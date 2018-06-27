@@ -5,23 +5,18 @@ import copy
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\DataNelle\SommenQuickScan\16-4\output'
-a = 0.9
-b = 300
-data = pd.read_csv(pad+ r"\assessment.csv",delimiter=';')
-data['Length'] = data['km end'] - data['km start']
-data['beta vak'] = -norm.ppf(norm.cdf(-data['beta_cs'])*(a*1000*data['Length']/b))
-data = data.set_index('Section Name')
-general = {}
-general['Pmax'] = 1/10000
-general['r'] = 0.03
-general['T'] = 50
-general['D'] = 23e9
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
-P_traject = np.sum(norm.cdf(-data['beta vak']))
+# read file decoding with cPickle/pickle (as binary)
+def ld_readObject(filePath):
+    f=open(filePath,'rb')
+    data = pickle.load(f)
+    f.close()
+    return data
 
-measures = pd.read_csv(pad+ r"\measures.csv",delimiter=';')
-measures = measures.set_index('naam')
 def calcTrajectProb(P_sections):
     P_traject = sum(P_sections)
     return P_traject
@@ -143,6 +138,27 @@ def makePlanning(sections, measures, general):
         Measures.append([section, measure, Costs.loc[measure,section], P_traject_list[-1]])
         #record the measure
     return Measures
+
+pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\DataNelle\SommenQuickScan\16-4\output'
+a = 0.9
+b = 300
+data = pd.read_csv(pad+ r"\assessment.csv",delimiter=';')
+data['Length'] = data['km end'] - data['km start']
+data['beta vak'] = -norm.ppf(norm.cdf(-data['beta_cs'])*(a*1000*data['Length']/b))
+data = data.set_index('Section Name')
+general = {}
+general['Pmax'] = 1/10000
+general['r'] = 0.03
+general['T'] = 50
+general['D'] = 23e9
+
+P_traject = np.sum(norm.cdf(-data['beta vak']))
+
+measures = pd.read_csv(pad+ r"\measures.csv",delimiter=';')
+measures = measures.set_index('naam')
+
+
+
 data_original = copy.deepcopy(data)
 measures_original = copy.deepcopy(data)
 general_original = copy.deepcopy(data)

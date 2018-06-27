@@ -3,23 +3,41 @@
 
 import numpy as np
 
-def LSF_heave(lambd,h,h_b,d,i_ch):
-    if d <= 0:
-        [g_h] = deal(999);
+def LSF_heave(Input):
+    #lambd,h,h_b,d,i_ch
+    if Input.d_cover_pip <= 0:      #geen deklaag = heave treedt altijd op
+        i_c = 0
+    elif Input.scherm == 'Ja':
+        i_c = 0.5
+    elif Input.scherm == 'Nee':
+        i_c = 0.3
     else:
-        m_phi = 1; #KW: this is assumed equal to 1!!! considered as a multiplicative variable (and not additive)
-        phi = h_b + m_phi * (h - h_b) * lambd; #Head at Exit Point
-        i   = (phi - h_b) / d;
-        g_h = i_ch - i;                        #Limit State Function
-    return g_h
+        print('The LSF of heave has no clue what to do')
+    delta_phi = (Input.h - Input.h_exit) * Input.r_exit
 
-def LSF_sellmeijer(h,h_b,d,L,D,theta,d70,k,m_p):
-    delta_h_c = m_p * sellmeijer2017(L,D,theta,d70,k);    # Critical head difference (resistance):
-    delta_h = h - h_b - 0.3 * d                           # Head difference (load)
-    g_p = delta_h_c - delta_h                             # Resistance minus load (incl. model factors)
+    i = (delta_phi/Input.d_cover_pip) if Input.d_cover_pip > 0 else 99
+    g_h = i_c - i
+    return g_h, i, i_c
+
+def LSF_sellmeijer(Input):
+    delta_h_c = Input.m_Piping * sellmeijer2017(Input.L,Input.D,Input.theta,Input.d70,Input.k);    # Critical head difference (resistance):
+    delta_h = Input.h - Input.h_exit - 0.3 * Input.d_cover_pip                                # Head difference (load)
+    g_p = delta_h_c - delta_h                                                                 # Resistance minus load (incl. model factors)
     if delta_h<0:
         delta_h = 0
     return g_p, delta_h, delta_h_c
+
+def LSF_uplift(Input):
+    #lambd,h,h_b,d,gamma_sat,m_u
+    m_u = 1.
+    if Input.d_cover <= 0:                          #no cover layer so no uplift
+        dh_c = 0
+    else:
+        dh_c= Input.d_cover * (Input.gamma_sat - Input.gamma_w) / Input.gamma_w;
+    # print(dh_c)
+    dh = (Input.h - Input.h_exit) * Input.r_exit
+    g_u = m_u * dh_c - dh;  # Limit State Function
+    return g_u, dh, dh_c
 def sellmeijer2017(L,D,theta,d70,k):
 
     #L     - Seepage Length (48)
@@ -50,14 +68,7 @@ def sellmeijer2017(L,D,theta,d70,k):
     # delta_h_c = F1 * F2 * F3 * L;
     return delta_h_c
 
-def LSF_uplift(lambd,h,h_b,d,gamma_sat,m_u):
-    if d <= 0:
-        [g_u] = deal(999);
-    phi = h_b + (h - h_b) * lambd;                    #Head at Exit Point
-    delta_phi_c = d * (gamma_sat - 10) / 10;           #Critical Head Difference
-    g_u = m_u * delta_phi_c - (phi - h_b);             #Limit State Function
-    h_cu = h_b + (m_u * delta_phi_c) / lambd;        #Critical Water Level (for Z = 0)
-    return g_u
+
 def zPiping(inp):
     lambd, h, h_b,d,i_ch, gamma_sat,m_u,L,D,theta,d70,k,m_p = inp
     g_h = LSF_heave(lambd,h,h_b,d,i_ch)
@@ -78,3 +89,8 @@ def zTotal(inp):
     z_piping = zPiping(inp_piping)
     z_overflow = zOverflow(inp_overfl)
     return min(z_piping,z_overflow)
+
+def zBligh(inp):
+    h, phi_in, C, L = inp
+    z_Bligh = (L/C) - (h-phi_in)
+    return z_Bligh
