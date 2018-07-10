@@ -4,18 +4,86 @@ import csv
 import copy
 import pandas as pd
 import numpy as np
+import numpy.ma as ma
+from HelperFunctions import ld_readObject
 from scipy.stats import norm
-try:
-    import cPickle as pickle
-except:
-    import pickle
+from ProbabilisticFunctions import calc_traject_prob
+import operator
+class Traject:
+    def __init__(self, traject, Sections):
+        self.name = traject
+        if traject == '16-4':
+            self.length = 19480
+            self.Pmax = 1. / 10000; #self.omegaPiping = 0.24; self.a = 0.9; self.b = 300
+        elif traject == '16-3':
+            self.length = 19899
+            self.Pmax = 1. / 10000; #self.omegaPiping = 0.24; self.a = 0.9; self.b = 300  #NB: klopt a hier?????!!!!
+        self.Sections = Sections
+        self.Sections.sort(key=operator.attrgetter('name'))
 
-# read file decoding with cPickle/pickle (as binary)
-def ld_readObject(filePath):
-    f=open(filePath,'rb')
-    data = pickle.load(f)
-    f.close()
-    return data
+    def determineSectionLengths(self):
+        dijkpaal_dist = 200
+        DV = []
+        self.Sections.sort(key=operator.attrgetter('CS'))
+        for i in range(0, len(self.Sections)):
+            startkm = float(self.Sections[i].start[2:5] + '.' + format(int(self.Sections[i].start[6:]), '03d')) if len(self.Sections[i].start) > 5 else float(self.Sections[i].start[2:5])
+            endkm   = float(self.Sections[i].end[2:5] + '.' + format(int(self.Sections[i].end[6:]), '03d'))     if len(self.Sections[i].end)   > 5 else float(self.Sections[i].end[2:5])
+            if self.Sections[i].name[0:4] == DV:
+                #Functie klopt niet helemaal: uiteindelijk moet dit gewoon in GIS worden aangegeven.
+               #adapt upper bound and length of previous section
+                print(self.Sections[i-1].CS)
+                CS_neighbour = float(self.Sections[i-1].CS[2:5] + '.' + format(int(self.Sections[i-1].CS[6:][0:3]), '03d'))
+                CS           = float(self.Sections[i].CS[2:5] + '.' + format(int(self.Sections[i].CS[6:][0:3]), '03d'))
+                newbound     = np.mean([CS,CS_neighbour])
+                #Recalculate previous:
+                start_prev = float(self.Sections[i-1].start[2:5] + '.' + self.Sections[i-1].start[6:])
+                self.Sections[i-1].length = (newbound-start_prev)*dijkpaal_dist
+                newupper = self.Sections[i].CS[0:2] + format(int(np.floor(newbound)), '03d') + '+' + format(int((newbound - np.floor(newbound)) * 100), '03d')
+                newupper = self.Sections[i].CS[0:2] + format(int(np.floor(newbound)),'03d') + '+' + format(int((newbound-np.floor(newbound))*100),'03d')
+                self.Sections[i-1].end    = newupper
+                #Write new length and boundaries
+                self.Sections[i].start = newupper
+                self.Sections[i].length= (endkm-newbound)*dijkpaal_dist
+
+            else:
+                DV = self.Sections[i].name[0:4]
+                self.Sections[i].length = (endkm-startkm)*dijkpaal_dist
+
+        self.Sections.sort(key=operator.attrgetter('name'))
+            #Testcode
+            # lensum = 0
+            # for i in range(0,len(self.Sections)):
+            #     print(self.Sections[i].name + ' ' + self.Sections[i].start + ' ' + self.Sections[i].CS  + ' ' + self.Sections[i].end + ' ' + self.Sections[i].length)
+            #     lensum = lensum + self.Sections[i].length
+            # print(lensum)
+
+    def calcBetaTCS(self,mechanism):
+        if mechanism == 'Piping':
+            for i in range(0,len(self.Sections)):
+                Peis = self.Sections[i].TrajectInfo['omegaPiping']* self.Sections[i].TrajectInfo['Pmax']
+                N = self.Sections[i].TrajectInfo['aPiping'] * self.Sections[i].TrajectInfo['TrajectLength'] / self.Sections[i].TrajectInfo['bPiping']
+                self.Sections[i].BetaCSPiping = -norm.ppf(Peis/N)
+    def calcPCS(self,mechanism):
+        if mechanism == 'Piping':
+            for i in range(0,len(self.Sections)):
+                self.Sections[i].PipingAssessment.Pf = norm.cdf(-(max((self.Sections[i].PipingAssessment.beta_cs_h,self.Sections[i].PipingAssessment.beta_cs_p,self.Sections[i].PipingAssessment.beta_cs_u))))
+    def setReinfVars(self,discountrate,planningperiod,flooddamage):
+        self.DiscountRate = discountrate
+        self.PlanningPeriod = planningperiod
+        self.FloodDamage = flooddamage
+
+    def calcPcurrent(self):
+        self.Pcurrent = calc_traject_prob(self.Sections, 'Piping')
+
+class Measures:
+    def __init__(self):
+        self.MeasureList = []
+
+    def addMeasuresfromCSV(self, pad):
+        measures = pd.read_csv(pad + r"\measures.csv", delimiter=';')
+        measures = measures.set_index('naam')
+        for i in range(0,len(measures)):
+            self.MeasureList = measures
 
 def calcTrajectProb(P_sections):
     P_traject = sum(P_sections)
@@ -26,43 +94,44 @@ def calcAnnuityFactor(T,r):
     return A
 def calcLCC(measure, T, r, section):
     A = calcAnnuityFactor(T,r)
-    LCC = A*measure['C_var']*section['Length']+measure['C_fix']
-    return LCC.values[0]
+    LCC = A*measure['C_var']*(section.length/1000.)+measure['C_fix']
+    return LCC
 
 def calcLCR(measure, T, r, D, P_sections,section):
     A = calcAnnuityFactor(T,r)
     #recalculate the probabilities for a measure:
     if measure['P_type'] == 'factor':
-        P_sections.loc[section] = P_sections.loc[section]* measure['P']
+        P_sections[section] = P_sections[section]* measure['P']
     elif measure['P_type'] == 'fixed':
-        P_sections.loc[section] = measure['P']
-    P_traject = calcTrajectProb(P_sections)
+        P_sections[section] = measure['P']
+    P_traject = calc_traject_prob(P_sections, 'Piping')
     LCR = P_traject * A * D
     return LCR, P_traject
 
-def MeasureCostBenefits(sections, measures, general):
-    P_traject = calcTrajectProb(sections['Pvak'])
-    # Psections = copy.deepcopy(sections['Pvak'])
-    A = calcAnnuityFactor(general['T'],general['r'])
-    LCR = P_traject*general['D']*A
-    cols = sections.index.tolist()
-    MeasureCosts = pd.DataFrame(columns=cols, index = range(measures.shape[0]))
-    MeasureRisk  = pd.DataFrame(columns=cols, index = range(measures.shape[0]))
-    MeasureP     = pd.DataFrame(columns=cols, index = range(measures.shape[0]))
-    for i in sections.index:
-        Psections = copy.deepcopy(sections['Pvak'])
-        for j in range(0,len(measures)):
-            MeasureCosts[i][j] = calcLCC(measures.iloc[j,:], general['T'], general['r'], sections.loc[sections.index == i])
-            MeasureRisk[i][j], MeasureP[i][j] = calcLCR(measures.iloc[j,:], general['T'], general['r'], general['D'], Psections,i)
+# def MeasureCostBenefits(sections, measures, general):
+def MeasureCostBenefits(Traject,Measures):
+    Traject.calcPcurrent()
+    A = calcAnnuityFactor(Traject.PlanningPeriod,Traject.DiscountRate)
+    LCR = A*Traject.FloodDamage*Traject.Pcurrent
+
+    MeasureCosts = pd.DataFrame(columns = range(len(Traject.Sections)), index = range(Measures.MeasureList.shape[0]))
+    MeasureRisk  = pd.DataFrame(columns = range(len(Traject.Sections)), index = range(Measures.MeasureList.shape[0]))
+    MeasureP     = pd.DataFrame(columns = range(len(Traject.Sections)), index = range(Measures.MeasureList.shape[0]))
+    P_sections = []
+    P_sections = [Traject.Sections[i].PipingAssessment.Pf for i in range(0,len(Traject.Sections))]
+    for i in range(0,len(Traject.Sections)):
+        for j in range(0,len(Measures.MeasureList)):
+            MeasureCosts[i][j] = calcLCC(Measures.MeasureList.iloc[j,:],Traject.PlanningPeriod,Traject.DiscountRate,Traject.Sections[i])
+            Psections = copy.deepcopy(P_sections)
+            MeasureRisk[i][j], MeasureP[i][j] = calcLCR(Measures.MeasureList.iloc[j,:], Traject.PlanningPeriod,Traject.DiscountRate, Traject.FloodDamage, Psections,i)
              # = LCR_meas - LCR
-    MeasureCosts.index = measures.index
-    MeasureRisk.index = measures.index
+    MeasureCosts.index = Measures.MeasureList.index
+    MeasureRisk.index = Measures.MeasureList.index
     deltaTotalCost = MeasureCosts + MeasureRisk - LCR
-    deltaTotalCost.index = measures.index
+    deltaTotalCost.index = Measures.MeasureList.index
 
     BCratio = (LCR-MeasureRisk)/MeasureCosts
     return deltaTotalCost, BCratio, MeasureCosts
-
 
 def writetoDataFrame(DF,index,columns,data):
     count = 0
@@ -71,106 +140,97 @@ def writetoDataFrame(DF,index,columns,data):
         count = count+1
     return DF
 
-def takeMeasure(measure,section,measures,sections):
-    # measures = measures.set_index('naam')
-    if measures.loc[measure,'P_type'] == 'fixed':
-        sections.loc[section,'Pvak'] = measures.loc[measure,'P']
-    elif measures.loc[measure,'P_type'] == 'factor':
-        sections.loc[section,'Pvak'] = sections.loc[section,'Pvak'] * measures.loc[measure,'P']
-    return sections, measures
+def takeMeasure(idx,measures,traject):
+    if measures.MeasureList.P_type[idx[0]] == 'fixed':
+        traject.Sections[idx[1]].PipingAssessment.__clearvalues__()
+        traject.Sections[idx[1]].PipingAssessment.Pf = measures.MeasureList.P[idx[0]]
+        traject.Sections[idx[1]].ReinfDone = 1 #MAKE MORE ROBUST
+        print('do this')
+    elif measures.MeasureList.P_type[idx[0]] == 'factor':
+        P_f = traject.Sections[idx[1]].PipingAssessment.Pf
+        traject.Sections[idx[1]].PipingAssessment.__clearvalues__()
+        traject.Sections[idx[1]].PipingAssessment.Pf = measures.MeasureList.P[idx[0]]*P_f
+        traject.Sections[idx[1]].MaintDone = 1
+    return traject
+def makeMask(Traject,shape,types):
+    #Makes a mask of all already executed reinforcement or maintenance types
+    masker = np.zeros(shape)
+    for i in range(0,len(types)):
+        for j in range(0,len(Traject.Sections)):
+            if types[i] == 'Reinf':
+                masker[i,j] = Traject.Sections[j].ReinfDone
+            elif types[i] == 'Maint':
+                masker[i,j] = Traject.Sections[j].MaintDone
+    return masker
+def selectMeasure(DecisionVariable,Traject,type,Measures):
+    masker = makeMask(Traject,np.shape(DecisionVariable),Measures.MeasureList['type'].values)
+    #First we mask all values that are not interesting. Check later if the mask functionality can be used.
 
-def selectMeasure(sections,measures,general,TCmeasures,BCratio,Measures):
-    mode = 'BC'
-    if mode == 'TC':
-        sec = [];     TC = 1e15
-        #this code can be much shorter I think!!!
-        for i in sections.index:
-            if min(TCmeasures.loc[:,i])<TC:
-                TC = min(TCmeasures.loc[:,i])
-                sec = i
-            # else:
-            #     #do nothing
-        #section selected. Now select the proper intervention
-        interv = []
-        TC = []
-        for i in measures.index:
-            if min(TCmeasures.loc[:,sec])==TCmeasures.loc[i,sec]:
-                measure = i
-                location = sec
-                #optimum found: section is sec and measure is i
-    elif mode == 'BC':
-        sec = [];     BC = -1000
-        #this code can be much shorter I think!!!
-        for i in sections.index:
-            if max(BCratio.loc[:,i])>BC:
-                BC = max(BCratio.loc[:,i])
-                sec = i
-            # else:
-            #     #do nothing
-        #section selected. Now select the proper intervention
-        interv = []; BC = []
-        for i in measures.index:
-            if max(BCratio.loc[:,sec])==BCratio.loc[i,sec]:
-                measure = i
-                location = sec
-                #optimum found: section is sec and measure is i
-    return measure, location
+    DecisionVariable = ma.masked_array(DecisionVariable.values, mask=masker)
+#Function selects a measure based on the optimal value for the decision variable. Returns a tuple with indices for measure and section
+    if type == 'BC':
+        idx0 = np.unravel_index(DecisionVariable.argmax(fill_value = 0),DecisionVariable.shape)
+        # Pvak = Traject.Sections[idx0[1]].PipingAssessment.Pf
+        #
+        # for i in range(0,len(DecisionVariable)):
+        #
+        # zoek hogere BC in kolom
+        # als gevonden, vergelijk de kansreductie
+        # Pak degene waar BC positief is en de kansreductie maximaal
+    elif type == 'TC':
+        idx0 = np.unravel_index(DecisionVariable.argmin(fill_value = 1e99),DecisionVariable.shape)
+    else:
+        print('type is not known')
+        idx0 = None
+    return idx0
 
+def makePlanning(Traject, Measures):
+    # A = calcAnnuityFactor(Traject.PlanningPeriod,Traject.DiscountRate)
+    # LCR = A*Traject.Pcurrent*Traject.FloodDamage
+    PTrajectList = []; InvestmentScheme = []
+    InvestmentScheme.append(['Initial','',0.,Traject.Pcurrent])
+    for i in range(0,len(Traject.Sections)):
+        Traject.Sections[i].ReinfDone = 0
+        Traject.Sections[i].MaintDone = 0
+    for i in range(0,2*len(Traject.Sections)):
+        dTotalCost, BCratio, Costs = MeasureCostBenefits(Traject, Measures)
+        # measure_idx = selectMeasure(BCratio,Traject,'BC',Measures)
+        measure_idx = selectMeasure(dTotalCost,Traject,'TC',Measures)
 
-def makePlanning(sections, measures, general):
-    #Calculate base values for probability and risk
-    P_traject = np.sum(norm.cdf(-sections['beta vak']))
-    A = calcAnnuityFactor(general['T'],general['r'])
-    LCR = A*P_traject*general['D']
-    sections['Pvak'] = norm.cdf(-sections['beta vak'])
+        takeMeasure(measure_idx,Traject1_Measures,Traject1)
+        Traject.calcPcurrent()
+        InvestmentScheme.append([Measures.MeasureList.index[measure_idx[0]], Traject.Sections[measure_idx[1]].name, Costs.iloc[measure_idx], Traject.Pcurrent])
+    return InvestmentScheme
 
-    #Initialize lists and dataframes that are needed
-    P_sections =[]; Costs = []; Measures = []; Measures.append(['Initial', '', 0, P_traject]); section_probs =[];
-    # P_sections = pd.DataFrame(columns=sections['Section Name'], index=range(general['T']))
-    # cols = ['naam'] + sections['Section Name'].values.tolist()
-    P_traject_list = [];
-    # P_sections = writetoDataFrame(P_sections, 0, sections['Section Name'], sections['Pvak'])
-    for i in range(0,4*len(sections)):
-        dTotalCost, BCratio, Costs = MeasureCostBenefits(sections,measures,general)
-        measure, section = selectMeasure(data,measures,general,dTotalCost,BCratio,Measures)
-        sections, measures = takeMeasure(measure, section, measures, sections)
-        P_traject_list.append(calcTrajectProb(sections['Pvak']))
-        Measures.append([section, measure, Costs.loc[measure,section], P_traject_list[-1]])
-        #record the measure
-    return Measures
+def plotCostsVSProbability(Investments):
+    totalcosts = np.cumsum(Investments.iloc[:,2])
+    plt.plot(totalcosts,Investments.iloc[:,3])
+    plt.yscale('log')
+    plt.show()
+    print()
+#Initialize the section information
+pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-4\input'
+Sections = ld_readObject(pad + '\\AllSections.dta')
+Traject1 = Traject('16-4',Sections)
+Traject1.determineSectionLengths()
+Traject1.calcBetaTCS('Piping')
+Traject1.calcPCS('Piping')
+Traject1.setReinfVars(0.03,50,23e9)
+Traject1.calcPcurrent()
 
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\DataNelle\SommenQuickScan\16-4\output'
-a = 0.9
-b = 300
-data = pd.read_csv(pad+ r"\assessment.csv",delimiter=';')
-data['Length'] = data['km end'] - data['km start']
-data['beta vak'] = -norm.ppf(norm.cdf(-data['beta_cs'])*(a*1000*data['Length']/b))
-data = data.set_index('Section Name')
-general = {}
-general['Pmax'] = 1/10000
-general['r'] = 0.03
-general['T'] = 50
-general['D'] = 23e9
+#Initialize the measures
+measure_pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-4\input'
+Traject1_Measures = Measures()
+Traject1_Measures.addMeasuresfromCSV(measure_pad)
 
-P_traject = np.sum(norm.cdf(-data['beta vak']))
+Traject1_original = copy.deepcopy(Traject1)
+Investments = makePlanning(Traject1,Traject1_Measures)
 
-measures = pd.read_csv(pad+ r"\measures.csv",delimiter=';')
-measures = measures.set_index('naam')
+# with open("interventionsTC.csv",'w') as resultFile:
+#     wr = csv.writer(resultFile, dialect='excel',lineterminator='\r',delimiter=';')
+#     wr.writerows(Investments)
 
-
-
-data_original = copy.deepcopy(data)
-measures_original = copy.deepcopy(data)
-general_original = copy.deepcopy(data)
-Measures = makePlanning(data,measures,general)
-print()
-
-
-
-with open("interventions.csv",'w') as resultFile:
-    wr = csv.writer(resultFile, dialect='excel',lineterminator='\r',delimiter=';')
-    wr.writerows(Measures)
-
+plotCostsVSProbability(pd.DataFrame(Investments))
 
 
 
