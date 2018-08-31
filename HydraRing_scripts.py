@@ -2,7 +2,13 @@ import subprocess
 import mmap
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+from openturns import Histogram
+import openturns as ot
+from ProbabilisticFunctions import TableDist
 pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Belasting_HydraRing'
+
+
 
 def runHydraRing(inifile):
     exelocation = r'C:\Program Files (x86)\WTI\Ringtoets 17.2.2.13491\bin\HydraRing\MechanismComputation.exe'
@@ -10,6 +16,14 @@ def runHydraRing(inifile):
 
 # runHydraRing(r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Belasting_HydraRing\1.ini')
 
+def DesignTableOpenTurns(filename,gridpoints=2000):
+    data = readDesignTable(filename)
+    wls = list(data.iloc[:,0])
+    p_nexc = list(1-data.iloc[:,1])
+    h = TableDist(np.array(wls), np.array(p_nexc),extrap='on',isload = 'on')
+
+    h = ot.Distribution(TableDist(np.array(wls), np.array(p_nexc),extrap='on',isload='on',gridpoints=gridpoints))
+    return h
 
 def readDesignTable(filename):
     import re
@@ -24,11 +38,8 @@ def readDesignTable(filename):
             val = [i.replace('\n', '') for i in val]
             val = [float(i) for i in val]
             values.append(val)
-
-
         count+=1
     data = pd.DataFrame(values, columns=headers)
-    # data.convert_objects(convert_numeric=True).dtypes
     f.close()
     return data
 def plotDesignTable(data):
@@ -39,7 +50,8 @@ def plotDesignTable(data):
     plt.yscale('log')
     plt.tight_layout()
     plt.show()
-
-data = readDesignTable(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Belasting_HydraRing\designTable.txt')
-plotDesignTable(data)
-print(data)
+#
+# data = readDesignTable(r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\DesignTable.txt')
+# plotDesignTable(data)
+# print(data
+# runHydraRing(r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\HBNsom\2.ini')

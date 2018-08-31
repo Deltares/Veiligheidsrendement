@@ -1,6 +1,11 @@
 from scipy.stats import norm
 import DikeClasses
 import numpy as np
+import openturns as ot
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
+
+import cProfile
+
 
 #Function to calculate a safety factor:
 def calc_gamma(mechanism,DikeSection):
@@ -39,10 +44,311 @@ def calc_traject_prob(sections, mechanism):
         Psections = []
         if mechanism == 'Piping':
             for i in range(0,len(sections)):
-                if isinstance(sections[i].PipingAssessment.Pf,float):
-                    betaCS = -norm.ppf(sections[i].PipingAssessment.Pf)
+                if isinstance(sections[i].Reliability.Piping.Pf,float):
+                    betaCS = -norm.ppf(sections[i].Reliability.Piping.Pf)
                 else:
-                    betaCS = max((sections[i].PipingAssessment.beta_cs_h, sections[i].PipingAssessment.beta_cs_p, sections[i].PipingAssessment.beta_cs_u))
+                    betaCS = max((sections[i].Reliability.Piping.beta_cs_h, sections[i].Reliability.Piping.beta_cs_p, sections[i].Reliability.Piping.beta_cs_u))
                 Psections.append(norm.cdf(-betaCS))
         traject_prob = sum(Psections)
     return traject_prob
+
+def MHWtoGumbel(MHW,p,d):
+    a = MHW + d * np.log(-(np.log(1-p))) / (np.log(-np.log(1-p))-np.log(-np.log(1-p/10)))
+    b = d /(np.log(-np.log(1-p))-np.log(-np.log(1-p/10)))
+    return a, b
+
+class TableDist(ot.PythonDistribution):
+    def __init__(self, x=[0,1], p=[1,0], extrap = 'off',isload = 'off',gridpoints = 2000):
+        super(TableDist, self).__init__(1)
+        #Check the input
+        if len(x) != len(p):
+            raise ValueError('Input arrays have unequal lengths')
+        if extrap == 'off':
+            if p[0] != 1 or p[-1:] != 0:
+                raise ValueError('Probability bounds are not equal to 0 and 1. Allow for extrapolation or change input')
+        for i in range(1,len(x)):
+            if x[i-1] > x[i]:
+                raise ValueError('Values should be increasing')
+            if p[i-1] > p[i]:
+                raise ValueError('Non-exceedance probabilities should be increasing')
+        #Define the distribution
+        pp1 = 1; pp0 = 0
+        if isload == 'on':
+            pgrid = 1-np.logspace(0,-8,gridpoints)
+        else:
+            pgrid = np.logspace(0, -8, gridpoints)
+            # pgrid = 1-np.logspace(0,-16,500)
+        # spline order: 1 linear, 2 quadratic, 3 cubic ...
+        order = 1
+        # do inter/extrapolation
+        s = InterpolatedUnivariateSpline(p, x, k=1)
+        xgrid = s(pgrid)
+        if xgrid[0]-xgrid[-1:]>0:
+            self.x = np.flip(xgrid,0)
+            self.xp = np.flip(pgrid, 0)
+            self.xp[0] = 0.
+
+        else:
+            self.x = xgrid
+            self.xp = pgrid
+            self.xp[-1:] = 1.
+    def getParameterDescription(self):
+        descr1 = []
+        descr2 = []
+        for i in range(0,len(self.x)):
+            descr1.append('x_' + str(i))
+            descr2.append('xp_' + str(i))
+        return(descr1+descr2)
+
+    def getParameter(self):
+        x = []; xp = []
+        for i in range(0,len(self.x)):
+            x.append(self.x[i])
+            xp.append(self.xp[i])
+        return ot.Point(x+xp)
+    def computeCDF(self, X):
+        if X < self.x[0]:
+            return 0.0
+        elif X >= self.x[-1:]:
+            return 1.0
+        else:
+            #find first value that is larger:
+            #Option 1, seems to be slightly slower:
+            # idx_up = min(np.argwhere(self.x>X))
+            # xx = self.x[int(idx_up)-1:int(idx_up)+1]
+            # pp = self.xp[int(idx_up)-1:int(idx_up)+1]
+            # f = interp1d(xx,pp)
+            # p = f(X)
+            X = X[0]
+
+            # idx_up = np.min(np.argwhere(self.x > X))
+            idx_up = np.argmax(self.x>X)
+            xx = self.x[idx_up - 1:idx_up + 1]
+            pp = self.xp[idx_up - 1:idx_up + 1]
+            dp = pp[1] - pp[0]
+            dx = xx[1] - xx[0]
+            p = pp[0] + dp * ((X - xx[0]) / dx)
+
+            return p
+
+
+    def getMean(self):
+        high = np.min(np.argwhere(self.xp > 0.53))
+        low = np.min(np.argwhere(self.xp>0.47))
+        # high = np.min(np.argwhere(self.xp > 0.50))
+        # low = high-1
+        index = low+(np.abs(0.5 - self.xp[low:high])).argmin()
+        mu = np.interp(0.5, self.xp[index - 1:index + 1], self.x[index - 1:index + 1])
+        return [mu]
+    def getRange(self):
+        return ot.Interval([self.x[0]], [float(self.x[-1:])], [True], [True])
+
+    def getRealization(self):
+        X = []
+        p = ot.RandomGenerator.Generate()
+        idx_up = min(np.argwhere(self.xp > p)) #CHECK
+        pp = self.xp[int(idx_up) - 1:int(idx_up) + 1]
+        xx = self.x[int(idx_up) - 1:int(idx_up) + 1]
+        f = interp1d(pp, xx)
+        X = float(f(p))
+        return ot.Point(1,X)
+
+        # sample = h.getSample(50000)
+        # from openturns.viewer import View
+        # graph = ot.VisualTest_DrawEmpiricalCDF(sample)
+        # orig = ot.Curve(wls, p_nexc)
+        # graph.add(orig)
+        # View(graph).show()
+    def getSample(self, size):
+        X = []
+        for i in range(size):
+            X.append(self.getRealization())
+        return X
+
+def run_prob_calc(model,dist,method='FORM'):
+    vect = ot.RandomVector(dist)
+    if method == 'MCS':
+        model = ot.MemoizeFunction(model)
+    G = ot.CompositeRandomVector(model, vect)
+    event = ot.Event(G, ot.Less(), 0)
+
+    if method == 'FORM':
+        solver = ot.AbdoRackwitz()
+        solver.setMaximumAbsoluteError(1e-3)
+        solver.setMaximumRelativeError(1e-3)
+        solver.setMaximumIterationNumber(100)
+        # if getattr(dist,'getMean',None) != None:
+        algo = ot.FORM(solver, event, dist.getMean())
+        # else:
+        #     startpoint = 0
+        algo.run()
+        result = algo.getResult()
+        Pf = result.getEventProbability()
+        beta = result.getHasoferReliabilityIndex()
+        alfas_sq = (np.array(result.getStandardSpaceDesignPoint())/beta)**2
+    elif method =='DIRS':
+        result, algo = run_DIRS(event, approach=ot.MediumSafe(), samples=1000)
+        Pf = result.getProbabilityEstimate()
+    elif method == 'MCS':
+        ot.RandomGenerator.SetSeed(0)
+        experiment = ot.MonteCarloExperiment()
+        algo = ot.ProbabilitySimulationAlgorithm(event, experiment)
+        # algo.setMaximumCoefficientOfVariation(0.01)
+        algo.setMaximumStandardDeviation(1e-3)
+        algo.setMaximumOuterSampling(int(1000))
+        algo.setBlockSize(100)
+        algo.run()
+        result = algo.getResult()
+        Pf = result.getProbabilityEstimate()
+        beta = -norm.ppf(Pf)
+        if beta != float('Inf'):
+            alfas_sq = np.array(result.getImportanceFactors())
+        else:
+            alfas_sq = np.empty((1,vect.getDimension(),))
+            alfas_sq[:] = np.nan
+    return result, Pf, beta, alfas_sq
+
+
+def run_DIRS(event, approach=ot.MediumSafe(),sampling=ot.OrthogonalDirection(),samples = 250):
+    # start = time.time()
+    algo = ot.DirectionalSampling(event,approach,sampling)
+    algo.setMaximumOuterSampling(samples)
+    algo.setBlockSize(4)
+    algo.setMaximumCoefficientOfVariation(0.025)
+    algo.run()
+    result = algo.getResult()
+    probability = result.getProbabilityEstimate()
+    # end = time.time()
+    print(event.getName())
+    print('%15s' % 'Pf = ', "{0:.2E}".format(probability))
+    print('%15s' % 'CoV = ', "{0:.2f}".format(result.getCoefficientOfVariation()))
+    print('%15s' % 'N = ', "{0:.0f}".format(result.getOuterSampling()))
+    # print('%15s' % 'Time elapsed = ', "{0:.2f}".format(end-start), 's')
+    return result, algo
+
+def IterativeFC_calculation(marginals,WL, names, zFunc, method, step=0.5, lolim = 10e-4, hilim=0.999):
+    marginals[len(marginals) - 1] = ot.Dirac(float(WL))
+    dist = ot.ComposedDistribution(marginals)
+    dist.setDescription(names)
+    result, P,beta,alpha = run_prob_calc(ot.PythonFunction(len(marginals), 1, zFunc), dist, method)
+    wl_list = []; result_list = []; P_list = [];
+    while P >hilim or P < lolim:
+        print('changed start value')
+        WL = WL - 1 if P > hilim else WL + 1
+        marginals[len(marginals) - 1] = ot.Dirac(float(WL))
+        dist = ot.ComposedDistribution(marginals)
+        dist.setDescription(names)
+        result, P,beta,alpha = run_prob_calc(ot.PythonFunction(len(marginals), 1, zFunc), dist, method)
+
+    result_list.append(result)
+    wl_list.append(WL)
+    P_list.append(P)
+    count = 0
+    while P > lolim:
+        WL -=step
+        count += 1
+        marginals[len(marginals) - 1] = ot.Dirac(float(WL))
+        dist = ot.ComposedDistribution(marginals); dist.setDescription(names)
+        result, P,beta,alpha = run_prob_calc(ot.PythonFunction(len(marginals), 1, zFunc), dist, method)
+        result_list.append(result)
+        wl_list.append(WL)
+        P_list.append(P)
+        print(str(count) + ' calculations made for fragility curve')
+    WL = max(wl_list)
+    while P < hilim:
+        WL +=step
+        count += 1
+        marginals[len(marginals) - 1] = ot.Dirac(float(WL))
+        dist = ot.ComposedDistribution(marginals); dist.setDescription(names)
+        result, P,beta,alpha = run_prob_calc(ot.PythonFunction(len(marginals), 1, zFunc), dist, method)
+        result_list.append(result)
+        wl_list.append(WL)
+        P_list.append(P)
+        print(str(count) + ' calculations made for fragility curve')
+
+    indices = list(np.argsort(wl_list))
+    wl_list = [wl_list[i] for i in indices]
+    result_list = [result_list[i] for i in indices]
+    P_list = [P_list[i] for i in indices]
+    indexes = np.where(np.diff(P_list) == 0)
+    rm_items = 0
+    if len(indexes[0])>0:
+        for i in indexes[0]:
+            wl_list.pop(i-rm_items)
+            result_list.pop(i-rm_items)
+            P_list.pop(i-rm_items)
+            rm_items +=1
+    #remove the non increasing values
+    print()
+    return result_list, P_list, wl_list
+
+def TemporalProcess(input, t,makePlot='off'):
+    #This function derives the distribution parameters for the temporal process governed by the annual distribution 'input' for year 't'
+    if input.getClassName() == 'Gamma':
+        params = input.getParameter()
+        mu = params[0] / params[1]
+        var = params[0] / (params[1] ** 2)
+
+        input.setParameter(ot.GammaMuSigma()([mu*float(t), np.sqrt(var*float(t)),0]))
+        if makePlot=='on':
+            gr = input.drawPDF()
+            from openturns.viewer import View
+            View(gr)
+    return input
+
+def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid = None):
+    #function to upscale an exceedance probability curve to another time scale
+    #change_dist provides the opportunity to include an (uncertain) temporally changing PDF (e.g. sea level rise)
+    #if that is added the function will provide the CDF of the water level for period t given a change over time
+    freq = []
+    pnew = []
+    if dist.getName() == 'TableDist':
+        params = dist.getParameter()
+        if Ngrid == None:
+            x = np.split(np.array(params),2)[0]
+        else:
+            x =np.linspace(np.min(np.split(np.array(params),2)[0]),np.max(np.split(np.array(params),2)[0]),Ngrid)
+        tgrid = np.arange(1,t+1,change_step)
+        if isinstance(change_dist,type(None)):
+            for i in x:
+                freq.append(-np.log(dist.computeCDF(i))*t)
+                pnew.append(np.exp(-freq[-1:][0]))
+        else:
+            distcoll = []
+
+            for j in tgrid:
+                original = copy.deepcopy(change_dist)
+                distcoll.append(ot.RandomMixture([dist,TemporalProcess(original,j,makePlot='off')],[1.0,1.0],0.0))
+                pass
+            #derive factors:
+            factors = []
+            for i in range(0, len(tgrid)):
+                if i == 0 or i == len(tgrid) - 1:
+                    factors.append((change_step / 2) + 0.5)
+                else:
+                    factors.append((change_step))
+            if tgrid[-1:] < t:
+                factors[-1:]=factors[-1:]+(t-tgrid[-1:])
+                print('Warning: range is not optimal. Last point has been extended to end of time window')
+            #calculate frequencies
+            freq = np.empty((len(x),len(distcoll)))
+            for i in range(0,len(distcoll)):
+                for j in range(0,len(x)):
+                    freq[j,i] = -np.log(distcoll[i].computeCDF(x[j]))*factors[i]
+            frequencies = np.sum(freq,axis=1)
+            pnew = np.exp(-frequencies)
+        newdist = ot.Distribution(TableDist(list(x),list(pnew),extrap='on',isload='on'))
+        if testPlot == 'on':
+            wl = np.arange(1, 10, 0.1)
+            pold = []
+            pnuevo = []
+            for i in wl:
+                pold.append(1 - dist.computeCDF(i))
+                pnuevo.append(1 - newdist.computeCDF(i))
+            import matplotlib.pyplot as plt
+            plt.plot(wl, pold)
+            plt.plot(wl, pnuevo)
+            plt.yscale('log')
+            plt.show()
+
+    return newdist

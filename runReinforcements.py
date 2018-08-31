@@ -22,32 +22,36 @@ class Traject:
         self.Sections.sort(key=operator.attrgetter('name'))
 
     def determineSectionLengths(self):
-        dijkpaal_dist = 200
-        DV = []
-        self.Sections.sort(key=operator.attrgetter('CS'))
+        #shortcut. all sections are total length / no of sections
         for i in range(0, len(self.Sections)):
-            startkm = float(self.Sections[i].start[2:5] + '.' + format(int(self.Sections[i].start[6:]), '03d')) if len(self.Sections[i].start) > 5 else float(self.Sections[i].start[2:5])
-            endkm   = float(self.Sections[i].end[2:5] + '.' + format(int(self.Sections[i].end[6:]), '03d'))     if len(self.Sections[i].end)   > 5 else float(self.Sections[i].end[2:5])
-            if self.Sections[i].name[0:4] == DV:
-                #Functie klopt niet helemaal: uiteindelijk moet dit gewoon in GIS worden aangegeven.
-               #adapt upper bound and length of previous section
-                print(self.Sections[i-1].CS)
-                CS_neighbour = float(self.Sections[i-1].CS[2:5] + '.' + format(int(self.Sections[i-1].CS[6:][0:3]), '03d'))
-                CS           = float(self.Sections[i].CS[2:5] + '.' + format(int(self.Sections[i].CS[6:][0:3]), '03d'))
-                newbound     = np.mean([CS,CS_neighbour])
-                #Recalculate previous:
-                start_prev = float(self.Sections[i-1].start[2:5] + '.' + self.Sections[i-1].start[6:])
-                self.Sections[i-1].length = (newbound-start_prev)*dijkpaal_dist
-                newupper = self.Sections[i].CS[0:2] + format(int(np.floor(newbound)), '03d') + '+' + format(int((newbound - np.floor(newbound)) * 100), '03d')
-                newupper = self.Sections[i].CS[0:2] + format(int(np.floor(newbound)),'03d') + '+' + format(int((newbound-np.floor(newbound))*100),'03d')
-                self.Sections[i-1].end    = newupper
-                #Write new length and boundaries
-                self.Sections[i].start = newupper
-                self.Sections[i].length= (endkm-newbound)*dijkpaal_dist
-
-            else:
-                DV = self.Sections[i].name[0:4]
-                self.Sections[i].length = (endkm-startkm)*dijkpaal_dist
+            print('WARNING: LENGTH EFFECT SHORTCUT IS TURNED ON!!!!!!')
+            self.Sections[i].length = self.length/len(self.Sections)
+        # dijkpaal_dist = 200
+        # DV = []
+        # self.Sections.sort(key=operator.attrgetter('CS'))
+        # for i in range(0, len(self.Sections)):
+        #     startkm = float(self.Sections[i].start[2:5] + '.' + format(int(self.Sections[i].start[6:]), '03d')) if len(self.Sections[i].start) > 5 else float(self.Sections[i].start[2:5])
+        #     endkm   = float(self.Sections[i].end[2:5] + '.' + format(int(self.Sections[i].end[6:]), '03d'))     if len(self.Sections[i].end)   > 5 else float(self.Sections[i].end[2:5])
+        #     if self.Sections[i].name[0:4] == DV:
+        #         #Functie klopt niet helemaal: uiteindelijk moet dit gewoon in GIS worden aangegeven.
+        #        #adapt upper bound and length of previous section
+        #         print(self.Sections[i-1].CS)
+        #         CS_neighbour = float(self.Sections[i-1].CS[2:5] + '.' + format(int(self.Sections[i-1].CS[6:][0:3]), '03d'))
+        #         CS           = float(self.Sections[i].CS[2:5] + '.' + format(int(self.Sections[i].CS[6:][0:3]), '03d'))
+        #         newbound     = np.mean([CS,CS_neighbour])
+        #         #Recalculate previous:
+        #         start_prev = float(self.Sections[i-1].start[2:5] + '.' + self.Sections[i-1].start[6:])
+        #         self.Sections[i-1].length = (newbound-start_prev)*dijkpaal_dist
+        #         newupper = self.Sections[i].CS[0:2] + format(int(np.floor(newbound)), '03d') + '+' + format(int((newbound - np.floor(newbound)) * 100), '03d')
+        #         newupper = self.Sections[i].CS[0:2] + format(int(np.floor(newbound)),'03d') + '+' + format(int((newbound-np.floor(newbound))*100),'03d')
+        #         self.Sections[i-1].end    = newupper
+        #         #Write new length and boundaries
+        #         self.Sections[i].start = newupper
+        #         self.Sections[i].length= (endkm-newbound)*dijkpaal_dist
+        #
+        #     else:
+        #         DV = self.Sections[i].name[0:4]
+        #         self.Sections[i].length = (endkm-startkm)*dijkpaal_dist
 
         self.Sections.sort(key=operator.attrgetter('name'))
             #Testcode
@@ -66,7 +70,7 @@ class Traject:
     def calcPCS(self,mechanism):
         if mechanism == 'Piping':
             for i in range(0,len(self.Sections)):
-                self.Sections[i].PipingAssessment.Pf = norm.cdf(-(max((self.Sections[i].PipingAssessment.beta_cs_h,self.Sections[i].PipingAssessment.beta_cs_p,self.Sections[i].PipingAssessment.beta_cs_u))))
+                self.Sections[i].Reliability.Piping.Pf = norm.cdf(-(max((self.Sections[i].Reliability.Piping.beta_cs_h,self.Sections[i].Reliability.Piping.beta_cs_p,self.Sections[i].Reliability.Piping.beta_cs_u))))
     def setReinfVars(self,discountrate,planningperiod,flooddamage):
         self.DiscountRate = discountrate
         self.PlanningPeriod = planningperiod
@@ -118,7 +122,7 @@ def MeasureCostBenefits(Traject,Measures):
     MeasureRisk  = pd.DataFrame(columns = range(len(Traject.Sections)), index = range(Measures.MeasureList.shape[0]))
     MeasureP     = pd.DataFrame(columns = range(len(Traject.Sections)), index = range(Measures.MeasureList.shape[0]))
     P_sections = []
-    P_sections = [Traject.Sections[i].PipingAssessment.Pf for i in range(0,len(Traject.Sections))]
+    P_sections = [Traject.Sections[i].Reliability.Piping.Pf for i in range(0,len(Traject.Sections))]
     for i in range(0,len(Traject.Sections)):
         for j in range(0,len(Measures.MeasureList)):
             MeasureCosts[i][j] = calcLCC(Measures.MeasureList.iloc[j,:],Traject.PlanningPeriod,Traject.DiscountRate,Traject.Sections[i])
@@ -142,14 +146,14 @@ def writetoDataFrame(DF,index,columns,data):
 
 def takeMeasure(idx,measures,traject):
     if measures.MeasureList.P_type[idx[0]] == 'fixed':
-        traject.Sections[idx[1]].PipingAssessment.__clearvalues__()
-        traject.Sections[idx[1]].PipingAssessment.Pf = measures.MeasureList.P[idx[0]]
+        traject.Sections[idx[1]].Reliability.Piping.__clearvalues__()
+        traject.Sections[idx[1]].Reliability.Piping.Pf = measures.MeasureList.P[idx[0]]
         traject.Sections[idx[1]].ReinfDone = 1 #MAKE MORE ROBUST
         print('do this')
     elif measures.MeasureList.P_type[idx[0]] == 'factor':
-        P_f = traject.Sections[idx[1]].PipingAssessment.Pf
-        traject.Sections[idx[1]].PipingAssessment.__clearvalues__()
-        traject.Sections[idx[1]].PipingAssessment.Pf = measures.MeasureList.P[idx[0]]*P_f
+        P_f = traject.Sections[idx[1]].Reliability.Piping.Pf
+        traject.Sections[idx[1]].Reliability.Piping.__clearvalues__()
+        traject.Sections[idx[1]].Reliability.Piping.Pf = measures.MeasureList.P[idx[0]]*P_f
         traject.Sections[idx[1]].MaintDone = 1
     return traject
 def makeMask(Traject,shape,types):
@@ -202,16 +206,24 @@ def makePlanning(Traject, Measures):
         InvestmentScheme.append([Measures.MeasureList.index[measure_idx[0]], Traject.Sections[measure_idx[1]].name, Costs.iloc[measure_idx], Traject.Pcurrent])
     return InvestmentScheme
 
-def plotCostsVSProbability(Investments):
+def plotCostsVSProbability(Investments,traject,pad):
     totalcosts = np.cumsum(Investments.iloc[:,2])
-    plt.plot(totalcosts,Investments.iloc[:,3])
+    plt.plot(totalcosts/1e6,Investments.iloc[:,3],label = 'Investeringsschema')
+    plt.plot([0,140],[1e-4, 1e-4],label = 'Maximaal toelaatbare faalkans')
+    plt.xlabel('Investering in MEuro')
+    plt.ylabel('Trajectfaalkans [-/jaar]')
     plt.yscale('log')
-    plt.show()
+    plt.xlim([0,140])
+    plt.title('Investeringen traject ' + traject)
+    # plt.show()
+    plt.savefig(pad + '\\output\\investeringen_' + traject + '.pdf')
     print()
 #Initialize the section information
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-4\input'
-Sections = ld_readObject(pad + '\\AllSections.dta')
-Traject1 = Traject('16-4',Sections)
+traject = '16-3'
+pad          = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data' + '\\' + traject
+
+Sections = ld_readObject(pad + '\\input\\AllSections.dta')
+Traject1 = Traject(traject,Sections)
 Traject1.determineSectionLengths()
 Traject1.calcBetaTCS('Piping')
 Traject1.calcPCS('Piping')
@@ -219,18 +231,18 @@ Traject1.setReinfVars(0.03,50,23e9)
 Traject1.calcPcurrent()
 
 #Initialize the measures
-measure_pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-4\input'
+measure_pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data' + '\\' + traject + '\\input'
 Traject1_Measures = Measures()
 Traject1_Measures.addMeasuresfromCSV(measure_pad)
 
 Traject1_original = copy.deepcopy(Traject1)
 Investments = makePlanning(Traject1,Traject1_Measures)
 
-# with open("interventionsTC.csv",'w') as resultFile:
-#     wr = csv.writer(resultFile, dialect='excel',lineterminator='\r',delimiter=';')
-#     wr.writerows(Investments)
+with open(pad + "\output\interventionsTC" + traject + ".csv",'w') as resultFile:
+    wr = csv.writer(resultFile, dialect='excel',lineterminator='\r',delimiter=';')
+    wr.writerows(Investments)
 
-plotCostsVSProbability(pd.DataFrame(Investments))
+plotCostsVSProbability(pd.DataFrame(Investments),traject,pad)
 
 
 

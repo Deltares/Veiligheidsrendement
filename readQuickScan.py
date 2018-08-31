@@ -15,7 +15,7 @@ except:
     import pickle
 
 #Define the path where the Excelsheets are located
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\DataNelle\SommenQuickScan\16-4'
+pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-3'
 
 
 # write to file with cPickle/pickle (as binary)

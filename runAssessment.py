@@ -12,11 +12,12 @@ import DikeClasses
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
-
+from scipy.stats import norm
 import collections
 
 #Specify the path
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-4'
+traject = '16-3'
+pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data' + '\\' + traject
 
 #Make a list of the files used as input
 onlyfiles = [f for f in listdir(pad) if isfile(join(pad,f))]
@@ -37,65 +38,69 @@ def writedataforNelle():
     writer.save()
 
 #Plot function for the assessment results
-def plotCS(Sections,pad, type,extra_variable):
+def plotCS(Sections,mechanism, type,extra_variable):
     Sections.sort(key=operator.attrgetter('name'))
-    # # This function plots the reliability index for all sections for all submechanisms.
-    beta_cs_p = []; beta_cs_h = []; beta_cs_u = []; beta_cs_max = []; sec_name = []
-    for i in range(0,len(Sections)):
-        sec_name.append(Sections[i].name)
-        beta_cs_p.append(Sections[i].PipingAssessment.beta_cs_p)
-        beta_cs_h.append(Sections[i].PipingAssessment.beta_cs_h)
-        beta_cs_u.append(Sections[i].PipingAssessment.beta_cs_u)
-        beta_cs_max.append(max(Sections[i].PipingAssessment.beta_cs_p,Sections[i].PipingAssessment.beta_cs_u,Sections[i].PipingAssessment.beta_cs_h))
-
-
-    if type == 'Beta':
-        plt.plot(range(0,len(Sections)), beta_cs_p, 'or', alpha=0.4, label = 'Piping')
-        plt.plot(range(0,len(Sections)), beta_cs_u, 'ob', alpha=0.4, label = 'Uplift')
-        plt.plot(range(0,len(Sections)), beta_cs_h, 'og', alpha=0.4, label = 'Heave')
-        plt.plot(range(0,len(Sections)), beta_cs_max, 'k', label = 'highest')
-        plt.xticks(range(0,len(Sections)), sec_name, rotation='vertical')
-        plt.legend(loc='upper right')
-
-        plt.ylabel(r'Cross sectional reliability index $\beta$')
-        plt.ylim(ymin=0)
-
-    elif type == 'Probability':
-        plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_p)), 'or', alpha=0.4, label='Piping')
-        plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_u)), 'ob', alpha=0.4, label='Uplift')
-        plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_h)), 'og', alpha=0.4, label='Heave')
-        plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_max)), 'k', label='highest')
-        plt.xticks(range(0,len(Sections)), sec_name, rotation='vertical')
-        plt.ylabel(r'Cross sectional failure probability $P_f$')
-        plt.legend(loc='upper right')
-        # plt.ylim(ymin=0)
-        plt.yscale('log')
-
-        # plt.savefig(pad + r'\output\FailureProbability.png')
-
-    if extra_variable == 'Cover layer':
-        d_c = []; sec_name = [];
-        for i in range(0, len(Sections)):
+    if mechanism == 'Piping':
+        # # This function plots the reliability index for all sections for all piping submechanisms.
+        beta_cs_p = []; beta_cs_h = []; beta_cs_u = []; beta_cs_max = []; sec_name = []
+        for i in range(0,len(Sections)):
             sec_name.append(Sections[i].name)
-            d_c.append(Sections[i].PipingIn.d_cover_pip)
-        ax2 = plt.twinx()
-        color = 'tab:blue'
-        ax2.plot(range(0,len(Sections)),np.array(d_c), 'tab:blue', alpha=0.2, label='Deklaag')
-        ax2.set_ylabel('Cover layer in m')
-        ax2.tick_params(axis='y', labelcolor=color)
-    elif extra_variable == 'Seepage length':
-        L = []; sec_name = [];
-        for i in range(0, len(Sections)):
-            sec_name.append(Sections[i].name)
-            L.append(Sections[i].PipingIn.L_berm+Sections[i].PipingIn.L_voorland+Sections[i].PipingIn.L_dijk)
-        ax2 = plt.twinx()
-        color = 'tab:blue'
-        ax2.plot(range(0,len(Sections)),np.array(L), 'tab:blue', alpha=0.2, label='Leklengte')
-        ax2.set_ylabel('Seepage length in m')
-        ax2.tick_params(axis='y', labelcolor=color)
+            beta_cs_p.append(Sections[i].Reliability.Piping.beta_cs_p)
+            beta_cs_h.append(Sections[i].Reliability.Piping.beta_cs_h)
+            beta_cs_u.append(Sections[i].Reliability.Piping.beta_cs_u)
+            beta_cs_max.append(max(Sections[i].Reliability.Piping.beta_cs_p,Sections[i].Reliability.Piping.beta_cs_u,Sections[i].Reliability.Piping.beta_cs_h))
+
+
+        if type == 'Beta':
+            plt.plot(range(0,len(Sections)), beta_cs_p, 'or', alpha=0.4, label = 'Piping')
+            plt.plot(range(0,len(Sections)), beta_cs_u, 'ob', alpha=0.4, label = 'Uplift')
+            plt.plot(range(0,len(Sections)), beta_cs_h, 'og', alpha=0.4, label = 'Heave')
+            plt.plot(range(0,len(Sections)), beta_cs_max, 'k', label = 'highest')
+            plt.xticks(range(0,len(Sections)), sec_name, rotation='vertical')
+            plt.legend(loc='upper right')
+
+            plt.ylabel(r'Cross sectional reliability index $\beta$')
+            plt.ylim(ymin=0)
+
+        elif type == 'Probability':
+            plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_p)), 'or', alpha=0.4, label='Piping')
+            plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_u)), 'ob', alpha=0.4, label='Uplift')
+            plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_h)), 'og', alpha=0.4, label='Heave')
+            plt.plot(range(0,len(Sections)), norm.cdf(-np.array(beta_cs_max)), 'k', label='highest')
+            plt.xticks(range(0,len(Sections)), sec_name, rotation='vertical')
+            plt.ylabel(r'Cross sectional failure probability $P_f$')
+            plt.legend(loc='upper right')
+            # plt.ylim(ymin=0)
+            plt.yscale('log')
+
+            plt.savefig(pad + r'\output\BetaTraject' + traject + '.pdf')
+
+        if extra_variable == 'Cover layer':
+            d_c = []; sec_name = [];
+            for i in range(0, len(Sections)):
+                sec_name.append(Sections[i].name)
+                d_c.append(Sections[i].Reliability.Piping.Input.d_cover_pip)
+            ax2 = plt.twinx()
+            color = 'tab:blue'
+            ax2.plot(range(0,len(Sections)),np.array(d_c), 'tab:blue', alpha=0.2, label='Deklaag')
+            ax2.set_ylabel('Cover layer in m')
+            ax2.tick_params(axis='y', labelcolor=color)
+        elif extra_variable == 'Seepage length':
+            L = []; sec_name = [];
+            for i in range(0, len(Sections)):
+                sec_name.append(Sections[i].name)
+                L.append(Sections[i].Reliability.Piping.Input.L_berm+Sections[i].Reliability.Piping.Input.L_voorland+Sections[i].Reliability.Piping.Input.L_dijk)
+            ax2 = plt.twinx()
+            color = 'tab:blue'
+            ax2.plot(range(0,len(Sections)),np.array(L), 'tab:blue', alpha=0.2, label='Leklengte')
+            ax2.set_ylabel('Seepage length in m')
+            ax2.tick_params(axis='y', labelcolor=color)
+        else:
+            plt.plot()
     plt.tight_layout()
     plt.show()
-
+    # plt.savefig(pad + r'\output' + '\\' + type + '_Traject_' + traject + '_' + extra_variable + '.pdf')
+    # plt.close()
 
 #Get a list of results (beta or safety factors) from the Class structure of a section
 def extractResult(Sections,type):
@@ -155,13 +160,13 @@ for i in onlyfiles:
 #make the sections list of class objects
 Sections = []
 for i in sectionnames:
-    Sections.append(DikeClasses.DikeSection(i,'16-4'))
+    Sections.append(DikeClasses.DikeSection(i,traject))
     Sections[-1].fill_from_dict(allsections[i])
     Sections[-1].doAssessment('Piping','SemiProb')
 
 #Write the results
-ld_writeObject(pad + '\\input\\AllSections.dta', Sections)
+# ld_writeObject(pad + '\\input\\AllSections.dta', Sections)
 
 #Plot the results
-plotCS(Sections,pad,'Beta','Seepage length')
-plotCS(Sections,pad,'Beta','Cover layer')
+plotCS(Sections,'Piping','Beta','Cover layer')
+plotCS(Sections,'Piping','Beta','Seepage length')
