@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isfile, join
 from HelperFunctions import ld_writeObject, ld_readObject, flatten
 import pandas as pd
-import DikeClasses
+from DikeClasses import DikeSection
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
@@ -23,7 +23,7 @@ pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SA
 onlyfiles = [f for f in listdir(pad) if isfile(join(pad,f))]
 
 #This writes a full xlsx with all section info
-def writedataforNelle():
+def writetoExcel():
     y = pd.DataFrame(flatten(allsections[sectionnames[0]]), index=['Beschrijving', 'remove'])
     y = y.T
     y = y.drop(columns=['remove'])
@@ -38,7 +38,7 @@ def writedataforNelle():
     writer.save()
 
 #Plot function for the assessment results
-def plotCS(Sections,mechanism, type,extra_variable):
+def plotCS(Sections,mechanism, type,extra_variable,mode='show',savepath=None):
     Sections.sort(key=operator.attrgetter('name'))
     if mechanism == 'Piping':
         # # This function plots the reliability index for all sections for all piping submechanisms.
@@ -58,6 +58,7 @@ def plotCS(Sections,mechanism, type,extra_variable):
             plt.plot(range(0,len(Sections)), beta_cs_max, 'k', label = 'highest')
             plt.xticks(range(0,len(Sections)), sec_name, rotation='vertical')
             plt.legend(loc='upper right')
+            plt.plot([0, len(Sections)], [4.93, 4.93])
 
             plt.ylabel(r'Cross sectional reliability index $\beta$')
             plt.ylim(ymin=0)
@@ -98,9 +99,11 @@ def plotCS(Sections,mechanism, type,extra_variable):
         else:
             plt.plot()
     plt.tight_layout()
-    plt.show()
-    # plt.savefig(pad + r'\output' + '\\' + type + '_Traject_' + traject + '_' + extra_variable + '.pdf')
-    # plt.close()
+    if mode == 'show':
+        plt.show()
+    elif mode == 'save':
+        plt.savefig(savepath + r'\output' + '\\' + type + '_Traject_' + traject + '_' + extra_variable + '.pdf')
+        plt.close()
 
 #Get a list of results (beta or safety factors) from the Class structure of a section
 def extractResult(Sections,type):
@@ -149,6 +152,7 @@ def extractSF_WSRL(allsections):
 ## HERE THE ACTUAL SCRIPT STARTS
 
 #First put all the data in 1 big dictionary for all sections in the traject
+#For this we use the pickle files that were generated using readQuickScan.py
 allsections = {}
 sectionnames = []
 onlyfiles = [f for f in listdir(pad) if isfile(join(pad,f))]
@@ -157,10 +161,10 @@ for i in onlyfiles:
     allsections[i.split(' ')[1][:-5]] = ld_readObject(pad + '\\output\\' + i.split(' ')[1][:-5] + '.dta')
     sectionnames.append(i.split(' ')[1][:-5])
 
-#make the sections list of class objects
+#make Sections, a list of class objects
 Sections = []
 for i in sectionnames:
-    Sections.append(DikeClasses.DikeSection(i,traject))
+    Sections.append(DikeSection(i,traject))
     Sections[-1].fill_from_dict(allsections[i])
     Sections[-1].doAssessment('Piping','SemiProb')
 

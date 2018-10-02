@@ -110,8 +110,11 @@ def zPipingTotal(inp):
     return [z_piping]
 
 def zOverflow(inp):
+    if len(inp) == 4:
+        h_c,dh_c,h,dh = inp
+        h=h+dh
     #with ageing:
-    if len(inp) == 3:
+    elif len(inp) == 3:
         h_c, dh_c, h = inp
     elif len(inp) == 2:
         h_c, h = inp

@@ -5,12 +5,11 @@ import openturns as ot
 import pandas as pd
 import numpy as np
 import copy
-import inspect
-from ProbabilisticFunctions import TableDist,run_DIRS, run_prob_calc, IterativeFC_calculation,TemporalProcess
-from HelperFunctions import drawAlphaBarPlot
+from ProbabilisticFunctions import TableDist, run_prob_calc, IterativeFC_calculation, TemporalProcess
+from HelperFunctions import MarginalsforTimeDepReliability
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-import openpyxl
+
 #Class for the input of a mechanism. Function only available for piping for now
 class LoadInput:
     #class to store load data
@@ -34,14 +33,13 @@ class LoadInput:
         plt.yscale('log')
         plt.title('Probability of non-exceedence')
         plt.xlabel('Water level [m NAP]')
-        plt.ylabel(r'$P_{non exceedence} (-/year)$')class MechanismInput:
+        plt.ylabel(r'$P_{non exceedence} (-/year)$')
+
+class MechanismInput:
     #Class for input of a mechanism
     def __init__(self,mechanism):
         self.mechanism = mechanism
-    #This routine fills a fragility curve with custom input parameters (can this be deleted and merged with the one below?)
-    def fill_fragility_curve(self, hc_params, distribution = 'Normal'):
-        if distribution == 'Normal':
-            self.h_c = ot.Normal(hc_params[0],hc_params[1])
+
 
     #This routine reads probabilistic input from an input sheet
     def fill_prob_mechanism(self, input, sheet):
@@ -125,7 +123,8 @@ class MechanismReliabilityCollection:
             #For a user defined 'simple' calculation
             if mechanism == 'StabilityInner':
                 [self.Reliability[i].calcSimple(strength_params, mechanism=mechanism, year = float(i)) for i in self.Reliability.keys()]
-
+        elif type == 'Prob':
+            [self.Reliability[i].calcProbabilistic(strength_params, load, mechanism=mechanism, method=method, year= float(i)) for i in self.Reliability.keys()]
         #NB: This should be extended with conditional failure probabilities
 
     def calcLifetimeProb(self,conditionality='no',period=None):
@@ -155,22 +154,22 @@ class MechanismReliabilityCollection:
         beta = np.interp(year,t0,beta0)
         return beta
 
-    def parameterizeLCR(self):
-        #Routine to parameterize the life-cycle reliability. Doesnt work properly for anything other than linear trends
-        from scipy import stats
-        t = []
-        beta = []
-        for i in self.Reliability.keys():
-            t.append(int(i))
-            beta.append(-ot.Normal().computeScalarQuantile(self.Reliability[i].Pf))
-        slope, intercept, r_value, p_value, std_err = stats.linregress(t, beta)
-        tgrid = np.arange(0, 50, 1)
-        betagrid = intercept + slope * tgrid
-        plt.plot(t,beta,'or')
-        plt.plot(tgrid, betagrid)
-        print(r_value ** 2)
+    # def parameterizeLCR(self):
+    #     #Routine to parameterize the life-cycle reliability. Doesnt work properly for anything other than linear trends
+    #     from scipy import stats
+    #     t = []
+    #     beta = []
+    #     for i in self.Reliability.keys():
+    #         t.append(int(i))
+    #         beta.append(-ot.Normal().computeScalarQuantile(self.Reliability[i].Pf))
+    #     slope, intercept, r_value, p_value, std_err = stats.linregress(t, beta)
+    #     tgrid = np.arange(0, 50, 1)
+    #     betagrid = intercept + slope * tgrid
+    #     plt.plot(t,beta,'or')
+    #     plt.plot(tgrid, betagrid)
+    #     print(r_value ** 2)
 
-    def drawLCR(self,yscale=None,type='pf'):
+    def drawLCR(self,yscale=None,type='pf',label=None):
         #Draw the life cycle reliability
         t = []; y = []
         for i in self.Reliability.keys():
@@ -179,7 +178,7 @@ class MechanismReliabilityCollection:
                 y.append(self.Reliability[i].result.getProbabilityEstimate()) if type == 'pf' else y.append(-ot.Normal().computeScalarQuantile(self.Reliability[i].result.getProbabilityEstimate()))
             else:
                 y.append(self.Reliability[i].result.getEventProbability()) if type == 'pf' else y.append(self.Reliability[i].result.getHasoferReliabilityIndex())
-        plt.plot(t,y)
+        plt.plot(t,y,label=label)
         if yscale=='log': plt.yscale(yscale)
         plt.xlabel('Time')
         plt.ylabel(r'$\beta$')
@@ -244,7 +243,7 @@ class MechanismReliability:
                 self.wl = wl_total
         elif mechanism == 'Overflow':
             # make list of all random variables:
-            marginals = []; names = []; wls = []
+            marginals = []; names = [];
             for i in input.input.keys():
                 #Adapt temporal process variables
                 if i in input.temporals:
@@ -270,7 +269,67 @@ class MechanismReliability:
         if mechanism == 'StabilityInner':
             self.beta = strength.input['beta'].getParameter()[0] - year * strength.input['dbeta'].getParameter()[0] + strength.input['berm_add'].getParameter()[0]*strength.input['beta_berm'].getParameter()[0]
             self.Pf = norm.cdf(-self.beta)
+    def calcFragilityCurve(self, load, method='FORM', mechanism=None, year=0):
+        #Generic function for evaluating a fragility curve with water level and change in water level (optional)
+        if hasattr(load,'dist_change'):
+            original = copy.deepcopy(load.dist_change)
+            dist_change = TemporalProcess(original, year)
+            marginals = [self.h_c, load.distribution, dist_change]
+            dist = ot.ComposedDistribution(marginals)
+            dist.setDescription(['h_c', 'h', 'dh'])
+            result,P,beta,alfas_sq = run_prob_calc(ot.SymbolicFunction(['h_c', 'h', 'dh'], ['h_c-(h+dh)']),dist,method)
+        else:
+            marginals = [self.h_c, load.distribution]
+            dist = ot.ComposedDistribution(marginals)
+            dist.setDescription(['h_c', 'h'])
+            result,P,beta,alfas_sq = run_prob_calc(ot.SymbolicFunction(['h_c', 'h'], ['h_c-h']),dist,method)
+        self.result = result
+        self.Pf = P
+        self.beta = beta
+        self.alpha_sq = alfas_sq
+
+    def calcProbabilistic(self, strength_params, load, method='FORM', mechanism=None, year=0):
+        # make list of all random variables:
+        marginals, names = MarginalsforTimeDepReliability(strength_params,load=load,year=year,type='Probabilistic')
+        marginals = []; names = [];
+        for i in strength_params.input.keys():
+            if i in strength_params.temporals:
+                original = copy.deepcopy(strength_params.input[i])
+                str_change = TemporalProcess(original, year)
+                marginals.append(str_change)
+            else:
+                marginals.append(strength_params.input[i])
+            names.append(i)
+        marginals.append(load.distribution)
+
+        marginals_orig = copy.deepcopy(marginals)
+        if hasattr(load,'dist_change'):
+            original = copy.deepcopy(load.dist_change)
+            dist_change = TemporalProcess(original, year)
+            marginals = marginals_orig
+            marginals.append(dist_change)
+            dist = ot.ComposedDistribution(marginals)
+            descr = list(strength_params.input.keys())
+            descr.extend(('h','dh'))
+        else:
+            marginals = marginals_orig
+            dist = ot.ComposedDistribution(marginals)
+            descr = list(strength_params.input.keys())
+            descr.append('h')
+        dist.setDescription(descr)
+        if mechanism == 'Piping':
+            zFunc = Mechanisms.zPipingTotal
+        elif mechanism=='Overflow':
+            zFunc = Mechanisms.zOverflow
+        else:
+            raise ValueError('Unknown Z-function')
+        result, P, beta, alpha_sq = run_prob_calc(ot.PythonFunction(len(marginals), 1, zFunc), dist, method)
+        self.result = result
+        self.Pf = P
+        self.beta = beta
+        self.alpha_sq = alpha_sq
     def SemiProbabilistic(self,DikeSection, MechanismInput):
+        MechanismInput.h = MechanismInput.h -0.5
         #NOTE: this should be treated the same as the probabilistic and simple calculations
         if MechanismInput.mechanism == 'Piping':
             #First calculate the SF without gamma for the three submechanisms
@@ -298,25 +357,6 @@ class MechanismReliability:
             self.beta_cs_u = ProbabilisticFunctions.calc_beta_implicated('Uplift',self.u_dh_c/self.u_dh,DikeSection)                 #Calculate the implicated beta_cs
         else:
             pass
-    def calcFragilityCurve(self, load, method='FORM', mechanism=None, year=0):
-        #Generic function for evaluating a fragility curve with water level and change in water level (optional)
-        if hasattr(load,'dist_change'):
-            original = copy.deepcopy(load.dist_change)
-            dist_change = TemporalProcess(original, year)
-            marginals = [self.h_c, load.distribution, dist_change]
-            dist = ot.ComposedDistribution(marginals)
-            dist.setDescription(['h_c', 'h', 'dh'])
-            result,P,beta,alfas_sq = run_prob_calc(ot.SymbolicFunction(['h_c', 'h', 'dh'], ['h_c-(h+dh)']),dist,method)
-        else:
-            marginals = [self.h_c, load.distribution]
-            dist = ot.ComposedDistribution(marginals)
-            dist.setDescription(['h_c', 'h'])
-            result,P,beta,alfas = run_prob_calc(ot.SymbolicFunction(['h_c', 'h'], ['h_c-h']),dist,method)
-        self.result = result
-        self.Pf = P
-        self.beta = beta
-        self.alpha_sq = alfas_sq
-
 
 #initialize the DikeSection class, as a general class for a dike section that contains all basic information
 class DikeSection:
@@ -372,156 +412,4 @@ class DikeSection:
         else:
             print('Mechanism not known')
 
-class Strategy:
-    def __init__(self,type):
-        self.Definition = StrategyDefinition(type)
 
-class StrategyDefinition:
-    def __init__(self,type):
-        if type == 'dimensioninput':
-            #here you can put in predefined dike reinforcement dimensions
-            StrategyDefinition.type = 'dimensioninput'
-        elif type == 'optimizationpersection':
-            #here we optimize so that a section meets the standard
-            StrategyDefinition.type = 'optimizationpersection'
-        elif type == 'optimizationpersegment':
-            pass
-            #here we optimize so that the segment meets the standard
-
-    def readinput(self,inputfile,sheet):
-        if self.type == 'optimizationpersection':
-            data = pd.read_excel(inputfile, sheet_name=sheet)
-            self.measures = {}
-            self.measures[data.index[0][0]] = {}
-            for i in range(0, len(data)):
-                self.measures[data.index[0][0]][data.index[i][1]] = data.loc[data.index[i]][0]
-        else:
-            pass
-
-class InitialSituation:
-    #Put the initial situation (i.e. no measures) in the strategy object
-    def __init__(self,SectionReliabilityObject):
-        self.SectionReliability = SectionReliabilityObject
-
-class StrategyCalculation:
-    def __init__(self,Definition,InitialSituation):
-        ## Derive dh - beta0 relation for all available measures
-        measurenames = list(Definition.measures.keys())
-        self.Measures = {}
-        for i in measurenames:
-            params = {}
-            if i == 'Soil reinforcement':
-                #Define the ranges that are possible for soil reinforcement
-                dcrest_min = Definition.measures[i]['dcrest_min']; dcrest_max = Definition.measures[i]['dcrest_max']
-                params['outwardrange'] = np.linspace(0,Definition.measures[i]['max_outward'],10) if Definition.measures[i]['max_outward'] >0 else np.nan
-                params['inwardrange'] = np.linspace(0, Definition.measures[i]['max_inward'], 10) if Definition.measures[i]['max_inward'] > 0 else np.nan
-                params['crestrange']   = np.linspace(dcrest_min,dcrest_max,6)
-                #Initial situation:
-                params['initial_overflow'] = InitialSituation.SectionReliability.Overflow.Input
-                params['initial_stabilityinner'] = InitialSituation.SectionReliability.StabilityInner.Input
-                params['load']         = InitialSituation.SectionReliability.Load
-            #Evaluate measures for different mechanisms
-            self.Measures[i] = {}
-            self.Measures[i]['Overflow'] = MeasureEvaluation('Soil reinforcement','Overflow',params)
-            self.Measures[i]['StabilityInner'] = MeasureEvaluation('Soil reinforcement','StabilityInner',params)
-
-class MeasureEvaluation:
-    #Class for the evaluation of a measure
-    def __init__(self,type,mechanism,params):
-        years = [1,10,20,30,40,50,70,100]
-        #Evaluation of soil reinforcement
-        if type == 'Soil reinforcement':
-            if mechanism == 'Overflow':
-                self.Overflow = {}
-                input0 = copy.deepcopy(params['initial_overflow'])
-                for i in params['crestrange']:
-                    input = copy.deepcopy(input0)
-                    if isinstance(input.input['h_c'],ot.Normal):
-                        input.input['h_c'] = ot.Normal(input.input['h_c'].getParameter()[0]+i,input.input['h_c'].getParameter()[1])
-                    else:
-                        raise ValueError('Unknown distribution type for h_c')
-                    self.Overflow[np.round(i,2)] = MechanismReliabilityCollection('Overflow','Prob',years)
-                    self.Overflow[np.round(i,2)].constructFragilityCurves(input,start = input.input['h_c'].getParameter()[0],step = 0.1)
-                    self.Overflow[np.round(i,2)].generateLCRProfile(params['load'],mechanism='Overflow')
-            if mechanism == 'StabilityInner':
-                self.StabilityInner = {}
-                input0 = copy.deepcopy(params['initial_stabilityinner'])
-                #Make a tuple of max inner and outer berm (with the simple model they have the same effect)
-                if np.isnan(params['inwardrange']):
-                    variants = [(round(x,1), round(y,1)) for x in [0] for y in params['outwardrange']]
-                elif np.isnan(params['outwardrange']):
-                    variants = [(round(x,1), round(y,1)) for x in params['inwardrange'] for y in [0]]
-                else:
-                    variants = [(round(x,1), round(y,1)) for x in params['inwardrange'] for y in params['outwardrange']]
-                # very simple mechanism model for now
-                for i in variants:
-                    input = copy.deepcopy(input0)
-                    input.input['berm_add'] = ot.Dirac(i[0]+i[1])
-                    self.StabilityInner[i] = MechanismReliabilityCollection('StabilityInner','Simple',years)
-                    self.StabilityInner[i].generateLCRProfile(params['load'],mechanism='StabilityInner',type='Simple',strength_params=input)
-
-    def deriveBetaRelations(self,mechanism,measure_type, period = None):
-        #Script to derive beta relations for increments of a reinforcement type
-        if measure_type == 'Soil reinforcement':
-            if mechanism == 'Overflow':
-                dh = []; beta_0 = []; beta_min = []; beta_life = []
-                if period == None: period = int8(self.Overflow.keys()[-1:])
-                for i in self.Overflow.keys():
-                    dh.append(np.float(i))
-                    beta_0.append(self.Overflow[i].Reliability['1'].beta)
-                    beta_min.append(self.Overflow[i].getProbinYear(period))
-                    self.Overflow[i].calcLifetimeProb(period=period)
-                    beta_life.append(self.Overflow[i].beta_life[1])
-                self.betadH = {}
-                self.betadH = pd.DataFrame({'dh': dh, 'beta_0': beta_0,'beta_life': beta_life, 'beta_min': beta_min})
-                self.betadH.set_index('dh')
-            elif mechanism == 'StabilityInner':
-                dBermIn = []
-                dBermOut = []
-                dBermInOut = []
-                beta_0 = []
-                beta_min = []
-                beta_life = []
-                if period == None:
-                    period = int8(self.StabilityInner.keys()[-1:])
-                for i in self.StabilityInner.keys():
-                    dBermIn.append(np.round(i[0],1))
-                    dBermOut.append(np.round(i[1],1))
-                    dBermInOut.append((np.round(i[0],1),np.round(i[1],1)))
-                    beta_0.append(self.StabilityInner[i].Reliability['1'].beta)
-                    beta_min.append(self.StabilityInner[i].getProbinYear(period))
-                    self.StabilityInner[i].calcLifetimeProb(period=period)
-                    beta_life.append(self.StabilityInner[i].beta_life[1])
-                self.betadBerm = {}
-                self.betadBerm = pd.DataFrame({'dBerm (Inward/Outward)': dBermInOut, 'beta_0': beta_0,'beta_life': beta_life, 'beta_min': beta_min})
-                self.betadBerm.set_index('dBerm (Inward/Outward)')
-            elif mechanism == 'Piping':
-                pass
-        else:
-            pass
-
-    def plotMeasureReliabilityinTime(self):
-        #Plot the reliability of different measure steps in time
-        mechanism = inspect.getmembers(self)[0][0]
-        if mechanism == 'StabilityInner':
-            for i in self.StabilityInner.keys():
-                t = []
-                beta = []
-                for j in self.StabilityInner[i].Reliability.keys():
-                    t.append(np.float(j))
-                    beta.append(self.StabilityInner[i].Reliability[j].beta)
-                plt.plot(t,beta, label=str(i))
-            plt.title('Reliability in time for different combinations of inner and outer berm widening')
-        elif mechanism == 'Overflow':
-            for i in self.Overflow.keys():
-                t = []
-                beta = []
-                for j in self.Overflow[i].Reliability.keys():
-                    t.append(np.float(j))
-                    beta.append(self.Overflow[i].Reliability[j].beta)
-                plt.plot(t,beta, label=str(i))
-            plt.title('Reliability in time for different increments of crest level increase')
-        plt.legend()
-        plt.xlabel('time')
-        plt.ylabel(r'$\beta$')
-        plt.show()

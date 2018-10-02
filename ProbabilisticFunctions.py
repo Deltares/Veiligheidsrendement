@@ -190,10 +190,11 @@ def run_prob_calc(model,dist,method='FORM'):
         result, algo = run_DIRS(event, approach=ot.MediumSafe(), samples=1000)
         Pf = result.getProbabilityEstimate()
     elif method == 'MCS':
-        ot.RandomGenerator.SetSeed(0)
+        ot.RandomGenerator.SetSeed(5000)
+        print('Warning, Random Generator state is currently fixed!')
         experiment = ot.MonteCarloExperiment()
         algo = ot.ProbabilitySimulationAlgorithm(event, experiment)
-        # algo.setMaximumCoefficientOfVariation(0.01)
+        algo.setMaximumCoefficientOfVariation(0.05)
         algo.setMaximumStandardDeviation(1e-3)
         algo.setMaximumOuterSampling(int(1000))
         algo.setBlockSize(100)

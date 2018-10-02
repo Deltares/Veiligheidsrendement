@@ -2,11 +2,13 @@ try:
     import cPickle as pickle
 except:
     import pickle
+import copy
 from openturns.viewer import View
 import matplotlib.pyplot as plt
 import openturns as ot
 from pandas import DataFrame
 import numpy as np
+# from ProbabilisticFunctions import TemporalProcess
 # write to file with cPickle/pickle (as binary)
 def ld_writeObject(filePath,object):
     f=open(filePath,'wb')
@@ -62,3 +64,34 @@ def drawAlphaBarPlot(resultList,xlabels = None, Pvalues = None, method = 'MCS', 
     plt.title(title)
     plt.show()
     #TO BE DONE: COmpare a reference case to Matlab
+
+def MarginalsforTimeDepReliability(input,load=None,year=0,type=None):
+    marginals = []; names = [];
+
+    #Strength variables:
+    for i in input.input.keys():
+        # Adapt temporal process variables
+        if i in input.temporals:
+            original = copy.deepcopy(input.input[i])
+            adapt_dist = TemporalProcess(original, year)
+            marginals.append(adapt_dist)
+            names.append(i)
+        else:
+            marginals.append(input.input[i])
+            names.append(i)
+
+    #Load variables:
+        if type =='ConstructFC':
+            marginals.append(ot.Dirac(1.)); names.append('h') #add the load
+        elif type == 'CalcFC' or type == 'Probabilistic':
+            marginals.append(load.distribution)
+            if hasattr(load, 'dist_change'):
+                original = copy.deepcopy(load.dist_change)
+                dist_change = TemporalProcess(original, year)
+                marginals.append(dist_change)
+                names.extend(('h','dh'))
+
+            else:
+                names.append('h')
+
+    return marginals, names
