@@ -16,8 +16,8 @@ from scipy.stats import norm
 import collections
 
 #Specify the path
-traject = '16-3'
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data' + '\\' + traject
+traject = '16-4'
+pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data' + '\\' + traject + '\\output'
 
 #Make a list of the files used as input
 onlyfiles = [f for f in listdir(pad) if isfile(join(pad,f))]
@@ -158,8 +158,8 @@ sectionnames = []
 onlyfiles = [f for f in listdir(pad) if isfile(join(pad,f))]
 ## read the input
 for i in onlyfiles:
-    allsections[i.split(' ')[1][:-5]] = ld_readObject(pad + '\\output\\' + i.split(' ')[1][:-5] + '.dta')
-    sectionnames.append(i.split(' ')[1][:-5])
+    allsections[i[:-4]] = ld_readObject(pad + '\\' + i)
+    sectionnames.append(i[:-4])
 
 #make Sections, a list of class objects
 Sections = []

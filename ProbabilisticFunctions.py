@@ -1,18 +1,17 @@
 from scipy.stats import norm
-import DikeClasses
 import numpy as np
 import openturns as ot
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
-
+import copy
 import cProfile
 
 
 #Function to calculate a safety factor:
-def calc_gamma(mechanism,DikeSection):
+def calc_gamma(mechanism,TrajectInfo):
     if mechanism == 'Piping' or mechanism == 'Heave' or mechanism == 'Uplift':
-        Pcs = (DikeSection.TrajectInfo['Pmax'] * DikeSection.TrajectInfo['omegaPiping'] * DikeSection.TrajectInfo['bPiping']) /( DikeSection.TrajectInfo['aPiping'] * DikeSection.TrajectInfo['TrajectLength'])
+        Pcs = (TrajectInfo['Pmax'] * TrajectInfo['omegaPiping'] * TrajectInfo['bPiping']) /( TrajectInfo['aPiping'] * TrajectInfo['TrajectLength'])
         betacs = -norm.ppf(Pcs)
-        betamax = -norm.ppf(DikeSection.TrajectInfo['Pmax'])
+        betamax = -norm.ppf(TrajectInfo['Pmax'])
         if mechanism == 'Piping':
             gamma = 1.04*np.exp(0.37*betacs-0.43*betamax)
         elif mechanism == 'Heave':
@@ -24,17 +23,34 @@ def calc_gamma(mechanism,DikeSection):
     return gamma
 
 #Function to calculate the implicated reliability from the safety factor
-def calc_beta_implicated(mechanism,SF,DikeSection):
-    if mechanism == 'Piping':
-        beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * -norm.ppf(DikeSection.TrajectInfo['Pmax']))
-    elif mechanism == 'Heave':
-        beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * -norm.ppf(DikeSection.TrajectInfo['Pmax']))
-    elif mechanism == 'Uplift':
-        # print(SF)
-        beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * -norm.ppf(DikeSection.TrajectInfo['Pmax']))
+def calc_beta_implicated(mechanism,SF,TrajectInfo=None):
+    if SF == 0:
+        # print('SF for ' + mechanism + ' is 0')
+        beta = 0.5
+    elif SF == np.inf:
+        beta = 8
     else:
-        print('Mechanism not found')
+        # OLD AND WRONG:
+        # if mechanism == 'Piping':
+        #     beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * -norm.ppf(TrajectInfo['Pmax']))
+        # elif mechanism == 'Heave':
+        #     beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * -norm.ppf(TrajectInfo['Pmax']))
+        # elif mechanism == 'Uplift':
+        #     # print(SF)
+        #     beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * -norm.ppf(TrajectInfo['Pmax']))
+        if mechanism == 'Piping':
+            beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * -norm.ppf(TrajectInfo['Pmax']))
+        elif mechanism == 'Heave':
+            beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * -norm.ppf(TrajectInfo['Pmax']))
+        elif mechanism == 'Uplift':
+            # print(SF)
+            beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * -norm.ppf(TrajectInfo['Pmax']))
+        else:
+            print('Mechanism not found')
     return beta
+
+
+
 
 #Calculates total probability from list of sections for a mechanism or for all mechanisms that can be found (to be programmed)
 def calc_traject_prob(sections, mechanism):
@@ -165,7 +181,7 @@ class TableDist(ot.PythonDistribution):
             X.append(self.getRealization())
         return X
 
-def run_prob_calc(model,dist,method='FORM'):
+def run_prob_calc(model,dist,method='FORM',startpoint=None):
     vect = ot.RandomVector(dist)
     if method == 'MCS':
         model = ot.MemoizeFunction(model)
@@ -174,11 +190,14 @@ def run_prob_calc(model,dist,method='FORM'):
 
     if method == 'FORM':
         solver = ot.AbdoRackwitz()
-        solver.setMaximumAbsoluteError(1e-3)
-        solver.setMaximumRelativeError(1e-3)
-        solver.setMaximumIterationNumber(100)
-        # if getattr(dist,'getMean',None) != None:
-        algo = ot.FORM(solver, event, dist.getMean())
+        solver.setMaximumAbsoluteError(1e-2)
+        solver.setMaximumRelativeError(1e-2)
+        solver.setMaximumIterationNumber(200)
+        if startpoint != None:
+            algo = ot.FORM(solver, event, startpoint)
+        else:
+            algo = ot.FORM(solver, event, dist.getMean())
+
         # else:
         #     startpoint = 0
         algo.run()
@@ -295,6 +314,8 @@ def TemporalProcess(input, t,makePlot='off'):
             gr = input.drawPDF()
             from openturns.viewer import View
             View(gr)
+    elif input.getClassName() == 'Dirac':
+        input.setParameter(input.getParameter()*t)
     return input
 
 def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid = None):
@@ -353,3 +374,53 @@ def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid
             plt.show()
 
     return newdist
+
+def addLoadCharVals(input,load=None,p_h = 1./1000, p_dh=0.5,year = 0):
+    #input = list of all strength variables
+
+    if load != None:
+        h_norm = np.array(load.distribution.computeQuantile(1 - p_h))[0]
+        input['h'] = h_norm
+
+    if hasattr(load, 'dist_change'):
+        if isinstance(load.dist_change,float):      #for SAFE input
+            # this is only for piping and stability. For overflow it should be extended with use of the HBN factor
+            input['dh'] = load.dist_change * year
+        else:
+            p = 0.5
+            dh = np.array(load.dist_change.computeQuantile(p_dh))[0]
+            input['dh'] = dh * year
+    else:
+        input['dh'] = 0.
+    return input
+
+def MarginalsforTimeDepReliability(input,load=None,year=0,type=None):
+    marginals = []; names = [];
+
+    #Strength variables:
+    for i in input.input.keys():
+        # Adapt temporal process variables
+        if i in input.temporals:
+            original = copy.deepcopy(input.input[i])
+            adapt_dist = TemporalProcess(original, year)
+            marginals.append(adapt_dist)
+            names.append(i)
+        else:
+            marginals.append(input.input[i])
+            names.append(i)
+
+    #Load variables:
+        if type =='ConstructFC':
+            marginals.append(ot.Dirac(1.)); names.append('h') #add the load
+        elif type == 'CalcFC' or type == 'Probabilistic':
+            marginals.append(load.distribution)
+            if hasattr(load, 'dist_change'):
+                original = copy.deepcopy(load.dist_change)
+                dist_change = TemporalProcess(original, year)
+                marginals.append(dist_change)
+                names.extend(('h','dh'))
+
+            else:
+                names.append('h')
+
+    return marginals, names

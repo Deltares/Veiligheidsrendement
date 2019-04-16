@@ -15,7 +15,7 @@ except:
     import pickle
 
 #Define the path where the Excelsheets are located
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-3'
+pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\16-4'
 
 
 # write to file with cPickle/pickle (as binary)
@@ -149,8 +149,8 @@ def readQSExcel(pathname,file):
 onlyfiles = [f for f in listdir(pad) if isfile(join(pad,f))]
 for i in range(0,len(onlyfiles)):
     data = readQSExcel(pad, onlyfiles[i])
-    ld_writeDicts(pad + '\\output\\' + onlyfiles[i].split(' ')[1][:-5] + '.dta', data)
-    print(onlyfiles[i].split(' ')[1][:-5])
+    ld_writeDicts(pad + '\\output\\' + onlyfiles[i][:-5] + '.dta', data)
+    print(onlyfiles[i][:-5])
     data = {}
 
 

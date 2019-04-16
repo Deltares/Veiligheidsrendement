@@ -3,16 +3,16 @@ import mmap
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from openturns import Histogram
 import openturns as ot
 from ProbabilisticFunctions import TableDist
-pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Belasting_HydraRing'
-
+import os
+import shutil
+# pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\Databases'
 
 
 def runHydraRing(inifile):
-    exelocation = r'C:\Program Files (x86)\WTI\Ringtoets 17.2.2.13491\bin\HydraRing\MechanismComputation.exe'
-    subprocess.run([exelocation, inifile],cwd=inifile[:-5])
+    exelocation = r'D:\wouterjanklerk\My Documents\HydraRing\Hydra-Ring 18.1\MechanismComputation.exe'
+    subprocess.run([exelocation, inifile],cwd=inifile[:-14])
 
 # runHydraRing(r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Belasting_HydraRing\1.ini')
 

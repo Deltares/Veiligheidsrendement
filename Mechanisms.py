@@ -2,7 +2,29 @@
 ## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
 
 import numpy as np
-
+from scipy import interpolate
+from scipy.stats import norm
+def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode = 'assessment', Pt = None, design_variable = None):
+    if mode == 'assessment':
+        if  q_c[0] != q_c[-1:]:
+            beta_hc = interpolate.interp2d(h_c, q_c, beta, kind='linear', fill_value='extrapolate')
+            beta = np.min([beta_hc(h_crest,q_crest), 8.])
+        else:
+            beta_hc = interpolate.interp1d(h_c, beta, kind='linear', fill_value='extrapolate')
+            beta = np.min([beta_hc(h_crest), 8.])
+        Pf = norm.cdf(-beta)
+        return beta, Pf
+    elif mode == 'design':
+        beta_t = -norm.ppf(Pt)
+        if design_variable == 'h_crest':
+            if  q_c[0] != q_c[-1:]:
+                beta_hc = interpolate.interp2d(beta, q_c, h_c, kind='linear', fill_value='extrapolate')
+                h_crest = beta_hc(beta_t,q_crest)
+            else:
+                beta_hc = interpolate.interp1d(beta, h_c, kind='linear', fill_value='extrapolate')
+                h_crest = beta_hc(beta_t)
+            return h_crest, beta_t
+        pass
 def LSF_heave(r_exit,h,h_exit,d_cover,kwelscherm):
     #lambd,h,h_b,d,i_ch
     if isinstance(kwelscherm,str):
@@ -61,9 +83,7 @@ def sellmeijer2017(L,D,d70,k):
     eta       = 0.25;    # White's constant
     kappa     = (nu / 9.81) * k
     theta     = 37
-    # Fres      = eta*(16.5/9.81)*np.tan(theta/180*np.pi)
-    Fres      = eta*(14.8/9.81)*np.tan(theta/180*np.pi)
-
+    Fres      = eta*(16.5/9.81)*np.tan(theta/180*np.pi)
     Fscale    = (d70m/(kappa*L) ** (1/3))*((d70/d70m) ** 0.4)
 
     # F1        = 1.65 * eta * np.tan(theta/180*np.pi) * (RD/RDm)**0.35;
@@ -78,21 +98,90 @@ def sellmeijer2017(L,D,d70,k):
     # delta_h_c = F1 * F2 * F3 * L;
     return delta_h_c
 
-def zUplift(inp):
-    D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
+def zUplift(inp,mode='Prob'):
+    #if it is a dictionary: split according to names
+    if isinstance(inp,dict):
+        D = inp['D']; d_cover = inp['d_cover']; h_exit = inp['h_exit']; r_exit = inp['r_exit']
+        L = inp['Lvoor']+inp['Lachter']; d70 = inp['d70']; k = inp['k']; gamma_sat = inp['gamma_sat']
+        kwelscherm = inp['kwelscherm']; mPiping = 1.
+        h_exit = h_exit - inp['dh_exit(t)']
+        h = inp['h'] + inp['dh']
+    #with ageing & water level change:
+    else:
+        if len(inp) == 13:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
+            h_exit = h_exit-dh_exit
+            h=h+dh    #with ageing:
+        if len(inp) == 12:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
+            h_exit = h_exit-dh_exit
+        #without ageing:
+        elif len(inp) == 11:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
     g_u, dh_u, dhc_u = LSF_uplift(r_exit,h,h_exit,d_cover,gamma_sat)
-    return [g_u]
+    if mode=='Prob':
+        return [g_u]
+    else:
+        return g_u, dh_u, dhc_u
 
-def zHeave(inp):
-    D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
+def zHeave(inp,mode='Prob'):
+    #if it is a dictionary: split according to names
+    if isinstance(inp,dict):
+        D = inp['D']; d_cover = inp['d_cover']; h_exit = inp['h_exit']; r_exit = inp['r_exit']
+        L = inp['Lvoor']+inp['Lachter']; d70 = inp['d70']; k = inp['k']; gamma_sat = inp['gamma_sat']
+        kwelscherm = inp['kwelscherm']; mPiping = 1.
+        h_exit = h_exit - inp['dh_exit(t)']
+        h = inp['h'] + inp['dh']
+    #with ageing & water level change:
+    else:
+        if len(inp) == 13:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
+            h_exit = h_exit-dh_exit
+            h=h+dh    #with ageing:
+        if len(inp) == 12:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
+            h_exit = h_exit-dh_exit
+        #without ageing:
+        elif len(inp) == 11:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
     g_h, i, i_c = LSF_heave(r_exit,h,h_exit,d_cover,kwelscherm)
-    return [g_h]
-def zPiping(inp):
-    D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
+    if mode=='Prob':
+        return [g_h]
+    else:
+        return g_h, i, i_c
+def zPiping(inp,mode='Prob'):
+    #if it is a dictionary: split according to names
+    if isinstance(inp,dict):
+        D = inp['D']; d_cover = inp['d_cover']; h_exit = inp['h_exit']; r_exit = inp['r_exit']
+        L = inp['Lvoor']+inp['Lachter']; d70 = inp['d70']; k = inp['k']; gamma_sat = inp['gamma_sat']
+        kwelscherm = inp['kwelscherm']; mPiping = 1. #inp['mPiping']
+        h_exit = h_exit - inp['dh_exit(t)']
+        h = inp['h'] + inp['dh']
+    #with ageing & water level change:
+    else:
+        if len(inp) == 13:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
+            h_exit = h_exit-dh_exit
+            h=h+dh    #with ageing:
+        if len(inp) == 12:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
+            h_exit = h_exit-dh_exit
+        #without ageing:
+        elif len(inp) == 11:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
+
     g_p, dh_p, dhc_p = LSF_sellmeijer(h,h_exit,d_cover,L,D,d70,k,mPiping)
-    return [g_p]
+    if mode == 'Prob':
+        return [g_p]
+    else:
+        return g_p, dh_p, dhc_p
 
 def zPipingTotal(inp):
+    #with ageing & water level change:
+    if len(inp) == 13:
+        D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
+        h_exit = h_exit-dh_exit
+        h=h+dh
     #with ageing:
     if len(inp) == 12:
         D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
