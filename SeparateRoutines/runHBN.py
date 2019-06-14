@@ -60,7 +60,7 @@ for i in input.iterrows():
         print('Skipped ' + i[1]['section name'] + '_' + i[1]['dijkpaal'])
 
     if i[1]['calculate?'] == 1:
-        # runHydraRing(newini)
+        runHydraRing(newini)
         location_list.append(filename)
 
         print('I ran ' + filename)

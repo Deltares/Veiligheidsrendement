@@ -53,11 +53,11 @@ else:
     #to be done if we want to include system monitoring. We should then combine the cases.
 
 CasesGeoRisk = CasesGeoRisk
-BaseCaseStrategy,BaseCaseSolutions = runModel(TestCaseGeoRisk, 'base', pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots,language='EN',types=['TC'])
+BaseCaseStrategy,BaseCaseSolutions = runFullModel(TestCaseGeoRisk, 'base', pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots,language='EN',types=['TC'])
 CasesGeoRisk_no_monitoring = []
 ## STEP 1: SAFETY ASSESSMENT
 for i in range(0,len(CasesGeoRisk)):
-    BeliefCaseStrategy,BeliefCaseSolutions = runModel(CasesGeoRisk[i], i, pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots,language='EN',types=['TC'])
+    BeliefCaseStrategy,BeliefCaseSolutions = runFullModel(CasesGeoRisk[i], i, pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots,language='EN',types=['TC'])
     print()
     NoMonitoringResult = runNature(BaseCaseStrategy[0].TakenMeasures,BeliefCaseStrategy[0],TestCaseGeoRisk,BeliefCaseSolutions,
               directory=pad+'\\Case_' + str(i) + '_base')

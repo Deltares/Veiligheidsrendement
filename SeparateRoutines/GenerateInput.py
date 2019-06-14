@@ -8,8 +8,8 @@ traject = '16-4'
 
 # pathname = "d:\\wouterjanklerk\\My Documents\\00_PhDgeneral\\98_Papers\\Conference\\GeoRisk_2019\\Calculations\\GenerateInput\\"
 # pathname = "d:\\wouterjanklerk\\My Documents\\00_PhDgeneral\\03_Cases\\01_Rivierenland SAFE\\Local\\All_Input\\" + traject
-pathname = "d:\\wouterjanklerk\\My Documents\\00_PhDgeneral\\03_Cases\\01_Rivierenland SAFE\\Local\\DijkwerkersdagInput\\"
-filename = 'Dijkvakindeling_v4.2_Dijkwerkers'
+pathname = "d:\\wouterjanklerk\\My Documents\\00_PhDgeneral\\03_Cases\\01_Rivierenland SAFE\\Local\\Input\\OptimizationInput\\Basic\\"
+filename = 'Dijkvakindeling_v4.2_Basic'
 DikeSections = pd.read_excel(pathname + '\\Input\\' + filename + '.xlsx',sheet_name='Dijkvakindeling_keuze_info',skiprows=[0])
 STBI_data = pd.read_excel(pathname    + '\\Input\\' + filename + '.xlsx',sheet_name='Info voor STBI',usecols="B,G:J")
 Piping_data = pd.read_excel(pathname  + '\\Input\\' + filename + '.xlsx',sheet_name='Info voor Piping',usecols="B,G:Q")

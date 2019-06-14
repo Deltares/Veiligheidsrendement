@@ -13,24 +13,36 @@ import os
 
 
 class DikeTraject:
-    def __init__(self,name,traject):
+    #This class contains general information on the dike traject and is used to store all data on the sections
+    def __init__(self,name,traject=None):
         self.GeneralInfo = {}
         self.Sections = []
+
         # Basic traject info
         if traject == '16-4':
+            self.GeneralInfo['FloodDamage'] = 23e9
             self.GeneralInfo['TrajectLength'] = 19480
             self.GeneralInfo['Pmax'] = 1. / 10000
             self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
             self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
             self.GeneralInfo['omegaOverflow'] = 0.24;
         elif traject == '16-3':
+            self.GeneralInfo['FloodDamage'] = 23e9
             self.GeneralInfo['TrajectLength'] = 19899
             self.GeneralInfo['Pmax'] = 1. / 10000
             self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
             self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
             self.GeneralInfo['omegaOverflow'] = 0.24
             # NB: klopt a hier?????!!!!
-    def ReadAllTrajectInput(self,path,case, years0, mechanisms = ['Overflow', 'StabilityInner', 'Piping']):
+        else:
+            self.GeneralInfo['FloodDamage'] = 5e9
+            self.GeneralInfo['Pmax'] = 1. / 10000
+            self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
+            self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
+            self.GeneralInfo['omegaOverflow'] = 0.24
+
+    def ReadAllTrajectInput(self,path,case, T, startyear, mechanisms = ['Overflow', 'StabilityInner', 'Piping']):
+        #Routine to read the input for all sections based on the default input format.
         if not case in os.listdir(path): os.makedirs(path + '\\' + case)
         allfiles = os.listdir(path)
         files = []
@@ -41,32 +53,45 @@ class DikeTraject:
             # Read the general information for each section:
             self.Sections.append(DikeSection(files[i].split('.')[0], '16-4'))
             self.Sections[i].readGeneralInfo(path, 'General')
-            # Read the data per mechanism, and first the load frequency line:
 
+            # Read the data per mechanism, and first the load frequency line:
             self.Sections[i].Reliability.Load = LoadInput()
             self.Sections[i].Reliability.Load.set_fromDesignTable(path + '\\Toetspeil' + self.Sections[i].LoadData)
             self.Sections[i].Reliability.Load.set_annual_change(type='SAFE',parameters=[self.Sections[i].YearlyWLRise, self.Sections[i].HBNRise_factor])
-            # Then for all the mechanisms:
+
+            # Then the input for all the mechanisms:
             self.Sections[i].Reliability.Mechanisms = {}
             for j in mechanisms:
                 self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j,
-                                                                                            self.Sections[i].MechanismData[j][1],years=years0)
-                # TestCaseSAFE.Sections[i].Reliability.Mechanisms[j].Input = MechanismInput(j)
+                                                                                            self.Sections[i].MechanismData[j][1],years=T)
                 for ij in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
                     self.Sections[i].Reliability.Mechanisms[j].Reliability[ij].Input.fill_mechanism(
                         path + self.Sections[i].MechanismData[j][0],
                         calctype=self.Sections[i].MechanismData[j][1], mechanism=j)
+
             # make a figures and results directory if it doesnt exist yet
-            if not 'figures' in os.listdir(path + '\\' + case): os.makedirs(path + '\\' + case + '\\figures\\')
-            if not 'results' in os.listdir(path + '\\' + case): os.makedirs(path + '\\' + case + '\\results\\')
+            createDir(path + '\\' + case + '\\figures\\')
+            createDir(path + '\\' + case + '\\results\\')
 
             if not self.Sections[i].name in os.listdir(path + '\\' + case + '\\figures\\'):
                 os.makedirs(path + '\\' + case + '\\figures\\' + self.Sections[i].name + '\\Initial')
                 os.makedirs(path + '\\' + case + '\\figures\\' + self.Sections[i].name + '\\Measures')
+        self.GeneralInfo['Mechanisms'] = mechanisms
 
+        self.GeneralInfo['T'] = T
+        self.GeneralInfo['StartYear'] = startyear
+        #Traject length is lengt of all sections together:
+        self.GeneralInfo['TrajectLength'] = 0
+        for i in self.Sections:
+            self.GeneralInfo['TrajectLength'] += i.Length
 
-    def plotReliabilityofDikeTraject(self,pathname = None,fig_size = (12,5),years = None,mechanisms = None,
-                                     draw_targetbeta='off',language='NL',flip='off',beta_or_prob = 'beta',outputcsv=False,first=True, last=True,alpha = 1,type = 'Assessment'):
+    def plotReliabilityofDikeTraject(self,
+                                     PATH = None, fig_size = (6,4),
+                                     draw_targetbeta='off', language='EN',
+                                     flip='off', beta_or_prob = 'beta',
+                                     outputcsv=False, first=True,
+                                     last=True, alpha = 1, type = 'Assessment'):
+        #a bunch of settings to make it look nice:
         SMALL_SIZE = 8
         MEDIUM_SIZE = 10
         BIGGER_SIZE = 12
@@ -79,12 +104,11 @@ class DikeTraject:
         plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
         plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
-        if years == None:
-            years = copy.deepcopy(self.Sections[0].Reliability.SectionReliability.columns.values)
-            for i in range(0,len(years)): years[i] = np.int(years[i])
-        if mechanisms == None:
-            mechanisms = list(self.Sections[0].MechanismData.keys())
+        years = self.GeneralInfo['T']
+        mechanisms = self.GeneralInfo['Mechanisms']
+        startyear = self.GeneralInfo['StartYear']
 
+        #read the assessments of all sections and write to one big dataframe:
         for i in range(0, len(self.Sections)):
             if i == 0:
                 Assessment = self.Sections[i].Reliability.SectionReliability.reset_index()
@@ -100,10 +124,13 @@ class DikeTraject:
                 data_to_add.columns = data_to_add.columns.astype(str)
                 if 'mechanism' in data_to_add.columns:
                     data_to_add = data_to_add.rename(columns={"mechanism":"index"})
-                # pd.concat((Assessment,data_to_add),axis=1)
                 Assessment = Assessment.append(data_to_add,sort=False)
+
         Assessment = Assessment.reset_index(drop=True)
-        if outputcsv: Assessment.to_csv(pathname + '\\AllBetas.csv')
+
+        if outputcsv: Assessment.to_csv(PATH + '\\AllBetas.csv')
+
+        #English or Dutch labels and titles
         if language == 'NL':
             label_xlabel = 'Dijkvakken'
             if beta_or_prob == 'beta':
@@ -125,13 +152,14 @@ class DikeTraject:
             for i in Assessment['Section'].loc[Assessment['index'] == 'Section']:
                 labels_xticks.append('S' + i[-2:])
 
+        #Derive some coordinates to properly plot everything according to the length of the different sections:
         cumlength = np.cumsum(Assessment['Length'].loc[Assessment['index'] == 'Overflow']).values
         cumlength = np.insert(cumlength, 0, 0)
         xticks1 = copy.deepcopy(cumlength)
         for i in range(1, len(cumlength) - 1):
             xticks1 = np.insert(xticks1, i * 2, cumlength[i])
         middles = (cumlength[:-1] + cumlength[1:]) / 2
-        # Nice feature would be to add the section length in the graph
+
         color = ['r', 'g', 'b', 'k']
         for ii in years:
             if first: plt.figure(ii, figsize=fig_size)
@@ -147,6 +175,7 @@ class DikeTraject:
                 if not first: plt.plot(middles, plotdata, color=color[col], linestyle='', marker='o',alpha=alpha)
                 col += 1
             col=0
+            #Whether to draw the target reliability for each individula mechanism.
             if draw_targetbeta == 'on' and last:
                 for j in mechanisms:
                     dash = [2, 2]
@@ -187,15 +216,48 @@ class DikeTraject:
                 plt.grid(axis='y')
                 if flip == 'on': plt.gca().invert_xaxis()
                 # plt.xlim([np.min(cumlength), np.max(cumlength)])
-                if pathname != None:
+                if PATH != None:
                     if type == 'Assessment':
-                        plt.savefig(pathname + '\\' + 'figures' + '\\' + beta_or_prob + 'Assessment_year=' + str(2025 + ii) + '.png', dpi = 300, bbox_inches='tight',format='png')
+                        plt.savefig(PATH + '\\' + beta_or_prob + '_' + str(startyear + ii) + '_Assessment.png', dpi = 300, bbox_inches='tight',format='png')
                     else:
-                        plt.savefig(pathname + '\\' + str(2025 + ii) + '_Step=' + str(type)  + '_' + beta_or_prob + '.png', dpi=300, bbox_inches='tight', format='png')
+                        plt.savefig(PATH + '\\' + str(startyear + ii) + '_Step=' + str(type)  + '_' + beta_or_prob + '.png', dpi=300, bbox_inches='tight', format='png')
                     plt.close()
                 else:
                     plt.show()
+
+    def runFullAssessment(self):
+        for i in self.Sections:
+            for j in self.GeneralInfo['Mechanisms']:
+                i.Reliability.Mechanisms[j].generateLCRProfile(i.Reliability.Load,
+                                                              mechanism   = j,
+                                                                              trajectinfo = self.GeneralInfo)
+            i.Reliability.calcSectionReliability(TrajectInfo=self.GeneralInfo,
+                                                                length = i.Length)
+
+    def plotAssessmentResults(self,directory,section_ids=None,t_start = 2020):
+        # for all or a selection of sections:
+        if section_ids==None:
+            sections = self.Sections
+        else:
+            sections = []
+            for i in section_ids:
+                sections.append(self.Sections[i])
+        createDir(directory)
+        #generate plots
+        for i in sections:
+            plt.figure(1)
+            [i.Reliability.Mechanisms[j].drawLCR(label=j, type='Standard', tstart=t_start) for j in self.GeneralInfo['Mechanisms']]
+            plt.plot([t_start, t_start + np.max(self.GeneralInfo['T'])],
+                     [-norm.ppf(self.GeneralInfo['Pmax']),
+                      -norm.ppf(self.GeneralInfo['Pmax'])],
+                     'k--', label='Requirement')
+            plt.legend()
+            plt.title(i.name)
+            plt.savefig(directory + '\\' + i.name + '.png', bbox_inches='tight')
+            plt.close()
+
     def updateProbabilities(self,Probabilities,ChangedSection):
+        #This function is to update the probabilities after a reinforcement.
         for i in self.Sections:
             if i.name == ChangedSection:
                 i.Reliability.SectionReliability = Probabilities.loc[ChangedSection].astype(float)
@@ -214,21 +276,6 @@ class DikeSection:
             self.TrajectInfo['TrajectLength'] = 19899
             self.TrajectInfo['Pmax'] = 1. / 10000; self.TrajectInfo['omegaPiping'] = 0.24; self.TrajectInfo['aPiping'] = 0.9; self.TrajectInfo['bPiping'] = 300
             # NB: klopt a hier?????!!!!
-
-    def fill_from_dict(self, dict):
-        #NOTE: this function has to be phased out as we will later on solely work from the Excel input files. We should make a separate routine for translating QuickScan data to the new input file format.
-
-        #Fill the data from a dictionary that has been generated using readQuickScan.py (i.e. from the pickle files)
-        #This concerns data from the piping quickscan
-
-        #First the general info (to be added: traject info, norm etc)
-        self.start = dict['General']['Traject start']
-        self.end   = dict['General']['Traject end']
-        self.CS    = dict['General']['Cross section']
-        self.MHW   = dict['Input']['Scenario 1']['j 0 ']        #TO DO: add a loop over scenarios
-        self.Reliability.Piping = MechanismReliability('Piping','SemiProb')
-        self.Reliability.Piping.Input = MechanismInput('Piping')
-        self.Reliability.Piping.Input.fill_piping_data(dict,'SemiProb')  #fill the data for the piping assessment
 
     def readGeneralInfo(self, path,sheet):
         #Read general data from sheet in standardized xlsx file
@@ -253,15 +300,7 @@ class DikeSection:
 
         setattr(self, 'InitialGeometry', geometry)
 
-    def doAssessment(self, mechanism, type):
-        #Routine to do an assessment: change this so it fits with 'Prob' and 'Simple' calculations
-        if mechanism == 'Piping':
-            # self.Reliability.Piping= MechanismReliability(mechanism, type)
-            self.Reliability.Piping.SemiProbabilistic(self,self.Reliability.Piping.Input)
-        else:
-            print('Mechanism not known')
-
-#Class describing safety assessments or descriptions (functions for piping, heave & uplift available)
+#Class describing safety assessments of a section:
 class SectionReliability:
     def __init__(self):
         self
@@ -276,21 +315,25 @@ class SectionReliability:
                     pf_mechanisms_time[count,j] = self.Mechanisms[i].Reliability[str(trange[j])].Pf
                 elif i == 'StabilityInner':
                     pf = self.Mechanisms[i].Reliability[str(trange[j])].Pf
-                    # N = 1 #
-                    N = length/TrajectInfo['bStabilityInner']
+                    #underneath one can choose whether to upscale within sections or not:
+                    N = 1
+                    # N = length/TrajectInfo['bStabilityInner']
                     # N = TrajectInfo['aStabilityInner']*length/TrajectInfo['bStabilityInner']
+
                     # pf_mechanisms_time[count,j] = min(1 - (1 - pf) ** N,1./100)
                     pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N,1./2)
 
 
                 elif i == 'Piping':
                     pf = self.Mechanisms[i].Reliability[str(trange[j])].Pf
-                    # N = 1
-                    N = length/TrajectInfo['bPiping']
+                    #underneath one can choose whether to upscale within sections or not:
+                    N = 1
+                    # N = length/TrajectInfo['bPiping']
                     # N = TrajectInfo['aPiping'] * length / TrajectInfo['bPiping']
                     # pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N,1./100)
                     pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N,1./2)
             count += 1
+
         #Do we want beta or failure probability? Preferably beta as output
         beta_mech_time = pd.DataFrame(-norm.ppf(pf_mechanisms_time),
                                           columns=list(self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()),
@@ -299,9 +342,6 @@ class SectionReliability:
                          columns=list(self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()),
                          index=['Section'])
         self.SectionReliability = pd.concat((beta_mech_time,beta_time))
-
-        # This function should in the future calculate a section reliability based on all mechanism objects found in the class (i.e. a run of the EP method to combine Z-functions).
-        # Now it is just very simple summation
 
 class LoadInput:
     #class to store load data
@@ -315,7 +355,7 @@ class LoadInput:
         #set an annual change of the water level
         if type == 'determinist':
             self.dist_change = ot.Dirac(parameters)
-        elif type == 'SAFE':
+        elif type == 'SAFE': #specific formulation for SAFE
             self.dist_change = parameters[0]
             self.HBN_factor = parameters[1]
         elif type == 'gamma':
@@ -344,7 +384,7 @@ class MechanismReliabilityCollection:
             else: self.Reliability[str(i)] = MechanismReliability(mechanism,type)
 
     def generateLCRProfile(self, load, mechanism = 'Overflow', method='FORM',trajectinfo=None,conditionality = 'no'):
-        # this function generates life-cycle reliability based on the years that have been calculated
+        # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
         [self.Reliability[i].calcReliability(self.Reliability[i].Input, load, mechanism=mechanism, method=method, year = float(i), TrajectInfo=trajectinfo) for i in self.Reliability.keys()]
         #NB: This should be extended with conditional failure probabilities
 
@@ -398,6 +438,7 @@ class MechanismReliabilityCollection:
         plt.title('Life-cycle reliability')
 
     def drawFC(self,yscale=None):
+        #Drawa a fragility curve
         for j in self.Reliability.keys():
             wl = self.Reliability[j].wl
             pf = [self.Reliability[j].results[i].getProbabilityEstimate() for i in range(0, len(self.Reliability[j].results))]
@@ -408,6 +449,7 @@ class MechanismReliabilityCollection:
         if yscale == 'log': plt.yscale('log')
 
 class MechanismReliability:
+    #This class contains evaluations of the reliability for a mechanism in a given year.
     def __init__(self,mechanism,type,copy_or_calculate = 'calculate'):
         #Initialize: set mechanism and type. These are the most important basic parameters
         self.mechanism = mechanism
@@ -487,9 +529,10 @@ class MechanismReliability:
             pass
         self.type = 'FragilityCurve'
     def calcReliability(self, strength, load, mechanism=None, method='FORM', year=0,TrajectInfo=None):
-        #This routine calculates cross-sectional reliability indices.
+        #This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == 'Simple':
             if mechanism == 'StabilityInner':
+                #Simple interpolation of two safety factors and translation to a value of beta at 'year'.
                 #In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
                 SFt = interpolate.interp1d([0, 50],np.concatenate((strength.input['SF_2025']/self.gamma_schem,
                                                                    strength.input['SF_2075']/self.gamma_schem)),
@@ -497,7 +540,7 @@ class MechanismReliability:
                 SF = SFt(year)
                 modelfactor = 1.07
                 beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
-                #Check if there is an elimination measure present
+                #Check if there is an elimination measure present (diaphragm wall)
                 if 'Elimination' in strength.input.keys():
                     if strength.input['Elimination'] == 'yes':
                         #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
@@ -509,10 +552,8 @@ class MechanismReliability:
                 else:
                     self.beta = beta
                     self.Pf = norm.cdf(-self.beta)
-                # self.beta = strength.input['beta'].getParameter()[0] - year * strength.input['dbeta'].getParameter()[0]
-                # + strength.input['berm_add'].getParameter()[0] * strength.input['beta_berm'].getParameter()[0]
 
-            elif mechanism == 'Overflow':
+            elif mechanism == 'Overflow': #specific for SAFE
                 #climate change included, including a factor for HBN
                 if hasattr(load,'dist_change'):
                     h_t = strength.input['h_crest'] - (strength.input['dhc(t)']+ (load.dist_change *load.HBN_factor)) * year
@@ -543,6 +584,7 @@ class MechanismReliability:
             self.beta = beta
             self.alpha_sq = alfas_sq
         elif self.type == 'Prob':
+            #Probabilistic evaluation of a mechanism.
             # make list of all random variables:
             marginals, names = MarginalsforTimeDepReliability(strength, load=load, year=year,type='Probabilistic')
             marginals = [];
@@ -592,6 +634,7 @@ class MechanismReliability:
             self.beta = beta
             self.alpha_sq = alpha_sq
         elif self.type == 'SemiProb':
+            #semi probabilistic assessment, only available for piping
             if mechanism == 'Piping':
                 if TrajectInfo == None: #Defaults, typical values for 16-3 and 16-4
                     TrajectInfo = {}; TrajectInfo['Pmax'] = 1. / 10000; TrajectInfo['omegaPiping'] = 0.24
@@ -602,12 +645,9 @@ class MechanismReliability:
                 for i in strength.temporals:
                     strength_new.input[i] = strength.input[i]*year
                 inputs = addLoadCharVals(strength_new.input,load=load,p_h=TrajectInfo['Pmax'],p_dh=0.5, year= year)
-                # inputs = [strength.char_vals['D'], strength.char_vals['d_cover'], strength.char_vals['h_exit'], strength.char_vals['r_exit'],
-                #           strength.char_vals['L'], strength.char_vals['d70'], strength.char_vals['k'], strength.char_vals['gamma_sat'],
-                #           strength.char_vals['kwelscherm'], strength.char_vals['mPiping'], strength.char_vals['dh_exit'], h_norm]
                 Z, self.p_dh, self.p_dh_c = Mechanisms.zPiping(inputs,mode='SemiProb')
                 self.gamma_pip = ProbabilisticFunctions.calc_gamma('Piping',TrajectInfo=TrajectInfo)  # Calculate needed safety factor
-                # NB: Schematization factor IS included here. Which is correct because a scenario approach is taken.
+
                 self.SF_p = (self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)) / self.p_dh
                 self.assess_p = 'voldoende' if self.SF_p > 1 else 'onvoldoende'
                 self.beta_cs_p = ProbabilisticFunctions.calc_beta_implicated('Piping', (self.p_dh_c/self.gamma_schem_pip) / self.p_dh,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
@@ -615,19 +655,20 @@ class MechanismReliability:
                 # Heave:
                 Z, self.h_i, self.h_i_c = Mechanisms.zHeave(inputs,mode='SemiProb')
                 self.gamma_h = ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  # Calculate needed safety factor
-                # Check if it is OK, NB: Schematization factor IS included here
+
                 self.SF_h = (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i
                 self.assess_h = 'voldoende' if (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i > 1 else 'onvoldoende'
                 self.beta_cs_h = ProbabilisticFunctions.calc_beta_implicated('Heave', (self.h_i_c/self.gamma_schem_heave) / self.h_i,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
+
                 # Uplift
                 Z, self.u_dh, self.u_dh_c = Mechanisms.zUplift(inputs,mode='SemiProb')
                 self.gamma_u = ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)  # Calculate needed safety factor
-                # NB: Schematization factor IS included here
+
                 self.SF_u = (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh
                 self.assess_u = 'voldoende' if (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh > 1 else 'onvoldoende'
                 self.beta_cs_u = ProbabilisticFunctions.calc_beta_implicated('Uplift', (self.u_dh_c/self.gamma_schem_upl) / self.u_dh,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
 
-                #Check if there is an elimination measure present
+                #Check if there is an elimination measure present (VZG or diaphragm wall)
                 if 'Elimination' in strength.input.keys():
                     if strength.input['Elimination'] == 'yes':
                         #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
@@ -640,64 +681,18 @@ class MechanismReliability:
                 else:
                     self.beta = np.min([np.max([self.beta_cs_h,self.beta_cs_u,self.beta_cs_p]),8])
                     self.Pf = norm.cdf(-self.beta)
-                self.WLchar = copy.deepcopy(inputs['h'])
+                self.WLchar = copy.deepcopy(inputs['h']) #add water level as used in the assessment
                 self.alpha_sq = np.nan
                 self.result = np.nan
             else:
                 pass
-
-    def SemiProbabilistic(self,DikeSection, MechanismInput):
-        MechanismInput.h = MechanismInput.h - 0.
-        # NOTE: this should be treated the same as the probabilistic and simple calculations
-        if MechanismInput.mechanism == 'Piping':
-            # First calculate the SF without gamma for the three submechanisms
-            # Piping:
-            Z, self.p_dh, self.p_dh_c = Mechanisms.LSF_sellmeijer(MechanismInput.h, MechanismInput.h_exit,
-                                                                  MechanismInput.d_cover_pip, MechanismInput.L,
-                                                                  MechanismInput.D, MechanismInput.d70,
-                                                                  MechanismInput.k,
-                                                                  MechanismInput.m_Piping)  # Calculate hydraulic heads
-            self.gamma_pip = ProbabilisticFunctions.calc_gamma('Piping',
-                                                               DikeSection.TrajectInfo)  # Calculate needed safety factor
-            # NB: Schematization factor IS NOT included here. Which is correct because a scenario approach is taken.
-            self.SF_p = (self.p_dh_c / self.gamma_pip) / self.p_dh
-            self.assess_p = 'voldoende' if (self.p_dh_c / self.gamma_pip) / self.p_dh > 1 else 'onvoldoende'
-            self.beta_cs_p = ProbabilisticFunctions.calc_beta_implicated('Piping', self.p_dh_c / self.p_dh,
-                                                                         DikeSection.TrajectInfo)  # Calculate the implicated beta_cs
-
-            # Heave:
-            Z, self.h_i, self.h_i_c = Mechanisms.LSF_heave(MechanismInput.r_exit, MechanismInput.h,
-                                                           MechanismInput.h_exit, MechanismInput.d_cover_pip,
-                                                           MechanismInput.scherm)  # Calculate hydraulic heads
-            self.gamma_h = ProbabilisticFunctions.calc_gamma('Heave', DikeSection.TrajectInfo)  # Calculate needed safety factor
-            # Check if it is OK, NB: Schematization factor IS included here
-            self.SF_h = (self.h_i_c / (MechanismInput.gamma_schem * self.gamma_h)) / self.h_i
-            self.assess_h = 'voldoende' if (self.h_i_c / (
-                        MechanismInput.gamma_schem * self.gamma_h)) / self.h_i > 1 else 'onvoldoende'
-            self.beta_cs_h = ProbabilisticFunctions.calc_beta_implicated('Heave', self.h_i_c / self.h_i,
-                                                                         DikeSection.TrajectInfo)  # Calculate the implicated beta_cs
-            # Uplift
-            Z, self.u_dh, self.u_dh_c = Mechanisms.LSF_uplift(MechanismInput.r_exit, MechanismInput.h,
-                                                              MechanismInput.h_exit, MechanismInput.d_cover_pip,
-                                                              MechanismInput.gamma_sat)  # Calculate hydraulic heads
-            self.gamma_u = ProbabilisticFunctions.calc_gamma('Uplift',
-                                                             DikeSection.TrajectInfo)  # Calculate needed safety factor
-            # NB: Schematization factor IS included here
-            self.SF_u = (self.u_dh_c / (MechanismInput.gamma_schem * self.gamma_u)) / self.u_dh
-            self.assess_u = 'voldoende' if (self.u_dh_c / (
-                        MechanismInput.gamma_schem * self.gamma_u)) / self.u_dh > 1 else 'onvoldoende'
-            self.beta_cs_u = ProbabilisticFunctions.calc_beta_implicated('Uplift', self.u_dh_c / self.u_dh,
-                                                                         DikeSection.TrajectInfo)  # Calculate the implicated beta_cs
-        else:
-            pass
 
 class MechanismInput:
     #Class for input of a mechanism
     def __init__(self,mechanism):
         self.mechanism = mechanism
 
-
-    #This routine reads probabilistic input from an input sheet
+    #This routine reads  input from an input sheet
     def fill_mechanism(self, input, type= 'csv', sheet=None, calctype = 'Prob',mechanism=None):
         if type == 'csv':
             data = pd.read_csv(input, delimiter=',')
@@ -711,6 +706,7 @@ class MechanismInput:
         self.input = {}; self.temporals = []; self.char_vals = {}
         for i in range(0,len(data)):
             if calctype == 'Prob':
+                #if it is a probabilistic calculation, transform the data to OpenTurns distributions:
                 if data.iloc[i]['Distribution'] == 'L':                 #Lognormal distribution
                     data.at[data.index[i],'Par2'] = data.at[data.index[i],'Par2']*data.at[data.index[i],'Par1'] if data.at[data.index[i],'variance type'] == 'var' else data.at[data.index[i],'Par2']
                     self.input[data.index[i]] = ot.LogNormal()
@@ -735,33 +731,8 @@ class MechanismInput:
                 self.input[data.index[i]] = x[~np.isnan(x)]
                 if data.index[i][-3:] == '(t)':
                     self.temporals.append(data.index[i])
-    def fill_piping_data(self, input,type):
-        #Mechanism input from quickscan file
-        self.inputtype = 'SemiProb'
-        #Input needed for multiple submechanisms
-        self.h           = input['Input']['Scenario 1']['j 0 '][1]
-        self.h_exit      = input['Input']['Scenario 1']['hp = j 3'][1]
-        self.gamma_w     = input['Input']['Scenario 1']['gw'][1]
-        self.r_exit      = (input['Input']['Scenario 1']['j2'][1] - self.h_exit)/(input['Input']['Scenario 1']['j 0 '][1]-self.h_exit)
-        self.d_cover     = input['Input']['Scenario 1']['d,pot'][1]
-        self.gamma_schem = input['Input']['Scenario 1']['gb,u'][1]
-        #Input parameter specifically for piping
-        self.D           = input['Input']['Scenario 1']['D'][1]
-        self.k           = input['Input']['Scenario 1']['kzand,pip'][1]
-        self.L_voorland  = input['Input']['Scenario 1']['L1:pip'][1]
-        self.L_dijk      = input['Input']['Scenario 1']['L2'][1]
-        self.L_berm      = input['Input']['Scenario 1']['L3'][1]
-        self.L           = self.L_berm + self.L_dijk + self.L_voorland
-        self.d70         = input['Input']['Scenario 1']['d70'][1]
-        self.d_cover_pip = input['Input']['Scenario 1']['d,pip'][1]
-        self.m_Piping    = 1.0
-        self.theta       = 37.
-        #Input specific for heave
-        self.scherm      = input['Results']['Scenario 1']['Heave']['kwelscherm aanwezig']
-        #Input specific for uplift
-        self.gamma_sat   = input['Input']['Scenario 1']['Gemiddeld volumegewicht:'][1]
-        self.gamma_sat = 18 if self.gamma_sat == 0. else self.gamma_sat                 #Make sure the saturated weight is not 0
 
+#routine to extract a characteristic 4 or 6 point profile from a list of xz coordinates:
 def extractProfile(profile,window=5,titel='Profile',path = None):
     profile_averaged = copy.deepcopy(profile)
     profile_averaged['z'] = pd.rolling_mean(profile['z'], window=window, center=True, min_periods=1)
@@ -771,24 +742,19 @@ def extractProfile(profile,window=5,titel='Profile',path = None):
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
 
-    # ax3.set_xlim(100, 170)
     ax1.plot(profile['x'], profile['z'])
     ax1.plot(profile_averaged['x'], profile_averaged['z'], 'r')
 
     ax2.plot(profile_cov['x'], profile_cov['z'])
 
-    # charpoints = [121, 128, 133, 143, 151, 161]
-    # for i in charpoints:
-    #     ax1.axvline(x=i, LineStyle='--', Color='k')
-    #     ax2.axvline(x=i, LineStyle='--', Color='k')
-        # ax3.axvline(x=i, LineStyle='--', Color='k')
+
     d1_peaks = np.argwhere(profile_cov['z'] > 0.02).flatten()
     ax1.plot(profile_averaged['x'].iloc[d1_peaks], profile_averaged['z'].iloc[d1_peaks], 'or')
     d1_peaks_diff = np.diff(d1_peaks)
     x = []
     takenext = 0
 
-    #This finds crests with about 100% reliability. Rest is crap.
+    #This finds the crest:
     for i in range(0, len(d1_peaks_diff)):
         if i == 0 or d1_peaks_diff[i] > 3 or takenext == 1:
             if takenext == 1:
@@ -868,6 +834,8 @@ def extractProfile(profile,window=5,titel='Profile',path = None):
         #not
     x_values.flatten()
     z_values.flatten()
+
+    #adapt points that were not good:
     if titel =='VY094': x_values[0] = 122; z_values[0] = 2.5; print('Adapted inner toe for VY094')
     if titel =='VY058': x_values[0] = 131.5; z_values[0]  = 3.; x_values[-1] = 158;  z_values[-1] = 4.8; print('Adapted inner and outer toe for VY058')
     if titel =='AW216': x_values[1] = 139; z_values[1] = 5.5; x_values[2] = 149.6; z_values[2] = 5.5; print('Adapted crest for AW216')
@@ -914,3 +882,6 @@ def extractProfile(profile,window=5,titel='Profile',path = None):
     # polygonshape = polygonshape.simplify(0.1)
     # x1, y1 = polygonshape.exterior.xy
     # ax1.fill(x1, y1, 'g', alpha=0.5)
+
+#DEPENDENT IMPORT (this has to be here to prevent a circular reference in the code)
+from HelperFunctions import createDir

@@ -9,18 +9,19 @@ import seaborn as sns
 from Mechanisms import OverflowSimple
 from scipy.stats import norm
 from scipy.interpolate import interp1d
-import math
+import cplex
 from shapely.geometry import Polygon
 from DikeClasses import MechanismReliabilityCollection, SectionReliability
-import cProfile
-import re
+
 class Solutions:
+    #This class contains possible solutions/measures
     def __init__(self, DikeSectionObject):
         self.SectionName = DikeSectionObject.name
         self.Length = DikeSectionObject.Length
         self.InitialGeometry = DikeSectionObject.InitialGeometry
 
     def fillSolutions(self,excelsheet):
+        #read solutions from Excel
         data = pd.read_excel(excelsheet,'Measures')
         self.Measures = {}
         partials = []
@@ -31,19 +32,21 @@ class Solutions:
             self.MeasureTable.loc[i] = [str(self.Measures[i].parameters['ID']), self.Measures[i].parameters['Name']]
 
 
-    def evaluateSolutions(self,DikeSection,TrajectInfo,trange = [0,24,25,50,75,100], geometry_plot='off',plot_dir = None):
+    def evaluateSolutions(self,DikeSection,TrajectInfo,trange = [0,24,25,50,75,100], geometry_plot=False,plot_dir = None):
+        # Evaluate all the possible measures that are available:
         self.trange = trange
         removal = []
         for i in self.Measures:
             if self.Measures[i].parameters['available'] == 1:
-                self.Measures[i].evaluateMeasure(i,DikeSection, TrajectInfo, trange = trange, geometry_plot=geometry_plot, plot_dir = plot_dir)
+                self.Measures[i].evaluateMeasure(DikeSection, TrajectInfo, geometry_plot=geometry_plot, plot_dir = plot_dir)
             else:
                 removal.append(i)
         if len(removal) > 0 :
             for i in removal:
                 self.Measures.pop(i)
-        print()
+
     def SolutionstoDataFrame(self,filtering='off'):
+        #write all solutions to one single dataframe:
         mechanisms = list(self.Measures[list(self.Measures.keys())[0]].measures[0]['Reliability'].Mechanisms.keys()); mechanisms.append('Section')
         years = self.trange
         cols_r = pd.MultiIndex.from_product([mechanisms,years],names =['base','year'])
@@ -56,10 +59,11 @@ class Solutions:
         for i in list(self.Measures.keys()):
 
             if isinstance(self.Measures[i].measures, list):
+                #if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
                 typee = self.Measures[i].parameters['Type']
                 for j in range(0, len(self.Measures[i].measures)):
                     measure_in = []; reliability_in = []
-                    if typee == 'Soil reinforcement': designvars = str((self.Measures[i].measures[j]['dcrest'], self.Measures[i].measures[j]['dberm']))
+                    if typee == 'Soil reinforcement': designvars = ((self.Measures[i].measures[j]['dcrest'], self.Measures[i].measures[j]['dberm']))
                     cost = self.Measures[i].measures[j]['Cost']
                     measure_in.append(str(self.Measures[i].parameters['ID'])); measure_in.append(typee); measure_in.append(self.Measures[i].parameters['Class']);
                     measure_in.append(self.Measures[i].parameters['year'])
@@ -73,7 +77,6 @@ class Solutions:
                     inputs_m.append(measure_in); inputs_r.append(reliability_in)
 
             elif isinstance(self.Measures[i].measures, dict):
-                # inputs_m = []; inputs_r = [];
                 ID = str(self.Measures[i].parameters['ID'])
                 typee = self.Measures[i].parameters['Type']
                 if typee == 'Vertical Geotextile': designvars = self.Measures[i].measures['VZG']
@@ -91,17 +94,20 @@ class Solutions:
         reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
         measure = measure.append(pd.DataFrame(inputs_m, columns=cols_m))
         self.MeasureData = measure.join(reliability,how='inner')
-        #fix multiindex
+        #fix multiindex:
         index = []
         for i in self.MeasureData.columns:
             index.append(i) if isinstance(i,tuple) else index.append((i,''))
         self.MeasureData.columns = pd.MultiIndex.from_tuples(index)
-        if filtering == 'on':
+        if filtering == 'on': #here we could add some filtering on the measures, but it is not used right now.
             pass
+
     def plotBetaTimeEuro(self, measures='undefined',mechanism='Section',beta_ind = 'beta0',sectionname='Unknown',beta_req=None):
+        # This function plots the relation between cost and beta in a certain year
+
         #measures is a list of measures that need to be plotted
         if measures == 'undefined': measures = list(self.Measures.keys())
-        #mechanism can be used to select a single or all 'Section' mechanisms
+        #mechanism can be used to select a single or all ('Section') mechanisms
         #beta can be used to use a criterion for selecting the 'best' designs, such as the beta at 't0'
         cols = ['type','parameters','Cost']
         [cols.append('beta'+str(i)) for i in self.trange]
@@ -174,20 +180,26 @@ class Solutions:
         plt.legend(loc='best')
 
 class Measure:
+    #class to store measures and their reliability. A Measure is a specific Solution (with parameters)
     def __init__(self,inputs):
         self.parameters = {}
         for i in range(0,len(inputs)):
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
                 self.parameters[inputs.index[i]] = inputs[i]
-    def evaluateMeasure(self,name,DikeSection,TrajectInfo, trange=None, geometry_plot='off', t0 = 2025, plot_dir = None):
+    def evaluateMeasure(self,DikeSection,TrajectInfo, geometry_plot=False, plot_dir = None):
+
+        from HelperFunctions import createDir
+
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
-        SFincrease = 0.2
-        if geometry_plot=='on': plt.figure(1000)
+        SFincrease = 0.2        #for stability screen
+        if geometry_plot: plt.figure(1000)
+        #different types of measures:
         if type == 'Soil reinforcement':
+            createDir(plot_dir)
+
             crest_step = 0.5; berm_step = 10
-            # crest_step = 0.25; berm_step = 10
 
             crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'],
                                      1+(self.parameters['dcrest_max']-self.parameters['dcrest_min'])/crest_step)
@@ -211,9 +223,7 @@ class Measure:
                 self.measures[-1]['Reliability'].Mechanisms = {}
                 for i in mechanisms:
                     calc_type = DikeSection.MechanismData[i][1]
-                    if trange == None:
-                        trange = [int(i) for i in DikeSection.Reliability.Mechanisms[i].Reliability.keys()]
-                    self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i,calc_type,years = trange,measure_year = self.parameters['year'] )
+                    self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i,calc_type,years = TrajectInfo['T'],measure_year = self.parameters['year'] )
                     # self.measures[-1]['Reliability'].Mechanisms[i].Input = {}
                     for ij in self.measures[-1]['Reliability'].Mechanisms[i].Reliability.keys():
                         self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
@@ -233,7 +243,7 @@ class Measure:
                                         self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] += SFincrease
                                         self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] += SFincrease
 
-                                elif self.parameters['Direction'] == 'outward':
+                                elif self.parameters['Direction'] == 'outward': #not implemented
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] \
                                                                                                             + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] \
@@ -243,15 +253,12 @@ class Measure:
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lvoor'] + self.measures[-1]['dberm']
                                 self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lachter'] = \
                                     np.max([0.,self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lachter'] - self.measures[-1]['dberm']])
-                        # self.measures[-1]['Reliability'].Mechanisms[i].Reliability = {}
                     self.measures[-1]['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
                 self.measures[-1]['Reliability'].calcSectionReliability(TrajectInfo,DikeSection.Length)
-                    #Calc betas!
         elif type == 'Vertical Geotextile':
             #No influence on overflow and stability
             #Only 1 parameterized version with a lifetime of 50 years
-            if trange == None:
-                trange = [int(i) for i in DikeSection.Reliability.Mechanisms[i].Reliability.keys()]
+
             self.measures = {}
             self.measures['VZG'] = 'yes'
             self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
@@ -260,7 +267,7 @@ class Measure:
 
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
-                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=trange)
+                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=TrajectInfo['T'])
                 for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(
                         DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
@@ -284,7 +291,7 @@ class Measure:
             self.measures['Reliability'].Mechanisms = {}
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
-                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=trange)
+                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=TrajectInfo['T'])
                 for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
                     if float(ij) >= self.parameters['year']:
@@ -311,7 +318,7 @@ class Measure:
             self.measures['Reliability'].Mechanisms = {}
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
-                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=trange)
+                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=TrajectInfo['T'])
                 for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
                     if i == 'Overflow' or i == 'Piping': #Copy results
@@ -325,13 +332,21 @@ class Measure:
                 self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
             self.measures['Reliability'].calcSectionReliability(TrajectInfo,DikeSection.Length)
 class Strategy:
+    #define a strategy object to evaluate measures in accordance with a strategy: options are:
+    # TC/Heuristic
+    # OI/TargetReliability
+    # MultiInteger (under dev.)
+    # GeneticAlgorithm (under dev.)
     def __init__(self,type,r=0.03):
         self.type = type        #OI or CB
         self.r = r
+        if type == 'MultiInteger' or type == 'GeneticAlgorithm':
+            pass
+
     def combine(self, traject, solutions, filtering ='off',OI_horizon=50,OI_year = 0):
+        #This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
-        # cols = ['name'] + list(solutions[list(solutions.keys())[0]].MeasureData['Section'].columns.values)
         cols = list(solutions[list(solutions.keys())[0]].MeasureData['Section'].columns.values)
 
         # measures at t=0 (2025) and t=20 (2045)
@@ -347,8 +362,8 @@ class Strategy:
             combinedmeasures = MeasureCombinations(combinables, partials,solutions[traject.Sections[i].name])
             # make sure combinable, mechanism and year are in the MeasureData dataframe
             # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
-            #if there is a measureid that is not known yet, add it o the measure table
-            # i = 3
+            #if there is a measureid that is not known yet, add it to the measure table
+
             existingIDs = solutions[traject.Sections[i].name].MeasureTable['ID'].values
             IDs = np.unique(combinedmeasures['ID'].values)
             if len(IDs) >0:
@@ -385,11 +400,12 @@ class Strategy:
             self.options[sec.name] = StrategyData.reset_index(drop=True)
 
     def evaluate(self,traject,solutions,OI_horizon=50,OI_year = 0):
-        # cols = ['name'] + list(solutions[list(solutions.keys())[0]].MeasureData['Section'].columns.values)
+        #This is the core code of the optimization. This piece should probably be split into the different methods available.
+
         cols = list(solutions[list(solutions.keys())[0]].MeasureData['Section'].columns.values)
 
         # measures at t=0 (2025) and t=20 (2045)
-        if self.type == 'TC':
+        if self.type == 'TC' or self.type == 'Heuristic':
             #Step 2: calculate costs and risk reduction for each option
             #make a very basic traject dataframe of the current state that consists of current betas for each section per year
             BaseTrajectProbability = makeTrajectDF(traject,cols)
@@ -408,7 +424,7 @@ class Strategy:
             TrajectProbability = copy.deepcopy(BaseTrajectProbability)
             sections = list(self.options.keys())
             keys = copy.deepcopy(sections)
-            while count < 80:
+            while count < 80: #counter set to 80 to limit calculations. But usually it stops much earlier as the BC-ratio drops below 1
                 count += 1
                 print('Run number ' + str(count))
                 PossibleMeasures = pd.DataFrame(columns=measure_cols)
@@ -417,13 +433,8 @@ class Strategy:
                 dRs = [];TRs = []
                 for i in self.options:
                     if i in keys:
-                        # print('Considering section ' + i)
-                        # somefunction(TC, TakenMeasures)
                         #assess the riskreduction based on the traject object (in a separate function to avoid alot of deepcopies) and the TakenMeasures
                         R_base, dR, TR = calcTR(i, self.options[i],TrajectProbability,original_section=TrajectProbability.loc[i], r=self.r,horizon=cols[-1],damage = traject.GeneralInfo['FloodDamage'])
-
-                        # if count == 1:
-                        #     cProfile.runctx("calcTR(i, self.options[i],TrajectProbability,original_section=TrajectProbability.loc[i], r=self.r,horizon=cols[-1],damage = traject.GeneralInfo['FloodDamage'])",globals=globals(),locals=locals())
 
                         #save TC
                         #if already a measure is in MeasuresTaken
@@ -445,8 +456,9 @@ class Strategy:
                         ind = np.argmax(BC_section)
                         #pick option with highest BC ratio and add to PossibleMeasures
                         data_measure = pd.DataFrame([[i, ind, LCC[i][ind], BC_section[ind]]], columns=measure_cols)
-                        PossibleMeasures = PossibleMeasures.append([data_measure],ignore_index=True)        #we can ditch this part
-                        # add a routine that throws out all options that have a negative BC ratio in the first step
+                        PossibleMeasures = PossibleMeasures.append([data_measure],ignore_index=True)
+
+                        # TODO: add a routine that throws out all options that have a negative BC ratio in the first step
                         if count == 1:
                             pass
                     else:
@@ -463,18 +475,22 @@ class Strategy:
 
                 #The following is faster but less robust:
                 id_opt = SectionMeasures.loc[SectionMeasures['BC'] > maxBC_others]['TotalCost'].idxmin()
+
                 #This would be an in between:
                 # if len(SectionMeasures.loc[SectionMeasures['BC'] > 3*maxBC_others])>2:
                 #     id_opt = SectionMeasures.loc[SectionMeasures['BC'] > 3*maxBC_others]['TotalCost'].idxmin()
                 # else:
                 #     id_opt = SectionMeasures['BC'].idxmax()
+
                 #This is most robust:
                 # id_opt = SectionMeasures['BC'].idxmax()
+
                 #Select the option with the highest BC ratio and add to TakenMeasures
                 #The difference written is the difference in LCC!!!!
                 LCCdiff = LCC[indd][id_opt] - np.sum(TakenMeasures.loc[TakenMeasures['Section']==indd]['LCC'].values)
                 data_opt = pd.DataFrame([[indd, id_opt, LCCdiff, BC[indd][id_opt], self.options[indd].iloc[id_opt]['ID'].values[0], self.options[indd].iloc[id_opt]['params'].values[0]]],
-                                        columns=measure_cols + ['ID', 'params'])                #here we evaluate and pick the option that has the lowest total cost and a BC ratio that is lower than any measure at any other section
+                                        columns=measure_cols + ['ID', 'params'])
+                #here we evaluate and pick the option that has the lowest total cost and a BC ratio that is lower than any measure at any other section
                 TakenMeasures = TakenMeasures.append(data_opt)
 
                 #Update the TrajectProbability
@@ -496,13 +512,15 @@ class Strategy:
             print('Run finished')
             self.Probabilities = Probability_steps
             self.TakenMeasures = TakenMeasures
-        elif self.type == 'SmartOI':
+        elif self.type == 'SmartOI' or self.type == 'SmartTargetReliability':
+            # TODO add a smarter OI version where the failure probability budget is partially redistributed of the mechanisms.
+
             #find section where it is most attractive to make 1 or multiple mechanisms to meet the cross sectional reliability index
             #choice 1: geotechnical mechanisms ok for 2075
 
             #choice 2:also height ok for 2075
             pass
-        elif self.type == 'OI':
+        elif self.type == 'OI' or self.type == 'TargetReliability':
             #compute cross sectional requirements
             N_piping = 1 + (traject.GeneralInfo['aPiping'] * traject.GeneralInfo['TrajectLength']/traject.GeneralInfo['bPiping'])
             N_stab = 1 + (traject.GeneralInfo['aStabilityInner'] * traject.GeneralInfo['TrajectLength'] / traject.GeneralInfo[
@@ -512,7 +530,7 @@ class Strategy:
             beta_cs_stabinner = -norm.ppf(traject.GeneralInfo['Pmax']*traject.GeneralInfo['omegaStabilityInner']/ N_stab)
             beta_cs_overflow = -norm.ppf(traject.GeneralInfo['Pmax']*traject.GeneralInfo['omegaOverflow']/ N_overflow)
 
-            #Rank sections based on 2075  Section probability
+            #Rank sections based on 2075 Section probability
             beta_horizon = []
             for i in traject.Sections:
                 beta_horizon.append(i.Reliability.SectionReliability.loc['Section'][str(OI_horizon)])
@@ -564,11 +582,184 @@ class Strategy:
             self.TakenMeasures = TakenMeasures
             self.Probabilities = Probability_steps
             pass
-        elif self.type == 'ExistingStrategy':
-            # Input is a TestCaseStrategyTC object AND a to be considered TakenMeasures DataFrame (maybe some extra data is required)
-            # We run through all the TakenMeasures, and each time compute the reliability
-
+        elif self.type == 'MultiInteger':
             pass
+
+    def make_optimization_input(self, traject,solutions):
+        N = len(self.options)
+        T = np.max(traject.GeneralInfo['T'])
+        S = 0
+        S = np.max([np.max([S, np.max(len(self.options[i]))]) for i in self.options.keys()])
+        #split in measures for overflow and measures for geotechnical mechanisms
+        # Soverflow & Sgeotechnical
+
+
+        #probabilities [N,S,T]
+        mechs = traject.GeneralInfo['Mechanisms']
+        self.Pf = {}
+        for i in mechs:
+            self.Pf[i]     = np.full((N,S+1,T),1.)
+
+        #fill values
+        keys = list(self.options.keys())
+        probs = {}
+        for n in range(0,N):
+            for i in mechs:
+                len_p1 = traject.Sections[n].Reliability.SectionReliability.shape[1]
+                p1 = norm.cdf(-traject.Sections[n].Reliability.SectionReliability.loc[i]).reshape((len_p1, 1)).T #Initial condition with no measure
+                p2 = norm.cdf(-self.options[keys[n]][i])                                                         #All solutions
+                probs[i] = np.concatenate((p1, p2),axis=0)
+                if np.shape(probs[i])[1] != T:
+                    probs[i] = interp1d(traject.GeneralInfo['T'], probs[i])(np.arange(0, T, 1))
+                self.Pf[i][n,0:np.size(probs[i],0),:]      = probs[i]
+
+
+
+        #Costs of options [N,S]
+        self.LCCOption = np.full((N, S+1), 1e99)
+        for n in range(0, len(keys)):
+            LCC = calcTC(self.options[keys[n]])
+            self.LCCOption[n, 1:len(LCC)+1] = LCC
+            self.LCCOption[n, 0]  = 0.
+
+
+        #Decision Variables for executed options [N,S]
+        self.Cint           = np.zeros((N,S))
+
+        #Decision Variable for weakest overflow section with dims [N,S]
+        self.Dint           = np.zeros((N,S))
+
+        #add discounted damage [T,]
+        self.D = np.array(traject.GeneralInfo['FloodDamage'] * (1 / ((1 + self.r) ** np.arange(0, T, 1))))
+
+        #expected damage for overflow and for piping & slope stability
+        self.RiskGeotechnical = (self.Pf['StabilityInner'] + self.Pf['Piping']) * np.tile(self.D.T,(N,S+1,1))
+        self.RiskOverflow = self.Pf['Overflow'] *np.tile(self.D.T,(N,S+1,1))
+        #add a few general parameters
+        self.opt_parameters = {'N':N, 'T':T, 'S':S+1}
+    def create_optimization_model(self):
+        pass
+        #make a model
+        #enlist all the variables
+        model = cplex.Cplex()
+        grN = range(self.opt_parameters['N'])
+        grS = range(self.opt_parameters['S'])
+        grT = range(self.opt_parameters['T'])
+
+        #all variables
+        Cint_nd = np.array([["C" + str(n).zfill(3) + str(s).zfill(3) for s in grS] for n in grN])
+        Dint_nd = np.array([[["D" + str(n).zfill(3) + str(s).zfill(3) + str(t).zfill(3) for t in grT] for s in grS] for n in grN])
+
+        #names of variables
+        Cint = ["C" + str(n).zfill(3) + str(s).zfill(3) for s in grS for n in grN]
+        Dint = ["D" + str(n).zfill(3) + str(s).zfill(3) + str(t).zfill(3) for t in grT for s in grS for n in grN]
+
+        VarNames = Cint + Dint
+        nvar = self.opt_parameters['N']*self.opt_parameters['S'] + \
+                self.opt_parameters['N']*self.opt_parameters['S']*self.opt_parameters['T']
+        if nvar != len(VarNames):
+            print(" ******  inconsistency with number of variables")
+
+        # -------------------------------------------------------------------------
+        #         objective function and bounds
+        # ------------------------------------------------------------------------
+
+        lbv = np.tile(0.0, nvar)  # lower bound 0 for all variables
+        ubv = np.tile(1.0, nvar)  # upper bound 1 for all variables
+        typev = "I" * nvar        # all variables are integer
+
+        self.LCCOption[np.isnan(self.LCCOption)] = 0.0  # turn nans from investment costs to 0
+        CostVec1a = [self.LCCOption[n,s]  for s in grS for n in grN]  # investment costs
+
+        #Sum the geotechnical risk costs over time and sum with investment costs:
+        CostVec1b = [np.sum(self.RiskGeotechnical[n,s,:]) for s in grS for n in grN]  #
+        CostVec1 = list(np.add(CostVec1a,CostVec1b))
+
+        CostVec2 = [self.RiskOverflow[n,s,t]  for t in grT for s in grS for n in grN]  # risk costs of overflow
+        # Here i should add a costvec3 (and 4) for piping and stability
+        CostVec = CostVec1 + CostVec2
+
+        model.variables.add(obj=CostVec, lb=lbv, ub=ubv, types=typev, names=VarNames)
+
+        # -------------------------------------------------------------------------
+        #         implement constraints
+        # ------------------------------------------------------------------------
+
+        # define lists that form the constraints
+        A = list()  # A matrix of constraints
+        b = list()  # b vector (right hand side) of equations
+
+        # constraint XX: The initial condition Cint(n,s) = 0 for all n and s in N and S. This is not a valid constraint, it is an initial condition
+        # constraint 1: There should be only 1 option implemented at each dike section: sum_s(Cint(s)=1 for all n in N
+        C1 = list()
+        for n in grN:
+            slist = Cint_nd[n,:].tolist()
+            nlist = [1.0] * self.opt_parameters['S']
+            curconstraint = [slist,nlist]
+            C1.append(curconstraint)
+        A = A + C1
+        senseV = "E"*len(C1)
+        b = b+[1.0]*self.opt_parameters['N']
+
+        print('constraint 1 implemented')
+
+        # constraint 2: there is only 1 weakest section for overflow at any point in time
+        C2 = list()
+        for t in grT:
+            slist = Dint_nd[:,:,t].tolist()
+            nlist = [1.0] * (self.opt_parameters['N']*self.opt_parameters['S'])
+            curconstraint = [slist,nlist]
+            C2.append(curconstraint)
+        A = A + C2
+        senseV = "E"*len(C2)
+        b = b+ [1.0]*(self.opt_parameters['N']*self.opt_parameters['S'])
+
+        print('constraint 2 implemented')
+
+        #constraint 3: make sure that for overflow DY represents the weakest link
+        C3 = list()
+        import sys
+        for t in grT:
+            for n in grN:
+                for nst in grN:
+                    for sst in grS:
+                        # derive the index of the relevant decision variables
+                        index = self.Pf['Overflow'][n,:,t]>self.Pf['Overflow'][nst,sst,t]
+                        index1 = np.where(index)[0]
+                        ii = -1
+                        if np.size(index1) > 0:     #select the last. WHY THE LAST?
+                            ii = index1[-1]
+
+                        jj = {}
+                        # jj = (self.opt_parameters['S']+1)*np.tile(1,self.opt_parameters['N'])
+                        for kk in grN:
+
+                            index = self.Pf['Overflow'][kk,:,t] <= self.Pf['Overflow'][nst,sst,t]
+                            index1 = np.where(index)[0]
+                            if np.size(index1) > 0:
+                                jj[kk] = index1
+                            else:
+                                jj[kk] = []
+                        slist = [Cint_nd[n, s] for s in range(ii + 1)] + \
+                                [Dint_nd[nh, s, t] for nh in grN for s in jj[nh]]
+                        nlist = [1.0]*len(slist)
+                        curconstraint = [slist,nlist]
+                        C3.append(curconstraint)
+                        del curconstraint, slist,nlist
+            print(str(sys.getsizeof(C3)) + ' bytes at t=' + str(t) + ' and n = ' + str(n))
+
+        A = A + C3
+        senseV = senseV + "L"*len(C3) # L means <=
+        b = b+[1.0]*len(C3)
+
+        print('constraint 3 implemented')
+
+        print()
+
+
+
+
+        return model
 
     def plotBetaTime(self,Traject, typ='single',fig_id = None,path = None, horizon = 100):
         step = 0
@@ -800,7 +991,9 @@ class Strategy:
             # self.TakenMeasures.ix[i].to_csv(f, header=True)
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
-def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initial,bermheight = 2,geometry_plot = 'off',plot_dir = None):
+#This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
+def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initial,bermheight = 2,geometry_plot = False,plot_dir = None):
+
     if len(initial) == 6:
         bermheight = initial.ix[2]['z']
     elif len(initial) == 4:
@@ -808,11 +1001,12 @@ def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initia
     #Geometry is always from inner to outer toe
     dcrest = geometry_change[0]
     dberm  = geometry_change[1]
-
+    if dcrest > 1.01 and dberm > 31 and geometry_plot:
+        geometry_plot = False
     geometry = initial.values
     cur_crest = np.max(geometry[:,1])
     new_crest = cur_crest+dcrest
-    if geometry_plot == 'on':
+    if geometry_plot:
         plt.plot(geometry[:, 0], geometry[:, 1],'k')
     if direction == 'outward':
         print("WARNING: outward reinforcement is NOT UP TO DATE!!!!")
@@ -844,7 +1038,7 @@ def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initia
             # add a shift
             for i in range(0, len(new_geometry)):
                 new_geometry[i][0] -= dberm
-        if geometry_plot == 'on':
+        if geometry_plot:
             plt.plot(new_geometry[:, 0], new_geometry[:, 1], '--r')
     elif direction == 'inward':
 
@@ -883,7 +1077,7 @@ def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initia
     area_new, polygon_new = calculateArea(new_geometry)
     poly_diff = polygon_new.difference(polygon_old)
     area_difference = poly_diff.area
-    if geometry_plot == 'on':
+    if geometry_plot:
         if hasattr(poly_diff,'geoms'):
             for i in range(0, len(poly_diff.geoms)):
                 x1, y1 = poly_diff[i].exterior.xy
@@ -896,14 +1090,13 @@ def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initia
         if plot_dir == None:
             plt.show()
         else:
-            plt.savefig(plot_dir + 'Geometry_'+ str(dberm) + '_' + str(dcrest) + '.png')
+            plt.savefig(plot_dir + '\\Geometry_'+ str(dberm) + '_' + str(dcrest) + '.png')
             plt.close()
 
     return new_geometry, area_difference
 
-
+# script to calculate the area difference of a new geometry after reinforcement (compared to old one)
 def calculateArea(geometry):
-    #voeg virtueel punt onder de grond toe:
     extra = np.empty((1,2))
     if geometry[-1][1] > geometry[0][1]:
         extra[0,0] = geometry[-1][0]; extra[0,1] = geometry[0][1]
@@ -922,6 +1115,7 @@ def calculateArea(geometry):
     polygon = Polygon(polypoints)
     return area, polygon
 
+#Script to determine the costs of a reinforcement:
 def DetermineCosts(parameters, type, length, reinf_pars = None, housing = None, area_difference = None):
     if type == 'Soil reinforcement':
         if parameters['StabilityScreen'] == 'no':
@@ -943,14 +1137,15 @@ def DetermineCosts(parameters, type, length, reinf_pars = None, housing = None, 
         print('Unknown type')
     return C
 
+#Script to determine the required crest height for a certain year
 def ProbabilisticDesign(design_variable, strength_input, Pt, horizon = 50, loadchange = 0, mechanism='Overflow'):
     if mechanism == 'Overflow':
         #determine the crest required for the target
         h_crest, beta = OverflowSimple(strength_input['h_crest'],strength_input['q_crest'], strength_input['h_c'],strength_input['q_c'],strength_input['beta'],mode='design',Pt=Pt,design_variable=design_variable)
-        #add temporal changes due to settlement and climate change TO DO ADD CLIMATE
+        #add temporal changes due to settlement and climate change
         h_crest = h_crest + horizon * (strength_input['dhc(t)'] + loadchange)
         return h_crest
-
+# This script combines two sets of measures to a single option
 def MeasureCombinations(combinables, partials,solutions):
     CombinedMeasures = pd.DataFrame(columns = combinables.columns)
     #loop over partials
@@ -961,23 +1156,13 @@ def MeasureCombinations(combinables, partials,solutions):
             types = [row1['type'].values[0], row2['type'].values[0]]
             year = [row1['year'].values[0],row2['year'].values[0]]
             params = [row1['params'].values[0], row2['params'].values[0]]
-            Cost = [row1['cost'].values[0],row2['cost'].values[0]]                #WARNING ADD DISCOUNTING IN EVALUATION OF MEASURES
+            Cost = [row1['cost'].values[0],row2['cost'].values[0]]
             #combine betas
             #take maximums of mechanisms except if it is about StabilityInner for partial Stability Screen
             betas = []
             years = []
             for ij in partials.columns:
                 if ij[0] != 'Section' and ij[1] != '':     #It is a beta value
-                    # print('make something for stabilityscreen here')
-                    # if ij[0] == 'StabilityInner' and row1['type'].values[0] == 'Stability Screen':
-                    #     for ijk in solutions.Measures:
-                    #         if ijk['ID'].values[0] == row2['ID'].values[0]:
-                    #
-                    #     #compute the LCR for the Soil Reinforcement with
-                    #     print('adapt this')
-                    #     #take the combinable
-                    #     #add 0.2 to the parameters
-                    # else:
                     beta = np.maximum(row1[ij],row2[ij])
                     years.append(ij[1])
                     betas.append(beta)
@@ -1004,26 +1189,15 @@ def makeTrajectDF(traject,cols):
     for i in traject.Sections:
         for j in mechanisms:
             TrajectProbability.loc[(i.name, j)] = list(i.Reliability.SectionReliability.loc[j])
-    # TrajectProbability = TrajectProbability.append(pd.DataFrame(data,columns=cols))
     return TrajectProbability
 
+#hereafter a bunch of functions to compute costs, risks and probabilities over time are defined:
 def calcTC(section_options,r = 0.03, horizon = 100):
-    TC = []
-    #HIER VERDER MET INDEXING!
-    for i,row in section_options.iterrows():
-        if isinstance(row.loc['year'].values[0], list):
-            year = row.loc['year'].values[0]
-            cost = row.loc['cost'].values[0]
-            totalcosts = 0
-            for j in range(0, len(year)):
-                totalcosts += cost[j] / ((1 + r) ** year[j])
-            TC.append(float(totalcosts))
-
-            # moeilijk lopen doen
-        else:
-            TC.append(float(row.loc['cost'] / ((1 + r) ** row.loc['year'])))
-
-    return np.array(TC)
+    costs = section_options['cost'].values
+    years = section_options['year'].values
+    discountfactors = list(map(lambda x: 1 / (1 + r) ** np.array(x), years))
+    TC = list(map(lambda c, r: c * r, costs, discountfactors))
+    return np.array(list(map(lambda c: np.sum(c), TC)))
 
 def calcTR(section, section_options, base_traject, original_section, r = 0.03, horizon = 100, damage = 1e9):
     #section: the section name
@@ -1134,7 +1308,7 @@ def calcTrajectProb(base,horizon=None, datatype = 'DataFrame',ts=None,mechs=None
     return beta_t,p_t
 
 
-
+#this function changes the trajectprobability of a measure is implemented:
 def ImplementOption(section,TrajectProbability,newProbability):
     mechs = np.unique(TrajectProbability.index.get_level_values('mechanism').values)
     #change trajectprobability by changing probability for each mechanism

@@ -15,6 +15,8 @@ from scipy.stats import norm
 import time
 from StrategyEvaluation import Solutions, Strategy, ImplementOption
 
+## This .py file contains a bunch of functions that are useful but do not fit under any of the other .py files.
+
 # write to file with cPickle/pickle (as binary)
 def ld_writeObject(filePath,object):
     f=open(filePath,'wb')
@@ -126,10 +128,14 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
         TestCaseStrategy.TakenMeasures.at[i, 'name'] = name
     return TestCaseStrategy
 
-def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
+
+# this is sort of the main script for any calculation for SAFE. It contains all the required steps:
+def runFullModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
              years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=0,shelves=1,
              types = ['TC', 'SmartOI', 'OI'],language='NL',TestCaseSolutions = None,t_start=2025,OI_year = 0):
     if timing == 1: start = time.time()
+
+    #make a few dirs if they dont exist yet:
     if isinstance(run_number,str):
         directory = base_dir + '\\Case_' + run_number
     else:
@@ -137,6 +143,7 @@ def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityI
     if not os.path.exists(directory):
         os.makedirs(directory + '\\figures')
         os.makedirs(directory + '\\results')
+
     ## STEP 1: SAFETY ASSESSMENT
     print('Start step 1: safety assessment')
     for i in range(0, len(TestCase.Sections)):
@@ -145,6 +152,7 @@ def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityI
                 TestCase.Sections[i].Reliability.Load, mechanism=j, trajectinfo=TestCase.GeneralInfo)
         TestCase.Sections[i].Reliability.calcSectionReliability(TrajectInfo=TestCase.GeneralInfo,
                                                                        length=TestCase.Sections[i].Length)
+        #Plot the initial reliability-time:
         plt.figure(1)
         [TestCase.Sections[i].Reliability.Mechanisms[j].drawLCR(label=j, type='Standard', tstart=t_start) for j in
          mechanisms]
@@ -161,16 +169,17 @@ def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityI
             bbox_inches='tight')
         plt.close()
 
-    # plot for entire traject
+    # plot reliability and failure probability for entire traject:
     figsize = (8,4)
-    TestCase.plotReliabilityofDikeTraject(pathname=directory, fig_size=figsize,language=language,flip='off',draw_targetbeta='off',beta_or_prob='beta',outputcsv = True, last=True)
-    TestCase.plotReliabilityofDikeTraject(pathname=directory, fig_size=figsize, language=language, flip='off',draw_targetbeta='off', beta_or_prob='prob', last=True)
-    # quit()
+    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize,language=language,flip='off',draw_targetbeta='off',beta_or_prob='beta',outputcsv = True, last=True)
+    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off',draw_targetbeta='off', beta_or_prob='prob', last=True)
+
     print('Finished step 1: assessment of current situation')
 
     if timing == 1: end = time.time()
     if timing == 1: print("Time elapsed: " + str(end - start) + ' seconds')
     if timing == 1: start = time.time()
+    #store stuff:
     if shelves == 1:
         # Save intermediate results to shelf:
         filename = directory + '\\AfterStep1.out'
@@ -185,22 +194,22 @@ def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityI
         #     locals()[key]=my_shelf[key]
         # my_shelf.close()
 
-    ## INITIALIZE MEASURES FOR EACH SECTION
+    ## STEP 2: INITIALIZE AND EVALUATE MEASURES FOR EACH SECTION
     # Result: Measures object with Section name and beta-t-euro relations for each measure
     TestCaseSolutions = {}
     # Calculate for each measure the cost-reliability-time relations
     for i in TestCase.Sections:
         TestCaseSolutions[i.name] = Solutions(i)
         TestCaseSolutions[i.name].fillSolutions(base_dir + '\\' + i.name + '.xlsx')
-        if i.name =='DV29':
-            print()
-        TestCaseSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot='off', trange=years,
+        TestCaseSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot=False, trange=years,
                                                     plot_dir=directory + '\\figures\\' + i.name + '\\')
+        #NB: geometry_plot = 'on' plots the soil reinforcement geometry, but costs a lot of time!
     print('Finished step 2: evaluation of measures')
     if timing == 1: end = time.time()
     if timing == 1: print("Time elapsed: " + str(end - start) + ' seconds')
     if timing == 1: start = time.time()
 
+    #possibly plot beta(t)-cost for all measures at a section:
     if save_beta_measure_plots == 1:
         betaind_array = []
         for i in years: betaind_array.append('beta' + str(i))
@@ -235,7 +244,6 @@ def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityI
         my_shelf.close()
 
     ## STEP 3: EVALUATE THE STRATEGIES
-    TestCase.GeneralInfo['FloodDamage'] = 23e9  # add flood damage (do this in the beginning)
     Strategies = []
     for i in types:
         if i == 'TC':
@@ -261,6 +269,7 @@ def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityI
                                              horizon=np.max(years))
             TestCaseStrategyTC = replaceNames(TestCaseStrategyTC, TestCaseSolutions)
             plt.close(102)
+
             # write to csv's
             for i in TestCaseStrategyTC.options: TestCaseStrategyTC.options[i].to_csv(
                 directory + '\\results\\' + i + '_Options_TC.csv')
@@ -311,13 +320,6 @@ def runModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityI
         if 'OI' in types: my_shelf['TestCaseStrategyOI'] = locals()['TestCaseStrategyOI']
         my_shelf.close()
 
-
-
-        # open shelf
-        # my_shelf = shelve.open(filename)
-        # for key in my_shelf:
-        #     locals()[key]=my_shelf[key]
-        # my_shelf.close()
     return Strategies, TestCaseSolutions
 
 def getMeasureTable(Solutions):
@@ -392,3 +394,27 @@ def runNature(strategy,nature,traject,nature_solutions,directory = None, shelves
             #re-evaluate Probabilities
     #save the adapted nature with extension _base
 
+
+def createDir(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+#this is a more generic function to read and write data from and to a shelve. But it is not implemented fully:
+# TODO implement DataAtShelve instead of (un)commenting snippets of code
+def DataAtShelve(dir, name, objects = None, mode = 'write'):
+    if mode == 'write':
+        #make shelf
+        my_shelf = shelve.open(dir + '\\' + name, 'n')
+        for i in objects.keys():
+            my_shelf[i] = objects[i]
+        my_shelf.close()
+    elif mode == 'read':
+        # open shelf
+        my_shelf = shelve.open(dir + '\\' + name)
+        keys = []
+        for key in my_shelf:
+            locals()[key]=my_shelf[key]
+            keys.append(key)
+        my_shelf.close()
+        if len(keys) == 1:
+            return locals()[keys[0]]
