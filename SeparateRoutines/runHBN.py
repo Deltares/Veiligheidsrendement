@@ -101,6 +101,4 @@ for i in locations:
     # plt.show()
     plt.savefig(filespath + '\\' + 'figures' + '\\' + i + '.png', bbox_inches='tight')
     plt.close()
-# pass
-#
-# #
+

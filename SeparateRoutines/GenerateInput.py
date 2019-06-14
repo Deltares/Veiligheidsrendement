@@ -88,8 +88,3 @@ for i in DikeSections.index:
     copyfile(pathname + '\\Input\\designtables_TP\\DESIGNTABLE_' + DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] + '.txt',
              pathname + '\\Output\\Toetspeil\\DESIGNTABLE_' + DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] + '.txt')
 
-
-
-
-#Generate a ton of Excel files
-

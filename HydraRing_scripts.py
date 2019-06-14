@@ -1,21 +1,15 @@
 import subprocess
-import mmap
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import openturns as ot
 from ProbabilisticFunctions import TableDist
-import os
-import shutil
-# pad = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\Databases'
 
-
-def runHydraRing(inifile):
-    exelocation = r'D:\wouterjanklerk\My Documents\HydraRing\Hydra-Ring 18.1\MechanismComputation.exe'
+#script to run HydraRing. exelocation should refer to the location of MechanismComputation.exe.
+def runHydraRing(inifile, exelocation = r'D:\wouterjanklerk\My Documents\HydraRing\Hydra-Ring 18.1\MechanismComputation.exe'):
     subprocess.run([exelocation, inifile],cwd=inifile[:-14])
 
-# runHydraRing(r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Belasting_HydraRing\1.ini')
-
+#write a design table to a OpenTurns TableDist as defined by ProbabilisticFunctions.TableDist
 def DesignTableOpenTurns(filename,gridpoints=2000):
     data = readDesignTable(filename)
     wls = list(data.iloc[:,0])
@@ -42,6 +36,8 @@ def readDesignTable(filename):
     data = pd.DataFrame(values, columns=headers)
     f.close()
     return data
+
+#script to plot a value-exceedance probability graph based on a designtable from HydraRing.
 def plotDesignTable(data):
     data.plot(x='Value', y='Failure probability',kind='line')
     plt.ylabel(r'Exceedance Probability')
@@ -49,9 +45,3 @@ def plotDesignTable(data):
     # plt.ylim(ymin=0)
     plt.yscale('log')
     plt.tight_layout()
-    plt.show()
-#
-# data = readDesignTable(r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\DesignTable.txt')
-# plotDesignTable(data)
-# print(data
-# runHydraRing(r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\HBNsom\2.ini')

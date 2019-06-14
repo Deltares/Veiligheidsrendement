@@ -30,14 +30,6 @@ def calc_beta_implicated(mechanism,SF,TrajectInfo=None):
     elif SF == np.inf:
         beta = 8
     else:
-        # OLD AND WRONG:
-        # if mechanism == 'Piping':
-        #     beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * -norm.ppf(TrajectInfo['Pmax']))
-        # elif mechanism == 'Heave':
-        #     beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * -norm.ppf(TrajectInfo['Pmax']))
-        # elif mechanism == 'Uplift':
-        #     # print(SF)
-        #     beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * -norm.ppf(TrajectInfo['Pmax']))
         if mechanism == 'Piping':
             beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * -norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == 'Heave':
