@@ -1,90 +1,108 @@
 #This script makes the entire input structure from the general input files
-
 import pandas as pd
-from shutil import copyfile
 from HydraRing_scripts import readDesignTable
-import os
-traject = '16-4'
+from openpyxl import load_workbook
+from pathlib import Path
+from shutil import copyfile
 
-# pathname = "d:\\wouterjanklerk\\My Documents\\00_PhDgeneral\\98_Papers\\Conference\\GeoRisk_2019\\Calculations\\GenerateInput\\"
-# pathname = "d:\\wouterjanklerk\\My Documents\\00_PhDgeneral\\03_Cases\\01_Rivierenland SAFE\\Local\\All_Input\\" + traject
-pathname = "d:\\wouterjanklerk\\My Documents\\00_PhDgeneral\\03_Cases\\01_Rivierenland SAFE\\Local\\Input\\OptimizationInput\\Basic\\"
-filename = 'Dijkvakindeling_v4.2_Basic'
-DikeSections = pd.read_excel(pathname + '\\Input\\' + filename + '.xlsx',sheet_name='Dijkvakindeling_keuze_info',skiprows=[0])
-STBI_data = pd.read_excel(pathname    + '\\Input\\' + filename + '.xlsx',sheet_name='Info voor STBI',usecols="B,G:J")
-Piping_data = pd.read_excel(pathname  + '\\Input\\' + filename + '.xlsx',sheet_name='Info voor Piping',usecols="B,G:Q")
-Housing = pd.read_excel(pathname      + '\\Input\\' + filename + '.xlsx',sheet_name='Info voor huizen',usecols="A,B,F:O")
-measures = pd.read_csv(pathname       + '\\Input\\measures.csv',delimiter=';')
-crestlevels = pd.read_excel(pathname  + '\\Input\\InputLocationsHBN.xlsx',sheet_name=traject,usecols="C,G")
+def main():
+    traject = '16-3'
+    path = Path('D:/SAFE/data/InputFiles/SAFEInput')
+    path_WLRise_HBNRise = Path('D:/SAFE/data/HBN sommen/HBN HKV')
+    filename = 'Dijkvakindeling_v4.8.xlsx'
+    filename_WLRise_HBNRise = 'Resultaten_OI2014v4_BeleidsmatigeAfvoerverdeling_20180430.xlsx'
 
-DikeSections = DikeSections.loc[DikeSections['Traject']==traject]
-DikeSections = DikeSections.loc[DikeSections['Wel of niet meerekenen']==1]
-DikeSections = DikeSections.reset_index(drop=True)
-General = {}
-General['Name']=['Length','Start','End','Overflow','StabilityInner','Piping','LoadData','YearlyWLRise','HBNRise_factor']
-General['Type'] =['','','','Simple','Simple','SemiProb','','','']
-Profile = {}
+    #Open en read data
+    df = pd.read_excel(path.joinpath(filename), sheet_name=None)
+    df_WL = pd.read_excel(path_WLRise_HBNRise.joinpath(filename_WLRise_HBNRise), sheet_name='Overzicht_Werkelijk', header=1, usecols='A, G:L')
+    df_WL['Dijkpaal'] = df_WL['Dijkpaal'].str.replace('.', '')
+    df_HBN = pd.read_excel(path_WLRise_HBNRise.joinpath(filename_WLRise_HBNRise), sheet_name='Overzicht_Werkelijk', header=1, usecols='A, AF:AK')
+    df_HBN['Dijkpaal'] = df_HBN['Dijkpaal'].str.replace('.', '')
+    DikeSections = df['Dijkvakindeling_keuze_info'].rename(columns=df['Dijkvakindeling_keuze_info'].iloc[0]).drop(df['Dijkvakindeling_keuze_info'].index[0])
+    DikeSections = DikeSections[((DikeSections['Traject'] == traject) & (DikeSections['Wel of niet meerekenen'] == 1))].reset_index(drop=True)
+    STBI_data = df['Info voor STBI'].iloc[:, [1, 6, 7, 8, 9]]
+    Piping_data = df['Info voor Piping'].iloc[:, [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
+    Housing = df['Info voor huizen'].iloc[:, [0, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
+    measures = pd.read_csv(path.joinpath(traject, 'Input/measures.csv'), delimiter=';')
+    crestlevels = pd.read_excel(path.joinpath(traject, 'Input/InputLocationsHBN.xlsx'), sheet_name=traject, usecols="C, G")
 
-#make folders:
-if not os.path.exists(pathname + '\\Output\\StabilityInner'):
-    os.mkdir(pathname + '\\Output\\StabilityInner')
-    os.mkdir(pathname + '\\Output\\Piping')
-    os.mkdir(pathname + '\\Output\\Overflow')
-    os.mkdir(pathname + '\\Output\\Toetspeil')
+    General = {}
+    General['Name'] = ['Length', 'Start', 'End', 'Overflow', 'StabilityInner', 'Piping', 'LoadData', 'YearlyWLRise', 'HBNRise_factor']
+    General['Type'] = ['', '', '', 'Simple', 'Simple', 'SemiProb', '', '', '']
 
-for i in DikeSections.index:
-    HBN_basis = pd.read_csv(pathname + '\\Input\\base_HBN.csv', delimiter=';')
+    #Make folders if not exist:
+    if not path.joinpath(traject, 'Output').is_dir():
+        path.joinpath(traject, 'Output/StabilityInner').mkdir(parents=True, exist_ok=True)
+        path.joinpath(traject, 'Output/Piping').mkdir(parents=True, exist_ok=True)
+        path.joinpath(traject, 'Output/Overflow').mkdir(parents=True, exist_ok=True)
+        path.joinpath(traject, 'Output/Toetspeil').mkdir(parents=True, exist_ok=True)
 
-    General['Value']= [DikeSections.iloc[i]['Lengte dijkvak'],
-                       DikeSections.iloc[i]['Van'],
-                       DikeSections.iloc[i]['Tot'],
-                       '\\Overflow\\' + DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] + '_Overflow.csv',
-                       '\\StabilityInner\\' + DikeSections.iloc[i]['Dwarsprofiel STBI/STBU'] + '_StabilityInner.csv',
-                       '\\Piping\\' + DikeSections.iloc[i]['Dwarsprofiel piping'] + '_Piping.csv',
-                       '\\DESIGNTABLE_' + DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] + '.txt',
-                       0.005, 1.5]
-    profile = pd.read_csv(pathname + '\\Input\\profiles\\' + DikeSections.iloc[i]['Dwarsprofiel Geometrie'] + '.csv')
-    profile = profile.set_index('Unnamed: 0')
-    toExcel = pd.DataFrame.from_dict(General)[['Name','Value','Type']]
-    opensheet = pd.ExcelWriter(pathname + '\\Output\\DV' + '{:02d}'.format(DikeSections.iloc[i]['dv_nummer']) + '.xlsx')
-    toExcel.to_excel(opensheet, sheet_name='General',index=False)
-    measures.to_excel(opensheet,sheet_name='Measures',index=False)
-    profile.to_excel(opensheet, sheet_name='Geometry',index=False)
+    for i in DikeSections.index:
+        df_YearlyWLRise = df_WL[df_WL['Dijkpaal'] == DikeSections['Dwarsprofiel HoogteToetspeil'][i]]
+        YearlyWLRise_factor = float((df_YearlyWLRise[2125].values - df_YearlyWLRise[2015].values) / (2125 - 2015))
+        df_HBNRise_factor = df_HBN[df_HBN['Dijkpaal'] == DikeSections['Dwarsprofiel HoogteToetspeil'][i]]
+        HBNRise_factor = float((df_HBNRise_factor[2125].values - df_HBNRise_factor[2015].values) / (2125 - 2015)) / YearlyWLRise_factor
 
-    #housin
-    houses_data_location = Housing.loc[Housing['Naam dijkvak'] == DikeSections.iloc[i]['dv_nummer']].loc[Housing['Naam traject'] == traject].transpose()
-    houses_data_location = houses_data_location.drop(['Naam traject','Naam dijkvak'],axis=0).reset_index()
-    houses_data_location.columns = ['distancefromtoe','number']
-    houses_data_location.to_excel(opensheet,sheet_name='Housing',index=False)
-    opensheet.save()
+        #Write YearlyWLRise and HBNRise factors to mastersheet
+        wb = load_workbook(path.joinpath(filename))
+        ws = wb.get_sheet_by_name('Dijkvakindeling_keuze_info')
 
-    #write stability inner
-    STBI_data_location = STBI_data.loc[STBI_data['dwarsprofiel']==DikeSections.iloc[i]['Dwarsprofiel STBI/STBU']].transpose()
-    STBI_data_location = STBI_data_location.drop(['dwarsprofiel'], axis=0).reset_index()
-    STBI_data_location.columns = ['Name', "Value"]
-    STBI_data_location = STBI_data_location.set_index('Name')
-    STBI_data_location.to_csv(pathname + '\\Output\\StabilityInner\\' + DikeSections.iloc[i]['Dwarsprofiel STBI/STBU'] + '_StabilityInner.csv')
+        for row in range(ws.max_row):
+            if ws[row + 1][9].value == DikeSections['Dwarsprofiel HoogteToetspeil'][i]:
+                ws.cell(row=row + 1, column=14).value = YearlyWLRise_factor
+                ws.cell(row=row + 1, column=15).value = HBNRise_factor
+            else:
+                pass
 
-    #write piping
-    Piping_data_location = Piping_data.loc[Piping_data['dwarsprofiel']==DikeSections.iloc[i]['Dwarsprofiel piping']].transpose()
-    Piping_data_location = Piping_data_location.drop(['dwarsprofiel'], axis=0).reset_index()
-    Piping_data_location.columns = ['Name', "Value"]
-    Piping_data_location = Piping_data_location.set_index('Name')
-    Piping_data_location.to_csv(pathname + '\\Output\\Piping\\' + DikeSections.iloc[i]['Dwarsprofiel piping'] + '_Piping.csv')
+        wb.save(path.joinpath(filename))
 
-    #write overflow
-    OverflowData = readDesignTable(pathname + '\\Input\\designtables_HBN\\DESIGNTABLE_'+ DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] +'.txt')
-    if len(OverflowData) != 13:
-        HBN_basis = HBN_basis.iloc[0:len(OverflowData)]
-        print('Warning! length is not 13!')
-    #overwrite crestheight, betas and h_c
-    # HBN_basis['h_crest'].ix[0] = crestlevels.loc[crestlevels['dijkpaal'] == DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil']]['hcrest'].values[0]
-    HBN_basis['h_crest'].ix[0] = DikeSections.Kruinhoogte[i]
-    HBN_basis['h_c'] = OverflowData['Value'].values
-    HBN_basis['beta'] = OverflowData['Beta\n'].values
-    HBN_basis.to_csv(pathname + '\\Output\\Overflow\\' + DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] + '_Overflow.csv',index=False)
+        HBN_basis = pd.read_csv(path.joinpath(traject, 'Input/base_HBN.csv'), delimiter=';')
+        General['Value'] = [DikeSections['Lengte dijkvak'][i], DikeSections['Van'][i], DikeSections['Tot'][i], 'Overflow/' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv', 'StabilityInner/' + DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv', 'Piping/' + DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv', 'DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt', YearlyWLRise_factor, HBNRise_factor]
+        profile = pd.read_csv(path.joinpath(traject, 'Input/profiles', DikeSections['Dwarsprofiel Geometrie'][i] + '.csv'), index_col=0)
+        toExcel = pd.DataFrame.from_dict(General)[['Name', 'Value', 'Type']]
+        houses_data_location = Housing[((Housing['Naam dijkvak'] == DikeSections['dv_nummer'][i]) & (Housing['Naam traject'] == traject))].transpose().drop(['Naam traject', 'Naam dijkvak'], axis=0).reset_index()
+        houses_data_location.columns = ['distancefromtoe', 'number']
 
-    #copy designtables
-    copyfile(pathname + '\\Input\\designtables_TP\\DESIGNTABLE_' + DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] + '.txt',
-             pathname + '\\Output\\Toetspeil\\DESIGNTABLE_' + DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil'] + '.txt')
+        #Write Data
+        writer = pd.ExcelWriter(path.joinpath(traject, 'Output/DV' + '{:02d}'.format(DikeSections['dv_nummer'][i]) + '.xlsx'))
+        toExcel.to_excel(writer, sheet_name='General', index=False)
+        measures.to_excel(writer, sheet_name='Measures', index=False)
+        profile.to_excel(writer, sheet_name='Geometry', index=False)
+        houses_data_location.to_excel(writer, sheet_name='Housing', index=False)
+        writer.save()
 
+        #Write stability inner
+        STBI_data_location = STBI_data[STBI_data['dwarsprofiel'] == DikeSections['Dwarsprofiel STBI/STBU'][i]].transpose().drop(['dwarsprofiel'], axis=0).reset_index()
+        STBI_data_location.columns = ['Name', "Value"]
+        STBI_data_location = STBI_data_location.set_index('Name')
+        STBI_data_location.to_csv(path.joinpath(traject, 'Output/StabilityInner', DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv'))
+
+        #Write piping
+        Piping_data_location = Piping_data[Piping_data['dwarsprofiel'] == DikeSections['Dwarsprofiel piping'][i]].transpose().drop(['dwarsprofiel'], axis=0).reset_index()
+        Piping_data_location.columns = ['Name', "Value"]
+        Piping_data_location = Piping_data_location.set_index('Name')
+        Piping_data_location.to_csv(path.joinpath(traject, 'Output/Piping', DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv'))
+
+        #Write overflow
+        OverflowData = readDesignTable(path.joinpath(traject, 'Input/designtables_HBN/DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt'))
+
+        if len(OverflowData) != 13:
+            HBN_basis = HBN_basis.iloc[0:len(OverflowData)]
+            print('Warning! length is not 13!')
+
+        #Overwrite crestheight, betas, h_c and if possible dhc(t)
+        # HBN_basis['h_crest'].ix[0] = crestlevels.loc[crestlevels['dijkpaal'] == DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil']]['hcrest'].values[0]
+        HBN_basis['h_crest'][0] = DikeSections['Kruinhoogte'][i]
+        HBN_basis['h_c'] = OverflowData['Value'].values
+        HBN_basis['beta'] = OverflowData['Beta\n'].values
+
+        if len(DikeSections['Kruindaling'].value_counts()) > 0:
+            HBN_basis['dhc(t)'][0] = DikeSections['Kruindaling'][i]
+
+        HBN_basis.to_csv(path.joinpath(traject, 'Output/Overflow', DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv'), index=False)
+
+        #Copy designtables
+        copyfile(path.joinpath(traject, 'Input/designtables_TP/DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt'), path.joinpath(traject, 'Output/Toetspeil/DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt'))
+
+if __name__ == '__main__':
+    main()

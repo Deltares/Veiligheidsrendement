@@ -121,7 +121,8 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
         # else:
         #     names = TestCaseSolutions[TestCaseStrategy.TakenMeasures.iloc[i]['Section']].Measures[names].parameters['Name']
         id = TestCaseStrategy.TakenMeasures.iloc[i]['ID']
-        if isinstance(id,list): id = '+'.join(id)
+        if isinstance(id, list):
+            id = '+'.join(id)
 
         section = TestCaseStrategy.TakenMeasures.iloc[i]['Section']
         name = TestCaseSolutions[section].MeasureTable.loc[TestCaseSolutions[section].MeasureTable['ID'] == id]['Name'].values
@@ -131,22 +132,19 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
 
 # this is sort of the main script for any calculation for SAFE. It contains all the required steps:
 def runFullModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
-             years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=0,shelves=1,
-             types = ['TC', 'SmartOI', 'OI'],language='NL',TestCaseSolutions = None,t_start=2025,OI_year = 0):
-    if timing == 1: start = time.time()
+    if timing == 1:
+        start = time.time()
 
-    #make a few dirs if they dont exist yet:
-    if isinstance(run_number,str):
-        directory = base_dir + '\\Case_' + run_number
-    else:
-        directory = base_dir + '\\Case_' + str(run_number)
-    if not os.path.exists(directory):
-        os.makedirs(directory + '\\figures')
-        os.makedirs(directory + '\\results')
+    #Make a few dirs if they dont exist yet:
+    if not directory.is_dir():
+        directory.mkdir(parents=True, exist_ok=True)
+        directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
+        directory.joinpath('results').mkdir(parents=True, exist_ok=True)
 
     ## STEP 1: SAFETY ASSESSMENT
     print('Start step 1: safety assessment')
-    for i in range(0, len(TestCase.Sections)):
+
+    for i in range(len(TestCase.Sections)):
         for j in mechanisms:
             TestCase.Sections[i].Reliability.Mechanisms[j].generateLCRProfile(
                 TestCase.Sections[i].Reliability.Load, mechanism=j, trajectinfo=TestCase.GeneralInfo)
@@ -161,30 +159,35 @@ def runFullModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'Stabil
                  'k--', label='Norm')
         plt.legend()
         plt.title(TestCase.Sections[i].name)
-        if not os.path.exists(directory + '\\figures\\' + TestCase.Sections[i].name):
-            os.makedirs(directory + '\\figures\\' + TestCase.Sections[i].name + '\\Initial')
+        if not directory.joinpath('figures', TestCase.Sections[i].name).is_dir():
+            directory.joinpath('figures', TestCase.Sections[i].name).mkdir(parents=True, exist_ok=True)
+            directory.joinpath('figures', TestCase.Sections[i].name, 'Initial')
 
-        plt.savefig(
-            directory + '\\' + 'figures' + '\\' + TestCase.Sections[i].name + '\\Initial\\InitialSituation' + '.png',
-            bbox_inches='tight')
+        plt.savefig(directory.joinpath('figures', TestCase.Sections[i].name, 'Initial', 'InitialSituation' + '.png'), bbox_inches='tight')
         plt.close()
 
     # plot reliability and failure probability for entire traject:
-    figsize = (8,4)
-    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize,language=language,flip='off',draw_targetbeta='off',beta_or_prob='beta',outputcsv = True, last=True)
-    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off',draw_targetbeta='off', beta_or_prob='prob', last=True)
+   figsize = (8, 4)
+    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='beta', outputcsv=True, first=False, last=True)
+    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='prob', first=False, last=True)
 
     print('Finished step 1: assessment of current situation')
 
-    if timing == 1: end = time.time()
-    if timing == 1: print("Time elapsed: " + str(end - start) + ' seconds')
-    if timing == 1: start = time.time()
+    if timing == 1:
+        end = time.time()
+
+    if timing == 1:
+        print("Time elapsed: " + str(end - start) + ' seconds')
+
+    if timing == 1:
+        start = time.time()
+
     #store stuff:
     if shelves == 1:
         # Save intermediate results to shelf:
-        filename = directory + '\\AfterStep1.out'
+        filename = directory.joinpath('AfterStep1.out')
         # make shelf
-        my_shelf = shelve.open(filename, 'n')
+        my_shelf = shelve.open(str(filename), 'n')
         my_shelf['TestCase'] = locals()['TestCase']
         my_shelf.close()
 
@@ -196,144 +199,175 @@ def runFullModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'Stabil
 
     ## STEP 2: INITIALIZE AND EVALUATE MEASURES FOR EACH SECTION
     # Result: Measures object with Section name and beta-t-euro relations for each measure
-    TestCaseSolutions = {}
+    AllSolutions = {}
+
     # Calculate for each measure the cost-reliability-time relations
     for i in TestCase.Sections:
-        TestCaseSolutions[i.name] = Solutions(i)
-        TestCaseSolutions[i.name].fillSolutions(base_dir + '\\' + i.name + '.xlsx')
-        TestCaseSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot=False, trange=years,
-                                                    plot_dir=directory + '\\figures\\' + i.name + '\\')
+        AllSolutions[i.name] = Solutions(i)
+        AllSolutions[i.name].fillSolutions(path.joinpath(i.name + '.xlsx'))
+        AllSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot=False, trange=years, plot_dir=directory.joinpath('figures', i.name))
         #NB: geometry_plot = 'on' plots the soil reinforcement geometry, but costs a lot of time!
+
     print('Finished step 2: evaluation of measures')
-    if timing == 1: end = time.time()
-    if timing == 1: print("Time elapsed: " + str(end - start) + ' seconds')
-    if timing == 1: start = time.time()
+
+    if timing == 1:
+        end = time.time()
+
+    if timing == 1:
+        print("Time elapsed: " + str(end - start) + ' seconds')
+
+    if timing == 1:
+        start = time.time()
+
+    for i in TestCase.Sections:
+        AllSolutions[i.name].SolutionstoDataFrame(filtering='off')
 
     #possibly plot beta(t)-cost for all measures at a section:
     if save_beta_measure_plots == 1:
         betaind_array = []
-        for i in years: betaind_array.append('beta' + str(i))
+
+        for i in years:
+            betaind_array.append('beta' + str(i))
+
         plt_mech = ['Section', 'Piping', 'StabilityInner', 'Overflow']
+
         for i in TestCase.Sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
-                    requiredbeta = -norm.ppf(
-                        TestCase.GeneralInfo['Pmax'] * (i.Length / TestCase.GeneralInfo['TrajectLength']))
+                    requiredbeta = -norm.ppf(TestCase.GeneralInfo['Pmax'] * (i.Length / TestCase.GeneralInfo['TrajectLength']))
                     plt.figure(1001)
-                    TestCaseSolutions[i.name].plotBetaTimeEuro(mechanism=mech, beta_ind=betaind, sectionname=i.name,
-                                                               beta_req=requiredbeta)
-                    plt.savefig(directory + '\\' + 'figures' + '\\' + i.name + '\\Measures\\' + mech + '_' + betaind + '.png',
-                                bbox_inches='tight')
+                    AllSolutions[i.name].plotBetaTimeEuro(mechanism=mech, beta_ind=betaind, sectionname=i.name, beta_req=requiredbeta)
+                    plt.savefig(directory.joinpath('figures', i.name, 'Measures', mech + '_' + betaind + '.png'), bbox_inches='tight')
                     plt.close(1001)
+
         print('Finished making beta plots')
 
-    for i in TestCase.Sections:
-        TestCaseSolutions[i.name].SolutionstoDataFrame(filtering='off')
+    if timing == 1:
+        end = time.time()
 
-    if timing == 1: end = time.time()
-    if timing == 1: print("Time elapsed: " + str(end - start) + ' seconds')
-    if timing == 1: start = time.time()
+    if timing == 1:
+        print("Time elapsed: " + str(end - start) + ' seconds')
+
+    if timing == 1:
+        start = time.time()
+
     if shelves == 1:
         # Store intermediate results:
-        filename = directory + '\\AfterStep2.out'
+        filename = directory.joinpath('AfterStep2.out')
         #
         # make shelf
-        my_shelf = shelve.open(filename, 'n')
+        my_shelf = shelve.open(str(filename), 'n')
         my_shelf['TestCase'] = locals()['TestCase']
-        my_shelf['TestCaseSolutions'] = locals()['TestCaseSolutions']
+        my_shelf['AllSolutions'] = locals()['AllSolutions']
         my_shelf.close()
 
     ## STEP 3: EVALUATE THE STRATEGIES
-    Strategies = []
+    AllStrategies = []
+
     for i in types:
         if i == 'TC':
             # Initialize a strategy type (i.e combination of objective & constraints)
             TestCaseStrategyTC = Strategy('TC')
             # Combine available measures
-            TestCaseStrategyTC.combine(TestCase, TestCaseSolutions, filtering='off')
-            if timing == 1: end = time.time()
-            if timing == 1: print('Combine step for TC')
-            if timing == 1: print("Time elapsed: " + str(end - start) + ' seconds')
+            TestCaseStrategyTC.combine(TestCase, AllSolutions, filtering='off')
+            if timing == 1:
+                end = time.time()
+
+            if timing == 1:
+                print('Combine step for TC')
+
+            if timing == 1:
+                print("Time elapsed: " + str(end - start) + ' seconds')
+
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            TestCaseStrategyTC.evaluate(TestCase, TestCaseSolutions)
+            TestCaseStrategyTC.evaluate(TestCase, AllSolutions)
 
             # plot beta time for all measure steps for each strategy
             TestCaseStrategyTC.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
+
             # plot beta costs for t=0
             plt.figure(101, figsize=(20, 10))
             TestCaseStrategyTC.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
             plt.close(101)
+
             # plot beta costs for t=50
             plt.figure(102, figsize=(20, 10))
-            TestCaseStrategyTC.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101,
-                                             horizon=np.max(years))
-            TestCaseStrategyTC = replaceNames(TestCaseStrategyTC, TestCaseSolutions)
+            TestCaseStrategyTC.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
+            TestCaseStrategyTC = replaceNames(TestCaseStrategyTC, AllSolutions)
             plt.close(102)
 
             # write to csv's
-            for i in TestCaseStrategyTC.options: TestCaseStrategyTC.options[i].to_csv(
-                directory + '\\results\\' + i + '_Options_TC.csv')
-            TestCaseStrategyTC.TakenMeasures.to_csv(directory + '\\results\\' + 'TakenMeasures_TC.csv')
+            for j in TestCaseStrategyTC.options:
+                TestCaseStrategyTC.options[j].to_csv(directory.joinpath('results', j + '_Options_TC.csv'))
 
-            Strategies.append(TestCaseStrategyTC)
+            TestCaseStrategyTC.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_TC.csv'))
+            AllStrategies.append(TestCaseStrategyTC)
 
         elif i == 'OI':
             # Initialize a strategy type (i.e combination of objective & constraints)
             TestCaseStrategyOI = Strategy('OI')
             # Combine available measures
-            TestCaseStrategyOI.combine(TestCase, TestCaseSolutions, filtering='off',OI_year=OI_year)
-            if timing == 1: end = time.time()
-            if timing == 1: print('Combine step for OI')
-            if timing == 1: print("Time elapsed: " + str(end - start) + ' seconds')
+            TestCaseStrategyOI.combine(TestCase, AllSolutions, filtering='off', OI_year=OI_year)
+            if timing == 1:
+                end = time.time()
+
+            if timing == 1:
+                print('Combine step for OI')
+
+            if timing == 1:
+                print("Time elapsed: " + str(end - start) + ' seconds')
+
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            TestCaseStrategyOI.evaluate(TestCase, TestCaseSolutions,OI_year=OI_year)
-            Strategies.append(TestCaseStrategyOI)
+            TestCaseStrategyOI.evaluate(TestCase, AllSolutions, OI_year=OI_year)
 
             # plot beta time for all measure steps for each strategy
             TestCaseStrategyOI.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
+
             # plot beta costs for t=0
             plt.figure(101, figsize=(20, 10))
             TestCaseStrategyOI.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
             plt.close(101)
+
             # plot beta costs for t=50
             plt.figure(102, figsize=(20, 10))
-            TestCaseStrategyOI.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101,
-                                             horizon=np.max(years))
-            TestCaseStrategyOI = replaceNames(TestCaseStrategyOI, TestCaseSolutions)
+            TestCaseStrategyOI.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
+            TestCaseStrategyOI = replaceNames(TestCaseStrategyOI, AllSolutions)
             plt.close(102)
+
             # write to csv's
-            for i in TestCaseStrategyOI.options: TestCaseStrategyOI.options[i].to_csv(
-                directory + '\\results\\' + i + '_Options_OI.csv')
-            TestCaseStrategyOI.TakenMeasures.to_csv(directory + '\\results\\' + 'TakenMeasures_OI.csv')
+            for j in TestCaseStrategyOI.options:
+                TestCaseStrategyOI.options[j].to_csv(directory.joinpath('results', j + '_Options_OI.csv'))
 
-
+            TestCaseStrategyOI.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_OI.csv'))
+            AllStrategies.append(TestCaseStrategyOI)
 
     if shelves == 1:
         # Store final results
-        filename = directory + '\\FINALRESULT.out'
+        filename = directory.joinpath('FINALRESULT.out')
 
         # make shelf
-        my_shelf = shelve.open(filename, 'n')
+        my_shelf = shelve.open(str(filename), 'n')
         my_shelf['TestCase'] = locals()['TestCase']
-        my_shelf['TestCaseSolutions'] = locals()['TestCaseSolutions']
-        if 'TC' in types: my_shelf['TestCaseStrategyTC'] = locals()['TestCaseStrategyTC']
-        if 'OI' in types: my_shelf['TestCaseStrategyOI'] = locals()['TestCaseStrategyOI']
+        my_shelf['AllSolutions'] = locals()['AllSolutions']
+        my_shelf['AllStrategies'] = locals()['AllStrategies']
+
         my_shelf.close()
 
-    return Strategies, TestCaseSolutions
+    return AllStrategies, AllSolutions
 
-def getMeasureTable(Solutions):
-    OverallMeasureTable = pd.DataFrame([],columns=['ID','Name'])
-    for i in Solutions:
-        OverallMeasureTable = pd.concat([OverallMeasureTable,Solutions[i].MeasureTable])
+def getMeasureTable(AllSolutions):
+    OverallMeasureTable = pd.DataFrame([], columns=['ID', 'Name'])
+
+    for i in AllSolutions:
+        OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].MeasureTable])
+
     OverallMeasureTable = OverallMeasureTable.drop_duplicates(subset='ID')
     return OverallMeasureTable
 
-
-def runNature(strategy,nature,traject,nature_solutions,directory = None, shelves = 1):
+def runNature(strategy, nature, traject, nature_solutions, directory=None, shelves=1):
     MeasureTable = getMeasureTable(nature_solutions)
     years = list(nature.Probabilities[0].columns)
-    nature_orig=copy.deepcopy(nature)
+    nature_orig = copy.deepcopy(nature)
     #Get the strategy from strategy and put it in nature (TakenMeasures) This is the strategy
     nature.TakenMeasures = strategy
     new_Probabilities = []

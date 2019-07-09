@@ -4,11 +4,12 @@
 import numpy as np
 from scipy import interpolate
 from scipy.stats import norm
-def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode = 'assessment', Pt = None, design_variable = None):
+
+def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None, design_variable=None):
     if mode == 'assessment':
-        if  q_c[0] != q_c[-1:]:
+        if q_c[0] != q_c[-1:]:
             beta_hc = interpolate.interp2d(h_c, q_c, beta, kind='linear', fill_value='extrapolate')
-            beta = np.min([beta_hc(h_crest,q_crest), 8.])
+            beta = np.min([beta_hc(h_crest, q_crest), 8.])
         else:
             beta_hc = interpolate.interp1d(h_c, beta, kind='linear', fill_value='extrapolate')
             beta = np.min([beta_hc(h_crest), 8.])
@@ -17,22 +18,22 @@ def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode = 'assessment', Pt = N
     elif mode == 'design':
         beta_t = -norm.ppf(Pt)
         if design_variable == 'h_crest':
-            if  q_c[0] != q_c[-1:]:
+            if q_c[0] != q_c[-1:]:
                 beta_hc = interpolate.interp2d(beta, q_c, h_c, kind='linear', fill_value='extrapolate')
-                h_crest = beta_hc(beta_t,q_crest)
+                h_crest = beta_hc(beta_t, q_crest)
             else:
                 beta_hc = interpolate.interp1d(beta, h_c, kind='linear', fill_value='extrapolate')
                 h_crest = beta_hc(beta_t)
             return h_crest, beta_t
         pass
-def LSF_heave(r_exit,h,h_exit,d_cover,kwelscherm):
+
+def LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm):
     #lambd,h,h_b,d,i_ch
-    if isinstance(kwelscherm,str):
+    if isinstance(kwelscherm, str):
         if kwelscherm == 'Ja':
             kwelscherm = 1
         elif kwelscherm == 'Nee':
             kwelscherm = 0
-
 
     #For semiprob
     if d_cover <= 0:      #geen deklaag = heave treedt altijd op
@@ -49,26 +50,28 @@ def LSF_heave(r_exit,h,h_exit,d_cover,kwelscherm):
     g_h = i_c - i
     return g_h, i, i_c
 
-def LSF_sellmeijer(h,h_exit,d_cover,L,D,d70,k, mPiping):
-    delta_h_c = mPiping * sellmeijer2017(L,D,d70,k);    # Critical head difference (resistance):
+def LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping):
+    delta_h_c = mPiping * sellmeijer2017(L, D, d70, k)  # Critical head difference (resistance):
     delta_h = h - h_exit - 0.3 * d_cover                                # Head difference (load)
     g_p = delta_h_c - delta_h                                                                 # Resistance minus load (incl. model factors)
-    if delta_h<0:
+    if delta_h < 0:
         delta_h = 0
+
     return g_p, delta_h, delta_h_c
 
-def LSF_uplift(r_exit,h,h_exit,d_cover,gamma_sat):
+def LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
     gamma_w = 9.81
     #lambd,h,h_b,d,gamma_sat,m_u
     m_u = 1.
     if d_cover <= 0:                          #no cover layer so no uplift
         dh_c = 0
     else:
-        dh_c= d_cover * (gamma_sat - gamma_w) / gamma_w;
+        dh_c = d_cover * (gamma_sat - gamma_w) / gamma_w
     # print(dh_c)
     dh = (h - h_exit) * r_exit
-    g_u = m_u * dh_c - dh;  # Limit State Function
+    g_u = m_u * dh_c - dh # Limit State Function
     return g_u, dh, dh_c
+
 def sellmeijer2017(L,D,d70,k):
 
     #L     - Seepage Length (48)
@@ -89,18 +92,18 @@ def sellmeijer2017(L,D,d70,k):
     # F1        = 1.65 * eta * np.tan(theta/180*np.pi) * (RD/RDm)**0.35;
     # F2        = d70m / (nu / 9.81 * k * L) ** (1/3) * (d70/d70m) ** 0.39;
     # F3        = 0.91 * (D/L)**(0.28/(((D/L)**2.8)-1)+0.04);
-    if D==L:
+    if D == L:
         Fgeometry = 1
     else:
-        Fgeometry = 0.91 * (D / L) ** (0.28 / (((D / L) ** 2.8) - 1) + 0.04);
+        Fgeometry = 0.91 * (D / L) ** (0.28 / (((D / L) ** 2.8) - 1) + 0.04)
 
     delta_h_c = Fres * Fscale * Fgeometry * L
     # delta_h_c = F1 * F2 * F3 * L;
     return delta_h_c
 
-def zUplift(inp,mode='Prob'):
+def zUplift(inp, mode='Prob'):
     #if it is a dictionary: split according to names
-    if isinstance(inp,dict):
+    if isinstance(inp, dict):
         D = inp['D']; d_cover = inp['d_cover']; h_exit = inp['h_exit']; r_exit = inp['r_exit']
         L = inp['Lvoor']+inp['Lachter']; d70 = inp['d70']; k = inp['k']; gamma_sat = inp['gamma_sat']
         kwelscherm = inp['kwelscherm']; mPiping = 1.
@@ -109,24 +112,24 @@ def zUplift(inp,mode='Prob'):
     #with ageing & water level change:
     else:
         if len(inp) == 13:
-            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
-            h_exit = h_exit-dh_exit
-            h=h+dh    #with ageing:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h, dh = inp
+            h_exit = h_exit - dh_exit
+            h = h + dh    #with ageing:
         if len(inp) == 12:
             D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
-            h_exit = h_exit-dh_exit
+            h_exit = h_exit - dh_exit
         #without ageing:
         elif len(inp) == 11:
             D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
-    g_u, dh_u, dhc_u = LSF_uplift(r_exit,h,h_exit,d_cover,gamma_sat)
-    if mode=='Prob':
+    g_u, dh_u, dhc_u = LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
+    if mode == 'Prob':
         return [g_u]
     else:
         return g_u, dh_u, dhc_u
 
-def zHeave(inp,mode='Prob'):
+def zHeave(inp, mode='Prob'):
     #if it is a dictionary: split according to names
-    if isinstance(inp,dict):
+    if isinstance(inp, dict):
         D = inp['D']; d_cover = inp['d_cover']; h_exit = inp['h_exit']; r_exit = inp['r_exit']
         L = inp['Lvoor']+inp['Lachter']; d70 = inp['d70']; k = inp['k']; gamma_sat = inp['gamma_sat']
         kwelscherm = inp['kwelscherm']; mPiping = 1.
@@ -135,23 +138,25 @@ def zHeave(inp,mode='Prob'):
     #with ageing & water level change:
     else:
         if len(inp) == 13:
-            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
-            h_exit = h_exit-dh_exit
-            h=h+dh    #with ageing:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h, dh = inp
+            h_exit = h_exit - dh_exit
+            h = h + dh    #with ageing:
         if len(inp) == 12:
             D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
-            h_exit = h_exit-dh_exit
+            h_exit = h_exit - dh_exit
         #without ageing:
         elif len(inp) == 11:
             D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
-    g_h, i, i_c = LSF_heave(r_exit,h,h_exit,d_cover,kwelscherm)
-    if mode=='Prob':
+
+    g_h, i, i_c = LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm)
+    if mode == 'Prob':
         return [g_h]
     else:
         return g_h, i, i_c
-def zPiping(inp,mode='Prob'):
+
+def zPiping(inp, mode='Prob'):
     #if it is a dictionary: split according to names
-    if isinstance(inp,dict):
+    if isinstance(inp, dict):
         D = inp['D']; d_cover = inp['d_cover']; h_exit = inp['h_exit']; r_exit = inp['r_exit']
         L = inp['Lvoor']+inp['Lachter']; d70 = inp['d70']; k = inp['k']; gamma_sat = inp['gamma_sat']
         kwelscherm = inp['kwelscherm']; mPiping = 1. #inp['mPiping']
@@ -160,17 +165,17 @@ def zPiping(inp,mode='Prob'):
     #with ageing & water level change:
     else:
         if len(inp) == 13:
-            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
-            h_exit = h_exit-dh_exit
-            h=h+dh    #with ageing:
+            D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h, dh = inp
+            h_exit = h_exit - dh_exit
+            h = h + dh    #with ageing:
         if len(inp) == 12:
             D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
-            h_exit = h_exit-dh_exit
+            h_exit = h_exit - dh_exit
         #without ageing:
         elif len(inp) == 11:
             D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
 
-    g_p, dh_p, dhc_p = LSF_sellmeijer(h,h_exit,d_cover,L,D,d70,k,mPiping)
+    g_p, dh_p, dhc_p = LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
     if mode == 'Prob':
         return [g_p]
     else:
@@ -179,34 +184,34 @@ def zPiping(inp,mode='Prob'):
 def zPipingTotal(inp):
     #with ageing & water level change:
     if len(inp) == 13:
-        D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h ,dh= inp
-        h_exit = h_exit-dh_exit
-        h=h+dh
+        D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h, dh = inp
+        h_exit = h_exit - dh_exit
+        h = h + dh
     #with ageing:
     if len(inp) == 12:
         D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, dh_exit, h = inp
-        h_exit = h_exit-dh_exit
+        h_exit = h_exit - dh_exit
     #without ageing:
     elif len(inp) == 11:
         D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
     # r_exit, h, h_exit,d,i_ch, gamma_sat,m_u,L,D,theta,d70,k,m_p = inp
 
-    g_h, i, i_c = LSF_heave(r_exit,h,h_exit,d_cover,kwelscherm)
-    g_p, dh_p, dhc_p = LSF_sellmeijer(h,h_exit,d_cover,L,D,d70,k,mPiping)
-    g_u, dh_u, dhc_u = LSF_uplift(r_exit,h,h_exit,d_cover,gamma_sat)
-    z_piping = max(g_p,g_u,g_h)
+    g_h, i, i_c = LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm)
+    g_p, dh_p, dhc_p = LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
+    g_u, dh_u, dhc_u = LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
+    z_piping = max(g_p, g_u, g_h)
     #import pdb; pdb.set_trace()
     return [z_piping]
 
 def zOverflow(inp):
     if len(inp) == 4:
-        h_c,dh_c,h,dh = inp
-        h=h+dh
+        h_c, dh_c, h, dh = inp
+        h = h + dh
     #with ageing:
     elif len(inp) == 3:
         h_c, dh_c, h = inp
     elif len(inp) == 2:
         h_c, h = inp
         dh_c = 0
-    z = (h_c-dh_c)-h
+    z = (h_c - dh_c) - h
     return [z]
