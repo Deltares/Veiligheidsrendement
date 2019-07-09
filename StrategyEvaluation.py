@@ -32,13 +32,13 @@ class Solutions:
             self.MeasureTable.loc[i] = [str(self.Measures[i].parameters['ID']), self.Measures[i].parameters['Name']]
 
 
-    def evaluateSolutions(self,DikeSection,TrajectInfo,trange = [0,24,25,50,75,100], geometry_plot=False,plot_dir = None):
+    def evaluateSolutions(self,DikeSection,TrajectInfo,trange = [0,24,25,50,75,100], geometry_plot=False,plot_dir = None, preserve_slope = False):
         # Evaluate all the possible measures that are available:
         self.trange = trange
         removal = []
         for i in self.Measures:
             if self.Measures[i].parameters['available'] == 1:
-                self.Measures[i].evaluateMeasure(DikeSection, TrajectInfo, geometry_plot=geometry_plot, plot_dir = plot_dir)
+                self.Measures[i].evaluateMeasure(DikeSection, TrajectInfo, geometry_plot=geometry_plot, plot_dir = plot_dir, preserve_slope = preserve_slope)
             else:
                 removal.append(i)
         if len(removal) > 0 :
@@ -63,7 +63,7 @@ class Solutions:
                 typee = self.Measures[i].parameters['Type']
                 for j in range(0, len(self.Measures[i].measures)):
                     measure_in = []; reliability_in = []
-                    if typee == 'Soil reinforcement': designvars = ((self.Measures[i].measures[j]['dcrest'], self.Measures[i].measures[j]['dberm']))
+                    if typee == 'Soil reinforcement': designvars = [self.Measures[i].measures[j]['dcrest'], self.Measures[i].measures[j]['dberm']]
                     cost = self.Measures[i].measures[j]['Cost']
                     measure_in.append(str(self.Measures[i].parameters['ID'])); measure_in.append(typee); measure_in.append(self.Measures[i].parameters['Class']);
                     measure_in.append(self.Measures[i].parameters['year'])
@@ -186,7 +186,7 @@ class Measure:
         for i in range(0,len(inputs)):
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
                 self.parameters[inputs.index[i]] = inputs[i]
-    def evaluateMeasure(self,DikeSection,TrajectInfo, geometry_plot=False, plot_dir = None):
+    def evaluateMeasure(self,DikeSection,TrajectInfo, geometry_plot=False, plot_dir = None,preserve_slope = False):
 
         from HelperFunctions import createDir
 
@@ -207,8 +207,14 @@ class Measure:
                 bermrange = np.linspace(0., self.parameters['max_outward'], 1+(self.parameters['max_outward']/berm_step))
             elif self.parameters['Direction'] == 'inward':
                 bermrange = np.linspace(0., self.parameters['max_inward'], 1+(self.parameters['max_inward']/berm_step))
-            measures = [(x,y) for x in crestrange for y in bermrange]
-            slope_inner = 4; slope_outer = 3;
+            measures = [[x,y] for x in crestrange for y in bermrange]
+            if not preserve_slope:
+                slope_in = 4
+                slope_out = 3 #inner and outer slope
+            else:
+                slope_in = False
+                slope_out = False
+
             self.measures = []
             if self.parameters['StabilityScreen'] == 'yes':
                 self.parameters['Depth'] = DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'] + 1.
@@ -217,7 +223,7 @@ class Measure:
                 self.measures.append({})
                 self.measures[-1]['dcrest'] =j[0]
                 self.measures[-1]['dberm'] = j[1]
-                self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,slope_inner,slope_outer,self.parameters['Direction'],DikeSection.InitialGeometry,geometry_plot=geometry_plot, plot_dir = plot_dir)
+                self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,self.parameters['Direction'],DikeSection.InitialGeometry,geometry_plot=geometry_plot, plot_dir = plot_dir, slope_in = slope_in)
                 self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, reinf_pars = j, housing = DikeSection.houses, area_difference= area_difference)
                 self.measures[-1]['Reliability'] = SectionReliability()
                 self.measures[-1]['Reliability'].Mechanisms = {}
@@ -585,13 +591,29 @@ class Strategy:
         elif self.type == 'MultiInteger':
             pass
 
+    def filter(self,type='ParetoPerSection'):
+
+        if type == 'ParetoPerSection':
+            for i in self.options:
+                beta_section = np.array(self.options[i]['Section'])
+                t_orig = np.array(self.options['DV01']['Section'].keys())
+                tgrid = range(0,100)
+                betat = interp1d(t_orig,beta_section)
+                beta_new = betat(tgrid)
+                pf_section = norm.cdf(-beta_new)
+
+
+            pass
+
     def make_optimization_input(self, traject,solutions):
-        N = len(self.options)
-        T = np.max(traject.GeneralInfo['T'])
+        N = len(self.options)                               # Number of dike sections
+        T = np.max(traject.GeneralInfo['T'])                # Number of time steps
         S = 0
-        S = np.max([np.max([S, np.max(len(self.options[i]))]) for i in self.options.keys()])
+        S = np.max([np.max([S, np.max(len(self.options[i]))]) for i in self.options.keys()])        #Number of strategies (maximum for all dike sections)
         #split in measures for overflow and measures for geotechnical mechanisms
         # Soverflow & Sgeotechnical
+
+        # self.options_split = split_options(self.options)
 
 
         #probabilities [N,S,T]
@@ -634,11 +656,12 @@ class Strategy:
 
         #expected damage for overflow and for piping & slope stability
         self.RiskGeotechnical = (self.Pf['StabilityInner'] + self.Pf['Piping']) * np.tile(self.D.T,(N,S+1,1))
+
         self.RiskOverflow = self.Pf['Overflow'] *np.tile(self.D.T,(N,S+1,1))
+        self.Risk = np.add(self.RiskOverflow,self.RiskGeotechnical)
         #add a few general parameters
         self.opt_parameters = {'N':N, 'T':T, 'S':S+1}
     def create_optimization_model(self):
-        pass
         #make a model
         #enlist all the variables
         model = cplex.Cplex()
@@ -699,24 +722,28 @@ class Strategy:
             C1.append(curconstraint)
         A = A + C1
         senseV = "E"*len(C1)
-        b = b+[1.0]*self.opt_parameters['N']
+        # b = b+[1.0]*self.opt_parameters['N']
+        b = b+[1.0]*len(C1)
 
         print('constraint 1 implemented')
 
         # constraint 2: there is only 1 weakest section for overflow at any point in time
         C2 = list()
         for t in grT:
-            slist = Dint_nd[:,:,t].tolist()
+            # slist = Dint_nd[:,:,t].tolist()
+            slist = [Dint_nd[n,s,t] for n in grN for s in grS]
             nlist = [1.0] * (self.opt_parameters['N']*self.opt_parameters['S'])
             curconstraint = [slist,nlist]
             C2.append(curconstraint)
         A = A + C2
-        senseV = "E"*len(C2)
-        b = b+ [1.0]*(self.opt_parameters['N']*self.opt_parameters['S'])
+        senseV = senseV + "E"*len(C2)
+        b = b+ [1.0]*len(C2)
+        # b = b+ [1.0]*(self.opt_parameters['N']*self.opt_parameters['S'])
 
         print('constraint 2 implemented')
 
         #constraint 3: make sure that for overflow DY represents the weakest link
+        # TODO Split this for different mechanisms!
         C3 = list()
         import sys
         for t in grT:
@@ -754,12 +781,156 @@ class Strategy:
 
         print('constraint 3 implemented')
 
-        print()
+        print('binary constraints implemented in restriction of variables')
 
+        # Add constraints to model:
 
-
+        model.linear_constraints.add(lin_expr=A, senses=senseV, rhs=b)
 
         return model
+    def readResults(self, Model):
+        N = self.opt_parameters['N']
+        S = self.opt_parameters['S']
+        T = self.opt_parameters['T']
+        grN = range(N)
+        grS = range(S)
+        grT = range(T)
+        self.results = {}
+        xs = Model.solution.get_values()
+        ind = np.argwhere(xs)
+        varnames = Model.variables.get_names()
+        ones = np.array(varnames)[ind]
+
+        LCCTotal = 0
+        sections = ones[grN]
+        # test = str(sections[i][0])
+        measure = []
+        for i in grN:
+            measure.append((np.int(str(sections[i][0])[1:4]), np.int(str(sections[i][0])[4:7])))
+
+        LCCTotal = 0
+        sectionnames = list(self.options.keys())
+        sections = []
+        measurenames = []
+        params = []
+        LCC = []
+        for i in measure:
+            sections.append(sectionnames[i[0]])
+            measurenames.append(self.options[sectionnames[i[0]]].ix[i[1]-1]['type'])
+            params.append(self.options[sectionnames[i[0]]].ix[i[1]-1]['params'])
+            LCC.append(self.LCCOption[i[0], i[1]])
+            LCCTotal += self.LCCOption[i[0], i[1]]
+            print(self.LCCOption[i[0], i[1]])
+        TakenMeasures = pd.DataFrame({'Section': sections, 'type': measurenames, 'params': params, 'LCC':LCC}) #add year
+        self.results['TakenMeasures'] = TakenMeasures
+        pd.set_option('display.max_columns', None)  # prevents trailing elipses
+        print(TakenMeasures)
+        TakenMeasures.to_csv('TakenMeasures_MIP.csv')
+
+    def readResults_Fer(self, Model):
+        N = self.opt_parameters['N']
+        S = self.opt_parameters['S']
+        T = self.opt_parameters['T']
+
+        grN = range(N)
+        grS = range(S)
+        grT = range(T)
+
+        # -------------------------------------------------------------------------
+        #         read results
+        # ------------------------------------------------------------------------
+
+        TotalCost = Model.solution.get_objective_value()
+
+        print("Solution status = ", Model.solution.status[Model.solution.get_status()])
+        print("Solution value  = ", TotalCost)
+        print("number of variables: " + "{0:0=2d}".format(Model.variables.get_num()))
+        print("number of constraints: " + "{0:0=2d}".format(Model.linear_constraints.get_num()))
+
+        # values of all decision variables
+        xsol = Model.solution.get_values()
+
+        # make nd-matrices
+        solC_int = np.tile(np.nan, (N,S))
+        solD_int = np.tile(np.nan, (N,S,T))
+        count = 0
+        for n in grN:
+            for s in grS:
+                solC_int[n,s] = xsol[count]
+                count += 1
+        for n in grN:
+            for s in grS:
+                for t in grT:
+                    solD_int[n,s,t] = xsol[count]
+                    count += 1
+
+        self.results ={}
+        self.results['C_int'] = solC_int
+        self.results['D_int'] = solD_int
+
+        # -------------------------------------------------------------------------
+        #         verify cost function
+        # ------------------------------------------------------------------------
+
+        LCC = 0.0
+        for n in grN:
+            for s in grS:
+                LCC = LCC + solC_int[n,s] *self.LCCOption[n,s]
+
+        LCRisk = 0.0
+        for n in grN:
+            for s in grS:
+                for t in grT:
+                    LCRisk = LCRisk + solD_int[n,s,t] * self.Risk[n,s,t]
+
+        TotalCostCheck = LCC +LCRisk
+        Diff = TotalCostCheck - TotalCost
+        PercError = Diff / TotalCostCheck
+        if np.abs(PercError) < 1e-10:
+            print("Cost function check succesful")
+        else:
+            print(" ******  Cost function check unsuccesful")
+            print('LCC = ' + str(LCC))
+            print('LCR = ' + str(LCRisk))
+            print('TC  = ' + str(TotalCost))
+
+    def checkConstraintSatisfaction(self, Model):
+        N = self.opt_parameters['N']
+        S = self.opt_parameters['S']
+        T = self.opt_parameters['T']
+
+        grN = range(N)
+        grS = range(S)
+        grT = range(T)
+        # -------------------------------------------------------------------------
+        #         verify if constraints are satisfied
+        # ------------------------------------------------------------------------
+
+        AllConstraintsSatisfied = True
+
+        #C1
+        GG = np.tile(1.0, N)
+        for n in grN:
+            GG[n] = np.sum(self.results['C_int'][n,:])
+
+        if (GG==1).all():
+            print('constraint 1 satisfied')
+        else:
+            print('Warning: constraint 1 not satisfied')
+            AllConstraintsSatisfied = False
+        #C2
+        GG = np.tile(1.0, T)
+        for t in range(0, T):
+            GG[t] = sum(sum(self.results['D_int'][:, :, t]))
+
+        if (GG == 1).all():
+            print("constraint C2 satisfied")
+        else:
+            print(" ******  warning: constraint C2 not satisfied")
+            AllConstraintsSatisfied = False
+
+            #C3
+        pass
 
     def plotBetaTime(self,Traject, typ='single',fig_id = None,path = None, horizon = 100):
         step = 0
@@ -845,13 +1016,13 @@ class Strategy:
             if beta_or_prob == 'beta':
                 plt.ylabel(r'$\beta$')
                 plt.title('Total LCC versus ' + r'$\beta$' + ' in year ' + str(t + 2025))
-                plt.savefig(path + '\\' + 'figures' + '\\' + 'BetavsCosts' + self.type + '_' + str(t + 2025) + '.png',
+                plt.savefig(path + '\\BetavsCosts' + self.type + '_' + str(t + 2025) + '.png',
                             bbox_inches='tight')
 
             if beta_or_prob == 'prob':
                 plt.ylabel(r'Failure probability $P_f$')
                 plt.title('Total LCC versus ' + r'$P_f$' + ' in year ' + str(t + 2025))
-                plt.savefig(path + '\\' + 'figures' + '\\' + 'PfvsCosts' + self.type + '_' + str(t + 2025) + '.png',
+                plt.savefig(path + '\\PfvsCosts' + self.type + '_' + str(t + 2025) + '.png',
                             bbox_inches='tight')
 
             plt.close(101)
@@ -992,7 +1163,8 @@ class Strategy:
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
-def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initial,bermheight = 2,geometry_plot = False,plot_dir = None):
+def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geometry_plot = False,plot_dir = None, slope_in = False):
+
 
     if len(initial) == 6:
         bermheight = initial.ix[2]['z']
@@ -1041,7 +1213,7 @@ def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initia
         if geometry_plot:
             plt.plot(new_geometry[:, 0], new_geometry[:, 1], '--r')
     elif direction == 'inward':
-
+        # set slope to existing
         new_geometry = copy.deepcopy(geometry)
         # we start at the outer toe so reverse:
         for i in reversed(range(0,len(new_geometry)-1)):
@@ -1057,8 +1229,13 @@ def DetermineNewGeometry(geometry_change, slope_in, slope_out, direction, initia
                 elif geometry[i][1] == bermheight:
                     new_geometry[i][0] = new_geometry[i + 1][0] - np.abs(geometry[i + 1][0] - geometry[i][0]) - dberm
                     new_geometry[i][1] = bermheight
-            elif slope < 0:  # This is the inner slope
-                new_geometry[i][0] = new_geometry[i + 1][0] - (new_geometry[i + 1][1] - new_geometry[i][1]) * slope_in
+            elif slope < 0:
+                if slope_in: # This is the inner slope
+                    new_geometry[i][0] = new_geometry[i + 1][0] - (new_geometry[i + 1][1] - new_geometry[i][1]) * slope_in
+                else:
+                    slope_in = (geometry[i + 1][0] - geometry[i][0])/(geometry[i + 1][1] - geometry[i][1])
+                    new_geometry[i][0] = new_geometry[i + 1][0] - (new_geometry[i + 1][1] - new_geometry[i][1]) * slope_in
+
         if dberm >0 and len(geometry) == 4:     #add a berm if the points dont exist yet
             x1 = new_geometry[0][0] + (bermheight*slope_in)
             x2 = x1 - dberm
@@ -1316,3 +1493,18 @@ def ImplementOption(section,TrajectProbability,newProbability):
         TrajectProbability.loc[(section,i)] = newProbability[i]
     return TrajectProbability
 
+def split_options(options):
+    options_height = {}
+    options_geotechnical = {}
+    for i in options:
+        for j in options[i].index:
+            if isinstance(options[i].ix[j],str):
+                pass
+            else:
+                pass
+                #loop over list of 2 strings
+
+def SolveMIP(MIPModel):
+
+    MultiIntegerSolution = MIPModel.solve()
+    return MultiIntegerSolution

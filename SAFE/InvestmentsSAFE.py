@@ -101,7 +101,7 @@ for i in setting:
 #This piece makes sort of a 'movie' of all reinforcement steps:
 # if not 'TC' in os.listdir(pad + '\\Case_' + casename): os.makedirs(pad + '\\Case_' + casename + '\\TC')
 # if not 'OI' in os.listdir(pad + '\\Case_' + casename): os.makedirs(pad + '\\Case_' + casename + '\\OI')
-# TestCaseStrategyTC.plotInvestmentSteps(TestCase, path= pad + '\\Case_' + casename + '\\TC',figure_size = (6,4))
+TestCaseStrategyTC.plotInvestmentSteps(TestCase, path= pad + '\\Case_' + casename + '\\TC',figure_size = (6,4))
 # TestCaseStrategyOI.plotInvestmentSteps(TestCase, path= pad + '\\Case_' + casename + '\\OI',figure_size = (6,4))
 
 ## write a LOG of all probabilities for all steps:
