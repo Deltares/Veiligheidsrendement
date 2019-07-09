@@ -131,7 +131,7 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
 
 
 # this is sort of the main script for any calculation for SAFE. It contains all the required steps:
-def runFullModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
+def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 'StabilityInner', 'Piping'], years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=0, shelves=1, types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=None, t_start=2025, OI_year=0):
     if timing == 1:
         start = time.time()
 
@@ -167,7 +167,7 @@ def runFullModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'Stabil
         plt.close()
 
     # plot reliability and failure probability for entire traject:
-   figsize = (8, 4)
+    figsize = (8, 4)
     TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='beta', outputcsv=True, first=False, last=True)
     TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='prob', first=False, last=True)
 
@@ -206,7 +206,7 @@ def runFullModel(TestCase, run_number, base_dir, mechanisms=['Overflow', 'Stabil
         AllSolutions[i.name] = Solutions(i)
         AllSolutions[i.name].fillSolutions(path.joinpath(i.name + '.xlsx'))
         AllSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot=False, trange=years, plot_dir=directory.joinpath('figures', i.name))
-        #NB: geometry_plot = 'on' plots the soil reinforcement geometry, but costs a lot of time!
+        #NB: geometry_plot = True plots the soil reinforcement geometry, but costs a lot of time!
 
     print('Finished step 2: evaluation of measures')
 

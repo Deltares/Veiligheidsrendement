@@ -19,7 +19,7 @@ def main():
     save_beta_measure_plots = 0
     years0 = [0, 19, 20, 50, 75, 100]
     mechanisms = ['Overflow', 'StabilityInner', 'Piping']
-    path = Path(r'D:\SAFE\data\SAFE\SAFE_' + traject + '_geenLE_Kruindaling')
+    path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\SAFE_' + traject)
     language = 'NL'
 
     if timing == 1:
@@ -43,26 +43,21 @@ def main():
 #If you want to use intermediate data (from after step 2) you can uncomment the following snippet of code (and input it to runFullModel:
 #This could be programmed more neatly of course...
 
-    # filename = directory.joinpath('AfterStep2')
-    #
-    # my_shelf = shelve.open(filename)
-
+    # filename = directory.joinpath('AfterStep2.out')
+    # my_shelf = shelve.open(str(filename))
     # for key in my_shelf:
     #     locals()[key] = my_shelf[key]
-
     # my_shelf.close()
 
     AllStrategies, AllSolutions = runFullModel(TestCase, casename, path, directory, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots, language='NL', types=['TC', 'OI'], OI_year=0) #,TestCaseSolutions=TestCaseSolutions)
 
     #Same here: if you want to make plots based on existing results, uncomment the part underneath:
 
-    # #Open shelf
+    # # #Open shelf
     # filename = directory.joinpath('FINALRESULT.out')
     # my_shelf = shelve.open(str(filename))
-    #
     # for key in my_shelf:
     #     locals()[key] = my_shelf[key]
-    #
     # my_shelf.close()
 
     #MAKING PLOTS:

@@ -40,7 +40,6 @@ class Solutions:
                 self.Measures[i].evaluateMeasure(DikeSection, TrajectInfo, geometry_plot=geometry_plot, plot_dir = plot_dir, preserve_slope = preserve_slope)
             else:
                 removal.append(i)
-        if len(removal) > 0 :
         if len(removal) > 0:
             for i in removal:
                 self.Measures.pop(i)
@@ -400,9 +399,11 @@ class Strategy:
             IDs = np.unique(combinedmeasures['ID'].values)
             if len(IDs) > 0:
                 for ij in IDs:
-                    name = solutions[traject.Sections[i].name].MeasureTable.loc[solutions[traject.Sections[i].name].MeasureTable['ID'] == ij[0]]['Name'].values + \
-                           '+' + solutions[traject.Sections[i].name].MeasureTable.loc[solutions[traject.Sections[i].name].MeasureTable['ID'] == ij[1]]['Name'].values
-                    solutions[traject.Sections[i].name].MeasureTable.loc[len(solutions[traject.Sections[i].name].MeasureTable) + 1] = ['+'.join(ij), str(name[0])]
+                    if ij not in existingIDs:
+                        name = solutions[traject.Sections[i].name].MeasureTable.loc[solutions[traject.Sections[i].name].MeasureTable['ID'] == ij[0]]['Name'].values + \
+                               '+' + solutions[traject.Sections[i].name].MeasureTable.loc[solutions[traject.Sections[i].name].MeasureTable['ID'] == ij[1]]['Name'].values
+                        solutions[traject.Sections[i].name].MeasureTable.loc[len(solutions[traject.Sections[
+                            i].name].MeasureTable) + 1] = ij
 
             StrategyData = copy.deepcopy(solutions[traject.Sections[i].name].MeasureData)
             if self.type == 'OI' and isinstance(OI_year,int):
@@ -1287,7 +1288,6 @@ def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geom
     if direction == 'outward':
         print("WARNING: outward reinforcement is NOT UP TO DATE!!!!")
         new_geometry = copy.deepcopy(geometry)
-        for i in range(0,len(new_geometry)):
         for i in range(len(new_geometry)):
             #Run over points from the outside.
             if i > 0:
@@ -1443,7 +1443,7 @@ def MeasureCombinations(combinables, partials, solutions):
     for i, row1 in partials.iterrows():
     #combine with all combinables
         for j, row2 in combinables.iterrows():
-            ID = [row1['ID'].values[0], row2['ID'].values[0]]
+            ID = '+'.join((row1['ID'].values[0], row2['ID'].values[0]))
             types = [row1['type'].values[0], row2['type'].values[0]]
             year = [row1['year'].values[0], row2['year'].values[0]]
             params = [row1['params'].values[0], row2['params'].values[0]]
