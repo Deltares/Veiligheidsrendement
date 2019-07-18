@@ -7,9 +7,11 @@ from shutil import copyfile
 
 def main():
     traject = '16-3'
-    path = Path('D:/SAFE/data/InputFiles/SAFEInput')
-    path_WLRise_HBNRise = Path('D:/SAFE/data/HBN sommen/HBN HKV')
-    filename = 'Dijkvakindeling_v4.8.xlsx'
+    path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
+                r'SAFE\WJKlerk\SAFE\data\InputFiles\SAFEInput')
+    path_WLRise_HBNRise = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
+                r'SAFE\WJKlerk\SAFE\data\InputFiles\SAFEInput\HBN HKV')
+    filename = 'Dijkvakindeling_v4.7.xlsx'
     filename_WLRise_HBNRise = 'Resultaten_OI2014v4_BeleidsmatigeAfvoerverdeling_20180430.xlsx'
 
     #Open en read data

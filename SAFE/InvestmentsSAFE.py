@@ -7,7 +7,8 @@ import pandas as pd
 import shelve
 import time
 from DikeClasses import DikeTraject
-from HelperFunctions import runFullModel, getMeasureTable
+from HelperFunctions import getMeasureTable
+from RunModel import runFullModel
 from pathlib import Path
 from scipy.stats import norm
 from StrategyEvaluation import calcTrajectProb
@@ -19,7 +20,8 @@ def main():
     save_beta_measure_plots = 0
     years0 = [0, 19, 20, 50, 75, 100]
     mechanisms = ['Overflow', 'StabilityInner', 'Piping']
-    path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\SAFE_' + traject)
+    path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
+                r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
     language = 'NL'
 
     if timing == 1:

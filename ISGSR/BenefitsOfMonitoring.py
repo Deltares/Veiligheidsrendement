@@ -8,7 +8,8 @@
 import matplotlib.pyplot as plt
 from DikeClasses import DikeSection, LoadInput, MechanismReliabilityCollection, DikeTraject
 from StrategyEvaluation import Solutions, Strategy
-from HelperFunctions import calc_r_exit, adaptInput, runModel, runNature
+from HelperFunctions import calc_r_exit, adaptInput
+from RunModel import runFullModel runNature
 import os
 from scipy.stats import norm
 import numpy as np
