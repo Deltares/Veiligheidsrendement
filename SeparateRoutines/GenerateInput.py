@@ -6,27 +6,31 @@ from pathlib import Path
 from shutil import copyfile
 
 def main():
-    traject = '16-3'
+    traject = 'Test'
     path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\InputFiles\SAFEInput')
-    path_WLRise_HBNRise = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\InputFiles\SAFEInput\HBN HKV')
-    filename = 'Dijkvakindeling_v4.7.xlsx'
-    filename_WLRise_HBNRise = 'Resultaten_OI2014v4_BeleidsmatigeAfvoerverdeling_20180430.xlsx'
+                r'SAFE\WJKlerk\SAFE\data\InputFiles\OptimizationTestCase')
+    filename = 'Dijkvakindeling_v4.2_Optimalisatie.xlsx'
+    path_WLRise_HBNRise = False
+    #Comment this out if it has to be read from the
+    # path_WLRise_HBNRise = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
+    #             r'SAFE\WJKlerk\SAFE\data\InputFiles\SAFEInput\HBN HKV')
+    # filename_WLRise_HBNRise = 'Resultaten_OI2014v4_BeleidsmatigeAfvoerverdeling_20180430.xlsx'
 
     #Open en read data
     df = pd.read_excel(path.joinpath(filename), sheet_name=None)
-    df_WL = pd.read_excel(path_WLRise_HBNRise.joinpath(filename_WLRise_HBNRise), sheet_name='Overzicht_Werkelijk', header=1, usecols='A, G:L')
-    df_WL['Dijkpaal'] = df_WL['Dijkpaal'].str.replace('.', '')
-    df_HBN = pd.read_excel(path_WLRise_HBNRise.joinpath(filename_WLRise_HBNRise), sheet_name='Overzicht_Werkelijk', header=1, usecols='A, AF:AK')
-    df_HBN['Dijkpaal'] = df_HBN['Dijkpaal'].str.replace('.', '')
+
+    if path_WLRise_HBNRise:
+        df_WL = pd.read_excel(path_WLRise_HBNRise.joinpath(filename_WLRise_HBNRise), sheet_name='Overzicht_Werkelijk', header=1, usecols='A, G:L')
+        df_WL['Dijkpaal'] = df_WL['Dijkpaal'].str.replace('.', '')
+        df_HBN = pd.read_excel(path_WLRise_HBNRise.joinpath(filename_WLRise_HBNRise), sheet_name='Overzicht_Werkelijk', header=1, usecols='A, AF:AK')
+        df_HBN['Dijkpaal'] = df_HBN['Dijkpaal'].str.replace('.', '')
+
     DikeSections = df['Dijkvakindeling_keuze_info'].rename(columns=df['Dijkvakindeling_keuze_info'].iloc[0]).drop(df['Dijkvakindeling_keuze_info'].index[0])
     DikeSections = DikeSections[((DikeSections['Traject'] == traject) & (DikeSections['Wel of niet meerekenen'] == 1))].reset_index(drop=True)
     STBI_data = df['Info voor STBI'].iloc[:, [1, 6, 7, 8, 9]]
     Piping_data = df['Info voor Piping'].iloc[:, [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
     Housing = df['Info voor huizen'].iloc[:, [0, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
     measures = pd.read_csv(path.joinpath(traject, 'Input/measures.csv'), delimiter=';')
-    crestlevels = pd.read_excel(path.joinpath(traject, 'Input/InputLocationsHBN.xlsx'), sheet_name=traject, usecols="C, G")
 
     General = {}
     General['Name'] = ['Length', 'Start', 'End', 'Overflow', 'StabilityInner', 'Piping', 'LoadData', 'YearlyWLRise', 'HBNRise_factor']
@@ -39,27 +43,36 @@ def main():
         path.joinpath(traject, 'Output/Overflow').mkdir(parents=True, exist_ok=True)
         path.joinpath(traject, 'Output/Toetspeil').mkdir(parents=True, exist_ok=True)
 
+    if path_WLRise_HBNRise:
+        for i in DikeSections.index:
+            df_YearlyWLRise = df_WL[df_WL['Dijkpaal'] == DikeSections['Dwarsprofiel HoogteToetspeil'][i]]
+            YearlyWLRise_factor = float((df_YearlyWLRise[2125].values - df_YearlyWLRise[2015].values) / (2125 - 2015))
+            df_HBNRise_factor = df_HBN[df_HBN['Dijkpaal'] == DikeSections['Dwarsprofiel HoogteToetspeil'][i]]
+            HBNRise_factor = float((df_HBNRise_factor[2125].values - df_HBNRise_factor[2015].values) / (2125 - 2015)) / YearlyWLRise_factor
+
+            #Write YearlyWLRise and HBNRise factors to mastersheet
+            wb = load_workbook(path.joinpath(filename))
+            ws = wb.get_sheet_by_name('Dijkvakindeling_keuze_info')
+
+            for row in range(ws.max_row):
+                if ws[row + 1][9].value == DikeSections['Dwarsprofiel HoogteToetspeil'][i]:
+                    ws.cell(row=row + 1, column=14).value = YearlyWLRise_factor
+                    ws.cell(row=row + 1, column=15).value = HBNRise_factor
+                else:
+                    pass
+
+            wb.save(path.joinpath(filename))
+
     for i in DikeSections.index:
-        df_YearlyWLRise = df_WL[df_WL['Dijkpaal'] == DikeSections['Dwarsprofiel HoogteToetspeil'][i]]
-        YearlyWLRise_factor = float((df_YearlyWLRise[2125].values - df_YearlyWLRise[2015].values) / (2125 - 2015))
-        df_HBNRise_factor = df_HBN[df_HBN['Dijkpaal'] == DikeSections['Dwarsprofiel HoogteToetspeil'][i]]
-        HBNRise_factor = float((df_HBNRise_factor[2125].values - df_HBNRise_factor[2015].values) / (2125 - 2015)) / YearlyWLRise_factor
-
-        #Write YearlyWLRise and HBNRise factors to mastersheet
-        wb = load_workbook(path.joinpath(filename))
-        ws = wb.get_sheet_by_name('Dijkvakindeling_keuze_info')
-
-        for row in range(ws.max_row):
-            if ws[row + 1][9].value == DikeSections['Dwarsprofiel HoogteToetspeil'][i]:
-                ws.cell(row=row + 1, column=14).value = YearlyWLRise_factor
-                ws.cell(row=row + 1, column=15).value = HBNRise_factor
-            else:
-                pass
-
-        wb.save(path.joinpath(filename))
-
         HBN_basis = pd.read_csv(path.joinpath(traject, 'Input/base_HBN.csv'), delimiter=';')
-        General['Value'] = [DikeSections['Lengte dijkvak'][i], DikeSections['Van'][i], DikeSections['Tot'][i], 'Overflow/' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv', 'StabilityInner/' + DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv', 'Piping/' + DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv', 'DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt', YearlyWLRise_factor, HBNRise_factor]
+
+        General['Value'] = [DikeSections['Lengte dijkvak'][i], DikeSections['Van'][i], DikeSections['Tot'][i],
+                            'Overflow/' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv',
+                            'StabilityInner/' + DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv',
+                            'Piping/' + DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv', 'DESIGNTABLE_' +
+                            DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt',
+                            DikeSections['Waterstandstijging'][i],
+                            DikeSections['HBN factor'][i]]
         profile = pd.read_csv(path.joinpath(traject, 'Input/profiles', DikeSections['Dwarsprofiel Geometrie'][i] + '.csv'), index_col=0)
         toExcel = pd.DataFrame.from_dict(General)[['Name', 'Value', 'Type']]
         houses_data_location = Housing[((Housing['Naam dijkvak'] == DikeSections['dv_nummer'][i]) & (Housing['Naam traject'] == traject))].transpose().drop(['Naam traject', 'Naam dijkvak'], axis=0).reset_index()

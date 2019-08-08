@@ -41,12 +41,14 @@ class DikeTraject:
             self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
             self.GeneralInfo['omegaOverflow'] = 0.24
 
-    def ReadAllTrajectInput(self, path, directory, traject, T, startyear, mechanisms=['Overflow', 'StabilityInner', 'Piping']):
+    def ReadAllTrajectInput(self, path, directory, T, startyear,traject='16-4', mechanisms=['Overflow',
+                                                                                           'StabilityInner',
+                                                                                     'Piping']):
         #Make a case directory and inside a figures and results directory if it doesnt exist yet
         if not path.joinpath(directory).is_dir():
-            directory.mkdir(parents=True, exist_ok=True)
-            directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
-            directory.joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
+            path.joinpath(directory).mkdir(parents=True, exist_ok=True)
+            path.joinpath(directory).joinpath('figures').mkdir(parents=True, exist_ok=True)
+            path.joinpath(directory).joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
 
         # Routine to read the input for all sections based on the default input format.
         files = [i for i in path.glob("*DV*") if i.is_file()]
@@ -67,12 +69,13 @@ class DikeTraject:
                 self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1], years=T)
 
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
-                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(path.joinpath(self.Sections[i].MechanismData[j][0]), calctype=self.Sections[i].MechanismData[j][1], mechanism=j)
+                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(path.joinpath(
+                        self.Sections[i].MechanismData[j][0]), calctype=self.Sections[i].MechanismData[j][1], mechanism=j)
 
             #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
-            if not path.joinpath(directory.joinpath('figures', self.Sections[i].name)).is_dir():
-                directory.joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
-                directory.joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
+            if not path.joinpath(directory).joinpath('figures', self.Sections[i].name).is_dir():
+                path.joinpath(directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
+                path.joinpath(directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
 
         self.GeneralInfo['Mechanisms'] = mechanisms
 
@@ -238,9 +241,9 @@ class DikeTraject:
                 # plt.xlim([np.min(cumlength), np.max(cumlength)])
                 if PATH != None:
                     if type == 'Assessment':
-                        plt.savefig(PATH.joinpath('figures', beta_or_prob + '_' + str(startyear + ii) + '_Assessment.png'), dpi=300, bbox_inches='tight', format='png')
+                        plt.savefig(PATH.joinpath(beta_or_prob + '_' + str(startyear + ii) + '_Assessment.png'), dpi=300, bbox_inches='tight', format='png')
                     else:
-                        plt.savefig(PATH.joinpath('figures', str(startyear + ii) + '_Step=' + str(type) + '_' + beta_or_prob + '.png'), dpi=300, bbox_inches='tight', format='png')
+                        plt.savefig(PATH.joinpath(str(startyear + ii) + '_Step=' + str(type) + '_' + beta_or_prob + '.png'), dpi=300, bbox_inches='tight', format='png')
                     plt.close()
                 else:
                     plt.show()
@@ -271,7 +274,7 @@ class DikeTraject:
                      'k--', label='Requirement')
             plt.legend()
             plt.title(i.name)
-            plt.savefig(directory + '\\' + i.name + '.png', bbox_inches='tight')
+            plt.savefig(directory.joinpath(i.name + '.png'), bbox_inches='tight')
             plt.close()
 
     def updateProbabilities(self,Probabilities,ChangedSection):
@@ -405,9 +408,25 @@ class MechanismReliabilityCollection:
             else:
                 self.Reliability[str(i)] = MechanismReliability(mechanism, type)
 
-    def generateLCRProfile(self, load, mechanism='Overflow', method='FORM', trajectinfo=None, conditionality = 'no'):
+    def generateInputfromDistributions(self, distributions, parameters = ['R', 'dR', 'S'], processes = ['dR']):
+        processIDs = []
+        for process in processes:
+            processIDs.append(parameters.index(process))
+
+        for i in self.Reliability:
+            self.Reliability[i].Input.fill_distributions(distributions,np.int32(i),processIDs,parameters)
+
+            pass
+
+    def generateLCRProfile(self, load=False, mechanism='Overflow', method='FORM', trajectinfo=None,
+                           conditionality = 'no'):
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
-        [self.Reliability[i].calcReliability(self.Reliability[i].Input, load, mechanism=mechanism, method=method, year=float(i), TrajectInfo=trajectinfo) for i in self.Reliability.keys()]
+        if load:
+            [self.Reliability[i].calcReliability(self.Reliability[i].Input, load, mechanism=mechanism, method=method, year=float(i), TrajectInfo=trajectinfo) for i in self.Reliability.keys()]
+        else:
+            [self.Reliability[i].calcReliability(mechanism=mechanism, method=method,
+                                                 year=float(i), TrajectInfo=trajectinfo) for i in
+             self.Reliability.keys()]
         #NB: This should be extended with conditional failure probabilities
 
     def constructFragilityCurves(self,input,start = 5, step = 0.2):
@@ -483,6 +502,21 @@ class MechanismReliabilityCollection:
         if yscale == 'log':
             plt.yscale('log')
 
+    def drawAlphaBar(self,step = 5):
+        import matplotlib.ticker as ticker
+
+        alphas = np.array([])
+        firstKey = list(self.Reliability.keys())[0]
+        alphaDim = len(self.Reliability[firstKey].alpha_sq)
+        alphas = np.concatenate([self.Reliability[i].alpha_sq for i in self.Reliability.keys()])
+        alphas = np.reshape(alphas, (np.int(np.size(alphas) / alphaDim), alphaDim))
+        variableNames = list(self.Reliability[firstKey].Input.input.getDescription())
+        alphas = pd.DataFrame(alphas,columns = variableNames)
+        ax = alphas.plot.bar(stacked=True)
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(step))
+        plt.ylim([0,1])
+        plt.title(r'Influence coefficients $\alpha$ in time')
+        plt.show()
 class MechanismReliability:
     #This class contains evaluations of the reliability for a mechanism in a given year.
     def __init__(self, mechanism, type, copy_or_calculate='calculate'):
@@ -584,7 +618,7 @@ class MechanismReliability:
 
         self.type = 'FragilityCurve'
 
-    def calcReliability(self, strength, load, mechanism=None, method='FORM', year=0, TrajectInfo=None):
+    def calcReliability(self, strength = False, load = False, mechanism=None, method='FORM', year=0, TrajectInfo=None):
         #This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == 'Simple':
             if mechanism == 'StabilityInner':
@@ -643,53 +677,27 @@ class MechanismReliability:
             self.alpha_sq = alfas_sq
         elif self.type == 'Prob':
             #Probabilistic evaluation of a mechanism.
-            # make list of all random variables:
-            marginals, names = MarginalsforTimeDepReliability(strength, load=load, year=year, type='Probabilistic')
-            marginals = []
-            names = []
-
-            for i in strength.input.keys():
-                if i in strength.temporals:
-                    original = copy.deepcopy(strength.input[i])
-                    str_change = TemporalProcess(original, year)
-                    marginals.append(str_change)
-                else:
-                    marginals.append(strength.input[i])
-                names.append(i)
-            marginals.append(load.distribution)
-
-            marginals_orig = copy.deepcopy(marginals)
-            if hasattr(load, 'dist_change'):
-                original = copy.deepcopy(load.dist_change)
-                dist_change = TemporalProcess(original, year)
-                marginals = marginals_orig
-                marginals.append(dist_change)
-                dist = ot.ComposedDistribution(marginals)
-                descr = list(strength.input.keys())
-                descr.extend(('h', 'dh'))
-            else:
-                marginals = marginals_orig
-                dist = ot.ComposedDistribution(marginals)
-                descr = list(strength.input.keys())
-                descr.append('h')
-            dist.setDescription(descr)
             if mechanism == 'Piping':
                 zFunc = Mechanisms.zPipingTotal
             elif mechanism == 'Overflow':
                 zFunc = Mechanisms.zOverflow
+            elif mechanism == 'simpleLSF':
+                zFunc = Mechanisms.simpleLSF
             else:
                 raise ValueError('Unknown Z-function')
 
-            if hasattr(strength,'char_vals'):
+            if hasattr(self.Input,'char_vals'):
                 start_vals = []
-
                 for i in descr:
                     if i != 'h' and i != 'dh':
                         start_vals.append(strength.char_vals[i]) if i not in strength.temporals else start_vals.append(strength.char_vals[i] * year)
-
                 start_vals = addLoadCharVals(start_vals, load)
+            else:
+                start_vals = self.Input.input.getMean()
 
-            result, P, beta, alpha_sq = run_prob_calc(ot.PythonFunction(len(marginals), 1, zFunc), dist, method, startpoint=start_vals)
+            result, P, beta, alpha_sq = run_prob_calc(ot.PythonFunction(self.Input.input.getDimension(), 1, zFunc),
+                                                      self.Input.input,
+                                                      method, startpoint=start_vals)
             self.result = result
             self.Pf = P
             self.beta = beta
@@ -754,6 +762,18 @@ class MechanismInput:
     #Class for input of a mechanism
     def __init__(self,mechanism):
         self.mechanism = mechanism
+    def fill_distributions(self,distributions,t,processIDs,parameters):
+
+        dists = copy.deepcopy(distributions)
+        self.temporals = []
+        for j in processIDs:
+            if t > 0:
+                dists[j] = TemporalProcess(dists[j],t)
+            else:
+                dists[j] = ot.Dirac(0.0)
+            self.temporals.append(parameters[j])
+        self.input = ot.ComposedDistribution(dists)
+        self.input.setDescription(parameters)
 
     #This routine reads  input from an input sheet
     def fill_mechanism(self, input, type= 'csv', sheet=None, calctype = 'Prob',mechanism=None):

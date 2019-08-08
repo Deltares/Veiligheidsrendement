@@ -215,3 +215,7 @@ def zOverflow(inp):
         dh_c = 0
     z = (h_c - dh_c) - h
     return [z]
+
+def simpleLSF(input):
+    R,dR,S = input
+    return [(R-dR)-S]

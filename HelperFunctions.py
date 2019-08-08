@@ -147,13 +147,13 @@ def createDir(directory):
 def DataAtShelve(dir, name, objects = None, mode = 'write'):
     if mode == 'write':
         #make shelf
-        my_shelf = shelve.open(dir + '\\' + name, 'n')
+        my_shelf = shelve.open(str(dir.joinpath(name)), 'n')
         for i in objects.keys():
             my_shelf[i] = objects[i]
         my_shelf.close()
     elif mode == 'read':
         # open shelf
-        my_shelf = shelve.open(dir + '\\' + name)
+        my_shelf = shelve.open(str(dir.joinpath(name)))
         keys = []
         for key in my_shelf:
             locals()[key]=my_shelf[key]
@@ -161,3 +161,40 @@ def DataAtShelve(dir, name, objects = None, mode = 'write'):
         my_shelf.close()
         if len(keys) == 1:
             return locals()[keys[0]]
+
+def IDtoName(ID, MeasureTable):
+    return MeasureTable.loc[MeasureTable['ID']==ID]['Name'].values[0]
+
+def flatten(l): #flatten a list
+  out = []
+  if len(l)>0:
+      for item in l:
+        if isinstance(item, (list, tuple)):
+          out.extend(flatten(item))
+        else:
+          out.append(item)
+  return out
+
+def pareto_frontier(Xs, Ys, maxX = True, maxY = True):
+    myList = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxX)
+    index_order = np.argsort(Xs)
+    p_front = [myList[0]]
+    index = [index_order[0]]
+    count = 1
+    for pair in myList[1:]:
+        if maxY:
+            if pair[1] >= p_front[-1][1]:
+                p_front.append(pair)
+                index.append(index_order[count])
+        else:
+            if pair[1] < p_front[-1][1]:
+                p_front.append(pair)
+                index.append(index_order[count])
+            elif pair[1] == p_front[-1][1]:
+                if pair[0] < p_front[-1][0]:
+                    p_front.append(pair)
+                    index.append(index_order[count])
+        count +=1
+    p_frontX = [pair[0] for pair in p_front]
+    p_frontY = [pair[1] for pair in p_front]
+    return p_frontX, p_frontY, index

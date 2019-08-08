@@ -173,7 +173,7 @@ class TableDist(ot.PythonDistribution):
             X.append(self.getRealization())
         return X
 
-def run_prob_calc(model,dist,method='FORM',startpoint=None):
+def run_prob_calc(model,dist,method='FORM',startpoint=False):
     vect = ot.RandomVector(dist)
     if method == 'MCS':
         model = ot.MemoizeFunction(model)
@@ -185,7 +185,7 @@ def run_prob_calc(model,dist,method='FORM',startpoint=None):
         solver.setMaximumAbsoluteError(1e-2)
         solver.setMaximumRelativeError(1e-2)
         solver.setMaximumIterationNumber(200)
-        if startpoint != None:
+        if startpoint:
             algo = ot.FORM(solver, event, startpoint)
         else:
             algo = ot.FORM(solver, event, dist.getMean())
@@ -300,12 +300,13 @@ def TemporalProcess(input, t,makePlot='off'):
         params = input.getParameter()
         mu = params[0] / params[1]
         var = params[0] / (params[1] ** 2)
-
-        input.setParameter(ot.GammaMuSigma()([mu*float(t), np.sqrt(var*float(t)),0]))
+        input.setParameter(ot.GammaMuSigma()([mu*float(t), np.sqrt(var)*float(t),0]))
         if makePlot=='on':
             gr = input.drawPDF()
             from openturns.viewer import View
-            View(gr)
+            view = View(gr)
+            view.show()
+
     elif input.getClassName() == 'Dirac':
         input.setParameter(input.getParameter()*t)
     return input

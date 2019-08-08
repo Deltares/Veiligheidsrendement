@@ -8,22 +8,22 @@ import fileinput
 import sys
 import os
 import matplotlib.pyplot as plt
+from pathlib import Path
 #First we generate all the input files
-
-inputfile = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\HBNberekeningen\InputLocations.xlsx'
-filespath = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\HBNberekeningen'
-refsql = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\HBNberekeningen\SQLreference.sql'
-refini = r'D:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\HBNberekeningen\inireference.ini'
-
+PATH = Path(r'd:\wouterjanklerk\My Documents\01_Projects\03_SAFE Deltares\GEKB_Anton\Toetspeil')
+inputfile = PATH.joinpath('InputLocations.xlsx')
+filespath = PATH
+refsql = PATH.joinpath('SQLreference.sql')
+refini = PATH.joinpath('inireference.ini')
 input = pd.read_excel(inputfile)
 
 #in sql change 'LocationName', HLCDID, ORIENTATION, TimeIntegration, Hmin, Hmax, Hstep
 #copy reference sql and rename
-writefiles=0
+writefiles=1
 def writeFiles(i, filespath, filename, refsql, refini):
-    newsql = filespath + '\\' + filename + '\\' + filename + '.sql'
-    newini = filespath + '\\' + filename + '\\' + filename + '.ini'
-    workdir = filespath + '\\' + filename + '\\'
+    newsql = filespath.joinpath(filename,filename + '.sql')
+    newini = filespath.joinpath(filename,filename + '.ini')
+    workdir = filespath.joinpath(filename)
     if not os.path.exists(workdir):
         os.makedirs(workdir)
     shutil.copy(refsql, newsql)

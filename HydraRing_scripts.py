@@ -7,7 +7,7 @@ from ProbabilisticFunctions import TableDist
 
 #script to run HydraRing. exelocation should refer to the location of MechanismComputation.exe.
 def runHydraRing(inifile, exelocation = r'D:\wouterjanklerk\My Documents\HydraRing\Hydra-Ring 18.1\MechanismComputation.exe'):
-    subprocess.run([exelocation, inifile],cwd=inifile[:-14])
+    subprocess.run([exelocation, str(inifile)],cwd=str(inifile)[:-14])
 
 #write a design table to a OpenTurns TableDist as defined by ProbabilisticFunctions.TableDist
 def DesignTableOpenTurns(filename, gridpoints=2000):
