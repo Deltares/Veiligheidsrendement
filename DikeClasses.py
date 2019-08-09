@@ -628,7 +628,7 @@ class MechanismReliability:
                                                                    strength.input['SF_2075']/self.gamma_schem)),
                                                                    fill_value='extrapolate')
                 SF = SFt(year)
-                modelfactor = 1.07
+                modelfactor = 1.07 # Spencer, LiftVan = 1.06
                 beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
                 #Check if there is an elimination measure present (diaphragm wall)
                 if 'Elimination' in strength.input.keys():

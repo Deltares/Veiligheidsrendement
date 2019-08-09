@@ -79,7 +79,7 @@ class Solutions:
                     measure_in.append(self.Measures[i].parameters['Class'])
                     measure_in.append(self.Measures[i].parameters['year'])
                     if splitparams:
-                        measure_in.append(None)
+                        measure_in.append(-999)
                         measure_in.append(designvars[0])
                         measure_in.append(designvars[1])
                     else:
@@ -108,7 +108,7 @@ class Solutions:
                 yeare  = self.Measures[i].parameters['year']
                 cost = self.Measures[i].measures['Cost']
                 if splitparams:
-                    inputs_m.append([ID, typee, classe, yeare, designvars, None , None ,cost])
+                    inputs_m.append([ID, typee, classe, yeare, designvars, -999 , -999 ,cost])
                 else:
                     inputs_m.append([ID, typee, classe, yeare, designvars, cost])
                 betas = self.Measures[i].measures['Reliability'].SectionReliability
@@ -567,7 +567,8 @@ class Strategy:
                                             columns=TakenMeasures.columns)
                 else:
                     data_opt = pd.DataFrame([[indd, id_opt, LCCdiff, BC[indd][id_opt], self.options[indd].iloc[
-                        id_opt]['ID'].values[0], self.options[indd].iloc[id_opt]['params'].values[0]]],
+                        id_opt]['ID'].values[0], IDtoName(self.options[indd].iloc[id_opt]['ID'].values[0],solutions[
+                        indd].MeasureTable), self.options[indd].iloc[id_opt]['params'].values[0]]],
                                             columns=TakenMeasures.columns)
 
                 #here we evaluate and pick the option that has the lowest total cost and a BC ratio that is lower than any measure at any other section
@@ -802,9 +803,6 @@ class Strategy:
         Sh = np.max([np.max([Sh, np.max(len(self.options_height[i]))]) for i in self.options_height.keys()])
         Sg = np.max([np.max([Sg, np.max(len(self.options_geotechnical[i]))]) for i in self.options_geotechnical.keys()])
 
-        #old:
-        # S = 0
-        # S = np.max([np.max([S, np.max(len(self.options[i]))]) for i in self.options.keys()])
         #probabilities [N,S,T]
         mechs = traject.GeneralInfo['Mechanisms']
         self.Pf = {}
@@ -820,31 +818,23 @@ class Strategy:
         #  0 soil reinforcement also suffices.
         keys = list(self.options.keys())
 
-        ## TODO Check the derivation of probabilities, preferably use the same routines as for the heuristic approach
-        probs = {}
+        #get all probabilities. Interpolate on beta per section, then combine p_f
+        betas = {}
         for n in range(0,N):
             for i in mechs:
-                len_p1 = traject.Sections[n].Reliability.SectionReliability.shape[1]
-                p1 = norm.cdf(-traject.Sections[n].Reliability.SectionReliability.loc[i]).reshape((len_p1, 1)).T #Initial condition with no measure
+                len_beta1 = traject.Sections[n].Reliability.SectionReliability.shape[1]
+                beta1 = traject.Sections[n].Reliability.SectionReliability.loc[i].values.reshape((len_beta1, 1)).T #Initial
+                # condition with no measure
                 if i == 'Overflow':
-                    p2 = norm.cdf(-self.options_height[keys[n]][i])
+                    beta2 = self.options_height[keys[n]][i]
                     #All solutions
                 else:
-                    p2 = norm.cdf(-self.options_geotechnical[keys[n]][i])  # All solutions
-                # p2 = norm.cdf(-self.options[keys[n]][i])  # All solutions
-                probs[i] = np.concatenate((p1, p2),axis=0)
-                if np.shape(probs[i])[1] != T:
-                    probs[i] = interp1d(traject.GeneralInfo['T'], probs[i],kind='linear')(np.arange(0, T, 1))
-                self.Pf[i][n,0:np.size(probs[i],0),:]      = probs[i]
+                    beta2 = self.options_geotechnical[keys[n]][i] # All solutions
+                betas[i] = np.concatenate((beta1, beta2),axis=0)
+                if np.shape(betas[i])[1] != T:
+                    betas[i] = interp1d(traject.GeneralInfo['T'], betas[i])(np.arange(0, T, 1))
+                self.Pf[i][n,0:np.size(betas[i],0),:]      = norm.cdf(-betas[i])
 
-
-        #old:
-        #Costs of options [N,S]
-        # self.LCCOption = np.full((N, S+1), 1e99)
-        # for n in range(0, len(keys)):
-        #     LCC = calcTC(self.options[keys[n]])
-        #     self.LCCOption[n, 1:len(LCC)+1] = LCC
-        #     self.LCCOption[n, 0]  = 0.
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
@@ -854,16 +844,42 @@ class Strategy:
             LCC_sg = calcTC(self.options_geotechnical[keys[n]])
             # LCC_tot = calcTC(self.options[keys[n]])
             for sh in range(0, len(self.options_height[keys[n]])):
-                if self.options_height[keys[n]].iloc[sh]['type'].values[0] == 'Diaphragm wall':
-                    diaphragm = True
+                #if it is a full type, it should only be combined with another full of the same type
+                if (self.options_height[keys[n]].iloc[sh]['class'].values[0] == 'full'):
+                    full = True
                 else:
-                    diaphragm = False
+                    full = False
+                # if (self.options_height[keys[n]].iloc[sh]['type'].values[0] == 'Diaphragm Wall') | (
+                #         self.options_height[keys[n]].iloc[sh]['type'].values[0] == 'Stability Screen'):
+                #     full_structure = True
+                # else:
+                #     full_structure = False
                 for sg in range(0, len(self.options_geotechnical[keys[n]])):# Sg):
-                    if diaphragm:
-                        if self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] != 'Diaphragm wall':
+                    #if sh is a diaphragm wall, only a diaphragm wall can be taken for sg
+                    if full:
+                        #if the type is different it is not a possibility:
+                        if self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] != self.options_height[keys[
+                            n]].iloc[sh]['type'].values[0]:
                             pass  # do not change value, impossible combination (keep at 1e99)
+                        #if it is a stability screen, use same reasoning as for single Vertical Geotextile
+                        elif self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Stability Screen':
+                            self.LCCOption[n, 0, sg + 1] = LCC_sg[sg]
                         else:
-                            self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh]  # only use the costs once
+                            #if the type is a soil reinforcement, the year has to be the same
+                            if (self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Soil reinforcement'):
+                                if (self.options_geotechnical[keys[n]].iloc[sg]['year'].values[0] ==self.options_height[keys[n]].iloc[sh]['year'].values[0]) & \
+                                        (self.options_geotechnical[keys[n]].iloc[sg]['class'].values[0] == 'full'):
+                                    self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh] + LCC_sg[sg]  # only use the costs once
+                                else:
+                                    pass #not allowed
+                            else:    #Diaphragm wall
+                                self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh]  # only use the costs once
+                    #if sg is a plain geotextile, it can only be combined with no measure for height, otherwise it
+                    # would be combined (should be extended to stability screen)
+                    elif self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Vertical Geotextile':
+                        #can only be combined with no measure for height
+                        self.LCCOption[n, 0, sg+1] = LCC_sg[sg]
+                    #if sg is a combined measure the soil reinforcement timing should be aligned:
                     elif self.options_geotechnical[keys[n]].iloc[sg]['class'].values[0] == 'combined':
                         #check if the time of the soil reinforcement part is the same as for the height one
                         #first extract the index of the soil reinforcement
@@ -874,8 +890,21 @@ class Strategy:
                             self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh] + LCC_sg[sg]  # only use the costs once
                         else:
                             pass #dont change, impossible combi
+                        #if sg is combinable, it should only be combined with sh that have the same year
+                    elif self.options_geotechnical[keys[n]].iloc[sg]['class'].values[0] == 'combinable':
+                        if self.options_geotechnical[keys[n]].iloc[sg]['year'].values[0] == self.options_height[keys[
+                            n]].iloc[sh]['year'].values[0]:
+                            self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh] + LCC_sg[sg]  # only use the costs once
+                        else:
+                            pass
+                    elif self.options_geotechnical[keys[n]].iloc[sg]['class'].values[0] == 'full':
+                        pass # not allowed as the sh is not 'full'
                     else:
-                        self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh] + LCC_sg[sg]  # only use the costs once
+                        # if sg is a diaphragm wall cost should be only accounted for once:
+                        if self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] != 'Diaphragm Wall':
+                            self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh] + LCC_sg[sg]  # only use the costs once
+                        else:
+                            pass
 
         #Decision Variables for executed options [N,Sh] & [N,Sg]
         self.Cint_h           = np.zeros((N,Sh))
@@ -888,10 +917,10 @@ class Strategy:
         self.D = np.array(traject.GeneralInfo['FloodDamage'] * (1 / ((1 + self.r) ** np.arange(0, T, 1))))
 
         #expected damage for overflow and for piping & slope stability
+        # self.RiskGeotechnical = np.zeros((N,Sg+1,T))
         self.RiskGeotechnical = (self.Pf['StabilityInner'] + self.Pf['Piping']) * np.tile(self.D.T,(N,Sg+1,1))
 
-        self.RiskOverflow = self.Pf['Overflow'] *np.tile(self.D.T,(N,Sh+1,1))
-        # self.Risk = np.add(self.RiskOverflow,self.RiskGeotechnical)
+        self.RiskOverflow = self.Pf['Overflow'] *np.tile(self.D.T,(N,Sh+1,1)) #np.zeros((N,Sh+1,T))
         #add a few general parameters
         self.opt_parameters = {'N':N, 'T':T, 'Sg':Sg+1 ,'Sh':Sh+1}
     def create_optimization_model(self):
@@ -935,11 +964,10 @@ class Strategy:
 
 
         CostVec2 = [self.RiskOverflow[n,sh,t]  for t in grT for sh in grSh for n in grN]  # risk costs of overflow
-        # Here i should add a costvec3 (and 4) for piping and stability
         CostVec = CostVec1 + CostVec2
 
         model.variables.add(obj=CostVec, lb=lbv, ub=ubv, types=typev, names=VarNames)
-
+        self.CostVec = CostVec
         # -------------------------------------------------------------------------
         #         implement constraints
         # ------------------------------------------------------------------------
@@ -1061,29 +1089,44 @@ class Strategy:
         ID2 = []
         for i in measure.keys():
             sections.append(sectionnames[i])
+            print(sectionnames[i])
             if isinstance(MeasureTable,pd.DataFrame):
-                ID.append(self.options_geotechnical[sectionnames[i]].iloc[measure[i][1]-1]['ID'].values[0])
-                ID2.append(self.options_height[sectionnames[i]].iloc[measure[i][0] - 1]['ID'].values[0])
-                if ID[-1] != ID2[-1]:
-                    print('IDheight = ' + ID[-1] + '; IDgeo = ' + ID2[-1])
-                    # should yield at least partly the same!
+                if np.sum(measure[i]) != 0:
+                    ID.append(self.options_geotechnical[sectionnames[i]].iloc[measure[i][1]-1]['ID'].values[0])
+                    ID2.append(self.options_height[sectionnames[i]].iloc[measure[i][0] - 1]['ID'].values[0])
+                    if ID[-1][-1] != ID2[-1]:
+                        ID[-1] = ID[-1] + '+' + ID2[-1]
+                        print(ID[-1])
+                else:
+                    ID.append('0')
+                    ID2.append('0')
+                    # MeasureTable.append(pd.DataFrame([['0', 'Do Nothing']],columns=['ID','Name']))
 
                 if len(MeasureTable.loc[MeasureTable['ID'] == ID[-1]]) ==0:
-                    splitID = ID[-1].split('+')
-                    newname = MeasureTable.loc[MeasureTable['ID'] == splitID[0]]['Name'].values + '+' + \
-                              MeasureTable.loc[MeasureTable['ID'] == splitID[1]]['Name'].values
-                    newline = pd.DataFrame([[ID[-1], newname[0]]], columns=['ID', 'Name'])
+                    if len(ID[-1])>1:
+                        splitID = ID[-1].split('+')
+                        newname = MeasureTable.loc[MeasureTable['ID'] == splitID[0]]['Name'].values + '+' + \
+                                  MeasureTable.loc[MeasureTable['ID'] == splitID[1]]['Name'].values
+                        newline = pd.DataFrame([[ID[-1], newname[0]]], columns=['ID', 'Name'])
+                    else:
+                        newline = pd.DataFrame([[ID[-1], 'Do Nothing']],columns=['ID','Name'])
                     MeasureTable = MeasureTable.append(newline)
 
                 measurenames.append(MeasureTable.loc[MeasureTable['ID'] == ID[-1]]['Name'].values[0])
             else:
-                measurenames.append(self.options[sectionnames[i]].iloc[measure[i][1]-1]['type'].values[0])
+                if np.sum(measure[i]) != 0:
+                    measurenames.append(self.options[sectionnames[i]].iloc[measure[i][1]-1]['type'].values[0])
+                else:
+                    measurenames.append('Do Nothing')
+            if np.sum(measure[i]) != 0:
+                yesno.append(self.options_geotechnical[sectionnames[i]].iloc[measure[i][1]-1]['yes/no'].values[0])
+                dcrest.append(self.options_height[sectionnames[i]].iloc[measure[i][0]-1]['dcrest'].values[0])
+                dberm.append(self.options_geotechnical[sectionnames[i]].iloc[measure[i][1]-1]['dberm'].values[0])
 
-            yesno.append(self.options_geotechnical[sectionnames[i]].iloc[measure[i][1]-1]['yes/no'].values[0])
-            dcrest.append(self.options_height[sectionnames[i]].iloc[measure[i][0]-1]['dcrest'].values[0])
-            dberm.append(self.options_geotechnical[sectionnames[i]].iloc[measure[i][1]-1]['dberm'].values[0])
-            LCC.append(self.LCCOption[i,measure[i][0], measure[i][1]])
-            print(self.LCCOption[i, measure[i][0], measure[i][1]])
+            else:
+                yesno.append('no'); dcrest.append(0); dberm.append(0)
+
+            LCC.append(self.LCCOption[i, measure[i][0], measure[i][1]])
             LCCTotal += self.LCCOption[i, measure[i][0], measure[i][1]]
 
         TakenMeasures = pd.DataFrame({'ID': ID, 'Section': sections,'LCC':LCC, 'name': measurenames, 'yes/no': yesno,
@@ -1091,12 +1134,26 @@ class Strategy:
         #add year
         self.results['measures'] = measure
         self.TakenMeasures = TakenMeasures
+        data = pd.DataFrame({'Names': Model['Names'], 'Values': Model['Values'], 'Cost': self.CostVec})
+        self.results['D_int'] = data.loc[data['Values'] == 1].iloc[-T:]
+        self.results['C_int'] = data.loc[data['Values'] == 1].iloc[:-T]
+
         pd.set_option('display.max_columns', None)  # prevents trailing elipses
         # print(TakenMeasures)
         if dir:
             TakenMeasures.to_csv(dir.joinpath('TakenMeasures_MIP.csv'))
         else:
             TakenMeasures.to_csv('TakenMeasures_MIP.csv')
+        ## reproduce objective:
+        alldata = data.loc[data['Values'] == 1]
+        self.results['TC'] = np.sum(alldata)['Cost']
+        self.results['LCC+GeoRisk'] = np.sum(alldata.iloc[:-T])['Cost']
+        self.results['OverflowRisk'] = np.sum(alldata.iloc[-T:])['Cost']
+
+
+    def makeFinalSolution(self, path):
+        pass
+        self.FinalSolution = copy.deepcopy(TakenMeasures)
 
     def readResults_Fer(self, Model):
         N = self.opt_parameters['N']
@@ -1211,7 +1268,7 @@ class Strategy:
             step += 1
             beta_t0, p = calcTrajectProb(i, horizon=horizon)
             beta_t.append(beta_t0)
-            t = range(2025,2025+horizon+1)
+            t = range(2025,2025+horizon)
             plt.plot(t, beta_t0, label=self.type+ ' stap ' + str(step))
         if typ == 'single':
             plt.plot([2025, 2025+horizon], [-norm.ppf(Traject.GeneralInfo['Pmax']), -norm.ppf(Traject.GeneralInfo['Pmax'])],
@@ -1256,7 +1313,10 @@ class Strategy:
         Costs = []
         if cost_type == 'LCC':
             for i in range(self.TakenMeasures['Section'].size):
-                x += self.TakenMeasures['LCC'].iloc[i]
+                if not np.isnan(self.TakenMeasures['LCC'].iloc[i]):
+                    x += self.TakenMeasures['LCC'].iloc[i]
+                else:
+                    pass
                 Costs.append(x)
 
         elif cost_type == 'Initial':
@@ -1353,17 +1413,16 @@ class Strategy:
                 for i in range(len(Costs)):
                     line = self.TakenMeasures.iloc[i]
                     if line['option_index'] != None:
-                        if isinstance(line['ID'], list):
-                            line['ID'] = '+'.join(line['ID'])
-                            if Costs[i] > Costs[i-1]:
-                                if beta_or_prob == 'beta':
-                                    plt.scatter(Costs[i],betas[i],marker=MeasureTable.loc[MeasureTable['ID']==line['ID']]['symbol'].values[0],label=MeasureTable.loc[MeasureTable['ID']==line['ID']]['Name'].values[0],color=linecolor,edgecolors='k',linewidths=.5,zorder=2)
-                                    plt.vlines(Costs[i],betas[i]+.05,ycoords[i]-.05,colors ='tab:gray', linestyles =':',zorder = 1)
-                                elif beta_or_prob == 'prob':
-                                    plt.scatter(Costs[i], pfs[i], marker=MeasureTable.loc[MeasureTable['ID'] == line['ID']]['symbol'].values[0], label=MeasureTable.loc[MeasureTable['ID'] == line['ID']]['Name'].values[0], color=linecolor, edgecolors='k', linewidths=.5, zorder=2)
-                                    plt.vlines(Costs[i], pfs[i], ycoords[i], colors='tab:gray', linestyles=':', zorder=1)
+                        if isinstance(line['ID'], list):line['ID'] = '+'.join(line['ID'])
+                        if Costs[i] > Costs[i-1]:
+                            if beta_or_prob == 'beta':
+                                plt.scatter(Costs[i],betas[i],marker=MeasureTable.loc[MeasureTable['ID']==line['ID']]['symbol'].values[0],label=MeasureTable.loc[MeasureTable['ID']==line['ID']]['Name'].values[0],color=linecolor,edgecolors='k',linewidths=.5,zorder=2)
+                                plt.vlines(Costs[i],betas[i]+.05,ycoords[i]-.05,colors ='tab:gray', linestyles =':',zorder = 1)
+                            elif beta_or_prob == 'prob':
+                                plt.scatter(Costs[i], pfs[i], marker=MeasureTable.loc[MeasureTable['ID'] == line['ID']]['symbol'].values[0], label=MeasureTable.loc[MeasureTable['ID'] == line['ID']]['Name'].values[0], color=linecolor, edgecolors='k', linewidths=.5, zorder=2)
+                                plt.vlines(Costs[i], pfs[i], ycoords[i], colors='tab:gray', linestyles=':', zorder=1)
 
-                                plt.text(Costs[i], ycoords[i], line['Section'][-2:], fontdict={'size': 8}, color=linecolor, horizontalalignment='center', zorder=3)
+                        plt.text(Costs[i], ycoords[i], line['Section'][-2:], fontdict={'size': 8}, color=linecolor, horizontalalignment='center', zorder=3)
 
             if labelmeasures == 'on':
                 for i in range(len(Costs)):
@@ -1523,19 +1582,22 @@ class Strategy:
             for i in self.TakenMeasures.iterrows():
                 data = i[1]
                 section.append(data['Section'])
-                option_index.append(self.options[data['Section']].loc[
-                                        (self.options[data['Section']]['ID'] == data['ID']) &
-                                        (self.options[data['Section']]['yes/no'].values == data['yes/no']) &
-                                        (self.options[data['Section']]['dcrest'] == data['dcrest']) &
-                                        (self.options[data['Section']]['dberm'] == data['dberm'])].index.values[0])
-
+                if data['name'] != 'Do Nothing':
+                    option_index.append(self.options[data['Section']].loc[
+                                            (self.options[data['Section']]['ID'] == data['ID']) &
+                                            (self.options[data['Section']]['yes/no'].values == data['yes/no']) &
+                                            (self.options[data['Section']]['dcrest'] == data['dcrest']) &
+                                            (self.options[data['Section']]['dberm'] == data['dberm'])].index.values[0])
+                else:
+                    option_index.append(-999)
             #implement the options 1 by 1
             Probability = makeTrajectDF(TrajectObject,TrajectObject.GeneralInfo['T'])
             ProbabilitySteps = []
             ProbabilitySteps.append(copy.deepcopy(Probability))
             for i in range(0,len(option_index)):
-                Probability = ImplementOption(section[i], Probability, self.options[section[i]].iloc[
-                    option_index[i]])
+                if option_index[i] > -999:
+                    Probability = ImplementOption(section[i], Probability, self.options[section[i]].iloc[
+                        option_index[i]])
                 ProbabilitySteps.append(copy.deepcopy(Probability))
 
             #evaluate the risk after the last step
@@ -1630,7 +1692,7 @@ def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geom
 
             elif slope < 0:  # This is the inner slope
                 if slope_in:
-                    print('check geometry formula, NOT CORRECTED YET')
+                    # print('check geometry formula, NOT CORRECTED YET')
                     new_geometry[i][0] = new_geometry[i + 1][0] - (new_geometry[i + 1][1] - new_geometry[i][1]) * slope_in
                 else:
                     new_geometry[i][0] = new_geometry[i + 1][0] + (new_geometry[i][1] - new_geometry[i + 1][
@@ -1854,7 +1916,7 @@ def calcTR(section, section_options, base_traject, original_section, r=0.03, hor
 
     return base_risk, dR, TotalRisk
 
-def calcLifeCycleRisks(base0, r, horizon,damage, change=None, section=None, datatype='DataFrame', ts=None,mechs=None,
+def calcLifeCycleRisks(base0, r, horizon,damage, change=None, section=None, datatype='DataFrame', ts=None,mechs=False,
                        option=None,dumpPt=False):
     base = copy.deepcopy(base0)
     if datatype == 'DataFrame':
@@ -1887,13 +1949,15 @@ def calcLifeCycleRisks(base0, r, horizon,damage, change=None, section=None, data
     TR = np.sum(risk_t)
     return TR
 
-def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=None):
+def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=False):
     pfs = {}
+    trange = np.arange(0, horizon, 1)
     if datatype == 'DataFrame':
         ts = base.columns.values
         mechs = np.unique(base.index.get_level_values('mechanism').values)
-
-    pf_traject = np.zeros((len(ts),))
+        # mechs = ['Overflow']
+    # pf_traject = np.zeros((len(ts),))
+    pf_traject = np.zeros((len(trange),))
 
     for i in mechs:
         if i != 'Section':
@@ -1901,13 +1965,15 @@ def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=Non
                 betas = base.xs(i, level='mechanism').values.astype('float')
             else:
                 betas = base[i]
-            pfs[i] = norm.cdf(-betas)
+            beta_interp = interp1d(ts,betas)
+            pfs[i] = norm.cdf(-beta_interp(trange))
+            # pfs[i] = norm.cdf(-betas)
             pnonfs = 1 - pfs[i]
             if i == 'Overflow':
                 pf_traject += np.max(pfs[i], axis=0)
             else:
-                # pf_traject += np.sum(pfs[i], axis=0)
-                pf_traject += 1-np.prod(pnonfs, axis=0)
+                pf_traject += np.sum(pfs[i], axis=0)
+                # pf_traject += 1-np.prod(pnonfs, axis=0)
 
     # elif datatype == 'Arrays':
     #     pf_traject = np.zeros((len(ts),))
@@ -1925,10 +1991,16 @@ def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=Non
     #                 # print('new:' + str(1-np.prod(pnonfs, axis = 0)))
 
     # trange = np.arange(0, horizon + 1, 1)
-    trange = np.arange(0, horizon, 1)
-    betafail = interp1d(ts, -norm.ppf(pf_traject),kind='linear')
-    beta_t = betafail(trange)
-    p_t = norm.cdf(-np.array(beta_t, dtype=np.float64))
+
+    ## INTERPOLATION AFTER COMBINATION:
+    # pfail = interp1d(ts,pf_traject)
+    # p_t1 = norm.cdf(-pfail(trange))
+    # betafail = interp1d(ts, -norm.ppf(pf_traject),kind='linear')
+    # beta_t = betafail(trange)
+    # p_t = norm.cdf(-np.array(beta_t, dtype=np.float64))
+
+    beta_t = -norm.ppf(pf_traject)
+    p_t = pf_traject
     return beta_t, p_t
 
 #this function changes the trajectprobability of a measure is implemented:
@@ -1953,7 +2025,8 @@ def split_options(options):
         #now we filter all geotechnical measures
         #first all crest heights are thrown out
         options_geotechnical[i] = options_geotechnical[i].loc[
-            (options_geotechnical[i]['dcrest'] == 0.0) | (np.isnan(options_geotechnical[i]['dcrest']))]
+            (options_geotechnical[i]['dcrest'] == 0.0) | (options_geotechnical[i]['dcrest']==-999) |
+            ((options_geotechnical[i]['class'] == 'combined') & (options_geotechnical[i]['dberm'] == 0))]
 
         #subtract startcosts, only for height.
         startcosts = np.min(options_height[i][(options_height[i]['type'] == 'Soil reinforcement')]['cost'])

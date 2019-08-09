@@ -19,7 +19,7 @@ RUN_MIXEDINTEGER           = True
 RUN_PARETOFRONTIER         = True
 READ_MIXEDINTEGER          = True
 #INDICATE THE CASE TO USE
-CASE = 'Basic_NoDiaphragm'
+CASE = 'Basic_withStabilityScreenasPartial'
 
 #STEP 0: READ GENERAL INPUT
 PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland ' \
@@ -79,7 +79,10 @@ if RUN_HEURISTIC:
     for i in StrategyHeuristic.options: StrategyHeuristic.options[i].to_csv(
         PATH.joinpath('Solutions').joinpath(i + '_Options.csv'))
     StrategyHeuristic.TakenMeasures.to_csv(PATH.joinpath(CASE).joinpath('TakenMeasures_Heuristic.csv'))
+    StrategyHeuristic.makeFinalSolution(PATH.joinpath(CASE).joinpath('TakenMeasures_Final_Heuristic.csv'))
     if SHELVES: DataAtShelve(dir = PATH, name = 'HeuristicResult.out', objects = {'StrategyHeuristic': StrategyHeuristic}, mode = 'write')
+else:
+    StrategyHeuristic = DataAtShelve(dir=PATH, name='HeuristicResult.out', mode='read')
 if RUN_MIXEDINTEGER:
     StrategyMixedInteger = Strategy('MixedInteger')
     StrategyMixedInteger.combine(TrajectObject,SolutionsCollection,splitparams=True)
@@ -106,18 +109,11 @@ if RUN_MIXEDINTEGER:
 if RUN_PARETOFRONTIER:
     StrategyParetoFrontier = Strategy('ParetoFrontier')
     StrategyParetoFrontier.combine(TrajectObject,SolutionsCollection,splitparams=True)
-
-
     # StrategyParetoFrontier_unfiltered = copy.deepcopy(StrategyParetoFrontier)
     # StrategyParetoFrontier_unfiltered.evaluate(TrajectObject,SolutionsCollection)
-
     #with filtering:
     StrategyParetoFrontier.filter(TrajectObject,'ParetoPerSection')
-    import cProfile
-    # cProfile.run('StrategyParetoFrontier.evaluate(TrajectObject,SolutionsCollection)')
     StrategyParetoFrontier.evaluate(TrajectObject,SolutionsCollection)
-
-
     if SHELVES: DataAtShelve(dir = PATH, name = 'ParetoFrontierResult.out', objects = {'StrategyParetoFrontier': StrategyParetoFrontier}, mode = 'write')
     print()
 # if RUN_SIMULATEDANNEALING: or DIJKSTRA SHORTEST PATH/UNIFORM COST SEARCH
@@ -162,13 +158,13 @@ if 'StrategyMixedInteger' in locals():
 
     #make radius line for optimum:
     total = TR_MixedInteger+LCC_MixedInteger
-    x = np.arange(0,total,1)
+    x = np.arange(0,total,10)
     y = total - x
     plt.plot(x,y,linestyle=':',color='blue',label='Radius of MIP optimum')
 plt.ylabel('Total Risk')
 plt.xlabel('LCC')
 plt.yscale('log')
-plt.ylim((1e4,5e7))
+plt.ylim((1e5,5e7))
 plt.xlim((0,1.2e8))
 # plt.xlim((0,2e7))
 plt.legend(loc=1)
@@ -176,6 +172,11 @@ plt.title('Comparison of risk and cost for different methods')
 plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods_logscale.png'),dpi=300, bbox_inches='tight')
 # plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods.png'),dpi=300, bbox_inches='tight')
 plt.close()
+
+print('recalculated: ' + str(TR_MixedInteger+LCC_MixedInteger))
+print('objective: ' + str(MixedIntegerResults['ObjectiveValue']))
+print(MixedIntegerResults['Status'])
+
 #plot with all TC of all draws in bar graph and the final solution of MIP and Heuristic:
 TC_Pareto = np.sort(np.add(LCC_Pareto,TR_Pareto))
 TC_ParetoFront = np.add(LCC_ParetoFront,TR_ParetoFront)
@@ -192,8 +193,10 @@ plt.xlim((0,len(TC_Pareto)))
 plt.legend(loc=2)
 plt.title('Comparison of total cost for different methods')
 plt.savefig(PATH.joinpath(CASE).joinpath('Methods.png'),dpi=300, bbox_inches='tight')
-print(TC_Heuristic)
-print(TC_MIP)
+print("TC Heuristic: " + str(TC_Heuristic[-1]))
+print("TC MIP: " + str(TC_MIP))
+print("Objective MIP: " + str(MixedIntegerResults['ObjectiveValue']))
+
 
 
 #pseudocode:

@@ -16,12 +16,12 @@ from StrategyEvaluation import calcTrajectProb
 def main():
     ## GENERAL SETTINGS
     timing = 1
-    traject = '16-4'
+    traject = '16-3'
     save_beta_measure_plots = 0
     years0 = [0, 19, 20, 50, 75, 100]
     mechanisms = ['Overflow', 'StabilityInner', 'Piping']
     path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
+                r'SAFE\WJKlerk\SAFE\data\Safe_16-3_augustus')
     language = 'NL'
 
     if timing == 1:
@@ -40,11 +40,17 @@ def main():
     ##First we read all the input data for the different sections. We store these in a Traject object.
     #Initialize a list of all sections that are of relevance (these start with DV).
     print('Start creating all the files and folders')
-    TestCase.ReadAllTrajectInput(path, directory, traject, years0, startyear=2025)
+    TestCase.ReadAllTrajectInput(path, directory, years0,traject=traject, startyear=2025)
 
 #If you want to use intermediate data (from after step 2) you can uncomment the following snippet of code (and input it to runFullModel:
 #This could be programmed more neatly of course...
 
+    # filename = directory.joinpath('AfterStep1.out')
+    # my_shelf = shelve.open(str(filename))
+    # for key in my_shelf:
+    #     locals()[key] = my_shelf[key]
+    # my_shelf.close()
+    #
     # filename = directory.joinpath('AfterStep2.out')
     # my_shelf = shelve.open(str(filename))
     # for key in my_shelf:
@@ -55,7 +61,7 @@ def main():
 
     #Same here: if you want to make plots based on existing results, uncomment the part underneath:
 
-    # # #Open shelf
+    # #Open shelf
     # filename = directory.joinpath('FINALRESULT.out')
     # my_shelf = shelve.open(str(filename))
     # for key in my_shelf:
@@ -88,8 +94,11 @@ def main():
 
         # Costs2025-beta
         plt.figure(103, figsize=figure_size)
-        AllStrategies[0].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'), typ='multi', fig_id=103, symbolmode='on', linecolor='b', labels='TC', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
-        AllStrategies[1].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'), typ='multi', fig_id=103, last='yes', symbolmode='on', labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+        AllStrategies[0].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'),
+                                       typ='multi', fig_id=103, symbolmode='on', linecolor='b', labels='TC',
+                                       MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+        AllStrategies[1].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'),
+                                       typ='multi', fig_id=103, last='yes', symbolmode='on', labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
 
     #This piece makes sort of a 'movie' of all reinforcement steps:
     # if not 'TC' in os.listdir(pad + '\\Case_' + casename): os.makedirs(pad + '\\Case_' + casename + '\\TC')
@@ -106,7 +115,7 @@ def main():
         beta_t, p_t = calcTrajectProb(i, horizon=100)
         ps.append(p_t)
 
-    ps = pd.DataFrame(ps, columns=range(101))
+    ps = pd.DataFrame(ps, columns=range(100))
     ps.to_csv(path_or_buf=directory.joinpath('results', 'investment_steps', 'PfT_OI.csv'))
     ps = []
 
@@ -114,7 +123,7 @@ def main():
         beta_t, p_t = calcTrajectProb(i, horizon=100)
         ps.append(p_t)
 
-    ps = pd.DataFrame(ps, columns=range(101))
+    ps = pd.DataFrame(ps, columns=range(100))
     ps.to_csv(path_or_buf=directory.joinpath('results', 'investment_steps', 'PfT_TC.csv'))
 
     if timing == 1:
