@@ -6,7 +6,7 @@
 # So the actual analysis starts at t=i
 
 import matplotlib.pyplot as plt
-from DikeClasses import DikeSection, LoadInput, MechanismReliabilityCollection, DikeTraject
+from DikeClasses_old import DikeSection, LoadInput, MechanismReliabilityCollection, DikeTraject
 from StrategyEvaluation import Solutions, Strategy
 import os
 from scipy.stats import norm

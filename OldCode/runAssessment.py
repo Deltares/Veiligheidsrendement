@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isfile, join
 from HelperFunctions import ld_writeObject, ld_readObject, flatten
 import pandas as pd
-from DikeClasses import DikeSection
+from DikeClasses_old import DikeSection
 import matplotlib.pyplot as plt
 import numpy as np
 import operator

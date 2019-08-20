@@ -2,26 +2,24 @@
 
 #Import a bunch of packages
 import matplotlib.pyplot as plt
-import os
 import pandas as pd
-import shelve
 import time
-from DikeClasses import DikeTraject
+from DikeTraject import DikeTraject
 from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
 from pathlib import Path
-from scipy.stats import norm
 from StrategyEvaluation import calcTrajectProb
+import cProfile
 
 def main():
     ## GENERAL SETTINGS
     timing = 1
     traject = '16-3'
-    save_beta_measure_plots = 0
+    save_beta_measure_plots = False
     years0 = [0, 19, 20, 50, 75, 100]
     mechanisms = ['Overflow', 'StabilityInner', 'Piping']
     path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\Safe_16-3_augustus')
+                r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
     language = 'NL'
 
     if timing == 1:
@@ -33,7 +31,7 @@ def main():
     TestCase = DikeTraject('TestCase', traject)
 
     ## Run the model
-    casename = 'SAFE'
+    casename = 'TestRefactor3'
     directory = path.joinpath('Case_' + casename)
 
     ## READ ALL DATA
@@ -57,7 +55,10 @@ def main():
     #     locals()[key] = my_shelf[key]
     # my_shelf.close()
 
-    AllStrategies, AllSolutions = runFullModel(TestCase, casename, path, directory, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots, language='NL', types=['TC', 'OI'], OI_year=0) #,TestCaseSolutions=TestCaseSolutions)
+    AllStrategies, AllSolutions = runFullModel(TestCase, casename, path, directory, years=years0, timing=timing,
+                                               save_beta_measure_plots=save_beta_measure_plots,
+                                               LCRplot=False, language='NL',
+                                               types=['TC', 'OI'], OI_year=0) #,TestCaseSolutions=TestCaseSolutions)
 
     #Same here: if you want to make plots based on existing results, uncomment the part underneath:
 
@@ -142,4 +143,5 @@ def main():
         print("Overall time elapsed: " + str(end - start0) + ' seconds')
 
 if __name__ == '__main__':
-    main()
+    # main()
+    cProfile.run('main()','InvestmentsSAFE.profile')

@@ -1,5 +1,6 @@
 #import modules:
-from StrategyEvaluation import Solutions, Strategy, ImplementOption
+from Strategy import ImplementOption, GreedyStrategy, TargetReliabilityStrategy
+from Solutions import Solutions
 import time
 import matplotlib.pyplot as plt
 try:
@@ -9,11 +10,14 @@ except:
 import shelve
 import copy
 import numpy as np
+import cProfile
 import os
 from scipy.stats import norm
 from HelperFunctions import replaceNames
 # this is sort of the main script for any calculation for SAFE. It contains all the required steps:
-def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 'StabilityInner', 'Piping'], years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=0, shelves=1, types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=None, t_start=2025, OI_year=0):
+def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
+                 years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=False, LCRplot = False, shelves=1,
+                 types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=None, t_start=2025, OI_year=0):
     if timing == 1:
         start = time.time()
 
@@ -32,26 +36,29 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
                 TestCase.Sections[i].Reliability.Load, mechanism=j, trajectinfo=TestCase.GeneralInfo)
         TestCase.Sections[i].Reliability.calcSectionReliability(TrajectInfo=TestCase.GeneralInfo,
                                                                        length=TestCase.Sections[i].Length)
-        #Plot the initial reliability-time:
-        plt.figure(1)
-        [TestCase.Sections[i].Reliability.Mechanisms[j].drawLCR(label=j, type='Standard', tstart=t_start) for j in
-         mechanisms]
-        plt.plot([t_start, t_start + np.max(years)],
-                 [-norm.ppf(TestCase.GeneralInfo['Pmax']), -norm.ppf(TestCase.GeneralInfo['Pmax'])],
-                 'k--', label='Norm')
-        plt.legend()
-        plt.title(TestCase.Sections[i].name)
-        if not directory.joinpath('figures', TestCase.Sections[i].name).is_dir():
-            directory.joinpath('figures', TestCase.Sections[i].name).mkdir(parents=True, exist_ok=True)
-            directory.joinpath('figures', TestCase.Sections[i].name, 'Initial')
+        if LCRplot:
+            #Plot the initial reliability-time:
+            plt.figure(1)
+            [TestCase.Sections[i].Reliability.Mechanisms[j].drawLCR(label=j, type='Standard', tstart=t_start) for j in
+             mechanisms]
+            plt.plot([t_start, t_start + np.max(years)],
+                     [-norm.ppf(TestCase.GeneralInfo['Pmax']), -norm.ppf(TestCase.GeneralInfo['Pmax'])],
+                     'k--', label='Norm')
+            plt.legend()
+            plt.title(TestCase.Sections[i].name)
+            if not directory.joinpath('figures', TestCase.Sections[i].name).is_dir():
+                directory.joinpath('figures', TestCase.Sections[i].name).mkdir(parents=True, exist_ok=True)
+                directory.joinpath('figures', TestCase.Sections[i].name, 'Initial')
 
-        plt.savefig(directory.joinpath('figures', TestCase.Sections[i].name, 'Initial', 'InitialSituation' + '.png'), bbox_inches='tight')
-        plt.close()
-
+            plt.savefig(directory.joinpath('figures', TestCase.Sections[i].name, 'Initial', 'InitialSituation' + '.png'), bbox_inches='tight')
+            plt.close()
     # plot reliability and failure probability for entire traject:
-    figsize = (8, 4)
-    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='beta', outputcsv=True, first=False, last=True)
-    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='prob', first=False, last=True)
+    figsize = (12, 4)
+    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off',
+                                          draw_targetbeta='off', beta_or_prob='beta', outputcsv=True,
+                                          years = [0, 20, 50], first=False,
+                                          last=True)
+    # TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='prob', first=False, last=True)
 
     print('Finished step 1: assessment of current situation')
 
@@ -91,12 +98,12 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
         #NB: geometry_plot = True plots the soil reinforcement geometry, but costs a lot of time!
 
     print('Finished step 2: evaluation of measures')
-
     if timing == 1:
         end = time.time()
 
     if timing == 1:
         print("Time elapsed: " + str(end - start) + ' seconds')
+    exit()
 
     if timing == 1:
         start = time.time()
@@ -105,7 +112,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
         AllSolutions[i.name].SolutionstoDataFrame(filtering='off')
 
     #possibly plot beta(t)-cost for all measures at a section:
-    if save_beta_measure_plots == 1:
+    if save_beta_measure_plots:
         betaind_array = []
 
         for i in years:
@@ -149,7 +156,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
     for i in types:
         if i == 'TC':
             # Initialize a strategy type (i.e combination of objective & constraints)
-            TestCaseStrategyTC = Strategy('TC')
+            TestCaseStrategyTC = GreedyStrategy('TC')
             # Combine available measures
             TestCaseStrategyTC.combine(TestCase, AllSolutions, filtering='off')
             if timing == 1:
@@ -187,7 +194,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
 
         elif i == 'OI':
             # Initialize a strategy type (i.e combination of objective & constraints)
-            TestCaseStrategyOI = Strategy('OI')
+            TestCaseStrategyOI = TargetReliabilityStrategy('OI')
             # Combine available measures
             TestCaseStrategyOI.combine(TestCase, AllSolutions, filtering='off', OI_year=OI_year)
             if timing == 1:

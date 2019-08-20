@@ -1,149 +1,165 @@
-from DikeClasses import extractProfile
+import copy
+import matplotlib.pyplot as plt
+import numpy as np
+from openpyxl import load_workbook
 import pandas as pd
-pathname = r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\Local\GIS\dwp_wouter'
-traject= '16_3'
-#read the dbf xls
-trajectdata = pd.read_excel(pathname + '\\shapes\\' + traject + '.xls')
-#read the ahnfile
-ahnprofiles = pd.read_excel(pathname + '\\xz\\' + traject + '_ahn3_output.xlsx')
-#run extractprofiles
-for i in trajectdata['Dijkpaal']:
-    profielnummer = trajectdata.loc[trajectdata['Dijkpaal'] == i]['profielnr'].values[0]
-    points = ahnprofiles.loc[ahnprofiles['profielnr'] == profielnummer]
-    points = points.reset_index(drop=True)
-    reducedProfile = extractProfile(points,window=10,titel = i,path = pathname + '\\output')
-    reducedProfile.to_csv(pathname + '\\output\\' + i + '.csv')
-#save plot with name of dike section in DBF
-#save csv with profile points
+import re
+from DikeClasses_old import extractProfile
+from pathlib import Path
 
-def extractProfile(profile,window=5,titel='Profile',path = None):
-    profile_averaged = copy.deepcopy(profile)
-    profile_averaged['z'] = pd.rolling_mean(profile['z'], window=window, center=True, min_periods=1)
+def extract_profile_data(profile_data, window, titel, path):
+    # Interpolate gaps with no data
+    profile_data['x'] = profile_data['x'].round(0).astype(int)
+    profile_data = profile_data.sort_values('x')
+    df = pd.DataFrame({'x': [i for i in range(profile_data['x'].iloc[0], profile_data['x'].iloc[-1], 2)]})
+    df = pd.merge(df, profile_data, how='left', on='x').interpolate()
 
-    profile_cov = copy.deepcopy(profile_averaged)
-    profile_cov['z'] = pd.rolling_cov(profile['z'], window=window, center=True, min_periods=1)
+    # Smoothen of the profile and calculate its derivative and covariation
+    df['z_averaged'] = df['z'].rolling(window=window, min_periods=1, center=True).mean()
+    df['z_derivative'] = df['z_averaged'].diff()
+    df['z_covariance'] = df['z'].rolling(window=window*2, min_periods=1, center=True).cov()
 
-    fig, (ax1, ax2) = plt.subplots(2, 1)
+    # Identify the slopes from the covariance plot
+    slopes = df[(df['z_covariance'] >= 0.15) & (df['x'] >= -50) & (df['x'] <= 50)].reset_index().rename(columns={'index': 'profile index'})
 
-    # ax3.set_xlim(100, 170)
-    ax1.plot(profile['x'], profile['z'])
-    ax1.plot(profile_averaged['x'], profile_averaged['z'], 'r')
+    # Correct the selected slopes on gradient direction to get rid of non-levee slopes
+    slopes = slopes[((slopes['x'] < 0) & (slopes['z_derivative'] > 0)) | ((slopes['x'] > 0) & (slopes['z_derivative'] < 0))].reset_index(drop=True)
+    pivot_index = slopes[slopes['profile index'].diff() > 1].reset_index().rename(columns={'index': 'slope index'})
 
-    ax2.plot(profile_cov['x'], profile_cov['z'])
+    # Correct selected slopes on covariance intensity to get rid of small disturbances like ditches
+    slopes_corrected = copy.deepcopy(slopes)
+    for i in range(len(pivot_index)):
+        if i == 0:
+            first_slope_intensity = slopes.iloc[0:int(pivot_index.iloc[i]['slope index'])]['z_covariance'].max()
+            if first_slope_intensity < 0.3:
+                slopes_corrected = slopes_corrected.drop(slopes.iloc[0:int(pivot_index.iloc[i]['slope index'])].index)
 
-    # charpoints = [121, 128, 133, 143, 151, 161]
-    # for i in charpoints:
-    #     ax1.axvline(x=i, LineStyle='--', Color='k')
-    #     ax2.axvline(x=i, LineStyle='--', Color='k')
-        # ax3.axvline(x=i, LineStyle='--', Color='k')
-    d1_peaks = np.argwhere(profile_cov['z'] > 0.02).flatten()
-    ax1.plot(profile_averaged['x'].iloc[d1_peaks], profile_averaged['z'].iloc[d1_peaks], 'or')
-    d1_peaks_diff = np.diff(d1_peaks)
-    x = []
-    takenext = 0
+        elif i != 0 and i != len(pivot_index)-1:
+            intermediate_slope_intensity = slopes.iloc[int(pivot_index.iloc[i-1]['slope index']):int(pivot_index.iloc[i]['slope index'])]['z_covariance'].max()
+            if intermediate_slope_intensity < 0.3:
+                slopes_corrected = slopes_corrected.drop(slopes.iloc[int(pivot_index.iloc[i-1]['slope index']):int(pivot_index.iloc[i]['slope index'])].index)
 
-    #This finds crests with about 100% reliability. Rest is crap.
-    for i in range(0, len(d1_peaks_diff)):
-        if i == 0 or d1_peaks_diff[i] > 3 or takenext == 1:
-            if takenext == 1:
-                if np.absolute([d1_peaks[i]- d1_peaks[i - 1]]) < 20 and np.absolute([d1_peaks[i]- d1_peaks[i - 1]]) > 3:
-                    x.append(d1_peaks[i])
-                    takenext = 0
-                else:
-                    takenext = 0
-            else:
-                x.append(d1_peaks[i])
-                takenext = 1
-    # ax2.plot(profile_averaged['x'].iloc[x], np.ones((len(x), 1)), 'xb')
-    # for i in x:
-    #     ax1.axvline(x=profile_averaged['x'].iloc[i], LineStyle='--', Color='k')
-    # if len(x) > 6:
-    #     #selecteer de juiste punten
-    # elif len (x) < 4:
-    #     #not enough points found
-    # else:
-    #select two highest points to find crest
-    #crest:
-    crest = profile_averaged.iloc[x].nlargest(2,'z')
-    ind_crest = crest.index.values
-    x_crest = crest['x'].values
-    z_crest = np.average(crest['z'].values)
+        elif i != 0 and i == len(pivot_index)-1:
+            intermediate_slope_intensity = slopes.iloc[int(pivot_index.iloc[i-1]['slope index']):int(pivot_index.iloc[i]['slope index'])]['z_covariance'].max()
+            if intermediate_slope_intensity < 0.3:
+                slopes_corrected = slopes_corrected.drop(slopes.iloc[int(pivot_index.iloc[i-1]['slope index']):int(pivot_index.iloc[i]['slope index'])].index)
 
-    inwardside = profile_averaged.iloc[0:np.min(ind_crest)]
-    toe_in_est_idx = np.int(np.round(3*z_crest/0.5))
-    mean_in = np.median(inwardside['z'].iloc[-50-toe_in_est_idx:-toe_in_est_idx])
-    inwardside = inwardside.iloc[-3*toe_in_est_idx:]
-    inward_cov = pd.rolling_cov(inwardside['z'], window=window, center=True, min_periods=1)
-    inward_crossing = inwardside.loc[inward_cov > 0.02]
-    inward_crossing = inward_crossing.loc[inward_crossing['z'] < np.max([mean_in + 0.3, np.min(inward_crossing['z'])+0.01])]
+            last_slope_intensity = slopes.iloc[int(pivot_index.iloc[len(pivot_index)-1]['slope index']-1):]['z_covariance'].max()
+            if last_slope_intensity < 0.3:
+                slopes_corrected = slopes_corrected.drop(slopes.iloc[int(pivot_index.iloc[len(pivot_index)-1]['slope index']-1):].index)
 
-    x_inner = inward_crossing['x'].iloc[-1]
-    z_inner = inward_crossing['z'].iloc[-1]
-    ind_inner = inward_crossing.loc[inward_crossing['z'] == z_inner].index.values[0]
+    # Overwrite with the corrected versions and calculate the pivot indexes of the profile
+    slopes = slopes_corrected.reset_index(drop=True)
+    pivot_index = slopes[slopes['profile index'].diff() > 1].reset_index().rename(columns={'index': 'slope index'})
 
-    outwardside = profile_averaged.iloc[np.max(ind_crest):]
-    mean_out = np.median(outwardside['z'].iloc[0:75])
-    outward_crossing = outwardside.loc[outwardside['z'] < mean_out+0.1]
-    x_outer = outward_crossing['x'].values[0]
-    z_outer = outward_crossing['z'].values[0]
+    # Find the profile coordinates of the levee with respect to the outer_crest_index
+    outer_crest_index = int(df[df['x'] == 0].index.values)
+    matched_pivot_index = int((pivot_index['profile index'] - outer_crest_index).abs().idxmin())
+    matched_slope_index = int(pivot_index.iloc[matched_pivot_index]['slope index'])
 
-    #berm
-    #2 points between crest and toe
-    berm = profile_averaged.iloc[ind_inner:np.min(ind_crest)]
-    berm_cov = pd.rolling_cov(berm['z'], window=window, center=True, min_periods=1)
-    berm_points = berm.loc[berm_cov < 0.05]
-    berm_points = berm_points.loc[berm_points['z'] > mean_in +1.5]
-
-
-    if len(berm_points) > 1:
-        berm_points = berm_points.iloc[[0,-1]]
-        x_berm = berm_points['x'].values
-        z_berm = np.average(berm_points['z'].values)
-        #check if berm makes sense by verifying if slope is about ok:
-        # slope lower part  and upper part should both be > 1.5
-        if (np.min(x_berm)-x_inner)/(z_berm-z_inner) > 1.5 and (np.min(x_crest)-np.max(x_berm))/(z_crest-z_berm) > 1.5 and np.diff(x_berm) > 2:
-            x_values = np.array([x_inner, x_berm[0], x_berm[1], np.min(x_crest), np.max(x_crest), x_outer])
-            z_values = np.array([z_inner, z_berm, z_berm, z_crest, z_crest, z_outer])
+    # In case of no berm
+    if matched_pivot_index == 0:
+        inner_crest_index = int(slopes.iloc[pivot_index['slope index'].values[0]-1]['profile index'])
+        inner_toe_index = int(slopes.iloc[0]['profile index'])
+        if len(pivot_index) == 1:
+            outer_toe_index = int(slopes.iloc[-1]['profile index'])
         else:
-            x_values = np.array([x_inner, np.min(x_crest), np.max(x_crest), x_outer])
-            z_values = np.array([z_inner, z_crest, z_crest, z_outer])
-            print('For ' + titel + ' estimated berm was deleted')
-            print('lower slope: ' + str((np.min(x_berm)-x_inner)/(z_berm-z_inner)))
-            print('upper slope: ' + str((np.min(x_crest)-np.max(x_berm))/(z_crest-z_berm)))
-            print('berm length: ' + str(np.diff(x_berm)))
-        #add berm
-        # last step
-        # filter out bogus berms where slopes are way too steep
+            outer_toe_index = int(slopes.iloc[int(pivot_index.iloc[matched_pivot_index+1]['slope index']-1)]['profile index'])
 
-
+    # In case of a berm
     else:
-        x_values = np.array([x_inner, np.min(x_crest), np.max(x_crest), x_outer])
-        z_values = np.array([z_inner, z_crest, z_crest, z_outer])
-        #not
-    x_values.flatten()
-    z_values.flatten()
-    if titel =='VY094': x_values[0] = 122; z_values[0] = 2.5; print('Adapted inner toe for VY094')
-    if titel =='VY058': x_values[0] = 131.5; z_values[0]  = 3.; x_values[-1] = 158;  z_values[-1] = 4.8; print('Adapted inner and outer toe for VY058')
-    if titel =='AW216': x_values[1] = 139; z_values[1] = 5.5; x_values[2] = 149.6; z_values[2] = 5.5; print('Adapted crest for AW216')
-    if titel == 'AW219':
-        x_values[1] = 137.6; z_values[1] = 5.9; x_values[2] = 149; z_values[2] = 5.9; print('Corrected crest of AW219')
-    if titel == 'AW240': x_values[0] = 124; z_values[0] = 1.07; print('Corrected inner toe of AW240')
-    if titel == 'AW248': x_values[-1] = 152; z_values[-1] = 2.12; print('Corrected outer toe of AW248')
-    if titel == 'AW276':
-        x_values = np.insert(x_values,[0, 1], [100, 135])
-        z_values = np.insert(z_values,[0, 1], [-0.7, z_values[0]])
-        print('Corrected AW276')
+        inner_crest_index = int(slopes.iloc[matched_slope_index-1]['profile index'])
+        berm_inner_toe_side_index = int(slopes.iloc[int(pivot_index.iloc[matched_pivot_index-1]['slope index']-1)]['profile index'])
+        berm_inner_crest_side_index = int(pivot_index.iloc[matched_pivot_index-1]['profile index'])
+        if matched_pivot_index == pivot_index.index[-1]:
+            outer_toe_index = int(slopes.iloc[-1]['profile index'])
+        else:
+            outer_toe_index = int(slopes.iloc[int(pivot_index.iloc[matched_pivot_index+1]['slope index']-1)]['profile index'])
+        if matched_pivot_index-1 == pivot_index.index[0]:
+            inner_toe_index = int(slopes.iloc[0]['profile index'])
+        else:
+            inner_toe_index = int(pivot_index.iloc[matched_pivot_index-2]['profile index'])
 
-    # Plot the  points with a line
-    ax1.plot(x_values,z_values, color = 'k', marker = 'o', linestyle = '--')
-    ax1.set_ylabel('m NAP')
-    ax2.set_ylabel('CoV profiel')
-    ax1.set_xlim(np.min(x_values)-30, np.max(x_values)+30)
-    ax2.set_xlim(np.min(x_values)-30, np.max(x_values)+30)
+    # Manual corrections
+    cross_section = int(re.findall('\d+', titel)[0])
+    if cross_section == 1: inner_toe_index = 85
+    if cross_section == 6: inner_toe_index = 83
+    if cross_section == 15: inner_toe_index = 83
+    if cross_section == 27: inner_toe_index = 84
+    if cross_section == 33: matched_pivot_index = 0
+    if cross_section == 34: inner_toe_index = 78
+    if cross_section == 39: inner_toe_index = 83
+    if cross_section == 47: inner_toe_index = 82
+    if cross_section == 53: inner_toe_index = 85
+    if cross_section == 58: inner_toe_index = 81
+    if cross_section == 59: inner_toe_index = 82
+    if cross_section == 60: inner_toe_index = 84
+    if cross_section == 64: inner_toe_index = 78
+    if cross_section == 65: inner_toe_index = 67
+    if cross_section == 74: inner_toe_index = 83
+    if cross_section == 83: matched_pivot_index = 0
+
+    # Extract x and z coordinates of the profile coordinates
+    if matched_pivot_index == 0:
+        x_coords = [df.loc[inner_toe_index]['x'], df.loc[inner_crest_index]['x'], df.loc[outer_crest_index]['x'], df.loc[outer_toe_index]['x']]
+        z_coords = [df.loc[inner_toe_index]['z'], (df.loc[inner_crest_index]['z'] + df.loc[outer_crest_index]['z']) / 2, (df.loc[inner_crest_index]['z'] + df.loc[outer_crest_index]['z']) / 2, df.loc[outer_toe_index]['z']]
+    else:
+        x_coords = [df.loc[inner_toe_index]['x'], df.loc[berm_inner_toe_side_index]['x'], df.loc[berm_inner_crest_side_index]['x'], df.loc[inner_crest_index]['x'], df.loc[outer_crest_index]['x'], df.loc[outer_toe_index]['x']]
+        z_coords = [df.loc[inner_toe_index]['z'], (df.loc[berm_inner_toe_side_index]['z'] + df.loc[berm_inner_crest_side_index]['z']) / 2, (df.loc[berm_inner_toe_side_index]['z'] + df.loc[berm_inner_crest_side_index]['z']) / 2, (df.loc[inner_crest_index]['z'] + df.loc[outer_crest_index]['z']) / 2, (df.loc[inner_crest_index]['z'] + df.loc[outer_crest_index]['z']) / 2, df.loc[outer_toe_index]['z']]
+
+    # Plot the calculated profile coordinates, connected by a dotted line over the measured profile and the covariance of the profile over the cross-section
+    fig, ax = plt.subplots(2, 1)
+    ax[0].plot(profile_data['x'], profile_data['z'])
+    ax[0].plot(df['x'], df['z_averaged'], 'r')
+    ax[1].plot(df['x'], df['z_covariance'])
+    ax[0].plot(x_coords, z_coords, color='k', marker='o', linestyle='--')
+    ax[0].set_ylabel('m NAP')
+    ax[1].set_ylabel('CoV profiel')
+    ax[0].set_xlim(min(x_coords)-30, max(x_coords)+30)
+    ax[1].set_xlim(min(x_coords)-30, max(x_coords)+30)
     fig.suptitle(titel)
-    if path != None:
-        plt.savefig(path + '\\' + titel + '.png')
-        plt.close()
+    plt.savefig(path.joinpath(titel + '.png'))
+    plt.close()
+    return pd.DataFrame({'x': x_coords, 'z': z_coords})
 
+def main():
+    traject = '16-3'
+    input_path = Path('d:/wouterjanklerk/My Documents/00_PhDgeneral/03_Cases/01_Rivierenland SAFE/WJKlerk/SAFE/data/InputFiles/Profiles').joinpath(traject)
+    output_path = Path('d:/wouterjanklerk/My Documents/00_PhDgeneral/03_Cases/01_Rivierenland SAFE/WJKlerk/SAFE/data/InputFiles/Profiles').joinpath(traject)
+    input_file_name = 'InputProfiles.xlsx'
+    output_filename = 'Dijkvakindeling_v5.0.xlsx'
 
-    return pd.DataFrame(np.hstack((x_values[:,None], z_values[:,None])),columns=['x','z'])
+    # Make output folder if not exist:
+    if not input_path.joinpath('profiles').is_dir():
+        input_path.joinpath('profiles').mkdir(parents=True, exist_ok=True)
+
+    # Read the input file
+    input_data = pd.read_excel(input_path.joinpath(input_file_name))
+    traject_data = pd.read_excel(output_path.joinpath((output_filename)), header=1)
+    traject_data = traject_data[(traject_data['Traject'] == traject) & (traject_data.iloc[:, 5])]
+
+    # Extract profile information
+    index = traject_data['dv_nummer'].reset_index(drop=True)
+
+    for i in index:
+        profile_number = 'Dwarsprofiel_' + str(i).zfill(len(str(index.iloc[-1])))
+        profile_data = input_data[input_data['dijkvaknummer'] == i].reset_index(drop=True).rename(columns={'afstand buk [m, buitenkant +]': 'x', 'z_ahn [m NAP]': 'z', 'x': 'x_coord', 'y': 'y_coord'})
+        profile = extract_profile_data(profile_data, window=2, titel=profile_number, path=input_path.joinpath('profiles'))
+
+        # Save extracted data in .csv
+        profile.to_csv(input_path.joinpath('profiles', profile_number + '.csv'))
+
+        # Write profile_numbers to output file
+        wb = load_workbook(output_path.joinpath((output_filename)))
+        ws = wb.get_sheet_by_name('Dijkvakindeling_keuze_info')
+
+        for row in range(ws.max_row):
+            if ws[row + 1][0].value == i:
+                ws.cell(row=row + 1, column=11).value = profile_number
+            else:
+                pass
+
+        wb.save(output_path.joinpath((output_filename)))
+
+if __name__ == '__main__':
+    main()

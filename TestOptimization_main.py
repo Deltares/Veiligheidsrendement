@@ -1,29 +1,29 @@
 #IMPORT PACKAGES
-from DikeClasses import DikeTraject
+from DikeTraject import DikeTraject
 from HelperFunctions import DataAtShelve,getMeasureTable, replaceNames, pareto_frontier
-from StrategyEvaluation import Solutions, Strategy, SolveMIP
+from Strategy import GreedyStrategy, MixedIntegerStrategy, ParetoFrontier
+from Solutions import Solutions
 from pathlib import Path
-import copy
-import pandas
+
 #GENERAL OPTIONS
 SHELVES = True
 
 #INDICATE WHICH STEPS TO RUN THROUGH
-RUN_STEP_1 = False
-RUN_STEP_2 = False
+RUN_STEP_1 = True
+RUN_STEP_2 = True
 RUN_STEP_3 = True
 
 #INDICATE WHICH METHODS TO EVALUATE
-RUN_HEURISTIC              = True
+RUN_GREEDY              = True
 RUN_MIXEDINTEGER           = True
 RUN_PARETOFRONTIER         = True
 READ_MIXEDINTEGER          = True
 #INDICATE THE CASE TO USE
-CASE = 'Basic_withStabilityScreenasPartial'
+CASE = 'TestRefactor4'
 
 #STEP 0: READ GENERAL INPUT
 PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland ' \
-         'SAFE\WJKlerk\SAFE\data\PaperOptimization\Basic')
+         'SAFE\WJKlerk\SAFE\data\PaperOptimization\Test')
 LANGUAGE = 'EN'
 MECHANISMS = ['Overflow', 'StabilityInner', 'Piping']
 T = [0, 19, 20, 50, 75, 100]
@@ -66,32 +66,31 @@ else:
 #store to an accessible format
 
 #STEP 3: FIND SOLUTIONS FOR ALL SELECTED METHODS
-if RUN_HEURISTIC:
-    StrategyHeuristic = Strategy('Heuristic')
-    StrategyHeuristic.combine(TrajectObject, SolutionsCollection,splitparams=True)
-    StrategyHeuristic.evaluate(TrajectObject, SolutionsCollection,splitparams=True)
+if RUN_GREEDY:
+    StrategyGreedy = GreedyStrategy('Greedy')
+    StrategyGreedy.combine(TrajectObject, SolutionsCollection,splitparams=True)
+    StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting='fast')
 
-    StrategyHeuristic = replaceNames(StrategyHeuristic,SolutionsCollection)
-    StrategyHeuristic.plotBetaCosts(TrajectObject,path= PATH.joinpath('Solutions'),typ='multi',
-                                     fig_id=101, symbolmode='on',linecolor='b', labels='Heuristic',
+    StrategyGreedy = replaceNames(StrategyGreedy,SolutionsCollection)
+    StrategyGreedy.plotBetaCosts(TrajectObject,path= PATH.joinpath('Solutions'),typ='multi',
+                                     fig_id=101, symbolmode='on',linecolor='b', labels='Greedy',
                                      MeasureTable=getMeasureTable(SolutionsCollection),beta_or_prob='beta',outputcsv=True,last='yes')
     # write to csv's
-    for i in StrategyHeuristic.options: StrategyHeuristic.options[i].to_csv(
+    for i in StrategyGreedy.options: StrategyGreedy.options[i].to_csv(
         PATH.joinpath('Solutions').joinpath(i + '_Options.csv'))
-    StrategyHeuristic.TakenMeasures.to_csv(PATH.joinpath(CASE).joinpath('TakenMeasures_Heuristic.csv'))
-    StrategyHeuristic.makeFinalSolution(PATH.joinpath(CASE).joinpath('TakenMeasures_Final_Heuristic.csv'))
-    if SHELVES: DataAtShelve(dir = PATH, name = 'HeuristicResult.out', objects = {'StrategyHeuristic': StrategyHeuristic}, mode = 'write')
+    StrategyGreedy.TakenMeasures.to_csv(PATH.joinpath(CASE).joinpath('TakenMeasures_Greedy.csv'))
+    StrategyGreedy.makeFinalSolution(PATH.joinpath(CASE).joinpath('TakenMeasures_Final_Greedy.csv'))
+    if SHELVES: DataAtShelve(dir = PATH, name = 'GreedyResult.out', objects = {'StrategyGreedy': StrategyGreedy}, mode = 'write')
 else:
-    StrategyHeuristic = DataAtShelve(dir=PATH, name='HeuristicResult.out', mode='read')
+    StrategyGreedy = DataAtShelve(dir=PATH, name='GreedyResult.out', mode='read')
 if RUN_MIXEDINTEGER:
-    StrategyMixedInteger = Strategy('MixedInteger')
+    StrategyMixedInteger = MixedIntegerStrategy('MixedInteger')
     StrategyMixedInteger.combine(TrajectObject,SolutionsCollection,splitparams=True)
     StrategyMixedInteger.make_optimization_input(TrajectObject,SolutionsCollection)
     MixedIntegerModel = StrategyMixedInteger.create_optimization_model()
-    MixedIntegerSolution = SolveMIP(MixedIntegerModel)
+    MixedIntegerModel.solve()
+    # MixedIntegerSolution = SolveMIP(MixedIntegerModel)
 
-    # StrategyMixedInteger.readResults(MixedIntegerModel)
-    # StrategyMixedInteger.checkConstraintSatisfaction(MixedIntegerModel)
     if SHELVES:
         DataAtShelve(dir = PATH, name = 'MixedIntegerStrategy.out', objects = {'StrategyMixedInteger':
                                                                             StrategyMixedInteger}, mode = 'write')
@@ -107,7 +106,7 @@ if RUN_MIXEDINTEGER:
     print()
 
 if RUN_PARETOFRONTIER:
-    StrategyParetoFrontier = Strategy('ParetoFrontier')
+    StrategyParetoFrontier = ParetoFrontier('ParetoFrontier')
     StrategyParetoFrontier.combine(TrajectObject,SolutionsCollection,splitparams=True)
     # StrategyParetoFrontier_unfiltered = copy.deepcopy(StrategyParetoFrontier)
     # StrategyParetoFrontier_unfiltered.evaluate(TrajectObject,SolutionsCollection)
@@ -146,10 +145,10 @@ if 'StrategyParetoFrontier' in locals():
     plt.plot(LCC_Pareto,TR_Pareto,linestyle = '',marker = 'o',color = 'lightgray',label='All Runs')
     plt.plot(LCC_ParetoFront,TR_ParetoFront,linestyle = '-',marker = 'd',color = 'dimgray',label='Pareto Front')
 
-if 'StrategyHeuristic' in locals():
-    [TR_Heuristic, LCC_Heuristic] = StrategyHeuristic.determineRiskCostCurve(TrajectObject,PATH.joinpath(
+if 'StrategyGreedy' in locals():
+    [TR_Greedy, LCC_Greedy] = StrategyGreedy.determineRiskCostCurve(TrajectObject,PATH.joinpath(
         CASE).joinpath('PfDumps'))
-    plt.plot(LCC_Heuristic,TR_Heuristic, '-or', label='Heuristic')
+    plt.plot(LCC_Greedy,TR_Greedy, '-or', label='Greedy')
 
 if 'StrategyMixedInteger' in locals():
     [TR_MixedInteger, LCC_MixedInteger] = StrategyMixedInteger.determineRiskCostCurve(TrajectObject,PATH.joinpath(
@@ -164,12 +163,15 @@ if 'StrategyMixedInteger' in locals():
 plt.ylabel('Total Risk')
 plt.xlabel('LCC')
 plt.yscale('log')
-plt.ylim((1e5,5e7))
-plt.xlim((0,1.2e8))
+plt.ylim((0.9*np.min(TR_Pareto),0.9*np.max(TR_Pareto)))
+plt.xlim((0,np.max(LCC_Pareto)))
 # plt.xlim((0,2e7))
 plt.legend(loc=1)
 plt.title('Comparison of risk and cost for different methods')
 plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods_logscale.png'),dpi=300, bbox_inches='tight')
+plt.ylim((1e5,5e7))
+plt.xlim((0,1.2e8))
+plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods_logscale_zoom.png'),dpi=300, bbox_inches='tight')
 # plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods.png'),dpi=300, bbox_inches='tight')
 plt.close()
 
@@ -177,36 +179,23 @@ print('recalculated: ' + str(TR_MixedInteger+LCC_MixedInteger))
 print('objective: ' + str(MixedIntegerResults['ObjectiveValue']))
 print(MixedIntegerResults['Status'])
 
-#plot with all TC of all draws in bar graph and the final solution of MIP and Heuristic:
+#plot with all TC of all draws in bar graph and the final solution of MIP and Greedy:
 TC_Pareto = np.sort(np.add(LCC_Pareto,TR_Pareto))
 TC_ParetoFront = np.add(LCC_ParetoFront,TR_ParetoFront)
-TC_Heuristic =np.add(LCC_Heuristic,TR_Heuristic)
+TC_Greedy =np.add(LCC_Greedy,TR_Greedy)
 TC_MIP = np.add(LCC_MixedInteger,TR_MixedInteger)
 
 plt.figure(1001,figsize=(8,6))
 plt.plot(range(0,len(TC_Pareto)),TC_Pareto,color='lightgray',label='individual runs')
 plt.axhline(y=TC_MIP,xmin=0,xmax=len(TC_Pareto),color='r',linestyle='--',label='Mixed Integer Optimum')
-plt.hlines(y=TC_Heuristic,xmin=0,xmax=len(TC_Pareto),color='g',linestyle='--',label='Greedy heuristic steps')
-plt.axhline(y=TC_Heuristic[-1],xmin=0,xmax=len(TC_Pareto),color='g',linestyle='-',label='Greedy heuristic '
-                                                                                                'Optimum')
+plt.hlines(y=TC_Greedy,xmin=0,xmax=len(TC_Pareto),color='g',linestyle='--',label='Greedy steps')
+plt.axhline(y=TC_Greedy[-1],xmin=0,xmax=len(TC_Pareto),color='g',linestyle='-',label='Greedy Optimum')
 plt.xlim((0,len(TC_Pareto)))
 plt.legend(loc=2)
 plt.title('Comparison of total cost for different methods')
 plt.savefig(PATH.joinpath(CASE).joinpath('Methods.png'),dpi=300, bbox_inches='tight')
-print("TC Heuristic: " + str(TC_Heuristic[-1]))
+np.savetxt(PATH.joinpath(CASE).joinpath('TCGreedy.csv'),TC_Greedy,delimiter=",")
+# print("TC Greedy: " + str(TC_Greedy))
+print("TC Greedy final step: " + str(TC_Greedy[-1]))
 print("TC MIP: " + str(TC_MIP))
 print("Objective MIP: " + str(MixedIntegerResults['ObjectiveValue']))
-
-
-
-#pseudocode:
-#if type = heuristic
-#loop over takenmeasures
-    #implemnet option
-    #calculate risk
-    #save (Total Risk, LCC)
-#elif type = MIP
-#implemnet options
-#calculate risk
-#save (total risk, lcc)
-#plot all points

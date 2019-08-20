@@ -6,9 +6,9 @@ from pathlib import Path
 from shutil import copyfile
 
 def main():
-    traject = 'Test'
+    traject = 'OverflowEqual'
     path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\InputFiles\OptimizationTestCase')
+                r'SAFE\WJKlerk\SAFE\data\InputFiles\OptimizationInput')
     filename = 'Dijkvakindeling_v4.2_Optimalisatie.xlsx'
     path_WLRise_HBNRise = False
     #Comment this out if it has to be read from the
@@ -31,6 +31,11 @@ def main():
     Piping_data = df['Info voor Piping'].iloc[:, [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
     Housing = df['Info voor huizen'].iloc[:, [0, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
     measures = pd.read_csv(path.joinpath(traject, 'Input/measures.csv'), delimiter=';')
+
+    #Check if two or multiple dike section are equally named
+    if any(STBI_data['dwarsprofiel'].duplicated()) or any(Piping_data['dwarsprofiel'].duplicated()):
+        raise Exception('Warning, two or multiple dike section are equally named!')
+        sys.exit()
 
     General = {}
     General['Name'] = ['Length', 'Start', 'End', 'Overflow', 'StabilityInner', 'Piping', 'LoadData', 'YearlyWLRise', 'HBNRise_factor']
@@ -88,12 +93,18 @@ def main():
 
         #Write stability inner
         STBI_data_location = STBI_data[STBI_data['dwarsprofiel'] == DikeSections['Dwarsprofiel STBI/STBU'][i]].transpose().drop(['dwarsprofiel'], axis=0).reset_index()
+        if STBI_data_location.iloc[:, 1].isnull().values.any():
+            raise Exception('STBI data of cross-section {} (Dike section {}) contains NaN values'.format(DikeSections['Dwarsprofiel STBI/STBU'][i], DikeSections['dv_nummer'][i]))
+            sys.exit()
         STBI_data_location.columns = ['Name', "Value"]
         STBI_data_location = STBI_data_location.set_index('Name')
         STBI_data_location.to_csv(path.joinpath(traject, 'Output/StabilityInner', DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv'))
 
         #Write piping
         Piping_data_location = Piping_data[Piping_data['dwarsprofiel'] == DikeSections['Dwarsprofiel piping'][i]].transpose().drop(['dwarsprofiel'], axis=0).reset_index()
+        if Piping_data_location.iloc[:, 1].isnull().values.any():
+            raise Exception('Piping data of cross-section {} (Dike section {}) contains NaN values'.format(DikeSections['Dwarsprofiel STBI/STBU'][i], DikeSections['dv_nummer'][i]))
+            sys.exit()
         Piping_data_location.columns = ['Name', "Value"]
         Piping_data_location = Piping_data_location.set_index('Name')
         Piping_data_location.to_csv(path.joinpath(traject, 'Output/Piping', DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv'))
@@ -107,12 +118,12 @@ def main():
 
         #Overwrite crestheight, betas, h_c and if possible dhc(t)
         # HBN_basis['h_crest'].ix[0] = crestlevels.loc[crestlevels['dijkpaal'] == DikeSections.iloc[i]['Dwarsprofiel HoogteToetspeil']]['hcrest'].values[0]
-        HBN_basis['h_crest'][0] = DikeSections['Kruinhoogte'][i]
+        HBN_basis['h_crest'].iloc[0] = DikeSections['Kruinhoogte'][i]
         HBN_basis['h_c'] = OverflowData['Value'].values
         HBN_basis['beta'] = OverflowData['Beta\n'].values
 
         if len(DikeSections['Kruindaling'].value_counts()) > 0:
-            HBN_basis['dhc(t)'][0] = DikeSections['Kruindaling'][i]
+            HBN_basis['dhc(t)'].iloc[0] = DikeSections['Kruindaling'][i]
 
         HBN_basis.to_csv(path.joinpath(traject, 'Output/Overflow', DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv'), index=False)
 
