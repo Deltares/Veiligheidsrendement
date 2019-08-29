@@ -3,8 +3,7 @@
 
 import numpy as np
 from scipy import interpolate
-from scipy.stats import norm
-
+import ProbabilisticFunctions
 def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None, design_variable=None):
     if mode == 'assessment':
         if q_c[0] != q_c[-1:]:
@@ -13,10 +12,10 @@ def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None,
         else:
             beta_hc = interpolate.interp1d(h_c, beta, kind='linear', fill_value='extrapolate')
             beta = np.min([beta_hc(h_crest), 8.])
-        Pf = norm.cdf(-beta)
+        Pf = ProbabilisticFunctions.beta_to_pf(beta)
         return beta, Pf
     elif mode == 'design':
-        beta_t = -norm.ppf(Pt)
+        beta_t = ProbabilisticFunctions.pf_to_beta(Pt)
         if design_variable == 'h_crest':
             if q_c[0] != q_c[-1:]:
                 beta_hc = interpolate.interp2d(beta, q_c, h_c, kind='linear', fill_value='extrapolate')

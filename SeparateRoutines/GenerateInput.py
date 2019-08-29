@@ -6,10 +6,10 @@ from pathlib import Path
 from shutil import copyfile
 
 def main():
-    traject = 'OverflowEqual'
+    traject = '16-4'
     path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\InputFiles\OptimizationInput')
-    filename = 'Dijkvakindeling_v4.2_Optimalisatie.xlsx'
+                r'SAFE\WJKlerk\SAFE\data\InputFiles\SAFEInput')
+    filename = 'Dijkvakindeling_v5.1.xlsx'
     path_WLRise_HBNRise = False
     #Comment this out if it has to be read from the
     # path_WLRise_HBNRise = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '

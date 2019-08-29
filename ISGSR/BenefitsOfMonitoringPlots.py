@@ -5,7 +5,7 @@ import pandas as pd
 import os
 from StrategyEvaluation import calcTrajectProb
 from FiguresGeoRisk import plotkversusBeta
-from scipy.stats import norm
+import ProbabilisticFunctions
 from scipy.interpolate import interp1d
 
 import numpy as np
@@ -140,7 +140,7 @@ def plotcVOI(data,threshold=None,t=0,pad = None):
                 beta_traj.append(betat[t])
             LCCs = np.cumsum(i['TestCaseStrategyTC'].TakenMeasures['LCC'].values)
             if threshold == None:
-                beta_target = -norm.ppf(i['TestCase'].GeneralInfo['Pmax'])
+                beta_target = ProbabilisticFunctions.pf_to_beta(i['TestCase'].GeneralInfo['Pmax'])
             else:
                 beta_target = threshold
             LCC_func = interp1d(beta_traj,LCCs)
@@ -222,9 +222,9 @@ def plotkversusBeta(cases,section,betayear = 0,path = None):
     ax1.set_ylabel(r'Reliability index $\beta$')
 
     from scipy.stats import norm
-    pfs = norm.cdf(-beta)
+    pfs = ProbabilisticFunctions.beta_to_pf(beta)
     pss = np.multiply(p, pfs)
-    beta_expected = -norm.ppf(np.sum(pss))
+    beta_expected = ProbabilisticFunctions.pf_to_beta(np.sum(pss))
 
     for i in range(0,len(casenames)):
         ax1.text(k[i]+.000005,beta[i],casenames[i])

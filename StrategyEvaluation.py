@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 import copy
-from scipy.stats import norm
+import ProbabilisticFunctions
 from scipy.interpolate import interp1d
-
+import matplotlib.pyplot as plt
+import time
 # This script combines two sets of measures to a single option
 def MeasureCombinations(combinables, partials, solutions,splitparams = False):
     CombinedMeasures = pd.DataFrame(columns=combinables.columns)
@@ -12,6 +13,7 @@ def MeasureCombinations(combinables, partials, solutions,splitparams = False):
     for i, row1 in partials.iterrows():
     #combine with all combinables
         for j, row2 in combinables.iterrows():
+
             ID = '+'.join((row1['ID'].values[0], row2['ID'].values[0]))
             types = [row1['type'].values[0], row2['type'].values[0]]
             year = [row1['year'].values[0], row2['year'].values[0]]
@@ -36,10 +38,12 @@ def MeasureCombinations(combinables, partials, solutions,splitparams = False):
                 if ij[0] =='Section':     #It is a beta value
                     #where year in years is the same as ij[1]
                     indices = [indices for indices, x in enumerate(years) if x == ij[1]]
-                    ps = norm.cdf(-np.array(betas)[indices])
+                    ps = ProbabilisticFunctions.beta_to_pf(np.array(betas)[indices])
                     p = np.sum(ps)
-                    betas.append(-norm.ppf(p))
-
+                    betas.append(ProbabilisticFunctions.pf_to_beta(p))
+                    # print(ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]))
+                    # if ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]) > 1e-8:
+                    #     pass
             if splitparams:
                 in1 = [ID, types, 'combined', year, params[0],params[1],params[2], Cost]
             else:
@@ -48,7 +52,12 @@ def MeasureCombinations(combinables, partials, solutions,splitparams = False):
             allin = pd.DataFrame([in1 + betas], columns=combinables.columns)
             CombinedMeasures = CombinedMeasures.append(allin)
     return CombinedMeasures
-
+def getTrajectProb(traject, traject_prob,trange):
+    for mechanism in range(0,len(traject.GeneralInfo['Mechanisms'])):
+        traject_prob[mechanism, :, :] = traject.Probabilities.loc[
+            traject.Probabilities['index'] == traject.GeneralInfo['Mechanisms'][mechanism]].drop(
+            ['index', 'Section', 'Length'], axis=1).values
+    return traject_prob
 def makeTrajectDF(traject, cols):
     # cols = cols[1:]
     sections = []
@@ -165,8 +174,8 @@ def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=Fal
         ts = base.columns.values
         mechs = np.unique(base.index.get_level_values('mechanism').values)
         # mechs = ['Overflow']
-    pf_traject = np.zeros((len(ts),))
-    # pf_traject = np.zeros((len(trange),))
+    # pf_traject = np.zeros((len(ts),))
+    pf_traject = np.zeros((len(trange),))
 
     for i in mechs:
         if i != 'Section':
@@ -174,9 +183,9 @@ def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=Fal
                 betas = base.xs(i, level='mechanism').values.astype('float')
             else:
                 betas = base[i]
-            beta_interp = interp1d(ts,betas)
-            pfs[i] = norm.cdf(-beta_interp(trange))
-            # pfs[i] = norm.cdf(-betas)
+            beta_interp = interp1d(np.array(ts).astype(np.int),betas)
+            pfs[i] = ProbabilisticFunctions.beta_to_pf(beta_interp(trange))
+            # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
             pnonfs = 1 - pfs[i]
             if i == 'Overflow':
                 pf_traject += np.max(pfs[i], axis=0)
@@ -186,12 +195,12 @@ def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=Fal
 
     ## INTERPOLATION AFTER COMBINATION:
     # pfail = interp1d(ts,pf_traject)
-    # p_t1 = norm.cdf(-pfail(trange))
-    # betafail = interp1d(ts, -norm.ppf(pf_traject),kind='linear')
+    # p_t1 = ProbabilisticFunctions.beta_to_pf(pfail(trange))
+    # betafail = interp1d(ts, ProbabilisticFunctions.pf_to_beta(pf_traject),kind='linear')
     # beta_t = betafail(trange)
-    # p_t = norm.cdf(-np.array(beta_t, dtype=np.float64))
+    # p_t = ProbabilisticFunctions.beta_to_pf(np.array(beta_t, dtype=np.float64))
 
-    beta_t = -norm.ppf(pf_traject)
+    beta_t = ProbabilisticFunctions.pf_to_beta(pf_traject)
     p_t = pf_traject
     return beta_t, p_t
 
@@ -255,3 +264,25 @@ def SolveMIP(MIPModel):
 
     MixedIntegerSolution = MIPModel.solve()
     return MixedIntegerSolution
+
+def evaluateRisk(mechanisms,init_overflow_risk,init_geo_risk,Strategy,n,sh,sg):
+    for i in mechanisms:
+        if i == 'Overflow':
+            init_overflow_risk[n,:] = Strategy.RiskOverflow[n,sh,:]
+        else:
+            init_geo_risk[n,:] = Strategy.RiskGeotechnical[n,sg,:]
+    return init_overflow_risk,init_geo_risk
+
+def updateProbability(init_probability,Strategy, index):
+    '''index = [n,sh,sg]'''
+    for i in init_probability:
+        from scipy.stats import norm
+        # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
+        if i == 'Overflow':
+            init_probability[i][index[0],:] = Strategy.Pf[i][index[0],index[1],:]
+        else:
+            init_probability[i][index[0], :] = Strategy.Pf[i][index[0], index[2], :]
+        # plt.plot(-norm.ppf(init_probability[i][index[0],:]),'b')
+        # plt.savefig('Beta ' + i + str(index) + '.png')
+        # plt.close()
+    return init_probability

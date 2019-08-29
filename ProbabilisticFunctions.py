@@ -1,8 +1,9 @@
-from scipy.stats import norm
 import numpy as np
 import openturns as ot
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 import copy
+import math
+from scipy.stats import norm
 import cProfile
 
 
@@ -10,8 +11,8 @@ import cProfile
 def calc_gamma(mechanism,TrajectInfo):
     if mechanism == 'Piping' or mechanism == 'Heave' or mechanism == 'Uplift':
         Pcs = (TrajectInfo['Pmax'] * TrajectInfo['omegaPiping'] * TrajectInfo['bPiping']) /( TrajectInfo['aPiping'] * TrajectInfo['TrajectLength'])
-        betacs = -norm.ppf(Pcs)
-        betamax = -norm.ppf(TrajectInfo['Pmax'])
+        betacs = pf_to_beta(Pcs)
+        betamax = pf_to_beta(TrajectInfo['Pmax'])
         if mechanism == 'Piping':
             gamma = 1.04*np.exp(0.37*betacs-0.43*betamax)
         elif mechanism == 'Heave':
@@ -31,12 +32,12 @@ def calc_beta_implicated(mechanism,SF,TrajectInfo=None):
         beta = 8
     else:
         if mechanism == 'Piping':
-            beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * -norm.ppf(TrajectInfo['Pmax']))
+            beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == 'Heave':
-            beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * -norm.ppf(TrajectInfo['Pmax']))
+            beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == 'Uplift':
             # print(SF)
-            beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * -norm.ppf(TrajectInfo['Pmax']))
+            beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
         else:
             print('Mechanism not found')
     return beta
@@ -53,10 +54,10 @@ def calc_traject_prob(sections, mechanism):
         if mechanism == 'Piping':
             for i in range(0,len(sections)):
                 if isinstance(sections[i].Reliability.Piping.Pf,float):
-                    betaCS = -norm.ppf(sections[i].Reliability.Piping.Pf)
+                    betaCS = pf_to_beta(sections[i].Reliability.Piping.Pf)
                 else:
                     betaCS = max((sections[i].Reliability.Piping.beta_cs_h, sections[i].Reliability.Piping.beta_cs_p, sections[i].Reliability.Piping.beta_cs_u))
-                Psections.append(norm.cdf(-betaCS))
+                Psections.append(beta_to_pf(betaCS))
         traject_prob = sum(Psections)
     return traject_prob
 
@@ -212,7 +213,7 @@ def run_prob_calc(model,dist,method='FORM',startpoint=False):
         algo.run()
         result = algo.getResult()
         Pf = result.getProbabilityEstimate()
-        beta = -norm.ppf(Pf)
+        beta = pf_to_beta(Pf)
         if beta != float('Inf'):
             alfas_sq = np.array(result.getImportanceFactors())
         else:
@@ -367,7 +368,9 @@ def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid
             plt.show()
 
     return newdist
-
+def getDesignWaterLevel(load,p):
+    #TODO Check this!
+    return np.array(load.distribution.computeQuantile(1 - p))[0]
 def addLoadCharVals(input,load=None,p_h = 1./1000, p_dh=0.5,year = 0):
     #input = list of all strength variables
 
@@ -417,3 +420,123 @@ def MarginalsforTimeDepReliability(input,load=None,year=0,type=None):
                 names.append('h')
 
     return marginals, names
+
+###################################################################################################
+## THESE ARE FASTER FORMULAS FOR CONVERTING BETA TO PROB AND VICE VERSA
+def erf(x):
+    ''' John D. Cook's implementation.http://www.johndcook.com
+    >> Formula 7.1.26 given in Abramowitz and Stegun.
+    >> Formula appears as 1 – (a1t1 + a2t2 + a3t3 + a4t4 + a5t5)exp(-x2)
+    >> A little wisdom in Horner's Method of coding polynomials:
+        1) We could evaluate a polynomial of the form a + bx + cx^2 + dx^3 by coding as a + b*x + c*x*x + d*x*x*x.
+        2) But we can save computational power by coding it as ((d*x + c)*x + b)*x + a.
+        3) The formula below was coded this way bringing down the complexity of this algorithm from O(n2) to O(n).'''
+
+    # constants
+    a1 = 0.254829592
+    a2 = -0.284496736
+    a3 = 1.421413741
+    a4 = -1.453152027
+    a5 = 1.061405429
+    p = 0.3275911
+
+    # Save the sign of x
+    # sign = 1
+    # if x < 0:
+    #     sign = -1
+    if np.any(np.isnan(np.where(x <0,-1,1))):
+        print()
+    sign = np.where(x < 0, -1, 1)
+    x = abs(x)
+
+    # Formula 7.1.26 given in Abramowitz and Stegun.
+    t = 1.0 / (1.0 + p * x)
+    y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * np.exp(-x * x)
+    # y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x * x)
+
+    return sign * y
+
+
+####################################################################################################
+
+def phi(x):
+    '''Cumulative gives a probability that a statistic
+    is less than Z. This equates to the area of the
+    distribution below Z.
+    e.g:  Pr(Z = 0.69) = 0.7549. This value is usually
+    given in Z tables.'''
+
+    return 0.5 * (1.0 + erf(x / math.sqrt(2)))
+
+
+#####################################################################################################
+
+def phi_compcum(x):
+    ''' Complementary cumulative gives a probability
+    that a statistic is greater than Z. This equates to
+    the area of the distribution above Z.
+    e.g: Pr(Z  =  0.69) = 1 - 0.7549 = 0.2451'''
+
+    return abs(phi(x) - 1)
+
+
+#####################################################################################################
+
+def phi_cumformu(x):
+    '''Cumulative from mean gives a probability
+    that a statistic is between 0 (mean) and Z.
+    e.g: Pr(0 = Z = 0.69) = 0.2549'''
+
+    return phi_compcum(0) - phi_compcum(x)
+
+
+def formula(t):
+    # constants
+    c0 = 2.515517
+    c1 = 0.802853
+    c2 = 0.010328
+    d0 = 1.432788
+    d1 = 0.189269
+    d2 = 0.001308
+
+    # Formula
+    p = t - ((c2 * t + c1) * t + c0) / (((d2 * t + d1) * t + d0) * t + 1.0)
+    return p
+
+
+def phi_inv(p):
+    x1 = -formula(np.sqrt(-2.0 * np.log(p)))
+    x2 = formula(np.sqrt(-2.0 * np.log(1 - p)))
+    if np.any(np.isnan(np.where(p<0.5,x1,x2))):
+        print()
+    return np.where(p<0.5,x1,x2)
+    #
+    # if (p < 0.5):
+    #     # F^-1(p) = - G^-1(p)
+    #     return -formula(math.sqrt(-2.0 * math.log(p)))
+    # else:
+    #     # F^-1(p) = G^-1(1-p)
+    #     return formula(math.sqrt(-2.0 * math.log(1 - p)))
+
+    return q
+
+def beta_to_pf(beta):
+    #alternative: use scipy
+    return norm.cdf(-beta)
+    # if isinstance(beta,np.ndarray):
+    #     pf = phi(-beta.astype(np.float64))
+    # else:
+    #     pf = phi(-np.float64(beta))
+    # return pf
+
+def pf_to_beta(pf):
+    #alternative: use scipy
+    return -norm.ppf(pf)
+
+    # if isinstance(pf,np.ndarray):
+    #     beta = -phi_inv(pf.astype(np.float64))
+    #     # if np.any(np.isnan(beta)):
+    #
+    # else:
+    #     beta = -phi_inv(np.float64(pf))
+    # return beta

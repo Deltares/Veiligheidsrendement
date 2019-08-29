@@ -1,9 +1,9 @@
 import copy
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import norm
 from DikeSection import DikeSection
 from ReliabilityCalculation import LoadInput, MechanismReliabilityCollection
+import ProbabilisticFunctions
 import time
 
 class DikeTraject:
@@ -28,12 +28,21 @@ class DikeTraject:
             self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
             self.GeneralInfo['omegaOverflow'] = 0.24
             # NB: klopt a hier?????!!!!
+        elif traject == '16-3 en 16-4':
+            self.GeneralInfo['FloodDamage'] = 23e9
+            self.GeneralInfo['TrajectLength'] = 19500 #voor doorsnede-eisen wel ongeveer lengte individueel traject
+            # gebruiken
+            self.GeneralInfo['Pmax'] = 1. / 10000
+            self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
+            self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
+            self.GeneralInfo['omegaOverflow'] = 0.24
         else:
             self.GeneralInfo['FloodDamage'] = 5e9
             self.GeneralInfo['Pmax'] = 1. / 10000
             self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
             self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
             self.GeneralInfo['omegaOverflow'] = 0.24
+
 
     def ReadAllTrajectInput(self, path, directory, T, startyear,traject='16-4', mechanisms=['Overflow',
                                                                                            'StabilityInner',
@@ -61,7 +70,6 @@ class DikeTraject:
             self.Sections[i].Reliability.Mechanisms = {}
             for j in mechanisms:
                 self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1], years=T)
-
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
                     self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(path.joinpath(
                         self.Sections[i].MechanismData[j][0]), calctype=self.Sections[i].MechanismData[j][1], mechanism=j)
@@ -80,32 +88,13 @@ class DikeTraject:
         for i in self.Sections:
             self.GeneralInfo['TrajectLength'] += i.Length
 
-    def plotReliabilityofDikeTraject(self,
-                                     PATH = None, fig_size = (6,4),
-                                     draw_targetbeta='off', language='EN',
-                                     flip='off', beta_or_prob = 'beta',
-                                     outputcsv=False, first=True,
-                                     last=True, alpha = 1, type = 'Assessment',years = False):
-        if not years:
-            years = self.GeneralInfo['T']
-        #a bunch of settings to make it look nice:
-        SMALL_SIZE = 8
-        MEDIUM_SIZE = 10
-        BIGGER_SIZE = 12
+        self.GeneralInfo['beta_max'] = ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax'])
+        self.GeneralInfo['gammaHeave'] = ProbabilisticFunctions.calc_gamma('Heave',self.GeneralInfo)
+        self.GeneralInfo['gammaUplift'] = ProbabilisticFunctions.calc_gamma('Uplift',self.GeneralInfo)
+        self.GeneralInfo['gammaPiping'] = ProbabilisticFunctions.calc_gamma('Piping',self.GeneralInfo)
 
-        plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
-        plt.rc('axes', titlesize=MEDIUM_SIZE)  # fontsize of the axes title
-        plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
-        plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
-        plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-
-        # years = self.GeneralInfo['T']
-        mechanisms = self.GeneralInfo['Mechanisms']
-        startyear = self.GeneralInfo['StartYear']
-
-        #read the assessments of all sections and write to one big dataframe:
+    def setProbabilities(self):
+        '''routine to make 1 dataframe of all probabilities of a TrajectObject'''
         for i in range(0, len(self.Sections)):
             if i == 0:
                 Assessment = self.Sections[i].Reliability.SectionReliability.reset_index()
@@ -123,11 +112,21 @@ class DikeTraject:
                     data_to_add = data_to_add.rename(columns={"mechanism": "index"})
 
                 Assessment = Assessment.append(data_to_add, sort=False)
+        self.Probabilities = Assessment.reset_index(drop=True)
 
-        Assessment = Assessment.reset_index(drop=True)
+    def plotAssessment(self,
+                       PATH = None, fig_size = (6,4),
+                       draw_targetbeta='off', language='EN',
+                       flip='off', beta_or_prob = 'beta',
+                       outputcsv=False, last=True, alpha = 1, years = False):
+        '''Routine to plot traject reliability'''
+        PlotSettings()
+        if not years:
+            years = self.GeneralInfo['T']
+        mechanisms = self.GeneralInfo['Mechanisms']
+        startyear = self.GeneralInfo['StartYear']
         if outputcsv:
-            Assessment.to_csv(PATH.joinpath('AllBetas.csv'))
-
+            self.Probabilities.to_csv(PATH.joinpath('AllBetas.csv'))
         #English or Dutch labels and titles
         if language == 'NL':
             label_xlabel = 'Dijkvakken'
@@ -137,7 +136,9 @@ class DikeTraject:
             elif beta_or_prob =='prob':
                 label_ylabel = r'Faalkans $P_f$ [-/jaar]'
                 label_target = 'Doelfaalkans'
-            labels_xticks = Assessment['Section'].loc[Assessment['index'] == 'Section']
+            labels_xticks = []
+            for i in self.Sections:
+                labels_xticks.append(i.name)
         elif language == 'EN':
             label_xlabel = 'Dike sections'
             if beta_or_prob == 'beta':
@@ -147,60 +148,45 @@ class DikeTraject:
                 label_ylabel = r'Failure probability $P_f$ [-/year]'
                 label_target = 'Target failure prob.'
             labels_xticks = []
-            for i in Assessment['Section'].loc[Assessment['index'] == 'Section']:
-                labels_xticks.append('S' + i[-2:])
+            for i in self.Sections:
+                labels_xticks.append('S' + i.name[-2:])
 
-        #Derive some coordinates to properly plot everything according to the length of the different sections:
-        cumlength = np.cumsum(Assessment['Length'].loc[Assessment['index'] == 'Overflow']).values
-        cumlength = np.insert(cumlength, 0, 0)
-        xticks1 = copy.deepcopy(cumlength)
-        for i in range(1, len(cumlength) - 1):
-            xticks1 = np.insert(xticks1, i * 2, cumlength[i])
-        middles = (cumlength[:-1] + cumlength[1:]) / 2
+        cumlength, xticks1, middles = getSectionLengthInTraject(self.Probabilities['Length'].loc[self.Probabilities[
+                                                                                                 'index']
+                                                                                       =='Overflow'].values)
 
         color = ['r', 'g', 'b', 'k']
-        fig, ax = plt.subplots(figsize=fig_size)
 
+        # fig, ax = plt.subplots(figsize=fig_size)
         #We will make many plots for different years
         year = 0
         line = {}
         mid = {}
         for ii in years:
-            # if first:
-            #     plt.figure(ii, figsize=fig_size)
-            #
-            # plt.figure(ii, figsize=fig_size)
+            fig, ax = plt.subplots(figsize=fig_size)
             col = 0
             mech = 0
-
             for j in mechanisms:
-
                 #get data to plot
-                plotdata = Assessment[str(ii)].loc[Assessment['index'] == j].values
+                plotdata = self.Probabilities[str(ii)].loc[self.Probabilities['index'] == j].values
                 if beta_or_prob == 'prob':
-                    plotdata = norm.cdf(-plotdata)
+                    plotdata = ProbabilisticFunctions.beta_to_pf(plotdata)
                 ydata = copy.deepcopy(plotdata)
                 for ij in range(0, len(plotdata)):
                     ydata = np.insert(ydata, ij * 2, plotdata[ij])
 
-                if year == 0:
-                #define the lines for the first time. Else replace the data.
+                if  year < 1000: #year == 0:
+                    #define the lines for the first time. Else replace the data.
                     line[mech], =  ax.plot(xticks1, ydata, color=color[col], linestyle='-', label=j, alpha=alpha)
-                    if not first:
-                        mid[mech], = ax.plot(middles, plotdata, color=color[col], linestyle='', marker='o', alpha=alpha)
+                    mid[mech], = ax.plot(middles, plotdata, color=color[col], linestyle='', marker='o', alpha=alpha)
                 else:
                     line[mech].set_ydata(ydata)
-                    if not first:
-                        mid[mech].set_ydata(plotdata)
-                # #plot it:
-                # ax.plot(xticks1, ydata, color=color[col], linestyle='-', label=j, alpha=alpha)
-                # if not first:
-                #     ax.plot(middles, plotdata, color=color[col], linestyle='', marker='o', alpha=alpha)
-
+                    mid[mech].set_ydata(plotdata)
                 col += 1
                 mech += 1
             col = 0
-            if year == 0:
+            ## TODO fix this plot routine which was supposed to make everything much faster
+            if year < 1000: #year == 0:
                 #Whether to draw the target reliability for each individula mechanism.
                 if draw_targetbeta == 'on' and last:
                     for j in mechanisms:
@@ -217,7 +203,7 @@ class DikeTraject:
                             pt = self.GeneralInfo['Pmax'] * self.GeneralInfo['omegaOverflow']
                             # dash = [1,2]
                         if beta_or_prob == 'beta':
-                            ax.plot([0, max(cumlength)], [-norm.ppf(pt), -norm.ppf(pt)],
+                            ax.plot([0, max(cumlength)], [ProbabilisticFunctions.pf_to_beta(pt), ProbabilisticFunctions.pf_to_beta(pt)],
                                      color=color[col], linestyle=':', label=label_target + ' ' + j,dashes=dash, alpha=0.5,linewidth=1)
                         elif beta_or_prob == 'prob':
                             ax.plot([0, max(cumlength)], [pt, pt],
@@ -226,15 +212,12 @@ class DikeTraject:
                 if last:
                     for i in cumlength:
                         ax.axvline(x=i, color='k', linestyle=':', alpha=0.5)
-
                     if beta_or_prob == 'beta':
-                        ax.plot([0, max(cumlength)], [-norm.ppf(self.GeneralInfo['Pmax']), -norm.ppf(self.GeneralInfo[
+                        ax.plot([0, max(cumlength)], [ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(self.GeneralInfo[
                                                                                                         'Pmax'])], 'k--', label=label_target, linewidth=1)
-
                     if beta_or_prob == 'prob':
                         ax.plot([0, max(cumlength)], [self.GeneralInfo['Pmax'], self.GeneralInfo['Pmax']], 'k--',
                                label=label_target, linewidth=1)
-
 
                     ax.legend(loc=1)
                     ax.set_xlabel(label_xlabel)
@@ -255,22 +238,20 @@ class DikeTraject:
 
                     if flip == 'on':
                         ax.invert_xaxis()
-            else:
+            else: #inactive loop
                 for i in range(0,mech):
                     ax.draw_artist(line[i])
-                    if not first:
-                        ax.draw_artist(mid[i])
+                    ax.draw_artist(mid[i])
                 fig.canvas.update()
                 fig.canvas.flush_events()
-            # plt.xlim([np.min(cumlength), np.max(cumlength)])
             if PATH != None:
-                if type == 'Assessment':
-                    plt.savefig(PATH.joinpath(beta_or_prob + '_' + str(startyear + ii) + '_Assessment.png'), dpi=300, bbox_inches='tight', format='png')
-                else:
-                    plt.savefig(PATH.joinpath(str(startyear + ii) + '_Step=' + str(type) + '_' + beta_or_prob + '.png'), dpi=300, bbox_inches='tight', format='png')
+                plt.savefig(PATH.joinpath(beta_or_prob + '_' + str(startyear + ii) + '_Assessment.png'), dpi=300, bbox_inches='tight', format='png')
+                plt.close()
             else:
-                plt.show()
+                pass
             year += 1
+            if last:
+                plt.close()
     def runFullAssessment(self):
         for i in self.Sections:
             for j in self.GeneralInfo['Mechanisms']:
@@ -292,20 +273,46 @@ class DikeTraject:
             plt.figure(1)
             [i.Reliability.Mechanisms[j].drawLCR(label=j, type='Standard', tstart=t_start) for j in self.GeneralInfo['Mechanisms']]
             plt.plot([t_start, t_start + np.max(self.GeneralInfo['T'])],
-                     [-norm.ppf(self.GeneralInfo['Pmax']),
-                      -norm.ppf(self.GeneralInfo['Pmax'])],
+                     [ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']),
+                      ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax'])],
                      'k--', label='Requirement')
             plt.legend()
             plt.title(i.name)
             plt.savefig(directory.joinpath(i.name + '.png'), bbox_inches='tight')
             plt.close()
 
-    def updateProbabilities(self,Probabilities,ChangedSection):
+    def updateProbabilities(self,Probabilities,ChangedSection=False):
         #This function is to update the probabilities after a reinforcement.
         for i in self.Sections:
-            if i.name == ChangedSection:
+            if (ChangedSection) and (i.name == ChangedSection):
                 i.Reliability.SectionReliability = Probabilities.loc[ChangedSection].astype(float)
+            elif not ChangedSection:
+                i.Reliability.SectionReliability = Probabilities.loc[i.name].astype(float)
         pass
+
+def PlotSettings(labels = 'NL'):
+    # a bunch of settings to make it look nice:
+    SMALL_SIZE = 8
+    MEDIUM_SIZE = 10
+    BIGGER_SIZE = 12
+
+    plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
+    plt.rc('axes', titlesize=MEDIUM_SIZE)  # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+def getSectionLengthInTraject(length):
+    # Derive some coordinates to properly plot everything according to the length of the different sections:
+    cumlength = np.cumsum(length)
+    cumlength = np.insert(cumlength, 0, 0)
+    xticks1 = copy.deepcopy(cumlength)
+    for i in range(1, len(cumlength) - 1):
+        xticks1 = np.insert(xticks1, i * 2, cumlength[i])
+    middles = (cumlength[:-1] + cumlength[1:]) / 2
+    return cumlength, xticks1, middles
 
 #DEPENDENT IMPORT (this has to be here to prevent a circular reference in the code)
 from HelperFunctions import createDir

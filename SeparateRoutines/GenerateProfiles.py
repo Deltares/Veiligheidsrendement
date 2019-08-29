@@ -4,7 +4,6 @@ import numpy as np
 from openpyxl import load_workbook
 import pandas as pd
 import re
-from DikeClasses_old import extractProfile
 from pathlib import Path
 
 def extract_profile_data(profile_data, window, titel, path):
@@ -123,11 +122,11 @@ def extract_profile_data(profile_data, window, titel, path):
     return pd.DataFrame({'x': x_coords, 'z': z_coords})
 
 def main():
-    traject = '16-3'
+    traject = '16-4'
     input_path = Path('d:/wouterjanklerk/My Documents/00_PhDgeneral/03_Cases/01_Rivierenland SAFE/WJKlerk/SAFE/data/InputFiles/Profiles').joinpath(traject)
     output_path = Path('d:/wouterjanklerk/My Documents/00_PhDgeneral/03_Cases/01_Rivierenland SAFE/WJKlerk/SAFE/data/InputFiles/Profiles').joinpath(traject)
     input_file_name = 'InputProfiles.xlsx'
-    output_filename = 'Dijkvakindeling_v5.0.xlsx'
+    output_filename = 'Dijkvakindeling_v5.1.xlsx'
 
     # Make output folder if not exist:
     if not input_path.joinpath('profiles').is_dir():

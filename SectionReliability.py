@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-
+import ProbabilisticFunctions
 #Class describing safety assessments of a section:
 class SectionReliability:
     def __init__(self):
@@ -39,10 +39,10 @@ class SectionReliability:
             count += 1
 
         #Do we want beta or failure probability? Preferably beta as output
-        beta_mech_time = pd.DataFrame(-norm.ppf(pf_mechanisms_time),
+        beta_mech_time = pd.DataFrame(ProbabilisticFunctions.pf_to_beta(pf_mechanisms_time),
                                           columns=list(self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()),
                                           index=list(self.Mechanisms.keys()))
-        beta_time = pd.DataFrame([-norm.ppf(np.sum(pf_mechanisms_time,axis=0))],
+        beta_time = pd.DataFrame([ProbabilisticFunctions.pf_to_beta(np.sum(pf_mechanisms_time,axis=0))],
                          columns=list(self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()),
                          index=['Section'])
         self.SectionReliability = pd.concat((beta_mech_time,beta_time))

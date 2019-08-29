@@ -6,7 +6,8 @@ import openturns as ot
 import pandas as pd
 import ProbabilisticFunctions
 from HydraRing_scripts import DesignTableOpenTurns
-from ProbabilisticFunctions import TableDist, run_prob_calc, IterativeFC_calculation, TemporalProcess, addLoadCharVals, MarginalsforTimeDepReliability
+from ProbabilisticFunctions import TableDist, run_prob_calc, IterativeFC_calculation, TemporalProcess, \
+    addLoadCharVals, MarginalsforTimeDepReliability, beta_to_pf, pf_to_beta
 from scipy.stats import norm
 from scipy import interpolate
 
@@ -95,9 +96,9 @@ class MechanismReliabilityCollection:
 
         #calculate beta's per year, transform to pf, accumulate and then calculate beta for the period
         beta = np.interp(tgrid, t0, beta0)
-        pfs = norm.cdf(-beta)
+        pfs = beta_to_pf(beta)
         pftot = 1 - np.cumprod(1 - pfs)
-        self.beta_life = (max(tgrid), np.float(norm.ppf(1 - pftot[-1:])))
+        self.beta_life = (np.max(tgrid), np.float(pf_to_beta(pftot[-1:])))
 
     def getProbinYear(self, year):
         #Interpolate a beta in a defined year from a collection of beta values
@@ -280,14 +281,14 @@ class MechanismReliability:
                 if 'Elimination' in strength.input.keys():
                     if strength.input['Elimination'] == 'yes':
                         #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
-                        self.Pf = norm.cdf(-beta) * strength.input['Pf_elim']  + \
+                        self.Pf = beta_to_pf(beta) * strength.input['Pf_elim']  + \
                             strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim'])
-                        self.beta = -norm.ppf(self.Pf)
+                        self.beta = pf_to_beta(self.Pf)
                     else:
                         raise ValueError('Warning: Elimination defined but not turned on')
                 else:
                     self.beta = beta
-                    self.Pf = norm.cdf(-self.beta)
+                    self.Pf = beta_to_pf(self.beta)
 
             elif mechanism == 'Overflow': #specific for SAFE
                 #climate change included, including a factor for HBN
@@ -360,10 +361,14 @@ class MechanismReliability:
 
                 for i in strength.temporals:
                     strength_new.input[i] = strength.input[i] * year
-
+                # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
+                # inputs['h'] = load.NormWaterLevel
                 inputs = addLoadCharVals(strength_new.input, load=load, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
+
                 Z, self.p_dh, self.p_dh_c = Mechanisms.zPiping(inputs, mode='SemiProb')
-                self.gamma_pip = ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) # Calculate needed safety factor
+                self.gamma_pip = TrajectInfo['gammaPiping']
+                # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
+                # Calculate needed safety factor
 
                 self.SF_p = (self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)) / self.p_dh
                 self.assess_p = 'voldoende' if self.SF_p > 1 else 'onvoldoende'
@@ -371,7 +376,9 @@ class MechanismReliability:
 
                 # Heave:
                 Z, self.h_i, self.h_i_c = Mechanisms.zHeave(inputs,mode='SemiProb')
-                self.gamma_h = ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  # Calculate needed safety factor
+                self.gamma_h = TrajectInfo['gammaHeave'] #ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
+                # Calculate
+                # needed safety factor
 
                 self.SF_h = (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i
                 self.assess_h = 'voldoende' if (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i > 1 else 'onvoldoende'
@@ -379,7 +386,9 @@ class MechanismReliability:
 
                 # Uplift
                 Z, self.u_dh, self.u_dh_c = Mechanisms.zUplift(inputs,mode='SemiProb')
-                self.gamma_u = ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)  # Calculate needed safety factor
+                self.gamma_u = TrajectInfo['gammaUplift'] #ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
+                # Calculate
+                # needed safety factor
 
                 self.SF_u = (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh
                 self.assess_u = 'voldoende' if (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh > 1 else 'onvoldoende'
@@ -390,14 +399,14 @@ class MechanismReliability:
                     if strength.input['Elimination'] == 'yes':
                         #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
                         self.Pf = \
-                            norm.cdf(-np.max([self.beta_cs_h,self.beta_cs_u,self.beta_cs_p])) * strength.input['Pf_elim']  + \
+                            beta_to_pf(np.max([self.beta_cs_h,self.beta_cs_u,self.beta_cs_p])) * strength.input['Pf_elim']  + \
                             strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim'])
-                        self.beta = -norm.ppf(self.Pf)
+                        self.beta = pf_to_beta(self.Pf)
                     else:
                         raise ValueError('Warning: Elimination defined but not turned on')
                 else:
                     self.beta = np.min([np.max([self.beta_cs_h,self.beta_cs_u,self.beta_cs_p]),8])
-                    self.Pf = norm.cdf(-self.beta)
+                    self.Pf = beta_to_pf(self.beta)
                 self.WLchar = copy.deepcopy(inputs['h']) #add water level as used in the assessment
                 self.alpha_sq = np.nan
                 self.result = np.nan

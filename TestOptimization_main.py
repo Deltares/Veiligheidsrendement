@@ -4,26 +4,26 @@ from HelperFunctions import DataAtShelve,getMeasureTable, replaceNames, pareto_f
 from Strategy import GreedyStrategy, MixedIntegerStrategy, ParetoFrontier
 from Solutions import Solutions
 from pathlib import Path
-
+import cProfile
 #GENERAL OPTIONS
 SHELVES = True
 
 #INDICATE WHICH STEPS TO RUN THROUGH
-RUN_STEP_1 = True
-RUN_STEP_2 = True
+RUN_STEP_1 = False
+RUN_STEP_2 = False
 RUN_STEP_3 = True
 
 #INDICATE WHICH METHODS TO EVALUATE
-RUN_GREEDY              = True
-RUN_MIXEDINTEGER           = True
-RUN_PARETOFRONTIER         = True
+RUN_GREEDY                 = True
+RUN_MIXEDINTEGER           = False
+RUN_PARETOFRONTIER         = False
 READ_MIXEDINTEGER          = True
 #INDICATE THE CASE TO USE
-CASE = 'TestRefactor4'
+CASE = 'Basic_newRoutineFast'
 
 #STEP 0: READ GENERAL INPUT
 PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland ' \
-         'SAFE\WJKlerk\SAFE\data\PaperOptimization\Test')
+         'SAFE\WJKlerk\SAFE\data\PaperOptimization\Basic')
 LANGUAGE = 'EN'
 MECHANISMS = ['Overflow', 'StabilityInner', 'Piping']
 T = [0, 19, 20, 50, 75, 100]
@@ -36,10 +36,12 @@ if RUN_STEP_1:
     TrajectObject.runFullAssessment()
 
     assessment_directory = PATH.joinpath('AssessmentFigures').joinpath('Initial')
+    TrajectObject.setProbabilities()
+
     TrajectObject.plotAssessmentResults(directory=assessment_directory)
 
     assessment_directory = PATH.joinpath('AssessmentFigures')
-    TrajectObject.plotReliabilityofDikeTraject(PATH=assessment_directory)
+    TrajectObject.plotAssessment(PATH=assessment_directory)
     print('Step 1: assessment finished')
     #store results:
     if SHELVES: DataAtShelve(dir = PATH, name = 'Step1Result.out', objects = {'TrajectObject': TrajectObject}, mode='write')
@@ -69,7 +71,12 @@ else:
 if RUN_GREEDY:
     StrategyGreedy = GreedyStrategy('Greedy')
     StrategyGreedy.combine(TrajectObject, SolutionsCollection,splitparams=True)
-    StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting='fast')
+    StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="fast")
+    # StrategyGreedy.evaluate_backup(TrajectObject, SolutionsCollection,splitparams=True,setting="fast")
+    # cProfile.run('StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="robust")',
+    #              'evaluate')
+    # cProfile.run('StrategyGreedy.evaluate_backup(TrajectObject, SolutionsCollection,splitparams=True,'
+    #              'setting="robust")','evaluate_old')
 
     StrategyGreedy = replaceNames(StrategyGreedy,SolutionsCollection)
     StrategyGreedy.plotBetaCosts(TrajectObject,path= PATH.joinpath('Solutions'),typ='multi',
@@ -163,8 +170,11 @@ if 'StrategyMixedInteger' in locals():
 plt.ylabel('Total Risk')
 plt.xlabel('LCC')
 plt.yscale('log')
-plt.ylim((0.9*np.min(TR_Pareto),0.9*np.max(TR_Pareto)))
-plt.xlim((0,np.max(LCC_Pareto)))
+if 'TR_Pareto' in locals():
+    plt.ylim((0.9*np.min(TR_Pareto),0.9*np.max(TR_Pareto)))
+    plt.xlim((0,np.max(LCC_Pareto)))
+else:
+    pass
 # plt.xlim((0,2e7))
 plt.legend(loc=1)
 plt.title('Comparison of risk and cost for different methods')
@@ -179,22 +189,22 @@ print('recalculated: ' + str(TR_MixedInteger+LCC_MixedInteger))
 print('objective: ' + str(MixedIntegerResults['ObjectiveValue']))
 print(MixedIntegerResults['Status'])
 
-#plot with all TC of all draws in bar graph and the final solution of MIP and Greedy:
-TC_Pareto = np.sort(np.add(LCC_Pareto,TR_Pareto))
-TC_ParetoFront = np.add(LCC_ParetoFront,TR_ParetoFront)
-TC_Greedy =np.add(LCC_Greedy,TR_Greedy)
-TC_MIP = np.add(LCC_MixedInteger,TR_MixedInteger)
-
-plt.figure(1001,figsize=(8,6))
-plt.plot(range(0,len(TC_Pareto)),TC_Pareto,color='lightgray',label='individual runs')
-plt.axhline(y=TC_MIP,xmin=0,xmax=len(TC_Pareto),color='r',linestyle='--',label='Mixed Integer Optimum')
-plt.hlines(y=TC_Greedy,xmin=0,xmax=len(TC_Pareto),color='g',linestyle='--',label='Greedy steps')
-plt.axhline(y=TC_Greedy[-1],xmin=0,xmax=len(TC_Pareto),color='g',linestyle='-',label='Greedy Optimum')
-plt.xlim((0,len(TC_Pareto)))
-plt.legend(loc=2)
-plt.title('Comparison of total cost for different methods')
-plt.savefig(PATH.joinpath(CASE).joinpath('Methods.png'),dpi=300, bbox_inches='tight')
-np.savetxt(PATH.joinpath(CASE).joinpath('TCGreedy.csv'),TC_Greedy,delimiter=",")
+# #plot with all TC of all draws in bar graph and the final solution of MIP and Greedy:
+# TC_Pareto = np.sort(np.add(LCC_Pareto,TR_Pareto))
+# TC_ParetoFront = np.add(LCC_ParetoFront,TR_ParetoFront)
+# TC_Greedy =np.add(LCC_Greedy,TR_Greedy)
+# TC_MIP = np.add(LCC_MixedInteger,TR_MixedInteger)
+#
+# plt.figure(1001,figsize=(8,6))
+# plt.plot(range(0,len(TC_Pareto)),TC_Pareto,color='lightgray',label='individual runs')
+# plt.axhline(y=TC_MIP,xmin=0,xmax=len(TC_Pareto),color='r',linestyle='--',label='Mixed Integer Optimum')
+# plt.hlines(y=TC_Greedy,xmin=0,xmax=len(TC_Pareto),color='g',linestyle='--',label='Greedy steps')
+# plt.axhline(y=TC_Greedy[-1],xmin=0,xmax=len(TC_Pareto),color='g',linestyle='-',label='Greedy Optimum')
+# plt.xlim((0,len(TC_Pareto)))
+# plt.legend(loc=2)
+# plt.title('Comparison of total cost for different methods')
+# plt.savefig(PATH.joinpath(CASE).joinpath('Methods.png'),dpi=300, bbox_inches='tight')
+# np.savetxt(PATH.joinpath(CASE).joinpath('TCGreedy.csv'),TC_Greedy,delimiter=",")
 # print("TC Greedy: " + str(TC_Greedy))
 print("TC Greedy final step: " + str(TC_Greedy[-1]))
 print("TC MIP: " + str(TC_MIP))

@@ -9,17 +9,22 @@ from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
 from pathlib import Path
 from StrategyEvaluation import calcTrajectProb
+from Solutions import Solutions
 import cProfile
+import shelve
 
 def main():
     ## GENERAL SETTINGS
     timing = 1
-    traject = '16-3'
+    traject = '16-3 en 16-4'
     save_beta_measure_plots = False
+    RunComputation = True
     years0 = [0, 19, 20, 50, 75, 100]
     mechanisms = ['Overflow', 'StabilityInner', 'Piping']
     path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
+                r'SAFE\WJKlerk\SAFE\data\SAFE_totaal')
+    # path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
+    #             r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
     language = 'NL'
 
     if timing == 1:
@@ -31,7 +36,7 @@ def main():
     TestCase = DikeTraject('TestCase', traject)
 
     ## Run the model
-    casename = 'TestRefactor3'
+    casename = 'nieuw_cautious_f=2_geenLE'
     directory = path.joinpath('Case_' + casename)
 
     ## READ ALL DATA
@@ -40,38 +45,40 @@ def main():
     print('Start creating all the files and folders')
     TestCase.ReadAllTrajectInput(path, directory, years0,traject=traject, startyear=2025)
 
-#If you want to use intermediate data (from after step 2) you can uncomment the following snippet of code (and input it to runFullModel:
+
+    #If you want to use intermediate data (from after step 2) you can uncomment the following snippet of code (and input it to runFullModel:
 #This could be programmed more neatly of course...
-
-    # filename = directory.joinpath('AfterStep1.out')
-    # my_shelf = shelve.open(str(filename))
-    # for key in my_shelf:
-    #     locals()[key] = my_shelf[key]
-    # my_shelf.close()
-    #
-    # filename = directory.joinpath('AfterStep2.out')
-    # my_shelf = shelve.open(str(filename))
-    # for key in my_shelf:
-    #     locals()[key] = my_shelf[key]
-    # my_shelf.close()
-
-    AllStrategies, AllSolutions = runFullModel(TestCase, casename, path, directory, years=years0, timing=timing,
-                                               save_beta_measure_plots=save_beta_measure_plots,
-                                               LCRplot=False, language='NL',
-                                               types=['TC', 'OI'], OI_year=0) #,TestCaseSolutions=TestCaseSolutions)
+    if RunComputation:
+        AllStrategies, AllSolutions = runFullModel(TestCase, casename, path, directory, years=years0, timing=timing,
+                                                   save_beta_measure_plots=save_beta_measure_plots,
+                                                   LCRplot=False, language='NL',
+                                                   types=['TC', 'OI'], OI_year=0) #,
+        # TestCaseSolutions=TestCaseSolutions)
 
     #Same here: if you want to make plots based on existing results, uncomment the part underneath:
+    #Open shelf
+    if not RunComputation:
+        filename = directory.joinpath('AfterStep1.out')
+        my_shelf = shelve.open(str(filename))
+        for key in my_shelf:
+            TestCase = my_shelf[key]
+        my_shelf.close()
 
-    # #Open shelf
-    # filename = directory.joinpath('FINALRESULT.out')
-    # my_shelf = shelve.open(str(filename))
-    # for key in my_shelf:
-    #     locals()[key] = my_shelf[key]
-    # my_shelf.close()
+        filename = directory.joinpath('AfterStep2.out')
+        my_shelf = shelve.open(str(filename))
+        for key in my_shelf:
+            AllSolutions = my_shelf[key]
+        my_shelf.close()
+
+        filename = directory.joinpath('FINALRESULT.out')
+        my_shelf = shelve.open(str(filename))
+        for key in my_shelf:
+            AllStrategies = my_shelf[key]
+        my_shelf.close()
 
     #MAKING PLOTS:
     MeasureTable = getMeasureTable(AllSolutions)
-
+    # TestCase.setProbabilities()
     #Plot the beta-t:
     beta_t = []
     step = 0
@@ -101,10 +108,10 @@ def main():
         AllStrategies[1].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'),
                                        typ='multi', fig_id=103, last='yes', symbolmode='on', labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
 
-    #This piece makes sort of a 'movie' of all reinforcement steps:
-    # if not 'TC' in os.listdir(pad + '\\Case_' + casename): os.makedirs(pad + '\\Case_' + casename + '\\TC')
-    # if not 'OI' in os.listdir(pad + '\\Case_' + casename): os.makedirs(pad + '\\Case_' + casename + '\\OI')
-    # TestCaseStrategyTC.plotInvestmentSteps(TestCase, path= pad + '\\Case_' + casename + '\\TC',figure_size = (6,4))
+    # AllStrategies[0].plotInvestmentSteps(TestCase, path= directory.joinpath('figures'),figure_size = (12,6),years=[0],
+    #                                      flip=True)
+    AllStrategies[0].plotInvestmentSteps(TestCase, investmentlimit= 40e6, path= directory.joinpath('figures'),
+                                         figure_size = (12,6),years=[0],flip=True)
     # TestCaseStrategyOI.plotInvestmentSteps(TestCase, path= pad + '\\Case_' + casename + '\\OI',figure_size = (6,4))
 
     ## write a LOG of all probabilities for all steps:
@@ -143,5 +150,5 @@ def main():
         print("Overall time elapsed: " + str(end - start0) + ' seconds')
 
 if __name__ == '__main__':
-    # main()
-    cProfile.run('main()','InvestmentsSAFE.profile')
+    main()
+    # cProfile.run('main()','InvestmentsSAFE.profile')

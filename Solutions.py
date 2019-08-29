@@ -16,11 +16,26 @@ class Solutions:
         #read solutions from Excel
         data = pd.read_excel(excelsheet,'Measures')
         self.Measures = {}
+        combinables = []
+        partials = []
         for i in data.index:
             self.Measures[i] = Measure(data.loc[i])
         self.MeasureTable = pd.DataFrame(columns=['ID', 'Name'])
         for i in range(0,len(self.Measures)):
-            self.MeasureTable.loc[i] = [str(self.Measures[i].parameters['ID']), self.Measures[i].parameters['Name']]
+            if self.Measures[i].parameters['available'] == 1:
+                self.MeasureTable.loc[i] = [str(self.Measures[i].parameters['ID']), self.Measures[i].parameters['Name']]
+                #also add the potential combined solutions up front
+                if self.Measures[i].parameters['Class'] == 'combinable':
+                    combinables.append((self.Measures[i].parameters['ID'],self.Measures[i].parameters['Name']))
+                if self.Measures[i].parameters['Class'] == 'partial':
+                    partials.append((self.Measures[i].parameters['ID'],self.Measures[i].parameters['Name']))
+        count = 0
+        for i in range(0,len(partials)):
+            for j in range(0,len(combinables)):
+                self.MeasureTable.loc[count+len(self.Measures)+1] = [str(partials[i][0]) + '+' + str(combinables[j][0]),
+                                                                     str(partials[i][1]) + '+' + str(combinables[j][1])]
+                count += 1
+
 
 
     def evaluateSolutions(self,DikeSection,TrajectInfo,trange = [0,19,20,50,75,100], geometry_plot=False,plot_dir =

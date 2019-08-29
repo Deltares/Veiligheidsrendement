@@ -45,14 +45,14 @@ for i in range(0,len(TestCaseGeoRisk.Sections)):
     TestCaseGeoRisk.Sections[i].Reliability.calcSectionReliability(TrajectInfo=TestCaseGeoRisk.GeneralInfo,length=TestCaseGeoRisk.Sections[i].Length)
     plt.figure(1)
     [TestCaseGeoRisk.Sections[i].Reliability.Mechanisms[j].drawLCR(label=j,type='Standard',tstart=2025) for j in mechanisms]
-    plt.plot([2025, 2025+np.max(years0)], [-norm.ppf(TestCaseGeoRisk.GeneralInfo['Pmax']), -norm.ppf(TestCaseGeoRisk.GeneralInfo['Pmax'])], 'k--', label = 'Norm')
+    plt.plot([2025, 2025+np.max(years0)], [ProbabilisticFunctions.pf_to_beta(TestCaseGeoRisk.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(TestCaseGeoRisk.GeneralInfo['Pmax'])], 'k--', label = 'Norm')
     plt.legend()
     plt.title(TestCaseGeoRisk.Sections[i].name)
     plt.savefig(pad + '\\' + 'figures' + '\\' + TestCaseGeoRisk.Sections[i].name + '\\Initial\\InitialSituation' + '.png', bbox_inches='tight')
     plt.close()
 
 #plot for entire traject
-TestCaseGeoRisk.plotReliabilityofDikeTraject(pathname=pad,fig_size=(14,6))
+TestCaseGeoRisk.plotAssessment(pathname=pad, fig_size=(14, 6))
 
 print('Finished step 1: assessment of current situation')
 
@@ -94,7 +94,7 @@ if save_beta_measure_plots == 1:
     for i in TestCaseGeoRisk.Sections:
         for betaind in betaind_array:
             for mech in plt_mech:
-                requiredbeta = -norm.ppf(TestCaseGeoRisk.GeneralInfo['Pmax'] * (i.Length / TestCaseGeoRisk.GeneralInfo['TrajectLength']))
+                requiredbeta = ProbabilisticFunctions.pf_to_beta(TestCaseGeoRisk.GeneralInfo['Pmax'] * (i.Length / TestCaseGeoRisk.GeneralInfo['TrajectLength']))
                 plt.figure(1001)
                 TestCaseSolutions[i.name].plotBetaTimeEuro(mechanism=mech,beta_ind = betaind, sectionname=i.name,beta_req=requiredbeta)
                 plt.savefig(pad + '\\' + 'figures' + '\\' + i.name + '\\Measures\\' + mech + '_' + betaind + '.png', bbox_inches='tight')

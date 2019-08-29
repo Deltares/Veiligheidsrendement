@@ -14,10 +14,13 @@ import cProfile
 import os
 from scipy.stats import norm
 from HelperFunctions import replaceNames
+import ProbabilisticFunctions
+import pandas as pd
+
 # this is sort of the main script for any calculation for SAFE. It contains all the required steps:
 def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
                  years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=False, LCRplot = False, shelves=1,
-                 types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=None, t_start=2025, OI_year=0):
+                 types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=False, t_start=2025, OI_year=0):
     if timing == 1:
         start = time.time()
 
@@ -31,6 +34,8 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
     print('Start step 1: safety assessment')
 
     for i in range(len(TestCase.Sections)):
+        TestCase.Sections[i].Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(
+            TestCase.Sections[i].Reliability.Load,TestCase.GeneralInfo['Pmax'])
         for j in mechanisms:
             TestCase.Sections[i].Reliability.Mechanisms[j].generateLCRProfile(
                 TestCase.Sections[i].Reliability.Load, mechanism=j, trajectinfo=TestCase.GeneralInfo)
@@ -42,7 +47,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
             [TestCase.Sections[i].Reliability.Mechanisms[j].drawLCR(label=j, type='Standard', tstart=t_start) for j in
              mechanisms]
             plt.plot([t_start, t_start + np.max(years)],
-                     [-norm.ppf(TestCase.GeneralInfo['Pmax']), -norm.ppf(TestCase.GeneralInfo['Pmax'])],
+                     [ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo['Pmax'])],
                      'k--', label='Norm')
             plt.legend()
             plt.title(TestCase.Sections[i].name)
@@ -52,12 +57,14 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
 
             plt.savefig(directory.joinpath('figures', TestCase.Sections[i].name, 'Initial', 'InitialSituation' + '.png'), bbox_inches='tight')
             plt.close()
+
+    TestCase.setProbabilities()
     # plot reliability and failure probability for entire traject:
     figsize = (12, 4)
-    TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off',
-                                          draw_targetbeta='off', beta_or_prob='beta', outputcsv=True,
-                                          years = [0, 20, 50], first=False,
-                                          last=True)
+    TestCase.plotAssessment(PATH=directory, fig_size=figsize, language=language, flip='off',
+                            draw_targetbeta='off', beta_or_prob='beta', outputcsv=True,
+                            years = [0, 20, 50],
+                            last=True)
     # TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='prob', first=False, last=True)
 
     print('Finished step 1: assessment of current situation')
@@ -88,28 +95,29 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
 
     ## STEP 2: INITIALIZE AND EVALUATE MEASURES FOR EACH SECTION
     # Result: Measures object with Section name and beta-t-euro relations for each measure
-    AllSolutions = {}
+    if not TestCaseSolutions:
+        AllSolutions = {}
 
-    # Calculate for each measure the cost-reliability-time relations
-    for i in TestCase.Sections:
-        AllSolutions[i.name] = Solutions(i)
-        AllSolutions[i.name].fillSolutions(path.joinpath(i.name + '.xlsx'))
-        AllSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot=False, trange=years, plot_dir=directory.joinpath('figures', i.name))
-        #NB: geometry_plot = True plots the soil reinforcement geometry, but costs a lot of time!
-
+        # Calculate for each measure the cost-reliability-time relations
+        for i in TestCase.Sections:
+            AllSolutions[i.name] = Solutions(i)
+            AllSolutions[i.name].fillSolutions(path.joinpath(i.name + '.xlsx'))
+            AllSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot=False, trange=years, plot_dir=directory.joinpath('figures', i.name))
+            #NB: geometry_plot = True plots the soil reinforcement geometry, but costs a lot of time!
+    else:
+        AllSolutions = TestCaseSolutions
     print('Finished step 2: evaluation of measures')
     if timing == 1:
         end = time.time()
 
     if timing == 1:
         print("Time elapsed: " + str(end - start) + ' seconds')
-    exit()
 
     if timing == 1:
         start = time.time()
 
     for i in TestCase.Sections:
-        AllSolutions[i.name].SolutionstoDataFrame(filtering='off')
+        AllSolutions[i.name].SolutionstoDataFrame(filtering='off',splitparams=True)
 
     #possibly plot beta(t)-cost for all measures at a section:
     if save_beta_measure_plots:
@@ -123,7 +131,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
         for i in TestCase.Sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
-                    requiredbeta = -norm.ppf(TestCase.GeneralInfo['Pmax'] * (i.Length / TestCase.GeneralInfo['TrajectLength']))
+                    requiredbeta = ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo['Pmax'] * (i.Length / TestCase.GeneralInfo['TrajectLength']))
                     plt.figure(1001)
                     AllSolutions[i.name].plotBetaTimeEuro(mechanism=mech, beta_ind=betaind, sectionname=i.name, beta_req=requiredbeta)
                     plt.savefig(directory.joinpath('figures', i.name, 'Measures', mech + '_' + betaind + '.png'), bbox_inches='tight')
@@ -140,15 +148,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
     if timing == 1:
         start = time.time()
 
-    if shelves == 1:
-        # Store intermediate results:
-        filename = directory.joinpath('AfterStep2.out')
-        #
-        # make shelf
-        my_shelf = shelve.open(str(filename), 'n')
-        my_shelf['TestCase'] = locals()['TestCase']
-        my_shelf['AllSolutions'] = locals()['AllSolutions']
-        my_shelf.close()
+
 
     ## STEP 3: EVALUATE THE STRATEGIES
     AllStrategies = []
@@ -158,18 +158,26 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
             # Initialize a strategy type (i.e combination of objective & constraints)
             TestCaseStrategyTC = GreedyStrategy('TC')
             # Combine available measures
-            TestCaseStrategyTC.combine(TestCase, AllSolutions, filtering='off')
+            TestCaseStrategyTC.combine(TestCase, AllSolutions, filtering='off',splitparams=True)
+
+            if shelves == 1:
+                # Store intermediate results:
+                filename = directory.joinpath('AfterStep2.out')
+                #
+                # make shelf
+                my_shelf = shelve.open(str(filename), 'n')
+                my_shelf['AllSolutions'] = locals()['AllSolutions']
+                my_shelf.close()
             if timing == 1:
                 end = time.time()
-
-            if timing == 1:
                 print('Combine step for TC')
-
-            if timing == 1:
                 print("Time elapsed: " + str(end - start) + ' seconds')
 
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            TestCaseStrategyTC.evaluate(TestCase, AllSolutions)
+            # TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='fast')
+            TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='cautious', f_cautious=2,
+                                        max_count = 300)
+            # TestCaseStrategyTC.evaluate_backup(TestCase, AllSolutions,splitparams=True,setting='robust')
 
             # plot beta time for all measure steps for each strategy
             TestCaseStrategyTC.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
@@ -188,15 +196,17 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
             # write to csv's
             for j in TestCaseStrategyTC.options:
                 TestCaseStrategyTC.options[j].to_csv(directory.joinpath('results', j + '_Options_TC.csv'))
-
+            [TR,LCC] = TestCaseStrategyTC.determineRiskCostCurve(TestCase)
+            pd.DataFrame([TR,LCC]).to_csv(directory.joinpath('results','TotalRiskCost.csv'))
             TestCaseStrategyTC.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_TC.csv'))
+            TestCaseStrategyTC.makeFinalSolution(directory.joinpath('results', 'FinalMeasures_TC.csv'))
             AllStrategies.append(TestCaseStrategyTC)
 
         elif i == 'OI':
             # Initialize a strategy type (i.e combination of objective & constraints)
             TestCaseStrategyOI = TargetReliabilityStrategy('OI')
             # Combine available measures
-            TestCaseStrategyOI.combine(TestCase, AllSolutions, filtering='off', OI_year=OI_year)
+            TestCaseStrategyOI.combine(TestCase, AllSolutions, filtering='off', OI_year=OI_year,splitparams=True)
             if timing == 1:
                 end = time.time()
 
@@ -207,7 +217,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
                 print("Time elapsed: " + str(end - start) + ' seconds')
 
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            TestCaseStrategyOI.evaluate(TestCase, AllSolutions, OI_year=OI_year)
+            TestCaseStrategyOI.evaluate(TestCase, AllSolutions, OI_year=OI_year,splitparams=True)
 
             # plot beta time for all measure steps for each strategy
             TestCaseStrategyOI.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))

@@ -139,7 +139,9 @@ class Measure:
                                 hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange = DikeSection.HBNRise_factor * DikeSection.YearlyWLRise, mechanism='Overflow')
                             else:
                                 hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange=None, mechanism='Overflow')
-                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] = hc
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] = \
+                                np.max([hc, self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
+                                    'h_crest']])  #should not become weaker!
                         elif i == 'StabilityInner' or i == 'Piping':
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Elimination'] = 'yes'
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_elim'] = self.parameters['P_solution']
