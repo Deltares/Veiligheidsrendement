@@ -11,7 +11,7 @@ import ProbabilisticFunctions
 from HelperFunctions import IDtoName, flatten, pareto_frontier
 import time
 from StrategyEvaluation import MeasureCombinations, makeTrajectDF, calcTC, calcTR, calcLifeCycleRisks, \
-    calcTrajectProb, ImplementOption, split_options, SolveMIP, getTrajectProb,evaluateRisk, updateProbability
+    calcTrajectProb, ImplementOption, split_options, SolveMIP, getTrajectProb,evaluateRisk, updateProbability, OverflowBundling
 from DikeTraject import PlotSettings, getSectionLengthInTraject
 import matplotlib.pyplot as plt
 
@@ -834,7 +834,8 @@ class Strategy:
         return TR, LCC
 
 class GreedyStrategy(Strategy):
-    def evaluate(self, traject, solutions, splitparams = False,setting='fast',BCstop=1,max_count = 150, f_cautious = 2):
+    def evaluate(self, traject, solutions, splitparams = False,setting='fast',BCstop=1,max_count = 150, f_cautious =
+    2, f_bundle = False):
         '''This is a faster version (supposedly). First we rebuild the old version. Afther that we add a different
         routine for properly dealing with overflow'''
         self.make_optimization_input(traject,solutions)
@@ -842,6 +843,10 @@ class GreedyStrategy(Strategy):
         self.Cint_g[:,0] = 1
         self.Cint_h[:,0] = 1
 
+        if setting == 'fast':
+            f_bundle = 1
+        elif setting == 'cautious':
+            f_bundle = f_cautious
 
         init_probability = {}
         init_overflow_risk = np.empty((self.opt_parameters['N'],self.opt_parameters['T']))
@@ -859,6 +864,7 @@ class GreedyStrategy(Strategy):
         count = 0
         measure_list = []
         Probabilities = []
+        Probabilities.append(copy.deepcopy(init_probability))
         risk_per_step = []
         cost_per_step = []
         cost_per_step.append(0)
@@ -866,8 +872,9 @@ class GreedyStrategy(Strategy):
         SpentMoney = np.zeros([self.opt_parameters['N']])
         InitialCostMatrix = copy.deepcopy(self.LCCOption)
         BC_list = []
+        Measures_per_section = np.zeros((self.opt_parameters['N'],2),dtype=np.int32)
         while count < max_count:
-            Probabilities.append(copy.deepcopy(init_probability))
+            # Probabilities.append(copy.deepcopy(init_probability))
             # start = time.time()
             init_risk = np.sum(np.max(init_overflow_risk,axis=0)) + np.sum(init_geotechnical_risk)
             risk_per_step.append(init_risk)
@@ -900,53 +907,88 @@ class GreedyStrategy(Strategy):
             dR = np.subtract(init_risk,TotalRisk)
             BC = np.divide(dR, LifeCycleCost) #risk reduction/cost [n,sh,sg]
             TC = np.add(LifeCycleCost,TotalRisk)
-            print(np.max(BC))
-            if np.max(BC) > BCstop:
-                #find the best combination
-                Index_Best = np.unravel_index(np.argmax(BC),BC.shape)
+            #determine the BC of the most favourable option for height
+            overflow_bundle_index, BC_bundle = OverflowBundling(self,init_overflow_risk,
+                                                               np.max(BC),
+                                                                measure_list,LifeCycleCost,traject)
+            BC_bundle=0
+            #compute additional measures where we combine overflow measures, here we optimize a package, purely based
+            # on overflow, and compute a general BC ratio that is a factor (factor cautious) higher than the max BC.
+            #then in the selection of the measure we make a if-elif split with either the normal routine or an
+            # 'overflow bundle'
+            if (np.max(BC) > BCstop) or (BC_bundle > BCstop):
+                if np.max(BC) >= BC_bundle:
+                    #find the best combination
+                    Index_Best = np.unravel_index(np.argmax(BC),BC.shape)
 
-                if setting == 'robust':
-                    measure_list.append(Index_Best)
-                    #update init_probability
+                    if setting == 'robust':
+                        measure_list.append(Index_Best)
+                        #update init_probability
+                        init_probability = updateProbability(init_probability,self,Index_Best)
+
+                    elif (setting == 'fast') or (setting == 'cautious'):
+                        BC_sections = np.empty((self.opt_parameters['N']))
+                        #find best measure for each section
+                        for n in range(0,self.opt_parameters['N']):
+                            BC_sections[n] = np.max(BC[n,:,:])
+                        if len(BC_sections)>2:
+                            BC_second = -np.partition(-BC_sections,2)[1]
+                        else:
+                            BC_second = np.min(BC_sections)
+
+                        if setting == 'fast':
+                            indices = np.argwhere(BC[Index_Best[0]] - np.max([BC_second,1]) > 0)
+                        elif setting == 'cautious':
+                            indices = np.argwhere(np.divide(BC[Index_Best[0]],np.max([BC_second,1])) > f_cautious)
+                        #a bit more cautious
+                        if indices.shape[0]>1:
+                            #take the investment that has the lowest total cost:
+
+
+                            fast_measure = indices[np.argmin(TC[Index_Best[0]][(indices[:, 0], indices[:, 1])])]
+                            Index_Best = (Index_Best[0], fast_measure[0], fast_measure[1])
+                            measure_list.append(Index_Best)
+                        else:
+                            measure_list.append(Index_Best)
+                    BC_list.append(BC[Index_Best])
                     init_probability = updateProbability(init_probability,self,Index_Best)
+                    # plt.plot(init_geotechnical_risk[Index_Best[0],:],'r')
+                    init_geotechnical_risk[Index_Best[0],:] = copy.deepcopy(self.RiskGeotechnical[Index_Best[0],
+                                                              Index_Best[2],:])
+                    # plt.plot(init_geotechnical_risk[Index_Best[0], :],'b')
+                    # plt.savefig('Risk Geotechnical ' + str(Index_Best) + '.png')
+                    # plt.close()
+                    # plt.plot(init_overflow_risk[Index_Best[0],:],'r')
+                    init_overflow_risk[Index_Best[0],:] = copy.deepcopy(self.RiskOverflow[Index_Best[0],Index_Best[
+                                                                                                            1],:])
+                    # plt.plot(init_overflow_risk[Index_Best[0],:],'b')
+                    # plt.savefig('Risk Overflow ' + str(Index_Best) + '.png')
+                    # plt.close()
+                    #TODO update risks
+                    SpentMoney[Index_Best[0]] += copy.deepcopy(LifeCycleCost[Index_Best])
+                    self.LCCOption[Index_Best] = 1e99
+                    Measures_per_section[Index_Best[0],0] = Index_Best[1]
+                    Measures_per_section[Index_Best[0],1] = Index_Best[2]
+                    Probabilities.append(copy.deepcopy(init_probability))
+                    print('Single measure in step ' + str(count))
+                elif BC_bundle > np.max(BC):
+                    for j in range(0,self.opt_parameters['N']):
+                        if overflow_bundle_index[j,0] != Measures_per_section[j,0]:
+                            IndexMeasure = (j, overflow_bundle_index[j,0], overflow_bundle_index[j,1])
 
-                elif (setting == 'fast') or (setting == 'cautious'):
-                    BC_sections = np.empty((self.opt_parameters['N']))
-                    #find best measure for each section
-                    for n in range(0,self.opt_parameters['N']):
-                        BC_sections[n] = np.max(BC[n,:,:])
-                    BC_second = -np.partition(-BC_sections,2)[1]
-                    if setting == 'fast':
-                        indices = np.argwhere(BC[Index_Best[0]] - np.max([BC_second,1]) > 0)
-                    elif setting == 'cautious':
-                        indices = np.argwhere(np.divide(BC[Index_Best[0]],np.max([BC_second,1])) > f_cautious)
-                    #a bit more cautious
-                    if indices.shape[0]>1:
-                        #take the investment that has the lowest total cost:
+                            measure_list.append(IndexMeasure)
+                            BC_list.append(BC_bundle)
+                            init_probability = updateProbability(init_probability,self,IndexMeasure)
+                            init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :])
+                            SpentMoney[IndexMeasure[0]] += copy.deepcopy(LifeCycleCost[IndexMeasure])
+                            self.LCCOption[IndexMeasure] = 1e99
+                            Measures_per_section[IndexMeasure[0],0] = IndexMeasure[1]
+                            #no update of geotechnical risk needed
+                            Probabilities.append(copy.deepcopy(init_probability))
+                    #add the height measures in separate entries in the measure list
 
-
-                        fast_measure = indices[np.argmin(TC[Index_Best[0]][(indices[:, 0], indices[:, 1])])]
-                        Index_Best = (Index_Best[0], fast_measure[0], fast_measure[1])
-                        measure_list.append(Index_Best)
-                    else:
-                        measure_list.append(Index_Best)
-                BC_list.append(BC[Index_Best])
-                init_probability = updateProbability(init_probability,self,Index_Best)
-                # plt.plot(init_geotechnical_risk[Index_Best[0],:],'r')
-                init_geotechnical_risk[Index_Best[0],:] = copy.deepcopy(self.RiskGeotechnical[Index_Best[0],
-                                                          Index_Best[2],:])
-                # plt.plot(init_geotechnical_risk[Index_Best[0], :],'b')
-                # plt.savefig('Risk Geotechnical ' + str(Index_Best) + '.png')
-                # plt.close()
-                # plt.plot(init_overflow_risk[Index_Best[0],:],'r')
-                init_overflow_risk[Index_Best[0],:] = copy.deepcopy(self.RiskOverflow[Index_Best[0],Index_Best[
-                                                                                                        1],:])
-                # plt.plot(init_overflow_risk[Index_Best[0],:],'b')
-                # plt.savefig('Risk Overflow ' + str(Index_Best) + '.png')
-                # plt.close()
-                #TODO update risks
-                SpentMoney[Index_Best[0]] += copy.deepcopy(LifeCycleCost[Index_Best])
-                self.LCCOption[Index_Best] = 1e99
+                    #write them to the measure_list
+                    print('Bundled measures in step ' + str(count))
 
             else: #stop the search
                 break

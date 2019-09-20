@@ -286,3 +286,150 @@ def updateProbability(init_probability,Strategy, index):
         # plt.savefig('Beta ' + i + str(index) + '.png')
         # plt.close()
     return init_probability
+
+def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
+                     LifeCycleCost,traject):
+    '''Routine for bundling several measures for overflow to prevent getting stuck if many overflow-dominated
+    sections have about equal reliability. A bundle is a set of measures (typically crest heightenings) at different sections.
+    This routine is needed for mechanisms where the system reliability is computed as a series system with fully correlated components.'''
+
+    #Step 1: fill an array of size (n,2) with sh and sg of existing investments per section in order to properly filter
+    # the viable options per section
+    existing_investments = np.zeros((np.size(LifeCycleCost, axis=0), 2), dtype=np.int32)
+    if len(existing_investment) > 0:
+        for i in range(0,len(existing_investment)):
+            existing_investments[existing_investment[i][0],0] = existing_investment[i][1]    #sh
+            existing_investments[existing_investment[i][0],1] = existing_investment[i][2]    #sg
+
+    #Step 2: for each section, determine the sorted_indices of the min to max LCC. Note that this could also be based on TC but the performance is good as is.
+    #first make the proper arrays for sorted_indices (sh), corresponding sg indices and the LCC for each section.
+    sorted_indices = np.empty((np.size(LifeCycleCost, axis=0), np.size(LifeCycleCost, axis=1)),dtype=np.int32)
+    sorted_indices.fill(999)
+    LCC_values = np.zeros((np.size(LifeCycleCost, axis=0),))
+    sg_indices = np.empty((np.size(LifeCycleCost, axis=0), np.size(LifeCycleCost, axis=1)),dtype=np.int32)
+    sg_indices.fill(999)
+
+    #loop over the sections
+    for i in range(0, len(traject.Sections)):
+        index_existing = 0  #value is only used in 1 of the branches of the if statement, otherwise should be 0.
+
+        #if there are investments this loop is needed to deal with the fact that it can be an integer or list.
+        if existing_investments[i,1] != 0:
+            if isinstance(Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0],list):
+                year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0][-1]
+            elif isinstance(Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0],int):
+                year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0]
+
+        #main routine:
+
+        # if there is no investment sg yet:
+        if existing_investments[i,1] == 0:
+            #take the minimal LCC over all options, and corresponding sg index:
+            LCCs = np.min(LifeCycleCost[i, :, :], axis=1)
+            sg_indices[i,:] = np.argmin(LifeCycleCost[i, :, :], axis=1)
+
+        #elif the year of the existing sg measure is >0 we will also consider situations where we pull this
+        # investment forward to year 0, and then take the minimum of those measures (note that this is a slight
+        # shortcut, not perfectly elegant) It works though.
+        elif year_of_investment > 0:
+            #find indices with same berm width
+            currentberm = Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1] - 1]['dberm'].values[0]
+            indices = np.argwhere(Strategy.options_geotechnical[traject.Sections[i].name]['dberm'] ==
+                                  currentberm)+1
+
+            #get costs and sg indices
+            LCC1 = LifeCycleCost[i, :, :]
+            LCC2 = LCC1[:, indices.flatten()]
+            LCCs = np.min(LCC2, axis=1)
+            sg_indices[i,:] = indices[np.argmin(LCC2, axis=1)].ravel()
+
+        #else we don't want to change the geotechnical measure that is taken, so we only grab LCCs from that specific
+        # column in the [n,sh,sg] LifeCycleCost array
+        else:
+            LCCs = LifeCycleCost[i, existing_investments[i,0]:, existing_investments[i,1]]
+            # TCs = np.add(LCCs, np.sum(Strategy.RiskOverflow[i, existing_investments[i,0]:, :], axis=1))
+            sg_indices[i,:].fill(existing_investments[i,1])
+            index_existing = existing_investments[i,0]
+
+        #at last we do some index manipulation:
+        #-to add the existing measure if we already have a geotechnical measure
+        #-to make options with cost 1e99 invalid
+        sorted_indices[i, 0:len(LCCs)] = np.argsort(LCCs)+index_existing
+        sorted_indices[i, 0:len(LCCs)] = np.where(np.sort(LCCs) > 1e60, 999, sorted_indices[i, 0:len(LCCs)])
+        sg_indices[i, 0:len(LCCs)] = sg_indices[i,0:len(LCCs)][np.argsort(LCCs)]
+
+    new_overflow_risk = copy.deepcopy(init_overflow_risk)
+
+    #Step 3: determine various bundles for overflow:
+
+    #first initialize som values
+    index_counter = np.zeros((len(traject.Sections),),dtype=np.int32)      #counter that keeps track of the next cheapest option for each section
+    run_number = 0                                                         #used for counting the loop
+    counter_list = []                                                      #used to store the bundle indices
+    BC_list = []                                                           #used to store BC for each bundle
+    weak_list = []                                                         #used to store index of weakest section
+
+    #here we start the loop. Note that we rarely make it to run 100, for larger problems this limit might need to be increased
+    #TODO think about a more proper rule to exit the routine
+    while run_number < 100:
+
+        #get weakest section
+        ind_weakest = np.argmax(np.sum(new_overflow_risk, axis=1))
+
+        #take next step, exception if there is no valid measure. In that case exit the routine.
+        if sorted_indices[ind_weakest, index_counter[ind_weakest]] == 999:
+            print('Bundle quit, weakest section has no more available measures')
+            break
+
+        #insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
+        new_overflow_risk[ind_weakest, :] = Strategy.RiskOverflow[ind_weakest,
+                                            sorted_indices[ind_weakest, index_counter[ind_weakest]], :]
+        LCC_values[ind_weakest] = np.min(LifeCycleCost[ind_weakest,sorted_indices[ind_weakest,index_counter[ind_weakest]],
+                                                                    sg_indices[ind_weakest,index_counter[ind_weakest]]])
+        BC = (np.sum(np.max(init_overflow_risk,axis=0)) - np.sum(np.max(new_overflow_risk,axis=0))) / np.sum(
+            LCC_values)
+
+        #store results of step:
+        BC_list.append(BC)
+        weak_list.append(ind_weakest)
+
+        #in the next step, the next measure should be taken for this section
+        index_counter[ind_weakest] += 1
+
+        #store the bundle indices, do -1 as index_counter contains the NEXT step
+        counter_list.append(copy.deepcopy(index_counter)-1)
+
+        run_number += 1
+
+    #take the final index from the list, where BC is max
+    final_index = counter_list[np.argmax(BC_list)]
+
+
+    #convert measure_index to sh based on sorted_indices
+    sg_index = np.empty((len(traject.Sections),))
+    measure_index = np.zeros((np.size(LifeCycleCost,axis=0),),dtype=np.int32)
+    for i in range(0,len(measure_index)):
+        if final_index[i] != -1: #a measure was taken
+            measure_index[i] = sorted_indices[i,final_index[i]]
+            sg_index[i] = sg_indices[i, final_index[i]]
+        else:   #no measure was taken
+            measure_index[i] = existing_investments[i,0]
+            sg_index[i] = existing_investments[i,1]
+
+    measure_index = np.append(measure_index,sg_index).reshape((2,len(traject.Sections))).T.astype(np.int32)
+    return measure_index, np.max(BC_list)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
