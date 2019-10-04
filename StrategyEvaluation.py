@@ -402,22 +402,29 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
         run_number += 1
 
     #take the final index from the list, where BC is max
-    final_index = counter_list[np.argmax(BC_list)]
+    if len(BC_list) > 0:
+        final_index = counter_list[np.argmax(BC_list)]
+        # convert measure_index to sh based on sorted_indices
+        sg_index = np.empty((len(traject.Sections),))
+        measure_index = np.zeros((np.size(LifeCycleCost, axis=0),), dtype=np.int32)
+        for i in range(0, len(measure_index)):
+            if final_index[i] != -1:  # a measure was taken
+                measure_index[i] = sorted_indices[i, final_index[i]]
+                sg_index[i] = sg_indices[i, final_index[i]]
+            else:  # no measure was taken
+                measure_index[i] = existing_investments[i, 0]
+                sg_index[i] = existing_investments[i, 1]
+
+        measure_index = np.append(measure_index, sg_index).reshape((2, len(traject.Sections))).T.astype(np.int32)
+        BC_out = np.max(BC_list)
+    else:
+        BC_out = 0
+        measure_index = []
+        print('Warning: no more measures for weakest overflow section')
 
 
-    #convert measure_index to sh based on sorted_indices
-    sg_index = np.empty((len(traject.Sections),))
-    measure_index = np.zeros((np.size(LifeCycleCost,axis=0),),dtype=np.int32)
-    for i in range(0,len(measure_index)):
-        if final_index[i] != -1: #a measure was taken
-            measure_index[i] = sorted_indices[i,final_index[i]]
-            sg_index[i] = sg_indices[i, final_index[i]]
-        else:   #no measure was taken
-            measure_index[i] = existing_investments[i,0]
-            sg_index[i] = existing_investments[i,1]
 
-    measure_index = np.append(measure_index,sg_index).reshape((2,len(traject.Sections))).T.astype(np.int32)
-    return measure_index, np.max(BC_list)
+    return measure_index, BC_out
 
 
 

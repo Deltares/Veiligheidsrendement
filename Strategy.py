@@ -911,7 +911,7 @@ class GreedyStrategy(Strategy):
             overflow_bundle_index, BC_bundle = OverflowBundling(self,init_overflow_risk,
                                                                np.max(BC),
                                                                 measure_list,LifeCycleCost,traject)
-            BC_bundle=0
+            # BC_bundle=0
             #compute additional measures where we combine overflow measures, here we optimize a package, purely based
             # on overflow, and compute a general BC ratio that is a factor (factor cautious) higher than the max BC.
             #then in the selection of the measure we make a if-elif split with either the normal routine or an
@@ -1341,8 +1341,9 @@ class MixedIntegerStrategy(Strategy):
                         nlist = [1.0]*len(slist)
                         curconstraint = [slist,nlist]
                         C3.append(curconstraint)
+
                         del curconstraint, slist,nlist
-            print(str(sys.getsizeof(C3)) + ' bytes at t=' + str(t) + ' and n = ' + str(n))
+            print(str(sys.getsizeof(C3)) + ' bytes at t=' + str(t) + ' and n = ' + str(n+1))
 
         A = A + C3
         senseV = senseV + "L"*len(C3) # L means <=
@@ -1353,7 +1354,6 @@ class MixedIntegerStrategy(Strategy):
         print('binary constraints implemented in restriction of variables')
 
         # Add constraints to model:
-
         model.linear_constraints.add(lin_expr=A, senses=senseV, rhs=b)
 
         return model
