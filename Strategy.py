@@ -253,9 +253,7 @@ class Strategy:
                         if (self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] != self.options_height[keys[
                             n]].iloc[sh]['type'].values[0]) or (self.options_geotechnical[keys[n]].iloc[sg]['year'].values[0] !=self.options_height[keys[n]].iloc[sh]['year'].values[0]):
                             pass  # do not change value, impossible combination (keep at 1e99)
-                        #if it is a stability screen, use same reasoning as for single Vertical Geotextile
-                        elif self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Stability Screen':
-                            self.LCCOption[n, 0, sg + 1] = LCC_sg[sg]
+
                         else:
                             #if the type is a soil reinforcement, the year has to be the same
                             if (self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Soil reinforcement'):
@@ -266,9 +264,9 @@ class Strategy:
                                     pass #not allowed
                             else:    #Diaphragm wall
                                 self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[sh]  # only use the costs once
-                    #if sg is a plain geotextile, it can only be combined with no measure for height, otherwise it
-                    # would be combined (should be extended to stability screen)
-                    elif self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Vertical Geotextile':
+                    #if sg is a plain geotextile or stability screen, it can only be combined with no measure for height, otherwise it
+                    # would be a combined measure
+                    elif (self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Vertical Geotextile') or (self.options_geotechnical[keys[n]].iloc[sg]['type'].values[0] == 'Stability Screen'):
                         #can only be combined with no measure for height
                         self.LCCOption[n, 0, sg+1] = LCC_sg[sg]
                     #if sg is a combined measure the soil reinforcement timing should be aligned:
@@ -836,9 +834,10 @@ class Strategy:
 class GreedyStrategy(Strategy):
     def evaluate(self, traject, solutions, splitparams = False,setting='fast',BCstop=1,max_count = 150, f_cautious =
     2, f_bundle = False):
-        '''This is a faster version (supposedly). First we rebuild the old version. Afther that we add a different
+        '''This is a faster version (supposedly). First we rebuild the old version. After that we add a different
         routine for properly dealing with overflow'''
         self.make_optimization_input(traject,solutions)
+        start = time.time()
         #set start values:
         self.Cint_g[:,0] = 1
         self.Cint_h[:,0] = 1
@@ -874,16 +873,8 @@ class GreedyStrategy(Strategy):
         BC_list = []
         Measures_per_section = np.zeros((self.opt_parameters['N'],2),dtype=np.int32)
         while count < max_count:
-            # Probabilities.append(copy.deepcopy(init_probability))
-            # start = time.time()
             init_risk = np.sum(np.max(init_overflow_risk,axis=0)) + np.sum(init_geotechnical_risk)
             risk_per_step.append(init_risk)
-            # plt.plot(np.max(init_overflow_risk,axis=0),'b')
-            # plt.plot(np.sum(init_geotechnical_risk,axis=0),'b--')
-            # plt.ylim([0,400000])
-            # plt.savefig('Risk at step ' + str(count) + '.png')
-            # plt.close()
-            # plt.plot(np.max(init_probability['Overflow'],axis=0),label=str(count))
             #first we compute the BC-ratio for each combination of Sh, Sg, for each section
             LifeCycleCost = np.full([self.opt_parameters['N'],self.opt_parameters['Sh'],self.opt_parameters['Sg']],1e99)
             TotalRisk = np.full([self.opt_parameters['N'],self.opt_parameters['Sh'],self.opt_parameters['Sg']],
@@ -891,7 +882,7 @@ class GreedyStrategy(Strategy):
             for n in range(0,self.opt_parameters['N']):
                 #for each section, start from index 1 to prevent putting inf in top left cell
                 for sg in range(1,self.opt_parameters['Sg']):
-                    for sh in range(1, self.opt_parameters['Sh']):
+                    for sh in range(0, self.opt_parameters['Sh']):
                         if self.LCCOption[n,sh,sg] < 1e20:
                             LifeCycleCost[n,sh,sg] = copy.deepcopy(np.subtract(self.LCCOption[n,sh,sg],SpentMoney[n]))
                             new_overflow_risk,new_geotechnical_risk = evaluateRisk(traject.GeneralInfo['Mechanisms'],
@@ -997,7 +988,7 @@ class GreedyStrategy(Strategy):
                 Probabilities.append(copy.deepcopy(init_probability))
 
             # print(count)
-            # print(time.time()-start)
+        print('Elapsed time for greedy algorithm: ' + str(time.time()-start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
         self.writeGreedyResults(traject,solutions,measure_list,BC_list,Probabilities)
 
@@ -1017,6 +1008,7 @@ class GreedyStrategy(Strategy):
         sections.append(''); LCC.append(0); ID.append(''); dcrest.append('');
         dberm.append(''); yes_no.append(''); option_index.append(''); names.append('')
         BC.insert(0,0)
+        pd.DataFrame(measure_list).to_csv('dumpindices.csv')
         for i in measure_list:
             sections.append(traject.Sections[i[0]].name)
             LCC.append(np.subtract(self.LCCOption[i],LCC_invested[i[0]])) #add costs and subtract the money already
@@ -1026,15 +1018,19 @@ class GreedyStrategy(Strategy):
 
             #get the ids
             ID1 = self.options_geotechnical[traject.Sections[i[0]].name].iloc[i[2] - 1]['ID'].values[0]
-            ID2 = self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1]['ID'].values[0]
-            if ID1[-1] == ID2:
-                if (self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1]['dcrest'].values[0] == 0.0) and (
-                        self.options_geotechnical[traject.Sections[i[0]].name].iloc[i[2] - 1]['dberm'].values[0] == 0.0):
-                    ID.append(ID1[0])
+            if i[1] != 0:
+                ID2 = self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1]['ID'].values[0]
+                if ID1[-1] == ID2:
+                    if (self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1]['dcrest'].values[0] == 0.0) and (
+                            self.options_geotechnical[traject.Sections[i[0]].name].iloc[i[2] - 1]['dberm'].values[0] == 0.0):
+                        ID.append(ID1[0])
+                    else:
+                        ID.append(ID1)
                 else:
-                    ID.append(ID1)
+                    ValueError('warning, conflicting IDs found for measures')
             else:
-                ValueError('warning, conflicting IDs found for measures')
+                ID2 = ''
+                ID.append(ID1)
 
             #get the parameters
             dcrest.append(self.options_height[traject.Sections[i[0]].name].iloc[i[1]-1]['dcrest'].values[0])
@@ -1086,7 +1082,7 @@ class GreedyStrategy(Strategy):
             combined = combined.set_index(['name','mechanism'])
             self.Probabilities.append(combined)
 
-    def evaluate_backup(self, traject, solutions, splitparams = False,setting='fast',BCstop=0.1):
+    def evaluate_backup(self, traject, solutions, splitparams = False,setting='fast',BCstop=1):
         cols = list(solutions[list(solutions.keys())[0]].MeasureData['Section'].columns.values)
 
         #Step 2: calculate costs and risk reduction for each option
@@ -1309,13 +1305,16 @@ class MixedIntegerStrategy(Strategy):
         # b = b+ [1.0]*(self.opt_parameters['N']*self.opt_parameters['S'])
 
         print('constraint 2 implemented')
+        # Add constraints to model:
+        model.linear_constraints.add(lin_expr=A, senses=senseV, rhs=b)
 
         #constraint 3: make sure that for overflow DY represents the weakest link
-        # TODO Split this for different mechanisms!
         C3 = list()
         import sys
         for t in grT:
+            print('Constraint 3 for t=' + str(t))
             for n in grN:
+                C3 = list()
                 for nst in grN:
                     for sst in grSh:
                         # derive the index of the relevant decision variables
@@ -1337,24 +1336,25 @@ class MixedIntegerStrategy(Strategy):
                                 jj[kk] = []
                         slist = flatten([Cint_nd[n, sh, :].tolist() for sh in ii]) + \
                                 flatten([Dint_nd[nh, sh, t].tolist() for nh in grN for sh in jj[nh]])
-                        # print(len(slist))
                         nlist = [1.0]*len(slist)
                         curconstraint = [slist,nlist]
                         C3.append(curconstraint)
-
                         del curconstraint, slist,nlist
-            print(str(sys.getsizeof(C3)) + ' bytes at t=' + str(t) + ' and n = ' + str(n+1))
+                senseV = "L"*len(C3)
+                b = [1.0]*len(C3)
+                model.linear_constraints.add(lin_expr=C3, senses=senseV, rhs=b)
+            # print(str(sys.getsizeof(C3)) + ' bytes at t=' + str(t) + ' and n = ' + str(n+1))
 
-        A = A + C3
-        senseV = senseV + "L"*len(C3) # L means <=
-        b = b+[1.0]*len(C3)
+        # A = A + C3
+        # senseV = senseV + "L"*len(C3) # L means <=
+        # b = b+[1.0]*len(C3)
 
         print('constraint 3 implemented')
 
         print('binary constraints implemented in restriction of variables')
 
-        # Add constraints to model:
-        model.linear_constraints.add(lin_expr=A, senses=senseV, rhs=b)
+        # # Add constraints to model:
+        # model.linear_constraints.add(lin_expr=A, senses=senseV, rhs=b)
 
         return model
     def readResults(self, Model,dir = None,MeasureTable=None):
@@ -1397,10 +1397,11 @@ class MixedIntegerStrategy(Strategy):
             if isinstance(MeasureTable,pd.DataFrame):
                 if np.sum(measure[i]) != 0:
                     ID.append(self.options_geotechnical[sectionnames[i]].iloc[measure[i][1]-1]['ID'].values[0])
-                    ID2.append(self.options_height[sectionnames[i]].iloc[measure[i][0] - 1]['ID'].values[0])
-                    if ID[-1][-1] != ID2[-1]:
-                        ID[-1] = ID[-1] + '+' + ID2[-1]
-                        print(ID[-1])
+                    if measure[i][0] != 0:
+                        ID2.append(self.options_height[sectionnames[i]].iloc[measure[i][0] - 1]['ID'].values[0]) #fout
+                        if ID[-1][-1] != ID2[-1]:
+                            ID[-1] = ID[-1] + '+' + ID2[-1]
+                            print(ID[-1])
                 else:
                     ID.append('0')
                     ID2.append('0')
@@ -1610,11 +1611,13 @@ class TargetReliabilityStrategy(Strategy):
 
         for j in section_indices:
             i = traject.Sections[j]
-            # convert beta_cs to beta_section in order to correctly search self.options[section] THIS IS CURRENTLY
-            # INCONSISTENT WITH THE WAY IT IS CALCULATED
+            # convert beta_cs to beta_section in order to correctly search self.options[section]
+            # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
             beta_T_overflow = beta_cs_overflow
-            beta_T_piping = ProbabilisticFunctions.pf_to_beta(ProbabilisticFunctions.beta_to_pf(beta_cs_piping) * (i.Length / traject.GeneralInfo['bPiping']))
-            beta_T_stabinner = ProbabilisticFunctions.pf_to_beta(ProbabilisticFunctions.beta_to_pf(beta_cs_stabinner) * (i.Length / traject.GeneralInfo['bStabilityInner']))
+            beta_T_piping = beta_cs_piping
+            #ProbabilisticFunctions.pf_to_beta(ProbabilisticFunctions.beta_to_pf(beta_cs_piping) * (i.Length / traject.GeneralInfo['bPiping']))
+            beta_T_stabinner = beta_cs_stabinner
+            #ProbabilisticFunctions.pf_to_beta(ProbabilisticFunctions.beta_to_pf(beta_cs_stabinner) * (i.Length / traject.GeneralInfo['bStabilityInner']))
 
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
             if isinstance(OI_year, int):

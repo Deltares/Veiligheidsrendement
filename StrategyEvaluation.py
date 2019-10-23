@@ -303,7 +303,7 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
 
     #Step 2: for each section, determine the sorted_indices of the min to max LCC. Note that this could also be based on TC but the performance is good as is.
     #first make the proper arrays for sorted_indices (sh), corresponding sg indices and the LCC for each section.
-    sorted_indices = np.empty((np.size(LifeCycleCost, axis=0), np.size(LifeCycleCost, axis=1)),dtype=np.int32)
+    sorted_indices = np.empty((np.size(LifeCycleCost, axis=0), np.size(LifeCycleCost, axis=1)+1),dtype=np.int32)
     sorted_indices.fill(999)
     LCC_values = np.zeros((np.size(LifeCycleCost, axis=0),))
     sg_indices = np.empty((np.size(LifeCycleCost, axis=0), np.size(LifeCycleCost, axis=1)),dtype=np.int32)
@@ -321,6 +321,7 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
                 year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0]
 
         #main routine:
+        GeotechnicalOptions = Strategy.options_geotechnical[traject.Sections[i].name]
 
         # if there is no investment sg yet:
         if existing_investments[i,1] == 0:
@@ -333,9 +334,16 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
         # shortcut, not perfectly elegant) It works though.
         elif year_of_investment > 0:
             #find indices with same berm width
-            currentberm = Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1] - 1]['dberm'].values[0]
-            indices = np.argwhere(Strategy.options_geotechnical[traject.Sections[i].name]['dberm'] ==
-                                  currentberm)+1
+            currentberm = GeotechnicalOptions.iloc[existing_investments[i,1] - 1]['dberm'].values[0]
+            if GeotechnicalOptions['class'].iloc[existing_investments[i,1] - 1] != 'combined':
+                indices = np.argwhere((GeotechnicalOptions['dberm'] == currentberm) &(GeotechnicalOptions['class'] == GeotechnicalOptions['class'].iloc[
+                    existing_investments[i,1] - 1]))+1
+            else:
+                #find the indices where the first combined measure has the same ID
+                id_list = [j[0] for j in GeotechnicalOptions['ID'].values]
+                ids = np.argwhere((np.array(id_list) == GeotechnicalOptions['ID'][existing_investments[i, 1] - 1][0])
+                                & (GeotechnicalOptions['dberm'] == currentberm))
+                indices = np.add(ids.reshape((len(ids),)), 1)
 
             #get costs and sg indices
             LCC1 = LifeCycleCost[i, :, :]
@@ -346,10 +354,36 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
         #else we don't want to change the geotechnical measure that is taken, so we only grab LCCs from that specific
         # column in the [n,sh,sg] LifeCycleCost array
         else:
-            LCCs = LifeCycleCost[i, existing_investments[i,0]:, existing_investments[i,1]]
-            # TCs = np.add(LCCs, np.sum(Strategy.RiskOverflow[i, existing_investments[i,0]:, :], axis=1))
-            sg_indices[i,:].fill(existing_investments[i,1])
-            index_existing = existing_investments[i,0]
+            if existing_investments[i,0] !=0:
+                LCCs = LifeCycleCost[i, existing_investments[i,0]:, existing_investments[i,1]]
+                # TCs = np.add(LCCs, np.sum(Strategy.RiskOverflow[i, existing_investments[i,0]:, :], axis=1))
+                sg_indices[i,:].fill(existing_investments[i,1])
+                index_existing = existing_investments[i,0]
+            elif GeotechnicalOptions['type'][existing_investments[i, 1] - 1] == 'Vertical Geotextile': #it is a geotextile which should be combined with soil
+                id_list = [j[0] for j in GeotechnicalOptions['ID'].values]
+                ids = np.argwhere(np.array(id_list) == GeotechnicalOptions['ID'][existing_investments[i, 1] - 1])
+                ids = np.add(ids.reshape((len(ids),)),1)
+                testLCC = LifeCycleCost[i, existing_investments[i, 0]:, ids].T
+                LCCs = np.min(testLCC,axis=1)
+                sg_indices[i,:] = np.array(ids)[np.argmin(testLCC, axis=1)]
+            elif GeotechnicalOptions['type'][existing_investments[i, 1] - 1] == 'Stability Screen':
+                ID_ref = GeotechnicalOptions['ID'][existing_investments[i, 1] - 1]
+                inv_year = GeotechnicalOptions.loc[GeotechnicalOptions['ID'] == ID_ref]['year'].values[0]
+                beta_investment_year = GeotechnicalOptions['StabilityInner',inv_year].loc[GeotechnicalOptions['ID'] == ID_ref].values[0]
+                ID_allowed = GeotechnicalOptions.loc[GeotechnicalOptions['StabilityInner',inv_year]==beta_investment_year]\
+                    .loc[GeotechnicalOptions['type']=='Soil reinforcement'].loc[GeotechnicalOptions['class']=='full']['ID'].values[0]
+                ids = np.argwhere(GeotechnicalOptions['ID'] == ID_allowed)
+                ids = np.add(ids.reshape((len(ids),)),1)
+                testLCC = LifeCycleCost[i, existing_investments[i, 0]:, ids].T
+                LCCs = np.min(testLCC,axis=1)
+                sg_indices[i,:] = np.array(ids)[np.argmin(testLCC, axis=1)]
+                #TODO Make a fix for stability screen: note this is not a very nice fix
+                #find the ID of stability screen
+
+                #it has to be combined with a soil reinforcement that is full, and where the betas for stability are identical
+
+                #find all geotechnical measures where the ID starts with the same number
+                #grab LCC values of these lines and take the minimum value, then find which sg index we should change to.
 
         #at last we do some index manipulation:
         #-to add the existing measure if we already have a geotechnical measure
@@ -359,7 +393,6 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
         sg_indices[i, 0:len(LCCs)] = sg_indices[i,0:len(LCCs)][np.argsort(LCCs)]
 
     new_overflow_risk = copy.deepcopy(init_overflow_risk)
-
     #Step 3: determine various bundles for overflow:
 
     #first initialize som values
@@ -378,7 +411,7 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
 
         #take next step, exception if there is no valid measure. In that case exit the routine.
         if sorted_indices[ind_weakest, index_counter[ind_weakest]] == 999:
-            print('Bundle quit, weakest section has no more available measures')
+            # print('Bundle quit, weakest section has no more available measures')
             break
 
         #insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC

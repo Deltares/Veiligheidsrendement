@@ -86,7 +86,6 @@ def extract_profile_data(profile_data, window, titel, path):
     if cross_section == 15: inner_toe_index = 83
     if cross_section == 27: inner_toe_index = 84
     if cross_section == 33: matched_pivot_index = 0
-    if cross_section == 34: inner_toe_index = 78
     if cross_section == 39: inner_toe_index = 83
     if cross_section == 47: inner_toe_index = 82
     if cross_section == 53: inner_toe_index = 85
@@ -122,11 +121,11 @@ def extract_profile_data(profile_data, window, titel, path):
     return pd.DataFrame({'x': x_coords, 'z': z_coords})
 
 def main():
-    traject = '16-4'
-    input_path = Path('d:/wouterjanklerk/My Documents/00_PhDgeneral/03_Cases/01_Rivierenland SAFE/WJKlerk/SAFE/data/InputFiles/Profiles').joinpath(traject)
-    output_path = Path('d:/wouterjanklerk/My Documents/00_PhDgeneral/03_Cases/01_Rivierenland SAFE/WJKlerk/SAFE/data/InputFiles/Profiles').joinpath(traject)
+    traject = '16-3'
+    input_path = Path('D:/SAFE/data/InputFiles/SAFEInput').joinpath(traject, 'Input')
+    output_path = Path('D:/SAFE/data/InputFiles/SAFEInput')
     input_file_name = 'InputProfiles.xlsx'
-    output_filename = 'Dijkvakindeling_v5.1.xlsx'
+    output_filename = 'Dijkvakindeling_v5.2.xlsx'
 
     # Make output folder if not exist:
     if not input_path.joinpath('profiles').is_dir():
@@ -141,7 +140,9 @@ def main():
     index = traject_data['dv_nummer'].reset_index(drop=True)
 
     for i in index:
-        profile_number = 'Dwarsprofiel_' + str(i).zfill(len(str(index.iloc[-1])))
+        number = re.findall(r'\d+', str(i))
+        extension = re.findall("[a-zA-Z]+", str(i))
+        profile_number = 'Dwarsprofiel_' + str(number[0]).zfill(len(str(index.iloc[-1]))) if not extension else 'Dwarsprofiel_' + str(number[0]).zfill(len(str(index.iloc[-1]))) + str(extension[0])
         profile_data = input_data[input_data['dijkvaknummer'] == i].reset_index(drop=True).rename(columns={'afstand buk [m, buitenkant +]': 'x', 'z_ahn [m NAP]': 'z', 'x': 'x_coord', 'y': 'y_coord'})
         profile = extract_profile_data(profile_data, window=2, titel=profile_number, path=input_path.joinpath('profiles'))
 

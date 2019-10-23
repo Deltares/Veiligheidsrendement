@@ -33,7 +33,9 @@ class DikeSection:
                         setattr(self, data.index[i], (data.loc[data.index[i]][0]))
 
             elif name == "Housing":
-                self.houses = pd.concat([df["Housing"], pd.DataFrame(np.cumsum(df["Housing"]['number'].values), columns=['cumulative'])],axis=1, join='inner').set_index('distancefromtoe')
+                self.houses = df['Housing'].set_index('distancefromtoe').rename(columns={'number':'cumulative'})
+                # self.houses = pd.concat([df["Housing"], pd.DataFrame(np.cumsum(df["Housing"]['number'].values), columns=['cumulative'])], axis=1, join='inner').set_index(
+                #     'distancefromtoe')
             else:
                 self.houses = None
 

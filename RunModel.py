@@ -61,7 +61,7 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
     TestCase.setProbabilities()
     # plot reliability and failure probability for entire traject:
     figsize = (12, 4)
-    TestCase.plotAssessment(PATH=directory, fig_size=figsize, language=language, flip='off',
+    TestCase.plotAssessment(PATH=directory, fig_size=figsize, language=language, flip='on',
                             draw_targetbeta='off', beta_or_prob='beta', outputcsv=True,
                             years = [0, 20, 50],
                             last=True)
@@ -175,9 +175,9 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
 
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
             # TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='fast')
-            TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='cautious', f_cautious=2,
-                                        max_count = 300)
-            # TestCaseStrategyTC.evaluate_backup(TestCase, AllSolutions,splitparams=True,setting='robust')
+            # TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='cautious', f_cautious=2,
+            #                             max_count = 300)
+            TestCaseStrategyTC.evaluate_backup(TestCase, AllSolutions,splitparams=True,setting='robust')
 
             # plot beta time for all measure steps for each strategy
             TestCaseStrategyTC.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
@@ -194,12 +194,13 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
             plt.close(102)
 
             # write to csv's
+            TestCaseStrategyTC.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_TC.csv'))
+            TestCaseStrategyTC.makeFinalSolution(directory.joinpath('results', 'FinalMeasures_TC.csv'))
             for j in TestCaseStrategyTC.options:
                 TestCaseStrategyTC.options[j].to_csv(directory.joinpath('results', j + '_Options_TC.csv'))
             [TR,LCC] = TestCaseStrategyTC.determineRiskCostCurve(TestCase)
-            pd.DataFrame([TR,LCC]).to_csv(directory.joinpath('results','TotalRiskCost.csv'))
-            TestCaseStrategyTC.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_TC.csv'))
-            TestCaseStrategyTC.makeFinalSolution(directory.joinpath('results', 'FinalMeasures_TC.csv'))
+            pd.DataFrame(np.array([TR,LCC]).reshape((len(TR),2)),columns=['TR','LCC']).to_csv(directory.joinpath('results','TotalRiskCost.csv'))
+
             AllStrategies.append(TestCaseStrategyTC)
 
         elif i == 'OI':
@@ -234,10 +235,10 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
             plt.close(102)
 
             # write to csv's
+            TestCaseStrategyOI.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_OI.csv'))
             for j in TestCaseStrategyOI.options:
                 TestCaseStrategyOI.options[j].to_csv(directory.joinpath('results', j + '_Options_OI.csv'))
 
-            TestCaseStrategyOI.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_OI.csv'))
             AllStrategies.append(TestCaseStrategyOI)
 
     if shelves == 1:
