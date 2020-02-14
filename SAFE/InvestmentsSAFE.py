@@ -12,20 +12,20 @@ from StrategyEvaluation import calcTrajectProb
 from Solutions import Solutions
 import cProfile
 import shelve
+import numpy as np
 
 def main():
     ## GENERAL SETTINGS
     timing = 1
-    traject = '16-3 en 16-4'
+    traject = '16-4'
     save_beta_measure_plots = False
     RunComputation = True
-    years0 = [0, 19, 20, 50, 75, 100]
+    years0 = [0, 19, 20, 25, 50, 75, 100]
     mechanisms = ['Overflow', 'StabilityInner', 'Piping']
-    path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-                r'SAFE\WJKlerk\SAFE\data\SAFE_totaal')
+    path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\SmallTestCase')
     # path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
     #             r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
-    language = 'NL'
+    language = 'EN'
 
     if timing == 1:
         start = time.time()
@@ -36,7 +36,7 @@ def main():
     TestCase = DikeTraject('TestCase', traject)
 
     ## Run the model
-    casename = 'nieuw_cautious_f=2_geenLE'
+    casename = 'cautious_f=2_bundling'
     directory = path.joinpath('Case_' + casename)
 
     ## READ ALL DATA
@@ -49,11 +49,16 @@ def main():
     #If you want to use intermediate data (from after step 2) you can uncomment the following snippet of code (and input it to runFullModel:
 #This could be programmed more neatly of course...
     if RunComputation:
+        filename = directory.joinpath('AfterStep2.out')
+        my_shelf = shelve.open(str(filename))
+        for key in my_shelf:
+            AllSolutions = my_shelf[key]
+        my_shelf.close()
+
         AllStrategies, AllSolutions = runFullModel(TestCase, casename, path, directory, years=years0, timing=timing,
                                                    save_beta_measure_plots=save_beta_measure_plots,
                                                    LCRplot=False, language='NL',
-                                                   types=['TC', 'OI'], OI_year=0) #,
-        # TestCaseSolutions=TestCaseSolutions)
+                                                   types=['TC', 'OI'], OI_year=0,BCstop=0.1)#, TestCaseSolutions=AllSolutions)
 
     #Same here: if you want to make plots based on existing results, uncomment the part underneath:
     #Open shelf
@@ -86,31 +91,38 @@ def main():
     #plot beta time for all measure steps for each strategy
     setting = ['beta', 'prob']       #PLOT FOR BETA AND OR PROBABILITY
 
+    cost_Greedy = AllStrategies[0].determineRiskCostCurve(TestCase)
+    print(cost_Greedy['TC_min'] + 1)
+
+
+    exit()
     #plot beta costs for t=0
     figure_size = (12, 7)
 
     for i in setting:
         # LCC-beta for t = 0
         plt.figure(101, figsize=figure_size)
-        AllStrategies[0].plotBetaCosts(TestCase, path=directory.joinpath('figures'), typ='multi', fig_id=101, symbolmode='on', linecolor='b', labels='TC', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
-        AllStrategies[1].plotBetaCosts(TestCase, path=directory.joinpath('figures'), typ='multi', fig_id=101, last='yes', symbolmode='on', labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+        AllStrategies[0].plotBetaCosts(TestCase, path=directory.joinpath('figures'), typ='multi', fig_id=101, symbolmode=True, linecolor='b', labels='Optimized',
+                                       MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+        AllStrategies[1].plotBetaCosts(TestCase, path=directory.joinpath('figures'), typ='multi', fig_id=101, last='yes', symbolmode=True, labels='Pieces of pie',
+                                       MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
 
         # LCC-beta for t=50
         plt.figure(102, figsize=figure_size)
-        AllStrategies[0].plotBetaCosts(TestCase, t=50, path=directory.joinpath('figures'), typ='multi', fig_id=102, symbolmode='on', linecolor='b', labels='TC', MeasureTable=MeasureTable, last='yes', beta_or_prob=i, outputcsv=True)
-        AllStrategies[1].plotBetaCosts(TestCase, t=50, path=directory.joinpath('figures'), typ='multi', fig_id=102, symbolmode='on', labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+        AllStrategies[0].plotBetaCosts(TestCase, t=50, path=directory.joinpath('figures'), typ='multi', fig_id=102, symbolmode=True, linecolor='b', labels='TC', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+        AllStrategies[1].plotBetaCosts(TestCase, t=50, path=directory.joinpath('figures'), typ='multi', fig_id=102, symbolmode=True, labels='OI', MeasureTable=MeasureTable, last='yes', beta_or_prob=i, outputcsv=True)
 
         # Costs2025-beta
         plt.figure(103, figsize=figure_size)
         AllStrategies[0].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'),
-                                       typ='multi', fig_id=103, symbolmode='on', linecolor='b', labels='TC',
+                                       typ='multi', fig_id=103, symbolmode=True, linecolor='b', labels='TC',
                                        MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
         AllStrategies[1].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'),
-                                       typ='multi', fig_id=103, last='yes', symbolmode='on', labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+                                       typ='multi', fig_id=103, last=True, symbolmode=True, labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
 
     # AllStrategies[0].plotInvestmentSteps(TestCase, path= directory.joinpath('figures'),figure_size = (12,6),years=[0],
     #                                      flip=True)
-    AllStrategies[0].plotInvestmentSteps(TestCase, investmentlimit= 40e6, path= directory.joinpath('figures'),
+    AllStrategies[0].plotInvestmentLimit(TestCase, investmentlimit= 20e6, path= directory.joinpath('figures'),
                                          figure_size = (12,6),years=[0],flip=True)
     # TestCaseStrategyOI.plotInvestmentSteps(TestCase, path= pad + '\\Case_' + casename + '\\OI',figure_size = (6,4))
 

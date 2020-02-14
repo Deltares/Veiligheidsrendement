@@ -36,7 +36,6 @@ def calc_beta_implicated(mechanism,SF,TrajectInfo=None):
         elif mechanism == 'Heave':
             beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == 'Uplift':
-            # print(SF)
             beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
         else:
             print('Mechanism not found')
@@ -48,7 +47,8 @@ def calc_beta_implicated(mechanism,SF,TrajectInfo=None):
 #Calculates total probability from list of sections for a mechanism or for all mechanisms that can be found (to be programmed)
 def calc_traject_prob(sections, mechanism):
     if isinstance(sections[0], float):
-        traject_prob = sum(sections)
+        # traject_prob = sum(sections)
+        traject_prob = 1-(np.prod(np.subtract(1,sections)))
     else:
         Psections = []
         if mechanism == 'Piping':
@@ -58,7 +58,8 @@ def calc_traject_prob(sections, mechanism):
                 else:
                     betaCS = max((sections[i].Reliability.Piping.beta_cs_h, sections[i].Reliability.Piping.beta_cs_p, sections[i].Reliability.Piping.beta_cs_u))
                 Psections.append(beta_to_pf(betaCS))
-        traject_prob = sum(Psections)
+        # traject_prob = sum(Psections)
+        traject_prob = 1-(np.prod(np.subtract(1,Psections)))
     return traject_prob
 
 def MHWtoGumbel(MHW,p,d):

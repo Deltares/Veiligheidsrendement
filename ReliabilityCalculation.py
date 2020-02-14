@@ -370,9 +370,13 @@ class MechanismReliability:
                 # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
                 # Calculate needed safety factor
 
-                self.SF_p = (self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)) / self.p_dh
+                if self.p_dh != 0 :
+                    self.SF_p = (self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)) / self.p_dh
+                else:
+                    self.SF_p = 99
                 self.assess_p = 'voldoende' if self.SF_p > 1 else 'onvoldoende'
-                self.beta_cs_p = ProbabilisticFunctions.calc_beta_implicated('Piping', (self.p_dh_c/self.gamma_schem_pip) / self.p_dh,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
+                self.beta_cs_p = ProbabilisticFunctions.calc_beta_implicated('Piping', self.SF_p*self.gamma_pip,TrajectInfo=TrajectInfo)  #
+                # Calculate the implicated beta_cs
 
                 # Heave:
                 Z, self.h_i, self.h_i_c = Mechanisms.zHeave(inputs,mode='SemiProb')

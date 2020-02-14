@@ -167,12 +167,18 @@ def calcLifeCycleRisks(base0, r, horizon,damage, change=None, section=None, data
     TR = np.sum(risk_t)
     return TR
 
-def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=False):
+def calcTrajectProb(base, horizon=False, datatype='DataFrame', ts=None, mechs=False):
     pfs = {}
-    trange = np.arange(0, horizon, 1)
+    if horizon:
+        trange = np.arange(0, horizon, 1)
+    elif ts:
+        trange = [ts]
+    else:
+        raise ValueError('No range defined')
     if datatype == 'DataFrame':
         ts = base.columns.values
-        mechs = np.unique(base.index.get_level_values('mechanism').values)
+        if not mechs:
+            mechs = np.unique(base.index.get_level_values('mechanism').values)
         # mechs = ['Overflow']
     # pf_traject = np.zeros((len(ts),))
     pf_traject = np.zeros((len(trange),))
@@ -188,10 +194,12 @@ def calcTrajectProb(base, horizon=None, datatype='DataFrame', ts=None, mechs=Fal
             # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
             pnonfs = 1 - pfs[i]
             if i == 'Overflow':
-                pf_traject += np.max(pfs[i], axis=0)
+                # pf_traject += np.max(pfs[i], axis=0)
+                pf_traject  = 1-np.multiply(1-pf_traject,1-np.max(pfs[i], axis=0))
             else:
-                pf_traject += np.sum(pfs[i], axis=0)
+                # pf_traject += np.sum(pfs[i], axis=0)
                 # pf_traject += 1-np.prod(pnonfs, axis=0)
+                pf_traject  = 1-np.multiply(1-pf_traject,np.prod(pnonfs, axis=0))
 
     ## INTERPOLATION AFTER COMBINATION:
     # pfail = interp1d(ts,pf_traject)
@@ -312,7 +320,7 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
     #loop over the sections
     for i in range(0, len(traject.Sections)):
         index_existing = 0  #value is only used in 1 of the branches of the if statement, otherwise should be 0.
-
+        #get the indices where safety is equal to no measure for stabilityinner & piping
         #if there are investments this loop is needed to deal with the fact that it can be an integer or list.
         if existing_investments[i,1] != 0:
             if isinstance(Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0],list):
@@ -323,8 +331,11 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
         #main routine:
         GeotechnicalOptions = Strategy.options_geotechnical[traject.Sections[i].name]
 
-        # if there is no investment sg yet:
-        if existing_investments[i,1] == 0:
+        # if there is no investment sg yet
+        possibleIndices = np.array([0])
+        for j in np.argwhere(GeotechnicalOptions[('Section', 100)] == GeotechnicalOptions.iloc[0][('Section', 100)]):
+            possibleIndices = np.append(possibleIndices, j + 1)
+        if existing_investments[i,1] in possibleIndices:
             #take the minimal LCC over all options, and corresponding sg index:
             LCCs = np.min(LifeCycleCost[i, :, :], axis=1)
             sg_indices[i,:] = np.argmin(LifeCycleCost[i, :, :], axis=1)
@@ -336,8 +347,32 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
             #find indices with same berm width
             currentberm = GeotechnicalOptions.iloc[existing_investments[i,1] - 1]['dberm'].values[0]
             if GeotechnicalOptions['class'].iloc[existing_investments[i,1] - 1] != 'combined':
-                indices = np.argwhere((GeotechnicalOptions['dberm'] == currentberm) &(GeotechnicalOptions['class'] == GeotechnicalOptions['class'].iloc[
-                    existing_investments[i,1] - 1]))+1
+                #indices of the same type:
+                indices = np.argwhere((GeotechnicalOptions['dberm'] == currentberm) &(GeotechnicalOptions['type'] == GeotechnicalOptions['type'].iloc[
+                    existing_investments[i,1] - 1]) & (GeotechnicalOptions['year'] == year_of_investment))
+                # indices = np.argwhere((GeotechnicalOptions['dberm'] == currentberm) &(GeotechnicalOptions['type'] == GeotechnicalOptions['type'].iloc[
+                #     existing_investments[i,1] - 1]))
+                #if it is a Geotextile or Stability Screen, it should also be possible to combine it with the corresponding soil reinforcement
+                if GeotechnicalOptions['type'].iloc[existing_investments[i,1] - 1] == 'Stability Screen':
+                    stabilities50 = GeotechnicalOptions[('StabilityInner', 50)].iloc[indices.flatten()].values
+                    indices = list(indices)
+                    for stab in stabilities50:
+                        # indices.append(list(np.argwhere((GeotechnicalOptions['class'] == 'full') & (GeotechnicalOptions[('StabilityInner', 50)] == stab))))
+                        indices.append(list(np.argwhere((GeotechnicalOptions['class'] == 'full') & (GeotechnicalOptions[('StabilityInner', 50)] == stab) &
+                                                        (GeotechnicalOptions['year'] == year_of_investment))))
+                    indice = [item for sublist in indices for item in sublist]
+                    indices = np.unique(np.array(indice).flatten()).astype(np.int32)+1
+                    pass
+                elif GeotechnicalOptions['type'].iloc[existing_investments[i,1] - 1] == 'Vertical Geotextile':
+                    piping50 = GeotechnicalOptions[('Piping', 50)].iloc[indices.flatten()].values
+                    indices = list(indices)
+                    for pip in piping50:
+                        id1 = GeotechnicalOptions['ID'].iloc[existing_investments[i, 1] - 1]
+                        id_list = [j[0] for j in GeotechnicalOptions['ID'].values]
+                        indices.append(list(np.argwhere(np.array(id_list) == id1)))
+                    indice = [item for sublist in indices for item in sublist]
+                    indices = np.unique(np.array(indice).flatten()).astype(np.int32)+1
+                #this is incorrect!
             else:
                 #find the indices where the first combined measure has the same ID
                 id_list = [j[0] for j in GeotechnicalOptions['ID'].values]

@@ -20,7 +20,7 @@ import pandas as pd
 # this is sort of the main script for any calculation for SAFE. It contains all the required steps:
 def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
                  years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=False, LCRplot = False, shelves=1,
-                 types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=False, t_start=2025, OI_year=0):
+                 types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=False, t_start=2025, OI_year=0,BCstop=0.1):
     if timing == 1:
         start = time.time()
 
@@ -175,30 +175,37 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
 
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
             # TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='fast')
-            # TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='cautious', f_cautious=2,
-            #                             max_count = 300)
-            TestCaseStrategyTC.evaluate_backup(TestCase, AllSolutions,splitparams=True,setting='robust')
+            TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='cautious', f_cautious=1.5,
+                                        max_count = 300,BCstop=0.1)
+            # TestCaseStrategyTC.evaluate_backup(TestCase, AllSolutions,splitparams=True,setting='robust')
 
             # plot beta time for all measure steps for each strategy
             TestCaseStrategyTC.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
 
             # plot beta costs for t=0
-            plt.figure(101, figsize=(20, 10))
-            TestCaseStrategyTC.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
-            plt.close(101)
+            # plt.figure(101, figsize=(20, 10))
+            # TestCaseStrategyTC.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
+            # plt.close(101)
 
             # plot beta costs for t=50
-            plt.figure(102, figsize=(20, 10))
-            TestCaseStrategyTC.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
+            # plt.figure(102, figsize=(20, 10))
+            # TestCaseStrategyTC.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
+            # plt.close(102)
+
             TestCaseStrategyTC = replaceNames(TestCaseStrategyTC, AllSolutions)
-            plt.close(102)
+            cost_Greedy = TestCaseStrategyTC.determineRiskCostCurve(TestCase)
 
             # write to csv's
             TestCaseStrategyTC.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_TC.csv'))
-            TestCaseStrategyTC.makeFinalSolution(directory.joinpath('results', 'FinalMeasures_TC.csv'))
+            pd.DataFrame(np.array([cost_Greedy['LCC'], cost_Greedy['TR'], np.add(cost_Greedy['LCC'], cost_Greedy['TR'])]).T, columns=['LCC', 'TR', 'TC']).to_csv(
+                directory.joinpath('results', 'TCs_Greedy.csv'), float_format='%.1f')
+            TestCaseStrategyTC.makeSolution(directory.joinpath('results', 'TakenMeasures_Optimal_Greedy.csv'), step=cost_Greedy['TC_min'] + 1, type='Optimal')
+            TestCaseStrategyTC.makeSolution(directory.joinpath('results', 'FinalMeasures_TC.csv'), type='Final')
             for j in TestCaseStrategyTC.options:
                 TestCaseStrategyTC.options[j].to_csv(directory.joinpath('results', j + '_Options_TC.csv'))
-            [TR,LCC] = TestCaseStrategyTC.determineRiskCostCurve(TestCase)
+            costs = TestCaseStrategyTC.determineRiskCostCurve(TestCase)
+            TR = costs['TR']
+            LCC = costs['LCC']
             pd.DataFrame(np.array([TR,LCC]).reshape((len(TR),2)),columns=['TR','LCC']).to_csv(directory.joinpath('results','TotalRiskCost.csv'))
 
             AllStrategies.append(TestCaseStrategyTC)
@@ -219,21 +226,22 @@ def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 
 
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
             TestCaseStrategyOI.evaluate(TestCase, AllSolutions, OI_year=OI_year,splitparams=True)
+            TestCaseStrategyOI.makeSolution(directory.joinpath('results', 'FinalMeasures_OI.csv'), type='Final')
 
             # plot beta time for all measure steps for each strategy
             TestCaseStrategyOI.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
 
-            # plot beta costs for t=0
-            plt.figure(101, figsize=(20, 10))
-            TestCaseStrategyOI.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
-            plt.close(101)
+            # # plot beta costs for t=0
+            # plt.figure(101, figsize=(20, 10))
+            # TestCaseStrategyOI.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
+            # plt.close(101)
+            #
+            # # plot beta costs for t=50
+            # plt.figure(102, figsize=(20, 10))
+            # TestCaseStrategyOI.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
+            # plt.close(102)
 
-            # plot beta costs for t=50
-            plt.figure(102, figsize=(20, 10))
-            TestCaseStrategyOI.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
             TestCaseStrategyOI = replaceNames(TestCaseStrategyOI, AllSolutions)
-            plt.close(102)
-
             # write to csv's
             TestCaseStrategyOI.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_OI.csv'))
             for j in TestCaseStrategyOI.options:

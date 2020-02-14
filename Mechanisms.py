@@ -4,7 +4,7 @@
 import numpy as np
 from scipy import interpolate
 import ProbabilisticFunctions
-def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None, design_variable=None):
+def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None, design_variable=None,iterative_solve = False,beta_t = False):
     if mode == 'assessment':
         if q_c[0] != q_c[-1:]:
             beta_hc = interpolate.interp2d(h_c, q_c, beta, kind='linear', fill_value='extrapolate')
@@ -13,7 +13,10 @@ def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None,
             beta_hc = interpolate.interp1d(h_c, beta, kind='linear', fill_value='extrapolate')
             beta = np.min([beta_hc(h_crest), 8.])
         Pf = ProbabilisticFunctions.beta_to_pf(beta)
-        return beta, Pf
+        if not iterative_solve:
+            return beta, Pf
+        else:
+            return beta - beta_t
     elif mode == 'design':
         beta_t = ProbabilisticFunctions.pf_to_beta(Pt)
         if design_variable == 'h_crest':

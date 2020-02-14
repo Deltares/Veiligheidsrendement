@@ -4,6 +4,7 @@ from HelperFunctions import DataAtShelve,getMeasureTable, replaceNames, pareto_f
 from Strategy import GreedyStrategy, MixedIntegerStrategy, ParetoFrontier
 from Solutions import Solutions
 from pathlib import Path
+import time
 import cProfile
 #GENERAL OPTIONS
 SHELVES = True
@@ -15,11 +16,11 @@ RUN_STEP_3 = True
 
 #INDICATE WHICH METHODS TO EVALUATE
 RUN_GREEDY                 = True
-RUN_MIXEDINTEGER           = False
+RUN_MIXEDINTEGER           = True
 RUN_PARETOFRONTIER         = False
 READ_MIXEDINTEGER          = True
 #INDICATE THE CASE TO USE
-CASE = 'Basic_newRoutineFast'
+CASE = 'Basic'
 
 #STEP 0: READ GENERAL INPUT
 PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland ' \
@@ -47,7 +48,7 @@ if RUN_STEP_1:
     if SHELVES: DataAtShelve(dir = PATH, name = 'Step1Result.out', objects = {'TrajectObject': TrajectObject}, mode='write')
 else:
     TrajectObject = DataAtShelve(dir = PATH, name = 'Step1Result.out', mode='read')
-
+    print('Loaded step 1')
 #STEP 2: EVALUATE ALL MEASURES
 if RUN_STEP_2:
     solutions_directory = PATH.joinpath('Solutions')
@@ -64,14 +65,16 @@ if RUN_STEP_2:
     if SHELVES: DataAtShelve(dir = PATH, name = 'Step2Result.out', objects = {'SolutionsCollection': SolutionsCollection}, mode = 'write')
 else:
     SolutionsCollection = DataAtShelve(dir = PATH, name = 'Step2Result.out', mode = 'read')
-
+    print('Loaded step 2')
 #store to an accessible format
 
 #STEP 3: FIND SOLUTIONS FOR ALL SELECTED METHODS
 if RUN_GREEDY:
     StrategyGreedy = GreedyStrategy('Greedy')
     StrategyGreedy.combine(TrajectObject, SolutionsCollection,splitparams=True)
-    StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="fast")
+    StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="cautious",f_cautious=1.5)
+    # StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="robust")
+    # StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="fast")
     # StrategyGreedy.evaluate_backup(TrajectObject, SolutionsCollection,splitparams=True,setting="fast")
     # cProfile.run('StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="robust")',
     #              'evaluate')
@@ -93,8 +96,12 @@ else:
 if RUN_MIXEDINTEGER:
     StrategyMixedInteger = MixedIntegerStrategy('MixedInteger')
     StrategyMixedInteger.combine(TrajectObject,SolutionsCollection,splitparams=True)
+    print('Start making MIP input')
     StrategyMixedInteger.make_optimization_input(TrajectObject,SolutionsCollection)
+    print('Start creating MIP model')
+    start = time.time()
     MixedIntegerModel = StrategyMixedInteger.create_optimization_model()
+    print('Time to create MIP model: ' + str(time.time()-start))
     MixedIntegerModel.solve()
     # MixedIntegerSolution = SolveMIP(MixedIntegerModel)
 
@@ -169,7 +176,6 @@ if 'StrategyMixedInteger' in locals():
     plt.plot(x,y,linestyle=':',color='blue',label='Radius of MIP optimum')
 plt.ylabel('Total Risk')
 plt.xlabel('LCC')
-plt.yscale('log')
 if 'TR_Pareto' in locals():
     plt.ylim((0.9*np.min(TR_Pareto),0.9*np.max(TR_Pareto)))
     plt.xlim((0,np.max(LCC_Pareto)))
@@ -178,10 +184,15 @@ else:
 # plt.xlim((0,2e7))
 plt.legend(loc=1)
 plt.title('Comparison of risk and cost for different methods')
+plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods_linear.png'),dpi=300, bbox_inches='tight')
+plt.yscale('log')
 plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods_logscale.png'),dpi=300, bbox_inches='tight')
 plt.ylim((1e5,5e7))
 plt.xlim((0,1.2e8))
 plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods_logscale_zoom.png'),dpi=300, bbox_inches='tight')
+
+plt.yscale('linear')
+plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods_linear_zoom.png'),dpi=300, bbox_inches='tight')
 # plt.savefig(PATH.joinpath(CASE).joinpath('ComparisonOfMethods.png'),dpi=300, bbox_inches='tight')
 plt.close()
 
@@ -206,6 +217,6 @@ print(MixedIntegerResults['Status'])
 # plt.savefig(PATH.joinpath(CASE).joinpath('Methods.png'),dpi=300, bbox_inches='tight')
 # np.savetxt(PATH.joinpath(CASE).joinpath('TCGreedy.csv'),TC_Greedy,delimiter=",")
 # print("TC Greedy: " + str(TC_Greedy))
-print("TC Greedy final step: " + str(TC_Greedy[-1]))
-print("TC MIP: " + str(TC_MIP))
+print("TC Greedy final step: " + str(np.add(LCC_Greedy,TR_Greedy)[-1]))
+print("TC MIP: " + str(np.add(LCC_MixedInteger,TR_MixedInteger)))
 print("Objective MIP: " + str(MixedIntegerResults['ObjectiveValue']))

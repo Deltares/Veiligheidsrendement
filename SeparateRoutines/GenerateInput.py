@@ -1,21 +1,29 @@
 #This script makes the entire input structure from the general input files
 import pandas as pd
-import re
 from HydraRing_scripts import readDesignTable
 from openpyxl import load_workbook
 from pathlib import Path
 from shutil import copyfile
+from Mechanisms import OverflowSimple
+import numpy as np
+from scipy.optimize import fsolve
 
 def main():
-    traject = '16-3'
-    path = Path('D:/SAFE/data/InputFiles/SAFEInput')
-    file_name = 'Dijkvakindeling_v5.2.xlsx'
-    backup_file_name = 'Dijkvakindeling_v5.2_backup.xlsx'
+    traject = '16-4'
+    path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\OptimizationBatchInput_OverflowDominant')
+    file_name = 'DikeSections.xlsx'
+    backup_file_name = 'DikeSections_backup.xlsx'
+    overflow_target_beta = True
+    originalcrests= []
+    newcrests= []
+    if overflow_target_beta:
+        print('WARNING: crest heights will be adapted to fit in a range of target beta-values!!!')
+        beta_t_overflow = [2.8,3.5]
 
     #Comment this out if the data only should originate from the Dijkvakindeling file and put path_WLRise_HBNRise to False
-    path_CrestHeight_WLRise_HBNRise = True
-    path_CrestHeight_WLRise_HBNRise = Path('D:\SAFE\data\HBN sommen\HBN HKV')
-    file_name_CrestHeight_WLRise_HBNRise = 'Resultaten_OI2014v4_BeleidsmatigeAfvoerverdeling_20180430.xlsx'
+    path_CrestHeight_WLRise_HBNRise = False
+    # path_CrestHeight_WLRise_HBNRise = Path('D:\SAFE\data\HBN sommen\HBN HKV')
+    # file_name_CrestHeight_WLRise_HBNRise = 'Resultaten_OI2014v4_BeleidsmatigeAfvoerverdeling_20180430.xlsx'
 
     #Make a backup before adjustment
     copyfile(path.joinpath(file_name), path.joinpath(backup_file_name))
@@ -88,7 +96,7 @@ def main():
         houses_data_location.columns = ['distancefromtoe', 'number']
 
         #Write Data
-        writer = pd.ExcelWriter(path.joinpath(traject, 'Output/DV' + str(DikeSections['dv_nummer'][i]) + '.xlsx'))
+        writer = pd.ExcelWriter(path.joinpath(traject, 'Output/DV' + '{:02d}'.format(DikeSections['dv_nummer'][i])  + '.xlsx'))
         toExcel.to_excel(writer, sheet_name='General', index=False)
         measures.to_excel(writer, sheet_name='Measures', index=False)
         profile.to_excel(writer, sheet_name='Geometry', index=False)
@@ -121,17 +129,31 @@ def main():
             print('Warning! length is not 13!')
 
         #Overwrite crestheight, betas, h_c and if possible dhc(t)
-        HBN_basis['h_crest'].iloc[0] = DikeSections['Kruinhoogte'][i]
+        if not overflow_target_beta:
+            HBN_basis['h_crest'].iloc[0] = DikeSections['Kruinhoogte'][i]
+        else:
+            beta_t = (beta_t_overflow[1] - beta_t_overflow[0]) * np.random.random_sample(1) + beta_t_overflow[0]
+            crestlevel = fsolve(OverflowSimple,DikeSections['Kruinhoogte'][i],
+                                args=(5, OverflowData['Value'].values, np.ones((len(OverflowData['Value'].values),1))*5,
+                                      OverflowData['Beta\n'].values, 'assessment', None, None, True, beta_t))
+            HBN_basis['h_crest'].iloc[0] = crestlevel[0]
+            originalcrests.append(DikeSections['Kruinhoogte'][i])
+            newcrests.append(crestlevel)
+            print('for section ' + str(DikeSections.iloc[i]['dv_nummer']) + ' changed crest from ' + str(DikeSections['Kruinhoogte'][i]) + ' to ' + str(crestlevel))
         HBN_basis['h_c'] = OverflowData['Value'].values
         HBN_basis['beta'] = OverflowData['Beta\n'].values
 
         if len(DikeSections['Kruindaling'].value_counts()) > 0:
             HBN_basis['dhc(t)'].iloc[0] = DikeSections['Kruindaling'][i]
+        else:
+            HBN_basis['dhc(t)'].iloc[0] = 0.
+
 
         HBN_basis.to_csv(path.joinpath(traject, 'Output/Overflow', DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv'), index=False)
 
         #Copy design tables
         copyfile(path.joinpath(traject, 'Input/designtables_TP/DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt'), path.joinpath(traject, 'Output/Toetspeil/DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt'))
+    print(np.array([originalcrests,newcrests]).T)
 
 if __name__ == '__main__':
     main()

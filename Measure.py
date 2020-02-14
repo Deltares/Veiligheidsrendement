@@ -14,7 +14,7 @@ class Measure:
         for i in range(0,len(inputs)):
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
                 self.parameters[inputs.index[i]] = inputs[i]
-    def evaluateMeasure(self,DikeSection,TrajectInfo, geometry_plot=False, plot_dir = None,preserve_slope = False):
+    def evaluateMeasure(self,DikeSection,TrajectInfo, geometry_plot=False, plot_dir = False,preserve_slope = False):
 
         from HelperFunctions import createDir
 
@@ -27,7 +27,7 @@ class Measure:
 
         #different types of measures:
         if type == 'Soil reinforcement':
-            createDir(plot_dir)
+            if plot_dir: createDir(plot_dir)
             crest_step = 0.5
             berm_step = 10
             crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], 1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step)

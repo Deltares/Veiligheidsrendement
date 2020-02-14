@@ -5,12 +5,14 @@ except:
 import shelve
 import copy
 import pandas as pd
+from openpyxl import load_workbook
 import matplotlib.pyplot as plt
 import openturns as ot
 from pandas import DataFrame
+from pathlib import Path
 import numpy as np
 import os
-
+from shutil import copyfile, rmtree
 ## This .py file contains a bunch of functions that are useful but do not fit under any of the other .py files.
 
 # write to file with cPickle/pickle (as binary)
@@ -126,13 +128,23 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
     return TestCaseStrategy
 
 
-def getMeasureTable(AllSolutions):
+def getMeasureTable(AllSolutions,language ='NL',abbrev=False):
     OverallMeasureTable = pd.DataFrame([], columns=['ID', 'Name'])
-
     for i in AllSolutions:
         OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].MeasureTable])
-
     OverallMeasureTable = OverallMeasureTable.drop_duplicates(subset='ID')
+    if (np.max(OverallMeasureTable['Name'].str.find('Grondversterking').values) > -1) and (language == 'EN'):
+        OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking binnenwaarts', 'Soil inward')
+        if abbrev:
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking met stabiliteitsscherm', 'Soil inward + SS')
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Verticaal Zanddicht Geotextiel', 'VSG')
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Zelfkerende constructie', 'DW')
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Stabiliteitsscherm', 'SS')
+        else:
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking met stabiliteitsscherm', 'Soil inward + Stability Screen')
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Verticaal Zanddicht Geotextiel', 'Vertical Sandtight Geotextile')
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Zelfkerende constructie', 'Diaphragm Wall')
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Stabiliteitsscherm', 'Stability Screen')
     return OverallMeasureTable
 
 
@@ -175,7 +187,18 @@ def flatten(l): #flatten a list
           out.append(item)
   return out
 
-def pareto_frontier(Xs, Ys, maxX = True, maxY = True):
+def pareto_frontier(Xs=False, Ys=False,PATH=False, maxX = True, maxY = True):
+    if PATH:
+        Xs = np.array([])  # LCC
+        Ys = np.array([])  # TR
+        # read info from path
+        for file in PATH.iterdir():
+            if file.is_file() and 'ParetoResults' in file.stem:
+                data = pd.read_csv(file)
+                Xs = np.concatenate((Xs, data['LCC'].values))
+                Ys = np.concatenate((Ys, data['TR'].values))
+    elif (isinstance(Xs,bool) or isinstance(Ys,bool)):
+        raise IOError('No input provided')
     myList = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxX)
     index_order = np.argsort(Xs)
     p_front = [myList[0]]
@@ -198,3 +221,65 @@ def pareto_frontier(Xs, Ys, maxX = True, maxY = True):
     p_frontX = [pair[0] for pair in p_front]
     p_frontY = [pair[1] for pair in p_front]
     return p_frontX, p_frontY, index
+
+def readBatchInfo(PATH):
+    CaseSet     = pd.read_csv(PATH.joinpath('CaseSet.csv'),delimiter=';')
+    MeasureSets = pd.read_csv(PATH.joinpath('MeasureSet.csv'),delimiter=';')
+    AvailableSections = [p for p in PATH.joinpath('BaseData').iterdir() if p.is_file()]
+    no_of_sections = len(AvailableSections)
+    caselist = []
+    for row in CaseSet.iterrows():
+        if row[1]['CaseOn'] == 1:
+
+            case_no = row[1]['CaseNumber']
+            case_measure_set = pd.DataFrame({'available': MeasureSets[row[1]['MeasureSet']].values})
+            for run in range(1, row[1]['Runs']+1):
+                sections = np.random.randint(0, no_of_sections, size=row[1]['Sections'])
+
+                #make directory
+                casepath = PATH.joinpath('{:02d}'.format(case_no), '{:03d}'.format(run))
+                #if the case exists: delete the entire directory
+                if casepath.is_dir():
+                    rmtree(casepath)
+                caselist.append(('{:02d}'.format(case_no), '{:03d}'.format(run)))
+                casepath.joinpath('StabilityInner').mkdir(parents= True,exist_ok=True)
+                casepath.joinpath('Piping').mkdir(parents= True,exist_ok=True)
+                casepath.joinpath('Overflow').mkdir(parents= True,exist_ok=True)
+                casepath.joinpath('Toetspeil').mkdir(parents= True,exist_ok=True)
+                #copy the section files
+                for i in sections:
+                    copyfile(AvailableSections[i],casepath.joinpath(AvailableSections[i].name))
+                    book = load_workbook(casepath.joinpath(AvailableSections[i].name))
+                    writer = pd.ExcelWriter(casepath.joinpath(AvailableSections[i].name),engine='openpyxl')
+                    writer.book = book
+                    writer.sheets = dict((ws.title,ws) for ws in book.worksheets)
+                    case_measure_set.to_excel(writer,'Measures',columns=['available'],index=False,startcol=3)
+                    writer.save()
+                    #change the measureset
+                #then copy all the needed files for
+                #StabilityInner
+                for p in casepath.iterdir():
+                    if p.is_file():
+                        data = pd.read_excel(p,sheet_name='General',index_col=0)
+                        copyfile(PATH.joinpath('BaseData',data.loc['Overflow']['Value']),casepath.joinpath(data.loc['Overflow']['Value']))
+                        copyfile(PATH.joinpath('BaseData',data.loc['StabilityInner']['Value']),casepath.joinpath(data.loc['StabilityInner']['Value']))
+                        copyfile(PATH.joinpath('BaseData',data.loc['Piping']['Value']),casepath.joinpath(data.loc['Piping']['Value']))
+                        copyfile(PATH.joinpath('BaseData','Toetspeil',data.loc['LoadData']['Value']),casepath.joinpath('Toetspeil',data.loc['LoadData']['Value']))
+    return caselist
+
+def setPath(computer):
+    raise ValueError('Change the paths!')
+    if computer == 'Horizon':
+        PATH = Path(r'c:\PythonResults\KPP case')
+    elif computer == 'DeltaresLaptop':
+        PATH = Path(r'c:\Users\klerk_wj\SurfDrive\01_Projects\01_KPP Bekledingen\KPP case')
+    elif computer == 'TULaptop':
+        PATH = Path(r'd:\wouterjanklerk\My Documents\01_Projects\01_KPP Bekledingen\KPP case')
+    return PATH
+
+def calcRsquared(x,y):
+    SStot = np.sum(np.subtract(x, np.mean(x)) ** 2)
+    SSreg = np.sum(np.subtract(y, np.mean(x)) ** 2)
+    SSres = np.sum(np.subtract(x, y) ** 2)
+    Rsq = 1 - np.divide(SSres, SStot)
+    return Rsq
