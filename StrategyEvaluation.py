@@ -405,6 +405,7 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
                 ID_ref = GeotechnicalOptions['ID'][existing_investments[i, 1] - 1]
                 inv_year = GeotechnicalOptions.loc[GeotechnicalOptions['ID'] == ID_ref]['year'].values[0]
                 beta_investment_year = GeotechnicalOptions['StabilityInner',inv_year].loc[GeotechnicalOptions['ID'] == ID_ref].values[0]
+                #TODO Hier gaat het mis als je geen "full" opties hebt. Bijvoorbeeld als een scherm wel kan, maar je mag geen scherm icm met een kruinverhoging doen
                 ID_allowed = GeotechnicalOptions.loc[GeotechnicalOptions['StabilityInner',inv_year]==beta_investment_year]\
                     .loc[GeotechnicalOptions['type']=='Soil reinforcement'].loc[GeotechnicalOptions['class']=='full']['ID'].values[0]
                 ids = np.argwhere(GeotechnicalOptions['ID'] == ID_allowed)

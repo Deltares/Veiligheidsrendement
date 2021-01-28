@@ -1,3 +1,5 @@
+"""This is the main script to run both a mixed integer, greedy search and pareto frontier computation for a single case."""
+
 #IMPORT PACKAGES
 from DikeTraject import DikeTraject
 from HelperFunctions import DataAtShelve,getMeasureTable, replaceNames, pareto_frontier
@@ -10,21 +12,22 @@ import cProfile
 SHELVES = True
 
 #INDICATE WHICH STEPS TO RUN THROUGH
-RUN_STEP_1 = False
-RUN_STEP_2 = False
+RUN_STEP_1 = True
+RUN_STEP_2 = True
 RUN_STEP_3 = True
 
 #INDICATE WHICH METHODS TO EVALUATE
 RUN_GREEDY                 = True
-RUN_MIXEDINTEGER           = True
+RUN_MIXEDINTEGER           = False
 RUN_PARETOFRONTIER         = False
-READ_MIXEDINTEGER          = True
+READ_MIXEDINTEGER          = False
 #INDICATE THE CASE TO USE
 CASE = 'Basic'
 
 #STEP 0: READ GENERAL INPUT
 PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland ' \
          'SAFE\WJKlerk\SAFE\data\PaperOptimization\Basic')
+
 LANGUAGE = 'EN'
 MECHANISMS = ['Overflow', 'StabilityInner', 'Piping']
 T = [0, 19, 20, 50, 75, 100]

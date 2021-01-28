@@ -442,7 +442,7 @@ class Strategy:
     def plotBetaCosts(self, Traject, fig_id, series_name=None, MeasureTable=None,
                       t = 0, cost_type = 'LCC', last = False, horizon = 100,
                       symbolmode = False, markersize = 10, symbolsections=False,color='r',linestyle = '-', beta_or_prob='beta',
-                      outputcsv=False,final_step = False):
+                      outputcsv=False,final_step = False,final_measure_symbols = False, solutiontype=False):
         if series_name == None:
             series_name = self.type
         if symbolmode:
@@ -450,6 +450,16 @@ class Strategy:
             MeasureTable = MeasureTable.assign(symbol=symbols[0: len(MeasureTable)])
         else:
             symbols = None
+
+        if solutiontype == 'OptimalSolution':
+            final_solution_index = list(self.OptimalSolution.index)
+            markersize2 = markersize/2
+        elif solutiontype == 'SatisfiedStandard':
+            final_solution_index = list(self.SatisfiedStandardSolution.index)
+            markersize2 = markersize / 2
+        else:
+            final_solution_index = list(self.TakenMeasures.index)
+            markersize2 = markersize
 
         if 'years' not in locals():
             years = Traject.Sections[0].Reliability.SectionReliability.columns.values.astype('float')
@@ -527,16 +537,22 @@ class Strategy:
                 line = self.TakenMeasures.iloc[i]
                 if line['option_index'] != None:
                     if isinstance(line['ID'], list):line['ID'] = '+'.join(line['ID'])
-                    if Costs[i] > Costs[i-1]:
+                    if (Costs[i] > Costs[i-1]):
+                        if (final_measure_symbols and i not in final_solution_index):
+                            marker = markersize2
+                            edgecolor = 'gray'
+                        else:
+                            marker = markersize
+                            edgecolor = 'k'
                         if beta_or_prob == 'beta':
-                            plt.scatter(Costs[i],betas[i],s = markersize, marker=MeasureTable.loc[MeasureTable['ID']==line['ID']]['symbol'].values[0],
+                            plt.scatter(Costs[i],betas[i],s = marker, marker=MeasureTable.loc[MeasureTable['ID']==line['ID']]['symbol'].values[0],
                                         label=MeasureTable.loc[
-                                MeasureTable['ID']==line['ID']]['Name'].values[0],color=color,edgecolors='k',linewidths=.5,zorder=2)
+                                MeasureTable['ID']==line['ID']]['Name'].values[0],color=color,edgecolors=edgecolor,linewidths=.5,zorder=2)
                             if symbolsections: plt.vlines(Costs[i],betas[i]+.05,ycoords[i]-.05,colors ='tab:gray', linestyles =':',zorder = 1)
                         elif beta_or_prob == 'prob':
-                            plt.scatter(Costs[i], pfs[i], s = markersize, marker=MeasureTable.loc[MeasureTable['ID'] == line['ID']]['symbol'].values[0],
+                            plt.scatter(Costs[i], pfs[i], s = marker, marker=MeasureTable.loc[MeasureTable['ID'] == line['ID']]['symbol'].values[0],
                                         label=MeasureTable.loc[
-                                MeasureTable['ID'] == line['ID']]['Name'].values[0], color=color, edgecolors='k', linewidths=.5, zorder=2)
+                                MeasureTable['ID'] == line['ID']]['Name'].values[0], color=color, edgecolors=edgecolor, linewidths=.5, zorder=2)
                             if symbolsections: plt.vlines(Costs[i], pfs[i], ycoords[i], colors='tab:gray', linestyles=':', zorder=1)
                     if symbolsections: plt.text(Costs[i], ycoords[i], line['Section'][-2:], fontdict={'size': 8}, color=color, horizontalalignment='center', zorder=3)
 
@@ -570,7 +586,8 @@ class Strategy:
             plt.title(costname + ' versus ' + rel_unit + ' in year ' + str(t + 2025))
 
 
-            plt.title(r'Relation between ' + rel_unit + ' and investment costs in M€')
+            # plt.title(r'Relation between ' + rel_unit + ' and investment costs in M€')
+            plt.title('Priority order of investments')
         if outputcsv:
             data = np.array([Costs.T, np.array(betas)]).T
             data = pd.DataFrame(data, columns=['Cost', 'beta'])
@@ -824,7 +841,7 @@ class Strategy:
         if len(DW) > 0:  measures['DW']  = ax.plot(DW,np.ones((len(DW),1))  *0,color=color[col+2], linestyle='', marker=markers[2],label='DW')
         if len(T2045) > 0:
             #dummy for label
-            ax.plot([-99,-98],[T2045_y1, T2045_y1], color='black', linestyle=':', label='2045')
+            ax.plot([-99,-98],[0, 0], color='black', linestyle=':', label='2045')
             for i in range(0,len(T2045)):
                 ax.plot([cumlength[T2045[i]],cumlength[T2045[i]+1]],[T2045_y1[i], T2045_y1[i]], color='black', linestyle=':')
                 ax.plot([cumlength[T2045[i]],cumlength[T2045[i]+1]],[T2045_y2[i], T2045_y2[i]], color='black', linestyle=':')
@@ -1295,14 +1312,16 @@ class MixedIntegerStrategy(Strategy):
 
         #all variables
         Cint_nd = np.array([[["C" + str(n).zfill(3) + str(sh).zfill(3) + str(sg).zfill(3) for sg in grSg] for sh in grSh] for n in grN])
-        Dint_nd = np.array([[["D" + str(n).zfill(3) + str(s).zfill(3) + str(t).zfill(3) for t in grT] for s in grSh] for n in grN])
+        Gint_nd = np.array([[["G" + str(n).zfill(3) + str(sh).zfill(3) + str(sg).zfill(3) for sg in grSg] for sh in grSh] for n in grN])
+        Oint_nd = np.array([[["O" + str(n).zfill(3) + str(s).zfill(3) + str(t).zfill(3) for t in grT] for s in grSh] for n in grN])
 
         #names of variables
         Cint = ["C" + str(n).zfill(3) + str(sh).zfill(3) +str(sg).zfill(3) for sg in grSg for sh in grSh for n in grN]
-        Dint = ["D" + str(n).zfill(3) + str(s).zfill(3) + str(t).zfill(3) for t in grT for s in grSh for n in grN]
+        Gint = ["G" + str(n).zfill(3) + str(sh).zfill(3) +str(sg).zfill(3) for sg in grSg for sh in grSh for n in grN]
+        Oint = ["O" + str(n).zfill(3) + str(s).zfill(3) + str(t).zfill(3) for t in grT for s in grSh for n in grN]
 
-        VarNames = Cint + Dint
-        nvar = self.opt_parameters['N']*self.opt_parameters['Sh']*self.opt_parameters['Sg'] + \
+        VarNames = Cint + Gint + Oint
+        nvar = 2* self.opt_parameters['N']*self.opt_parameters['Sh']*self.opt_parameters['Sg'] + \
                 self.opt_parameters['N']*self.opt_parameters['Sh']*self.opt_parameters['T']
         if nvar != len(VarNames):
             print(" ******  inconsistency with number of variables")
@@ -1314,13 +1333,13 @@ class MixedIntegerStrategy(Strategy):
 
 
         self.LCCOption[np.isnan(self.LCCOption)] = 0.0  # turn nans from investment costs to 0
-        CostVec1a = [self.LCCOption[n,sh,sg]  for sg in grSg for sh in grSh for n in grN]  # investment costs
+        CostVec1a = [self.LCCOption[n,sh,sg]  for sg in grSg for sh in grSh for n in grN]  # investment costs connected to C parameter
 
         #Sum the risk costs over time and sum with investment costs:
-        CostVec1b = [np.sum(self.RiskGeotechnical[n,sg,:]) for sg in grSg for sh in grSh for n in grN]  #
+        CostVec1b = [np.sum(self.RiskGeotechnical[n,sg,:]) for sg in grSg for sh in grSh for n in grN]  # geotechnical risk connected to G parameter
 
 
-        CostVec2 = [self.RiskOverflow[n,sh,t]  for t in grT for sh in grSh for n in grN]  # risk costs of overflow
+        CostVec2 = [self.RiskOverflow[n,sh,t]  for t in grT for sh in grSh for n in grN]  # risk costs of overflow connected to O parameter
 
         #normal version:
         # lbv = np.tile(0.0, nvar)  # lower bound 0 for all variables
@@ -1330,7 +1349,7 @@ class MixedIntegerStrategy(Strategy):
         # CostVec = CostVec1 + CostVec2
 
         #alternative with budget limit:
-        VarNames = Cint + Cint + Dint
+        VarNames = Cint + Gint + Oint
         lbv = np.tile(0.0, len(VarNames))  # lower bound 0 for all variables
         ubv = np.tile(1.0, len(VarNames))  # upper bound 1 for all variables
         typev = "I" * len(VarNames)        # all variables are integer
@@ -1364,7 +1383,7 @@ class MixedIntegerStrategy(Strategy):
         C2 = list()
         for t in grT:
             # slist = Dint_nd[:,:,t].tolist()
-            slist = [Dint_nd[n,s,t] for n in grN for s in grSh]
+            slist = [Oint_nd[n,s,t] for n in grN for s in grSh]
             nlist = [1.0] * (self.opt_parameters['N']*self.opt_parameters['Sh'])
             curconstraint = [slist,nlist]
             C2.append(curconstraint)
@@ -1381,7 +1400,7 @@ class MixedIntegerStrategy(Strategy):
         C3 = list()
         import sys
         for t in grT:
-            print('Constraint 3 for t=' + str(t))
+            # print('Constraint 3 for t=' + str(t))
             for n in grN:
                 C3 = list()
                 for nst in grN:
@@ -1404,7 +1423,7 @@ class MixedIntegerStrategy(Strategy):
                             else:
                                 jj[kk] = []
                         slist = flatten([Cint_nd[n, sh, :].tolist() for sh in ii]) + \
-                                flatten([Dint_nd[nh, sh, t].tolist() for nh in grN for sh in jj[nh]])
+                                flatten([Oint_nd[nh, sh, t].tolist() for nh in grN for sh in jj[nh]])
                         nlist = [1.0]*len(slist)
                         curconstraint = [slist,nlist]
                         C3.append(curconstraint)
@@ -1419,10 +1438,30 @@ class MixedIntegerStrategy(Strategy):
         # b = b+[1.0]*len(C3)
 
         print('constraint 3 implemented')
-
-        #optional constraint 4: implement a budget limit
+        #constraint 4: If Cint = 0 OR 1 for sh, sg, n Gint should also be 0 OR 1.
         C4 = list()
+        for n in grN:
+            for sh in grSh:
+                for sg in grSg:
+                    curconstraint = [[Cint_nd[n,sh,sg], Gint_nd[n,sh,sg]],[1.0,-1.0]] #[nlist, slist]
+                    C4.append(curconstraint)
+        senseV = "E"*len(C4)
+        b = [0.0]*len(C4)
+        model.linear_constraints.add(lin_expr=C4, senses=senseV, rhs=b)
+        #optional constraint 5: implement a budget limit
+        if BudgetLimit:
+            if BudgetLimit <= 0.: raise ValueError('Invalid budget limit entered!')
+            C5 = list()
+            slist = Cint #Cint_nd[:,:,:].ravel().tolist()
+            nlist = CostVec1a
+            curconstraint = [slist,nlist]
+            C5.append(curconstraint)
+            senseV = "L"*len(C5)
+            b = [BudgetLimit]*len(C5)
+            model.linear_constraints.add(lin_expr=C5, senses=senseV, rhs=b)
 
+        # slist = Cint_nd[:, :, :].ravel().tolist()
+        # nlist = [1.0] * (self.opt_parameters['Sg'] * self.opt_parameters['Sh'])
         # print('binary constraints implemented in restriction of variables')
 
         # # Add constraints to model:
@@ -1440,16 +1479,18 @@ class MixedIntegerStrategy(Strategy):
         grT = range(T)
         self.results = {}
         xs = Model['Values']
-        ind = np.argwhere(xs)
+        ind = np.argwhere(np.int32(xs))
         varnames = Model['Names']
-        ones = np.array(varnames)[ind]
-
+        Measure_ones = np.array(varnames)[ind][:-T]
         LCCTotal = 0
-        sections = ones[grN]
-        # test = str(sections[i][0])
+        sections = []
+        for i in list(Measure_ones):
+            if i[0][0] == 'C':
+                sections.append(i[0])
+
         measure = {}
-        for i in grN:
-            measure[np.int(str(sections[i][0])[1:4])] = [np.int(str(sections[i][0])[4:7]),np.int(str(sections[i][0])[
+        for i in range(0,len(sections)):
+            measure[np.int(str(sections[i])[1:4])] = [np.int(str(sections[i])[4:7]),np.int(str(sections[i])[
                                                                                                      7:])]
             # measure.append((np.int(str(sections[i][0])[1:4]), np.int(str(sections[i][0])[4:7])))
 
@@ -1513,8 +1554,6 @@ class MixedIntegerStrategy(Strategy):
         TakenMeasures = TakenMeasures.sort_values('Section')
         self.TakenMeasures = TakenMeasures
         data = pd.DataFrame({'Names': Model['Names'], 'Values': Model['Values'], 'Cost': self.CostVec})
-        self.results['D_int'] = data.loc[data['Values'] == 1].iloc[-T:]
-        self.results['C_int'] = data.loc[data['Values'] == 1].iloc[:-T]
 
         pd.set_option('display.max_columns', None)  # prevents trailing elipses
         # print(TakenMeasures)
@@ -1525,8 +1564,13 @@ class MixedIntegerStrategy(Strategy):
             # TakenMeasures.to_csv('TakenMeasures_MIP.csv')
         ## reproduce objective:
         alldata = data.loc[data['Values'] == 1]
+        Nsections = np.int32((len(alldata)-T)/2)
+        self.results['C_int'] = alldata.iloc[0:Nsections]
+        self.results['G_int'] = data.loc[data['Values'] == 1].iloc[Nsections:-T]
+        self.results['O_int'] = data.loc[data['Values'] == 1].iloc[-T:]
         self.results['TC'] = np.sum(alldata)['Cost']
-        self.results['LCC+GeoRisk'] = np.sum(alldata.iloc[:-T])['Cost']
+        self.results['LCC'] = np.sum(alldata.iloc[0:Nsections])['Cost']
+        self.results['GeoRisk'] = np.sum(alldata.iloc[Nsections:-T])['Cost']
         self.results['OverflowRisk'] = np.sum(alldata.iloc[-T:])['Cost']
     def checkConstraintSatisfaction(self, Model):
         N = self.opt_parameters['N']
@@ -1566,7 +1610,7 @@ class MixedIntegerStrategy(Strategy):
             #C3
         pass
 class ParetoFrontier(Strategy):
-    def evaluate(self, TrajectObject, SolutionsCollection, LCClist=False):
+    def evaluate(self, TrajectObject, SolutionsCollection, LCClist=False,PATH=False):
         if not LCClist:
             print()
             #run optimization and generate list on that
@@ -1577,6 +1621,10 @@ class ParetoFrontier(Strategy):
         MIPObjects = []
         MIPModels = []
         MIPResults = []
+        LCC = []
+        TR = []
+        TC = []
+        ObjectiveValue = []
         for j in range(0,len(LCClist)):
             MIPObjects.append(copy.deepcopy(MIPObject))
             MIPModels.append(MIPObjects[-1].create_optimization_model(BudgetLimit = LCClist[j]))
@@ -1589,8 +1637,22 @@ class ParetoFrontier(Strategy):
             MIPResults.append(MIPResult)
             MIPObjects[-1].readResults(MIPResults[-1], MeasureTable=getMeasureTable(
                 SolutionsCollection))
-        print()
+            MIPObjects[-1].TakenMeasures.to_csv(PATH.joinpath('Pareto_LCC=' + str(np.int32(LCClist[j])) + '.csv'))
+            LCC.append(MIPObjects[-1].results['LCC'])
+            TR.append(MIPObjects[-1].results['GeoRisk'] + MIPObjects[-1].results['OverflowRisk'])
+            TC.append(MIPObjects[-1].results['TC'])
+            ObjectiveValue.append(MIPResult['ObjectiveValue'])
+            print(MIPModels[-1].solution.status[MIPModels[-1].solution.get_status()])
+            if MIPObjects[-1].results['LCC'] > LCClist[j]:
+                print()
+        self.costs = pd.DataFrame(np.array([LCC,TR,TC]).T,columns=['LCC','TR','TC'])
+        print(LCC)
+        print(TR)
 
+        print(ObjectiveValue)
+        # Summarize results:
+            #print csvs of TakenMeasures with name: path + Pareto_LCC= LCClist[j]
+            #Generate TCs_pareto (LCC, TR, TC)
 
 
 class RandomizedParetoFrontier(Strategy):

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 import time
 def BatchRunOptimization(filepath,LANGUAGE = 'EN', MECHANISMS = ['Overflow', 'StabilityInner', 'Piping'],T = [0, 19, 20, 50, 75, 100],STARTYEAR=2020,plot_on = False,
-                         pareto_on=False,StartSet = 0,pareto_sets = 1,pareto_samples=100,run_MIP=True,run_Greedy = True, GreedySettings = {'setting':'cautious','f':1.5,
+                         pareto_on=False,paretoLCCs=[1.e6,10.e6, 20.e6],run_MIP=True,run_Greedy = True, GreedySettings = {'setting':'cautious','f':1.5,
                                                                                                                    'BCstop':0.1}):
 
     #Read the data
@@ -87,18 +87,9 @@ def BatchRunOptimization(filepath,LANGUAGE = 'EN', MECHANISMS = ['Overflow', 'St
             StrategyMixedInteger.combine(TrajectObject, SolutionsCollection, splitparams=True)
             StrategyMixedInteger.make_optimization_input(TrajectObject, SolutionsCollection)
         StrategyParetoFrontier = ParetoFrontier('ParetoFrontier')
-        StrategyParetoFrontier.evaluate(TrajectObject,SolutionsCollection,LCClist=[1,10,50])
+        StrategyParetoFrontier.evaluate(TrajectObject,SolutionsCollection,LCClist=paretoLCCs,PATH = filepath)
+        StrategyParetoFrontier.costs.to_csv(filepath.joinpath('TCs_Pareto.csv'), float_format='%.1f')
 
-        StrategyParetoFrontier.fill_with_MIP(StrategyMixedInteger)
-        # StrategyParetoFrontier_unfiltered = copy.deepcopy(StrategyParetoFrontier)
-        # StrategyParetoFrontier_unfiltered.evaluate(TrajectObject,SolutionsCollection)
-        #with filtering:
-        if run_Greedy:
-            StrategyParetoFrontier.evaluate(TrajectObject,SolutionsCollection,filepath,NrSets = pareto_sets,StartSet=14,NrSamples=pareto_samples,greedystrategy=StrategyGreedy)
-        else:
-            StrategyParetoFrontier.evaluate(TrajectObject,SolutionsCollection,filepath,NrSets = pareto_sets,StartSet=14,NrSamples=pareto_samples)
-
-        pass
     # DataAtShelve(dir=filepath, name='MixedIntegerResults.out', objects={'MixedIntegerResults': MixedIntegerResults},mode='write')
 
 def main():

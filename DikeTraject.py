@@ -178,7 +178,7 @@ class DikeTraject:
                 label_target = 'Target failure prob.'
             labels_xticks = []
             for i in self.Sections:
-                labels_xticks.append('S' + i.name[-2:])
+                labels_xticks.append('S' + i.name[2:])
 
         cumlength, xticks1, middles = getSectionLengthInTraject(self.Probabilities['Length'].loc[self.Probabilities.index.get_level_values(1) == 'Overflow'].values)
 
@@ -254,8 +254,6 @@ class DikeTraject:
                     #should be in legend
                     ax.plot([-100,-99], [ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(self.GeneralInfo[
                                                                                                     'Pmax'])], 'k--', label=label_target, linewidth=1)
-                    #visible in bar chart
-                    if system_rel: ax1.axhline(ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']), linestyle='--',color='black', label=label_target, linewidth=1)
                 if beta_or_prob == 'prob':
                     ax.plot([0, max(cumlength)], [self.GeneralInfo['Pmax'], self.GeneralInfo['Pmax']], 'k--',
                            label=label_target, linewidth=1)
@@ -301,9 +299,11 @@ class DikeTraject:
                 beta_tot = ProbabilisticFunctions.pf_to_beta(pt_tot)
                 print(beta_tot)
                 ax1.plot([-2,3],[beta_tot, beta_tot], color=color[col])
+                ax1.axhline(ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']), linestyle='--',color='black', label=label_target, linewidth=1)
                 ax1.grid(axis='y',linewidth=0.5,color='gray',alpha=0.5)
                 ax1.set_xticks([0,1,2])
                 ax1.set_xlim(left=-0.4,right=2.4)
+                ax1.set_title('System \n reliability')
                 if show_xticks:
                     ax1.set_xticklabels(mechanisms,rotation=90,fontsize=6)
                 else:

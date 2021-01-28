@@ -9,11 +9,13 @@ import numpy as np
 from scipy.optimize import fsolve
 
 def main():
+    # TODO Somewhere in this function an extension should be made such that section specific information can also be inserted. Perhaps in separate files, named after the dike section.
+
     traject = '16-4'
     path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\OptimizationBatchInput_OverflowDominant')
     file_name = 'DikeSections.xlsx'
     backup_file_name = 'DikeSections_backup.xlsx'
-    overflow_target_beta = True
+    overflow_target_beta = False
     originalcrests= []
     newcrests= []
     if overflow_target_beta:
@@ -50,6 +52,7 @@ def main():
     if any(STBI_data['dwarsprofiel'].duplicated()) or any(Piping_data['dwarsprofiel'].duplicated()):
         raise Exception('Warning, two or multiple dike section are equally named!')
         sys.exit()
+
 
     General = {}
     General['Name'] = ['Length', 'Start', 'End', 'Overflow', 'StabilityInner', 'Piping', 'LoadData', 'YearlyWLRise', 'HBNRise_factor']

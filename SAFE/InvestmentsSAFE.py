@@ -1,4 +1,4 @@
-## This script can calculate life-cycle reliability and costs for all measures for various mechanisms
+""" This script can calculate life-cycle reliability and costs for all measures for various mechanisms. It uses both a target reliability based approach and a greedy search optimization"""
 
 #Import a bunch of packages
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ def main():
     RunComputation = True
     years0 = [0, 19, 20, 25, 50, 75, 100]
     mechanisms = ['Overflow', 'StabilityInner', 'Piping']
-    path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\SmallTestCase')
+    path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\SAFE_16-4_oktober_test')
     # path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
     #             r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
     language = 'EN'
@@ -36,7 +36,7 @@ def main():
     TestCase = DikeTraject('TestCase', traject)
 
     ## Run the model
-    casename = 'cautious_f=2_bundling'
+    casename = 'cautious_f=1.5_bundling'
     directory = path.joinpath('Case_' + casename)
 
     ## READ ALL DATA

@@ -134,9 +134,9 @@ def getMeasureTable(AllSolutions,language ='NL',abbrev=False):
         OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].MeasureTable])
     OverallMeasureTable = OverallMeasureTable.drop_duplicates(subset='ID')
     if (np.max(OverallMeasureTable['Name'].str.find('Grondversterking').values) > -1) and (language == 'EN'):
-        OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking binnenwaarts', 'Soil inward')
+        OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking binnenwaarts', 'Soil based')
         if abbrev:
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking met stabiliteitsscherm', 'Soil inward + SS')
+            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking met stabiliteitsscherm', 'Soil based + SS')
             OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Verticaal Zanddicht Geotextiel', 'VSG')
             OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Zelfkerende constructie', 'DW')
             OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Stabiliteitsscherm', 'SS')

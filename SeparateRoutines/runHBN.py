@@ -10,7 +10,7 @@ import os
 import matplotlib.pyplot as plt
 from pathlib import Path
 #First we generate all the input files
-PATH = Path(r'd:\wouterjanklerk\My Documents\01_Projects\03_SAFE Deltares\GEKB_Anton\Toetspeil')
+PATH = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\Local\HydraRing\HBNberekeningen')
 inputfile = PATH.joinpath('InputLocations.xlsx')
 filespath = PATH
 refsql = PATH.joinpath('SQLreference.sql')
@@ -67,38 +67,43 @@ for i in input.iterrows():
     else:
         pass
 
-locations = location_list
-# locations = ['DV01_VY094']
+# locations = location_list
+locations = ['DV01_VY094']
 # # locations = ['DV01_VY094', 'DV02_VY090', 'DV02_VY091', 'DV03_VY078', 'DV04_VY074', 'DV04_VY077', 'DV05_VY069', 'DV10_VY030', 'DV10_VY034', 'DV11_VY023', 'DV12_VY018', 'DV13_VY014']
-if not os.path.exists(filespath + '\\' + 'figures'):
-    os.makedirs(filespath + '\\' + 'figures')
+if not os.path.exists(filespath.joinpath('figures')):
+    os.makedirs(filespath.joinpath('figures'))
 for i in locations:
-    table = readDesignTable(filespath + '\\' + i + '\\' + 'DESIGNTABLE_' + i + '.txt')
+    table = readDesignTable(filespath.joinpath(i,'DESIGNTABLE_' + i + '.txt'))
+    table_WL = readDesignTable(filespath.joinpath(i,'DESIGNTABLE_' + i + '_waterlevel.txt'))
     dijkpaal = i[-5:]
     line = input.loc[input['dijkpaal']==dijkpaal]
-    HBNHKV1l = line['HBN_HKV (1 l/m/s)'].values
-    HBNHKV5l = line['HBN_HKV (5 l/m/s)'].values
-    HBNHKV10l = line['HBN_HKV (10 l/m/s)'].values
+    # HBNHKV1l = line['HBN_HKV (1 l/m/s)'].values
+    # HBNHKV5l = line['HBN_HKV (5 l/m/s)'].values
+    # HBNHKV10l = line['HBN_HKV (10 l/m/s)'].values
 
     Kruin_nu = line['hcrest'].values
     p = 0.24* 1./10000
-    plt.plot(table['Value'], table['Failure probability'],label='HydraRing 1 l/m/s')
-    plt.plot(HBNHKV1l[0],p,'ro',label='HKV 1 l/m/s')
-    plt.plot(HBNHKV5l[0],p,'yo',label='HKV 5 l/m/s')
-    plt.plot(HBNHKV10l[0],p,'bo',label='HKV 10 l/m/s')
+    plt.plot(table['Value'], table['Failure probability'],label='Hydraulic Load q = 1 l/m/s')
+    plt.plot(table_WL['Value'], table_WL['Failure probability'],label='Water level')
+    # plt.plot(HBNHKV1l[0],p,'ro',label='HKV 1 l/m/s')
+    # plt.plot(HBNHKV5l[0],p,'yo',label='HKV 5 l/m/s')
+    # plt.plot(HBNHKV10l[0],p,'bo',label='HKV 10 l/m/s')
 
-    plt.vlines(Kruin_nu[0],0,1./1000,colors = 'tab:gray',linestyles='solid', label='Huidige kruinhoogte')
-    plt.hlines(p,min(min(table['Value']), HBNHKV10l[0]),max(table['Value']),colors = 'k',linestyles='dotted', label='Overslagnorm')
-    plt.hlines(1./10000, min(min(table['Value']), HBNHKV10l[0]), max(table['Value']), colors='k', linestyles='dashdot', label='Trajectnorm')
-    plt.xlabel('Hoogte [m NAP]')
-    plt.ylabel('Faalkans (-/jaar)')
+    plt.vlines(Kruin_nu[0],0,1./1000,colors = 'tab:gray',linestyles='solid', label='Current crest')
+    # plt.hlines(p,min(min(table['Value']), HBNHKV10l[0]),max(table['Value']),colors = 'k',linestyles='dotted', label='Overslagnorm')
+    # plt.hlines(1./10000, min(min(table['Value']), HBNHKV10l[0]), max(table['Value']), colors='k', linestyles='dashdot', label='Trajectnorm')
+    # plt.xlabel('Hoogte [m NAP]')
+    plt.xlabel('Level [m ref]')
+    # plt.ylabel('Faalkans (-/jaar)')
+    plt.ylabel('Failure probability [-/year]')
     plt.yscale('log')
     plt.legend()
     plt.title(i)
-    plt.xlim((min(min(table['Value']), HBNHKV10l[0]), max(Kruin_nu[0]+1,HBNHKV1l[0])))
+    # plt.xlim((min(min(table['Value']), HBNHKV10l[0]), max(Kruin_nu[0]+1,HBNHKV1l[0])))
+    plt.xlim((7.5, 8.5))
     plt.ylim((10e-10,1./1000))
     plt.grid()
     # plt.show()
-    plt.savefig(filespath + '\\' + 'figures' + '\\' + i + '.png', bbox_inches='tight')
+    plt.savefig(filespath.joinpath('figures',i + 'Paper.png'), bbox_inches='tight')
     plt.close()
 

@@ -31,6 +31,9 @@ class DikeSection:
                         # setattr(self, data.index[i], (data.loc[data.index[i]][0], data.loc[data.index[i]][1]))
                     else:
                         setattr(self, data.index[i], (data.loc[data.index[i]][0]))
+                        # if data.index[i] == 'YearlyWLRise':
+                        #     self.YearlyWLRise = self.YearlyWLRise * 3
+                        #     print('Warning: WLRise multiplied!')
 
             elif name == "Housing":
                 self.houses = df['Housing'].set_index('distancefromtoe').rename(columns={'number':'cumulative'})

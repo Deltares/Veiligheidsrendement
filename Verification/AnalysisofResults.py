@@ -170,7 +170,7 @@ def readSampledResults(PATH,caselist,print_large_diffs = False,rel_crit = 0.01,r
     casenames = []
     setnames = []
     measuresets = []
-    caseinfo = pd.read_csv(PATH.joinpath('CaseSet.csv'),delimiter=';')
+    caseinfo = pd.read_csv(PATH.joinpath('CaseSet.csv'),delimiter=',')
     runtimeGreedy = []
     runtimeMIP1 = []
     runtimeMIP2 = []
@@ -258,7 +258,10 @@ def plot_data_points(PATH, data,type = 'TC',rsquared=True,subset = False,to_axis
         # return ax_handle
 
 def cost_and_error(data,PATH,logaxis=True,TC_color='b',LCC_color='r'):
-
+    color = sns.cubehelix_palette(n_colors=4, start=1.9, rot=1, gamma=1.5, hue=1.0, light=0.8, dark=0.3)
+    color = ['r', '', '', 'b']
+    TC_color = color[3]
+    LCC_color = color[0]
     fig1 = plt.figure(constrained_layout=True)
     gs = fig1.add_gridspec(2, 2)
     ax_rolling = fig1.add_subplot(gs[:, 0])
@@ -270,8 +273,8 @@ def cost_and_error(data,PATH,logaxis=True,TC_color='b',LCC_color='r'):
 
     ax_rolling.grid('on')
     ax_rolling.set_xlabel('cost in M€')
-    ax_rolling.set_ylabel('relative error in %')
-    ax_rolling.set_title('rel. error')
+    ax_rolling.set_ylabel('relative difference in %')
+    ax_rolling.set_title('rel. difference')
     if logaxis:
         ax_rolling.set_yscale('log')
         ax_rolling.set_ylim(bottom=1e-2, top=topy)
@@ -292,9 +295,9 @@ def cost_and_error(data,PATH,logaxis=True,TC_color='b',LCC_color='r'):
         errorLCC.append(np.mean(
             data['relative error LCC'].loc[(data['LCC MIP'] > grid[i - 1] - window) & (data['LCC MIP'] < grid[i] + window)]))
         mean.append(grid[i])
-    ax_rolling.plot(np.divide(mean, 1e6), np.multiply(errorTC, 100), label='TC rolling avg. error (window = ' + str(np.int32(2 * window / 1e6)) + ' M€)',\
+    ax_rolling.plot(np.divide(mean, 1e6), np.multiply(errorTC, 100), label='TC rolling avg. diff. (window = ' + str(np.int32(2 * window / 1e6)) + ' M€)',\
                                                                             color=TC_color)
-    ax_rolling.plot(np.divide(mean, 1e6), np.multiply(errorLCC, 100), label='LCC rolling avg. error (window = ' + str(np.int32(2 * window / 1e6)) + ' M€)',
+    ax_rolling.plot(np.divide(mean, 1e6), np.multiply(errorLCC, 100), label='LCC rolling avg. diff. (window = ' + str(np.int32(2 * window / 1e6)) + ' M€)',
                     color=LCC_color)
     ax_rolling.legend(loc=1,fontsize='x-small')
     plot_data_points(PATH,data,type='TC',to_axis=True,ax_handle=ax_rsq_TC,markercolor=TC_color,rsquared=False)
@@ -308,7 +311,7 @@ def cost_and_error(data,PATH,logaxis=True,TC_color='b',LCC_color='r'):
 def main():
     # PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\98_Papers\Journal\XXXX_SAFEGreedyMethod_CACAIE\Berekeningen\Batch_Normal_cautious_f=1.5')
     # PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\98_Papers\Journal\XXXX_SAFEGreedyMethod_CACAIE\Berekeningen\Batch_Overflow_cautious_f=1.5')
-    # PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\98_Papers\Journal\XXXX_SAFEGreedyMethod_CACAIE\Berekeningen\AllCases_cautious_f=1.5')
+    # PATH = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\98_Papers\Journal\2020_SAFEGreedyMethod_CACAIE\Berekeningen\resultaten\AllCases_cautious_f=1.5')
 
     # PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\98_Papers\Journal\XXXX_SAFEGreedyMethod_CACAIE\Berekeningen\Batch_Overflow_cautious_f=3')
     # PATH = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\98_Papers\Journal\XXXX_SAFEGreedyMethod_CACAIE\Berekeningen\Batch_Normal_cautious_f=3')
@@ -390,15 +393,20 @@ def main():
     if analyze_computation_time:
         #plot runtime vs number of sections
         fig, ax = plt.subplots()
-        nruns = 20
-        sections = [5, 7, 9, 11,11,13,15]
-        sec_array = np.empty((0, 1))
-        for i in sections:
-            sec_array = np.concatenate((sec_array, np.ones((nruns, 1)) * i))
+        counts = []
+        for case in caselist:
+            count = 0
+            for i in PATH.joinpath(case[0], case[1]).glob('**/*.xlsx'):
+                count += 1
+            print(count)
+            counts.append(count)
+        sec_array = np.array(counts)
+        # for i in sections:
+        #     sec_array = np.concatenate((sec_array, np.ones((nruns, 1)) * i))
         avgGreedy = []
         avgMIP1 = []
         avgMIP2 = []
-        for i in np.unique(sections):
+        for i in np.unique(counts):
             avgGreedy.append(np.mean(data_computations['runtime Greedy'].loc[np.argwhere(sec_array == i)[:,0]]))
             avgMIP1.append(np.mean(data_computations['runtime MIP initialization'].loc[np.argwhere(sec_array == i)[:,0]]))
             avgMIP2.append(np.mean(data_computations['runtime MIP solve'].loc[np.argwhere(sec_array == i)[:,0]]))
@@ -407,19 +415,20 @@ def main():
         ax.plot(sec_array, data_computations['runtime Greedy'][0:len(sec_array)], color=colors[0], linestyle = '', marker = 'o')
         ax.plot(sec_array, data_computations['runtime MIP initialization'][0:len(sec_array)], color=colors[1], linestyle = '', marker = 'd')
         ax.plot(sec_array, data_computations['runtime MIP solve'][0:len(sec_array)], color=colors[1], linestyle = '', marker = 'o')
-        ax.plot(np.unique(sections), avgGreedy, color=colors[0], label='Greedy solve')
-        ax.plot(np.unique(sections), avgMIP1, color=colors[1], linestyle='--', label='MIP init')
-        ax.plot(np.unique(sections), avgMIP2, color=colors[1], linestyle= ':', label='MIP solve')
-        ax.plot(np.unique(sections), np.add(avgMIP2,avgMIP1), color=colors[1], label='MIP total')
+        ax.plot(np.unique(counts), avgGreedy, color=colors[0], label='Greedy solve')
+        ax.plot(np.unique(counts), avgMIP1, color=colors[1], linestyle='--', label='MIP init')
+        ax.plot(np.unique(counts), avgMIP2, color=colors[1], linestyle= ':', label='MIP solve')
+        ax.plot(np.unique(counts), np.add(avgMIP2,avgMIP1), color=colors[1], label='MIP total')
         ax.set_xlabel('no of sections')
         ax.set_ylabel('time elapsed [in s]')
         ax.set_title('Runtime')
         ax.set_xlim(left=5, right=15)
-        ax.set_ylim(bottom=0, top=100)
         ax.legend()
         ax.grid()
         # ax.set_yscale('log')
-        plt.savefig(PATH.joinpath('runtime.png'),dpi=300,bbox_anchor='tight',format='png')
+        plt.savefig(PATH.joinpath('runtime_linear.png'),dpi=300,bbox_anchor='tight',format='png')
+        ax.set_ylim(bottom=0, top=60)
+        plt.savefig(PATH.joinpath('runtime2_linear.png'),dpi=300,bbox_anchor='tight',format='png')
 
 if __name__ == '__main__':
     main()
