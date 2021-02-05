@@ -76,13 +76,7 @@ if RUN_GREEDY:
     StrategyGreedy = GreedyStrategy('Greedy')
     StrategyGreedy.combine(TrajectObject, SolutionsCollection,splitparams=True)
     StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="cautious",f_cautious=1.5)
-    # StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="robust")
-    # StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="fast")
-    # StrategyGreedy.evaluate_backup(TrajectObject, SolutionsCollection,splitparams=True,setting="fast")
-    # cProfile.run('StrategyGreedy.evaluate(TrajectObject, SolutionsCollection,splitparams=True,setting="robust")',
-    #              'evaluate')
-    # cProfile.run('StrategyGreedy.evaluate_backup(TrajectObject, SolutionsCollection,splitparams=True,'
-    #              'setting="robust")','evaluate_old')
+
 
     StrategyGreedy = replaceNames(StrategyGreedy,SolutionsCollection)
     StrategyGreedy.plotBetaCosts(TrajectObject,path= PATH.joinpath('Solutions'),typ='multi',

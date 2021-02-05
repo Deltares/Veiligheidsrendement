@@ -5,6 +5,7 @@ import ProbabilisticFunctions
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import time
+import config
 # This script combines two sets of measures to a single option
 def MeasureCombinations(combinables, partials, solutions,splitparams = False):
     CombinedMeasures = pd.DataFrame(columns=combinables.columns)
@@ -273,8 +274,8 @@ def SolveMIP(MIPModel):
     MixedIntegerSolution = MIPModel.solve()
     return MixedIntegerSolution
 
-def evaluateRisk(mechanisms,init_overflow_risk,init_geo_risk,Strategy,n,sh,sg):
-    for i in mechanisms:
+def evaluateRisk(init_overflow_risk,init_geo_risk,Strategy,n,sh,sg):
+    for i in config.mechanisms:
         if i == 'Overflow':
             init_overflow_risk[n,:] = Strategy.RiskOverflow[n,sh,:]
         else:

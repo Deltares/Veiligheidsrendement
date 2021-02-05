@@ -6,28 +6,31 @@ from ReliabilityCalculation import MechanismReliabilityCollection
 from SectionReliability import SectionReliability
 from shapely.geometry import Polygon
 import pandas as pd
+import config
 
+"""Important: a measure is a single type of reinforcement, so for instance a stability screen. A solution can be a COMBINATION of measures (e.g. a stability screen with a berm)"""
 class Measure:
+    """Possible change: create subclasses for different measures to make the below code more neat. Can be done jointly with adding outward reinforcement"""
     #class to store measures and their reliability. A Measure is a specific Solution (with parameters)
     def __init__(self,inputs):
         self.parameters = {}
         for i in range(0,len(inputs)):
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
                 self.parameters[inputs.index[i]] = inputs[i]
-    def evaluateMeasure(self,DikeSection,TrajectInfo, geometry_plot=False, plot_dir = False,preserve_slope = False):
 
+    def evaluateMeasure(self,DikeSection,TrajectInfo,preserve_slope = False):
         from HelperFunctions import createDir
 
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
         SFincrease = 0.2        #for stability screen
-        if geometry_plot:
+        if config.geometry_plot:
             plt.figure(1000)
+            createDir(config.directory.joinpath('figures',DikeSection.name,'Geometry'))
 
         #different types of measures:
         if type == 'Soil reinforcement':
-            if plot_dir: createDir(plot_dir)
             crest_step = 0.5
             berm_step = 10
             crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], 1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step)
@@ -52,14 +55,14 @@ class Measure:
                 self.measures.append({})
                 self.measures[-1]['dcrest'] =j[0]
                 self.measures[-1]['dberm'] = j[1]
-                self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,self.parameters['Direction'],DikeSection.InitialGeometry,geometry_plot=geometry_plot, plot_dir = plot_dir, slope_in = slope_in)
+                self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,self.parameters['Direction'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
                 self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, reinf_pars = j, housing = DikeSection.houses, area_difference= area_difference)
                 self.measures[-1]['Reliability'] = SectionReliability()
                 self.measures[-1]['Reliability'].Mechanisms = {}
 
                 for i in mechanisms:
                     calc_type = DikeSection.MechanismData[i][1]
-                    self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=TrajectInfo['T'], measure_year=self.parameters['year'])
+                    self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, measure_year=self.parameters['year'])
                     # self.measures[-1]['Reliability'].Mechanisms[i].Input = {}
 
                     for ij in self.measures[-1]['Reliability'].Mechanisms[i].Reliability.keys():
@@ -91,12 +94,11 @@ class Measure:
                                 self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lachter'] = \
                                     np.max([0.,self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lachter'] - self.measures[-1]['dberm']])
                     self.measures[-1]['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
-                self.measures[-1]['Reliability'].calcSectionReliability(TrajectInfo,DikeSection.Length)
+                self.measures[-1]['Reliability'].calcSectionReliability()
                 #TODO add interpolation option here (and for the other types)
         elif type == 'Vertical Geotextile':
             #No influence on overflow and stability
             #Only 1 parameterized version with a lifetime of 50 years
-
             self.measures = {}
             self.measures['VZG'] = 'yes'
             self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
@@ -105,7 +107,7 @@ class Measure:
 
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
-                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=TrajectInfo['T'])
+                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
                 for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(
                         DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
@@ -117,7 +119,7 @@ class Measure:
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_elim'] = self.parameters['P_solution']
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_with_elim'] = self.parameters['Pf_solution']
                 self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
-            self.measures['Reliability'].calcSectionReliability(TrajectInfo,DikeSection.Length)
+            self.measures['Reliability'].calcSectionReliability()
         elif type == 'Diaphragm Wall':
             #StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
             # It is assumed that the diaphragm wall is extendable after that.
@@ -129,7 +131,7 @@ class Measure:
             self.measures['Reliability'].Mechanisms = {}
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
-                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=TrajectInfo['T'])
+                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
                 for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
                     if float(ij) >= self.parameters['year']:
@@ -147,7 +149,7 @@ class Measure:
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_elim'] = self.parameters['P_solution']
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_with_elim'] = self.parameters['Pf_solution']
                 self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
-            self.measures['Reliability'].calcSectionReliability(TrajectInfo,DikeSection.Length)
+            self.measures['Reliability'].calcSectionReliability()
         elif type == 'Stability Screen':
             self.measures = {}
             self.measures['Stability Screen'] = 'yes'
@@ -158,7 +160,7 @@ class Measure:
             self.measures['Reliability'].Mechanisms = {}
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
-                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, years=TrajectInfo['T'])
+                self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
                 for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
                     if i == 'Overflow' or i == 'Piping': #Copy results
@@ -170,12 +172,10 @@ class Measure:
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] += SFincrease
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] += SFincrease
                 self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
-            self.measures['Reliability'].calcSectionReliability(TrajectInfo,DikeSection.Length)
+            self.measures['Reliability'].calcSectionReliability()
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
-def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geometry_plot = False,plot_dir = None, slope_in = False):
-
-
+def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, bermheight = 2, slope_in = False):
     if len(initial) == 6:
         bermheight = initial.iloc[2]['z']
     elif len(initial) == 4:
@@ -183,12 +183,10 @@ def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geom
     #Geometry is always from inner to outer toe
     dcrest = geometry_change[0]
     dberm  = geometry_change[1]
-    if dcrest > 1.01 and dberm > 31 and geometry_plot:
-        geometry_plot = False
     geometry = initial.values
     cur_crest = np.max(geometry[:,1])
     new_crest = cur_crest+dcrest
-    if geometry_plot:
+    if config.geometry_plot:
         plt.plot(geometry[:, 0], geometry[:, 1],'k')
     if direction == 'outward':
         print("WARNING: outward reinforcement is NOT UP TO DATE!!!!")
@@ -223,7 +221,7 @@ def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geom
             for i in range(len(new_geometry)):
                 new_geometry[i][0] -= dberm
 
-        if geometry_plot:
+        if config.geometry_plot:
             plt.plot(new_geometry[:, 0], new_geometry[:, 1], '--r')
 
     elif direction == 'inward':
@@ -272,7 +270,7 @@ def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geom
     area_new, polygon_new = calculateArea(new_geometry)
     poly_diff = polygon_new.difference(polygon_old)
     area_difference = poly_diff.area
-    if geometry_plot:
+    if config.geometry_plot:
         if hasattr(poly_diff, 'geoms'):
             for i in range(len(poly_diff.geoms)):
                 x1, y1 = poly_diff[i].exterior.xy
@@ -283,11 +281,9 @@ def DetermineNewGeometry(geometry_change, direction, initial,bermheight = 2,geom
             plt.fill(x1, y1, 'r--')
 
         plt.text(np.mean(new_geometry[:, 0]), np.max(new_geometry[:, 1]), 'Area difference = ' + '{:.4}'.format(str(area_difference)) + ' $m^2$')
-        if plot_dir == None:
-            plt.show()
-        else:
-            plt.savefig(plot_dir.joinpath('Geometry_' + str(dberm) + '_' + str(dcrest) + '.png'))
-            plt.close()
+
+        plt.savefig(plot_dir.joinpath('Geometry_' + str(dberm) + '_' + str(dcrest) + '.png'))
+        plt.close()
 
     return new_geometry, area_difference
 

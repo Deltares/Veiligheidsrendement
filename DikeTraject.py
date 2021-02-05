@@ -5,12 +5,18 @@ from DikeSection import DikeSection
 from ReliabilityCalculation import LoadInput, MechanismReliabilityCollection
 import ProbabilisticFunctions
 from StrategyEvaluation import calcTrajectProb
-import time
+import config
 import seaborn as sns
 
 class DikeTraject:
     #This class contains general information on the dike traject and is used to store all data on the sections
-    def __init__(self, name, traject=None):
+    def __init__(self):
+        try:
+            traject = config.traject
+        except:
+            print('Warning: no traject given in config. Default was chosen')
+            traject = None
+
         self.GeneralInfo = {}
         self.Sections = []
 
@@ -46,47 +52,42 @@ class DikeTraject:
             self.GeneralInfo['omegaOverflow'] = 0.24
 
 
-    def ReadAllTrajectInput(self, path, directory, T, startyear,traject='16-4', mechanisms=['Overflow',
-                                                                                           'StabilityInner',
-                                                                                     'Piping'],makesubdirs=True):
+    def ReadAllTrajectInput(self,makesubdirs=True):
         #Make a case directory and inside a figures and results directory if it doesnt exist yet
-        if not path.joinpath(directory).is_dir():
-            path.joinpath(directory).mkdir(parents=True, exist_ok=True)
+        #TODO check if these are obsolete
+        if not config.path.joinpath(config.directory).is_dir():
+            config.path.joinpath(config.directory).mkdir(parents=True, exist_ok=True)
             if makesubdirs:
-                path.joinpath(directory).joinpath('figures').mkdir(parents=True, exist_ok=True)
-                path.joinpath(directory).joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
+                config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
+                config.directory.joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
 
         # Routine to read the input for all sections based on the default input format.
-        files = [i for i in path.glob("*DV*") if i.is_file()]
+        files = [i for i in config.path.glob("*DV*") if i.is_file()]
         if len(files) == 0:
             raise IOError('Error: no dike sections found. Check path!')
         for i in range(len(files)):
             # Read the general information for each section:
-            self.Sections.append(DikeSection(files[i].stem, traject))
-            self.Sections[i].readGeneralInfo(path, 'General')
+            self.Sections.append(DikeSection(files[i].stem, config.traject))
+            self.Sections[i].readGeneralInfo(config.path, 'General')
 
             # Read the data per mechanism, and first the load frequency line:
             self.Sections[i].Reliability.Load = LoadInput()
-            self.Sections[i].Reliability.Load.set_fromDesignTable(path.joinpath('Toetspeil', self.Sections[i].LoadData))
+            self.Sections[i].Reliability.Load.set_fromDesignTable(config.path.joinpath('Toetspeil', self.Sections[i].LoadData))
             self.Sections[i].Reliability.Load.set_annual_change(type='SAFE', parameters=[self.Sections[i].YearlyWLRise, self.Sections[i].HBNRise_factor])
 
             # Then the input for all the mechanisms:
             self.Sections[i].Reliability.Mechanisms = {}
-            for j in mechanisms:
-                self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1], years=T)
+            for j in config.mechanisms:
+                self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1])
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
-                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(path.joinpath(
+                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(config.path.joinpath(
                         self.Sections[i].MechanismData[j][0]), calctype=self.Sections[i].MechanismData[j][1], mechanism=j)
 
             #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
-            if not path.joinpath(directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:
-                path.joinpath(directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
-                path.joinpath(directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
+            if not config.path.joinpath(config.directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:
+                config.path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
+                config.path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
 
-        self.GeneralInfo['Mechanisms'] = mechanisms
-
-        self.GeneralInfo['T'] = T
-        self.GeneralInfo['StartYear'] = startyear
         #Traject length is lengt of all sections together:
         self.GeneralInfo['TrajectLength'] = 0
         for i in self.Sections:
@@ -99,18 +100,18 @@ class DikeTraject:
 
     def setProbabilities(self):
         '''routine to make 1 dataframe of all probabilities of a TrajectObject'''
-        for i in range(0, len(self.Sections)):
+        for i, section in enumerate(self.Sections):
             if i == 0:
-                Assessment = self.Sections[i].Reliability.SectionReliability.reset_index()
-                Assessment['Section'] = self.Sections[i].name
-                Assessment['Length'] = self.Sections[i].Length
+                Assessment = section.Reliability.SectionReliability.reset_index()
+                Assessment['Section'] = section.name
+                Assessment['Length'] = section.Length
                 Assessment.columns = Assessment.columns.astype(str)
                 if 'mechanism' in Assessment.columns:
                     Assessment = Assessment.rename(columns={"mechanism":"index"})
             else:
-                data_to_add = self.Sections[i].Reliability.SectionReliability.reset_index()
-                data_to_add['Section'] = self.Sections[i].name
-                data_to_add['Length'] = self.Sections[i].Length
+                data_to_add = section.Reliability.SectionReliability.reset_index()
+                data_to_add['Section'] = section.name
+                data_to_add['Length'] = section.Length
                 data_to_add.columns = data_to_add.columns.astype(str)
                 if 'mechanism' in data_to_add.columns:
                     data_to_add = data_to_add.rename(columns={"mechanism": "index"})
@@ -119,11 +120,8 @@ class DikeTraject:
         Assessment = Assessment.rename(columns={'index':'mechanism','Section':'name'})
         self.Probabilities = Assessment.reset_index(drop=True).set_index(['name','mechanism'])
 
-    def plotAssessment(self,
-                       PATH = None, fig_size = (6,4),
-                       draw_targetbeta='off', language='EN',
-                       flip='off', beta_or_prob = 'beta',
-                       outputcsv=False, last=True, alpha = 1, years = False, colors=False,
+    def plotAssessment(self, fig_size = (6,4),
+                       draw_targetbeta='off', last=True, alpha = 1, colors=False,
                        labels_limited=False,system_rel=False, custom_name=False,title_in=False,
                        reinforcement_strategy=False,greedymode='Optimal',show_xticks = True):
         '''Routine to plot traject reliability'''
@@ -147,33 +145,29 @@ class DikeTraject:
             ProbabilityFrame = ProbabilityFrame.drop(['Length'],axis=1)
         ProbabilityFrame.columns = ProbabilityFrame.columns.values.astype(np.int64)
         PlotSettings()
-        if not years:
-            years = self.GeneralInfo['T']
-        mechanisms = self.GeneralInfo['Mechanisms']
-        startyear = self.GeneralInfo['StartYear']
-        if outputcsv:
-            self.Probabilities.to_csv(PATH.joinpath('AllBetas.csv'))
+
+        self.Probabilities.to_csv(config.directory.joinpath('InitialAssessment_Betas.csv'))
         #English or Dutch labels and titles
-        if language == 'NL':
+        if config.language == 'NL':
             label_xlabel = 'Dijkvakken'
-            if beta_or_prob == 'beta':
+            if config.beta_or_prob == 'beta':
                 label_ylabel = r'Betrouwbaarheidsindex $\beta$ [-/jaar]'
                 label_target = 'Doelbetrouwbaarheid'
-            elif beta_or_prob =='prob':
+            elif config.beta_or_prob =='prob':
                 label_ylabel = r'Faalkans $P_f$ [-/jaar]'
                 label_target = 'Doelfaalkans'
             labels_xticks = []
             for i in self.Sections:
                 labels_xticks.append(i.name)
-        elif language == 'EN':
+        elif config.language == 'EN':
             label_xlabel = 'Dike sections'
-            if beta_or_prob == 'beta':
+            if config.beta_or_prob == 'beta':
                 if labels_limited:
                     label_ylabel = r'$\beta$ [-/year]'
                 else:
                     label_ylabel = r'Reliability index $\beta$ [-/year]'
                 label_target = r'$\beta_\mathrm{target}$'
-            elif beta_or_prob == 'prob':
+            elif config.beta_or_prob == 'prob':
                 label_ylabel = r'Failure probability $P_f$ [-/year]'
                 label_target = 'Target failure prob.'
             labels_xticks = []
@@ -182,20 +176,19 @@ class DikeTraject:
 
         cumlength, xticks1, middles = getSectionLengthInTraject(self.Probabilities['Length'].loc[self.Probabilities.index.get_level_values(1) == 'Overflow'].values)
 
-        # color = ['r', 'g', 'b', 'k']
         if colors:
             color = sns.cubehelix_palette(**colors)
         else:
             color = sns.cubehelix_palette(n_colors=4, start=1.9,rot=1,gamma=1.5,hue=1.0,light=0.8,dark=0.3)
         # color = sns.cubehelix_palette(n_colors=4, start=0.7,rot=1,gamma=1.5,hue=0.0,light=0.8,dark=0.3)
         markers = ['o', 'v', 'd']
-        # fig, ax = plt.subplots(figsize=fig_size)
-        #We will make many plots for different years
+
+        #We will make plots for different years
         year = 0
         line = {}
         mid = {}
         legend_line = {}
-        for ii in years:
+        for ii in config.assessment_plot_years:
             if system_rel:
                 fig, (ax, ax1) = plt.subplots(nrows=1, ncols=2, figsize=fig_size,sharey='row',
                                               gridspec_kw={'width_ratios': [20, 1], 'wspace': 0.08, 'left': 0.03, 'right': 0.98})
@@ -203,11 +196,11 @@ class DikeTraject:
                 fig, ax = plt.subplots(figsize=fig_size)
             col = 0
             mech = 0
-            for j in mechanisms:
+            for j in config.mechanisms:
                 #get data to plot
                 # plotdata = self.Probabilities[str(ii)].loc[self.Probabilities['index'] == j].values
                 plotdata = ProbabilityFrame[ii].loc[ProbabilityFrame.index.get_level_values(1) == j].values
-                if beta_or_prob == 'prob':
+                if config.beta_or_prob == 'prob':
                     plotdata = ProbabilisticFunctions.beta_to_pf(plotdata)
                 ydata = copy.deepcopy(plotdata)
                 for ij in range(0, len(plotdata)):
@@ -227,7 +220,7 @@ class DikeTraject:
             col = 0
             #Whether to draw the target reliability for each individula mechanism.
             if draw_targetbeta == 'on' and last:
-                for j in mechanisms:
+                for j in config.mechanisms:
                     dash = [2, 2]
                     if j == 'StabilityInner':
                         N = self.GeneralInfo['TrajectLength'] * self.GeneralInfo['aStabilityInner']/ self.GeneralInfo['bStabilityInner']
@@ -240,21 +233,21 @@ class DikeTraject:
                     elif j == 'Overflow':
                         pt = self.GeneralInfo['Pmax'] * self.GeneralInfo['omegaOverflow']
                         # dash = [1,2]
-                    if beta_or_prob == 'beta':
+                    if config.beta_or_prob == 'beta':
                         ax.plot([0, max(cumlength)], [ProbabilisticFunctions.pf_to_beta(pt), ProbabilisticFunctions.pf_to_beta(pt)],
                                  color=color[col], linestyle=':', label=label_target + ' ' + j,dashes=dash, alpha=0.5,linewidth=1)
-                    elif beta_or_prob == 'prob':
+                    elif config.beta_or_prob == 'prob':
                         ax.plot([0, max(cumlength)], [pt, pt],
                                  color=color[col], linestyle=':', label=label_target + ' ' + j, dashes=dash, alpha=0.5,linewidth=1)
                     col += 1
             if last:
                 for i in cumlength:
                     ax.axvline(x=i, color='gray', linestyle='-',linewidth=0.5, alpha=0.5)
-                if beta_or_prob == 'beta':
+                if config.beta_or_prob == 'beta':
                     #should be in legend
-                    ax.plot([-100,-99], [ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(self.GeneralInfo[
+                    ax.plot([0, max(cumlength)], [ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(self.GeneralInfo[
                                                                                                     'Pmax'])], 'k--', label=label_target, linewidth=1)
-                if beta_or_prob == 'prob':
+                if config.beta_or_prob == 'prob':
                     ax.plot([0, max(cumlength)], [self.GeneralInfo['Pmax'], self.GeneralInfo['Pmax']], 'k--',
                            label=label_target, linewidth=1)
 
@@ -269,16 +262,16 @@ class DikeTraject:
                 ax.tick_params(axis='x',rotation=90)
                 ax.set_xlim([0, max(cumlength)])
                 ax.tick_params(axis='both', bottom=False)
-                if beta_or_prob == 'beta':
+                if config.beta_or_prob == 'beta':
                     ax.set_ylim([0.5, 8.5])
 
-                if beta_or_prob == 'prob':
+                if config.beta_or_prob == 'prob':
                     ax.set_ylim([1e-1, 1e-9])
                     ax.set_yscale('log')
 
                 ax.grid(axis='y',linewidth=0.5,color='gray',alpha=0.5)
 
-                if flip == 'on':
+                if config.flip_traject:
                     ax.invert_xaxis()
             if system_rel:
                 col=0
@@ -287,7 +280,7 @@ class DikeTraject:
                 mid1 = {}
                 bars = {}
                 pt_tot = 0
-                for m in mechanisms:
+                for m in config.mechanisms:
                     beta_t,p_t = calcTrajectProb(ProbabilityFrame,ts=ii,mechs=[m])
                     # pt_tot +=p_t
                     pt_tot = 1-((1-pt_tot)*(1-p_t))
@@ -305,18 +298,16 @@ class DikeTraject:
                 ax1.set_xlim(left=-0.4,right=2.4)
                 ax1.set_title('System \n reliability')
                 if show_xticks:
-                    ax1.set_xticklabels(mechanisms,rotation=90,fontsize=6)
+                    ax1.set_xticklabels(config.mechanisms,rotation=90,fontsize=6)
                 else:
                     ax1.set_xticklabels('')
                 ax1.tick_params(axis='both', bottom=False)
                 if title_in:
                     ax.set_title(title_in)
-            if PATH != None:
-                if not custom_name: custom_name = beta_or_prob + '_' + str(startyear + ii) + '_Assessment.png'
-                plt.savefig(PATH.joinpath(custom_name), dpi=300, bbox_inches='tight', format='png')
-                plt.close()
-            else:
-                pass
+            if not custom_name: custom_name = config.beta_or_prob + '_' + str(config.t_0 + ii) + '_Assessment.png'
+            plt.savefig(config.directory.joinpath(custom_name), dpi=300, bbox_inches='tight', format='png')
+            plt.close()
+
             year += 1
             if last:
                 plt.close()

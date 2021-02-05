@@ -6,7 +6,7 @@ import ProbabilisticFunctions
 class SectionReliability:
     def __init__(self):
         self
-    def calcSectionReliability(self,TrajectInfo,length = 1000):
+    def calcSectionReliability(self):
         #This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.

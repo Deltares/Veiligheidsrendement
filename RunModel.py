@@ -10,321 +10,229 @@ except:
 import shelve
 import copy
 import numpy as np
-import cProfile
 import os
-from scipy.stats import norm
 from HelperFunctions import replaceNames
 import ProbabilisticFunctions
 import pandas as pd
+import config
 
-# this is sort of the main script for any calculation for SAFE. It contains all the required steps:
-def runFullModel(TestCase, run_number, path, directory, mechanisms=['Overflow', 'StabilityInner', 'Piping'],
-                 years=[0, 1, 10, 20, 40, 50], timing=0, save_beta_measure_plots=False, LCRplot = False, shelves=1,
-                 types=['TC', 'SmartOI', 'OI'], language='NL', TestCaseSolutions=False, t_start=2025, OI_year=0,BCstop=0.1):
-    if timing == 1:
-        start = time.time()
+'''The function below is the main one for any calculation for SAFE. It contains 3 main steps:
+1. Safety assessment
+2. Computation of reliability for all solutions per section
+3. Optimization of measures in accordance with the chosen design methods
+
+Settings for the computations are imported from config.py and can be set there. 
+Note that not all settings are yet generalized, this is work in progress.
+'''
+
+def runFullModel(TrajectObject):
+
+    '''This is the main routine for a "SAFE"-type calculation
+    Input is a TrajectObject = DikeTraject object with all relevant data'''
+
+    if config.timing:  start = time.time()
 
     #Make a few dirs if they dont exist yet:
-    if not directory.is_dir():
-        directory.mkdir(parents=True, exist_ok=True)
-        directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
-        directory.joinpath('results').mkdir(parents=True, exist_ok=True)
+    if not config.directory.is_dir():
+        config.directory.mkdir(parents=True, exist_ok=True)
+        config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
+        config.directory.joinpath('results','investment_steps').mkdir(parents=True, exist_ok=True)
 
     ## STEP 1: SAFETY ASSESSMENT
     print('Start step 1: safety assessment')
 
-    for i in range(len(TestCase.Sections)):
-        TestCase.Sections[i].Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(
-            TestCase.Sections[i].Reliability.Load,TestCase.GeneralInfo['Pmax'])
-        for j in mechanisms:
-            TestCase.Sections[i].Reliability.Mechanisms[j].generateLCRProfile(
-                TestCase.Sections[i].Reliability.Load, mechanism=j, trajectinfo=TestCase.GeneralInfo)
-        TestCase.Sections[i].Reliability.calcSectionReliability(TrajectInfo=TestCase.GeneralInfo,
-                                                                       length=TestCase.Sections[i].Length)
-        if LCRplot:
+    #Loop over sections and do the assessment.
+    for i, section in enumerate(TrajectObject.Sections):
+        #get design water level:
+        section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
+        #compute reliability in time for each mechanism:
+        for j in config.mechanisms:
+            section.Reliability.Mechanisms[j].generateLCRProfile(section.Reliability.Load, mechanism=j, trajectinfo=TrajectObject.GeneralInfo)
+
+        #aggregate to section reliability:
+        section.Reliability.calcSectionReliability()
+
+        #optional: plot reliability in time for each section
+        #TODO make a function of this statement to clean code even further.
+        if config.plot_reliability_in_time:
             #Plot the initial reliability-time:
             plt.figure(1)
-            [TestCase.Sections[i].Reliability.Mechanisms[j].drawLCR(label=j, type='Standard', tstart=t_start) for j in
-             mechanisms]
-            plt.plot([t_start, t_start + np.max(years)],
-                     [ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo['Pmax'])],
+            [section.Reliability.Mechanisms[j].drawLCR(mechanism=j) for j in config.mechanisms]
+            plt.plot([config.t_0, config.t_0 + np.max(config.T)], [ProbabilisticFunctions.pf_to_beta(TrajectObject.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(TrajectObject.GeneralInfo['Pmax'])],
                      'k--', label='Norm')
             plt.legend()
-            plt.title(TestCase.Sections[i].name)
-            if not directory.joinpath('figures', TestCase.Sections[i].name).is_dir():
-                directory.joinpath('figures', TestCase.Sections[i].name).mkdir(parents=True, exist_ok=True)
-                directory.joinpath('figures', TestCase.Sections[i].name, 'Initial')
-
-            plt.savefig(directory.joinpath('figures', TestCase.Sections[i].name, 'Initial', 'InitialSituation' + '.png'), bbox_inches='tight')
+            plt.title(section.name)
+            if not config.directory.joinpath('figures', section.name).is_dir():
+                config.directory.joinpath('figures', section.name).mkdir(parents=True, exist_ok=True)
+                config.directory.joinpath('figures', section.name, 'Initial')
+            plt.savefig(config.directory.joinpath('figures', section.name, 'Initial', 'InitialSituation' + '.png'), bbox_inches='tight')
             plt.close()
 
-    TestCase.setProbabilities()
-    # plot reliability and failure probability for entire traject:
-    figsize = (12, 4)
-    TestCase.plotAssessment(PATH=directory, fig_size=figsize, language=language, flip='on',
-                            draw_targetbeta='off', beta_or_prob='beta', outputcsv=True,
-                            years = [0, 20, 50],
-                            last=True)
-    # TestCase.plotReliabilityofDikeTraject(PATH=directory, fig_size=figsize, language=language, flip='off', draw_targetbeta='off', beta_or_prob='prob', first=False, last=True)
+    #aggregate computed initial probabilities to DataFrame in TrajectObject:
+    TrajectObject.setProbabilities()
+
+    #Plot initial reliability for TrajectObject:
+    TrajectObject.plotAssessment(fig_size=(12, 4), draw_targetbeta='off', last=True)
 
     print('Finished step 1: assessment of current situation')
 
-    if timing == 1:
-        end = time.time()
-
-    if timing == 1:
-        print("Time elapsed: " + str(end - start) + ' seconds')
-
-    if timing == 1:
+    if config.timing:
+        print("Time elapsed: " + str(time.time() - start) + ' seconds')
         start = time.time()
 
     #store stuff:
-    if shelves == 1:
+    if config.shelves:
         # Save intermediate results to shelf:
-        filename = directory.joinpath('AfterStep1.out')
+        filename = config.directory.joinpath('AfterStep1.out')
         # make shelf
         my_shelf = shelve.open(str(filename), 'n')
-        my_shelf['TestCase'] = locals()['TestCase']
+        my_shelf['TrajectObject'] = locals()['TrajectObject']
         my_shelf.close()
 
-        # open shelf
-        # my_shelf = shelve.open(filename)
-        # for key in my_shelf:
-        #     locals()[key]=my_shelf[key]
-        # my_shelf.close()
-
     ## STEP 2: INITIALIZE AND EVALUATE MEASURES FOR EACH SECTION
-    # Result: Measures object with Section name and beta-t-euro relations for each measure
-    if not TestCaseSolutions:
-        AllSolutions = {}
+    # Goal: Generate a Measures object with Section name and beta-t-euro relations for each measure. Combining is done later.
 
-        # Calculate for each measure the cost-reliability-time relations
-        for i in TestCase.Sections:
-            AllSolutions[i.name] = Solutions(i)
-            AllSolutions[i.name].fillSolutions(path.joinpath(i.name + '.xlsx'))
-            AllSolutions[i.name].evaluateSolutions(i, TestCase.GeneralInfo, geometry_plot=False, trange=years, plot_dir=directory.joinpath('figures', i.name))
-            #NB: geometry_plot = True plots the soil reinforcement geometry, but costs a lot of time!
+    #TODO consider whether combining should be done in this step rather than in the next.
+    # Then after selecting a strategy you only need to throw out invalid combinations (e.g., for Target Reliability throw out all investments at t=20
+
+    #Either load existing results or compute:
+    if config.reuse_output and os.path.exists(config.directory.joinpath('AfterStep2.out')):
+        my_shelf = shelve.open(config.directory.joinpath('AfterStep2.out'))
+        for key in my_shelf:
+            AllSolutions = my_shelf[key]
+        my_shelf.close()
     else:
-        AllSolutions = TestCaseSolutions
-    print('Finished step 2: evaluation of measures')
-    if timing == 1:
-        end = time.time()
+        AllSolutions = {}
+        # Calculate per section, for each measure the cost-reliability-time relations:
+        for i in TrajectObject.Sections:
+            AllSolutions[i.name] = Solutions(i)
+            AllSolutions[i.name].fillSolutions(config.path.joinpath(i.name + '.xlsx'))
+            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
 
-    if timing == 1:
-        print("Time elapsed: " + str(end - start) + ' seconds')
-
-    if timing == 1:
-        start = time.time()
-
-    for i in TestCase.Sections:
+    for i in TrajectObject.Sections:
         AllSolutions[i.name].SolutionstoDataFrame(filtering='off',splitparams=True)
 
-    #possibly plot beta(t)-cost for all measures at a section:
-    if save_beta_measure_plots:
+    # Store intermediate results:
+    if config.shelves:
+        filename = config.directory.joinpath('AfterStep2.out')
+        # make shelf
+        my_shelf = shelve.open(str(filename), 'n')
+        my_shelf['AllSolutions'] = locals()['AllSolutions']
+        my_shelf.close()
+
+    print('Finished step 2: evaluation of measures')
+    if config.timing:
+        end = time.time()
+        print("Time elapsed: " + str(end - start) + ' seconds')
+        start = time.time()
+
+    #If desired: plot beta(t)-cost for all measures at a section:
+    if config.plot_reliability_in_time:
         betaind_array = []
 
-        for i in years:
+        for i in config.years:
             betaind_array.append('beta' + str(i))
 
         plt_mech = ['Section', 'Piping', 'StabilityInner', 'Overflow']
 
-        for i in TestCase.Sections:
+        for i in TrajectObject.Sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
-                    requiredbeta = ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo['Pmax'] * (i.Length / TestCase.GeneralInfo['TrajectLength']))
+                    requiredbeta = ProbabilisticFunctions.pf_to_beta(TrajectObject.GeneralInfo['Pmax'] * (i.Length / TrajectObject.GeneralInfo['TrajectLength']))
                     plt.figure(1001)
                     AllSolutions[i.name].plotBetaTimeEuro(mechanism=mech, beta_ind=betaind, sectionname=i.name, beta_req=requiredbeta)
-                    plt.savefig(directory.joinpath('figures', i.name, 'Measures', mech + '_' + betaind + '.png'), bbox_inches='tight')
+                    plt.savefig(config.directory.joinpath('figures', i.name, 'Measures', mech + '_' + betaind + '.png'), bbox_inches='tight')
                     plt.close(1001)
-
         print('Finished making beta plots')
-
-    if timing == 1:
-        end = time.time()
-
-    if timing == 1:
-        print("Time elapsed: " + str(end - start) + ' seconds')
-
-    if timing == 1:
-        start = time.time()
-
-
 
     ## STEP 3: EVALUATE THE STRATEGIES
     AllStrategies = []
+    for i in config.design_methods:
+        if i in ['TC', 'Total Cost', 'Optimized', 'Greedy', 'Veiligheidsrendement']:
+            # Initialize a GreedyStrategy:
+            GreedyOptimization = GreedyStrategy(i)
 
-    for i in types:
-        if i == 'TC':
-            # Initialize a strategy type (i.e combination of objective & constraints)
-            TestCaseStrategyTC = GreedyStrategy('TC')
             # Combine available measures
-            TestCaseStrategyTC.combine(TestCase, AllSolutions, filtering='off',splitparams=True)
+            GreedyOptimization.combine(TrajectObject, AllSolutions, filtering='off', splitparams=True)
 
-            if shelves == 1:
-                # Store intermediate results:
-                filename = directory.joinpath('AfterStep2.out')
-                #
-                # make shelf
-                my_shelf = shelve.open(str(filename), 'n')
-                my_shelf['AllSolutions'] = locals()['AllSolutions']
-                my_shelf.close()
-            if timing == 1:
-                end = time.time()
-                print('Combine step for TC')
-                print("Time elapsed: " + str(end - start) + ' seconds')
+            if config.timing:
+                print('Combined measures for '+ i)
+                print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                start = time.time()
 
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            # TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='fast')
-            TestCaseStrategyTC.evaluate(TestCase, AllSolutions,splitparams=True,setting='cautious', f_cautious=1.5,
-                                        max_count = 300,BCstop=0.1)
-            # TestCaseStrategyTC.evaluate_backup(TestCase, AllSolutions,splitparams=True,setting='robust')
+            GreedyOptimization.evaluate(TrajectObject, AllSolutions, splitparams=True, setting='cautious', f_cautious=1.5,
+                                        max_count = 300, BCstop=0.1)
 
             # plot beta time for all measure steps for each strategy
-            TestCaseStrategyTC.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
+            GreedyOptimization.plotBetaTime(TrajectObject, typ='single', path=config.directory)
 
-            # plot beta costs for t=0
-            # plt.figure(101, figsize=(20, 10))
-            # TestCaseStrategyTC.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
-            # plt.close(101)
-
-            # plot beta costs for t=50
-            # plt.figure(102, figsize=(20, 10))
-            # TestCaseStrategyTC.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
-            # plt.close(102)
-
-            TestCaseStrategyTC = replaceNames(TestCaseStrategyTC, AllSolutions)
-            cost_Greedy = TestCaseStrategyTC.determineRiskCostCurve(TestCase)
+            GreedyOptimization = replaceNames(GreedyOptimization, AllSolutions)
+            cost_Greedy = GreedyOptimization.determineRiskCostCurve(TrajectObject)
 
             # write to csv's
-            TestCaseStrategyTC.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_TC.csv'))
+            GreedyOptimization.TakenMeasures.to_csv(config.directory.joinpath('results', 'TakenMeasures_' + GreedyOptimization.type + '.csv'))
             pd.DataFrame(np.array([cost_Greedy['LCC'], cost_Greedy['TR'], np.add(cost_Greedy['LCC'], cost_Greedy['TR'])]).T, columns=['LCC', 'TR', 'TC']).to_csv(
-                directory.joinpath('results', 'TCs_Greedy.csv'), float_format='%.1f')
-            TestCaseStrategyTC.makeSolution(directory.joinpath('results', 'TakenMeasures_Optimal_Greedy.csv'), step=cost_Greedy['TC_min'] + 1, type='Optimal')
-            TestCaseStrategyTC.makeSolution(directory.joinpath('results', 'FinalMeasures_TC.csv'), type='Final')
-            for j in TestCaseStrategyTC.options:
-                TestCaseStrategyTC.options[j].to_csv(directory.joinpath('results', j + '_Options_TC.csv'))
-            costs = TestCaseStrategyTC.determineRiskCostCurve(TestCase)
+                config.directory.joinpath('results', 'TotalCostValues_Greedy.csv'), float_format='%.1f')
+            GreedyOptimization.makeSolution(config.directory.joinpath('results', 'TakenMeasures_Optimal_' + GreedyOptimization.type + '.csv'), step=cost_Greedy['TC_min'] + 1, type='Optimal')
+            GreedyOptimization.makeSolution(config.directory.joinpath('results', 'FinalMeasures_' + GreedyOptimization.type + '.csv'), type='Final')
+            for j in GreedyOptimization.options:
+                GreedyOptimization.options[j].to_csv(config.directory.joinpath('results', j + '_Options_' + GreedyOptimization.type + '.csv'))
+            costs = GreedyOptimization.determineRiskCostCurve(TrajectObject)
             TR = costs['TR']
             LCC = costs['LCC']
-            pd.DataFrame(np.array([TR,LCC]).reshape((len(TR),2)),columns=['TR','LCC']).to_csv(directory.joinpath('results','TotalRiskCost.csv'))
+            pd.DataFrame(np.array([TR,LCC]).reshape((len(TR),2)),columns=['TR','LCC']).to_csv(config.directory.joinpath('results','TotalRiskCost.csv'))
+            AllStrategies.append(GreedyOptimization)
 
-            AllStrategies.append(TestCaseStrategyTC)
+            if config.timing:
+                print('Determined strategy for '+ i)
+                print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                start = time.time()
 
-        elif i == 'OI':
+        elif i in ['OI','TargetReliability','Doorsnede-eisen']:
             # Initialize a strategy type (i.e combination of objective & constraints)
-            TestCaseStrategyOI = TargetReliabilityStrategy('OI')
+            TargetReliabilityBased = TargetReliabilityStrategy(i)
             # Combine available measures
-            TestCaseStrategyOI.combine(TestCase, AllSolutions, filtering='off', OI_year=OI_year,splitparams=True)
-            if timing == 1:
-                end = time.time()
+            TargetReliabilityBased.combine(TrajectObject, AllSolutions, filtering='off', splitparams=True)
 
-            if timing == 1:
-                print('Combine step for OI')
-
-            if timing == 1:
-                print("Time elapsed: " + str(end - start) + ' seconds')
+            if config.timing:
+                print('Combined measures for '+ i)
+                print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                start = time.time()
 
             # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            TestCaseStrategyOI.evaluate(TestCase, AllSolutions, OI_year=OI_year,splitparams=True)
-            TestCaseStrategyOI.makeSolution(directory.joinpath('results', 'FinalMeasures_OI.csv'), type='Final')
+            TargetReliabilityBased.evaluate(TrajectObject, AllSolutions, splitparams=True)
+            TargetReliabilityBased.makeSolution(config.directory.joinpath('results', 'FinalMeasures_' + TargetReliabilityBased.type + '.csv'), type='Final')
 
             # plot beta time for all measure steps for each strategy
-            TestCaseStrategyOI.plotBetaTime(TestCase, typ='single', path=directory, horizon=np.max(years))
+            TargetReliabilityBased.plotBetaTime(TrajectObject, typ='single', path=config.directory, horizon=np.max(config.T))
 
-            # # plot beta costs for t=0
-            # plt.figure(101, figsize=(20, 10))
-            # TestCaseStrategyOI.plotBetaCosts(TestCase, path=directory, typ='single', fig_id=101, horizon=np.max(years))
-            # plt.close(101)
-            #
-            # # plot beta costs for t=50
-            # plt.figure(102, figsize=(20, 10))
-            # TestCaseStrategyOI.plotBetaCosts(TestCase, t=50, path=directory, typ='single', fig_id=101, horizon=np.max(years))
-            # plt.close(102)
-
-            TestCaseStrategyOI = replaceNames(TestCaseStrategyOI, AllSolutions)
+            TargetReliabilityBased = replaceNames(TargetReliabilityBased, AllSolutions)
             # write to csv's
-            TestCaseStrategyOI.TakenMeasures.to_csv(directory.joinpath('results', 'TakenMeasures_OI.csv'))
-            for j in TestCaseStrategyOI.options:
-                TestCaseStrategyOI.options[j].to_csv(directory.joinpath('results', j + '_Options_OI.csv'))
+            TargetReliabilityBased.TakenMeasures.to_csv(config.directory.joinpath('results', 'TakenMeasures_' + TargetReliabilityBased.type + '.csv'))
+            for j in TargetReliabilityBased.options:
+                TargetReliabilityBased.options[j].to_csv(config.directory.joinpath('results', j + '_Options_' + TargetReliabilityBased.type + '.csv'))
 
-            AllStrategies.append(TestCaseStrategyOI)
+            AllStrategies.append(TargetReliabilityBased)
 
-    if shelves == 1:
+            if config.timing:
+                print('Determined strategy for '+ i)
+                print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                start = time.time()
+
+    if config.shelves:
         # Store final results
-        filename = directory.joinpath('FINALRESULT.out')
+        filename = config.directory.joinpath('FINALRESULT.out')
 
         # make shelf
         my_shelf = shelve.open(str(filename), 'n')
-        my_shelf['TestCase'] = locals()['TestCase']
+        my_shelf['TrajectObject'] = locals()['TrajectObject']
         my_shelf['AllSolutions'] = locals()['AllSolutions']
         my_shelf['AllStrategies'] = locals()['AllStrategies']
 
         my_shelf.close()
+        #TODO as all objects are in this one, the others can possibly be deleted to save space
 
     return AllStrategies, AllSolutions
 
 
-#Separate routine used for GeoRisk paper
-def runNature(strategy, nature, traject, nature_solutions, directory=None, shelves=1):
-    MeasureTable = getMeasureTable(nature_solutions)
-    years = list(nature.Probabilities[0].columns)
-    nature_orig = copy.deepcopy(nature)
-    #Get the strategy from strategy and put it in nature (TakenMeasures) This is the strategy
-    nature.TakenMeasures = strategy
-    new_Probabilities = []
-    BaseTrajectProbability = copy.deepcopy(nature_orig.Probabilities[0])
-    #Evaluate for each step in strategy the total risk and cost
-    for i in range(0,len(strategy)):
-        if i == 0:
-            new_Probabilities.append(BaseTrajectProbability)
-            #write the base case
-        else:
-            BaseProbability = copy.deepcopy(new_Probabilities[-1])
-            TrajectProbability = ImplementOption(strategy.ix[i]['Section'],
-                                                 BaseProbability, nature.options[strategy.ix[i]['Section']].iloc[strategy.ix[i]['option_index']])
-            new_Probabilities.append(copy.deepcopy(TrajectProbability))
-            #potentially add changed BC values
-    nature.Probabilities = new_Probabilities
-
-    if not os.path.exists(directory):
-        os.makedirs(directory + '\\figures')
-        os.makedirs(directory + '\\results')
-
-    plt.figure(101,figsize=(8,4))
-    nature_orig.plotBetaCosts(traject,path = directory + '\\figures',
-                              typ='multi',fig_id=101,linecolor='b',
-                              name='NatureBeliefComparison',symbolmode='on',MeasureTable=MeasureTable,labels='With monitoring')           #The optimized strategy
-    nature.plotBetaCosts(traject,path = directory + '\\figures' ,
-                         typ='multi',last='yes',fig_id=101,linestyle='--',
-                         name='NatureBeliefComparison',symbolmode='on',MeasureTable=MeasureTable,labels='Without monitoring')    #The strategy without knowing nature
-
-    plt.close(101)
-    #write to a separate folder\
-
-
-    if shelves == 1:
-        # Store final results
-        filename = directory + '\\FINALRESULT.out'
-        # make shelf
-        my_shelf = shelve.open(filename, 'n')
-        my_shelf['TestCase'] = locals()['traject']
-        my_shelf['TestCaseStrategyTC'] = locals()['nature']
-        my_shelf.close()
-        # plot beta time for all measure steps for each strategy
-
-
-    # plot beta costs for t=0
-    plt.figure(101, figsize=(20, 10))
-    nature.plotBetaCosts(traject, path=directory, typ='single', fig_id=101,
-                         horizon=np.max(years),symbolmode='on',MeasureTable=MeasureTable)
-    # plot beta costs for t=50
-    plt.figure(102, figsize=(20, 10))
-    nature.plotBetaCosts(traject, t=50, path=directory, typ='single', fig_id=101,
-                         horizon=np.max(years),symbolmode='on',MeasureTable=MeasureTable)
-    nature = replaceNames(nature,nature_solutions)
-    #write to csv's
-    for i in nature.options: nature.options[i].to_csv(directory + '\\results\\' + i + '_Options_TC.csv')
-    nature.TakenMeasures.to_csv(directory + '\\results\\' + 'TakenMeasures_TC.csv')
-    return nature
-            #re-evaluate Probabilities
-    #save the adapted nature with extension _base
