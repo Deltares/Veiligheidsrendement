@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from DikeClasses_old import DikeSection, LoadInput, MechanismReliabilityCollection, DikeTraject
 from StrategyEvaluation import Solutions, Strategy
 from HelperFunctions import calc_r_exit, adaptInput
-from RunModel import runFullModel runNature
+from RunModel import runFullModel, runNature
 import os
 from scipy.stats import norm
 import numpy as np
@@ -54,11 +54,13 @@ else:
     #to be done if we want to include system monitoring. We should then combine the cases.
 
 CasesGeoRisk = CasesGeoRisk
-BaseCaseStrategy,BaseCaseSolutions = runFullModel(TestCaseGeoRisk, 'base', pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots,language='EN',types=['TC'])
+BaseCaseStrategy,BaseCaseSolutions = runFullModel(TestCaseGeoRisk, 'base', pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots, language='EN',
+                                                  design_methods=['TC'])
 CasesGeoRisk_no_monitoring = []
 ## STEP 1: SAFETY ASSESSMENT
 for i in range(0,len(CasesGeoRisk)):
-    BeliefCaseStrategy,BeliefCaseSolutions = runFullModel(CasesGeoRisk[i], i, pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots,language='EN',types=['TC'])
+    BeliefCaseStrategy,BeliefCaseSolutions = runFullModel(CasesGeoRisk[i], i, pad, mechanisms=mechanisms, years=years0, timing=timing, save_beta_measure_plots=save_beta_measure_plots, language='EN',
+                                                          design_methods=['TC'])
     print()
     NoMonitoringResult = runNature(BaseCaseStrategy[0].TakenMeasures,BeliefCaseStrategy[0],TestCaseGeoRisk,BeliefCaseSolutions,
               directory=pad+'\\Case_' + str(i) + '_base')

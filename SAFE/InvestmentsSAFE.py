@@ -9,157 +9,96 @@ from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
 from pathlib import Path
 from StrategyEvaluation import calcTrajectProb
-from Solutions import Solutions
-import cProfile
+import config
 import shelve
-import numpy as np
+from os import path
+
+#General and global settings:
+global timing, traject, path,casename, directory
+
 
 def main():
     ## GENERAL SETTINGS
-    timing = 1
-    traject = '16-4'
-    save_beta_measure_plots = False
     RunComputation = True
-    years0 = [0, 19, 20, 25, 50, 75, 100]
-    mechanisms = ['Overflow', 'StabilityInner', 'Piping']
-    path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\SAFE_16-4_oktober_test')
-    # path = Path(r'd:\wouterjanklerk\My Documents\00_PhDgeneral\03_Cases\01_Rivierenland '
-    #             r'SAFE\WJKlerk\SAFE\data\Dijkwerkersdag')
-    language = 'EN'
 
-    if timing == 1:
+    if config.timing:
         start = time.time()
-    if timing == 1:
-        start0 = time.time()
+        start_overall = time.time()
 
     ## MAKE TRAJECT OBJECT
-    TestCase = DikeTraject('TestCase', traject)
-
-    ## Run the model
-    casename = 'cautious_f=1.5_bundling'
-    directory = path.joinpath('Case_' + casename)
+    TrajectObject = DikeTraject()
 
     ## READ ALL DATA
     ##First we read all the input data for the different sections. We store these in a Traject object.
     #Initialize a list of all sections that are of relevance (these start with DV).
     print('Start creating all the files and folders')
-    TestCase.ReadAllTrajectInput(path, directory, years0,traject=traject, startyear=2025)
+    TrajectObject.ReadAllTrajectInput()
 
-
-    #If you want to use intermediate data (from after step 2) you can uncomment the following snippet of code (and input it to runFullModel:
-#This could be programmed more neatly of course...
     if RunComputation:
-        filename = directory.joinpath('AfterStep2.out')
+        #compute everything
+        AllStrategies, AllSolutions = runFullModel(TrajectObject)
+    else:
+        #load existing results
+        filename = config.directory.joinpath('AfterStep1.out')
+        my_shelf = shelve.open(str(filename))
+        for key in my_shelf:
+            TrajectObject = my_shelf[key]
+        my_shelf.close()
+
+        filename = config.directory.joinpath('AfterStep2.out')
         my_shelf = shelve.open(str(filename))
         for key in my_shelf:
             AllSolutions = my_shelf[key]
         my_shelf.close()
 
-        AllStrategies, AllSolutions = runFullModel(TestCase, casename, path, directory, years=years0, timing=timing,
-                                                   save_beta_measure_plots=save_beta_measure_plots,
-                                                   LCRplot=False, language='NL',
-                                                   types=['TC', 'OI'], OI_year=0,BCstop=0.1)#, TestCaseSolutions=AllSolutions)
-
-    #Same here: if you want to make plots based on existing results, uncomment the part underneath:
-    #Open shelf
-    if not RunComputation:
-        filename = directory.joinpath('AfterStep1.out')
-        my_shelf = shelve.open(str(filename))
-        for key in my_shelf:
-            TestCase = my_shelf[key]
-        my_shelf.close()
-
-        filename = directory.joinpath('AfterStep2.out')
-        my_shelf = shelve.open(str(filename))
-        for key in my_shelf:
-            AllSolutions = my_shelf[key]
-        my_shelf.close()
-
-        filename = directory.joinpath('FINALRESULT.out')
+        filename = config.directory.joinpath('FINALRESULT.out')
         my_shelf = shelve.open(str(filename))
         for key in my_shelf:
             AllStrategies = my_shelf[key]
         my_shelf.close()
 
-    #MAKING PLOTS:
+    #Now some general output figures and csv's are generated:
+
+    #First make a table of all the solutions:
     MeasureTable = getMeasureTable(AllSolutions)
-    # TestCase.setProbabilities()
-    #Plot the beta-t:
-    beta_t = []
-    step = 0
 
-    #plot beta time for all measure steps for each strategy
-    setting = ['beta', 'prob']       #PLOT FOR BETA AND OR PROBABILITY
-
-    cost_Greedy = AllStrategies[0].determineRiskCostCurve(TestCase)
-    print(cost_Greedy['TC_min'] + 1)
-
-
-    exit()
     #plot beta costs for t=0
     figure_size = (12, 7)
 
-    for i in setting:
-        # LCC-beta for t = 0
-        plt.figure(101, figsize=figure_size)
-        AllStrategies[0].plotBetaCosts(TestCase, path=directory.joinpath('figures'), typ='multi', fig_id=101, symbolmode=True, linecolor='b', labels='Optimized',
-                                       MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
-        AllStrategies[1].plotBetaCosts(TestCase, path=directory.joinpath('figures'), typ='multi', fig_id=101, last='yes', symbolmode=True, labels='Pieces of pie',
-                                       MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+    # LCC-beta for t = 0
+    plt.figure(101, figsize=figure_size)
+    AllStrategies[0].plotBetaCosts(TrajectObject, fig_id=101, series_name=config.design_methods[0],MeasureTable=MeasureTable,color='b')
+    AllStrategies[1].plotBetaCosts(TrajectObject, fig_id=101, series_name=config.design_methods[1],MeasureTable=MeasureTable,last='yes')
+    plt.savefig(config.directory.joinpath('Priority order Beta vs LCC_' + str(config.t_0) + '.png'), dpi=300, bbox_inches='tight', format='png')
 
-        # LCC-beta for t=50
-        plt.figure(102, figsize=figure_size)
-        AllStrategies[0].plotBetaCosts(TestCase, t=50, path=directory.joinpath('figures'), typ='multi', fig_id=102, symbolmode=True, linecolor='b', labels='TC', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
-        AllStrategies[1].plotBetaCosts(TestCase, t=50, path=directory.joinpath('figures'), typ='multi', fig_id=102, symbolmode=True, labels='OI', MeasureTable=MeasureTable, last='yes', beta_or_prob=i, outputcsv=True)
+    # LCC-beta for t=50
+    plt.figure(102, figsize=figure_size)
+    AllStrategies[0].plotBetaCosts(TrajectObject, t=50, fig_id=102, series_name=config.design_methods[0], MeasureTable=MeasureTable, color='b' )
+    AllStrategies[1].plotBetaCosts(TrajectObject, t=50, fig_id=102, series_name=config.design_methods[1], MeasureTable=MeasureTable, last='yes')
+    plt.savefig(config.directory.joinpath('Priority order Beta vs LCC_' + str(config.t_0+50) + '.png'), dpi=300, bbox_inches='tight', format='png')
 
-        # Costs2025-beta
-        plt.figure(103, figsize=figure_size)
-        AllStrategies[0].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'),
-                                       typ='multi', fig_id=103, symbolmode=True, linecolor='b', labels='TC',
-                                       MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
-        AllStrategies[1].plotBetaCosts(TestCase, cost_type='Initial', path=directory.joinpath('figures'),
-                                       typ='multi', fig_id=103, last=True, symbolmode=True, labels='OI', MeasureTable=MeasureTable, beta_or_prob=i, outputcsv=True)
+    # Costs2025-beta
+    plt.figure(103, figsize=figure_size)
+    AllStrategies[0].plotBetaCosts(TrajectObject, cost_type='Initial', fig_id=103, series_name=config.design_methods[0], MeasureTable=MeasureTable, color='b')
+    AllStrategies[1].plotBetaCosts(TrajectObject, cost_type='Initial', fig_id=103, series_name=config.design_methods[1], MeasureTable=MeasureTable, last='yes')
+    plt.savefig(config.directory.joinpath('Priority order Beta vs Costs_' + str(config.t_0+50) + '.png'), dpi=300, bbox_inches='tight', format='png')
 
-    # AllStrategies[0].plotInvestmentSteps(TestCase, path= directory.joinpath('figures'),figure_size = (12,6),years=[0],
-    #                                      flip=True)
-    AllStrategies[0].plotInvestmentLimit(TestCase, investmentlimit= 20e6, path= directory.joinpath('figures'),
-                                         figure_size = (12,6),years=[0],flip=True)
-    # TestCaseStrategyOI.plotInvestmentSteps(TestCase, path= pad + '\\Case_' + casename + '\\OI',figure_size = (6,4))
+    AllStrategies[0].plotInvestmentLimit(TrajectObject, investmentlimit= 20e6, path= config.directory.joinpath('figures'), figure_size = (12,6),years=[0],flip=True)
 
     ## write a LOG of all probabilities for all steps:
-    AllStrategies[0].writeProbabilitiesCSV(path=directory.joinpath('results', 'investment_steps'), type='TC')
-    AllStrategies[1].writeProbabilitiesCSV(path=directory.joinpath('results', 'investment_steps'), type='OI')
-    ps = []
+    AllStrategies[0].writeReliabilityToCSV(path=config.directory.joinpath('results', 'investment_steps'), type=config.design_methods[0])
+    AllStrategies[1].writeReliabilityToCSV(path=config.directory.joinpath('results', 'investment_steps'), type=config.design_methods[1])
 
-    for i in AllStrategies[1].Probabilities:
-        beta_t, p_t = calcTrajectProb(i, horizon=100)
-        ps.append(p_t)
+    for count, Strategy in enumerate(AllStrategies):
+        ps = []
+        for i in Strategy.Probabilities:
+            beta_t, p_t = calcTrajectProb(i, horizon=100)
+            ps.append(p_t)
+        pd.DataFrame(ps, columns=range(100)).to_csv(path_or_buf=config.directory.joinpath('results', 'investment_steps', 'PfT_' + config.design_methods[count] + '.csv'))
 
-    ps = pd.DataFrame(ps, columns=range(100))
-    ps.to_csv(path_or_buf=directory.joinpath('results', 'investment_steps', 'PfT_OI.csv'))
-    ps = []
-
-    for i in AllStrategies[0].Probabilities:
-        beta_t, p_t = calcTrajectProb(i, horizon=100)
-        ps.append(p_t)
-
-    ps = pd.DataFrame(ps, columns=range(100))
-    ps.to_csv(path_or_buf=directory.joinpath('results', 'investment_steps', 'PfT_TC.csv'))
-
-    if timing == 1:
-        end = time.time()
-
-    if timing == 1:
-        print("time elapsed: " + str(end - start) + ' seconds')
-
-    if timing == 1:
-        start = time.time()
-
-    if timing == 1:
-        end = time.time()
-
-    if timing == 1:
-        print("Overall time elapsed: " + str(end - start0) + ' seconds')
+    if config.timing:
+        print("Time elapsed: " + str(time.time() - start) + ' seconds')
+        print("Overall time elapsed: " + str(time.time() - start_overall) + ' seconds')
 
 if __name__ == '__main__':
     main()

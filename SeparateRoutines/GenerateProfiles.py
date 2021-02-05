@@ -5,6 +5,8 @@ from openpyxl import load_workbook
 import pandas as pd
 import re
 from pathlib import Path
+"""This is a routine to extract profiles from AHN data. It is based on detecting points with the highest covariance in slope, whcih are the crest, toe and berm lines. 
+For some profiles manual point adjustments have been made. Therefore: handle this with care and check visually whether generated profiles are correct!!!"""
 
 def extract_profile_data(profile_data, window, titel, path):
     # Interpolate gaps with no data
@@ -122,36 +124,37 @@ def extract_profile_data(profile_data, window, titel, path):
 
 def main():
     traject = '16-3'
-    input_path = Path('D:/SAFE/data/InputFiles/SAFEInput').joinpath(traject, 'Input')
-    output_path = Path('D:/SAFE/data/InputFiles/SAFEInput')
+    input_path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Profiles').joinpath(traject)
+    output_path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Profiles').joinpath(traject,'profiles')
     input_file_name = 'InputProfiles.xlsx'
     output_filename = 'Dijkvakindeling_v5.2.xlsx'
 
     # Make output folder if not exist:
-    if not input_path.joinpath('profiles').is_dir():
-        input_path.joinpath('profiles').mkdir(parents=True, exist_ok=True)
+    if not output_path.is_dir():
+        output_path.mkdir(parents=True, exist_ok=True)
 
     # Read the input file
     input_data = pd.read_excel(input_path.joinpath(input_file_name))
-    traject_data = pd.read_excel(output_path.joinpath((output_filename)), header=1)
+    traject_data = pd.read_excel(input_path.parent.joinpath((output_filename)), header=1)
     traject_data = traject_data[(traject_data['Traject'] == traject) & (traject_data.iloc[:, 5])]
 
     # Extract profile information
     index = traject_data['dv_nummer'].reset_index(drop=True)
 
     for i in index:
+        #Let op: extensies (bijv 34a) worden nu genegeerd!
         number = re.findall(r'\d+', str(i))
         extension = re.findall("[a-zA-Z]+", str(i))
-        profile_number = 'Dwarsprofiel_' + str(number[0]).zfill(len(str(index.iloc[-1]))) if not extension else 'Dwarsprofiel_' + str(number[0]).zfill(len(str(index.iloc[-1]))) + str(extension[0])
-        profile_data = input_data[input_data['dijkvaknummer'] == i].reset_index(drop=True).rename(columns={'afstand buk [m, buitenkant +]': 'x', 'z_ahn [m NAP]': 'z', 'x': 'x_coord', 'y': 'y_coord'})
-        profile = extract_profile_data(profile_data, window=2, titel=profile_number, path=input_path.joinpath('profiles'))
+        profile_number = 'Dwarsprofiel_' + str(number[0]).zfill(len(str(index.iloc[-1])))# if not extension else 'Dwarsprofiel_' + str(number[0]).zfill(len(str(index.iloc[-1]))) + str(extension[0])
+        profile_data = input_data[input_data['dijkvaknummer'] == int(number[0])].reset_index(drop=True).rename(columns={'afstand buk [m, buitenkant +]': 'x', 'z_ahn [m NAP]': 'z', 'x': 'x_coord', 'y': 'y_coord'})
+        profile = extract_profile_data(profile_data, window=2, titel=profile_number, path=output_path)
 
         # Save extracted data in .csv
-        profile.to_csv(input_path.joinpath('profiles', profile_number + '.csv'))
+        profile.to_csv(output_path.joinpath(profile_number + '.csv'))
 
         # Write profile_numbers to output file
-        wb = load_workbook(output_path.joinpath((output_filename)))
-        ws = wb.get_sheet_by_name('Dijkvakindeling_keuze_info')
+        wb = load_workbook(input_path.parent.joinpath((output_filename)))
+        ws = wb['Dijkvakindeling_keuze_info']
 
         for row in range(ws.max_row):
             if ws[row + 1][0].value == i:
@@ -159,7 +162,7 @@ def main():
             else:
                 pass
 
-        wb.save(output_path.joinpath((output_filename)))
+        wb.save(input_path.joinpath((output_filename)))
 
 if __name__ == '__main__':
     main()
