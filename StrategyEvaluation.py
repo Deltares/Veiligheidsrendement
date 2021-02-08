@@ -348,8 +348,8 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
             currentberm = GeotechnicalOptions.iloc[existing_investments[i,1] - 1]['dberm'].values[0]
             if GeotechnicalOptions['class'].iloc[existing_investments[i,1] - 1] != 'combined':
                 #indices of the same type:
-                indices = np.argwhere((GeotechnicalOptions['dberm'] == currentberm) &(GeotechnicalOptions['type'] == GeotechnicalOptions['type'].iloc[
-                    existing_investments[i,1] - 1]) & (GeotechnicalOptions['year'] == year_of_investment))
+                indices = np.argwhere((GeotechnicalOptions['dberm'].values == currentberm) &(GeotechnicalOptions['type'].values == GeotechnicalOptions['type'].iloc[
+                    existing_investments[i,1] - 1]) & (GeotechnicalOptions['year'].values == year_of_investment))
                 # indices = np.argwhere((GeotechnicalOptions['dberm'] == currentberm) &(GeotechnicalOptions['type'] == GeotechnicalOptions['type'].iloc[
                 #     existing_investments[i,1] - 1]))
                 #if it is a Geotextile or Stability Screen, it should also be possible to combine it with the corresponding soil reinforcement
@@ -408,7 +408,7 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
                 #TODO Hier gaat het mis als je geen "full" opties hebt. Bijvoorbeeld als een scherm wel kan, maar je mag geen scherm icm met een kruinverhoging doen
                 ID_allowed = GeotechnicalOptions.loc[GeotechnicalOptions['StabilityInner',inv_year]==beta_investment_year]\
                     .loc[GeotechnicalOptions['type']=='Soil reinforcement'].loc[GeotechnicalOptions['class']=='full']['ID'].values[0]
-                ids = np.argwhere(GeotechnicalOptions['ID'] == ID_allowed)
+                ids = np.argwhere(GeotechnicalOptions['ID'].values == ID_allowed)
                 ids = np.add(ids.reshape((len(ids),)),1)
                 testLCC = LifeCycleCost[i, existing_investments[i, 0]:, ids].T
                 LCCs = np.min(testLCC,axis=1)
