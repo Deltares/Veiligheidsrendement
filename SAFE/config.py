@@ -4,9 +4,9 @@ from pathlib import Path
 
 ## GENERAL SETTINGS
 timing = True
-traject = '16-3'
-path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\TestcaseNienke_' + traject)
-casename = 'reference_results'
+traject = '16-4'
+path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\Testcase_10sections_' + traject)
+casename = 'reference_results_new_envi'
 directory = path.joinpath('Case_' + casename)
 language = 'NL'
 

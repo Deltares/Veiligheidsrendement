@@ -133,7 +133,7 @@ def main():
     if not output_path.is_dir():
         output_path.mkdir(parents=True, exist_ok=True)
 
-    # Read the input file
+    # Read the input fileconda
     input_data = pd.read_excel(input_path.joinpath(input_file_name))
     traject_data = pd.read_excel(input_path.parent.joinpath((output_filename)), header=1)
     traject_data = traject_data[(traject_data['Traject'] == traject) & (traject_data.iloc[:, 5])]

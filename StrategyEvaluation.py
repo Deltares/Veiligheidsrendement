@@ -247,8 +247,7 @@ def split_options(options):
         # if an option has a stability screen, the costs for height are too high. This has to be adjusted. We do this
         # for all soil reinforcements. costs are not discounted yet, so we can disregard the year of the investment:
         for ij in np.unique(options_height[i].loc[options_height[i]['type']=='Soil reinforcement']['dcrest']):
-            options_height[i].loc[options_height[i]['dcrest'] == ij, 'cost'] = np.min(
-                options_height[i].loc[options_height[i]['dcrest'] == ij]['cost'])
+            options_height[i].loc[options_height[i]['dcrest'] == ij,'cost'] = np.min(options_height[i].loc[options_height[i]['dcrest'] == ij]['cost'])
 
         options_geotechnical[i] = options_geotechnical[i].reset_index(drop=True)
         options_height[i]       = options_height[i].reset_index(drop=True)
@@ -265,8 +264,8 @@ def split_options(options):
                 newcosts.append(options_geotechnical[i].iloc[ij]['cost'].values[0])
         options_geotechnical[i]['cost'] = newcosts
         #only keep reliability of relevant mechanisms in dictionary
-        options_height[i].drop(['Piping','StabilityInner','Section'],axis=1)
-        options_geotechnical[i].drop(['Overflow','Section'],axis=1)
+        options_height[i].drop(['Piping','StabilityInner','Section'],axis=1,level=0)
+        options_geotechnical[i].drop(['Overflow','Section'],axis=1,level=0)
     return options_height,options_geotechnical
 
 def SolveMIP(MIPModel):
@@ -324,17 +323,17 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
         #get the indices where safety is equal to no measure for stabilityinner & piping
         #if there are investments this loop is needed to deal with the fact that it can be an integer or list.
         if existing_investments[i,1] != 0:
-            if isinstance(Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0],list):
-                year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0][-1]
-            elif isinstance(Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0],int):
-                year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].ix[existing_investments[i,1]-1]['year'].values[0]
+            if isinstance(Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i,1]-1]['year'].values[0],list):
+                year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i,1]-1]['year'].values[0][-1]
+            elif isinstance(Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i,1]-1]['year'].values[0],int):
+                year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i,1]-1]['year'].values[0]
 
         #main routine:
         GeotechnicalOptions = Strategy.options_geotechnical[traject.Sections[i].name]
 
         # if there is no investment sg yet
         possibleIndices = np.array([0])
-        for j in np.argwhere(GeotechnicalOptions[('Section', 100)] == GeotechnicalOptions.iloc[0][('Section', 100)]):
+        for j in np.argwhere(GeotechnicalOptions[('Section', 100)].values == GeotechnicalOptions.iloc[0][('Section', 100)]):
             possibleIndices = np.append(possibleIndices, j + 1)
         if existing_investments[i,1] in possibleIndices:
             #take the minimal LCC over all options, and corresponding sg index:
@@ -378,7 +377,7 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
                 #find the indices where the first combined measure has the same ID
                 id_list = [j[0] for j in GeotechnicalOptions['ID'].values]
                 ids = np.argwhere((np.array(id_list) == GeotechnicalOptions['ID'][existing_investments[i, 1] - 1][0])
-                                & (GeotechnicalOptions['dberm'] == currentberm))
+                                & (GeotechnicalOptions['dberm'].values == currentberm))
                 indices = np.add(ids.reshape((len(ids),)), 1)
 
             #get costs and sg indices

@@ -5,7 +5,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-import cplex
+# import cplex
 import itertools
 import ProbabilisticFunctions
 from HelperFunctions import IDtoName, flatten, pareto_frontier, getMeasureTable

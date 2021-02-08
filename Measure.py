@@ -33,11 +33,11 @@ class Measure:
         if type == 'Soil reinforcement':
             crest_step = 0.5
             berm_step = 10
-            crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], 1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step)
+            crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], np.int(1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step))
             if self.parameters['Direction'] == 'outward':
-                bermrange = np.linspace(0., self.parameters['max_outward'], 1+(self.parameters['max_outward']/berm_step))
+                bermrange = np.linspace(0., self.parameters['max_outward'], np.int(1+(self.parameters['max_outward']/berm_step)))
             elif self.parameters['Direction'] == 'inward':
-                bermrange = np.linspace(0., self.parameters['max_inward'], 1+(self.parameters['max_inward']/berm_step))
+                bermrange = np.linspace(0., self.parameters['max_inward'], np.int(1+(self.parameters['max_inward']/berm_step)))
             measures = [[x,y] for x in crestrange for y in bermrange]
             if not preserve_slope:
                 slope_in = 4
