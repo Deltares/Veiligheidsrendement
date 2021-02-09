@@ -124,8 +124,8 @@ def extract_profile_data(profile_data, window, titel, path):
 
 def main():
     traject = '16-3'
-    input_path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Profiles').joinpath(traject)
-    output_path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Profiles').joinpath(traject,'profiles')
+    input_path = Path(r'..\..\data\base_files\ProfilesFromAHN').joinpath(traject)
+    output_path = Path(r'..\..\data\base_files\ProfilesFromAHN').joinpath(traject,'profiles')
     input_file_name = 'InputProfiles.xlsx'
     output_filename = 'Dijkvakindeling_v5.2.xlsx'
 

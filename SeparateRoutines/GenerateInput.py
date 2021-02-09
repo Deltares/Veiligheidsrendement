@@ -1,4 +1,7 @@
 #This script makes the entire input structure from the general input files
+import sys
+sys.path.append('..')
+
 import pandas as pd
 from HydraRing_scripts import readDesignTable
 from openpyxl import load_workbook
@@ -12,11 +15,11 @@ def main():
     #TODO Somewhere in this function an extension should be made such that section specific information can also be inserted. Perhaps in separate files, named after the dike section.
 
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
-    path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\TestcaseNienke')
+    path = Path(r'..\..\data\case_input\SAFE')
 
     #Settings:
-    traject = '16-3'                                                                            #Traject to consider
-    file_name = 'Testindeling_v0.xlsx'                                                          #Name of main file
+    traject = '16-4'                                                                            #Traject to consider
+    file_name = 'Dijkvakindeling_v5.2.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.
                                                                                                 # WARNING: this overwrites existing values!

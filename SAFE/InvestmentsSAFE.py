@@ -1,5 +1,8 @@
 """ This script can calculate life-cycle reliability and costs for all measures for various mechanisms. It uses both a target reliability based approach and a greedy search optimization"""
 
+import sys
+sys.path.append('..')
+
 #Import a bunch of packages
 import matplotlib.pyplot as plt
 import pandas as pd
