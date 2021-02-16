@@ -222,19 +222,19 @@ class MechanismReliability:
                 result_heave, Pheave, wl_heave = IterativeFC_calculation(marginals, start, names, Mechanisms.zHeave, method, step, lolim, hilim)
                 result_piping, Ppiping, wl_piping = IterativeFC_calculation(marginals, start, names, Mechanisms.zPiping, method, step, lolim, hilim)
                 result_uplift, Puplift, wl_uplift = IterativeFC_calculation(marginals, start, names, Mechanisms.zUplift, method, step, lolim, hilim)
-                self.h_cUplift = ot.Distribution(TableDist(np.array(wl_uplift), np.array(Puplift), extrap='on'))
+                self.h_cUplift = ot.Distribution(TableDist(np.array(wl_uplift), np.array(Puplift), extrap=True))
                 self.resultsUplift = result_uplift
                 self.wlUplift = wl_uplift
-                self.h_cHeave = ot.Distribution(TableDist(np.array(wl_heave), np.array(Pheave), extrap='on'))
+                self.h_cHeave = ot.Distribution(TableDist(np.array(wl_heave), np.array(Pheave), extrap=True))
                 self.resultsHeave = result_heave
                 self.wlHeave = wl_heave
-                self.h_cPiping = ot.Distribution(TableDist(np.array(wl_piping), np.array(Ppiping), extrap='on'))
+                self.h_cPiping = ot.Distribution(TableDist(np.array(wl_piping), np.array(Ppiping), extrap=True))
                 self.resultsPiping = result_piping
                 self.wlPiping = wl_piping
 
             if splitPiping == 'no':
                 result_total, Ptotal, wl_total = IterativeFC_calculation(marginals, start, names, Mechanisms.zPipingTotal, method, step, lolim, hilim)
-                self.h_c = ot.Distribution(TableDist(np.array(wl_total), np.array(Ptotal), extrap='on'))
+                self.h_c = ot.Distribution(TableDist(np.array(wl_total), np.array(Ptotal), extrap=True))
                 self.results = result_total
                 self.wl = wl_total
 
@@ -258,7 +258,7 @@ class MechanismReliability:
             result = []
             marginals.append(ot.Dirac(1.)); names.append('h') #add the load
             result, P, wl = IterativeFC_calculation(marginals, start, names, Mechanisms.zOverflow, method, step, lolim, hilim)
-            self.h_c = ot.Distribution(TableDist(np.array(wl), np.array(P), extrap='on'))
+            self.h_c = ot.Distribution(TableDist(np.array(wl), np.array(P), extrap=True))
             self.results = result
             self.wl = wl
         elif mechanism == 'StabilityInner':

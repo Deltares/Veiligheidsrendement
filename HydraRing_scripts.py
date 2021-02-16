@@ -7,7 +7,7 @@ from ProbabilisticFunctions import TableDist
 
 #script to run HydraRing. exelocation should refer to the location of MechanismComputation.exe.
 def runHydraRing(inifile, exelocation = r'D:\wouterjanklerk\My Documents\HydraRing\Hydra-Ring 18.1\MechanismComputation.exe'):
-    subprocess.run([exelocation, str(inifile)],cwd=str(inifile)[:-14])
+    subprocess.run([exelocation, str(inifile)],cwd=str(inifile.parent))
 
 #write a design table to a OpenTurns TableDist as defined by ProbabilisticFunctions.TableDist
 def DesignTableOpenTurns(filename, gridpoints=2000):
@@ -16,8 +16,8 @@ def DesignTableOpenTurns(filename, gridpoints=2000):
     #print('Warning water levels reduced')
     #wls = np.subtract(wls, 0.5)
     p_nexc = list(1-data.iloc[:, 1])
-    h = TableDist(np.array(wls), np.array(p_nexc), extrap='on', isload='on')
-    h = ot.Distribution(TableDist(np.array(wls), np.array(p_nexc), extrap='on', isload='on', gridpoints=gridpoints))
+    h = TableDist(np.array(wls), np.array(p_nexc), extrap=True, isload=True)
+    h = ot.Distribution(TableDist(np.array(wls), np.array(p_nexc), extrap=True, isload=True, gridpoints=gridpoints))
     return h
 
 def readDesignTable(filename):
@@ -46,3 +46,9 @@ def plotDesignTable(data):
     # plt.ylim(ymin=0)
     plt.yscale('log')
     plt.tight_layout()
+
+def main():
+    pass
+
+if __name__ == "__main__":
+    main()

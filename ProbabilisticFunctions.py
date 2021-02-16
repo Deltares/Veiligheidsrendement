@@ -68,12 +68,12 @@ def MHWtoGumbel(MHW,p,d):
     return a, b
 
 class TableDist(ot.PythonDistribution):
-    def __init__(self, x=[0,1], p=[1,0], extrap = 'off',isload = 'off',gridpoints = 2000):
+    def __init__(self, x=[0,1], p=[1,0], extrap = False,isload = False,gridpoints = 2000):
         super(TableDist, self).__init__(1)
         #Check the input
         if len(x) != len(p):
             raise ValueError('Input arrays have unequal lengths')
-        if extrap == 'off':
+        if not extrap:
             if p[0] != 1 or p[-1:] != 0:
                 raise ValueError('Probability bounds are not equal to 0 and 1. Allow for extrapolation or change input')
         for i in range(1,len(x)):
@@ -83,7 +83,7 @@ class TableDist(ot.PythonDistribution):
                 raise ValueError('Non-exceedance probabilities should be increasing')
         #Define the distribution
         pp1 = 1; pp0 = 0
-        if isload == 'on':
+        if isload:
             pgrid = 1-np.logspace(0,-8,gridpoints)
         else:
             pgrid = np.logspace(0, -8, gridpoints)
@@ -140,8 +140,22 @@ class TableDist(ot.PythonDistribution):
             p = pp[0] + dp * ((X - xx[0]) / dx)
 
             return p
+    def computeQuantile(self,p,tail=False):
+            if tail:            #if input p is to be interpreted as exceedence probability
+                p = 1-p
+            #Linearly interpolate between two values
 
 
+            # idx_up = np.min(np.argwhere(self.x > X))
+            #find index above
+            idx_up = np.argmax(self.xp>p)
+
+            xx = self.x[idx_up - 1:idx_up + 1]
+            pp = self.xp[idx_up - 1:idx_up + 1]
+            dp = pp[1] - pp[0]
+            dx = xx[1] - xx[0]
+            x = xx[0] + dx * ((p - pp[0]) / dp)
+            return x
     def getMean(self):
         high = np.min(np.argwhere(self.xp > 0.53))
         low = np.min(np.argwhere(self.xp>0.47))
@@ -354,7 +368,7 @@ def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid
                     freq[j,i] = -np.log(distcoll[i].computeCDF(x[j]))*factors[i]
             frequencies = np.sum(freq,axis=1)
             pnew = np.exp(-frequencies)
-        newdist = ot.Distribution(TableDist(list(x),list(pnew),extrap='on',isload='on'))
+        newdist = ot.Distribution(TableDist(list(x),list(pnew),extrap=True, isload=True))
         if testPlot == 'on':
             wl = np.arange(1, 10, 0.1)
             pold = []
@@ -541,3 +555,9 @@ def pf_to_beta(pf):
     # else:
     #     beta = -phi_inv(np.float64(pf))
     # return beta
+
+def main():
+    pass
+
+if __name__ == "__main__":
+    main()
