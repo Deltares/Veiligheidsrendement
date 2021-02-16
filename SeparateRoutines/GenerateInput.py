@@ -15,11 +15,11 @@ def main():
     #TODO Somewhere in this function an extension should be made such that section specific information can also be inserted. Perhaps in separate files, named after the dike section.
 
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
-    path = Path(r'..\..\data\case_input\SAFE')
+    path = Path(r'..\..\data\case_input\Testcase_10sections_2021')
 
     #Settings:
     traject = '16-4'                                                                            #Traject to consider
-    file_name = 'Dijkvakindeling_v5.2.xlsx'                                                          #Name of main file
+    file_name = 'Dijkvakindeling_v1.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.
                                                                                                 # WARNING: this overwrites existing values!
@@ -42,7 +42,7 @@ def main():
     DikeSections = DikeSections[((DikeSections['Traject'] == traject) & (DikeSections['Wel of niet meerekenen'] == 1))].reset_index(drop=True)
 
     #Sheets for mechanisms:
-    STBI_data = df['Info voor STBI'].iloc[:, [1, 6, 7, 8, 9]]
+    STBI_data = df['Info voor STBI'].iloc[:, [1, 6, 7, 8, 9, 10]]
     Piping_data = df['Info voor Piping'].iloc[:, [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
 
     #Sheet for housing:
@@ -50,7 +50,8 @@ def main():
 
     #Sheet for measures:
     #TODO make this more flexible.
-    measures = pd.read_csv(path.joinpath(traject, 'Input/measures.csv'), delimiter=';')
+    Measures = df['Measures'].iloc[:, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]]
+    Measures_info = pd.read_csv(path.joinpath(traject, 'Input/measures.csv'), delimiter=';')
 
     #If we want to fill missing load values based on the computations by HKV, it is done here:
     if fill_load_values:
@@ -95,8 +96,7 @@ def main():
     #First we are going to write a general xlsx for every dike section considered:
 
     General = {}
-    General['Name'] = ['Length', 'Start', 'End', 'Overflow', 'StabilityInner', 'Piping', 'LoadData', 'YearlyWLRise', 'HBNRise_factor']
-    General['Type'] = ['', '', '', 'Simple', 'Simple', 'SemiProb', '', '', '']
+    General['Name'] = ['Length', 'Start', 'End', 'Overflow', 'StabilityInner', 'Piping', 'LoadData', 'YearlyWLRise', 'HBNRise_factor']   
 
     #Make subfolders if not exist:
     if not path.joinpath(traject, 'Output').is_dir():
@@ -108,51 +108,27 @@ def main():
     if overflow_target_beta:
         originalcrests= []
         newcrests= []
-
+    
     for i in DikeSections.index:
-        #Fill general tab and write to Excel:
-        General['Value'] = [DikeSections['Lengte dijkvak'][i],
-                            DikeSections['Van'][i],
-                            DikeSections['Tot'][i],
-                            'Overflow/' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv',
-                            'StabilityInner/' + DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv',
-                            'Piping/' + DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv',
-                            'DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt',
-                            DikeSections['Waterstandstijging'][i],
-                            DikeSections['HBN factor'][i]]
-        toExcel = pd.DataFrame.from_dict(General)[['Name', 'Value', 'Type']]
-
-        #Fill measures tab (specific code should be here)
-        #TODO customize this per section?
-
-        #Fill profile tab
-        profile = pd.read_csv(path.joinpath(traject, 'Input/profiles', DikeSections['Dwarsprofiel Geometrie'][i] + '.csv'), index_col=0)
-
-        #Fill houses tab
-        houses_data_location = Housing[((Housing['Naam dijkvak'] == DikeSections['dv_nummer'][i]) & (Housing['Naam traject'] == traject))].transpose().drop(['Naam traject', 'Naam dijkvak'], axis=0).reset_index()
-        houses_data_location.columns = ['distancefromtoe', 'number']
-
-        #Write data
-        try:
-            writer = pd.ExcelWriter(path.joinpath(traject, 'Output/DV' + '{:02d}'.format(DikeSections['dv_nummer'][i])  + '.xlsx'))
-        except:
-            writer = pd.ExcelWriter(path.joinpath(traject, 'Output/DV' + DikeSections['dv_nummer'][i]  + '.xlsx'))
-
-        toExcel.to_excel(writer, sheet_name='General', index=False)
-        measures.to_excel(writer, sheet_name='Measures', index=False)
-        profile.to_excel(writer, sheet_name='Geometry', index=False)
-        houses_data_location.to_excel(writer, sheet_name='Housing', index=False)
-        writer.save()
 
         #Now we write subfiles with input for different submechanisms:
 
         #First we write files for StabilityInner:
         STBI_data_location = STBI_data[STBI_data['dwarsprofiel'] == DikeSections['Dwarsprofiel STBI/STBU'][i]].transpose().drop(['dwarsprofiel'], axis=0).reset_index()
-        if STBI_data_location.iloc[:, 1].isnull().values.any():
-            raise Exception('STBI data of cross-section {} (Dike section {}) contains NaN values'.format(DikeSections['Dwarsprofiel STBI/STBU'][i], DikeSections['dv_nummer'][i]))
-            sys.exit()
         STBI_data_location.columns = ['Name', "Value"]
-        STBI_data_location = STBI_data_location.set_index('Name')
+        STBI_data_location = STBI_data_location.set_index('Name')        
+        if False if pd.isnull(STBI_data_location.loc['FragilityCurve', 'Value']) else True:
+            General['Type'] = ['', '', '', 'Simple', 'FragilityCurve', 'SemiProb', '', '', '']
+            #read fragilityCurve file
+            FC = pd.read_csv(path.joinpath(traject,'Input/FragilityCurve_STBI',STBI_data_location.loc['FragilityCurve', 'Value']), delimiter=';', header=0)
+            dA = pd.DataFrame([['H' ,FC['H'].values], ['Beta', FC['Beta'].values]], columns=['Name','Value']).set_index('Name')
+
+            STBI_data_location = STBI_data_location.append(dA)
+        else:
+            General['Type'] = ['', '', '', 'Simple', 'Simple', 'SemiProb', '', '', '']
+            if STBI_data_location['Value'][1:4].isnull().values.any():
+                raise Exception('STBI data of cross-section {} (Dike section {}) contains NaN values'.format(DikeSections['Dwarsprofiel STBI/STBU'][i], DikeSections['dv_nummer'][i]))
+                sys.exit()
         STBI_data_location.to_csv(path.joinpath(traject, 'Output/StabilityInner', DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv'))
 
         #Then for piping:
@@ -163,6 +139,7 @@ def main():
         Piping_data_location.columns = ['Name', "Value"]
         Piping_data_location = Piping_data_location.set_index('Name')
         Piping_data_location.to_csv(path.joinpath(traject, 'Output/Piping', DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv'))
+
 
         #Then we read and write data for overflow (this is a bit more complicated):
         HBN_basis = pd.read_csv(path.joinpath(traject, 'Input/base_HBN.csv'), delimiter=';')
@@ -195,6 +172,53 @@ def main():
 
         #Copy design tables for the water level:
         copyfile(path.joinpath(traject, 'Input/designtables_TP/DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt'), path.joinpath(traject, 'Output/Toetspeil/DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt'))
+
+        #Fill general tab and write to Excel:
+        General['Value'] = [DikeSections['Lengte dijkvak'][i],
+                            DikeSections['Van'][i],
+                            DikeSections['Tot'][i],
+                            'Overflow/' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '_Overflow.csv',
+                            'StabilityInner/' + DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv',
+                            'Piping/' + DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv',
+                            'DESIGNTABLE_' + DikeSections['Dwarsprofiel HoogteToetspeil'][i] + '.txt',
+                            DikeSections['Waterstandstijging'][i],
+                            DikeSections['HBN factor'][i]]
+        toExcel = pd.DataFrame.from_dict(General)[['Name', 'Value', 'Type']]
+
+        #Fill measures tab (specific code should be here)
+        measures_location = Measures[Measures['Naam dijkvak'] == DikeSections['dv_nummer'][i]].transpose().drop(['Naam dijkvak'], axis=0).reset_index()
+        measures_location.columns = ['Name', "Value"]
+        measures_location = measures_location.set_index('Name')
+        measures_location = measures_location.rename(index={'voorkeursalternatief_1': ('voorkeur1_dijkv' + str(DikeSections['dv_nummer'][i]))})
+        measures_location = measures_location.rename(index={'voorkeursalternatief_2': ('voorkeur2_dijkv' + str(DikeSections['dv_nummer'][i]))})
+        measures_location = measures_location.rename(index={'voorkeursalternatief_3': ('voorkeur3_dijkv' + str(DikeSections['dv_nummer'][i]))})
+        # rijen weghalen met nullen
+        # measures_location.loc['Grondversterking met stabiliteitsscherm 2025']=0
+        measures_location1 = measures_location[measures_location['Value']==1]
+        # check waar gelijk zijn aan measures_locations
+        measures_data_location = Measures_info.merge(measures_location1, left_on='Name', right_on='Name')
+
+        #TODO customize this per section?
+
+        #Fill profile tab
+        profile = pd.read_csv(path.joinpath(traject, 'Input/profiles', DikeSections['Dwarsprofiel Geometrie'][i] + '.csv'), index_col=0)
+
+        #Fill houses tab
+        houses_data_location = Housing[((Housing['Naam dijkvak'] == DikeSections['dv_nummer'][i]) & (Housing['Naam traject'] == traject))].transpose().drop(['Naam traject', 'Naam dijkvak'], axis=0).reset_index()
+        houses_data_location.columns = ['distancefromtoe', 'number']
+
+        #Write data
+        try:
+            writer = pd.ExcelWriter(path.joinpath(traject, 'Output/DV' + '{:02d}'.format(DikeSections['dv_nummer'][i])  + '.xlsx'))
+        except:
+            writer = pd.ExcelWriter(path.joinpath(traject, 'Output/DV' + DikeSections['dv_nummer'][i]  + '.xlsx'))
+
+        toExcel.to_excel(writer, sheet_name='General', index=False)
+        measures_data_location.to_excel(writer, sheet_name='Measures', index=False)
+        profile.to_excel(writer, sheet_name='Geometry', index=False)
+        houses_data_location.to_excel(writer, sheet_name='Housing', index=False)
+        writer.save()
+
 
 if __name__ == '__main__':
     main()
