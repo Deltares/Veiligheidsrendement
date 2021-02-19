@@ -12,25 +12,25 @@ import numpy as np
 from scipy.optimize import fsolve
 
 
-def vka_measures(measures_basis, measures_custum_all, measures_location, vka_name, path, traject):
+def vka_measures(measures_basis, measures_custom_all, measures_location, vka_name, path, traject):
     j=len(measures_basis.index)
     measures_custom_vka1 =  measures_location.loc[vka_name].Value
     measures_basis.loc[j,'Name']=measures_custom_vka1
-    measures_basis.loc[j,'Type']='custom'
+    measures_basis.loc[j,'Type']='Custom'
     measures_basis.loc[j,'File']= measures_custom_vka1 + '.csv'
     measures_basis.loc[j,'available']= 1   
     measures_basis.loc[j,'ID']= j + 1            
     #write custom to csv
-    measure_custum_1 = measures_custum_all[measures_custum_all['variantnaam'] == measures_custom_vka1]
-    naam= path.joinpath(traject, 'OUtput/Measures', measures_custom_vka1 + '.csv')
-    measure_custum_1.to_csv(naam, index=False)
+    measure_custom_1 = measures_custom_all[measures_custom_all['variantnaam'] == measures_custom_vka1]
+    naam= path.joinpath(traject, 'Output/Measures', measures_custom_vka1 + '.csv')
+    measure_custom_1.to_csv(naam, index=False)
     return(measures_basis)
 
 def main():
     #TODO Somewhere in this function an extension should be made such that section specific information can also be inserted. Perhaps in separate files, named after the dike section.
     
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
-    path = Path(r'..\..\data\case_input\Testcase_10sections_2021')
+    path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Testcase_10sections_2021')
     
     #Settings:
     traject = '16-4'                                                                            #Traject to consider
@@ -60,7 +60,7 @@ def main():
     else:
         #old verion
         stbi_col = ['dwarsprofiel', 'SF_2025', 'SF_2075', 'd_cover', 'dSF/dberm']        
-    
+
     #Sheets for mechanisms:
     STBI_data = df['Info voor STBI'].loc[:,stbi_col]
     
@@ -217,16 +217,16 @@ def main():
             measures_location = measures_location.set_index('Name')
             # read tables with measures
             measures_basis = pd.read_csv(path.joinpath(traject, 'Input/measures', measures_location.loc['Basismaatregelen'].Value), delimiter=';') 
-            measures_custum_all = pd.read_csv(path.joinpath(traject, 'Input/measures/measures_custom.csv'), delimiter=';') 
+            measures_custom_all = pd.read_csv(path.joinpath(traject, 'Input/measures/measures_custom.csv'))
             #add voorkeursalternatieven to table with measeares. 
             if (~pd.isna(measures_location.loc['voorkeursalternatief_1'].Value)== -1):
-                measures_per_location = vka_measures(measures_basis, measures_custum_all, measures_location, 'voorkeursalternatief_1', path, traject)                   
+                measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_1', path, traject)                   
     
             if (~pd.isna(measures_location.loc['voorkeursalternatief_2'].Value) == -1):
-                measures_per_location = vka_measures(measures_basis, measures_custum_all, measures_location, 'voorkeursalternatief_2', path, traject) 
+                measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_2', path, traject) 
                                
             if (~pd.isna(measures_location.loc['voorkeursalternatief_3'].Value) == -1):
-                measures_per_location = vka_measures(measures_basis, measures_custum_all, measures_location, 'voorkeursalternatief_3', path, traject)                  
+                measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_3', path, traject)                  
            
     
         #Fill profile tab
