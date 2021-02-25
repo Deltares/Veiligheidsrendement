@@ -30,7 +30,8 @@ def main():
     #TODO Somewhere in this function an extension should be made such that section specific information can also be inserted. Perhaps in separate files, named after the dike section.
     
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
-    path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Testcase_10sections_2021')
+    # path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Testcase_10sections_2021')
+    path = Path(r'..\..\data\case_input\Testcase_10sections_2021')
     
     #Settings:
     traject = '16-4'                                                                            #Traject to consider
@@ -217,7 +218,7 @@ def main():
             measures_location = measures_location.set_index('Name')
             # read tables with measures
             measures_basis = pd.read_csv(path.joinpath(traject, 'Input/measures', measures_location.loc['Basismaatregelen'].Value), delimiter=';') 
-            measures_custom_all = pd.read_csv(path.joinpath(traject, 'Input/measures/measures_custom.csv'))
+            measures_custom_all = pd.read_csv(path.joinpath(traject, 'Input/measures/custom_measures.csv'))
             #add voorkeursalternatieven to table with measeares. 
             if (~pd.isna(measures_location.loc['voorkeursalternatief_1'].Value)== -1):
                 measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_1', path, traject)                   
