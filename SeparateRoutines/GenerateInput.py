@@ -10,7 +10,7 @@ from shutil import copyfile
 from Mechanisms import OverflowSimple
 import numpy as np
 from scipy.optimize import fsolve
-
+import shutil
 
 def vka_measures(measures_basis, measures_custom_all, measures_location, vka_name, path, traject):
     j=len(measures_basis.index)
@@ -146,10 +146,13 @@ def main():
         STBI_data_location = STBI_data_location.set_index('Name')        
         if False if pd.isnull(STBI_data_location.loc['FragilityCurve', 'Value']) else True:
             General['Type'] = ['', '', '', 'Simple', 'FragilityCurve', 'SemiProb', '', '', '']
+            src = path.joinpath(traject,'Input/FragilityCurve_STBI',STBI_data_location.loc['FragilityCurve', 'Value'])
+            dst = path.joinpath(traject,'Output/FragilityCurve_STBI',STBI_data_location.loc['FragilityCurve', 'Value'])
+            shutil.copy2(src, dst)
             #read fragilityCurve file
-            FC = pd.read_csv(path.joinpath(traject,'Input/FragilityCurve_STBI',STBI_data_location.loc['FragilityCurve', 'Value']), delimiter=';', header=0)
-            dA = pd.DataFrame([['H' ,FC['H'].values], ['Beta', FC['Beta'].values]], columns=['Name','Value']).set_index('Name')    
-            STBI_data_location = STBI_data_location.append(dA)
+            # FC = pd.read_csv(path.joinpath(traject,'Input/FragilityCurve_STBI',STBI_data_location.loc['FragilityCurve', 'Value']), delimiter=';', header=0)
+            # dA = pd.DataFrame([['h' ,FC['h'].values], ['beta', FC['beta'].values]], columns=['Name','Value']).set_index('Name')
+            # STBI_data_location = STBI_data_location.append(dA)
         else: # uf fragility curve is not available
             General['Type'] = ['', '', '', 'Simple', 'Simple', 'SemiProb', '', '', '']
             if STBI_data_location['Value'][1:4].isnull().values.any():

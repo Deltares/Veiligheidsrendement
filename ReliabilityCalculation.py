@@ -7,10 +7,11 @@ import pandas as pd
 import ProbabilisticFunctions
 from HydraRing_scripts import DesignTableOpenTurns
 from ProbabilisticFunctions import TableDist, run_prob_calc, IterativeFC_calculation, TemporalProcess, \
-    addLoadCharVals, MarginalsforTimeDepReliability, beta_to_pf, pf_to_beta
+    addLoadCharVals, MarginalsforTimeDepReliability, beta_to_pf, pf_to_beta, FragilityIntegration
 from scipy.stats import norm
 from scipy import interpolate
 import config
+from pathlib import Path
 
 class LoadInput:
     #class to store load data
@@ -309,17 +310,18 @@ class MechanismReliability:
             if hasattr(load, 'dist_change'):
                 original = copy.deepcopy(load.dist_change)
                 dist_change = TemporalProcess(original, year)
-                marginals = [self.h_c, load.distribution, dist_change]
-                dist = ot.ComposedDistribution(marginals)
-                dist.setDescription(['h_c', 'h', 'dh'])
-                result, P, beta, alfas_sq = run_prob_calc(ot.SymbolicFunction(['h_c', 'h', 'dh'], ['h_c-(h+dh)']), dist,
-                                                          method)
+                #marginals = [self.Input.input['FC'], load, dist_change]
+                P, beta = FragilityIntegration(self.Input.input['FC'], load, WaterLevelChange=dist_change)
+                #result missing
+                # dist = ot.ComposedDistribution(marginals)
+                # dist.setDescription(['h_c', 'h', 'dh'])
+                #TODO replace with FragilityIntegration. FragilityIntegration in ProbabilisticFunctions.py
             else:
                 marginals = [self.h_c, load.distribution]
                 dist = ot.ComposedDistribution(marginals)
                 dist.setDescription(['h_c', 'h'])
                 result, P, beta, alfas_sq = run_prob_calc(ot.SymbolicFunction(['h_c', 'h'], ['h_c-h']), dist, method)
-            self.result = result
+                self.result = result
             self.Pf = P
             self.beta = beta
             self.alpha_sq = alfas_sq
@@ -450,28 +452,28 @@ class MechanismInput:
         self.input = {}
         self.temporals = []
         self.char_vals = {}
-
         for i in range(len(data)):
-            if calctype == 'Prob':
-                #if it is a probabilistic calculation, transform the data to OpenTurns distributions:
-                if data.iloc[i]['Distribution'] == 'L':                 #Lognormal distribution
-                    data.at[data.index[i],'Par2'] = data.at[data.index[i],'Par2']*data.at[data.index[i],'Par1'] if data.at[data.index[i],'variance type'] == 'var' else data.at[data.index[i],'Par2']
-                    self.input[data.index[i]] = ot.LogNormal()
-                    #With or without shift
-                    params = ot.LogNormalMuSigma()([float(data.iloc[i]['Par1']), float(data.iloc[i]['Par2']), float(data.iloc[i]['Par3'])]) if ~np.isnan(data.iloc[i]['Par3']) else ot.LogNormalMuSigma()([float(data.iloc[i]['Par1']), float(data.iloc[i]['Par2']), 0.0])
-                    self.input[data.index[i]].setParameter(params)
-                elif data.iloc[i]['Distribution'] == 'N':               #Normal distribution
-                    self.input[data.index[i]] = ot.Normal(float(data.iloc[i]['Par1']),float(data.iloc[i]['Par2']))
-                elif data.iloc[i]['Distribution'] == 'D':               #Determinist (Dirac) distribution
-                    self.input[data.index[i]] = ot.Dirac(float(data.iloc[i]['Par1']))
-                elif data.iloc[i]['Distribution'] == 'G':               #Gamma distribution
-                    self.input[data.index[i]] = ot.Gamma()
-                    self.input[data.index[i]].setParameter(ot.GammaMuSigma()([float(data.iloc[i]['Par1']), float(data.iloc[i]['Par2']), float(data.iloc[i]['Par3'])]))
-                else:
-                    raise TypeError('Input distribution type for parameter ' + data.index[i] + ' is not known')
-                #Write value to temporals if required:
-                self.char_vals[data.index[i]] = np.array(self.input[data.index[i]].computeQuantile(data.iloc[i]['quantile']))[0]
-                self.temporals.append(data.index[i]) if data.iloc[i]['temporal'] == 'yes' else self.temporals
+            # if (data.iloc[i].Name == 'FragilityCurve') and ~np.isnan(data.iloc[i].Value):
+            if (data.index[i] == 'FragilityCurve'):
+                # if ~np.isnan(data.iloc[i].Value): 
+                if (~pd.isna(data.iloc[i].Value)== -1):
+                    #csv inlezen en wegschrijven in self.input
+                    #H en beta nog eruit halen in GenerateInput
+                    FC = pd.read_csv(config.path.joinpath('FragilityCurve_STBI',data.iloc[i].Value), delimiter=';', header=0)
+                    # #FC2=FC.append(pd.DataFrame([[np.nan, 7]],columns=['H', 'Beta'])).reset_index(drop=True)
+                    # np.argwhere(np.isnan(FC2.values))
+                    # FC2.drop(index=)
+                    A=np.argwhere(np.isnan(FC.values))
+                    if A.size != 0:
+                        FC.drop([A[0,0]])
+                        print('nan values in frigilitycurve')
+                    self.input['FC'] = FC  # check of interpolatie nodig is
+                    # x = FC['H'].values
+                    # x = x.astype(np.float32)
+                    # self.input['h'] = x[~np.isnan(x)]  #check of interpolatie nodig is
+                    # y = FC['Beta'].values
+                    # y = y.astype(np.float32)
+                    # self.input['Beta'] = y[~np.isnan(x)]
             else:
                 x = data.iloc[i][:].values
                 x = x.astype(np.float32)

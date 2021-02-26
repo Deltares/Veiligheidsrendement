@@ -5,7 +5,7 @@ import copy
 import math
 from scipy.stats import norm
 import cProfile
-
+import scipy as sp
 
 #Function to calculate a safety factor:
 def calc_gamma(mechanism,TrajectInfo):
@@ -140,22 +140,22 @@ class TableDist(ot.PythonDistribution):
             p = pp[0] + dp * ((X - xx[0]) / dx)
 
             return p
-    def computeQuantile(self,p,tail=False):
-            if tail:            #if input p is to be interpreted as exceedence probability
-                p = 1-p
-            #Linearly interpolate between two values
+    # def computeQuantile(self,p,tail=False):
+    #         if tail:            #if input p is to be interpreted as exceedence probability
+    #             p = 1-p
+    #         #Linearly interpolate between two values
 
 
-            # idx_up = np.min(np.argwhere(self.x > X))
-            #find index above
-            idx_up = np.argmax(self.xp>p)
+    #         # idx_up = np.min(np.argwhere(self.x > X))
+    #         #find index above
+    #         idx_up = np.argmax(self.xp>p)
 
-            xx = self.x[idx_up - 1:idx_up + 1]
-            pp = self.xp[idx_up - 1:idx_up + 1]
-            dp = pp[1] - pp[0]
-            dx = xx[1] - xx[0]
-            x = xx[0] + dx * ((p - pp[0]) / dp)
-            return x
+    #         xx = self.x[idx_up - 1:idx_up + 1]
+    #         pp = self.xp[idx_up - 1:idx_up + 1]
+    #         dp = pp[1] - pp[0]
+    #         dx = xx[1] - xx[0]
+    #         x = xx[0] + dx * ((p - pp[0]) / dp)
+    #         return x
     def getMean(self):
         high = np.min(np.argwhere(self.xp > 0.53))
         low = np.min(np.argwhere(self.xp>0.47))
@@ -188,6 +188,57 @@ class TableDist(ot.PythonDistribution):
         for i in range(size):
             X.append(self.getRealization())
         return X
+
+def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = False, N=1600,  PrintResults=True):
+    A=1
+    if WaterLevelChange:
+        if (WaterLevelChange.getClassName() == 'Dirac') and (WaterLevelDist.distribution.getName() =='TableDist'):
+            pass
+            half = int(0.5 * len(WaterLevelDist.distribution.getParameter()))
+            x = np.asarray(WaterLevelDist.distribution.getParameter()[0:half]) + np.asarray(WaterLevelChange.getParameter())
+            p = WaterLevelDist.distribution.getParameter()[half:]
+            # plt.semilogy(x, np.subtract(1, p))
+            # plt.xlim(left=5)
+            # new_dist = TableDist(x, p)
+        else:
+            raise Exception('not implemented')
+
+    ux = np.linspace(-8.0, 8.0, N+1)
+    px = norm.cdf(ux)
+    interpolator = sp.interpolate.interp1d(p, x, fill_value='extrapolate')
+    h = interpolator(px)
+    cdf_hc = GetValueFromFragilityCurve(FragilityCurve, Value='pf', x=h)
+    dx = ux[1] - ux[0]
+    pdf_h = norm.pdf(ux)
+    Pfs = cdf_hc * pdf_h * dx
+    Pf = Pfs.sum()
+    beta = -1*norm.ppf(Pf)
+    if PrintResults:
+        print('\n'
+              'Integrated Results Numerical Integration \n'
+              '======================================== \n'
+              'Beta = %0.2f \n'
+              'Pf   = %0.2e \n' %(beta,Pf)
+              )
+    A =1
+
+    return Pf, beta
+
+def GetValueFromFragilityCurve(FragilityCurve, Value, x):
+    if Value=='h':
+        interpolator = sp.interpolate.interp1d(FragilityCurve['beta'], FragilityCurve['h'], fill_value='extrapolate')
+        h = interpolator(x)
+        return h
+    elif Value=='beta' or Value=='pf':
+        interpolator = sp.interpolate.interp1d(FragilityCurve['h'], FragilityCurve['beta'], fill_value='extrapolate')
+        beta_hc = interpolator(x)
+        if Value=='pf':
+            pf = norm.cdf(-beta_hc)
+            return pf
+        else:
+            return beta
+
+
 
 def run_prob_calc(model,dist,method='FORM',startpoint=False):
     vect = ot.RandomVector(dist)
@@ -311,8 +362,11 @@ def IterativeFC_calculation(marginals,WL, names, zFunc, method, step=0.5, lolim 
     return result_list, P_list, wl_list
 
 def TemporalProcess(input, t,makePlot='off'):
-    #This function derives the distribution parameters for the temporal process governed by the annual distribution 'input' for year 't'
-    if input.getClassName() == 'Gamma':
+    #TODO check of input == float.
+    if isinstance(input, float):
+        input = ot.Dirac(input*t) #make distribution
+   #This function derives the distribution parameters for the temporal process governed by the annual distribution 'input' for year 't'
+    elif input.getClassName() == 'Gamma':
         params = input.getParameter()
         mu = params[0] / params[1]
         var = params[0] / (params[1] ** 2)
@@ -322,9 +376,10 @@ def TemporalProcess(input, t,makePlot='off'):
             from openturns.viewer import View
             view = View(gr)
             view.show()
-
     elif input.getClassName() == 'Dirac':
         input.setParameter(input.getParameter()*t)
+    else:
+        raise Exception('Distribution type for temporal process not recognized.')
     return input
 
 def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid = None):
@@ -385,7 +440,9 @@ def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid
     return newdist
 def getDesignWaterLevel(load,p):
     #TODO Check this!
+    a=1
     return np.array(load.distribution.computeQuantile(1 - p))[0]
+
 def addLoadCharVals(input,load=None,p_h = 1./1000, p_dh=0.5,year = 0):
     #input = list of all strength variables
 
