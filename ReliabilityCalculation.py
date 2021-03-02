@@ -316,15 +316,18 @@ class MechanismReliability:
                 # dist = ot.ComposedDistribution(marginals)
                 # dist.setDescription(['h_c', 'h', 'dh'])
                 #TODO replace with FragilityIntegration. FragilityIntegration in ProbabilisticFunctions.py
+                self.alpha_sq = np.nan
+                self.result = np.nan
             else:
                 marginals = [self.h_c, load.distribution]
                 dist = ot.ComposedDistribution(marginals)
                 dist.setDescription(['h_c', 'h'])
                 result, P, beta, alfas_sq = run_prob_calc(ot.SymbolicFunction(['h_c', 'h'], ['h_c-h']), dist, method)
                 self.result = result
+                self.alpha_sq = alfas_sq
             self.Pf = P
             self.beta = beta
-            self.alpha_sq = alfas_sq
+
         elif self.type == 'Prob':
             #Probabilistic evaluation of a mechanism.
             if mechanism == 'Piping':

@@ -190,7 +190,6 @@ class TableDist(ot.PythonDistribution):
         return X
 
 def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = False, N=1600,  PrintResults=True):
-    A=1
     if WaterLevelChange:
         if (WaterLevelChange.getClassName() == 'Dirac') and (WaterLevelDist.distribution.getName() =='TableDist'):
             pass
@@ -220,7 +219,6 @@ def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = Fals
               'Beta = %0.2f \n'
               'Pf   = %0.2e \n' %(beta,Pf)
               )
-    A =1
 
     return Pf, beta
 
