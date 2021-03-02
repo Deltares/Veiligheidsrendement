@@ -461,22 +461,19 @@ class MechanismInput:
                 # if ~np.isnan(data.iloc[i].Value): 
                 if (~pd.isna(data.iloc[i].Value)== -1):
                     #csv inlezen en wegschrijven in self.input
-                    #H en beta nog eruit halen in GenerateInput
                     FC = pd.read_csv(config.path.joinpath('FragilityCurve_STBI',data.iloc[i].Value), delimiter=';', header=0)
-                    # #FC2=FC.append(pd.DataFrame([[np.nan, 7]],columns=['H', 'Beta'])).reset_index(drop=True)
-                    # np.argwhere(np.isnan(FC2.values))
-                    # FC2.drop(index=)
+
+                    if np.min(np.diff(FC.beta))>0:  #beta values should be decreasing.
+                        raise Exception('Fragility curve input should have decreasing betas. Filename: ' + data.iloc[i].Value)
+                    if np.min(np.diff(FC.h))<0:  #h values should be increasing.
+                        raise Exception('Fragility curve input should have increasing water levels. Filename: ' + data.iloc[i].Value )
+
                     A=np.argwhere(np.isnan(FC.values))
                     if A.size != 0:
                         FC.drop([A[0,0]])
-                        print('nan values in frigilitycurve')
-                    self.input['FC'] = FC  # check of interpolatie nodig is
-                    # x = FC['H'].values
-                    # x = x.astype(np.float32)
-                    # self.input['h'] = x[~np.isnan(x)]  #check of interpolatie nodig is
-                    # y = FC['Beta'].values
-                    # y = y.astype(np.float32)
-                    # self.input['Beta'] = y[~np.isnan(x)]
+                        raise Warning('NaN values in Fragility Curve from file ' + data.iloc[i].Value)
+                    self.input['FC'] = FC
+
             else:
                 x = data.iloc[i][:].values
                 x = x.astype(np.float32)

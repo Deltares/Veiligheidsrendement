@@ -61,6 +61,12 @@ def calc_traject_prob(sections, mechanism):
         # traject_prob = sum(Psections)
         traject_prob = 1-(np.prod(np.subtract(1,Psections)))
     return traject_prob
+def compute_decimation_height(h,p, n=2):
+    #computes the average decimation height for the lower parts of a distribution: h are water levels, p are exceedence probabilities. n is the number of 'decimations'
+    hp = interp1d(p, h)
+    h_low = hp(p[0])       #lower limit
+    h_high = hp((p[0])/(10 * n))
+    return (h_high-h_low)/n
 
 def MHWtoGumbel(MHW,p,d):
     a = MHW + d * np.log(-(np.log(1-p))) / (np.log(-np.log(1-p))-np.log(-np.log(1-p/10)))
@@ -85,9 +91,17 @@ class TableDist(ot.PythonDistribution):
         pp1 = 1; pp0 = 0
         if isload:
             pgrid = 1-np.logspace(0,-8,gridpoints)
+            # we add a zero point to prevent excessive extrapolation. We do this based on the decimation height from the inserted points.
+            d10 = compute_decimation_height(x,1-p)
+            p_low = 1-p[0]
+            #determine water level with 100\% chance of occuring in a year
+            p = np.concatenate(([0.], p))
+            x_low = x[0] - (1/p_low) * (d10/10)
+            x = np.concatenate(([x_low],x))
         else:
             pgrid = np.logspace(0, -8, gridpoints)
             # pgrid = 1-np.logspace(0,-16,500)
+
         # spline order: 1 linear, 2 quadratic, 3 cubic ...
         order = 1
         # do inter/extrapolation
@@ -212,6 +226,12 @@ def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = Fals
     Pfs = cdf_hc * pdf_h * dx
     Pf = Pfs.sum()
     beta = -1*norm.ppf(Pf)
+    import matplotlib.pyplot as plt
+
+    # plt.plot(h, pdf_h, label='pdf h')
+    # plt.plot(h, cdf_hc, label='fragility curve')
+    # plt.plot(h, Pfs / dx, label='multiplied (no scaling)')
+    # plt.legend()
     if PrintResults:
         print('\n'
               'Integrated Results Numerical Integration \n'

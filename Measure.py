@@ -173,6 +173,13 @@ class Measure:
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] += SFincrease
                 self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
             self.measures['Reliability'].calcSectionReliability()
+        elif type == 'Custom':
+            try:
+                data = pd.read_csv(config.path.joinpath('Measures',self.parameters['File']))
+                print('Here the logic for reading the data for the vka should be inserted')
+                #interpret data
+            except:
+                raise Exception (self.parameters['File'] + ' not found.')
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
 def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, bermheight = 2, slope_in = False):
