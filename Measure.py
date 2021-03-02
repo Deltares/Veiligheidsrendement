@@ -75,6 +75,8 @@ class Measure:
                             elif i == 'StabilityInner':
                                 #NOTE: we do not account for the slope reduction. This should be implemented for outward reinforcements.
                                 if self.parameters['Direction'] == 'inward':
+
+                                    #TODO implement_berm_widening(input_parameters, mechanism, type = 'FragilityCurve/Simple', direction='inward', stabilityscreen = 'no')
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] \
                                                                                                             + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] \
@@ -180,7 +182,43 @@ class Measure:
                 #interpret data
             except:
                 raise Exception (self.parameters['File'] + ' not found.')
+class CustomMeasure(Measure):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+        pass
 
+class VerticalGeotextile(Measure):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+        #To be added: year property to distinguish the same measure in year 2025 and 2045
+        type = self.parameters['Type']
+        mechanisms = DikeSection.Reliability.Mechanisms.keys()
+
+        # No influence on overflow and stability
+        # Only 1 parameterized version with a lifetime of 50 years
+        self.measures = {}
+        self.measures['VZG'] = 'yes'
+        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
+        self.measures['Reliability'] = SectionReliability()
+        self.measures['Reliability'].Mechanisms = {}
+
+        for i in mechanisms:
+            calc_type = DikeSection.MechanismData[i][1]
+            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
+            for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
+                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(
+                    DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                if i == 'Overflow' or i == 'StabilityInner' or (
+                        i == 'Piping' and int(ij) < self.parameters['year']):  # Copy results
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(
+                        DikeSection.Reliability.Mechanisms[i].Reliability[ij])
+                elif i == 'Piping' and int(ij) >= self.parameters['year']:
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Elimination'] = 'yes'
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_elim'] = self.parameters[
+                        'P_solution']
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_with_elim'] = \
+                    self.parameters['Pf_solution']
+            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load, mechanism=i,
+                                                                          trajectinfo=TrajectInfo)
+        self.measures['Reliability'].calcSectionReliability()
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
 def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, bermheight = 2, slope_in = False):
     if len(initial) == 6:

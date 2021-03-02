@@ -23,6 +23,7 @@ class Solutions:
         combinables = []
         partials = []
         for i in data.index:
+            #TODO depending on data.loc[i].type make correct sublclass
             self.Measures.append(Measure(data.loc[i]))
 
         self.MeasureTable = pd.DataFrame(columns=['ID', 'Name'])
