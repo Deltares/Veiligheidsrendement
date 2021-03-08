@@ -35,7 +35,7 @@ def main():
     
     #Settings:
     traject = '16-4'                                                                            #Traject to consider
-    file_name = 'Dijkvakindeling_v1.xlsx'                                                          #Name of main file
+    file_name = 'Dijkvakindeling_v0.2.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.
                                                                                                 # WARNING: this overwrites existing values!
@@ -56,13 +56,13 @@ def main():
     DikeSections = df['Dijkvakindeling_keuze_info'].rename(columns=df['Dijkvakindeling_keuze_info'].iloc[0]).drop(df['Dijkvakindeling_keuze_info'].index[0])
     DikeSections = DikeSections[((DikeSections['Traject'] == traject) & (DikeSections['Wel of niet meerekenen'] == 1))].reset_index(drop=True)
     
-    if 'FragilityCurve' in df['Info voor STBI'].columns.values: #nieuwe versie
-        stbi_col = ['dwarsprofiel','FragilityCurve', 'SF_2025', 'SF_2075', 'd_cover', 'dSF/dberm']        
+    if 'FragilityCurve' in df['Info voor STBI'].columns.values:
+        stbi_col = ['dwarsprofiel','FragilityCurve', 'SF_2025', 'SF_2075', 'd_cover','dSF/dberm', 'beta_2025', 'beta_2075', 'dbeta/dberm'] #new version excelfile
     else:
-        #old verion
-        stbi_col = ['dwarsprofiel', 'SF_2025', 'SF_2075', 'd_cover', 'dSF/dberm']        
+        stbi_col = ['dwarsprofiel', 'SF_2025', 'SF_2075', 'd_cover', 'dSF/dberm'] #old verion excelfile
 
     #Sheets for mechanisms:
+
     STBI_data = df['Info voor STBI'].loc[:,stbi_col]
     
     #Sheet for pinping:
@@ -155,7 +155,7 @@ def main():
             # STBI_data_location = STBI_data_location.append(dA)
         else: # uf fragility curve is not available
             General['Type'] = ['', '', '', 'Simple', 'Simple', 'SemiProb', '', '', '']
-            if STBI_data_location['Value'][1:4].isnull().values.any():
+            if STBI_data_location['Value'][[1,2,5,6]].isnull().values.all():
                 raise Exception('STBI data of cross-section {} (Dike section {}) contains NaN values'.format(DikeSections['Dwarsprofiel STBI/STBU'][i], DikeSections['dv_nummer'][i]))
                 sys.exit()
         STBI_data_location.to_csv(path.joinpath(traject, 'Output/StabilityInner', DikeSections['Dwarsprofiel STBI/STBU'][i] + '_StabilityInner.csv'))

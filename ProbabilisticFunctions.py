@@ -203,7 +203,7 @@ class TableDist(ot.PythonDistribution):
             X.append(self.getRealization())
         return X
 
-def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = False, N=1600,  PrintResults=True):
+def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = False, N=1600,  PrintResults=False):
     if WaterLevelChange:
         if (WaterLevelChange.getClassName() == 'Dirac') and (WaterLevelDist.distribution.getName() =='TableDist'):
             pass
@@ -227,7 +227,6 @@ def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = Fals
     Pf = Pfs.sum()
     beta = -1*norm.ppf(Pf)
     import matplotlib.pyplot as plt
-
     # plt.plot(h, pdf_h, label='pdf h')
     # plt.plot(h, cdf_hc, label='fragility curve')
     # plt.plot(h, Pfs / dx, label='multiplied (no scaling)')

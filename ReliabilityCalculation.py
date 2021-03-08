@@ -187,7 +187,8 @@ class MechanismReliability:
         #clear all values
         keys = self.__dict__.keys()
         for i in keys:
-            if i is not 'mechanism':
+            # if i is not 'mechanism':
+            if i != 'mechanism':
                 setattr(self, i, None)
 
     def constructFragilityCurve(self, mechanism, input, start=5, step=0.2, method='MCS', splitPiping='no', year=0, lolim=10e-4, hilim=0.995):
@@ -271,15 +272,22 @@ class MechanismReliability:
         #This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == 'Simple':
             if mechanism == 'StabilityInner':
-                #Simple interpolation of two safety factors and translation to a value of beta at 'year'.
-                #In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
-                SFt = interpolate.interp1d([0, 50],np.concatenate((strength.input['SF_2025']/self.gamma_schem,
-                                                                   strength.input['SF_2075']/self.gamma_schem)),
-                                                                   fill_value='extrapolate')
-                SF = SFt(year)
-                modelfactor = 1.07 # Spencer, LiftVan = 1.06
-                beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
-                #Check if there is an elimination measure present (diaphragm wall)
+                if strength.input['SF_2025'].size != 0:
+                    #Simple interpolation of two safety factors and translation to a value of beta at 'year'.
+                    #In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
+                    SFt = interpolate.interp1d([0, 50],np.concatenate((strength.input['SF_2025']/self.gamma_schem,
+                                                                       strength.input['SF_2075']/self.gamma_schem)),fill_value='extrapolate')
+                    SF = SFt(year)
+                    modelfactor = 1.07 # Spencer, LiftVan = 1.06
+                    beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
+                elif strength.input['beta_2025'].size != 0:
+                    #TODO check .gamma_scherm
+                    betat = interpolate.interp1d([0, 50], np.concatenate((strength.input['beta_2025'] / self.gamma_schem,
+                                                                    strength.input['beta_2075'] / self.gamma_schem)), fill_value='extrapolate')
+                    beta = betat(year)
+                else:
+                    raise Exception('Warning: No inputvalues SF or Beta StabilityInner')
+                # Check if there is an elimination measure present (diaphragm wall)
                 if 'Elimination' in strength.input.keys():
                     if strength.input['Elimination'] == 'yes':
                         #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
@@ -312,6 +320,7 @@ class MechanismReliability:
                 dist_change = TemporalProcess(original, year)
                 #marginals = [self.Input.input['FC'], load, dist_change]
                 P, beta = FragilityIntegration(self.Input.input['FC'], load, WaterLevelChange=dist_change)
+
                 #result missing
                 # dist = ot.ComposedDistribution(marginals)
                 # dist.setDescription(['h_c', 'h', 'dh'])
