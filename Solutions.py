@@ -3,7 +3,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 import seaborn as sns
-from Measure import Measure, Soilreinforcement, DiaphragmWall, StabilityScreen, VerticalGeotextile, CustomMeasure
+from Measure import Measure , Soilreinforcement, DiaphragmWall, StabilityScreen, VerticalGeotextile, CustomMeasure
 import config
 
 class Solutions:
@@ -54,15 +54,15 @@ class Solutions:
                 # old: measure.evaluateMeasure(DikeSection, TrajectInfo, preserve_slope = preserve_slope)
 
                 if measure.parameters['Type'] == 'Soil reinforcement':
-                    Soilreinforcement(DikeSection, TrajectInfo, preserve_slope = preserve_slope)
+                    Soilreinforcement(measure, DikeSection, TrajectInfo, preserve_slope = preserve_slope)
                 elif measure.parameters['Type'] == 'DiaphragmWall':
-                    DiaphragmWall(DikeSection, TrajectInfo)
+                    DiaphragmWall(measure,DikeSection, TrajectInfo)
                 elif measure.parameters['Type'] == 'StabilityScreen':
-                    StabilityScreen(DikeSection, TrajectInfo)
+                    StabilityScreen(measure,DikeSection, TrajectInfo)
                 elif measure.parameters['Type'] == 'VerticalGeotextile':
-                    VerticalGeotextile(DikeSection, TrajectInfo)
+                    VerticalGeotextile(measure,DikeSection, TrajectInfo)
                 elif measure.parameters['Type'] == 'Custom':
-                    CustomMeasure()
+                    CustomMeasure(measure)
             else:
                 removal.append(i)
         #remove measures that are set to unavailable:

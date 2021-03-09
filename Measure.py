@@ -12,7 +12,7 @@ import config
 class Measure():
     """Possible change: create subclasses for different measures to make the below code more neat. Can be done jointly with adding outward reinforcement"""
     #class to store measures and their reliability. A Measure is a specific Solution (with parameters)
-    def __init__(self,inputs):
+    def __init__(self, inputs):
         self.parameters = {}
         for i in range(0,len(inputs)):
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
@@ -32,10 +32,13 @@ class Measure():
         #different types of measures:
 class Soilreinforcement(Measure):
     # type == 'Soil reinforcement':
-    def __init__(self, DikeSection, TrajectInfo, preserve_slope=False):
+    def __init__(self, measure, DikeSection, TrajectInfo, preserve_slope=False):
     # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
-        Measure.__init__(self,inputs)
+        # Measure.__init__(self,inputs)
+        self. parameters = measure.parameters
+        SFincrease = 0.2  # for stability screen
+
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
 
@@ -96,14 +99,14 @@ class Soilreinforcement(Measure):
                                     # self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = ((beta * 0.15) + 0.41) * modelfactor
                                     # # beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
                                     # modelfactor = 1.07  # Spencer, LiftVan = 1.06
-                                elif self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] != 'nan':
+                                elif np.size(self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025']) ==1:
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                         'beta_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2025'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dBeta/dberm'])
+                                        'beta_2025'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dbeta/dberm'])
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                         'beta_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                         'beta_2075'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
-                                elif self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] != 'nan':
+                                elif np.size(self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025']) ==1:
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] \
                                                                                                             + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] \
@@ -128,7 +131,7 @@ class Soilreinforcement(Measure):
 
 class DiaphragmWall(Measure):
     # type == 'Diaphragm Wall':
-    def __init__(self, DikeSection, TrajectInfo):
+    def __init__(self, measure,DikeSection, TrajectInfo):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
@@ -164,7 +167,7 @@ class DiaphragmWall(Measure):
 
 class StabilityScreen(Measure):
     # type == 'Stability Screen':
-    def __init__(self, DikeSection, TrajectInfo):
+    def __init__(self,measure, DikeSection, TrajectInfo):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
@@ -191,18 +194,9 @@ class StabilityScreen(Measure):
             self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
         self.measures['Reliability'].calcSectionReliability()
 
-# class Custom(Measure):
-#     # type == 'Custom':
-#     try:
-#         pass
-#         #data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
-#         #print('Here the logic for reading the data for the vka should be inserted')
-#         #interpret data
-#     except:
-#        raise Exception (self.parameters['File'] + ' not found.')
 
 class VerticalGeotextile(Measure):
-    def __init__(self, DikeSection, TrajectInfo):
+    def __init__(self, measure,DikeSection, TrajectInfo):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
@@ -237,8 +231,17 @@ class VerticalGeotextile(Measure):
 
 
 class CustomMeasure(Measure):
-    def __init__(self):
+    def __init__(self,measure):
         pass
+# class Custom(Measure):
+#     # type == 'Custom':
+#     try:
+#         pass
+#         #data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
+#         #print('Here the logic for reading the data for the vka should be inserted')
+#         #interpret data
+#     except:
+#        raise Exception (self.parameters['File'] + ' not found.')
 
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
