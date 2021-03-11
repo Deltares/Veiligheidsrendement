@@ -18,7 +18,8 @@ class Measure():
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
                 self.parameters[inputs.index[i]] = inputs[i]
 
-    # def evaluateMeasure(self,DikeSection,TrajectInfo,preserve_slope = False):
+    def evaluateMeasure(self,DikeSection,TrajectInfo,preserve_slope = False):
+        raise Exception('define subclass of measure')
     #     from HelperFunctions import createDir
     #
     #     #To be added: year property to distinguish the same measure in year 2025 and 2045
@@ -30,13 +31,14 @@ class Measure():
     #         createDir(config.directory.joinpath('figures',DikeSection.name,'Geometry'))
 
         #different types of measures:
-class Soilreinforcement(Measure):
+class SoilReinforcement(Measure):
     # type == 'Soil reinforcement':
-    def __init__(self, measure, DikeSection, TrajectInfo, preserve_slope=False):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
     # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
-        self. parameters = measure.parameters
+        # self. parameters = measure.parameters
+
         SFincrease = 0.2  # for stability screen
 
         type = self.parameters['Type']
@@ -89,6 +91,7 @@ class Soilreinforcement(Measure):
                             if self.parameters['Direction'] == 'inward':
                                 # distinguish between FC, Beta of SF
                                 if self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].type == 'FragilityCurve':
+                                    #TODO check beta_2025 and beta_2075
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                         'beta_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                         'beta_2025'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dBeta/dberm'])
@@ -99,7 +102,7 @@ class Soilreinforcement(Measure):
                                     # self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = ((beta * 0.15) + 0.41) * modelfactor
                                     # # beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
                                     # modelfactor = 1.07  # Spencer, LiftVan = 1.06
-                                elif np.size(self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025']) ==1:
+                                elif np.size(self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025']) ==1:  # if beta_2025 exists, than beta+dberm*dbeta/dberm
                                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                         'beta_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                         'beta_2025'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dbeta/dberm'])
@@ -131,7 +134,7 @@ class Soilreinforcement(Measure):
 
 class DiaphragmWall(Measure):
     # type == 'Diaphragm Wall':
-    def __init__(self, measure,DikeSection, TrajectInfo):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
@@ -167,7 +170,7 @@ class DiaphragmWall(Measure):
 
 class StabilityScreen(Measure):
     # type == 'Stability Screen':
-    def __init__(self,measure, DikeSection, TrajectInfo):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
@@ -196,7 +199,7 @@ class StabilityScreen(Measure):
 
 
 class VerticalGeotextile(Measure):
-    def __init__(self, measure,DikeSection, TrajectInfo):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
@@ -231,8 +234,61 @@ class VerticalGeotextile(Measure):
 
 
 class CustomMeasure(Measure):
-    def __init__(self,measure):
-        pass
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+        type = self.parameters['Type']
+        mechanisms = DikeSection.Reliability.Mechanisms.keys()
+        try:
+            data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
+        except:
+            raise Exception(self.parameters['File'] + ' not found.')
+
+        self.measures = {}
+        self.measures['Custom'] = 'yes'
+        self.measures['Cost'] = data['cost']
+        self.measures['Reliability'] = SectionReliability()
+        self.measures['Reliability'].Mechanisms = {}
+
+
+        for i in mechanisms:
+            calc_type = DikeSection.MechanismData[i][1]
+            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
+            for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
+                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                if float(ij) >= 2025: #data['year']:  #TOdo, wat te doen als data['year'] is empty???
+                    if i == 'Overflow':
+                        pass  # TODO zelfde als hieronder?? beetje veel code
+                    elif i == 'StabilityInner':
+                        if (data['beta_StabilityInner_2025']).size != 0 or (data['beta_StabilityInner_2045']).size !=0 or (data['beta_StabilityInner_2075']).size !=0:
+                            if (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size == 0: #only 2025 available
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2025']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2025']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2025']
+                            elif (data['beta_StabilityInner_2025']).size == 0 and (data['beta_StabilityInner_2045']).size != 0 and (data['beta_StabilityInner_2075']).size == 0: #only 2045 available
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2045']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2045']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2045']
+                            elif (data['beta_StabilityInner_2025']).size == 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0: #only 2075 available
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2075']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2075']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2075']
+                            elif (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0: #only 2045 missing
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2025']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2025']+((2045-2025)*((data['beta_StabilityInner_2075']-data['beta_StabilityInner_2025'])*(2027-2025)))
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2075']
+                            elif (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0:  #only 2025 missing
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2045']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2045']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2075']
+                            elif (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0:  #only 2075 missing
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2025']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2045']
+                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2045']
+                    elif i == 'Piping':
+                        pass
+            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
+        self.measures['Reliability'].calcSectionReliability()
+
+
 # class Custom(Measure):
 #     # type == 'Custom':
 #     try:

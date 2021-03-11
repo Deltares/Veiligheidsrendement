@@ -3,7 +3,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 import seaborn as sns
-from Measure import Measure , Soilreinforcement, DiaphragmWall, StabilityScreen, VerticalGeotextile, CustomMeasure
+from Measure import Measure, SoilReinforcement, DiaphragmWall, StabilityScreen, VerticalGeotextile, CustomMeasure
 import config
 
 class Solutions:
@@ -24,7 +24,18 @@ class Solutions:
         partials = []
         for i in data.index:
             #TODO depending on data.loc[i].type make correct sublclass
-            self.Measures.append(Measure(data.loc[i]))
+
+            if data.loc[i].Type == 'Soil reinforcement':
+                self.Measures.append(SoilReinforcement(data.loc[i]))
+            elif data.loc[i].Type == 'DiaphragmWall':
+                self.Measures.append(DiaphragmWall(data.loc[i]))
+            elif data.loc[i].Type == 'StabilityScreen':
+                self.Measures.append(StabilityScreen(data.loc[i]))
+            elif data.loc[i].Type == 'VerticalGeotextile':
+                self.Measures.append(VerticalGeotextile(data.loc[i]))
+            elif data.loc[i].Type == 'Custom':
+                self.Measures.append(CustomMeasure(data.loc[i]))
+
 
         self.MeasureTable = pd.DataFrame(columns=['ID', 'Name'])
         for i, measure in enumerate(self.Measures):
@@ -52,17 +63,19 @@ class Solutions:
         for i, measure in enumerate(self.Measures):
             if measure.parameters['available'] == 1:
                 # old: measure.evaluateMeasure(DikeSection, TrajectInfo, preserve_slope = preserve_slope)
+                measure.evaluateMeasure(DikeSection, TrajectInfo, preserve_slope=preserve_slope)
 
-                if measure.parameters['Type'] == 'Soil reinforcement':
-                    Soilreinforcement(measure, DikeSection, TrajectInfo, preserve_slope = preserve_slope)
-                elif measure.parameters['Type'] == 'DiaphragmWall':
-                    DiaphragmWall(measure,DikeSection, TrajectInfo)
-                elif measure.parameters['Type'] == 'StabilityScreen':
-                    StabilityScreen(measure,DikeSection, TrajectInfo)
-                elif measure.parameters['Type'] == 'VerticalGeotextile':
-                    VerticalGeotextile(measure,DikeSection, TrajectInfo)
-                elif measure.parameters['Type'] == 'Custom':
-                    CustomMeasure(measure)
+                # if measure.parameters['Type'] == 'Soil reinforcement':
+                #     A = Soilreinforcement()
+                #     A.evaluateMeasure(measure, DikeSection, TrajectInfo, preserve_slope = preserve_slope)
+                # elif measure.parameters['Type'] == 'DiaphragmWall':
+                #     DiaphragmWall.evaluateMeasure(measure,DikeSection, TrajectInfo)
+                # elif measure.parameters['Type'] == 'StabilityScreen':
+                #     StabilityScreen.evaluateMeasure(measure,DikeSection, TrajectInfo)
+                # elif measure.parameters['Type'] == 'VerticalGeotextile':
+                #     VerticalGeotextile.evaluateMeasure(measure,DikeSection, TrajectInfo)
+                # elif measure.parameters['Type'] == 'Custom':
+                #     CustomMeasure.evaluateMeasure(measure)
             else:
                 removal.append(i)
         #remove measures that are set to unavailable:

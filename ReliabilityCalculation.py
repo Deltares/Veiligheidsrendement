@@ -281,7 +281,11 @@ class MechanismReliability:
                     modelfactor = 1.07 # Spencer, LiftVan = 1.06
                     beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
                 elif strength.input['beta_2025'].size != 0:
-                    #TODO check .gamma_scherm
+                    #TODO check .gamma_schem
+                    if np.size(strength.input['beta_2025']) == 0:
+                        A=1
+                    elif np.size(strength.input['beta_2075']) == 0:
+                        A=1  #TODO uitzoeken waarom beta_2075 hier geen waarde heeft
                     betat = interpolate.interp1d([0, 50], np.concatenate((strength.input['beta_2025'] / self.gamma_schem,
                                                                     strength.input['beta_2075'] / self.gamma_schem)), fill_value='extrapolate')
                     beta = betat(year)
