@@ -270,6 +270,9 @@ class MechanismReliability:
 
     def calcReliability(self, strength = False, load = False, mechanism=None, method='FORM', year=0, TrajectInfo=None):
         #This routine calculates cross-sectional reliability indices based on different types of calculations.
+        if self.type == 'DirectInput':
+            pass
+            #if input consists of 1 or 2 reliability values in time. Here we do an interpolation of those values to derive beta(year)
         if self.type == 'Simple':
             if mechanism == 'StabilityInner':
                 if strength.input['SF_2025'].size != 0:

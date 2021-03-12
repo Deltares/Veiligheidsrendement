@@ -76,61 +76,17 @@ class SoilReinforcement(Measure):
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
                 self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, measure_year=self.parameters['year'])
-                # self.measures[-1]['Reliability'].Mechanisms[i].Input = {}
-
-                for ij in self.measures[-1]['Reliability'].Mechanisms[i].Reliability.keys():
-                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
-                    #Adapt inputs
-                    if float(ij) >= self.parameters['year']: #year of finishing improvement should be given.
-                        if i == 'Overflow':
-                            self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] = \
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] + self.measures[-1]['dcrest']
-                        elif i == 'StabilityInner':
-                            # TODO implement_berm_widening(input_parameters, mechanism, type = 'FragilityCurve/Simple', direction='inward', stabilityscreen = 'no')
-                            #NOTE: we do not account for the slope reduction. This should be implemented for outward reinforcements.
-                            if self.parameters['Direction'] == 'inward':
-                                # distinguish between FC, Beta of SF
-                                if self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].type == 'FragilityCurve':
-                                    #TODO check beta_2025 and beta_2075
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2025'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dBeta/dberm'])
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2075'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
-                                    # self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] = ((beta*0.15) +0.41)*modelfactor
-                                    # self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = ((beta * 0.15) + 0.41) * modelfactor
-                                    # # beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
-                                    # modelfactor = 1.07  # Spencer, LiftVan = 1.06
-                                elif np.size(self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025']) ==1:  # if beta_2025 exists, than beta+dberm*dbeta/dberm
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2025'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dbeta/dberm'])
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
-                                        'beta_2075'] + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
-                                elif np.size(self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025']) ==1:
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] \
-                                                                                                            + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] \
-                                                                                                            + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
-                                if self.parameters['StabilityScreen'] == 'yes':
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] += SFincrease
-                                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] += SFincrease
-
-                            elif self.parameters['Direction'] == 'outward': #not implemented
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] \
-                                                                                                        + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] = self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] \
-                                                                                                        + (self.measures[-1]['dberm'] * self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['dSF/dberm'])
-                        elif i == 'Piping':
-                            self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lvoor'] = \
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lvoor'] + self.measures[-1]['dberm']
-                            self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lachter'] = \
-                                np.max([0.,self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lachter'] - self.measures[-1]['dberm']])
+                for ij, reliability_input in self.measures[-1]['Reliability'].Mechanisms[i].Reliability.items():
+                    #for all time steps considered.
+                    #first copy the data
+                    reliability_input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                    #Adapt inputs for reliability calculation, but only after year of implementation.
+                    if float(ij) >= self.parameters['year']:
+                        reliability_input.input = implement_berm_widening(input=reliability_input.input,measure_input = self.measures[-1],measure_parameters = self.parameters, mechanism=i,computation_type = calc_type)
+                    #put them back in the object
+                    self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input = reliability_input
                 self.measures[-1]['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
             self.measures[-1]['Reliability'].calcSectionReliability()
-            #TODO add interpolation option here (and for the other types)
 
 class DiaphragmWall(Measure):
     # type == 'Diaphragm Wall':
@@ -170,13 +126,12 @@ class DiaphragmWall(Measure):
 
 class StabilityScreen(Measure):
     # type == 'Stability Screen':
-    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False, SFincrease = 0.2):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
         self.measures = {}
         self.measures['Stability Screen'] = 'yes'
-        SFincrease = 0.2
         self.parameters['Depth'] = np.max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'] + 1., 8.])
         self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
         self.measures['Reliability'] = SectionReliability()
@@ -234,59 +189,88 @@ class VerticalGeotextile(Measure):
 
 
 class CustomMeasure(Measure):
-    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
-        type = self.parameters['Type']
-        mechanisms = DikeSection.Reliability.Mechanisms.keys()
+    def set_input(self):
         try:
             data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
+            reliability_headers = []
+            for i, element in enumerate(list(data.columns)):
+                #find and split headers
+                if 'beta' in element:
+                    reliability_headers.append(element.split('_'))
+                    if 'start_id' not in locals():
+                        start_id =i
+            #make 2 dataframes: 1 with base data and 1 with reliability data
+            base_data = data.iloc[:,0:start_id]
+            reliability_data = data.iloc[:,start_id:]
+            reliability_data.columns = pd.MultiIndex.from_arrays([np.array(reliability_headers)[:,1],np.array(reliability_headers)[:,2].astype(np.int32)],names=['mechanism','year'])
+            #TODO reindex the reliability data such that the mechanism is the index and year the column. Now it is a multiindex, which works as well but is not as nice.
         except:
             raise Exception(self.parameters['File'] + ' not found.')
-
+        # self.base_data = base_data
+        self.reliability_data = reliability_data
         self.measures = {}
-        self.measures['Custom'] = 'yes'
-        self.measures['Cost'] = data['cost']
+        self.parameters['year'] = base_data['year'] - config.t_0
+
+        #TODO check these values:
+        self.measures['Cost'] = base_data['cost']
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
 
+    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+        mechanisms = list(DikeSection.Reliability.Mechanisms.keys())
 
+        #first read and set the data:
+        self.set_input()
+
+        #loop over mechanisms to modify the reliability
         for i in mechanisms:
-            calc_type = DikeSection.MechanismData[i][1]
+            calc_type = 'DirectInput'        #new computation type: DirectInput for direct input of beta values
             self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
-                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
-                if float(ij) >= 2025: #data['year']:  #TOdo, wat te doen als data['year'] is empty???
-                    if i == 'Overflow':
-                        pass  # TODO zelfde als hieronder?? beetje veel code
-                    elif i == 'StabilityInner':
-                        if (data['beta_StabilityInner_2025']).size != 0 or (data['beta_StabilityInner_2045']).size !=0 or (data['beta_StabilityInner_2075']).size !=0:
-                            if (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size == 0: #only 2025 available
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2025']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2025']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2025']
-                            elif (data['beta_StabilityInner_2025']).size == 0 and (data['beta_StabilityInner_2045']).size != 0 and (data['beta_StabilityInner_2075']).size == 0: #only 2045 available
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2045']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2045']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2045']
-                            elif (data['beta_StabilityInner_2025']).size == 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0: #only 2075 available
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2075']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2075']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2075']
-                            elif (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0: #only 2045 missing
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2025']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2025']+((2045-2025)*((data['beta_StabilityInner_2075']-data['beta_StabilityInner_2025'])*(2027-2025)))
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2075']
-                            elif (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0:  #only 2025 missing
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2045']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2045']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2075']
-                            elif (data['beta_StabilityInner_2025']).size != 0 and (data['beta_StabilityInner_2045']).size == 0 and (data['beta_StabilityInner_2075']).size != 0:  #only 2075 missing
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = data['beta_StabilityInner_2025']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2045'] = data['beta_StabilityInner_2045']
-                                self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = data['beta_StabilityInner_2045']
-                    elif i == 'Piping':
-                        pass
+                self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij])
+
+                #only adapt after year of implementation:
+                if np.int(ij) >= self.parameters['year'].values:
+                    #remove other input:
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input = {}
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].type = calc_type
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'] = {}
+                    for input in self.reliability_data[i]:
+                        #only read non-nan values:
+                        if not np.isnan(self.reliability_data[i, input].values[0]):
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'][input] = self.reliability_data[i, input].values[0]
             self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
         self.measures['Reliability'].calcSectionReliability()
+
+def implement_berm_widening(input, measure_input, measure_parameters, mechanism,computation_type, SFincrease = 0.2):
+    # this function implements a berm widening based on the relevant inputs
+    if mechanism == 'Overflow':
+        input['h_crest'] = input['h_crest'] + measure_input['dcrest']
+    elif mechanism == 'StabilityInner':
+        #For stability factors
+        if 'SF_2025' in input:
+            #For now, inward and outward are the same!
+            if (measure_parameters['Direction'] == 'inward') or (measure_parameters['Direction'] == 'outward'):
+                input['SF_2025'] = input['SF_2025'] + (measure_input['dberm'] * input['dSF/dberm'])
+                input['SF_2075'] = input['SF_2075'] + (measure_input['dberm'] * input['dSF/dberm'])
+            if measure_parameters['StabilityScreen'] == 'yes':
+                input['SF_2025'] += SFincrease
+                input['SF_2075'] += SFincrease
+        #For betas as input
+        elif 'beta_2025' in input:
+            input['beta_2025'] = input['beta_2025'] + (measure_input['dberm'] * input['dbeta/dberm'])
+            input['beta_2075'] = input['beta_2075'] + (measure_input['dberm'] * input['dSF/dberm'])
+            if measure_parameters['StabilityScreen'] == 'yes':
+                #TODO recompute SFincrease to the correct beta increase
+                raise Warning('Stability screen not implemented, results might be wrong')
+        #For fragility curve as input
+        elif computation_type== 'FragilityCurve':
+            raise Exception('Not implemented')
+            #TODO Here we can develop code to add berms to sections with a fragility curve.
+    elif mechanism == 'Piping':
+        input['Lvoor'] = input['Lvoor'] + measure_input['dberm']
+        input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
+    return input
 
 
 # class Custom(Measure):

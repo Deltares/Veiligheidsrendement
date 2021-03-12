@@ -11,7 +11,7 @@ def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None,
             beta = np.min([beta_hc(h_crest, q_crest), 8.])
         else:
             beta_hc = interpolate.interp1d(h_c, beta, kind='linear', fill_value='extrapolate')
-            beta = np.min([beta_hc(h_crest), 8.])
+            beta = np.min([beta_hc(h_crest), [8.]])
         Pf = ProbabilisticFunctions.beta_to_pf(beta)
         if not iterative_solve:
             return beta, Pf

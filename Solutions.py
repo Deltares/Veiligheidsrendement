@@ -101,17 +101,17 @@ class Solutions:
         for i, measure in enumerate(self.Measures):
             if isinstance(measure.measures, list):
                 #if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
-                typee = measure.parameters['Type']
+                type = measure.parameters['Type']
 
                 for j in range(len(measure.measures)):
                     measure_in = []
                     reliability_in = []
-                    if typee == 'Soil reinforcement':
+                    if type == 'Soil reinforcement':
                         designvars = ((measure.measures[j]['dcrest'], measure.measures[j]['dberm']))
 
                     cost = measure.measures[j]['Cost']
                     measure_in.append(str(measure.parameters['ID']))
-                    measure_in.append(typee)
+                    measure_in.append(type)
                     measure_in.append(measure.parameters['Class'])
                     measure_in.append(measure.parameters['year'])
                     if splitparams:
@@ -133,20 +133,20 @@ class Solutions:
 
             elif isinstance(measure.measures, dict):
                 ID = str(measure.parameters['ID'])
-                typee = measure.parameters['Type']
-                if typee == 'Vertical Geotextile':
+                type = measure.parameters['Type']
+                if type == 'Vertical Geotextile':
                     designvars = measure.measures['VZG']
 
-                if typee == 'Diaphragm Wall':
+                if type == 'Diaphragm Wall':
                     designvars = measure.measures['DiaphragmWall']
 
-                classe = measure.parameters['Class']
-                yeare  = measure.parameters['year']
+                measure_class = measure.parameters['Class']
+                year  = measure.parameters['year']
                 cost = measure.measures['Cost']
                 if splitparams:
-                    inputs_m.append([ID, typee, classe, yeare, designvars, -999 , -999 ,cost])
+                    inputs_m.append([ID, type, measure_class, year, designvars, -999 , -999 ,cost])
                 else:
-                    inputs_m.append([ID, typee, classe, yeare, designvars, cost])
+                    inputs_m.append([ID, type, measure_class, year, designvars, cost])
                 betas = measure.measures['Reliability'].SectionReliability
                 beta = []
                 for ij in config.mechanisms + ['Section']:
