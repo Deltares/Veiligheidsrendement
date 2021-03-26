@@ -203,7 +203,7 @@ class CustomMeasure(Measure):
             base_data = data.iloc[:,0:start_id]
             reliability_data = data.iloc[:,start_id:]
             reliability_data.columns = pd.MultiIndex.from_arrays([np.array(reliability_headers)[:,1],np.array(reliability_headers)[:,2].astype(np.int32)],names=['mechanism','year'])
-            #TODO reindex the reliability data such that the mechanism is the index and year the column. Now it is a multiindex, which works as well but is not as nice.
+            #TODO reindex the reliability data such that the mechanism is the index and year the column. Now it is a multiindex, hwich works as well but is not as nice.
         except:
             raise Exception(self.parameters['File'] + ' not found.')
         # self.base_data = base_data
@@ -212,6 +212,13 @@ class CustomMeasure(Measure):
         self.parameters['year'] = base_data['year'] - config.t_0
 
         #TODO check these values:
+        #for testing:
+        print('test values in Custom Measure')
+        # base_data['kruinhoogte']=6.
+        base_data['extra kwelweg'] = 10.
+
+        self.parameters['h_crest_new'] = base_data['kruinhoogte']
+        self.parameters['L_added'] = base_data['extra kwelweg']
         self.measures['Cost'] = base_data['cost']
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
@@ -224,23 +231,36 @@ class CustomMeasure(Measure):
 
         #loop over mechanisms to modify the reliability
         for i in mechanisms:
-            calc_type = 'DirectInput'        #new computation type: DirectInput for direct input of beta values
-            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
+
+
+            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, computation_type=False)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij])
 
                 #only adapt after year of implementation:
                 if np.int(ij) >= self.parameters['year'].values:
                     #remove other input:
-                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input = {}
-                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].type = calc_type
-                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'] = {}
-                    for input in self.reliability_data[i]:
-                        #only read non-nan values:
-                        if not np.isnan(self.reliability_data[i, input].values[0]):
-                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'][input] = self.reliability_data[i, input].values[0]
+                    if i == 'Overflow' and self.parameters['h_crest_new'].size != 0:
+                        #type: simple
+
+                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].h_crest = self.parameters['h_crest_new']
+                        pass
+                        #change crest
+                    elif i == 'Piping':
+                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].Lvoor += self.parameters['L_added']
+                        #change Lvoor
+                    else:
+                        #Direct input: remove existing inputs and replace with beta
+                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].type = 'DirectInput'
+                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input = {}
+                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'] = {}
+                        for input in self.reliability_data[i]:
+                            #only read non-nan values:
+                            if not np.isnan(self.reliability_data[i, input].values[0]):
+                                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'][input-config.t_0] = self.reliability_data[i, input].values[0]
             self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
         self.measures['Reliability'].calcSectionReliability()
+
 
 def implement_berm_widening(input, measure_input, measure_parameters, mechanism,computation_type, SFincrease = 0.2):
     # this function implements a berm widening based on the relevant inputs
@@ -286,6 +306,7 @@ def implement_berm_widening(input, measure_input, measure_parameters, mechanism,
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
 def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, bermheight = 2, slope_in = False):
+
     if len(initial) == 6:
         bermheight = initial.iloc[2]['z']
     elif len(initial) == 4:
@@ -298,11 +319,23 @@ def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, be
     new_crest = cur_crest+dcrest
     if config.geometry_plot:
         plt.plot(geometry[:, 0], geometry[:, 1],'k')
+
     if direction == 'outward':
         print("WARNING: outward reinforcement is NOT UP TO DATE!!!!")
+
+        # nieuwe opzet:
+        # # if outward:
+        #     verplaats buitenkruin en buitenteen
+        #     ->tussen geometrie 1
+        #     afgraven
+        #     ->tussen geometrie 2
+        # berm er aan plakken. Ook bij alleen binnenwaarts
+        # volumes berekenen (totaal extra, en totaal "verplaatst in profiel")
+        # optional extension: optimize amount of outward/inward reinforcement
+
         new_geometry = copy.deepcopy(geometry)
         for i in range(len(new_geometry)):
-            #Run over points from the outside.
+        #Run over points from the outside.
             if i > 0:
                 slope = (geometry[i - 1][1] - geometry[i][1]) / (geometry[i - 1][0] - geometry[i][0])
                 if slope > 0 and new_geometry[i, 1] == cur_crest:  # outer slope
@@ -314,10 +347,8 @@ def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, be
                 elif slope < 0 and new_geometry[i, 1] != cur_crest:  # This is the inner slope
                     new_geometry[i][0] = new_geometry[i - 1][0] + (new_geometry[i - 1][1] - new_geometry[i][1]) / np.abs(slope)
                     # new_geometry[i][0]-(geometry[i-1][0] - new_geometry[i-1][0])
-
             else:
                 new_geometry[i][0] = new_geometry[i][0]
-
         if dberm > 0:
             slope = (geometry[i - 1][1] - geometry[i][1]) / (geometry[i - 1][0] - geometry[i][0])
             x1 = new_geometry[i - 1][0] + (new_geometry[-2][1] - (new_geometry[-1][1] + bermheight)) / np.abs(slope)
@@ -358,7 +389,7 @@ def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, be
                     new_geometry[i][0] = new_geometry[i + 1][0] - (new_geometry[i + 1][1] - new_geometry[i][1]) * slope_in
                 else:
                     new_geometry[i][0] = new_geometry[i + 1][0] + (new_geometry[i][1] - new_geometry[i + 1][
-                        1])/np.abs(slope)
+                         1])/np.abs(slope)
                 # new_geometry[i-1][0] = new_geometry[i][0] - (new_geometry[i][1] - new_geometry[i-1][1]) * slope_in
 
         if dberm > 0 and len(geometry) == 4:     #add a berm if the points dont exist yet
@@ -399,58 +430,58 @@ def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, be
 
 # script to calculate the area difference of a new geometry after reinforcement (compared to old one)
 def calculateArea(geometry):
-    extra = np.empty((1, 2))
-    if geometry[-1][1] > geometry[0][1]:
-        extra[0, 0] = geometry[-1][0]
-        extra[0, 1] = geometry[0][1]
-        geometry = np.append(geometry, np.array(extra), axis=0)
-    elif geometry[-1][1] < geometry[0][1]:
-        extra[0, 0] = geometry[0][0]; extra[0, 1] = geometry[-1][1]
-        geometry = np.insert(geometry, [0], np.array(extra), axis=0)
+ extra = np.empty((1, 2))
+ if geometry[-1][1] > geometry[0][1]:
+     extra[0, 0] = geometry[-1][0]
+     extra[0, 1] = geometry[0][1]
+     geometry = np.append(geometry, np.array(extra), axis=0)
+ elif geometry[-1][1] < geometry[0][1]:
+     extra[0, 0] = geometry[0][0]; extra[0, 1] = geometry[-1][1]
+     geometry = np.insert(geometry, [0], np.array(extra), axis=0)
 
-    bottomlevel = np.min(geometry[:, 1])
-    area = 0
+ bottomlevel = np.min(geometry[:, 1])
+ area = 0
 
-    for i in range(1, len(geometry)):
-        a = np.abs(geometry[i-1][0] - geometry[i][0]) * (0.5 * np.abs(geometry[i - 1][1]-geometry[i][1]) + 1.0 * (np.min((geometry[i-1][1], geometry[i][1])) - bottomlevel))
-        area += a
+ for i in range(1, len(geometry)):
+     a = np.abs(geometry[i-1][0] - geometry[i][0]) * (0.5 * np.abs(geometry[i - 1][1]-geometry[i][1]) + 1.0 * (np.min((geometry[i-1][1], geometry[i][1])) - bottomlevel))
+     area += a
 
-    polypoints= []
+ polypoints= []
 
-    for i in range(len(geometry)):
-        polypoints.append((geometry[i, 0], geometry[i, 1]))
-    polygon = Polygon(polypoints)
-    return area, polygon
+ for i in range(len(geometry)):
+     polypoints.append((geometry[i, 0], geometry[i, 1]))
+ polygon = Polygon(polypoints)
+ return area, polygon
 
 #Script to determine the costs of a reinforcement:
 def DetermineCosts(parameters, type, length, reinf_pars = None, housing = None, area_difference = None):
-    if type == 'Soil reinforcement':
-        if parameters['StabilityScreen'] == 'no':
-            C = parameters['C_start'] + area_difference*parameters['C_unit'] * length
-            if isinstance(housing, pd.DataFrame) and reinf_pars[1] > 0.:
-                C += parameters['C_house'] * housing.loc[float(reinf_pars[1])]['cumulative']
+ if type == 'Soil reinforcement':
+     if parameters['StabilityScreen'] == 'no':
+         C = parameters['C_start'] + area_difference*parameters['C_unit'] * length
+         if isinstance(housing, pd.DataFrame) and reinf_pars[1] > 0.:
+             C += parameters['C_house'] * housing.loc[float(reinf_pars[1])]['cumulative']
 
-        elif parameters['StabilityScreen'] == 'yes':
-            C = parameters['C_start'] + area_difference*parameters['C_unit'] * length + parameters['C_unit2'] * parameters['Depth'] * length
-            if isinstance(housing, pd.DataFrame) and reinf_pars[1] > 0.:
-                C += parameters['C_house'] * housing.loc[float(reinf_pars[1])]['cumulative']
+     elif parameters['StabilityScreen'] == 'yes':
+         C = parameters['C_start'] + area_difference*parameters['C_unit'] * length + parameters['C_unit2'] * parameters['Depth'] * length
+         if isinstance(housing, pd.DataFrame) and reinf_pars[1] > 0.:
+             C += parameters['C_house'] * housing.loc[float(reinf_pars[1])]['cumulative']
 
-        #x = map(int, self.parameters['house_removal'].split(';'))
-    elif type == 'Vertical Geotextile':
-        C = parameters['C_unit'] * length
-    elif type == 'Diaphragm Wall':
-        C = parameters['C_unit'] * length
-    elif type == 'Stability Screen':
-        C = parameters['C_unit'] * parameters['Depth'] * length
-    else:
-        print('Unknown type')
-    return C
+     #x = map(int, self.parameters['house_removal'].split(';'))
+ elif type == 'Vertical Geotextile':
+     C = parameters['C_unit'] * length
+ elif type == 'Diaphragm Wall':
+     C = parameters['C_unit'] * length
+ elif type == 'Stability Screen':
+     C = parameters['C_unit'] * parameters['Depth'] * length
+ else:
+     print('Unknown type')
+ return C
 
 #Script to determine the required crest height for a certain year
 def ProbabilisticDesign(design_variable, strength_input, Pt, horizon = 50, loadchange = 0, mechanism='Overflow'):
-    if mechanism == 'Overflow':
-        #determine the crest required for the target
-        h_crest, beta = OverflowSimple(strength_input['h_crest'], strength_input['q_crest'], strength_input['h_c'], strength_input['q_c'], strength_input['beta'], mode='design', Pt=Pt, design_variable=design_variable)
-        #add temporal changes due to settlement and climate change
-        h_crest = h_crest + horizon * (strength_input['dhc(t)'] + loadchange)
-        return h_crest
+ if mechanism == 'Overflow':
+     #determine the crest required for the target
+     h_crest, beta = OverflowSimple(strength_input['h_crest'], strength_input['q_crest'], strength_input['h_c'], strength_input['q_c'], strength_input['beta'], mode='design', Pt=Pt, design_variable=design_variable)
+     #add temporal changes due to settlement and climate change
+     h_crest = h_crest + horizon * (strength_input['dhc(t)'] + loadchange)
+     return h_crest

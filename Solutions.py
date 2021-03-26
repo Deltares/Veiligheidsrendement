@@ -140,8 +140,11 @@ class Solutions:
                 if type == 'Diaphragm Wall':
                     designvars = measure.measures['DiaphragmWall']
 
+                if type == 'Custom':
+                    designvars = 1.  ##TODO check
+
                 measure_class = measure.parameters['Class']
-                year  = measure.parameters['year']
+                year = measure.parameters['year']
                 cost = measure.measures['Cost']
                 if splitparams:
                     inputs_m.append([ID, type, measure_class, year, designvars, -999 , -999 ,cost])

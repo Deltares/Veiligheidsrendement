@@ -1,3 +1,5 @@
+from typing import Union
+
 try:
     import cPickle as pickle
 except:
@@ -8,7 +10,7 @@ import pandas as pd
 from openpyxl import load_workbook
 import matplotlib.pyplot as plt
 import openturns as ot
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from pathlib import Path
 import numpy as np
 import os
@@ -132,7 +134,7 @@ def getMeasureTable(AllSolutions,language ='NL',abbrev=False):
     OverallMeasureTable = pd.DataFrame([], columns=['ID', 'Name'])
     for i in AllSolutions:
         OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].MeasureTable])
-    OverallMeasureTable = OverallMeasureTable.drop_duplicates(subset='ID')
+    OverallMeasureTable: Union[DataFrame, None, Series] = OverallMeasureTable.drop_duplicates(subset='ID')
     if (np.max(OverallMeasureTable['Name'].str.find('Grondversterking').values) > -1) and (language == 'EN'):
         OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking binnenwaarts', 'Soil based')
         if abbrev:

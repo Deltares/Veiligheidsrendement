@@ -327,6 +327,9 @@ def OverflowBundling(Strategy, init_overflow_risk, BCref,existing_investment,
                 year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i,1]-1]['year'].values[0][-1]
             elif isinstance(Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i,1]-1]['year'].values[0],int):
                 year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i,1]-1]['year'].values[0]
+            else:
+                #TODO: check float
+                year_of_investment = Strategy.options_geotechnical[traject.Sections[i].name].iloc[existing_investments[i, 1] - 1]['year'].values[0]
 
         #main routine:
         GeotechnicalOptions = Strategy.options_geotechnical[traject.Sections[i].name]

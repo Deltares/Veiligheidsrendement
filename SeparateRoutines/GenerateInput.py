@@ -24,6 +24,7 @@ def vka_measures(measures_basis, measures_custom_all, measures_location, vka_nam
     measure_custom_1 = measures_custom_all[measures_custom_all['variantnaam'] == measures_custom_vka1]
     naam= path.joinpath(traject, 'Output/Measures', measures_custom_vka1 + '.csv')
     measure_custom_1.to_csv(naam, index=False)
+    measures_basis.loc[j, 'year'] = int(measure_custom_1.year-2025) #TODO, check 2025
     return(measures_basis)
 
 def main():

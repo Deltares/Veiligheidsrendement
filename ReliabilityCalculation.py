@@ -166,6 +166,7 @@ class MechanismReliabilityCollection:
         plt.ylim([0,1])
         plt.title(r'Influence coefficients $\alpha$ in time')
         plt.show()
+
 class MechanismReliability:
     #This class contains evaluations of the reliability for a mechanism in a given year.
     def __init__(self, mechanism, type, copy_or_calculate='calculate'):
@@ -271,8 +272,12 @@ class MechanismReliability:
     def calcReliability(self, strength = False, load = False, mechanism=None, method='FORM', year=0, TrajectInfo=None):
         #This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == 'DirectInput':
-            pass
-            #if input consists of 1 or 2 reliability values in time. Here we do an interpolation of those values to derive beta(year)
+            t_grid = list(self.Input.input['beta'].keys())
+            beta_grid = list(self.Input.input['beta'].values())
+            betat = interpolate.interp1d(t_grid,beta_grid,fill_value='extrapolate')
+            beta = np.float32(betat(year))
+            self.beta = beta
+            self.Pf = beta_to_pf(self.beta)
         if self.type == 'Simple':
             if mechanism == 'StabilityInner':
                 if strength.input['SF_2025'].size != 0:
@@ -284,11 +289,10 @@ class MechanismReliability:
                     modelfactor = 1.07 # Spencer, LiftVan = 1.06
                     beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
                 elif strength.input['beta_2025'].size != 0:
-                    #TODO check .gamma_schem
-                    if np.size(strength.input['beta_2025']) == 0:
-                        A=1
-                    elif np.size(strength.input['beta_2075']) == 0:
-                        A=1  #TODO uitzoeken waarom beta_2075 hier geen waarde heeft
+                    # if np.size(strength.input['beta_2025']) == 0:
+                    #                     #     A=1
+                    #                     # elif np.size(strength.input['beta_2075']) == 0:
+                    #                     #     A=1
                     betat = interpolate.interp1d([0, 50], np.concatenate((strength.input['beta_2025'] / self.gamma_schem,
                                                                     strength.input['beta_2075'] / self.gamma_schem)), fill_value='extrapolate')
                     beta = betat(year)
