@@ -96,10 +96,11 @@ def runFullModel(TrajectObject):
     # Then after selecting a strategy you only need to throw out invalid combinations (e.g., for Target Reliability throw out all investments at t=20
 
     #Either load existing results or compute:
-    if config.reuse_output and os.path.exists(config.directory.joinpath('AfterStep2.out')):
-        my_shelf = shelve.open(config.directory.joinpath('AfterStep2.out'))
+    if config.reuse_output and os.path.exists(config.directory.joinpath('AfterStep2.out.dat')):
+        my_shelf = shelve.open(str(config.directory.joinpath('AfterStep2.out')))
         for key in my_shelf:
             AllSolutions = my_shelf[key]
+            print('Loaded AllSolutions from file')
         my_shelf.close()
     else:
         AllSolutions = {}
@@ -127,10 +128,10 @@ def runFullModel(TrajectObject):
         start = time.time()
 
     #If desired: plot beta(t)-cost for all measures at a section:
-    if config.plot_reliability_in_time:
+    if config.plot_measure_reliability:
         betaind_array = []
 
-        for i in config.years:
+        for i in config.T:
             betaind_array.append('beta' + str(i))
 
         plt_mech = ['Section', 'Piping', 'StabilityInner', 'Overflow']
@@ -144,81 +145,88 @@ def runFullModel(TrajectObject):
                     plt.savefig(config.directory.joinpath('figures', i.name, 'Measures', mech + '_' + betaind + '.png'), bbox_inches='tight')
                     plt.close(1001)
         print('Finished making beta plots')
+    #Either load existing results or compute:
+    if config.reuse_output and os.path.exists(config.directory.joinpath('FINALRESULT.out.dat')):
+        my_shelf = shelve.open(str(config.directory.joinpath('FINALRESULT.out')))
+        AllStrategies = my_shelf['AllStrategies']
+        print('Loaded AllStrategies from file')
 
+        my_shelf.close()
+    else:
     ## STEP 3: EVALUATE THE STRATEGIES
-    AllStrategies = []
-    for i in config.design_methods:
-        if i in ['TC', 'Total Cost', 'Optimized', 'Greedy', 'Veiligheidsrendement']:
-            # Initialize a GreedyStrategy:
-            GreedyOptimization = GreedyStrategy(i)
+        AllStrategies = []
+        for i in config.design_methods:
+            if i in ['TC', 'Total Cost', 'Optimized', 'Greedy', 'Veiligheidsrendement']:
+                # Initialize a GreedyStrategy:
+                GreedyOptimization = GreedyStrategy(i)
 
-            # Combine available measures
-            GreedyOptimization.combine(TrajectObject, AllSolutions, filtering='off', splitparams=True)
+                # Combine available measures
+                GreedyOptimization.combine(TrajectObject, AllSolutions, filtering='off', splitparams=True)
 
-            if config.timing:
-                print('Combined measures for '+ i)
-                print("Time elapsed: " + str(time.time() - start) + ' seconds')
-                start = time.time()
+                if config.timing:
+                    print('Combined measures for '+ i)
+                    print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                    start = time.time()
 
-            # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            GreedyOptimization.evaluate(TrajectObject, AllSolutions, splitparams=True, setting='cautious', f_cautious=1.5,
-                                        max_count = 300, BCstop=0.1)
+                # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
+                GreedyOptimization.evaluate(TrajectObject, AllSolutions, splitparams=True, setting='cautious', f_cautious=1.5,
+                                            max_count = 300, BCstop=0.1)
 
-            # plot beta time for all measure steps for each strategy
-            GreedyOptimization.plotBetaTime(TrajectObject, typ='single', path=config.directory)
+                # plot beta time for all measure steps for each strategy
+                GreedyOptimization.plotBetaTime(TrajectObject, typ='single', path=config.directory)
 
-            GreedyOptimization = replaceNames(GreedyOptimization, AllSolutions)
-            cost_Greedy = GreedyOptimization.determineRiskCostCurve(TrajectObject)
+                GreedyOptimization = replaceNames(GreedyOptimization, AllSolutions)
+                cost_Greedy = GreedyOptimization.determineRiskCostCurve(TrajectObject)
 
-            # write to csv's
-            GreedyOptimization.TakenMeasures.to_csv(config.directory.joinpath('results', 'TakenMeasures_' + GreedyOptimization.type + '.csv'))
-            pd.DataFrame(np.array([cost_Greedy['LCC'], cost_Greedy['TR'], np.add(cost_Greedy['LCC'], cost_Greedy['TR'])]).T, columns=['LCC', 'TR', 'TC']).to_csv(
-                config.directory.joinpath('results', 'TotalCostValues_Greedy.csv'), float_format='%.1f')
-            GreedyOptimization.makeSolution(config.directory.joinpath('results', 'TakenMeasures_Optimal_' + GreedyOptimization.type + '.csv'), step=cost_Greedy['TC_min'] + 1, type='Optimal')
-            GreedyOptimization.makeSolution(config.directory.joinpath('results', 'FinalMeasures_' + GreedyOptimization.type + '.csv'), type='Final')
-            for j in GreedyOptimization.options:
-                GreedyOptimization.options[j].to_csv(config.directory.joinpath('results', j + '_Options_' + GreedyOptimization.type + '.csv'))
-            costs = GreedyOptimization.determineRiskCostCurve(TrajectObject)
-            TR = costs['TR']
-            LCC = costs['LCC']
-            pd.DataFrame(np.array([TR,LCC]).reshape((len(TR),2)),columns=['TR','LCC']).to_csv(config.directory.joinpath('results','TotalRiskCost.csv'))
-            AllStrategies.append(GreedyOptimization)
+                # write to csv's
+                GreedyOptimization.TakenMeasures.to_csv(config.directory.joinpath('results', 'TakenMeasures_' + GreedyOptimization.type + '.csv'))
+                pd.DataFrame(np.array([cost_Greedy['LCC'], cost_Greedy['TR'], np.add(cost_Greedy['LCC'], cost_Greedy['TR'])]).T, columns=['LCC', 'TR', 'TC']).to_csv(
+                    config.directory.joinpath('results', 'TotalCostValues_Greedy.csv'), float_format='%.1f')
+                GreedyOptimization.makeSolution(config.directory.joinpath('results', 'TakenMeasures_Optimal_' + GreedyOptimization.type + '.csv'), step=cost_Greedy['TC_min'] + 1, type='Optimal')
+                GreedyOptimization.makeSolution(config.directory.joinpath('results', 'FinalMeasures_' + GreedyOptimization.type + '.csv'), type='Final')
+                for j in GreedyOptimization.options:
+                    GreedyOptimization.options[j].to_csv(config.directory.joinpath('results', j + '_Options_' + GreedyOptimization.type + '.csv'))
+                costs = GreedyOptimization.determineRiskCostCurve(TrajectObject)
+                TR = costs['TR']
+                LCC = costs['LCC']
+                pd.DataFrame(np.array([TR,LCC]).reshape((len(TR),2)),columns=['TR','LCC']).to_csv(config.directory.joinpath('results','TotalRiskCost.csv'))
+                AllStrategies.append(GreedyOptimization)
 
-            if config.timing:
-                print('Determined strategy for '+ i)
-                print("Time elapsed: " + str(time.time() - start) + ' seconds')
-                start = time.time()
+                if config.timing:
+                    print('Determined strategy for '+ i)
+                    print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                    start = time.time()
 
-        elif i in ['OI','TargetReliability','Doorsnede-eisen']:
-            # Initialize a strategy type (i.e combination of objective & constraints)
-            TargetReliabilityBased = TargetReliabilityStrategy(i)
-            # Combine available measures
-            TargetReliabilityBased.combine(TrajectObject, AllSolutions, filtering='off', splitparams=True)
+            elif i in ['OI','TargetReliability','Doorsnede-eisen']:
+                # Initialize a strategy type (i.e combination of objective & constraints)
+                TargetReliabilityBased = TargetReliabilityStrategy(i)
+                # Combine available measures
+                TargetReliabilityBased.combine(TrajectObject, AllSolutions, filtering='off', splitparams=True)
 
-            if config.timing:
-                print('Combined measures for '+ i)
-                print("Time elapsed: " + str(time.time() - start) + ' seconds')
-                start = time.time()
+                if config.timing:
+                    print('Combined measures for '+ i)
+                    print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                    start = time.time()
 
-            # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-            TargetReliabilityBased.evaluate(TrajectObject, AllSolutions, splitparams=True)
-            TargetReliabilityBased.makeSolution(config.directory.joinpath('results', 'FinalMeasures_' + TargetReliabilityBased.type + '.csv'), type='Final')
+                # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
+                TargetReliabilityBased.evaluate(TrajectObject, AllSolutions, splitparams=True)
+                TargetReliabilityBased.makeSolution(config.directory.joinpath('results', 'FinalMeasures_' + TargetReliabilityBased.type + '.csv'), type='Final')
 
-            # plot beta time for all measure steps for each strategy
-            TargetReliabilityBased.plotBetaTime(TrajectObject, typ='single', path=config.directory, horizon=np.max(config.T))
+                # plot beta time for all measure steps for each strategy
+                TargetReliabilityBased.plotBetaTime(TrajectObject, typ='single', path=config.directory, horizon=np.max(config.T))
 
-            TargetReliabilityBased = replaceNames(TargetReliabilityBased, AllSolutions)
-            # write to csv's
-            TargetReliabilityBased.TakenMeasures.to_csv(config.directory.joinpath('results', 'TakenMeasures_' + TargetReliabilityBased.type + '.csv'))
-            for j in TargetReliabilityBased.options:
-                TargetReliabilityBased.options[j].to_csv(config.directory.joinpath('results', j + '_Options_' + TargetReliabilityBased.type + '.csv'))
+                TargetReliabilityBased = replaceNames(TargetReliabilityBased, AllSolutions)
+                # write to csv's
+                TargetReliabilityBased.TakenMeasures.to_csv(config.directory.joinpath('results', 'TakenMeasures_' + TargetReliabilityBased.type + '.csv'))
+                for j in TargetReliabilityBased.options:
+                    TargetReliabilityBased.options[j].to_csv(config.directory.joinpath('results', j + '_Options_' + TargetReliabilityBased.type + '.csv'))
 
-            AllStrategies.append(TargetReliabilityBased)
+                AllStrategies.append(TargetReliabilityBased)
 
-            if config.timing:
-                print('Determined strategy for '+ i)
-                print("Time elapsed: " + str(time.time() - start) + ' seconds')
-                start = time.time()
+                if config.timing:
+                    print('Determined strategy for '+ i)
+                    print("Time elapsed: " + str(time.time() - start) + ' seconds')
+                    start = time.time()
 
     if config.shelves:
         # Store final results

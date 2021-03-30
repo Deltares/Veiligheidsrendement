@@ -44,20 +44,17 @@ def main():
         #load existing results
         filename = config.directory.joinpath('AfterStep1.out')
         my_shelf = shelve.open(str(filename))
-        for key in my_shelf:
-            TrajectObject = my_shelf[key]
+        TrajectObject = my_shelf['TrajectObject']
         my_shelf.close()
     
         filename = config.directory.joinpath('AfterStep2.out')
         my_shelf = shelve.open(str(filename))
-        for key in my_shelf:
-            AllSolutions = my_shelf[key]
+        AllSolutions = my_shelf['AllSolutions']
         my_shelf.close()
     
         filename = config.directory.joinpath('FINALRESULT.out')
         my_shelf = shelve.open(str(filename))
-        for key in my_shelf:
-            AllStrategies = my_shelf[key]
+        AllStrategies = my_shelf['AllStrategies']
         my_shelf.close()
     
     #Now some general output figures and csv's are generated:

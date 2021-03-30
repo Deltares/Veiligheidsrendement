@@ -280,22 +280,23 @@ class MechanismReliability:
             self.Pf = beta_to_pf(self.beta)
         if self.type == 'Simple':
             if mechanism == 'StabilityInner':
-                if strength.input['SF_2025'].size != 0:
+                if 'SF_2025' in strength.input:
                     #Simple interpolation of two safety factors and translation to a value of beta at 'year'.
                     #In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
                     SFt = interpolate.interp1d([0, 50],np.concatenate((strength.input['SF_2025']/self.gamma_schem,
                                                                        strength.input['SF_2075']/self.gamma_schem)),fill_value='extrapolate')
                     SF = SFt(year)
-                    modelfactor = 1.07 # Spencer, LiftVan = 1.06
-                    beta = np.min([((SF/modelfactor)-0.41)/0.15, 8])
-                elif strength.input['beta_2025'].size != 0:
+                    beta = np.min([beta_SF_StabilityInner(SF,type='SF'),8.])
+                elif 'beta_2025' in strength.input:
                     # if np.size(strength.input['beta_2025']) == 0:
                     #                     #     A=1
                     #                     # elif np.size(strength.input['beta_2075']) == 0:
                     #                     #     A=1
-                    betat = interpolate.interp1d([0, 50], np.concatenate((strength.input['beta_2025'] / self.gamma_schem,
-                                                                    strength.input['beta_2075'] / self.gamma_schem)), fill_value='extrapolate')
+                    betat = interpolate.interp1d([0, 50], np.array([np.divide(strength.input['beta_2025'],self.gamma_schem),
+                                                                    np.divide(strength.input['beta_2075'],self.gamma_schem)]).flatten()
+                                                        , fill_value='extrapolate')
                     beta = betat(year)
+                    beta = np.min([beta,8])
                 else:
                     raise Exception('Warning: No inputvalues SF or Beta StabilityInner')
                 # Check if there is an elimination measure present (diaphragm wall)
@@ -495,8 +496,20 @@ class MechanismInput:
                     self.input['FC'] = FC
 
             else:
+
                 x = data.iloc[i][:].values
                 x = x.astype(np.float32)
                 self.input[data.index[i]] = x[~np.isnan(x)]
+                if len( self.input[data.index[i]]) == 0:
+                    self.input.pop(data.index[i])
                 if data.index[i][-3:] == '(t)':
                     self.temporals.append(data.index[i])
+
+def beta_SF_StabilityInner(SF_or_beta, type = False, modelfactor = 1.07):
+    """Careful: ensure that upon using this function you clearly define the input parameter!"""
+    if type == 'SF':
+        beta = np.min([((SF_or_beta / modelfactor) - 0.41) / 0.15, 8])
+        return beta
+    elif type == 'beta':
+        SF = (0.41+0.15*SF_or_beta) * modelfactor
+        return SF

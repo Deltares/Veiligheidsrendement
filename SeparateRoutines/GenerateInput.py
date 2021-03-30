@@ -11,20 +11,28 @@ from Mechanisms import OverflowSimple
 import numpy as np
 from scipy.optimize import fsolve
 import shutil
-
-def vka_measures(measures_basis, measures_custom_all, measures_location, vka_name, path, traject):
+import copy
+def vka_measures(measures_basis, measures_custom_all, measures_location, path, traject):
     j=len(measures_basis.index)
-    measures_custom_vka1 =  measures_location.loc[vka_name].Value
-    measures_basis.loc[j,'Name']=measures_custom_vka1
-    measures_basis.loc[j,'Type']='Custom'
-    measures_basis.loc[j,'File']= measures_custom_vka1 + '.csv'
-    measures_basis.loc[j,'available']= 1   
-    measures_basis.loc[j,'ID']= j + 1            
-    #write custom to csv
-    measure_custom_1 = measures_custom_all[measures_custom_all['variantnaam'] == measures_custom_vka1]
-    naam= path.joinpath(traject, 'Output/Measures', measures_custom_vka1 + '.csv')
-    measure_custom_1.to_csv(naam, index=False)
-    measures_basis.loc[j, 'year'] = int(measure_custom_1.year-2025) #TODO, check 2025
+    vka_cols = ['voorkeursalternatief_1', 'voorkeursalternatief_2', 'voorkeursalternatief_3']
+
+    print()
+    #add derivation of vka names
+    vkas = measures_location.loc[vka_cols].dropna()
+    for i, measures_custom_vka in vkas.iterrows():
+        measures_basis.loc[j, 'Name'] = measures_custom_vka.Value
+        measures_basis.loc[j, 'Type'] = 'Custom'
+        #TODO think about how custom measures could be combined with standard measures (or whether this should not be done)
+        measures_basis.loc[j, 'Class'] = 'full'
+
+        measures_basis.loc[j, 'File'] = measures_custom_vka.Value + '.csv'
+        measures_basis.loc[j, 'available'] = 1
+        measures_basis.loc[j, 'ID'] = j + 1
+        #write custom to csv
+        measure_custom_1 = measures_custom_all[measures_custom_all['variantnaam'] == measures_custom_vka.Value]
+        naam= path.joinpath(traject, 'Output/Measures', measures_custom_vka.Value + '.csv')
+        measure_custom_1.to_csv(naam, index=False)
+        measures_basis.loc[j, 'year'] = int(measure_custom_1.year-2025) #TODO, check 2025
     return(measures_basis)
 
 def main():
@@ -32,11 +40,11 @@ def main():
     
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
     # path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Testcase_10sections_2021')
-    path = Path(r'..\..\data\case_input\Testcase_10sections_2021')
+    path = Path(r'..\..\data\case_input\SAFE_v0.6')
     
     #Settings:
     traject = '16-4'                                                                            #Traject to consider
-    file_name = 'Dijkvakindeling_v0.2.xlsx'                                                          #Name of main file
+    file_name = 'Dijkvakindeling_v0.6.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.
                                                                                                 # WARNING: this overwrites existing values!
@@ -71,7 +79,7 @@ def main():
     Piping_data = df['Info voor Piping'].loc[:, piping_col]
     
     #Sheet for housing:
-    housing_col = ['Naam traject', 'Naam dijkvak', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]    
+    housing_col = ['Naam traject', 'Naam dijkvak'] + list(range(1,51))
     Housing = df['Info voor huizen'].loc[:, housing_col]
     
     #Sheet for measures:   
@@ -221,17 +229,20 @@ def main():
             measures_location.columns = ['Name', "Value"]
             measures_location = measures_location.set_index('Name')
             # read tables with measures
-            measures_basis = pd.read_csv(path.joinpath(traject, 'Input/measures', measures_location.loc['Basismaatregelen'].Value), delimiter=';') 
+            measures_basis = pd.read_csv(path.joinpath(traject, 'Input/measures', measures_location.loc['Basismaatregelen'].Value), delimiter=',')
             measures_custom_all = pd.read_csv(path.joinpath(traject, 'Input/measures/custom_measures.csv'))
+            vka_cols = ['voorkeursalternatief_1','voorkeursalternatief_2','voorkeursalternatief_3']
             #add voorkeursalternatieven to table with measeares. 
-            if (~pd.isna(measures_location.loc['voorkeursalternatief_1'].Value)== -1):
-                measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_1', path, traject)                   
-    
-            if (~pd.isna(measures_location.loc['voorkeursalternatief_2'].Value) == -1):
-                measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_2', path, traject) 
-                               
-            if (~pd.isna(measures_location.loc['voorkeursalternatief_3'].Value) == -1):
-                measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_3', path, traject)                  
+            if not all(pd.isna(measures_location.loc[vka_cols].Value)):
+                measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, path, traject)
+            else:
+                measures_per_location = copy.deepcopy(measures_basis)
+            #
+            # if (~pd.isna(measures_location.loc['voorkeursalternatief_2'].Value) == -1):
+            #     measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_2', path, traject)
+            #
+            # if (~pd.isna(measures_location.loc['voorkeursalternatief_3'].Value) == -1):
+            #     measures_per_location = vka_measures(measures_basis, measures_custom_all, measures_location, 'voorkeursalternatief_3', path, traject)
            
     
         #Fill profile tab

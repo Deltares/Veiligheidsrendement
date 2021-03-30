@@ -15,6 +15,7 @@ from StrategyEvaluation import MeasureCombinations, makeTrajectDF, calcTC, calcT
 from DikeTraject import PlotSettings, getSectionLengthInTraject
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 import config
 
 class Strategy:
@@ -28,6 +29,43 @@ class Strategy:
         self.type = type
         self.r = r
 
+    def get_measure_from_index(self, index,section_order = False, print_measure = False):
+        """"Converts an index (n,sh,sg) to a printout of the measure data"""
+        if not section_order:
+            print('Warning: deriving section order from unordered dictionary. Might be wrong')
+            section_order = list(self.options_height.keys())
+        section = section_order[index[0]]
+        if index[1]>0:
+            sh = self.options_height[section_order[index[0]]].iloc[index[1]-1]
+        else:
+            sh = 'No measure'
+            if index[2] >0:
+                sg = self.options_geotechnical[section_order[index[0]]].iloc[index[2]-1]
+                if not ((sg.type.values == 'Stability Screen') or (sg.type.values == 'Vertical Geotextile')):
+                    raise Exception('Illegal combination')
+            else:
+                sg = 'No measure'
+                print('SECTION {}'.format(section))
+                print('No measures are taken at this section: sh and sg are: {} and {}'.format(sh, sg))
+                return (section, sh, sg)
+        if index[2] >0:
+            sg = self.options_geotechnical[section_order[index[0]]].iloc[index[2]-1]
+
+        if print_measure:
+            print('SECTION {}'.format(section))
+            if isinstance(sh,str):
+                print('There is no measure for height')
+            else:
+                print('The measure for height is a {} in year {} with dcrest={} meters of the class {}.'.format(sh['type'].values[0],sh['year'].values[0], sh['dcrest'].values[0],sh['class'].values[0]))
+            if (sg.type.values == 'Vertical Geotextile') or (sg.type.values == 'Diaphragm Wall') or (sg.type.values == 'Stability Screen') or (sg.type.values == 'Custom'):
+                print(' The geotechnical measure is a {}'.format(sg.type.values[0]))
+            elif isinstance(sg.type.values[0],list): #VZG+Soil
+                print(' The geotechnical measure is a {} in year {} with a {} with dberm = {} in year {}'.format(sg.type.values[0][0],sg.year.values[0][0], sg.type.values[0][1],sg.dberm.values[0],sg.year.values[0][1]))
+            elif sg.type.values == 'Soil reinforcement':
+                print(' The geotechnical measure is a {} in year {} of class {} with dberm = {}'.format(sg.type.values[0],sg.year.values[0], sg['class'].values[0],sg.dberm.values[0]))
+
+
+        return (section, sh, sg)
     def combine(self, traject, solutions, filtering='off',splitparams=False):
         #This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
@@ -402,12 +440,12 @@ class Strategy:
             for i in range(final_step):
                 if i > 0:
                     years = self.options[self.TakenMeasures.iloc[i]['Section']].iloc[self.TakenMeasures.iloc[i]['option_index']]['year'].values[0]
-                    if not isinstance(years, int):
+                    if isinstance(years, list):
                         for ij in range(len(years)):
                             if years[ij] == 0:
                                 x += self.options[self.TakenMeasures.iloc[i]['Section']].iloc[self.TakenMeasures.iloc[i]['option_index']]['cost'].values[0][ij]
 
-                    elif isinstance(years, int):
+                    else:# isinstance(years, np.integer):
                         if years > 0:
                             pass
                         else:
@@ -848,13 +886,14 @@ class GreedyStrategy(Strategy):
             TC = np.add(LifeCycleCost,TotalRisk)
             #determine the BC of the most favourable option for height
             overflow_bundle_index, BC_bundle = OverflowBundling(self,init_overflow_risk,
-                                                               np.max(BC),
                                                                 measure_list,LifeCycleCost,traject)
             #compute additional measures where we combine overflow measures, here we optimize a package, purely based
             # on overflow, and compute a general BC ratio that is a factor (factor cautious) higher than the max BC.
             #then in the selection of the measure we make a if-elif split with either the normal routine or an
             # 'overflow bundle'
-            if np.isnan(np.max(BC)): raise ValueError('nan value encountered in BC-ratio')
+            if np.isnan(np.max(BC)):
+                print(BC)
+                raise ValueError('nan value encountered in BC-ratio')
             if (np.max(BC) > BCstop) or (BC_bundle > BCstop):
                 if np.max(BC) >= BC_bundle:
                     #find the best combination
@@ -931,6 +970,19 @@ class GreedyStrategy(Strategy):
 
         print('Elapsed time for greedy algorithm: ' + str(time.time()-start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
+        # #make dump
+        # import shelve
+        #
+        # filename = config.directory.joinpath('FinalGreedyResult.out')
+        # # make shelf
+        # my_shelf = shelve.open(str(filename), 'n')
+        # my_shelf['Strategy'] = locals()['self']
+        # my_shelf['solutions'] = locals()['solutions']
+        # my_shelf['measure_list'] = locals()['measure_list']
+        # my_shelf['BC_list'] = locals()['BC_list']
+        # my_shelf['Probabilities'] = locals()['Probabilities']
+        #
+        # my_shelf.close()
         self.writeGreedyResults(traject,solutions,measure_list,BC_list,Probabilities)
 
     def writeGreedyResults(self,traject,solutions,measure_list,BC,Probabilities):
@@ -970,7 +1022,10 @@ class GreedyStrategy(Strategy):
                     else:
                         ID.append(ID1)
                 else:
-                    ValueError('warning, conflicting IDs found for measures')
+                    print(i)
+                    print(self.options_geotechnical[traject.Sections[i[0]].name].iloc[i[2] - 1])
+                    print(self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1])
+                    raise ValueError('warning, conflicting IDs found for measures')
             else:
                 ID2 = ''
                 ID.append(ID1)

@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 from Mechanisms import OverflowSimple
-from ReliabilityCalculation import MechanismReliabilityCollection
+from ReliabilityCalculation import MechanismReliabilityCollection, beta_SF_StabilityInner
 from SectionReliability import SectionReliability
 from shapely.geometry import Polygon
 import pandas as pd
@@ -147,8 +147,14 @@ class StabilityScreen(Measure):
                 elif i == 'StabilityInner':
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
                     if int(ij)>=self.parameters['year']:
-                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] += SFincrease
-                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] += SFincrease
+                        if 'SF_2025' in self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input:
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] += SFincrease
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] += SFincrease
+                        else:
+                            #convert to SF and back:
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'], type = 'beta'), SFincrease), type = 'SF')
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'], type = 'beta'), SFincrease), type = 'SF')
+
             self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
         self.measures['Reliability'].calcSectionReliability()
 
@@ -182,14 +188,14 @@ class VerticalGeotextile(Measure):
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_elim'] = self.parameters[
                         'P_solution']
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_with_elim'] = \
-                    self.parameters['Pf_solution']
+                    np.min([self.parameters['Pf_solution'], 1.e-16])
             self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load, mechanism=i,
                                                                           trajectinfo=TrajectInfo)
         self.measures['Reliability'].calcSectionReliability()
 
 
 class CustomMeasure(Measure):
-    def set_input(self):
+    def set_input(self,section):
         try:
             data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
             reliability_headers = []
@@ -209,17 +215,22 @@ class CustomMeasure(Measure):
         # self.base_data = base_data
         self.reliability_data = reliability_data
         self.measures = {}
-        self.parameters['year'] = base_data['year'] - config.t_0
+        self.parameters['year'] = np.int32(base_data['year'] - config.t_0)
 
         #TODO check these values:
         #for testing:
-        print('test values in Custom Measure')
+        # print('test values in Custom Measure')
         # base_data['kruinhoogte']=6.
-        base_data['extra kwelweg'] = 10.
-
-        self.parameters['h_crest_new'] = base_data['kruinhoogte']
-        self.parameters['L_added'] = base_data['extra kwelweg']
-        self.measures['Cost'] = base_data['cost']
+        # base_data['extra kwelweg'] = 10.
+        annual_dhc = section.Reliability.Mechanisms['Overflow'].Reliability['0'].Input.input['dhc(t)']
+        if base_data['kruinhoogte_2075'].values > 0:
+            self.parameters['h_crest_new'] = base_data['kruinhoogte_2075'].values + 50 * annual_dhc
+        else:
+            self.parameters['h_crest_new'] = None
+        # print('Warning: kruinhoogte of custom measure should be adapted')
+        #TODO modify kruinhoogte_2075 to 2025 using change of crest in time.
+        self.parameters['L_added'] = base_data['verlenging kwelweg']
+        self.measures['Cost'] = base_data['cost'].values[0]
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
 
@@ -227,7 +238,7 @@ class CustomMeasure(Measure):
         mechanisms = list(DikeSection.Reliability.Mechanisms.keys())
 
         #first read and set the data:
-        self.set_input()
+        self.set_input(DikeSection)
 
         #loop over mechanisms to modify the reliability
         for i in mechanisms:
@@ -238,16 +249,16 @@ class CustomMeasure(Measure):
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij])
 
                 #only adapt after year of implementation:
-                if np.int(ij) >= self.parameters['year'].values:
+                if np.int(ij) >= self.parameters['year']:
                     #remove other input:
-                    if i == 'Overflow' and self.parameters['h_crest_new'].size != 0:
-                        #type: simple
+                    if i == 'Overflow':
+                        if self.parameters['h_crest_new'] != None:
+                            #type: simple
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] = self.parameters['h_crest_new']
 
-                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].h_crest = self.parameters['h_crest_new']
-                        pass
                         #change crest
                     elif i == 'Piping':
-                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].Lvoor += self.parameters['L_added']
+                        self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Lvoor'] += self.parameters['L_added'].values
                         #change Lvoor
                     else:
                         #Direct input: remove existing inputs and replace with beta
@@ -279,10 +290,11 @@ def implement_berm_widening(input, measure_input, measure_parameters, mechanism,
         #For betas as input
         elif 'beta_2025' in input:
             input['beta_2025'] = input['beta_2025'] + (measure_input['dberm'] * input['dbeta/dberm'])
-            input['beta_2075'] = input['beta_2075'] + (measure_input['dberm'] * input['dSF/dberm'])
+            input['beta_2075'] = input['beta_2075'] + (measure_input['dberm'] * input['dbeta/dberm'])
             if measure_parameters['StabilityScreen'] == 'yes':
-                #TODO recompute SFincrease to the correct beta increase
-                raise Warning('Stability screen not implemented, results might be wrong')
+                # convert to SF and back:
+                input['beta_2025'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(input['beta_2025'], type = 'beta'),SFincrease), type='SF')
+                input['beta_2075'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(input['beta_2075'], type = 'beta'),SFincrease), type='SF')
         #For fragility curve as input
         elif computation_type== 'FragilityCurve':
             raise Exception('Not implemented')
@@ -311,6 +323,21 @@ def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, be
         bermheight = initial.iloc[2]['z']
     elif len(initial) == 4:
         pass
+    #nieuwe opzet:
+    """
+    #if outward:
+    #    verplaats buitenkruin en buitenteen
+     #   ->tussen geometrie 1
+      #  afgraven
+       # ->tussen geometrie 2
+    
+    #berm er aan plakken. Ook bij alleen binnenwaarts
+    
+    #volumes berekenen (totaal extra, en totaal "verplaatst in profiel")
+    
+    #optional extension: optimize amount of outward/inward reinforcement
+        """
+
     #Geometry is always from inner to outer toe
     dcrest = geometry_change[0]
     dberm  = geometry_change[1]
@@ -425,7 +452,7 @@ def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, be
 
         plt.savefig(plot_dir.joinpath('Geometry_' + str(dberm) + '_' + str(dcrest) + '.png'))
         plt.close()
-
+    #area_difference = (toegevoegd volume, verplaatst volume)
     return new_geometry, area_difference
 
 # script to calculate the area difference of a new geometry after reinforcement (compared to old one)

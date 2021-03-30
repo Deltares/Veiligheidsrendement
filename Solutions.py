@@ -27,11 +27,11 @@ class Solutions:
 
             if data.loc[i].Type == 'Soil reinforcement':
                 self.Measures.append(SoilReinforcement(data.loc[i]))
-            elif data.loc[i].Type == 'DiaphragmWall':
+            elif data.loc[i].Type == 'Diaphragm Wall':
                 self.Measures.append(DiaphragmWall(data.loc[i]))
-            elif data.loc[i].Type == 'StabilityScreen':
+            elif data.loc[i].Type == 'Stability Screen':
                 self.Measures.append(StabilityScreen(data.loc[i]))
-            elif data.loc[i].Type == 'VerticalGeotextile':
+            elif data.loc[i].Type == 'Vertical Geotextile':
                 self.Measures.append(VerticalGeotextile(data.loc[i]))
             elif data.loc[i].Type == 'Custom':
                 self.Measures.append(CustomMeasure(data.loc[i]))
@@ -172,7 +172,7 @@ class Solutions:
 
         #measures is a list of measures that need to be plotted
         if measures == 'undefined':
-            measures = list(self.Measures.keys())
+            measures = list(self.Measures)
 
         #mechanism can be used to select a single or all ('Section') mechanisms
         #beta can be used to use a criterion for selecting the 'best' designs, such as the beta at 't0'
