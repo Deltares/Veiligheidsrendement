@@ -46,6 +46,7 @@ def runFullModel(TrajectObject):
         #get design water level:
         section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
         #compute reliability in time for each mechanism:
+        # print(section.End)
         for j in config.mechanisms:
             section.Reliability.Mechanisms[j].generateLCRProfile(section.Reliability.Load, mechanism=j, trajectinfo=TrajectObject.GeneralInfo)
 

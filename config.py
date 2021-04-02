@@ -7,7 +7,7 @@ timing = True
 traject = '16-4'
 # path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\Testcase_fast_' + traject)
 # path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_small')
-path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject)
+path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_SAFE_v08_' + traject)
 # path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_testcombine')
 # path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\Documents\04_SAFE\SAFE repository\data\cases\Testcase_' + traject)
 # path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_10sections_2021_' + traject)
@@ -21,6 +21,9 @@ t_0 = 2025                                                  #year the computatio
 T = [0, 19, 20, 25, 50, 75, 100]                            #years to compute reliability for
 mechanisms=['Overflow', 'StabilityInner','Piping']          #mechanisms to consider
 LE_in_section=False                                         #whether to consider length-effects within a dike section
+crest_step = 0.5
+berm_step = [5,6,7,8,9,10,15,20,25,30,35,40,45,50]
+
 
 ## OPTIMIZATION SETTINGS
 OI_year = 0                                                 #investment year for TargetReliabilityBased approach

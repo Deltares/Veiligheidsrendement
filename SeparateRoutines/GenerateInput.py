@@ -40,11 +40,11 @@ def main():
     
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
     # path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Testcase_10sections_2021')
-    path = Path(r'..\..\data\case_input\SAFE_v0.6')
+    path = Path(r'..\..\data\case_input\SAFE_v0.8')
     
     #Settings:
     traject = '16-4'                                                                            #Traject to consider
-    file_name = 'Dijkvakindeling_v0.6.xlsx'                                                          #Name of main file
+    file_name = 'Dijkvakindeling_v0.8.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.
                                                                                                 # WARNING: this overwrites existing values!
@@ -135,11 +135,14 @@ def main():
     General['Name'] = ['Length', 'Start', 'End', 'Overflow', 'StabilityInner', 'Piping', 'LoadData', 'YearlyWLRise', 'HBNRise_factor']   
     
     #Make subfolders if not exist:
-    if not path.joinpath(traject, 'Output').is_dir():
+    if not path.joinpath(traject, 'Output/StabilityInner').is_dir():
         path.joinpath(traject, 'Output/StabilityInner').mkdir(parents=True, exist_ok=True)
         path.joinpath(traject, 'Output/Piping').mkdir(parents=True, exist_ok=True)
         path.joinpath(traject, 'Output/Overflow').mkdir(parents=True, exist_ok=True)
         path.joinpath(traject, 'Output/Toetspeil').mkdir(parents=True, exist_ok=True)
+        path.joinpath(traject, 'Output/Measures').mkdir(parents=True, exist_ok=True)
+        path.joinpath(traject, 'Output/FragilityCurve_STBI').mkdir(parents=True, exist_ok=True)
+
     
     if overflow_target_beta:
         originalcrests= []
@@ -247,7 +250,16 @@ def main():
     
         #Fill profile tab
         profile = pd.read_csv(path.joinpath(traject, 'Input/profiles', DikeSections['Dwarsprofiel Geometrie'][i] + '.csv'), index_col=0)
-    
+
+        if len(profile) == 6:
+            type= pd.DataFrame(['innertoe','innerberm1','innerberm2','innercrest','outercrest','outertoe'], columns = ['type'])
+            profile['type'] = type
+        elif len(profile) == 4:
+            type= pd.DataFrame(['innertoe','innercrest','outercrest','outertoe'], columns = ['type'])
+            profile['type'] = type
+        else:
+            raise Exception('input length dike is not 4 or 6')
+
         #Fill houses tab
         houses_data_location = Housing[((Housing['Naam dijkvak'] == DikeSections['dv_nummer'][i]) & (Housing['Naam traject'] == traject))].transpose().drop(['Naam traject', 'Naam dijkvak'], axis=0).reset_index()
         houses_data_location.columns = ['distancefromtoe', 'number']

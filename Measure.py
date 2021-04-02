@@ -43,14 +43,25 @@ class SoilReinforcement(Measure):
 
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
-
-        crest_step = 0.5
-        berm_step = 10
+        crest_step = config.crest_step
+        berm_step = config.berm_step
         crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], np.int(1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step))
+        #TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
         if self.parameters['Direction'] == 'outward':
-            bermrange = np.linspace(0., self.parameters['max_outward'], np.int(1+(self.parameters['max_outward']/berm_step)))
+            if len(berm_step)>1:
+                max_berm = self.parameters['max_outward']+self.parameters['max_inward']
+                bermrange = berm_step[:len(np.where((berm_step <= max_berm))[0])]
+            else:
+                bermrange = np.linspace(0., self.parameters['max_outward'], np.int(1+(self.parameters['max_outward']/berm_step)))
         elif self.parameters['Direction'] == 'inward':
-            bermrange = np.linspace(0., self.parameters['max_inward'], np.int(1+(self.parameters['max_inward']/berm_step)))
+            if len(berm_step)>1:
+                max_berm = self.parameters['max_inward']
+                bermrange = berm_step[:len(np.where((berm_step <= max_berm))[0])]
+            else:
+                bermrange = np.linspace(0., self.parameters['max_inward'], np.int(1+(self.parameters['max_inward']/berm_step)))
+        else:
+            raise Exception('unkown direction')
+
         measures = [[x,y] for x in crestrange for y in bermrange]
         if not preserve_slope:
             slope_in = 4
@@ -68,7 +79,7 @@ class SoilReinforcement(Measure):
             self.measures.append({})
             self.measures[-1]['dcrest'] =j[0]
             self.measures[-1]['dberm'] = j[1]
-            self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,self.parameters['Direction'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
+            self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
             self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, reinf_pars = j, housing = DikeSection.houses, area_difference= area_difference)
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
@@ -305,180 +316,236 @@ def implement_berm_widening(input, measure_input, measure_parameters, mechanism,
     return input
 
 
-# class Custom(Measure):
-#     # type == 'Custom':
-#     try:
-#         pass
-#         #data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
-#         #print('Here the logic for reading the data for the vka should be inserted')
-#         #interpret data
-#     except:
-#        raise Exception (self.parameters['File'] + ' not found.')
+def addBerm(initial, geometry, new_geometry, bermheight, dberm):
+    i = int(initial[initial.type == 'innertoe'].index.values)
+    j = int(initial[initial.type == 'innercrest'].index.values)
+    slope_inner = (geometry[j][1] - geometry[i][1]) / (geometry[j][0] - geometry[i][0])
+    extra = np.empty((1, 2))
+    extra[0, 0] = new_geometry[i][0] + (1 / slope_inner) * bermheight
+    extra[0, 1] = new_geometry[i][1] + bermheight
+    new_geometry = np.append(new_geometry, np.array(extra), axis=0)
+    extra2 = np.empty((1, 2))
+    extra2[0, 0] = new_geometry[i][0] + (1 / slope_inner) * bermheight + dberm
+    extra2[0, 1] = new_geometry[i][1] + bermheight
+    new_geometry = np.append(new_geometry, np.array(extra2), axis=0)
+    new_geometry = new_geometry[new_geometry[:, 0].argsort()]
+
+    if (initial.type == 'extra').any():
+        k = int(initial[initial.type == 'extra'].index.values)
+        new_geometry[0, 0] = initial.x[i]
+        new_geometry[0, 1] = initial.z[i]
+        extra3 = np.empty((1, 2))
+        extra3[0, 0] = initial.x[k]
+        extra3[0, 1] = initial.z[k]
+        new_geometry = np.append(np.array(extra3), new_geometry, axis=0)
+    return new_geometry
+
+def calculateArea(geometry):
+    polypoints = []
+    for i in range(len(geometry)):
+        polypoints.append((geometry[i, 0], geometry[i, 1]))
+    polygonXY = Polygon(polypoints)
+    areaPol = Polygon(polygonXY).area
+    return areaPol, polygonXY
 
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
-def DetermineNewGeometry(geometry_change, direction, initial,plot_dir = None, bermheight = 2, slope_in = False):
-
+def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_dir = None, bermheight = 2, slope_in = False):
+    # maxBermOut=20
     if len(initial) == 6:
-        bermheight = initial.iloc[2]['z']
+        noberm = False
     elif len(initial) == 4:
-        pass
-    #nieuwe opzet:
-    """
-    #if outward:
-    #    verplaats buitenkruin en buitenteen
-     #   ->tussen geometrie 1
-      #  afgraven
-       # ->tussen geometrie 2
-    
-    #berm er aan plakken. Ook bij alleen binnenwaarts
-    
-    #volumes berekenen (totaal extra, en totaal "verplaatst in profiel")
-    
-    #optional extension: optimize amount of outward/inward reinforcement
-        """
+        noberm=True
+    else:
+        raise Exception ('input length dike is not 4 or 6')
 
-    #Geometry is always from inner to outer toe
+    # if outertoe < innertoe
+    if initial.z[int(initial[initial.type == 'innertoe'].index.values)] > initial.z[int(initial[initial.type == 'outertoe'].index.values)]:
+        extra_row = pd.DataFrame([[initial.x[int(initial[initial.type == 'innertoe'].index.values)],initial.z[int(initial[initial.type == 'outertoe'].index.values)], 'extra']],columns =initial.columns)
+        initial = extra_row.append(initial).reset_index(drop=True)
+
+    if initial.z[int(initial[initial.type == 'innertoe'].index.values)] < initial.z[int(initial[initial.type == 'outertoe'].index.values)]:
+        extra_row2 = pd.DataFrame([[initial.x[int(initial[initial.type == 'outertoe'].index.values)],initial.z[int(initial[initial.type == 'innertoe'].index.values)], 'extra2']],columns =initial.columns)
+        initial = initial.append(extra_row2).reset_index(drop=True)
+
+    # Geometry is always from inner to outer toe
     dcrest = geometry_change[0]
-    dberm  = geometry_change[1]
-    geometry = initial.values
-    cur_crest = np.max(geometry[:,1])
-    new_crest = cur_crest+dcrest
-    if config.geometry_plot:
-        plt.plot(geometry[:, 0], geometry[:, 1],'k')
+    dberm = geometry_change[1]
+    geometry = initial.values[:,0:2]
+    cur_crest = np.max(geometry[:, 1])
+    new_crest = cur_crest + dcrest
+
+    # if config.geometry_plot:
+    #     plt.plot(geometry[:, 0], geometry[:, 1], 'k')
 
     if direction == 'outward':
-        print("WARNING: outward reinforcement is NOT UP TO DATE!!!!")
 
         # nieuwe opzet:
-        # # if outward:
-        #     verplaats buitenkruin en buitenteen
-        #     ->tussen geometrie 1
-        #     afgraven
-        #     ->tussen geometrie 2
+        # if outward:
+        #    verplaats buitenkruin en buitenteen
+        #   ->tussen geometrie 1
+        #  afgraven
+        # ->tussen geometrie 2
+
         # berm er aan plakken. Ook bij alleen binnenwaarts
+
         # volumes berekenen (totaal extra, en totaal "verplaatst in profiel")
+
         # optional extension: optimize amount of outward/inward reinforcement
-
         new_geometry = copy.deepcopy(geometry)
-        for i in range(len(new_geometry)):
-        #Run over points from the outside.
-            if i > 0:
-                slope = (geometry[i - 1][1] - geometry[i][1]) / (geometry[i - 1][0] - geometry[i][0])
-                if slope > 0 and new_geometry[i, 1] == cur_crest:  # outer slope
-                    new_geometry[i][0] = (new_geometry[i][0] + dcrest / np.abs(slope))
-                    new_geometry[i][1] = new_crest
-                elif slope == 0:  # This is the crest
-                    new_geometry[i][0] = new_geometry[i - 1][0] + np.abs(geometry[i - 1][0] - geometry[i][0])
-                    new_geometry[i][1] = new_crest
-                elif slope < 0 and new_geometry[i, 1] != cur_crest:  # This is the inner slope
-                    new_geometry[i][0] = new_geometry[i - 1][0] + (new_geometry[i - 1][1] - new_geometry[i][1]) / np.abs(slope)
-                    # new_geometry[i][0]-(geometry[i-1][0] - new_geometry[i-1][0])
-            else:
-                new_geometry[i][0] = new_geometry[i][0]
-        if dberm > 0:
-            slope = (geometry[i - 1][1] - geometry[i][1]) / (geometry[i - 1][0] - geometry[i][0])
-            x1 = new_geometry[i - 1][0] + (new_geometry[-2][1] - (new_geometry[-1][1] + bermheight)) / np.abs(slope)
-            x2 = x1 + dberm
-            y = bermheight + new_geometry[-1][1]
-            new_geometry[-1][0] = new_geometry[-1][0] + dberm
-            new_geometry = np.insert(new_geometry, [-1], np.array([x1, y]), axis=0)
-            new_geometry = np.insert(new_geometry, [-1], np.array([x2, y]), axis=0)
 
-            # add a shift
+        if dberm < maxbermout:
             for i in range(len(new_geometry)):
-                new_geometry[i][0] -= dberm
+                # Run over points from the outside.
+                if initial.type[i] == 'extra':
+                    new_geometry[i][0] = geometry[i][0]
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innertoe':
+                    new_geometry[i][0] = geometry[i][0]
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innerberm1':
+                    new_geometry[i][0] = geometry[i][0]
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innerberm2':
+                    new_geometry[i][0] = geometry[i][0] + dberm
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innercrest':
+                    new_geometry[i][0] = geometry[i][0] + dberm
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outercrest':
+                    new_geometry[i][0] = geometry[i][0] + dberm
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outertoe':
+                    new_geometry[i][0] = geometry[i][0] + dberm
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'extra2':
+                    new_geometry[i][0] = geometry[i][0] + dberm
+                    new_geometry[i][1] = geometry[i][1]
+        else:
+            berm_in = dberm- maxbermout
+            for i in range(len(new_geometry)):
+                # Run over points from the outside.
+                if initial.type[i] == 'extra':
+                    new_geometry[i][0] = geometry[i][0] - berm_in
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innertoe':
+                    new_geometry[i][0] = geometry[i][0] - berm_in
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innerberm1':
+                    new_geometry[i][0] = geometry[i][0] - berm_in
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innerberm2':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innercrest':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outercrest':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outertoe':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'extra2':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][1] = geometry[i][1]
 
-        if config.geometry_plot:
-            plt.plot(new_geometry[:, 0], new_geometry[:, 1], '--r')
+        if noberm:  # len(initial) == 4:
+            new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
 
-    elif direction == 'inward':
+    if direction == 'inward':
         new_geometry = copy.deepcopy(geometry)
         # we start at the outer toe so reverse:
 
-        for i in reversed(range(len(new_geometry)-1)):
-            #preserve the outer slope
-            slope = (geometry[i][1]-geometry[i + 1][1]) / (geometry[i + 1][0]-geometry[i][0])
-            if slope > 0 and new_geometry[i, 1] == cur_crest:  # This is the outer slope
-                new_geometry[i][0] = new_geometry[i][0] - dcrest / np.abs(slope) #point goes left with same slope
-                new_geometry[i][1] = new_crest
-            elif slope == 0:  # This is a horizontal part
-                if geometry[i][1] == cur_crest:
-                    new_geometry[i][0] = new_geometry[i + 1][0] - np.abs(geometry[i + 1][0] - geometry[i][0])
-                    new_geometry[i][1] = new_crest
-                elif geometry[i][1] == bermheight:
-                    new_geometry[i][0] = new_geometry[i + 1][0] - np.abs(geometry[i + 1][0] - geometry[i][0]) - dberm
-                    new_geometry[i][1] = bermheight
+        for i in range(len(new_geometry)):
+            # Run over points from the outside.
+            if initial.type[i] == 'extra':
+                new_geometry[i][0] = geometry[i][0] - dberm
+                new_geometry[i][1] = geometry[i][1]
+            elif initial.type[i] == 'innertoe':
+                new_geometry[i][0] = geometry[i][0] - dberm
+                new_geometry[i][1] = geometry[i][1]
+            elif initial.type[i] == 'innerberm1':
+                new_geometry[i][0] = geometry[i][0] - dberm
+                new_geometry[i][1] = geometry[i][1]
+            elif initial.type[i] == 'innerberm2':
+                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][1] = geometry[i][1]
+            elif initial.type[i] == 'innercrest':
+                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][1] = geometry[i][1] + dcrest
+            elif initial.type[i] == 'outercrest':
+                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][1] = geometry[i][1] + dcrest
+            elif initial.type[i] == 'outertoe':
+                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][1] = geometry[i][1]
 
-            elif slope < 0:  # This is the inner slope
-                if slope_in:
-                    # print('check geometry formula, NOT CORRECTED YET')
-                    new_geometry[i][0] = new_geometry[i + 1][0] - (new_geometry[i + 1][1] - new_geometry[i][1]) * slope_in
-                else:
-                    new_geometry[i][0] = new_geometry[i + 1][0] + (new_geometry[i][1] - new_geometry[i + 1][
-                         1])/np.abs(slope)
-                # new_geometry[i-1][0] = new_geometry[i][0] - (new_geometry[i][1] - new_geometry[i-1][1]) * slope_in
+        if noberm: #len(initial) == 4:   #precies hetzelfde als hierboven. def van maken.
+            new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
 
-        if dberm > 0 and len(geometry) == 4:     #add a berm if the points dont exist yet
-            if slope_in:
-                x1 = new_geometry[0][0] + (bermheight*slope_in)
-            else:
-                x1 = new_geometry[0][0] + (bermheight/np.abs(slope))
-            x2 = x1 - dberm
-            y = bermheight + new_geometry[0][1]
-            new_geometry[0][0] = new_geometry[0][0] - dberm
-            new_geometry = np.insert(new_geometry, [1], np.array([x1, y]), axis=0)
-            new_geometry = np.insert(new_geometry, [1], np.array([x2, y]), axis=0)
-        elif dberm > 0 and len(geometry) == 6:
-            pass
-
-    #calculate the area difference
-    # geometry = np.append(geometry, np.array([new_geometry[-1]]), axis=0)
+    # calculate the area difference
     area_old, polygon_old = calculateArea(geometry)
     area_new, polygon_new = calculateArea(new_geometry)
-    poly_diff = polygon_new.difference(polygon_old)
-    area_difference = poly_diff.area
-    if config.geometry_plot:
-        if hasattr(poly_diff, 'geoms'):
-            for i in range(len(poly_diff.geoms)):
-                x1, y1 = poly_diff[i].exterior.xy
-                plt.fill(x1, y1, 'r--')
 
-        else:
-            x1, y1 = poly_diff.exterior.xy
-            plt.fill(x1, y1, 'r--')
+    if (polygon_old.intersects(polygon_new)):  # True
+        poly_intsects = polygon_old.intersection(polygon_new)
+        area_intersect = (polygon_old.intersection(polygon_new).area)  # 1.0
+        area_excavate = area_old - area_intersect
+        area_extra = area_new - area_intersect
 
-        plt.text(np.mean(new_geometry[:, 0]), np.max(new_geometry[:, 1]), 'Area difference = ' + '{:.4}'.format(str(area_difference)) + ' $m^2$')
+        #difference new-old = extra
+        poly_diff = polygon_new.difference(polygon_old)
+        area_diff = poly_diff.area  #zou zelfde moeten zijn als area_extra
+        # difference new-old = excavate
+        poly_diff2 = polygon_old.difference(polygon_new)
+        area_diff2 = poly_diff2.area  #zou zelfde moeten zijn als area_excavate
 
-        plt.savefig(plot_dir.joinpath('Geometry_' + str(dberm) + '_' + str(dcrest) + '.png'))
-        plt.close()
-    #area_difference = (toegevoegd volume, verplaatst volume)
+        #controle
+        test1 = area_diff - area_extra
+        test2 = area_diff2 - area_excavate
+        if test1>1 or test2 >1:
+            raise Exception ('area calculation failed')
+
+        if config.geometry_plot:
+            if not plot_dir.joinpath('Geometry').is_dir():
+                # plot_dir.joinpath.mkdir(parents=True, exist_ok=True)
+                plot_dir.joinpath('Geometry').mkdir(parents=True, exist_ok=True)
+            plt.plot(geometry[:, 0], geometry[:, 1], 'k')
+            plt.plot(new_geometry[:, 0], new_geometry[:, 1], '--r')
+            if poly_diff.area > 0:
+                if hasattr(poly_diff, 'geoms'):
+                    for i in range(len(poly_diff.geoms)):
+                        x1, y1 = poly_diff[i].exterior.xy
+                        plt.fill(x1, y1, 'r--', alpha=.1)
+                else:
+                    x1, y1 = poly_diff.exterior.xy
+                    plt.fill(x1, y1, 'r--', alpha=.1)
+            if poly_diff2.area > 0:
+                if hasattr(poly_diff2, 'geoms'):
+                    for i in range(len(poly_diff2.geoms)):
+                        x1, y1 = poly_diff2[i].exterior.xy
+                        plt.fill(x1, y1, 'b--', alpha=.8)
+                else:
+                    x1, y1 = poly_diff2.exterior.xy
+                    plt.fill(x1, y1, 'b--', alpha=.8)            #
+            # if hasattr(poly_intsects, 'geoms'):
+            #     for i in range(len(poly_intsects.geoms)):
+            #         x1, y1 = poly_intsects[i].exterior.xy
+            #         plt.fill(x1, y1, 'g--', alpha=.1)
+            # else:
+            #     x1, y1 = poly_intsects.exterior.xy
+            #     plt.fill(x1, y1, 'g--', alpha=.1)
+            # plt.show()
+
+            plt.text(np.mean(new_geometry[:, 0]), np.max(new_geometry[:, 1]),'Area extra = {:.4} $m^2$, area excavated = {:.4} $m^2$'.format(str(area_extra),str(area_excavate)))
+
+            plt.savefig(plot_dir.joinpath('Geometry_' + str(dberm) + '_' + str(dcrest)+ direction + '.png'))
+            plt.close()
+
+    area_difference = area_extra + 0.5 * area_excavate
     return new_geometry, area_difference
 
-# script to calculate the area difference of a new geometry after reinforcement (compared to old one)
-def calculateArea(geometry):
- extra = np.empty((1, 2))
- if geometry[-1][1] > geometry[0][1]:
-     extra[0, 0] = geometry[-1][0]
-     extra[0, 1] = geometry[0][1]
-     geometry = np.append(geometry, np.array(extra), axis=0)
- elif geometry[-1][1] < geometry[0][1]:
-     extra[0, 0] = geometry[0][0]; extra[0, 1] = geometry[-1][1]
-     geometry = np.insert(geometry, [0], np.array(extra), axis=0)
-
- bottomlevel = np.min(geometry[:, 1])
- area = 0
-
- for i in range(1, len(geometry)):
-     a = np.abs(geometry[i-1][0] - geometry[i][0]) * (0.5 * np.abs(geometry[i - 1][1]-geometry[i][1]) + 1.0 * (np.min((geometry[i-1][1], geometry[i][1])) - bottomlevel))
-     area += a
-
- polypoints= []
-
- for i in range(len(geometry)):
-     polypoints.append((geometry[i, 0], geometry[i, 1]))
- polygon = Polygon(polypoints)
- return area, polygon
 
 #Script to determine the costs of a reinforcement:
 def DetermineCosts(parameters, type, length, reinf_pars = None, housing = None, area_difference = None):

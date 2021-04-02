@@ -441,6 +441,8 @@ class MechanismReliability:
                 self.WLchar = copy.deepcopy(inputs['h']) #add water level as used in the assessment
                 self.alpha_sq = np.nan
                 self.result = np.nan
+                # if year == 50:
+                #      print(year, self.beta_cs_u ,self.beta_cs_h,self.beta_cs_p, self.WLchar)
             else:
                 pass
 
