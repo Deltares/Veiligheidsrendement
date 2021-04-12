@@ -40,11 +40,11 @@ def main():
     
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
     # path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Testcase_10sections_2021')
-    path = Path(r'..\..\data\case_input\SAFE_v0.8')
+    path = Path(r'..\..\data\case_input\SAFE_v0.9')
     
     #Settings:
     traject = '16-4'                                                                            #Traject to consider
-    file_name = 'Dijkvakindeling_v0.8.xlsx'                                                          #Name of main file
+    file_name = 'Dijkvakindeling_v0.9.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.
                                                                                                 # WARNING: this overwrites existing values!
@@ -75,7 +75,7 @@ def main():
     STBI_data = df['Info voor STBI'].loc[:,stbi_col]
     
     #Sheet for pinping:
-    piping_col = ['dwarsprofiel','D','d70','d_cover','h_exit','r_exit','Lvoor','Lachter','k','gamma_sat','kwelscherm','dh_exit(t)']
+    piping_col = ['dwarsprofiel','Scenario','P_scenario','D','d70','d_cover','h_exit','r_exit','Lvoor','Lachter','k','gamma_sat','kwelscherm','dh_exit(t)']
     Piping_data = df['Info voor Piping'].loc[:, piping_col]
     
     #Sheet for housing:
@@ -125,7 +125,7 @@ def main():
             wb.save(path.joinpath(file_name))
     
     #Check if two or multiple dike section are equally named
-    if any(STBI_data['dwarsprofiel'].duplicated()) or any(Piping_data['dwarsprofiel'].duplicated()):
+    if any(STBI_data['dwarsprofiel'].duplicated()): # or any(Piping_data['dwarsprofiel'].duplicated()):
         raise Exception('Warning, two or multiple dike section are equally named!')
         sys.exit()
     
@@ -177,10 +177,12 @@ def main():
         if Piping_data_location.iloc[:, 1].isnull().values.any():
             raise Exception('Piping data of cross-section {} (Dike section {}) contains NaN values'.format(DikeSections['Dwarsprofiel STBI/STBU'][i], DikeSections['dv_nummer'][i]))
             sys.exit()
-        Piping_data_location.columns = ['Name', "Value"]
+        Piping_data_location.rename(columns={'index': 'Name'}, inplace=True)
         Piping_data_location = Piping_data_location.set_index('Name')
+        scenario= Piping_data_location.loc['Scenario']
+        Piping_data_location.columns = scenario
+        # Piping_data_location.columns = ['Name', "Value"]
         Piping_data_location.to_csv(path.joinpath(traject, 'Output/Piping', DikeSections['Dwarsprofiel piping'][i] + '_Piping.csv'))
-    
     
         #Then we read and write data for overflow (this is a bit more complicated):
         HBN_basis = pd.read_csv(path.joinpath(traject, 'Input/base_HBN.csv'), delimiter=';')

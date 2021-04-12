@@ -7,7 +7,7 @@ timing = True
 traject = '16-4'
 # path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\Testcase_fast_' + traject)
 # path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_small')
-path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_SAFE_v08_' + traject)
+path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_SAFE_v08_fast_' + traject)
 # path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_testcombine')
 # path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\Documents\04_SAFE\SAFE repository\data\cases\Testcase_' + traject)
 # path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_10sections_2021_' + traject)
@@ -22,7 +22,7 @@ T = [0, 19, 20, 25, 50, 75, 100]                            #years to compute re
 mechanisms=['Overflow', 'StabilityInner','Piping']          #mechanisms to consider
 LE_in_section=False                                         #whether to consider length-effects within a dike section
 crest_step = 0.5
-berm_step = [5,6,7,8,9,10,15,20,25,30,35,40,45,50]
+berm_step = [0,5,10,20,30,40,50]
 
 
 ## OPTIMIZATION SETTINGS
@@ -40,8 +40,8 @@ reuse_output = False                                        #reuse intermediate 
 beta_or_prob = 'beta'                                       #whether to use 'beta' or 'prob' for plotting reliability
 
 #Settings for step 1:
-plot_reliability_in_time=False                              #Setting to turn on plotting the reliability in time for each section.
-plot_measure_reliability=False                              #Setting to turn on plotting beta of measures at each section.
+plot_reliability_in_time = False                              #Setting to turn on plotting the reliability in time for each section.
+plot_measure_reliability = False                              #Setting to turn on plotting beta of measures at each section.
 
 flip_traject = True                                         #Setting to flip the direction of the longitudinal plots. Used for SAFE as sections are numbered east-west
 assessment_plot_years = [0,20,50]                           #years (relative to t_0) to plot the reliability

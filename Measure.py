@@ -48,13 +48,13 @@ class SoilReinforcement(Measure):
         crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], np.int(1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step))
         #TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
         if self.parameters['Direction'] == 'outward':
-            if len(berm_step)>1:
+            if np.size(berm_step)>1:
                 max_berm = self.parameters['max_outward']+self.parameters['max_inward']
                 bermrange = berm_step[:len(np.where((berm_step <= max_berm))[0])]
             else:
                 bermrange = np.linspace(0., self.parameters['max_outward'], np.int(1+(self.parameters['max_outward']/berm_step)))
         elif self.parameters['Direction'] == 'inward':
-            if len(berm_step)>1:
+            if np.size(berm_step)>1:
                 max_berm = self.parameters['max_inward']
                 bermrange = berm_step[:len(np.where((berm_step <= max_berm))[0])]
             else:
@@ -76,11 +76,15 @@ class SoilReinforcement(Measure):
                                            '0'].Input.input['d_cover'] + 1., 8.])
 
         for j in measures:
+            if self.parameters['Direction'] == 'outward':
+                k = max(0, j[1]-self.parameters['max_inward']) #correction max_outward
+            else:
+                k = j[1]
             self.measures.append({})
             self.measures[-1]['dcrest'] =j[0]
             self.measures[-1]['dberm'] = j[1]
             self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
-            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, reinf_pars = j, housing = DikeSection.houses, area_difference= area_difference)
+            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, reinf_pars = k, housing = DikeSection.houses, area_difference= area_difference)
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
 
@@ -543,7 +547,7 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
             plt.savefig(plot_dir.joinpath('Geometry_' + str(dberm) + '_' + str(dcrest)+ direction + '.png'))
             plt.close()
 
-    area_difference = area_extra + 0.5 * area_excavate
+    area_difference = max(0,area_extra + 0.5 * area_excavate)
     return new_geometry, area_difference
 
 
@@ -552,13 +556,13 @@ def DetermineCosts(parameters, type, length, reinf_pars = None, housing = None, 
  if type == 'Soil reinforcement':
      if parameters['StabilityScreen'] == 'no':
          C = parameters['C_start'] + area_difference*parameters['C_unit'] * length
-         if isinstance(housing, pd.DataFrame) and reinf_pars[1] > 0.:
-             C += parameters['C_house'] * housing.loc[float(reinf_pars[1])]['cumulative']
+         if isinstance(housing, pd.DataFrame) and reinf_pars > 0.:
+             C += parameters['C_house'] * housing.loc[float(reinf_pars)]['cumulative']
 
      elif parameters['StabilityScreen'] == 'yes':
          C = parameters['C_start'] + area_difference*parameters['C_unit'] * length + parameters['C_unit2'] * parameters['Depth'] * length
-         if isinstance(housing, pd.DataFrame) and reinf_pars[1] > 0.:
-             C += parameters['C_house'] * housing.loc[float(reinf_pars[1])]['cumulative']
+         if isinstance(housing, pd.DataFrame) and reinf_pars > 0.:
+             C += parameters['C_house'] * housing.loc[float(reinf_pars)]['cumulative']
 
      #x = map(int, self.parameters['house_removal'].split(';'))
  elif type == 'Vertical Geotextile':

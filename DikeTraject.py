@@ -184,7 +184,7 @@ class DikeTraject:
         markers = ['o', 'v', 'd']
 
         #We will make plots for different years
-        year = 50
+        year = 0
         line = {}
         mid = {}
         legend_line = {}

@@ -490,7 +490,15 @@ def OverflowBundling(Strategy, init_overflow_risk,existing_investment,
         index_counter[ind_weakest] += 1
 
         #take next step, exception if there is no valid measure. In that case exit the routine.
+        #TODO: check
+        try:
+            sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999
+        except:
+            A=1
+
+
         if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
+            A=1
             # print('Bundle quit, weakest section has no more available measures')
             break
 

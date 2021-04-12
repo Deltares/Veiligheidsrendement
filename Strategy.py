@@ -983,7 +983,7 @@ class GreedyStrategy(Strategy):
         # my_shelf['Probabilities'] = locals()['Probabilities']
         #
         # my_shelf.close()
-        self.writeGreedyResults(traject,solutions,measure_list,BC_list,Probabilities)
+        # self.writeGreedyResults(traject,solutions,measure_list,BC_list,Probabilities)
 
     def writeGreedyResults(self,traject,solutions,measure_list,BC,Probabilities):
         """This writes the results of a step to a list of dataframes for all steps."""
@@ -1013,12 +1013,16 @@ class GreedyStrategy(Strategy):
 
             #get the ids
             ID1 = self.options_geotechnical[traject.Sections[i[0]].name].iloc[i[2] - 1]['ID'].values[0]
+            if '+' in ID1:
+                ID_relevant = ID1[-1]
+            else:
+                ID_relevant = ID1
             if i[1] != 0:
                 ID2 = self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1]['ID'].values[0]
-                if ID1[-1] == ID2:
+                if ID_relevant == ID2:
                     if (self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1]['dcrest'].values[0] == 0.0) and (
                             self.options_geotechnical[traject.Sections[i[0]].name].iloc[i[2] - 1]['dberm'].values[0] == 0.0):
-                        ID.append(ID1[0])
+                        ID.append(ID1[0]) #TODO Fixen
                     else:
                         ID.append(ID1)
                 else:
