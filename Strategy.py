@@ -983,7 +983,8 @@ class GreedyStrategy(Strategy):
         # my_shelf['Probabilities'] = locals()['Probabilities']
         #
         # my_shelf.close()
-        # self.writeGreedyResults(traject,solutions,measure_list,BC_list,Probabilities)
+
+        self.writeGreedyResults(traject,solutions,measure_list,BC_list,Probabilities)
 
     def writeGreedyResults(self,traject,solutions,measure_list,BC,Probabilities):
         """This writes the results of a step to a list of dataframes for all steps."""

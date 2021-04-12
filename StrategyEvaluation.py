@@ -486,21 +486,19 @@ def OverflowBundling(Strategy, init_overflow_risk,existing_investment,
         #get weakest section
         ind_weakest = np.argmax(np.sum(new_overflow_risk, axis=1))
 
-        #We should increase the measure at the weakest section:
-        index_counter[ind_weakest] += 1
-
-        #take next step, exception if there is no valid measure. In that case exit the routine.
-        #TODO: check
-        try:
-            sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999
-        except:
-            A=1
-
-
-        if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
-            A=1
-            # print('Bundle quit, weakest section has no more available measures')
+        #We should increase the measure at the weakest section, but only if we have not reached the end of the array yet:
+        if sorted_sh.shape[1] -1 > index_counter[ind_weakest]:
+            index_counter[ind_weakest] += 1
+            #take next step, exception if there is no valid measure. In that case exit the routine.
+            if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
+                print('Bundle quit, weakest section has no more available measures')
+                break
+        else:
+            print('Bundle quit, weakest section has no more available measures')
             break
+
+
+
 
         #insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
         new_overflow_risk[ind_weakest, :] = Strategy.RiskOverflow[ind_weakest,
