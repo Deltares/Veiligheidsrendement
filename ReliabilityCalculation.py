@@ -386,7 +386,7 @@ class MechanismReliability:
                 # Piping:
                 strength_new = copy.deepcopy(strength)
                 self.scenario_result = {}
-                self.scenario_result['Scenario']  = strength_new.input['Scenario']
+                self.scenario_result['Scenario'] = strength_new.input['Scenario']
                 self.scenario_result['P_scenario'] = strength_new.input['P_scenario']
                 self.scenario_result['beta_cs_p'] = {}
                 self.scenario_result['beta_cs_h'] = {}
