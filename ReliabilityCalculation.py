@@ -385,64 +385,103 @@ class MechanismReliability:
                 # First calculate the SF without gamma for the three submechanisms
                 # Piping:
                 strength_new = copy.deepcopy(strength)
+                self.scenario_result = {}
+                self.scenario_result['Scenario']  = strength_new.input['Scenario']
+                self.scenario_result['P_scenario'] = strength_new.input['P_scenario']
+                self.scenario_result['beta_cs_p'] = {}
+                self.scenario_result['beta_cs_h'] = {}
+                self.scenario_result['beta_cs_u'] = {}
+                self.scenario_result['Pf'] = {}
+                self.scenario_result['Beta'] = {}
 
                 for i in strength.temporals:
                     strength_new.input[i] = strength.input[i] * year
-                # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
-                # inputs['h'] = load.NormWaterLevel
-                inputs = addLoadCharVals(strength_new.input, load=load, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
 
-                Z, self.p_dh, self.p_dh_c = Mechanisms.zPiping(inputs, mode='SemiProb')
-                self.gamma_pip = TrajectInfo['gammaPiping']
-                # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
-                # Calculate needed safety factor
+                #TODO:below, remove self. in for example self.gamma_pip. This is just an scenario output value. do not store.
+                # calculate beta per scenario and determine overall
+                for j in range(0,len(strength_new.input['Scenario'])):
+                    strength_new.input_ind = {}
+                    for i in strength_new.input:  # select values of scenario j
+                        try:
+                            strength_new.input_ind[i] = strength_new.input[i][j]
+                        except:
+                            pass  #TODO: make more clean, na measures doorloopt hij deze loop nogmaals, niet voor alle variabelen in strength_new.input is een array beschikbaar.
 
-                if self.p_dh != 0 :
-                    self.SF_p = (self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)) / self.p_dh
-                else:
-                    self.SF_p = 99
-                self.assess_p = 'voldoende' if self.SF_p > 1 else 'onvoldoende'
-                self.beta_cs_p = ProbabilisticFunctions.calc_beta_implicated('Piping', self.SF_p*self.gamma_pip,TrajectInfo=TrajectInfo)  #
-                # Calculate the implicated beta_cs
+                    # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
+                    # inputs['h'] = load.NormWaterLevel
+                    inputs = addLoadCharVals(strength_new.input_ind, load=load, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
 
-                # Heave:
-                Z, self.h_i, self.h_i_c = Mechanisms.zHeave(inputs,mode='SemiProb')
-                self.gamma_h = TrajectInfo['gammaHeave'] #ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
-                # Calculate
-                # needed safety factor
+                    Z, self.p_dh, self.p_dh_c = Mechanisms.zPiping(inputs, mode='SemiProb')
+                    self.gamma_pip = TrajectInfo['gammaPiping']
+                    # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
+                    # Calculate needed safety factor
 
-                self.SF_h = (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i
-                self.assess_h = 'voldoende' if (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i > 1 else 'onvoldoende'
-                self.beta_cs_h = ProbabilisticFunctions.calc_beta_implicated('Heave', (self.h_i_c/self.gamma_schem_heave) / self.h_i,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
-
-                # Uplift
-                Z, self.u_dh, self.u_dh_c = Mechanisms.zUplift(inputs,mode='SemiProb')
-                self.gamma_u = TrajectInfo['gammaUplift'] #ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
-                # Calculate
-                # needed safety factor
-
-                self.SF_u = (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh
-                self.assess_u = 'voldoende' if (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh > 1 else 'onvoldoende'
-                self.beta_cs_u = ProbabilisticFunctions.calc_beta_implicated('Uplift', (self.u_dh_c/self.gamma_schem_upl) / self.u_dh,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
-
-                #Check if there is an elimination measure present (VZG or diaphragm wall)
-                if 'Elimination' in strength.input.keys():
-                    if strength.input['Elimination'] == 'yes':
-                        #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
-                        self.Pf = \
-                            beta_to_pf(np.max([self.beta_cs_h,self.beta_cs_u,self.beta_cs_p])) * strength.input['Pf_elim']  + \
-                            strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim'])
-                        self.beta = pf_to_beta(self.Pf)
+                    if self.p_dh != 0 :
+                        self.SF_p = (self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)) / self.p_dh
                     else:
-                        raise ValueError('Warning: Elimination defined but not turned on')
-                else:
-                    self.beta = np.min([np.max([self.beta_cs_h,self.beta_cs_u,self.beta_cs_p]),8])
-                    self.Pf = beta_to_pf(self.beta)
+                        self.SF_p = 99
+                    self.assess_p = 'voldoende' if self.SF_p > 1 else 'onvoldoende'
+                    self.scenario_result['beta_cs_p'][j] = ProbabilisticFunctions.calc_beta_implicated('Piping', self.SF_p*self.gamma_pip,TrajectInfo=TrajectInfo)  #
+                    # Calculate the implicated beta_cs
+
+                    # Heave:
+                    Z, self.h_i, self.h_i_c = Mechanisms.zHeave(inputs,mode='SemiProb')
+                    self.gamma_h = TrajectInfo['gammaHeave'] #ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
+                    # Calculate
+                    # needed safety factor
+                    #TODO: check
+                    # Formula Sander Kapinga,veilighiedsfactor heave
+                    # if i_optredend <= 0:
+                    #     self.SF_h = 3.0
+                    # else:
+                    #     self.SF_h =i_c_h/m_he)/i_optrendend
+
+                    self.SF_h = (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i
+                    self.assess_h = 'voldoende' if (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i > 1 else 'onvoldoende'
+                    self.scenario_result['beta_cs_h'][j] = ProbabilisticFunctions.calc_beta_implicated('Heave', (self.h_i_c/self.gamma_schem_heave) / self.h_i,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
+
+                    # Uplift
+                    Z, self.u_dh, self.u_dh_c = Mechanisms.zUplift(inputs,mode='SemiProb')
+                    self.gamma_u = TrajectInfo['gammaUplift'] #ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
+                    # Calculate
+                    # needed safety factor
+                    #TODO: check
+                    # Formula Sander Kapinga,veilighiedsfactor openbarsten
+                    # if self.u_dh <= h_exit:
+                    #     self.SF_u = 3.0
+                    # else:
+                    #     self.SF_u =(d_pot_c_u/m_u)/(self.u_dh-h_exit)
+                    self.SF_u = (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh
+
+                    self.assess_u = 'voldoende' if (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh > 1 else 'onvoldoende'
+                    self.scenario_result['beta_cs_u'][j] = ProbabilisticFunctions.calc_beta_implicated('Uplift', (self.u_dh_c/self.gamma_schem_upl) / self.u_dh,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
+
+                    #Check if there is an elimination measure present (VZG or diaphragm wall)
+                    if 'Elimination' in strength.input.keys():
+                        if strength.input['Elimination'] == 'yes':
+                            #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
+                            self.scenario_result['Pf'][j] = \
+                                beta_to_pf(np.max([self.scenario_result['beta_cs_h'][j],self.scenario_result['beta_cs_u'][j],self.scenario_result['beta_cs_p'][j]])) * strength.input['Pf_elim']  + \
+                                strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim'])
+                            self.scenario_result['Beta'][j] = pf_to_beta(self.scenario_result['Pf'][j])
+                        else:
+                            raise ValueError('Warning: Elimination defined but not turned on')
+                    else:
+                        self.scenario_result['Beta'][j] = np.min([np.max([self.scenario_result['beta_cs_h'][j],self.scenario_result['beta_cs_u'][j],self.scenario_result['beta_cs_p'][j]]),8])
+                        self.scenario_result['Pf'][j] = beta_to_pf(self.scenario_result['Beta'][j])
+
+                # multiply every scenario by probability
+                self.Pf = sum(self.scenario_result['Pf'][k]*self.scenario_result['P_scenario'][k] for k in self.scenario_result['Pf'])
+                self.Beta = np.min([pf_to_beta(self.Pf),8])
+
                 self.WLchar = copy.deepcopy(inputs['h']) #add water level as used in the assessment
                 self.alpha_sq = np.nan
                 self.result = np.nan
                 # if year == 50:
                 #      print(year, self.beta_cs_u ,self.beta_cs_h,self.beta_cs_p, self.WLchar)
+
+
+
             else:
                 pass
 

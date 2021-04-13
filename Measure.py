@@ -316,7 +316,8 @@ def implement_berm_widening(input, measure_input, measure_parameters, mechanism,
             #TODO Here we can develop code to add berms to sections with a fragility curve.
     elif mechanism == 'Piping':
         input['Lvoor'] = input['Lvoor'] + measure_input['dberm']
-        input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
+        # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
+        input['Lachter'] = (input['Lachter'] - measure_input['dberm']).clip(0)
     return input
 
 
