@@ -46,10 +46,18 @@ def LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm):
         i_c = 0.3
     else:
         print('The LSF of heave has no clue what to do')
-    delta_phi = (h - h_exit) * r_exit
 
-    i = (delta_phi/d_cover) if d_cover > 0 else 99
+    #According to Formula Sander Kapinga,veilighiedsfactor heave
+    if r_exit > 0:
+        delta_phi = (h - h_exit) * r_exit
+        i = (delta_phi/d_cover) if d_cover > 0 else 99
+    else:
+        # delta_phi = 0
+        i_c = 0.5
+        i = 0.1
+
     g_h = i_c - i
+
     return g_h, i, i_c
 
 def LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping):
@@ -71,7 +79,16 @@ def LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
         dh_c = d_cover * (gamma_sat - gamma_w) / gamma_w
     # print(dh_c)
     dh = (h - h_exit) * r_exit
-    g_u = m_u * dh_c - dh # Limit State Function
+
+    # According to Formula Sander Kapinga,veilighiedsfactor openbarsten
+    if dh > h_exit:
+        pass
+    else:
+        dh_c = 0.5
+        dh = 0.1
+
+    g_u = m_u * dh_c - dh  # Limit State Function
+
     return g_u, dh, dh_c
 
 def sellmeijer2017(L,D,d70,k):

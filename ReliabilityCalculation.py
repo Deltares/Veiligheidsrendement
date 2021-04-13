@@ -429,13 +429,7 @@ class MechanismReliability:
                     self.gamma_h = TrajectInfo['gammaHeave'] #ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
                     # Calculate
                     # needed safety factor
-                    #TODO: check
-                    # Formula Sander Kapinga,veilighiedsfactor heave
-                    # if i_optredend <= 0:
-                    #     self.SF_h = 3.0
-                    # else:
-                    #     self.SF_h =i_c_h/m_he)/i_optrendend
-
+                    #TODO: check formula Sander Kapinga
                     self.SF_h = (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i
                     self.assess_h = 'voldoende' if (self.h_i_c / (self.gamma_schem_heave * self.gamma_h)) / self.h_i > 1 else 'onvoldoende'
                     self.scenario_result['beta_cs_h'][j] = ProbabilisticFunctions.calc_beta_implicated('Heave', (self.h_i_c/self.gamma_schem_heave) / self.h_i,TrajectInfo=TrajectInfo)  # Calculate the implicated beta_cs
@@ -445,12 +439,7 @@ class MechanismReliability:
                     self.gamma_u = TrajectInfo['gammaUplift'] #ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
                     # Calculate
                     # needed safety factor
-                    #TODO: check
-                    # Formula Sander Kapinga,veilighiedsfactor openbarsten
-                    # if self.u_dh <= h_exit:
-                    #     self.SF_u = 3.0
-                    # else:
-                    #     self.SF_u =(d_pot_c_u/m_u)/(self.u_dh-h_exit)
+                    #TODO: check formula Sander Kapinga
                     self.SF_u = (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh
 
                     self.assess_u = 'voldoende' if (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)) / self.u_dh > 1 else 'onvoldoende'
