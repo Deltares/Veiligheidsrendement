@@ -81,9 +81,7 @@ def LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
     dh = (h - h_exit) * r_exit
 
     # According to Formula Sander Kapinga,veilighiedsfactor openbarsten
-    if dh > h_exit:
-        pass
-    else:
+    if dh <= 0:
         dh_c = 0.5
         dh = 0.1
 
@@ -98,8 +96,7 @@ def sellmeijer2017(L,D,d70,k):
     #theta - Bedding angle (Theta) (52)
     #d70   - Particle diameter (D70) (56)
     #k     - Permeability of the upper sand layer (55)
-    RD        = 0.725;   # RD (set equal to the reference RD to neglect RD-influence)
-    RDm       = 0.725;   # reference RD
+
     d70m      = 2.08e-4; # reference d70
     nu        = 1.33e-6; # dynamic viscosity of water at 10degC
     eta       = 0.25;    # White's constant
@@ -108,7 +105,7 @@ def sellmeijer2017(L,D,d70,k):
     Fres      = eta*(16.5/9.81)*np.tan(theta/180*np.pi)
     Fscale    = (d70m/(kappa*L) ** (1/3))*((d70/d70m) ** 0.4)
 
-    # F1        = 1.65 * eta * np.tan(theta/180*np.pi) * (RD/RDm)**0.35;
+    # F1        = 1.65 * eta * np.tan(theta/180*np.pi)**0.35;
     # F2        = d70m / (nu / 9.81 * k * L) ** (1/3) * (d70/d70m) ** 0.39;
     # F3        = 0.91 * (D/L)**(0.28/(((D/L)**2.8)-1)+0.04);
     if D == L:
