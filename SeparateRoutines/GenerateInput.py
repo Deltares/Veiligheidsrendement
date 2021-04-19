@@ -43,7 +43,7 @@ def main():
     path = Path(r'..\..\data\case_input\SAFE_v0.9')
     
     #Settings:
-    traject = '16-4'                                                                            #Traject to consider
+    traject = '16-3'                                                                            #Traject to consider
     file_name = 'Dijkvakindeling_v0.9.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.

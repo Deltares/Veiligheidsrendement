@@ -455,9 +455,14 @@ def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid
             plt.show()
 
     return newdist
+
 def getDesignWaterLevel(load,p):
     #TODO Check this!
     a=1
+    from scipy import interpolate
+    # half = int(0.5 * len(load.distribution.getParameter()))
+    # p = load.distribution.getParameter()[half:]
+    # x = load.distribution.getParameter()[0:half]
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
 def addLoadCharVals(input,load=None,p_h = 1./1000, p_dh=0.5,year = 0):

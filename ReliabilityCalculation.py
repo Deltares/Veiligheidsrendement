@@ -416,10 +416,10 @@ class MechanismReliability:
                     # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
                     # Calculate needed safety factor
 
-                    if self.p_dh != 0 :
+                    if self.p_dh != 0:
                         self.SF_p = (self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)) / self.p_dh
                     else:
-                        self.SF_p = 99
+                        self.SF_p = np.inf
                     self.assess_p = 'voldoende' if self.SF_p > 1 else 'onvoldoende'
                     self.scenario_result['beta_cs_p'][j] = ProbabilisticFunctions.calc_beta_implicated('Piping', self.SF_p*self.gamma_pip,TrajectInfo=TrajectInfo)  #
                     # Calculate the implicated beta_cs
@@ -468,7 +468,6 @@ class MechanismReliability:
                 self.result = np.nan
                 # if year == 50:
                 #      print(year, self.beta_cs_u ,self.beta_cs_h,self.beta_cs_p, self.WLchar)
-
 
 
             else:
