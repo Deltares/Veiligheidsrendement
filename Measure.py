@@ -83,8 +83,8 @@ class SoilReinforcement(Measure):
             self.measures.append({})
             self.measures[-1]['dcrest'] =j[0]
             self.measures[-1]['dberm'] = j[1]
-            self.measures[-1]['Geometry'], area_difference = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
-            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, reinf_pars = k, housing = DikeSection.houses, area_difference= area_difference)
+            self.measures[-1]['Geometry'], area_extra,area_excavated = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
+            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in = j[1], housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'])
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
 
@@ -548,33 +548,59 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
             plt.savefig(plot_dir.joinpath('Geometry_' + str(dberm) + '_' + str(dcrest)+ direction + '.png'))
             plt.close()
 
-    area_difference = max(0,area_extra + 0.5 * area_excavate)
-    return new_geometry, area_difference
+    area_difference = np.max([0.,area_extra + 0.5 * area_excavate])
+    #old:
+    # return new_geometry, area_difference
+    return new_geometry, area_extra, area_excavate
 
 
 #Script to determine the costs of a reinforcement:
-def DetermineCosts(parameters, type, length, reinf_pars = None, housing = None, area_difference = None):
- if type == 'Soil reinforcement':
-     if parameters['StabilityScreen'] == 'no':
-         C = parameters['C_start'] + area_difference*parameters['C_unit'] * length
-         if isinstance(housing, pd.DataFrame) and reinf_pars > 0.:
-             C += parameters['C_house'] * housing.loc[float(reinf_pars)]['cumulative']
+def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing = False, area_extra = False, area_excavated = False, direction = False):
+    if (type == 'Soil reinforcement') and (direction == 'outward') and (dberm_in >0.):
+        #as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
+        print('Warning: encountered outward reinforcement with inward berm. Cost computation might be inaccurate')
+    if type == 'Soil reinforcement':
+     if direction == 'inward':
+         C = config.unit_cost['Inward added volume'] * area_extra
+     elif direction == 'outward':
+         reusable_volume = config.unit_cost['Outward reuse factor'] * area_excavated
+         #excavate and remove part of existing profile:
+         C = config.unit_cost['Outward removed volume'] * (area_excavated-reusable_volume)
 
-     elif parameters['StabilityScreen'] == 'yes':
-         C = parameters['C_start'] + area_difference*parameters['C_unit'] * length + parameters['C_unit2'] * parameters['Depth'] * length
-         if isinstance(housing, pd.DataFrame) and reinf_pars > 0.:
-             C += parameters['C_house'] * housing.loc[float(reinf_pars)]['cumulative']
+         #apply reusable volume
+         C += config.unit_cost['Outward reused volume'] * reusable_volume
+         remaining_volume = area_extra - reusable_volume
+
+         #add additional soil:
+         C += config.unit_cost['Outward added volume'] * remaining_volume
+
+         #compensate:
+         C += config.unit_cost['Outward removed volume'] * config.unit_cost['Outward compensation factor'] * area_extra
+
+
+     else:
+         raise Exception('invalid direction')
+
+     #add costs for housing
+     if isinstance(housing, pd.DataFrame) and dberm_in > 0.:
+         C += parameters['C_house'] * housing.loc[float(dberm_in)]['cumulative']
+    #add costs for stability screen
+     if parameters['StabilityScreen'] == 'yes':
+         C += config.unit_cost['Sheetpile'] * parameters['Depth'] * length
+
+     if dcrest >0.:
+         C += config.unit_cost['Road renewal'] * length
 
      #x = map(int, self.parameters['house_removal'].split(';'))
- elif type == 'Vertical Geotextile':
-     C = parameters['C_unit'] * length
- elif type == 'Diaphragm Wall':
-     C = parameters['C_unit'] * length
- elif type == 'Stability Screen':
-     C = parameters['C_unit'] * parameters['Depth'] * length
- else:
+    elif type == 'Vertical Geotextile':
+     C = config.unit_cost['Vertical Geotextile'] * length
+    elif type == 'Diaphragm Wall':
+     C = config.unit_cost['Diaphragm wall'] * length
+    elif type == 'Stability Screen':
+     C = config.unit_cost['Sheetpile'] * parameters['Depth'] * length
+    else:
      print('Unknown type')
- return C
+    return C
 
 #Script to determine the required crest height for a certain year
 def ProbabilisticDesign(design_variable, strength_input, Pt, horizon = 50, loadchange = 0, mechanism='Overflow'):
