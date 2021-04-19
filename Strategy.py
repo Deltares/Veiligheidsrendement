@@ -709,6 +709,14 @@ class Strategy:
                     'MixedInteger.csv'))
             costs['TC'] = np.add(costs['TR'],costs['LCC'])
         return costs
+    def getSafetyStandardStep(self,Ptarget,t=50):
+        """Get the index of the measure where the traject probability in year t is higher than the requirement"""
+        for i in range(0, len(self.Probabilities)):
+            beta_traj, Pf_traj = calcTrajectProb(self.Probabilities[i], ts=t)
+            if Pf_traj < Ptarget:
+                self.SafetyStandardStep = i
+                break
+
     def plotMeasures(self, traject,PATH,fig_size=(12,4),crestscale = 25.,creststep=0.5,show_xticks=True,flip=False,title_in=False,greedymode='Optimal',colors=False):
         """This routine plots the measures for different solution options. Extension of plotAssessment.
         We might need to generalize the labeling, as this is now only in English. """
@@ -732,14 +740,10 @@ class Strategy:
             if greedymode == 'Optimal':
                 Solution = copy.deepcopy(self.OptimalSolution)
             elif greedymode == 'SafetyStandard':
-                Ptarget = traject.GeneralInfo['Pmax']
-                for i in range(0,len(self.Probabilities)):
-                    beta_traj, Pf_traj = calcTrajectProb(self.Probabilities[i], ts=50)
-                    if Pf_traj < Ptarget:
-                        SafetyStandardStep = i
-                        self.makeSolution(PATH.joinpath('SatisfiedStandardGreedy.csv'),step = SafetyStandardStep+1,type='SatisfiedStandard')
-                        Solution = self.SatisfiedStandardSolution
-                        break
+                self.getSafetyStandardStep(traject.GeneralInfo['Pmax'])
+                self.makeSolution(PATH.joinpath('SatisfiedStandardGreedy.csv'),step = self.SafetyStandardStep+1,type='SatisfiedStandard')
+                Solution = self.SatisfiedStandardSolution
+
         else:
             Solution = copy.deepcopy(self.FinalSolution)
         # Solution['dcrest'].iloc[0]=0.5; print('careful: test line included')
@@ -759,6 +763,7 @@ class Strategy:
         SS = []
         VSG = []
         DW = []
+        Customs = []
         T2045 = []
         T2045_y1 = []
         T2045_y2 = []
@@ -769,6 +774,8 @@ class Strategy:
                 VSG.append(middles[i])
             elif 'Zelfkere' in Solution['name'].iloc[i]:
                 DW.append(middles[i])
+            elif Solution['LCC'].iloc[i]>0.:
+                Customs.append(middles[i])
             if '2045' in Solution['name'].iloc[i]:
                 T2045.append(i)
                 T2045_y1.append(Solution['dcrest'].iloc[i]* -(crestscale))
@@ -781,8 +788,9 @@ class Strategy:
         ax.axhline(y=0,color='black',linestyle='-',linewidth=1,alpha=1)
 
         if len(SS) > 0:  measures['SS']  = ax.plot(SS,np.ones((len(SS),1))  *0,color=color[col]  , linestyle='', marker=markers[0],label='SS')
-        if len(VSG) > 0: measures['VSG'] = ax.plot(VSG,np.ones((len(VSG),1))*0,color=color[col+1], linestyle='', marker=markers[1],label='VSG')
+        if len(VSG) > 0: measures['VSG'] = ax.plot(VSG,np.ones((len(VSG),1))*0,color=color[col+1], linestyle='', marker=markers[1],label='VZG')
         if len(DW) > 0:  measures['DW']  = ax.plot(DW,np.ones((len(DW),1))  *0,color=color[col+2], linestyle='', marker=markers[2],label='DW')
+        if len(Customs) > 0:  measures['Customs']  = ax.plot(Customs,np.ones((len(Customs),1))  *0,color=color[col+2], linestyle='', marker=markers[2],label='Custom')
         if len(T2045) > 0:
             #dummy for label
             ax.plot([-99,-98],[0, 0], color='black', linestyle=':', label='2045')
@@ -792,7 +800,7 @@ class Strategy:
         for i in cumlength:
             ax.axvline(x=i, color='gray', linestyle='-', linewidth=0.5, alpha=0.5)
         ax.set_xlim(left=0,right=np.max(cumlength))
-        bermticks = np.arange(0,101,20)
+        bermticks = np.arange(0,51,10)
         crestticks = np.arange(-crestscale*2,0,creststep*crestscale)
         # otherticks = np.arange(140,181,20)
         allticks = np.concatenate((crestticks, bermticks))#, otherticks))
@@ -817,7 +825,7 @@ class Strategy:
         ax.grid(axis='y', linewidth=0.5, color='gray', alpha=0.5)
         ax.invert_yaxis()
         if flip: ax.invert_xaxis()
-        ax.text(-0.035, .7, 'Crest in m', rotation=90, transform=ax.transAxes)
+        ax.text(-0.035, .7, 'Kruin in m', rotation=90, transform=ax.transAxes)
         ax.text(-0.035, .1, 'Berm in m', rotation=90, transform=ax.transAxes)
         # ax.text(-0.035, -0.02, 'Structural', rotation=90, transform=ax.transAxes)
         ax.legend(bbox_to_anchor=(1.01, 0.85))

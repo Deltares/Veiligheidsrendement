@@ -172,7 +172,7 @@ def calcTrajectProb(base, horizon=False, datatype='DataFrame', ts=None, mechs=Fa
     pfs = {}
     if horizon:
         trange = np.arange(0, horizon, 1)
-    elif ts:
+    elif ts != None:
         trange = [ts]
     else:
         raise ValueError('No range defined')

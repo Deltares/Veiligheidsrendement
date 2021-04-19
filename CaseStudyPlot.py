@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 from HelperFunctions import getMeasureTable
-
+import config
 
 def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
     #now for 2 strategies: plots an LCC bar chart
@@ -55,86 +55,84 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
 
 def main():
     #initialize the case that we consider. We start with a small one, eventually we will use a big one.
-    ## GENERAL SETTINGS
-    PATH = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\SAFE_16-4_oktober_test')
-    case = 'Case_cautious_f=1.5_bundling'
-
     ##PLOT SETTINGS
     plot_year = 2025
     rel_year = plot_year-2025
-    directory = PATH.joinpath(case)
-    filename = directory.joinpath('AfterStep1.out')
+    filename = config.directory.joinpath('AfterStep1.out')
     my_shelf = shelve.open(str(filename))
     for key in my_shelf:
         TestCase = my_shelf[key]
     my_shelf.close()
 
-    filename = directory.joinpath('AfterStep2.out')
+    filename = config.directory.joinpath('AfterStep2.out')
     my_shelf = shelve.open(str(filename))
     for key in my_shelf:
         AllSolutions = my_shelf[key]
     my_shelf.close()
 
-    filename = directory.joinpath('FINALRESULT.out')
+    filename = config.directory.joinpath('FINALRESULT.out')
     my_shelf = shelve.open(str(filename))
     for key in my_shelf:
         AllStrategies = my_shelf[key]
     my_shelf.close()
-    AllStrategies[1].makeSolution(directory.joinpath('results', 'FinalMeasures_OI.csv'), type='Final')
-    AllStrategies[0].makeSolution(directory.joinpath('results', 'FinalMeasures_TC.csv'), type='SatisfiedStandard')
-    #pane 1: reliability in 2050
+    AllStrategies[0].getSafetyStandardStep(TestCase.GeneralInfo['Pmax'])
+    AllStrategies[1].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Doorsnede-eisen.csv'), type='Final')
+    AllStrategies[0].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Veiligheidsrendement.csv'),step = AllStrategies[0].SafetyStandardStep, type='SatisfiedStandard')
+
+    #pane 1: reliability in the relevant years
         #left: system reliability
         #right: all sections
     figsize = (12, 2)
     #color settings
     optimized_colors = {'n_colors': 5, 'start' : 1.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
     targetrel_colors = {'n_colors': 5, 'start' : 0.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
-
-    # TestCase.plotAssessment(PATH=directory, fig_size=figsize, flip='on',
-    #                         years = [rel_year], labels_limited=True, system_rel=True,
-    #                         custom_name='Assessment_' + str(plot_year) + '.png', show_xticks=True,
-    #                         title_in='(a) \n' + r'$\bf{Predicted~reliability~in~' + str(plot_year) + '}$')
-    #
-    # #pane 2: reliability in 2075, with Greedy optimization
-    # TestCase.plotAssessment(PATH=directory, fig_size=figsize, flip='on',
-    #                         years = [rel_year], labels_limited=True,system_rel=True,
-    #                         custom_name='GreedyStrategy_' + str(plot_year) + '.png', reinforcement_strategy=AllStrategies[0], greedymode = 'SafetyStandard',
-    #                         show_xticks=True, title_in='(c)\n' + r'$\bf{Optimized~investment}$ - Reliability in ' + str(plot_year),colors=optimized_colors)
-    #
-    # #pane 3: reliability in 2075, with Target Reliability Approach
-    # TestCase.plotAssessment(PATH=directory, fig_size=figsize, flip='on',
-    #                         years = [rel_year], labels_limited=True,system_rel=True,
-    #                         custom_name='TargetReliability_' + str(plot_year) + '.png', reinforcement_strategy=AllStrategies[1],
-    #                         show_xticks=True, title_in='(e) \n' + r'$\bf{Target~reliability~based~investment}$ -  Reliability in ' + str(plot_year),colors=targetrel_colors)
+    for plot_t in config.assessment_plot_years:
+        plot_year = str(plot_t+config.t_0)
+        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True, system_rel=True, show_xticks=True,
+                                custom_name='Assessment_' + plot_year+'.png',
+                                title_in='(a) \n' + r'$\bf{Predicted~reliability~in~' + plot_year + '}$')
+        #
+        # #pane 2: reliability in 2075, with Greedy optimization
+        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True,system_rel=True,
+                                custom_name='GreedyStrategy_' + plot_year + '.png', reinforcement_strategy=AllStrategies[0], greedymode = 'SafetyStandard',
+                                show_xticks=True, title_in='(c)\n' + r'$\bf{Optimized~investment}$ - Reliability in ' + plot_year,colors=optimized_colors)
+        #
+        # #pane 3: reliability in 2075, with Target Reliability Approach
+        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True,system_rel=True,
+                                custom_name='TargetReliability_' + plot_year + '.png', reinforcement_strategy=AllStrategies[1],
+                                show_xticks=True, title_in='(e) \n' + r'$\bf{Target~reliability~based~investment}$ -  Reliability in ' + plot_year,colors=targetrel_colors)
     #
     #pane 4: measures per dike section for Greedy
-    AllStrategies[0].plotMeasures(traject=TestCase,PATH=directory,fig_size=figsize,crestscale=25.,
-                                  show_xticks=False, flip=True,  greedymode = 'SafetyStandard',
-                                  title_in='(b) \n' + r'Measures for optimized investment with large increase in hydraulic load',colors=optimized_colors)
+    AllStrategies[0].plotMeasures(traject=TestCase,PATH=config.directory,fig_size=figsize,crestscale=25.,
+                                  show_xticks=True, flip=True,  greedymode = 'SafetyStandard',
+                                  title_in='(b) \n' + r'$\bf{Greedy strategy}$ - Measures',colors=optimized_colors)
     # #pane 5: measures per dike section for Target
     #
-    # AllStrategies[1].plotMeasures(traject=TestCase,PATH=directory,fig_size=figsize,crestscale=25.,
-    #                               show_xticks=False, flip=True,
-    #                               title_in='(d) \n' + r'$\bf{Target~reliability~based~investment}$ - Measures',colors=targetrel_colors)
+    AllStrategies[1].plotMeasures(traject=TestCase,PATH=config.directory,fig_size=figsize,crestscale=25.,
+                                  show_xticks=True, flip=True,
+                                  title_in='(d) \n' + r'$\bf{Target~reliability~based~investment}$ - Measures',colors=targetrel_colors)
 
     # #pane 6: Investment costs per dike section for both
     twoColors = [sns.cubehelix_palette(**optimized_colors)[1],sns.cubehelix_palette(**targetrel_colors)[1]]
-    plotLCC(AllStrategies,TestCase,PATH=directory,fig_size=figsize,flip=True,greedymode='SafetyStandard',
+    plotLCC(AllStrategies,TestCase,PATH=config.directory,fig_size=figsize,flip=True,greedymode='SafetyStandard',
             title_in='(f) \n' + r'$\bf{LCC~of~both~approaches}$',color = twoColors)
 
 
+
     # LCC-beta for t=50
-    MeasureTable = getMeasureTable(AllSolutions, language = 'EN',abbrev=True)
-    figsize = (5,5)
-    plt.figure(102, figsize=figsize)
-    AllStrategies[0].plotBetaCosts(TestCase, t=rel_year,
-                                   fig_id=102, symbolmode=True, markersize = 10, final_step = AllStrategies[0].OptimalStep,color=twoColors[0], series_name='Optimized ' \
-                                                                                                                                                    'investment',
-                                   MeasureTable=MeasureTable, beta_or_prob='beta', outputcsv=PATH,final_measure_symbols =False)
-    AllStrategies[1].plotBetaCosts(TestCase, t=rel_year,
-                                   fig_id=102, symbolmode=True, markersize = 10, color=twoColors[1], series_name='Target reliability based investment',
-                                   MeasureTable=MeasureTable,last=True, beta_or_prob='beta', outputcsv=PATH,final_measure_symbols =True)
-    plt.savefig(directory.joinpath('Priority order Beta vs LCC_' + str(plot_year) + '.png'),dpi=300,bbox_inches='tight',format='png')
+    for t_plot in [0,50]:
+        for cost_type in ['Initial', 'LCC']:
+            MeasureTable = getMeasureTable(AllSolutions, language = 'EN',abbrev=True)
+            figsize = (8,8)
+            plt.figure(102, figsize=figsize)
+            AllStrategies[0].plotBetaCosts(TestCase, t=t_plot, cost_type=cost_type,
+                                           fig_id=102, markersize = 10, final_step = AllStrategies[0].OptimalStep,color=twoColors[0], series_name='Optimized investment',
+                                           MeasureTable=MeasureTable,final_measure_symbols =False)
+            AllStrategies[1].plotBetaCosts(TestCase, t=t_plot, cost_type=cost_type,
+                                           fig_id=102, markersize = 10, color=twoColors[1], series_name='Target reliability based investment',
+                                           MeasureTable=MeasureTable,last=True,final_measure_symbols =True)
+            plt.savefig(config.directory.joinpath('Priority order Beta vs LCC_' + str(t_plot+config.t_0) + '.png'),dpi=300,bbox_inches='tight',format='png')
+            plt.close()
 
 if __name__ == '__main__':
     main()

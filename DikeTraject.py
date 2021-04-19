@@ -123,7 +123,7 @@ class DikeTraject:
     def plotAssessment(self, fig_size = (6,4),
                        draw_targetbeta='off', last=True, alpha = 1, colors=False,
                        labels_limited=False,system_rel=False, custom_name=False,title_in=False,
-                       reinforcement_strategy=False,greedymode='Optimal',show_xticks = True):
+                       reinforcement_strategy=False,greedymode='Optimal',show_xticks = True,t_list=[]):
         '''Routine to plot traject reliability'''
         if reinforcement_strategy:
             if reinforcement_strategy.__class__.__name__ == 'GreedyStrategy':
@@ -188,7 +188,8 @@ class DikeTraject:
         line = {}
         mid = {}
         legend_line = {}
-        for ii in config.assessment_plot_years:
+        if len(t_list) == 0: t_list = config.assessment_plot_years
+        for ii in t_list:
             if system_rel:
                 fig, (ax, ax1) = plt.subplots(nrows=1, ncols=2, figsize=fig_size,sharey='row',
                                               gridspec_kw={'width_ratios': [20, 1], 'wspace': 0.08, 'left': 0.03, 'right': 0.98})

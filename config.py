@@ -5,15 +5,16 @@ import pandas as pd
 
 ## GENERAL SETTINGS
 timing = True
-traject = '16-3'
-path = Path(r'c:\Users\wouterjanklerk\Documents\01_Projects\03_SAFE Deltares\data_repos\cases\Testcase_SAFE_v09_fast_{}'.format(traject))
+traject = '16-4'
+# path = Path(r'c:\Users\wouterjanklerk\Documents\01_Projects\03_SAFE Deltares\data_repos\cases\Testcase_SAFE_v09_fast_{}'.format(traject))
+path = Path(r'c:\Users\wouterjanklerk\Documents\01_Projects\03_SAFE Deltares\data_repos\cases\Testcase_SAFE_v09_{}'.format(traject))
 # path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_small')
 # path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_SAFE_v09_' + traject)
 # path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_testcombine')
 # path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\Documents\04_SAFE\SAFE repository\data\cases\Testcase_' + traject)
 # path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_10sections_2021_' + traject)
 
-casename = 'test_cost'
+casename = 'new_cost_functions'
 directory = path.joinpath('Case_' + casename)
 language = 'NL'
 
@@ -57,7 +58,12 @@ geometry_plot = False                                       #Setting to plot the
 beta_cost_settings = {'symbols':True,                       #whether to include symbols in the beta-cost curve
                       'markersize':10}                      #base size of markers.
 #unit costs:
-unit_cost_data = pd.read_csv('../unit_costs.csv')
+try:
+    unit_cost_data = pd.read_csv('../unit_costs.csv')
+except:
+    unit_cost_data = pd.read_csv('unit_costs.csv')
+
+
 unit_cost = {}
 for count, i in unit_cost_data.iterrows():
     unit_cost[i['Description']] = i['Cost']
