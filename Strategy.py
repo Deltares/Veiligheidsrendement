@@ -728,7 +728,7 @@ class Strategy:
             color = sns.cubehelix_palette(**colors)
         else:
             color = sns.cubehelix_palette(n_colors=5, start=1.9,rot=1,gamma=1.5,hue=1.0,light=0.8,dark=0.3)
-        markers = ['o', 'v', 'd']
+        markers = ['o', 'v', 'd','*']
         # fig, ax = plt.subplots(figsize=fig_size)
         fig, (ax, ax1) = plt.subplots(nrows=1, ncols=2, figsize=fig_size, sharey='row',
                                       gridspec_kw={'width_ratios': [20, 1], 'wspace': 0.08, 'left': 0.03, 'right': 0.98})
@@ -790,7 +790,7 @@ class Strategy:
         if len(SS) > 0:  measures['SS']  = ax.plot(SS,np.ones((len(SS),1))  *0,color=color[col]  , linestyle='', marker=markers[0],label='SS')
         if len(VSG) > 0: measures['VSG'] = ax.plot(VSG,np.ones((len(VSG),1))*0,color=color[col+1], linestyle='', marker=markers[1],label='VZG')
         if len(DW) > 0:  measures['DW']  = ax.plot(DW,np.ones((len(DW),1))  *0,color=color[col+2], linestyle='', marker=markers[2],label='DW')
-        if len(Customs) > 0:  measures['Customs']  = ax.plot(Customs,np.ones((len(Customs),1))  *0,color=color[col+2], linestyle='', marker=markers[2],label='Custom')
+        if len(Customs) > 0:  measures['Customs']  = ax.plot(Customs,np.ones((len(Customs),1))  *0,color=color[col+3], linestyle='', marker=markers[3],label='Custom')
         if len(T2045) > 0:
             #dummy for label
             ax.plot([-99,-98],[0, 0], color='black', linestyle=':', label='2045')
