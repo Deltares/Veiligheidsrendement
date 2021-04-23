@@ -5,16 +5,13 @@ import pandas as pd
 
 ## GENERAL SETTINGS
 timing = True
-traject = '16-4'
-# path = Path(r'c:\Users\wouterjanklerk\Documents\01_Projects\03_SAFE Deltares\data_repos\cases\Testcase_SAFE_v09_fast_{}'.format(traject))
-path = Path(r'c:\Users\wouterjanklerk\Documents\01_Projects\03_SAFE Deltares\data_repos\cases\Testcase_SAFE_v09_{}'.format(traject))
-# path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_small')
-# path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_SAFE_v09_' + traject)
+traject = '16-3'
+path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_SAFE_v1_scope_' + traject)
 # path = Path(r'..\..\data\cases\SAFE_v0.6-' + traject + '_testcombine')
 # path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\Documents\04_SAFE\SAFE repository\data\cases\Testcase_' + traject)
 # path = Path(r'c:\Users\krame_n\0_WERK\SAFE\Repos\data\cases\Testcase_10sections_2021_' + traject)
 
-casename = 'new_cost_functions'
+casename = 'maatregelen_scope_vakken' # maatregelen scope vakken
 directory = path.joinpath('Case_' + casename)
 language = 'NL'
 
@@ -24,7 +21,7 @@ T = [0, 19, 20, 25, 50, 75, 100]                            #years to compute re
 mechanisms=['Overflow', 'StabilityInner','Piping']          #mechanisms to consider
 LE_in_section=False                                         #whether to consider length-effects within a dike section
 crest_step = 0.5
-berm_step = [0,5,10,20,30,40,50]
+berm_step = [0,5,8,10,12,15,20,30,40,50]
 
 
 ## OPTIMIZATION SETTINGS
