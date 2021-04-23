@@ -1,5 +1,6 @@
 Description,Cost,Unit
-Inward added volume,47,€/m3
+Inward starting costs, 185, €/m
+Inward added volume,44,€/m3
 Outward added volume,36,€/m3
 Outward reused volume,14,€/m3
 Outward reuse factor,0.7,-

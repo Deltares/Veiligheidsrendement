@@ -561,7 +561,7 @@ def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing
         print('Warning: encountered outward reinforcement with inward berm. Cost computation might be inaccurate')
     if type == 'Soil reinforcement':
      if direction == 'inward':
-         C = config.unit_cost['Inward added volume'] * area_extra
+         C = config.unit_cost['Inward added volume'] * area_extra + config.unit_cost['Inward starting costs'] *length
      elif direction == 'outward':
          reusable_volume = config.unit_cost['Outward reuse factor'] * area_excavated
          #excavate and remove part of existing profile:
