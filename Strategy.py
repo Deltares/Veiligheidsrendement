@@ -755,7 +755,7 @@ class Strategy:
         # Solution['dcrest'].iloc[0]=0.5; print('careful: test line included')
         for i in types:
             data = Solution[i].values
-            data[np.where(data < -900)] = 0.01
+            data[np.where(data.astype(np.float32)<-900)] = 0.01
             if i == 'dcrest':
                 if np.nanmax(data)>0.2:
                     data = np.multiply(data, -crestscale)
@@ -782,7 +782,7 @@ class Strategy:
                 DW.append(middles[i])
             elif 'Grondversterking' in Solution['name'].iloc[i]:
                 pass
-            elif Solution['LCC'].iloc[i]>0.:
+            elif Solution['LCC'].iloc[i].astype(np.float32)>0.:
                 Customs.append(middles[i])
             if '2045' in Solution['name'].iloc[i]:
                 T2045.append(i)
@@ -1723,12 +1723,15 @@ class TargetReliabilityStrategy(Strategy):
 
             # filter for stabilityinner
             PossibleMeasures = PossibleMeasures.loc[PossibleMeasures[('StabilityInner', targetyear)] > beta_T_stabinner]
-
+            if len(PossibleMeasures) == 0:
+                #break if weakest has no more measures
+                break
             # calculate LCC
             LCC = calcTC(PossibleMeasures, r=self.r, horizon=self.options[i.name]['Overflow'].columns[-1])
 
             # select measure with lowest cost
             idx = np.argmin(LCC)
+
             measure = PossibleMeasures.iloc[idx]
 
             # calculate achieved risk reduction & BC ratio compared to base situation
