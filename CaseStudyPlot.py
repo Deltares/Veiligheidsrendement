@@ -8,6 +8,11 @@ from HelperFunctions import getMeasureTable
 import config
 
 def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
+    #TODO This should not be necessary:
+    Strategies[0].OptimalSolution['LCC']= Strategies[0].OptimalSolution['LCC'].astype(np.float32)
+    Strategies[0].SatisfiedStandardSolution['LCC'] = Strategies[0].SatisfiedStandardSolution['LCC'].astype(np.float32)
+    Strategies[1].FinalSolution['LCC'] = Strategies[1].FinalSolution['LCC'].astype(np.float32)
+
     #now for 2 strategies: plots an LCC bar chart
     cumlength, xticks1, middles = getSectionLengthInTraject(traject.Probabilities['Length'].loc[traject.Probabilities.index.get_level_values(1) == 'Overflow'].values)
     if not color:
@@ -20,7 +25,7 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
     if greedymode == 'Optimal':
         GreedySolution = Strategies[0].OptimalSolution['LCC'].values/1e6
     elif greedymode == 'SafetyStandard':
-        GreedySolution = np.float32(Strategies[0].SatisfiedStandardSolution['LCC'].values)/1e6
+        GreedySolution = Strategies[0].SatisfiedStandardSolution['LCC'].values/1e6
         print()
     ax.bar(np.subtract(middles,0.45*widths),GreedySolution,widths*0.9,color=color[0],label='Optimized')
     ax.bar(np.add(middles,0.45*widths),Strategies[1].FinalSolution['LCC'].values/1e6,widths*0.9,color=color[1],label='Target rel.')
@@ -43,8 +48,8 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
 
     #add a legend
     ax1.axis('off')
-    ax.text(0, 0.8,'Total LCC Optimized = ' + '{:.0f}'.format(np.sum(GreedySolution)) +
-            ' M€ \n' + 'Total LCC Target rel. = ' + '{:.0f}'.format(np.sum(Strategies[1].FinalSolution['LCC'].values / 1e6)) + ' M€',
+    ax.text(0, 0.8,'Total LCC Optimized = {:.0f}'.format(np.sum(GreedySolution.astype(np.float32))) +
+            ' M€ \n' + 'Total LCC Target rel. = {:.0f}'.format(np.sum(Strategies[1].FinalSolution['LCC'].values / 1e6)) + ' M€',
             horizontalalignment='left', transform=ax.transAxes)
     if flip: ax.invert_xaxis()
     ax.legend(bbox_to_anchor=(1.0001, 0.85)) #reposition!
@@ -75,7 +80,7 @@ def main():
     for key in my_shelf:
         AllStrategies = my_shelf[key]
     my_shelf.close()
-    greedy_mode = 'SafetyStandard'
+    greedy_mode = 'Optimal'
     AllStrategies[0].getSafetyStandardStep(TestCase.GeneralInfo['Pmax'])
     AllStrategies[1].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Doorsnede-eisen.csv'), type='Final')
     AllStrategies[0].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Veiligheidsrendement.csv'),step = AllStrategies[0].SafetyStandardStep, type='SatisfiedStandard')
