@@ -715,7 +715,13 @@ class Strategy:
             beta_traj, Pf_traj = calcTrajectProb(self.Probabilities[i], ts=t)
             if Pf_traj < Ptarget:
                 self.SafetyStandardStep = i
+                print('found step {} with {:.2f}'.format(i,beta_traj[0]))
                 break
+
+            if i == len(self.Probabilities)-1:
+                self.SafetyStandardStep = i
+                print('Warning: safety standard not met. Using final step for plotting')
+
 
     def plotMeasures(self, traject,PATH,fig_size=(12,4),crestscale = 25.,creststep=0.5,show_xticks=True,flip=False,title_in=False,greedymode='Optimal',colors=False):
         """This routine plots the measures for different solution options. Extension of plotAssessment.
@@ -774,6 +780,8 @@ class Strategy:
                 VSG.append(middles[i])
             elif 'Zelfkere' in Solution['name'].iloc[i]:
                 DW.append(middles[i])
+            elif 'Grondversterking' in Solution['name'].iloc[i]:
+                pass
             elif Solution['LCC'].iloc[i]>0.:
                 Customs.append(middles[i])
             if '2045' in Solution['name'].iloc[i]:
@@ -790,6 +798,7 @@ class Strategy:
         if len(SS) > 0:  measures['SS']  = ax.plot(SS,np.ones((len(SS),1))  *0,color=color[col]  , linestyle='', marker=markers[0],label='SS')
         if len(VSG) > 0: measures['VSG'] = ax.plot(VSG,np.ones((len(VSG),1))*0,color=color[col+1], linestyle='', marker=markers[1],label='VZG')
         if len(DW) > 0:  measures['DW']  = ax.plot(DW,np.ones((len(DW),1))  *0,color=color[col+2], linestyle='', marker=markers[2],label='DW')
+        print(col)
         if len(Customs) > 0:  measures['Customs']  = ax.plot(Customs,np.ones((len(Customs),1))  *0,color=color[col+3], linestyle='', marker=markers[3],label='Custom')
         if len(T2045) > 0:
             #dummy for label

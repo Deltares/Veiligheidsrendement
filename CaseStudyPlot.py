@@ -75,6 +75,7 @@ def main():
     for key in my_shelf:
         AllStrategies = my_shelf[key]
     my_shelf.close()
+    greedy_mode = 'Optimal'
     AllStrategies[0].getSafetyStandardStep(TestCase.GeneralInfo['Pmax'])
     AllStrategies[1].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Doorsnede-eisen.csv'), type='Final')
     AllStrategies[0].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Veiligheidsrendement.csv'),step = AllStrategies[0].SafetyStandardStep, type='SatisfiedStandard')
@@ -84,8 +85,8 @@ def main():
         #right: all sections
     figsize = (12, 2)
     #color settings
-    optimized_colors = {'n_colors': 5, 'start' : 1.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
-    targetrel_colors = {'n_colors': 5, 'start' : 0.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
+    optimized_colors = {'n_colors': 6, 'start' : 1.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
+    targetrel_colors = {'n_colors': 6, 'start' : 0.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
     for plot_t in config.assessment_plot_years:
         plot_year = str(plot_t+config.t_0)
         TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True, system_rel=True, show_xticks=True,
@@ -94,7 +95,7 @@ def main():
         #
         # #pane 2: reliability in 2075, with Greedy optimization
         TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True,system_rel=True,
-                                custom_name='GreedyStrategy_' + plot_year + '.png', reinforcement_strategy=AllStrategies[0], greedymode = 'SafetyStandard',
+                                custom_name='GreedyStrategy_' + plot_year + '.png', reinforcement_strategy=AllStrategies[0], greedymode = greedy_mode,
                                 show_xticks=True, title_in='(c)\n' + r'$\bf{Optimized~investment}$ - Reliability in ' + plot_year,colors=optimized_colors)
         #
         # #pane 3: reliability in 2075, with Target Reliability Approach
@@ -104,7 +105,7 @@ def main():
     #
     #pane 4: measures per dike section for Greedy
     AllStrategies[0].plotMeasures(traject=TestCase,PATH=config.directory,fig_size=figsize,crestscale=25.,
-                                  show_xticks=True, flip=True,  greedymode = 'SafetyStandard',
+                                  show_xticks=True, flip=True,  greedymode = greedy_mode,
                                   title_in='(b) \n' + r'$\bf{Greedy strategy}$ - Measures',colors=optimized_colors)
     # #pane 5: measures per dike section for Target
     #
@@ -114,7 +115,7 @@ def main():
 
     # #pane 6: Investment costs per dike section for both
     twoColors = [sns.cubehelix_palette(**optimized_colors)[1],sns.cubehelix_palette(**targetrel_colors)[1]]
-    plotLCC(AllStrategies,TestCase,PATH=config.directory,fig_size=figsize,flip=True,greedymode='SafetyStandard',
+    plotLCC(AllStrategies,TestCase,PATH=config.directory,fig_size=figsize,flip=True,greedymode=greedy_mode,
             title_in='(f) \n' + r'$\bf{LCC~of~both~approaches}$',color = twoColors)
 
 

@@ -154,22 +154,22 @@ class TableDist(ot.PythonDistribution):
             p = pp[0] + dp * ((X - xx[0]) / dx)
 
             return p
-    # def computeQuantile(self,p,tail=False):
-    #         if tail:            #if input p is to be interpreted as exceedence probability
-    #             p = 1-p
-    #         #Linearly interpolate between two values
+    def computeQuantile_alternative(self,p,tail=False):
+            if tail:            #if input p is to be interpreted as exceedence probability
+                p = 1-p
+            #Linearly interpolate between two values
 
 
-    #         # idx_up = np.min(np.argwhere(self.x > X))
-    #         #find index above
-    #         idx_up = np.argmax(self.xp>p)
+            # idx_up = np.min(np.argwhere(self.x > X))
+            #find index above
+            idx_up = np.argmax(self.xp>p)
 
-    #         xx = self.x[idx_up - 1:idx_up + 1]
-    #         pp = self.xp[idx_up - 1:idx_up + 1]
-    #         dp = pp[1] - pp[0]
-    #         dx = xx[1] - xx[0]
-    #         x = xx[0] + dx * ((p - pp[0]) / dp)
-    #         return x
+            xx = self.x[idx_up - 1:idx_up + 1]
+            pp = self.xp[idx_up - 1:idx_up + 1]
+            dp = pp[1] - pp[0]
+            dx = xx[1] - xx[0]
+            x = xx[0] + dx * ((p - pp[0]) / dp)
+            return x
     def getMean(self):
         high = np.min(np.argwhere(self.xp > 0.53))
         low = np.min(np.argwhere(self.xp>0.47))
