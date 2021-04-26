@@ -20,7 +20,7 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
     if greedymode == 'Optimal':
         GreedySolution = Strategies[0].OptimalSolution['LCC'].values/1e6
     elif greedymode == 'SafetyStandard':
-        GreedySolution = Strategies[0].SatisfiedStandardSolution['LCC'].values/1e6
+        GreedySolution = np.float32(Strategies[0].SatisfiedStandardSolution['LCC'].values)/1e6
         print()
     ax.bar(np.subtract(middles,0.45*widths),GreedySolution,widths*0.9,color=color[0],label='Optimized')
     ax.bar(np.add(middles,0.45*widths),Strategies[1].FinalSolution['LCC'].values/1e6,widths*0.9,color=color[1],label='Target rel.')
@@ -75,7 +75,7 @@ def main():
     for key in my_shelf:
         AllStrategies = my_shelf[key]
     my_shelf.close()
-    greedy_mode = 'Optimal'
+    greedy_mode = 'SafetyStandard'
     AllStrategies[0].getSafetyStandardStep(TestCase.GeneralInfo['Pmax'])
     AllStrategies[1].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Doorsnede-eisen.csv'), type='Final')
     AllStrategies[0].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Veiligheidsrendement.csv'),step = AllStrategies[0].SafetyStandardStep, type='SatisfiedStandard')

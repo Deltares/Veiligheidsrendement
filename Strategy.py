@@ -782,7 +782,7 @@ class Strategy:
                 DW.append(middles[i])
             elif 'Grondversterking' in Solution['name'].iloc[i]:
                 pass
-            elif Solution['LCC'].iloc[i].astype(np.float32)>0.:
+            elif np.float32(Solution['LCC'].iloc[i])>0.:
                 Customs.append(middles[i])
             if '2045' in Solution['name'].iloc[i]:
                 T2045.append(i)
