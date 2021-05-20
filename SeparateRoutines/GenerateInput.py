@@ -40,11 +40,11 @@ def main():
     
     #Path of files. Should contain a subdirectory '\Input with designtables_HBN, designtables_TP, profiles, base_HBN.csv and measures.csv'
     # path = Path(r'c:\Users\wouterjanklerk\Documents\00_PhDGeneral\03_Cases\01_Rivierenland SAFE\WJKlerk\SAFE\data\InputFiles\Testcase_10sections_2021')
-    path = Path(r'..\..\data\case_input\SAFE_v1.0_scope')
+    path = Path(r'..\..\data\case_input\SAFE_v1.1_scope')
     
     #Settings:
-    traject = '16-3'                                                                            #Traject to consider
-    file_name = 'Dijkvakindeling_v1.0.xlsx'                                                          #Name of main file
+    traject = '16-4'                                                                            #Traject to consider
+    file_name = 'Dijkvakindeling_v1.1.xlsx'                                                          #Name of main file
     backup_file_name = file_name + '.bak'                                                       #Name for backupping the main file before making changes
     fill_load_values = True                                                                     #If this is set to True, the script will fill missing values for crest height & temporal changes to loads from load_file.
                                                                                                 # WARNING: this overwrites existing values!

@@ -83,8 +83,8 @@ class SoilReinforcement(Measure):
             self.measures.append({})
             self.measures[-1]['dcrest'] =j[0]
             self.measures[-1]['dberm'] = j[1]
-            self.measures[-1]['Geometry'], area_extra,area_excavated = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
-            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in = j[1], housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'])
+            self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
+            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'])
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
 
@@ -324,6 +324,9 @@ def implement_berm_widening(input, measure_input, measure_parameters, mechanism,
 def addBerm(initial, geometry, new_geometry, bermheight, dberm):
     i = int(initial[initial.type == 'innertoe'].index.values)
     j = int(initial[initial.type == 'innercrest'].index.values)
+    if (initial.type == 'extra').any():
+        new_geometry[0][0] = new_geometry[0][0] -100
+
     slope_inner = (geometry[j][1] - geometry[i][1]) / (geometry[j][0] - geometry[i][0])
     extra = np.empty((1, 2))
     extra[0, 0] = new_geometry[i][0] + (1 / slope_inner) * bermheight
@@ -334,16 +337,21 @@ def addBerm(initial, geometry, new_geometry, bermheight, dberm):
     extra2[0, 1] = new_geometry[i][1] + bermheight
     new_geometry = np.append(new_geometry, np.array(extra2), axis=0)
     new_geometry = new_geometry[new_geometry[:, 0].argsort()]
-
     if (initial.type == 'extra').any():
-        k = int(initial[initial.type == 'extra'].index.values)
-        new_geometry[0, 0] = initial.x[i]
-        new_geometry[0, 1] = initial.z[i]
-        extra3 = np.empty((1, 2))
-        extra3[0, 0] = initial.x[k]
-        extra3[0, 1] = initial.z[k]
-        new_geometry = np.append(np.array(extra3), new_geometry, axis=0)
+        new_geometry[0][0] = new_geometry[0][0] +100
     return new_geometry
+
+def addExtra(initial, new_geometry):
+    i = int(initial[initial.type == 'innertoe'].index.values)
+    k = int(initial[initial.type == 'extra'].index.values)
+    new_geometry[0, 0] = initial.x[i]
+    new_geometry[0, 1] = initial.z[i]
+    extra3 = np.empty((1, 2))
+    extra3[0, 0] = initial.x[k]
+    extra3[0, 1] = initial.z[k]
+    new_geometry = np.append(np.array(extra3), new_geometry, axis=0)
+    return new_geometry
+
 
 def calculateArea(geometry):
     polypoints = []
@@ -369,6 +377,7 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
         extra_row = pd.DataFrame([[initial.x[int(initial[initial.type == 'innertoe'].index.values)],initial.z[int(initial[initial.type == 'outertoe'].index.values)], 'extra']],columns =initial.columns)
         initial = extra_row.append(initial).reset_index(drop=True)
 
+
     if initial.z[int(initial[initial.type == 'innertoe'].index.values)] < initial.z[int(initial[initial.type == 'outertoe'].index.values)]:
         extra_row2 = pd.DataFrame([[initial.x[int(initial[initial.type == 'outertoe'].index.values)],initial.z[int(initial[initial.type == 'innertoe'].index.values)], 'extra2']],columns =initial.columns)
         initial = initial.append(extra_row2).reset_index(drop=True)
@@ -382,6 +391,21 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
 
     # if config.geometry_plot:
     #     plt.plot(geometry[:, 0], geometry[:, 1], 'k')
+    if dcrest > 0:
+        int_outercrest = int(initial[initial.type == 'outercrest'].index.values)
+        int_outertoe = int(initial[initial.type == 'outertoe'].index.values)
+        slope_out = ((initial.x[int_outercrest]) - (initial.x[int_outertoe])) / (
+                    (initial.z[int_outercrest]) - (initial.z[int_outertoe]))
+        dout = slope_out * dcrest
+        int_innercrest = int(initial[initial.type == 'innercrest'].index.values)
+        # int_innertoe = int(initial[initial.type == 'innertoe'].index.values)
+        slope_inn = ((initial.x[int_innercrest]) - (initial.x[int_innercrest - 1])) / (
+                    (initial.z[int_innercrest]) - (initial.z[int_innercrest - 1]))
+        din = slope_inn * dcrest
+    else:
+        din = 0.
+        dout = 0.
+    z_innertoe = (initial.z[int(initial[initial.type == 'innertoe'].index.values)])
 
     if direction == 'outward':
 
@@ -399,95 +423,112 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
         # optional extension: optimize amount of outward/inward reinforcement
         new_geometry = copy.deepcopy(geometry)
 
-        if dberm < maxbermout:
-            for i in range(len(new_geometry)):
-                # Run over points from the outside.
-                if initial.type[i] == 'extra':
-                    new_geometry[i][0] = geometry[i][0]
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innertoe':
-                    new_geometry[i][0] = geometry[i][0]
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innerberm1':
-                    new_geometry[i][0] = geometry[i][0]
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innerberm2':
-                    new_geometry[i][0] = geometry[i][0] + dberm
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innercrest':
-                    new_geometry[i][0] = geometry[i][0] + dberm
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == 'outercrest':
-                    new_geometry[i][0] = geometry[i][0] + dberm
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == 'outertoe':
-                    new_geometry[i][0] = geometry[i][0] + dberm
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'extra2':
-                    new_geometry[i][0] = geometry[i][0] + dberm
-                    new_geometry[i][1] = geometry[i][1]
-        else:
-            berm_in = dberm- maxbermout
-            for i in range(len(new_geometry)):
-                # Run over points from the outside.
-                if initial.type[i] == 'extra':
-                    new_geometry[i][0] = geometry[i][0] - berm_in
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innertoe':
-                    new_geometry[i][0] = geometry[i][0] - berm_in
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innerberm1':
-                    new_geometry[i][0] = geometry[i][0] - berm_in
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innerberm2':
-                    new_geometry[i][0] = geometry[i][0] + maxbermout
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'innercrest':
-                    new_geometry[i][0] = geometry[i][0] + maxbermout
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == 'outercrest':
-                    new_geometry[i][0] = geometry[i][0] + maxbermout
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == 'outertoe':
-                    new_geometry[i][0] = geometry[i][0] + maxbermout
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == 'extra2':
-                    new_geometry[i][0] = geometry[i][0] + maxbermout
-                    new_geometry[i][1] = geometry[i][1]
+        if dberm <= maxbermout:
 
-        if noberm:  # len(initial) == 4:
-            new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
+            for i in range(len(new_geometry)):
+                # Run over points
+                if initial.type[i] == 'extra':
+                    new_geometry[i][0] = geometry[i][0]
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innertoe':
+                    new_geometry[i][0] = geometry[i][0] + dberm + dout - din
+                    new_geometry[i][1] = geometry[i][1]
+                    dhouse = max(0,-(dberm + dout - din))
+                elif initial.type[i] == 'innerberm1':
+                    new_geometry[i][0] = geometry[i][0] + dberm + dout - din
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innerberm2':
+                    new_geometry[i][0] = geometry[i][0] + dberm + dout - din
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innercrest':
+                    new_geometry[i][0] = geometry[i][0] + dberm + dout
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outercrest':
+                    new_geometry[i][0] = geometry[i][0] + dberm + dout
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outertoe':
+                    new_geometry[i][0] = geometry[i][0] + dberm
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'extra2':
+                    new_geometry[i][0] = geometry[i][0] + dberm
+                    new_geometry[i][1] = geometry[i][1]
+            if (initial.type == 'extra').any():
+                if dberm > 0 or dcrest > 0:
+                    new_geometry = addExtra(initial, new_geometry)
+
+        else:
+            berm_in = dberm - maxbermout
+            for i in range(len(new_geometry)):
+                # Run over points
+                if initial.type[i] == 'extra':
+                    new_geometry[i][0] = geometry[i][0]
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innertoe':
+                    new_geometry[i][0] = geometry[i][0] - berm_in + dout - din
+                    new_geometry[i][1] = geometry[i][1]
+                    dhouse = max(0,-(- berm_in + dout - din))
+                elif initial.type[i] == 'innerberm1':
+                    new_geometry[i][0] = geometry[i][0] - berm_in + dout - din
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innerberm2':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout + dout - din
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'innercrest':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout + dout
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outercrest':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout + dout
+                    new_geometry[i][1] = geometry[i][1] + dcrest
+                elif initial.type[i] == 'outertoe':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][1] = geometry[i][1]
+                elif initial.type[i] == 'extra2':
+                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][1] = geometry[i][1]
+            if noberm:  # len(initial) == 4:
+                if dberm > 0:
+                    new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
+            if (initial.type == 'extra').any():
+                if dberm > 0 or dcrest > 0:
+                    new_geometry = addExtra(initial, new_geometry)
 
     if direction == 'inward':
         new_geometry = copy.deepcopy(geometry)
-        # we start at the outer toe so reverse:
-
         for i in range(len(new_geometry)):
-            # Run over points from the outside.
+            # Run over points .
             if initial.type[i] == 'extra':
-                new_geometry[i][0] = geometry[i][0] - dberm
+                new_geometry[i][0] = geometry[i][0]
                 new_geometry[i][1] = geometry[i][1]
             elif initial.type[i] == 'innertoe':
-                new_geometry[i][0] = geometry[i][0] - dberm
+                new_geometry[i][0] = geometry[i][0] - dberm + dout - din
                 new_geometry[i][1] = geometry[i][1]
+                dhouse = max(0,-(-dberm + dout - din))
             elif initial.type[i] == 'innerberm1':
-                new_geometry[i][0] = geometry[i][0] - dberm
+                new_geometry[i][0] = geometry[i][0] - dberm + dout - din
                 new_geometry[i][1] = geometry[i][1]
             elif initial.type[i] == 'innerberm2':
-                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][0] = geometry[i][0] + dout - din
                 new_geometry[i][1] = geometry[i][1]
             elif initial.type[i] == 'innercrest':
-                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][0] = geometry[i][0] + dout
                 new_geometry[i][1] = geometry[i][1] + dcrest
             elif initial.type[i] == 'outercrest':
-                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][0] = geometry[i][0] + dout
                 new_geometry[i][1] = geometry[i][1] + dcrest
             elif initial.type[i] == 'outertoe':
                 new_geometry[i][0] = geometry[i][0]
                 new_geometry[i][1] = geometry[i][1]
+            elif initial.type[i] == 'extra2':
+                new_geometry[i][0] = geometry[i][0]
+                new_geometry[i][1] = geometry[i][1]
 
         if noberm: #len(initial) == 4:   #precies hetzelfde als hierboven. def van maken.
-            new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
+            if dberm > 0:
+                new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
+
+        if (initial.type == 'extra').any():
+            if dberm > 0 or dcrest > 0:
+                new_geometry = addExtra(initial, new_geometry)
 
     # calculate the area difference
     area_old, polygon_old = calculateArea(geometry)
@@ -551,7 +592,7 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
     area_difference = np.max([0.,area_extra + 0.5 * area_excavate])
     #old:
     # return new_geometry, area_difference
-    return new_geometry, area_extra, area_excavate
+    return new_geometry, area_extra, area_excavate, dhouse
 
 
 #Script to determine the costs of a reinforcement:
@@ -583,6 +624,9 @@ def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing
 
      #add costs for housing
      if isinstance(housing, pd.DataFrame) and dberm_in > 0.:
+         if dberm_in > housing.size:
+             raise Exception('inwards distance exceeds housing database')
+
          C += parameters['C_house'] * housing.loc[float(dberm_in)]['cumulative']
     #add costs for stability screen
      if parameters['StabilityScreen'] == 'yes':
