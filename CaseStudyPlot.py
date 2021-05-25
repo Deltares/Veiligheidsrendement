@@ -24,7 +24,7 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
     widths = traject.Probabilities['Length'].loc[traject.Probabilities.index.get_level_values(1) == 'Overflow'].values/2
     if greedymode == 'Optimal':
         GreedySolution = Strategies[0].OptimalSolution['LCC'].values/1e6
-    elif greedymode == 'SafetyStandard':
+    elif greedymode == 'SatisfiedStandard':
         GreedySolution = Strategies[0].SatisfiedStandardSolution['LCC'].values/1e6
         print()
     ax.bar(np.subtract(middles,0.45*widths),GreedySolution,widths*0.9,color=color[0],label='Optimized')
@@ -81,6 +81,7 @@ def main():
         AllStrategies = my_shelf[key]
     my_shelf.close()
     greedy_mode = 'Optimal'
+    # greedy_mode = 'SatisfiedStandard'
     AllStrategies[0].getSafetyStandardStep(TestCase.GeneralInfo['Pmax'])
     AllStrategies[1].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Doorsnede-eisen.csv'), type='Final')
     AllStrategies[0].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Veiligheidsrendement.csv'),step = AllStrategies[0].SafetyStandardStep, type='SatisfiedStandard')
@@ -129,7 +130,7 @@ def main():
     for t_plot in [0,50]:
         for cost_type in ['Initial', 'LCC']:
             MeasureTable = getMeasureTable(AllSolutions, language = 'EN',abbrev=True)
-            figsize = (8,8)
+            figsize = (6,4)
             plt.figure(102, figsize=figsize)
             AllStrategies[0].plotBetaCosts(TestCase, t=t_plot, cost_type=cost_type,
                                            fig_id=102, markersize = 10, final_step = AllStrategies[0].OptimalStep,color=twoColors[0], series_name='Optimized investment',

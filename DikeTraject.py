@@ -129,7 +129,7 @@ class DikeTraject:
             if reinforcement_strategy.__class__.__name__ == 'GreedyStrategy':
                 if greedymode == 'Optimal':
                     ProbabilityFrame = reinforcement_strategy.Probabilities[reinforcement_strategy.OptimalStep]
-                elif greedymode == 'SafetyStandard':
+                elif greedymode == 'SatisfiedStandard':
                     Ptarget = self.GeneralInfo['Pmax']
                     for i in reversed(reinforcement_strategy.Probabilities):
                         beta_traj, Pf_traj = calcTrajectProb(i, ts=50)

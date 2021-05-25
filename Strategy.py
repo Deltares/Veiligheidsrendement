@@ -745,7 +745,7 @@ class Strategy:
         if self.__class__.__name__ == 'GreedyStrategy':
             if greedymode == 'Optimal':
                 Solution = copy.deepcopy(self.OptimalSolution)
-            elif greedymode == 'SafetyStandard':
+            elif greedymode == 'SatisfiedStandard':
                 self.getSafetyStandardStep(traject.GeneralInfo['Pmax'])
                 self.makeSolution(PATH.joinpath('SatisfiedStandardGreedy.csv'),step = self.SafetyStandardStep+1,type='SatisfiedStandard')
                 Solution = self.SatisfiedStandardSolution

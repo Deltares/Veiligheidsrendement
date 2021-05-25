@@ -602,21 +602,23 @@ def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing
         print('Warning: encountered outward reinforcement with inward berm. Cost computation might be inaccurate')
     if type == 'Soil reinforcement':
      if direction == 'inward':
-         C = config.unit_cost['Inward added volume'] * area_extra + config.unit_cost['Inward starting costs'] *length
+         C = config.unit_cost['Inward added volume'] * area_extra * length + config.unit_cost['Inward starting costs'] *length
      elif direction == 'outward':
-         reusable_volume = config.unit_cost['Outward reuse factor'] * area_excavated
+         volume_excavated = area_excavated * length
+         volume_extra = area_extra *length
+         reusable_volume = config.unit_cost['Outward reuse factor'] * volume_excavated
          #excavate and remove part of existing profile:
-         C = config.unit_cost['Outward removed volume'] * (area_excavated-reusable_volume)
+         C = config.unit_cost['Outward removed volume'] * (volume_excavated-reusable_volume)
 
          #apply reusable volume
          C += config.unit_cost['Outward reused volume'] * reusable_volume
-         remaining_volume = area_extra - reusable_volume
+         remaining_volume = volume_extra - reusable_volume
 
          #add additional soil:
          C += config.unit_cost['Outward added volume'] * remaining_volume
 
          #compensate:
-         C += config.unit_cost['Outward removed volume'] * config.unit_cost['Outward compensation factor'] * area_extra
+         C += config.unit_cost['Outward removed volume'] * config.unit_cost['Outward compensation factor'] * volume_extra
 
 
      else:
