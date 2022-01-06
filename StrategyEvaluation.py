@@ -30,7 +30,16 @@ def MeasureCombinations(combinables, partials, solutions,splitparams = False):
 
             for ij in partials.columns:
                 if ij[0] != 'Section' and ij[1] != '':     #It is a beta value
-                    beta = np.maximum(row1[ij], row2[ij])
+                    #TODO make clean. Quick fix to fix incorrect treatment of vertical geotextile.
+                    #VSG is idx in MeasureTable
+                    if (row1['type'].values=='Vertical Geotextile') and (ij[0]=='Piping'):
+                        idx = solutions.MeasureTable.loc[solutions.MeasureTable['Name']=='Verticaal Zanddicht Geotextiel'].index.values[0]
+                        Pf_VSG = solutions.Measures[idx].parameters['Pf_solution']
+                        P_VSG = solutions.Measures[idx].parameters['P_solution']
+                        pf = (1-P_VSG)*Pf_VSG + P_VSG * ProbabilisticFunctions.beta_to_pf(row2[ij])
+                        beta = ProbabilisticFunctions.pf_to_beta(pf)
+                    else:
+                        beta = np.maximum(row1[ij], row2[ij])
                     years.append(ij[1])
                     betas.append(beta)
 
@@ -40,7 +49,7 @@ def MeasureCombinations(combinables, partials, solutions,splitparams = False):
                     #where year in years is the same as ij[1]
                     indices = [indices for indices, x in enumerate(years) if x == ij[1]]
                     ps = ProbabilisticFunctions.beta_to_pf(np.array(betas)[indices])
-                    p = np.sum(ps)
+                    p = np.sum(ps)  #TODO replace with correct formula
                     betas.append(ProbabilisticFunctions.pf_to_beta(p))
                     # print(ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]))
                     # if ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]) > 1e-8:

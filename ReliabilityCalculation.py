@@ -303,8 +303,9 @@ class MechanismReliability:
                 if 'Elimination' in strength.input.keys():
                     if strength.input['Elimination'] == 'yes':
                         #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
-                        self.Pf = beta_to_pf(beta) * strength.input['Pf_elim']  + \
-                            strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim'])
+                        #addition: should not be more unsafe
+                        self.Pf = np.min([beta_to_pf(beta) * strength.input['Pf_elim']  + \
+                            strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim']),beta_to_pf(beta)])
                         self.beta = pf_to_beta(self.Pf)
                     else:
                         raise ValueError('Warning: Elimination defined but not turned on')
@@ -449,10 +450,12 @@ class MechanismReliability:
                     if 'Elimination' in strength.input.keys():
                         if strength.input['Elimination'] == 'yes':
                             #Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
+                            scenario_beta = np.max([self.scenario_result['beta_cs_h'][j],self.scenario_result['beta_cs_u'][j],self.scenario_result['beta_cs_p'][j]])
                             self.scenario_result['Pf'][j] = \
-                                beta_to_pf(np.max([self.scenario_result['beta_cs_h'][j],self.scenario_result['beta_cs_u'][j],self.scenario_result['beta_cs_p'][j]])) * strength.input['Pf_elim']  + \
-                                strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim'])
-                            self.scenario_result['Beta'][j] = pf_to_beta(self.scenario_result['Pf'][j])
+                                np.min([np.min([beta_to_pf(scenario_beta) * strength.input['Pf_elim']  + strength.input['Pf_with_elim'] * (1-strength.input['Pf_elim']),
+                                        beta_to_pf(scenario_beta)]),beta_to_pf(8.)])
+                            self.scenario_result['Beta'][j] = np.min([pf_to_beta(self.scenario_result['Pf'][j]),8.])
+
                         else:
                             raise ValueError('Warning: Elimination defined but not turned on')
                     else:
@@ -460,7 +463,7 @@ class MechanismReliability:
                         self.scenario_result['Pf'][j] = beta_to_pf(self.scenario_result['Beta'][j])
 
                 # multiply every scenario by probability
-                self.Pf = sum(self.scenario_result['Pf'][k]*self.scenario_result['P_scenario'][k] for k in self.scenario_result['Pf'])
+                self.Pf = np.max([sum(self.scenario_result['Pf'][k]*self.scenario_result['P_scenario'][k] for k in self.scenario_result['Pf']),beta_to_pf(8.)])
                 self.Beta = np.min([pf_to_beta(self.Pf),8])
 
                 self.WLchar = copy.deepcopy(inputs['h']) #add water level as used in the assessment

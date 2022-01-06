@@ -909,7 +909,9 @@ class GreedyStrategy(Strategy):
             #then in the selection of the measure we make a if-elif split with either the normal routine or an
             # 'overflow bundle'
             if np.isnan(np.max(BC)):
-                print(BC)
+                ids = np.argwhere(np.isnan(BC))
+                for i in range(0,ids.shape[0]):
+                    print(self.get_measure_from_index(ids[i,:]))
                 raise ValueError('nan value encountered in BC-ratio')
             if (np.max(BC) > BCstop) or (BC_bundle > BCstop):
                 if np.max(BC) >= BC_bundle:
@@ -1724,8 +1726,8 @@ class TargetReliabilityStrategy(Strategy):
             # filter for stabilityinner
             PossibleMeasures = PossibleMeasures.loc[PossibleMeasures[('StabilityInner', targetyear)] > beta_T_stabinner]
             if len(PossibleMeasures) == 0:
-                #break if weakest has no more measures
-                break
+                #continue to next section if weakest has no more measures
+                continue
             # calculate LCC
             LCC = calcTC(PossibleMeasures, r=self.r, horizon=self.options[i.name]['Overflow'].columns[-1])
 
