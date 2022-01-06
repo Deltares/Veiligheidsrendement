@@ -80,8 +80,8 @@ def main():
     for key in my_shelf:
         AllStrategies = my_shelf[key]
     my_shelf.close()
-    greedy_mode = 'Optimal'
-    # greedy_mode = 'SatisfiedStandard'
+    # greedy_mode = 'Optimal'
+    greedy_mode = 'SatisfiedStandard'
     AllStrategies[0].getSafetyStandardStep(TestCase.GeneralInfo['Pmax'])
     AllStrategies[1].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Doorsnede-eisen.csv'), type='Final')
     AllStrategies[0].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Veiligheidsrendement.csv'),step = AllStrategies[0].SafetyStandardStep, type='SatisfiedStandard')
