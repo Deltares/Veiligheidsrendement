@@ -1,10 +1,10 @@
 import copy
 import matplotlib.pyplot as plt
 import numpy as np
-from DikeSection import DikeSection
-from ReliabilityCalculation import LoadInput, MechanismReliabilityCollection
-import ProbabilisticFunctions
-from StrategyEvaluation import calcTrajectProb
+from FloodDefenceSystem.DikeSection import DikeSection
+from FloodDefenceSystem.ReliabilityCalculation import LoadInput, MechanismReliabilityCollection
+import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+from DecisionMaking.StrategyEvaluation import calcTrajectProb
 import config
 import seaborn as sns
 

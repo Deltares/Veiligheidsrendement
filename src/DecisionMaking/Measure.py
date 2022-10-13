@@ -1,9 +1,9 @@
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
-from Mechanisms import OverflowSimple
-from ReliabilityCalculation import MechanismReliabilityCollection, beta_SF_StabilityInner
-from SectionReliability import SectionReliability
+from FloodDefenceSystem.Mechanisms import OverflowSimple
+from FloodDefenceSystem.ReliabilityCalculation import MechanismReliabilityCollection, beta_SF_StabilityInner
+from FloodDefenceSystem.SectionReliability import SectionReliability
 from shapely.geometry import Polygon
 import pandas as pd
 import config

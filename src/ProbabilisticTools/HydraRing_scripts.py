@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import openturns as ot
-from ProbabilisticFunctions import TableDist
+from ProbabilisticTools.ProbabilisticFunctions import TableDist
 
 #script to run HydraRing. exelocation should refer to the location of MechanismComputation.exe.
 def runHydraRing(inifile, exelocation = r'C:\Program Files (x86)\BOI\Riskeer 21.1.1.2\Application\Standalone\Deltares\HydraRing-20.1.3.10236\MechanismComputation.exe'):

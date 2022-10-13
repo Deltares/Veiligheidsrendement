@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 # import cplex
 import itertools
-import ProbabilisticFunctions
+import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from HelperFunctions import IDtoName, flatten, pareto_frontier, getMeasureTable
 import time
-from StrategyEvaluation import MeasureCombinations, makeTrajectDF, calcTC, calcTR, calcLifeCycleRisks, \
+from DecisionMaking.StrategyEvaluation import MeasureCombinations, makeTrajectDF, calcTC, calcTR, calcLifeCycleRisks, \
     calcTrajectProb, ImplementOption, split_options, SolveMIP, getTrajectProb,evaluateRisk, updateProbability, OverflowBundling
-from DikeTraject import PlotSettings, getSectionLengthInTraject
+from FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np

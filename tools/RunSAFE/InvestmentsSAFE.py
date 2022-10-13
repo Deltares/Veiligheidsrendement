@@ -1,18 +1,18 @@
 """ This script can calculate life-cycle reliability and costs for all measures for various mechanisms. It uses both a target reliability based approach and a greedy search optimization"""
 
 import sys
-sys.path.append('..')
+import src.config as config
+
 
 #Import a bunch of packages
 import matplotlib.pyplot as plt
 import pandas as pd
 import time
-from DikeTraject import DikeTraject
+from FloodDefenceSystem.DikeTraject import DikeTraject
 from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
 from pathlib import Path
-from StrategyEvaluation import calcTrajectProb
-import config
+from DecisionMaking.StrategyEvaluation import calcTrajectProb
 import shelve
 from os import path
 

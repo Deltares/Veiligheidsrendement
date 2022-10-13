@@ -3,7 +3,7 @@
 
 import numpy as np
 from scipy import interpolate
-import ProbabilisticFunctions
+import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None, design_variable=None,iterative_solve = False,beta_t = False):
     if mode == 'assessment':
         if q_c[0] != q_c[-1:]:

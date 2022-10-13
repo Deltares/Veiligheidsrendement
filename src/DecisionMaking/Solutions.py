@@ -3,7 +3,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 import seaborn as sns
-from Measure import Measure, SoilReinforcement, DiaphragmWall, StabilityScreen, VerticalGeotextile, CustomMeasure
+from DecisionMaking.Measure import Measure, SoilReinforcement, DiaphragmWall, StabilityScreen, VerticalGeotextile, CustomMeasure
 import config
 
 class Solutions:

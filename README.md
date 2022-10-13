@@ -1,6 +1,6 @@
-# README #
+# Veiligheidsrendement #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This is the repository as developed in the AllRisk programme to apply the veiligheidsrendementmethode for optimal planning of flood defence systems.
 
 ### What is this repository for? ###
 

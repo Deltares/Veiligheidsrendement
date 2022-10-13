@@ -1,18 +1,19 @@
 '''This is a file with all the general configuration settings for the SAFE computations
 Use them in a function by calling import config, and then config.key'''
+
 from pathlib import Path
 import pandas as pd
-
+import sys
+sys.path.append('../../src')
+sys.path.append('..')
 ## GENERAL SETTINGS
 timing = True
 
 traject = '16-4'
-
-path = Path(r'c:\Users\wouterjanklerk\Documents\01_Projects\03_SAFE Deltares\data_repos\cases\Testcase_SAFE_v12_{}'.format(traject))
-# path = Path(r'c:\Users\wouterjanklerk\Documents\01_Projects\03_SAFE Deltares\data_repos\cases\Testcase_SAFE_v12_scope_{}'.format(traject))
+path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Samenwerken aan Kunstwerken\Testcases\cases\Testcase_SAFE_16-3')
 
 # casename = 'maatregelen_scope'
-casename = 'maatregelen_alle_vakken'
+casename = 'test_1'
 
 directory = path.joinpath('Case_' + casename)
 language = 'NL'
@@ -60,7 +61,7 @@ beta_cost_settings = {'symbols':True,                       #whether to include 
 try:
     unit_cost_data = pd.read_csv('../unit_costs.csv')
 except:
-    unit_cost_data = pd.read_csv('unit_costs.csv')
+    unit_cost_data = pd.read_csv('../tools/unit_costs.csv')
 
 
 unit_cost = {}

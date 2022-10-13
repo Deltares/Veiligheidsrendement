@@ -1,6 +1,6 @@
 #import modules:
-from Strategy import ImplementOption, GreedyStrategy, TargetReliabilityStrategy
-from Solutions import Solutions
+from DecisionMaking.Strategy import ImplementOption, GreedyStrategy, TargetReliabilityStrategy
+from DecisionMaking.Solutions import Solutions
 import time
 import matplotlib.pyplot as plt
 try:
@@ -12,7 +12,7 @@ import copy
 import numpy as np
 import os
 from HelperFunctions import replaceNames
-import ProbabilisticFunctions
+import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 import pandas as pd
 import config
 

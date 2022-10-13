@@ -1,12 +1,12 @@
 import copy
 import matplotlib.pyplot as plt
-import Mechanisms
+import FloodDefenceSystem.Mechanisms as Mechanisms
 import numpy as np
 import openturns as ot
 import pandas as pd
-import ProbabilisticFunctions
-from HydraRing_scripts import DesignTableOpenTurns
-from ProbabilisticFunctions import TableDist, run_prob_calc, IterativeFC_calculation, TemporalProcess, \
+import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+from ProbabilisticTools. HydraRing_scripts import DesignTableOpenTurns
+from ProbabilisticTools.ProbabilisticFunctions import TableDist, run_prob_calc, IterativeFC_calculation, TemporalProcess, \
     addLoadCharVals, MarginalsforTimeDepReliability, beta_to_pf, pf_to_beta, FragilityIntegration
 from scipy.stats import norm
 from scipy import interpolate

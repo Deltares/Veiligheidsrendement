@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from SectionReliability import SectionReliability
+from FloodDefenceSystem.SectionReliability import SectionReliability
 
 #initialize the DikeSection class, as a general class for a dike section that contains all basic information
 class DikeSection:
