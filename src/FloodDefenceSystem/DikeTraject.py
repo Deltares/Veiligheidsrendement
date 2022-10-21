@@ -7,6 +7,7 @@ import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from DecisionMaking.StrategyEvaluation import calcTrajectProb
 import config
 import seaborn as sns
+import pandas as pd
 
 class DikeTraject:
     #This class contains general information on the dike traject and is used to store all data on the sections
@@ -116,7 +117,7 @@ class DikeTraject:
                 if 'mechanism' in data_to_add.columns:
                     data_to_add = data_to_add.rename(columns={"mechanism": "index"})
 
-                Assessment = Assessment.append(data_to_add, sort=False)
+                Assessment = pd.concat((Assessment,data_to_add))
         Assessment = Assessment.rename(columns={'index':'mechanism','Section':'name'})
         self.Probabilities = Assessment.reset_index(drop=True).set_index(['name','mechanism'])
 

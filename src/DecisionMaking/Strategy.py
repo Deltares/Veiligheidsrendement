@@ -466,9 +466,9 @@ class Strategy:
             interval = 2
         plt.figure(fig_id)
         if config.beta_cost_settings['symbols']:
-            plt.plot(Costs, data_to_plot, '-', label=series_name, color=color, linestyle=linestyle, zorder=1)
+            plt.plot(Costs, data_to_plot, label=series_name, color=color, linestyle=linestyle, zorder=1)
         else:
-            plt.plot(Costs, data_to_plot, 'o-', label=series_name, color=color, linestyle=linestyle)
+            plt.plot(Costs, data_to_plot, label=series_name, color=color, linestyle=linestyle, markerstyle = 'o')
 
         if config.beta_cost_settings['symbols']:
             if config.beta_or_prob == 'beta':

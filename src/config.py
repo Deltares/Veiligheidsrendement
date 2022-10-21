@@ -13,7 +13,7 @@ traject = '16-4'
 path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Samenwerken aan Kunstwerken\Testcases\cases\Testcase_SAFE_16-3')
 
 # casename = 'maatregelen_scope'
-casename = 'test_1'
+casename = 'test_vr_env'
 
 directory = path.joinpath('Case_' + casename)
 language = 'NL'
@@ -37,7 +37,7 @@ f_cautious = 1.5                                            #cautiousness factor
 
 ## OUTPUT SETTINGS:
 #General settings:
-shelves = True                                              #setting to shelve intermediate results
+shelves = False                                              #setting to shelve intermediate results
 reuse_output = False                                        #reuse intermediate result if available
 beta_or_prob = 'beta'                                       #whether to use 'beta' or 'prob' for plotting reliability
 
@@ -59,9 +59,9 @@ beta_cost_settings = {'symbols':True,                       #whether to include 
                       'markersize':10}                      #base size of markers.
 #unit costs:
 try:
-    unit_cost_data = pd.read_csv('../unit_costs.csv')
+    unit_cost_data = pd.read_csv('../unit_costs.csv', encoding='latin_1')
 except:
-    unit_cost_data = pd.read_csv('../tools/unit_costs.csv')
+    unit_cost_data = pd.read_csv('../tools/unit_costs.csv', encoding='latin_1')
 
 
 unit_cost = {}

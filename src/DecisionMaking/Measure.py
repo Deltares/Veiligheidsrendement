@@ -375,12 +375,13 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
     # if outertoe < innertoe
     if initial.z[int(initial[initial.type == 'innertoe'].index.values)] > initial.z[int(initial[initial.type == 'outertoe'].index.values)]:
         extra_row = pd.DataFrame([[initial.x[int(initial[initial.type == 'innertoe'].index.values)],initial.z[int(initial[initial.type == 'outertoe'].index.values)], 'extra']],columns =initial.columns)
-        initial = extra_row.append(initial).reset_index(drop=True)
+
+        initial = pd.concat((extra_row,initial)).reset_index(drop=True)
 
 
     if initial.z[int(initial[initial.type == 'innertoe'].index.values)] < initial.z[int(initial[initial.type == 'outertoe'].index.values)]:
         extra_row2 = pd.DataFrame([[initial.x[int(initial[initial.type == 'outertoe'].index.values)],initial.z[int(initial[initial.type == 'innertoe'].index.values)], 'extra2']],columns =initial.columns)
-        initial = initial.append(extra_row2).reset_index(drop=True)
+        initial = pd.concat((initial,extra_row2)).reset_index(drop=True)
 
     # Geometry is always from inner to outer toe
     dcrest = geometry_change[0]

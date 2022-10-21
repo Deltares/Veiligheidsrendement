@@ -60,7 +60,7 @@ def MeasureCombinations(combinables, partials, solutions,splitparams = False):
                 in1 = [ID, types, 'combined', year, params, Cost]
 
             allin = pd.DataFrame([in1 + betas], columns=combinables.columns)
-            CombinedMeasures = CombinedMeasures.append(allin)
+            CombinedMeasures = pd.concat((CombinedMeasures,allin))
     return CombinedMeasures
 def getTrajectProb(traject, traject_prob,trange):
     for mechanism in range(0,len(traject.GeneralInfo['Mechanisms'])):
