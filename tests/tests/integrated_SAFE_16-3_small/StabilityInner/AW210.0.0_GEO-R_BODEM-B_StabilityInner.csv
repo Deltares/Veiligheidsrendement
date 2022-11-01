@@ -1,0 +1,9 @@
+Name,Value
+FragilityCurve,
+SF_2025,
+SF_2075,
+d_cover,2.679861890077591
+dSF/dberm,
+beta_2025,4.382991464150273
+beta_2075,3.9
+dbeta/dberm,0.01

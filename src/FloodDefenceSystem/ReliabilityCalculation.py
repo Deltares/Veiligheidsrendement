@@ -293,7 +293,7 @@ class MechanismReliability:
                     #                     # elif np.size(strength.input['beta_2075']) == 0:
                     #                     #     A=1
                     betat = interpolate.interp1d([0, 50], np.array([np.divide(strength.input['beta_2025'],self.gamma_schem),
-                                                                    np.divide(strength.input['beta_2075'],self.gamma_schem)]).flatten()
+                                                                    np.divide(strength.input['beta_2075'],self.gamma_schem)],dtype=np.float32)
                                                         , fill_value='extrapolate')
                     beta = betat(year)
                     beta = np.min([beta,8])
@@ -540,8 +540,8 @@ class MechanismInput:
 def beta_SF_StabilityInner(SF_or_beta, type = False, modelfactor = 1.07):
     """Careful: ensure that upon using this function you clearly define the input parameter!"""
     if type == 'SF':
-        beta = np.min([((SF_or_beta / modelfactor) - 0.41) / 0.15, 8])
-        return beta
+        beta = ((SF_or_beta / modelfactor) - 0.41) / 0.15
+        return np.min([beta[0],8.])
     elif type == 'beta':
         SF = (0.41+0.15*SF_or_beta) * modelfactor
         return SF

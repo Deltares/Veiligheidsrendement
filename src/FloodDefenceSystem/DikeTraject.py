@@ -8,19 +8,20 @@ from DecisionMaking.StrategyEvaluation import calcTrajectProb
 import config
 import seaborn as sns
 import pandas as pd
+from pathlib import Path
 
 class DikeTraject:
     #This class contains general information on the dike traject and is used to store all data on the sections
-    def __init__(self):
-        try:
-            traject = config.traject
-        except:
+    def __init__(self,traject=None):
+        if traject == None:
             print('Warning: no traject given in config. Default was chosen')
-            traject = None
+            self.traject= 'Not specified'
+        else:
+            self.traject = traject
 
         self.GeneralInfo = {}
         self.Sections = []
-
+        self.GeneralInfo['MechanismsConsidered'] = config.mechanisms
         # Basic traject info
         if traject == '16-4':
             self.GeneralInfo['FloodDamage'] = 23e9
@@ -52,28 +53,27 @@ class DikeTraject:
             self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
             self.GeneralInfo['omegaOverflow'] = 0.24
 
-
-    def ReadAllTrajectInput(self,makesubdirs=True):
+    def ReadAllTrajectInput(self,input_path,makesubdirs=True):
         #Make a case directory and inside a figures and results directory if it doesnt exist yet
-        #TODO check if these are obsolete
-        if not config.path.joinpath(config.directory).is_dir():
-            config.path.joinpath(config.directory).mkdir(parents=True, exist_ok=True)
-            if makesubdirs:
-                config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
-                config.directory.joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
+        # #TODO check if these are obsolete
+        # if not config.path.joinpath(config.directory).is_dir():
+        #     config.path.joinpath(config.directory).mkdir(parents=True, exist_ok=True)
+        #     if makesubdirs:
+        #         config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
+        #         config.directory.joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
 
         # Routine to read the input for all sections based on the default input format.
-        files = [i for i in config.path.glob("*DV*") if i.is_file()]
+        files = [i for i in input_path.glob("*DV*") if i.is_file()]
         if len(files) == 0:
             raise IOError('Error: no dike sections found. Check path!')
         for i in range(len(files)):
             # Read the general information for each section:
-            self.Sections.append(DikeSection(files[i].stem, config.traject))
-            self.Sections[i].readGeneralInfo(config.path, 'General')
+            self.Sections.append(DikeSection(files[i].stem, self.traject))
+            self.Sections[i].readGeneralInfo(input_path, 'General')
 
             # Read the data per mechanism, and first the load frequency line:
             self.Sections[i].Reliability.Load = LoadInput()
-            self.Sections[i].Reliability.Load.set_fromDesignTable(config.path.joinpath('Toetspeil', self.Sections[i].LoadData))
+            self.Sections[i].Reliability.Load.set_fromDesignTable(input_path.joinpath('Toetspeil', self.Sections[i].LoadData))
             self.Sections[i].Reliability.Load.set_annual_change(type='SAFE', parameters=[self.Sections[i].YearlyWLRise, self.Sections[i].HBNRise_factor])
 
             # Then the input for all the mechanisms:
@@ -81,13 +81,13 @@ class DikeTraject:
             for j in config.mechanisms:
                 self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1])
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
-                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(config.path.joinpath(
+                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(input_path.joinpath(
                         self.Sections[i].MechanismData[j][0]), calctype=self.Sections[i].MechanismData[j][1], mechanism=j)
 
-            #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
-            if not config.path.joinpath(config.directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:
-                config.path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
-                config.path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
+            # #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
+            # if not input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:
+            #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
+            #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
 
         #Traject length is lengt of all sections together:
         self.GeneralInfo['TrajectLength'] = 0
@@ -124,7 +124,8 @@ class DikeTraject:
     def plotAssessment(self, fig_size = (6,4),
                        draw_targetbeta='off', last=True, alpha = 1, colors=False,
                        labels_limited=False,system_rel=False, custom_name=False,title_in=False,
-                       reinforcement_strategy=False,greedymode='Optimal',show_xticks = True,t_list=[]):
+                       reinforcement_strategy=False,greedymode='Optimal',show_xticks = True,t_list=[],
+                       case_settings = {'directory':Path(''),'language':'NL','beta_or_prob':'beta'}):
         '''Routine to plot traject reliability'''
         if reinforcement_strategy:
             if reinforcement_strategy.__class__.__name__ == 'GreedyStrategy':
@@ -147,28 +148,28 @@ class DikeTraject:
         ProbabilityFrame.columns = ProbabilityFrame.columns.values.astype(np.int64)
         PlotSettings()
 
-        self.Probabilities.to_csv(config.directory.joinpath('InitialAssessment_Betas.csv'))
+        self.Probabilities.to_csv(case_settings['directory'].joinpath('InitialAssessment_Betas.csv'))
         #English or Dutch labels and titles
-        if config.language == 'NL':
+        if case_settings['language'] == 'NL':
             label_xlabel = 'Dijkvakken'
-            if config.beta_or_prob == 'beta':
+            if case_settings['beta_or_prob'] == 'beta':
                 label_ylabel = r'Betrouwbaarheidsindex $\beta$ [-/jaar]'
                 label_target = 'Doelbetrouwbaarheid'
-            elif config.beta_or_prob =='prob':
+            elif case_settings['beta_or_prob'] =='prob':
                 label_ylabel = r'Faalkans $P_f$ [-/jaar]'
                 label_target = 'Doelfaalkans'
             labels_xticks = []
             for i in self.Sections:
                 labels_xticks.append(i.name)
-        elif config.language == 'EN':
+        elif case_settings['language'] == 'EN':
             label_xlabel = 'Dike sections'
-            if config.beta_or_prob == 'beta':
+            if case_settings['beta_or_prob'] == 'beta':
                 if labels_limited:
                     label_ylabel = r'$\beta$ [-/year]'
                 else:
                     label_ylabel = r'Reliability index $\beta$ [-/year]'
                 label_target = r'$\beta_\mathrm{target}$'
-            elif config.beta_or_prob == 'prob':
+            elif case_settings['beta_or_prob'] == 'prob':
                 label_ylabel = r'Failure probability $P_f$ [-/year]'
                 label_target = 'Target failure prob.'
             labels_xticks = []
@@ -202,7 +203,7 @@ class DikeTraject:
                 #get data to plot
                 # plotdata = self.Probabilities[str(ii)].loc[self.Probabilities['index'] == j].values
                 plotdata = ProbabilityFrame[ii].loc[ProbabilityFrame.index.get_level_values(1) == j].values
-                if config.beta_or_prob == 'prob':
+                if case_settings['beta_or_prob'] == 'prob':
                     plotdata = ProbabilisticFunctions.beta_to_pf(plotdata)
                 ydata = copy.deepcopy(plotdata)
                 for ij in range(0, len(plotdata)):
@@ -235,21 +236,21 @@ class DikeTraject:
                     elif j == 'Overflow':
                         pt = self.GeneralInfo['Pmax'] * self.GeneralInfo['omegaOverflow']
                         # dash = [1,2]
-                    if config.beta_or_prob == 'beta':
+                    if case_settings['beta_or_prob'] == 'beta':
                         ax.plot([0, max(cumlength)], [ProbabilisticFunctions.pf_to_beta(pt), ProbabilisticFunctions.pf_to_beta(pt)],
                                  color=color[col], linestyle=':', label=label_target + ' ' + j,dashes=dash, alpha=0.5,linewidth=1)
-                    elif config.beta_or_prob == 'prob':
+                    elif case_settings['beta_or_prob'] == 'prob':
                         ax.plot([0, max(cumlength)], [pt, pt],
                                  color=color[col], linestyle=':', label=label_target + ' ' + j, dashes=dash, alpha=0.5,linewidth=1)
                     col += 1
             if last:
                 for i in cumlength:
                     ax.axvline(x=i, color='gray', linestyle='-',linewidth=0.5, alpha=0.5)
-                if config.beta_or_prob == 'beta':
+                if case_settings['beta_or_prob'] == 'beta':
                     #should be in legend
                     ax.plot([0, max(cumlength)], [ProbabilisticFunctions.pf_to_beta(self.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(self.GeneralInfo[
                                                                                                     'Pmax'])], 'k--', label=label_target, linewidth=1)
-                if config.beta_or_prob == 'prob':
+                if case_settings['beta_or_prob'] == 'prob':
                     ax.plot([0, max(cumlength)], [self.GeneralInfo['Pmax'], self.GeneralInfo['Pmax']], 'k--',
                            label=label_target, linewidth=1)
 
@@ -264,10 +265,10 @@ class DikeTraject:
                 ax.tick_params(axis='x',rotation=90)
                 ax.set_xlim([0, max(cumlength)])
                 ax.tick_params(axis='both', bottom=False)
-                if config.beta_or_prob == 'beta':
+                if case_settings['beta_or_prob'] == 'beta':
                     ax.set_ylim([0.5, 8.5])
 
-                if config.beta_or_prob == 'prob':
+                if case_settings['beta_or_prob'] == 'prob':
                     ax.set_ylim([1e-1, 1e-9])
                     ax.set_yscale('log')
 
@@ -306,8 +307,8 @@ class DikeTraject:
                 ax1.tick_params(axis='both', bottom=False)
                 if title_in:
                     ax.set_title(title_in)
-            if not custom_name: custom_name = config.beta_or_prob + '_' + str(config.t_0 + ii) + '_Assessment.png'
-            plt.savefig(config.directory.joinpath(custom_name), dpi=300, bbox_inches='tight', format='png')
+            if not custom_name: custom_name = case_settings['beta_or_prob'] + '_' + str(config.t_0 + ii) + '_Assessment.png'
+            plt.savefig(case_settings['directory'].joinpath(custom_name), dpi=300, bbox_inches='tight', format='png')
             plt.close()
 
             year += 1
@@ -376,4 +377,4 @@ def getSectionLengthInTraject(length):
     return cumlength, xticks1, middles
 
 #DEPENDENT IMPORT (this has to be here to prevent a circular reference in the code)
-from HelperFunctions import createDir
+from tools.HelperFunctions import createDir

@@ -4,19 +4,8 @@ Use them in a function by calling import config, and then config.key'''
 from pathlib import Path
 import pandas as pd
 import sys
-sys.path.append('../../src')
-sys.path.append('..')
-## GENERAL SETTINGS
-timing = True
-
-traject = '16-4'
-path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Samenwerken aan Kunstwerken\Testcases\cases\Testcase_SAFE_16-3')
-
-# casename = 'maatregelen_scope'
-casename = 'test_vr_env'
-
-directory = path.joinpath('Case_' + casename)
-language = 'NL'
+# sys.path.append('../../src')
+# sys.path.append('..')
 
 ## RELIABILITY COMPUTATION
 t_0 = 2025                                                  #year the computation starts
@@ -30,7 +19,6 @@ berm_step = [0,5,8,10,12,15,20,30]
 ## OPTIMIZATION SETTINGS
 OI_year = 0                                                 #investment year for TargetReliabilityBased approach
 OI_horizon = 50                                             #Design horizon for TargetReliabilityBased approach
-design_methods = ['Veiligheidsrendement','Doorsnede-eisen'] #Design methods (do not change, if you do ensure that the proper keys are used)
 BC_stop = 0.1                                               #Stop criterion for benefit-cost ratio
 max_greedy_iterations = 150                                 #maximum number of iterations in the greedy search algorithm
 f_cautious = 1.5                                            #cautiousness factor for the greedy search algorithm. Larger values result in larger steps but lower accuracy and larger probability of finding a local optimum
@@ -57,11 +45,14 @@ geometry_plot = False                                       #Setting to plot the
 #dictionary with settings for beta-cost curve:
 beta_cost_settings = {'symbols':True,                       #whether to include symbols in the beta-cost curve
                       'markersize':10}                      #base size of markers.
-#unit costs:
+#unit costs: (TODO make this more clean)
 try:
     unit_cost_data = pd.read_csv('../unit_costs.csv', encoding='latin_1')
 except:
-    unit_cost_data = pd.read_csv('../tools/unit_costs.csv', encoding='latin_1')
+    try:
+        unit_cost_data = pd.read_csv('../tools/unit_costs.csv', encoding='latin_1')
+    except:
+        unit_cost_data = pd.read_csv('../../tools/unit_costs.csv', encoding='latin_1')
 
 
 unit_cost = {}

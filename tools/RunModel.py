@@ -11,7 +11,7 @@ import shelve
 import copy
 import numpy as np
 import os
-from HelperFunctions import replaceNames
+from tools.HelperFunctions import replaceNames
 import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 import pandas as pd
 import config
@@ -25,17 +25,19 @@ Settings for the computations are imported from config.py and can be set there.
 Note that not all settings are yet generalized, this is work in progress.
 '''
 
-def runFullModel(TrajectObject):
+def runFullModel(TrajectObject,config,plot_mode = 'test'):
 
     '''This is the main routine for a "SAFE"-type calculation
-    Input is a TrajectObject = DikeTraject object with all relevant data'''
+    Input is a TrajectObject = DikeTraject object with all relevant data
+    plot_mode sets the amount of plots to be made. 'test' means a simple test approach where only csv's are given as output.
+    'standard' means that normal plots are made, and with 'extensive' all plots can be switched on (not recommended)'''
 
     if config.timing:  start = time.time()
 
     #Make a few dirs if they dont exist yet:
     if not config.directory.is_dir():
         config.directory.mkdir(parents=True, exist_ok=True)
-        config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
+        if plot_mode != 'test': config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
         config.directory.joinpath('results','investment_steps').mkdir(parents=True, exist_ok=True)
 
     ## STEP 1: SAFETY ASSESSMENT
@@ -47,7 +49,7 @@ def runFullModel(TrajectObject):
         section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
         #compute reliability in time for each mechanism:
         # print(section.End)
-        for j in config.mechanisms:
+        for j in TrajectObject.GeneralInfo['MechanismsConsidered']:
             section.Reliability.Mechanisms[j].generateLCRProfile(section.Reliability.Load, mechanism=j, trajectinfo=TrajectObject.GeneralInfo)
 
         #aggregate to section reliability:
@@ -73,7 +75,11 @@ def runFullModel(TrajectObject):
     TrajectObject.setProbabilities()
 
     #Plot initial reliability for TrajectObject:
-    TrajectObject.plotAssessment(fig_size=(12, 4), draw_targetbeta='off', last=True)
+    case_settings = {'directory':config.directory,
+                     'language':config.language,
+                     'beta_or_prob':config.beta_or_prob}
+    if plot_mode != 'test':
+        TrajectObject.plotAssessment(fig_size=(12, 4),draw_targetbeta='off', last=True, case_settings=case_settings)
 
     print('Finished step 1: assessment of current situation')
 
@@ -174,7 +180,8 @@ def runFullModel(TrajectObject):
                                             max_count = 300, BCstop=0.1)
 
                 # plot beta time for all measure steps for each strategy
-                GreedyOptimization.plotBetaTime(TrajectObject, typ='single', path=config.directory)
+                if plot_mode == 'extensive':
+                    GreedyOptimization.plotBetaTime(TrajectObject, typ='single', path=config.directory)
 
                 GreedyOptimization = replaceNames(GreedyOptimization, AllSolutions)
                 cost_Greedy = GreedyOptimization.determineRiskCostCurve(TrajectObject)
@@ -214,7 +221,8 @@ def runFullModel(TrajectObject):
                 TargetReliabilityBased.makeSolution(config.directory.joinpath('results', 'FinalMeasures_' + TargetReliabilityBased.type + '.csv'), type='Final')
 
                 # plot beta time for all measure steps for each strategy
-                TargetReliabilityBased.plotBetaTime(TrajectObject, typ='single', path=config.directory, horizon=np.max(config.T))
+                if plot_mode == 'extensive':
+                    TargetReliabilityBased.plotBetaTime(TrajectObject, typ='single', path=config.directory, horizon=np.max(config.T))
 
                 TargetReliabilityBased = replaceNames(TargetReliabilityBased, AllSolutions)
                 # write to csv's

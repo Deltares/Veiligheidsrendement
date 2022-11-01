@@ -1,4 +1,6 @@
-from src.FloodDefenceSystem.Mechanisms import LSF_heave,LSF_sellmeijer
+import sys
+sys.path.append('../../src')
+from FloodDefenceSystem.Mechanisms import LSF_heave,LSF_sellmeijer
 from scipy.sparse import csc_matrix
 import pytest
 

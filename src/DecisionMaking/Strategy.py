@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 # import cplex
 import itertools
 import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from HelperFunctions import IDtoName, flatten, pareto_frontier, getMeasureTable
+from tools.HelperFunctions import IDtoName, flatten, pareto_frontier, getMeasureTable
 import time
 from DecisionMaking.StrategyEvaluation import MeasureCombinations, makeTrajectDF, calcTC, calcTR, calcLifeCycleRisks, \
     calcTrajectProb, ImplementOption, split_options, SolveMIP, getTrajectProb,evaluateRisk, updateProbability, OverflowBundling
@@ -108,7 +108,7 @@ class Strategy:
             if self.__class__.__name__ == 'TargetReliabilityStrategy':
                 StrategyData = StrategyData.loc[StrategyData['year']==config.OI_year]
 
-            StrategyData = StrategyData.append(combinedmeasures)
+            StrategyData = pd.concat((StrategyData,combinedmeasures))
             if filtering == 'on':
                 StrategyData = copy.deepcopy(StrategyData)
                 StrategyData = StrategyData.reset_index(drop=True)
@@ -336,11 +336,11 @@ class Strategy:
             lines = AllMeasures.loc[AllMeasures['Section'] == section]
             if len(lines) > 1:
                 lcctot = np.sum(lines['LCC'])
-                lines.iloc[-1:]['LCC'] = lcctot
-                lines.iloc[-1:]['BC'] = np.nan
+                lines.loc[lines.index.values[-1],'LCC'] = lcctot
+                lines.loc[lines.index.values[-1],'BC'] = np.nan
                 Solution = pd.concat([Solution, lines[-1:]])
             elif len(lines) == 0:
-                lines = pd.DataFrame(np.array([section, 0, 0, np.nan, 0, 'No Measure', -999.0, -999.0, -999.0]).reshape(1,len(Solution.columns)),columns=Solution.columns)
+                lines = pd.DataFrame(np.array([np.nan, section, 0, 'No Measure', -999.0, -999.0, -999.0, -999., 0.]).reshape(1,len(Solution.columns)),columns=Solution.columns)
                 Solution = pd.concat([Solution, lines])
             else:
                 Solution = pd.concat([Solution, lines])
@@ -384,7 +384,7 @@ class Strategy:
         else:
             pass
 
-    def plotBetaCosts(self, Traject, fig_id, series_name=None, MeasureTable=None,
+    def plotBetaCosts(self, Traject, save_dir, fig_id, series_name=None, MeasureTable=None,
                       t = 0, cost_type = 'LCC', last = False, horizon = 100, markersize = 10, symbolsections=False,color='r',linestyle = '-',
                       final_step = False,final_measure_symbols = False, solutiontype=False):
         """Script to plot the costs versus the reliability in time. Different measures are indicated by different markers. There is a bunch of options that might have to be cleaned up, but this will be done later"""
@@ -536,9 +536,9 @@ class Strategy:
             plt.title('Priority order of investments')
         data = pd.DataFrame(np.array([Costs.T, np.array(betas)]).T, columns=['Cost', 'beta'])
         if cost_type == 'LCC':
-            data.to_csv(config.directory.joinpath('Beta vs '+ cost_type + '_' + series_name + '_t' + str(t+2025) + '.csv'))
+            data.to_csv(save_dir.joinpath('Beta vs '+ cost_type + '_' + series_name + '_t' + str(t+2025) + '.csv'))
         if cost_type == 'Initial':
-            data.to_csv(config.directory.joinpath('Beta vs '+ cost_type + '_' + series_name + '_t' + str(t + 2025) + '.csv'))
+            data.to_csv(save_dir.joinpath('Beta vs '+ cost_type + '_' + series_name + '_t' + str(t + 2025) + '.csv'))
 
     def plotInvestmentLimit(self, TestCase, investmentlimit = False, step2 = False, path=None, figure_size=(6, 4),
                             years = [0],

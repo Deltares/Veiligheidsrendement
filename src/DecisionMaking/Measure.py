@@ -33,7 +33,7 @@ class Measure():
         #different types of measures:
 class SoilReinforcement(Measure):
     # type == 'Soil reinforcement':
-    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+    def evaluateMeasure(self, DikeSection, TrajectInfo, plot_dir = False, preserve_slope=False):
     # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
@@ -83,7 +83,7 @@ class SoilReinforcement(Measure):
             self.measures.append({})
             self.measures[-1]['dcrest'] =j[0]
             self.measures[-1]['dberm'] = j[1]
-            self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = config.directory.joinpath('figures', DikeSection.name, 'Geometry'), slope_in = slope_in)
+            self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = plot_dir, slope_in = slope_in)
             self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'])
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
@@ -212,7 +212,10 @@ class VerticalGeotextile(Measure):
 class CustomMeasure(Measure):
     def set_input(self,section):
         try:
-            data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
+            try:
+                data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
+            except:
+                data = pd.read_csv(self.parameters['File'])
             reliability_headers = []
             for i, element in enumerate(list(data.columns)):
                 #find and split headers

@@ -34,6 +34,7 @@ class Solutions:
             elif data.loc[i].Type == 'Vertical Geotextile':
                 self.Measures.append(VerticalGeotextile(data.loc[i]))
             elif data.loc[i].Type == 'Custom':
+                data.loc[i,'File'] = excelsheet.parent.joinpath('Measures', data.loc[i]['File'])
                 self.Measures.append(CustomMeasure(data.loc[i]))
 
 
@@ -156,14 +157,13 @@ class Solutions:
                     for ijk in betas.loc[ij].values:
                         beta.append(ijk)
                 inputs_r.append(beta)
-        reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
+        # reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
+        reliability = pd.concat((reliability,pd.DataFrame(inputs_r, columns=cols_r)))
         measure_df = measure_df.append(pd.DataFrame(inputs_m, columns=cols_m))
+        measure_df = pd.concat(measure_df,pd.DataFrame(inputs_m, columns=cols_m)))
+        cols = pd.MultiIndex.from_arrays(np.array([measure_df.columns,['']*len(measure_df.columns)]))
+        measure_df.columns=cols
         self.MeasureData = measure_df.join(reliability,how='inner')
-        #fix multiindex:
-        index = []
-        for i in self.MeasureData.columns:
-            index.append(i) if isinstance(i,tuple) else index.append((i,''))
-        self.MeasureData.columns = pd.MultiIndex.from_tuples(index)
         if filtering: #here we could add some filtering on the measures, but it is not used right now.
             pass
 

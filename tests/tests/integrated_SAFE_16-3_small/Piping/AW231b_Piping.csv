@@ -1,0 +1,14 @@
+Name,1
+Scenario,1
+P_scenario,1.0
+D,32.0
+d70,0.000285
+d_cover,5.13899999
+h_exit,-0.30000001
+r_exit,0.9311436754870832
+Lvoor,42.6866243265174
+Lachter,7.9052006231828
+k,0.0003472222222222222
+gamma_sat,16.5
+kwelscherm,1
+dh_exit(t),0.005
