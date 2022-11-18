@@ -541,7 +541,7 @@ def beta_SF_StabilityInner(SF_or_beta, type = False, modelfactor = 1.07):
     """Careful: ensure that upon using this function you clearly define the input parameter!"""
     if type == 'SF':
         beta = ((SF_or_beta / modelfactor) - 0.41) / 0.15
-        return np.min([beta[0],8.])
+        return np.min([beta,8.])
     elif type == 'beta':
         SF = (0.41+0.15*SF_or_beta) * modelfactor
         return SF
