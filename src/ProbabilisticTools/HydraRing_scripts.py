@@ -34,7 +34,7 @@ def readDesignTable(filename):
             val = [float(i) for i in val]
             values.append(val)
         count += 1
-    data = pd.DataFrame(values, columns=headers)
+    data = pd.DataFrame(values, columns=headers).rename(columns = {'Beta\n':'Beta'})
     f.close()
     return data
 

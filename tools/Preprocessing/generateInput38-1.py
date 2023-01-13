@@ -13,8 +13,10 @@ import glob
 import re
 from owslib.wfs import WebFeatureService
 import shutil
-sys.path.append('../src')
+import copy
+sys.path.append('../../src')
 from FloodDefenceSystem.DikeSection import DikeProfile
+
 
 def get_traject_shape_from_NBPW(traject,NBWP_shape_path=False):
     if not NBWP_shape_path:
@@ -158,7 +160,7 @@ def findWeakestGEKB(vakindeling, GEKB_shape,db_dir = Path(r'n:\Projects\11208000
     GEKB_selectie['OBJECTID'] = vakindeling['OBJECTID']
 
     #write right DOORSNEDE to vakindeling:
-    vakindeling['DOORSNEDE_GEKB'] = GEKB_selectie['Vaknaam']
+    vakindeling['DSN_GEKB'] = GEKB_selectie['Vaknaam']
 
     return GEKB_selectie, vakindeling
 def write_df_to_csv(df,path):
@@ -200,9 +202,8 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
     vakindeling_df = check_vakindeling_algemeen(vakindeling_df, traject_length)
     #modify the traject shape such that it represents the vakindeling properly
     vakindeling_gdf = generate_vakindeling_shape(traject_shape,vakindeling_df)
-    vakindeling_gdf.to_file(intermediate_dir.joinpath('Vakindeling_Veiligheidsrendement.shp'))
 
-    #read the mechanism data for each entry with DOORSNEDE_mechanism:
+    #read the mechanism data for each entry with DSN_mechanism:
 
     #first for GEKB, we use the generic xlsx used for the assessment at WSRL. We have a (broad) selection fo relevant columns, and read the Excel for that:
     relevante_kolommen = ['dijkvak', 'nr', 'HR koppel', 'overslagdebiet', 'prfl_bestandnaam', 'prfl_oriëntatie',
@@ -240,7 +241,7 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
     #Piping data
     Piping_data = pd.read_csv(input_dir.joinpath('Piping','PipingInput.csv'))
     #TODO coupling based on M-value (more robust)
-    vakindeling_gdf['DOORSNEDE_STPH'] = Piping_data.dwarsprofiel.unique()
+    vakindeling_gdf['DSN_STPH'] = Piping_data.dwarsprofiel.unique()
 
     #STBI data
     STBI_data = pd.read_excel(vakindeling_tabel_path,sheet_name='STBI')[['DOORSNEDE','BEREKENING','SCENARIOKANS','SF','BETA','STIX']]
@@ -253,14 +254,14 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
     for count, vak in vakindeling_gdf.iterrows():
         if vak.IN_ANALYSE:
             #ALS STBI ID in lijst met profielen pak dat profiel
-            if any(raw_profile_data.ID_GEOMETRY_LOCATION.isin([vak.DOORSNEDE_STBI])):
-                if len(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DOORSNEDE_STBI]['ID_GEOMETRIE']) >1: raise Exception('Multiple profiles found')
-                profiles.append(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DOORSNEDE_STBI]['ID_GEOMETRIE'].values[0])
+            if any(raw_profile_data.ID_GEOMETRY_LOCATION.isin([vak.DSN_STBI])):
+                if len(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DSN_STBI]['ID_GEOMETRIE']) >1: raise Exception('Multiple profiles found')
+                profiles.append(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DSN_STBI]['ID_GEOMETRIE'].values[0])
 
             #NB: dit is een custom stap die weg kan als we CS_NUM goed hebben
-            elif any(raw_profile_data.ID_GEOMETRY_LOCATION.isin([vak.DOORSNEDE_STBI[:-2]])):
-                if len(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DOORSNEDE_STBI]['ID_GEOMETRIE'][:-2]) >1: raise Exception('Multiple profiles found')
-                profiles.append(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DOORSNEDE_STBI[:-2]]['ID_GEOMETRIE'].values[0])
+            elif any(raw_profile_data.ID_GEOMETRY_LOCATION.isin([vak.DSN_STBI[:-2]])):
+                if len(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DSN_STBI]['ID_GEOMETRIE'][:-2]) >1: raise Exception('Multiple profiles found')
+                profiles.append(raw_profile_data.loc[raw_profile_data.ID_GEOMETRY_LOCATION == vak.DSN_STBI[:-2]]['ID_GEOMETRIE'].values[0])
 
             #ANDERS: Zoek op basis van getalswaarde
             else:
@@ -320,8 +321,103 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
     #Bebouwing
     write_df_to_csv(bebouwing,intermediate_dir.joinpath('Bebouwing','Bebouwing_data.csv'))
 
+    #Vakindeling:
+    vakindeling_gdf.to_file(intermediate_dir.joinpath('Vakindeling_Veiligheidsrendement.shp'))
 
-def write_tool_input(working_dir):
+def write_dike_section_files_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, piping_data, stbi_data):
+    vakindeling_gdf = vakindeling_gdf.loc[vakindeling_gdf.IN_ANALYSE == 1]
+    for count, section in vakindeling_gdf.iterrows():
+        #write generic file for section:
+
+        #General tab:
+        general_name = ['Length','Start','End','Overflow', 'StabilityInner','Piping','Load_2025','Load_2100','SHP']
+        general_type = [''] *3 + ['HRING', 'Simple', 'SemiProb'] + ['']*3
+
+        general_values = [section['VAKLENGTE'], section['VAN_DP'], section['TOT_DP'],
+                          section['DSN_GEKB'], section['DSN_STBI'], section['DSN_STPH'],
+                          'Waterstand_' + section['DSN_GEKB'],'Waterstand_' + section['DSN_GEKB'], section['geometry']]
+
+        General = pd.DataFrame(general_values,index=general_name,columns=['Value'])
+        General['Type'] = general_type
+
+        #Measures tab
+        Measures = copy.deepcopy(measureset_data)
+
+        #DikeProfile
+        DikeProfile = pd.read_csv(working_dir.joinpath('intermediate','Profielen',section['DIJKPROFIE'] + '.csv'),index_col=0)
+
+        #Housing
+        Housing = housing_data.loc[housing_data.OBJECTID == section.OBJECTID].drop(columns=['OBJECTID', 'NUMMER']).transpose().reset_index()
+        Housing.columns = ['distancefromtoe','number']
+        if len(section['NUMMER'])==1:
+            # if replace_files & working_dir.joinpath('output','DV{:02d}.xlsx'.format(np.int32(section['NUMMER']))).exists():
+            #     os.remove(working_dir.joinpath('output','DV{:02d}.xlsx'.format(np.int32(section['NUMMER']))))
+            writer = pd.ExcelWriter(working_dir.joinpath('output','DV{:02d}.xlsx'.format(np.int32(section['NUMMER']))))
+        else:
+            # if replace_files & working_dir.joinpath('output','DV{}.xlsx'.format(section['NUMMER'])).exists():
+            #     os.remove(working_dir.joinpath('output','DV{}.xlsx'.format(section['NUMMER'])))
+            writer = pd.ExcelWriter(working_dir.joinpath('output','DV{}.xlsx'.format(section['NUMMER'])))
+
+        General.to_excel(writer, sheet_name='General', index=True)
+        Measures.to_excel(writer, sheet_name='Measures', index=False)
+        DikeProfile.to_excel(writer, sheet_name='Geometry', index=True)
+        Housing.to_excel(writer, sheet_name='Housing', index=False)
+        writer.save()
+def write_mechanism_data_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, piping_data, stbi_data):
+
+
+    # make subfolders for Overflow and Toetspeil:
+    shutil.rmtree(working_dir.joinpath('output', 'Overflow'))
+    shutil.rmtree(working_dir.joinpath('output', 'Waterstand'))
+    working_dir.joinpath('output', 'Overflow', '2025').mkdir(parents=True)
+    working_dir.joinpath('output', 'Overflow', '2100').mkdir(parents=True)
+    working_dir.joinpath('output', 'Waterstand', '2025').mkdir(parents=True)
+    working_dir.joinpath('output', 'Waterstand', '2100').mkdir(parents=True)
+
+
+    vakindeling_gdf = vakindeling_gdf.loc[vakindeling_gdf.IN_ANALYSE == 1]
+    for count, section in vakindeling_gdf.iterrows():
+        #STBI
+        stbi_data.set_index('DOORSNEDE').loc[section.DSN_STBI].to_csv(working_dir.joinpath('output', 'StabilityInner', section.DSN_STBI + '.csv'), header=False)
+
+        #Piping
+        piping_data.set_index('dwarsprofiel').loc[section.DSN_STPH].drop(columns=['Naam traject']).transpose().to_csv(working_dir.joinpath('output', 'Piping', str(section.DSN_STPH) + '.csv'), header=False)
+
+
+
+        #Overflow
+        shutil.copyfile(working_dir.joinpath('intermediate','Overslag','Resultaten_W2100',section.DSN_GEKB,'designTable.txt'),working_dir.joinpath('output','Overflow','2100',section.DSN_GEKB + '.txt'))
+        shutil.copyfile(working_dir.joinpath('intermediate','Overslag','Resultaten_WBI2017',section.DSN_GEKB,'designTable.txt'),working_dir.joinpath('output','Overflow','2025',section.DSN_GEKB + '.txt'))
+        shutil.copyfile(working_dir.joinpath('intermediate','Waterstand','Resultaten_W2100',section.DSN_GEKB,'DESIGNTABLE_{}.txt'.format(section.DSN_GEKB)),working_dir.joinpath('output','Waterstand','2100', 'Waterstand_{}.txt'.format(section.DSN_GEKB)))
+        shutil.copyfile(working_dir.joinpath('intermediate','Waterstand','Resultaten_WBI2017',section.DSN_GEKB,'DESIGNTABLE_{}.txt'.format(section.DSN_GEKB)),working_dir.joinpath('output','Waterstand','2025','Waterstand_{}.txt'.format(section.DSN_GEKB)))
+        #Toetspeil
+
+    pass
+def write_tool_input_legacy(working_dir):
+    '''Script to translate intermediate input to the legacy file structure (with some additions for geospatial plotting and analysis)'''
+
+    #basic data on sections and mechanisms:
+    vakindeling_gdf = gpd.read_file(working_dir.joinpath('intermediate','Vakindeling_Veiligheidsrendement.shp'))
+    housing_data = pd.read_csv(working_dir.joinpath('intermediate','Bebouwing','Bebouwing_data.csv'),index_col=0)
+    #NB: no customs here, should be extended.
+    measureset_data = pd.read_csv(working_dir.joinpath('intermediate','Maatregelen','base_measures.csv'), delimiter=',')
+
+    piping_data = pd.read_csv(working_dir.joinpath('intermediate','Piping','Piping_data.csv'),index_col=0)
+    stbi_data = pd.read_csv(working_dir.joinpath('intermediate','STBI','STBI_data.csv'),index_col=0)
+
+    #Make subfolders if not exist:
+    if not working_dir.joinpath('output','StabilityInner').is_dir():
+        working_dir.joinpath('output','StabilityInner').mkdir(parents=True, exist_ok=True)
+        working_dir.joinpath('output','Piping').mkdir(parents=True, exist_ok=True)
+        working_dir.joinpath('output','Overflow').mkdir(parents=True, exist_ok=True)
+        working_dir.joinpath('output','Toetspeil').mkdir(parents=True, exist_ok=True)
+        working_dir.joinpath('output','Measures').mkdir(parents=True, exist_ok=True)
+
+    #write section files:
+    write_dike_section_files_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, piping_data, stbi_data)
+
+    write_mechanism_data_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, piping_data, stbi_data)
+
     pass
 
 if __name__ == '__main__':
@@ -332,4 +428,11 @@ if __name__ == '__main__':
     # working_dir = Path(r'n:\Projects\11208000\11208392\C. Report - advise\Invoer & vakindeling\Invoer & vakindeling\test_38_1')
     vakindeling_tabel_path = working_dir.joinpath('input','Vakindeling 38-1.xlsx')
     traject_name = '38-1'
-    write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = True)
+
+    #write to intermediate data format
+    # write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = True)
+
+    #here we could implement a bunch of checks to see if all the proper data is there
+
+    #write intermediate data to tool input (legacy version)
+    write_tool_input_legacy(working_dir)

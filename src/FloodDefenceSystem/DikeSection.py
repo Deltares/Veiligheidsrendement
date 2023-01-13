@@ -40,7 +40,7 @@ class DikeSection:
 
         for name, sheet_data in df.items():
             if name == sheet_name:
-                data = df[name].set_index('Name')
+                data = df[name].set_index(list(df[name])[0])
                 self.MechanismData = {}
 
                 for i in range(len(data)):
@@ -61,4 +61,4 @@ class DikeSection:
                 self.houses = None
 
         #and we add the geometry
-        setattr(self, 'InitialGeometry', df['Geometry'])
+        setattr(self, 'InitialGeometry', df['Geometry'].set_index(list(df['Geometry'])[0]))

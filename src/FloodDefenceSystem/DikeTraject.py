@@ -72,17 +72,20 @@ class DikeTraject:
             self.Sections[i].readGeneralInfo(input_path, 'General')
 
             # Read the data per mechanism, and first the load frequency line:
-            self.Sections[i].Reliability.Load = LoadInput()
-            self.Sections[i].Reliability.Load.set_fromDesignTable(input_path.joinpath('Toetspeil', self.Sections[i].LoadData))
-            self.Sections[i].Reliability.Load.set_annual_change(type='SAFE', parameters=[self.Sections[i].YearlyWLRise, self.Sections[i].HBNRise_factor])
+            self.Sections[i].Reliability.Load = LoadInput(list(self.Sections[i].__dict__.keys()))
+            if self.Sections[i].Reliability.Load.load_type == 'HRING': #2 HRING computations for different years
+                self.Sections[i].Reliability.Load.set_HRING_input(input_path.joinpath('Waterstand'), self.Sections[i])  #input folder, location
+            elif self.Sections[i].Reliability.Load.load_type == 'SAFE': #2 computation as done for SAFE
+                self.Sections[i].Reliability.Load.set_fromDesignTable(input_path.joinpath('Toetspeil', self.Sections[i].LoadData))
+                self.Sections[i].Reliability.Load.set_annual_change(type='SAFE', parameters=[self.Sections[i].YearlyWLRise, self.Sections[i].HBNRise_factor])
 
             # Then the input for all the mechanisms:
             self.Sections[i].Reliability.Mechanisms = {}
             for j in config.mechanisms:
+                mech_input_path = input_path.joinpath(j)
                 self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1])
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
-                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(input_path.joinpath(
-                        self.Sections[i].MechanismData[j][0]), calctype=self.Sections[i].MechanismData[j][1], mechanism=j)
+                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(mech_input_path, *self.Sections[i].MechanismData[j], mechanism=j)
 
             # #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
             # if not input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:

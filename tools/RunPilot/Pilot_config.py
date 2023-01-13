@@ -11,10 +11,10 @@ import shutil
 ## GENERAL SETTINGS
 timing = True
 
-traject = '16-3'
-path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Samenwerken aan Kunstwerken\Testcases\cases\Testcase_SAFE_16-3')
+traject = '38-1'
+path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Prioritering WSRL\Gegevens 38-1\VR_berekening')
 
-casename = 'test_vr_env'
+casename = 'run_1'
 
 directory = path.joinpath('Case_' + casename)
 language = 'NL'
@@ -52,7 +52,7 @@ design_methods = ['Veiligheidsrendement','Doorsnede-eisen'] #Design methods (do 
 beta_cost_settings = {'symbols':True,                       #whether to include symbols in the beta-cost curve
                       'markersize':10}                      #base size of markers.
 #unit costs:
-unit_cost_data = pd.read_csv('../../tools/unit_costs.csv', encoding='latin_1')
+unit_cost_data = pd.read_csv('../unit_costs.csv', encoding='latin_1')
 
 
 unit_cost = {}

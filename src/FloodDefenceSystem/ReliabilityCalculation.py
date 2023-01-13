@@ -1,11 +1,12 @@
 import copy
+import os
 import matplotlib.pyplot as plt
 import FloodDefenceSystem.Mechanisms as Mechanisms
 import numpy as np
 import openturns as ot
 import pandas as pd
 import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from ProbabilisticTools. HydraRing_scripts import DesignTableOpenTurns
+from ProbabilisticTools. HydraRing_scripts import DesignTableOpenTurns, readDesignTable
 from ProbabilisticTools.ProbabilisticFunctions import TableDist, run_prob_calc, IterativeFC_calculation, TemporalProcess, \
     addLoadCharVals, MarginalsforTimeDepReliability, beta_to_pf, pf_to_beta, FragilityIntegration
 from scipy.stats import norm
@@ -15,8 +16,18 @@ from pathlib import Path
 
 class LoadInput:
     #class to store load data
-    def __init__(self):
-        pass
+    def __init__(self,section_fields):
+        if 'Load_2025' in section_fields:
+            self.load_type = 'HRING'
+        elif 'YearlyWLRise' in section_fields:
+            self.load_type = 'SAFE'
+
+    def set_HRING_input(self, folder, section, gridpoints = 1000):
+        years = os.listdir(folder)
+        self.distribution = {}
+        for year in years:
+            self.distribution[year] = DesignTableOpenTurns(folder.joinpath(year, '{}.txt'.format(getattr(section, 'Load_{}'.format(year)))), gridpoints=gridpoints)
+
 
     def set_fromDesignTable(self, filelocation, gridpoints=1000):
         #Load is given by exceedence probability-water level table from Hydra-Ring
@@ -32,6 +43,7 @@ class LoadInput:
         elif type == 'gamma':
             self.dist_change = ot.Gamma()
             self.dist_change.setParameter(ot.GammaMuSigma()(parameters))
+
     def plot_load_cdf(self):
         data = np.array(self.distribution.getParameter())
         x = np.split(data, 2)
@@ -494,13 +506,32 @@ class MechanismInput:
         self.input.setDescription(parameters)
 
     #This routine reads  input from an input sheet
-    def fill_mechanism(self, input, type= 'csv', sheet=None, calctype = 'Prob',mechanism=None):
+    def fill_mechanism(self, input_path, reference, calctype, type= 'csv', sheet=None,mechanism=None):
         if type == 'csv':
-            data = pd.read_csv(input, delimiter=',')
-            if mechanism == 'Overflow':
-                data = data.transpose()
-            else:
+            if mechanism != 'Overflow':
+                data = pd.read_csv(input, delimiter=',')
                 data = data.set_index('Name')
+            else: #'Overflow':
+                if calctype == 'Simple':
+                    data = pd.read_csv(input, delimiter=',')
+                    data = data.transpose()
+                elif calctype == 'HRING':
+                    #detect years
+                    years = os.listdir(input_path)
+                    for count, year in enumerate(years):
+                        year_data = readDesignTable(input_path.joinpath(year, reference + '.txt'))[['Value', 'Beta']]
+                        if count == 0:
+                            data = year_data.set_index('Value').rename(columns={'Beta':year})
+
+                        else:
+                            if all(data.index.values ==year_data.Value.values):
+                                data = pd.concat((data, year_data.set_index('Value').rename(columns={'Beta':year})), axis='columns')
+                            #compare value columns:
+                        #if count>0 and Value is identical: concatenate.
+                        #else: interpolate and then concatenate.
+                else:
+                    raise Exception('Unknown input type for overflow')
+
         elif type == 'xlsx':
             data = pd.read_excel(input,sheet_name=sheet)
             data = data.set_index('Name')

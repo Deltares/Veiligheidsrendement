@@ -13,10 +13,8 @@ sys.path.append('..')
 from FloodDefenceSystem.DikeTraject import DikeTraject
 from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
-from pathlib import Path
 from DecisionMaking.StrategyEvaluation import calcTrajectProb
 import shelve
-from os import path
 
 #General and global settings:
 global timing, traject, path,casename, directory
