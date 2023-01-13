@@ -1,0 +1,18 @@
+﻿Situatie,Golfhoogteklasse,mu,sigma,Bron
+Bebouwing in kruin/talud,NVT,10,15,BOI - Overgangen
+BOI: nette overgang talud - gesloten zode,0-1 meter,7.6,3.7,BOI - Overgangen
+BOI: nette overgang kruin - gesloten zode,0-1 meter,189,210,BOI - Overgangen
+BOI: nette overgang talud - gesloten zode,1-2 meter,4.6,1.2,BOI - Overgangen
+BOI: nette overgang kruin - gesloten zode,1-2 meter,24,11,BOI - Overgangen
+BOI: nette overgang talud - gesloten zode,2-3 meter,4.5,0.9,BOI - Overgangen
+BOI: nette overgang kruin - gesloten zode,2-3 meter,17,5.2,BOI - Overgangen
+NVT,NVT,10000,0.1,BOI - Overgangen
+BOI: nette overgang talud - open zode,0-1 meter,2.9,1,BOI - Overgangen
+BOI: nette overgang kruin - open zode,0-1 meter,21,13,BOI - Overgangen
+BOI: nette overgang talud - open zode,1-2 meter,2.8,0.6,BOI - Overgangen
+BOI: nette overgang kruin - open zode,1-2 meter,10,3.3,BOI - Overgangen
+BOI: nette overgang talud - open zode,2-3 meter,3,0.5,BOI - Overgangen
+BOI: nette overgang kruin - open zode,2-3 meter,9.4,2.2,BOI - Overgangen
+BOI: geometrische overgang - open zode,0-1 meter,271,262,BOI - Overgangen
+BOI: geometrische overgang - open zode,1-2 meter,33,12,BOI - Overgangen
+BOI: geometrische overgang - open zode,2-3 meter,24,6.4,BOI - Overgangen
