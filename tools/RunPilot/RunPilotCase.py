@@ -42,7 +42,7 @@ def main():
 
     if RunComputation:
         # compute everything
-        AllStrategies, AllSolutions = runFullModel(TrajectObject, case_config)
+        AllStrategies, AllSolutions = runFullModel(TrajectObject, case_config,plot_mode='all')
     else:
         # load existing results
         filename = case_config.directory.joinpath('AfterStep1.out')

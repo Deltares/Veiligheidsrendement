@@ -87,7 +87,6 @@ def check_vakindeling_algemeen(df_vakindeling,traject_length):
     #check if MEAS_END.max() is approx equal to traject_length
     np.testing.assert_approx_equal(df_vakindeling.MEAS_END.max(), traject_length, significant=5)
 
-    print()
     return df_vakindeling
 
 def cut(line, distance):
@@ -172,7 +171,10 @@ def dp_as_number(dijkpaal):
     string_splitted = re.findall(r'\d+', dijkpaal)
     dp_num = np.float64(string_splitted[0]) * 100 + np.float64(string_splitted[1])
     return dp_num
-
+def check_STBI_data(data):
+    #TODO ensure that always an SF and a BETA are given as input.
+    raise Exception('Develop the STBI check to avoid nans in SF and BETA')
+    pass
 def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = False):
     #this part writes all original data to a more or less fixed format (to be more fixed in the future). This is the really tailo
     input_dir = vakindeling_tabel_path.parent    #input directory
@@ -219,7 +221,7 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
     #replace non-numeric values (NVT means not applicable so Pf=0)
     raw_GEKB_data['Faalkans'] = raw_GEKB_data['Faalkans'].replace({'NVT': 0.})
     raw_GEKB_data['Faalkans'] = np.divide(1., raw_GEKB_data['Faalkans'].astype(np.float64))
-
+    raw_GEKB_data['Kruindaling'] = 0.005 #TODO read from file
     #select weakest cross section
     #We load the vakindeling shape for the GEKB computations. Coincidentally this is also the traject_shape. We merge the data to it.
     if len(glob.glob(str(input_dir.joinpath('Overslag', 'Vakindeling', '*.shp'))))>1: raise Exception('Multiple shapefiles for GEKB detected.')
@@ -233,10 +235,10 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
     if input_dir.joinpath('Overslag','GEKB_data.csv').exists():
         old_GEKB_data = pd.read_csv(input_dir.joinpath('Overslag','GEKB_data.csv'),index_col=0)
         #compare:
-        pd.testing.assert_frame_equal(old_GEKB_data, GEKB_data[['Vaknaam', 'prfl_bestandnaam', 'prfl_oriëntatie', 'prfl_dijkhoogte', 'gekb_situatie', 'Golfhoogteklasse','LocationID', 'Faalkans']])
+        pd.testing.assert_frame_equal(old_GEKB_data, GEKB_data[['Vaknaam', 'prfl_bestandnaam', 'prfl_oriëntatie', 'prfl_dijkhoogte', 'gekb_situatie', 'Golfhoogteklasse','LocationID', 'Faalkans','Kruindaling']])
         GEKB_data_reduced = old_GEKB_data
     else:
-        GEKB_data_reduced = GEKB_data[['Vaknaam', 'prfl_bestandnaam', 'prfl_oriëntatie', 'prfl_dijkhoogte', 'gekb_situatie', 'Golfhoogteklasse','LocationID', 'Faalkans']]
+        GEKB_data_reduced = GEKB_data[['Vaknaam', 'prfl_bestandnaam', 'prfl_oriëntatie', 'prfl_dijkhoogte', 'gekb_situatie', 'Golfhoogteklasse','LocationID', 'Faalkans','Kruindaling']]
         GEKB_data_reduced.to_csv(input_dir.joinpath('Overslag','GEKB_data.csv'))
     #Piping data
     Piping_data = pd.read_csv(input_dir.joinpath('Piping','PipingInput.csv'))
@@ -245,7 +247,7 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
 
     #STBI data
     STBI_data = pd.read_excel(vakindeling_tabel_path,sheet_name='STBI')[['DOORSNEDE','BEREKENING','SCENARIOKANS','SF','BETA','STIX']]
-
+    STBI_data = check_STBI_data(STBI_data)
     #profielen
     raw_profile_data = pd.read_excel(input_dir.joinpath('Dijkprofielen','GEOMETRY_TEMPLATE_v3_38_1_STBI.xlsx'),sheet_name='KARAKTERISTIEKE_PUNTEN',header=9)
     #TODO improve CS_NUM (e.g. by a table that reference DP and M_value)
@@ -324,18 +326,22 @@ def write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = Fal
     #Vakindeling:
     vakindeling_gdf.to_file(intermediate_dir.joinpath('Vakindeling_Veiligheidsrendement.shp'))
 
-def write_dike_section_files_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, piping_data, stbi_data):
+def write_dike_section_files_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, gekb_data):
+    '''This routine translates /intermediate to input data that is mostly in accordance with the old format. To be replaced by the new data model.'''
     vakindeling_gdf = vakindeling_gdf.loc[vakindeling_gdf.IN_ANALYSE == 1]
     for count, section in vakindeling_gdf.iterrows():
         #write generic file for section:
 
         #General tab:
-        general_name = ['Length','Start','End','Overflow', 'StabilityInner','Piping','Load_2025','Load_2100','SHP']
-        general_type = [''] *3 + ['HRING', 'Simple', 'SemiProb'] + ['']*3
+        general_name = ['Length','Start','End','Overflow', 'StabilityInner','Piping','Load_2025','Load_2100','Kruindaling','Kruinhoogte','SHP']
+        general_type = [''] *3 + ['HRING', 'Simple', 'SemiProb'] + ['']*5
 
         general_values = [section['VAKLENGTE'], section['VAN_DP'], section['TOT_DP'],
                           section['DSN_GEKB'], section['DSN_STBI'], section['DSN_STPH'],
-                          'Waterstand_' + section['DSN_GEKB'],'Waterstand_' + section['DSN_GEKB'], section['geometry']]
+                          'Waterstand_' + section['DSN_GEKB'],'Waterstand_' + section['DSN_GEKB'],
+                          gekb_data.loc[gekb_data['Vaknaam']==section['DSN_GEKB']]['Kruindaling'].item(),
+                          gekb_data.loc[gekb_data['Vaknaam'] == section['DSN_GEKB']]['prfl_dijkhoogte'].item(),
+                          section['geometry']]
 
         General = pd.DataFrame(general_values,index=general_name,columns=['Value'])
         General['Type'] = general_type
@@ -392,7 +398,6 @@ def write_mechanism_data_legacy(working_dir, vakindeling_gdf, housing_data, meas
         shutil.copyfile(working_dir.joinpath('intermediate','Waterstand','Resultaten_WBI2017',section.DSN_GEKB,'DESIGNTABLE_{}.txt'.format(section.DSN_GEKB)),working_dir.joinpath('output','Waterstand','2025','Waterstand_{}.txt'.format(section.DSN_GEKB)))
         #Toetspeil
 
-    pass
 def write_tool_input_legacy(working_dir):
     '''Script to translate intermediate input to the legacy file structure (with some additions for geospatial plotting and analysis)'''
 
@@ -404,6 +409,7 @@ def write_tool_input_legacy(working_dir):
 
     piping_data = pd.read_csv(working_dir.joinpath('intermediate','Piping','Piping_data.csv'),index_col=0)
     stbi_data = pd.read_csv(working_dir.joinpath('intermediate','STBI','STBI_data.csv'),index_col=0)
+    gekb_data = pd.read_csv(working_dir.joinpath('intermediate','Overslag','GEKB_data.csv'),index_col=0)
 
     #Make subfolders if not exist:
     if not working_dir.joinpath('output','StabilityInner').is_dir():
@@ -414,11 +420,9 @@ def write_tool_input_legacy(working_dir):
         working_dir.joinpath('output','Measures').mkdir(parents=True, exist_ok=True)
 
     #write section files:
-    write_dike_section_files_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, piping_data, stbi_data)
+    write_dike_section_files_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, gekb_data)
 
     write_mechanism_data_legacy(working_dir, vakindeling_gdf, housing_data, measureset_data, piping_data, stbi_data)
-
-    pass
 
 if __name__ == '__main__':
     #this code generates all the input for traject 38-1
@@ -430,7 +434,7 @@ if __name__ == '__main__':
     traject_name = '38-1'
 
     #write to intermediate data format
-    # write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = True)
+    write_intermediate_data(traject_name,vakindeling_tabel_path,clear_data = True)
 
     #here we could implement a bunch of checks to see if all the proper data is there
 

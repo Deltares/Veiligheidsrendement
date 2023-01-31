@@ -46,7 +46,9 @@ def runFullModel(TrajectObject,config,plot_mode = 'test'):
     #Loop over sections and do the assessment.
     for i, section in enumerate(TrajectObject.Sections):
         #get design water level:
-        section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
+        #TODO remove this line?
+        # section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
+
         #compute reliability in time for each mechanism:
         # print(section.End)
         for j in TrajectObject.GeneralInfo['MechanismsConsidered']:
@@ -79,7 +81,7 @@ def runFullModel(TrajectObject,config,plot_mode = 'test'):
                      'language':config.language,
                      'beta_or_prob':config.beta_or_prob}
     if plot_mode != 'test':
-        TrajectObject.plotAssessment(fig_size=(12, 4),draw_targetbeta='off', last=True, case_settings=case_settings)
+        TrajectObject.plotAssessment(fig_size=(12, 4),draw_targetbeta='off', last=True, t_list = [0, 25, 50], case_settings=case_settings)
 
     print('Finished step 1: assessment of current situation')
 
@@ -177,7 +179,7 @@ def runFullModel(TrajectObject,config,plot_mode = 'test'):
 
                 # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
                 GreedyOptimization.evaluate(TrajectObject, AllSolutions, splitparams=True, setting='cautious', f_cautious=1.5,
-                                            max_count = 300, BCstop=0.1)
+                                            max_count = 600, BCstop=0.1)
 
                 # plot beta time for all measure steps for each strategy
                 if plot_mode == 'extensive':

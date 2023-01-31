@@ -25,7 +25,7 @@ class DikeSection:
     def __init__(self, name, traject):
         self.Reliability = SectionReliability()
         self.name = name  #Make sure names have the same length by adding a zero. This is non-generic, specific for SAFE
-        # Basic traject info NOTE: THIS HAS TO BE REMOVED TO TRAJECT OBJECT
+        # Basic traject info TODO: THIS HAS TO BE MOVED TO TRAJECT OBJECT
         self.TrajectInfo = {}
         if traject == '16-4':
             self.TrajectInfo['TrajectLength'] = 19480
@@ -33,7 +33,9 @@ class DikeSection:
         elif traject == '16-3':
             self.TrajectInfo['TrajectLength'] = 19899
             self.TrajectInfo['Pmax'] = 1. / 10000; self.TrajectInfo['omegaPiping'] = 0.24; self.TrajectInfo['aPiping'] = 0.9; self.TrajectInfo['bPiping'] = 300
-
+        elif traject == '38-1':
+            self.TrajectInfo['TrajectLength'] = 28902
+            self.TrajectInfo['Pmax'] = 1. / 10000; self.TrajectInfo['omegaPiping'] = 0.24; self.TrajectInfo['aPiping'] = 0.9; self.TrajectInfo['bPiping'] = 300
     def readGeneralInfo(self, path, sheet_name):
         #Read general data from sheet in standardized xlsx file
         df = pd.read_excel(path.joinpath(self.name + ".xlsx"), sheet_name=None)
