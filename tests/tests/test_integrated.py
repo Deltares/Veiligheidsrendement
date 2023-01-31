@@ -12,7 +12,7 @@ import pytest
 def test_integrated_run(casename):
     '''This test so far only checks the output values after optimization.
     The test should eventually e split for the different steps in the computation (assessment, measures and optimization)'''
-    # sys.path.append(os.getcwd() + '\\{}'.format(casename))
+    sys.path.append(os.getcwd() + '\\{}'.format(casename))
     import config_test as case_config
 
     sys.path.append('../../src')

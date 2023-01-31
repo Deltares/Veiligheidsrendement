@@ -10,7 +10,7 @@ import shutil
 
 ## GENERAL SETTINGS
 timing = False
-path = Path(sys.path[0])
+path = Path(sys.path[-1])
 traject = '16-3'
 
 #manage the in and output directory of the test (this should be done somewhere else eventually)

@@ -1,11 +1,15 @@
 from pathlib import Path
 import shelve
-from DikeTraject import PlotSettings, getSectionLengthInTraject
+import sys
+sys.path.append('../../src')
+sys.path.append('../../tools')
+
+from FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 from HelperFunctions import getMeasureTable
-import config
+
 
 def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
     #TODO This should not be necessary:
@@ -59,10 +63,12 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
     plt.savefig(PATH.joinpath('LCC.png'),dpi=300, bbox_inches='tight', format='png')
 
 def main():
+    #import settings of run:
+    import RunPilot.Pilot_config as config
     #initialize the case that we consider. We start with a small one, eventually we will use a big one.
     ##PLOT SETTINGS
-    plot_year = 2025
-    rel_year = plot_year-2025
+    t_0 = 2025
+    rel_year = t_0-2025
     filename = config.directory.joinpath('AfterStep1.out')
     my_shelf = shelve.open(str(filename))
     for key in my_shelf:
@@ -80,8 +86,8 @@ def main():
     for key in my_shelf:
         AllStrategies = my_shelf[key]
     my_shelf.close()
-    # greedy_mode = 'Optimal'
-    greedy_mode = 'SatisfiedStandard'
+    greedy_mode = 'Optimal'
+    # greedy_mode = 'SatisfiedStandard'
     AllStrategies[0].getSafetyStandardStep(TestCase.GeneralInfo['Pmax'])
     AllStrategies[1].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Doorsnede-eisen.csv'), type='Final')
     AllStrategies[0].makeSolution(config.directory.joinpath('results', 'FinalMeasures_Veiligheidsrendement.csv'),step = AllStrategies[0].SafetyStandardStep, type='SatisfiedStandard')
@@ -93,19 +99,22 @@ def main():
     #color settings
     optimized_colors = {'n_colors': 6, 'start' : 1.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
     targetrel_colors = {'n_colors': 6, 'start' : 0.5, 'rot' : 0.3, 'gamma' : 1.5, 'hue' : 1.0, 'light' : 0.8, 'dark' : 0.3}
+    case_settings = {'directory':config.directory,
+                     'language':config.language,
+                     'beta_or_prob':config.beta_or_prob}
     for plot_t in config.assessment_plot_years:
-        plot_year = str(plot_t+config.t_0)
-        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True, system_rel=True, show_xticks=True,
+        plot_year = str(plot_t+t_0)
+        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True, system_rel=True, show_xticks=True,case_settings = case_settings,
                                 custom_name='Assessment_' + plot_year+'.png',
                                 title_in='(a) \n' + r'$\bf{Predicted~reliability~in~' + plot_year + '}$')
         #
         # #pane 2: reliability in 2075, with Greedy optimization
-        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True,system_rel=True,
+        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True,system_rel=True, case_settings = case_settings,
                                 custom_name='GreedyStrategy_' + plot_year + '.png', reinforcement_strategy=AllStrategies[0], greedymode = greedy_mode,
                                 show_xticks=True, title_in='(c)\n' + r'$\bf{Optimized~investment}$ - Reliability in ' + plot_year,colors=optimized_colors)
         #
         # #pane 3: reliability in 2075, with Target Reliability Approach
-        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True,system_rel=True,
+        TestCase.plotAssessment(fig_size=figsize, t_list=[plot_t], labels_limited=True,system_rel=True, case_settings = case_settings,
                                 custom_name='TargetReliability_' + plot_year + '.png', reinforcement_strategy=AllStrategies[1],
                                 show_xticks=True, title_in='(e) \n' + r'$\bf{Target~reliability~based~investment}$ -  Reliability in ' + plot_year,colors=targetrel_colors)
     #
@@ -132,13 +141,13 @@ def main():
             MeasureTable = getMeasureTable(AllSolutions, language = 'EN',abbrev=True)
             figsize = (6,4)
             plt.figure(102, figsize=figsize)
-            AllStrategies[0].plotBetaCosts(TestCase, t=t_plot, cost_type=cost_type,
+            AllStrategies[0].plotBetaCosts(TestCase, save_dir= config.directory,t=t_plot, cost_type=cost_type,
                                            fig_id=102, markersize = 10, final_step = AllStrategies[0].OptimalStep,color=twoColors[0], series_name='Optimized investment',
                                            MeasureTable=MeasureTable,final_measure_symbols =False)
-            AllStrategies[1].plotBetaCosts(TestCase, t=t_plot, cost_type=cost_type,
+            AllStrategies[1].plotBetaCosts(TestCase, save_dir= config.directory,t=t_plot, cost_type=cost_type,
                                            fig_id=102, markersize = 10, color=twoColors[1], series_name='Target reliability based investment',
                                            MeasureTable=MeasureTable,last=True,final_measure_symbols =True)
-            plt.savefig(config.directory.joinpath('Priority order Beta vs LCC_' + str(t_plot+config.t_0) + '.png'),dpi=300,bbox_inches='tight',format='png')
+            plt.savefig(config.directory.joinpath('Priority order Beta vs LCC_' + str(t_plot+t_0) + '.png'),dpi=300,bbox_inches='tight',format='png')
             plt.close()
 
 if __name__ == '__main__':
