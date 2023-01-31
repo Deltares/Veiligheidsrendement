@@ -4,6 +4,23 @@
 import numpy as np
 from scipy import interpolate
 import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+import config
+def OverflowHRING(input, year, mode='assessment',Pt = None):
+    '''year is relative to start year. input contains relevant inputs'''
+    if mode == 'assessment':
+        h_t = input['h_crest'] - input['d_crest'] * (year)
+        years = input['hc_beta'].columns.values.astype(np.int32)
+        betas = []
+        for j in years:
+            betas.append(interpolate.interp1d(input['hc_beta'].index.values,input['hc_beta'][str(j)],fill_value='extrapolate')(h_t))
+        beta = interpolate.interp1d(years,betas,fill_value='extrapolate')(year+config.t_0)
+        return beta, ProbabilisticFunctions.beta_to_pf(beta)
+    if mode == 'design':
+        t_beta_interp = interpolate.interp2d(input['hc_beta'].columns.values.astype(np.float32), input['hc_beta'].index.values,input['hc_beta'],bounds_error=False)
+        h_grid = np.linspace(input['hc_beta'].index.values.min(),input['hc_beta'].index.values.max(),50)
+        h_beta = t_beta_interp(year+config.t_0,h_grid).flatten()
+        new_crest = interpolate.interp1d(h_beta,h_grid,fill_value='extrapolate')(ProbabilisticFunctions.pf_to_beta(Pt)).item()
+        return new_crest, ProbabilisticFunctions.pf_to_beta(Pt)
 def OverflowSimple(h_crest, q_crest, h_c, q_c, beta, mode='assessment', Pt=None, design_variable=None,iterative_solve = False,beta_t = False):
     if mode == 'assessment':
         if q_c[0] != q_c[-1:]:
@@ -49,8 +66,12 @@ def LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm):
 
     #According to Formula Sander Kapinga,veilighiedsfactor heave
     if r_exit > 0:
-        delta_phi = (h - h_exit) * r_exit
-        i = (delta_phi/d_cover) if d_cover > 0 else 99
+        if h_exit > h:
+            #hoog achterland dus geen piping
+            i=1e-50
+        else:
+            delta_phi = (h - h_exit) * r_exit
+            i = (delta_phi/d_cover) if d_cover > 0 else 99
     else:
         # delta_phi = 0
         i_c = 0.5

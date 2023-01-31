@@ -6,7 +6,7 @@ import math
 from scipy.stats import norm
 import cProfile
 import scipy as sp
-
+import config
 #Function to calculate a safety factor:
 def calc_gamma(mechanism,TrajectInfo):
     if mechanism == 'Piping' or mechanism == 'Heave' or mechanism == 'Uplift':
@@ -34,6 +34,7 @@ def calc_beta_implicated(mechanism,SF,TrajectInfo=None):
         if mechanism == 'Piping':
             beta = (1 / 0.37) * (np.log(SF / 1.04) + 0.43 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == 'Heave':
+            #TODO troubleshoot the RuntimeWarning errors with invalid values in log.
             beta = (1 / 0.48) * (np.log(SF / 0.37) + 0.30 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == 'Uplift':
             beta = (1 / 0.46) * (np.log(SF / 0.48) + 0.27 * TrajectInfo['beta_max']) #-norm.ppf(TrajectInfo['Pmax']))
@@ -457,19 +458,26 @@ def UpscaleCDF(dist,t=1,testPlot='off' ,change_dist = None,change_step = 1,Ngrid
     return newdist
 
 def getDesignWaterLevel(load,p):
-    #TODO Check this!
-    a=1
-    from scipy import interpolate
-    # half = int(0.5 * len(load.distribution.getParameter()))
-    # p = load.distribution.getParameter()[half:]
-    # x = load.distribution.getParameter()[0:half]
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
 def addLoadCharVals(input,load=None,p_h = 1./1000, p_dh=0.5,year = 0):
+    #TODO this function should be moved elsewhere
     #input = list of all strength variables
 
     if load != None:
-        h_norm = np.array(load.distribution.computeQuantile(1 - p_h))[0]
+        if isinstance(load.distribution,dict):
+            if str(np.int32(year+config.t_0)) in list(load.distribution.keys()):
+                h_norm = np.array(load.distribution[str(np.int32(year+config.t_0))].computeQuantile(1 - p_h))[0]
+            else:
+                #for each year, compute WL
+                years = [np.int32(i) for i in list(load.distribution.keys())]
+                wls = []
+                for j in years:
+                    wls.append(load.distribution[str(j)].computeQuantile(1-p_h)[0])
+                h_norm = interp1d(years,wls,fill_value='extrapolate')(year+config.t_0)
+                #then interpolate for given year
+        else:
+            h_norm = np.array(load.distribution.computeQuantile(1 - p_h))[0]
         input['h'] = h_norm
 
     if hasattr(load, 'dist_change'):

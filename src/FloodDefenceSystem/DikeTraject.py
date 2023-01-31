@@ -9,6 +9,7 @@ import config
 import seaborn as sns
 import pandas as pd
 from pathlib import Path
+import warnings
 
 class DikeTraject:
     #This class contains general information on the dike traject and is used to store all data on the sections
@@ -19,39 +20,53 @@ class DikeTraject:
         else:
             self.traject = traject
 
-        self.GeneralInfo = {}
+        self.GeneralInfo = {'omegaPiping': 0.24, 'omegaStabilityInner':0.04, 'omegaOverflow':0.24,
+                            'bPiping': 300, 'aStabilityInner':0.033,'bStabilityInner':50}
         self.Sections = []
         self.GeneralInfo['MechanismsConsidered'] = config.mechanisms
         # Basic traject info
+        #Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
+        #Pmax is the ondergrens as given by law
+        #TODO check whether this is a sensible value
+        #TODO read these values from a generic input file.
         if traject == '16-4':
+            self.GeneralInfo['aPiping'] = 0.9
             self.GeneralInfo['FloodDamage'] = 23e9
             self.GeneralInfo['TrajectLength'] = 19480
             self.GeneralInfo['Pmax'] = 1. / 10000
-            self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
-            self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
-            self.GeneralInfo['omegaOverflow'] = 0.24;
         elif traject == '16-3':
             self.GeneralInfo['FloodDamage'] = 23e9
             self.GeneralInfo['TrajectLength'] = 19899
             self.GeneralInfo['Pmax'] = 1. / 10000
-            self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
-            self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
-            self.GeneralInfo['omegaOverflow'] = 0.24
+            self.GeneralInfo['aPiping'] = 0.9
             # NB: klopt a hier?????!!!!
         elif traject == '16-3 en 16-4':
             self.GeneralInfo['FloodDamage'] = 23e9
             self.GeneralInfo['TrajectLength'] = 19500 #voor doorsnede-eisen wel ongeveer lengte individueel traject
             # gebruiken
             self.GeneralInfo['Pmax'] = 1. / 10000
-            self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
-            self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
-            self.GeneralInfo['omegaOverflow'] = 0.24
+            self.GeneralInfo['aPiping'] = 0.9
+
+        elif traject == '38-1':
+            self.GeneralInfo['FloodDamage'] = 14e9
+            self.GeneralInfo['TrajectLength'] = 29500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
+            # gebruiken
+            self.GeneralInfo['Pmax'] = 1. / 10000
+            self.GeneralInfo['aPiping'] = 0.9
+
+        elif traject == '16-1':
+            self.GeneralInfo['FloodDamage'] = 29e9
+            self.GeneralInfo['TrajectLength'] = 15000
+            self.GeneralInfo['Pmax'] = 1. / 30000
+            self.GeneralInfo['aPiping'] = 0.4
         else:
+            warnings.warn('Warning: dike traject not found, using default assumptions for traject.')
             self.GeneralInfo['FloodDamage'] = 5e9
             self.GeneralInfo['Pmax'] = 1. / 10000
             self.GeneralInfo['omegaPiping'] = 0.24; self.GeneralInfo['aPiping'] = 0.9; self.GeneralInfo['bPiping'] = 300
             self.GeneralInfo['omegaStabilityInner'] = 0.04; self.GeneralInfo['aStabilityInner'] = 0.033; self.GeneralInfo['bStabilityInner'] = 50
             self.GeneralInfo['omegaOverflow'] = 0.24
+
 
     def ReadAllTrajectInput(self,input_path,makesubdirs=True):
         #Make a case directory and inside a figures and results directory if it doesnt exist yet
@@ -85,7 +100,11 @@ class DikeTraject:
                 mech_input_path = input_path.joinpath(j)
                 self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1])
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
-                    self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(mech_input_path, *self.Sections[i].MechanismData[j], mechanism=j)
+                    if self.Sections[i].Reliability.Load.load_type == 'HRING':
+                        self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(mech_input_path, *self.Sections[i].MechanismData[j], mechanism=j, crest_height = self.Sections[i].Kruinhoogte, dcrest = self.Sections[i].Kruindaling )
+                    else:
+                        self.Sections[i].Reliability.Mechanisms[j].Reliability[k].Input.fill_mechanism(mech_input_path, *self.Sections[i].MechanismData[j], mechanism=j)
+
 
             # #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
             # if not input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:
@@ -141,8 +160,9 @@ class DikeTraject:
                         if Pf_traj < Ptarget:  # satisfactory solution
                             ProbabilityFrame = i
                         else:
-                            if not 'ProbabilityFrame' in locals(): raise ValueError('No satisfactory solution found')
-                            break
+                            if not 'ProbabilityFrame' in locals():
+                                warnings.warn('No satisfactory solution found, skipping plot')
+                            return
             else:
                 ProbabilityFrame = reinforcement_strategy.Probabilities[-1]
         else:
@@ -313,7 +333,7 @@ class DikeTraject:
             if not custom_name: custom_name = case_settings['beta_or_prob'] + '_' + str(config.t_0 + ii) + '_Assessment.png'
             plt.savefig(case_settings['directory'].joinpath(custom_name), dpi=300, bbox_inches='tight', format='png')
             plt.close()
-
+            custom_name = False
             year += 1
             if last:
                 plt.close()

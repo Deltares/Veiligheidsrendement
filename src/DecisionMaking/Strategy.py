@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import config
+import warnings
 
 class Strategy:
     """This defines a Strategy object, which can be allowed to evaluate a set of solutions/measures. There are currently 3 types:
@@ -911,7 +912,9 @@ class GreedyStrategy(Strategy):
             if np.isnan(np.max(BC)):
                 ids = np.argwhere(np.isnan(BC))
                 for i in range(0,ids.shape[0]):
-                    print(self.get_measure_from_index(ids[i,:]))
+                    error_measure = self.get_measure_from_index(ids[i,:])
+                    print(error_measure)
+                    #TODO think about a more sophisticated error catch here, as currently tracking the error is extremely difficult.
                 raise ValueError('nan value encountered in BC-ratio')
             if (np.max(BC) > BCstop) or (BC_bundle > BCstop):
                 if np.max(BC) >= BC_bundle:
@@ -985,7 +988,8 @@ class GreedyStrategy(Strategy):
                 break
             count += 1
             if count == max_count:
-                Probabilities.append(copy.deepcopy(init_probability))
+                pass
+                # Probabilities.append(copy.deepcopy(init_probability))
 
         print('Elapsed time for greedy algorithm: ' + str(time.time()-start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
@@ -1727,6 +1731,7 @@ class TargetReliabilityStrategy(Strategy):
             PossibleMeasures = PossibleMeasures.loc[PossibleMeasures[('StabilityInner', targetyear)] > beta_T_stabinner]
             if len(PossibleMeasures) == 0:
                 #continue to next section if weakest has no more measures
+                warnings.warn('Warning: for Target reliability strategy no suitable measures were found for section {}'.format(i.name))
                 continue
             # calculate LCC
             LCC = calcTC(PossibleMeasures, r=self.r, horizon=self.options[i.name]['Overflow'].columns[-1])

@@ -159,7 +159,6 @@ class Solutions:
                 inputs_r.append(beta)
         # reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
         reliability = pd.concat((reliability,pd.DataFrame(inputs_r, columns=cols_r)))
-        measure_df = measure_df.append(pd.DataFrame(inputs_m, columns=cols_m))
         measure_df = pd.concat((measure_df,pd.DataFrame(inputs_m, columns=cols_m)))
         cols = pd.MultiIndex.from_arrays(np.array([measure_df.columns,['']*len(measure_df.columns)]))
         measure_df.columns=cols

@@ -290,6 +290,12 @@ class MechanismReliability:
             beta = np.float32(betat(year))
             self.beta = beta
             self.Pf = beta_to_pf(self.beta)
+
+        if self.type == 'HRING':
+            if mechanism == 'Overflow':
+                self.beta, self.Pf = Mechanisms.OverflowHRING(self.Input.input,year)
+            else:
+                raise Exception('Unknown computation type HRING for {}'.format(mechanism))
         if self.type == 'Simple':
             if mechanism == 'StabilityInner':
                 if 'SF_2025' in strength.input:
@@ -309,8 +315,10 @@ class MechanismReliability:
                                                         , fill_value='extrapolate')
                     beta = betat(year)
                     beta = np.min([beta,8])
+                elif 'BETA' in strength.input: #situation where beta is constant in time
+                    beta = np.min([strength.input['BETA'].item(),8.])
                 else:
-                    raise Exception('Warning: No inputvalues SF or Beta StabilityInner')
+                    raise Exception('Warning: No input values SF or Beta StabilityInner')
                 # Check if there is an elimination measure present (diaphragm wall)
                 if 'Elimination' in strength.input.keys():
                     if strength.input['Elimination'] == 'yes':
@@ -422,6 +430,7 @@ class MechanismReliability:
 
                     # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
                     # inputs['h'] = load.NormWaterLevel
+                    #TODO aanpassen met nieuwe belastingmodel
                     inputs = addLoadCharVals(strength_new.input_ind, load=load, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
 
                     Z, self.p_dh, self.p_dh_c = Mechanisms.zPiping(inputs, mode='SemiProb')
@@ -506,14 +515,19 @@ class MechanismInput:
         self.input.setDescription(parameters)
 
     #This routine reads  input from an input sheet
-    def fill_mechanism(self, input_path, reference, calctype, type= 'csv', sheet=None,mechanism=None):
+    def fill_mechanism(self, input_path, reference, calctype, type= 'csv', sheet=None,mechanism=None, **kwargs):
         if type == 'csv':
             if mechanism != 'Overflow':
-                data = pd.read_csv(input, delimiter=',')
+                try:
+                    data = pd.read_csv(input_path.joinpath(Path(str(reference)).name), delimiter=',',header=None)
+                except:
+                    data = pd.read_csv(input_path.joinpath(Path(str(reference)).name + '.csv'), delimiter=',',header=None)
+
+                data = data.rename(columns={list(data)[0]:'Name'})
                 data = data.set_index('Name')
             else: #'Overflow':
                 if calctype == 'Simple':
-                    data = pd.read_csv(input, delimiter=',')
+                    data = pd.read_csv(input_path.joinpath(Path(reference).name), delimiter=',')
                     data = data.transpose()
                 elif calctype == 'HRING':
                     #detect years
@@ -542,37 +556,56 @@ class MechanismInput:
         for i in range(len(data)):
             # if (data.iloc[i].Name == 'FragilityCurve') and ~np.isnan(data.iloc[i].Value):
             if (data.index[i] == 'FragilityCurve'):
+                pass
+                #Turned of: old code that doesnt work anymore
                 # if ~np.isnan(data.iloc[i].Value): 
-                if (~pd.isna(data.iloc[i].Value)== -1):
-                    #csv inlezen en wegschrijven in self.input
-                    FC = pd.read_csv(config.path.joinpath('FragilityCurve_STBI',data.iloc[i].Value), delimiter=';', header=0)
-
-                    if np.min(np.diff(FC.beta))>0:  #beta values should be decreasing.
-                        raise Exception('Fragility curve input should have decreasing betas. Filename: ' + data.iloc[i].Value)
-                    if np.min(np.diff(FC.h))<0:  #h values should be increasing.
-                        raise Exception('Fragility curve input should have increasing water levels. Filename: ' + data.iloc[i].Value )
-
-                    A=np.argwhere(np.isnan(FC.values))
-                    if A.size != 0:
-                        FC.drop([A[0,0]])
-                        raise Warning('NaN values in Fragility Curve from file ' + data.iloc[i].Value)
-                    self.input['FC'] = FC
-
+                # if (~pd.isna(data.iloc[i].Value)== -1):
+                #     #csv inlezen en wegschrijven in self.input
+                #     FC = pd.read_csv(config.path.joinpath('FragilityCurve_STBI',data.iloc[i].Value), delimiter=';', header=0)
+                #
+                #     if np.min(np.diff(FC.beta))>0:  #beta values should be decreasing.
+                #         raise Exception('Fragility curve input should have decreasing betas. Filename: ' + data.iloc[i].Value)
+                #     if np.min(np.diff(FC.h))<0:  #h values should be increasing.
+                #         raise Exception('Fragility curve input should have increasing water levels. Filename: ' + data.iloc[i].Value )
+                #
+                #     A=np.argwhere(np.isnan(FC.values))
+                #     if A.size != 0:
+                #         FC.drop([A[0,0]])
+                #         raise Warning('NaN values in Fragility Curve from file ' + data.iloc[i].Value)
+                #     self.input['FC'] = FC
+            elif calctype=='HRING':
+                self.input['hc_beta'] = data
+                self.input['h_crest'] = kwargs['crest_height']
+                self.input['d_crest'] = kwargs['dcrest']
             else:
-
                 x = data.iloc[i][:].values
-                x = x.astype(np.float32)
-                self.input[data.index[i]] = x[~np.isnan(x)]
-                if len( self.input[data.index[i]]) == 0:
-                    self.input.pop(data.index[i])
-                if data.index[i][-3:] == '(t)':
-                    self.temporals.append(data.index[i])
+                try:    #numeric input:
+                    x = x.astype(np.float32)
+                    # if any(np.isnan(x)):
+                    #     warnings.warn('NaN detected for {} for {} with reference {}'.format(data.index[i], mechanism,reference))
+                    self.input[data.index[i]] = x[~np.isnan(x)]
+                    if len( self.input[data.index[i]]) == 0:
+                        self.input.pop(data.index[i])
+                    if data.index[i][-3:] == '(t)':
+                        self.temporals.append(data.index[i])
 
-def beta_SF_StabilityInner(SF_or_beta, type = False, modelfactor = 1.07):
+                    #for k-value: ensure that value is in m/s not m/d:
+                    if (data.index[i] == 'k') & any(self.input[data.index[i]]>1.):
+                        self.input[data.index[i]] = self.input[data.index[i]] /(24*3600)
+                        print('k-value modified as it was likely m/d and should be m/s')
+                except: #other input
+                    self.input[data.index[i]] = x
+                    if len( self.input[data.index[i]]) == 0:
+                        self.input.pop(data.index[i])
+                    if data.index[i][-3:] == '(t)':
+                        self.temporals.append(data.index[i])
+
+def beta_SF_StabilityInner(SF_or_beta, type = False, modelfactor = 1.06):
     """Careful: ensure that upon using this function you clearly define the input parameter!"""
     if type == 'SF':
-        beta = ((SF_or_beta / modelfactor) - 0.41) / 0.15
-        return np.min([beta,8.])
+        beta = ((SF_or_beta.item() / modelfactor) - 0.41) / 0.15
+        beta = np.min([beta,8.])
+        return beta
     elif type == 'beta':
         SF = (0.41+0.15*SF_or_beta) * modelfactor
         return SF

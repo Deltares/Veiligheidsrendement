@@ -402,7 +402,7 @@ def OverflowBundling(Strategy, init_overflow_risk,existing_investment,
                 sh_opts = HeightOptions.loc[(HeightOptions['type'] == 'Soil reinforcement') & (HeightOptions['class'] == current_class)].index.values+1
                 sg_opts = GeotechnicalOptions.loc[(GeotechnicalOptions['type'] == 'Soil reinforcement') & (GeotechnicalOptions['class'] == current_class) * (GeotechnicalOptions['dberm']==current_berm)].index.values+1
                 LCCs = LifeCycleCost[i, sh_opts, :][:, sg_opts]
-                order = np.dstack(np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape[0], LCCs.shape[1])))
+                # order = np.dstack(np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape[0], LCCs.shape[1])))
                 order = np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape))
                 orderedLCCs = LCCs[order[0], order[1]]
 

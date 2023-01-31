@@ -1,7 +1,8 @@
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
-from FloodDefenceSystem.Mechanisms import OverflowSimple
+import warnings
+from FloodDefenceSystem.Mechanisms import OverflowSimple, OverflowHRING
 from FloodDefenceSystem.ReliabilityCalculation import MechanismReliabilityCollection, beta_SF_StabilityInner
 from FloodDefenceSystem.SectionReliability import SectionReliability
 from shapely.geometry import Polygon
@@ -72,8 +73,11 @@ class SoilReinforcement(Measure):
 
         self.measures = []
         if self.parameters['StabilityScreen'] == 'yes':
-            self.parameters['Depth'] = np.max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability[
-                                           '0'].Input.input['d_cover'] + 1., 8.])
+            if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:
+                self.parameters['Depth'] = np.max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability[
+                                               '0'].Input.input['d_cover'] + 1., 8.])
+            else:
+                self.parameters['Depth'] = 6. #TODO: implement a better depth estimate based on d_cover
 
         for j in measures:
             if self.parameters['Direction'] == 'outward':
@@ -83,8 +87,18 @@ class SoilReinforcement(Measure):
             self.measures.append({})
             self.measures[-1]['dcrest'] =j[0]
             self.measures[-1]['dberm'] = j[1]
-            self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],DikeSection.InitialGeometry, plot_dir = plot_dir, slope_in = slope_in)
-            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'])
+            if hasattr(DikeSection,'Kruinhoogte'):
+                if DikeSection.Kruinhoogte != np.max(DikeSection.InitialGeometry.z):
+                    #In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
+                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),                                                                                                      **{'plot_dir': plot_dir, 'slope_in': slope_in, 'crest_extra':DikeSection.Kruinhoogte})
+                else:
+                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
+                                                                                                        **{'plot_dir': plot_dir, 'slope_in': slope_in})
+            else:
+                self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
+                                                                                                        **{'plot_dir': plot_dir, 'slope_in': slope_in})
+
+            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'],section=DikeSection.name)
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
 
@@ -125,10 +139,14 @@ class DiaphragmWall(Measure):
                 if float(ij) >= self.parameters['year']:
                     if i == 'Overflow':
                         Pt = TrajectInfo['Pmax']*TrajectInfo['omegaOverflow']
-                        if hasattr(DikeSection,'HBNRise_factor'):
-                            hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange = DikeSection.HBNRise_factor * DikeSection.YearlyWLRise, mechanism='Overflow')
+                        if DikeSection.Reliability.Mechanisms[i].Reliability[ij].type == 'Simple':
+                            if hasattr(DikeSection,'HBNRise_factor'):
+                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange = DikeSection.HBNRise_factor * DikeSection.YearlyWLRise, mechanism='Overflow')
+                            else:
+                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange=None, mechanism='Overflow')
                         else:
-                            hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange=None, mechanism='Overflow')
+                            hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange=None, type='HRING', mechanism='Overflow')
+
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] = \
                             np.max([hc, self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
                                 'h_crest']])  #should not become weaker!
@@ -147,7 +165,11 @@ class StabilityScreen(Measure):
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
         self.measures = {}
         self.measures['Stability Screen'] = 'yes'
-        self.parameters['Depth'] = np.max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'] + 1., 8.])
+        if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:
+            self.parameters['Depth'] = np.max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'] + 1., 8.])
+        else:
+            #TODO remove shaky assumption on depth
+            self.parameters['Depth'] = 6.
         self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
@@ -165,10 +187,13 @@ class StabilityScreen(Measure):
                         if 'SF_2025' in self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input:
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] += SFincrease
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2075'] += SFincrease
-                        else:
+                        elif 'beta_2025' in self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input:
                             #convert to SF and back:
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2025'], type = 'beta'), SFincrease), type = 'SF')
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta_2075'], type = 'beta'), SFincrease), type = 'SF')
+                        else:
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF'] = np.add(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF'], SFincrease)
+                            self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['BETA'] = beta_SF_StabilityInner(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF'], type = 'SF')
 
             self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
         self.measures['Reliability'].calcSectionReliability()
@@ -313,10 +338,21 @@ def implement_berm_widening(input, measure_input, measure_parameters, mechanism,
                 # convert to SF and back:
                 input['beta_2025'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(input['beta_2025'], type = 'beta'),SFincrease), type='SF')
                 input['beta_2075'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(input['beta_2075'], type = 'beta'),SFincrease), type='SF')
+        elif 'BETA' in input:
+            #TODO make sure input is grabbed properly. Should be read from input sheet
+            input['SF'] = input['SF'] + (.02 *measure_input['dberm'])
+            input['BETA'] = input['BETA'] + (.13 *measure_input['dberm'])
+            if measure_parameters['StabilityScreen'] == 'yes':
+                # convert to SF and back:
+                input['SF'] = beta_SF_StabilityInner(np.add(input['SF'],SFincrease), type='SF')
+                input['BETA'] = beta_SF_StabilityInner(np.add(beta_SF_StabilityInner(input['BETA'], type = 'beta'),SFincrease), type='SF')
         #For fragility curve as input
         elif computation_type== 'FragilityCurve':
             raise Exception('Not implemented')
             #TODO Here we can develop code to add berms to sections with a fragility curve.
+        else:
+            raise Exception('Unknown input data for stability when widening the berm')
+
     elif mechanism == 'Piping':
         input['Lvoor'] = input['Lvoor'] + measure_input['dberm']
         # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
@@ -358,61 +394,103 @@ def addExtra(initial, new_geometry):
 
 def calculateArea(geometry):
     polypoints = []
-    for i in range(len(geometry)):
-        polypoints.append((geometry[i, 0], geometry[i, 1]))
-    polygonXY = Polygon(polypoints)
-    areaPol = Polygon(polygonXY).area
-    return areaPol, polygonXY
+    for label, points in geometry.iterrows():
+        polypoints.append((points.x, points.z))
+    polygonXZ = Polygon(polypoints)
+    areaPol = Polygon(polygonXZ).area
+    return areaPol, polygonXZ
 
+def ModifyGeometryInput(initial,bermheight):
+    '''Checks geometry and corrects if necessary'''
+    #TODO move this to the beginning for the input.
+    #modify the old structure
+    if not 'BUK' in initial.index:
+        initial = initial.replace({'innertoe':'BIT','innerberm1':'EBL','innerberm2':'BBL','innercrest':'BIK','outercrest':'BUK','outertoe':'BUT'}).reset_index().set_index('type')
+
+
+    if initial.loc['BUK'].x != 0.0:
+        #if BUK is not at x = 0 , modify entire profile
+        initial['x'] = np.subtract(initial['x'],initial.loc['BUK'].x)
+
+    if initial.loc['BUK'].x > initial.loc['BIK'].x:
+        #BIK must have larger x than BUK, so likely the profile is mirrored, mirror it back:
+        initial['x'] = np.multiply(initial['x'], -1.)
+    #if EBL and BBL not there, generate them.
+    if not 'EBL' in initial.index:
+        inner_slope = np.abs(initial.loc['BIT'].z -initial.loc['BIK'].z)/np.abs(initial.loc['BIT'].x -initial.loc['BIK'].x)
+        initial.loc['EBL','x'] = initial.loc['BIT'].x - (bermheight/inner_slope)
+        initial.loc['BBL','x'] = initial.loc['BIT'].x - (bermheight/inner_slope)
+        initial.loc['BBL','z'] = initial.loc['BIT'].z + bermheight
+        initial.loc['EBL','z'] = initial.loc['BIT'].z + bermheight
+
+    return initial
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
-def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_dir = None, bermheight = 2, slope_in = False):
+def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_dir = None, bermheight = 2, slope_in = False, crest_extra = False):
+    '''initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
+    If this is not the case and it is input of the old type, first it is transformed to obey that.
+    crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
+    In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT, such that after reinforcement the height is crest_extra + increment.
+    It has to be ensured that the BUK has x = 0, and that x increases inward'''
+    initial = ModifyGeometryInput(initial,bermheight)
     # maxBermOut=20
-    if len(initial) == 6:
-        noberm = False
-    elif len(initial) == 4:
-        noberm=True
-    else:
-        raise Exception ('input length dike is not 4 or 6')
+    # if len(initial) == 6:
+    #     noberm = False
+    # elif len(initial) == 4:
+    #     noberm=True
+    # else:
+    #     raise Exception ('input length dike is not 4 or 6')
 
-    # if outertoe < innertoe
-    if initial.z[int(initial[initial.type == 'innertoe'].index.values)] > initial.z[int(initial[initial.type == 'outertoe'].index.values)]:
-        extra_row = pd.DataFrame([[initial.x[int(initial[initial.type == 'innertoe'].index.values)],initial.z[int(initial[initial.type == 'outertoe'].index.values)], 'extra']],columns =initial.columns)
+    # if z innertoe != z outertoe add a point to ensure correct shapely operations
+    initial.loc['EXT','x'] = initial.loc['BIK'].x
+    initial.loc['EXT','z'] = np.min(initial.z)
 
-        initial = pd.concat((extra_row,initial)).reset_index(drop=True)
+    if initial.loc['BIT'].z > initial.loc['BUT'].z:
+        initial.loc['BIT_0','x'] = initial.loc['BIT'].x
+        initial.loc['BIT_0','z'] = initial.loc['BIT'].z
+        initial=initial.reindex(['BUT', 'BUK', 'BIK','BBL','EBL','BIT','BIT_0','EXT'])
+    elif initial.loc['BIT'].z < initial.loc['BUT'].z:
+        initial.loc['BUT_0','x'] = initial.loc['BUT'].x
+        initial.loc['BUT_0','z'] = initial.loc['BUT'].z
+        initial=initial.reindex(['BUT', 'BUT_0','BUK', 'BIK','BBL','EBL','BIT','EXT'])
 
 
-    if initial.z[int(initial[initial.type == 'innertoe'].index.values)] < initial.z[int(initial[initial.type == 'outertoe'].index.values)]:
-        extra_row2 = pd.DataFrame([[initial.x[int(initial[initial.type == 'outertoe'].index.values)],initial.z[int(initial[initial.type == 'innertoe'].index.values)], 'extra2']],columns =initial.columns)
-        initial = pd.concat((initial,extra_row2)).reset_index(drop=True)
 
     # Geometry is always from inner to outer toe
     dcrest = geometry_change[0]
     dberm = geometry_change[1]
-    geometry = initial.values[:,0:2]
-    cur_crest = np.max(geometry[:, 1])
+    if crest_extra:
+        if (crest_extra > initial['z'].max()) & (dcrest >0.):
+            #if overflow crest is higher than profile, in case of reinforcement ensure that everything is heightened to that level + increment:
+            pass
+        elif (crest_extra < initial['z'].max()):
+            #case where cross section for overflow has a lower spot, but majority of section is higher.
+            #in that case the crest height is modified to the level of the overflow computation which is a conservative estimate.
+            initial.loc['BIK','z'] = crest_extra
+            initial.loc['BUK','z'] = crest_extra
+        cur_crest = crest_extra
+
+    else:
+        cur_crest = initial['z'].max()
     new_crest = cur_crest + dcrest
 
-    # if config.geometry_plot:
-    #     plt.plot(geometry[:, 0], geometry[:, 1], 'k')
+    #crest heightening
     if dcrest > 0:
-        int_outercrest = int(initial[initial.type == 'outercrest'].index.values)
-        int_outertoe = int(initial[initial.type == 'outertoe'].index.values)
-        slope_out = ((initial.x[int_outercrest]) - (initial.x[int_outertoe])) / (
-                    (initial.z[int_outercrest]) - (initial.z[int_outertoe]))
-        dout = slope_out * dcrest
-        int_innercrest = int(initial[initial.type == 'innercrest'].index.values)
-        # int_innertoe = int(initial[initial.type == 'innertoe'].index.values)
-        slope_inn = ((initial.x[int_innercrest]) - (initial.x[int_innercrest - 1])) / (
-                    (initial.z[int_innercrest]) - (initial.z[int_innercrest - 1]))
-        din = slope_inn * dcrest
+        #determine widening at toes.
+        slope_out = np.abs(initial.loc['BUK'].x - initial.loc['BUT'].x)/np.abs(initial.loc['BUK'].z - initial.loc['BUT'].z)
+        BUT_dx = out = slope_out * dcrest
+
+        #TODO discuss with WSRL: if crest is heightened, should slope be determined based on BIK and BIT or BIK and BBL?
+        #Now it has been implemented that the slope is based on BIK and BBL
+        slope_in = np.abs(initial.loc['BBL'].x - initial.loc['BIK'].x)/np.abs(initial.loc['BBL'].z - initial.loc['BIK'].z)
+        BIT_dx = slope_in * dcrest
     else:
-        din = 0.
-        dout = 0.
-    z_innertoe = (initial.z[int(initial[initial.type == 'innertoe'].index.values)])
+        BUT_dx = 0.
+        BIT_dx = 0.
+    # z_innertoe = (initial.z[int(initial[initial.type == 'innertoe'].index.values)])
 
     if direction == 'outward':
-
+        warnings.warn('Outward reinforcement is not updated!')
         # nieuwe opzet:
         # if outward:
         #    verplaats buitenkruin en buitenteen
@@ -425,11 +503,11 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
         # volumes berekenen (totaal extra, en totaal "verplaatst in profiel")
 
         # optional extension: optimize amount of outward/inward reinforcement
-        new_geometry = copy.deepcopy(geometry)
+        new_geometry = copy.deepcopy(initial)
 
         if dberm <= maxbermout:
 
-            for i in range(len(new_geometry)):
+            for count, i in new_geometry.iterrows():
                 # Run over points
                 if initial.type[i] == 'extra':
                     new_geometry[i][0] = geometry[i][0]
@@ -489,57 +567,51 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
                 elif initial.type[i] == 'extra2':
                     new_geometry[i][0] = geometry[i][0] + maxbermout
                     new_geometry[i][1] = geometry[i][1]
-            if noberm:  # len(initial) == 4:
-                if dberm > 0:
-                    new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
-            if (initial.type == 'extra').any():
-                if dberm > 0 or dcrest > 0:
-                    new_geometry = addExtra(initial, new_geometry)
+            # if noberm:  # len(initial) == 4:
+            #     if dberm > 0:
+            #         new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
+            # if (initial.type == 'extra').any():
+            #     if dberm > 0 or dcrest > 0:
+            #         new_geometry = addExtra(initial, new_geometry)
 
     if direction == 'inward':
-        new_geometry = copy.deepcopy(geometry)
-        for i in range(len(new_geometry)):
+        # all changes inward.
+        new_geometry = copy.deepcopy(initial)
+        for ind, data in new_geometry.iterrows():
             # Run over points .
-            if initial.type[i] == 'extra':
-                new_geometry[i][0] = geometry[i][0]
-                new_geometry[i][1] = geometry[i][1]
-            elif initial.type[i] == 'innertoe':
-                new_geometry[i][0] = geometry[i][0] - dberm + dout - din
-                new_geometry[i][1] = geometry[i][1]
-                dhouse = max(0,-(-dberm + dout - din))
-            elif initial.type[i] == 'innerberm1':
-                new_geometry[i][0] = geometry[i][0] - dberm + dout - din
-                new_geometry[i][1] = geometry[i][1]
-            elif initial.type[i] == 'innerberm2':
-                new_geometry[i][0] = geometry[i][0] + dout - din
-                new_geometry[i][1] = geometry[i][1]
-            elif initial.type[i] == 'innercrest':
-                new_geometry[i][0] = geometry[i][0] + dout
-                new_geometry[i][1] = geometry[i][1] + dcrest
-            elif initial.type[i] == 'outercrest':
-                new_geometry[i][0] = geometry[i][0] + dout
-                new_geometry[i][1] = geometry[i][1] + dcrest
-            elif initial.type[i] == 'outertoe':
-                new_geometry[i][0] = geometry[i][0]
-                new_geometry[i][1] = geometry[i][1]
-            elif initial.type[i] == 'extra2':
-                new_geometry[i][0] = geometry[i][0]
-                new_geometry[i][1] = geometry[i][1]
-
-        if noberm: #len(initial) == 4:   #precies hetzelfde als hierboven. def van maken.
-            if dberm > 0:
-                new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
-
-        if (initial.type == 'extra').any():
-            if dberm > 0 or dcrest > 0:
-                new_geometry = addExtra(initial, new_geometry)
+            if ind in ['EXT','BUT', 'BUT_0', 'BIT_0']: #Points that are not modified
+                xz = data.values
+            if ind == 'BIT':
+                xz = [data.x + dberm + BUT_dx + BIT_dx, data.z]
+                dhouse = max(0,dberm + BUT_dx + BIT_dx)
+            elif ind == 'EBL':
+                xz = [data.x + dberm + BUT_dx + BIT_dx, data.z]
+            elif ind == 'BBL':
+                xz = [data.x + BUT_dx + BIT_dx, data.z]
+            elif ind == 'BIK':
+                xz = [data.x + BUT_dx, data.z + dcrest]
+            elif ind == 'BUK':
+                xz = [data.x + BUT_dx, data.z + dcrest]
+            new_geometry.loc[ind] = pd.Series(xz,index=['x','z'])
 
     # calculate the area difference
-    area_old, polygon_old = calculateArea(geometry)
+    area_old, polygon_old = calculateArea(initial)
     area_new, polygon_new = calculateArea(new_geometry)
-
+    #
+    # plt.plot(initial.x,initial.z, 'ko')
+    # plt.plot(*polygon_old.exterior.xy, 'g')
+    # plt.plot(*polygon_new.exterior.xy, 'r--')
+    # plt.savefig('testgeom.png')
+    # plt.close()
     if (polygon_old.intersects(polygon_new)):  # True
-        poly_intsects = polygon_old.intersection(polygon_new)
+        try:
+            poly_intsects = polygon_old.intersection(polygon_new)
+        except:
+            plt.plot(initial.x,initial.z, 'ko')
+            plt.plot(*polygon_old.exterior.xy, 'g')
+            plt.plot(*polygon_new.exterior.xy, 'r--')
+            plt.savefig('testgeom.png')
+            plt.close()
         area_intersect = (polygon_old.intersection(polygon_new).area)  # 1.0
         area_excavate = area_old - area_intersect
         area_extra = area_new - area_intersect
@@ -600,7 +672,7 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
 
 
 #Script to determine the costs of a reinforcement:
-def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing = False, area_extra = False, area_excavated = False, direction = False):
+def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing = False, area_extra = False, area_excavated = False, direction = False, section = ''):
     if (type == 'Soil reinforcement') and (direction == 'outward') and (dberm_in >0.):
         #as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
         print('Warning: encountered outward reinforcement with inward berm. Cost computation might be inaccurate')
@@ -631,9 +703,12 @@ def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing
      #add costs for housing
      if isinstance(housing, pd.DataFrame) and dberm_in > 0.:
          if dberm_in > housing.size:
-             raise Exception('inwards distance exceeds housing database')
+            warnings.warn('Inwards reinforcement distance exceeds data for housing database at section {}'.format(section))
+            # raise Exception('inwards distance exceeds housing database')
+            C += parameters['C_house'] * housing.loc[housing.size]['cumulative']
+         else:
+            C += parameters['C_house'] * housing.loc[float(dberm_in)]['cumulative']
 
-         C += parameters['C_house'] * housing.loc[float(dberm_in)]['cumulative']
     #add costs for stability screen
      if parameters['StabilityScreen'] == 'yes':
          C += config.unit_cost['Sheetpile'] * parameters['Depth'] * length
@@ -653,10 +728,16 @@ def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing
     return C
 
 #Script to determine the required crest height for a certain year
-def ProbabilisticDesign(design_variable, strength_input, Pt, horizon = 50, loadchange = 0, mechanism='Overflow'):
+def ProbabilisticDesign(design_variable, strength_input, Pt, horizon = 50, loadchange = 0, mechanism='Overflow',type = 'SAFE'):
  if mechanism == 'Overflow':
-     #determine the crest required for the target
-     h_crest, beta = OverflowSimple(strength_input['h_crest'], strength_input['q_crest'], strength_input['h_c'], strength_input['q_c'], strength_input['beta'], mode='design', Pt=Pt, design_variable=design_variable)
-     #add temporal changes due to settlement and climate change
-     h_crest = h_crest + horizon * (strength_input['dhc(t)'] + loadchange)
-     return h_crest
+     if type == 'SAFE':
+         #determine the crest required for the target
+         h_crest, beta = OverflowSimple(strength_input['h_crest'], strength_input['q_crest'], strength_input['h_c'], strength_input['q_c'], strength_input['beta'], mode='design', Pt=Pt, design_variable=design_variable)
+         #add temporal changes due to settlement and climate change
+         h_crest = h_crest + horizon * (strength_input['dhc(t)'] + loadchange)
+         return h_crest
+     elif type == 'HRING':
+         h_crest, beta = OverflowHRING(strength_input, horizon, mode='design', Pt = Pt)
+         return h_crest
+     else:
+         raise Exception('Unknown calculation type for {}'.format(mechanism))
