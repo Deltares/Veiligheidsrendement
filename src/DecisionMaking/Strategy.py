@@ -1759,7 +1759,7 @@ class TargetReliabilityStrategy(Strategy):
                 # lowest total cost and a BC ratio that is lower than any measure at any other section
 
             # Add to TakenMeasures
-            TakenMeasures = TakenMeasures.append(data_opt)
+            TakenMeasures = pd.concat((TakenMeasures,data_opt))
             # Calculate new probabilities
             TrajectProbability = ImplementOption(i.name, TrajectProbability, measure)
             Probability_steps.append(copy.deepcopy(TrajectProbability))

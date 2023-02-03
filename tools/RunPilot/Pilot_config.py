@@ -12,9 +12,10 @@ import shutil
 timing = True
 
 traject = '38-1'
-path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Prioritering WSRL\Gegevens 38-1\VR_berekening')
+# path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Prioritering WSRL\Gegevens 38-1\VR_berekening')
+path = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_Prioritering WSRL\Gegevens 38-1\VR_showcase')
 
-casename = 'run_2_full_b'
+casename = 'run_0'
 
 directory = path.joinpath('Case_' + casename)
 language = 'NL'

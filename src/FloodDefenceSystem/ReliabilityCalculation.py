@@ -191,8 +191,6 @@ class MechanismReliability:
             self.gamma_schem_heave = 1 #1.05
             self.gamma_schem_upl = 1 #1.05
             self.gamma_schem_pip = 1 #1.05
-        elif mechanism == 'StabilityInner':
-            self.gamma_schem = 1 #1.1
         else:
             pass
 
@@ -301,18 +299,16 @@ class MechanismReliability:
                 if 'SF_2025' in strength.input:
                     #Simple interpolation of two safety factors and translation to a value of beta at 'year'.
                     #In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
-                    SFt = interpolate.interp1d([0, 50],np.concatenate((strength.input['SF_2025']/self.gamma_schem,
-                                                                       strength.input['SF_2075']/self.gamma_schem)),fill_value='extrapolate')
+                    SFt = interpolate.interp1d([0, 50],np.array([strength.input['SF_2025'],
+                                                                    strength.input['SF_2075']]).flatten(),fill_value='extrapolate')
                     SF = SFt(year)
                     beta = np.min([beta_SF_StabilityInner(SF,type='SF'),8.])
                 elif 'beta_2025' in strength.input:
-                    # if np.size(strength.input['beta_2025']) == 0:
-                    #                     #     A=1
-                    #                     # elif np.size(strength.input['beta_2075']) == 0:
-                    #                     #     A=1
-                    betat = interpolate.interp1d([0, 50], np.array([np.divide(strength.input['beta_2025'],self.gamma_schem),
-                                                                    np.divide(strength.input['beta_2075'],self.gamma_schem)],dtype=np.float32)
-                                                        , fill_value='extrapolate')
+
+
+                    betat = interpolate.interp1d([0, 50], np.array([strength.input['beta_2025'],
+                                                                    strength.input['beta_2075']]).flatten(), fill_value='extrapolate')
+
                     beta = betat(year)
                     beta = np.min([beta,8])
                 elif 'BETA' in strength.input: #situation where beta is constant in time
@@ -515,16 +511,23 @@ class MechanismInput:
         self.input.setDescription(parameters)
 
     #This routine reads  input from an input sheet
-    def fill_mechanism(self, input_path, reference, calctype, type= 'csv', sheet=None,mechanism=None, **kwargs):
-        if type == 'csv':
+    def fill_mechanism(self, input_path, reference, calctype, kind='csv', sheet=None, mechanism=None, **kwargs):
+        if kind == 'csv':
             if mechanism != 'Overflow':
                 try:
                     data = pd.read_csv(input_path.joinpath(Path(str(reference)).name), delimiter=',',header=None)
                 except:
                     data = pd.read_csv(input_path.joinpath(Path(str(reference)).name + '.csv'), delimiter=',',header=None)
 
+
+                #TODO: fix datatypes in input such that we do not need to drop columns
                 data = data.rename(columns={list(data)[0]:'Name'})
                 data = data.set_index('Name')
+                try:
+                    data = data.drop(['InScope','Opmerking']).astype(np.float32)
+                except:
+                    pass
+
             else: #'Overflow':
                 if calctype == 'Simple':
                     data = pd.read_csv(input_path.joinpath(Path(reference).name), delimiter=',')
@@ -546,7 +549,7 @@ class MechanismInput:
                 else:
                     raise Exception('Unknown input type for overflow')
 
-        elif type == 'xlsx':
+        elif kind == 'xlsx':
             data = pd.read_excel(input,sheet_name=sheet)
             data = data.set_index('Name')
 
@@ -557,48 +560,41 @@ class MechanismInput:
             # if (data.iloc[i].Name == 'FragilityCurve') and ~np.isnan(data.iloc[i].Value):
             if (data.index[i] == 'FragilityCurve'):
                 pass
-                #Turned of: old code that doesnt work anymore
-                # if ~np.isnan(data.iloc[i].Value): 
-                # if (~pd.isna(data.iloc[i].Value)== -1):
-                #     #csv inlezen en wegschrijven in self.input
-                #     FC = pd.read_csv(config.path.joinpath('FragilityCurve_STBI',data.iloc[i].Value), delimiter=';', header=0)
-                #
-                #     if np.min(np.diff(FC.beta))>0:  #beta values should be decreasing.
-                #         raise Exception('Fragility curve input should have decreasing betas. Filename: ' + data.iloc[i].Value)
-                #     if np.min(np.diff(FC.h))<0:  #h values should be increasing.
-                #         raise Exception('Fragility curve input should have increasing water levels. Filename: ' + data.iloc[i].Value )
-                #
-                #     A=np.argwhere(np.isnan(FC.values))
-                #     if A.size != 0:
-                #         FC.drop([A[0,0]])
-                #         raise Warning('NaN values in Fragility Curve from file ' + data.iloc[i].Value)
-                #     self.input['FC'] = FC
+                #Turned off: old code that doesnt work anymore
             elif calctype=='HRING':
                 self.input['hc_beta'] = data
                 self.input['h_crest'] = kwargs['crest_height']
                 self.input['d_crest'] = kwargs['dcrest']
             else:
                 x = data.iloc[i][:].values
-                try:    #numeric input:
-                    x = x.astype(np.float32)
-                    # if any(np.isnan(x)):
-                    #     warnings.warn('NaN detected for {} for {} with reference {}'.format(data.index[i], mechanism,reference))
-                    self.input[data.index[i]] = x[~np.isnan(x)]
-                    if len( self.input[data.index[i]]) == 0:
-                        self.input.pop(data.index[i])
-                    if data.index[i][-3:] == '(t)':
-                        self.temporals.append(data.index[i])
+                if isinstance(x,np.ndarray):
+                    if len(x)> 1:
+                        self.input[data.index[i]] = x.astype(np.float32)[~np.isnan(x)]
+                    elif len(x) == 1:
+                        try:
+                            if not np.isnan(np.float32(x[0])):
+                                self.input[data.index[i]] = np.array([np.float32(x[0])])
+                        except:
+                            self.input[data.index[i]] = x[0]
+                    else:
+                        pass
+                else:
+                    pass
 
-                    #for k-value: ensure that value is in m/s not m/d:
-                    if (data.index[i] == 'k') & any(self.input[data.index[i]]>1.):
-                        self.input[data.index[i]] = self.input[data.index[i]] /(24*3600)
-                        print('k-value modified as it was likely m/d and should be m/s')
-                except: #other input
-                    self.input[data.index[i]] = x
-                    if len( self.input[data.index[i]]) == 0:
-                        self.input.pop(data.index[i])
-                    if data.index[i][-3:] == '(t)':
-                        self.temporals.append(data.index[i])
+                if data.index[i][-3:] == '(t)':
+                    self.temporals.append(data.index[i])
+
+                #for k-value: ensure that value is in m/s not m/d:
+                if (data.index[i] == 'k'):
+                    try:
+                        if any(self.input[data.index[i]]>1.): #if k>1 it is likely in m/d
+                            self.input[data.index[i]] = self.input[data.index[i]] /(24*3600)
+                            print('k-value modified as it was likely m/d and should be m/s')
+                    except:
+                        if self.input[data.index[i]]>1.:
+                            self.input[data.index[i]] = self.input[data.index[i]] /(24*3600)
+                            print('k-value modified as it was likely m/d and should be m/s')
+
 
 def beta_SF_StabilityInner(SF_or_beta, type = False, modelfactor = 1.06):
     """Careful: ensure that upon using this function you clearly define the input parameter!"""
