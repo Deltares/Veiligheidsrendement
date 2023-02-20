@@ -5,7 +5,7 @@ import numpy as np
 import openturns as ot
 import pandas as pd
 
-from ProbabilisticTools.ProbabilisticFunctions import TableDist
+from src.ProbabilisticTools.ProbabilisticFunctions import TableDist
 
 
 #script to run HydraRing. exelocation should refer to the location of MechanismComputation.exe.
