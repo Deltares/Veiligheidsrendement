@@ -1,12 +1,11 @@
-'''This is a test based on 10 sections from traject 16-4 of the SAFE project'''
 import os
 import sys
 from pathlib import Path
+
 import pandas as pd
-
-
-
 import pytest
+
+'''This is a test based on 10 sections from traject 16-4 of the SAFE project'''
 
 @pytest.mark.parametrize("casename",['integrated_SAFE_16-3_small'])
 def test_integrated_run(casename):
