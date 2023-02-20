@@ -1,10 +1,19 @@
-import pandas as pd
-import numpy as np
 import copy
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
-from DecisionMaking.Measure import Measure, SoilReinforcement, DiaphragmWall, StabilityScreen, VerticalGeotextile, CustomMeasure
+
 import config
+from DecisionMaking.Measure import (
+    CustomMeasure,
+    DiaphragmWall,
+    SoilReinforcement,
+    StabilityScreen,
+    VerticalGeotextile,
+)
+
 
 class Solutions:
     #This class contains possible solutions/measures
