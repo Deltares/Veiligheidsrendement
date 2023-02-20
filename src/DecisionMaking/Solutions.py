@@ -6,13 +6,9 @@ import pandas as pd
 import seaborn as sns
 
 import config
-from DecisionMaking.Measure import (
-    CustomMeasure,
-    DiaphragmWall,
-    SoilReinforcement,
-    StabilityScreen,
-    VerticalGeotextile,
-)
+from src.DecisionMaking.Measure import (CustomMeasure, DiaphragmWall,
+                                        SoilReinforcement, StabilityScreen,
+                                        VerticalGeotextile)
 
 
 class Solutions:

@@ -1,5 +1,4 @@
 import copy
-import cProfile
 import itertools
 import time
 import warnings
@@ -12,17 +11,17 @@ import seaborn as sns
 from scipy.interpolate import interp1d
 
 import config
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from DecisionMaking.StrategyEvaluation import (ImplementOption,
-                                               MeasureCombinations,
-                                               OverflowBundling,
-                                               calcLifeCycleRisks, calcTC,
-                                               calcTR, calcTrajectProb,
-                                               evaluateRisk, makeTrajectDF,
-                                               split_options,
-                                               updateProbability)
-from FloodDefenceSystem.DikeTraject import (PlotSettings,
-                                            getSectionLengthInTraject)
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+from src.DecisionMaking.StrategyEvaluation import (ImplementOption,
+                                                   MeasureCombinations,
+                                                   OverflowBundling,
+                                                   calcLifeCycleRisks, calcTC,
+                                                   calcTR, calcTrajectProb,
+                                                   evaluateRisk, makeTrajectDF,
+                                                   split_options,
+                                                   updateProbability)
+from src.FloodDefenceSystem.DikeTraject import (PlotSettings,
+                                                getSectionLengthInTraject)
 from tools.HelperFunctions import (IDtoName, flatten, getMeasureTable,
                                    pareto_frontier)
 

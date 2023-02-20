@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 
 import config
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 
 
 # This script combines two sets of measures to a single option
@@ -296,6 +296,7 @@ def updateProbability(init_probability,Strategy, index):
     '''index = [n,sh,sg]'''
     for i in init_probability:
         from scipy.stats import norm
+
         # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
         if i == 'Overflow':
             init_probability[i][index[0],:] = Strategy.Pf[i][index[0],index[1],:]
