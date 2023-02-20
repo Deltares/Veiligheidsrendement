@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+
+
 #Class describing safety assessments of a section:
 class SectionReliability:
     def __init__(self):

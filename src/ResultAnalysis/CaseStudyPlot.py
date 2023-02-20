@@ -1,14 +1,11 @@
-from pathlib import Path
 import shelve
-import sys
-sys.path.append('../../src')
-sys.path.append('../../tools')
 
-from FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
-import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 from HelperFunctions import getMeasureTable
+
+from src.FloodDefenceSystem.DikeTraject import getSectionLengthInTraject
 
 
 def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
@@ -65,6 +62,7 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
 def main():
     #import settings of run:
     import RunPilot.Pilot_config as config
+
     #initialize the case that we consider. We start with a small one, eventually we will use a big one.
     ##PLOT SETTINGS
     t_0 = 2025

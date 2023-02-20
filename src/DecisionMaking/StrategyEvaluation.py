@@ -1,11 +1,13 @@
-import pandas as pd
-import numpy as np
 import copy
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+
+import numpy as np
+import pandas as pd
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
-import time
-import config
+
+import src.config
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+
+
 # This script combines two sets of measures to a single option
 def MeasureCombinations(combinables, partials, solutions,splitparams = False):
     CombinedMeasures = pd.DataFrame(columns=combinables.columns)
@@ -294,6 +296,7 @@ def updateProbability(init_probability,Strategy, index):
     '''index = [n,sh,sg]'''
     for i in init_probability:
         from scipy.stats import norm
+
         # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
         if i == 'Overflow':
             init_probability[i][index[0],:] = Strategy.Pf[i][index[0],index[1],:]

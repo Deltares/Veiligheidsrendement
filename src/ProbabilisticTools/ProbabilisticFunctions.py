@@ -1,12 +1,15 @@
-import numpy as np
-import openturns as ot
-from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 import copy
 import math
-from scipy.stats import norm
-import cProfile
+
+import numpy as np
+import openturns as ot
 import scipy as sp
-import config
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
+from scipy.stats import norm
+
+import src.config
+
+
 #Function to calculate a safety factor:
 def calc_gamma(mechanism,TrajectInfo):
     if mechanism == 'Piping' or mechanism == 'Heave' or mechanism == 'Uplift':
@@ -228,6 +231,7 @@ def FragilityIntegration(FragilityCurve, WaterLevelDist, WaterLevelChange = Fals
     Pf = Pfs.sum()
     beta = -1*norm.ppf(Pf)
     import matplotlib.pyplot as plt
+
     # plt.plot(h, pdf_h, label='pdf h')
     # plt.plot(h, cdf_hc, label='fragility curve')
     # plt.plot(h, Pfs / dx, label='multiplied (no scaling)')

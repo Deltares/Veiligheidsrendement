@@ -1,11 +1,7 @@
+import pandas as pd
+
 '''This is a file with all the general configuration settings for the SAFE computations
 Use them in a function by calling import config, and then config.key'''
-
-from pathlib import Path
-import pandas as pd
-import sys
-# sys.path.append('../../src')
-# sys.path.append('..')
 
 ## RELIABILITY COMPUTATION
 t_0 = 2025                                                  #year the computation starts

@@ -1,23 +1,33 @@
-from collections import OrderedDict
-import cProfile
-import pandas as pd
-import numpy as np
 import copy
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
-# import cplex
 import itertools
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from tools.HelperFunctions import IDtoName, flatten, pareto_frontier, getMeasureTable
 import time
-from DecisionMaking.StrategyEvaluation import MeasureCombinations, makeTrajectDF, calcTC, calcTR, calcLifeCycleRisks, \
-    calcTrajectProb, ImplementOption, split_options, SolveMIP, getTrajectProb,evaluateRisk, updateProbability, OverflowBundling
-from FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-import config
 import warnings
+from collections import OrderedDict
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy.interpolate import interp1d
+
+import src.config
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+from src.DecisionMaking.StrategyEvaluation import (
+    ImplementOption,
+    MeasureCombinations,
+    OverflowBundling,
+    calcLifeCycleRisks,
+    calcTC,
+    calcTR,
+    calcTrajectProb,
+    evaluateRisk,
+    makeTrajectDF,
+    split_options,
+    updateProbability,
+)
+from src.FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
+from tools.HelperFunctions import IDtoName, flatten, getMeasureTable, pareto_frontier
+
 
 class Strategy:
     """This defines a Strategy object, which can be allowed to evaluate a set of solutions/measures. There are currently 3 types:

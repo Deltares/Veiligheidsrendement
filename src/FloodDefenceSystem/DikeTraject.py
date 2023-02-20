@@ -1,15 +1,21 @@
 import copy
+import warnings
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-from FloodDefenceSystem.DikeSection import DikeSection
-from FloodDefenceSystem.ReliabilityCalculation import LoadInput, MechanismReliabilityCollection
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from DecisionMaking.StrategyEvaluation import calcTrajectProb
-import config
-import seaborn as sns
 import pandas as pd
-from pathlib import Path
-import warnings
+import seaborn as sns
+
+import src.config
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+from src.DecisionMaking.StrategyEvaluation import calcTrajectProb
+from src.FloodDefenceSystem.DikeSection import DikeSection
+from src.FloodDefenceSystem.ReliabilityCalculation import (
+    LoadInput,
+    MechanismReliabilityCollection,
+)
+
 
 class DikeTraject:
     #This class contains general information on the dike traject and is used to store all data on the sections
