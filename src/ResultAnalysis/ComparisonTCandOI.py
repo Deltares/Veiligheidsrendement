@@ -1,7 +1,8 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import re
-from pathlib import Path
+
 
 def compare_investment_strategy(wb_TC, wb_OI, investment_limit, output_file_path, measure_file_path):
     investment_TC = 0
