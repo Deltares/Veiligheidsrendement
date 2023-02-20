@@ -1,8 +1,9 @@
-import numpy as np
 import pandas as pd
+
 from FloodDefenceSystem.SectionReliability import SectionReliability
 
-#class that contains a DikeProfile consisting of 4 or 6 characteristic points:
+
+# class that contains a DikeProfile consisting of 4 or 6 characteristic points:
 class DikeProfile:
     def __init__(self,name = None):
         self.characteristic_points = {}

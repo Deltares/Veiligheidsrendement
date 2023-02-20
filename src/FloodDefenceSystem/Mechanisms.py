@@ -1,15 +1,17 @@
-## This script contains limit state functions for the different mechanisms.
-## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
-
 import numpy as np
 from scipy import interpolate
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+
 import config
-def OverflowHRING(input, year, mode='assessment',Pt = None):
-    '''year is relative to start year. input contains relevant inputs'''
-    if mode == 'assessment':
-        h_t = input['h_crest'] - input['d_crest'] * (year)
-        years = input['hc_beta'].columns.values.astype(np.int32)
+import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+
+
+## This script contains limit state functions for the different mechanisms.
+## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
+def OverflowHRING(input, year, mode="assessment", Pt=None):
+    """year is relative to start year. input contains relevant inputs"""
+    if mode == "assessment":
+        h_t = input["h_crest"] - input["d_crest"] * (year)
+        years = input["hc_beta"].columns.values.astype(np.int32)
         betas = []
         for j in years:
             betas.append(interpolate.interp1d(input['hc_beta'].index.values,input['hc_beta'][str(j)],fill_value='extrapolate')(h_t))
