@@ -1,6 +1,6 @@
 import pytest
 
-from FloodDefenceSystem.Mechanisms import LSF_heave, LSF_sellmeijer
+from src.FloodDefenceSystem.Mechanisms import LSF_heave, LSF_sellmeijer
 
 
 def test_LSF_heave():
