@@ -5,7 +5,7 @@ import numpy as np
 import seaborn as sns
 from HelperFunctions import getMeasureTable
 
-from FloodDefenceSystem.DikeTraject import getSectionLengthInTraject
+from src.FloodDefenceSystem.DikeTraject import getSectionLengthInTraject
 
 
 def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
