@@ -7,7 +7,7 @@ import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
 
-import config
+import src.config
 
 
 #Function to calculate a safety factor:

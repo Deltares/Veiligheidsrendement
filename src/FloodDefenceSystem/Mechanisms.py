@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import interpolate
 
-import config
+import src.config
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 
 

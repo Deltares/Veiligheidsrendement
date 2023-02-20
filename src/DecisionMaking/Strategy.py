@@ -10,20 +10,23 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-import config
+import src.config
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from src.DecisionMaking.StrategyEvaluation import (ImplementOption,
-                                                   MeasureCombinations,
-                                                   OverflowBundling,
-                                                   calcLifeCycleRisks, calcTC,
-                                                   calcTR, calcTrajectProb,
-                                                   evaluateRisk, makeTrajectDF,
-                                                   split_options,
-                                                   updateProbability)
-from src.FloodDefenceSystem.DikeTraject import (PlotSettings,
-                                                getSectionLengthInTraject)
-from tools.HelperFunctions import (IDtoName, flatten, getMeasureTable,
-                                   pareto_frontier)
+from src.DecisionMaking.StrategyEvaluation import (
+    ImplementOption,
+    MeasureCombinations,
+    OverflowBundling,
+    calcLifeCycleRisks,
+    calcTC,
+    calcTR,
+    calcTrajectProb,
+    evaluateRisk,
+    makeTrajectDF,
+    split_options,
+    updateProbability,
+)
+from src.FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
+from tools.HelperFunctions import IDtoName, flatten, getMeasureTable, pareto_frontier
 
 
 class Strategy:

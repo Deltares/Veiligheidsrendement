@@ -5,10 +5,14 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import config
-from src.DecisionMaking.Measure import (CustomMeasure, DiaphragmWall,
-                                        SoilReinforcement, StabilityScreen,
-                                        VerticalGeotextile)
+import src.config
+from src.DecisionMaking.Measure import (
+    CustomMeasure,
+    DiaphragmWall,
+    SoilReinforcement,
+    StabilityScreen,
+    VerticalGeotextile,
+)
 
 
 class Solutions:

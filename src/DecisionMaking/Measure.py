@@ -6,10 +6,12 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-import config
+import src.config
 from src.FloodDefenceSystem.Mechanisms import OverflowHRING, OverflowSimple
 from src.FloodDefenceSystem.ReliabilityCalculation import (
-    MechanismReliabilityCollection, beta_SF_StabilityInner)
+    MechanismReliabilityCollection,
+    beta_SF_StabilityInner,
+)
 from src.FloodDefenceSystem.SectionReliability import SectionReliability
 
 """Important: a measure is a single type of reinforcement, so for instance a stability screen. A solution can be a COMBINATION of measures (e.g. a stability screen with a berm)"""
