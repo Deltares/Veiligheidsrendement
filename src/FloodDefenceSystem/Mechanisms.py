@@ -2,7 +2,7 @@ import numpy as np
 from scipy import interpolate
 
 import config
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 
 
 ## This script contains limit state functions for the different mechanisms.

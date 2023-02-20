@@ -8,13 +8,11 @@ import pandas as pd
 import seaborn as sns
 
 import config
-import ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from DecisionMaking.StrategyEvaluation import calcTrajectProb
-from FloodDefenceSystem.DikeSection import DikeSection
-from FloodDefenceSystem.ReliabilityCalculation import (
-    LoadInput,
-    MechanismReliabilityCollection,
-)
+import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+from src.DecisionMaking.StrategyEvaluation import calcTrajectProb
+from src.FloodDefenceSystem.DikeSection import DikeSection
+from src.FloodDefenceSystem.ReliabilityCalculation import (
+    LoadInput, MechanismReliabilityCollection)
 
 
 class DikeTraject:

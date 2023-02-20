@@ -1,6 +1,6 @@
 import pandas as pd
 
-from FloodDefenceSystem.SectionReliability import SectionReliability
+from src.FloodDefenceSystem.SectionReliability import SectionReliability
 
 
 # class that contains a DikeProfile consisting of 4 or 6 characteristic points:
