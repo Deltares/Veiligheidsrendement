@@ -52,7 +52,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          poetry run pytest --cov=koswat --cov-report xml:coverage-reports/coverage-koswat-src.xml --junitxml=xunit-reports/xunit-result-koswat-src.xml
+          poetry run pytest --cov=src --cov-report xml:coverage-reports/coverage-vrtool-src.xml --junitxml=xunit-reports/xunit-result-vrtool-src.xml
           poetry run coverage xml -i
 
       - name: Autoformat code if the check fails
