@@ -51,3 +51,11 @@ line_length = 88
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.1"
+tag_format = "v$major.$minor.$patch"
+version_files= [
+    "src/__init__.py",
+    "pyproject.toml:version",]
