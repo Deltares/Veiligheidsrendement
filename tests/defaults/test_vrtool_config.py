@@ -2,10 +2,34 @@ from dataclasses import asdict
 
 import pytest
 
-from src.defaults.vrtool_config import VrtoolConfig
+from src.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
 
 
 class TestVrtoolConfig:
+    def test_load_default_unit_costs(self):
+        # 1. Define test data.
+        _expected_keys = [
+            "Inward starting costs",
+            "Inward added volume",
+            "Outward added volume",
+            "Outward reused volume",
+            "Outward reuse factor",
+            "Outward compensation factor",
+            "Outward removed volume",
+            "Road renewal",
+            "Sheetpile",
+            "Diaphragm wall",
+            "Vertical Geotextile",
+            "House removal",
+        ]
+
+        # 2. Run test.
+        _unit_costs_data = _load_default_unit_costs()
+
+        # 3. Verify expectations.
+        assert isinstance(_unit_costs_data, dict)
+        assert not (any(set(_expected_keys) - set(_unit_costs_data.keys())))
+
     def test_init_vrtool_config_default_values(self):
         _config = VrtoolConfig()
         assert isinstance(_config, VrtoolConfig)
@@ -28,13 +52,14 @@ class TestVrtoolConfig:
         assert not _config.shelves
         assert not _config.reuse_output
         assert _config.beta_or_prob == "beta"
-        assert _config.plot_reliability_in_time
+        assert not _config.plot_reliability_in_time
         assert not _config.plot_measure_reliability
         assert _config.flip_traject
         assert _config.assessment_plot_years == [0, 20, 50]
         assert not _config.geometry_plot
         assert _config.beta_cost_settings == {"symbols": True, "markersize": 10}
         assert isinstance(_config.unit_costs, dict)
+        assert any(_config.unit_costs.items())
         _expected_keys = [
             "t_0",
             "T",

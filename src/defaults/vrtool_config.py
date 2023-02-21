@@ -1,10 +1,31 @@
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
 
 import pandas as pd
 
 from src.defaults import default_unit_costs_csv
 
+
+def _load_default_unit_costs() -> dict:
+    """
+    Returns the _default_ unit costs read from the default csv file.
+
+    Raises:
+        FileNotFoundError: When the default "unit_costs.csv" file is not found.
+
+    Returns:
+        dict: Unit costs dictionary with columns 'Description', 'Cost' and 'Unit'.
+    """
+    if not default_unit_costs_csv.is_file():
+        raise FileNotFoundError(
+            "Default unit costs file not found at {}.".format(
+                default_unit_costs_csv
+            )
+        )
+    _unit_cost_data = pd.read_csv(str(default_unit_costs_csv), encoding="latin_1")
+    unit_cost = {}
+    for _, _series in _unit_cost_data.iterrows():
+        unit_cost[_series["Description"]] = _series["Cost"]
+    return unit_cost
 
 @dataclass
 class VrtoolConfig:
@@ -19,17 +40,19 @@ class VrtoolConfig:
     # year the computation starts
     t_0: int = 2025
     # years to compute reliability for
-    T: List[int] = [0, 19, 20, 25, 50, 75, 100]
+    T: list[int] = field(default_factory=lambda: [0, 19, 20, 25, 50, 75, 100])
     # mechanisms to consider
-    mechanisms: List[str] = [
-        "Overflow",
-        "StabilityInner",
-        "Piping",
-    ]
+    mechanisms: list[str] = field(
+        default_factory=lambda: [
+            "Overflow",
+            "StabilityInner",
+            "Piping",
+        ]
+    )
     # whether to consider length-effects within a dike section
     LE_in_section: bool = False
     crest_step: float = 0.5
-    berm_step: List[int] = [0, 5, 8, 10, 12, 15, 20, 30]
+    berm_step: list[int] = field(default_factory=lambda: [0, 5, 8, 10, 12, 15, 20, 30])
 
     ## OPTIMIZATION SETTINGS
     # investment year for TargetReliabilityBased approach
@@ -47,9 +70,8 @@ class VrtoolConfig:
     # General settings:
     shelves: bool = False  # setting to shelve intermediate results
     reuse_output: bool = False  # reuse intermediate result if available
-    beta_or_prob: str = (
-        "beta"  # whether to use 'beta' or 'prob' for plotting reliability
-    )
+    # whether to use 'beta' or 'prob' for plotting reliability
+    beta_or_prob: str = "beta"
 
     # Settings for step 1:
     # Setting to turn on plotting the reliability in time for each section.
@@ -60,11 +82,13 @@ class VrtoolConfig:
     # Setting to flip the direction of the longitudinal plots. Used for SAFE as sections are numbered east-west
     flip_traject: bool = True
     # years (relative to t_0) to plot the reliability
-    assessment_plot_years: List[int] = [
-        0,
-        20,
-        50,
-    ]
+    assessment_plot_years: list[int] = field(
+        default_factory=lambda: [
+            0,
+            20,
+            50,
+        ]
+    )
 
     # Settings for step 2:
     # Setting to plot the change in geometry for each soil reinforcement combination. Only use for debugging: very time consuming.
@@ -72,32 +96,14 @@ class VrtoolConfig:
 
     # Settings for step 3:
     # dictionary with settings for beta-cost curve:
-    beta_cost_settings: dict = {
-        # whether to include symbols in the beta-cost curve
-        "symbols": True,
-        # base size of markers.
-        "markersize": 10,
-    }
-
-    @property
-    def unit_costs(self) -> dict:
-        """
-        Returns the _default_ unit costs read from the default csv file.
-
-        Raises:
-            FileNotFoundError: When the default "unit_costs.csv" file is not found.
-
-        Returns:
-            dict: Unit costs dictionary with columns 'Description', 'Cost' and 'Unit'.
-        """
-        if not default_unit_costs_csv.is_file():
-            raise FileNotFoundError(
-                "Default unit costs file not found at {}.".format(
-                    default_unit_costs_csv
-                )
-            )
-        _unit_cost_data = pd.read_csv(str(default_unit_costs_csv), encoding="latin_1")
-        unit_cost = {}
-        for _, _series in _unit_cost_data.iterrows():
-            unit_cost[_series["Description"]] = _series["Cost"]
-        return unit_cost
+    beta_cost_settings: dict = field(
+        default_factory=lambda: {
+            # whether to include symbols in the beta-cost curve
+            "symbols": True,
+            # base size of markers.
+            "markersize": 10,
+        }
+    )
+    unit_costs: dict = field(
+        default_factory=lambda: _load_default_unit_costs()
+    )
