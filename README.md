@@ -22,7 +22,7 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git
 
 2. Specific `Veiligheidsrendement` version, add `@version-tag` to the previous command, for instance install tag `v0.0.1` (__Proof of Concept__ previous to this GIT repository):
 ```bash
-pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.11.0
+pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
 ```
 | You can also do the above with a commit-hash for development branches (e.g.:`@40bd07d`)
 
