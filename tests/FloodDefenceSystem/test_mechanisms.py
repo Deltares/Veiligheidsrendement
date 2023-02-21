@@ -4,7 +4,7 @@ from src.FloodDefenceSystem.Mechanisms import LSF_heave, LSF_sellmeijer
 
 
 class TestMechanisms:
-    def test_LSF_heave():
+    def test_LSF_heave(self):
         # set tests data
         r_exit, h, h_exit, d_cover, kwelscherm = (0.9, 6, 4, 2, 0)
 
@@ -16,7 +16,7 @@ class TestMechanisms:
         assert i == pytest.approx(0.9)
         assert i_c == pytest.approx(0.3)
 
-    def test_LSF_sellmeijer():
+    def test_LSF_sellmeijer(self):
         # set tests data
         h, h_exit, d_cover, L, D, d70, k, mPiping = (
             7,
