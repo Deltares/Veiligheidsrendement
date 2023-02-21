@@ -2,28 +2,71 @@
 
 This is the repository as developed in the AllRisk programme to apply the veiligheidsrendementmethode for optimal planning of flood defence systems.
 
-### What is this repository for? ###
+## What is this repository for?
 
 * Quick summary
 * Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
-### How do I get set up? ###
+## How do I get set up? ##
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+__Important!__ The following installation steps are written based on a Windows environment. When using other systems (which should be possible) it might be required to use different commands. However, the fundamental of the installation steps should remain the same. This meaning, no additional packages or libraries should be required. If problems would arose during your installation, please contact the maintainers of the tool.
 
-### Contribution guidelines ###
+### Sandbox / Endpoint
+
+When you only require the `VeiligheidsrendementTool` package to be used as a whole, and not for developments, we advise to directly use the latest greatest release, or directly the latest available version from `main` as follows:
+
+1. Latest available `main`:
+```bash
+pip install git+https://github.com/Deltares/Veiligheidsrendement.git
+```
+
+2. Specific `Veiligheidsrendement` version, add `@version-tag` to the previous command, for instance install tag `v0.0.1` (__Proof of Concept__ previous to this GIT repository):
+```bash
+pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
+```
+| You can also do the above with a commit-hash for development branches (e.g.:`@40bd07d`)
+
+
+
+### Development mode
+1. Checkout the code from github in a directory of your choice. You can either do this by downloading the source zip or (better) using git, for instance:
+    ```bash
+    cd C:\repos
+    git clone https://github.com/Deltares/Veiligheidsrendement.git vrtool_repo
+    ```
+    | Note, the above steps are based on a Windows setup. If you are not familiar with Git we recommend using the [GitHub desktop tool](https://desktop.github.com/).
+
+2. Navigate to your Koswat repository and then install the koswat package with your preferred step:
+
+    1. With [Anaconda](https://www.anaconda.com/) (our recommendation):    
+        ```bash
+        cd C:\repos\vrtool_repo
+        conda env create -f "environment.yml"
+        conda activate vrtool_env
+        poetry install
+        ```
+    2. With `pypi`:
+        ```bash
+        cd C:\repos\vrtool_repo
+        pip install .
+        ```
+        | Note, this will not install `Poetry`, which is required to properly maintain the interdependencies of `Veiligheidsrendement` tool.
+
+### Dependencies / Pre-requirements.
+We found out a hard dependency when working under a Windows environment with the [library `openturns`](https://openturns.github.io/www/index.html), which forced us to work under the version 1.19. This is automatically resolved for you when following the steps specified for [development mode](#development-mode).
+When using your own environment, you might have to follow the openturns installation steps for version 1.19.
+
+### How to run tests
+Tests can be run with the pytest command `pytest run`. However, when working under a [development mode](#development-mode) environment, we advise to run the command `poetry run pytest` instead.
+
+
+## Contribution guidelines ##
 
 * Writing tests
 * Code review
 * Other guidelines
 
-### Who do I talk to? ###
+## Who do I talk to? ##
 
 * Repo owner or admin
 * Other community or team contact

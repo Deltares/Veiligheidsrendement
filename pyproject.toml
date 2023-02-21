@@ -2,8 +2,24 @@
 name = "veiligheidsrendement tool"
 version = "0.0.1"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
+maintainers = [
+  "Carles S. Soriano Pérez <carles.sorianoperez@deltares.nl>",
+  "Dennis Tang <dennis.tang@deltares.nl>",
+  "Edwin Speen <edwin.spee@delatres.nl>",
+  "Stephan Rikkert <stephan.rikkert@deltares.nl>",
+]
 readme = "README.md"
+repository = "https://github.com/Deltares/veiligheidsrendement"
+packages = [{include="src"},]
+keywords = ["civil-engineering", "dikes", "flood-defence", "deltares"]
+classifiers = [
+  'Intended Audience :: Developers, Civil Engineers',
+  'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+  'Natural Language :: English',
+  'Programming Language :: Python :: 3',
+  'Topic :: Civil Engineering :: Dike reinforcements'
+]
 
 [tool.poetry.dependencies]
 python = "^3.9, <3.11"
