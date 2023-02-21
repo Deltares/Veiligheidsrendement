@@ -79,6 +79,7 @@ class VrtoolConfig:
         "markersize": 10,
     }
 
+    @property
     def unit_costs(self) -> dict:
         """
         Returns the _default_ unit costs read from the default csv file.
