@@ -9,7 +9,6 @@ maintainers = [
   "Edwin Speen <edwin.spee@delatres.nl>",
   "Stephan Rikkert <stephan.rikkert@deltares.nl>",
 ]
-license = "GPL-3.0-or-later"
 readme = "README.md"
 repository = "https://github.com/Deltares/veiligheidsrendement"
 packages = [{include="src"},]
