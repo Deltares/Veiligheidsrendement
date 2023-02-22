@@ -31,9 +31,44 @@ class TestVrtoolConfig:
         assert not (any(set(_expected_keys) - set(_unit_costs_data.keys())))
 
     def test_init_vrtool_config_default_values(self):
-        _config = VrtoolConfig()
-        assert isinstance(_config, VrtoolConfig)
+        # 1. Define test data.
+        _expected_keys = [
+            "t_0",
+            "T",
+            "mechanisms",
+            "LE_in_section",
+            "crest_step",
+            "berm_step",
+            "OI_year",
+            "OI_horizon",
+            "BC_stop",
+            "max_greedy_iterations",
+            "f_cautious",
+            "shelves",
+            "reuse_output",
+            "beta_or_prob",
+            "plot_reliability_in_time",
+            "plot_measure_reliability",
+            "flip_traject",
+            "assessment_plot_years",
+            "geometry_plot",
+            "beta_cost_settings",
+            "unit_costs",
+        ]
 
+        # 2. Run test.
+        _config = VrtoolConfig()
+
+        # 3. Verify expectations.
+        assert isinstance(_config, VrtoolConfig)
+        _different_entries = set(_expected_keys) - set(asdict(_config).keys())
+        assert not any(
+            _different_entries
+        ), "Mismatch between expected entries and retrieved: {}".format(
+            ",".join(_different_entries)
+        )
+
+        # Verify default values.
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
         assert _config.mechanisms == [
@@ -60,32 +95,3 @@ class TestVrtoolConfig:
         assert _config.beta_cost_settings == {"symbols": True, "markersize": 10}
         assert isinstance(_config.unit_costs, dict)
         assert any(_config.unit_costs.items())
-        _expected_keys = [
-            "t_0",
-            "T",
-            "mechanisms",
-            "LE_in_section",
-            "crest_step",
-            "berm_step",
-            "OI_year",
-            "OI_horizon",
-            "BC_stop",
-            "max_greedy_iterations",
-            "f_cautious",
-            "shelves",
-            "reuse_output",
-            "beta_or_prob",
-            "plot_reliability_in_time",
-            "plot_measure_reliability",
-            "flip_traject",
-            "assessment_plot_years",
-            "geometry_plot",
-            "beta_cost_settings",
-            "unit_costs",
-        ]
-        _different_entries = set(_expected_keys) - set(asdict(_config).keys())
-        assert not any(
-            _different_entries
-        ), "Mismatch between expected entries and retrieved: {}".format(
-            ",".join(_different_entries)
-        )
