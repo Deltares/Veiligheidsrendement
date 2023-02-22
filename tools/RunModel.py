@@ -32,7 +32,9 @@ Note that not all settings are yet generalized, this is work in progress.
 """
 
 
-def runFullModel(TrajectObject: DikeTraject, config: VrtoolConfig, plot_mode: str = "test"):
+def runFullModel(
+    TrajectObject: DikeTraject, config: VrtoolConfig, plot_mode: str = "test"
+):
 
     """This is the main routine for a "SAFE"-type calculation
     Input is a TrajectObject = DikeTraject object with all relevant data
@@ -343,8 +345,7 @@ def runFullModel(TrajectObject: DikeTraject, config: VrtoolConfig, plot_mode: st
                     TargetReliabilityBased.plotBetaTime(
                         TrajectObject,
                         typ="single",
-                        path=config.directory,
-                        horizon=np.max(config.T),
+                        path=config.directory
                     )
 
                 TargetReliabilityBased = replaceNames(

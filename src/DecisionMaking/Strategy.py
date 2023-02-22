@@ -382,8 +382,10 @@ class Strategy:
             self.SatisfiedStandardSolution = Solution
             self.SatisfiedStandardSolution.to_csv(path)
 
-    def plotBetaTime(self,Traject, typ='single',path = None, horizon = np.max(config.T)):
+    def plotBetaTime(self,Traject, typ='single',path = None):
         """This routine plots the reliability in time for each step in the optimization. Mainly for debugging purposes."""
+        horizon = np.max(self.T)
+        
         step = 0
         beta_t = []
         plt.figure(100)
