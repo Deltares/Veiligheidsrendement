@@ -13,8 +13,11 @@ from tests import test_data
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
-class TestAcceptance
-    @pytest.mark.parametrize("casename", "traject", ["integrated_SAFE_16-3_small", "16-3"])
+
+class TestAcceptance:
+    @pytest.mark.parametrize(
+        "casename", "traject", ["integrated_SAFE_16-3_small", "16-3"]
+    )
     def test_integrated_run(self, casename, traject):
         """This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
@@ -37,7 +40,9 @@ class TestAcceptance
 
         reference_path = Path.joinpath(test_data, casename, "reference")
         for file in files_to_compare:
-            reference = pd.read_csv(reference_path.joinpath("results", file), index_col=0)
+            reference = pd.read_csv(
+                reference_path.joinpath("results", file), index_col=0
+            )
             result = pd.read_csv(
                 case_config.directory.joinpath("results", file), index_col=0
             )
