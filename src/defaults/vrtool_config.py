@@ -7,25 +7,24 @@ from src.defaults import default_unit_costs_csv
 
 def _load_default_unit_costs() -> dict:
     """
-    Returns the _default_ unit costs read from the default csv file.
+    Returns the _default_ unit costs read from the default csv file, with columns: 'Description', 'Cost' and 'Unit'.
 
     Raises:
         FileNotFoundError: When the default "unit_costs.csv" file is not found.
 
     Returns:
-        dict: Unit costs dictionary with columns 'Description', 'Cost' and 'Unit'.
+        dict: Unit costs dictionary.
     """
     if not default_unit_costs_csv.is_file():
         raise FileNotFoundError(
-            "Default unit costs file not found at {}.".format(
-                default_unit_costs_csv
-            )
+            "Default unit costs file not found at {}.".format(default_unit_costs_csv)
         )
     _unit_cost_data = pd.read_csv(str(default_unit_costs_csv), encoding="latin_1")
     unit_cost = {}
     for _, _series in _unit_cost_data.iterrows():
         unit_cost[_series["Description"]] = _series["Cost"]
     return unit_cost
+
 
 @dataclass
 class VrtoolConfig:
@@ -104,6 +103,4 @@ class VrtoolConfig:
             "markersize": 10,
         }
     )
-    unit_costs: dict = field(
-        default_factory=lambda: _load_default_unit_costs()
-    )
+    unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
