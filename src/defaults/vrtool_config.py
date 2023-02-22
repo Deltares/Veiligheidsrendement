@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pandas as pd
 
@@ -17,15 +18,14 @@ def _load_default_unit_costs() -> dict:
     """
     if not default_unit_costs_csv.is_file():
         raise FileNotFoundError(
-            "Default unit costs file not found at {}.".format(
-                default_unit_costs_csv
-            )
+            "Default unit costs file not found at {}.".format(default_unit_costs_csv)
         )
     _unit_cost_data = pd.read_csv(str(default_unit_costs_csv), encoding="latin_1")
     unit_cost = {}
     for _, _series in _unit_cost_data.iterrows():
         unit_cost[_series["Description"]] = _series["Cost"]
     return unit_cost
+
 
 @dataclass
 class VrtoolConfig:
@@ -35,6 +35,9 @@ class VrtoolConfig:
     TODO: Potentially transform all fix strings values into enums (or class types).
     TODO: Refactor properties to follow python standard (snakecase)
     """
+
+    # Directory to write the results to
+    directory: Path = None
 
     ## RELIABILITY COMPUTATION
     # year the computation starts
@@ -104,6 +107,4 @@ class VrtoolConfig:
             "markersize": 10,
         }
     )
-    unit_costs: dict = field(
-        default_factory=lambda: _load_default_unit_costs()
-    )
+    unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())

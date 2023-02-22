@@ -33,6 +33,7 @@ class TestVrtoolConfig:
     def test_init_vrtool_config_default_values(self):
         # 1. Define test data.
         _expected_keys = [
+            "directory",
             "t_0",
             "T",
             "mechanisms",
@@ -71,6 +72,8 @@ class TestVrtoolConfig:
         )
 
         # Verify default values.
+        assert _config.directory is None
+
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
         assert _config.mechanisms == [
