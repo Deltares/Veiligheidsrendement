@@ -19,6 +19,7 @@ import pandas as pd
 
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from src.defaults.vrtool_config import VrtoolConfig
+from src.FloodDefenceSystem.DikeTraject import DikeTraject
 from tools.HelperFunctions import replaceNames
 
 """The function below is the main one for any calculation for SAFE. It contains 3 main steps:
@@ -31,7 +32,7 @@ Note that not all settings are yet generalized, this is work in progress.
 """
 
 
-def runFullModel(TrajectObject, config: VrtoolConfig, plot_mode="test"):
+def runFullModel(TrajectObject: DikeTraject, config: VrtoolConfig, plot_mode: str = "test"):
 
     """This is the main routine for a "SAFE"-type calculation
     Input is a TrajectObject = DikeTraject object with all relevant data
