@@ -8,7 +8,7 @@ import openturns as ot
 import pandas as pd
 from scipy import interpolate
 
-import src.config
+import src.defaults.vrtool_config as config
 import src.FloodDefenceSystem.Mechanisms as Mechanisms
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from src.ProbabilisticTools.HydraRing_scripts import (

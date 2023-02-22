@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-import src.config
+import src.defaults.vrtool_config as config
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from src.DecisionMaking.StrategyEvaluation import (
     ImplementOption,
