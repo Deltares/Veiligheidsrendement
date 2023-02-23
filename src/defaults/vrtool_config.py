@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 
@@ -37,7 +38,7 @@ class VrtoolConfig:
     """
 
     # Directory to write the results to
-    directory: Path = None
+    directory: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
     # year the computation starts
