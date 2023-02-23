@@ -38,7 +38,9 @@ class VrtoolConfig:
     """
 
     # Directory to write the results to
-    directory: Optional[Path] = None
+    directory: Path = None
+    language: str = "EN"
+    timing: bool = False
 
     ## RELIABILITY COMPUTATION
     # year the computation starts

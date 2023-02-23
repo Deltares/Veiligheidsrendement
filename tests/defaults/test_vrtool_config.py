@@ -34,6 +34,8 @@ class TestVrtoolConfig:
         # 1. Define test data.
         _expected_keys = [
             "directory",
+            "language",
+            "timing",
             "t_0",
             "T",
             "mechanisms",
@@ -74,6 +76,8 @@ class TestVrtoolConfig:
 
         # Verify default values.
         assert _config.directory is None
+        assert _config.language == "EN"
+        assert not _config.timing
 
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
