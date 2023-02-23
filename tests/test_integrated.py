@@ -3,11 +3,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import src.defaults.vrtool_config as case_config
-import src.FloodDefenceSystem.DikeTraject as DikeTraject
-import tools.RunModel as runFullModel
 from src.defaults.vrtool_config import VrtoolConfig
+from src.FloodDefenceSystem.DikeTraject import DikeTraject
 from tests import get_test_results_dir, test_data
+from tools.RunModel import runFullModel
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
@@ -19,14 +18,15 @@ class TestAcceptance:
     def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
         """This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        TestTrajectObject = DikeTraject(traject=traject)
+        test_config = VrtoolConfig()
+        test_results_dir = get_test_results_dir(request)
+        test_config.directory = test_results_dir
+
+        TestTrajectObject = DikeTraject(test_config, traject=traject)
 
         test_data_input_directory = Path.joinpath(test_data, casename)
         TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
-        test_config = VrtoolConfig()
-        test_results_dir = get_test_results_dir(request)
-        test_config.directory = test_results_dir
         AllStrategies, AllSolutions = runFullModel(TestTrajectObject, test_config)
 
         comparison_errors = []
