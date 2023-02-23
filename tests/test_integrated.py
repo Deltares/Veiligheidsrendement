@@ -1,5 +1,3 @@
-import os
-import sys
 from pathlib import Path
 
 import pandas as pd
@@ -9,26 +7,26 @@ import src.defaults.vrtool_config as case_config
 import src.FloodDefenceSystem.DikeTraject as DikeTraject
 import tools.RunModel as runFullModel
 from src.defaults.vrtool_config import VrtoolConfig
-from tests import test_data
+from tests import get_test_results_dir, test_data
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
 
 class TestAcceptance:
     @pytest.mark.parametrize(
-        "casename", "traject", ["integrated_SAFE_16-3_small", "16-3"]
+        "casename, traject", [("integrated_SAFE_16-3_small", "16-3")]
     )
-    def test_integrated_run(self, casename, traject):
+    def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
         """This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        sys.path.append(os.getcwd() + "\\{}".format(casename))
-
         TestTrajectObject = DikeTraject(traject=traject)
 
         test_data_input_directory = Path.joinpath(test_data, casename)
         TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
         test_config = VrtoolConfig()
+        test_results_dir = get_test_results_dir(request)
+        test_config.directory = test_results_dir
         AllStrategies, AllSolutions = runFullModel(TestTrajectObject, test_config)
 
         comparison_errors = []
@@ -44,7 +42,7 @@ class TestAcceptance:
                 reference_path.joinpath("results", file), index_col=0
             )
             result = pd.read_csv(
-                case_config.directory.joinpath("results", file), index_col=0
+                test_results_dir.joinpath("results", file), index_col=0
             )
             if not reference.equals(result):
                 comparison_errors.append("{} is different.".format(file))
