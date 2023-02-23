@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import src.defaults.vrtool_config as config
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from src.DecisionMaking.StrategyEvaluation import calcTrajectProb
+from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeSection import DikeSection
 from src.FloodDefenceSystem.ReliabilityCalculation import (
     LoadInput,
@@ -19,17 +19,23 @@ from src.FloodDefenceSystem.ReliabilityCalculation import (
 
 class DikeTraject:
     #This class contains general information on the dike traject and is used to store all data on the sections
-    def __init__(self,traject=None):
+    def __init__(self, config:VrtoolConfig, traject=None):
         if traject == None:
             print('Warning: no traject given in config. Default was chosen')
             self.traject= 'Not specified'
         else:
             self.traject = traject
 
+        self.mechanisms = config.mechanisms
+        self.assessment_plot_years = config.assessment_plot_years
+        self.flip_traject = config.flip_traject
+        self.t_0 = config.t_0
+
+
         self.GeneralInfo = {'omegaPiping': 0.24, 'omegaStabilityInner':0.04, 'omegaOverflow':0.24,
                             'bPiping': 300, 'aStabilityInner':0.033,'bStabilityInner':50}
         self.Sections = []
-        self.GeneralInfo['MechanismsConsidered'] = config.mechanisms
+        self.GeneralInfo['MechanismsConsidered'] = self.mechanisms
         # Basic traject info
         #Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
         #Pmax is the ondergrens as given by law
@@ -102,7 +108,7 @@ class DikeTraject:
 
             # Then the input for all the mechanisms:
             self.Sections[i].Reliability.Mechanisms = {}
-            for j in config.mechanisms:
+            for j in self.mechanisms:
                 mech_input_path = input_path.joinpath(j)
                 self.Sections[i].Reliability.Mechanisms[j] = MechanismReliabilityCollection(j, self.Sections[i].MechanismData[j][1])
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
@@ -219,7 +225,7 @@ class DikeTraject:
         line = {}
         mid = {}
         legend_line = {}
-        if len(t_list) == 0: t_list = config.assessment_plot_years
+        if len(t_list) == 0: t_list = self.assessment_plot_years
         for ii in t_list:
             if system_rel:
                 fig, (ax, ax1) = plt.subplots(nrows=1, ncols=2, figsize=fig_size,sharey='row',
@@ -228,7 +234,7 @@ class DikeTraject:
                 fig, ax = plt.subplots(figsize=fig_size)
             col = 0
             mech = 0
-            for j in config.mechanisms:
+            for j in self.mechanisms:
                 #get data to plot
                 # plotdata = self.Probabilities[str(ii)].loc[self.Probabilities['index'] == j].values
                 plotdata = ProbabilityFrame[ii].loc[ProbabilityFrame.index.get_level_values(1) == j].values
@@ -252,7 +258,7 @@ class DikeTraject:
             col = 0
             #Whether to draw the target reliability for each individula mechanism.
             if draw_targetbeta == 'on' and last:
-                for j in config.mechanisms:
+                for j in self.mechanisms:
                     dash = [2, 2]
                     if j == 'StabilityInner':
                         N = self.GeneralInfo['TrajectLength'] * self.GeneralInfo['aStabilityInner']/ self.GeneralInfo['bStabilityInner']
@@ -303,7 +309,7 @@ class DikeTraject:
 
                 ax.grid(axis='y',linewidth=0.5,color='gray',alpha=0.5)
 
-                if config.flip_traject:
+                if self.flip_traject:
                     ax.invert_xaxis()
             if system_rel:
                 col=0
@@ -312,7 +318,7 @@ class DikeTraject:
                 mid1 = {}
                 bars = {}
                 pt_tot = 0
-                for m in config.mechanisms:
+                for m in self.mechanisms:
                     beta_t,p_t = calcTrajectProb(ProbabilityFrame,ts=ii,mechs=[m])
                     # pt_tot +=p_t
                     pt_tot = 1-((1-pt_tot)*(1-p_t))
@@ -330,13 +336,13 @@ class DikeTraject:
                 ax1.set_xlim(left=-0.4,right=2.4)
                 ax1.set_title('System \n reliability')
                 if show_xticks:
-                    ax1.set_xticklabels(config.mechanisms,rotation=90,fontsize=6)
+                    ax1.set_xticklabels(self.mechanisms,rotation=90,fontsize=6)
                 else:
                     ax1.set_xticklabels('')
                 ax1.tick_params(axis='both', bottom=False)
                 if title_in:
                     ax.set_title(title_in)
-            if not custom_name: custom_name = case_settings['beta_or_prob'] + '_' + str(config.t_0 + ii) + '_Assessment.png'
+            if not custom_name: custom_name = case_settings['beta_or_prob'] + '_' + str(self.t_0 + ii) + '_Assessment.png'
             plt.savefig(case_settings['directory'].joinpath(custom_name), dpi=300, bbox_inches='tight', format='png')
             plt.close()
             custom_name = False
