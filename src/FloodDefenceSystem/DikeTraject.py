@@ -26,6 +26,7 @@ class DikeTraject:
         else:
             self.traject = traject
 
+        self.config = config
         self.mechanisms = config.mechanisms
         self.assessment_plot_years = config.assessment_plot_years
         self.flip_traject = config.flip_traject
@@ -143,7 +144,7 @@ class DikeTraject:
                 self.Sections[i].Reliability.Mechanisms[
                     j
                 ] = MechanismReliabilityCollection(
-                    j, self.Sections[i].MechanismData[j][1]
+                    j, self.Sections[i].MechanismData[j][1], self.config
                 )
                 for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
                     if self.Sections[i].Reliability.Load.load_type == "HRING":

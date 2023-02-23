@@ -73,15 +73,18 @@ class LoadInput:
 
 # A collection of MechanismReliability objects in time
 class MechanismReliabilityCollection:
-    def __init__(self, mechanism, computation_type, measure_year=0):
+    def __init__(
+        self, mechanism, computation_type, config: VrtoolConfig, measure_year=0
+    ):
         # Initialize and make collection of MechanismReliability objects
         # mechanism, type, years are universal.
         # Measure_year is to indicate whether the reliability has to be recalculated or can be copied
         # (the latter is the case if a measure is taken later than the considered point in time)
-
+        self.T = config.T
+        self.t_0 = config.t_0
         self.Reliability = {}
 
-        for i in config.T:
+        for i in self.T:
             if measure_year > i:
                 self.Reliability[str(i)] = MechanismReliability(
                     mechanism, computation_type, copy_or_calculate="copy"
@@ -189,7 +192,7 @@ class MechanismReliabilityCollection:
         y = []
 
         for i in self.Reliability.keys():
-            t.append(float(i) + config.t_0)
+            t.append(float(i) + self.t_0)
             if self.Reliability[i].type == "Probabilistic":
                 if self.Reliability[i].result.getClassName() == "SimulationResult":
                     y.append(
