@@ -28,6 +28,7 @@ class Measure():
         self.berm_step = config.berm_step
         self.input_directory = config.input_directory
         self.t_0 = config.t_0
+        self.geometry_plot = config.geometry_plot
 
     def evaluateMeasure(self,DikeSection,TrajectInfo,preserve_slope = False):
         raise Exception('define subclass of measure')
@@ -100,13 +101,14 @@ class SoilReinforcement(Measure):
             if hasattr(DikeSection,'Kruinhoogte'):
                 if DikeSection.Kruinhoogte != np.max(DikeSection.InitialGeometry.z):
                     #In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
-                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),                                                                                                      **{'plot_dir': plot_dir, 'slope_in': slope_in, 'crest_extra':DikeSection.Kruinhoogte})
+                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
+                                                                                                            self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in, 'crest_extra':DikeSection.Kruinhoogte})
                 else:
                     self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
-                                                                                                        **{'plot_dir': plot_dir, 'slope_in': slope_in})
+                                                                                                            self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in})
             else:
                 self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
-                                                                                                        **{'plot_dir': plot_dir, 'slope_in': slope_in})
+                                                                                                        self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in})
 
             self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'],section=DikeSection.name)
             self.measures[-1]['Reliability'] = SectionReliability()
@@ -436,7 +438,7 @@ def ModifyGeometryInput(initial,bermheight):
     return initial
 
 #This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
-def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_dir = None, bermheight = 2, slope_in = False, crest_extra = False):
+def DetermineNewGeometry(geometry_change, direction, maxbermout, initial, geometry_plot: bool, plot_dir = None, bermheight = 2, slope_in = False, crest_extra = False):
     '''initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
     If this is not the case and it is input of the old type, first it is transformed to obey that.
     crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
@@ -639,7 +641,7 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial,plot_di
         if test1>1 or test2 >1:
             raise Exception ('area calculation failed')
 
-        if config.geometry_plot:
+        if geometry_plot:
             if not plot_dir.joinpath('Geometry').is_dir():
                 # plot_dir.joinpath.mkdir(parents=True, exist_ok=True)
                 plot_dir.joinpath('Geometry').mkdir(parents=True, exist_ok=True)
