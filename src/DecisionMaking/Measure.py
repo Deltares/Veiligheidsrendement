@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-import src.defaults.vrtool_config as config
+from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.Mechanisms import OverflowHRING, OverflowSimple
 from src.FloodDefenceSystem.ReliabilityCalculation import (
     MechanismReliabilityCollection,
