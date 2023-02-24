@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import src.defaults.vrtool_config as config
 from src.DecisionMaking.Measure import (
     CustomMeasure,
     DiaphragmWall,
@@ -13,14 +12,18 @@ from src.DecisionMaking.Measure import (
     StabilityScreen,
     VerticalGeotextile,
 )
+from src.defaults.vrtool_config import VrtoolConfig
 
 
 class Solutions:
     # This class contains possible solutions/measures
-    def __init__(self, DikeSectionObject):
+    def __init__(self, DikeSectionObject, config: VrtoolConfig):
         self.SectionName = DikeSectionObject.name
         self.Length = DikeSectionObject.Length
         self.InitialGeometry = DikeSectionObject.InitialGeometry
+
+        self.T = config.T
+        self.mechanisms = config.mechanisms
 
     def fillSolutions(self, excelsheet):
         """This routine reads input for the measures from the Excel sheet for each section.
@@ -76,7 +79,7 @@ class Solutions:
     def evaluateSolutions(self, DikeSection, TrajectInfo, preserve_slope=False):
         """This is the base routine to evaluate (i.e., determine costs and reliability) for each defined measure.
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures."""
-        self.trange = config.T
+        self.trange = self.T
         removal = []
         for i, measure in enumerate(self.Measures):
             if measure.parameters["available"] == 1:
@@ -108,7 +111,7 @@ class Solutions:
 
         years = self.trange
         cols_r = pd.MultiIndex.from_product(
-            [config.mechanisms + ["Section"], years], names=["base", "year"]
+            [self.mechanisms + ["Section"], years], names=["base", "year"]
         )
         reliability = pd.DataFrame(columns=cols_r)
         if splitparams:
@@ -154,7 +157,7 @@ class Solutions:
 
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
-                    for ij in config.mechanisms + ["Section"]:
+                    for ij in self.mechanisms + ["Section"]:
                         for ijk in betas.loc[ij].values:
                             reliability_in.append(ijk)
 
@@ -184,7 +187,7 @@ class Solutions:
                     inputs_m.append([ID, type, measure_class, year, designvars, cost])
                 betas = measure.measures["Reliability"].SectionReliability
                 beta = []
-                for ij in config.mechanisms + ["Section"]:
+                for ij in self.mechanisms + ["Section"]:
                     for ijk in betas.loc[ij].values:
                         beta.append(ijk)
                 inputs_r.append(beta)

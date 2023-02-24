@@ -162,7 +162,7 @@ def runFullModel(
         AllSolutions = {}
         # Calculate per section, for each measure the cost-reliability-time relations:
         for i in TrajectObject.Sections:
-            AllSolutions[i.name] = Solutions(i)
+            AllSolutions[i.name] = Solutions(i, config)
             AllSolutions[i.name].fillSolutions(
                 config.input_directory.joinpath(i.name + ".xlsx")
             )
