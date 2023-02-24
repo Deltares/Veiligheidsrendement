@@ -18,11 +18,16 @@ from src.FloodDefenceSystem.SectionReliability import SectionReliability
 class Measure():
     """Possible change: create subclasses for different measures to make the below code more neat. Can be done jointly with adding outward reinforcement"""
     #class to store measures and their reliability. A Measure is a specific Solution (with parameters)
-    def __init__(self, inputs):
+    def __init__(self, inputs, config:VrtoolConfig):
         self.parameters = {}
         for i in range(0,len(inputs)):
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
                 self.parameters[inputs.index[i]] = inputs[i]
+        
+        self.crest_step = config.crest_step
+        self.berm_step = config.berm_step
+        self.input_directory = config.input_directory
+        self.t_0 = config.t_0
 
     def evaluateMeasure(self,DikeSection,TrajectInfo,preserve_slope = False):
         raise Exception('define subclass of measure')
@@ -49,8 +54,8 @@ class SoilReinforcement(Measure):
 
         type = self.parameters['Type']
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
-        crest_step = config.crest_step
-        berm_step = config.berm_step
+        crest_step = self.crest_step
+        berm_step = self.berm_step
         crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], np.int(1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step))
         #TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
         if self.parameters['Direction'] == 'outward':
@@ -243,7 +248,7 @@ class CustomMeasure(Measure):
     def set_input(self,section):
         try:
             try:
-                data = pd.read_csv(config.path.joinpath('Measures', self.parameters['File']))
+                data = pd.read_csv(self.input_directory.joinpath('Measures', self.parameters['File']))
             except:
                 data = pd.read_csv(self.parameters['File'])
             reliability_headers = []
@@ -263,7 +268,7 @@ class CustomMeasure(Measure):
         # self.base_data = base_data
         self.reliability_data = reliability_data
         self.measures = {}
-        self.parameters['year'] = np.int32(base_data['year'] - config.t_0)
+        self.parameters['year'] = np.int32(base_data['year'] - self.t_0)
 
         #TODO check these values:
         #for testing:
@@ -316,7 +321,7 @@ class CustomMeasure(Measure):
                         for input in self.reliability_data[i]:
                             #only read non-nan values:
                             if not np.isnan(self.reliability_data[i, input].values[0]):
-                                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'][input-config.t_0] = self.reliability_data[i, input].values[0]
+                                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'][input-self.t_0] = self.reliability_data[i, input].values[0]
             self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
         self.measures['Reliability'].calcSectionReliability()
 

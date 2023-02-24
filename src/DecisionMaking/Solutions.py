@@ -22,6 +22,7 @@ class Solutions:
         self.Length = DikeSectionObject.Length
         self.InitialGeometry = DikeSectionObject.InitialGeometry
 
+        self.config = config
         self.T = config.T
         self.mechanisms = config.mechanisms
 
@@ -38,18 +39,18 @@ class Solutions:
             # TODO depending on data.loc[i].type make correct sublclass
 
             if data.loc[i].Type == "Soil reinforcement":
-                self.Measures.append(SoilReinforcement(data.loc[i]))
+                self.Measures.append(SoilReinforcement(data.loc[i], self.config))
             elif data.loc[i].Type == "Diaphragm Wall":
-                self.Measures.append(DiaphragmWall(data.loc[i]))
+                self.Measures.append(DiaphragmWall(data.loc[i], self.config))
             elif data.loc[i].Type == "Stability Screen":
-                self.Measures.append(StabilityScreen(data.loc[i]))
+                self.Measures.append(StabilityScreen(data.loc[i], self.config))
             elif data.loc[i].Type == "Vertical Geotextile":
-                self.Measures.append(VerticalGeotextile(data.loc[i]))
+                self.Measures.append(VerticalGeotextile(data.loc[i], self.config))
             elif data.loc[i].Type == "Custom":
                 data.loc[i, "File"] = excelsheet.parent.joinpath(
                     "Measures", data.loc[i]["File"]
                 )
-                self.Measures.append(CustomMeasure(data.loc[i]))
+                self.Measures.append(CustomMeasure(data.loc[i], self.config))
 
         self.MeasureTable = pd.DataFrame(columns=["ID", "Name"])
         for i, measure in enumerate(self.Measures):
