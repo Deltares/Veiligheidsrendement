@@ -10,7 +10,6 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-import src.config
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from src.DecisionMaking.StrategyEvaluation import (
     ImplementOption,
@@ -25,6 +24,7 @@ from src.DecisionMaking.StrategyEvaluation import (
     split_options,
     updateProbability,
 )
+from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
 from tools.HelperFunctions import IDtoName, flatten, getMeasureTable, pareto_frontier
 
@@ -36,9 +36,18 @@ class Strategy:
     MixedInteger: a Mixed Integer optimization. Note that this has exponential runtime for large systems so it should not be used for more than approximately 13 sections.
     Note that this is the main class. Each type has a different subclass"""
 
-    def __init__(self, type, r=0.03):
+    def __init__(self, type, config:VrtoolConfig, r=0.03):
         self.type = type
         self.r = r
+        
+        self.OI_Year = config.OI_year
+        self.OI_horizon = config.OI_horizon
+        self.mechanisms = config.mechanisms
+        self.T = config.T
+        self.beta_cost_settings = config.beta_cost_settings
+        self.beta_or_prob = config.beta_or_prob
+        self.LE_in_section = config.LE_in_section
+
 
     def get_measure_from_index(self, index,section_order = False, print_measure = False):
         """"Converts an index (n,sh,sg) to a printout of the measure data"""
@@ -91,8 +100,8 @@ class Strategy:
             combinables = solutions[section.name].MeasureData.loc[solutions[section.name].MeasureData['class'] == 'combinable']
             partials = solutions[section.name].MeasureData.loc[solutions[section.name].MeasureData['class'] == 'partial']
             if self.__class__.__name__ == 'TargetReliabilityStrategy':
-                combinables = combinables.loc[solutions[section.name].MeasureData['year'] == config.OI_year]
-                partials = partials.loc[solutions[section.name].MeasureData['year'] == config.OI_year]
+                combinables = combinables.loc[solutions[section.name].MeasureData['year'] == self.OI_year]
+                partials = partials.loc[solutions[section.name].MeasureData['year'] == self.OI_year]
 
             combinedmeasures = MeasureCombinations(combinables, partials, solutions[section.name],
                                                    splitparams=splitparams)
@@ -117,7 +126,7 @@ class Strategy:
 
             StrategyData = copy.deepcopy(solutions[section.name].MeasureData)
             if self.__class__.__name__ == 'TargetReliabilityStrategy':
-                StrategyData = StrategyData.loc[StrategyData['year']==config.OI_year]
+                StrategyData = StrategyData.loc[StrategyData['year']==self.OI_year]
 
             StrategyData = pd.concat((StrategyData,combinedmeasures))
             if filtering == 'on':
@@ -158,7 +167,7 @@ class Strategy:
 
 
         N = len(self.options)                               # Number of dike sections
-        T = np.max(config.T)                # Number of time steps
+        T = np.max(self.T)                # Number of time steps
         Sh = 0
         Sg = 0
         # #Number of strategies (maximum for all dike sections), for geotechnical and height
@@ -167,7 +176,7 @@ class Strategy:
 
         #probabilities [N,S,T]
         self.Pf = {}
-        for i in config.mechanisms:
+        for i in self.mechanisms:
             if i == 'Overflow':
                 self.Pf[i]     = np.full((N, Sh+1, T),1.)
             else:
@@ -181,7 +190,7 @@ class Strategy:
         #get all probabilities. Interpolate on beta per section, then combine p_f
         betas = {}
         for n in range(0,N):
-            for i in config.mechanisms:
+            for i in self.mechanisms:
                 len_beta1 = traject.Sections[n].Reliability.SectionReliability.shape[1]
                 beta1 = traject.Sections[n].Reliability.SectionReliability.loc[i].values.reshape((len_beta1, 1)).T #Initial
                 # condition with no measure
@@ -192,7 +201,7 @@ class Strategy:
                     beta2 = self.options_geotechnical[keys[n]][i] # All solutions
                 betas[i] = np.concatenate((beta1, beta2),axis=0)
                 if np.shape(betas[i])[1] != T:
-                    betas[i] = interp1d(config.T, betas[i])(np.arange(0, T, 1))
+                    betas[i] = interp1d(self.T, betas[i])(np.arange(0, T, 1))
                 self.Pf[i][n,0:np.size(betas[i],0),:]      = ProbabilisticFunctions.beta_to_pf(betas[i])
 
 
@@ -295,7 +304,7 @@ class Strategy:
         if type == 'ParetoPerSection':
             damage = traject.GeneralInfo['FloodDamage']
             r = self.r
-            horizon = np.max(config.T)
+            horizon = np.max(self.T)
             self.options_g_filtered = copy.deepcopy(self.options_geotechnical)
 
             #we filter the options for each section, such that only interesting ones remain
@@ -373,8 +382,10 @@ class Strategy:
             self.SatisfiedStandardSolution = Solution
             self.SatisfiedStandardSolution.to_csv(path)
 
-    def plotBetaTime(self,Traject, typ='single',path = None, horizon = np.max(config.T)):
+    def plotBetaTime(self,Traject, typ='single',path = None):
         """This routine plots the reliability in time for each step in the optimization. Mainly for debugging purposes."""
+        horizon = np.max(self.T)
+        
         step = 0
         beta_t = []
         plt.figure(100)
@@ -402,7 +413,7 @@ class Strategy:
         #TODO Evaluate options for plotBetaCosts and eliminate obsolete options/put in general config.
         if series_name == None:
             series_name = self.type
-        if config.beta_cost_settings['symbols']:
+        if self.beta_cost_settings['symbols']:
             symbols = ['*', 'o', '^', 's', 'p', 'X', 'd', 'h', '>', '.', '<', 'v', '3', 'P', 'D']
             MeasureTable = MeasureTable.assign(symbol=symbols[0: len(MeasureTable)])
         else:
@@ -410,13 +421,13 @@ class Strategy:
 
         if solutiontype == 'OptimalSolution':
             final_solution_index = list(self.OptimalSolution.index)
-            markersize2 = config.beta_cost_settings['markersize'] / 2
+            markersize2 = self.beta_cost_settings['markersize'] / 2
         elif solutiontype == 'SatisfiedStandard':
             final_solution_index = list(self.SatisfiedStandardSolution.index)
-            markersize2 = config.beta_cost_settings['markersize'] / 2
+            markersize2 = self.beta_cost_settings['markersize'] / 2
         else:
             final_solution_index = list(self.TakenMeasures.index)
-            markersize2 = config.beta_cost_settings['markersize']
+            markersize2 = self.beta_cost_settings['markersize']
 
         if 'years' not in locals():
             years = Traject.Sections[0].Reliability.SectionReliability.columns.values.astype('float')
@@ -467,25 +478,25 @@ class Strategy:
                     Costs.append(x)
 
         Costs = np.divide(Costs, 1e6)
-        if config.beta_or_prob == 'beta':
+        if self.beta_or_prob == 'beta':
             rel_unit = r'$\beta$'
             data_to_plot = betas
             interval = .07
-        elif config.beta_or_prob == 'prob':
+        elif self.beta_or_prob == 'prob':
             data_to_plot = pfs
             rel_unit = r'$P_f$'
             interval = 2
         plt.figure(fig_id)
-        if config.beta_cost_settings['symbols']:
+        if self.beta_cost_settings['symbols']:
             plt.plot(Costs, data_to_plot, label=series_name, color=color, linestyle=linestyle, zorder=1)
         else:
             plt.plot(Costs, data_to_plot, label=series_name, color=color, linestyle=linestyle, markerstyle = 'o')
 
-        if config.beta_cost_settings['symbols']:
-            if config.beta_or_prob == 'beta':
+        if self.beta_cost_settings['symbols']:
+            if self.beta_or_prob == 'beta':
                 base = np.max(data_to_plot) + interval
                 ycoord = np.array([base, base + interval, base + 2 * interval, base + 3 * interval])
-            elif config.beta_or_prob == 'prob':
+            elif self.beta_or_prob == 'prob':
                 base = np.min(data_to_plot)/interval
                 ycoord = np.array([base, base/interval, base/(2 * interval), base/(3 * interval)])
             ycoords = np.tile(ycoord, np.int(np.ceil(len(Costs) / len(ycoord))))
@@ -499,14 +510,14 @@ class Strategy:
                             marker = markersize2
                             edgecolor = 'gray'
                         else:
-                            marker = config.beta_cost_settings['markersize']
+                            marker = self.beta_cost_settings['markersize']
                             edgecolor = 'k'
-                        if config.beta_or_prob == 'beta':
+                        if self.beta_or_prob == 'beta':
                             plt.scatter(Costs[i],betas[i],s = marker, marker=MeasureTable.loc[MeasureTable['ID']==line['ID']]['symbol'].values[0],
                                         label=MeasureTable.loc[
                                 MeasureTable['ID']==line['ID']]['Name'].values[0],color=color,edgecolors=edgecolor,linewidths=.5,zorder=2)
                             if symbolsections: plt.vlines(Costs[i],betas[i]+.05,ycoords[i]-.05,colors ='tab:gray', linestyles =':',zorder = 1)
-                        elif config.beta_or_prob == 'prob':
+                        elif self.beta_or_prob == 'prob':
                             plt.scatter(Costs[i], pfs[i], s = marker, marker=MeasureTable.loc[MeasureTable['ID'] == line['ID']]['symbol'].values[0],
                                         label=MeasureTable.loc[
                                 MeasureTable['ID'] == line['ID']]['Name'].values[0], color=color, edgecolors=edgecolor, linewidths=.5, zorder=2)
@@ -517,13 +528,13 @@ class Strategy:
             axes = plt.gca()
             xmax = np.max([axes.get_xlim()[1], np.max(Costs)])
             ceiling = np.ceil(np.max([xmax, np.max(Costs)]) / 10) * 10
-            if config.beta_or_prob == 'beta':
+            if self.beta_or_prob == 'beta':
                 plt.plot([0, ceiling], [ProbabilisticFunctions.pf_to_beta(Traject.GeneralInfo['Pmax']), ProbabilisticFunctions.pf_to_beta(Traject.GeneralInfo[
                                                                                                                                               'Pmax'])], 'k--',
                          label='Safety standard')
                 plt.ylabel(r'$\beta$')
 
-            if config.beta_or_prob == 'prob':
+            if self.beta_or_prob == 'prob':
                 plt.plot([0, ceiling], [Traject.GeneralInfo['Pmax'], Traject.GeneralInfo['Pmax']], 'k--', label='Safety standard')
                 plt.ylabel(r'$P_f$')
                 axes.set_yscale('log')
@@ -584,7 +595,7 @@ class Strategy:
             for i in range(1, len(self.TakenMeasures)):
                 col = 0; mech = 0; line1 = {}; line2 = {}; mid = {}
                 fig, ax = plt.subplots(figsize = figure_size)
-                for j in config.mechanisms:
+                for j in self.mechanisms:
                     plotdata1 = copy.deepcopy(self.Probabilities[i-1][years[0]].xs(j,level='mechanism',axis=0)).values
                     plotdata2 = copy.deepcopy(self.Probabilities[i][years[0]].xs(j,level='mechanism',axis=0)).values
                     ydata1 = copy.deepcopy(plotdata1) #oude sterkte
@@ -622,7 +633,7 @@ class Strategy:
                 if i == 1: step1 = time2; step2 = -1 #; print(step1); print(step2)
                 col = 0; mech = 0; line1 = {}; line2 = {}; mid = {}
                 fig, ax = plt.subplots(figsize = figure_size)
-                for j in config.mechanisms:
+                for j in self.mechanisms:
                     plotdata1 = copy.deepcopy(self.Probabilities[step1][years[0]].xs(j,level='mechanism',axis=0)).values
                     plotdata2 = copy.deepcopy(self.Probabilities[step2][years[0]].xs(j,level='mechanism',axis=0)).values
                     ydata1 = copy.deepcopy(plotdata1) #oude sterkte
@@ -867,7 +878,7 @@ class GreedyStrategy(Strategy):
         init_probability = {}
         init_overflow_risk = np.empty((self.opt_parameters['N'],self.opt_parameters['T']))
         init_geotechnical_risk = np.empty((self.opt_parameters['N'],self.opt_parameters['T']))
-        for m in config.mechanisms:
+        for m in self.mechanisms:
             init_probability[m] = np.empty((self.opt_parameters['N'], self.opt_parameters['T']))
             for n in range(0, self.opt_parameters['N']):
                 init_probability[m][n, :] = self.Pf[m][n,0, :]
@@ -1092,7 +1103,7 @@ class GreedyStrategy(Strategy):
                                           columns=TakenMeasuresHeaders)
 
         #writing the probabilities to self.Probabilities
-        tgrid = copy.deepcopy(config.T)
+        tgrid = copy.deepcopy(self.T)
         #make sure it doesnt exceed the data:
         tgrid[-1] = np.size(Probabilities[0]['Overflow'],axis=1)-1
         probabilities_columns = ['name','mechanism']+tgrid
@@ -1103,7 +1114,7 @@ class GreedyStrategy(Strategy):
             mech = []
             probs = []
             for n in range(0,self.opt_parameters['N']):
-                for m in config.mechanisms:
+                for m in self.mechanisms:
                     name.append(traject.Sections[n].name)
                     mech.append(m)
                     probs.append(i[m][n,np.array(tgrid)])
@@ -1135,10 +1146,10 @@ class GreedyStrategy(Strategy):
         count = 0
         for i in self.Probabilities:
             if PATH:
-                costs['TR'].append(calcLifeCycleRisks(i, self.r, np.max(config.T),
+                costs['TR'].append(calcLifeCycleRisks(i, self.r, np.max(self.T),
                                              TrajectObject.GeneralInfo['FloodDamage'], dumpPt=PATH.joinpath('Greedy_step_' + str(count) + '.csv')))
             else:
-                costs['TR'].append(calcLifeCycleRisks(i, self.r, np.max(config.T),
+                costs['TR'].append(calcLifeCycleRisks(i, self.r, np.max(self.T),
                                              TrajectObject.GeneralInfo['FloodDamage']))
             count += 1
         costs['TC'] = np.add(costs['TR'],costs['LCC'])
@@ -1695,7 +1706,7 @@ class TargetReliabilityStrategy(Strategy):
         # Rank sections based on 2075 Section probability
         beta_horizon = []
         for i in traject.Sections:
-            beta_horizon.append(i.Reliability.SectionReliability.loc['Section'][str(config.OI_horizon)])
+            beta_horizon.append(i.Reliability.SectionReliability.loc['Section'][str(self.OI_horizon)])
 
         section_indices = np.argsort(beta_horizon)
         measure_cols = ['Section', 'option_index', 'LCC', 'BC']
@@ -1715,7 +1726,7 @@ class TargetReliabilityStrategy(Strategy):
             i = traject.Sections[j]
             # convert beta_cs to beta_section in order to correctly search self.options[section]
             # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
-            if config.LE_in_section:
+            if self.LE_in_section:
                 print("WARNING in evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED")
                 beta_T_piping = ProbabilisticFunctions.pf_to_beta(ProbabilisticFunctions.beta_to_pf(beta_cs_piping) * (i.Length / traject.GeneralInfo['bPiping']))
                 beta_T_stabinner = ProbabilisticFunctions.pf_to_beta(ProbabilisticFunctions.beta_to_pf(beta_cs_stabinner) * (i.Length / traject.GeneralInfo['bStabilityInner']))
@@ -1725,7 +1736,7 @@ class TargetReliabilityStrategy(Strategy):
             beta_T_overflow = beta_cs_overflow
 
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
-            if isinstance(config.OI_year, int):
+            if isinstance(self.OI_year, int):
                 targetyear = 50  # OI_year + 50
             else:
                 targetyear = 50

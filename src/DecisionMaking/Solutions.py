@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import src.config
+import src.defaults.vrtool_config as config
 from src.DecisionMaking.Measure import (
     CustomMeasure,
     DiaphragmWall,

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import src.config
+import src.defaults.vrtool_config as config
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 from src.DecisionMaking.StrategyEvaluation import calcTrajectProb
 from src.FloodDefenceSystem.DikeSection import DikeSection

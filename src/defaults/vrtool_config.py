@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 
@@ -34,6 +36,9 @@ class VrtoolConfig:
     TODO: Potentially transform all fix strings values into enums (or class types).
     TODO: Refactor properties to follow python standard (snakecase)
     """
+
+    # Directory to write the results to
+    directory: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
     # year the computation starts

@@ -33,6 +33,7 @@ class TestVrtoolConfig:
     def test_init_vrtool_config_default_values(self):
         # 1. Define test data.
         _expected_keys = [
+            "directory",
             "t_0",
             "T",
             "mechanisms",
@@ -61,7 +62,10 @@ class TestVrtoolConfig:
 
         # 3. Verify expectations.
         assert isinstance(_config, VrtoolConfig)
-        _different_entries = set(_expected_keys) - set(asdict(_config).keys())
+
+        expected_set = set(_expected_keys)
+        actual_keys_set = set(asdict(_config).keys())
+        _different_entries = expected_set.symmetric_difference(actual_keys_set)
         assert not any(
             _different_entries
         ), "Mismatch between expected entries and retrieved: {}".format(
@@ -69,6 +73,8 @@ class TestVrtoolConfig:
         )
 
         # Verify default values.
+        assert _config.directory is None
+
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
         assert _config.mechanisms == [

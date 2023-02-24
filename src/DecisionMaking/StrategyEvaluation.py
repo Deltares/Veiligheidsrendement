@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-import src.config
+import src.defaults.vrtool_config as config
 import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 
 

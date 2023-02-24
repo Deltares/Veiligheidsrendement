@@ -1,41 +1,53 @@
-import os
-import sys
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-'''This is a test based on 10 sections from traject 16-4 of the SAFE project'''
+import src.defaults.vrtool_config as case_config
+import src.FloodDefenceSystem.DikeTraject as DikeTraject
+import tools.RunModel as runFullModel
+from src.defaults.vrtool_config import VrtoolConfig
+from tests import get_test_results_dir, test_data
 
-@pytest.mark.parametrize("casename",['integrated_SAFE_16-3_small'])
-def test_integrated_run(casename):
-    '''This test so far only checks the output values after optimization.
-    The test should eventually e split for the different steps in the computation (assessment, measures and optimization)'''
-    sys.path.append(os.getcwd() + '\\{}'.format(casename))
-    import config_test as case_config
+"""This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
-    sys.path.append('../../src')
-    from FloodDefenceSystem.DikeTraject import DikeTraject
-    from tools.RunModel import runFullModel
 
-    TestTrajectObject = DikeTraject(traject=case_config.traject)
+class TestAcceptance:
+    @pytest.mark.parametrize(
+        "casename, traject", [("integrated_SAFE_16-3_small", "16-3")]
+    )
+    def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
+        """This test so far only checks the output values after optimization.
+        The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
+        TestTrajectObject = DikeTraject(traject=traject)
 
-    TestTrajectObject.ReadAllTrajectInput(input_path=case_config.path)
+        test_data_input_directory = Path.joinpath(test_data, casename)
+        TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
-    AllStrategies, AllSolutions = runFullModel(TestTrajectObject,case_config)
+        test_config = VrtoolConfig()
+        test_results_dir = get_test_results_dir(request)
+        test_config.directory = test_results_dir
+        AllStrategies, AllSolutions = runFullModel(TestTrajectObject, test_config)
 
-    reference_path = Path(os.getcwd() + '\\{}\\reference'.format(casename))
+        comparison_errors = []
+        files_to_compare = [
+            "TakenMeasures_Doorsnede-eisen.csv",
+            "TakenMeasures_Veiligheidsrendement.csv",
+            "TotalCostValues_Greedy.csv",
+        ]
 
-    comparison_errors = []
+        reference_path = Path.joinpath(test_data, casename, "reference")
+        for file in files_to_compare:
+            reference = pd.read_csv(
+                reference_path.joinpath("results", file), index_col=0
+            )
+            result = pd.read_csv(
+                test_results_dir.joinpath("results", file), index_col=0
+            )
+            if not reference.equals(result):
+                comparison_errors.append("{} is different.".format(file))
 
-    files_to_compare = ['TakenMeasures_Doorsnede-eisen.csv',
-                        'TakenMeasures_Veiligheidsrendement.csv',
-                        'TotalCostValues_Greedy.csv']
-    for file in files_to_compare:
-        reference = pd.read_csv(reference_path.joinpath('results',file),index_col=0)
-        result    = pd.read_csv(case_config.directory.joinpath('results',file),index_col=0)
-        if not reference.equals(result):
-            comparison_errors.append('{} is different.'.format(file))
-
-    # assert no error message has been registered, else print messages
-    assert not comparison_errors, "errors occured:\n{}".format("\n".join(comparison_errors))
+        # assert no error message has been registered, else print messages
+        assert not comparison_errors, "errors occured:\n{}".format(
+            "\n".join(comparison_errors)
+        )
