@@ -18,13 +18,14 @@ class TestAcceptance:
     def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
         """This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        test_config = VrtoolConfig()
+        test_data_input_directory = Path.joinpath(test_data, casename)
         test_results_dir = get_test_results_dir(request)
+
+        test_config = VrtoolConfig()
+        test_config.input_directory = test_data_input_directory
         test_config.directory = test_results_dir
 
         TestTrajectObject = DikeTraject(test_config, traject=traject)
-
-        test_data_input_directory = Path.joinpath(test_data, casename)
         TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
         AllStrategies, AllSolutions = runFullModel(TestTrajectObject, test_config)

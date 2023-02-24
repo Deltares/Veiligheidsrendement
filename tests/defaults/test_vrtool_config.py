@@ -36,6 +36,7 @@ class TestVrtoolConfig:
             "directory",
             "language",
             "timing",
+            "input_directory",
             "t_0",
             "T",
             "mechanisms",
@@ -78,6 +79,7 @@ class TestVrtoolConfig:
         assert _config.directory is None
         assert _config.language == "EN"
         assert not _config.timing
+        assert _config.input_directory is None
 
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]

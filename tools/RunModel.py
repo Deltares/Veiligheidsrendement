@@ -163,7 +163,9 @@ def runFullModel(
         # Calculate per section, for each measure the cost-reliability-time relations:
         for i in TrajectObject.Sections:
             AllSolutions[i.name] = Solutions(i)
-            AllSolutions[i.name].fillSolutions(config.path.joinpath(i.name + ".xlsx"))
+            AllSolutions[i.name].fillSolutions(
+                config.input_directory.joinpath(i.name + ".xlsx")
+            )
             AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
 
     for i in TrajectObject.Sections:
@@ -342,9 +344,7 @@ def runFullModel(
                 # plot beta time for all measure steps for each strategy
                 if plot_mode == "extensive":
                     TargetReliabilityBased.plotBetaTime(
-                        TrajectObject,
-                        typ="single",
-                        path=config.directory
+                        TrajectObject, typ="single", path=config.directory
                     )
 
                 TargetReliabilityBased = replaceNames(

@@ -41,6 +41,7 @@ class VrtoolConfig:
     directory: Path = None
     language: str = "EN"
     timing: bool = False
+    input_directory: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
     # year the computation starts
