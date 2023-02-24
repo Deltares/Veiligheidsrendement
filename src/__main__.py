@@ -13,7 +13,7 @@ def cli():
 @cli.command(name="assessment", help="Validation of the model in the given directory.")
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_assessment(**kwargs):
-    logging.info("Assess, {0}!".format(kwargs["name"]))
+    logging.info("Assess, {0}!".format(kwargs["model_directory"]))
 
 
 @cli.command(
@@ -22,7 +22,7 @@ def run_step_assessment(**kwargs):
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_measures(**kwargs):
-    logging.info("Measure, {0}!".format(kwargs["name"]))
+    logging.info("Measure, {0}!".format(kwargs["model_directory"]))
 
 
 @cli.command(
@@ -30,7 +30,7 @@ def run_step_measures(**kwargs):
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_optimization(**kwargs):
-    logging.info("Optimize, {0}!".format(kwargs["name"]))
+    logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
 
 
 if __name__ == "__main__":
