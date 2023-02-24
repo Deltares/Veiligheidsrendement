@@ -36,7 +36,7 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
     ```
     | Note, the above steps are based on a Windows setup. If you are not familiar with Git we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
-2. Navigate to your Koswat repository and then install the koswat package with your preferred step:
+2. Navigate to your `Veiligheidsrendement` repository and then install the `vrtool` package with your preferred step:
 
     1. With [Anaconda](https://www.anaconda.com/) (our recommendation):    
         ```bash
