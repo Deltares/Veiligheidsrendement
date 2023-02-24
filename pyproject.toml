@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "veiligheidsrendement tool"
+name = "vrtool"
 version = "0.0.1"
 description = ""
 authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
