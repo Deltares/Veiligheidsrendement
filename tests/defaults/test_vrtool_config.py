@@ -62,9 +62,10 @@ class TestVrtoolConfig:
 
         # 3. Verify expectations.
         assert isinstance(_config, VrtoolConfig)
+
         expected_set = set(_expected_keys)
-        _different_entries = expected_set - set(asdict(_config).keys())
-        _different_entries.update(set(asdict(_config).keys()) - set(_expected_keys))
+        actual_keys_set = set(asdict(_config).keys())
+        _different_entries = expected_set.symmetric_difference(actual_keys_set)
         assert not any(
             _different_entries
         ), "Mismatch between expected entries and retrieved: {}".format(
