@@ -59,20 +59,20 @@ class SoilReinforcement(Measure):
         mechanisms = DikeSection.Reliability.Mechanisms.keys()
         crest_step = self.crest_step
         berm_step = self.berm_step
-        crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], np.int(1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step))
+        crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], np.int_(1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step))
         #TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
         if self.parameters['Direction'] == 'outward':
             if np.size(berm_step)>1:
                 max_berm = self.parameters['max_outward']+self.parameters['max_inward']
                 bermrange = berm_step[:len(np.where((berm_step <= max_berm))[0])]
             else:
-                bermrange = np.linspace(0., self.parameters['max_outward'], np.int(1+(self.parameters['max_outward']/berm_step)))
+                bermrange = np.linspace(0., self.parameters['max_outward'], np.int_(1+(self.parameters['max_outward']/berm_step)))
         elif self.parameters['Direction'] == 'inward':
             if np.size(berm_step)>1:
                 max_berm = self.parameters['max_inward']
                 bermrange = berm_step[:len(np.where((berm_step <= max_berm))[0])]
             else:
-                bermrange = np.linspace(0., self.parameters['max_inward'], np.int(1+(self.parameters['max_inward']/berm_step)))
+                bermrange = np.linspace(0., self.parameters['max_inward'], np.int_(1+(self.parameters['max_inward']/berm_step)))
         else:
             raise Exception('unkown direction')
 
