@@ -87,8 +87,11 @@ class SoilReinforcement(Measure):
         self.measures = []
         if self.parameters['StabilityScreen'] == 'yes':
             if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:   
-                self.parameters['Depth'] = max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability[
-                                               '0'].Input.input['d_cover'][0] + 1., 8.])
+                d_cover_input = DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover']
+                if d_cover_input.size > 1:
+                    print("d_cover has more values than 1.")
+
+                self.parameters['Depth'] = max([d_cover_input[0] + 1., 8.])
             else:
                 self.parameters['Depth'] = 6. #TODO: implement a better depth estimate based on d_cover
 
