@@ -306,7 +306,7 @@ class CustomMeasure(Measure):
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij])
 
                 #only adapt after year of implementation:
-                if np.int(ij) >= self.parameters['year']:
+                if np.int_(ij) >= self.parameters['year']:
                     #remove other input:
                     if i == 'Overflow':
                         if self.parameters['h_crest_new'] != None:
