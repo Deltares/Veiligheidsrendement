@@ -29,6 +29,7 @@ class Measure():
         self.input_directory = config.input_directory
         self.t_0 = config.t_0
         self.geometry_plot = config.geometry_plot
+        self.unit_costs = config.unit_costs
 
     def evaluateMeasure(self,DikeSection,TrajectInfo,preserve_slope = False):
         raise Exception('define subclass of measure')
@@ -39,7 +40,7 @@ class Measure():
     #     mechanisms = DikeSection.Reliability.Mechanisms.keys()
     #     SFincrease = 0.2        #for stability screen
     #     if config.geometry_plot:
-    #         plt.figure(1000)
+    #         plt.figure(1000) 
     #         createDir(config.directory.joinpath('figures',DikeSection.name,'Geometry'))
 
         #different types of measures:
@@ -110,7 +111,7 @@ class SoilReinforcement(Measure):
                 self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
                                                                                                         self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in})
 
-            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'],section=DikeSection.name)
+            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'],section=DikeSection.name)
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
 
@@ -140,7 +141,7 @@ class DiaphragmWall(Measure):
         #Only 1 parameterized version with a lifetime of 100 years
         self.measures = {}
         self.measures['DiaphragmWall'] = 'yes'
-        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
+        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs)
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
         for i in mechanisms:
@@ -182,7 +183,7 @@ class StabilityScreen(Measure):
         else:
             #TODO remove shaky assumption on depth
             self.parameters['Depth'] = 6.
-        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
+        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs)
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
         for i in mechanisms:
@@ -221,7 +222,7 @@ class VerticalGeotextile(Measure):
         # Only 1 parameterized version with a lifetime of 50 years
         self.measures = {}
         self.measures['VZG'] = 'yes'
-        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length)
+        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs)
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
 
@@ -684,29 +685,29 @@ def DetermineNewGeometry(geometry_change, direction, maxbermout, initial, geomet
 
 
 #Script to determine the costs of a reinforcement:
-def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing = False, area_extra = False, area_excavated = False, direction = False, section = ''):
+def DetermineCosts(parameters, type, length, unit_costs:dict, dcrest = 0., dberm_in = 0., housing = False, area_extra = False, area_excavated = False, direction = False, section = ''):
     if (type == 'Soil reinforcement') and (direction == 'outward') and (dberm_in >0.):
         #as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
         print('Warning: encountered outward reinforcement with inward berm. Cost computation might be inaccurate')
     if type == 'Soil reinforcement':
      if direction == 'inward':
-         C = config.unit_cost['Inward added volume'] * area_extra * length + config.unit_cost['Inward starting costs'] *length
+         C = unit_costs['Inward added volume'] * area_extra * length + unit_costs['Inward starting costs'] *length
      elif direction == 'outward':
          volume_excavated = area_excavated * length
          volume_extra = area_extra *length
-         reusable_volume = config.unit_cost['Outward reuse factor'] * volume_excavated
+         reusable_volume = unit_costs['Outward reuse factor'] * volume_excavated
          #excavate and remove part of existing profile:
-         C = config.unit_cost['Outward removed volume'] * (volume_excavated-reusable_volume)
+         C = unit_costs['Outward removed volume'] * (volume_excavated-reusable_volume)
 
          #apply reusable volume
-         C += config.unit_cost['Outward reused volume'] * reusable_volume
+         C += unit_costs['Outward reused volume'] * reusable_volume
          remaining_volume = volume_extra - reusable_volume
 
          #add additional soil:
-         C += config.unit_cost['Outward added volume'] * remaining_volume
+         C += unit_costs['Outward added volume'] * remaining_volume
 
          #compensate:
-         C += config.unit_cost['Outward removed volume'] * config.unit_cost['Outward compensation factor'] * volume_extra
+         C += unit_costs['Outward removed volume'] * unit_costs['Outward compensation factor'] * volume_extra
 
 
      else:
@@ -723,18 +724,18 @@ def DetermineCosts(parameters, type, length, dcrest = 0., dberm_in = 0., housing
 
     #add costs for stability screen
      if parameters['StabilityScreen'] == 'yes':
-         C += config.unit_cost['Sheetpile'] * parameters['Depth'] * length
+         C += unit_costs['Sheetpile'] * parameters['Depth'] * length
 
      if dcrest >0.:
-         C += config.unit_cost['Road renewal'] * length
+         C += unit_costs['Road renewal'] * length
 
      #x = map(int, self.parameters['house_removal'].split(';'))
     elif type == 'Vertical Geotextile':
-     C = config.unit_cost['Vertical Geotextile'] * length
+     C = unit_costs['Vertical Geotextile'] * length
     elif type == 'Diaphragm Wall':
-     C = config.unit_cost['Diaphragm wall'] * length
+     C = unit_costs['Diaphragm wall'] * length
     elif type == 'Stability Screen':
-     C = config.unit_cost['Sheetpile'] * parameters['Depth'] * length
+     C = unit_costs['Sheetpile'] * parameters['Depth'] * length
     else:
      print('Unknown type')
     return C
