@@ -292,7 +292,7 @@ def calcTrajectProb(base, horizon=False, datatype="DataFrame", ts=None, mechs=Fa
                 betas = base.xs(i, level="mechanism").values.astype("float")
             else:
                 betas = base[i]
-            beta_interp = interp1d(np.array(ts).astype(np.int), betas)
+            beta_interp = interp1d(np.array(ts).astype(np.int_), betas)
             pfs[i] = ProbabilisticFunctions.beta_to_pf(beta_interp(trange))
             # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
             pnonfs = 1 - pfs[i]
@@ -404,7 +404,9 @@ def SolveMIP(MIPModel):
     return MixedIntegerSolution
 
 
-def evaluateRisk(init_overflow_risk, init_geo_risk, Strategy, n, sh, sg, config:VrtoolConfig):
+def evaluateRisk(
+    init_overflow_risk, init_geo_risk, Strategy, n, sh, sg, config: VrtoolConfig
+):
     for i in config.mechanisms:
         if i == "Overflow":
             init_overflow_risk[n, :] = Strategy.RiskOverflow[n, sh, :]
