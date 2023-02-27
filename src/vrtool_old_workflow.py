@@ -20,6 +20,12 @@ from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeSection import DikeSection
 from src.FloodDefenceSystem.DikeTraject import DikeTraject
 
+"""
+!!IMPORTANT!!
+This file is deprecated in favor of the /run_workflows module which should be used instead.
+Use the contents of this file for reference purposes.
+"""
+
 
 def run_model_old_approach(vr_config: VrtoolConfig, plot_mode: str):
     """This is the main routine for a "SAFE"-type calculation
@@ -124,11 +130,12 @@ def _step_safety_assessment(
     logging.info("Finished step 1: assessment of current situation")
 
     # store stuff:
-    _save_path = None
     if save_to_file:
         # Save intermediate results to shelf:
-        _save_path = vr_config.directory.joinpath("AfterStep1.out")
-        _save_intermediate_results(_save_path, dict(SelectedTraject=selected_traject))
+        _save_intermediate_results(
+            vr_config.directory.joinpath("AfterStep1.out"),
+            dict(SelectedTraject=selected_traject),
+        )
 
 
 def _step_measures(
