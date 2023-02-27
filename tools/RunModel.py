@@ -231,7 +231,7 @@ def runFullModel(
         for i in config.design_methods:
             if i in ["TC", "Total Cost", "Optimized", "Greedy", "Veiligheidsrendement"]:
                 # Initialize a GreedyStrategy:
-                GreedyOptimization = GreedyStrategy(i)
+                GreedyOptimization = GreedyStrategy(i, config)
 
                 # Combine available measures
                 GreedyOptimization.combine(
