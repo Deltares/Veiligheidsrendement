@@ -43,15 +43,6 @@ def runFullModel(
     if config.timing:
         start = time.time()
 
-    # Make a few dirs if they dont exist yet:
-    if not config.directory.is_dir():
-        config.directory.mkdir(parents=True, exist_ok=True)
-        if plot_mode != "test":
-            config.directory.joinpath("figures").mkdir(parents=True, exist_ok=True)
-        config.directory.joinpath("results", "investment_steps").mkdir(
-            parents=True, exist_ok=True
-        )
-
     ## STEP 1: SAFETY ASSESSMENT
     print("Start step 1: safety assessment")
 

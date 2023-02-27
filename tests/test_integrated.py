@@ -25,6 +25,10 @@ class TestAcceptance:
         test_config.input_directory = test_data_input_directory
         test_config.directory = test_results_dir
 
+        # Make a few dirs if they dont exist yet:
+        test_config.directory.joinpath("figures").mkdir(parents=True)
+        test_config.directory.joinpath("results", "investment_steps").mkdir(parents=True)
+
         TestTrajectObject = DikeTraject(test_config, traject=traject)
         TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
