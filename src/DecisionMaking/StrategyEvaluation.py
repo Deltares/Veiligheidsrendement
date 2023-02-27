@@ -404,7 +404,7 @@ def SolveMIP(MIPModel):
     return MixedIntegerSolution
 
 
-def evaluateRisk(init_overflow_risk, init_geo_risk, Strategy, n, sh, sg):
+def evaluateRisk(init_overflow_risk, init_geo_risk, Strategy, n, sh, sg, config:VrtoolConfig):
     for i in config.mechanisms:
         if i == "Overflow":
             init_overflow_risk[n, :] = Strategy.RiskOverflow[n, sh, :]
