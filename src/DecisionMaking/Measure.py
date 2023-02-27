@@ -24,6 +24,7 @@ class Measure():
             if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
                 self.parameters[inputs.index[i]] = inputs[i]
         
+        self.config = config
         self.crest_step = config.crest_step
         self.berm_step = config.berm_step
         self.input_directory = config.input_directory
@@ -117,7 +118,7 @@ class SoilReinforcement(Measure):
 
             for i in mechanisms:
                 calc_type = DikeSection.MechanismData[i][1]
-                self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, measure_year=self.parameters['year'])
+                self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config, measure_year=self.parameters['year'])
                 for ij, reliability_input in self.measures[-1]['Reliability'].Mechanisms[i].Reliability.items():
                     #for all time steps considered.
                     #first copy the data
@@ -146,7 +147,7 @@ class DiaphragmWall(Measure):
         self.measures['Reliability'].Mechanisms = {}
         for i in mechanisms:
             calc_type = DikeSection.MechanismData[i][1]
-            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
+            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
                 if float(ij) >= self.parameters['year']:
@@ -188,7 +189,7 @@ class StabilityScreen(Measure):
         self.measures['Reliability'].Mechanisms = {}
         for i in mechanisms:
             calc_type = DikeSection.MechanismData[i][1]
-            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
+            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
                 if i == 'Overflow' or i == 'Piping': #Copy results
@@ -228,7 +229,7 @@ class VerticalGeotextile(Measure):
 
         for i in mechanisms:
             calc_type = DikeSection.MechanismData[i][1]
-            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type)
+            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(
                     DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
@@ -300,7 +301,7 @@ class CustomMeasure(Measure):
         for i in mechanisms:
 
 
-            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, computation_type=False)
+            self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, computation_type=False, config = self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij])
 
