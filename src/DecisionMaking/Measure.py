@@ -86,9 +86,9 @@ class SoilReinforcement(Measure):
 
         self.measures = []
         if self.parameters['StabilityScreen'] == 'yes':
-            if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:
-                self.parameters['Depth'] = np.max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability[
-                                               '0'].Input.input['d_cover'] + 1., 8.])
+            if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:   
+                self.parameters['Depth'] = max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability[
+                                               '0'].Input.input['d_cover'][0] + 1., 8.])
             else:
                 self.parameters['Depth'] = 6. #TODO: implement a better depth estimate based on d_cover
 
@@ -180,7 +180,7 @@ class StabilityScreen(Measure):
         self.measures = {}
         self.measures['Stability Screen'] = 'yes'
         if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:
-            self.parameters['Depth'] = np.max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'] + 1., 8.])
+            self.parameters['Depth'] = max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'][0] + 1., 8.])
         else:
             #TODO remove shaky assumption on depth
             self.parameters['Depth'] = 6.
