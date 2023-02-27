@@ -57,6 +57,7 @@ class TestVrtoolConfig:
             "assessment_plot_years",
             "geometry_plot",
             "beta_cost_settings",
+            "design_methods",
             "unit_costs",
         ]
 
@@ -105,5 +106,6 @@ class TestVrtoolConfig:
         assert _config.assessment_plot_years == [0, 20, 50]
         assert not _config.geometry_plot
         assert _config.beta_cost_settings == {"symbols": True, "markersize": 10}
+        assert _config.design_methods == ["Veiligheidsrendement", "Doorsnede-eisen"]
         assert isinstance(_config.unit_costs, dict)
         assert any(_config.unit_costs.items())

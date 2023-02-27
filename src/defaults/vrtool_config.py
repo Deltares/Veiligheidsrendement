@@ -111,4 +111,9 @@ class VrtoolConfig:
             "markersize": 10,
         }
     )
+
+    design_methods: list[str] = field(
+        default_factory=lambda: ["Veiligheidsrendement", "Doorsnede-eisen"]
+    )
+
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
