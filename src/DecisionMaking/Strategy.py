@@ -41,7 +41,7 @@ class Strategy:
         self.r = r
 
         self.config = config
-        self.OI_Year = config.OI_year
+        self.OI_year = config.OI_year
         self.OI_horizon = config.OI_horizon
         self.mechanisms = config.mechanisms
         self.T = config.T

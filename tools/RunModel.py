@@ -309,7 +309,7 @@ def runFullModel(
 
             elif i in ["OI", "TargetReliability", "Doorsnede-eisen"]:
                 # Initialize a strategy type (i.e combination of objective & constraints)
-                TargetReliabilityBased = TargetReliabilityStrategy(i)
+                TargetReliabilityBased = TargetReliabilityStrategy(i, config)
                 # Combine available measures
                 TargetReliabilityBased.combine(
                     TrajectObject, AllSolutions, filtering="off", splitparams=True

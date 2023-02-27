@@ -19,13 +19,12 @@ class TestAcceptance:
         """This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
         test_data_input_directory = Path.joinpath(test_data, casename)
-        test_results_dir = get_test_results_dir(request)
+        test_results_dir = get_test_results_dir(request).joinpath(casename)
 
         test_config = VrtoolConfig()
         test_config.input_directory = test_data_input_directory
         test_config.directory = test_results_dir
 
-        # Make a few dirs if they dont exist yet:
         test_config.directory.joinpath("figures").mkdir(parents=True)
         test_config.directory.joinpath("results", "investment_steps").mkdir(parents=True)
 
