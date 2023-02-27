@@ -855,9 +855,10 @@ def DetermineNewGeometry(
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
     If this is not the case and it is input of the old type, first it is transformed to obey that.
     crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
-    In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT, such that after reinforcement the height is crest_extra + increment.
-    It has to be ensured that the BUK has x = 0, and that x increases inward"""
-    initial = ModifyGeometryInput(initial, berm_height)
+    In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
+    such that after reinforcement the height is crest_extra + increment.
+    It has to be ensured that the BUK has x = 0, and that x increases inward'''
+    initial = ModifyGeometryInput(initial,bermheight)
     # maxBermOut=20
     # if len(initial) == 6:
     #     noberm = False
@@ -920,8 +921,7 @@ def DetermineNewGeometry(
         BIT_dx = 0.0
     # z_innertoe = (initial.z[int(initial[initial.type == 'innertoe'].index.values)])
 
-    if direction == "outward":
-        warnings.warn("Outward reinforcement is not updated!")
+    if direction == 'outward':
         # nieuwe opzet:
         # if outward:
         #    verplaats buitenkruin en buitenteen
@@ -936,68 +936,52 @@ def DetermineNewGeometry(
         # optional extension: optimize amount of outward/inward reinforcement
         new_geometry = copy.deepcopy(initial)
 
-        if dberm <= max_berm_out:
+        dout = BUT_dx
+        din  = BIT_dx
+        if dberm <= maxbermout:
 
-            for count, i in new_geometry.iterrows():
-                # Run over points
-                if initial.type[i] == "extra":
-                    new_geometry[i][0] = geometry[i][0]
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "innertoe":
-                    new_geometry[i][0] = geometry[i][0] + dberm + dout - din
-                    new_geometry[i][1] = geometry[i][1]
-                    dhouse = max(0, -(dberm + dout - din))
-                elif initial.type[i] == "innerberm1":
-                    new_geometry[i][0] = geometry[i][0] + dberm + dout - din
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "innerberm2":
-                    new_geometry[i][0] = geometry[i][0] + dberm + dout - din
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "innercrest":
-                    new_geometry[i][0] = geometry[i][0] + dberm + dout
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == "outercrest":
-                    new_geometry[i][0] = geometry[i][0] + dberm + dout
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == "outertoe":
-                    new_geometry[i][0] = geometry[i][0] + dberm
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "extra2":
-                    new_geometry[i][0] = geometry[i][0] + dberm
-                    new_geometry[i][1] = geometry[i][1]
-            if (initial.type == "extra").any():
+            hasExtra = False
+            for ind, data in new_geometry.iterrows():
+            # Run over points
+                if ind == 'EXT':
+                    xz = data.values
+                    hasExtra = True
+                elif ind in ['BUT_0', 'BIT_0']:
+                    xz = data.values
+                elif ind == 'BIT':
+                    xz = [data.x + dberm + dout - din, data.z]
+                    dhouse = max(0,-(dberm + dout - din))
+                elif ind in ['BBL', 'EBL']:
+                    xz = [data.x + dberm + dout - din, data.z]
+                elif ind in ['BIK','BUK']:
+                    xz = [data.x + dberm + dout, data.z + dcrest]
+                elif ind == 'BUT':
+                    xz = [data.x + dberm, data.z]
+                new_geometry.loc[ind] = pd.Series(xz,index=['x','z'])
+
+            if hasExtra:
                 if dberm > 0 or dcrest > 0:
                     new_geometry = addExtra(initial, new_geometry)
 
         else:
-            berm_in = dberm - max_berm_out
-            for i in range(len(new_geometry)):
+            berm_in = dberm - maxbermout
+            for ind, data in new_geometry.iterrows():
                 # Run over points
-                if initial.type[i] == "extra":
-                    new_geometry[i][0] = geometry[i][0]
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "innertoe":
-                    new_geometry[i][0] = geometry[i][0] - berm_in + dout - din
-                    new_geometry[i][1] = geometry[i][1]
-                    dhouse = max(0, -(-berm_in + dout - din))
-                elif initial.type[i] == "innerberm1":
-                    new_geometry[i][0] = geometry[i][0] - berm_in + dout - din
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "innerberm2":
-                    new_geometry[i][0] = geometry[i][0] + max_berm_out + dout - din
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "innercrest":
-                    new_geometry[i][0] = geometry[i][0] + max_berm_out + dout
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == "outercrest":
-                    new_geometry[i][0] = geometry[i][0] + max_berm_out + dout
-                    new_geometry[i][1] = geometry[i][1] + dcrest
-                elif initial.type[i] == "outertoe":
-                    new_geometry[i][0] = geometry[i][0] + max_berm_out
-                    new_geometry[i][1] = geometry[i][1]
-                elif initial.type[i] == "extra2":
-                    new_geometry[i][0] = geometry[i][0] + max_berm_out
-                    new_geometry[i][1] = geometry[i][1]
+                if ind in ['EXT', 'BUT_0', 'BIT_0']:
+                    xz = data.values
+                elif ind == 'BIT':
+                    xz = [data.x - berm_in + dout - din, data.z]
+                    dhouse = max(0,-(-berm_in + dout - din))
+                elif ind == 'BBL':
+                    xz = [data.x - berm_in + dout - din, data.z]
+                elif ind == 'EBL':
+                    xz = [data.x + maxbermout + dout - din, data.z]
+                elif ind in ['BIK','BUK']:
+                    xz = [data.x + maxbermout + dout, data.z + dcrest]
+                elif ind == 'BUT':
+                    xz = [data.x + maxbermout, data.z]
+                new_geometry.loc[ind] = pd.Series(xz,index=['x','z'])
+
             # if noberm:  # len(initial) == 4:
             #     if dberm > 0:
             #         new_geometry = addBerm(initial, geometry, new_geometry, bermheight, dberm)
