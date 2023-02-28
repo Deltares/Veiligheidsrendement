@@ -21,6 +21,8 @@ class RunOptimization(VrToolRunProtocol):
     def __init__(
         self, results_measures: ResultsMeasures, plot_mode: VrToolPlotMode
     ) -> None:
+        if not isinstance(results_measures, ResultsMeasures):
+            raise ValueError("Required valid instance of ResultsMeasures as argument.")
         self._solutions_dict = results_measures.solutions_dict
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config

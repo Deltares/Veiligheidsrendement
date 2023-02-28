@@ -1,9 +1,10 @@
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeTraject import DikeTraject
 
 
+@runtime_checkable
 class VrToolRunResultProtocol(Protocol):
     vr_config: VrtoolConfig
     selected_traject: DikeTraject

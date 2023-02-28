@@ -32,7 +32,7 @@ class RunMeasures(VrToolRunProtocol):
         _safety_run = RunSafetyAssessment(self._plot_mode)
         _safety_run.selected_traject = self.selected_traject
         _safety_run.vr_config = self.vr_config
-        _safety_results = _safety_run.run()
+        _safety_run.run()
 
         # Get measurements solutions
         _results_measures = ResultsMeasures()
