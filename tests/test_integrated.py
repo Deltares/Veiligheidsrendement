@@ -13,7 +13,12 @@ from tools.RunModel import runFullModel
 
 class TestAcceptance:
     @pytest.mark.parametrize(
-        "casename, traject", [("integrated_SAFE_16-3_small", "16-3")]
+        "casename, traject",
+        [
+            ("integrated_SAFE_16-3_small", "16-3"),
+            ("TestCase1_38-1_no_housing", "38-1"),
+            ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        ],
     )
     def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
         """This test so far only checks the output values after optimization.
@@ -26,7 +31,9 @@ class TestAcceptance:
         test_config.directory = test_results_dir
 
         test_config.directory.joinpath("figures").mkdir(parents=True)
-        test_config.directory.joinpath("results", "investment_steps").mkdir(parents=True)
+        test_config.directory.joinpath("results", "investment_steps").mkdir(
+            parents=True
+        )
 
         TestTrajectObject = DikeTraject(test_config, traject=traject)
         TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
