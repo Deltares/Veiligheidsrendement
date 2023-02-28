@@ -1,31 +1,12 @@
 from __future__ import annotations
 
 import shelve
-from enum import Enum
 from pathlib import Path
 from typing import List, Protocol
 
 from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeTraject import DikeTraject
-
-
-class VrToolPlotMode(Enum):
-    STANDARD = 0
-    EXTENSIVE = 1
-
-
-class VrToolRunResultProtocol(Protocol):
-    vr_config: VrtoolConfig
-    selected_traject: DikeTraject
-
-    def plot_results(self):
-        pass
-
-    def save_results(self):
-        pass
-
-    def load_results(self):
-        pass
+from src.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
 class VrToolRunProtocol(Protocol):
