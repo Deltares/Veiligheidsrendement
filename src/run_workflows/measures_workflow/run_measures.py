@@ -42,14 +42,6 @@ class RunMeasures(VrToolRunProtocol):
             _results_measures.solutions_dict.update(
                 dict(map(self._get_section_solution, self.selected_traject.Sections))
             )
-            # for i in self.selected_traject.Sections:
-            #     _results_measures.solutions_dict[i.name] = Solutions(i)
-            #     _results_measures.solutions_dict[i.name].fillSolutions(
-            #         self.vr_config.path.joinpath(i.name + ".xlsx")
-            #     )
-            #     _results_measures.solutions_dict[i.name].evaluateSolutions(
-            #         i, self.selected_traject.GeneralInfo
-            #     )
 
         for i in self.selected_traject.Sections:
             _results_measures.solutions_dict[i.name].SolutionstoDataFrame(

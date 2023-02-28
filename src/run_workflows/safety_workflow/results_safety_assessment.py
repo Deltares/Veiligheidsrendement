@@ -1,5 +1,6 @@
 import logging
 import shelve
+from pathlib import Path
 
 from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem import DikeTraject
@@ -29,17 +30,25 @@ class ResultsSafetyAssessment(VrToolRunResultProtocol):
             case_settings=_case_settings,
         )
 
+    @property
+    def _step_output_filepath(self) -> Path:
+        """
+        Internal property to define where is located the output for the Safety Assessment step.
+
+        Returns:
+            Path: Instance representing the file location.
+        """
+        return self.vr_config.output_directory / "AfterStep1.out"
+
     def save_results(self):
         # Save intermediate results to shelf:
-        _output_file = self.vr_config.output_directory.joinpath("AfterStep1.out")
-        my_shelf = shelve.open(str(_output_file), "n")
+        my_shelf = shelve.open(str(self._step_output_filepath), "n")
         my_shelf["SelectedTraject"] = self.selected_traject
         my_shelf.close()
 
     def load_results(self):
-        _step_one_results = self.vr_config.output_directory.joinpath("AfterStep1.out")
-        if _step_one_results.exists():
-            _shelf = shelve.open(str(_step_one_results))
+        if self._step_output_filepath.exists():
+            _shelf = shelve.open(str(self._step_output_filepath))
             self.selected_traject = _shelf["SelectedTraject"]
             _shelf.close()
             logging.info("Loaded Selected Traject from file")

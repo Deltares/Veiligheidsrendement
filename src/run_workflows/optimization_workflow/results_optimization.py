@@ -1,5 +1,6 @@
 import logging
 import shelve
+from pathlib import Path
 from typing import Dict, List
 
 from src.DecisionMaking.Solutions import Solutions
@@ -14,11 +15,20 @@ class ResultsOptimization(VrToolRunResultProtocol):
     def __init__(self) -> None:
         self.results_solutions = {}
         self.results_strategies = []
+    
+    @property
+    def _step_output_filepath(self) -> Path:
+        """
+        Internal property to define where is located the output for the Optimization step.
+
+        Returns:
+            Path: Instance representing the file location.
+        """
+        return self.vr_config.output_directory / "FINAL_RESULT.out"
 
     def load_results(self):
-        _step_3_results = self.vr_config.output_directory / "FINAL_RESULT.out"
-        if _step_3_results.exists():
-            _shelf = shelve.open(str(_step_3_results))
+        if self._step_output_filepath.exists():
+            _shelf = shelve.open(str(self._step_output_filepath))
             self.selected_traject = _shelf["SelectedTraject"]
             self.results_solutions = _shelf["AllSolutions"]
             self.results_strategies = _shelf["AllStrategies"]
@@ -28,8 +38,7 @@ class ResultsOptimization(VrToolRunResultProtocol):
             )
 
     def save_results(self):
-        _step_3_results = self.vr_config.output_directory / "FINAL_RESULT.out"
-        _shelf = shelve.open(str(_step_3_results), "n")
+        _shelf = shelve.open(str(self._step_output_filepath), "n")
         _shelf["SelectedTraject"] = self.selected_traject
         _shelf["AllSolutions"] = self.results_solutions
         _shelf["AllStrategies"] = self.results_strategies

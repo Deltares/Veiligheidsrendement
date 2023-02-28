@@ -9,7 +9,6 @@ from src.run_workflows.measures_workflow.run_measures import RunMeasures
 from src.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
-from src.run_workflows.vrtool_run_protocol import load_traject
 from tests import get_test_results_dir, test_data
 from tools.RunModel import runFullModel
 
@@ -42,7 +41,7 @@ class TestAcceptance:
 
         # 2. Run test.
         # Step 0. Load Traject
-        _selected_traject = load_traject(_vr_config)
+        _selected_traject = DikeTraject.from_vr_config(_vr_config)
         assert isinstance(_selected_traject, DikeTraject)
 
         # Step 1. Safety assessment.

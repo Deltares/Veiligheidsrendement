@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import shelve
-from pathlib import Path
-from typing import List, Protocol
+from typing import Protocol
 
 from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeTraject import DikeTraject
@@ -14,49 +12,10 @@ class VrToolRunProtocol(Protocol):
     selected_traject: DikeTraject
 
     def run(self) -> VrToolRunResultProtocol:
+        """
+        Runs a Veiligheidsrendement step based on the instances of the defined `VrtoolConfig` and `DikeTraject`.
+
+        Returns:
+            VrToolRunResultProtocol: Container of all results regarding this run.
+        """
         pass
-
-
-def load_traject(vr_config: VrtoolConfig) -> DikeTraject:
-    _traject = DikeTraject(vr_config, traject=vr_config.traject)
-
-    # Process input
-    _traject.ReadAllTrajectInput(input_path=vr_config.input_directory)
-
-    return _traject
-
-
-def save_intermediate_results(filename: Path, results_dict: dict) -> None:
-    """
-    Saves the intermediate results using the `shelve` library.
-
-    Args:
-        filename (Path): Path where to export the results
-        results_dict (dict): Dictionary of values to be exported using their respective keys.
-    """
-    # make shelf
-    my_shelf = shelve.open(str(filename), "n")
-    for key, value in results_dict.items():
-        my_shelf[key] = value
-    my_shelf.close()
-
-
-def load_intermediate_results(filename: Path, results_keys: List[str]) -> dict:
-    """
-    Loads intermediate results from a provided file (`filename`) using the `shelve` library.
-
-    Args:
-        filename (Path): Path from where to load the intermediate results.
-        results_keys (List[str]): List of keys to be loaded from the intermediate results.
-
-    Returns:
-        dict: Resulting dictionary of values succesfully loaded.
-    """
-    _shelf = shelve.open(str(filename))
-    _result_dict = {
-        _result_key: _shelf[_result_key]
-        for _result_key in results_keys
-        if _result_key in _shelf.keys()
-    }
-    _shelf.close()
-    return _result_dict
