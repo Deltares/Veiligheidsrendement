@@ -5,11 +5,18 @@ import pytest
 
 from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeTraject import DikeTraject
+from src.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from src.run_workflows.measures_workflow.run_measures import RunMeasures
+from src.run_workflows.optimization_workflow.results_optimization import (
+    ResultsOptimization,
+)
 from src.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from tests import get_test_results_dir, test_data
+from tests.run_workflows.safety_workflow.test_results_safety_assessment import (
+    TestResultsSafetyAssessment,
+)
 from tools.RunModel import runFullModel
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
@@ -49,16 +56,19 @@ class TestAcceptance:
         _safety_assessment.selected_traject = _selected_traject
         _safety_assessment.vr_config = _vr_config
         _safety_result = _safety_assessment.run()
+        assert isinstance(_safety_result, TestResultsSafetyAssessment)
 
         # Step 2. Measures.
         _measures = RunMeasures(plot_mode=_plot_mode)
         _measures.selected_traject = _selected_traject
         _measures.vr_config = _vr_config
         _measures_result = _measures.run()
+        assert isinstance(_measures_result, ResultsMeasures)
 
         # Step 3. Optimization.
         _optimization = RunOptimization(_measures_result, plot_mode=_plot_mode)
         _optimization_result = _optimization.run()
+        assert isinstance(_optimization_result, ResultsOptimization)
 
         # 3. Verify expectations.
         _found_errors = []
