@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeTraject import DikeTraject
 from src.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
+@runtime_checkable
 class VrToolRunProtocol(Protocol):
     vr_config: VrtoolConfig
     selected_traject: DikeTraject
