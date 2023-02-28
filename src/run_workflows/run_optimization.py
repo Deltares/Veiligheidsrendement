@@ -1,6 +1,6 @@
 import logging
 import shelve
-from typing import Dict, List
+from typing import Callable, Dict, List, Union
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,10 @@ from src.run_workflows.vrtool_run_protocol import (
 class ResultsOptimization(VrToolRunResultProtocol):
     results_strategies: List[Strategy]
     results_solutions: Dict[str, Solutions]
+
+    def __init__(self) -> None:
+        self.results_solutions = {}
+        self.results_strategies = []
 
     def load_results(self):
         _step_3_results = self.vr_config.output_directory / "FINAL_RESULT.out"
@@ -53,162 +57,169 @@ class RunOptimization(VrToolRunProtocol):
         self.vr_config = results_measures.vr_config
         self._plot_mode = plot_mode
 
+    def _get_optimized_greedy_strategy(self, design_method: str) -> Strategy:
+        # Initialize a GreedyStrategy:
+        _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
+        _results_dir = self.vr_config.output_directory / "results"
+
+        # Combine available measures
+        _greedy_optimization.combine(
+            self.selected_traject,
+            self._solutions_dict,
+            filtering="off",
+            splitparams=True,
+        )
+
+        # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
+        _greedy_optimization.evaluate(
+            self.selected_traject,
+            self._solutions_dict,
+            splitparams=True,
+            setting="cautious",
+            f_cautious=1.5,
+            max_count=600,
+            BCstop=0.1,
+        )
+
+        # plot beta time for all measure steps for each strategy
+        if self._plot_mode == VrToolPlotMode.EXTENSIVE:
+            _greedy_optimization.plotBetaTime(
+                self.selected_traject,
+                typ="single",
+                path=self.vr_config.directory,
+            )
+
+        _greedy_optimization = self._replace_names(
+            _greedy_optimization, self._solutions_dict
+        )
+        _cost_greedy = _greedy_optimization.determineRiskCostCurve(
+            self.selected_traject
+        )
+
+        # write to csv's
+        _greedy_optimization.TakenMeasures.to_csv(
+            _results_dir.joinpath("TakenMeasures_" + _greedy_optimization.type + ".csv")
+        )
+        pd.DataFrame(
+            np.array(
+                [
+                    _cost_greedy["LCC"],
+                    _cost_greedy["TR"],
+                    np.add(_cost_greedy["LCC"], _cost_greedy["TR"]),
+                ]
+            ).T,
+            columns=["LCC", "TR", "TC"],
+        ).to_csv(
+            _results_dir / "TotalCostValues_Greedy.csv",
+            float_format="%.1f",
+        )
+        _greedy_optimization.makeSolution(
+            _results_dir.joinpath(
+                "TakenMeasures_Optimal_" + _greedy_optimization.type + ".csv",
+            ),
+            step=_cost_greedy["TC_min"] + 1,
+            type="Optimal",
+        )
+        _greedy_optimization.makeSolution(
+            _results_dir.joinpath(
+                "FinalMeasures_" + _greedy_optimization.type + ".csv"
+            ),
+            type="Final",
+        )
+        for j in _greedy_optimization.options:
+            _greedy_optimization.options[j].to_csv(
+                _results_dir.joinpath(
+                    j + "_Options_" + _greedy_optimization.type + ".csv",
+                )
+            )
+        costs = _greedy_optimization.determineRiskCostCurve(self.selected_traject)
+        _tr_costs = costs["TR"]
+        _lcc_costs = costs["LCC"]
+        pd.DataFrame(
+            np.array([_tr_costs, _lcc_costs]).reshape((len(_tr_costs), 2)),
+            columns=["TR", "LCC"],
+        ).to_csv(_results_dir / "TotalRiskCost.csv")
+
+        return _greedy_optimization
+
+    def _get_target_reliability_strategy(self, design_method: str) -> Strategy:
+        # Initialize a strategy type (i.e combination of objective & constraints)
+        _target_reliability_based = TargetReliabilityStrategy(
+            design_method, self.vr_config
+        )
+        _results_dir = self.vr_config.output_directory / "results"
+
+        # Combine available measures
+        _target_reliability_based.combine(
+            self.selected_traject,
+            self._solutions_dict,
+            filtering="off",
+            splitparams=True,
+        )
+
+        # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
+        _target_reliability_based.evaluate(
+            self.selected_traject, self._solutions_dict, splitparams=True
+        )
+        _target_reliability_based.makeSolution(
+            _results_dir.joinpath(
+                "FinalMeasures_" + _target_reliability_based.type + ".csv",
+            ),
+            type="Final",
+        )
+
+        # plot beta time for all measure steps for each strategy
+        if self._plot_mode == VrToolPlotMode.EXTENSIVE:
+            _target_reliability_based.plotBetaTime(
+                self.selected_traject,
+                typ="single",
+                path=self.vr_config.directory,
+            )
+
+        _target_reliability_based = self._replace_names(
+            _target_reliability_based, self._solutions_dict
+        )
+        # write to csv's
+        _target_reliability_based.TakenMeasures.to_csv(
+            _results_dir.joinpath(
+                "TakenMeasures_" + _target_reliability_based.type + ".csv",
+            )
+        )
+        for j in _target_reliability_based.options:
+            _target_reliability_based.options[j].to_csv(
+                _results_dir.joinpath(
+                    j + "_Options_" + _target_reliability_based.type + ".csv",
+                )
+            )
+
+        return _target_reliability_based
+
+    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], Strategy]]:
+        return {
+            "TC": self._get_optimized_greedy_strategy,
+            "Total Cost": self._get_optimized_greedy_strategy,
+            "Optimized": self._get_optimized_greedy_strategy,
+            "Greedy": self._get_optimized_greedy_strategy,
+            "Veiligheidsrendement": self._get_optimized_greedy_strategy,
+            "OI": self._get_target_reliability_strategy,
+            "TargetReliability": self._get_target_reliability_strategy,
+            "Doorsnede-eisen": self._get_target_reliability_strategy,
+        }
+
     def run(self) -> ResultsOptimization:
         _results_optimization = ResultsOptimization()
         if self.vr_config.reuse_output:
             _results_optimization.load_results()
         else:
             ## STEP 3: EVALUATE THE STRATEGIES
-            for i in self.vr_config.design_methods:
-                if i in [
-                    "TC",
-                    "Total Cost",
-                    "Optimized",
-                    "Greedy",
-                    "Veiligheidsrendement",
-                ]:
-                    # Initialize a GreedyStrategy:
-                    _greedy_optimization = GreedyStrategy(i)
-
-                    # Combine available measures
-                    _greedy_optimization.combine(
-                        self.selected_traject,
-                        self._solutions_dict,
-                        filtering="off",
-                        splitparams=True,
-                    )
-
-                    # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-                    _greedy_optimization.evaluate(
-                        self.selected_traject,
-                        self._solutions_dict,
-                        splitparams=True,
-                        setting="cautious",
-                        f_cautious=1.5,
-                        max_count=600,
-                        BCstop=0.1,
-                    )
-
-                    # plot beta time for all measure steps for each strategy
-                    if self._plot_mode == VrToolPlotMode.EXTENSIVE:
-                        _greedy_optimization.plotBetaTime(
-                            self.selected_traject,
-                            typ="single",
-                            path=self.vr_config.directory,
-                        )
-
-                    _greedy_optimization = self._replace_names(
-                        _greedy_optimization, self._solutions_dict
-                    )
-                    cost_Greedy = _greedy_optimization.determineRiskCostCurve(
-                        self.selected_traject
-                    )
-
-                    # write to csv's
-                    _results_dir = self.vr_config.directory / "results"
-                    _greedy_optimization.TakenMeasures.to_csv(
-                        _results_dir.joinpath(
-                            "TakenMeasures_" + _greedy_optimization.type + ".csv"
-                        )
-                    )
-                    pd.DataFrame(
-                        np.array(
-                            [
-                                cost_Greedy["LCC"],
-                                cost_Greedy["TR"],
-                                np.add(cost_Greedy["LCC"], cost_Greedy["TR"]),
-                            ]
-                        ).T,
-                        columns=["LCC", "TR", "TC"],
-                    ).to_csv(
-                        _results_dir / "TotalCostValues_Greedy.csv",
-                        float_format="%.1f",
-                    )
-                    _greedy_optimization.makeSolution(
-                        _results_dir.joinpath(
-                            "TakenMeasures_Optimal_"
-                            + _greedy_optimization.type
-                            + ".csv",
-                        ),
-                        step=cost_Greedy["TC_min"] + 1,
-                        type="Optimal",
-                    )
-                    _greedy_optimization.makeSolution(
-                        _results_dir.joinpath(
-                            "FinalMeasures_" + _greedy_optimization.type + ".csv"
-                        ),
-                        type="Final",
-                    )
-                    for j in _greedy_optimization.options:
-                        _greedy_optimization.options[j].to_csv(
-                            _results_dir.joinpath(
-                                j + "_Options_" + _greedy_optimization.type + ".csv",
-                            )
-                        )
-                    costs = _greedy_optimization.determineRiskCostCurve(
-                        self.selected_traject
-                    )
-                    TR = costs["TR"]
-                    LCC = costs["LCC"]
-                    pd.DataFrame(
-                        np.array([TR, LCC]).reshape((len(TR), 2)), columns=["TR", "LCC"]
-                    ).to_csv(_results_dir / "TotalRiskCost.csv")
-                    _results_optimization.results_strategies.append(
-                        _greedy_optimization
-                    )
-
-                elif i in ["OI", "TargetReliability", "Doorsnede-eisen"]:
-                    # Initialize a strategy type (i.e combination of objective & constraints)
-                    _target_reliability_based = TargetReliabilityStrategy(i)
-                    # Combine available measures
-                    _target_reliability_based.combine(
-                        self.selected_traject,
-                        self._solutions_dict,
-                        filtering="off",
-                        splitparams=True,
-                    )
-
-                    # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-                    _target_reliability_based.evaluate(
-                        self.selected_traject, self._solutions_dict, splitparams=True
-                    )
-                    _target_reliability_based.makeSolution(
-                        _results_dir.joinpath(
-                            "FinalMeasures_" + _target_reliability_based.type + ".csv",
-                        ),
-                        type="Final",
-                    )
-
-                    # plot beta time for all measure steps for each strategy
-                    if self._plot_mode == VrToolPlotMode.EXTENSIVE:
-                        _target_reliability_based.plotBetaTime(
-                            self.selected_traject,
-                            typ="single",
-                            path=self.vr_config.directory,
-                        )
-
-                    _target_reliability_based = self._replace_names(
-                        _target_reliability_based, self._solutions_dict
-                    )
-                    # write to csv's
-                    _target_reliability_based.TakenMeasures.to_csv(
-                        _results_dir.joinpath(
-                            "TakenMeasures_" + _target_reliability_based.type + ".csv",
-                        )
-                    )
-                    for j in _target_reliability_based.options:
-                        _target_reliability_based.options[j].to_csv(
-                            _results_dir.joinpath(
-                                j
-                                + "_Options_"
-                                + _target_reliability_based.type
-                                + ".csv",
-                            )
-                        )
-
-                    _results_optimization.results_strategies.append(
-                        _target_reliability_based
-                    )
+            _evaluation_mapping = self._get_evaluation_mapping()
+            _results_optimization.results_strategies.extend(
+                [
+                    _evaluation_mapping[_dm](_dm)
+                    for _dm in self.vr_config.design_methods
+                    if _dm in _evaluation_mapping.keys()
+                ]
+            )
 
         _results_optimization.selected_traject = self.selected_traject
         _results_optimization.vr_config = self.vr_config

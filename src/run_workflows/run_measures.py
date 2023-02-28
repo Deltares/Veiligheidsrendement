@@ -20,6 +20,9 @@ from src.run_workflows.vrtool_run_protocol import (
 class ResultsMeasures(VrToolRunResultProtocol):
     solutions_dict: Dict[str, Solutions]
 
+    def __init__(self) -> None:
+        self.solutions_dict = {}
+
     def plot_results(self):
         betaind_array = []
 
@@ -78,8 +81,10 @@ class RunMeasures(VrToolRunProtocol):
         selected_section: DikeSection,
     ) -> Tuple[str, Solutions]:
         # Calculate per section, for each measure the cost-reliability-time relations:
-        _solution = Solutions(selected_section)
-        _solution.fillSolutions(self.vr_config.path.joinpath(selected_section.name))
+        _solution = Solutions(selected_section, self.vr_config)
+        _solution.fillSolutions(
+            self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
+        )
         _solution.evaluateSolutions(selected_section, self.selected_traject.GeneralInfo)
         return selected_section.name, _solution
 
@@ -92,8 +97,6 @@ class RunMeasures(VrToolRunProtocol):
 
         # Get measurements solutions
         _results_measures = ResultsMeasures()
-        _results_measures.selected_traject = self.selected_traject
-        _results_measures.vr_config = self.vr_config
         if self.vr_config.reuse_output:
             _results_measures.load_results()
         else:
@@ -113,6 +116,9 @@ class RunMeasures(VrToolRunProtocol):
             _results_measures.solutions_dict[i.name].SolutionstoDataFrame(
                 filtering="off", splitparams=True
             )
+
+        _results_measures.selected_traject = self.selected_traject
+        _results_measures.vr_config = self.vr_config
 
         # Store intermediate results:
         if self.vr_config.shelves:
