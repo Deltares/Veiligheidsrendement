@@ -15,8 +15,14 @@ class VrToolPlotMode(Enum):
 
 
 class VrToolRunResultProtocol(Protocol):
-    pass
+    vr_config: VrtoolConfig
+    selected_traject: DikeTraject
 
+    def plot_results(self):
+        pass
+
+    def save_results(self):
+        pass
 
 class VrToolRunProtocol(Protocol):
     vr_config: VrtoolConfig
@@ -24,6 +30,15 @@ class VrToolRunProtocol(Protocol):
 
     def run(self) -> VrToolRunResultProtocol:
         pass
+
+
+def load_traject(vr_config: VrtoolConfig) -> DikeTraject:
+    _traject = DikeTraject(vr_config, traject=vr_config.traject)
+
+    # Process input
+    _traject.ReadAllTrajectInput(input_path=vr_config.input_directory)
+
+    return _traject
 
 
 def save_intermediate_results(filename: Path, results_dict: dict) -> None:

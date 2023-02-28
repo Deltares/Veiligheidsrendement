@@ -19,8 +19,10 @@ class RunMeasures(VrToolRunProtocol):
         self._plot_mode = plot_mode
 
     def run(self) -> VrToolRunResultProtocol:
-        RunSafetyAssessment(self._plot_mode).run()
-        _step_two_output = self.vr_config.directory.joinpath("AfterStep2.out.dat")
+        _run = RunSafetyAssessment(self._plot_mode).run()
+        _step_two_output = self.vr_config.output_directory.joinpath(
+            "AfterStep2.out.dat"
+        )
         if self.vr_config.reuse_output and _step_two_output.exists():
             _results_dict = load_intermediate_results(
                 _step_two_output, ["AllSolutions"]
