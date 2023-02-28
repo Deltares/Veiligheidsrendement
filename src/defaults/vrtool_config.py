@@ -39,6 +39,9 @@ class VrtoolConfig:
 
     # Directory to write the results to
     directory: Optional[Path] = None
+    language: str = "EN"
+    timing: bool = False
+    input_directory: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
     # year the computation starts
@@ -108,4 +111,9 @@ class VrtoolConfig:
             "markersize": 10,
         }
     )
+
+    design_methods: list[str] = field(
+        default_factory=lambda: ["Veiligheidsrendement", "Doorsnede-eisen"]
+    )
+
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
