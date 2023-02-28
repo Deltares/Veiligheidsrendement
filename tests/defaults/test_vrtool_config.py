@@ -37,6 +37,7 @@ class TestVrtoolConfig:
             "language",
             "timing",
             "input_directory",
+            "output_directory",
             "t_0",
             "T",
             "mechanisms",
