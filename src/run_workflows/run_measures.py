@@ -20,9 +20,7 @@ from src.run_workflows.vrtool_run_protocol import (
 class ResultsMeasures(VrToolRunResultProtocol):
     solutions_dict: Dict[str, Solutions]
 
-    def plot_results(
-        self,
-    ):
+    def plot_results(self):
         betaind_array = []
 
         for i in self.vr_config.T:
@@ -66,9 +64,9 @@ class ResultsMeasures(VrToolRunResultProtocol):
 
     def save_results(self):
         _step_two_output = self.vr_config.output_directory / "AfterStep2.out"
-        my_shelf = shelve.open(str(_step_two_output), "n")
-        my_shelf["AllSolutions"] = self.solutions_dict
-        my_shelf.close()
+        _shelf = shelve.open(str(_step_two_output), "n")
+        _shelf["AllSolutions"] = self.solutions_dict
+        _shelf.close()
 
 
 class RunMeasures(VrToolRunProtocol):
@@ -85,7 +83,7 @@ class RunMeasures(VrToolRunProtocol):
         _solution.evaluateSolutions(selected_section, self.selected_traject.GeneralInfo)
         return selected_section.name, _solution
 
-    def run(self) -> VrToolRunResultProtocol:
+    def run(self) -> ResultsMeasures:
         # Safety Assessment run
         _safety_run = RunSafetyAssessment(self._plot_mode)
         _safety_run.selected_traject = self.selected_traject
