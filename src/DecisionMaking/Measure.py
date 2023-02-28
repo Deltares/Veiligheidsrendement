@@ -722,9 +722,9 @@ def DetermineCosts(parameters, type, length, unit_costs:dict, dcrest = 0., dberm
          if dberm_in > housing.size:
             warnings.warn('Inwards reinforcement distance exceeds data for housing database at section {}'.format(section))
             # raise Exception('inwards distance exceeds housing database')
-            C += parameters['C_house'] * housing.loc[housing.size]['cumulative']
+            C += unit_costs['House removal'] * housing.loc[housing.size]['cumulative']
          else:
-            C += parameters['C_house'] * housing.loc[float(dberm_in)]['cumulative']
+            C += unit_costs['House removal'] * housing.loc[float(dberm_in)]['cumulative']
 
     #add costs for stability screen
      if parameters['StabilityScreen'] == 'yes':
