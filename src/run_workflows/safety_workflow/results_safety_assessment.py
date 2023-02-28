@@ -8,9 +8,6 @@ from src.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
 class ResultsSafetyAssessment(VrToolRunResultProtocol):
-    selected_traject: DikeTraject
-    vr_config: VrtoolConfig
-
     def plot_results(self):
         """
         Plot initial reliability for `selected_traject`.
