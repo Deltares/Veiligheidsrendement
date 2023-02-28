@@ -24,6 +24,10 @@ class VrToolRunResultProtocol(Protocol):
     def save_results(self):
         pass
 
+    def load_results(self):
+        pass
+
+
 class VrToolRunProtocol(Protocol):
     vr_config: VrtoolConfig
     selected_traject: DikeTraject
