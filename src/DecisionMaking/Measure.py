@@ -158,11 +158,11 @@ class DiaphragmWall(Measure):
                         Pt = TrajectInfo['Pmax']*TrajectInfo['omegaOverflow']
                         if DikeSection.Reliability.Mechanisms[i].Reliability[ij].type == 'Simple':
                             if hasattr(DikeSection,'HBNRise_factor'):
-                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange = DikeSection.HBNRise_factor * DikeSection.YearlyWLRise, mechanism='Overflow')
+                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange = DikeSection.HBNRise_factor * DikeSection.YearlyWLRise, mechanism='Overflow')
                             else:
-                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange=None, mechanism='Overflow')
+                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange=None, mechanism='Overflow')
                         else:
-                            hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, horizon = self.parameters['year'] + 100, loadchange=None, type='HRING', mechanism='Overflow')
+                            hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange=None, type='HRING', mechanism='Overflow')
 
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] = \
                             np.max([hc, self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
@@ -745,7 +745,7 @@ def DetermineCosts(parameters, type, length, unit_costs:dict, dcrest = 0., dberm
     return C
 
 #Script to determine the required crest height for a certain year
-def ProbabilisticDesign(design_variable, strength_input, Pt, horizon = 50, loadchange = 0, mechanism='Overflow',type = 'SAFE'):
+def ProbabilisticDesign(design_variable, strength_input, Pt, t_0:int, horizon = 50, loadchange = 0, mechanism='Overflow',type = 'SAFE'):
  if mechanism == 'Overflow':
      if type == 'SAFE':
          #determine the crest required for the target
@@ -754,7 +754,7 @@ def ProbabilisticDesign(design_variable, strength_input, Pt, horizon = 50, loadc
          h_crest = h_crest + horizon * (strength_input['dhc(t)'] + loadchange)
          return h_crest
      elif type == 'HRING':
-         h_crest, beta = OverflowHRING(strength_input, horizon, mode='design', Pt = Pt)
+         h_crest, beta = OverflowHRING(strength_input, horizon, t_0, mode='design', Pt = Pt)
          return h_crest
      else:
          raise Exception('Unknown calculation type for {}'.format(mechanism))

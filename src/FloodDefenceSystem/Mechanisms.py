@@ -6,7 +6,7 @@ import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
 
 ## This script contains limit state functions for the different mechanisms.
 ## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
-def OverflowHRING(input, year, mode="assessment", Pt=None):
+def OverflowHRING(input, year, t_0: int, mode="assessment", Pt=None):
     """year is relative to start year. input contains relevant inputs"""
     if mode == "assessment":
         h_t = input["h_crest"] - input["d_crest"] * (year)
@@ -20,9 +20,7 @@ def OverflowHRING(input, year, mode="assessment", Pt=None):
                     fill_value="extrapolate",
                 )(h_t)
             )
-        beta = interpolate.interp1d(years, betas, fill_value="extrapolate")(
-            year + config.t_0
-        )
+        beta = interpolate.interp1d(years, betas, fill_value="extrapolate")(year + t_0)
         return beta, ProbabilisticFunctions.beta_to_pf(beta)
     if mode == "design":
         t_beta_interp = interpolate.interp2d(
@@ -34,7 +32,7 @@ def OverflowHRING(input, year, mode="assessment", Pt=None):
         h_grid = np.linspace(
             input["hc_beta"].index.values.min(), input["hc_beta"].index.values.max(), 50
         )
-        h_beta = t_beta_interp(year + config.t_0, h_grid).flatten()
+        h_beta = t_beta_interp(year + t_0, h_grid).flatten()
         new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
             ProbabilisticFunctions.pf_to_beta(Pt)
         ).item()

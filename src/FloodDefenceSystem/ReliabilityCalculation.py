@@ -87,11 +87,11 @@ class MechanismReliabilityCollection:
         for i in self.T:
             if measure_year > i:
                 self.Reliability[str(i)] = MechanismReliability(
-                    mechanism, computation_type, copy_or_calculate="copy"
+                    mechanism, computation_type, self.t_0, copy_or_calculate="copy"
                 )
             else:
                 self.Reliability[str(i)] = MechanismReliability(
-                    mechanism, computation_type
+                    mechanism, computation_type, self.t_0
                 )
 
     def generateInputfromDistributions(
@@ -258,11 +258,13 @@ class MechanismReliabilityCollection:
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
-    def __init__(self, mechanism, type, copy_or_calculate="calculate"):
+    def __init__(self, mechanism, type, t_0: int, copy_or_calculate="calculate"):
         # Initialize: set mechanism and type. These are the most important basic parameters
         self.mechanism = mechanism
         self.type = type
+        self.t_0 = t_0
         self.copy_or_calculate = copy_or_calculate
+
         self.Input = MechanismInput(self.mechanism)
         if mechanism == "Piping":
             self.gamma_schem_heave = 1  # 1.05
@@ -443,7 +445,9 @@ class MechanismReliability:
 
         if self.type == "HRING":
             if mechanism == "Overflow":
-                self.beta, self.Pf = Mechanisms.OverflowHRING(self.Input.input, year)
+                self.beta, self.Pf = Mechanisms.OverflowHRING(
+                    self.Input.input, year, self.t_0
+                )
             else:
                 raise Exception(
                     "Unknown computation type HRING for {}".format(mechanism)
