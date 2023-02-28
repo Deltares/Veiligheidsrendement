@@ -11,12 +11,12 @@ from src.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
 from src.run_workflows.optimization_workflow.run_optimization import RunOptimization
+from src.run_workflows.safety_workflow.results_safety_assessment import (
+    ResultsSafetyAssessment,
+)
 from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from tests import get_test_results_dir, test_data
-from tests.run_workflows.safety_workflow.test_results_safety_assessment import (
-    TestResultsSafetyAssessment,
-)
 from tools.RunModel import runFullModel
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
@@ -56,7 +56,7 @@ class TestAcceptance:
         _safety_assessment.selected_traject = _selected_traject
         _safety_assessment.vr_config = _vr_config
         _safety_result = _safety_assessment.run()
-        assert isinstance(_safety_result, TestResultsSafetyAssessment)
+        assert isinstance(_safety_result, ResultsSafetyAssessment)
 
         # Step 2. Measures.
         _measures = RunMeasures(plot_mode=_plot_mode)

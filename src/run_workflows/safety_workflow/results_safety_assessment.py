@@ -2,8 +2,6 @@ import logging
 import shelve
 from pathlib import Path
 
-from src.defaults.vrtool_config import VrtoolConfig
-from src.FloodDefenceSystem import DikeTraject
 from src.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
