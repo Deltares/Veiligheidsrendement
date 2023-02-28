@@ -583,7 +583,7 @@ class MechanismReliability:
                         ) if i not in strength.temporals else start_vals.append(
                             strength.char_vals[i] * year
                         )
-                start_vals = addLoadCharVals(start_vals, load)
+                start_vals = addLoadCharVals(start_vals, self.t_0, load)
             else:
                 start_vals = self.Input.input.getMean()
 
@@ -637,6 +637,7 @@ class MechanismReliability:
                     # TODO aanpassen met nieuwe belastingmodel
                     inputs = addLoadCharVals(
                         strength_new.input_ind,
+                        t_0=self.t_0,
                         load=load,
                         p_h=TrajectInfo["Pmax"],
                         p_dh=0.5,

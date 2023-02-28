@@ -548,15 +548,15 @@ def getDesignWaterLevel(load, p):
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
 
-def addLoadCharVals(input, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0):
+def addLoadCharVals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0):
     # TODO this function should be moved elsewhere
     # input = list of all strength variables
 
     if load != None:
         if isinstance(load.distribution, dict):
-            if str(np.int32(year + config.t_0)) in list(load.distribution.keys()):
+            if str(np.int32(year + t_0)) in list(load.distribution.keys()):
                 h_norm = np.array(
-                    load.distribution[str(np.int32(year + config.t_0))].computeQuantile(
+                    load.distribution[str(np.int32(year + t_0))].computeQuantile(
                         1 - p_h
                     )
                 )[0]
@@ -566,9 +566,7 @@ def addLoadCharVals(input, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0):
                 wls = []
                 for j in years:
                     wls.append(load.distribution[str(j)].computeQuantile(1 - p_h)[0])
-                h_norm = interp1d(years, wls, fill_value="extrapolate")(
-                    year + config.t_0
-                )
+                h_norm = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
                 # then interpolate for given year
         else:
             h_norm = np.array(load.distribution.computeQuantile(1 - p_h))[0]
