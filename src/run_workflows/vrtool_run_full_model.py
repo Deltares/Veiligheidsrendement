@@ -49,7 +49,7 @@ class RunFullModel(VrToolRunProtocol):
         _safety_assessment.run()
 
         # Step 2. Measures.
-        _measures = RunMeasures(self.vr_config, self.traject, self._plot_mode)
+        _measures = RunMeasures(self.vr_config, self.selected_traject, self._plot_mode)
         _measures_result = _measures.run()
 
         # Step 3. Optimization.
