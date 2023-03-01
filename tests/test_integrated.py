@@ -16,7 +16,8 @@ from src.run_workflows.safety_workflow.results_safety_assessment import (
 )
 from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
-from src.run_workflows.vrtool_run_model import run_model_old_approach
+from src.run_workflows.vrtool_run_full_model import RunFullModel
+from tools.RunModel import runFullModel
 from tests import get_test_results_dir, test_data
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
@@ -97,8 +98,64 @@ class TestAcceptance:
             ("TestCase2_38-1_overflow_no_housing", "38-1"),
         ],
     )
+    def test_run_full_model(self, casename: str, traject: str, request: pytest.FixtureRequest):
+        """
+        TODO: Determine whether we want to support this run type.
+        This test so far only checks the output values after optimization.
+        The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
+        # 1. Define test data.
+        _test_input_directory = Path.joinpath(test_data, casename)
+        assert _test_input_directory.exists()
+
+        _test_results_directory = get_test_results_dir(request).joinpath(casename)
+
+        _test_reference_path = _test_input_directory / "reference"
+        assert _test_reference_path.exists()
+
+        _test_config = VrtoolConfig()
+        _test_config.input_directory = _test_input_directory
+        _test_config.output_directory = _test_results_directory
+        _test_config.traject = traject
+        _test_traject = DikeTraject.from_vr_config(_test_config)
+
+        # 2. Run test.
+        RunFullModel(_test_config, _test_traject, VrToolPlotMode.STANDARD).run()
+
+        # 3. Verify final expectations.
+        comparison_errors = []
+        files_to_compare = [
+            "TakenMeasures_Doorsnede-eisen.csv",
+            "TakenMeasures_Veiligheidsrendement.csv",
+            "TotalCostValues_Greedy.csv",
+        ]
+
+        for file in files_to_compare:
+            reference = pd.read_csv(
+                _test_reference_path.joinpath("results", file), index_col=0
+            )
+            result = pd.read_csv(
+                _test_results_directory.joinpath("results", file), index_col=0
+            )
+            if not reference.equals(result):
+                comparison_errors.append("{} is different.".format(file))
+
+        assert not comparison_errors, "errors occured:\n{}".format(
+            "\n".join(comparison_errors)
+        )
+
+
+    @pytest.mark.parametrize(
+        "casename, traject",
+        [
+            ("integrated_SAFE_16-3_small", "16-3"),
+            ("TestCase1_38-1_no_housing", "38-1"),
+            ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        ],
+    )
+    @pytest.mark.skip(reason="This test should be replaced by test_run_full_model or test_run_as_sandbox as soon as all tests go green")
     def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
-        """This test so far only checks the output values after optimization.
+        """
+        This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
         test_data_input_directory = Path.joinpath(test_data, casename)
         test_results_dir = get_test_results_dir(request).joinpath(casename)
@@ -115,7 +172,8 @@ class TestAcceptance:
         _test_traject = DikeTraject(_test_config, traject=traject)
         _test_traject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
-        AllStrategies, AllSolutions = run_model_old_approach(_test_config, _test_traject)
+        # run_model_old_approach(_test_config, _test_traject)        
+        runFullModel(_test_traject, _test_config)
 
         comparison_errors = []
         files_to_compare = [
