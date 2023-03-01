@@ -21,7 +21,7 @@ class TestMain:
         # 3. Verify expectations.
         assert _run_result.exit_code == 2
 
-    def test_given_invalid_traject_when_run_full_then_fails(self):
+    def test_given_no_traject_when_run_full_then_fails(self):
         # 1. Define test data.
         _casename = "integrated_SAFE_16-3_small"
         _input_dir = test_data / _casename
@@ -31,11 +31,11 @@ class TestMain:
         # 2. Run test.
         _run_result = CliRunner().invoke(
             __main__.run_full,
-            [str(_input_dir), ""],
+            [str(_input_dir)],
         )
 
         # 3. Verify expectations.
-        assert _run_result.exit_code == 1
+        assert _run_result.exit_code == 2
 
     def test_given_valid_input_when_run_full_then_succeeds(self):
         # TODO: Ideally we want a really small test.
