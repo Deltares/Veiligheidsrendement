@@ -7,15 +7,24 @@ import numpy as np
 
 import src.ProbabilisticTools.ProbabilisticFunctions as pb
 from src.FloodDefenceSystem.DikeSection import DikeSection
+from src.defaults.vrtool_config import VrtoolConfig
 from src.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from src.run_workflows.vrtool_run_protocol import VrToolRunProtocol
+from src.FloodDefenceSystem.DikeTraject import DikeTraject
 
 
 class RunSafetyAssessment(VrToolRunProtocol):
-    def __init__(self, plot_mode: VrToolPlotMode) -> None:
+    _plot_mode: VrToolPlotMode
+    def __init__(self, vr_config: VrtoolConfig, selected_traject: DikeTraject, plot_mode: VrToolPlotMode) -> None:
+        if not isinstance(vr_config, VrtoolConfig):
+            raise ValueError("Expected instance of a {}.".format(VrtoolConfig.__name__))
+        if not isinstance(selected_traject, DikeTraject):
+            raise ValueError("Expected instance of a {}.".format(DikeTraject.__name__))
+        self.vr_config = vr_config
+        self.selected_traject = selected_traject
         self._plot_mode = plot_mode
 
     def run(self) -> ResultsSafetyAssessment:

@@ -42,7 +42,7 @@ def run_model_old_approach(vr_config: VrtoolConfig, plot_mode: str):
             parents=True, exist_ok=True
         )
 
-    _selected_traject = _load_traject(vr_config)
+    _selected_traject = DikeTraject.from_vr_config(vr_config)
     _step_safety_assessment(vr_config, _selected_traject, plot_mode, vr_config.shelves)
     _measures_solutions = _step_measures(
         vr_config, _selected_traject, vr_config.shelves
@@ -52,13 +52,6 @@ def run_model_old_approach(vr_config: VrtoolConfig, plot_mode: str):
     )
 
     return _strategies, _measures_solutions
-
-
-def _load_traject(vr_config: VrtoolConfig) -> DikeTraject:
-    _traject = DikeTraject(traject=vr_config.traject)
-    _traject.ReadAllTrajectInput(vr_config.path)
-    return _traject
-
 
 def _save_intermediate_results(filename: Path, results_dict: dict) -> None:
     # make shelf

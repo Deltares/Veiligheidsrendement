@@ -17,8 +17,6 @@ from src.run_workflows.safety_workflow.results_safety_assessment import (
 from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from tests import get_test_results_dir, test_data
-from tools.RunModel import runFullModel
-
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
 
@@ -57,16 +55,12 @@ class TestAcceptance:
         assert isinstance(_selected_traject, DikeTraject)
 
         # Step 1. Safety assessment.
-        _safety_assessment = RunSafetyAssessment(plot_mode=_plot_mode)
-        _safety_assessment.selected_traject = _selected_traject
-        _safety_assessment.vr_config = _vr_config
+        _safety_assessment = RunSafetyAssessment(_vr_config, _selected_traject, plot_mode=_plot_mode)
         _safety_result = _safety_assessment.run()
         assert isinstance(_safety_result, ResultsSafetyAssessment)
 
         # Step 2. Measures.
-        _measures = RunMeasures(plot_mode=_plot_mode)
-        _measures.selected_traject = _selected_traject
-        _measures.vr_config = _vr_config
+        _measures = RunMeasures(_vr_config, _selected_traject, plot_mode=_plot_mode)
         _measures_result = _measures.run()
         assert isinstance(_measures_result, ResultsMeasures)
 
@@ -95,7 +89,12 @@ class TestAcceptance:
         assert not _found_errors, "errors occured:\n{}".format("\n".join(_found_errors))
 
     @pytest.mark.parametrize(
-        "casename, traject", [("integrated_SAFE_16-3_small", "16-3")]
+        "casename, traject",
+        [
+            ("integrated_SAFE_16-3_small", "16-3"),
+            ("TestCase1_38-1_no_housing", "38-1"),
+            ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        ],
     )
     def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
         """This test so far only checks the output values after optimization.

@@ -28,5 +28,5 @@ class TestRunOptimization:
 
         assert (
             str(exc_err.value)
-            == "Required valid instance of ResultsMeasures as argument."
+            == "Required valid instance of ResultsMeasures as an argument."
         )

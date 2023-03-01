@@ -15,17 +15,18 @@ from src.run_workflows.optimization_workflow.results_optimization import (
 )
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from src.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-
+import logging
 
 class RunOptimization(VrToolRunProtocol):
     def __init__(
         self, results_measures: ResultsMeasures, plot_mode: VrToolPlotMode
     ) -> None:
         if not isinstance(results_measures, ResultsMeasures):
-            raise ValueError("Required valid instance of ResultsMeasures as argument.")
-        self._solutions_dict = results_measures.solutions_dict
+            raise ValueError("Required valid instance of {} as an argument.".format(ResultsMeasures.__name__))
+
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
+        self._solutions_dict = results_measures.solutions_dict
         self._plot_mode = plot_mode
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> Strategy:
@@ -178,6 +179,7 @@ class RunOptimization(VrToolRunProtocol):
         }
 
     def run(self) -> ResultsOptimization:
+        logging.info("Start step 3: Optimization")
         _results_optimization = ResultsOptimization()
         if self.vr_config.reuse_output:
             _results_optimization.load_results()
@@ -191,12 +193,14 @@ class RunOptimization(VrToolRunProtocol):
                     if _dm in _evaluation_mapping.keys()
                 ]
             )
-
+        
+        logging.info("Finished step 3: Optimization")
         _results_optimization.selected_traject = self.selected_traject
         _results_optimization.vr_config = self.vr_config
         _results_optimization.results_solutions = self._solutions_dict
         if self.vr_config.shelves:
             _results_optimization.save_results()
+
         return _results_optimization
 
     def _replace_names(
