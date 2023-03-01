@@ -7,6 +7,7 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 from src.defaults.vrtool_config import VrtoolConfig
+from src.FloodDefenceSystem.DikeSection import DikeSection
 from src.FloodDefenceSystem.Mechanisms import OverflowHRING, OverflowSimple
 from src.FloodDefenceSystem.ReliabilityCalculation import (
     MechanismReliabilityCollection,
@@ -32,7 +33,7 @@ class Measure():
         self.geometry_plot = config.geometry_plot
         self.unit_costs = config.unit_costs
 
-    def evaluateMeasure(self,DikeSection,TrajectInfo,preserve_slope = False):
+    def evaluateMeasure(self, dike_section:DikeSection, traject_info:dict[str, any], preserve_slope:bool = False):
         raise Exception('define subclass of measure')
     #     from HelperFunctions import createDir
     #
@@ -47,7 +48,7 @@ class Measure():
         #different types of measures:
 class SoilReinforcement(Measure):
     # type == 'Soil reinforcement':
-    def evaluateMeasure(self, DikeSection, TrajectInfo, plot_dir = False, preserve_slope=False):
+    def evaluateMeasure(self, dike_section:DikeSection, traject_info:dict[str, any], plot_dir:bool = False, preserve_slope:bool=False):
     # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
@@ -56,7 +57,7 @@ class SoilReinforcement(Measure):
         SFincrease = 0.2  # for stability screen
 
         type = self.parameters['Type']
-        mechanisms = DikeSection.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.Reliability.Mechanisms.keys()
         crest_step = self.crest_step
         berm_step = self.berm_step
         crestrange = np.linspace(self.parameters['dcrest_min'], self.parameters['dcrest_max'], np.int_(1 + (self.parameters['dcrest_max']-self.parameters['dcrest_min']) / crest_step))
@@ -86,8 +87,8 @@ class SoilReinforcement(Measure):
 
         self.measures = []
         if self.parameters['StabilityScreen'] == 'yes':
-            if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:   
-                d_cover_input = DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover']
+            if 'd_cover' in dike_section.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:   
+                d_cover_input = dike_section.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover']
                 if d_cover_input.size > 1:
                     print("d_cover has more values than 1.")
 
@@ -103,66 +104,66 @@ class SoilReinforcement(Measure):
             self.measures.append({})
             self.measures[-1]['dcrest'] =j[0]
             self.measures[-1]['dberm'] = j[1]
-            if hasattr(DikeSection,'Kruinhoogte'):
-                if DikeSection.Kruinhoogte != np.max(DikeSection.InitialGeometry.z):
+            if hasattr(dike_section,'Kruinhoogte'):
+                if dike_section.Kruinhoogte != np.max(dike_section.InitialGeometry.z):
                     #In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
-                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
-                                                                                                            self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in, 'crest_extra':DikeSection.Kruinhoogte})
+                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(dike_section.InitialGeometry),
+                                                                                                            self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in, 'crest_extra':dike_section.Kruinhoogte})
                 else:
-                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
+                    self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(dike_section.InitialGeometry),
                                                                                                             self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in})
             else:
-                self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(DikeSection.InitialGeometry),
+                self.measures[-1]['Geometry'], area_extra,area_excavated, dhouse = DetermineNewGeometry(j,self.parameters['Direction'],self.parameters['max_outward'],copy.deepcopy(dike_section.InitialGeometry),
                                                                                                         self.geometry_plot, **{'plot_dir': plot_dir, 'slope_in': slope_in})
 
-            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs, dcrest = j[0], dberm_in =int(dhouse), housing = DikeSection.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'],section=DikeSection.name)
+            self.measures[-1]['Cost'] = DetermineCosts(self.parameters, type, dike_section.Length, self.unit_costs, dcrest = j[0], dberm_in =int(dhouse), housing = dike_section.houses, area_extra= area_extra, area_excavated = area_excavated,direction = self.parameters['Direction'],section=dike_section.name)
             self.measures[-1]['Reliability'] = SectionReliability()
             self.measures[-1]['Reliability'].Mechanisms = {}
 
             for i in mechanisms:
-                calc_type = DikeSection.MechanismData[i][1]
+                calc_type = dike_section.MechanismData[i][1]
                 self.measures[-1]['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config, measure_year=self.parameters['year'])
                 for ij, reliability_input in self.measures[-1]['Reliability'].Mechanisms[i].Reliability.items():
                     #for all time steps considered.
                     #first copy the data
-                    reliability_input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                    reliability_input = copy.deepcopy(dike_section.Reliability.Mechanisms[i].Reliability[ij].Input)
                     #Adapt inputs for reliability calculation, but only after year of implementation.
                     if float(ij) >= self.parameters['year']:
                         reliability_input.input = implement_berm_widening(input=reliability_input.input,measure_input = self.measures[-1],measure_parameters = self.parameters, mechanism=i,computation_type = calc_type)
                     #put them back in the object
                     self.measures[-1]['Reliability'].Mechanisms[i].Reliability[ij].Input = reliability_input
-                self.measures[-1]['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
+                self.measures[-1]['Reliability'].Mechanisms[i].generateLCRProfile(dike_section.Reliability.Load,mechanism=i,trajectinfo=traject_info)
             self.measures[-1]['Reliability'].calcSectionReliability()
 
 class DiaphragmWall(Measure):
     # type == 'Diaphragm Wall':
-    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+    def evaluateMeasure(self, dike_section:DikeSection, traject_info:dict[str, any], preserve_slope:bool=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
-        mechanisms = DikeSection.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.Reliability.Mechanisms.keys()
         #StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
         # It is assumed that the diaphragm wall is extendable after that.
         #Only 1 parameterized version with a lifetime of 100 years
         self.measures = {}
         self.measures['DiaphragmWall'] = 'yes'
-        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs)
+        self.measures['Cost'] = DetermineCosts(self.parameters, type, dike_section.Length, self.unit_costs)
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
         for i in mechanisms:
-            calc_type = DikeSection.MechanismData[i][1]
+            calc_type = dike_section.MechanismData[i][1]
             self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
-                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(dike_section.Reliability.Mechanisms[i].Reliability[ij].Input)
                 if float(ij) >= self.parameters['year']:
                     if i == 'Overflow':
-                        Pt = TrajectInfo['Pmax']*TrajectInfo['omegaOverflow']
-                        if DikeSection.Reliability.Mechanisms[i].Reliability[ij].type == 'Simple':
-                            if hasattr(DikeSection,'HBNRise_factor'):
-                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange = DikeSection.HBNRise_factor * DikeSection.YearlyWLRise, mechanism='Overflow')
+                        Pt = traject_info['Pmax']*traject_info['omegaOverflow']
+                        if dike_section.Reliability.Mechanisms[i].Reliability[ij].type == 'Simple':
+                            if hasattr(dike_section,'HBNRise_factor'):
+                                hc = ProbabilisticDesign('h_crest', dike_section.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange = dike_section.HBNRise_factor * dike_section.YearlyWLRise, mechanism='Overflow')
                             else:
-                                hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange=None, mechanism='Overflow')
+                                hc = ProbabilisticDesign('h_crest', dike_section.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange=None, mechanism='Overflow')
                         else:
-                            hc = ProbabilisticDesign('h_crest', DikeSection.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange=None, type='HRING', mechanism='Overflow')
+                            hc = ProbabilisticDesign('h_crest', dike_section.Reliability.Mechanisms['Overflow'].Reliability[ij].Input.input, Pt=Pt, t_0 = self.t_0, horizon = self.parameters['year'] + 100, loadchange=None, type='HRING', mechanism='Overflow')
 
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['h_crest'] = \
                             np.max([hc, self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input[
@@ -171,35 +172,35 @@ class DiaphragmWall(Measure):
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Elimination'] = 'yes'
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_elim'] = self.parameters['P_solution']
                         self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_with_elim'] = self.parameters['Pf_solution']
-            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
+            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(dike_section.Reliability.Load,mechanism=i,trajectinfo=traject_info)
         self.measures['Reliability'].calcSectionReliability()
 
 class StabilityScreen(Measure):
     # type == 'Stability Screen':
-    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False, SFincrease = 0.2):
+    def evaluateMeasure(self, dike_section:DikeSection, traject_info:dict[str, any], preserve_slope:bool=False, SFincrease:float = 0.2):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
-        mechanisms = DikeSection.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.Reliability.Mechanisms.keys()
         self.measures = {}
         self.measures['Stability Screen'] = 'yes'
-        if 'd_cover' in DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:
-            self.parameters['Depth'] = max([DikeSection.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'][0] + 1., 8.])
+        if 'd_cover' in dike_section.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input:
+            self.parameters['Depth'] = max([dike_section.Reliability.Mechanisms['StabilityInner'].Reliability['0'].Input.input['d_cover'][0] + 1., 8.])
         else:
             #TODO remove shaky assumption on depth
             self.parameters['Depth'] = 6.
-        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs)
+        self.measures['Cost'] = DetermineCosts(self.parameters, type, dike_section.Length, self.unit_costs)
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
         for i in mechanisms:
-            calc_type = DikeSection.MechanismData[i][1]
+            calc_type = dike_section.MechanismData[i][1]
             self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
-                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(dike_section.Reliability.Mechanisms[i].Reliability[ij].Input)
                 if i == 'Overflow' or i == 'Piping': #Copy results
-                    self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij])
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(dike_section.Reliability.Mechanisms[i].Reliability[ij])
                     pass #no influence
                 elif i == 'StabilityInner':
-                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                    self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(dike_section.Reliability.Mechanisms[i].Reliability[ij].Input)
                     if int(ij)>=self.parameters['year']:
                         if 'SF_2025' in self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input:
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF_2025'] += SFincrease
@@ -212,47 +213,47 @@ class StabilityScreen(Measure):
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF'] = np.add(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF'], SFincrease)
                             self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['BETA'] = beta_SF_StabilityInner(self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['SF'], type = 'SF')
 
-            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
+            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(dike_section.Reliability.Load,mechanism=i,trajectinfo=traject_info)
         self.measures['Reliability'].calcSectionReliability()
 
 
 class VerticalGeotextile(Measure):
-    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
+    def evaluateMeasure(self, dike_section:DikeSection, traject_info:dict[str, any], preserve_slope:bool=False):
         #To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters['Type']
-        mechanisms = DikeSection.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.Reliability.Mechanisms.keys()
 
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years
         self.measures = {}
         self.measures['VZG'] = 'yes'
-        self.measures['Cost'] = DetermineCosts(self.parameters, type, DikeSection.Length, self.unit_costs)
+        self.measures['Cost'] = DetermineCosts(self.parameters, type, dike_section.Length, self.unit_costs)
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
 
         for i in mechanisms:
-            calc_type = DikeSection.MechanismData[i][1]
+            calc_type = dike_section.MechanismData[i][1]
             self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, calc_type, self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
                 self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input = copy.deepcopy(
-                    DikeSection.Reliability.Mechanisms[i].Reliability[ij].Input)
+                    dike_section.Reliability.Mechanisms[i].Reliability[ij].Input)
                 if i == 'Overflow' or i == 'StabilityInner' or (
                         i == 'Piping' and int(ij) < self.parameters['year']):  # Copy results
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(
-                        DikeSection.Reliability.Mechanisms[i].Reliability[ij])
+                        dike_section.Reliability.Mechanisms[i].Reliability[ij])
                 elif i == 'Piping' and int(ij) >= self.parameters['year']:
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Elimination'] = 'yes'
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_elim'] = self.parameters[
                         'P_solution']
                     self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['Pf_with_elim'] = \
                     np.min([self.parameters['Pf_solution'], 1.e-16])
-            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load, mechanism=i,
-                                                                          trajectinfo=TrajectInfo)
+            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(dike_section.Reliability.Load, mechanism=i,
+                                                                          trajectinfo=traject_info)
         self.measures['Reliability'].calcSectionReliability()
 
 
 class CustomMeasure(Measure):
-    def set_input(self,section):
+    def set_input(self, section:DikeSection):
         try:
             try:
                 data = pd.read_csv(self.input_directory.joinpath('Measures', self.parameters['File']))
@@ -294,11 +295,11 @@ class CustomMeasure(Measure):
         self.measures['Reliability'] = SectionReliability()
         self.measures['Reliability'].Mechanisms = {}
 
-    def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
-        mechanisms = list(DikeSection.Reliability.Mechanisms.keys())
+    def evaluateMeasure(self, dike_section:DikeSection, traject_info:dict[str, any], preserve_slope:bool=False):
+        mechanisms = list(dike_section.Reliability.Mechanisms.keys())
 
         #first read and set the data:
-        self.set_input(DikeSection)
+        self.set_input(dike_section)
 
         #loop over mechanisms to modify the reliability
         for i in mechanisms:
@@ -306,7 +307,7 @@ class CustomMeasure(Measure):
 
             self.measures['Reliability'].Mechanisms[i] = MechanismReliabilityCollection(i, computation_type=False, config = self.config)
             for ij in self.measures['Reliability'].Mechanisms[i].Reliability.keys():
-                self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(DikeSection.Reliability.Mechanisms[i].Reliability[ij])
+                self.measures['Reliability'].Mechanisms[i].Reliability[ij] = copy.deepcopy(dike_section.Reliability.Mechanisms[i].Reliability[ij])
 
                 #only adapt after year of implementation:
                 if np.int_(ij) >= self.parameters['year']:
@@ -329,7 +330,7 @@ class CustomMeasure(Measure):
                             #only read non-nan values:
                             if not np.isnan(self.reliability_data[i, input].values[0]):
                                 self.measures['Reliability'].Mechanisms[i].Reliability[ij].Input.input['beta'][input-self.t_0] = self.reliability_data[i, input].values[0]
-            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(DikeSection.Reliability.Load,mechanism=i,trajectinfo=TrajectInfo)
+            self.measures['Reliability'].Mechanisms[i].generateLCRProfile(dike_section.Reliability.Load,mechanism=i,trajectinfo=traject_info)
         self.measures['Reliability'].calcSectionReliability()
 
 
