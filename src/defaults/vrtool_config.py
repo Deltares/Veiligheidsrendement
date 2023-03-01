@@ -45,6 +45,7 @@ class VrtoolConfig:
     input_directory: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
+    traject: str = ""
     # year the computation starts
     t_0: int = 2025
     # years to compute reliability for
