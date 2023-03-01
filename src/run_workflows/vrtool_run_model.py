@@ -19,6 +19,10 @@ from src.DecisionMaking.Strategy import (
 from src.defaults.vrtool_config import VrtoolConfig
 from src.FloodDefenceSystem.DikeSection import DikeSection
 from src.FloodDefenceSystem.DikeTraject import DikeTraject
+from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
+from src.run_workflows.measures_workflow.run_measures import RunMeasures
+from src.run_workflows.optimization_workflow.run_optimization import RunOptimization
+from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 
 """
 !!IMPORTANT!!
@@ -28,30 +32,32 @@ Use the contents of this file for reference purposes.
 """
 
 
-def run_model_old_approach(vr_config: VrtoolConfig, plot_mode: str):
+def run_model_old_approach(vr_config: VrtoolConfig, traject: DikeTraject, plot_mode: VrToolPlotMode = VrToolPlotMode.STANDARD):
     """This is the main routine for a "SAFE"-type calculation
     Input is a TrajectObject = DikeTraject object with all relevant data
     plot_mode sets the amount of plots to be made. 'test' means a simple test approach where only csv's are given as output.
     'standard' means that normal plots are made, and with 'extensive' all plots can be switched on (not recommended)"""
     # Make a few dirs if they dont exist yet:
-    if not vr_config.directory.is_dir():
-        vr_config.directory.mkdir(parents=True, exist_ok=True)
-        if plot_mode != "test":
-            vr_config.directory.joinpath("figures").mkdir(parents=True, exist_ok=True)
-        vr_config.directory.joinpath("results", "investment_steps").mkdir(
+    if not vr_config.output_directory.is_dir():
+        vr_config.output_directory.mkdir(parents=True, exist_ok=True)
+        vr_config.output_directory.joinpath("figures").mkdir(parents=True, exist_ok=True)
+        vr_config.output_directory.joinpath("results", "investment_steps").mkdir(
             parents=True, exist_ok=True
         )
 
-    _selected_traject = DikeTraject.from_vr_config(vr_config)
-    _step_safety_assessment(vr_config, _selected_traject, plot_mode, vr_config.shelves)
-    _measures_solutions = _step_measures(
-        vr_config, _selected_traject, vr_config.shelves
-    )
-    _strategies = _step_optimization(
-        vr_config, _selected_traject, _measures_solutions, plot_mode, vr_config.shelves
-    )
+    # Step 1. Safety assessment.
+    _safety_assessment = RunSafetyAssessment(vr_config, traject, plot_mode=plot_mode)
+    _safety_assessment.run()
 
-    return _strategies, _measures_solutions
+    # Step 2. Measures.
+    _measures = RunMeasures(vr_config, traject, plot_mode=plot_mode)
+    _measures_result = _measures.run()
+
+    # Step 3. Optimization.
+    _optimization = RunOptimization(_measures_result, plot_mode=plot_mode)
+    _optimization_result = _optimization.run()
+
+    return _optimization_result.results_strategies, _optimization_result.results_solutions
 
 def _save_intermediate_results(filename: Path, results_dict: dict) -> None:
     # make shelf

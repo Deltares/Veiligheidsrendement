@@ -16,6 +16,7 @@ from src.run_workflows.safety_workflow.results_safety_assessment import (
 )
 from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
+from src.run_workflows.vrtool_run_model import run_model_old_approach
 from tests import get_test_results_dir, test_data
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
@@ -102,19 +103,19 @@ class TestAcceptance:
         test_data_input_directory = Path.joinpath(test_data, casename)
         test_results_dir = get_test_results_dir(request).joinpath(casename)
 
-        test_config = VrtoolConfig()
-        test_config.input_directory = test_data_input_directory
-        test_config.directory = test_results_dir
+        _test_config = VrtoolConfig()
+        _test_config.input_directory = test_data_input_directory
+        _test_config.output_directory = test_results_dir
 
-        test_config.directory.joinpath("figures").mkdir(parents=True)
-        test_config.directory.joinpath("results", "investment_steps").mkdir(
+        _test_config.output_directory.joinpath("figures").mkdir(parents=True)
+        _test_config.output_directory.joinpath("results", "investment_steps").mkdir(
             parents=True
         )
 
-        TestTrajectObject = DikeTraject(test_config, traject=traject)
-        TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
+        _test_traject = DikeTraject(_test_config, traject=traject)
+        _test_traject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
-        AllStrategies, AllSolutions = runFullModel(TestTrajectObject, test_config)
+        AllStrategies, AllSolutions = run_model_old_approach(_test_config, _test_traject)
 
         comparison_errors = []
         files_to_compare = [
