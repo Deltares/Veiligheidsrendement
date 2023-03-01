@@ -122,17 +122,12 @@ class SoilReinforcement(Measure):
 
         self.measures = []
         if self.parameters["StabilityScreen"] == "yes":
-            if (
-                "d_cover"
-                in dike_section.Reliability.Mechanisms["StabilityInner"]
+            d_cover_input = (
+                dike_section.Reliability.Mechanisms["StabilityInner"]
                 .Reliability["0"]
-                .Input.input
-            ):
-                d_cover_input = (
-                    dike_section.Reliability.Mechanisms["StabilityInner"]
-                    .Reliability["0"]
-                    .Input.input["d_cover"]
-                )
+                .Input.input.get("d_cover", None)
+            )
+            if d_cover_input:
                 if d_cover_input.size > 1:
                     print("d_cover has more values than 1.")
 
