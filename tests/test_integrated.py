@@ -24,7 +24,12 @@ from tools.RunModel import runFullModel
 
 class TestAcceptance:
     @pytest.mark.parametrize(
-        "casename, traject", [("integrated_SAFE_16-3_small", "16-3")]
+        "casename, traject",
+        [
+            ("integrated_SAFE_16-3_small", "16-3"),
+            ("TestCase1_38-1_no_housing", "38-1"),
+            ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        ],
     )
     def test_run_as_sandbox(
         self, casename: str, traject: str, request: pytest.FixtureRequest
