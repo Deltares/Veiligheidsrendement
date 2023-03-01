@@ -54,7 +54,7 @@ class TestMain:
 
         # 2. Run test.
         _run_result = CliRunner().invoke(
-            __main__.run_full_model,
+            __main__.run_full,
             [str(_input_dir), _traject],
         )
 
