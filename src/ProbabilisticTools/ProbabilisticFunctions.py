@@ -743,11 +743,3 @@ def pf_to_beta(pf):
     # else:
     #     beta = -phi_inv(np.float64(pf))
     # return beta
-
-
-def main():
-    pass
-
-
-if __name__ == "__main__":
-    main()
