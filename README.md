@@ -60,6 +60,30 @@ When using your own environment, you might have to follow the openturns installa
 Tests can be run with the pytest command `pytest run`. However, when working under a [development mode](#development-mode) environment, we advise to run the command `poetry run pytest` instead.
 
 
+## Endpoint usage
+ 
+When using `Veiligheidsrendement` as a package (`vrtool`) you can run it directly from the command line as follows:
+
+```cli
+python -m vrtool {desired_run} {MODEL_DIRECTORY} {SELECTED_TRAJECT}
+```
+The run options are:
+- `assessment`: Runs a validation of the model in the given MODEL_DIRECTORY.
+- `measures`: Runs measurements of all specified mechanisms in the model.
+- `optimization`: Runs an optimization of the model including the previous measures run.
+- `run_full`: Runs all the steps above sequentially.
+
+The arguments are:
+- `MODEL_DIRECTORY` (required): Absolute path to the location of your model directory.
+- `SELECTED_TRAJECT` (required): Name of the selected traject.
+
+It is also possible to check all the above possibilities via the `--help` argument in the command line:
+```cli
+python -m vrtool --help
+```
+
+> Note, when using the CLI directly from a development environment, you will have to call to `src` instead of `vrtool` as it's the package installed.
+
 ## Contribution guidelines ##
 
 * Writing tests
