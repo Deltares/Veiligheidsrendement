@@ -82,7 +82,7 @@ It is also possible to check all the above possibilities via the `--help` argume
 python -m vrtool --help
 ```
 
-> Note, when using the CLI directly from a development environment, you will have to call to `src` instead of `vrtool` as it's the package installed.
+> Note, you will have to call to `src` instead of `vrtool` as the directory is not yet renamed.
 
 ## Contribution guidelines ##
 
