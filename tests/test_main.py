@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from src import __main__
 from tests import test_data, test_results
-
+import pytest
 
 class TestMain:
     def test_given_invalid_directory_when_run_full_then_fails(self):
@@ -21,10 +21,11 @@ class TestMain:
         # 3. Verify expectations.
         assert _run_result.exit_code == 2
 
-    def test_given_no_traject_when_run_full_then_fails(self):
+    def test_given_valid_path_without_config_when_run_full_then_fails(self, request: pytest.FixtureRequest):
         # 1. Define test data.
-        _casename = "integrated_SAFE_16-3_small"
-        _input_dir = test_data / _casename
+        _input_dir = test_results / request.node.name
+        if not _input_dir.exists():
+            _input_dir.mkdir(parents=True)
 
         assert _input_dir.exists()
         
@@ -40,10 +41,7 @@ class TestMain:
     def test_given_valid_input_when_run_full_then_succeeds(self):
         # TODO: Ideally we want a really small test.
         # 1. Define test data.
-        _casename = "integrated_SAFE_16-3_small"
-        _traject = "16-3"
-        _input_dir = test_data / _casename
-
+        _input_dir = test_data / "integrated_SAFE_16-3_small"
         assert _input_dir.exists()
 
         # Ensure we have a clean results dir.
@@ -55,7 +53,7 @@ class TestMain:
         # 2. Run test.
         _run_result = CliRunner().invoke(
             __main__.run_full,
-            [str(_input_dir), _traject],
+            [str(_input_dir)],
         )
 
         # 3. Verify final expectations.

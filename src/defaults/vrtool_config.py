@@ -143,6 +143,15 @@ class VrtoolConfig:
 
     @classmethod
     def from_json(cls, json_path: Path) -> VrtoolConfig:
+        """
+        Loads all the custom properties defined in a json file into an instance of `VrtoolConfig`.
+
+        Args:
+            json_path (Path): Valid path to a json file.
+
+        Returns:
+            VrtoolConfig: Valid instance with custom configuration values.
+        """
         _custom_config = json.loads(json_path.read_text())
         _vrtool_config = cls(**_custom_config)
         return _vrtool_config

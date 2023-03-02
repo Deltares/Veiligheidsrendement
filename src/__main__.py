@@ -18,16 +18,23 @@ def cli():
     pass
 
 def _get_valid_vrtool_config(args_dict: dict) -> VrtoolConfig:
-    _vr_config = VrtoolConfig()
-    _vr_config.input_directory = Path(args_dict["model_directory"])
-    _vr_config.traject = args_dict["traject"]
+    _model_directory = Path(args_dict["model_directory"])
+    _found_json = _model_directory.glob("*.json")
+    if not any(_found_json):
+        raise FileNotFoundError("No json config file found in the model directory.")
+
+    if len(_found_json) > 1:
+        raise ValueError("More than one json file found in the directory. Only one json at the root directory supported.")
+
+    _vr_config = VrtoolConfig.from_json(_found_json[0])
+    _vr_config.input_directory = _model_directory
+
     if not _vr_config.output_directory:
         _vr_config.output_directory = _vr_config.input_directory / "results"
     return _vr_config
 
 @cli.command(name="assessment", help="Validation of the model in the given directory.")
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
-@click.argument("traject", type=str, nargs=1)
 def run_step_assessment(**kwargs):
     logging.info("Assess, {0}!".format(kwargs["model_directory"]))
 
@@ -45,7 +52,6 @@ def run_step_assessment(**kwargs):
     help="Measurement of all specified mechanisms in the model.",
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
-@click.argument("traject", type=str, nargs=1)
 def run_step_measures(**kwargs):
     logging.info("Measure, {0}!".format(kwargs["model_directory"]))
 
@@ -62,7 +68,6 @@ def run_step_measures(**kwargs):
     name="optimization", help="Optimization of the model in the given directory."
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
-@click.argument("traject", type=str, nargs=1)
 def run_step_optimization(**kwargs):
     logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
 
@@ -83,7 +88,6 @@ def run_step_optimization(**kwargs):
     name="run_full", help="Full run of the model in the given directory."
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
-@click.argument("traject", type=str, nargs=1)
 def run_full(**kwargs):
     logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
 
