@@ -1,5 +1,7 @@
 import copy
 import warnings
+from pathlib import Path
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -842,20 +844,20 @@ def ModifyGeometryInput(initial, bermheight):
 def DetermineNewGeometry(
     geometry_change,
     direction,
-    maxbermout,
+    max_berm_out,
     initial,
     geometry_plot: bool,
-    plot_dir=None,
-    bermheight=2,
-    slope_in=False,
-    crest_extra=False,
+    plot_dir: Union[Path, None] = None,
+    berm_height: float = 2,
+    slope_in: bool = False,
+    crest_extra: bool = False,
 ):
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
     If this is not the case and it is input of the old type, first it is transformed to obey that.
     crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
     In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT, such that after reinforcement the height is crest_extra + increment.
     It has to be ensured that the BUK has x = 0, and that x increases inward"""
-    initial = ModifyGeometryInput(initial, bermheight)
+    initial = ModifyGeometryInput(initial, berm_height)
     # maxBermOut=20
     # if len(initial) == 6:
     #     noberm = False
@@ -934,7 +936,7 @@ def DetermineNewGeometry(
         # optional extension: optimize amount of outward/inward reinforcement
         new_geometry = copy.deepcopy(initial)
 
-        if dberm <= maxbermout:
+        if dberm <= max_berm_out:
 
             for count, i in new_geometry.iterrows():
                 # Run over points
@@ -968,7 +970,7 @@ def DetermineNewGeometry(
                     new_geometry = addExtra(initial, new_geometry)
 
         else:
-            berm_in = dberm - maxbermout
+            berm_in = dberm - max_berm_out
             for i in range(len(new_geometry)):
                 # Run over points
                 if initial.type[i] == "extra":
@@ -982,19 +984,19 @@ def DetermineNewGeometry(
                     new_geometry[i][0] = geometry[i][0] - berm_in + dout - din
                     new_geometry[i][1] = geometry[i][1]
                 elif initial.type[i] == "innerberm2":
-                    new_geometry[i][0] = geometry[i][0] + maxbermout + dout - din
+                    new_geometry[i][0] = geometry[i][0] + max_berm_out + dout - din
                     new_geometry[i][1] = geometry[i][1]
                 elif initial.type[i] == "innercrest":
-                    new_geometry[i][0] = geometry[i][0] + maxbermout + dout
+                    new_geometry[i][0] = geometry[i][0] + max_berm_out + dout
                     new_geometry[i][1] = geometry[i][1] + dcrest
                 elif initial.type[i] == "outercrest":
-                    new_geometry[i][0] = geometry[i][0] + maxbermout + dout
+                    new_geometry[i][0] = geometry[i][0] + max_berm_out + dout
                     new_geometry[i][1] = geometry[i][1] + dcrest
                 elif initial.type[i] == "outertoe":
-                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][0] = geometry[i][0] + max_berm_out
                     new_geometry[i][1] = geometry[i][1]
                 elif initial.type[i] == "extra2":
-                    new_geometry[i][0] = geometry[i][0] + maxbermout
+                    new_geometry[i][0] = geometry[i][0] + max_berm_out
                     new_geometry[i][1] = geometry[i][1]
             # if noberm:  # len(initial) == 4:
             #     if dberm > 0:
