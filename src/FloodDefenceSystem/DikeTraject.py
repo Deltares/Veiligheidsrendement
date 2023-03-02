@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import copy
 import warnings
 from pathlib import Path
@@ -96,21 +94,6 @@ class DikeTraject:
             self.GeneralInfo["aStabilityInner"] = 0.033
             self.GeneralInfo["bStabilityInner"] = 50
             self.GeneralInfo["omegaOverflow"] = 0.24
-
-    @classmethod
-    def from_vr_config(cls, vr_config: VrtoolConfig) -> DikeTraject:
-        """
-        Initializes a `DikeTraject` instance by also reading all its related input from the directory defined in the `vr_config`.
-
-        Args:
-            vr_config (VrtoolConfig): Valid instance containing required data by a `DikeTraject`
-
-        Returns:
-            DikeTraject: Valid instance of a loaded dike traject.
-        """
-        _traject = cls(vr_config, traject=vr_config.traject)
-        _traject.ReadAllTrajectInput(input_path=vr_config.input_directory)
-        return _traject
 
     def ReadAllTrajectInput(self, input_path, makesubdirs=True):
         # Make a case directory and inside a figures and results directory if it doesnt exist yet
