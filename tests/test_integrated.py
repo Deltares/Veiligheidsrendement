@@ -24,7 +24,7 @@ from tests import get_test_results_dir, test_data
 
 class TestAcceptance:
     @pytest.mark.parametrize(
-        "casename, traject",
+        "case_name, traject",
         [
             ("integrated_SAFE_16-3_small", "16-3"),
             ("TestCase1_38-1_no_housing", "38-1"),
@@ -157,8 +157,8 @@ class TestAcceptance:
         """
         This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        test_data_input_directory = Path.joinpath(test_data, casename)
-        test_results_dir = get_test_results_dir(request).joinpath(casename)
+        test_data_input_directory = Path.joinpath(test_data, case_name)
+        test_results_dir = get_test_results_dir(request).joinpath(case_name)
 
         _test_config = VrtoolConfig()
         _test_config.input_directory = test_data_input_directory
@@ -182,7 +182,7 @@ class TestAcceptance:
             "TotalCostValues_Greedy.csv",
         ]
 
-        reference_path = Path.joinpath(test_data, casename, "reference")
+        reference_path = Path.joinpath(test_data, case_name, "reference")
         for file in files_to_compare:
             reference = pd.read_csv(
                 reference_path.joinpath("results", file), index_col=0

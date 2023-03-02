@@ -13,6 +13,7 @@ from src.DecisionMaking.Measure import (
     VerticalGeotextile,
 )
 from src.defaults.vrtool_config import VrtoolConfig
+from src.FloodDefenceSystem.DikeSection import DikeSection
 
 
 class Solutions:
@@ -26,12 +27,12 @@ class Solutions:
         self.T = config.T
         self.mechanisms = config.mechanisms
 
-    def fillSolutions(self, excelsheet):
+    def fillSolutions(self, excel_sheet):
         """This routine reads input for the measures from the Excel sheet for each section.
         It identifies combinables and partials and identifies possible combinations of measures this way.
         These are then stored in the MeasureTable, which is later evaluated.
         """
-        data = pd.read_excel(excelsheet, "Measures")
+        data = pd.read_excel(excel_sheet, "Measures")
         self.Measures = []
         combinables = []
         partials = []
@@ -47,7 +48,7 @@ class Solutions:
             elif data.loc[i].Type == "Vertical Geotextile":
                 self.Measures.append(VerticalGeotextile(data.loc[i], self.config))
             elif data.loc[i].Type == "Custom":
-                data.loc[i, "File"] = excelsheet.parent.joinpath(
+                data.loc[i, "File"] = excel_sheet.parent.joinpath(
                     "Measures", data.loc[i]["File"]
                 )
                 self.Measures.append(CustomMeasure(data.loc[i], self.config))
@@ -77,7 +78,12 @@ class Solutions:
                 ]
                 count += 1
 
-    def evaluateSolutions(self, DikeSection, TrajectInfo, preserve_slope=False):
+    def evaluateSolutions(
+        self,
+        dike_section: DikeSection,
+        traject_info: dict[str, any],
+        preserve_slope: bool = False,
+    ):
         """This is the base routine to evaluate (i.e., determine costs and reliability) for each defined measure.
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures."""
         self.trange = self.T
@@ -86,7 +92,7 @@ class Solutions:
             if measure.parameters["available"] == 1:
                 # old: measure.evaluateMeasure(DikeSection, TrajectInfo, preserve_slope = preserve_slope)
                 measure.evaluateMeasure(
-                    DikeSection, TrajectInfo, preserve_slope=preserve_slope
+                    dike_section, traject_info, preserve_slope=preserve_slope
                 )
 
                 # if measure.parameters['Type'] == 'Soil reinforcement':
