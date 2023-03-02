@@ -12,6 +12,9 @@ from src.run_workflows.vrtool_run_full_model import RunFullModel
 
 @click.group()
 def cli():
+    """
+    Required (empty) method to define the main group of CLI calls.
+    """
     pass
 
 def _get_valid_vrtool_config(args_dict: dict) -> VrtoolConfig:

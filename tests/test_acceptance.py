@@ -19,17 +19,41 @@ from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from src.run_workflows.vrtool_run_full_model import RunFullModel
 from tools.RunModel import runFullModel
 from tests import get_test_results_dir, test_data
+
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
+_acceptance_test_cases = [
+    pytest.param("integrated_SAFE_16-3_small", "16-3"),
+    pytest.param("TestCase1_38-1_no_housing", "38-1"),
+    pytest.param("TestCase2_38-1_overflow_no_housing", "38-1"),
+]
 
 
 class TestAcceptance:
+    def _validate_acceptance_result_cases(self, test_results_dir: Path, test_reference_dir: Path):
+        comparison_errors = []
+        files_to_compare = [
+            "TakenMeasures_Doorsnede-eisen.csv",
+            "TakenMeasures_Veiligheidsrendement.csv",
+            "TotalCostValues_Greedy.csv",
+        ]
+
+        for file in files_to_compare:
+            reference = pd.read_csv(
+                test_reference_dir.joinpath("results", file), index_col=0
+            )
+            result = pd.read_csv(
+                test_results_dir.joinpath("results", file), index_col=0
+            )
+            if not reference.equals(result):
+                comparison_errors.append("{} is different.".format(file))
+
+        # assert no error message has been registered, else print messages
+        assert not comparison_errors, "errors occured:\n{}".format(
+            "\n".join(comparison_errors)
+        )
+
     @pytest.mark.parametrize(
-        "case_name, traject",
-        [
-            ("integrated_SAFE_16-3_small", "16-3"),
-            ("TestCase1_38-1_no_housing", "38-1"),
-            ("TestCase2_38-1_overflow_no_housing", "38-1"),
-        ],
+        "casename, traject", _acceptance_test_cases,
     )
     def test_run_as_sandbox(
         self, casename: str, traject: str, request: pytest.FixtureRequest
@@ -72,31 +96,11 @@ class TestAcceptance:
         assert isinstance(_optimization_result, ResultsOptimization)
 
         # 3. Verify expectations.
-        _found_errors = []
-        files_to_compare = [
-            "TakenMeasures_Doorsnede-eisen.csv",
-            "TakenMeasures_Veiligheidsrendement.csv",
-            "TotalCostValues_Greedy.csv",
-        ]
+        self._validate_acceptance_result_cases(_results_dir, _test_dir / "reference")
 
-        for _f_to_compare in files_to_compare:
-            reference = pd.read_csv(
-                _test_dir / "reference" / "results" / _f_to_compare, index_col=0
-            )
-            result = pd.read_csv(_results_dir / "results" / _f_to_compare, index_col=0)
-            if not reference.equals(result):
-                _found_errors.append("{} is different.".format(_f_to_compare))
-
-        # assert no error message has been registered, else print messages
-        assert not _found_errors, "errors occured:\n{}".format("\n".join(_found_errors))
 
     @pytest.mark.parametrize(
-        "casename, traject",
-        [
-            ("integrated_SAFE_16-3_small", "16-3"),
-            ("TestCase1_38-1_no_housing", "38-1"),
-            ("TestCase2_38-1_overflow_no_housing", "38-1"),
-        ],
+        "casename, traject",_acceptance_test_cases,
     )
     def test_run_full_model(self, casename: str, traject: str, request: pytest.FixtureRequest):
         """
@@ -122,43 +126,20 @@ class TestAcceptance:
         RunFullModel(_test_config, _test_traject, VrToolPlotMode.STANDARD).run()
 
         # 3. Verify final expectations.
-        comparison_errors = []
-        files_to_compare = [
-            "TakenMeasures_Doorsnede-eisen.csv",
-            "TakenMeasures_Veiligheidsrendement.csv",
-            "TotalCostValues_Greedy.csv",
-        ]
-
-        for file in files_to_compare:
-            reference = pd.read_csv(
-                _test_reference_path.joinpath("results", file), index_col=0
-            )
-            result = pd.read_csv(
-                _test_results_directory.joinpath("results", file), index_col=0
-            )
-            if not reference.equals(result):
-                comparison_errors.append("{} is different.".format(file))
-
-        assert not comparison_errors, "errors occured:\n{}".format(
-            "\n".join(comparison_errors)
-        )
+        self._validate_acceptance_result_cases(_test_results_directory, _test_reference_path)
 
 
     @pytest.mark.parametrize(
-        "casename, traject",
-        [
-            ("integrated_SAFE_16-3_small", "16-3"),
-            ("TestCase1_38-1_no_housing", "38-1"),
-            ("TestCase2_38-1_overflow_no_housing", "38-1"),
-        ],
+        "casename, traject",_acceptance_test_cases,
     )
     @pytest.mark.skip(reason="This test should be replaced by test_run_full_model or test_run_as_sandbox as soon as all tests go green")
-    def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
+    def test_integrated_run(self, casename: str, traject: str, request: pytest.FixtureRequest):
         """
         This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        test_data_input_directory = Path.joinpath(test_data, case_name)
-        test_results_dir = get_test_results_dir(request).joinpath(case_name)
+        # 1. Define test data.
+        test_data_input_directory = Path.joinpath(test_data, casename)
+        test_results_dir = get_test_results_dir(request).joinpath(casename)
 
         _test_config = VrtoolConfig()
         _test_config.input_directory = test_data_input_directory
@@ -172,28 +153,9 @@ class TestAcceptance:
         _test_traject = DikeTraject(_test_config, traject=traject)
         _test_traject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
+        # 2. Run test.
         # run_model_old_approach(_test_config, _test_traject)        
         runFullModel(_test_traject, _test_config)
 
-        comparison_errors = []
-        files_to_compare = [
-            "TakenMeasures_Doorsnede-eisen.csv",
-            "TakenMeasures_Veiligheidsrendement.csv",
-            "TotalCostValues_Greedy.csv",
-        ]
-
-        reference_path = Path.joinpath(test_data, case_name, "reference")
-        for file in files_to_compare:
-            reference = pd.read_csv(
-                reference_path.joinpath("results", file), index_col=0
-            )
-            result = pd.read_csv(
-                test_results_dir.joinpath("results", file), index_col=0
-            )
-            if not reference.equals(result):
-                comparison_errors.append("{} is different.".format(file))
-
-        # assert no error message has been registered, else print messages
-        assert not comparison_errors, "errors occured:\n{}".format(
-            "\n".join(comparison_errors)
-        )
+        # 3. Verify expectations.
+        self._validate_acceptance_result_cases(test_results_dir, Path.joinpath(test_data, casename, "reference"))
