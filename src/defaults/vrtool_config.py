@@ -1,7 +1,8 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-
+import json
 import pandas as pd
 
 from src.defaults import default_unit_costs_csv
@@ -119,3 +120,29 @@ class VrtoolConfig:
     )
 
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
+
+
+    def export(self, export_path: Path):
+        """
+        Exports the non-default values of this configuration into a JSON file.
+
+        Args:
+            export_path (Path): Location where to export the configuration.
+        """
+        _default_config = VrtoolConfig().__dict__
+        _custom_entries = {}
+        _current_config = self.__dict__
+        for _key, _default_value in _default_config.items():
+            _current_value = _current_config[_key]
+            if _default_value != _current_value:
+                _custom_entries[_key] = _current_value
+
+        if not export_path.parent.exists():
+            export_path.parent.mkdir(parents=True)
+        export_path.write_text(json.dumps(_custom_entries, sort_keys=True, indent=4))
+
+    @classmethod
+    def from_json(cls, json_path: Path) -> VrtoolConfig:
+        _custom_config = json.loads(json_path.read_text())
+        _vrtool_config = cls(**_custom_config)
+        return _vrtool_config
