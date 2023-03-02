@@ -800,7 +800,7 @@ def calculateArea(geometry):
     return areaPol, polygonXZ
 
 
-def ModifyGeometryInput(initial, bermheight):
+def ModifyGeometryInput(initial, berm_height):
     """Checks geometry and corrects if necessary"""
     # TODO move this to the beginning for the input.
     # modify the old structure
@@ -832,10 +832,10 @@ def ModifyGeometryInput(initial, bermheight):
         inner_slope = np.abs(initial.loc["BIT"].z - initial.loc["BIK"].z) / np.abs(
             initial.loc["BIT"].x - initial.loc["BIK"].x
         )
-        initial.loc["EBL", "x"] = initial.loc["BIT"].x - (bermheight / inner_slope)
-        initial.loc["BBL", "x"] = initial.loc["BIT"].x - (bermheight / inner_slope)
-        initial.loc["BBL", "z"] = initial.loc["BIT"].z + bermheight
-        initial.loc["EBL", "z"] = initial.loc["BIT"].z + bermheight
+        initial.loc["EBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
+        initial.loc["BBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
+        initial.loc["BBL", "z"] = initial.loc["BIT"].z + berm_height
+        initial.loc["EBL", "z"] = initial.loc["BIT"].z + berm_height
 
     return initial
 
@@ -1116,17 +1116,17 @@ def DetermineNewGeometry(
 # Script to determine the costs of a reinforcement:
 def DetermineCosts(
     parameters,
-    type,
-    length,
+    type: str,
+    length: float,
     unit_costs: dict,
-    dcrest=0.0,
-    dberm_in=0.0,
-    housing=False,
-    area_extra=False,
-    area_excavated=False,
-    direction=False,
-    section="",
-):
+    dcrest: float = 0.0,
+    dberm_in: float = 0.0,
+    housing: bool = False,
+    area_extra: bool = False,
+    area_excavated: bool = False,
+    direction: bool = False,
+    section: str = "",
+) -> float:
     if (type == "Soil reinforcement") and (direction == "outward") and (dberm_in > 0.0):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
         print(
@@ -1134,7 +1134,7 @@ def DetermineCosts(
         )
     if type == "Soil reinforcement":
         if direction == "inward":
-            C = (
+            total_cost = (
                 unit_costs["Inward added volume"] * area_extra * length
                 + unit_costs["Inward starting costs"] * length
             )
@@ -1143,19 +1143,19 @@ def DetermineCosts(
             volume_extra = area_extra * length
             reusable_volume = unit_costs["Outward reuse factor"] * volume_excavated
             # excavate and remove part of existing profile:
-            C = unit_costs["Outward removed volume"] * (
+            total_cost = unit_costs["Outward removed volume"] * (
                 volume_excavated - reusable_volume
             )
 
             # apply reusable volume
-            C += unit_costs["Outward reused volume"] * reusable_volume
+            total_cost += unit_costs["Outward reused volume"] * reusable_volume
             remaining_volume = volume_extra - reusable_volume
 
             # add additional soil:
-            C += unit_costs["Outward added volume"] * remaining_volume
+            total_cost += unit_costs["Outward added volume"] * remaining_volume
 
             # compensate:
-            C += (
+            total_cost += (
                 unit_costs["Outward removed volume"]
                 * unit_costs["Outward compensation factor"]
                 * volume_extra
@@ -1173,33 +1173,33 @@ def DetermineCosts(
                     )
                 )
                 # raise Exception('inwards distance exceeds housing database')
-                C += (
+                total_cost += (
                     unit_costs["House removal"]
                     * housing.loc[housing.size]["cumulative"]
                 )
             else:
-                C += (
+                total_cost += (
                     unit_costs["House removal"]
                     * housing.loc[float(dberm_in)]["cumulative"]
                 )
 
         # add costs for stability screen
         if parameters["StabilityScreen"] == "yes":
-            C += unit_costs["Sheetpile"] * parameters["Depth"] * length
+            total_cost += unit_costs["Sheetpile"] * parameters["Depth"] * length
 
         if dcrest > 0.0:
-            C += unit_costs["Road renewal"] * length
+            total_cost += unit_costs["Road renewal"] * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
     elif type == "Vertical Geotextile":
-        C = unit_costs["Vertical Geotextile"] * length
+        total_cost = unit_costs["Vertical Geotextile"] * length
     elif type == "Diaphragm Wall":
-        C = unit_costs["Diaphragm wall"] * length
+        total_cost = unit_costs["Diaphragm wall"] * length
     elif type == "Stability Screen":
-        C = unit_costs["Sheetpile"] * parameters["Depth"] * length
+        total_cost = unit_costs["Sheetpile"] * parameters["Depth"] * length
     else:
         print("Unknown type")
-    return C
+    return total_cost
 
 
 # Script to determine the required crest height for a certain year
