@@ -17,17 +17,17 @@ def cli():
     """
     pass
 
-def _get_valid_vrtool_config(args_dict: dict) -> VrtoolConfig:
-    _model_directory = Path(args_dict["model_directory"])
-    _found_json = _model_directory.glob("*.json")
+def _get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
+    _found_json = list(model_directory.glob("*.json"))
     if not any(_found_json):
-        raise FileNotFoundError("No json config file found in the model directory.")
+        raise FileNotFoundError("No json config file found in the model directory. {}".format(model_directory))
 
     if len(_found_json) > 1:
-        raise ValueError("More than one json file found in the directory. Only one json at the root directory supported.")
+        raise ValueError("More than one json file found in the directory {}. Only one json at the root directory supported.".format(model_directory))
 
     _vr_config = VrtoolConfig.from_json(_found_json[0])
-    _vr_config.input_directory = _model_directory
+    if not _vr_config.input_directory:
+        _vr_config.input_directory = model_directory
 
     if not _vr_config.output_directory:
         _vr_config.output_directory = _vr_config.input_directory / "results"
@@ -39,7 +39,7 @@ def run_step_assessment(**kwargs):
     logging.info("Assess, {0}!".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = _get_valid_vrtool_config(kwargs)
+    _vr_config = _get_valid_vrtool_config(kwargs["model_directory"])
     _selected_traject = DikeTraject.from_vr_config(_vr_config)
 
     # Step 1. Safety assessment.
@@ -56,7 +56,7 @@ def run_step_measures(**kwargs):
     logging.info("Measure, {0}!".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = _get_valid_vrtool_config(kwargs)
+    _vr_config = _get_valid_vrtool_config(kwargs["model_directory"])
     _selected_traject = DikeTraject.from_vr_config(_vr_config)
 
     # Step 2. Measures.
@@ -72,7 +72,7 @@ def run_step_optimization(**kwargs):
     logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = _get_valid_vrtool_config(kwargs)
+    _vr_config = _get_valid_vrtool_config(kwargs["model_directory"])
     _selected_traject = DikeTraject.from_vr_config(_vr_config)
     _plot_mode = VrToolPlotMode.STANDARD
 
@@ -92,7 +92,7 @@ def run_full(**kwargs):
     logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = _get_valid_vrtool_config(kwargs)
+    _vr_config = _get_valid_vrtool_config(kwargs["model_directory"])
     _selected_traject = DikeTraject.from_vr_config(_vr_config)
 
     # Run all steps with one command.
