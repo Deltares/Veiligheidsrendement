@@ -1,9 +1,11 @@
 from dataclasses import asdict
+import shutil
 
 import pytest
 
 from src.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
-
+from tests import test_results, test_data
+import json
 
 class TestVrtoolConfig:
     def test_load_default_unit_costs(self):
@@ -36,7 +38,9 @@ class TestVrtoolConfig:
             "directory",
             "language",
             "timing",
+            "traject",
             "input_directory",
+            "output_directory",
             "t_0",
             "T",
             "mechanisms",
@@ -109,3 +113,33 @@ class TestVrtoolConfig:
         assert _config.design_methods == ["Veiligheidsrendement", "Doorsnede-eisen"]
         assert isinstance(_config.unit_costs, dict)
         assert any(_config.unit_costs.items())
+
+    def test_export(self, request: pytest.FixtureRequest):
+        # 1. Define test data.
+        _test_dir = test_results / request.node.name
+        if _test_dir.exists():
+            shutil.rmtree(_test_dir)
+
+        _test_file = _test_dir / "export_config.json"
+        _vrtool_config = VrtoolConfig()
+        _vrtool_config.traject = "test_traject"
+
+        # 2. Run test
+        _vrtool_config.export(_test_file)
+
+        # 3. Verify expectations
+        _expected_data = {"traject": _vrtool_config.traject}
+        assert _test_file.exists()
+        assert _expected_data == json.loads(_test_file.read_text())
+
+    def test_load(self):
+        # 1. Define test data.
+        _test_file = test_data / "vrtool_config" / "custom_config.json"
+        assert _test_file.exists()
+
+        # 2. Run test.
+        _vrtool_config = VrtoolConfig.from_json(_test_file)
+
+        # 3. Verify expectations.
+        assert isinstance(_vrtool_config, VrtoolConfig)
+        assert _vrtool_config.traject == "MyCustomTraject"
