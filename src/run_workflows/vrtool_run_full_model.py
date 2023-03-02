@@ -43,7 +43,9 @@ class RunFullModel(VrToolRunProtocol):
             self.vr_config.output_directory.joinpath("results", "investment_steps").mkdir(
                 parents=True, exist_ok=True
             )
+        
         logging.info("Start run full model.")
+
         # Step 1. Safety assessment.
         _safety_assessment = RunSafetyAssessment(self.vr_config, self.selected_traject, self._plot_mode)
         _safety_assessment.run()

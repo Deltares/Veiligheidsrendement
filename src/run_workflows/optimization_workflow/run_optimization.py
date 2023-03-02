@@ -188,9 +188,9 @@ class RunOptimization(VrToolRunProtocol):
             _evaluation_mapping = self._get_evaluation_mapping()
             _results_optimization.results_strategies.extend(
                 [
-                    _evaluation_mapping[_dm](_dm)
-                    for _dm in self.vr_config.design_methods
-                    if _dm in _evaluation_mapping.keys()
+                    _evaluation_mapping[_design_method](_design_method)
+                    for _design_method in self.vr_config.design_methods
+                    if _design_method in _evaluation_mapping.keys()
                 ]
             )
         
