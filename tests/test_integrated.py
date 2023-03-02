@@ -3,31 +3,42 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import src.defaults.vrtool_config as case_config
-import src.FloodDefenceSystem.DikeTraject as DikeTraject
-import tools.RunModel as runFullModel
 from src.defaults.vrtool_config import VrtoolConfig
+from src.FloodDefenceSystem.DikeTraject import DikeTraject
 from tests import get_test_results_dir, test_data
+from tools.RunModel import runFullModel
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 
 
 class TestAcceptance:
     @pytest.mark.parametrize(
-        "casename, traject", [("integrated_SAFE_16-3_small", "16-3")]
+        "case_name, traject",
+        [
+            ("integrated_SAFE_16-3_small", "16-3"),
+            ("TestCase1_38-1_no_housing", "38-1"),
+            ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        ],
     )
-    def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
+    def test_integrated_run(self, case_name, traject, request: pytest.FixtureRequest):
         """This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        TestTrajectObject = DikeTraject(traject=traject)
-
-        test_data_input_directory = Path.joinpath(test_data, casename)
-        TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
+        test_data_input_directory = Path.joinpath(test_data, case_name)
+        test_results_dir = get_test_results_dir(request).joinpath(case_name)
 
         test_config = VrtoolConfig()
-        test_results_dir = get_test_results_dir(request)
+        test_config.input_directory = test_data_input_directory
         test_config.directory = test_results_dir
-        AllStrategies, AllSolutions = runFullModel(TestTrajectObject, test_config)
+
+        test_config.directory.joinpath("figures").mkdir(parents=True)
+        test_config.directory.joinpath("results", "investment_steps").mkdir(
+            parents=True
+        )
+
+        test_traject = DikeTraject(test_config, traject=traject)
+        test_traject.ReadAllTrajectInput(input_path=test_data_input_directory)
+
+        runFullModel(test_traject, test_config)
 
         comparison_errors = []
         files_to_compare = [
@@ -36,7 +47,7 @@ class TestAcceptance:
             "TotalCostValues_Greedy.csv",
         ]
 
-        reference_path = Path.joinpath(test_data, casename, "reference")
+        reference_path = Path.joinpath(test_data, case_name, "reference")
         for file in files_to_compare:
             reference = pd.read_csv(
                 reference_path.joinpath("results", file), index_col=0

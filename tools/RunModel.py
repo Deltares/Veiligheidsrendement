@@ -43,15 +43,6 @@ def runFullModel(
     if config.timing:
         start = time.time()
 
-    # Make a few dirs if they dont exist yet:
-    if not config.directory.is_dir():
-        config.directory.mkdir(parents=True, exist_ok=True)
-        if plot_mode != "test":
-            config.directory.joinpath("figures").mkdir(parents=True, exist_ok=True)
-        config.directory.joinpath("results", "investment_steps").mkdir(
-            parents=True, exist_ok=True
-        )
-
     ## STEP 1: SAFETY ASSESSMENT
     print("Start step 1: safety assessment")
 
@@ -162,8 +153,10 @@ def runFullModel(
         AllSolutions = {}
         # Calculate per section, for each measure the cost-reliability-time relations:
         for i in TrajectObject.Sections:
-            AllSolutions[i.name] = Solutions(i)
-            AllSolutions[i.name].fillSolutions(config.path.joinpath(i.name + ".xlsx"))
+            AllSolutions[i.name] = Solutions(i, config)
+            AllSolutions[i.name].fillSolutions(
+                config.input_directory.joinpath(i.name + ".xlsx")
+            )
             AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
 
     for i in TrajectObject.Sections:
@@ -229,7 +222,7 @@ def runFullModel(
         for i in config.design_methods:
             if i in ["TC", "Total Cost", "Optimized", "Greedy", "Veiligheidsrendement"]:
                 # Initialize a GreedyStrategy:
-                GreedyOptimization = GreedyStrategy(i)
+                GreedyOptimization = GreedyStrategy(i, config)
 
                 # Combine available measures
                 GreedyOptimization.combine(
@@ -316,7 +309,7 @@ def runFullModel(
 
             elif i in ["OI", "TargetReliability", "Doorsnede-eisen"]:
                 # Initialize a strategy type (i.e combination of objective & constraints)
-                TargetReliabilityBased = TargetReliabilityStrategy(i)
+                TargetReliabilityBased = TargetReliabilityStrategy(i, config)
                 # Combine available measures
                 TargetReliabilityBased.combine(
                     TrajectObject, AllSolutions, filtering="off", splitparams=True
@@ -342,9 +335,7 @@ def runFullModel(
                 # plot beta time for all measure steps for each strategy
                 if plot_mode == "extensive":
                     TargetReliabilityBased.plotBetaTime(
-                        TrajectObject,
-                        typ="single",
-                        path=config.directory
+                        TrajectObject, typ="single", path=config.directory
                     )
 
                 TargetReliabilityBased = replaceNames(

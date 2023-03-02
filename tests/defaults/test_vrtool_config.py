@@ -34,6 +34,9 @@ class TestVrtoolConfig:
         # 1. Define test data.
         _expected_keys = [
             "directory",
+            "language",
+            "timing",
+            "input_directory",
             "t_0",
             "T",
             "mechanisms",
@@ -54,6 +57,7 @@ class TestVrtoolConfig:
             "assessment_plot_years",
             "geometry_plot",
             "beta_cost_settings",
+            "design_methods",
             "unit_costs",
         ]
 
@@ -74,6 +78,9 @@ class TestVrtoolConfig:
 
         # Verify default values.
         assert _config.directory is None
+        assert _config.language == "EN"
+        assert not _config.timing
+        assert _config.input_directory is None
 
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
@@ -99,5 +106,6 @@ class TestVrtoolConfig:
         assert _config.assessment_plot_years == [0, 20, 50]
         assert not _config.geometry_plot
         assert _config.beta_cost_settings == {"symbols": True, "markersize": 10}
+        assert _config.design_methods == ["Veiligheidsrendement", "Doorsnede-eisen"]
         assert isinstance(_config.unit_costs, dict)
         assert any(_config.unit_costs.items())

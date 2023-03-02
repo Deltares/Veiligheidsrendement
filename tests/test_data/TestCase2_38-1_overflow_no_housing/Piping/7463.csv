@@ -1,0 +1,21 @@
+Naam traject,38-1
+Scenario,1
+WBN,6.67
+Polderpeil,0.2
+P_scenario,1.0
+D,42.54604296936758
+d70,0.0003209719522931
+d_cover,7.455730318652426
+h_exit,0.537973
+r_exit,0.8969343660375616
+Lvoor,142.41537796743287
+Lachter,0
+k,0.000631817779043
+gamma_sat,14.488637299587095
+kwelscherm,0
+dh_exit(t),0.005
+Gevoelige fractie,0.0
+InScope,True
+Pf_s,8.976573422194994e-09
+Mvalue,25445.992226
+Opmerking,
