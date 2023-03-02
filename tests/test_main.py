@@ -37,7 +37,7 @@ class TestMain:
         )
 
         # 3. Verify expectations.
-        assert _run_result.exit_code == 2
+        assert _run_result.exit_code == 1
 
     def test_given_valid_input_when_run_full_then_succeeds(self):
         # TODO: Ideally we want a really small test.
