@@ -13,18 +13,18 @@ from tools.RunModel import runFullModel
 
 class TestAcceptance:
     @pytest.mark.parametrize(
-        "casename, traject",
+        "case_name, traject",
         [
             ("integrated_SAFE_16-3_small", "16-3"),
             ("TestCase1_38-1_no_housing", "38-1"),
             ("TestCase2_38-1_overflow_no_housing", "38-1"),
         ],
     )
-    def test_integrated_run(self, casename, traject, request: pytest.FixtureRequest):
+    def test_integrated_run(self, case_name, traject, request: pytest.FixtureRequest):
         """This test so far only checks the output values after optimization.
         The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        test_data_input_directory = Path.joinpath(test_data, casename)
-        test_results_dir = get_test_results_dir(request).joinpath(casename)
+        test_data_input_directory = Path.joinpath(test_data, case_name)
+        test_results_dir = get_test_results_dir(request).joinpath(case_name)
 
         test_config = VrtoolConfig()
         test_config.input_directory = test_data_input_directory
@@ -35,10 +35,10 @@ class TestAcceptance:
             parents=True
         )
 
-        TestTrajectObject = DikeTraject(test_config, traject=traject)
-        TestTrajectObject.ReadAllTrajectInput(input_path=test_data_input_directory)
+        test_traject = DikeTraject(test_config, traject=traject)
+        test_traject.ReadAllTrajectInput(input_path=test_data_input_directory)
 
-        AllStrategies, AllSolutions = runFullModel(TestTrajectObject, test_config)
+        runFullModel(test_traject, test_config)
 
         comparison_errors = []
         files_to_compare = [
@@ -47,7 +47,7 @@ class TestAcceptance:
             "TotalCostValues_Greedy.csv",
         ]
 
-        reference_path = Path.joinpath(test_data, casename, "reference")
+        reference_path = Path.joinpath(test_data, case_name, "reference")
         for file in files_to_compare:
             reference = pd.read_csv(
                 reference_path.joinpath("results", file), index_col=0

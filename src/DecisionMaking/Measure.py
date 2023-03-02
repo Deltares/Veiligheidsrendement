@@ -293,10 +293,10 @@ class DiaphragmWall(Measure):
                                     dike_section.Reliability.Mechanisms["Overflow"]
                                     .Reliability[ij]
                                     .Input.input,
-                                    Pt=Pt,
+                                    p_t=Pt,
                                     t_0=self.t_0,
                                     horizon=self.parameters["year"] + 100,
-                                    loadchange=dike_section.HBNRise_factor
+                                    load_change=dike_section.HBNRise_factor
                                     * dike_section.YearlyWLRise,
                                     mechanism="Overflow",
                                 )
@@ -306,10 +306,10 @@ class DiaphragmWall(Measure):
                                     dike_section.Reliability.Mechanisms["Overflow"]
                                     .Reliability[ij]
                                     .Input.input,
-                                    Pt=Pt,
+                                    p_t=Pt,
                                     t_0=self.t_0,
                                     horizon=self.parameters["year"] + 100,
-                                    loadchange=None,
+                                    load_change=None,
                                     mechanism="Overflow",
                                 )
                         else:
@@ -318,10 +318,10 @@ class DiaphragmWall(Measure):
                                 dike_section.Reliability.Mechanisms["Overflow"]
                                 .Reliability[ij]
                                 .Input.input,
-                                Pt=Pt,
+                                p_t=Pt,
                                 t_0=self.t_0,
                                 horizon=self.parameters["year"] + 100,
-                                loadchange=None,
+                                load_change=None,
                                 type="HRING",
                                 mechanism="Overflow",
                             )
@@ -1204,15 +1204,15 @@ def DetermineCosts(
 
 # Script to determine the required crest height for a certain year
 def ProbabilisticDesign(
-    design_variable,
+    design_variable: str,
     strength_input,
-    Pt,
+    p_t: float,
     t_0: int,
-    horizon=50,
-    loadchange=0,
-    mechanism="Overflow",
-    type="SAFE",
-):
+    horizon: int = 50,
+    load_change: float = 0,
+    mechanism: str = "Overflow",
+    type: str = "SAFE",
+) -> float:
     if mechanism == "Overflow":
         if type == "SAFE":
             # determine the crest required for the target
@@ -1223,15 +1223,15 @@ def ProbabilisticDesign(
                 strength_input["q_c"],
                 strength_input["beta"],
                 mode="design",
-                Pt=Pt,
+                Pt=p_t,
                 design_variable=design_variable,
             )
             # add temporal changes due to settlement and climate change
-            h_crest = h_crest + horizon * (strength_input["dhc(t)"] + loadchange)
+            h_crest = h_crest + horizon * (strength_input["dhc(t)"] + load_change)
             return h_crest
         elif type == "HRING":
             h_crest, beta = OverflowHRING(
-                strength_input, horizon, t_0, mode="design", Pt=Pt
+                strength_input, horizon, t_0, mode="design", Pt=p_t
             )
             return h_crest
         else:
