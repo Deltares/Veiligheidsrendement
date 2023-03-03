@@ -39,6 +39,7 @@ class TestMain:
         # 3. Verify expectations.
         assert _run_result.exit_code == 1
 
+    @pytest.mark.slow
     def test_given_valid_input_when_run_full_then_succeeds(self):
         # TODO: Ideally we want a really small test.
         # 1. Define test data.
@@ -46,7 +47,7 @@ class TestMain:
         assert _input_dir.exists()
 
         # Ensure we have a clean results dir.
-        _results_dir = test_results / "acceptance"
+        _results_dir = _input_dir / "results"
         if _results_dir.exists():
             shutil.rmtree(_results_dir)
         _results_dir.mkdir(parents=True)
