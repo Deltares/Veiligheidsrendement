@@ -12,6 +12,7 @@ from tools.RunModel import runFullModel
 
 
 class TestAcceptance:
+    @pytest.mark.acceptance
     @pytest.mark.parametrize(
         "case_name, traject",
         [
