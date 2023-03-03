@@ -75,7 +75,7 @@ class DikeTraject:
                 "TrajectLength"
             ] = 29500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
             # gebruiken
-            self.GeneralInfo["Pmax"] = 1.0 / 10000
+            self.GeneralInfo["Pmax"] = 1.0 / 30000
             self.GeneralInfo["aPiping"] = 0.9
 
         elif traject == "16-1":

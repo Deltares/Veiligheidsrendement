@@ -731,7 +731,7 @@ class MechanismReliability:
                                     self.scenario_result["beta_cs_p"][j],
                                 ]
                             )
-                            self.scenario_result["Pf"][j] = np.min(
+                            self.scenario_result["Pf"][j] = np.max(
                                 [
                                     np.min(
                                         [
