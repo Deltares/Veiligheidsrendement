@@ -28,6 +28,7 @@ _acceptance_test_cases = [
 ]
 
 
+@pytest.mark.slow
 class TestAcceptance:
     def _validate_acceptance_result_cases(self, test_results_dir: Path, test_reference_dir: Path):
         comparison_errors = []

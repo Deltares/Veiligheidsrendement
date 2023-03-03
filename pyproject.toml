@@ -69,6 +69,11 @@ line_length = 88
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.0.1"
