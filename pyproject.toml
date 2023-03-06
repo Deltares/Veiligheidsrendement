@@ -38,8 +38,6 @@ pytest-cov = "^3.0.0"
 black = "^22.8.0"
 isort = "^5.10.1"
 coverage = "^6.4.4"
-
-[tool.poetry.group.dev.dependencies]
 teamcity-messages = "^1.32"
 
 [tool.black]
