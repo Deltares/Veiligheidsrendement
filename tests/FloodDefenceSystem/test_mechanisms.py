@@ -1,6 +1,6 @@
 import pytest
 
-from src.FloodDefenceSystem.Mechanisms import LSF_heave, LSF_sellmeijer
+from vrtool.FloodDefenceSystem.Mechanisms import LSF_heave, LSF_sellmeijer
 
 
 class TestMechanisms:

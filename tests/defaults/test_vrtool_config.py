@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from src.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
+from vrtool.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
 from tests import test_results, test_data
 import json
 

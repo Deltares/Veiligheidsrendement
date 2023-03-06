@@ -2,11 +2,11 @@ import shutil
 
 import pytest
 
-from src.defaults.vrtool_config import VrtoolConfig
-from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
-from src.run_workflows.vrtool_run_protocol import VrToolRunProtocol
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
+from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 from tests import test_results
-from src.FloodDefenceSystem.DikeTraject import DikeTraject
+from vrtool.FloodDefenceSystem.DikeTraject import DikeTraject
 
 
 class TestRunSafetyAssessment:

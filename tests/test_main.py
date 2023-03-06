@@ -3,8 +3,8 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from src import __main__
-from src.defaults.vrtool_config import VrtoolConfig
+from vrtool import __main__
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from tests import test_data, test_results
 import pytest
 

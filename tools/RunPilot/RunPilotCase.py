@@ -1,7 +1,7 @@
 """ This script can calculate life-cycle reliability and costs for all measures for various mechanisms. It uses both a target reliability based approach and a greedy search optimization"""
 
 import sys
-import src.config as config
+import vrtool.config as config
 import Pilot_config as case_config
 # Import a bunch of packages
 import matplotlib.pyplot as plt

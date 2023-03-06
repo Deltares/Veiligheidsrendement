@@ -2,8 +2,8 @@ import time
 
 import matplotlib.pyplot as plt
 
-from src.DecisionMaking.Solutions import Solutions
-from src.DecisionMaking.Strategy import GreedyStrategy, TargetReliabilityStrategy
+from vrtool.DecisionMaking.Solutions import Solutions
+from vrtool.DecisionMaking.Strategy import GreedyStrategy, TargetReliabilityStrategy
 
 try:
     import cPickle as pickle
@@ -16,9 +16,9 @@ import shelve
 import numpy as np
 import pandas as pd
 
-import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from src.defaults.vrtool_config import VrtoolConfig
-from src.FloodDefenceSystem.DikeTraject import DikeTraject
+import vrtool.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.FloodDefenceSystem.DikeTraject import DikeTraject
 from tools.HelperFunctions import replaceNames
 
 """The function below is the main one for any calculation for SAFE. It contains 3 main steps:

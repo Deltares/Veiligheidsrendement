@@ -4,20 +4,20 @@ import shutil
 import pandas as pd
 import pytest
 
-from src.defaults.vrtool_config import VrtoolConfig
-from src.FloodDefenceSystem.DikeTraject import DikeTraject
-from src.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from src.run_workflows.measures_workflow.run_measures import RunMeasures
-from src.run_workflows.optimization_workflow.results_optimization import (
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.FloodDefenceSystem.DikeTraject import DikeTraject
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
-from src.run_workflows.optimization_workflow.run_optimization import RunOptimization
-from src.run_workflows.safety_workflow.results_safety_assessment import (
+from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
+from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
-from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
-from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
-from src.run_workflows.vrtool_run_full_model import RunFullModel
+from vrtool.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
+from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
+from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 from tests import get_test_results_dir, test_data
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
