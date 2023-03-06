@@ -22,7 +22,7 @@ class DiaphragmWall(MeasureBase):
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
-        mechanisms = dike_section.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.section_reliability.Mechanisms.keys()
         # StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
         # It is assumed that the diaphragm wall is extendable after that.
         # Only 1 parameterized version with a lifetime of 100 years
@@ -42,19 +42,19 @@ class DiaphragmWall(MeasureBase):
                 self.measures["Reliability"].Mechanisms[i].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.Reliability.Mechanisms[i].Reliability[ij].Input
+                    dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
                 )
                 if float(ij) >= self.parameters["year"]:
                     if i == "Overflow":
                         Pt = traject_info["Pmax"] * traject_info["omegaOverflow"]
                         if (
-                            dike_section.Reliability.Mechanisms[i].Reliability[ij].type
+                            dike_section.section_reliability.Mechanisms[i].Reliability[ij].type
                             == "Simple"
                         ):
                             if hasattr(dike_section, "HBNRise_factor"):
                                 hc = probabilistic_design(
                                     "h_crest",
-                                    dike_section.Reliability.Mechanisms["Overflow"]
+                                    dike_section.section_reliability.Mechanisms["Overflow"]
                                     .Reliability[ij]
                                     .Input.input,
                                     p_t=Pt,
@@ -67,7 +67,7 @@ class DiaphragmWall(MeasureBase):
                             else:
                                 hc = probabilistic_design(
                                     "h_crest",
-                                    dike_section.Reliability.Mechanisms["Overflow"]
+                                    dike_section.section_reliability.Mechanisms["Overflow"]
                                     .Reliability[ij]
                                     .Input.input,
                                     p_t=Pt,
@@ -79,7 +79,7 @@ class DiaphragmWall(MeasureBase):
                         else:
                             hc = probabilistic_design(
                                 "h_crest",
-                                dike_section.Reliability.Mechanisms["Overflow"]
+                                dike_section.section_reliability.Mechanisms["Overflow"]
                                 .Reliability[ij]
                                 .Input.input,
                                 p_t=Pt,
@@ -112,6 +112,6 @@ class DiaphragmWall(MeasureBase):
                             ij
                         ].Input.input["Pf_with_elim"] = self.parameters["Pf_solution"]
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
             )
         self.measures["Reliability"].calculate_section_reliability()

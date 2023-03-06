@@ -33,7 +33,7 @@ class RunMeasures(VrToolRunProtocol):
         _solution.fillSolutions(
             self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
         )
-        _solution.evaluateSolutions(selected_section, self.selected_traject.GeneralInfo)
+        _solution.evaluate_solutions(selected_section, self.selected_traject.general_info)
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:
@@ -48,10 +48,10 @@ class RunMeasures(VrToolRunProtocol):
             _results_measures.load_results()
         else:
             _results_measures.solutions_dict.update(
-                dict(map(self._get_section_solution, self.selected_traject.Sections))
+                dict(map(self._get_section_solution, self.selected_traject.sections))
             )
 
-        for i in self.selected_traject.Sections:
+        for i in self.selected_traject.sections:
             _results_measures.solutions_dict[i.name].solutions_to_dataframe(
                 filtering="off", splitparams=True
             )

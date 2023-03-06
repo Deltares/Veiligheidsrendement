@@ -1,4 +1,5 @@
 import copy
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,6 +13,7 @@ from vrtool.decision_making.measures import (
     StabilityScreen,
     VerticalGeotextile,
 )
+from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
@@ -19,13 +21,15 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 class Solutions:
     # This class contains possible solutions/measures
     def __init__(self, dike_section: DikeSection, config: VrtoolConfig):
-        self.SectionName = dike_section.name
-        self.Length = dike_section.Length
-        self.InitialGeometry = dike_section.InitialGeometry
+        self.section_name = dike_section.name
+        self.length = dike_section.Length
+        self.initial_geometry = dike_section.InitialGeometry
 
         self.config = config
         self.T = config.T
         self.mechanisms = config.mechanisms
+        self.measures: List[MeasureBase] = []
+
 
     def fillSolutions(self, excel_sheet):
         """This routine reads input for the measures from the Excel sheet for each section.
@@ -33,28 +37,27 @@ class Solutions:
         These are then stored in the MeasureTable, which is later evaluated.
         """
         data = pd.read_excel(excel_sheet, "Measures")
-        self.Measures = []
         combinables = []
         partials = []
         for i in data.index:
             # TODO depending on data.loc[i].type make correct sublclass
 
             if data.loc[i].Type == "Soil reinforcement":
-                self.Measures.append(SoilReinforcement(data.loc[i], self.config))
+                self.measures.append(SoilReinforcement(data.loc[i], self.config))
             elif data.loc[i].Type == "Diaphragm Wall":
-                self.Measures.append(DiaphragmWall(data.loc[i], self.config))
+                self.measures.append(DiaphragmWall(data.loc[i], self.config))
             elif data.loc[i].Type == "Stability Screen":
-                self.Measures.append(StabilityScreen(data.loc[i], self.config))
+                self.measures.append(StabilityScreen(data.loc[i], self.config))
             elif data.loc[i].Type == "Vertical Geotextile":
-                self.Measures.append(VerticalGeotextile(data.loc[i], self.config))
+                self.measures.append(VerticalGeotextile(data.loc[i], self.config))
             elif data.loc[i].Type == "Custom":
                 data.loc[i, "File"] = excel_sheet.parent.joinpath(
                     "Measures", data.loc[i]["File"]
                 )
-                self.Measures.append(CustomMeasure(data.loc[i], self.config))
+                self.measures.append(CustomMeasure(data.loc[i], self.config))
 
         self.MeasureTable = pd.DataFrame(columns=["ID", "Name"])
-        for i, measure in enumerate(self.Measures):
+        for i, measure in enumerate(self.measures):
             if measure.parameters["available"] == 1:
                 self.MeasureTable.loc[i] = [
                     str(measure.parameters["ID"]),
@@ -72,13 +75,13 @@ class Solutions:
         count = 0
         for i in range(0, len(partials)):
             for j in range(0, len(combinables)):
-                self.MeasureTable.loc[count + len(self.Measures) + 1] = [
+                self.MeasureTable.loc[count + len(self.measures) + 1] = [
                     str(partials[i][0]) + "+" + str(combinables[j][0]),
                     str(partials[i][1]) + "+" + str(combinables[j][1]),
                 ]
                 count += 1
 
-    def evaluateSolutions(
+    def evaluate_solutions(
         self,
         dike_section: DikeSection,
         traject_info: dict[str, any],
@@ -88,10 +91,10 @@ class Solutions:
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures."""
         self.trange = self.T
         removal = []
-        for i, measure in enumerate(self.Measures):
+        for i, measure in enumerate(self.measures):
             if measure.parameters["available"] == 1:
                 # old: measure.evaluateMeasure(DikeSection, TrajectInfo, preserve_slope = preserve_slope)
-                measure.evaluateMeasure(
+                measure.evaluate_measure(
                     dike_section, traject_info, preserve_slope=preserve_slope
                 )
 
@@ -111,7 +114,7 @@ class Solutions:
         # remove measures that are set to unavailable:
         if len(removal) > 0:
             for i in reversed(removal):
-                self.Measures.pop(i)
+                self.measures.pop(i)
 
     def solutions_to_dataframe(self, filtering=False, splitparams=False):
         # write all solutions to one single dataframe:
@@ -135,7 +138,7 @@ class Solutions:
         inputs_m = []
         inputs_r = []
 
-        for i, measure in enumerate(self.Measures):
+        for i, measure in enumerate(self.measures):
             if isinstance(measure.measures, list):
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
                 type = measure.parameters["Type"]
@@ -223,7 +226,7 @@ class Solutions:
 
         # measures is a list of measures that need to be plotted
         if measures == "undefined":
-            measures = list(self.Measures)
+            measures = list(self.measures)
 
         # mechanism can be used to select a single or all ('Section') mechanisms
         # beta can be used to use a criterion for selecting the 'best' designs, such as the beta at 't0'
@@ -236,7 +239,7 @@ class Solutions:
         color = 0
 
         for i in np.unique(self.MeasureData["ID"].values):
-            if isinstance(self.Measures[int(i) - 1].measures, list):
+            if isinstance(self.measures[int(i) - 1].measures, list):
                 data = copy.deepcopy(self.MeasureData.loc[self.MeasureData["ID"] == i])
                 # inputs = []; type = self.Measures[i].parameters['Type']
                 # for j in range(0, len(self.Measures[i].measures)):
@@ -277,7 +280,7 @@ class Solutions:
 
                             envelope_beta.append(betamax)
 
-                if self.Measures[np.int(i) - 1].parameters["Name"][-4:] != "2045":
+                if self.measures[np.int(i) - 1].parameters["Name"][-4:] != "2045":
                     plt.plot(
                         envelope_costs,
                         envelope_beta,
@@ -289,7 +292,7 @@ class Solutions:
                     plt.plot(
                         y["cost"],
                         y[(mechanism, beta_ind)],
-                        label=self.Measures[np.int(i) - 1].parameters["Name"],
+                        label=self.measures[np.int(i) - 1].parameters["Name"],
                         marker="o",
                         markersize=6,
                         color=colors[color],
@@ -300,7 +303,7 @@ class Solutions:
                     )
 
                     color += 1
-            elif isinstance(self.Measures[np.int(i) - 1].measures, dict):
+            elif isinstance(self.measures[np.int(i) - 1].measures, dict):
                 data = copy.deepcopy(self.MeasureData.loc[self.MeasureData["ID"] == i])
                 #
                 # inputs = []; type = self.Measures[np.int(i)].parameters['Type']
@@ -314,7 +317,7 @@ class Solutions:
                 plt.plot(
                     data["cost"],
                     data[(mechanism, beta_ind)],
-                    label=self.Measures[np.int(i) - 1].parameters["Name"],
+                    label=self.measures[np.int(i) - 1].parameters["Name"],
                     marker="d",
                     markersize=10,
                     markerfacecolor=colors[color],

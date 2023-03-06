@@ -52,7 +52,7 @@ class CustomMeasure(MeasureBase):
         # base_data['kruinhoogte']=6.
         # base_data['extra kwelweg'] = 10.
         annual_dhc = (
-            section.Reliability.Mechanisms["Overflow"]
+            section.section_reliability.Mechanisms["Overflow"]
             .Reliability["0"]
             .Input.input["dhc(t)"]
         )
@@ -75,7 +75,7 @@ class CustomMeasure(MeasureBase):
         traject_info: dict[str, any],
         preserve_slope: bool = False,
     ):
-        mechanisms = list(dike_section.Reliability.Mechanisms.keys())
+        mechanisms = list(dike_section.section_reliability.Mechanisms.keys())
 
         # first read and set the data:
         self.set_input(dike_section)
@@ -90,7 +90,7 @@ class CustomMeasure(MeasureBase):
                 self.measures["Reliability"].Mechanisms[i].Reliability[
                     ij
                 ] = copy.deepcopy(
-                    dike_section.Reliability.Mechanisms[i].Reliability[ij]
+                    dike_section.section_reliability.Mechanisms[i].Reliability[ij]
                 )
 
                 # only adapt after year of implementation:
@@ -133,7 +133,7 @@ class CustomMeasure(MeasureBase):
                                     0
                                 ]
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
             )
-        self.measures["Reliability"].calcSectionReliability()
+        self.measures["Reliability"].calculate_section_reliability()
 

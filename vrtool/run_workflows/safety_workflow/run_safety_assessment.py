@@ -32,22 +32,22 @@ class RunSafetyAssessment(VrToolRunProtocol):
         logging.info("Start step 1: safety assessment")
 
         # Loop over sections and do the assessment.
-        for _, _section in enumerate(self.selected_traject.Sections):
+        for _, _section in enumerate(self.selected_traject.sections):
             # get design water level:
             # TODO remove this line?
             # section.Reliability.Load.NormWaterLevel = pb.getDesignWaterLevel(section.Reliability.Load,selected_traject.GeneralInfo['Pmax'])
 
             # compute reliability in time for each mechanism:
             # logging.info(section.End)
-            for j in self.selected_traject.GeneralInfo["MechanismsConsidered"]:
-                _section.Reliability.Mechanisms[j].generateLCRProfile(
-                    _section.Reliability.Load,
+            for j in self.selected_traject.general_info["MechanismsConsidered"]:
+                _section.section_reliability.Mechanisms[j].generateLCRProfile(
+                    _section.section_reliability.Load,
                     mechanism=j,
-                    trajectinfo=self.selected_traject.GeneralInfo,
+                    trajectinfo=self.selected_traject.general_info,
                 )
 
             # aggregate to section reliability:
-            _section.Reliability.calcSectionReliability()
+            _section.section_reliability.calculate_section_reliability()
 
             # optional: plot reliability in time for each section
             if self.vr_config.plot_reliability_in_time:
@@ -77,14 +77,14 @@ class RunSafetyAssessment(VrToolRunProtocol):
         # Plot the initial reliability-time:
         plt.figure(1)
         [
-            selected_section.Reliability.Mechanisms[j].drawLCR(mechanism=j)
+            selected_section.section_reliability.Mechanisms[j].drawLCR(mechanism=j)
             for j in self.vr_config.mechanisms
         ]
         plt.plot(
             [self.vr_config.t_0, self.vr_config.t_0 + np.max(self.vr_config.T)],
             [
-                pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
-                pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
+                pf_to_beta(self.selected_traject.general_info["Pmax"]),
+                pf_to_beta(self.selected_traject.general_info["Pmax"]),
             ],
             "k--",
             label="Norm",

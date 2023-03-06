@@ -20,7 +20,7 @@ class VerticalGeotextile(MeasureBase):
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
-        mechanisms = dike_section.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.section_reliability.Mechanisms.keys()
 
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years
@@ -41,7 +41,7 @@ class VerticalGeotextile(MeasureBase):
                 self.measures["Reliability"].Mechanisms[i].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.Reliability.Mechanisms[i].Reliability[ij].Input
+                    dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
                 )
                 if (
                     i == "Overflow"
@@ -51,7 +51,7 @@ class VerticalGeotextile(MeasureBase):
                     self.measures["Reliability"].Mechanisms[i].Reliability[
                         ij
                     ] = copy.deepcopy(
-                        dike_section.Reliability.Mechanisms[i].Reliability[ij]
+                        dike_section.section_reliability.Mechanisms[i].Reliability[ij]
                     )
                 elif i == "Piping" and int(ij) >= self.parameters["year"]:
                     self.measures["Reliability"].Mechanisms[i].Reliability[
@@ -66,7 +66,7 @@ class VerticalGeotextile(MeasureBase):
                         [self.parameters["Pf_solution"], 1.0e-16]
                     )
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
             )
         self.measures["Reliability"].calculate_section_reliability()
 

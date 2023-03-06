@@ -15,7 +15,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability_collection import MechanismReliabilityCollection
-
+from typing import List
 
 class DikeTraject:
     # This class contains general information on the dike traject and is used to store all data on the sections
@@ -32,7 +32,7 @@ class DikeTraject:
         self.flip_traject = config.flip_traject
         self.t_0 = config.t_0
 
-        self.GeneralInfo = {
+        self.general_info = {
             "omegaPiping": 0.24,
             "omegaStabilityInner": 0.04,
             "omegaOverflow": 0.24,
@@ -40,60 +40,60 @@ class DikeTraject:
             "aStabilityInner": 0.033,
             "bStabilityInner": 50,
         }
-        self.Sections = []
-        self.GeneralInfo["MechanismsConsidered"] = self.mechanisms
+        self.sections: List[DikeSection] = []
+        self.general_info["MechanismsConsidered"] = self.mechanisms
         # Basic traject info
         # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
         # Pmax is the ondergrens as given by law
         # TODO check whether this is a sensible value
         # TODO read these values from a generic input file.
         if traject == "16-4":
-            self.GeneralInfo["aPiping"] = 0.9
-            self.GeneralInfo["FloodDamage"] = 23e9
-            self.GeneralInfo["TrajectLength"] = 19480
-            self.GeneralInfo["Pmax"] = 1.0 / 10000
+            self.general_info["aPiping"] = 0.9
+            self.general_info["FloodDamage"] = 23e9
+            self.general_info["TrajectLength"] = 19480
+            self.general_info["Pmax"] = 1.0 / 10000
         elif traject == "16-3":
-            self.GeneralInfo["FloodDamage"] = 23e9
-            self.GeneralInfo["TrajectLength"] = 19899
-            self.GeneralInfo["Pmax"] = 1.0 / 10000
-            self.GeneralInfo["aPiping"] = 0.9
+            self.general_info["FloodDamage"] = 23e9
+            self.general_info["TrajectLength"] = 19899
+            self.general_info["Pmax"] = 1.0 / 10000
+            self.general_info["aPiping"] = 0.9
             # NB: klopt a hier?????!!!!
         elif traject == "16-3 en 16-4":
-            self.GeneralInfo["FloodDamage"] = 23e9
-            self.GeneralInfo[
+            self.general_info["FloodDamage"] = 23e9
+            self.general_info[
                 "TrajectLength"
             ] = 19500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
             # gebruiken
-            self.GeneralInfo["Pmax"] = 1.0 / 10000
-            self.GeneralInfo["aPiping"] = 0.9
+            self.general_info["Pmax"] = 1.0 / 10000
+            self.general_info["aPiping"] = 0.9
 
         elif traject == "38-1":
-            self.GeneralInfo["FloodDamage"] = 14e9
-            self.GeneralInfo[
+            self.general_info["FloodDamage"] = 14e9
+            self.general_info[
                 "TrajectLength"
             ] = 29500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
             # gebruiken
-            self.GeneralInfo["Pmax"] = 1.0 / 30000
-            self.GeneralInfo["aPiping"] = 0.9
+            self.general_info["Pmax"] = 1.0 / 30000
+            self.general_info["aPiping"] = 0.9
 
         elif traject == "16-1":
-            self.GeneralInfo["FloodDamage"] = 29e9
-            self.GeneralInfo["TrajectLength"] = 15000
-            self.GeneralInfo["Pmax"] = 1.0 / 30000
-            self.GeneralInfo["aPiping"] = 0.4
+            self.general_info["FloodDamage"] = 29e9
+            self.general_info["TrajectLength"] = 15000
+            self.general_info["Pmax"] = 1.0 / 30000
+            self.general_info["aPiping"] = 0.4
         else:
             warnings.warn(
                 "Warning: dike traject not found, using default assumptions for traject."
             )
-            self.GeneralInfo["FloodDamage"] = 5e9
-            self.GeneralInfo["Pmax"] = 1.0 / 10000
-            self.GeneralInfo["omegaPiping"] = 0.24
-            self.GeneralInfo["aPiping"] = 0.9
-            self.GeneralInfo["bPiping"] = 300
-            self.GeneralInfo["omegaStabilityInner"] = 0.04
-            self.GeneralInfo["aStabilityInner"] = 0.033
-            self.GeneralInfo["bStabilityInner"] = 50
-            self.GeneralInfo["omegaOverflow"] = 0.24
+            self.general_info["FloodDamage"] = 5e9
+            self.general_info["Pmax"] = 1.0 / 10000
+            self.general_info["omegaPiping"] = 0.24
+            self.general_info["aPiping"] = 0.9
+            self.general_info["bPiping"] = 300
+            self.general_info["omegaStabilityInner"] = 0.04
+            self.general_info["aStabilityInner"] = 0.033
+            self.general_info["bStabilityInner"] = 50
+            self.general_info["omegaOverflow"] = 0.24
 
     @classmethod
     def from_vr_config(cls, vr_config: VrtoolConfig) -> DikeTraject:
@@ -107,10 +107,10 @@ class DikeTraject:
             DikeTraject: Valid instance of a loaded dike traject.
         """
         _traject = cls(vr_config, traject=vr_config.traject)
-        _traject.ReadAllTrajectInput(input_path=vr_config.input_directory)
+        _traject.read_all_traject_input(input_path=vr_config.input_directory)
         return _traject
 
-    def ReadAllTrajectInput(self, input_path, makesubdirs=True):
+    def read_all_traject_input(self, input_path: Path, makesubdirs=True):
         # Make a case directory and inside a figures and results directory if it doesnt exist yet
         # #TODO check if these are obsolete
         # if not config.path.joinpath(config.directory).is_dir():
@@ -125,59 +125,59 @@ class DikeTraject:
             raise IOError("Error: no dike sections found. Check path!")
         for i in range(len(files)):
             # Read the general information for each section:
-            self.Sections.append(DikeSection(files[i].stem, self.traject))
-            self.Sections[i].readGeneralInfo(input_path, "General")
+            self.sections.append(DikeSection(files[i].stem, self.traject))
+            self.sections[i].read_general_info(input_path, "General")
 
             # Read the data per mechanism, and first the load frequency line:
-            self.Sections[i].Reliability.Load = LoadInput(
-                list(self.Sections[i].__dict__.keys())
+            self.sections[i].section_reliability.Load = LoadInput(
+                list(self.sections[i].__dict__.keys())
             )
             if (
-                self.Sections[i].Reliability.Load.load_type == "HRING"
+                self.sections[i].section_reliability.Load.load_type == "HRING"
             ):  # 2 HRING computations for different years
-                self.Sections[i].Reliability.Load.set_HRING_input(
-                    input_path.joinpath("Waterstand"), self.Sections[i]
+                self.sections[i].section_reliability.Load.set_HRING_input(
+                    input_path.joinpath("Waterstand"), self.sections[i]
                 )  # input folder, location
             elif (
-                self.Sections[i].Reliability.Load.load_type == "SAFE"
+                self.sections[i].section_reliability.Load.load_type == "SAFE"
             ):  # 2 computation as done for SAFE
-                self.Sections[i].Reliability.Load.set_fromDesignTable(
-                    input_path.joinpath("Toetspeil", self.Sections[i].LoadData)
+                self.sections[i].section_reliability.Load.set_fromDesignTable(
+                    input_path.joinpath("Toetspeil", self.sections[i].LoadData)
                 )
-                self.Sections[i].Reliability.Load.set_annual_change(
+                self.sections[i].section_reliability.Load.set_annual_change(
                     type="SAFE",
                     parameters=[
-                        self.Sections[i].YearlyWLRise,
-                        self.Sections[i].HBNRise_factor,
+                        self.sections[i].YearlyWLRise,
+                        self.sections[i].HBNRise_factor,
                     ],
                 )
 
             # Then the input for all the mechanisms:
-            self.Sections[i].Reliability.Mechanisms = {}
+            self.sections[i].section_reliability.Mechanisms = {}
             for j in self.mechanisms:
                 mech_input_path = input_path.joinpath(j)
-                self.Sections[i].Reliability.Mechanisms[
+                self.sections[i].section_reliability.Mechanisms[
                     j
                 ] = MechanismReliabilityCollection(
-                    j, self.Sections[i].MechanismData[j][1], self.config
+                    j, self.sections[i].MechanismData[j][1], self.config
                 )
-                for k in self.Sections[i].Reliability.Mechanisms[j].Reliability.keys():
-                    if self.Sections[i].Reliability.Load.load_type == "HRING":
-                        self.Sections[i].Reliability.Mechanisms[j].Reliability[
+                for k in self.sections[i].section_reliability.Mechanisms[j].Reliability.keys():
+                    if self.sections[i].section_reliability.Load.load_type == "HRING":
+                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
-                            *self.Sections[i].MechanismData[j],
+                            *self.sections[i].MechanismData[j],
                             mechanism=j,
-                            crest_height=self.Sections[i].Kruinhoogte,
-                            dcrest=self.Sections[i].Kruindaling,
+                            crest_height=self.sections[i].Kruinhoogte,
+                            dcrest=self.sections[i].Kruindaling,
                         )
                     else:
-                        self.Sections[i].Reliability.Mechanisms[j].Reliability[
+                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
-                            *self.Sections[i].MechanismData[j],
+                            *self.sections[i].MechanismData[j],
                             mechanism=j,
                         )
 
@@ -187,35 +187,35 @@ class DikeTraject:
             #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
 
         # Traject length is lengt of all sections together:
-        self.GeneralInfo["TrajectLength"] = 0
-        for i in self.Sections:
-            self.GeneralInfo["TrajectLength"] += i.Length
+        self.general_info["TrajectLength"] = 0
+        for i in self.sections:
+            self.general_info["TrajectLength"] += i.Length
 
-        self.GeneralInfo["beta_max"] = pf_to_beta(
-            self.GeneralInfo["Pmax"]
+        self.general_info["beta_max"] = pf_to_beta(
+            self.general_info["Pmax"]
         )
-        self.GeneralInfo["gammaHeave"] = calc_gamma(
-            "Heave", self.GeneralInfo
+        self.general_info["gammaHeave"] = calc_gamma(
+            "Heave", self.general_info
         )
-        self.GeneralInfo["gammaUplift"] = calc_gamma(
-            "Uplift", self.GeneralInfo
+        self.general_info["gammaUplift"] = calc_gamma(
+            "Uplift", self.general_info
         )
-        self.GeneralInfo["gammaPiping"] = calc_gamma(
-            "Piping", self.GeneralInfo
+        self.general_info["gammaPiping"] = calc_gamma(
+            "Piping", self.general_info
         )
 
     def setProbabilities(self):
         """routine to make 1 dataframe of all probabilities of a TrajectObject"""
-        for i, section in enumerate(self.Sections):
+        for i, section in enumerate(self.sections):
             if i == 0:
-                Assessment = section.Reliability.SectionReliability.reset_index()
+                Assessment = section.section_reliability.SectionReliability.reset_index()
                 Assessment["Section"] = section.name
                 Assessment["Length"] = section.Length
                 Assessment.columns = Assessment.columns.astype(str)
                 if "mechanism" in Assessment.columns:
                     Assessment = Assessment.rename(columns={"mechanism": "index"})
             else:
-                data_to_add = section.Reliability.SectionReliability.reset_index()
+                data_to_add = section.section_reliability.SectionReliability.reset_index()
                 data_to_add["Section"] = section.name
                 data_to_add["Length"] = section.Length
                 data_to_add.columns = data_to_add.columns.astype(str)
@@ -255,7 +255,7 @@ class DikeTraject:
                         reinforcement_strategy.OptimalStep
                     ]
                 elif greedymode == "SatisfiedStandard":
-                    Ptarget = self.GeneralInfo["Pmax"]
+                    Ptarget = self.general_info["Pmax"]
                     for i in reversed(reinforcement_strategy.Probabilities):
                         beta_traj, Pf_traj = calc_traject_prob(i, ts=50)
                         if Pf_traj < Ptarget:  # satisfactory solution
@@ -287,7 +287,7 @@ class DikeTraject:
                 label_ylabel = r"Faalkans $P_f$ [-/jaar]"
                 label_target = "Doelfaalkans"
             labels_xticks = []
-            for i in self.Sections:
+            for i in self.sections:
                 labels_xticks.append(i.name)
         elif case_settings["language"] == "EN":
             label_xlabel = "Dike sections"
@@ -301,7 +301,7 @@ class DikeTraject:
                 label_ylabel = r"Failure probability $P_f$ [-/year]"
                 label_target = "Target failure prob."
             labels_xticks = []
-            for i in self.Sections:
+            for i in self.sections:
                 labels_xticks.append("S" + i.name[2:])
 
         cumlength, xticks1, middles = get_section_length_in_traject(
@@ -401,31 +401,31 @@ class DikeTraject:
                     dash = [2, 2]
                     if j == "StabilityInner":
                         N = (
-                            self.GeneralInfo["TrajectLength"]
-                            * self.GeneralInfo["aStabilityInner"]
-                            / self.GeneralInfo["bStabilityInner"]
+                            self.general_info["TrajectLength"]
+                            * self.general_info["aStabilityInner"]
+                            / self.general_info["bStabilityInner"]
                         )
                         pt = (
-                            self.GeneralInfo["Pmax"]
-                            * self.GeneralInfo["omegaStabilityInner"]
+                            self.general_info["Pmax"]
+                            * self.general_info["omegaStabilityInner"]
                             / N
                         )
                         # dash = [1,2]
                     elif j == "Piping":
                         N = (
-                            self.GeneralInfo["TrajectLength"]
-                            * self.GeneralInfo["aPiping"]
-                            / self.GeneralInfo["bPiping"]
+                            self.general_info["TrajectLength"]
+                            * self.general_info["aPiping"]
+                            / self.general_info["bPiping"]
                         )
                         pt = (
-                            self.GeneralInfo["Pmax"]
-                            * self.GeneralInfo["omegaPiping"]
+                            self.general_info["Pmax"]
+                            * self.general_info["omegaPiping"]
                             / N
                         )
                         # dash = [1,3]
                     elif j == "Overflow":
                         pt = (
-                            self.GeneralInfo["Pmax"] * self.GeneralInfo["omegaOverflow"]
+                            self.general_info["Pmax"] * self.general_info["omegaOverflow"]
                         )
                         # dash = [1,2]
                     if case_settings["beta_or_prob"] == "beta":
@@ -464,8 +464,8 @@ class DikeTraject:
                     ax.plot(
                         [0, max(cumlength)],
                         [
-                            pf_to_beta(self.GeneralInfo["Pmax"]),
-                            pf_to_beta(self.GeneralInfo["Pmax"]),
+                            pf_to_beta(self.general_info["Pmax"]),
+                            pf_to_beta(self.general_info["Pmax"]),
                         ],
                         "k--",
                         label=label_target,
@@ -474,7 +474,7 @@ class DikeTraject:
                 if case_settings["beta_or_prob"] == "prob":
                     ax.plot(
                         [0, max(cumlength)],
-                        [self.GeneralInfo["Pmax"], self.GeneralInfo["Pmax"]],
+                        [self.general_info["Pmax"], self.general_info["Pmax"]],
                         "k--",
                         label=label_target,
                         linewidth=1,
@@ -523,7 +523,7 @@ class DikeTraject:
                 print(beta_tot)
                 ax1.plot([-2, 3], [beta_tot, beta_tot], color=color[col])
                 ax1.axhline(
-                    pf_to_beta(self.GeneralInfo["Pmax"]),
+                    pf_to_beta(self.general_info["Pmax"]),
                     linestyle="--",
                     color="black",
                     label=label_target,
@@ -560,39 +560,39 @@ class DikeTraject:
                 plt.close()
 
     def runFullAssessment(self):
-        for i in self.Sections:
-            for j in self.GeneralInfo["Mechanisms"]:
-                i.Reliability.Mechanisms[j].generateLCRProfile(
-                    i.Reliability.Load, mechanism=j, trajectinfo=self.GeneralInfo
+        for i in self.sections:
+            for j in self.general_info["Mechanisms"]:
+                i.section_reliability.Mechanisms[j].generateLCRProfile(
+                    i.section_reliability.Load, mechanism=j, trajectinfo=self.general_info
                 )
 
-            i.Reliability.calcSectionReliability(
-                TrajectInfo=self.GeneralInfo, length=i.Length
+            i.section_reliability.calculate_section_reliability(
+                TrajectInfo=self.general_info, length=i.Length
             )
 
     def plotAssessmentResults(self, directory, section_ids=None, t_start=2020):
         # for all or a selection of sections:
         if section_ids == None:
-            sections = self.Sections
+            sections = self.sections
         else:
             sections = []
             for i in section_ids:
-                sections.append(self.Sections[i])
+                sections.append(self.sections[i])
         createDir(directory)
         # generate plots
         for i in sections:
             plt.figure(1)
             [
-                i.Reliability.Mechanisms[j].drawLCR(
+                i.section_reliability.Mechanisms[j].drawLCR(
                     label=j, type="Standard", tstart=t_start
                 )
-                for j in self.GeneralInfo["Mechanisms"]
+                for j in self.general_info["Mechanisms"]
             ]
             plt.plot(
-                [t_start, t_start + np.max(self.GeneralInfo["T"])],
+                [t_start, t_start + np.max(self.general_info["T"])],
                 [
-                    pf_to_beta(self.GeneralInfo["Pmax"]),
-                    pf_to_beta(self.GeneralInfo["Pmax"]),
+                    pf_to_beta(self.general_info["Pmax"]),
+                    pf_to_beta(self.general_info["Pmax"]),
                 ],
                 "k--",
                 label="Requirement",
@@ -604,13 +604,13 @@ class DikeTraject:
 
     def updateProbabilities(self, Probabilities, ChangedSection=False):
         # This function is to update the probabilities after a reinforcement.
-        for i in self.Sections:
+        for i in self.sections:
             if (ChangedSection) and (i.name == ChangedSection):
-                i.Reliability.SectionReliability = Probabilities.loc[
+                i.section_reliability.SectionReliability = Probabilities.loc[
                     ChangedSection
                 ].astype(float)
             elif not ChangedSection:
-                i.Reliability.SectionReliability = Probabilities.loc[i.name].astype(
+                i.section_reliability.SectionReliability = Probabilities.loc[i.name].astype(
                     float
                 )
         pass

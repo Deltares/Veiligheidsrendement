@@ -29,7 +29,7 @@ class SoilReinforcement(MeasureBase):
         SFincrease = 0.2  # for stability screen
 
         type = self.parameters["Type"]
-        mechanisms = dike_section.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.section_reliability.Mechanisms.keys()
         crest_step = self.crest_step
         berm_step = self.berm_step
         crestrange = np.linspace(
@@ -78,7 +78,7 @@ class SoilReinforcement(MeasureBase):
         self.measures = []
         if self.parameters["StabilityScreen"] == "yes":
             d_cover_input = (
-                dike_section.Reliability.Mechanisms["StabilityInner"]
+                dike_section.section_reliability.Mechanisms["StabilityInner"]
                 .Reliability["0"]
                 .Input.input.get("d_cover", None)
             )
@@ -180,7 +180,7 @@ class SoilReinforcement(MeasureBase):
                     # for all time steps considered.
                     # first copy the data
                     reliability_input = copy.deepcopy(
-                        dike_section.Reliability.Mechanisms[i].Reliability[ij].Input
+                        dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
                     )
                     # Adapt inputs for reliability calculation, but only after year of implementation.
                     if float(ij) >= self.parameters["year"]:
@@ -196,7 +196,7 @@ class SoilReinforcement(MeasureBase):
                         ij
                     ].Input = reliability_input
                 self.measures[-1]["Reliability"].Mechanisms[i].generateLCRProfile(
-                    dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
+                    dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
                 )
-            self.measures[-1]["Reliability"].calcSectionReliability()
+            self.measures[-1]["Reliability"].calculate_section_reliability()
 

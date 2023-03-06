@@ -9,7 +9,7 @@ class DikeSection:
     Initialize the DikeSection class, as a general class for a dike section that contains all basic information
     """
     def __init__(self, name, traject):
-        self.Reliability = SectionReliability()
+        self.section_reliability = SectionReliability()
         self.name = name  #Make sure names have the same length by adding a zero. This is non-generic, specific for SAFE
         # Basic traject info TODO: THIS HAS TO BE MOVED TO TRAJECT OBJECT
         self.TrajectInfo = {}

@@ -47,22 +47,22 @@ def runFullModel(
     print("Start step 1: safety assessment")
 
     # Loop over sections and do the assessment.
-    for i, section in enumerate(TrajectObject.Sections):
+    for i, section in enumerate(TrajectObject.sections):
         # get design water level:
         # TODO remove this line?
         # section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
 
         # compute reliability in time for each mechanism:
         # print(section.End)
-        for j in TrajectObject.GeneralInfo["MechanismsConsidered"]:
-            section.Reliability.Mechanisms[j].generateLCRProfile(
-                section.Reliability.Load,
+        for j in TrajectObject.general_info["MechanismsConsidered"]:
+            section.section_reliability.Mechanisms[j].generateLCRProfile(
+                section.section_reliability.Load,
                 mechanism=j,
-                trajectinfo=TrajectObject.GeneralInfo,
+                trajectinfo=TrajectObject.general_info,
             )
 
         # aggregate to section reliability:
-        section.Reliability.calcSectionReliability()
+        section.section_reliability.calculate_section_reliability()
 
         # optional: plot reliability in time for each section
         # TODO make a function of this statement to clean code even further.
@@ -70,17 +70,17 @@ def runFullModel(
             # Plot the initial reliability-time:
             plt.figure(1)
             [
-                section.Reliability.Mechanisms[j].drawLCR(mechanism=j)
+                section.section_reliability.Mechanisms[j].drawLCR(mechanism=j)
                 for j in config.mechanisms
             ]
             plt.plot(
                 [config.t_0, config.t_0 + np.max(config.T)],
                 [
                     pb_functions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
+                        TrajectObject.general_info["Pmax"]
                     ),
                     pb_functions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
+                        TrajectObject.general_info["Pmax"]
                     ),
                 ],
                 "k--",
@@ -152,14 +152,14 @@ def runFullModel(
     else:
         AllSolutions = {}
         # Calculate per section, for each measure the cost-reliability-time relations:
-        for i in TrajectObject.Sections:
+        for i in TrajectObject.sections:
             AllSolutions[i.name] = Solutions(i, config)
             AllSolutions[i.name].fillSolutions(
                 config.input_directory.joinpath(i.name + ".xlsx")
             )
-            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
+            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.general_info)
 
-    for i in TrajectObject.Sections:
+    for i in TrajectObject.sections:
         AllSolutions[i.name].SolutionstoDataFrame(filtering="off", splitparams=True)
 
     # Store intermediate results:
@@ -185,12 +185,12 @@ def runFullModel(
 
         plt_mech = ["Section", "Piping", "StabilityInner", "Overflow"]
 
-        for i in TrajectObject.Sections:
+        for i in TrajectObject.sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
                     requiredbeta = pb_functions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
-                        * (i.Length / TrajectObject.GeneralInfo["TrajectLength"])
+                        TrajectObject.general_info["Pmax"]
+                        * (i.Length / TrajectObject.general_info["TrajectLength"])
                     )
                     plt.figure(1001)
                     AllSolutions[i.name].plotBetaTimeEuro(

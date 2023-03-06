@@ -22,18 +22,18 @@ class StabilityScreen(MeasureBase):
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
-        mechanisms = dike_section.Reliability.Mechanisms.keys()
+        mechanisms = dike_section.section_reliability.Mechanisms.keys()
         self.measures = {}
         self.measures["Stability Screen"] = "yes"
         if (
             "d_cover"
-            in dike_section.Reliability.Mechanisms["StabilityInner"]
+            in dike_section.section_reliability.Mechanisms["StabilityInner"]
             .Reliability["0"]
             .Input.input
         ):
             self.parameters["Depth"] = max(
                 [
-                    dike_section.Reliability.Mechanisms["StabilityInner"]
+                    dike_section.section_reliability.Mechanisms["StabilityInner"]
                     .Reliability["0"]
                     .Input.input["d_cover"][0]
                     + 1.0,
@@ -57,20 +57,20 @@ class StabilityScreen(MeasureBase):
                 self.measures["Reliability"].Mechanisms[i].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.Reliability.Mechanisms[i].Reliability[ij].Input
+                    dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
                 )
                 if i == "Overflow" or i == "Piping":  # Copy results
                     self.measures["Reliability"].Mechanisms[i].Reliability[
                         ij
                     ] = copy.deepcopy(
-                        dike_section.Reliability.Mechanisms[i].Reliability[ij]
+                        dike_section.section_reliability.Mechanisms[i].Reliability[ij]
                     )
                     pass  # no influence
                 elif i == "StabilityInner":
                     self.measures["Reliability"].Mechanisms[i].Reliability[
                         ij
                     ].Input = copy.deepcopy(
-                        dike_section.Reliability.Mechanisms[i].Reliability[ij].Input
+                        dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
                     )
                     if int(ij) >= self.parameters["year"]:
                         if (
@@ -145,7 +145,7 @@ class StabilityScreen(MeasureBase):
                             )
 
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
             )
         self.measures["Reliability"].calculate_section_reliability()
 
