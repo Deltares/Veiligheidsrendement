@@ -3,16 +3,17 @@ import shelve
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from HelperFunctions import getMeasureTable
-
+from tools.HelperFunctions import get_measure_table
+from typing import List
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.flood_defence_system.dike_traject import get_section_length_in_traject
 
 
-def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
+def plot_lcc(strategies_list: List[StrategyBase],traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
     #TODO This should not be necessary:
-    Strategies[0].OptimalSolution['LCC']= Strategies[0].OptimalSolution['LCC'].astype(np.float32)
-    Strategies[0].SatisfiedStandardSolution['LCC'] = Strategies[0].SatisfiedStandardSolution['LCC'].astype(np.float32)
-    Strategies[1].FinalSolution['LCC'] = Strategies[1].FinalSolution['LCC'].astype(np.float32)
+    strategies_list[0].OptimalSolution['LCC']= strategies_list[0].OptimalSolution['LCC'].astype(np.float32)
+    strategies_list[0].SatisfiedStandardSolution['LCC'] = strategies_list[0].SatisfiedStandardSolution['LCC'].astype(np.float32)
+    strategies_list[1].FinalSolution['LCC'] = strategies_list[1].FinalSolution['LCC'].astype(np.float32)
 
     #now for 2 strategies: plots an LCC bar chart
     cumlength, xticks1, middles = get_section_length_in_traject(traject.Probabilities['Length'].loc[traject.Probabilities.index.get_level_values(1) == 'Overflow'].values)
@@ -24,12 +25,12 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
         ax.axvline(x=i, color='gray', linestyle='-', linewidth=0.5, alpha=0.5)
     widths = traject.Probabilities['Length'].loc[traject.Probabilities.index.get_level_values(1) == 'Overflow'].values/2
     if greedymode == 'Optimal':
-        GreedySolution = Strategies[0].OptimalSolution['LCC'].values/1e6
+        GreedySolution = strategies_list[0].OptimalSolution['LCC'].values/1e6
     elif greedymode == 'SatisfiedStandard':
-        GreedySolution = Strategies[0].SatisfiedStandardSolution['LCC'].values/1e6
+        GreedySolution = strategies_list[0].SatisfiedStandardSolution['LCC'].values/1e6
         print()
     ax.bar(np.subtract(middles,0.45*widths),GreedySolution,widths*0.9,color=color[0],label='Optimized')
-    ax.bar(np.add(middles,0.45*widths),Strategies[1].FinalSolution['LCC'].values/1e6,widths*0.9,color=color[1],label='Target rel.')
+    ax.bar(np.add(middles,0.45*widths),strategies_list[1].FinalSolution['LCC'].values/1e6,widths*0.9,color=color[1],label='Target rel.')
 
     #make x-axis nice
     ax.set_xlim(left=0, right=np.max(cumlength))
@@ -40,7 +41,7 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
     ax.set_xticklabels(labels_xticks)
     ax.tick_params(axis='x', rotation=90)
     #make y-axis nice
-    LCCmax = np.max([Strategies[0].OptimalSolution['LCC'].values, Strategies[1].FinalSolution['LCC'].values]) / 1e6
+    LCCmax = np.max([strategies_list[0].OptimalSolution['LCC'].values, strategies_list[1].FinalSolution['LCC'].values]) / 1e6
     if LCCmax < 10: ax.set_ylim(bottom=0,top=np.ceil(LCCmax/2)*2)
     if LCCmax >=10: ax.set_ylim(bottom=0,top=np.ceil(LCCmax/5)*5)
     ax.set_ylabel('Cost in M€')
@@ -50,7 +51,7 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
     #add a legend
     ax1.axis('off')
     ax.text(0, 0.8,'Total LCC Optimized = {:.0f}'.format(np.sum(GreedySolution.astype(np.float32))) +
-            ' M€ \n' + 'Total LCC Target rel. = {:.0f}'.format(np.sum(Strategies[1].FinalSolution['LCC'].values / 1e6)) + ' M€',
+            ' M€ \n' + 'Total LCC Target rel. = {:.0f}'.format(np.sum(strategies_list[1].FinalSolution['LCC'].values / 1e6)) + ' M€',
             horizontalalignment='left', transform=ax.transAxes)
     if flip: ax.invert_xaxis()
     ax.legend(bbox_to_anchor=(1.0001, 0.85)) #reposition!
@@ -128,7 +129,7 @@ def main():
 
     # #pane 6: Investment costs per dike section for both
     twoColors = [sns.cubehelix_palette(**optimized_colors)[1],sns.cubehelix_palette(**targetrel_colors)[1]]
-    plotLCC(AllStrategies,TestCase,PATH=config.directory,fig_size=figsize,flip=True,greedymode=greedy_mode,
+    plot_lcc(AllStrategies,TestCase,PATH=config.directory,fig_size=figsize,flip=True,greedymode=greedy_mode,
             title_in='(f) \n' + r'$\bf{LCC~of~both~approaches}$',color = twoColors)
 
 
@@ -136,7 +137,7 @@ def main():
     # LCC-beta for t=50
     for t_plot in [0,50]:
         for cost_type in ['Initial', 'LCC']:
-            MeasureTable = getMeasureTable(AllSolutions, language = 'EN',abbrev=True)
+            MeasureTable = get_measure_table(AllSolutions, language = 'EN',abbrev=True)
             figsize = (6,4)
             plt.figure(102, figsize=figsize)
             AllStrategies[0].plotBetaCosts(TestCase, save_dir= config.directory,t=t_plot, cost_type=cost_type,
@@ -147,6 +148,3 @@ def main():
                                            MeasureTable=MeasureTable,last=True,final_measure_symbols =True)
             plt.savefig(config.directory.joinpath('Priority order Beta vs LCC_' + str(t_plot+t_0) + '.png'),dpi=300,bbox_inches='tight',format='png')
             plt.close()
-
-if __name__ == '__main__':
-    main()

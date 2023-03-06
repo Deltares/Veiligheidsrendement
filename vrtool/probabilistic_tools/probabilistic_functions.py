@@ -9,13 +9,13 @@ from scipy.stats import norm
 
 
 # Function to calculate a safety factor:
-def calc_gamma(mechanism, TrajectInfo):
+def calc_gamma(mechanism, traject_info):
     if mechanism == "Piping" or mechanism == "Heave" or mechanism == "Uplift":
         Pcs = (
-            TrajectInfo["Pmax"] * TrajectInfo["omegaPiping"] * TrajectInfo["bPiping"]
-        ) / (TrajectInfo["aPiping"] * TrajectInfo["TrajectLength"])
+            traject_info["Pmax"] * traject_info["omegaPiping"] * traject_info["bPiping"]
+        ) / (traject_info["aPiping"] * traject_info["TrajectLength"])
         betacs = pf_to_beta(Pcs)
-        betamax = pf_to_beta(TrajectInfo["Pmax"])
+        betamax = pf_to_beta(traject_info["Pmax"])
         if mechanism == "Piping":
             gamma = 1.04 * np.exp(0.37 * betacs - 0.43 * betamax)
         elif mechanism == "Heave":
@@ -28,25 +28,25 @@ def calc_gamma(mechanism, TrajectInfo):
 
 
 # Function to calculate the implicated reliability from the safety factor
-def calc_beta_implicated(mechanism, SF, TrajectInfo=None):
-    if SF == 0:
+def calc_beta_implicated(mechanism, sf_factor, TrajectInfo=None):
+    if sf_factor == 0:
         # print('SF for ' + mechanism + ' is 0')
         beta = 0.5
-    elif SF == np.inf:
+    elif sf_factor == np.inf:
         beta = 8
     else:
         if mechanism == "Piping":
             beta = (1 / 0.37) * (
-                np.log(SF / 1.04) + 0.43 * TrajectInfo["beta_max"]
+                np.log(sf_factor / 1.04) + 0.43 * TrajectInfo["beta_max"]
             )  # -norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == "Heave":
             # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
             beta = (1 / 0.48) * (
-                np.log(SF / 0.37) + 0.30 * TrajectInfo["beta_max"]
+                np.log(sf_factor / 0.37) + 0.30 * TrajectInfo["beta_max"]
             )  # -norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == "Uplift":
             beta = (1 / 0.46) * (
-                np.log(SF / 0.48) + 0.27 * TrajectInfo["beta_max"]
+                np.log(sf_factor / 0.48) + 0.27 * TrajectInfo["beta_max"]
             )  # -norm.ppf(TrajectInfo['Pmax']))
         else:
             print("Mechanism not found")
