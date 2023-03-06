@@ -56,10 +56,10 @@ class Solutions:
                 )
                 self.measures.append(CustomMeasure(data.loc[i], self.config))
 
-        self.MeasureTable = pd.DataFrame(columns=["ID", "Name"])
+        self.measure_table = pd.DataFrame(columns=["ID", "Name"])
         for i, measure in enumerate(self.measures):
             if measure.parameters["available"] == 1:
-                self.MeasureTable.loc[i] = [
+                self.measure_table.loc[i] = [
                     str(measure.parameters["ID"]),
                     measure.parameters["Name"],
                 ]
@@ -75,7 +75,7 @@ class Solutions:
         count = 0
         for i in range(0, len(partials)):
             for j in range(0, len(combinables)):
-                self.MeasureTable.loc[count + len(self.measures) + 1] = [
+                self.measure_table.loc[count + len(self.measures) + 1] = [
                     str(partials[i][0]) + "+" + str(combinables[j][0]),
                     str(partials[i][1]) + "+" + str(combinables[j][1]),
                 ]

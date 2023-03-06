@@ -21,7 +21,7 @@ from vrtool.decision_making.strategy_evaluation import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import plot_settings, get_section_length_in_traject
 from tools.HelperFunctions import pareto_frontier
-
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 class StrategyBase:
     """This defines a Strategy object, which can be allowed to evaluate a set of solutions/measures. There are currently 3 types:
@@ -118,7 +118,7 @@ class StrategyBase:
 
         return (section, sh, sg)
 
-    def combine(self, traject, solutions, filtering="off", splitparams=False):
+    def combine(self, traject: DikeTraject, solutions, filtering="off", splitparams=False):
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
@@ -128,7 +128,7 @@ class StrategyBase:
 
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.Sections)):
-        for i, section in enumerate(traject.Sections):
+        for i, section in enumerate(traject.sections):
 
             # Step 1: combine measures with partial measures
             combinables = solutions[section.name].MeasureData.loc[

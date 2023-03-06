@@ -6,10 +6,10 @@ from scipy.interpolate import interp1d
 
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 from vrtool.defaults.vrtool_config import VrtoolConfig
-
+from vrtool.decision_making.solutions import Solutions
 
 # This script combines two sets of measures to a single option
-def measure_combinations(combinables, partials, solutions, splitparams=False):
+def measure_combinations(combinables, partials, solutions: Solutions, splitparams=False):
     _combined_measures = pd.DataFrame(columns=combinables.columns)
 
     # loop over partials
@@ -41,12 +41,12 @@ def measure_combinations(combinables, partials, solutions, splitparams=False):
                     if (row1["type"].values == "Vertical Geotextile") and (
                         ij[0] == "Piping"
                     ):
-                        idx = solutions.MeasureTable.loc[
-                            solutions.MeasureTable["Name"]
+                        idx = solutions.measure_table.loc[
+                            solutions.measure_table["Name"]
                             == "Verticaal Zanddicht Geotextiel"
                         ].index.values[0]
-                        Pf_VSG = solutions.Measures[idx].parameters["Pf_solution"]
-                        P_VSG = solutions.Measures[idx].parameters["P_solution"]
+                        Pf_VSG = solutions.measures[idx].parameters["Pf_solution"]
+                        P_VSG = solutions.measures[idx].parameters["P_solution"]
                         pf = (
                             1 - P_VSG
                         ) * Pf_VSG + P_VSG * beta_to_pf(row2[ij])
