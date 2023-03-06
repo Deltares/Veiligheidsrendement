@@ -446,32 +446,32 @@ def IterativeFC_calculation(
     return result_list, P_list, wl_list
 
 
-def TemporalProcess(input, t, makePlot="off"):
+def temporal_process(temporal_input, t, makePlot="off"):
     # TODO check of input == float.
-    if isinstance(input, float):
-        input = ot.Dirac(input * t)  # make distribution
+    if isinstance(temporal_input, float):
+        temporal_input = ot.Dirac(temporal_input * t)  # make distribution
     # This function derives the distribution parameters for the temporal process governed by the annual distribution 'input' for year 't'
-    elif input.getClassName() == "Gamma":
-        params = input.getParameter()
+    elif temporal_input.getClassName() == "Gamma":
+        params = temporal_input.getParameter()
         mu = params[0] / params[1]
         var = params[0] / (params[1] ** 2)
-        input.setParameter(
+        temporal_input.setParameter(
             ot.GammaMuSigma()([mu * float(t), np.sqrt(var) * float(t), 0])
         )
         if makePlot == "on":
-            gr = input.drawPDF()
+            gr = temporal_input.drawPDF()
             from openturns.viewer import View
 
             view = View(gr)
             view.show()
-    elif input.getClassName() == "Dirac":
-        input.setParameter(input.getParameter() * t)
+    elif temporal_input.getClassName() == "Dirac":
+        temporal_input.setParameter(temporal_input.getParameter() * t)
     else:
         raise Exception("Distribution type for temporal process not recognized.")
-    return input
+    return temporal_input
 
 
-def UpscaleCDF(dist, t=1, testPlot="off", change_dist=None, change_step=1, Ngrid=None):
+def upscale_cdf(dist, t=1, testPlot="off", change_dist=None, change_step=1, Ngrid=None):
     # function to upscale an exceedance probability curve to another time scale
     # change_dist provides the opportunity to include an (uncertain) temporally changing PDF (e.g. sea level rise)
     # if that is added the function will provide the CDF of the water level for period t given a change over time
@@ -499,7 +499,7 @@ def UpscaleCDF(dist, t=1, testPlot="off", change_dist=None, change_step=1, Ngrid
                 original = copy.deepcopy(change_dist)
                 distcoll.append(
                     ot.RandomMixture(
-                        [dist, TemporalProcess(original, j, makePlot="off")],
+                        [dist, temporal_process(original, j, makePlot="off")],
                         [1.0, 1.0],
                         0.0,
                     )
@@ -594,7 +594,7 @@ def MarginalsforTimeDepReliability(input, load=None, year=0, type=None):
         # Adapt temporal process variables
         if i in input.temporals:
             original = copy.deepcopy(input.input[i])
-            adapt_dist = TemporalProcess(original, year)
+            adapt_dist = temporal_process(original, year)
             marginals.append(adapt_dist)
             names.append(i)
         else:
@@ -609,7 +609,7 @@ def MarginalsforTimeDepReliability(input, load=None, year=0, type=None):
             marginals.append(load.distribution)
             if hasattr(load, "dist_change"):
                 original = copy.deepcopy(load.dist_change)
-                dist_change = TemporalProcess(original, year)
+                dist_change = temporal_process(original, year)
                 marginals.append(dist_change)
                 names.extend(("h", "dh"))
 

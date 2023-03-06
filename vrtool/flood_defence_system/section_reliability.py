@@ -6,9 +6,8 @@ import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 
 #Class describing safety assessments of a section:
 class SectionReliability:
-    def __init__(self):
-        self
-    def calcSectionReliability(self):
+
+    def calculate_section_reliability(self):
         #This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.

@@ -1,12 +1,12 @@
 import numpy as np
 from scipy import interpolate
 
-import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 
 
 ## This script contains limit state functions for the different mechanisms.
 ## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
-def OverflowHRING(input, year, t_0: int, mode="assessment", Pt=None):
+def overflow_hring(input, year, t_0: int, mode="assessment", Pt=None):
     """year is relative to start year. input contains relevant inputs"""
     if mode == "assessment":
         h_t = input["h_crest"] - input["d_crest"] * (year)
@@ -21,7 +21,7 @@ def OverflowHRING(input, year, t_0: int, mode="assessment", Pt=None):
                 )(h_t)
             )
         beta = interpolate.interp1d(years, betas, fill_value="extrapolate")(year + t_0)
-        return beta, pb_functions.beta_to_pf(beta)
+        return beta, beta_to_pf(beta)
     if mode == "design":
         t_beta_interp = interpolate.interp2d(
             input["hc_beta"].columns.values.astype(np.float32),
@@ -34,12 +34,12 @@ def OverflowHRING(input, year, t_0: int, mode="assessment", Pt=None):
         )
         h_beta = t_beta_interp(year + t_0, h_grid).flatten()
         new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
-            pb_functions.pf_to_beta(Pt)
+            pf_to_beta(Pt)
         ).item()
-        return new_crest, pb_functions.pf_to_beta(Pt)
+        return new_crest, pf_to_beta(Pt)
 
 
-def OverflowSimple(
+def overflow_simple(
     h_crest,
     q_crest,
     h_c,
@@ -62,13 +62,13 @@ def OverflowSimple(
                 h_c, beta, kind="linear", fill_value="extrapolate"
             )
             beta = np.min([beta_hc(h_crest), [8.0]])
-        Pf = pb_functions.beta_to_pf(beta)
+        Pf = beta_to_pf(beta)
         if not iterative_solve:
             return beta, Pf
         else:
             return beta - beta_t
     elif mode == "design":
-        beta_t = pb_functions.pf_to_beta(Pt)
+        beta_t = pf_to_beta(Pt)
         if design_variable == "h_crest":
             if q_c[0] != q_c[-1:]:
                 beta_hc = interpolate.interp2d(
@@ -84,7 +84,7 @@ def OverflowSimple(
         pass
 
 
-def LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm):
+def calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm):
     # lambd,h,h_b,d,i_ch
     if isinstance(kwelscherm, str):
         if kwelscherm == "Ja":
@@ -120,8 +120,8 @@ def LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm):
     return g_h, i, i_c
 
 
-def LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping):
-    delta_h_c = mPiping * sellmeijer2017(
+def calculate_lsf_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping):
+    delta_h_c = mPiping * calculate_sellmeijer_2017(
         L, D, d70, k
     )  # Critical head difference (resistance):
     delta_h = h - h_exit - 0.3 * d_cover  # Head difference (load)
@@ -132,7 +132,7 @@ def LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping):
     return g_p, delta_h, delta_h_c
 
 
-def LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
+def calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
     gamma_w = 9.81
     # lambd,h,h_b,d,gamma_sat,m_u
     m_u = 1.0
@@ -153,39 +153,44 @@ def LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
     return g_u, dh, dh_c
 
 
-def sellmeijer2017(L, D, d70, k):
+def calculate_sellmeijer_2017(seepage_length: float, upper_thickness: float, particle_diameter: float, permeability: float) -> float:
+    """
+    Calculates the Sellmeijer 2017 formula.
 
-    # L     - Seepage Length (48)
-    # D     - Thickness of upper sand layer (49)
-    # theta - Bedding angle (Theta) (52)
-    # d70   - Particle diameter (D70) (56)
-    # k     - Permeability of the upper sand layer (55)
+    Args:
+        seepage_length (float):  L - Seepage Length (48)
+        upper_thickness (float): D - Thickness of upper sand layer (49)
+        particle_diameter (float): d70 - Particle diameter (D70) (56)
+        permeability (float):  k - Permeability of the upper sand layer (55)
 
+    Returns:
+        float: Delta HC
+    """
     d70m = 2.08e-4
     # reference d70
     nu = 1.33e-6
     # dynamic viscosity of water at 10degC
     eta = 0.25
     # White's constant
-    kappa = (nu / 9.81) * k
+    kappa = (nu / 9.81) * permeability
     theta = 37
     Fres = eta * (16.5 / 9.81) * np.tan(theta / 180 * np.pi)
-    Fscale = (d70m / (kappa * L) ** (1 / 3)) * ((d70 / d70m) ** 0.4)
+    Fscale = (d70m / (kappa * seepage_length) ** (1 / 3)) * ((particle_diameter / d70m) ** 0.4)
 
     # F1        = 1.65 * eta * np.tan(theta/180*np.pi)**0.35;
     # F2        = d70m / (nu / 9.81 * k * L) ** (1/3) * (d70/d70m) ** 0.39;
     # F3        = 0.91 * (D/L)**(0.28/(((D/L)**2.8)-1)+0.04);
-    if D == L:
+    if upper_thickness == seepage_length:
         Fgeometry = 1
     else:
-        Fgeometry = 0.91 * (D / L) ** (0.28 / (((D / L) ** 2.8) - 1) + 0.04)
+        Fgeometry = 0.91 * (upper_thickness / seepage_length) ** (0.28 / (((upper_thickness / seepage_length) ** 2.8) - 1) + 0.04)
 
-    delta_h_c = Fres * Fscale * Fgeometry * L
+    delta_h_c = Fres * Fscale * Fgeometry * seepage_length
     # delta_h_c = F1 * F2 * F3 * L;
     return delta_h_c
 
 
-def zUplift(inp, mode="Prob"):
+def calculate_z_uplift(inp, mode: str="Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
         D = inp["D"]
@@ -251,14 +256,14 @@ def zUplift(inp, mode="Prob"):
                 mPiping,
                 h,
             ) = inp
-    g_u, dh_u, dhc_u = LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
+    g_u, dh_u, dhc_u = calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
     if mode == "Prob":
         return [g_u]
     else:
         return g_u, dh_u, dhc_u
 
 
-def zHeave(inp, mode="Prob"):
+def calculate_z_heave(inp, mode: str="Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
         D = inp["D"]
@@ -325,14 +330,14 @@ def zHeave(inp, mode="Prob"):
                 h,
             ) = inp
 
-    g_h, i, i_c = LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm)
+    g_h, i, i_c = calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm)
     if mode == "Prob":
         return [g_h]
     else:
         return g_h, i, i_c
 
 
-def zPiping(inp, mode="Prob"):
+def calculate_z_piping(inp, mode: str="Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
         D = inp["D"]
@@ -399,14 +404,14 @@ def zPiping(inp, mode="Prob"):
                 h,
             ) = inp
 
-    g_p, dh_p, dhc_p = LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
+    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
     if mode == "Prob":
         return [g_p]
     else:
         return g_p, dh_p, dhc_p
 
 
-def zPipingTotal(inp):
+def calculate_z_piping_total(inp):
     # with ageing & water level change:
     if len(inp) == 13:
         (
@@ -448,15 +453,15 @@ def zPipingTotal(inp):
         D, d_cover, h_exit, r_exit, L, d70, k, gamma_sat, kwelscherm, mPiping, h = inp
     # r_exit, h, h_exit,d,i_ch, gamma_sat,m_u,L,D,theta,d70,k,m_p = inp
 
-    g_h, i, i_c = LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm)
-    g_p, dh_p, dhc_p = LSF_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
-    g_u, dh_u, dhc_u = LSF_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
+    g_h, i, i_c = calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm)
+    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
+    g_u, dh_u, dhc_u = calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
     z_piping = max(g_p, g_u, g_h)
     # import pdb; pdb.set_trace()
     return [z_piping]
 
 
-def zOverflow(inp):
+def calculate_z_overflow(inp):
     if len(inp) == 4:
         h_c, dh_c, h, dh = inp
         h = h + dh
@@ -470,6 +475,6 @@ def zOverflow(inp):
     return [z]
 
 
-def simpleLSF(input):
-    R, dR, S = input
+def calculate_simple_lsf(input_tuple):
+    R, dR, S = input_tuple
     return [(R - dR) - S]

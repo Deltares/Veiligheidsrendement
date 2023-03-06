@@ -114,4 +114,4 @@ class DiaphragmWall(MeasureBase):
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
                 dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
             )
-        self.measures["Reliability"].calcSectionReliability()
+        self.measures["Reliability"].calculate_section_reliability()

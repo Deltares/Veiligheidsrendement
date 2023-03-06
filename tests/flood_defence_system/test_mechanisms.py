@@ -1,6 +1,6 @@
 import pytest
 
-from vrtool.flood_defence_system.mechanisms import LSF_heave, LSF_sellmeijer
+from vrtool.flood_defence_system.mechanisms import calculate_lsf_heave, calculate_lsf_sellmeijer
 
 
 class TestMechanisms:
@@ -13,7 +13,7 @@ class TestMechanisms:
         kwelscherm = 0
 
         # calculate
-        (g_h, i, i_c) = LSF_heave(r_exit, h, h_exit, d_cover, kwelscherm)
+        (g_h, i, i_c) = calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm)
 
         # assert
         assert g_h == pytest.approx(-0.6)
@@ -32,7 +32,7 @@ class TestMechanisms:
         m_piping = 1.0
 
         # calculate
-        (g_p, delta_h, delta_h_c) = LSF_sellmeijer(
+        (g_p, delta_h, delta_h_c) = calculate_lsf_sellmeijer(
             h, h_exit, d_cover, l, d, d70, k, m_piping
         )
 

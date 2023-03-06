@@ -1,5 +1,5 @@
 from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.decision_making.measures.common_calculations import determine_costs, beta_SF_StabilityInner
+from vrtool.decision_making.measures.common_calculations import determine_costs, beta_sf_stability_inner
 from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
@@ -96,9 +96,9 @@ class StabilityScreen(MeasureBase):
                             # convert to SF and back:
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
-                            ].Input.input["beta_2025"] = beta_SF_StabilityInner(
+                            ].Input.input["beta_2025"] = beta_sf_stability_inner(
                                 np.add(
-                                    beta_SF_StabilityInner(
+                                    beta_sf_stability_inner(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
@@ -111,9 +111,9 @@ class StabilityScreen(MeasureBase):
                             )
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
-                            ].Input.input["beta_2075"] = beta_SF_StabilityInner(
+                            ].Input.input["beta_2075"] = beta_sf_stability_inner(
                                 np.add(
-                                    beta_SF_StabilityInner(
+                                    beta_sf_stability_inner(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
@@ -136,7 +136,7 @@ class StabilityScreen(MeasureBase):
                             )
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
-                            ].Input.input["BETA"] = beta_SF_StabilityInner(
+                            ].Input.input["BETA"] = beta_sf_stability_inner(
                                 self.measures["Reliability"]
                                 .Mechanisms[i]
                                 .Reliability[ij]
@@ -147,5 +147,5 @@ class StabilityScreen(MeasureBase):
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
                 dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
             )
-        self.measures["Reliability"].calcSectionReliability()
+        self.measures["Reliability"].calculate_section_reliability()
 

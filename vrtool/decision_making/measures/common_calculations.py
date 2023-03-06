@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-from vrtool.flood_defence_system.mechanisms import OverflowHRING, OverflowSimple
+from vrtool.flood_defence_system.mechanisms import overflow_hring, overflow_simple
 from vrtool.flood_defence_system.reliability_calculation import (
-    beta_SF_StabilityInner,
+    beta_sf_stability_inner,
 )
 
 def implement_berm_widening(
@@ -50,16 +50,16 @@ def implement_berm_widening(
             )
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["beta_2025"] = beta_SF_StabilityInner(
+                input["beta_2025"] = beta_sf_stability_inner(
                     np.add(
-                        beta_SF_StabilityInner(input["beta_2025"], type="beta"),
+                        beta_sf_stability_inner(input["beta_2025"], type="beta"),
                         SFincrease,
                     ),
                     type="SF",
                 )
-                input["beta_2075"] = beta_SF_StabilityInner(
+                input["beta_2075"] = beta_sf_stability_inner(
                     np.add(
-                        beta_SF_StabilityInner(input["beta_2075"], type="beta"),
+                        beta_sf_stability_inner(input["beta_2075"], type="beta"),
                         SFincrease,
                     ),
                     type="SF",
@@ -70,12 +70,12 @@ def implement_berm_widening(
             input["BETA"] = input["BETA"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["SF"] = beta_SF_StabilityInner(
+                input["SF"] = beta_sf_stability_inner(
                     np.add(input["SF"], SFincrease), type="SF"
                 )
-                input["BETA"] = beta_SF_StabilityInner(
+                input["BETA"] = beta_sf_stability_inner(
                     np.add(
-                        beta_SF_StabilityInner(input["BETA"], type="beta"), SFincrease
+                        beta_sf_stability_inner(input["BETA"], type="beta"), SFincrease
                     ),
                     type="SF",
                 )
@@ -551,7 +551,7 @@ def probabilistic_design(
     if mechanism == "Overflow":
         if type == "SAFE":
             # determine the crest required for the target
-            h_crest, beta = OverflowSimple(
+            h_crest, beta = overflow_simple(
                 strength_input["h_crest"],
                 strength_input["q_crest"],
                 strength_input["h_c"],
@@ -565,7 +565,7 @@ def probabilistic_design(
             h_crest = h_crest + horizon * (strength_input["dhc(t)"] + load_change)
             return h_crest
         elif type == "HRING":
-            h_crest, beta = OverflowHRING(
+            h_crest, beta = overflow_hring(
                 strength_input, horizon, t_0, mode="design", Pt=p_t
             )
             return h_crest
