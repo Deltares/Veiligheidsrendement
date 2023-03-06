@@ -20,19 +20,19 @@ class TestVrtoolRunFullModel:
 
     def test_init_with_invalid_vr_config(self):
         # 1. Run test
-        with pytest.raises(ValueError) as exc_err:
+        with pytest.raises(ValueError) as exception_error:
             RunFullModel("nothing", "else", "matters")
 
         # 2. Verify expectations
-        assert str(exc_err.value) == "Expected instance of a VrtoolConfig."
+        assert str(exception_error.value) == "Expected instance of a VrtoolConfig."
 
     def test_init_with_invalid_selected_traject(self):
         # 1. Define test data.
         _vr_config = VrtoolConfig()
 
-        # 1. Run test
-        with pytest.raises(ValueError) as exc_err:
+        # 2. Run test
+        with pytest.raises(ValueError) as exception_error:
             RunFullModel(_vr_config, "else", "matters")
 
-        # 2. Verify expectations
-        assert str(exc_err.value) == "Expected instance of a DikeTraject."
+        # 3. Verify expectations
+        assert str(exception_error.value) == "Expected instance of a DikeTraject."
