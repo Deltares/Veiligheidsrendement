@@ -1,0 +1,116 @@
+
+from vrtool.decision_making.measures.measure_base import Measure, determine_costs, ProbabilisticDesign
+from vrtool.flood_defence_system.dike_section import DikeSection
+import copy
+
+import numpy as np
+
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.reliability_calculation import (
+    MechanismReliabilityCollection,
+)
+from vrtool.flood_defence_system.section_reliability import SectionReliability
+
+class DiaphragmWall(Measure):
+    # type == 'Diaphragm Wall':
+    def evaluateMeasure(
+        self,
+        dike_section: DikeSection,
+        traject_info: dict[str, any],
+        preserve_slope: bool = False,
+    ):
+        # To be added: year property to distinguish the same measure in year 2025 and 2045
+        type = self.parameters["Type"]
+        mechanisms = dike_section.Reliability.Mechanisms.keys()
+        # StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
+        # It is assumed that the diaphragm wall is extendable after that.
+        # Only 1 parameterized version with a lifetime of 100 years
+        self.measures = {}
+        self.measures["DiaphragmWall"] = "yes"
+        self.measures["Cost"] = determine_costs(
+            self.parameters, type, dike_section.Length, self.unit_costs
+        )
+        self.measures["Reliability"] = SectionReliability()
+        self.measures["Reliability"].Mechanisms = {}
+        for i in mechanisms:
+            calc_type = dike_section.MechanismData[i][1]
+            self.measures["Reliability"].Mechanisms[i] = MechanismReliabilityCollection(
+                i, calc_type, self.config
+            )
+            for ij in self.measures["Reliability"].Mechanisms[i].Reliability.keys():
+                self.measures["Reliability"].Mechanisms[i].Reliability[
+                    ij
+                ].Input = copy.deepcopy(
+                    dike_section.Reliability.Mechanisms[i].Reliability[ij].Input
+                )
+                if float(ij) >= self.parameters["year"]:
+                    if i == "Overflow":
+                        Pt = traject_info["Pmax"] * traject_info["omegaOverflow"]
+                        if (
+                            dike_section.Reliability.Mechanisms[i].Reliability[ij].type
+                            == "Simple"
+                        ):
+                            if hasattr(dike_section, "HBNRise_factor"):
+                                hc = ProbabilisticDesign(
+                                    "h_crest",
+                                    dike_section.Reliability.Mechanisms["Overflow"]
+                                    .Reliability[ij]
+                                    .Input.input,
+                                    p_t=Pt,
+                                    t_0=self.t_0,
+                                    horizon=self.parameters["year"] + 100,
+                                    load_change=dike_section.HBNRise_factor
+                                    * dike_section.YearlyWLRise,
+                                    mechanism="Overflow",
+                                )
+                            else:
+                                hc = ProbabilisticDesign(
+                                    "h_crest",
+                                    dike_section.Reliability.Mechanisms["Overflow"]
+                                    .Reliability[ij]
+                                    .Input.input,
+                                    p_t=Pt,
+                                    t_0=self.t_0,
+                                    horizon=self.parameters["year"] + 100,
+                                    load_change=None,
+                                    mechanism="Overflow",
+                                )
+                        else:
+                            hc = ProbabilisticDesign(
+                                "h_crest",
+                                dike_section.Reliability.Mechanisms["Overflow"]
+                                .Reliability[ij]
+                                .Input.input,
+                                p_t=Pt,
+                                t_0=self.t_0,
+                                horizon=self.parameters["year"] + 100,
+                                load_change=None,
+                                type="HRING",
+                                mechanism="Overflow",
+                            )
+
+                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                            ij
+                        ].Input.input["h_crest"] = np.max(
+                            [
+                                hc,
+                                self.measures["Reliability"]
+                                .Mechanisms[i]
+                                .Reliability[ij]
+                                .Input.input["h_crest"],
+                            ]
+                        )  # should not become weaker!
+                    elif i == "StabilityInner" or i == "Piping":
+                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                            ij
+                        ].Input.input["Elimination"] = "yes"
+                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                            ij
+                        ].Input.input["Pf_elim"] = self.parameters["P_solution"]
+                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                            ij
+                        ].Input.input["Pf_with_elim"] = self.parameters["Pf_solution"]
+            self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
+                dike_section.Reliability.Load, mechanism=i, trajectinfo=traject_info
+            )
+        self.measures["Reliability"].calcSectionReliability()

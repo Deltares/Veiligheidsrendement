@@ -157,7 +157,7 @@ class SoilReinforcement(Measure):
                         area_extra,
                         area_excavated,
                         dhouse,
-                    ) = DetermineNewGeometry(
+                    ) = determine_new_geometry(
                         j,
                         self.parameters["Direction"],
                         self.parameters["max_outward"],
@@ -175,7 +175,7 @@ class SoilReinforcement(Measure):
                         area_extra,
                         area_excavated,
                         dhouse,
-                    ) = DetermineNewGeometry(
+                    ) = determine_new_geometry(
                         j,
                         self.parameters["Direction"],
                         self.parameters["max_outward"],
@@ -189,7 +189,7 @@ class SoilReinforcement(Measure):
                     area_extra,
                     area_excavated,
                     dhouse,
-                ) = DetermineNewGeometry(
+                ) = determine_new_geometry(
                     j,
                     self.parameters["Direction"],
                     self.parameters["max_outward"],
@@ -198,7 +198,7 @@ class SoilReinforcement(Measure):
                     **{"plot_dir": plot_dir, "slope_in": slope_in},
                 )
 
-            self.measures[-1]["Cost"] = DetermineCosts(
+            self.measures[-1]["Cost"] = determine_costs(
                 self.parameters,
                 type,
                 dike_section.Length,
@@ -264,7 +264,7 @@ class DiaphragmWall(Measure):
         # Only 1 parameterized version with a lifetime of 100 years
         self.measures = {}
         self.measures["DiaphragmWall"] = "yes"
-        self.measures["Cost"] = DetermineCosts(
+        self.measures["Cost"] = determine_costs(
             self.parameters, type, dike_section.Length, self.unit_costs
         )
         self.measures["Reliability"] = SectionReliability()
@@ -385,7 +385,7 @@ class StabilityScreen(Measure):
         else:
             # TODO remove shaky assumption on depth
             self.parameters["Depth"] = 6.0
-        self.measures["Cost"] = DetermineCosts(
+        self.measures["Cost"] = determine_costs(
             self.parameters, type, dike_section.Length, self.unit_costs
         )
         self.measures["Reliability"] = SectionReliability()
@@ -507,7 +507,7 @@ class VerticalGeotextile(Measure):
         # Only 1 parameterized version with a lifetime of 50 years
         self.measures = {}
         self.measures["VZG"] = "yes"
-        self.measures["Cost"] = DetermineCosts(
+        self.measures["Cost"] = determine_costs(
             self.parameters, type, dike_section.Length, self.unit_costs
         )
         self.measures["Reliability"] = SectionReliability()
@@ -841,7 +841,7 @@ def ModifyGeometryInput(initial, berm_height):
 
 
 # This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
-def DetermineNewGeometry(
+def determine_new_geometry(
     geometry_change,
     direction,
     max_berm_out,
@@ -1114,7 +1114,7 @@ def DetermineNewGeometry(
 
 
 # Script to determine the costs of a reinforcement:
-def DetermineCosts(
+def determine_costs(
     parameters,
     type: str,
     length: float,
