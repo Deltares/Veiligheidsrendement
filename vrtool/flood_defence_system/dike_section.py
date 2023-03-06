@@ -1,28 +1,13 @@
+from pathlib import Path
 import pandas as pd
 
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-# class that contains a DikeProfile consisting of 4 or 6 characteristic points:
-class DikeProfile:
-    def __init__(self,name = None):
-        self.characteristic_points = {}
-        self.name = name
-    def add_point(self,key, xz):
-        self.characteristic_points[key] = xz
-
-    def generate_shapely_polygon(self):
-        pass
-
-    def read_points(self):
-        pass
-
-    def to_csv(self,path):
-        #add mkdir?
-        pd.DataFrame.from_dict(self.characteristic_points, orient='index', columns=['x', 'z']).to_csv(path.joinpath('{}.csv'.format(self.name)))
-
-#initialize the DikeSection class, as a general class for a dike section that contains all basic information
 class DikeSection:
+    """
+    Initialize the DikeSection class, as a general class for a dike section that contains all basic information
+    """
     def __init__(self, name, traject):
         self.Reliability = SectionReliability()
         self.name = name  #Make sure names have the same length by adding a zero. This is non-generic, specific for SAFE
@@ -37,9 +22,10 @@ class DikeSection:
         elif traject == '38-1':
             self.TrajectInfo['TrajectLength'] = 28902
             self.TrajectInfo['Pmax'] = 1. / 10000; self.TrajectInfo['omegaPiping'] = 0.24; self.TrajectInfo['aPiping'] = 0.9; self.TrajectInfo['bPiping'] = 300
-    def readGeneralInfo(self, path, sheet_name):
+    
+    def read_general_info(self, input_dir: Path, sheet_name: str):
         #Read general data from sheet in standardized xlsx file
-        df = pd.read_excel(path.joinpath(self.name + ".xlsx"), sheet_name=None)
+        df = pd.read_excel(input_dir.joinpath(self.name + ".xlsx"), sheet_name=None)
 
         for name, sheet_data in df.items():
             if name == sheet_name:

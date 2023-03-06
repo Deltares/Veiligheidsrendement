@@ -18,7 +18,7 @@ from vrtool.decision_making.strategy_evaluation import (
     split_options,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_traject import PlotSettings, getSectionLengthInTraject
+from vrtool.flood_defence_system.dike_traject import plot_settings, get_section_length_in_traject
 from tools.HelperFunctions import pareto_frontier
 
 
@@ -941,7 +941,7 @@ class StrategyBase:
         # all settings, similar to plotAssessment
 
         ##Settings part:
-        PlotSettings()
+        plot_settings()
         # English or Dutch labels and titles
         if language == "NL":
             label_xlabel = "Dijkvakken"
@@ -959,7 +959,7 @@ class StrategyBase:
                 labels_xticks.append("S" + i[-2:])
         color = ["r", "g", "b", "k"]
 
-        cumlength, xticks1, middles = getSectionLengthInTraject(
+        cumlength, xticks1, middles = get_section_length_in_traject(
             TestCase.Probabilities["Length"]
             .loc[TestCase.Probabilities.index.get_level_values(1) == "Overflow"]
             .values
@@ -1259,7 +1259,7 @@ class StrategyBase:
 
         # TODO check labeling
         # set the lengths of the sections
-        cumlength, xticks1, middles = getSectionLengthInTraject(
+        cumlength, xticks1, middles = get_section_length_in_traject(
             traject.Probabilities["Length"]
             .loc[traject.Probabilities.index.get_level_values(1) == "Overflow"]
             .values

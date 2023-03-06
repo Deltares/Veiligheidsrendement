@@ -274,7 +274,7 @@ class DikeTraject:
             ProbabilityFrame = self.Probabilities
             ProbabilityFrame = ProbabilityFrame.drop(["Length"], axis=1)
         ProbabilityFrame.columns = ProbabilityFrame.columns.values.astype(np.int64)
-        PlotSettings()
+        plot_settings()
 
         self.Probabilities.to_csv(
             case_settings["directory"].joinpath("InitialAssessment_Betas.csv")
@@ -306,7 +306,7 @@ class DikeTraject:
             for i in self.Sections:
                 labels_xticks.append("S" + i.name[2:])
 
-        cumlength, xticks1, middles = getSectionLengthInTraject(
+        cumlength, xticks1, middles = get_section_length_in_traject(
             self.Probabilities["Length"]
             .loc[self.Probabilities.index.get_level_values(1) == "Overflow"]
             .values
@@ -618,7 +618,7 @@ class DikeTraject:
         pass
 
 
-def PlotSettings(labels="NL"):
+def plot_settings(labels: str ="NL"):
     # a bunch of settings to make it look nice:
     SMALL_SIZE = 8
     MEDIUM_SIZE = 10
@@ -633,7 +633,7 @@ def PlotSettings(labels="NL"):
     plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
-def getSectionLengthInTraject(length):
+def get_section_length_in_traject(length):
     # Derive some coordinates to properly plot everything according to the length of the different sections:
     cumlength = np.cumsum(length)
     cumlength = np.insert(cumlength, 0, 0)

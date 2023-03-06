@@ -5,7 +5,7 @@ import numpy as np
 import seaborn as sns
 from HelperFunctions import getMeasureTable
 
-from vrtool.flood_defence_system.dike_traject import getSectionLengthInTraject
+from vrtool.flood_defence_system.dike_traject import get_section_length_in_traject
 
 
 def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=False,subfig=False,greedymode = 'Optimal',color = False):
@@ -15,7 +15,7 @@ def plotLCC(Strategies,traject,PATH=False,fig_size=(12,2),flip=False,title_in=Fa
     Strategies[1].FinalSolution['LCC'] = Strategies[1].FinalSolution['LCC'].astype(np.float32)
 
     #now for 2 strategies: plots an LCC bar chart
-    cumlength, xticks1, middles = getSectionLengthInTraject(traject.Probabilities['Length'].loc[traject.Probabilities.index.get_level_values(1) == 'Overflow'].values)
+    cumlength, xticks1, middles = get_section_length_in_traject(traject.Probabilities['Length'].loc[traject.Probabilities.index.get_level_values(1) == 'Overflow'].values)
     if not color:
         color = sns.cubehelix_palette(n_colors=4, start=1.9, rot=1, gamma=1.5, hue=1.0, light=0.8, dark=0.3)
     fig, (ax, ax1) = plt.subplots(nrows=1, ncols=2, figsize=fig_size, sharey='row',
