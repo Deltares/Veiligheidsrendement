@@ -1,5 +1,5 @@
 
-from vrtool.decision_making.measures.measure_base import Measure
+from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
@@ -12,7 +12,7 @@ from vrtool.flood_defence_system.reliability_calculation import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 import pandas as pd
 
-class CustomMeasure(Measure):
+class CustomMeasure(MeasureBase):
     def set_input(self, section: DikeSection):
         try:
             try:

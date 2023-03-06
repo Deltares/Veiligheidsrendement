@@ -1,5 +1,6 @@
 
-from vrtool.decision_making.measures.measure_base import Measure, determine_costs, ProbabilisticDesign
+from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.common_calculations import determine_costs, probabilistic_design
 from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
@@ -11,7 +12,7 @@ from vrtool.flood_defence_system.reliability_calculation import (
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
-class DiaphragmWall(Measure):
+class DiaphragmWall(MeasureBase):
     # type == 'Diaphragm Wall':
     def evaluateMeasure(
         self,
@@ -51,7 +52,7 @@ class DiaphragmWall(Measure):
                             == "Simple"
                         ):
                             if hasattr(dike_section, "HBNRise_factor"):
-                                hc = ProbabilisticDesign(
+                                hc = probabilistic_design(
                                     "h_crest",
                                     dike_section.Reliability.Mechanisms["Overflow"]
                                     .Reliability[ij]
@@ -64,7 +65,7 @@ class DiaphragmWall(Measure):
                                     mechanism="Overflow",
                                 )
                             else:
-                                hc = ProbabilisticDesign(
+                                hc = probabilistic_design(
                                     "h_crest",
                                     dike_section.Reliability.Mechanisms["Overflow"]
                                     .Reliability[ij]
@@ -76,7 +77,7 @@ class DiaphragmWall(Measure):
                                     mechanism="Overflow",
                                 )
                         else:
-                            hc = ProbabilisticDesign(
+                            hc = probabilistic_design(
                                 "h_crest",
                                 dike_section.Reliability.Mechanisms["Overflow"]
                                 .Reliability[ij]

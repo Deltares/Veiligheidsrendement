@@ -1,4 +1,5 @@
-from vrtool.decision_making.measures.measure_base import Measure, determine_costs
+from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.common_calculations import determine_costs
 from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
@@ -10,7 +11,7 @@ from vrtool.flood_defence_system.reliability_calculation import (
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
-class VerticalGeotextile(Measure):
+class VerticalGeotextile(MeasureBase):
     def evaluateMeasure(
         self,
         dike_section: DikeSection,

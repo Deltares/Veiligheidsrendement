@@ -1,5 +1,5 @@
-
-from vrtool.decision_making.measures.measure_base import Measure, determine_new_geometry, determine_costs, implement_berm_widening
+from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.common_calculations import determine_new_geometry, determine_costs, implement_berm_widening
 from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
@@ -12,7 +12,7 @@ from vrtool.flood_defence_system.reliability_calculation import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class SoilReinforcement(Measure):
+class SoilReinforcement(MeasureBase):
     # type == 'Soil reinforcement':
     def evaluateMeasure(
         self,
