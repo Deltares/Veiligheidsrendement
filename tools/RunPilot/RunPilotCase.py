@@ -12,7 +12,7 @@ sys.path.append('../../src')
 sys.path.append('../../tools')
 sys.path.append('../..')
 from flood_defence_system.dike_traject import DikeTraject
-from HelperFunctions import getMeasureTable
+from HelperFunctions import get_measure_table
 from RunModel import runFullModel
 from pathlib import Path
 from decision_making.strategy_evaluation import calcTrajectProb
@@ -63,7 +63,7 @@ def main():
     # Now some general output figures and csv's are generated:
 
     # First make a table of all the solutions:
-    MeasureTable = getMeasureTable(AllSolutions)
+    MeasureTable = get_measure_table(AllSolutions)
 
     # plot beta costs for t=0
     figure_size = (12, 7)

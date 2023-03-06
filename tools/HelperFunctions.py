@@ -130,7 +130,7 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
     return TestCaseStrategy
 
 
-def getMeasureTable(AllSolutions,language ='NL',abbrev=False):
+def get_measure_table(AllSolutions,language ='NL',abbrev=False):
     OverallMeasureTable = pd.DataFrame([], columns=['ID', 'Name'])
     for i in AllSolutions:
         OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].MeasureTable])
@@ -176,7 +176,7 @@ def DataAtShelve(dir, name, objects = None, mode = 'write'):
         if len(keys) == 1:
             return locals()[keys[0]]
 
-def IDtoName(ID, MeasureTable):
+def id_to_name(ID, MeasureTable):
     return MeasureTable.loc[MeasureTable['ID']==ID]['Name'].values[0]
 
 def flatten(l): #flatten a list
