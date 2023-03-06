@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "veiligheidsrendement tool"
+name = "vrtool"
 version = "0.0.1"
 description = ""
 authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
@@ -68,6 +68,11 @@ line_length = 88
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
