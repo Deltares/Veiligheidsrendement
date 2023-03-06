@@ -24,7 +24,7 @@ class MeasureBase:
         self.geometry_plot = config.geometry_plot
         self.unit_costs = config.unit_costs
 
-    def evaluateMeasure(
+    def evaluate_measure(
         self,
         dike_section: DikeSection,
         traject_info: dict[str, any],

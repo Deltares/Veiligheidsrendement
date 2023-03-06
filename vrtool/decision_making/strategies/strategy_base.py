@@ -1,5 +1,6 @@
 import copy
 from collections import OrderedDict
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -519,7 +520,7 @@ class StrategyBase:
             self.options_geotechnical_filtered = copy.deepcopy(self.options_g_filtered)
             del self.options_g_filtered
 
-    def makeSolution(self, path, step=False, type="Final"):
+    def make_solution(self, path, step=False, type="Final"):
         """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
         There are 3 types:
         FinalSolution: which is the result in the last step of the optimization
@@ -585,7 +586,7 @@ class StrategyBase:
             self.SatisfiedStandardSolution = Solution
             self.SatisfiedStandardSolution.to_csv(path)
 
-    def plotBetaTime(self, Traject, typ="single", path=None):
+    def plot_beta_time(self, Traject, typ="single", path=None):
         """This routine plots the reliability in time for each step in the optimization. Mainly for debugging purposes."""
         horizon = np.max(self.T)
 
@@ -619,7 +620,7 @@ class StrategyBase:
         else:
             pass
 
-    def plotBetaCosts(
+    def plot_beta_costs(
         self,
         Traject,
         save_dir,
@@ -924,7 +925,7 @@ class StrategyBase:
                 )
             )
 
-    def plotInvestmentLimit(
+    def plot_investment_limit(
         self,
         TestCase,
         investmentlimit=False,
@@ -1131,22 +1132,22 @@ class StrategyBase:
                     )
                 plt.close()
 
-    def writeReliabilityToCSV(self, path, type):
+    def write_reliability_to_csv(self, path, type):
         """Routine to write all the reliability indices in a step of the algorithm to a csv file"""
         # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
         for i in range(len(self.Probabilities)):
             name = path.joinpath("ReliabilityLog_" + type + "_Step" + str(i) + ".csv")
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
-    def determineRiskCostCurve(self, TrajectObject, PATH=False):
+    def determine_risk_cost_curve(self, traject, input_path: Path = None):
         """This routine writes a curve for total risk versus total cost for a certain solution. Not standard output but can be used for validation.
         Uses output from ReliabilityToCSV"""
 
         # TODO clean up options and make paths more generic
-        if PATH:
-            PATH.mkdir(parents=True, exist_ok=True)
+        if input_path:
+            input_path.mkdir(parents=True, exist_ok=True)
         else:
-            PATH = False
+            input_path = False
         if not hasattr(self, "TakenMeasures"):
             raise TypeError("TakenMeasures not found")
         costs = {}
@@ -1156,14 +1157,14 @@ class StrategyBase:
             costs["LCC"] = np.cumsum(self.TakenMeasures["LCC"].values)
             count = 0
             for i in self.Probabilities:
-                if PATH:
+                if input_path:
                     costs["TR"].append(
                         calc_life_cycle_risks(
                             i,
                             self.r,
-                            np.max(TrajectObject.GeneralInfo["T"]),
-                            TrajectObject.GeneralInfo["FloodDamage"],
-                            dumpPt=PATH.joinpath("Greedy_step_" + str(count) + ".csv"),
+                            np.max(traject.GeneralInfo["T"]),
+                            traject.GeneralInfo["FloodDamage"],
+                            dumpPt=input_path.joinpath("Greedy_step_" + str(count) + ".csv"),
                         )
                     )
                 else:
@@ -1171,8 +1172,8 @@ class StrategyBase:
                         calc_life_cycle_risks(
                             i,
                             self.r,
-                            np.max(TrajectObject.GeneralInfo["T"]),
-                            TrajectObject.GeneralInfo["FloodDamage"],
+                            np.max(traject.GeneralInfo["T"]),
+                            traject.GeneralInfo["FloodDamage"],
                         )
                     )
                 count += 1
@@ -1205,7 +1206,7 @@ class StrategyBase:
                 else:
                     option_index.append(-999)
             # implement the options 1 by 1
-            Probability = make_traject_df(TrajectObject, TrajectObject.GeneralInfo["T"])
+            Probability = make_traject_df(traject, traject.GeneralInfo["T"])
             ProbabilitySteps = []
             ProbabilitySteps.append(copy.deepcopy(Probability))
             for i in range(0, len(option_index)):
@@ -1221,14 +1222,14 @@ class StrategyBase:
             costs["TR"] = calc_life_cycle_risks(
                 ProbabilitySteps[-1],
                 self.r,
-                np.max(TrajectObject.GeneralInfo["T"]),
-                TrajectObject.GeneralInfo["FloodDamage"],
-                dumpPt=PATH.joinpath("MixedInteger.csv"),
+                np.max(traject.GeneralInfo["T"]),
+                traject.GeneralInfo["FloodDamage"],
+                dumpPt=input_path.joinpath("MixedInteger.csv"),
             )
             costs["TC"] = np.add(costs["TR"], costs["LCC"])
         return costs
 
-    def getSafetyStandardStep(self, Ptarget, t=50):
+    def get_safety_standard_step(self, Ptarget, t=50):
         """Get the index of the measure where the traject probability in year t is higher than the requirement"""
         for i in range(0, len(self.Probabilities)):
             beta_traj, Pf_traj = calc_traject_prob(self.Probabilities[i], ts=t)
@@ -1241,7 +1242,7 @@ class StrategyBase:
                 self.SafetyStandardStep = i
                 print("Warning: safety standard not met. Using final step for plotting")
 
-    def plotMeasures(
+    def plot_measures(
         self,
         traject,
         PATH,
@@ -1292,8 +1293,8 @@ class StrategyBase:
             if greedymode == "Optimal":
                 Solution = copy.deepcopy(self.OptimalSolution)
             elif greedymode == "SatisfiedStandard":
-                self.getSafetyStandardStep(traject.GeneralInfo["Pmax"])
-                self.makeSolution(
+                self.get_safety_standard_step(traject.GeneralInfo["Pmax"])
+                self.make_solution(
                     PATH.joinpath("SatisfiedStandardGreedy.csv"),
                     step=self.SafetyStandardStep + 1,
                     type="SatisfiedStandard",
@@ -1450,5 +1451,3 @@ class StrategyBase:
             bbox_inches="tight",
             format="png",
         )
-
-

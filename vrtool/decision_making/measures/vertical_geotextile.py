@@ -12,7 +12,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 class VerticalGeotextile(MeasureBase):
-    def evaluateMeasure(
+    def evaluate_measure(
         self,
         dike_section: DikeSection,
         traject_info: dict[str, any],

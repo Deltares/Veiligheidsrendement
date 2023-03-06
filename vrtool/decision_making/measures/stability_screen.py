@@ -13,7 +13,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 class StabilityScreen(MeasureBase):
     # type == 'Stability Screen':
-    def evaluateMeasure(
+    def evaluate_measure(
         self,
         dike_section: DikeSection,
         traject_info: dict[str, any],

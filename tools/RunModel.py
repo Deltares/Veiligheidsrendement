@@ -247,12 +247,12 @@ def runFullModel(
 
                 # plot beta time for all measure steps for each strategy
                 if plot_mode == "extensive":
-                    GreedyOptimization.plotBetaTime(
+                    GreedyOptimization.plot_beta_time(
                         TrajectObject, typ="single", path=config.directory
                     )
 
                 GreedyOptimization = replaceNames(GreedyOptimization, AllSolutions)
-                cost_Greedy = GreedyOptimization.determineRiskCostCurve(TrajectObject)
+                cost_Greedy = GreedyOptimization.determine_risk_cost_curve(TrajectObject)
 
                 # write to csv's
                 GreedyOptimization.TakenMeasures.to_csv(
@@ -273,7 +273,7 @@ def runFullModel(
                     config.directory.joinpath("results", "TotalCostValues_Greedy.csv"),
                     float_format="%.1f",
                 )
-                GreedyOptimization.makeSolution(
+                GreedyOptimization.make_solution(
                     config.directory.joinpath(
                         "results",
                         "TakenMeasures_Optimal_" + GreedyOptimization.type + ".csv",
@@ -281,7 +281,7 @@ def runFullModel(
                     step=cost_Greedy["TC_min"] + 1,
                     type="Optimal",
                 )
-                GreedyOptimization.makeSolution(
+                GreedyOptimization.make_solution(
                     config.directory.joinpath(
                         "results", "FinalMeasures_" + GreedyOptimization.type + ".csv"
                     ),
@@ -294,7 +294,7 @@ def runFullModel(
                             j + "_Options_" + GreedyOptimization.type + ".csv",
                         )
                     )
-                costs = GreedyOptimization.determineRiskCostCurve(TrajectObject)
+                costs = GreedyOptimization.determine_risk_cost_curve(TrajectObject)
                 TR = costs["TR"]
                 LCC = costs["LCC"]
                 pd.DataFrame(
@@ -324,7 +324,7 @@ def runFullModel(
                 TargetReliabilityBased.evaluate(
                     TrajectObject, AllSolutions, splitparams=True
                 )
-                TargetReliabilityBased.makeSolution(
+                TargetReliabilityBased.make_solution(
                     config.directory.joinpath(
                         "results",
                         "FinalMeasures_" + TargetReliabilityBased.type + ".csv",
@@ -334,7 +334,7 @@ def runFullModel(
 
                 # plot beta time for all measure steps for each strategy
                 if plot_mode == "extensive":
-                    TargetReliabilityBased.plotBetaTime(
+                    TargetReliabilityBased.plot_beta_time(
                         TrajectObject, typ="single", path=config.directory
                     )
 

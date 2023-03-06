@@ -69,7 +69,7 @@ class CustomMeasure(MeasureBase):
         self.measures["Reliability"] = SectionReliability()
         self.measures["Reliability"].Mechanisms = {}
 
-    def evaluateMeasure(
+    def evaluate_measure(
         self,
         dike_section: DikeSection,
         traject_info: dict[str, any],

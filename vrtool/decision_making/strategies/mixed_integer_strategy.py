@@ -251,7 +251,7 @@ class MixedIntegerStrategy(StrategyBase):
 
         return model
 
-    def readResults(self, Model, dir=False, MeasureTable=None):
+    def read_results(self, model_results, dir=False, measure_table=None):
         N = self.opt_parameters["N"]
         Sh = self.opt_parameters["Sh"]
         Sg = self.opt_parameters["Sg"]
@@ -261,9 +261,9 @@ class MixedIntegerStrategy(StrategyBase):
         grSg = range(Sg)
         grT = range(T)
         self.results = {}
-        xs = Model["Values"]
+        xs = model_results["Values"]
         ind = np.argwhere(np.int32(xs))
-        varnames = Model["Names"]
+        varnames = model_results["Names"]
         Measure_ones = np.array(varnames)[ind][:-T]
         LCCTotal = 0
         sections = []
@@ -292,7 +292,7 @@ class MixedIntegerStrategy(StrategyBase):
         for i in measure.keys():
             sections.append(sectionnames[i])
             # print(sectionnames[i])
-            if isinstance(MeasureTable, pd.DataFrame):
+            if isinstance(measure_table, pd.DataFrame):
                 if np.sum(measure[i]) != 0:
                     ID.append(
                         self.options_geotechnical[sectionnames[i]]
@@ -313,15 +313,15 @@ class MixedIntegerStrategy(StrategyBase):
                     ID2.append("0")
                     # MeasureTable.append(pd.DataFrame([['0', 'Do Nothing']],columns=['ID','Name']))
 
-                if len(MeasureTable.loc[MeasureTable["ID"] == ID[-1]]) == 0:
+                if len(measure_table.loc[measure_table["ID"] == ID[-1]]) == 0:
                     if len(ID[-1]) > 1:
                         splitID = ID[-1].split("+")
                         newname = (
-                            MeasureTable.loc[MeasureTable["ID"] == splitID[0]][
+                            measure_table.loc[measure_table["ID"] == splitID[0]][
                                 "Name"
                             ].values
                             + "+"
-                            + MeasureTable.loc[MeasureTable["ID"] == splitID[1]][
+                            + measure_table.loc[measure_table["ID"] == splitID[1]][
                                 "Name"
                             ].values
                         )
@@ -332,10 +332,10 @@ class MixedIntegerStrategy(StrategyBase):
                         newline = pd.DataFrame(
                             [[ID[-1], "Do Nothing"]], columns=["ID", "Name"]
                         )
-                    MeasureTable = MeasureTable.append(newline)
+                    measure_table = measure_table.append(newline)
 
                 measurenames.append(
-                    MeasureTable.loc[MeasureTable["ID"] == ID[-1]]["Name"].values[0]
+                    measure_table.loc[measure_table["ID"] == ID[-1]]["Name"].values[0]
                 )
             else:
                 if np.sum(measure[i]) != 0:
@@ -387,7 +387,7 @@ class MixedIntegerStrategy(StrategyBase):
         TakenMeasures = TakenMeasures.sort_values("Section")
         self.TakenMeasures = TakenMeasures
         data = pd.DataFrame(
-            {"Names": Model["Names"], "Values": Model["Values"], "Cost": self.CostVec}
+            {"Names": model_results["Names"], "Values": model_results["Values"], "Cost": self.CostVec}
         )
 
         pd.set_option("display.max_columns", None)  # prevents trailing elipses
@@ -408,7 +408,7 @@ class MixedIntegerStrategy(StrategyBase):
         self.results["GeoRisk"] = np.sum(alldata.iloc[Nsections:-T])["Cost"]
         self.results["OverflowRisk"] = np.sum(alldata.iloc[-T:])["Cost"]
 
-    def checkConstraintSatisfaction(self, Model):
+    def check_constraint_satisfaction(self, Model):
         N = self.opt_parameters["N"]
         S = self.opt_parameters["S"]
         T = self.opt_parameters["T"]

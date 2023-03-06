@@ -13,9 +13,9 @@ class ParetoFrontier(StrategyBase):
         if not lcc_list:
             print()
             # run optimization and generate list on that
-        MIPObject = MixedIntegerStrategy("MIPObject")
-        MIPObject.combine(traject_obj, solutions_collection, splitparams=True)
-        MIPObject.make_optimization_input(traject_obj, solutions_collection)
+        _mip_object = MixedIntegerStrategy("MIPObject")
+        _mip_object.combine(traject_obj, solutions_collection, splitparams=True)
+        _mip_object.make_optimization_input(traject_obj, solutions_collection)
 
         MIPObjects = []
         MIPModels = []
@@ -25,7 +25,7 @@ class ParetoFrontier(StrategyBase):
         TC = []
         ObjectiveValue = []
         for j in range(0, len(lcc_list)):
-            MIPObjects.append(copy.deepcopy(MIPObject))
+            MIPObjects.append(copy.deepcopy(_mip_object))
             MIPModels.append(
                 MIPObjects[-1].create_optimization_model(BudgetLimit=lcc_list[j])
             )

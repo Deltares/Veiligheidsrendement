@@ -10,11 +10,11 @@ from tools.HelperFunctions import pareto_frontier
 
 class RandomizedParetoFrontier(StrategyBase):
     # Old Pareto Routine: evaluates random combinations of measures.
-    def fill_with_MIP(self, MIPResults):
-        self.LCCOption = MIPResults.LCCOption
-        self.RiskGeotechnical = MIPResults.RiskGeotechnical
-        self.RiskOverflow = MIPResults.RiskOverflow
-        self.opt_parameters = MIPResults.opt_parameters
+    def fill_with_MIP(self, mip_results):
+        self.LCCOption = mip_results.LCCOption
+        self.RiskGeotechnical = mip_results.RiskGeotechnical
+        self.RiskOverflow = mip_results.RiskOverflow
+        self.opt_parameters = mip_results.opt_parameters
         TC = np.empty(
             (
                 self.opt_parameters["N"],

@@ -63,7 +63,7 @@ class RunOptimization(VrToolRunProtocol):
 
         # plot beta time for all measure steps for each strategy
         if self._plot_mode == VrToolPlotMode.EXTENSIVE:
-            _greedy_optimization.plotBetaTime(
+            _greedy_optimization.plot_beta_time(
                 self.selected_traject,
                 typ="single",
                 path=self.vr_config.directory,
@@ -72,7 +72,7 @@ class RunOptimization(VrToolRunProtocol):
         _greedy_optimization = self._replace_names(
             _greedy_optimization, self._solutions_dict
         )
-        _cost_greedy = _greedy_optimization.determineRiskCostCurve(
+        _cost_greedy = _greedy_optimization.determine_risk_cost_curve(
             self.selected_traject
         )
 
@@ -93,14 +93,14 @@ class RunOptimization(VrToolRunProtocol):
             _results_dir / "TotalCostValues_Greedy.csv",
             float_format="%.1f",
         )
-        _greedy_optimization.makeSolution(
+        _greedy_optimization.make_solution(
             _results_dir.joinpath(
                 "TakenMeasures_Optimal_" + _greedy_optimization.type + ".csv",
             ),
             step=_cost_greedy["TC_min"] + 1,
             type="Optimal",
         )
-        _greedy_optimization.makeSolution(
+        _greedy_optimization.make_solution(
             _results_dir.joinpath(
                 "FinalMeasures_" + _greedy_optimization.type + ".csv"
             ),
@@ -112,7 +112,7 @@ class RunOptimization(VrToolRunProtocol):
                     j + "_Options_" + _greedy_optimization.type + ".csv",
                 )
             )
-        costs = _greedy_optimization.determineRiskCostCurve(self.selected_traject)
+        costs = _greedy_optimization.determine_risk_cost_curve(self.selected_traject)
         _tr_costs = costs["TR"]
         _lcc_costs = costs["LCC"]
         pd.DataFrame(
@@ -141,7 +141,7 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based.evaluate(
             self.selected_traject, self._solutions_dict, splitparams=True
         )
-        _target_reliability_based.makeSolution(
+        _target_reliability_based.make_solution(
             _results_dir.joinpath(
                 "FinalMeasures_" + _target_reliability_based.type + ".csv",
             ),
@@ -150,7 +150,7 @@ class RunOptimization(VrToolRunProtocol):
 
         # plot beta time for all measure steps for each strategy
         if self._plot_mode == VrToolPlotMode.EXTENSIVE:
-            _target_reliability_based.plotBetaTime(
+            _target_reliability_based.plot_beta_time(
                 self.selected_traject,
                 typ="single",
                 path=self.vr_config.directory,

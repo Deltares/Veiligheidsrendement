@@ -14,7 +14,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 class DiaphragmWall(MeasureBase):
     # type == 'Diaphragm Wall':
-    def evaluateMeasure(
+    def evaluate_measure(
         self,
         dike_section: DikeSection,
         traject_info: dict[str, any],

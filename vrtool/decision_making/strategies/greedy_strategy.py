@@ -243,11 +243,11 @@ class GreedyStrategy(StrategyBase):
         #
         # my_shelf.close()
 
-        self.writeGreedyResults(
+        self.write_greedy_results(
             traject, solutions, measure_list, BC_list, Probabilities
         )
 
-    def writeGreedyResults(self, traject, solutions, measure_list, BC, Probabilities):
+    def write_greedy_results(self, traject, solutions, measure_list, BC, Probabilities):
         """This writes the results of a step to a list of dataframes for all steps."""
         # TODO We need to think about how to include outward reinforcement here. Can we formulate outward reinforcement as a 'dberm'?
         TakenMeasuresHeaders = [
@@ -425,7 +425,7 @@ class GreedyStrategy(StrategyBase):
             combined = combined.set_index(["name", "mechanism"])
             self.Probabilities.append(combined)
 
-    def determineRiskCostCurve(self, TrajectObject, PATH=False):
+    def determine_risk_cost_curve(self, TrajectObject, PATH=False):
         """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""
         if PATH:
             PATH.mkdir(parents=True, exist_ok=True)
