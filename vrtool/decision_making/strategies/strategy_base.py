@@ -125,7 +125,7 @@ class StrategyBase:
         self.options = {}
 
         cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]].measure_data["Section"].columns.values
+            solutions_dict[list(solutions_dict.keys())[0]].MeasureData["Section"].columns.values
         )
 
         # measures at t=0 (2025) and t=20 (2045)
@@ -133,18 +133,18 @@ class StrategyBase:
         for i, section in enumerate(traject.Sections):
 
             # Step 1: combine measures with partial measures
-            combinables = solutions_dict[section.name].measure_data.loc[
-                solutions_dict[section.name].measure_data["class"] == "combinable"
+            combinables = solutions_dict[section.name].MeasureData.loc[
+                solutions_dict[section.name].MeasureData["class"] == "combinable"
             ]
-            partials = solutions_dict[section.name].measure_data.loc[
-                solutions_dict[section.name].measure_data["class"] == "partial"
+            partials = solutions_dict[section.name].MeasureData.loc[
+                solutions_dict[section.name].MeasureData["class"] == "partial"
             ]
             if self.__class__.__name__ == "TargetReliabilityStrategy":
                 combinables = combinables.loc[
-                    solutions_dict[section.name].measure_data["year"] == self.OI_year
+                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
                 ]
                 partials = partials.loc[
-                    solutions_dict[section.name].measure_data["year"] == self.OI_year
+                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
                 ]
 
             combinedmeasures = measure_combinations(
@@ -182,7 +182,7 @@ class StrategyBase:
                             len(solutions_dict[traject.Sections[i].name].measure_table)
                         ]["ID"] = ij
 
-            StrategyData = copy.deepcopy(solutions_dict[section.name].measure_data)
+            StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
                 StrategyData = StrategyData.loc[StrategyData["year"] == self.OI_year]
 
