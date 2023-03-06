@@ -7,8 +7,8 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
-import vrtool.ProbabilisticTools.ProbabilisticFunctions as pb
-from vrtool.DecisionMaking.Solutions import Solutions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb
+from vrtool.decision_making.Solutions import Solutions
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 

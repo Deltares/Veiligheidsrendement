@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import vrtool.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from vrtool.DecisionMaking.StrategyEvaluation import calcTrajectProb
+import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+from vrtool.decision_making.StrategyEvaluation import calcTrajectProb
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.FloodDefenceSystem.DikeSection import DikeSection
-from vrtool.FloodDefenceSystem.ReliabilityCalculation import (
+from vrtool.flood_defence_system.DikeSection import DikeSection
+from vrtool.flood_defence_system.ReliabilityCalculation import (
     LoadInput,
     MechanismReliabilityCollection,
 )

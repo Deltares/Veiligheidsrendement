@@ -1,6 +1,6 @@
 import pandas as pd
 
-from vrtool.FloodDefenceSystem.SectionReliability import SectionReliability
+from vrtool.flood_defence_system.SectionReliability import SectionReliability
 
 
 # class that contains a DikeProfile consisting of 4 or 6 characteristic points:

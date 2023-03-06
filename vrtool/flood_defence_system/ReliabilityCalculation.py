@@ -8,14 +8,14 @@ import openturns as ot
 import pandas as pd
 from scipy import interpolate
 
-import vrtool.FloodDefenceSystem.Mechanisms as Mechanisms
-import vrtool.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.flood_defence_system.Mechanisms as Mechanisms
+import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.ProbabilisticTools.HydraRing_scripts import (
+from vrtool.probabilistic_tools.HydraRing_scripts import (
     DesignTableOpenTurns,
     readDesignTable,
 )
-from vrtool.ProbabilisticTools.ProbabilisticFunctions import (
+from vrtool.probabilistic_tools.ProbabilisticFunctions import (
     FragilityIntegration,
     IterativeFC_calculation,
     TableDist,

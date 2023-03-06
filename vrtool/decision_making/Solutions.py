@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from vrtool.DecisionMaking.Measure import (
+from vrtool.decision_making.Measure import (
     CustomMeasure,
     DiaphragmWall,
     SoilReinforcement,
@@ -13,7 +13,7 @@ from vrtool.DecisionMaking.Measure import (
     VerticalGeotextile,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.FloodDefenceSystem.DikeSection import DikeSection
+from vrtool.flood_defence_system.DikeSection import DikeSection
 
 
 class Solutions:

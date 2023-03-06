@@ -10,8 +10,8 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-import vrtool.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from vrtool.DecisionMaking.StrategyEvaluation import (
+import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+from vrtool.decision_making.StrategyEvaluation import (
     ImplementOption,
     MeasureCombinations,
     OverflowBundling,
@@ -25,7 +25,7 @@ from vrtool.DecisionMaking.StrategyEvaluation import (
     updateProbability,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.FloodDefenceSystem.DikeTraject import PlotSettings, getSectionLengthInTraject
+from vrtool.flood_defence_system.DikeTraject import PlotSettings, getSectionLengthInTraject
 from tools.HelperFunctions import IDtoName, flatten, getMeasureTable, pareto_frontier
 
 

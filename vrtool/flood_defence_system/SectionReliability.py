@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-import vrtool.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
 
 
 #Class describing safety assessments of a section:

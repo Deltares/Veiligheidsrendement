@@ -5,15 +5,15 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 
-import vrtool.ProbabilisticTools.ProbabilisticFunctions as pb
-from vrtool.FloodDefenceSystem.DikeSection import DikeSection
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb
+from vrtool.flood_defence_system.DikeSection import DikeSection
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-from vrtool.FloodDefenceSystem.DikeTraject import DikeTraject
+from vrtool.flood_defence_system.DikeTraject import DikeTraject
 
 
 class RunSafetyAssessment(VrToolRunProtocol):

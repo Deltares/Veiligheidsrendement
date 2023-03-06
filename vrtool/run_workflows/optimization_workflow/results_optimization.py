@@ -3,8 +3,8 @@ import shelve
 from pathlib import Path
 from typing import Dict, List
 
-from vrtool.DecisionMaking.Solutions import Solutions
-from vrtool.DecisionMaking.Strategy import Strategy
+from vrtool.decision_making.Solutions import Solutions
+from vrtool.decision_making.Strategy import Strategy
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 

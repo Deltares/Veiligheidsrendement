@@ -4,8 +4,8 @@ from typing import Callable, Dict
 import numpy as np
 import pandas as pd
 
-from vrtool.DecisionMaking.Solutions import Solutions
-from vrtool.DecisionMaking.Strategy import (
+from vrtool.decision_making.Solutions import Solutions
+from vrtool.decision_making.Strategy import (
     GreedyStrategy,
     Strategy,
     TargetReliabilityStrategy,

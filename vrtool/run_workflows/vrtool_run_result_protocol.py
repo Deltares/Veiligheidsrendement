@@ -1,7 +1,7 @@
 from typing import Protocol, runtime_checkable
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.FloodDefenceSystem.DikeTraject import DikeTraject
+from vrtool.flood_defence_system.DikeTraject import DikeTraject
 
 
 @runtime_checkable
