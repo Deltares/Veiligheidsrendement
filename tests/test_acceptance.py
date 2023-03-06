@@ -43,7 +43,7 @@ class TestAcceptance:
                 test_reference_dir.joinpath("results", file), index_col=0
             )
             result = pd.read_csv(
-                test_results_dir.joinpath("results", file), index_col=0
+                test_results_dir / file, index_col=0
             )
             if not reference.equals(result):
                 comparison_errors.append("{} is different.".format(file))
