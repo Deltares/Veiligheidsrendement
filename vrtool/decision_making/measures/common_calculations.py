@@ -9,7 +9,7 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 from vrtool.flood_defence_system.mechanisms import overflow_hring, overflow_simple
-from vrtool.flood_defence_system.reliability_calculation import (
+from vrtool.flood_defence_system.mechanism_reliability import (
     beta_sf_stability_inner,
 )
 

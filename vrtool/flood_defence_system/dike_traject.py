@@ -13,10 +13,8 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, calc_
 from vrtool.decision_making.strategy_evaluation import calc_traject_prob
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.reliability_calculation import (
-    LoadInput,
-    MechanismReliabilityCollection,
-)
+from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.flood_defence_system.mechanism_reliability_collection import MechanismReliabilityCollection
 
 
 class DikeTraject:

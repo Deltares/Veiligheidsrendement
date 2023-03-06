@@ -7,7 +7,7 @@ import copy
 import numpy as np
 
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.reliability_calculation import (
+from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
