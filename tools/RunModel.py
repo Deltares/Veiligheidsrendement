@@ -54,11 +54,11 @@ def runFullModel(
 
         # compute reliability in time for each mechanism:
         # print(section.End)
-        for j in TrajectObject.general_info["MechanismsConsidered"]:
+        for j in TrajectObject.GeneralInfo["MechanismsConsidered"]:
             section.section_reliability.Mechanisms[j].generateLCRProfile(
                 section.section_reliability.Load,
                 mechanism=j,
-                trajectinfo=TrajectObject.general_info,
+                trajectinfo=TrajectObject.GeneralInfo,
             )
 
         # aggregate to section reliability:
@@ -77,10 +77,10 @@ def runFullModel(
                 [config.t_0, config.t_0 + np.max(config.T)],
                 [
                     pb_functions.pf_to_beta(
-                        TrajectObject.general_info["Pmax"]
+                        TrajectObject.GeneralInfo["Pmax"]
                     ),
                     pb_functions.pf_to_beta(
-                        TrajectObject.general_info["Pmax"]
+                        TrajectObject.GeneralInfo["Pmax"]
                     ),
                 ],
                 "k--",
@@ -157,7 +157,7 @@ def runFullModel(
             AllSolutions[i.name].fillSolutions(
                 config.input_directory.joinpath(i.name + ".xlsx")
             )
-            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.general_info)
+            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
 
     for i in TrajectObject.sections:
         AllSolutions[i.name].SolutionstoDataFrame(filtering="off", splitparams=True)
@@ -189,8 +189,8 @@ def runFullModel(
             for betaind in betaind_array:
                 for mech in plt_mech:
                     requiredbeta = pb_functions.pf_to_beta(
-                        TrajectObject.general_info["Pmax"]
-                        * (i.Length / TrajectObject.general_info["TrajectLength"])
+                        TrajectObject.GeneralInfo["Pmax"]
+                        * (i.Length / TrajectObject.GeneralInfo["TrajectLength"])
                     )
                     plt.figure(1001)
                     AllSolutions[i.name].plotBetaTimeEuro(

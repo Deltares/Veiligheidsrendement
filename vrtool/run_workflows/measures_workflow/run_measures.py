@@ -33,7 +33,7 @@ class RunMeasures(VrToolRunProtocol):
         _solution.fillSolutions(
             self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
         )
-        _solution.evaluate_solutions(selected_section, self.selected_traject.general_info)
+        _solution.evaluate_solutions(selected_section, self.selected_traject.GeneralInfo)
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:

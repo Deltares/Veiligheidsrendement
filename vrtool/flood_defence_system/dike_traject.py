@@ -32,7 +32,7 @@ class DikeTraject:
         self.flip_traject = config.flip_traject
         self.t_0 = config.t_0
 
-        self.general_info = {
+        self.GeneralInfo = {
             "omegaPiping": 0.24,
             "omegaStabilityInner": 0.04,
             "omegaOverflow": 0.24,
@@ -41,59 +41,59 @@ class DikeTraject:
             "bStabilityInner": 50,
         }
         self.sections: List[DikeSection] = []
-        self.general_info["MechanismsConsidered"] = self.mechanisms
+        self.GeneralInfo["MechanismsConsidered"] = self.mechanisms
         # Basic traject info
         # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
         # Pmax is the ondergrens as given by law
         # TODO check whether this is a sensible value
         # TODO read these values from a generic input file.
         if traject == "16-4":
-            self.general_info["aPiping"] = 0.9
-            self.general_info["FloodDamage"] = 23e9
-            self.general_info["TrajectLength"] = 19480
-            self.general_info["Pmax"] = 1.0 / 10000
+            self.GeneralInfo["aPiping"] = 0.9
+            self.GeneralInfo["FloodDamage"] = 23e9
+            self.GeneralInfo["TrajectLength"] = 19480
+            self.GeneralInfo["Pmax"] = 1.0 / 10000
         elif traject == "16-3":
-            self.general_info["FloodDamage"] = 23e9
-            self.general_info["TrajectLength"] = 19899
-            self.general_info["Pmax"] = 1.0 / 10000
-            self.general_info["aPiping"] = 0.9
+            self.GeneralInfo["FloodDamage"] = 23e9
+            self.GeneralInfo["TrajectLength"] = 19899
+            self.GeneralInfo["Pmax"] = 1.0 / 10000
+            self.GeneralInfo["aPiping"] = 0.9
             # NB: klopt a hier?????!!!!
         elif traject == "16-3 en 16-4":
-            self.general_info["FloodDamage"] = 23e9
-            self.general_info[
+            self.GeneralInfo["FloodDamage"] = 23e9
+            self.GeneralInfo[
                 "TrajectLength"
             ] = 19500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
             # gebruiken
-            self.general_info["Pmax"] = 1.0 / 10000
-            self.general_info["aPiping"] = 0.9
+            self.GeneralInfo["Pmax"] = 1.0 / 10000
+            self.GeneralInfo["aPiping"] = 0.9
 
         elif traject == "38-1":
-            self.general_info["FloodDamage"] = 14e9
-            self.general_info[
+            self.GeneralInfo["FloodDamage"] = 14e9
+            self.GeneralInfo[
                 "TrajectLength"
             ] = 29500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
             # gebruiken
-            self.general_info["Pmax"] = 1.0 / 30000
-            self.general_info["aPiping"] = 0.9
+            self.GeneralInfo["Pmax"] = 1.0 / 30000
+            self.GeneralInfo["aPiping"] = 0.9
 
         elif traject == "16-1":
-            self.general_info["FloodDamage"] = 29e9
-            self.general_info["TrajectLength"] = 15000
-            self.general_info["Pmax"] = 1.0 / 30000
-            self.general_info["aPiping"] = 0.4
+            self.GeneralInfo["FloodDamage"] = 29e9
+            self.GeneralInfo["TrajectLength"] = 15000
+            self.GeneralInfo["Pmax"] = 1.0 / 30000
+            self.GeneralInfo["aPiping"] = 0.4
         else:
             warnings.warn(
                 "Warning: dike traject not found, using default assumptions for traject."
             )
-            self.general_info["FloodDamage"] = 5e9
-            self.general_info["Pmax"] = 1.0 / 10000
-            self.general_info["omegaPiping"] = 0.24
-            self.general_info["aPiping"] = 0.9
-            self.general_info["bPiping"] = 300
-            self.general_info["omegaStabilityInner"] = 0.04
-            self.general_info["aStabilityInner"] = 0.033
-            self.general_info["bStabilityInner"] = 50
-            self.general_info["omegaOverflow"] = 0.24
+            self.GeneralInfo["FloodDamage"] = 5e9
+            self.GeneralInfo["Pmax"] = 1.0 / 10000
+            self.GeneralInfo["omegaPiping"] = 0.24
+            self.GeneralInfo["aPiping"] = 0.9
+            self.GeneralInfo["bPiping"] = 300
+            self.GeneralInfo["omegaStabilityInner"] = 0.04
+            self.GeneralInfo["aStabilityInner"] = 0.033
+            self.GeneralInfo["bStabilityInner"] = 50
+            self.GeneralInfo["omegaOverflow"] = 0.24
 
     @classmethod
     def from_vr_config(cls, vr_config: VrtoolConfig) -> DikeTraject:
@@ -187,21 +187,21 @@ class DikeTraject:
             #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
 
         # Traject length is lengt of all sections together:
-        self.general_info["TrajectLength"] = 0
+        self.GeneralInfo["TrajectLength"] = 0
         for i in self.sections:
-            self.general_info["TrajectLength"] += i.Length
+            self.GeneralInfo["TrajectLength"] += i.Length
 
-        self.general_info["beta_max"] = pf_to_beta(
-            self.general_info["Pmax"]
+        self.GeneralInfo["beta_max"] = pf_to_beta(
+            self.GeneralInfo["Pmax"]
         )
-        self.general_info["gammaHeave"] = calc_gamma(
-            "Heave", self.general_info
+        self.GeneralInfo["gammaHeave"] = calc_gamma(
+            "Heave", self.GeneralInfo
         )
-        self.general_info["gammaUplift"] = calc_gamma(
-            "Uplift", self.general_info
+        self.GeneralInfo["gammaUplift"] = calc_gamma(
+            "Uplift", self.GeneralInfo
         )
-        self.general_info["gammaPiping"] = calc_gamma(
-            "Piping", self.general_info
+        self.GeneralInfo["gammaPiping"] = calc_gamma(
+            "Piping", self.GeneralInfo
         )
 
     def setProbabilities(self):
@@ -255,7 +255,7 @@ class DikeTraject:
                         reinforcement_strategy.OptimalStep
                     ]
                 elif greedymode == "SatisfiedStandard":
-                    Ptarget = self.general_info["Pmax"]
+                    Ptarget = self.GeneralInfo["Pmax"]
                     for i in reversed(reinforcement_strategy.Probabilities):
                         beta_traj, Pf_traj = calc_traject_prob(i, ts=50)
                         if Pf_traj < Ptarget:  # satisfactory solution
@@ -401,31 +401,31 @@ class DikeTraject:
                     dash = [2, 2]
                     if j == "StabilityInner":
                         N = (
-                            self.general_info["TrajectLength"]
-                            * self.general_info["aStabilityInner"]
-                            / self.general_info["bStabilityInner"]
+                            self.GeneralInfo["TrajectLength"]
+                            * self.GeneralInfo["aStabilityInner"]
+                            / self.GeneralInfo["bStabilityInner"]
                         )
                         pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaStabilityInner"]
+                            self.GeneralInfo["Pmax"]
+                            * self.GeneralInfo["omegaStabilityInner"]
                             / N
                         )
                         # dash = [1,2]
                     elif j == "Piping":
                         N = (
-                            self.general_info["TrajectLength"]
-                            * self.general_info["aPiping"]
-                            / self.general_info["bPiping"]
+                            self.GeneralInfo["TrajectLength"]
+                            * self.GeneralInfo["aPiping"]
+                            / self.GeneralInfo["bPiping"]
                         )
                         pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaPiping"]
+                            self.GeneralInfo["Pmax"]
+                            * self.GeneralInfo["omegaPiping"]
                             / N
                         )
                         # dash = [1,3]
                     elif j == "Overflow":
                         pt = (
-                            self.general_info["Pmax"] * self.general_info["omegaOverflow"]
+                            self.GeneralInfo["Pmax"] * self.GeneralInfo["omegaOverflow"]
                         )
                         # dash = [1,2]
                     if case_settings["beta_or_prob"] == "beta":
@@ -464,8 +464,8 @@ class DikeTraject:
                     ax.plot(
                         [0, max(cumlength)],
                         [
-                            pf_to_beta(self.general_info["Pmax"]),
-                            pf_to_beta(self.general_info["Pmax"]),
+                            pf_to_beta(self.GeneralInfo["Pmax"]),
+                            pf_to_beta(self.GeneralInfo["Pmax"]),
                         ],
                         "k--",
                         label=label_target,
@@ -474,7 +474,7 @@ class DikeTraject:
                 if case_settings["beta_or_prob"] == "prob":
                     ax.plot(
                         [0, max(cumlength)],
-                        [self.general_info["Pmax"], self.general_info["Pmax"]],
+                        [self.GeneralInfo["Pmax"], self.GeneralInfo["Pmax"]],
                         "k--",
                         label=label_target,
                         linewidth=1,
@@ -523,7 +523,7 @@ class DikeTraject:
                 print(beta_tot)
                 ax1.plot([-2, 3], [beta_tot, beta_tot], color=color[col])
                 ax1.axhline(
-                    pf_to_beta(self.general_info["Pmax"]),
+                    pf_to_beta(self.GeneralInfo["Pmax"]),
                     linestyle="--",
                     color="black",
                     label=label_target,
@@ -561,13 +561,13 @@ class DikeTraject:
 
     def runFullAssessment(self):
         for i in self.sections:
-            for j in self.general_info["Mechanisms"]:
+            for j in self.GeneralInfo["Mechanisms"]:
                 i.section_reliability.Mechanisms[j].generateLCRProfile(
-                    i.section_reliability.Load, mechanism=j, trajectinfo=self.general_info
+                    i.section_reliability.Load, mechanism=j, trajectinfo=self.GeneralInfo
                 )
 
             i.section_reliability.calculate_section_reliability(
-                TrajectInfo=self.general_info, length=i.Length
+                TrajectInfo=self.GeneralInfo, length=i.Length
             )
 
     def plotAssessmentResults(self, directory, section_ids=None, t_start=2020):
@@ -586,13 +586,13 @@ class DikeTraject:
                 i.section_reliability.Mechanisms[j].drawLCR(
                     label=j, type="Standard", tstart=t_start
                 )
-                for j in self.general_info["Mechanisms"]
+                for j in self.GeneralInfo["Mechanisms"]
             ]
             plt.plot(
-                [t_start, t_start + np.max(self.general_info["T"])],
+                [t_start, t_start + np.max(self.GeneralInfo["T"])],
                 [
-                    pf_to_beta(self.general_info["Pmax"]),
-                    pf_to_beta(self.general_info["Pmax"]),
+                    pf_to_beta(self.GeneralInfo["Pmax"]),
+                    pf_to_beta(self.GeneralInfo["Pmax"]),
                 ],
                 "k--",
                 label="Requirement",
