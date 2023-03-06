@@ -16,9 +16,9 @@ import shelve
 import numpy as np
 import pandas as pd
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.DikeTraject import DikeTraject
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from tools.HelperFunctions import replaceNames
 
 """The function below is the main one for any calculation for SAFE. It contains 3 main steps:
@@ -76,10 +76,10 @@ def runFullModel(
             plt.plot(
                 [config.t_0, config.t_0 + np.max(config.T)],
                 [
-                    ProbabilisticFunctions.pf_to_beta(
+                    pb_functions.pf_to_beta(
                         TrajectObject.GeneralInfo["Pmax"]
                     ),
-                    ProbabilisticFunctions.pf_to_beta(
+                    pb_functions.pf_to_beta(
                         TrajectObject.GeneralInfo["Pmax"]
                     ),
                 ],
@@ -188,7 +188,7 @@ def runFullModel(
         for i in TrajectObject.Sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
-                    requiredbeta = ProbabilisticFunctions.pf_to_beta(
+                    requiredbeta = pb_functions.pf_to_beta(
                         TrajectObject.GeneralInfo["Pmax"]
                         * (i.Length / TrajectObject.GeneralInfo["TrajectLength"])
                     )

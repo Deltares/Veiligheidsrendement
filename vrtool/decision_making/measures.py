@@ -9,13 +9,13 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.DikeSection import DikeSection
-from vrtool.flood_defence_system.Mechanisms import OverflowHRING, OverflowSimple
-from vrtool.flood_defence_system.ReliabilityCalculation import (
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.mechanisms import OverflowHRING, OverflowSimple
+from vrtool.flood_defence_system.reliability_calculation import (
     MechanismReliabilityCollection,
     beta_SF_StabilityInner,
 )
-from vrtool.flood_defence_system.SectionReliability import SectionReliability
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 """Important: a measure is a single type of reinforcement, so for instance a stability screen. A solution can be a COMBINATION of measures (e.g. a stability screen with a berm)"""
 

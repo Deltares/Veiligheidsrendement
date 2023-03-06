@@ -8,8 +8,7 @@ import openturns as ot
 import pandas as pd
 from scipy import interpolate
 
-import vrtool.flood_defence_system.Mechanisms as Mechanisms
-import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.flood_defence_system.mechanisms as fds_mechanisms
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.probabilistic_tools.HydraRing_scripts import (
     DesignTableOpenTurns,
@@ -24,6 +23,7 @@ from vrtool.probabilistic_tools.ProbabilisticFunctions import (
     beta_to_pf,
     pf_to_beta,
     run_prob_calc,
+    calc_beta_implicated
 )
 
 
@@ -326,7 +326,7 @@ class MechanismReliability:
                     marginals,
                     start,
                     names,
-                    Mechanisms.zHeave,
+                    fds_mechanisms.zHeave,
                     method,
                     step,
                     lolim,
@@ -336,7 +336,7 @@ class MechanismReliability:
                     marginals,
                     start,
                     names,
-                    Mechanisms.zPiping,
+                    fds_mechanisms.zPiping,
                     method,
                     step,
                     lolim,
@@ -346,7 +346,7 @@ class MechanismReliability:
                     marginals,
                     start,
                     names,
-                    Mechanisms.zUplift,
+                    fds_mechanisms.zUplift,
                     method,
                     step,
                     lolim,
@@ -373,7 +373,7 @@ class MechanismReliability:
                     marginals,
                     start,
                     names,
-                    Mechanisms.zPipingTotal,
+                    fds_mechanisms.zPipingTotal,
                     method,
                     step,
                     lolim,
@@ -409,7 +409,7 @@ class MechanismReliability:
                 marginals,
                 start,
                 names,
-                Mechanisms.zOverflow,
+                fds_mechanisms.zOverflow,
                 method,
                 step,
                 lolim,
@@ -445,7 +445,7 @@ class MechanismReliability:
 
         if self.type == "HRING":
             if mechanism == "Overflow":
-                self.beta, self.Pf = Mechanisms.OverflowHRING(
+                self.beta, self.Pf = fds_mechanisms.OverflowHRING(
                     self.Input.input, year, self.t_0
                 )
             else:
@@ -522,7 +522,7 @@ class MechanismReliability:
                 else:
                     h_t = strength.input["h_crest"] - (strength.input["dhc(t)"] * year)
 
-                self.beta, self.Pf = Mechanisms.OverflowSimple(
+                self.beta, self.Pf = fds_mechanisms.OverflowSimple(
                     h_t,
                     strength.input["q_crest"],
                     strength.input["h_c"],
@@ -566,11 +566,11 @@ class MechanismReliability:
         elif self.type == "Prob":
             # Probabilistic evaluation of a mechanism.
             if mechanism == "Piping":
-                zFunc = Mechanisms.zPipingTotal
+                zFunc = fds_mechanisms.zPipingTotal
             elif mechanism == "Overflow":
-                zFunc = Mechanisms.zOverflow
+                zFunc = fds_mechanisms.zOverflow
             elif mechanism == "simpleLSF":
-                zFunc = Mechanisms.simpleLSF
+                zFunc = fds_mechanisms.simpleLSF
             else:
                 raise ValueError("Unknown Z-function")
 
@@ -644,7 +644,7 @@ class MechanismReliability:
                         year=year,
                     )
 
-                    Z, self.p_dh, self.p_dh_c = Mechanisms.zPiping(
+                    Z, self.p_dh, self.p_dh_c = fds_mechanisms.zPiping(
                         inputs, mode="SemiProb"
                     )
                     self.gamma_pip = TrajectInfo["gammaPiping"]
@@ -660,13 +660,13 @@ class MechanismReliability:
                     self.assess_p = "voldoende" if self.SF_p > 1 else "onvoldoende"
                     self.scenario_result["beta_cs_p"][
                         j
-                    ] = ProbabilisticFunctions.calc_beta_implicated(
+                    ] = calc_beta_implicated(
                         "Piping", self.SF_p * self.gamma_pip, TrajectInfo=TrajectInfo
                     )  #
                     # Calculate the implicated beta_cs
 
                     # Heave:
-                    Z, self.h_i, self.h_i_c = Mechanisms.zHeave(inputs, mode="SemiProb")
+                    Z, self.h_i, self.h_i_c = fds_mechanisms.zHeave(inputs, mode="SemiProb")
                     self.gamma_h = TrajectInfo[
                         "gammaHeave"
                     ]  # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
@@ -685,14 +685,14 @@ class MechanismReliability:
                     )
                     self.scenario_result["beta_cs_h"][
                         j
-                    ] = ProbabilisticFunctions.calc_beta_implicated(
+                    ] = calc_beta_implicated(
                         "Heave",
                         (self.h_i_c / self.gamma_schem_heave) / self.h_i,
                         TrajectInfo=TrajectInfo,
                     )  # Calculate the implicated beta_cs
 
                     # Uplift
-                    Z, self.u_dh, self.u_dh_c = Mechanisms.zUplift(
+                    Z, self.u_dh, self.u_dh_c = fds_mechanisms.zUplift(
                         inputs, mode="SemiProb"
                     )
                     self.gamma_u = TrajectInfo[
@@ -714,7 +714,7 @@ class MechanismReliability:
                     )
                     self.scenario_result["beta_cs_u"][
                         j
-                    ] = ProbabilisticFunctions.calc_beta_implicated(
+                    ] = calc_beta_implicated(
                         "Uplift",
                         (self.u_dh_c / self.gamma_schem_upl) / self.u_dh,
                         TrajectInfo=TrajectInfo,

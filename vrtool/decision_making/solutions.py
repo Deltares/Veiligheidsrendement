@@ -13,7 +13,7 @@ from vrtool.decision_making.measures import (
     VerticalGeotextile,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.DikeSection import DikeSection
+from vrtool.flood_defence_system.dike_section import DikeSection
 
 
 class Solutions:

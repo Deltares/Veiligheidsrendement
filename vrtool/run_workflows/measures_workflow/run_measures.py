@@ -4,13 +4,13 @@ import logging
 from typing import Tuple
 
 from vrtool.decision_making.solutions import Solutions
-from vrtool.flood_defence_system import DikeSection
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-from vrtool.flood_defence_system.DikeTraject import DikeTraject
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 
 class RunMeasures(VrToolRunProtocol):

@@ -11,7 +11,7 @@ import time
 sys.path.append('../../src')
 sys.path.append('../../tools')
 sys.path.append('../..')
-from flood_defence_system.DikeTraject import DikeTraject
+from flood_defence_system.dike_traject import DikeTraject
 from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
 from pathlib import Path

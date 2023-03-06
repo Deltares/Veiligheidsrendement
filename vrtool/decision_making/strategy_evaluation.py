@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 
 
@@ -49,8 +49,8 @@ def MeasureCombinations(combinables, partials, solutions, splitparams=False):
                         P_VSG = solutions.Measures[idx].parameters["P_solution"]
                         pf = (
                             1 - P_VSG
-                        ) * Pf_VSG + P_VSG * ProbabilisticFunctions.beta_to_pf(row2[ij])
-                        beta = ProbabilisticFunctions.pf_to_beta(pf)
+                        ) * Pf_VSG + P_VSG * pb_functions.beta_to_pf(row2[ij])
+                        beta = pb_functions.pf_to_beta(pf)
                     else:
                         beta = np.maximum(row1[ij], row2[ij])
                     years.append(ij[1])
@@ -61,9 +61,9 @@ def MeasureCombinations(combinables, partials, solutions, splitparams=False):
                 if ij[0] == "Section":  # It is a beta value
                     # where year in years is the same as ij[1]
                     indices = [indices for indices, x in enumerate(years) if x == ij[1]]
-                    ps = ProbabilisticFunctions.beta_to_pf(np.array(betas)[indices])
+                    ps = pb_functions.beta_to_pf(np.array(betas)[indices])
                     p = np.sum(ps)  # TODO replace with correct formula
-                    betas.append(ProbabilisticFunctions.pf_to_beta(p))
+                    betas.append(pb_functions.pf_to_beta(p))
                     # print(ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]))
                     # if ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]) > 1e-8:
                     #     pass
@@ -293,7 +293,7 @@ def calcTrajectProb(base, horizon=False, datatype="DataFrame", ts=None, mechs=Fa
             else:
                 betas = base[i]
             beta_interp = interp1d(np.array(ts).astype(np.int_), betas)
-            pfs[i] = ProbabilisticFunctions.beta_to_pf(beta_interp(trange))
+            pfs[i] = pb_functions.beta_to_pf(beta_interp(trange))
             # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
             pnonfs = 1 - pfs[i]
             if i == "Overflow":
@@ -311,7 +311,7 @@ def calcTrajectProb(base, horizon=False, datatype="DataFrame", ts=None, mechs=Fa
     # beta_t = betafail(trange)
     # p_t = ProbabilisticFunctions.beta_to_pf(np.array(beta_t, dtype=np.float64))
 
-    beta_t = ProbabilisticFunctions.pf_to_beta(pf_traject)
+    beta_t = pb_functions.pf_to_beta(pf_traject)
     p_t = pf_traject
     return beta_t, p_t
 

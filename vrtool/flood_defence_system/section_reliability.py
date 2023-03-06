@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
 
 
 #Class describing safety assessments of a section:
@@ -41,10 +41,10 @@ class SectionReliability:
             count += 1
 
         #Do we want beta or failure probability? Preferably beta as output
-        beta_mech_time = pd.DataFrame(ProbabilisticFunctions.pf_to_beta(pf_mechanisms_time),
+        beta_mech_time = pd.DataFrame(pb_functions.pf_to_beta(pf_mechanisms_time),
                                           columns=list(self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()),
                                           index=list(self.Mechanisms.keys()))
-        beta_time = pd.DataFrame([ProbabilisticFunctions.pf_to_beta(np.sum(pf_mechanisms_time,axis=0))],
+        beta_time = pd.DataFrame([pb_functions.pf_to_beta(np.sum(pf_mechanisms_time,axis=0))],
                          columns=list(self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()),
                          index=['Section'])
         self.SectionReliability = pd.concat((beta_mech_time,beta_time))

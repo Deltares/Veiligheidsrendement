@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
 from vrtool.decision_making.strategy_evaluation import (
     ImplementOption,
     MeasureCombinations,
@@ -25,7 +25,7 @@ from vrtool.decision_making.strategy_evaluation import (
     updateProbability,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.DikeTraject import PlotSettings, getSectionLengthInTraject
+from vrtool.flood_defence_system.dike_traject import PlotSettings, getSectionLengthInTraject
 from tools.HelperFunctions import IDtoName, flatten, getMeasureTable, pareto_frontier
 
 
@@ -286,7 +286,7 @@ class Strategy:
                     betas[i] = interp1d(self.T, betas[i])(np.arange(0, T, 1))
                 self.Pf[i][
                     n, 0 : np.size(betas[i], 0), :
-                ] = ProbabilisticFunctions.beta_to_pf(betas[i])
+                ] = pb_functions.beta_to_pf(betas[i])
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
@@ -489,10 +489,10 @@ class Strategy:
                 LCC = calcTC(self.options_g_filtered[i])
 
                 tgrid = self.options_g_filtered[i]["StabilityInner"].columns.values
-                pf_SI = ProbabilisticFunctions.beta_to_pf(
+                pf_SI = pb_functions.beta_to_pf(
                     self.options_g_filtered[i]["StabilityInner"]
                 )
-                pf_pip = ProbabilisticFunctions.beta_to_pf(
+                pf_pip = pb_functions.beta_to_pf(
                     self.options_g_filtered[i]["Piping"]
                 )
 
@@ -609,8 +609,8 @@ class Strategy:
             plt.plot(
                 [2025, 2025 + horizon],
                 [
-                    ProbabilisticFunctions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
-                    ProbabilisticFunctions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                    pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                    pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
                 ],
                 "k--",
                 label="Norm",
@@ -869,8 +869,8 @@ class Strategy:
                 plt.plot(
                     [0, ceiling],
                     [
-                        ProbabilisticFunctions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
-                        ProbabilisticFunctions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                        pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                        pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label="Safety standard",
@@ -1011,8 +1011,8 @@ class Strategy:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
-                        ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1093,8 +1093,8 @@ class Strategy:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
-                        ProbabilisticFunctions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1867,7 +1867,7 @@ class GreedyStrategy(Strategy):
                 name.append(traject.Sections[n].name)
                 mech.append("Section")
                 probs.append(np.sum(probs[-3:], axis=0))
-            betas = np.array(ProbabilisticFunctions.pf_to_beta(probs))
+            betas = np.array(pb_functions.pf_to_beta(probs))
             leftpart = pd.DataFrame(
                 list(zip(name, mech)), columns=probabilities_columns[0:2]
             )
@@ -2752,15 +2752,15 @@ class TargetReliabilityStrategy(Strategy):
             / traject.GeneralInfo["bStabilityInner"]
         )
         N_overflow = 1
-        beta_cs_piping = ProbabilisticFunctions.pf_to_beta(
+        beta_cs_piping = pb_functions.pf_to_beta(
             traject.GeneralInfo["Pmax"] * traject.GeneralInfo["omegaPiping"] / N_piping
         )
-        beta_cs_stabinner = ProbabilisticFunctions.pf_to_beta(
+        beta_cs_stabinner = pb_functions.pf_to_beta(
             traject.GeneralInfo["Pmax"]
             * traject.GeneralInfo["omegaStabilityInner"]
             / N_stab
         )
-        beta_cs_overflow = ProbabilisticFunctions.pf_to_beta(
+        beta_cs_overflow = pb_functions.pf_to_beta(
             traject.GeneralInfo["Pmax"]
             * traject.GeneralInfo["omegaOverflow"]
             / N_overflow
@@ -2799,12 +2799,12 @@ class TargetReliabilityStrategy(Strategy):
                 print(
                     "WARNING in evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
                 )
-                beta_T_piping = ProbabilisticFunctions.pf_to_beta(
-                    ProbabilisticFunctions.beta_to_pf(beta_cs_piping)
+                beta_T_piping = pb_functions.pf_to_beta(
+                    pb_functions.beta_to_pf(beta_cs_piping)
                     * (i.Length / traject.GeneralInfo["bPiping"])
                 )
-                beta_T_stabinner = ProbabilisticFunctions.pf_to_beta(
-                    ProbabilisticFunctions.beta_to_pf(beta_cs_stabinner)
+                beta_T_stabinner = pb_functions.pf_to_beta(
+                    pb_functions.beta_to_pf(beta_cs_stabinner)
                     * (i.Length / traject.GeneralInfo["bStabilityInner"])
                 )
             else:

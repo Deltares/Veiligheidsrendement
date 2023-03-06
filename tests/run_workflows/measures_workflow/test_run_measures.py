@@ -1,7 +1,7 @@
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-from vrtool.flood_defence_system.DikeTraject import DikeTraject
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 import pytest
 
 class TestRunMeasures:

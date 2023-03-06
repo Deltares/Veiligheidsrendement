@@ -7,7 +7,7 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as pb
+from vrtool.probabilistic_tools.ProbabilisticFunctions import pf_to_beta
 from vrtool.decision_making.solutions import Solutions
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
@@ -33,7 +33,7 @@ class ResultsMeasures(VrToolRunResultProtocol):
         for i in self.selected_traject.Sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
-                    requiredbeta = pb.pf_to_beta(
+                    requiredbeta = pf_to_beta(
                         self.selected_traject.GeneralInfo["Pmax"]
                         * (
                             i.Length

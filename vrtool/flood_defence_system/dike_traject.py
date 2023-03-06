@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
 from vrtool.decision_making.strategy_evaluation import calcTrajectProb
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.DikeSection import DikeSection
-from vrtool.flood_defence_system.ReliabilityCalculation import (
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.reliability_calculation import (
     LoadInput,
     MechanismReliabilityCollection,
 )
@@ -193,16 +193,16 @@ class DikeTraject:
         for i in self.Sections:
             self.GeneralInfo["TrajectLength"] += i.Length
 
-        self.GeneralInfo["beta_max"] = ProbabilisticFunctions.pf_to_beta(
+        self.GeneralInfo["beta_max"] = pb_functions.pf_to_beta(
             self.GeneralInfo["Pmax"]
         )
-        self.GeneralInfo["gammaHeave"] = ProbabilisticFunctions.calc_gamma(
+        self.GeneralInfo["gammaHeave"] = pb_functions.calc_gamma(
             "Heave", self.GeneralInfo
         )
-        self.GeneralInfo["gammaUplift"] = ProbabilisticFunctions.calc_gamma(
+        self.GeneralInfo["gammaUplift"] = pb_functions.calc_gamma(
             "Uplift", self.GeneralInfo
         )
-        self.GeneralInfo["gammaPiping"] = ProbabilisticFunctions.calc_gamma(
+        self.GeneralInfo["gammaPiping"] = pb_functions.calc_gamma(
             "Piping", self.GeneralInfo
         )
 
@@ -355,7 +355,7 @@ class DikeTraject:
                     .values
                 )
                 if case_settings["beta_or_prob"] == "prob":
-                    plotdata = ProbabilisticFunctions.beta_to_pf(plotdata)
+                    plotdata = pb_functions.beta_to_pf(plotdata)
                 ydata = copy.deepcopy(plotdata)
                 for ij in range(0, len(plotdata)):
                     ydata = np.insert(ydata, ij * 2, plotdata[ij])
@@ -434,8 +434,8 @@ class DikeTraject:
                         ax.plot(
                             [0, max(cumlength)],
                             [
-                                ProbabilisticFunctions.pf_to_beta(pt),
-                                ProbabilisticFunctions.pf_to_beta(pt),
+                                pb_functions.pf_to_beta(pt),
+                                pb_functions.pf_to_beta(pt),
                             ],
                             color=color[col],
                             linestyle=":",
@@ -466,8 +466,8 @@ class DikeTraject:
                     ax.plot(
                         [0, max(cumlength)],
                         [
-                            ProbabilisticFunctions.pf_to_beta(self.GeneralInfo["Pmax"]),
-                            ProbabilisticFunctions.pf_to_beta(self.GeneralInfo["Pmax"]),
+                            pb_functions.pf_to_beta(self.GeneralInfo["Pmax"]),
+                            pb_functions.pf_to_beta(self.GeneralInfo["Pmax"]),
                         ],
                         "k--",
                         label=label_target,
@@ -521,11 +521,11 @@ class DikeTraject:
                     bars[mech] = ax1.bar(col, beta_t, color=color[col])
                     col += 1
                     mech += 1
-                beta_tot = ProbabilisticFunctions.pf_to_beta(pt_tot)
+                beta_tot = pb_functions.pf_to_beta(pt_tot)
                 print(beta_tot)
                 ax1.plot([-2, 3], [beta_tot, beta_tot], color=color[col])
                 ax1.axhline(
-                    ProbabilisticFunctions.pf_to_beta(self.GeneralInfo["Pmax"]),
+                    pb_functions.pf_to_beta(self.GeneralInfo["Pmax"]),
                     linestyle="--",
                     color="black",
                     label=label_target,
@@ -593,8 +593,8 @@ class DikeTraject:
             plt.plot(
                 [t_start, t_start + np.max(self.GeneralInfo["T"])],
                 [
-                    ProbabilisticFunctions.pf_to_beta(self.GeneralInfo["Pmax"]),
-                    ProbabilisticFunctions.pf_to_beta(self.GeneralInfo["Pmax"]),
+                    pb_functions.pf_to_beta(self.GeneralInfo["Pmax"]),
+                    pb_functions.pf_to_beta(self.GeneralInfo["Pmax"]),
                 ],
                 "k--",
                 label="Requirement",

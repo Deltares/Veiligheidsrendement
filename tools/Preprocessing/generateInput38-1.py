@@ -15,7 +15,7 @@ from owslib.wfs import WebFeatureService
 import shutil
 import copy
 sys.path.append('../../src')
-from flood_defence_system.DikeSection import DikeProfile
+from flood_defence_system.dike_section import DikeProfile
 
 
 def get_traject_shape_from_NBPW(traject,NBWP_shape_path=False):

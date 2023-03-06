@@ -5,15 +5,15 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as pb
-from vrtool.flood_defence_system.DikeSection import DikeSection
+from vrtool.probabilistic_tools.ProbabilisticFunctions import pf_to_beta
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-from vrtool.flood_defence_system.DikeTraject import DikeTraject
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 
 class RunSafetyAssessment(VrToolRunProtocol):
@@ -83,8 +83,8 @@ class RunSafetyAssessment(VrToolRunProtocol):
         plt.plot(
             [self.vr_config.t_0, self.vr_config.t_0 + np.max(self.vr_config.T)],
             [
-                pb.pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
-                pb.pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
+                pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
+                pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
             ],
             "k--",
             label="Norm",

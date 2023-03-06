@@ -10,7 +10,7 @@ import time
 
 sys.path.append('../../src')
 sys.path.append('..')
-from flood_defence_system.DikeTraject import DikeTraject
+from flood_defence_system.dike_traject import DikeTraject
 from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
 from decision_making.strategy_evaluation import calcTrajectProb

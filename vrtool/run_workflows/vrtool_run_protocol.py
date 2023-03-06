@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.DikeTraject import DikeTraject
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 

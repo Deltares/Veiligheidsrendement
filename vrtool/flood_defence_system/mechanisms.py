@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import interpolate
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
+import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
 
 
 ## This script contains limit state functions for the different mechanisms.
@@ -21,7 +21,7 @@ def OverflowHRING(input, year, t_0: int, mode="assessment", Pt=None):
                 )(h_t)
             )
         beta = interpolate.interp1d(years, betas, fill_value="extrapolate")(year + t_0)
-        return beta, ProbabilisticFunctions.beta_to_pf(beta)
+        return beta, pb_functions.beta_to_pf(beta)
     if mode == "design":
         t_beta_interp = interpolate.interp2d(
             input["hc_beta"].columns.values.astype(np.float32),
@@ -34,9 +34,9 @@ def OverflowHRING(input, year, t_0: int, mode="assessment", Pt=None):
         )
         h_beta = t_beta_interp(year + t_0, h_grid).flatten()
         new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
-            ProbabilisticFunctions.pf_to_beta(Pt)
+            pb_functions.pf_to_beta(Pt)
         ).item()
-        return new_crest, ProbabilisticFunctions.pf_to_beta(Pt)
+        return new_crest, pb_functions.pf_to_beta(Pt)
 
 
 def OverflowSimple(
@@ -62,13 +62,13 @@ def OverflowSimple(
                 h_c, beta, kind="linear", fill_value="extrapolate"
             )
             beta = np.min([beta_hc(h_crest), [8.0]])
-        Pf = ProbabilisticFunctions.beta_to_pf(beta)
+        Pf = pb_functions.beta_to_pf(beta)
         if not iterative_solve:
             return beta, Pf
         else:
             return beta - beta_t
     elif mode == "design":
-        beta_t = ProbabilisticFunctions.pf_to_beta(Pt)
+        beta_t = pb_functions.pf_to_beta(Pt)
         if design_variable == "h_crest":
             if q_c[0] != q_c[-1:]:
                 beta_hc = interpolate.interp2d(
