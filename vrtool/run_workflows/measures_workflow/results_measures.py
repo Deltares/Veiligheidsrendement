@@ -41,7 +41,7 @@ class ResultsMeasures(VrToolRunResultProtocol):
                         )
                     )
                     plt.figure(1001)
-                    self.solutions_dict[i.name].plotBetaTimeEuro(
+                    self.solutions_dict[i.name].plot_beta_time_euro(
                         mechanism=mech,
                         beta_ind=betaind,
                         sectionname=i.name,

@@ -52,7 +52,7 @@ class RunMeasures(VrToolRunProtocol):
             )
 
         for i in self.selected_traject.Sections:
-            _results_measures.solutions_dict[i.name].SolutionstoDataFrame(
+            _results_measures.solutions_dict[i.name].solutions_to_dataframe(
                 filtering="off", splitparams=True
             )
 

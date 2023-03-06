@@ -18,10 +18,10 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 
 class Solutions:
     # This class contains possible solutions/measures
-    def __init__(self, DikeSectionObject, config: VrtoolConfig):
-        self.SectionName = DikeSectionObject.name
-        self.Length = DikeSectionObject.Length
-        self.InitialGeometry = DikeSectionObject.InitialGeometry
+    def __init__(self, dike_section: DikeSection, config: VrtoolConfig):
+        self.SectionName = dike_section.name
+        self.Length = dike_section.Length
+        self.InitialGeometry = dike_section.InitialGeometry
 
         self.config = config
         self.T = config.T
@@ -113,7 +113,7 @@ class Solutions:
             for i in reversed(removal):
                 self.Measures.pop(i)
 
-    def SolutionstoDataFrame(self, filtering=False, splitparams=False):
+    def solutions_to_dataframe(self, filtering=False, splitparams=False):
         # write all solutions to one single dataframe:
 
         years = self.trange
@@ -211,7 +211,7 @@ class Solutions:
         ):  # here we could add some filtering on the measures, but it is not used right now.
             pass
 
-    def plotBetaTimeEuro(
+    def plot_beta_time_euro(
         self,
         measures="undefined",
         mechanism="Section",

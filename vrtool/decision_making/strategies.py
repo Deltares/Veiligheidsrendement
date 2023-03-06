@@ -10,19 +10,19 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 from vrtool.decision_making.strategy_evaluation import (
-    ImplementOption,
-    MeasureCombinations,
-    OverflowBundling,
-    calcLifeCycleRisks,
-    calcTC,
-    calcTR,
-    calcTrajectProb,
-    evaluateRisk,
-    makeTrajectDF,
+    implement_option,
+    measure_combinations,
+    overflow_bundling,
+    calc_life_cycle_risks,
+    calc_tc,
+    calc_tr,
+    calc_traject_prob,
+    evaluate_risk,
+    make_traject_df,
     split_options,
-    updateProbability,
+    update_probability,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import PlotSettings, getSectionLengthInTraject
@@ -151,7 +151,7 @@ class Strategy:
                     solutions[section.name].MeasureData["year"] == self.OI_year
                 ]
 
-            combinedmeasures = MeasureCombinations(
+            combinedmeasures = measure_combinations(
                 combinables, partials, solutions[section.name], splitparams=splitparams
             )
             # make sure combinable, mechanism and year are in the MeasureData dataframe
@@ -194,7 +194,7 @@ class Strategy:
             if filtering == "on":
                 StrategyData = copy.deepcopy(StrategyData)
                 StrategyData = StrategyData.reset_index(drop=True)
-                LCC = calcTC(StrategyData)
+                LCC = calc_tc(StrategyData)
                 ind = np.argsort(LCC)
                 LCC_sort = LCC[ind]
                 StrategyData = StrategyData.iloc[ind]
@@ -286,14 +286,14 @@ class Strategy:
                     betas[i] = interp1d(self.T, betas[i])(np.arange(0, T, 1))
                 self.Pf[i][
                     n, 0 : np.size(betas[i], 0), :
-                ] = pb_functions.beta_to_pf(betas[i])
+                ] = beta_to_pf(betas[i])
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
         for n in range(0, len(keys)):
             self.LCCOption[n, 0, 0] = 0.0
-            LCC_sh = calcTC(self.options_height[keys[n]])
-            LCC_sg = calcTC(self.options_geotechnical[keys[n]])
+            LCC_sh = calc_tc(self.options_height[keys[n]])
+            LCC_sg = calc_tc(self.options_geotechnical[keys[n]])
             # LCC_tot = calcTC(self.options[keys[n]])
             for sh in range(0, len(self.options_height[keys[n]])):
                 # if it is a full type, it should only be combined with another full of the same type
@@ -486,13 +486,13 @@ class Strategy:
             for i in self.options_g_filtered.keys():
 
                 # indexes part 1: only the pareto front for stability and piping
-                LCC = calcTC(self.options_g_filtered[i])
+                LCC = calc_tc(self.options_g_filtered[i])
 
                 tgrid = self.options_g_filtered[i]["StabilityInner"].columns.values
-                pf_SI = pb_functions.beta_to_pf(
+                pf_SI = beta_to_pf(
                     self.options_g_filtered[i]["StabilityInner"]
                 )
-                pf_pip = pb_functions.beta_to_pf(
+                pf_pip = beta_to_pf(
                     self.options_g_filtered[i]["Piping"]
                 )
 
@@ -601,7 +601,7 @@ class Strategy:
         plt.figure(100)
         for i in self.Probabilities:
             step += 1
-            beta_t0, p = calcTrajectProb(i, horizon=horizon)
+            beta_t0, p = calc_traject_prob(i, horizon=horizon)
             beta_t.append(beta_t0)
             t = range(2025, 2025 + horizon)
             plt.plot(t, beta_t0, label=self.type + " stap " + str(step))
@@ -609,8 +609,8 @@ class Strategy:
             plt.plot(
                 [2025, 2025 + horizon],
                 [
-                    pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
-                    pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                    pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                    pf_to_beta(Traject.GeneralInfo["Pmax"]),
                 ],
                 "k--",
                 label="Norm",
@@ -694,7 +694,7 @@ class Strategy:
 
         for i in self.Probabilities[0:final_step]:
             step += 1
-            beta_t0, p_t = calcTrajectProb(i, horizon=horizon)
+            beta_t0, p_t = calc_traject_prob(i, horizon=horizon)
             betas.append(beta_t0[t])
             pfs.append(p_t[t])
 
@@ -869,8 +869,8 @@ class Strategy:
                 plt.plot(
                     [0, ceiling],
                     [
-                        pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
-                        pb_functions.pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(Traject.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label="Safety standard",
@@ -1011,8 +1011,8 @@ class Strategy:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
-                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1093,8 +1093,8 @@ class Strategy:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
-                        pb_functions.pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1165,7 +1165,7 @@ class Strategy:
             for i in self.Probabilities:
                 if PATH:
                     costs["TR"].append(
-                        calcLifeCycleRisks(
+                        calc_life_cycle_risks(
                             i,
                             self.r,
                             np.max(TrajectObject.GeneralInfo["T"]),
@@ -1175,7 +1175,7 @@ class Strategy:
                     )
                 else:
                     costs["TR"].append(
-                        calcLifeCycleRisks(
+                        calc_life_cycle_risks(
                             i,
                             self.r,
                             np.max(TrajectObject.GeneralInfo["T"]),
@@ -1212,12 +1212,12 @@ class Strategy:
                 else:
                     option_index.append(-999)
             # implement the options 1 by 1
-            Probability = makeTrajectDF(TrajectObject, TrajectObject.GeneralInfo["T"])
+            Probability = make_traject_df(TrajectObject, TrajectObject.GeneralInfo["T"])
             ProbabilitySteps = []
             ProbabilitySteps.append(copy.deepcopy(Probability))
             for i in range(0, len(option_index)):
                 if option_index[i] > -999:
-                    Probability = ImplementOption(
+                    Probability = implement_option(
                         section[i],
                         Probability,
                         self.options[section[i]].iloc[option_index[i]],
@@ -1225,7 +1225,7 @@ class Strategy:
                 ProbabilitySteps.append(copy.deepcopy(Probability))
 
             # evaluate the risk after the last step
-            costs["TR"] = calcLifeCycleRisks(
+            costs["TR"] = calc_life_cycle_risks(
                 ProbabilitySteps[-1],
                 self.r,
                 np.max(TrajectObject.GeneralInfo["T"]),
@@ -1238,7 +1238,7 @@ class Strategy:
     def getSafetyStandardStep(self, Ptarget, t=50):
         """Get the index of the measure where the traject probability in year t is higher than the requirement"""
         for i in range(0, len(self.Probabilities)):
-            beta_traj, Pf_traj = calcTrajectProb(self.Probabilities[i], ts=t)
+            beta_traj, Pf_traj = calc_traject_prob(self.Probabilities[i], ts=t)
             if Pf_traj < Ptarget:
                 self.SafetyStandardStep = i
                 print("found step {} with {:.2f}".format(i, beta_traj[0]))
@@ -1538,7 +1538,7 @@ class GreedyStrategy(Strategy):
                             LifeCycleCost[n, sh, sg] = copy.deepcopy(
                                 np.subtract(self.LCCOption[n, sh, sg], SpentMoney[n])
                             )
-                            new_overflow_risk, new_geotechnical_risk = evaluateRisk(
+                            new_overflow_risk, new_geotechnical_risk = evaluate_risk(
                                 copy.deepcopy(init_overflow_risk),
                                 copy.deepcopy(init_geotechnical_risk),
                                 self,
@@ -1559,7 +1559,7 @@ class GreedyStrategy(Strategy):
             BC = np.divide(dR, LifeCycleCost)  # risk reduction/cost [n,sh,sg]
             TC = np.add(LifeCycleCost, TotalRisk)
             # determine the BC of the most favourable option for height
-            overflow_bundle_index, BC_bundle = OverflowBundling(
+            overflow_bundle_index, BC_bundle = overflow_bundling(
                 self, init_overflow_risk, measure_list, LifeCycleCost, traject
             )
             # compute additional measures where we combine overflow measures, here we optimize a package, purely based
@@ -1581,7 +1581,7 @@ class GreedyStrategy(Strategy):
                     if setting == "robust":
                         measure_list.append(Index_Best)
                         # update init_probability
-                        init_probability = updateProbability(
+                        init_probability = update_probability(
                             init_probability, self, Index_Best
                         )
 
@@ -1622,7 +1622,7 @@ class GreedyStrategy(Strategy):
                         else:
                             measure_list.append(Index_Best)
                     BC_list.append(BC[Index_Best])
-                    init_probability = updateProbability(
+                    init_probability = update_probability(
                         init_probability, self, Index_Best
                     )
                     init_geotechnical_risk[Index_Best[0], :] = copy.deepcopy(
@@ -1653,7 +1653,7 @@ class GreedyStrategy(Strategy):
 
                             measure_list.append(IndexMeasure)
                             BC_list.append(BC_bundle)
-                            init_probability = updateProbability(
+                            init_probability = update_probability(
                                 init_probability, self, IndexMeasure
                             )
                             init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
@@ -1867,7 +1867,7 @@ class GreedyStrategy(Strategy):
                 name.append(traject.Sections[n].name)
                 mech.append("Section")
                 probs.append(np.sum(probs[-3:], axis=0))
-            betas = np.array(pb_functions.pf_to_beta(probs))
+            betas = np.array(pf_to_beta(probs))
             leftpart = pd.DataFrame(
                 list(zip(name, mech)), columns=probabilities_columns[0:2]
             )
@@ -1894,7 +1894,7 @@ class GreedyStrategy(Strategy):
         for i in self.Probabilities:
             if PATH:
                 costs["TR"].append(
-                    calcLifeCycleRisks(
+                    calc_life_cycle_risks(
                         i,
                         self.r,
                         np.max(self.T),
@@ -1904,7 +1904,7 @@ class GreedyStrategy(Strategy):
                 )
             else:
                 costs["TR"].append(
-                    calcLifeCycleRisks(
+                    calc_life_cycle_risks(
                         i,
                         self.r,
                         np.max(self.T),
@@ -2752,15 +2752,15 @@ class TargetReliabilityStrategy(Strategy):
             / traject.GeneralInfo["bStabilityInner"]
         )
         N_overflow = 1
-        beta_cs_piping = pb_functions.pf_to_beta(
+        beta_cs_piping = pf_to_beta(
             traject.GeneralInfo["Pmax"] * traject.GeneralInfo["omegaPiping"] / N_piping
         )
-        beta_cs_stabinner = pb_functions.pf_to_beta(
+        beta_cs_stabinner = pf_to_beta(
             traject.GeneralInfo["Pmax"]
             * traject.GeneralInfo["omegaStabilityInner"]
             / N_stab
         )
-        beta_cs_overflow = pb_functions.pf_to_beta(
+        beta_cs_overflow = pf_to_beta(
             traject.GeneralInfo["Pmax"]
             * traject.GeneralInfo["omegaOverflow"]
             / N_overflow
@@ -2787,7 +2787,7 @@ class TargetReliabilityStrategy(Strategy):
                 columns=measure_cols + ["ID", "name", "params"],
             )
         # columns (section name and index in self.options[section])
-        BaseTrajectProbability = makeTrajectDF(traject, cols)
+        BaseTrajectProbability = make_traject_df(traject, cols)
         Probability_steps = [copy.deepcopy(BaseTrajectProbability)]
         TrajectProbability = copy.deepcopy(BaseTrajectProbability)
 
@@ -2799,12 +2799,12 @@ class TargetReliabilityStrategy(Strategy):
                 print(
                     "WARNING in evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
                 )
-                beta_T_piping = pb_functions.pf_to_beta(
-                    pb_functions.beta_to_pf(beta_cs_piping)
+                beta_T_piping = pf_to_beta(
+                    beta_to_pf(beta_cs_piping)
                     * (i.Length / traject.GeneralInfo["bPiping"])
                 )
-                beta_T_stabinner = pb_functions.pf_to_beta(
-                    pb_functions.beta_to_pf(beta_cs_stabinner)
+                beta_T_stabinner = pf_to_beta(
+                    beta_to_pf(beta_cs_stabinner)
                     * (i.Length / traject.GeneralInfo["bStabilityInner"])
                 )
             else:
@@ -2843,7 +2843,7 @@ class TargetReliabilityStrategy(Strategy):
                 )
                 continue
             # calculate LCC
-            LCC = calcTC(
+            LCC = calc_tc(
                 PossibleMeasures,
                 r=self.r,
                 horizon=self.options[i.name]["Overflow"].columns[-1],
@@ -2855,7 +2855,7 @@ class TargetReliabilityStrategy(Strategy):
             measure = PossibleMeasures.iloc[idx]
 
             # calculate achieved risk reduction & BC ratio compared to base situation
-            R_base, dR, TR = calcTR(
+            R_base, dR, TR = calc_tr(
                 i.name,
                 measure,
                 TrajectProbability,
@@ -2904,7 +2904,7 @@ class TargetReliabilityStrategy(Strategy):
             # Add to TakenMeasures
             TakenMeasures = pd.concat((TakenMeasures, data_opt))
             # Calculate new probabilities
-            TrajectProbability = ImplementOption(i.name, TrajectProbability, measure)
+            TrajectProbability = implement_option(i.name, TrajectProbability, measure)
             Probability_steps.append(copy.deepcopy(TrajectProbability))
         self.TakenMeasures = TakenMeasures
         self.Probabilities = Probability_steps

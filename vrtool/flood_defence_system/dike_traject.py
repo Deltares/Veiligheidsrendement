@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
-from vrtool.decision_making.strategy_evaluation import calcTrajectProb
+from vrtool.decision_making.strategy_evaluation import calc_traject_prob
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.reliability_calculation import (
@@ -259,7 +259,7 @@ class DikeTraject:
                 elif greedymode == "SatisfiedStandard":
                     Ptarget = self.GeneralInfo["Pmax"]
                     for i in reversed(reinforcement_strategy.Probabilities):
-                        beta_traj, Pf_traj = calcTrajectProb(i, ts=50)
+                        beta_traj, Pf_traj = calc_traject_prob(i, ts=50)
                         if Pf_traj < Ptarget:  # satisfactory solution
                             ProbabilityFrame = i
                         else:
@@ -513,7 +513,7 @@ class DikeTraject:
                 bars = {}
                 pt_tot = 0
                 for m in self.mechanisms:
-                    beta_t, p_t = calcTrajectProb(ProbabilityFrame, ts=ii, mechs=[m])
+                    beta_t, p_t = calc_traject_prob(ProbabilityFrame, ts=ii, mechs=[m])
                     # pt_tot +=p_t
                     pt_tot = 1 - ((1 - pt_tot) * (1 - p_t))
                     # line1[mech], = ax1.plot([0,1], [beta_t,beta_t], color=color[col], linestyle='-', label=j, alpha=alpha)

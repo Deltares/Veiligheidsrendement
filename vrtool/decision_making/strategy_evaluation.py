@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 from vrtool.defaults.vrtool_config import VrtoolConfig
 
 
 # This script combines two sets of measures to a single option
-def MeasureCombinations(combinables, partials, solutions, splitparams=False):
-    CombinedMeasures = pd.DataFrame(columns=combinables.columns)
+def measure_combinations(combinables, partials, solutions, splitparams=False):
+    _combined_measures = pd.DataFrame(columns=combinables.columns)
 
     # loop over partials
     for i, row1 in partials.iterrows():
@@ -49,8 +49,8 @@ def MeasureCombinations(combinables, partials, solutions, splitparams=False):
                         P_VSG = solutions.Measures[idx].parameters["P_solution"]
                         pf = (
                             1 - P_VSG
-                        ) * Pf_VSG + P_VSG * pb_functions.beta_to_pf(row2[ij])
-                        beta = pb_functions.pf_to_beta(pf)
+                        ) * Pf_VSG + P_VSG * beta_to_pf(row2[ij])
+                        beta = pf_to_beta(pf)
                     else:
                         beta = np.maximum(row1[ij], row2[ij])
                     years.append(ij[1])
@@ -61,9 +61,9 @@ def MeasureCombinations(combinables, partials, solutions, splitparams=False):
                 if ij[0] == "Section":  # It is a beta value
                     # where year in years is the same as ij[1]
                     indices = [indices for indices, x in enumerate(years) if x == ij[1]]
-                    ps = pb_functions.beta_to_pf(np.array(betas)[indices])
+                    ps = beta_to_pf(np.array(betas)[indices])
                     p = np.sum(ps)  # TODO replace with correct formula
-                    betas.append(pb_functions.pf_to_beta(p))
+                    betas.append(pf_to_beta(p))
                     # print(ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]))
                     # if ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]) > 1e-8:
                     #     pass
@@ -82,11 +82,11 @@ def MeasureCombinations(combinables, partials, solutions, splitparams=False):
                 in1 = [ID, types, "combined", year, params, Cost]
 
             allin = pd.DataFrame([in1 + betas], columns=combinables.columns)
-            CombinedMeasures = pd.concat((CombinedMeasures, allin))
-    return CombinedMeasures
+            _combined_measures = pd.concat((_combined_measures, allin))
+    return _combined_measures
 
 
-def getTrajectProb(traject, traject_prob, trange):
+def get_traject_prob(traject, traject_prob, trange):
     for mechanism in range(0, len(traject.GeneralInfo["Mechanisms"])):
         traject_prob[mechanism, :, :] = (
             traject.Probabilities.loc[
@@ -99,7 +99,7 @@ def getTrajectProb(traject, traject_prob, trange):
     return traject_prob
 
 
-def makeTrajectDF(traject, cols):
+def make_traject_df(traject, cols):
     # cols = cols[1:]
     sections = []
 
@@ -122,7 +122,7 @@ def makeTrajectDF(traject, cols):
 
 
 # hereafter a bunch of functions to compute costs, risks and probabilities over time are defined:
-def calcTC(section_options, r=0.03, horizon=100):
+def calc_tc(section_options, r=0.03, horizon=100):
     costs = section_options["cost"].values
     years = section_options["year"].values
     discountfactors = list(map(lambda x: 1 / (1 + r) ** np.array(x), years))
@@ -130,7 +130,7 @@ def calcTC(section_options, r=0.03, horizon=100):
     return np.array(list(map(lambda c: np.sum(c), TC)))
 
 
-def calcTR(
+def calc_tr(
     section,
     section_options,
     base_traject,
@@ -172,7 +172,7 @@ def calcTR(
             range_idx = 0
 
     if "section_options_array" in locals():
-        base_risk = calcLifeCycleRisks(
+        base_risk = calc_life_cycle_risks(
             base_array,
             r,
             horizon,
@@ -183,7 +183,7 @@ def calcTR(
         )
 
         for i in range(range_idx):
-            TR = calcLifeCycleRisks(
+            TR = calc_life_cycle_risks(
                 base_array,
                 r,
                 horizon,
@@ -198,17 +198,17 @@ def calcTR(
             TotalRisk.append(TR)
             dR.append(base_risk - TR)
     else:
-        base_risk = calcLifeCycleRisks(base_traject, r, horizon, damage)
+        base_risk = calc_life_cycle_risks(base_traject, r, horizon, damage)
         if isinstance(section_options, pd.DataFrame):
             for i, row in section_options.iterrows():
-                TR = calcLifeCycleRisks(
+                TR = calc_life_cycle_risks(
                     base_traject, r, horizon, damage, change=row, section=section
                 )
                 TotalRisk.append(TR)
                 dR.append(base_risk - TR)
 
         elif isinstance(section_options, pd.Series):
-            TR = calcLifeCycleRisks(
+            TR = calc_life_cycle_risks(
                 base_traject,
                 r,
                 horizon,
@@ -222,7 +222,7 @@ def calcTR(
     return base_risk, dR, TotalRisk
 
 
-def calcLifeCycleRisks(
+def calc_life_cycle_risks(
     base0,
     r,
     horizon,
@@ -245,7 +245,7 @@ def calcLifeCycleRisks(
         else:
             pass
 
-        beta_t, p_t = calcTrajectProb(base, horizon=horizon)
+        beta_t, p_t = calc_traject_prob(base, horizon=horizon)
     elif datatype == "Array":
         if isinstance(change, dict):
             for i in mechs:
@@ -256,7 +256,7 @@ def calcLifeCycleRisks(
             ts = np.array(range(0, horizon))
         if not isinstance(mechs, np.ndarray):
             mechs = np.array(list(base.keys()))
-        beta_t, p_t = calcTrajectProb(
+        beta_t, p_t = calc_traject_prob(
             base, horizon=horizon, datatype="Arrays", ts=ts, mechs=mechs
         )
 
@@ -270,7 +270,7 @@ def calcLifeCycleRisks(
     return TR
 
 
-def calcTrajectProb(base, horizon=False, datatype="DataFrame", ts=None, mechs=False):
+def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=False):
     pfs = {}
     if horizon:
         trange = np.arange(0, horizon, 1)
@@ -293,7 +293,7 @@ def calcTrajectProb(base, horizon=False, datatype="DataFrame", ts=None, mechs=Fa
             else:
                 betas = base[i]
             beta_interp = interp1d(np.array(ts).astype(np.int_), betas)
-            pfs[i] = pb_functions.beta_to_pf(beta_interp(trange))
+            pfs[i] = beta_to_pf(beta_interp(trange))
             # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
             pnonfs = 1 - pfs[i]
             if i == "Overflow":
@@ -311,13 +311,13 @@ def calcTrajectProb(base, horizon=False, datatype="DataFrame", ts=None, mechs=Fa
     # beta_t = betafail(trange)
     # p_t = ProbabilisticFunctions.beta_to_pf(np.array(beta_t, dtype=np.float64))
 
-    beta_t = pb_functions.pf_to_beta(pf_traject)
+    beta_t = pf_to_beta(pf_traject)
     p_t = pf_traject
     return beta_t, p_t
 
 
 # this function changes the trajectprobability of a measure is implemented:
-def ImplementOption(section, TrajectProbability, newProbability):
+def implement_option(section, TrajectProbability, newProbability):
     mechs = np.unique(TrajectProbability.index.get_level_values("mechanism").values)
     # change trajectprobability by changing probability for each mechanism
     for i in mechs:
@@ -398,41 +398,41 @@ def split_options(options):
     return options_height, options_geotechnical
 
 
-def SolveMIP(MIPModel):
+def solve_mip(mip_model):
 
-    MixedIntegerSolution = MIPModel.solve()
+    MixedIntegerSolution = mip_model.solve()
     return MixedIntegerSolution
 
 
-def evaluateRisk(
-    init_overflow_risk, init_geo_risk, Strategy, n, sh, sg, config: VrtoolConfig
+def evaluate_risk(
+    init_overflow_risk, init_geo_risk, strategy, n, sh, sg, config: VrtoolConfig
 ):
     for i in config.mechanisms:
         if i == "Overflow":
-            init_overflow_risk[n, :] = Strategy.RiskOverflow[n, sh, :]
+            init_overflow_risk[n, :] = strategy.RiskOverflow[n, sh, :]
         else:
-            init_geo_risk[n, :] = Strategy.RiskGeotechnical[n, sg, :]
+            init_geo_risk[n, :] = strategy.RiskGeotechnical[n, sg, :]
     return init_overflow_risk, init_geo_risk
 
 
-def updateProbability(init_probability, Strategy, index):
+def update_probability(init_probability, strategy, index):
     """index = [n,sh,sg]"""
     for i in init_probability:
         from scipy.stats import norm
 
         # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
         if i == "Overflow":
-            init_probability[i][index[0], :] = Strategy.Pf[i][index[0], index[1], :]
+            init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
-            init_probability[i][index[0], :] = Strategy.Pf[i][index[0], index[2], :]
+            init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]
         # plt.plot(-norm.ppf(init_probability[i][index[0],:]),'b')
         # plt.savefig('Beta ' + i + str(index) + '.png')
         # plt.close()
     return init_probability
 
 
-def OverflowBundling(
-    Strategy, init_overflow_risk, existing_investment, LifeCycleCost, traject
+def overflow_bundling(
+    strategy, init_overflow_risk, existing_investment, life_cycle_cost, traject
 ):
     """Routine for bundling several measures for overflow to prevent getting stuck if many overflow-dominated
     sections have about equal reliability. A bundle is a set of measures (typically crest heightenings) at different sections.
@@ -453,7 +453,7 @@ def OverflowBundling(
 
     # Step 1: fill an array of size (n,2) with sh and sg of existing investments per section in order to properly filter
     # the viable options per section
-    existing_investments = np.zeros((np.size(LifeCycleCost, axis=0), 2), dtype=np.int32)
+    existing_investments = np.zeros((np.size(life_cycle_cost, axis=0), 2), dtype=np.int32)
     if len(existing_investment) > 0:
         for i in range(0, len(existing_investment)):
             existing_investments[existing_investment[i][0], 0] = existing_investment[i][
@@ -466,12 +466,12 @@ def OverflowBundling(
     # Step 2: for each section, determine the sorted_indices of the min to max LCC. Note that this could also be based on TC but the performance is good as is.
     # first make the proper arrays for sorted_indices (sh), corresponding sg indices and the LCC for each section.
     sorted_sh = np.empty(
-        (np.size(LifeCycleCost, axis=0), np.size(LifeCycleCost, axis=1)), dtype=np.int32
+        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)), dtype=np.int32
     )
     sorted_sh.fill(999)
-    LCC_values = np.zeros((np.size(LifeCycleCost, axis=0),))
+    LCC_values = np.zeros((np.size(life_cycle_cost, axis=0),))
     sg_indices = np.empty(
-        (np.size(LifeCycleCost, axis=0), np.size(LifeCycleCost, axis=1)), dtype=np.int32
+        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)), dtype=np.int32
     )
     sg_indices.fill(999)
 
@@ -483,8 +483,8 @@ def OverflowBundling(
         # if there are investments this loop is needed to deal with the fact that it can be an integer or list.
 
         # get all geotechnical options for this section:
-        GeotechnicalOptions = Strategy.options_geotechnical[traject.Sections[i].name]
-        HeightOptions = Strategy.options_height[traject.Sections[i].name]
+        GeotechnicalOptions = strategy.options_geotechnical[traject.Sections[i].name]
+        HeightOptions = strategy.options_height[traject.Sections[i].name]
         if any(existing_investments[i, :] > 0):
             investment_id = existing_investments[i, 1] - 1
             if isinstance(
@@ -528,7 +528,7 @@ def OverflowBundling(
 
         if current_type in ["Diaphragm Wall", "Custom"]:
             # get costs for measure (1e99)
-            LCC = LifeCycleCost[
+            LCC = life_cycle_cost[
                 i, existing_investments[i, 0], existing_investments[i, 1]
             ]
             # TCs = np.add(LCCs, np.sum(Strategy.RiskOverflow[i, existing_investments[i,0]:, :], axis=1))
@@ -556,7 +556,7 @@ def OverflowBundling(
                 sh_opts = (
                     subset.loc[subset["year"] == year_of_investment].index.values + 1
                 )
-                LCCs = LifeCycleCost[i, sh_opts, existing_investments[i, 1]]
+                LCCs = life_cycle_cost[i, sh_opts, existing_investments[i, 1]]
                 sorted_sh[i, 0 : len(LCCs)] = sh_opts[np.argsort(LCCs)]
                 sorted_sh[i, 0 : len(LCCs)] = np.where(
                     np.sort(LCCs) > 1e60, 999, sorted_sh[i, 0 : len(LCCs)]
@@ -579,7 +579,7 @@ def OverflowBundling(
                     ].index.values
                     + 1
                 )
-                LCCs = LifeCycleCost[i, sh_opts, :][:, sg_opts]
+                LCCs = life_cycle_cost[i, sh_opts, :][:, sg_opts]
                 # order = np.dstack(np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape[0], LCCs.shape[1])))
                 order = np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape))
                 orderedLCCs = LCCs[order[0], order[1]]
@@ -623,7 +623,7 @@ def OverflowBundling(
                     ids = np.argwhere(GeotechnicalOptions["ID"].values == ID_allowed)
                 # convert to matrix indexing:
                 ids = np.add(ids.reshape((len(ids),)), 1)
-                testLCC = LifeCycleCost[i, existing_investments[i, 0] :, ids].T
+                testLCC = life_cycle_cost[i, existing_investments[i, 0] :, ids].T
                 LCCs = np.min(testLCC, axis=1)
                 sg_indices[i, :] = np.array(ids)[np.argmin(testLCC, axis=1)]
                 sorted_sh[i, :] = np.argsort(LCCs) + index_existing
@@ -673,7 +673,7 @@ def OverflowBundling(
             # matrix indices:
             ids = subset.index.values + 1
             # get LCC with correct geotechnical measure:
-            LCC_1 = LifeCycleCost[i, :, ids].T
+            LCC_1 = life_cycle_cost[i, :, ids].T
 
             # sort sg indices
             # sg_indices[i,0:len(ids)] = np.array(ids)[np.argsort(np.min(LCC_1,axis=0))]
@@ -686,8 +686,8 @@ def OverflowBundling(
             )
 
         elif current_type == None:
-            sg_indices[i, :] = np.argmin(LifeCycleCost[i, :, :], axis=1)
-            LCCs = np.min(LifeCycleCost[i, :, :], axis=1)
+            sg_indices[i, :] = np.argmin(life_cycle_cost[i, :, :], axis=1)
+            LCCs = np.min(life_cycle_cost[i, :, :], axis=1)
             sorted_sh[i, :] = np.argsort(LCCs)
             sorted_sh[i, :] = np.where(
                 np.sort(LCCs) > 1e60, 999, sorted_sh[i, 0 : len(LCCs)]
@@ -728,11 +728,11 @@ def OverflowBundling(
             break
 
         # insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
-        new_overflow_risk[ind_weakest, :] = Strategy.RiskOverflow[
+        new_overflow_risk[ind_weakest, :] = strategy.RiskOverflow[
             ind_weakest, sorted_sh[ind_weakest, index_counter[ind_weakest]], :
         ]
         LCC_values[ind_weakest] = np.min(
-            LifeCycleCost[
+            life_cycle_cost[
                 ind_weakest,
                 sorted_sh[ind_weakest, index_counter[ind_weakest]],
                 sg_indices[ind_weakest, index_counter[ind_weakest]],
@@ -764,7 +764,7 @@ def OverflowBundling(
         final_index = counter_list[ind]
         # convert measure_index to sh based on sorted_indices
         sg_index = np.zeros((len(traject.Sections),))
-        measure_index = np.zeros((np.size(LifeCycleCost, axis=0),), dtype=np.int32)
+        measure_index = np.zeros((np.size(life_cycle_cost, axis=0),), dtype=np.int32)
         for i in range(0, len(measure_index)):
             if final_index[i] != 0:  # a measure was taken
                 measure_index[i] = sorted_sh[i, final_index[i]]
