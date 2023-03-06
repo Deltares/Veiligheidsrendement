@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 
 import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
-from vrtool.decision_making.StrategyEvaluation import calcTrajectProb
+from vrtool.decision_making.strategy_evaluation import calcTrajectProb
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.DikeSection import DikeSection
 from vrtool.flood_defence_system.ReliabilityCalculation import (

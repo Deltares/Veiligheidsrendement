@@ -13,7 +13,7 @@ sys.path.append('..')
 from flood_defence_system.DikeTraject import DikeTraject
 from HelperFunctions import getMeasureTable
 from RunModel import runFullModel
-from decision_making.StrategyEvaluation import calcTrajectProb
+from decision_making.strategy_evaluation import calcTrajectProb
 import shelve
 
 #General and global settings:

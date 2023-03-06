@@ -2,8 +2,8 @@ import time
 
 import matplotlib.pyplot as plt
 
-from vrtool.decision_making.Solutions import Solutions
-from vrtool.decision_making.Strategy import GreedyStrategy, TargetReliabilityStrategy
+from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 
 try:
     import cPickle as pickle

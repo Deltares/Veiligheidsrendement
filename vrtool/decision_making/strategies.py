@@ -11,7 +11,7 @@ import seaborn as sns
 from scipy.interpolate import interp1d
 
 import vrtool.probabilistic_tools.ProbabilisticFunctions as ProbabilisticFunctions
-from vrtool.decision_making.StrategyEvaluation import (
+from vrtool.decision_making.strategy_evaluation import (
     ImplementOption,
     MeasureCombinations,
     OverflowBundling,

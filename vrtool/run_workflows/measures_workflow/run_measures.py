@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Tuple
 
-from vrtool.decision_making.Solutions import Solutions
+from vrtool.decision_making.solutions import Solutions
 from vrtool.flood_defence_system import DikeSection
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures

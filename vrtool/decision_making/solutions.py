@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from vrtool.decision_making.Measure import (
+from vrtool.decision_making.measures import (
     CustomMeasure,
     DiaphragmWall,
     SoilReinforcement,
