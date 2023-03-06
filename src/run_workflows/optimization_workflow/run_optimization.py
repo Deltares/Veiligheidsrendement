@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Dict
 
 import numpy as np
@@ -29,10 +30,17 @@ class RunOptimization(VrToolRunProtocol):
         self._solutions_dict = results_measures.solutions_dict
         self._plot_mode = plot_mode
 
+    def _get_optimization_results_dir(self) -> Path:
+        _results_dir = self.vr_config.output_directory / "optimization_results"
+        if not _results_dir.exists():
+            _results_dir.mkdir(parents=True)
+        return _results_dir
+
+
     def _get_optimized_greedy_strategy(self, design_method: str) -> Strategy:
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
-        _results_dir = self.vr_config.output_directory / "results"
+        _results_dir = self._get_optimization_results_dir()
 
         # Combine available measures
         _greedy_optimization.combine(
@@ -119,7 +127,7 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based = TargetReliabilityStrategy(
             design_method, self.vr_config
         )
-        _results_dir = self.vr_config.output_directory / "results"
+        _results_dir = self._get_optimization_results_dir()
 
         # Combine available measures
         _target_reliability_based.combine(
