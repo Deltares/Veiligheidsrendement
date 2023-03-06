@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Dict, List
 
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies import Strategy
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
 class ResultsOptimization(VrToolRunResultProtocol):
-    results_strategies: List[Strategy]
+    results_strategies: List[StrategyBase]
     results_solutions: Dict[str, Solutions]
 
     def __init__(self) -> None:

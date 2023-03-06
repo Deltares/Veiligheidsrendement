@@ -7,9 +7,9 @@ import pandas as pd
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import (
     GreedyStrategy,
-    Strategy,
     TargetReliabilityStrategy,
 )
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -37,7 +37,7 @@ class RunOptimization(VrToolRunProtocol):
         return _results_dir
 
 
-    def _get_optimized_greedy_strategy(self, design_method: str) -> Strategy:
+    def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
         _results_dir = self._get_output_dir()
@@ -122,7 +122,7 @@ class RunOptimization(VrToolRunProtocol):
 
         return _greedy_optimization
 
-    def _get_target_reliability_strategy(self, design_method: str) -> Strategy:
+    def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
         # Initialize a strategy type (i.e combination of objective & constraints)
         _target_reliability_based = TargetReliabilityStrategy(
             design_method, self.vr_config
@@ -174,7 +174,7 @@ class RunOptimization(VrToolRunProtocol):
 
         return _target_reliability_based
 
-    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], Strategy]]:
+    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyBase]]:
         return {
             "TC": self._get_optimized_greedy_strategy,
             "Total Cost": self._get_optimized_greedy_strategy,
@@ -212,8 +212,8 @@ class RunOptimization(VrToolRunProtocol):
         return _results_optimization
 
     def _replace_names(
-        self, strategy_case: Strategy, solution_case: Solutions
-    ) -> Strategy:
+        self, strategy_case: StrategyBase, solution_case: Solutions
+    ) -> StrategyBase:
         strategy_case.TakenMeasures = strategy_case.TakenMeasures.reset_index(drop=True)
         for i in range(1, len(strategy_case.TakenMeasures)):
             _measure_id = strategy_case.TakenMeasures.iloc[i]["ID"]
