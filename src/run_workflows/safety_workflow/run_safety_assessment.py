@@ -92,8 +92,8 @@ class RunSafetyAssessment(VrToolRunProtocol):
         plt.legend()
         plt.title(selected_section.name)
         _plot_filename = self._get_valid_output_dir(
-            ["figures", selected_section.name, "Initial", "InitialSituation.png"]
-        )
+            ["figures", selected_section.name, "Initial"]
+        ) / "InitialSituation.png"
         plt.savefig(
             _plot_filename,
             bbox_inches="tight",
