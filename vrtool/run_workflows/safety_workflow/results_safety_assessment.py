@@ -50,5 +50,3 @@ class ResultsSafetyAssessment(VrToolRunResultProtocol):
             self.selected_traject = _shelf["SelectedTraject"]
             _shelf.close()
             logging.info("Loaded Selected Traject from file")
-
-        return super().load_results()

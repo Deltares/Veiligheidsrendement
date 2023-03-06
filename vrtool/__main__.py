@@ -37,7 +37,7 @@ def _get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
 
     return _vr_config
 
-@cli.command(name="assessment", help="Validation of the model in the given directory.")
+@cli.command(name="assessment", help="Assesses the model in the given directory.")
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_assessment(**kwargs):
     logging.info("Assess, {0}!".format(kwargs["model_directory"]))
@@ -53,7 +53,7 @@ def run_step_assessment(**kwargs):
 
 @cli.command(
     name="measures",
-    help="Measurement of all specified mechanisms in the model.",
+    help="Calculates all measures for all specified mechanisms in the model.",
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_measures(**kwargs):
@@ -69,7 +69,7 @@ def run_step_measures(**kwargs):
 
 
 @cli.command(
-    name="optimization", help="Optimization of the model in the given directory."
+    name="optimization", help="Optimizes the model measures in the given directory."
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_optimization(**kwargs):

@@ -69,11 +69,11 @@ class TestMain:
         assert _input_dir.exists()
 
         # 2. Run test.
-        with pytest.raises(FileNotFoundError) as exc_err:
+        with pytest.raises(FileNotFoundError) as exception_error:
             __main__._get_valid_vrtool_config(_input_dir)
 
         # 3. Verify expectations.
-        assert str(exc_err.value) == "No json config file found in the model directory. {}".format(_input_dir)
+        assert str(exception_error.value) == "No json config file found in the model directory. {}".format(_input_dir)
     
     def test_given_directory_with_too_many_jsons_raises_error(self, request: pytest.FixtureRequest):
         # 1. Define test data.
@@ -86,11 +86,11 @@ class TestMain:
         Path.joinpath(_input_dir, "second.json").touch()
 
         # 2. Run test.
-        with pytest.raises(ValueError) as exc_err:
+        with pytest.raises(ValueError) as exception_error:
             __main__._get_valid_vrtool_config(_input_dir)
 
         # 3. Verify expectations.
-        assert str(exc_err.value) == "More than one json file found in the directory {}. Only one json at the root directory supported.".format(_input_dir)
+        assert str(exception_error.value) == "More than one json file found in the directory {}. Only one json at the root directory supported.".format(_input_dir)
     
     def test_given_directory_with_valid_config_returns_vrtool_config(self):
         # 1. Define test data.

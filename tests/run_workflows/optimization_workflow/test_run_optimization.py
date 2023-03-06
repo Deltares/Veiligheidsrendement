@@ -23,10 +23,10 @@ class TestRunOptimization:
         assert _run.selected_traject == _results_measures.selected_traject
 
     def test_init_with_invalid_data(self):
-        with pytest.raises(ValueError) as exc_err:
+        with pytest.raises(ValueError) as exception_error:
             RunOptimization("not a result instance", "doh")
 
         assert (
-            str(exc_err.value)
+            str(exception_error.value)
             == "Required valid instance of ResultsMeasures as an argument."
         )
