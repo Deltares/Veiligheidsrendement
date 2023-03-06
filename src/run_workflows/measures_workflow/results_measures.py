@@ -19,8 +19,12 @@ class ResultsMeasures(VrToolRunResultProtocol):
         self.solutions_dict = {}
 
     def plot_results(self):
-        betaind_array = []
 
+        _figures_dir = self.vr_config.output_directory / "figures"
+        if not _figures_dir.exists():
+            _figures_dir.mkdir(parents=True)
+
+        betaind_array = []
         for i in self.vr_config.T:
             betaind_array.append("beta" + str(i))
 
@@ -44,8 +48,7 @@ class ResultsMeasures(VrToolRunResultProtocol):
                         beta_req=requiredbeta,
                     )
                     plt.savefig(
-                        self.vr_config.output_directory.joinpath(
-                            "figures", i.name, "Measures", mech + "_" + betaind + ".png"
+                        _figures_dir.joinpath( i.name, "Measures", mech + "_" + betaind + ".png"
                         ),
                         bbox_inches="tight",
                     )

@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 
 import pandas as pd
 import pytest
@@ -17,7 +18,6 @@ from src.run_workflows.safety_workflow.results_safety_assessment import (
 from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
 from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from src.run_workflows.vrtool_run_full_model import RunFullModel
-from tools.RunModel import runFullModel
 from tests import get_test_results_dir, test_data
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
@@ -59,22 +59,21 @@ class TestAcceptance:
     def test_run_as_sandbox(
         self, casename: str, traject: str, request: pytest.FixtureRequest
     ):
+        """
+        This test so far only checks the output values after optimization.
+        """
         # 1. Define test data.
         _test_dir = test_data / casename
         assert _test_dir.exists(), "No input data found at {}".format(_test_dir)
 
         _results_dir = get_test_results_dir(request) / casename
+        if _results_dir.exists():
+            shutil.rmtree(_results_dir)
         _vr_config = VrtoolConfig()
         _vr_config.input_directory = _test_dir
         _vr_config.output_directory = _results_dir
         _vr_config.traject = traject
         _plot_mode = VrToolPlotMode.STANDARD
-
-        # Initialize output sub folders
-        (_vr_config.output_directory / "figures").mkdir(parents=True)
-        (_vr_config.output_directory / "results" / "investments_steps").mkdir(
-            parents=True
-        )
 
         # 2. Run test.
         # Step 0. Load Traject
@@ -105,14 +104,15 @@ class TestAcceptance:
     )
     def test_run_full_model(self, casename: str, traject: str, request: pytest.FixtureRequest):
         """
-        TODO: Determine whether we want to support this run type.
         This test so far only checks the output values after optimization.
-        The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
+        """
         # 1. Define test data.
         _test_input_directory = Path.joinpath(test_data, casename)
         assert _test_input_directory.exists()
 
         _test_results_directory = get_test_results_dir(request).joinpath(casename)
+        if _test_results_directory.exists():
+            shutil.rmtree(_test_results_directory)
 
         _test_reference_path = _test_input_directory / "reference"
         assert _test_reference_path.exists()
@@ -128,35 +128,3 @@ class TestAcceptance:
 
         # 3. Verify final expectations.
         self._validate_acceptance_result_cases(_test_results_directory, _test_reference_path)
-
-
-    @pytest.mark.parametrize(
-        "casename, traject",_acceptance_test_cases,
-    )
-    @pytest.mark.skip(reason="This test should be replaced by test_run_full_model or test_run_as_sandbox as soon as all tests go green")
-    def test_integrated_run(self, casename: str, traject: str, request: pytest.FixtureRequest):
-        """
-        This test so far only checks the output values after optimization.
-        The test should eventually e split for the different steps in the computation (assessment, measures and optimization)"""
-        # 1. Define test data.
-        test_data_input_directory = Path.joinpath(test_data, casename)
-        test_results_dir = get_test_results_dir(request).joinpath(casename)
-
-        _test_config = VrtoolConfig()
-        _test_config.input_directory = test_data_input_directory
-        _test_config.output_directory = test_results_dir
-
-        _test_config.output_directory.joinpath("figures").mkdir(parents=True)
-        _test_config.output_directory.joinpath("results", "investment_steps").mkdir(
-            parents=True
-        )
-
-        _test_traject = DikeTraject(_test_config, traject=traject)
-        _test_traject.ReadAllTrajectInput(input_path=test_data_input_directory)
-
-        # 2. Run test.
-        # run_model_old_approach(_test_config, _test_traject)        
-        runFullModel(_test_traject, _test_config)
-
-        # 3. Verify expectations.
-        self._validate_acceptance_result_cases(test_results_dir, Path.joinpath(test_data, casename, "reference"))

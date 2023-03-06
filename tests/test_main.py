@@ -50,7 +50,6 @@ class TestMain:
         _results_dir = _input_dir / "results"
         if _results_dir.exists():
             shutil.rmtree(_results_dir)
-        _results_dir.mkdir(parents=True)
 
         # 2. Run test.
         _run_result = CliRunner().invoke(

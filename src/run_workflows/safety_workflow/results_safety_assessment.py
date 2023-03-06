@@ -16,6 +16,9 @@ class ResultsSafetyAssessment(VrToolRunResultProtocol):
             "beta_or_prob": self.vr_config.beta_or_prob,
         }
 
+        if not self.vr_config.output_directory.exists():
+            self.vr_config.output_directory.mkdir(parents=True)
+
         # Previously this plotting would be skipped for 'test' type of plotting.
         self.selected_traject.plotAssessment(
             fig_size=(12, 4),
