@@ -40,7 +40,7 @@ class DikeTraject:
             "aStabilityInner": 0.033,
             "bStabilityInner": 50,
         }
-        self.sections: List[DikeSection] = []
+        self.Sections: List[DikeSection] = []
         self.GeneralInfo["MechanismsConsidered"] = self.mechanisms
         # Basic traject info
         # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
@@ -125,59 +125,59 @@ class DikeTraject:
             raise IOError("Error: no dike sections found. Check path!")
         for i in range(len(files)):
             # Read the general information for each section:
-            self.sections.append(DikeSection(files[i].stem, self.traject))
-            self.sections[i].read_general_info(input_path, "General")
+            self.Sections.append(DikeSection(files[i].stem, self.traject))
+            self.Sections[i].read_general_info(input_path, "General")
 
             # Read the data per mechanism, and first the load frequency line:
-            self.sections[i].section_reliability.Load = LoadInput(
-                list(self.sections[i].__dict__.keys())
+            self.Sections[i].section_reliability.Load = LoadInput(
+                list(self.Sections[i].__dict__.keys())
             )
             if (
-                self.sections[i].section_reliability.Load.load_type == "HRING"
+                self.Sections[i].section_reliability.Load.load_type == "HRING"
             ):  # 2 HRING computations for different years
-                self.sections[i].section_reliability.Load.set_HRING_input(
-                    input_path.joinpath("Waterstand"), self.sections[i]
+                self.Sections[i].section_reliability.Load.set_HRING_input(
+                    input_path.joinpath("Waterstand"), self.Sections[i]
                 )  # input folder, location
             elif (
-                self.sections[i].section_reliability.Load.load_type == "SAFE"
+                self.Sections[i].section_reliability.Load.load_type == "SAFE"
             ):  # 2 computation as done for SAFE
-                self.sections[i].section_reliability.Load.set_fromDesignTable(
-                    input_path.joinpath("Toetspeil", self.sections[i].LoadData)
+                self.Sections[i].section_reliability.Load.set_fromDesignTable(
+                    input_path.joinpath("Toetspeil", self.Sections[i].LoadData)
                 )
-                self.sections[i].section_reliability.Load.set_annual_change(
+                self.Sections[i].section_reliability.Load.set_annual_change(
                     type="SAFE",
                     parameters=[
-                        self.sections[i].YearlyWLRise,
-                        self.sections[i].HBNRise_factor,
+                        self.Sections[i].YearlyWLRise,
+                        self.Sections[i].HBNRise_factor,
                     ],
                 )
 
             # Then the input for all the mechanisms:
-            self.sections[i].section_reliability.Mechanisms = {}
+            self.Sections[i].section_reliability.Mechanisms = {}
             for j in self.mechanisms:
                 mech_input_path = input_path.joinpath(j)
-                self.sections[i].section_reliability.Mechanisms[
+                self.Sections[i].section_reliability.Mechanisms[
                     j
                 ] = MechanismReliabilityCollection(
-                    j, self.sections[i].MechanismData[j][1], self.config
+                    j, self.Sections[i].MechanismData[j][1], self.config
                 )
-                for k in self.sections[i].section_reliability.Mechanisms[j].Reliability.keys():
-                    if self.sections[i].section_reliability.Load.load_type == "HRING":
-                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
+                for k in self.Sections[i].section_reliability.Mechanisms[j].Reliability.keys():
+                    if self.Sections[i].section_reliability.Load.load_type == "HRING":
+                        self.Sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
-                            *self.sections[i].MechanismData[j],
+                            *self.Sections[i].MechanismData[j],
                             mechanism=j,
-                            crest_height=self.sections[i].Kruinhoogte,
-                            dcrest=self.sections[i].Kruindaling,
+                            crest_height=self.Sections[i].Kruinhoogte,
+                            dcrest=self.Sections[i].Kruindaling,
                         )
                     else:
-                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
+                        self.Sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
-                            *self.sections[i].MechanismData[j],
+                            *self.Sections[i].MechanismData[j],
                             mechanism=j,
                         )
 
@@ -188,7 +188,7 @@ class DikeTraject:
 
         # Traject length is lengt of all sections together:
         self.GeneralInfo["TrajectLength"] = 0
-        for i in self.sections:
+        for i in self.Sections:
             self.GeneralInfo["TrajectLength"] += i.Length
 
         self.GeneralInfo["beta_max"] = pf_to_beta(
@@ -206,7 +206,7 @@ class DikeTraject:
 
     def setProbabilities(self):
         """routine to make 1 dataframe of all probabilities of a TrajectObject"""
-        for i, section in enumerate(self.sections):
+        for i, section in enumerate(self.Sections):
             if i == 0:
                 Assessment = section.section_reliability.SectionReliability.reset_index()
                 Assessment["Section"] = section.name
@@ -287,7 +287,7 @@ class DikeTraject:
                 label_ylabel = r"Faalkans $P_f$ [-/jaar]"
                 label_target = "Doelfaalkans"
             labels_xticks = []
-            for i in self.sections:
+            for i in self.Sections:
                 labels_xticks.append(i.name)
         elif case_settings["language"] == "EN":
             label_xlabel = "Dike sections"
@@ -301,7 +301,7 @@ class DikeTraject:
                 label_ylabel = r"Failure probability $P_f$ [-/year]"
                 label_target = "Target failure prob."
             labels_xticks = []
-            for i in self.sections:
+            for i in self.Sections:
                 labels_xticks.append("S" + i.name[2:])
 
         cumlength, xticks1, middles = get_section_length_in_traject(
@@ -560,7 +560,7 @@ class DikeTraject:
                 plt.close()
 
     def runFullAssessment(self):
-        for i in self.sections:
+        for i in self.Sections:
             for j in self.GeneralInfo["Mechanisms"]:
                 i.section_reliability.Mechanisms[j].generateLCRProfile(
                     i.section_reliability.Load, mechanism=j, trajectinfo=self.GeneralInfo
@@ -573,11 +573,11 @@ class DikeTraject:
     def plotAssessmentResults(self, directory, section_ids=None, t_start=2020):
         # for all or a selection of sections:
         if section_ids == None:
-            sections = self.sections
+            sections = self.Sections
         else:
             sections = []
             for i in section_ids:
-                sections.append(self.sections[i])
+                sections.append(self.Sections[i])
         createDir(directory)
         # generate plots
         for i in sections:
@@ -604,7 +604,7 @@ class DikeTraject:
 
     def updateProbabilities(self, Probabilities, ChangedSection=False):
         # This function is to update the probabilities after a reinforcement.
-        for i in self.sections:
+        for i in self.Sections:
             if (ChangedSection) and (i.name == ChangedSection):
                 i.section_reliability.SectionReliability = Probabilities.loc[
                     ChangedSection

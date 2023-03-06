@@ -30,7 +30,7 @@ class ResultsMeasures(VrToolRunResultProtocol):
 
         plt_mech = ["Section", "Piping", "StabilityInner", "Overflow"]
 
-        for i in self.selected_traject.sections:
+        for i in self.selected_traject.Sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
                     requiredbeta = pf_to_beta(
