@@ -223,8 +223,8 @@ class RunOptimization(VrToolRunProtocol):
             section = strategy_case.TakenMeasures.iloc[i]["Section"]
             name = (
                 solution_case[section]
-                .MeasureTable.loc[
-                    solution_case[section].MeasureTable["ID"] == _measure_id
+                .measure_table.loc[
+                    solution_case[section].measure_table["ID"] == _measure_id
                 ]["Name"]
                 .values
             )

@@ -125,7 +125,7 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
             id = '+'.join(id)
 
         section = TestCaseStrategy.TakenMeasures.iloc[i]['Section']
-        name = TestCaseSolutions[section].MeasureTable.loc[TestCaseSolutions[section].MeasureTable['ID'] == id]['Name'].values
+        name = TestCaseSolutions[section].measure_table.loc[TestCaseSolutions[section].measure_table['ID'] == id]['Name'].values
         TestCaseStrategy.TakenMeasures.at[i, 'name'] = name
     return TestCaseStrategy
 
@@ -133,7 +133,7 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
 def get_measure_table(AllSolutions,language ='NL',abbrev=False):
     OverallMeasureTable = pd.DataFrame([], columns=['ID', 'Name'])
     for i in AllSolutions:
-        OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].MeasureTable])
+        OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].measure_table])
     OverallMeasureTable: Union[DataFrame, None, Series] = OverallMeasureTable.drop_duplicates(subset='ID')
     if (np.max(OverallMeasureTable['Name'].str.find('Grondversterking').values) > -1) and (language == 'EN'):
         OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking binnenwaarts', 'Soil based')

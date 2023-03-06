@@ -384,8 +384,8 @@ class GreedyStrategy(StrategyBase):
             # get the name
             names.append(
                 solutions[traject.Sections[i[0]].name]
-                .MeasureTable.loc[
-                    solutions[traject.Sections[i[0]].name].MeasureTable["ID"] == ID[-1]
+                .measure_table.loc[
+                    solutions[traject.Sections[i[0]].name].measure_table["ID"] == ID[-1]
                 ]["Name"]
                 .values[0][0]
             )

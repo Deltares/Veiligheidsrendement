@@ -208,7 +208,7 @@ class Solutions:
             np.array([measure_df.columns, [""] * len(measure_df.columns)])
         )
         measure_df.columns = cols
-        self.MeasureData = measure_df.join(reliability, how="inner")
+        self.measure_data = measure_df.join(reliability, how="inner")
         if (
             filtering
         ):  # here we could add some filtering on the measures, but it is not used right now.
@@ -238,9 +238,9 @@ class Solutions:
         # colors = plt.cm.get_cmap(name=plt.cm.hsv, lut=num_plots)
         color = 0
 
-        for i in np.unique(self.MeasureData["ID"].values):
+        for i in np.unique(self.measure_data["ID"].values):
             if isinstance(self.measures[int(i) - 1].measures, list):
-                data = copy.deepcopy(self.MeasureData.loc[self.MeasureData["ID"] == i])
+                data = copy.deepcopy(self.measure_data.loc[self.measure_data["ID"] == i])
                 # inputs = []; type = self.Measures[i].parameters['Type']
                 # for j in range(0, len(self.Measures[i].measures)):
                 #     inputvals = []
@@ -304,7 +304,7 @@ class Solutions:
 
                     color += 1
             elif isinstance(self.measures[np.int(i) - 1].measures, dict):
-                data = copy.deepcopy(self.MeasureData.loc[self.MeasureData["ID"] == i])
+                data = copy.deepcopy(self.measure_data.loc[self.measure_data["ID"] == i])
                 #
                 # inputs = []; type = self.Measures[np.int(i)].parameters['Type']
                 # if type == 'Vertical Geotextile': designvars = self.Measures[np.int(i)].measures['VZG']

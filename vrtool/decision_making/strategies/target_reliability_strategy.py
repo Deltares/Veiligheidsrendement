@@ -151,7 +151,7 @@ class TargetReliabilityStrategy(StrategyBase):
             BC = dR / LCC[idx]
 
             if splitparams:
-                name = id_to_name(measure["ID"].values[0], solutions[i.name].MeasureTable)
+                name = id_to_name(measure["ID"].values[0], solutions[i.name].measure_table)
                 data_opt = pd.DataFrame(
                     [
                         [

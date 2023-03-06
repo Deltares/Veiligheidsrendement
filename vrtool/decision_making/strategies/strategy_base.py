@@ -22,6 +22,8 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import plot_settings, get_section_length_in_traject
 from tools.HelperFunctions import pareto_frontier
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from typing import Dict
+from vrtool.decision_making.solutions import Solutions
 
 class StrategyBase:
     """This defines a Strategy object, which can be allowed to evaluate a set of solutions/measures. There are currently 3 types:
@@ -118,12 +120,12 @@ class StrategyBase:
 
         return (section, sh, sg)
 
-    def combine(self, traject: DikeTraject, solutions, filtering="off", splitparams=False):
+    def combine(self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], filtering="off", splitparams=False):
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
         cols = list(
-            solutions[list(solutions.keys())[0]].MeasureData["Section"].columns.values
+            solutions_dict[list(solutions_dict.keys())[0]].measure_data["Section"].columns.values
         )
 
         # measures at t=0 (2025) and t=20 (2045)
@@ -131,56 +133,56 @@ class StrategyBase:
         for i, section in enumerate(traject.sections):
 
             # Step 1: combine measures with partial measures
-            combinables = solutions[section.name].MeasureData.loc[
-                solutions[section.name].MeasureData["class"] == "combinable"
+            combinables = solutions_dict[section.name].measure_data.loc[
+                solutions_dict[section.name].measure_data["class"] == "combinable"
             ]
-            partials = solutions[section.name].MeasureData.loc[
-                solutions[section.name].MeasureData["class"] == "partial"
+            partials = solutions_dict[section.name].measure_data.loc[
+                solutions_dict[section.name].measure_data["class"] == "partial"
             ]
             if self.__class__.__name__ == "TargetReliabilityStrategy":
                 combinables = combinables.loc[
-                    solutions[section.name].MeasureData["year"] == self.OI_year
+                    solutions_dict[section.name].measure_data["year"] == self.OI_year
                 ]
                 partials = partials.loc[
-                    solutions[section.name].MeasureData["year"] == self.OI_year
+                    solutions_dict[section.name].measure_data["year"] == self.OI_year
                 ]
 
             combinedmeasures = measure_combinations(
-                combinables, partials, solutions[section.name], splitparams=splitparams
+                combinables, partials, solutions_dict[section.name], splitparams=splitparams
             )
             # make sure combinable, mechanism and year are in the MeasureData dataframe
             # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
             # if there is a measureid that is not known yet, add it to the measure table
 
-            existingIDs = solutions[section.name].MeasureTable["ID"].values
+            existingIDs = solutions_dict[section.name].measure_table["ID"].values
             IDs = np.unique(combinedmeasures["ID"].values)
             if len(IDs) > 0:
                 for ij in IDs:
                     if ij not in existingIDs:
                         indexes = ij.split("+")
                         name = (
-                            solutions[section.name]
-                            .MeasureTable.loc[
-                                solutions[traject.Sections[i].name].MeasureTable["ID"]
+                            solutions_dict[section.name]
+                            .measure_table.loc[
+                                solutions_dict[traject.Sections[i].name].measure_table["ID"]
                                 == indexes[0]
                             ]["Name"]
                             .values[0]
                             + "+"
-                            + solutions[section.name]
-                            .MeasureTable.loc[
-                                solutions[traject.Sections[i].name].MeasureTable["ID"]
+                            + solutions_dict[section.name]
+                            .measure_table.loc[
+                                solutions_dict[traject.Sections[i].name].measure_table["ID"]
                                 == indexes[1]
                             ]["Name"]
                             .values[0]
                         )
-                        solutions[section.name].MeasureTable.loc[
-                            len(solutions[traject.Sections[i].name].MeasureTable) + 1
+                        solutions_dict[section.name].measure_table.loc[
+                            len(solutions_dict[traject.Sections[i].name].measure_table) + 1
                         ] = name
-                        solutions[section.name].MeasureTable.loc[
-                            len(solutions[traject.Sections[i].name].MeasureTable)
+                        solutions_dict[section.name].measure_table.loc[
+                            len(solutions_dict[traject.Sections[i].name].measure_table)
                         ]["ID"] = ij
 
-            StrategyData = copy.deepcopy(solutions[section.name].MeasureData)
+            StrategyData = copy.deepcopy(solutions_dict[section.name].measure_data)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
                 StrategyData = StrategyData.loc[StrategyData["year"] == self.OI_year]
 
