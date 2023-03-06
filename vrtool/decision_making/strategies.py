@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
+import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 from vrtool.decision_making.strategy_evaluation import (
     ImplementOption,
     MeasureCombinations,

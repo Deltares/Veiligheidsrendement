@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import interpolate
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
+import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 
 
 ## This script contains limit state functions for the different mechanisms.

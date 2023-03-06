@@ -12,7 +12,7 @@ from pathlib import Path
 import sqlite3
 import subprocess
 sys.path.append('../../src')
-from probabilistic_tools.HydraRing_scripts import runHydraRing
+from probabilistic_tools.hydra_ring_scripts import runHydraRing
 
 def getPrfl(fileName):
     # Get profile information from *.prfl Versie 4.0

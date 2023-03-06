@@ -7,7 +7,7 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
-from vrtool.probabilistic_tools.ProbabilisticFunctions import pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.decision_making.solutions import Solutions
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 

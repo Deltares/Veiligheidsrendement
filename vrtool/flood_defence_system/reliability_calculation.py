@@ -10,11 +10,11 @@ from scipy import interpolate
 
 import vrtool.flood_defence_system.mechanisms as fds_mechanisms
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.probabilistic_tools.HydraRing_scripts import (
+from vrtool.probabilistic_tools.hydra_ring_scripts import (
     DesignTableOpenTurns,
     readDesignTable,
 )
-from vrtool.probabilistic_tools.ProbabilisticFunctions import (
+from vrtool.probabilistic_tools.probabilistic_functions import (
     FragilityIntegration,
     IterativeFC_calculation,
     TableDist,

@@ -16,7 +16,7 @@ import shelve
 import numpy as np
 import pandas as pd
 
-import vrtool.probabilistic_tools.ProbabilisticFunctions as pb_functions
+import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from tools.HelperFunctions import replaceNames
