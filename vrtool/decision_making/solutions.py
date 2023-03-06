@@ -165,7 +165,7 @@ class Solutions:
                         measure_in.append(designvars)
                     measure_in.append(cost)
 
-                    betas = measure.measures[j]["Reliability"].SectionReliability
+                    betas = measure.measures[j]["Reliability"].section_reliability
 
                     for ij in self.mechanisms + ["Section"]:
                         for ijk in betas.loc[ij].values:
@@ -195,7 +195,7 @@ class Solutions:
                     )
                 else:
                     inputs_m.append([ID, type, measure_class, year, designvars, cost])
-                betas = measure.measures["Reliability"].SectionReliability
+                betas = measure.measures["Reliability"].section_reliability
                 beta = []
                 for ij in self.mechanisms + ["Section"]:
                     for ijk in betas.loc[ij].values:

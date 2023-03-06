@@ -129,7 +129,7 @@ class StrategyBase:
         )
 
         # measures at t=0 (2025) and t=20 (2045)
-        # for i in range(0, len(traject.Sections)):
+        # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
 
             # Step 1: combine measures with partial measures
@@ -163,23 +163,23 @@ class StrategyBase:
                         name = (
                             solutions_dict[section.name]
                             .measure_table.loc[
-                                solutions_dict[traject.Sections[i].name].measure_table["ID"]
+                                solutions_dict[traject.sections[i].name].measure_table["ID"]
                                 == indexes[0]
                             ]["Name"]
                             .values[0]
                             + "+"
                             + solutions_dict[section.name]
                             .measure_table.loc[
-                                solutions_dict[traject.Sections[i].name].measure_table["ID"]
+                                solutions_dict[traject.sections[i].name].measure_table["ID"]
                                 == indexes[1]
                             ]["Name"]
                             .values[0]
                         )
                         solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.Sections[i].name].measure_table) + 1
+                            len(solutions_dict[traject.sections[i].name].measure_table) + 1
                         ] = name
                         solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.Sections[i].name].measure_table)
+                            len(solutions_dict[traject.sections[i].name].measure_table)
                         ]["ID"] = ij
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].measure_data)
@@ -220,7 +220,7 @@ class StrategyBase:
             "General strategy can not be evaluated. Please make an object of the desired subclass (GreedyStrategy/MixedIntegerStrategy/TargetReliabilityStrategy"
         )
 
-    def make_optimization_input(self, traject):
+    def make_optimization_input(self, traject: DikeTraject):
         """This subroutine organizes the input into an optimization problem such that it can be accessed by the evaluation algorithm"""
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
@@ -264,10 +264,10 @@ class StrategyBase:
         betas = {}
         for n in range(0, N):
             for i in self.mechanisms:
-                len_beta1 = traject.Sections[n].Reliability.SectionReliability.shape[1]
+                len_beta1 = traject.sections[n].section_reliability.SectionReliability.shape[1]
                 beta1 = (
-                    traject.Sections[n]
-                    .Reliability.SectionReliability.loc[i]
+                    traject.sections[n]
+                    .section_reliability.SectionReliability.loc[i]
                     .values.reshape((len_beta1, 1))
                     .T
                 )  # Initial
@@ -466,7 +466,7 @@ class StrategyBase:
         # add a few general parameters
         self.opt_parameters = {"N": N, "T": T, "Sg": Sg + 1, "Sh": Sh + 1}
 
-    def filter(self, traject, type="ParetoPerSection"):
+    def filter(self, traject: DikeTraject, type="ParetoPerSection"):
         """This is an optional routine that can be used to filter measures per section.
         It is based on defining a Pareto front, its main idea is that you throw out measures that have a certain reliability but are more costly than other measures that provide the same reliability."""
         self.options_height, self.options_geotechnical = split_options(self.options)
@@ -680,7 +680,7 @@ class StrategyBase:
         if "years" not in locals():
             years = Traject.Sections[
                 0
-            ].Reliability.SectionReliability.columns.values.astype("float")
+            ].section_reliability.SectionReliability.columns.values.astype("float")
             horizon = np.max(years)
         if not final_step:
             final_step = self.TakenMeasures["Section"].size
@@ -1427,7 +1427,7 @@ class StrategyBase:
         ax.set_ylim(top=np.max(allticks), bottom=np.min(allticks))
         if show_xticks:
             labels_xticks = []
-            for i in traject.Sections:
+            for i in traject.sections:
                 labels_xticks.append(i.name)
             ax.set_xticks(middles)
             ax.set_xticklabels(labels_xticks)

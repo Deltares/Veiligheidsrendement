@@ -115,7 +115,7 @@ def make_traject_df(traject, cols):
     for i in traject.Sections:
         for j in mechanisms:
             TrajectProbability.loc[(i.name, j)] = list(
-                i.Reliability.SectionReliability.loc[j]
+                i.section_reliability.SectionReliability.loc[j]
             )
 
     return TrajectProbability
