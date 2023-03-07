@@ -1,89 +1,8 @@
 import numpy as np
-from scipy import interpolate
-
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 ## This script contains limit state functions for the different mechanisms.
 ## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
-def overflow_hring(input, year, t_0: int, mode="assessment", Pt=None):
-    """year is relative to start year. input contains relevant inputs"""
-    if mode == "assessment":
-        h_t = input["h_crest"] - input["d_crest"] * (year)
-        years = input["hc_beta"].columns.values.astype(np.int32)
-        betas = []
-        for j in years:
-            betas.append(
-                interpolate.interp1d(
-                    input["hc_beta"].index.values,
-                    input["hc_beta"][str(j)],
-                    fill_value="extrapolate",
-                )(h_t)
-            )
-        beta = interpolate.interp1d(years, betas, fill_value="extrapolate")(year + t_0)
-        return beta, beta_to_pf(beta)
-    if mode == "design":
-        t_beta_interp = interpolate.interp2d(
-            input["hc_beta"].columns.values.astype(np.float32),
-            input["hc_beta"].index.values,
-            input["hc_beta"],
-            bounds_error=False,
-        )
-        h_grid = np.linspace(
-            input["hc_beta"].index.values.min(), input["hc_beta"].index.values.max(), 50
-        )
-        h_beta = t_beta_interp(year + t_0, h_grid).flatten()
-        new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
-            pf_to_beta(Pt)
-        ).item()
-        return new_crest, pf_to_beta(Pt)
-
-
-def overflow_simple(
-    h_crest,
-    q_crest,
-    h_c,
-    q_c,
-    beta,
-    mode="assessment",
-    Pt=None,
-    design_variable=None,
-    iterative_solve=False,
-    beta_t=False,
-):
-    if mode == "assessment":
-        if q_c[0] != q_c[-1:]:
-            beta_hc = interpolate.interp2d(
-                h_c, q_c, beta, kind="linear", fill_value="extrapolate"
-            )
-            beta = np.min([beta_hc(h_crest, q_crest), 8.0])
-        else:
-            beta_hc = interpolate.interp1d(
-                h_c, beta, kind="linear", fill_value="extrapolate"
-            )
-            beta = np.min([beta_hc(h_crest), [8.0]])
-        Pf = beta_to_pf(beta)
-        if not iterative_solve:
-            return beta, Pf
-        else:
-            return beta - beta_t
-    elif mode == "design":
-        beta_t = pf_to_beta(Pt)
-        if design_variable == "h_crest":
-            if q_c[0] != q_c[-1:]:
-                beta_hc = interpolate.interp2d(
-                    beta, q_c, h_c, kind="linear", fill_value="extrapolate"
-                )
-                h_crest = beta_hc(beta_t, q_crest)
-            else:
-                beta_hc = interpolate.interp1d(
-                    beta, h_c, kind="linear", fill_value="extrapolate"
-                )
-                h_crest = beta_hc(beta_t)
-            return h_crest, beta_t
-        pass
-
-
 def calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm):
     # lambd,h,h_b,d,i_ch
     if isinstance(kwelscherm, str):

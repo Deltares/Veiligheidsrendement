@@ -5,6 +5,7 @@ import openturns as ot
 from scipy import interpolate
 
 import vrtool.flood_defence_system.mechanisms as fds_mechanisms
+from vrtool.failure_mechanisms.overflow.overflow import Overflow
 from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
 from vrtool.flood_defence_system.mechanism_input import MechanismInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
@@ -209,7 +210,7 @@ class MechanismReliability:
 
         if self.type == "HRING":
             if mechanism == "Overflow":
-                self.beta, self.Pf = fds_mechanisms.overflow_hring(
+                self.beta, self.Pf = Overflow.overflow_hring(
                     self.Input.input, year, self.t_0
                 )
             else:
@@ -288,7 +289,7 @@ class MechanismReliability:
                 else:
                     h_t = strength.input["h_crest"] - (strength.input["dhc(t)"] * year)
 
-                self.beta, self.Pf = fds_mechanisms.overflow_simple(
+                self.beta, self.Pf = Overflow.overflow_simple(
                     h_t,
                     strength.input["q_crest"],
                     strength.input["h_c"],

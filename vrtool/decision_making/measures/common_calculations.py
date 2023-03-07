@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
+from vrtool.failure_mechanisms.overflow.overflow import Overflow
 from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
-from vrtool.flood_defence_system.mechanisms import overflow_hring, overflow_simple
 
 
 def implement_berm_widening(
@@ -548,22 +548,22 @@ def probabilistic_design(
     if mechanism == "Overflow":
         if type == "SAFE":
             # determine the crest required for the target
-            h_crest, beta = overflow_simple(
+            h_crest, beta = Overflow.overflow_simple(
                 strength_input["h_crest"],
                 strength_input["q_crest"],
                 strength_input["h_c"],
                 strength_input["q_c"],
                 strength_input["beta"],
                 mode="design",
-                Pt=p_t,
+                failure_probability=p_t,
                 design_variable=design_variable,
             )
             # add temporal changes due to settlement and climate change
             h_crest = h_crest + horizon * (strength_input["dhc(t)"] + load_change)
             return h_crest
         elif type == "HRING":
-            h_crest, beta = overflow_hring(
-                strength_input, horizon, t_0, mode="design", Pt=p_t
+            h_crest, beta = Overflow.overflow_hring(
+                strength_input, horizon, t_0, mode="design", failure_probability=p_t
             )
             return h_crest
         else:
