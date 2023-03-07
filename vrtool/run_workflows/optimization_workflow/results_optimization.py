@@ -15,7 +15,7 @@ class ResultsOptimization(VrToolRunResultProtocol):
     def __init__(self) -> None:
         self.results_solutions = {}
         self.results_strategies = []
-    
+
     @property
     def _step_output_filepath(self) -> Path:
         """

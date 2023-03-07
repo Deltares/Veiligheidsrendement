@@ -3,19 +3,26 @@ from __future__ import annotations
 import copy
 import warnings
 from pathlib import Path
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.interpolate import interp1d
 
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, calc_gamma, beta_to_pf
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.load_input import LoadInput
-from vrtool.flood_defence_system.mechanism_reliability_collection import MechanismReliabilityCollection
-from typing import List
-from scipy.interpolate import interp1d
+from vrtool.flood_defence_system.mechanism_reliability_collection import (
+    MechanismReliabilityCollection,
+)
+from vrtool.probabilistic_tools.probabilistic_functions import (
+    beta_to_pf,
+    calc_gamma,
+    pf_to_beta,
+)
+
 
 class DikeTraject:
     sections: List[DikeSection]
@@ -43,9 +50,9 @@ class DikeTraject:
             "bPiping": 300,
             "aStabilityInner": 0.033,
             "bStabilityInner": 50,
-            "MechanismsConsidered": self.mechanisms
+            "MechanismsConsidered": self.mechanisms,
         }
-        
+
         # Basic traject info
         # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
         # Pmax is the ondergrens as given by law
@@ -165,7 +172,11 @@ class DikeTraject:
                 ] = MechanismReliabilityCollection(
                     j, self.sections[i].mechanism_data[j][1], self.config
                 )
-                for k in self.sections[i].section_reliability.Mechanisms[j].Reliability.keys():
+                for k in (
+                    self.sections[i]
+                    .section_reliability.Mechanisms[j]
+                    .Reliability.keys()
+                ):
                     if self.sections[i].section_reliability.Load.load_type == "HRING":
                         self.sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
@@ -195,31 +206,27 @@ class DikeTraject:
         for i in self.sections:
             self.general_info["TrajectLength"] += i.Length
 
-        self.general_info["beta_max"] = pf_to_beta(
-            self.general_info["Pmax"]
-        )
-        self.general_info["gammaHeave"] = calc_gamma(
-            "Heave", self.general_info
-        )
-        self.general_info["gammaUplift"] = calc_gamma(
-            "Uplift", self.general_info
-        )
-        self.general_info["gammaPiping"] = calc_gamma(
-            "Piping", self.general_info
-        )
+        self.general_info["beta_max"] = pf_to_beta(self.general_info["Pmax"])
+        self.general_info["gammaHeave"] = calc_gamma("Heave", self.general_info)
+        self.general_info["gammaUplift"] = calc_gamma("Uplift", self.general_info)
+        self.general_info["gammaPiping"] = calc_gamma("Piping", self.general_info)
 
     def set_probabilities(self):
         """routine to make 1 dataframe of all probabilities of a TrajectObject"""
         for i, section in enumerate(self.sections):
             if i == 0:
-                _assessment = section.section_reliability.SectionReliability.reset_index()
+                _assessment = (
+                    section.section_reliability.SectionReliability.reset_index()
+                )
                 _assessment["Section"] = section.name
                 _assessment["Length"] = section.Length
                 _assessment.columns = _assessment.columns.astype(str)
                 if "mechanism" in _assessment.columns:
                     _assessment = _assessment.rename(columns={"mechanism": "index"})
             else:
-                data_to_add = section.section_reliability.SectionReliability.reset_index()
+                data_to_add = (
+                    section.section_reliability.SectionReliability.reset_index()
+                )
                 data_to_add["Section"] = section.name
                 data_to_add["Length"] = section.Length
                 data_to_add.columns = data_to_add.columns.astype(str)
@@ -429,7 +436,8 @@ class DikeTraject:
                         # dash = [1,3]
                     elif j == "Overflow":
                         pt = (
-                            self.general_info["Pmax"] * self.general_info["omegaOverflow"]
+                            self.general_info["Pmax"]
+                            * self.general_info["omegaOverflow"]
                         )
                         # dash = [1,2]
                     if case_settings["beta_or_prob"] == "beta":
@@ -567,14 +575,18 @@ class DikeTraject:
         for i in self.sections:
             for j in self.general_info["Mechanisms"]:
                 i.section_reliability.Mechanisms[j].generateLCRProfile(
-                    i.section_reliability.Load, mechanism=j, trajectinfo=self.general_info
+                    i.section_reliability.Load,
+                    mechanism=j,
+                    trajectinfo=self.general_info,
                 )
 
             i.section_reliability.calculate_section_reliability(
                 TrajectInfo=self.general_info, length=i.Length
             )
 
-    def plot_assessment_results(self, output_directory: Path, section_ids=None, t_start=2020):
+    def plot_assessment_results(
+        self, output_directory: Path, section_ids=None, t_start=2020
+    ):
         # for all or a selection of sections:
         if section_ids == None:
             sections = self.sections
@@ -617,12 +629,12 @@ class DikeTraject:
                     changed_section
                 ].astype(float)
             elif not changed_section:
-                i.section_reliability.SectionReliability = probabilities.loc[i.name].astype(
-                    float
-                )
+                i.section_reliability.SectionReliability = probabilities.loc[
+                    i.name
+                ].astype(float)
 
 
-def plot_settings(labels: str ="NL"):
+def plot_settings(labels: str = "NL"):
     # a bunch of settings to make it look nice:
     SMALL_SIZE = 8
     MEDIUM_SIZE = 10
@@ -692,4 +704,3 @@ def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=
     beta_t = pf_to_beta(pf_traject)
     p_t = pf_traject
     return beta_t, p_t
-

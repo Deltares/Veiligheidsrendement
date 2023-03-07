@@ -1,10 +1,13 @@
-from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.decision_making.measures.common_calculations import determine_new_geometry, determine_costs, implement_berm_widening
-from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
 import numpy as np
 
+from vrtool.decision_making.measures.common_calculations import (
+    determine_costs,
+    determine_new_geometry,
+    implement_berm_widening,
+)
+from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
@@ -180,7 +183,9 @@ class SoilReinforcement(MeasureBase):
                     # for all time steps considered.
                     # first copy the data
                     reliability_input = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
+                        dike_section.section_reliability.Mechanisms[i]
+                        .Reliability[ij]
+                        .Input
                     )
                     # Adapt inputs for reliability calculation, but only after year of implementation.
                     if float(ij) >= self.parameters["year"]:
@@ -196,7 +201,8 @@ class SoilReinforcement(MeasureBase):
                         ij
                     ].Input = reliability_input
                 self.measures[-1]["Reliability"].Mechanisms[i].generateLCRProfile(
-                    dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
+                    dike_section.section_reliability.Load,
+                    mechanism=i,
+                    trajectinfo=traject_info,
                 )
             self.measures[-1]["Reliability"].calculate_section_reliability()
-

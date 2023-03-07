@@ -3,13 +3,16 @@ import copy
 import numpy as np
 import pandas as pd
 
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
-from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.decision_making.solutions import Solutions
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+
 
 # This script combines two sets of measures to a single option
-def measure_combinations(combinables, partials, solutions: Solutions, splitparams=False):
+def measure_combinations(
+    combinables, partials, solutions: Solutions, splitparams=False
+):
     _combined_measures = pd.DataFrame(columns=combinables.columns)
 
     # loop over partials
@@ -47,9 +50,7 @@ def measure_combinations(combinables, partials, solutions: Solutions, splitparam
                         ].index.values[0]
                         Pf_VSG = solutions.measures[idx].parameters["Pf_solution"]
                         P_VSG = solutions.measures[idx].parameters["P_solution"]
-                        pf = (
-                            1 - P_VSG
-                        ) * Pf_VSG + P_VSG * beta_to_pf(row2[ij])
+                        pf = (1 - P_VSG) * Pf_VSG + P_VSG * beta_to_pf(row2[ij])
                         beta = pf_to_beta(pf)
                     else:
                         beta = np.maximum(row1[ij], row2[ij])
@@ -269,6 +270,7 @@ def calc_life_cycle_risks(
     TR = np.sum(risk_t)
     return TR
 
+
 # this function changes the trajectprobability of a measure is implemented:
 def implement_option(section, traject_probability, new_probability):
     mechs = np.unique(traject_probability.index.get_level_values("mechanism").values)
@@ -385,7 +387,11 @@ def update_probability(init_probability, strategy, index):
 
 
 def overflow_bundling(
-    strategy, init_overflow_risk, existing_investment, life_cycle_cost, traject: DikeTraject
+    strategy,
+    init_overflow_risk,
+    existing_investment,
+    life_cycle_cost,
+    traject: DikeTraject,
 ):
     """Routine for bundling several measures for overflow to prevent getting stuck if many overflow-dominated
     sections have about equal reliability. A bundle is a set of measures (typically crest heightenings) at different sections.
@@ -406,7 +412,9 @@ def overflow_bundling(
 
     # Step 1: fill an array of size (n,2) with sh and sg of existing investments per section in order to properly filter
     # the viable options per section
-    existing_investments = np.zeros((np.size(life_cycle_cost, axis=0), 2), dtype=np.int32)
+    existing_investments = np.zeros(
+        (np.size(life_cycle_cost, axis=0), 2), dtype=np.int32
+    )
     if len(existing_investment) > 0:
         for i in range(0, len(existing_investment)):
             existing_investments[existing_investment[i][0], 0] = existing_investment[i][
@@ -419,12 +427,14 @@ def overflow_bundling(
     # Step 2: for each section, determine the sorted_indices of the min to max LCC. Note that this could also be based on TC but the performance is good as is.
     # first make the proper arrays for sorted_indices (sh), corresponding sg indices and the LCC for each section.
     sorted_sh = np.empty(
-        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)), dtype=np.int32
+        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)),
+        dtype=np.int32,
     )
     sorted_sh.fill(999)
     LCC_values = np.zeros((np.size(life_cycle_cost, axis=0),))
     sg_indices = np.empty(
-        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)), dtype=np.int32
+        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)),
+        dtype=np.int32,
     )
     sg_indices.fill(999)
 

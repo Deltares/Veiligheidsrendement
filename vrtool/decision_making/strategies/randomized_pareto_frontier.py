@@ -1,16 +1,16 @@
-
 import copy
+import itertools
 from pathlib import Path
 from typing import Dict
 
 import numpy as np
 import pandas as pd
+
+from tools.HelperFunctions import pareto_frontier
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
-
-import itertools
-from tools.HelperFunctions import pareto_frontier
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+
 
 class RandomizedParetoFrontier(StrategyBase):
     # Old Pareto Routine: evaluates random combinations of measures.
@@ -325,4 +325,3 @@ class RandomizedParetoFrontier(StrategyBase):
                     output_path.joinpath("ParetoResults" + str(j) + ".csv")
                 )
                 print("Set " + str(j + 1) + " of " + str(set_range) + " finished")
-

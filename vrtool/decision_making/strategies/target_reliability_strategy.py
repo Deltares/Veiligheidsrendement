@@ -4,27 +4,34 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+
+from tools.HelperFunctions import id_to_name
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
-from vrtool.flood_defence_system.dike_traject import DikeTraject
-
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 from vrtool.decision_making.strategy_evaluation import (
+    calc_tc,
     calc_tr,
     implement_option,
-    calc_tc,
     make_traject_df,
 )
-from tools.HelperFunctions import id_to_name
+from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
-class TargetReliabilityStrategy(StrategyBase):  
+class TargetReliabilityStrategy(StrategyBase):
     """Subclass for evaluation in accordance with basic OI2014 approach.
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability"""
 
-    def evaluate(self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], splitparams=False):
+    def evaluate(
+        self,
+        traject: DikeTraject,
+        solutions_dict: Dict[str, Solutions],
+        splitparams=False,
+    ):
         cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]].MeasureData["Section"].columns.values
+            solutions_dict[list(solutions_dict.keys())[0]]
+            .MeasureData["Section"]
+            .columns.values
         )
 
         # compute cross sectional requirements
@@ -40,7 +47,9 @@ class TargetReliabilityStrategy(StrategyBase):
         )
         N_overflow = 1
         beta_cs_piping = pf_to_beta(
-            traject.general_info["Pmax"] * traject.general_info["omegaPiping"] / N_piping
+            traject.general_info["Pmax"]
+            * traject.general_info["omegaPiping"]
+            / N_piping
         )
         beta_cs_stabinner = pf_to_beta(
             traject.general_info["Pmax"]
@@ -57,7 +66,9 @@ class TargetReliabilityStrategy(StrategyBase):
         beta_horizon = []
         for i in traject.sections:
             beta_horizon.append(
-                i.section_reliability.SectionReliability.loc["Section"][str(self.OI_horizon)]
+                i.section_reliability.SectionReliability.loc["Section"][
+                    str(self.OI_horizon)
+                ]
             )
 
         section_indices = np.argsort(beta_horizon)
@@ -154,7 +165,9 @@ class TargetReliabilityStrategy(StrategyBase):
             BC = dR / LCC[idx]
 
             if splitparams:
-                name = id_to_name(measure["ID"].values[0], solutions_dict[i.name].measure_table)
+                name = id_to_name(
+                    measure["ID"].values[0], solutions_dict[i.name].measure_table
+                )
                 data_opt = pd.DataFrame(
                     [
                         [
@@ -195,4 +208,3 @@ class TargetReliabilityStrategy(StrategyBase):
             Probability_steps.append(copy.deepcopy(TrajectProbability))
         self.TakenMeasures = TakenMeasures
         self.Probabilities = Probability_steps
-

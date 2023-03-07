@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import interpolate
 
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 ## This script contains limit state functions for the different mechanisms.
@@ -153,7 +153,12 @@ def calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
     return g_u, dh, dh_c
 
 
-def calculate_sellmeijer_2017(seepage_length: float, upper_thickness: float, particle_diameter: float, permeability: float) -> float:
+def calculate_sellmeijer_2017(
+    seepage_length: float,
+    upper_thickness: float,
+    particle_diameter: float,
+    permeability: float,
+) -> float:
     """
     Calculates the Sellmeijer 2017 formula.
 
@@ -175,7 +180,9 @@ def calculate_sellmeijer_2017(seepage_length: float, upper_thickness: float, par
     kappa = (nu / 9.81) * permeability
     theta = 37
     Fres = eta * (16.5 / 9.81) * np.tan(theta / 180 * np.pi)
-    Fscale = (d70m / (kappa * seepage_length) ** (1 / 3)) * ((particle_diameter / d70m) ** 0.4)
+    Fscale = (d70m / (kappa * seepage_length) ** (1 / 3)) * (
+        (particle_diameter / d70m) ** 0.4
+    )
 
     # F1        = 1.65 * eta * np.tan(theta/180*np.pi)**0.35;
     # F2        = d70m / (nu / 9.81 * k * L) ** (1/3) * (d70/d70m) ** 0.39;
@@ -183,14 +190,16 @@ def calculate_sellmeijer_2017(seepage_length: float, upper_thickness: float, par
     if upper_thickness == seepage_length:
         Fgeometry = 1
     else:
-        Fgeometry = 0.91 * (upper_thickness / seepage_length) ** (0.28 / (((upper_thickness / seepage_length) ** 2.8) - 1) + 0.04)
+        Fgeometry = 0.91 * (upper_thickness / seepage_length) ** (
+            0.28 / (((upper_thickness / seepage_length) ** 2.8) - 1) + 0.04
+        )
 
     delta_h_c = Fres * Fscale * Fgeometry * seepage_length
     # delta_h_c = F1 * F2 * F3 * L;
     return delta_h_c
 
 
-def calculate_z_uplift(inp, mode: str="Prob"):
+def calculate_z_uplift(inp, mode: str = "Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
         D = inp["D"]
@@ -263,7 +272,7 @@ def calculate_z_uplift(inp, mode: str="Prob"):
         return g_u, dh_u, dhc_u
 
 
-def calculate_z_heave(inp, mode: str="Prob"):
+def calculate_z_heave(inp, mode: str = "Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
         D = inp["D"]
@@ -337,7 +346,7 @@ def calculate_z_heave(inp, mode: str="Prob"):
         return g_h, i, i_c
 
 
-def calculate_z_piping(inp, mode: str="Prob"):
+def calculate_z_piping(inp, mode: str = "Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
         D = inp["D"]
@@ -404,7 +413,9 @@ def calculate_z_piping(inp, mode: str="Prob"):
                 h,
             ) = inp
 
-    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
+    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(
+        h, h_exit, d_cover, L, D, d70, k, mPiping
+    )
     if mode == "Prob":
         return [g_p]
     else:
@@ -454,7 +465,9 @@ def calculate_z_piping_total(inp):
     # r_exit, h, h_exit,d,i_ch, gamma_sat,m_u,L,D,theta,d70,k,m_p = inp
 
     g_h, i, i_c = calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm)
-    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(h, h_exit, d_cover, L, D, d70, k, mPiping)
+    g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(
+        h, h_exit, d_cover, L, D, d70, k, mPiping
+    )
     g_u, dh_u, dhc_u = calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
     z_piping = max(g_p, g_u, g_h)
     # import pdb; pdb.set_trace()

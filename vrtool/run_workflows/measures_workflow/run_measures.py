@@ -4,17 +4,24 @@ import logging
 from typing import Tuple
 
 from vrtool.decision_making.solutions import Solutions
-from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from vrtool.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
+from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
+    RunSafetyAssessment,
+)
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 
 class RunMeasures(VrToolRunProtocol):
-    def __init__(self, vr_config: VrtoolConfig, selected_traject: DikeTraject, plot_mode: VrToolPlotMode) -> None:
+    def __init__(
+        self,
+        vr_config: VrtoolConfig,
+        selected_traject: DikeTraject,
+        plot_mode: VrToolPlotMode,
+    ) -> None:
         if not isinstance(vr_config, VrtoolConfig):
             raise ValueError("Expected instance of a {}.".format(VrtoolConfig.__name__))
         if not isinstance(selected_traject, DikeTraject):
@@ -33,12 +40,16 @@ class RunMeasures(VrToolRunProtocol):
         _solution.fillSolutions(
             self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
         )
-        _solution.evaluate_solutions(selected_section, self.selected_traject.general_info)
+        _solution.evaluate_solutions(
+            selected_section, self.selected_traject.general_info
+        )
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:
         # Safety Assessment run
-        _safety_run = RunSafetyAssessment(self.vr_config, self.selected_traject, self._plot_mode)
+        _safety_run = RunSafetyAssessment(
+            self.vr_config, self.selected_traject, self._plot_mode
+        )
         _safety_run.run()
 
         # Get measurements solutions

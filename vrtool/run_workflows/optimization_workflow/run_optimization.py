@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Callable, Dict
 
@@ -5,10 +6,7 @@ import numpy as np
 import pandas as pd
 
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies import (
-    GreedyStrategy,
-    TargetReliabilityStrategy,
-)
+from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -16,14 +14,18 @@ from vrtool.run_workflows.optimization_workflow.results_optimization import (
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-import logging
+
 
 class RunOptimization(VrToolRunProtocol):
     def __init__(
         self, results_measures: ResultsMeasures, plot_mode: VrToolPlotMode
     ) -> None:
         if not isinstance(results_measures, ResultsMeasures):
-            raise ValueError("Required valid instance of {} as an argument.".format(ResultsMeasures.__name__))
+            raise ValueError(
+                "Required valid instance of {} as an argument.".format(
+                    ResultsMeasures.__name__
+                )
+            )
 
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
@@ -35,7 +37,6 @@ class RunOptimization(VrToolRunProtocol):
         if not _results_dir.exists():
             _results_dir.mkdir(parents=True)
         return _results_dir
-
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
         # Initialize a GreedyStrategy:
@@ -201,7 +202,7 @@ class RunOptimization(VrToolRunProtocol):
                     if _design_method in _evaluation_mapping.keys()
                 ]
             )
-        
+
         logging.info("Finished step 3: Optimization")
         _results_optimization.selected_traject = self.selected_traject
         _results_optimization.vr_config = self.vr_config

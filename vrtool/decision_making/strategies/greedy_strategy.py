@@ -1,16 +1,22 @@
-
 import copy
+import time
 from pathlib import Path
+from typing import Dict
 
 import numpy as np
 import pandas as pd
+
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategy_evaluation import (
+    calc_life_cycle_risks,
+    evaluate_risk,
+    overflow_bundling,
+    update_probability,
+)
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
-from vrtool.decision_making.strategy_evaluation import evaluate_risk, overflow_bundling, update_probability, calc_life_cycle_risks
-import time
-from typing import Dict
+
 
 class GreedyStrategy(StrategyBase):
     def evaluate(
@@ -251,7 +257,14 @@ class GreedyStrategy(StrategyBase):
             traject, solutions_dict, measure_list, BC_list, Probabilities
         )
 
-    def write_greedy_results(self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], measure_list, BC, Probabilities):
+    def write_greedy_results(
+        self,
+        traject: DikeTraject,
+        solutions_dict: Dict[str, Solutions],
+        measure_list,
+        BC,
+        Probabilities,
+    ):
         """This writes the results of a step to a list of dataframes for all steps."""
         # TODO We need to think about how to include outward reinforcement here. Can we formulate outward reinforcement as a 'dberm'?
         TakenMeasuresHeaders = [
@@ -389,7 +402,8 @@ class GreedyStrategy(StrategyBase):
             names.append(
                 solutions_dict[traject.sections[i[0]].name]
                 .measure_table.loc[
-                    solutions_dict[traject.sections[i[0]].name].measure_table["ID"] == ID[-1]
+                    solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
+                    == ID[-1]
                 ]["Name"]
                 .values[0][0]
             )
@@ -450,7 +464,9 @@ class GreedyStrategy(StrategyBase):
                         self.r,
                         np.max(self.T),
                         traject.general_info["FloodDamage"],
-                        dumpPt=output_path.joinpath("Greedy_step_" + str(count) + ".csv"),
+                        dumpPt=output_path.joinpath(
+                            "Greedy_step_" + str(count) + ".csv"
+                        ),
                     )
                 )
             else:
@@ -467,4 +483,3 @@ class GreedyStrategy(StrategyBase):
         costs["TC_min"] = np.argmin(costs["TC"])
 
         return costs
-

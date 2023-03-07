@@ -1,16 +1,18 @@
-
-from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.decision_making.measures.common_calculations import determine_costs, probabilistic_design
-from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
 import numpy as np
 
+from vrtool.decision_making.measures.common_calculations import (
+    determine_costs,
+    probabilistic_design,
+)
+from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+
 
 class DiaphragmWall(MeasureBase):
     # type == 'Diaphragm Wall':
@@ -48,13 +50,17 @@ class DiaphragmWall(MeasureBase):
                     if i == "Overflow":
                         Pt = traject_info["Pmax"] * traject_info["omegaOverflow"]
                         if (
-                            dike_section.section_reliability.Mechanisms[i].Reliability[ij].type
+                            dike_section.section_reliability.Mechanisms[i]
+                            .Reliability[ij]
+                            .type
                             == "Simple"
                         ):
                             if hasattr(dike_section, "HBNRise_factor"):
                                 hc = probabilistic_design(
                                     "h_crest",
-                                    dike_section.section_reliability.Mechanisms["Overflow"]
+                                    dike_section.section_reliability.Mechanisms[
+                                        "Overflow"
+                                    ]
                                     .Reliability[ij]
                                     .Input.input,
                                     p_t=Pt,
@@ -67,7 +73,9 @@ class DiaphragmWall(MeasureBase):
                             else:
                                 hc = probabilistic_design(
                                     "h_crest",
-                                    dike_section.section_reliability.Mechanisms["Overflow"]
+                                    dike_section.section_reliability.Mechanisms[
+                                        "Overflow"
+                                    ]
                                     .Reliability[ij]
                                     .Input.input,
                                     p_t=Pt,
@@ -112,6 +120,8 @@ class DiaphragmWall(MeasureBase):
                             ij
                         ].Input.input["Pf_with_elim"] = self.parameters["Pf_solution"]
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load,
+                mechanism=i,
+                trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()

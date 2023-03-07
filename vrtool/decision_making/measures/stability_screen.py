@@ -1,15 +1,18 @@
-from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.decision_making.measures.common_calculations import determine_costs, beta_sf_stability_inner
-from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
 import numpy as np
 
+from vrtool.decision_making.measures.common_calculations import (
+    beta_sf_stability_inner,
+    determine_costs,
+)
+from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+
 
 class StabilityScreen(MeasureBase):
     # type == 'Stability Screen':
@@ -70,7 +73,9 @@ class StabilityScreen(MeasureBase):
                     self.measures["Reliability"].Mechanisms[i].Reliability[
                         ij
                     ].Input = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
+                        dike_section.section_reliability.Mechanisms[i]
+                        .Reliability[ij]
+                        .Input
                     )
                     if int(ij) >= self.parameters["year"]:
                         if (
@@ -145,7 +150,8 @@ class StabilityScreen(MeasureBase):
                             )
 
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load,
+                mechanism=i,
+                trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()
-

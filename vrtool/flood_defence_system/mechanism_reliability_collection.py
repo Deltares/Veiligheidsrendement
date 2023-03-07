@@ -2,12 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openturns as ot
 import pandas as pd
+
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.probabilistic_tools.probabilistic_functions import (
-    beta_to_pf,
-    pf_to_beta,
-)
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+
 
 # A collection of MechanismReliability objects in time
 class MechanismReliabilityCollection:
@@ -192,5 +191,3 @@ class MechanismReliabilityCollection:
         plt.ylim([0, 1])
         plt.title(r"Influence coefficients $\alpha$ in time")
         plt.show()
-
-

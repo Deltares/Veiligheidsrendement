@@ -1,4 +1,5 @@
 import copy
+
 import numpy as np
 import openturns as ot
 from scipy import interpolate
@@ -6,15 +7,15 @@ from scipy import interpolate
 import vrtool.flood_defence_system.mechanisms as fds_mechanisms
 from vrtool.flood_defence_system.mechanism_input import MechanismInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
-    calculate_fragility_integration,
-    iterative_fc_calculation,
     TableDist,
-    temporal_process,
     add_load_char_vals,
     beta_to_pf,
+    calc_beta_implicated,
+    calculate_fragility_integration,
+    iterative_fc_calculation,
     pf_to_beta,
     run_prob_calc,
-    calc_beta_implicated
+    temporal_process,
 )
 
 
@@ -420,15 +421,15 @@ class MechanismReliability:
                     else:
                         self.SF_p = np.inf
                     self.assess_p = "voldoende" if self.SF_p > 1 else "onvoldoende"
-                    self.scenario_result["beta_cs_p"][
-                        j
-                    ] = calc_beta_implicated(
+                    self.scenario_result["beta_cs_p"][j] = calc_beta_implicated(
                         "Piping", self.SF_p * self.gamma_pip, TrajectInfo=TrajectInfo
                     )  #
                     # Calculate the implicated beta_cs
 
                     # Heave:
-                    Z, self.h_i, self.h_i_c = fds_mechanisms.calculate_z_heave(inputs, mode="SemiProb")
+                    Z, self.h_i, self.h_i_c = fds_mechanisms.calculate_z_heave(
+                        inputs, mode="SemiProb"
+                    )
                     self.gamma_h = TrajectInfo[
                         "gammaHeave"
                     ]  # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
@@ -445,9 +446,7 @@ class MechanismReliability:
                         > 1
                         else "onvoldoende"
                     )
-                    self.scenario_result["beta_cs_h"][
-                        j
-                    ] = calc_beta_implicated(
+                    self.scenario_result["beta_cs_h"][j] = calc_beta_implicated(
                         "Heave",
                         (self.h_i_c / self.gamma_schem_heave) / self.h_i,
                         TrajectInfo=TrajectInfo,
@@ -474,9 +473,7 @@ class MechanismReliability:
                         > 1
                         else "onvoldoende"
                     )
-                    self.scenario_result["beta_cs_u"][
-                        j
-                    ] = calc_beta_implicated(
+                    self.scenario_result["beta_cs_u"][j] = calc_beta_implicated(
                         "Uplift",
                         (self.u_dh_c / self.gamma_schem_upl) / self.u_dh,
                         TrajectInfo=TrajectInfo,
@@ -557,8 +554,7 @@ class MechanismReliability:
                 pass
 
 
-
-def beta_sf_stability_inner(sf_or_beta, type=False, modelfactor: float=1.06):
+def beta_sf_stability_inner(sf_or_beta, type=False, modelfactor: float = 1.06):
     """Careful: ensure that upon using this function you clearly define the input parameter!"""
     if type == "SF":
         beta = ((sf_or_beta.item() / modelfactor) - 0.41) / 0.15

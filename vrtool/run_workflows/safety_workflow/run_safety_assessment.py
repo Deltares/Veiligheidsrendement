@@ -5,20 +5,26 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
-from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 
 class RunSafetyAssessment(VrToolRunProtocol):
     _plot_mode: VrToolPlotMode
-    def __init__(self, vr_config: VrtoolConfig, selected_traject: DikeTraject, plot_mode: VrToolPlotMode) -> None:
+
+    def __init__(
+        self,
+        vr_config: VrtoolConfig,
+        selected_traject: DikeTraject,
+        plot_mode: VrToolPlotMode,
+    ) -> None:
         if not isinstance(vr_config, VrtoolConfig):
             raise ValueError("Expected instance of a {}.".format(VrtoolConfig.__name__))
         if not isinstance(selected_traject, DikeTraject):
@@ -91,9 +97,10 @@ class RunSafetyAssessment(VrToolRunProtocol):
         )
         plt.legend()
         plt.title(selected_section.name)
-        _plot_filename = self._get_valid_output_dir(
-            ["figures", selected_section.name, "Initial"]
-        ) / "InitialSituation.png"
+        _plot_filename = (
+            self._get_valid_output_dir(["figures", selected_section.name, "Initial"])
+            / "InitialSituation.png"
+        )
         plt.savefig(
             _plot_filename,
             bbox_inches="tight",

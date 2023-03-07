@@ -1,6 +1,7 @@
 import copy
 from collections import OrderedDict
 from pathlib import Path
+from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,21 +9,25 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
+from tools.HelperFunctions import pareto_frontier
+from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import (
-    implement_option,
-    measure_combinations,
     calc_life_cycle_risks,
     calc_tc,
+    implement_option,
     make_traject_df,
+    measure_combinations,
     split_options,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_traject import plot_settings, get_section_length_in_traject
-from tools.HelperFunctions import pareto_frontier
-from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
-from typing import Dict
-from vrtool.decision_making.solutions import Solutions
+from vrtool.flood_defence_system.dike_traject import (
+    DikeTraject,
+    calc_traject_prob,
+    get_section_length_in_traject,
+    plot_settings,
+)
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+
 
 class StrategyBase:
     """This defines a Strategy object, which can be allowed to evaluate a set of solutions/measures. There are currently 3 types:
@@ -119,12 +124,20 @@ class StrategyBase:
 
         return (section, sh, sg)
 
-    def combine(self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], filtering="off", splitparams=False):
+    def combine(
+        self,
+        traject: DikeTraject,
+        solutions_dict: Dict[str, Solutions],
+        filtering="off",
+        splitparams=False,
+    ):
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
         cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]].MeasureData["Section"].columns.values
+            solutions_dict[list(solutions_dict.keys())[0]]
+            .MeasureData["Section"]
+            .columns.values
         )
 
         # measures at t=0 (2025) and t=20 (2045)
@@ -147,7 +160,10 @@ class StrategyBase:
                 ]
 
             combinedmeasures = measure_combinations(
-                combinables, partials, solutions_dict[section.name], splitparams=splitparams
+                combinables,
+                partials,
+                solutions_dict[section.name],
+                splitparams=splitparams,
             )
             # make sure combinable, mechanism and year are in the MeasureData dataframe
             # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
@@ -162,20 +178,25 @@ class StrategyBase:
                         name = (
                             solutions_dict[section.name]
                             .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table["ID"]
+                                solutions_dict[traject.sections[i].name].measure_table[
+                                    "ID"
+                                ]
                                 == indexes[0]
                             ]["Name"]
                             .values[0]
                             + "+"
                             + solutions_dict[section.name]
                             .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table["ID"]
+                                solutions_dict[traject.sections[i].name].measure_table[
+                                    "ID"
+                                ]
                                 == indexes[1]
                             ]["Name"]
                             .values[0]
                         )
                         solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.sections[i].name].measure_table) + 1
+                            len(solutions_dict[traject.sections[i].name].measure_table)
+                            + 1
                         ] = name
                         solutions_dict[section.name].measure_table.loc[
                             len(solutions_dict[traject.sections[i].name].measure_table)
@@ -213,7 +234,12 @@ class StrategyBase:
             self.options[section.name] = StrategyData.reset_index(drop=True)
 
     def evaluate(
-        self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], OI_horizon=50, splitparams=False, setting="fast"
+        self,
+        traject: DikeTraject,
+        solutions_dict: Dict[str, Solutions],
+        OI_horizon=50,
+        splitparams=False,
+        setting="fast",
     ):
         raise Exception(
             "General strategy can not be evaluated. Please make an object of the desired subclass (GreedyStrategy/MixedIntegerStrategy/TargetReliabilityStrategy"
@@ -263,7 +289,9 @@ class StrategyBase:
         betas = {}
         for n in range(0, N):
             for i in self.mechanisms:
-                len_beta1 = traject.sections[n].section_reliability.SectionReliability.shape[1]
+                len_beta1 = traject.sections[
+                    n
+                ].section_reliability.SectionReliability.shape[1]
                 beta1 = (
                     traject.sections[n]
                     .section_reliability.SectionReliability.loc[i]
@@ -279,9 +307,7 @@ class StrategyBase:
                 betas[i] = np.concatenate((beta1, beta2), axis=0)
                 if np.shape(betas[i])[1] != T:
                     betas[i] = interp1d(self.T, betas[i])(np.arange(0, T, 1))
-                self.Pf[i][
-                    n, 0 : np.size(betas[i], 0), :
-                ] = beta_to_pf(betas[i])
+                self.Pf[i][n, 0 : np.size(betas[i], 0), :] = beta_to_pf(betas[i])
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
@@ -484,12 +510,8 @@ class StrategyBase:
                 LCC = calc_tc(self.options_g_filtered[i])
 
                 tgrid = self.options_g_filtered[i]["StabilityInner"].columns.values
-                pf_SI = beta_to_pf(
-                    self.options_g_filtered[i]["StabilityInner"]
-                )
-                pf_pip = beta_to_pf(
-                    self.options_g_filtered[i]["Piping"]
-                )
+                pf_SI = beta_to_pf(self.options_g_filtered[i]["StabilityInner"])
+                pf_pip = beta_to_pf(self.options_g_filtered[i]["Piping"])
 
                 pftot1 = interp1d(tgrid, np.add(pf_SI, pf_pip))
                 risk1 = np.sum(
@@ -1137,7 +1159,9 @@ class StrategyBase:
         """Routine to write all the reliability indices in a step of the algorithm to a csv file"""
         # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
         for i in range(len(self.Probabilities)):
-            name = input_path.joinpath("ReliabilityLog_" + type + "_Step" + str(i) + ".csv")
+            name = input_path.joinpath(
+                "ReliabilityLog_" + type + "_Step" + str(i) + ".csv"
+            )
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
     def determine_risk_cost_curve(self, traject: DikeTraject, input_path: Path = None):
@@ -1165,7 +1189,9 @@ class StrategyBase:
                             self.r,
                             np.max(traject.general_info["T"]),
                             traject.general_info["FloodDamage"],
-                            dumpPt=input_path.joinpath("Greedy_step_" + str(count) + ".csv"),
+                            dumpPt=input_path.joinpath(
+                                "Greedy_step_" + str(count) + ".csv"
+                            ),
                         )
                     )
                 else:

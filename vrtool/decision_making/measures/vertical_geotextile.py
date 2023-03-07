@@ -1,15 +1,15 @@
-from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.decision_making.measures.common_calculations import determine_costs
-from vrtool.flood_defence_system.dike_section import DikeSection
 import copy
 
 import numpy as np
 
+from vrtool.decision_making.measures.common_calculations import determine_costs
+from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+
 
 class VerticalGeotextile(MeasureBase):
     def evaluate_measure(
@@ -66,7 +66,8 @@ class VerticalGeotextile(MeasureBase):
                         [self.parameters["Pf_solution"], 1.0e-16]
                     )
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load,
+                mechanism=i,
+                trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()
-

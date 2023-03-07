@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+
 from tools.HelperFunctions import flatten
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
+
 
 class MixedIntegerStrategy(StrategyBase):
     def create_optimization_model(self, BudgetLimit=False):
@@ -387,7 +389,11 @@ class MixedIntegerStrategy(StrategyBase):
         TakenMeasures = TakenMeasures.sort_values("Section")
         self.TakenMeasures = TakenMeasures
         data = pd.DataFrame(
-            {"Names": model_results["Names"], "Values": model_results["Values"], "Cost": self.CostVec}
+            {
+                "Names": model_results["Names"],
+                "Values": model_results["Values"],
+                "Cost": self.CostVec,
+            }
         )
 
         pd.set_option("display.max_columns", None)  # prevents trailing elipses
@@ -445,4 +451,3 @@ class MixedIntegerStrategy(StrategyBase):
 
             # C3
         pass
-

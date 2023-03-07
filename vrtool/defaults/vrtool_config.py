@@ -1,8 +1,10 @@
 from __future__ import annotations
+
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-import json
+
 import pandas as pd
 
 from vrtool.defaults import default_unit_costs_csv
@@ -120,7 +122,6 @@ class VrtoolConfig:
     )
 
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
-
 
     def export(self, export_path: Path):
         """

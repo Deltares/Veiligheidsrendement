@@ -3,9 +3,9 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import openturns as ot
-from vrtool.probabilistic_tools.hydra_ring_scripts import (
-    design_table_openturns,
-)
+
+from vrtool.probabilistic_tools.hydra_ring_scripts import design_table_openturns
+
 
 class LoadInput:
     # class to store load data

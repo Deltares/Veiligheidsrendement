@@ -8,10 +8,9 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
+from vrtool.flood_defence_system.mechanism_reliability import beta_sf_stability_inner
 from vrtool.flood_defence_system.mechanisms import overflow_hring, overflow_simple
-from vrtool.flood_defence_system.mechanism_reliability import (
-    beta_sf_stability_inner,
-)
+
 
 def implement_berm_widening(
     input,
