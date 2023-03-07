@@ -14,14 +14,13 @@ from vrtool.decision_making.strategy_evaluation import (
     measure_combinations,
     calc_life_cycle_risks,
     calc_tc,
-    calc_traject_prob,
     make_traject_df,
     split_options,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import plot_settings, get_section_length_in_traject
 from tools.HelperFunctions import pareto_frontier
-from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from typing import Dict
 from vrtool.decision_making.solutions import Solutions
 

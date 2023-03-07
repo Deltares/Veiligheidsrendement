@@ -10,12 +10,12 @@ import pandas as pd
 import seaborn as sns
 
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, calc_gamma, beta_to_pf
-from vrtool.decision_making.strategy_evaluation import calc_traject_prob
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability_collection import MechanismReliabilityCollection
 from typing import List
+from scipy.interpolate import interp1d
 
 class DikeTraject:
     # This class contains general information on the dike traject and is used to store all data on the sections
@@ -640,3 +640,50 @@ def get_section_length_in_traject(length):
         xticks1 = np.insert(xticks1, i * 2, cumlength[i])
     middles = (cumlength[:-1] + cumlength[1:]) / 2
     return cumlength, xticks1, middles
+
+
+def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=False):
+    pfs = {}
+    if horizon:
+        trange = np.arange(0, horizon, 1)
+    elif ts != None:
+        trange = [ts]
+    else:
+        raise ValueError("No range defined")
+    if datatype == "DataFrame":
+        ts = base.columns.values
+        if not mechs:
+            mechs = np.unique(base.index.get_level_values("mechanism").values)
+        # mechs = ['Overflow']
+    # pf_traject = np.zeros((len(ts),))
+    pf_traject = np.zeros((len(trange),))
+
+    for i in mechs:
+        if i != "Section":
+            if datatype == "DataFrame":
+                betas = base.xs(i, level="mechanism").values.astype("float")
+            else:
+                betas = base[i]
+            beta_interp = interp1d(np.array(ts).astype(np.int_), betas)
+            pfs[i] = beta_to_pf(beta_interp(trange))
+            # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
+            pnonfs = 1 - pfs[i]
+            if i == "Overflow":
+                # pf_traject += np.max(pfs[i], axis=0)
+                pf_traject = 1 - np.multiply(1 - pf_traject, 1 - np.max(pfs[i], axis=0))
+            else:
+                # pf_traject += np.sum(pfs[i], axis=0)
+                # pf_traject += 1-np.prod(pnonfs, axis=0)
+                pf_traject = 1 - np.multiply(1 - pf_traject, np.prod(pnonfs, axis=0))
+
+    ## INTERPOLATION AFTER COMBINATION:
+    # pfail = interp1d(ts,pf_traject)
+    # p_t1 = ProbabilisticFunctions.beta_to_pf(pfail(trange))
+    # betafail = interp1d(ts, ProbabilisticFunctions.pf_to_beta(pf_traject),kind='linear')
+    # beta_t = betafail(trange)
+    # p_t = ProbabilisticFunctions.beta_to_pf(np.array(beta_t, dtype=np.float64))
+
+    beta_t = pf_to_beta(pf_traject)
+    p_t = pf_traject
+    return beta_t, p_t
+

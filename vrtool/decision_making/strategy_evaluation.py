@@ -2,11 +2,11 @@ import copy
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
 
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.decision_making.solutions import Solutions
+from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 
 # This script combines two sets of measures to a single option
 def measure_combinations(combinables, partials, solutions: Solutions, splitparams=False):
@@ -86,7 +86,7 @@ def measure_combinations(combinables, partials, solutions: Solutions, splitparam
     return _combined_measures
 
 
-def get_traject_prob(traject, traject_prob, trange):
+def get_traject_prob(traject: DikeTraject, traject_prob, trange):
     for mechanism in range(0, len(traject.GeneralInfo["Mechanisms"])):
         traject_prob[mechanism, :, :] = (
             traject.Probabilities.loc[
@@ -99,7 +99,7 @@ def get_traject_prob(traject, traject_prob, trange):
     return traject_prob
 
 
-def make_traject_df(traject, cols):
+def make_traject_df(traject: DikeTraject, cols):
     # cols = cols[1:]
     sections = []
 
@@ -268,53 +268,6 @@ def calc_life_cycle_risks(
         np.savetxt(dumpPt, p_t, delimiter=",")
     TR = np.sum(risk_t)
     return TR
-
-
-def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=False):
-    pfs = {}
-    if horizon:
-        trange = np.arange(0, horizon, 1)
-    elif ts != None:
-        trange = [ts]
-    else:
-        raise ValueError("No range defined")
-    if datatype == "DataFrame":
-        ts = base.columns.values
-        if not mechs:
-            mechs = np.unique(base.index.get_level_values("mechanism").values)
-        # mechs = ['Overflow']
-    # pf_traject = np.zeros((len(ts),))
-    pf_traject = np.zeros((len(trange),))
-
-    for i in mechs:
-        if i != "Section":
-            if datatype == "DataFrame":
-                betas = base.xs(i, level="mechanism").values.astype("float")
-            else:
-                betas = base[i]
-            beta_interp = interp1d(np.array(ts).astype(np.int_), betas)
-            pfs[i] = beta_to_pf(beta_interp(trange))
-            # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
-            pnonfs = 1 - pfs[i]
-            if i == "Overflow":
-                # pf_traject += np.max(pfs[i], axis=0)
-                pf_traject = 1 - np.multiply(1 - pf_traject, 1 - np.max(pfs[i], axis=0))
-            else:
-                # pf_traject += np.sum(pfs[i], axis=0)
-                # pf_traject += 1-np.prod(pnonfs, axis=0)
-                pf_traject = 1 - np.multiply(1 - pf_traject, np.prod(pnonfs, axis=0))
-
-    ## INTERPOLATION AFTER COMBINATION:
-    # pfail = interp1d(ts,pf_traject)
-    # p_t1 = ProbabilisticFunctions.beta_to_pf(pfail(trange))
-    # betafail = interp1d(ts, ProbabilisticFunctions.pf_to_beta(pf_traject),kind='linear')
-    # beta_t = betafail(trange)
-    # p_t = ProbabilisticFunctions.beta_to_pf(np.array(beta_t, dtype=np.float64))
-
-    beta_t = pf_to_beta(pf_traject)
-    p_t = pf_traject
-    return beta_t, p_t
-
 
 # this function changes the trajectprobability of a measure is implemented:
 def implement_option(section, TrajectProbability, newProbability):
