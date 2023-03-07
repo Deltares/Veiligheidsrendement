@@ -56,6 +56,7 @@ class TestAcceptance:
     @pytest.mark.parametrize(
         "casename, traject", _acceptance_test_cases,
     )
+    @pytest.mark.skip(reason="Duplicated in run_full_model, this should become just an integration test.")
     def test_run_as_sandbox(
         self, casename: str, traject: str, request: pytest.FixtureRequest
     ):
