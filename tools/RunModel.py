@@ -54,11 +54,11 @@ def runFullModel(
 
         # compute reliability in time for each mechanism:
         # print(section.End)
-        for j in TrajectObject.GeneralInfo["MechanismsConsidered"]:
+        for j in TrajectObject.general_info["MechanismsConsidered"]:
             section.section_reliability.Mechanisms[j].generateLCRProfile(
                 section.section_reliability.Load,
                 mechanism=j,
-                trajectinfo=TrajectObject.GeneralInfo,
+                trajectinfo=TrajectObject.general_info,
             )
 
         # aggregate to section reliability:
@@ -77,10 +77,10 @@ def runFullModel(
                 [config.t_0, config.t_0 + np.max(config.T)],
                 [
                     pb_functions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
+                        TrajectObject.general_info["Pmax"]
                     ),
                     pb_functions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
+                        TrajectObject.general_info["Pmax"]
                     ),
                 ],
                 "k--",
@@ -102,7 +102,7 @@ def runFullModel(
             plt.close()
 
     # aggregate computed initial probabilities to DataFrame in TrajectObject:
-    TrajectObject.setProbabilities()
+    TrajectObject.set_probabilities()
 
     # Plot initial reliability for TrajectObject:
     case_settings = {
@@ -111,7 +111,7 @@ def runFullModel(
         "beta_or_prob": config.beta_or_prob,
     }
     if plot_mode != "test":
-        TrajectObject.plotAssessment(
+        TrajectObject.plot_assessment(
             fig_size=(12, 4),
             draw_targetbeta="off",
             last=True,
@@ -157,7 +157,7 @@ def runFullModel(
             AllSolutions[i.name].fillSolutions(
                 config.input_directory.joinpath(i.name + ".xlsx")
             )
-            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
+            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.general_info)
 
     for i in TrajectObject.sections:
         AllSolutions[i.name].SolutionstoDataFrame(filtering="off", splitparams=True)
@@ -189,8 +189,8 @@ def runFullModel(
             for betaind in betaind_array:
                 for mech in plt_mech:
                     requiredbeta = pb_functions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
-                        * (i.Length / TrajectObject.GeneralInfo["TrajectLength"])
+                        TrajectObject.general_info["Pmax"]
+                        * (i.Length / TrajectObject.general_info["TrajectLength"])
                     )
                     plt.figure(1001)
                     AllSolutions[i.name].plotBetaTimeEuro(

@@ -20,7 +20,7 @@ class ResultsSafetyAssessment(VrToolRunResultProtocol):
             self.vr_config.output_directory.mkdir(parents=True)
 
         # Previously this plotting would be skipped for 'test' type of plotting.
-        self.selected_traject.plotAssessment(
+        self.selected_traject.plot_assessment(
             fig_size=(12, 4),
             draw_targetbeta="off",
             last=True,

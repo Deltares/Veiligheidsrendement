@@ -449,7 +449,7 @@ class StrategyBase:
 
         # add discounted damage [T,]
         self.D = np.array(
-            traject.GeneralInfo["FloodDamage"]
+            traject.general_info["FloodDamage"]
             * (1 / ((1 + self.r) ** np.arange(0, T, 1)))
         )
 
@@ -470,7 +470,7 @@ class StrategyBase:
         It is based on defining a Pareto front, its main idea is that you throw out measures that have a certain reliability but are more costly than other measures that provide the same reliability."""
         self.options_height, self.options_geotechnical = split_options(self.options)
         if type == "ParetoPerSection":
-            damage = traject.GeneralInfo["FloodDamage"]
+            damage = traject.general_info["FloodDamage"]
             r = self.r
             horizon = np.max(self.T)
             self.options_g_filtered = copy.deepcopy(self.options_geotechnical)
@@ -604,8 +604,8 @@ class StrategyBase:
             plt.plot(
                 [2025, 2025 + horizon],
                 [
-                    pf_to_beta(traject.GeneralInfo["Pmax"]),
-                    pf_to_beta(traject.GeneralInfo["Pmax"]),
+                    pf_to_beta(traject.general_info["Pmax"]),
+                    pf_to_beta(traject.general_info["Pmax"]),
                 ],
                 "k--",
                 label="Norm",
@@ -864,8 +864,8 @@ class StrategyBase:
                 plt.plot(
                     [0, ceiling],
                     [
-                        pf_to_beta(traject.GeneralInfo["Pmax"]),
-                        pf_to_beta(traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.general_info["Pmax"]),
+                        pf_to_beta(traject.general_info["Pmax"]),
                     ],
                     "k--",
                     label="Safety standard",
@@ -875,7 +875,7 @@ class StrategyBase:
             if self.beta_or_prob == "prob":
                 plt.plot(
                     [0, ceiling],
-                    [traject.GeneralInfo["Pmax"], traject.GeneralInfo["Pmax"]],
+                    [traject.general_info["Pmax"], traject.general_info["Pmax"]],
                     "k--",
                     label="Safety standard",
                 )
@@ -962,8 +962,8 @@ class StrategyBase:
         color = ["r", "g", "b", "k"]
 
         cumlength, xticks1, middles = get_section_length_in_traject(
-            traject.Probabilities["Length"]
-            .loc[traject.Probabilities.index.get_level_values(1) == "Overflow"]
+            traject.probabilities["Length"]
+            .loc[traject.probabilities.index.get_level_values(1) == "Overflow"]
             .values
         )
 
@@ -1006,8 +1006,8 @@ class StrategyBase:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pf_to_beta(traject.GeneralInfo["Pmax"]),
-                        pf_to_beta(traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.general_info["Pmax"]),
+                        pf_to_beta(traject.general_info["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1088,8 +1088,8 @@ class StrategyBase:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pf_to_beta(traject.GeneralInfo["Pmax"]),
-                        pf_to_beta(traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.general_info["Pmax"]),
+                        pf_to_beta(traject.general_info["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1163,8 +1163,8 @@ class StrategyBase:
                         calc_life_cycle_risks(
                             i,
                             self.r,
-                            np.max(traject.GeneralInfo["T"]),
-                            traject.GeneralInfo["FloodDamage"],
+                            np.max(traject.general_info["T"]),
+                            traject.general_info["FloodDamage"],
                             dumpPt=input_path.joinpath("Greedy_step_" + str(count) + ".csv"),
                         )
                     )
@@ -1173,8 +1173,8 @@ class StrategyBase:
                         calc_life_cycle_risks(
                             i,
                             self.r,
-                            np.max(traject.GeneralInfo["T"]),
-                            traject.GeneralInfo["FloodDamage"],
+                            np.max(traject.general_info["T"]),
+                            traject.general_info["FloodDamage"],
                         )
                     )
                 count += 1
@@ -1207,7 +1207,7 @@ class StrategyBase:
                 else:
                     option_index.append(-999)
             # implement the options 1 by 1
-            Probability = make_traject_df(traject, traject.GeneralInfo["T"])
+            Probability = make_traject_df(traject, traject.general_info["T"])
             ProbabilitySteps = []
             ProbabilitySteps.append(copy.deepcopy(Probability))
             for i in range(0, len(option_index)):
@@ -1223,8 +1223,8 @@ class StrategyBase:
             costs["TR"] = calc_life_cycle_risks(
                 ProbabilitySteps[-1],
                 self.r,
-                np.max(traject.GeneralInfo["T"]),
-                traject.GeneralInfo["FloodDamage"],
+                np.max(traject.general_info["T"]),
+                traject.general_info["FloodDamage"],
                 dumpPt=input_path.joinpath("MixedInteger.csv"),
             )
             costs["TC"] = np.add(costs["TR"], costs["LCC"])
@@ -1262,8 +1262,8 @@ class StrategyBase:
         # TODO check labeling
         # set the lengths of the sections
         cumlength, xticks1, middles = get_section_length_in_traject(
-            traject.Probabilities["Length"]
-            .loc[traject.Probabilities.index.get_level_values(1) == "Overflow"]
+            traject.probabilities["Length"]
+            .loc[traject.probabilities.index.get_level_values(1) == "Overflow"]
             .values
         )
         if colors:
@@ -1294,7 +1294,7 @@ class StrategyBase:
             if greedymode == "Optimal":
                 Solution = copy.deepcopy(self.OptimalSolution)
             elif greedymode == "SatisfiedStandard":
-                self.get_safety_standard_step(traject.GeneralInfo["Pmax"])
+                self.get_safety_standard_step(traject.general_info["Pmax"])
                 self.make_solution(
                     input_path.joinpath("SatisfiedStandardGreedy.csv"),
                     step=self.SafetyStandardStep + 1,

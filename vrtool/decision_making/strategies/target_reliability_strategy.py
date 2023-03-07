@@ -29,27 +29,27 @@ class TargetReliabilityStrategy(StrategyBase):
 
         # compute cross sectional requirements
         N_piping = 1 + (
-            traject.GeneralInfo["aPiping"]
-            * traject.GeneralInfo["TrajectLength"]
-            / traject.GeneralInfo["bPiping"]
+            traject.general_info["aPiping"]
+            * traject.general_info["TrajectLength"]
+            / traject.general_info["bPiping"]
         )
         N_stab = 1 + (
-            traject.GeneralInfo["aStabilityInner"]
-            * traject.GeneralInfo["TrajectLength"]
-            / traject.GeneralInfo["bStabilityInner"]
+            traject.general_info["aStabilityInner"]
+            * traject.general_info["TrajectLength"]
+            / traject.general_info["bStabilityInner"]
         )
         N_overflow = 1
         beta_cs_piping = pf_to_beta(
-            traject.GeneralInfo["Pmax"] * traject.GeneralInfo["omegaPiping"] / N_piping
+            traject.general_info["Pmax"] * traject.general_info["omegaPiping"] / N_piping
         )
         beta_cs_stabinner = pf_to_beta(
-            traject.GeneralInfo["Pmax"]
-            * traject.GeneralInfo["omegaStabilityInner"]
+            traject.general_info["Pmax"]
+            * traject.general_info["omegaStabilityInner"]
             / N_stab
         )
         beta_cs_overflow = pf_to_beta(
-            traject.GeneralInfo["Pmax"]
-            * traject.GeneralInfo["omegaOverflow"]
+            traject.general_info["Pmax"]
+            * traject.general_info["omegaOverflow"]
             / N_overflow
         )
 
@@ -88,11 +88,11 @@ class TargetReliabilityStrategy(StrategyBase):
                 )
                 beta_T_piping = pf_to_beta(
                     beta_to_pf(beta_cs_piping)
-                    * (i.Length / traject.GeneralInfo["bPiping"])
+                    * (i.Length / traject.general_info["bPiping"])
                 )
                 beta_T_stabinner = pf_to_beta(
                     beta_to_pf(beta_cs_stabinner)
-                    * (i.Length / traject.GeneralInfo["bStabilityInner"])
+                    * (i.Length / traject.general_info["bStabilityInner"])
                 )
             else:
                 beta_T_piping = beta_cs_piping
@@ -149,7 +149,7 @@ class TargetReliabilityStrategy(StrategyBase):
                 original_section=TrajectProbability.loc[i.name],
                 r=self.r,
                 horizon=cols[-1],
-                damage=traject.GeneralInfo["FloodDamage"],
+                damage=traject.general_info["FloodDamage"],
             )
             BC = dR / LCC[idx]
 

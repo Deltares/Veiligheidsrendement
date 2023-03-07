@@ -168,7 +168,7 @@ class SoilReinforcement(MeasureBase):
             self.measures[-1]["Reliability"].Mechanisms = {}
 
             for i in mechanisms:
-                calc_type = dike_section.MechanismData[i][1]
+                calc_type = dike_section.mechanism_data[i][1]
                 self.measures[-1]["Reliability"].Mechanisms[
                     i
                 ] = MechanismReliabilityCollection(

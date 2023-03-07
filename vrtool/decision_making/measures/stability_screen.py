@@ -49,7 +49,7 @@ class StabilityScreen(MeasureBase):
         self.measures["Reliability"] = SectionReliability()
         self.measures["Reliability"].Mechanisms = {}
         for i in mechanisms:
-            calc_type = dike_section.MechanismData[i][1]
+            calc_type = dike_section.mechanism_data[i][1]
             self.measures["Reliability"].Mechanisms[i] = MechanismReliabilityCollection(
                 i, calc_type, self.config
             )

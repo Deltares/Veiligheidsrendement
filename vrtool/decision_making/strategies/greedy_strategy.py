@@ -449,7 +449,7 @@ class GreedyStrategy(StrategyBase):
                         i,
                         self.r,
                         np.max(self.T),
-                        traject.GeneralInfo["FloodDamage"],
+                        traject.general_info["FloodDamage"],
                         dumpPt=output_path.joinpath("Greedy_step_" + str(count) + ".csv"),
                     )
                 )
@@ -459,7 +459,7 @@ class GreedyStrategy(StrategyBase):
                         i,
                         self.r,
                         np.max(self.T),
-                        traject.GeneralInfo["FloodDamage"],
+                        traject.general_info["FloodDamage"],
                     )
                 )
             count += 1

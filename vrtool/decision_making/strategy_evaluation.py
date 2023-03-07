@@ -87,11 +87,11 @@ def measure_combinations(combinables, partials, solutions: Solutions, splitparam
 
 
 def get_traject_prob(traject: DikeTraject, traject_prob, trange):
-    for mechanism in range(0, len(traject.GeneralInfo["Mechanisms"])):
+    for mechanism in range(0, len(traject.general_info["Mechanisms"])):
         traject_prob[mechanism, :, :] = (
-            traject.Probabilities.loc[
-                traject.Probabilities["index"]
-                == traject.GeneralInfo["Mechanisms"][mechanism]
+            traject.probabilities.loc[
+                traject.probabilities["index"]
+                == traject.general_info["Mechanisms"][mechanism]
             ]
             .drop(["index", "Section", "Length"], axis=1)
             .values
@@ -106,7 +106,7 @@ def make_traject_df(traject: DikeTraject, cols):
     for i in traject.sections:
         sections.append(i.name)
 
-    mechanisms = list(traject.sections[0].MechanismData.keys()) + ["Section"]
+    mechanisms = list(traject.sections[0].mechanism_data.keys()) + ["Section"]
     df_index = pd.MultiIndex.from_product(
         [sections, mechanisms], names=["name", "mechanism"]
     )

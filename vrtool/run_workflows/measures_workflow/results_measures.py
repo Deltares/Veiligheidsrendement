@@ -34,10 +34,10 @@ class ResultsMeasures(VrToolRunResultProtocol):
             for betaind in betaind_array:
                 for mech in plt_mech:
                     requiredbeta = pf_to_beta(
-                        self.selected_traject.GeneralInfo["Pmax"]
+                        self.selected_traject.general_info["Pmax"]
                         * (
                             i.Length
-                            / self.selected_traject.GeneralInfo["TrajectLength"]
+                            / self.selected_traject.general_info["TrajectLength"]
                         )
                     )
                     plt.figure(1001)

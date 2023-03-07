@@ -149,13 +149,6 @@ def get_measure_table(AllSolutions,language ='NL',abbrev=False):
             OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Stabiliteitsscherm', 'Stability Screen')
     return OverallMeasureTable
 
-
-
-
-def createDir(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
 #this is a more generic function to read and write data from and to a shelve. But it is not implemented fully:
 # TODO implement DataAtShelve instead of (un)commenting snippets of code
 def DataAtShelve(dir, name, objects = None, mode = 'write'):

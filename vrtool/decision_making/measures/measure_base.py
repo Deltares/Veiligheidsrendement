@@ -31,15 +31,3 @@ class MeasureBase:
         preserve_slope: bool = False,
     ):
         raise Exception("define subclass of measure")
-
-    #     from HelperFunctions import createDir
-    #
-    #     #To be added: year property to distinguish the same measure in year 2025 and 2045
-    #     type = self.parameters['Type']
-    #     mechanisms = DikeSection.Reliability.Mechanisms.keys()
-    #     SFincrease = 0.2        #for stability screen
-    #     if config.geometry_plot:
-    #         plt.figure(1000)
-    #         createDir(config.directory.joinpath('figures',DikeSection.name,'Geometry'))
-
-    # different types of measures:

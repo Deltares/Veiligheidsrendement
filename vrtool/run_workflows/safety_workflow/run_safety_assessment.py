@@ -39,11 +39,11 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
             # compute reliability in time for each mechanism:
             # logging.info(section.End)
-            for j in self.selected_traject.GeneralInfo["MechanismsConsidered"]:
+            for j in self.selected_traject.general_info["MechanismsConsidered"]:
                 _section.section_reliability.Mechanisms[j].generateLCRProfile(
                     _section.section_reliability.Load,
                     mechanism=j,
-                    trajectinfo=self.selected_traject.GeneralInfo,
+                    trajectinfo=self.selected_traject.general_info,
                 )
 
             # aggregate to section reliability:
@@ -54,7 +54,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
                 self._plot_reliability_in_time(_section)
 
         # aggregate computed initial probabilities to DataFrame in selected_traject:
-        self.selected_traject.setProbabilities()
+        self.selected_traject.set_probabilities()
 
         _results = ResultsSafetyAssessment()
         _results.selected_traject = self.selected_traject
@@ -83,8 +83,8 @@ class RunSafetyAssessment(VrToolRunProtocol):
         plt.plot(
             [self.vr_config.t_0, self.vr_config.t_0 + np.max(self.vr_config.T)],
             [
-                pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
-                pf_to_beta(self.selected_traject.GeneralInfo["Pmax"]),
+                pf_to_beta(self.selected_traject.general_info["Pmax"]),
+                pf_to_beta(self.selected_traject.general_info["Pmax"]),
             ],
             "k--",
             label="Norm",
