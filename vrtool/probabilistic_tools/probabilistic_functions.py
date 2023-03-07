@@ -86,7 +86,7 @@ def compute_decimation_height(h, p, n=2):
     return (h_high - h_low) / n
 
 
-def MHWtoGumbel(MHW, p, d):
+def calculate_mhw_to_gumbel(MHW, p, d):
     a = MHW + d * np.log(-(np.log(1 - p))) / (
         np.log(-np.log(1 - p)) - np.log(-np.log(1 - p / 10))
     )
@@ -236,7 +236,7 @@ class TableDist(ot.PythonDistribution):
         return X
 
 
-def FragilityIntegration(
+def calculate_fragility_integration(
     FragilityCurve, WaterLevelDist, WaterLevelChange=False, N=1600, PrintResults=False
 ):
     if WaterLevelChange:
@@ -259,7 +259,7 @@ def FragilityIntegration(
     px = norm.cdf(ux)
     interpolator = sp.interpolate.interp1d(p, x, fill_value="extrapolate")
     h = interpolator(px)
-    cdf_hc = GetValueFromFragilityCurve(FragilityCurve, Value="pf", x=h)
+    cdf_hc = get_value_from_fagility_curve(FragilityCurve, Value="pf", x=h)
     dx = ux[1] - ux[0]
     pdf_h = norm.pdf(ux)
     Pfs = cdf_hc * pdf_h * dx
@@ -283,7 +283,7 @@ def FragilityIntegration(
     return Pf, beta
 
 
-def GetValueFromFragilityCurve(FragilityCurve, Value, x):
+def get_value_from_fagility_curve(FragilityCurve, Value, x):
     if Value == "h":
         interpolator = sp.interpolate.interp1d(
             FragilityCurve["beta"], FragilityCurve["h"], fill_value="extrapolate"
@@ -375,7 +375,7 @@ def run_DIRS(
     return result, algo
 
 
-def IterativeFC_calculation(
+def iterative_fc_calculation(
     marginals, WL, names, zFunc, method, step=0.5, lolim=10e-4, hilim=0.999
 ):
     marginals[len(marginals) - 1] = ot.Dirac(float(WL))
@@ -544,11 +544,11 @@ def upscale_cdf(dist, t=1, testPlot="off", change_dist=None, change_step=1, Ngri
     return newdist
 
 
-def getDesignWaterLevel(load, p):
+def get_design_water_level(load, p):
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
 
-def addLoadCharVals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0):
+def add_load_char_vals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0):
     # TODO this function should be moved elsewhere
     # input = list of all strength variables
 
@@ -585,7 +585,7 @@ def addLoadCharVals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0
     return input
 
 
-def MarginalsforTimeDepReliability(input, load=None, year=0, type=None):
+def marginals_for_time_dep_reliability(input, load=None, year=0, type=None):
     marginals = []
     names = []
 

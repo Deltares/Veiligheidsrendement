@@ -6,11 +6,11 @@ from scipy import interpolate
 import vrtool.flood_defence_system.mechanisms as fds_mechanisms
 from vrtool.flood_defence_system.mechanism_input import MechanismInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
-    FragilityIntegration,
-    IterativeFC_calculation,
+    calculate_fragility_integration,
+    iterative_fc_calculation,
     TableDist,
     temporal_process,
-    addLoadCharVals,
+    add_load_char_vals,
     beta_to_pf,
     pf_to_beta,
     run_prob_calc,
@@ -84,7 +84,7 @@ class MechanismReliability:
             names.append("h")
 
             if splitPiping == "yes":
-                result_heave, Pheave, wl_heave = IterativeFC_calculation(
+                result_heave, Pheave, wl_heave = iterative_fc_calculation(
                     marginals,
                     start,
                     names,
@@ -94,7 +94,7 @@ class MechanismReliability:
                     lolim,
                     hilim,
                 )
-                result_piping, Ppiping, wl_piping = IterativeFC_calculation(
+                result_piping, Ppiping, wl_piping = iterative_fc_calculation(
                     marginals,
                     start,
                     names,
@@ -104,7 +104,7 @@ class MechanismReliability:
                     lolim,
                     hilim,
                 )
-                result_uplift, Puplift, wl_uplift = IterativeFC_calculation(
+                result_uplift, Puplift, wl_uplift = iterative_fc_calculation(
                     marginals,
                     start,
                     names,
@@ -131,7 +131,7 @@ class MechanismReliability:
                 self.wlPiping = wl_piping
 
             if splitPiping == "no":
-                result_total, Ptotal, wl_total = IterativeFC_calculation(
+                result_total, Ptotal, wl_total = iterative_fc_calculation(
                     marginals,
                     start,
                     names,
@@ -167,7 +167,7 @@ class MechanismReliability:
             result = []
             marginals.append(ot.Dirac(1.0))
             names.append("h")  # add the load
-            result, P, wl = IterativeFC_calculation(
+            result, P, wl = iterative_fc_calculation(
                 marginals,
                 start,
                 names,
@@ -303,7 +303,7 @@ class MechanismReliability:
                 original = copy.deepcopy(load.dist_change)
                 dist_change = temporal_process(original, year)
                 # marginals = [self.Input.input['FC'], load, dist_change]
-                P, beta = FragilityIntegration(
+                P, beta = calculate_fragility_integration(
                     self.Input.input["FC"], load, WaterLevelChange=dist_change
                 )
 
@@ -345,7 +345,7 @@ class MechanismReliability:
                         ) if i not in strength.temporals else start_vals.append(
                             strength.char_vals[i] * year
                         )
-                start_vals = addLoadCharVals(start_vals, self.t_0, load)
+                start_vals = add_load_char_vals(start_vals, self.t_0, load)
             else:
                 start_vals = self.Input.input.getMean()
 
@@ -397,7 +397,7 @@ class MechanismReliability:
                     # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
                     # inputs['h'] = load.NormWaterLevel
                     # TODO aanpassen met nieuwe belastingmodel
-                    inputs = addLoadCharVals(
+                    inputs = add_load_char_vals(
                         strength_new.input_ind,
                         t_0=self.t_0,
                         load=load,
