@@ -1,21 +1,24 @@
 import copy
+from typing import Dict
 
 import numpy as np
 import pandas as pd
+from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategies.mixed_integer_strategy import MixedIntegerStrategy
 from tools.HelperFunctions import get_measure_table
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 class ParetoFrontier(StrategyBase):
     """This is a subclass for generating a ParetoFrontier based on Mixed Integer evaluations with a budget limit."""
 
-    def evaluate(self, traject_obj, solutions_collection, lcc_list: bool=False, strategy_path=False):
+    def evaluate(self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], lcc_list: bool=False, strategy_path=False):
         if not lcc_list:
             print()
             # run optimization and generate list on that
         _mip_object = MixedIntegerStrategy("MIPObject")
-        _mip_object.combine(traject_obj, solutions_collection, splitparams=True)
-        _mip_object.make_optimization_input(traject_obj, solutions_collection)
+        _mip_object.combine(traject, solutions_dict, splitparams=True)
+        _mip_object.make_optimization_input(traject, solutions_dict)
 
         MIPObjects = []
         MIPModels = []
@@ -37,7 +40,7 @@ class ParetoFrontier(StrategyBase):
             MIPResult["Status"] = MIPModels[-1].solution.get_status_string()
             MIPResults.append(MIPResult)
             MIPObjects[-1].readResults(
-                MIPResults[-1], MeasureTable=get_measure_table(solutions_collection)
+                MIPResults[-1], MeasureTable=get_measure_table(solutions_dict)
             )
             MIPObjects[-1].TakenMeasures.to_csv(
                 strategy_path.joinpath("Pareto_LCC=" + str(np.int32(lcc_list[j])) + ".csv")

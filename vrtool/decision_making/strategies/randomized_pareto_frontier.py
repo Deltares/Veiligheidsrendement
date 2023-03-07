@@ -1,12 +1,16 @@
 
 import copy
+from pathlib import Path
+from typing import Dict
 
 import numpy as np
 import pandas as pd
+from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 
 import itertools
 from tools.HelperFunctions import pareto_frontier
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 class RandomizedParetoFrontier(StrategyBase):
     # Old Pareto Routine: evaluates random combinations of measures.
@@ -34,15 +38,18 @@ class RandomizedParetoFrontier(StrategyBase):
 
     def evaluate(
         self,
-        traject,
-        solutions,
-        PATH,
+        traject: DikeTraject,
+        solutions: Dict[str, Solutions],
+        output_path: Path,
         splitparams=False,
         NrSets=1,
         NrSamples=100,
         greedystrategy=False,
         StartSet=0,
     ):
+        """
+        TODO: This method does not follow the parent implementation.
+        """
         self.option_combis = []
         self.LCC_combis = []
         self.TotalRisk_combis = []
@@ -305,7 +312,7 @@ class RandomizedParetoFrontier(StrategyBase):
                 columns=["LCC", "TR", "TC"],
             )
             if greedystrategy and j == set_range - 1:
-                Results.to_csv(PATH.joinpath("ParetoResultsGreedy.csv"))
+                Results.to_csv(output_path.joinpath("ParetoResultsGreedy.csv"))
                 print("Set " + str(j + 1) + " of " + str(set_range) + " finished")
             else:
                 p_frontX, p_frontY, index = pareto_frontier(
@@ -315,7 +322,7 @@ class RandomizedParetoFrontier(StrategyBase):
                     maxY=False,
                 )
                 Results.iloc[index].to_csv(
-                    PATH.joinpath("ParetoResults" + str(j) + ".csv")
+                    output_path.joinpath("ParetoResults" + str(j) + ".csv")
                 )
                 print("Set " + str(j + 1) + " of " + str(set_range) + " finished")
 

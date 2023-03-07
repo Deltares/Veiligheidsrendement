@@ -214,7 +214,7 @@ class StrategyBase:
             self.options[section.name] = StrategyData.reset_index(drop=True)
 
     def evaluate(
-        self, traject, solutions, OI_horizon=50, splitparams=False, setting="fast"
+        self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], OI_horizon=50, splitparams=False, setting="fast"
     ):
         raise Exception(
             "General strategy can not be evaluated. Please make an object of the desired subclass (GreedyStrategy/MixedIntegerStrategy/TargetReliabilityStrategy"
@@ -522,7 +522,7 @@ class StrategyBase:
             self.options_geotechnical_filtered = copy.deepcopy(self.options_g_filtered)
             del self.options_g_filtered
 
-    def make_solution(self, path, step=False, type="Final"):
+    def make_solution(self, csv_path, step=False, type="Final"):
         """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
         There are 3 types:
         FinalSolution: which is the result in the last step of the optimization
@@ -579,16 +579,16 @@ class StrategyBase:
         Solution["name"] = names
         if type == "Final":
             self.FinalSolution = Solution
-            self.FinalSolution.to_csv(path)
+            self.FinalSolution.to_csv(csv_path)
         elif type == "Optimal":
             self.OptimalSolution = Solution
-            self.OptimalSolution.to_csv(path)
+            self.OptimalSolution.to_csv(csv_path)
             self.OptimalStep = step - 1
         elif type == "SatisfiedStandard":
             self.SatisfiedStandardSolution = Solution
-            self.SatisfiedStandardSolution.to_csv(path)
+            self.SatisfiedStandardSolution.to_csv(csv_path)
 
-    def plot_beta_time(self, Traject, typ="single", path=None):
+    def plot_beta_time(self, traject: DikeTraject, typ="single", path=None):
         """This routine plots the reliability in time for each step in the optimization. Mainly for debugging purposes."""
         horizon = np.max(self.T)
 
@@ -605,8 +605,8 @@ class StrategyBase:
             plt.plot(
                 [2025, 2025 + horizon],
                 [
-                    pf_to_beta(Traject.GeneralInfo["Pmax"]),
-                    pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                    pf_to_beta(traject.GeneralInfo["Pmax"]),
+                    pf_to_beta(traject.GeneralInfo["Pmax"]),
                 ],
                 "k--",
                 label="Norm",
@@ -624,7 +624,7 @@ class StrategyBase:
 
     def plot_beta_costs(
         self,
-        Traject,
+        traject: DikeTraject,
         save_dir,
         fig_id,
         series_name=None,
@@ -678,7 +678,7 @@ class StrategyBase:
             markersize2 = self.beta_cost_settings["markersize"]
 
         if "years" not in locals():
-            years = Traject.Sections[
+            years = traject.Sections[
                 0
             ].section_reliability.SectionReliability.columns.values.astype("float")
             horizon = np.max(years)
@@ -865,8 +865,8 @@ class StrategyBase:
                 plt.plot(
                     [0, ceiling],
                     [
-                        pf_to_beta(Traject.GeneralInfo["Pmax"]),
-                        pf_to_beta(Traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label="Safety standard",
@@ -876,7 +876,7 @@ class StrategyBase:
             if self.beta_or_prob == "prob":
                 plt.plot(
                     [0, ceiling],
-                    [Traject.GeneralInfo["Pmax"], Traject.GeneralInfo["Pmax"]],
+                    [traject.GeneralInfo["Pmax"], traject.GeneralInfo["Pmax"]],
                     "k--",
                     label="Safety standard",
                 )
@@ -929,7 +929,7 @@ class StrategyBase:
 
     def plot_investment_limit(
         self,
-        TestCase,
+        traject: DikeTraject,
         investmentlimit=False,
         step2=False,
         path=None,
@@ -951,20 +951,20 @@ class StrategyBase:
             label_ylabel = r"Betrouwbaarheidsindex $\beta$ [-/jaar]"
             label_target = "Doelbetrouwbaarheid"
             labels_xticks = []
-            for i in TestCase.Sections:
+            for i in traject.Sections:
                 labels_xticks.append(i.name)
         elif language == "EN":
             label_xlabel = "Dike sections"
             label_ylabel = r"Reliability index $\beta$ [-/year]"
             label_target = "Target reliability"
             labels_xticks = []
-            for i in TestCase.Sections:
+            for i in traject.Sections:
                 labels_xticks.append("S" + i[-2:])
         color = ["r", "g", "b", "k"]
 
         cumlength, xticks1, middles = get_section_length_in_traject(
-            TestCase.Probabilities["Length"]
-            .loc[TestCase.Probabilities.index.get_level_values(1) == "Overflow"]
+            traject.Probabilities["Length"]
+            .loc[traject.Probabilities.index.get_level_values(1) == "Overflow"]
             .values
         )
 
@@ -1007,8 +1007,8 @@ class StrategyBase:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
-                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1089,8 +1089,8 @@ class StrategyBase:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
-                        pf_to_beta(TestCase.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.GeneralInfo["Pmax"]),
+                        pf_to_beta(traject.GeneralInfo["Pmax"]),
                     ],
                     "k--",
                     label=label_target,
@@ -1134,14 +1134,14 @@ class StrategyBase:
                     )
                 plt.close()
 
-    def write_reliability_to_csv(self, path, type):
+    def write_reliability_to_csv(self, input_path: Path, type):
         """Routine to write all the reliability indices in a step of the algorithm to a csv file"""
         # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
         for i in range(len(self.Probabilities)):
-            name = path.joinpath("ReliabilityLog_" + type + "_Step" + str(i) + ".csv")
+            name = input_path.joinpath("ReliabilityLog_" + type + "_Step" + str(i) + ".csv")
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
-    def determine_risk_cost_curve(self, traject, input_path: Path = None):
+    def determine_risk_cost_curve(self, traject: DikeTraject, input_path: Path = None):
         """This routine writes a curve for total risk versus total cost for a certain solution. Not standard output but can be used for validation.
         Uses output from ReliabilityToCSV"""
 
@@ -1246,8 +1246,8 @@ class StrategyBase:
 
     def plot_measures(
         self,
-        traject,
-        PATH,
+        traject: DikeTraject,
+        input_path: Path,
         fig_size=(12, 4),
         crestscale=25.0,
         creststep=0.5,
@@ -1297,7 +1297,7 @@ class StrategyBase:
             elif greedymode == "SatisfiedStandard":
                 self.get_safety_standard_step(traject.GeneralInfo["Pmax"])
                 self.make_solution(
-                    PATH.joinpath("SatisfiedStandardGreedy.csv"),
+                    input_path.joinpath("SatisfiedStandardGreedy.csv"),
                     step=self.SafetyStandardStep + 1,
                     type="SatisfiedStandard",
                 )
@@ -1448,7 +1448,7 @@ class StrategyBase:
             ax.set_title(title_in)
         ax1.axis("off")
         plt.savefig(
-            PATH.joinpath(self.__class__.__name__ + "_measures.png"),
+            input_path.joinpath(self.__class__.__name__ + "_measures.png"),
             dpi=300,
             bbox_inches="tight",
             format="png",

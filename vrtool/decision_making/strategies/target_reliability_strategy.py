@@ -1,9 +1,12 @@
 import copy
 import logging
+from typing import Dict
 
 import numpy as np
 import pandas as pd
+from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 from vrtool.decision_making.strategy_evaluation import (
@@ -19,9 +22,9 @@ class TargetReliabilityStrategy(StrategyBase):
     """Subclass for evaluation in accordance with basic OI2014 approach.
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability"""
 
-    def evaluate(self, traject, solutions, splitparams=False):
+    def evaluate(self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], splitparams=False):
         cols = list(
-            solutions[list(solutions.keys())[0]].MeasureData["Section"].columns.values
+            solutions_dict[list(solutions_dict.keys())[0]].MeasureData["Section"].columns.values
         )
 
         # compute cross sectional requirements
@@ -151,7 +154,7 @@ class TargetReliabilityStrategy(StrategyBase):
             BC = dR / LCC[idx]
 
             if splitparams:
-                name = id_to_name(measure["ID"].values[0], solutions[i.name].measure_table)
+                name = id_to_name(measure["ID"].values[0], solutions_dict[i.name].measure_table)
                 data_opt = pd.DataFrame(
                     [
                         [

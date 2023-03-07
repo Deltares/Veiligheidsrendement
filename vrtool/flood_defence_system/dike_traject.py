@@ -640,7 +640,3 @@ def get_section_length_in_traject(length):
         xticks1 = np.insert(xticks1, i * 2, cumlength[i])
     middles = (cumlength[:-1] + cumlength[1:]) / 2
     return cumlength, xticks1, middles
-
-
-# DEPENDENT IMPORT (this has to be here to prevent a circular reference in the code)
-from tools.HelperFunctions import createDir

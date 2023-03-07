@@ -1,18 +1,22 @@
 
 import copy
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.decision_making.strategy_evaluation import evaluate_risk, overflow_bundling, update_probability, calc_life_cycle_risks
 import time
+from typing import Dict
 
 class GreedyStrategy(StrategyBase):
     def evaluate(
         self,
-        traject,
-        solutions,
+        traject: DikeTraject,
+        solutions_dict: Dict[str, Solutions],
         splitparams=False,
         setting="fast",
         BCstop=0.1,
@@ -244,10 +248,10 @@ class GreedyStrategy(StrategyBase):
         # my_shelf.close()
 
         self.write_greedy_results(
-            traject, solutions, measure_list, BC_list, Probabilities
+            traject, solutions_dict, measure_list, BC_list, Probabilities
         )
 
-    def write_greedy_results(self, traject, solutions, measure_list, BC, Probabilities):
+    def write_greedy_results(self, traject: DikeTraject, solutions_dict: Dict[str, Solutions], measure_list, BC, Probabilities):
         """This writes the results of a step to a list of dataframes for all steps."""
         # TODO We need to think about how to include outward reinforcement here. Can we formulate outward reinforcement as a 'dberm'?
         TakenMeasuresHeaders = [
@@ -383,9 +387,9 @@ class GreedyStrategy(StrategyBase):
                 )
             # get the name
             names.append(
-                solutions[traject.Sections[i[0]].name]
+                solutions_dict[traject.Sections[i[0]].name]
                 .measure_table.loc[
-                    solutions[traject.Sections[i[0]].name].measure_table["ID"] == ID[-1]
+                    solutions_dict[traject.Sections[i[0]].name].measure_table["ID"] == ID[-1]
                 ]["Name"]
                 .values[0][0]
             )
@@ -425,13 +429,11 @@ class GreedyStrategy(StrategyBase):
             combined = combined.set_index(["name", "mechanism"])
             self.Probabilities.append(combined)
 
-    def determine_risk_cost_curve(self, TrajectObject, PATH=False):
+    def determine_risk_cost_curve(self, traject: DikeTraject, output_path: Path = None):
         """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""
-        if PATH:
-            PATH.mkdir(parents=True, exist_ok=True)
+        if output_path:
+            output_path.mkdir(parents=True, exist_ok=True)
 
-        else:
-            PATH = False
         if not hasattr(self, "TakenMeasures"):
             raise TypeError("TakenMeasures not found")
         costs = {}
@@ -441,14 +443,14 @@ class GreedyStrategy(StrategyBase):
         costs["LCC"] = np.cumsum(self.TakenMeasures["LCC"].values)
         count = 0
         for i in self.Probabilities:
-            if PATH:
+            if output_path:
                 costs["TR"].append(
                     calc_life_cycle_risks(
                         i,
                         self.r,
                         np.max(self.T),
-                        TrajectObject.GeneralInfo["FloodDamage"],
-                        dumpPt=PATH.joinpath("Greedy_step_" + str(count) + ".csv"),
+                        traject.GeneralInfo["FloodDamage"],
+                        dumpPt=output_path.joinpath("Greedy_step_" + str(count) + ".csv"),
                     )
                 )
             else:
@@ -457,7 +459,7 @@ class GreedyStrategy(StrategyBase):
                         i,
                         self.r,
                         np.max(self.T),
-                        TrajectObject.GeneralInfo["FloodDamage"],
+                        traject.GeneralInfo["FloodDamage"],
                     )
                 )
             count += 1
