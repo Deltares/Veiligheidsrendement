@@ -103,16 +103,16 @@ def make_traject_df(traject: DikeTraject, cols):
     # cols = cols[1:]
     sections = []
 
-    for i in traject.Sections:
+    for i in traject.sections:
         sections.append(i.name)
 
-    mechanisms = list(traject.Sections[0].MechanismData.keys()) + ["Section"]
+    mechanisms = list(traject.sections[0].MechanismData.keys()) + ["Section"]
     df_index = pd.MultiIndex.from_product(
         [sections, mechanisms], names=["name", "mechanism"]
     )
     TrajectProbability = pd.DataFrame(columns=cols, index=df_index)
 
-    for i in traject.Sections:
+    for i in traject.sections:
         for j in mechanisms:
             TrajectProbability.loc[(i.name, j)] = list(
                 i.section_reliability.SectionReliability.loc[j]
@@ -270,12 +270,12 @@ def calc_life_cycle_risks(
     return TR
 
 # this function changes the trajectprobability of a measure is implemented:
-def implement_option(section, TrajectProbability, newProbability):
-    mechs = np.unique(TrajectProbability.index.get_level_values("mechanism").values)
+def implement_option(section, traject_probability, new_probability):
+    mechs = np.unique(traject_probability.index.get_level_values("mechanism").values)
     # change trajectprobability by changing probability for each mechanism
     for i in mechs:
-        TrajectProbability.loc[(section, i)] = newProbability[i]
-    return TrajectProbability
+        traject_probability.loc[(section, i)] = new_probability[i]
+    return traject_probability
 
 
 def split_options(options):
@@ -385,7 +385,7 @@ def update_probability(init_probability, strategy, index):
 
 
 def overflow_bundling(
-    strategy, init_overflow_risk, existing_investment, life_cycle_cost, traject
+    strategy, init_overflow_risk, existing_investment, life_cycle_cost, traject: DikeTraject
 ):
     """Routine for bundling several measures for overflow to prevent getting stuck if many overflow-dominated
     sections have about equal reliability. A bundle is a set of measures (typically crest heightenings) at different sections.
@@ -429,15 +429,15 @@ def overflow_bundling(
     sg_indices.fill(999)
 
     # loop over the sections
-    for i in range(0, len(traject.Sections)):
+    for i in range(0, len(traject.sections)):
         extra_type = None
         index_existing = 0  # value is only used in 1 of the branches of the if statement, otherwise should be 0.
         # get the indices where safety is equal to no measure for stabilityinner & piping
         # if there are investments this loop is needed to deal with the fact that it can be an integer or list.
 
         # get all geotechnical options for this section:
-        GeotechnicalOptions = strategy.options_geotechnical[traject.Sections[i].name]
-        HeightOptions = strategy.options_height[traject.Sections[i].name]
+        GeotechnicalOptions = strategy.options_geotechnical[traject.sections[i].name]
+        HeightOptions = strategy.options_height[traject.sections[i].name]
         if any(existing_investments[i, :] > 0):
             investment_id = existing_investments[i, 1] - 1
             if isinstance(
@@ -657,7 +657,7 @@ def overflow_bundling(
 
     # first initialize som values
     index_counter = np.zeros(
-        (len(traject.Sections),), dtype=np.int32
+        (len(traject.sections),), dtype=np.int32
     )  # counter that keeps track of the next cheapest option for each section
     run_number = 0  # used for counting the loop
     counter_list = []  # used to store the bundle indices
@@ -716,7 +716,7 @@ def overflow_bundling(
         ind = np.argwhere(BC_list == np.max(BC_list))[0][0]
         final_index = counter_list[ind]
         # convert measure_index to sh based on sorted_indices
-        sg_index = np.zeros((len(traject.Sections),))
+        sg_index = np.zeros((len(traject.sections),))
         measure_index = np.zeros((np.size(life_cycle_cost, axis=0),), dtype=np.int32)
         for i in range(0, len(measure_index)):
             if final_index[i] != 0:  # a measure was taken
@@ -728,7 +728,7 @@ def overflow_bundling(
 
         measure_index = (
             np.append(measure_index, sg_index)
-            .reshape((2, len(traject.Sections)))
+            .reshape((2, len(traject.sections)))
             .T.astype(np.int32)
         )
         BC_out = np.max(BC_list)

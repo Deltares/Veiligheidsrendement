@@ -268,7 +268,7 @@ class GreedyStrategy(StrategyBase):
         sections = []
         LCC = []
         LCC2 = []
-        LCC_invested = np.zeros((len(traject.Sections)))
+        LCC_invested = np.zeros((len(traject.sections)))
         ID = []
         dcrest = []
         dberm = []
@@ -287,7 +287,7 @@ class GreedyStrategy(StrategyBase):
         BC.insert(0, 0)
         self.MeasureIndices = pd.DataFrame(measure_list)
         for i in measure_list:
-            sections.append(traject.Sections[i[0]].name)
+            sections.append(traject.sections[i[0]].name)
             LCC.append(
                 np.subtract(self.LCCOption[i], LCC_invested[i[0]])
             )  # add costs and subtract the money already
@@ -297,7 +297,7 @@ class GreedyStrategy(StrategyBase):
 
             # get the ids
             ID1 = (
-                self.options_geotechnical[traject.Sections[i[0]].name]
+                self.options_geotechnical[traject.sections[i[0]].name]
                 .iloc[i[2] - 1]["ID"]
                 .values[0]
             )
@@ -307,18 +307,18 @@ class GreedyStrategy(StrategyBase):
                 ID_relevant = ID1
             if i[1] != 0:
                 ID2 = (
-                    self.options_height[traject.Sections[i[0]].name]
+                    self.options_height[traject.sections[i[0]].name]
                     .iloc[i[1] - 1]["ID"]
                     .values[0]
                 )
                 if ID_relevant == ID2:
                     if (
-                        self.options_height[traject.Sections[i[0]].name]
+                        self.options_height[traject.sections[i[0]].name]
                         .iloc[i[1] - 1]["dcrest"]
                         .values[0]
                         == 0.0
                     ) and (
-                        self.options_geotechnical[traject.Sections[i[0]].name]
+                        self.options_geotechnical[traject.sections[i[0]].name]
                         .iloc[i[2] - 1]["dberm"]
                         .values[0]
                         == 0.0
@@ -329,12 +329,12 @@ class GreedyStrategy(StrategyBase):
                 else:
                     print(i)
                     print(
-                        self.options_geotechnical[traject.Sections[i[0]].name].iloc[
+                        self.options_geotechnical[traject.sections[i[0]].name].iloc[
                             i[2] - 1
                         ]
                     )
                     print(
-                        self.options_height[traject.Sections[i[0]].name].iloc[i[1] - 1]
+                        self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
                     )
                     raise ValueError("warning, conflicting IDs found for measures")
             else:
@@ -343,53 +343,53 @@ class GreedyStrategy(StrategyBase):
 
             # get the parameters
             dcrest.append(
-                self.options_height[traject.Sections[i[0]].name]
+                self.options_height[traject.sections[i[0]].name]
                 .iloc[i[1] - 1]["dcrest"]
                 .values[0]
             )
             dberm.append(
-                self.options_geotechnical[traject.Sections[i[0]].name]
+                self.options_geotechnical[traject.sections[i[0]].name]
                 .iloc[i[2] - 1]["dberm"]
                 .values[0]
             )
             yes_no.append(
-                self.options_geotechnical[traject.Sections[i[0]].name]
+                self.options_geotechnical[traject.sections[i[0]].name]
                 .iloc[i[2] - 1]["yes/no"]
                 .values[0]
             )
 
             # get the option_index
-            option_df = self.options[traject.Sections[i[0]].name].loc[
-                self.options[traject.Sections[i[0]].name]["ID"] == ID[-1]
+            option_df = self.options[traject.sections[i[0]].name].loc[
+                self.options[traject.sections[i[0]].name]["ID"] == ID[-1]
             ]
             if len(option_df) > 1:
                 option_index.append(
-                    self.options[traject.Sections[i[0]].name]
-                    .loc[self.options[traject.Sections[i[0]].name]["ID"] == ID[-1]]
+                    self.options[traject.sections[i[0]].name]
+                    .loc[self.options[traject.sections[i[0]].name]["ID"] == ID[-1]]
                     .loc[
-                        self.options[traject.Sections[i[0]].name]["dcrest"]
+                        self.options[traject.sections[i[0]].name]["dcrest"]
                         == dcrest[-1]
                     ]
                     .loc[
-                        self.options[traject.Sections[i[0]].name]["dberm"] == dberm[-1]
+                        self.options[traject.sections[i[0]].name]["dberm"] == dberm[-1]
                     ]
                     .loc[
-                        self.options[traject.Sections[i[0]].name]["yes/no"]
+                        self.options[traject.sections[i[0]].name]["yes/no"]
                         == yes_no[-1]
                     ]
                     .index.values[0]
                 )
             else:  # partial measure with no parameter variations
                 option_index.append(
-                    self.options[traject.Sections[i[0]].name]
-                    .loc[self.options[traject.Sections[i[0]].name]["ID"] == ID[-1]]
+                    self.options[traject.sections[i[0]].name]
+                    .loc[self.options[traject.sections[i[0]].name]["ID"] == ID[-1]]
                     .index.values[0]
                 )
             # get the name
             names.append(
-                solutions_dict[traject.Sections[i[0]].name]
+                solutions_dict[traject.sections[i[0]].name]
                 .measure_table.loc[
-                    solutions_dict[traject.Sections[i[0]].name].measure_table["ID"] == ID[-1]
+                    solutions_dict[traject.sections[i[0]].name].measure_table["ID"] == ID[-1]
                 ]["Name"]
                 .values[0][0]
             )
@@ -413,11 +413,11 @@ class GreedyStrategy(StrategyBase):
             probs = []
             for n in range(0, self.opt_parameters["N"]):
                 for m in self.mechanisms:
-                    name.append(traject.Sections[n].name)
+                    name.append(traject.sections[n].name)
                     mech.append(m)
                     probs.append(i[m][n, np.array(tgrid)])
                     pass
-                name.append(traject.Sections[n].name)
+                name.append(traject.sections[n].name)
                 mech.append("Section")
                 probs.append(np.sum(probs[-3:], axis=0))
             betas = np.array(pf_to_beta(probs))

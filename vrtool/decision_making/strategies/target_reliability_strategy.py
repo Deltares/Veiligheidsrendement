@@ -55,7 +55,7 @@ class TargetReliabilityStrategy(StrategyBase):
 
         # Rank sections based on 2075 Section probability
         beta_horizon = []
-        for i in traject.Sections:
+        for i in traject.sections:
             beta_horizon.append(
                 i.section_reliability.SectionReliability.loc["Section"][str(self.OI_horizon)]
             )
@@ -79,7 +79,7 @@ class TargetReliabilityStrategy(StrategyBase):
         TrajectProbability = copy.deepcopy(BaseTrajectProbability)
 
         for j in section_indices:
-            i = traject.Sections[j]
+            i = traject.sections[j]
             # convert beta_cs to beta_section in order to correctly search self.options[section]
             # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
             if self.LE_in_section:

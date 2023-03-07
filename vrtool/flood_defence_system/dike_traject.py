@@ -18,6 +18,7 @@ from typing import List
 from scipy.interpolate import interp1d
 
 class DikeTraject:
+    sections: List[DikeSection]
     # This class contains general information on the dike traject and is used to store all data on the sections
     def __init__(self, config: VrtoolConfig, traject=None):
         if traject == None:
@@ -31,7 +32,7 @@ class DikeTraject:
         self.assessment_plot_years = config.assessment_plot_years
         self.flip_traject = config.flip_traject
         self.t_0 = config.t_0
-
+        self.sections = []
         self.GeneralInfo = {
             "omegaPiping": 0.24,
             "omegaStabilityInner": 0.04,
@@ -39,9 +40,9 @@ class DikeTraject:
             "bPiping": 300,
             "aStabilityInner": 0.033,
             "bStabilityInner": 50,
+            "MechanismsConsidered": self.mechanisms
         }
-        self.Sections: List[DikeSection] = []
-        self.GeneralInfo["MechanismsConsidered"] = self.mechanisms
+        
         # Basic traject info
         # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
         # Pmax is the ondergrens as given by law
@@ -125,59 +126,59 @@ class DikeTraject:
             raise IOError("Error: no dike sections found. Check path!")
         for i in range(len(files)):
             # Read the general information for each section:
-            self.Sections.append(DikeSection(files[i].stem, self.traject))
-            self.Sections[i].read_general_info(input_path, "General")
+            self.sections.append(DikeSection(files[i].stem, self.traject))
+            self.sections[i].read_general_info(input_path, "General")
 
             # Read the data per mechanism, and first the load frequency line:
-            self.Sections[i].section_reliability.Load = LoadInput(
-                list(self.Sections[i].__dict__.keys())
+            self.sections[i].section_reliability.Load = LoadInput(
+                list(self.sections[i].__dict__.keys())
             )
             if (
-                self.Sections[i].section_reliability.Load.load_type == "HRING"
+                self.sections[i].section_reliability.Load.load_type == "HRING"
             ):  # 2 HRING computations for different years
-                self.Sections[i].section_reliability.Load.set_HRING_input(
-                    input_path.joinpath("Waterstand"), self.Sections[i]
+                self.sections[i].section_reliability.Load.set_HRING_input(
+                    input_path.joinpath("Waterstand"), self.sections[i]
                 )  # input folder, location
             elif (
-                self.Sections[i].section_reliability.Load.load_type == "SAFE"
+                self.sections[i].section_reliability.Load.load_type == "SAFE"
             ):  # 2 computation as done for SAFE
-                self.Sections[i].section_reliability.Load.set_fromDesignTable(
-                    input_path.joinpath("Toetspeil", self.Sections[i].LoadData)
+                self.sections[i].section_reliability.Load.set_fromDesignTable(
+                    input_path.joinpath("Toetspeil", self.sections[i].LoadData)
                 )
-                self.Sections[i].section_reliability.Load.set_annual_change(
+                self.sections[i].section_reliability.Load.set_annual_change(
                     type="SAFE",
                     parameters=[
-                        self.Sections[i].YearlyWLRise,
-                        self.Sections[i].HBNRise_factor,
+                        self.sections[i].YearlyWLRise,
+                        self.sections[i].HBNRise_factor,
                     ],
                 )
 
             # Then the input for all the mechanisms:
-            self.Sections[i].section_reliability.Mechanisms = {}
+            self.sections[i].section_reliability.Mechanisms = {}
             for j in self.mechanisms:
                 mech_input_path = input_path.joinpath(j)
-                self.Sections[i].section_reliability.Mechanisms[
+                self.sections[i].section_reliability.Mechanisms[
                     j
                 ] = MechanismReliabilityCollection(
-                    j, self.Sections[i].MechanismData[j][1], self.config
+                    j, self.sections[i].MechanismData[j][1], self.config
                 )
-                for k in self.Sections[i].section_reliability.Mechanisms[j].Reliability.keys():
-                    if self.Sections[i].section_reliability.Load.load_type == "HRING":
-                        self.Sections[i].section_reliability.Mechanisms[j].Reliability[
+                for k in self.sections[i].section_reliability.Mechanisms[j].Reliability.keys():
+                    if self.sections[i].section_reliability.Load.load_type == "HRING":
+                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
-                            *self.Sections[i].MechanismData[j],
+                            *self.sections[i].MechanismData[j],
                             mechanism=j,
-                            crest_height=self.Sections[i].Kruinhoogte,
-                            dcrest=self.Sections[i].Kruindaling,
+                            crest_height=self.sections[i].Kruinhoogte,
+                            dcrest=self.sections[i].Kruindaling,
                         )
                     else:
-                        self.Sections[i].section_reliability.Mechanisms[j].Reliability[
+                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
-                            *self.Sections[i].MechanismData[j],
+                            *self.sections[i].MechanismData[j],
                             mechanism=j,
                         )
 
@@ -188,7 +189,7 @@ class DikeTraject:
 
         # Traject length is lengt of all sections together:
         self.GeneralInfo["TrajectLength"] = 0
-        for i in self.Sections:
+        for i in self.sections:
             self.GeneralInfo["TrajectLength"] += i.Length
 
         self.GeneralInfo["beta_max"] = pf_to_beta(
@@ -206,7 +207,7 @@ class DikeTraject:
 
     def setProbabilities(self):
         """routine to make 1 dataframe of all probabilities of a TrajectObject"""
-        for i, section in enumerate(self.Sections):
+        for i, section in enumerate(self.sections):
             if i == 0:
                 Assessment = section.section_reliability.SectionReliability.reset_index()
                 Assessment["Section"] = section.name
@@ -287,7 +288,7 @@ class DikeTraject:
                 label_ylabel = r"Faalkans $P_f$ [-/jaar]"
                 label_target = "Doelfaalkans"
             labels_xticks = []
-            for i in self.Sections:
+            for i in self.sections:
                 labels_xticks.append(i.name)
         elif case_settings["language"] == "EN":
             label_xlabel = "Dike sections"
@@ -301,7 +302,7 @@ class DikeTraject:
                 label_ylabel = r"Failure probability $P_f$ [-/year]"
                 label_target = "Target failure prob."
             labels_xticks = []
-            for i in self.Sections:
+            for i in self.sections:
                 labels_xticks.append("S" + i.name[2:])
 
         cumlength, xticks1, middles = get_section_length_in_traject(
@@ -560,7 +561,7 @@ class DikeTraject:
                 plt.close()
 
     def runFullAssessment(self):
-        for i in self.Sections:
+        for i in self.sections:
             for j in self.GeneralInfo["Mechanisms"]:
                 i.section_reliability.Mechanisms[j].generateLCRProfile(
                     i.section_reliability.Load, mechanism=j, trajectinfo=self.GeneralInfo
@@ -573,11 +574,11 @@ class DikeTraject:
     def plotAssessmentResults(self, directory, section_ids=None, t_start=2020):
         # for all or a selection of sections:
         if section_ids == None:
-            sections = self.Sections
+            sections = self.sections
         else:
             sections = []
             for i in section_ids:
-                sections.append(self.Sections[i])
+                sections.append(self.sections[i])
         createDir(directory)
         # generate plots
         for i in sections:
@@ -604,7 +605,7 @@ class DikeTraject:
 
     def updateProbabilities(self, Probabilities, ChangedSection=False):
         # This function is to update the probabilities after a reinforcement.
-        for i in self.Sections:
+        for i in self.sections:
             if (ChangedSection) and (i.name == ChangedSection):
                 i.section_reliability.SectionReliability = Probabilities.loc[
                     ChangedSection

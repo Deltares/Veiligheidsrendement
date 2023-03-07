@@ -47,7 +47,7 @@ def runFullModel(
     print("Start step 1: safety assessment")
 
     # Loop over sections and do the assessment.
-    for i, section in enumerate(TrajectObject.Sections):
+    for i, section in enumerate(TrajectObject.sections):
         # get design water level:
         # TODO remove this line?
         # section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
@@ -152,14 +152,14 @@ def runFullModel(
     else:
         AllSolutions = {}
         # Calculate per section, for each measure the cost-reliability-time relations:
-        for i in TrajectObject.Sections:
+        for i in TrajectObject.sections:
             AllSolutions[i.name] = Solutions(i, config)
             AllSolutions[i.name].fillSolutions(
                 config.input_directory.joinpath(i.name + ".xlsx")
             )
             AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
 
-    for i in TrajectObject.Sections:
+    for i in TrajectObject.sections:
         AllSolutions[i.name].SolutionstoDataFrame(filtering="off", splitparams=True)
 
     # Store intermediate results:
@@ -185,7 +185,7 @@ def runFullModel(
 
         plt_mech = ["Section", "Piping", "StabilityInner", "Overflow"]
 
-        for i in TrajectObject.Sections:
+        for i in TrajectObject.sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
                     requiredbeta = pb_functions.pf_to_beta(

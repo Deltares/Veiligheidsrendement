@@ -129,7 +129,7 @@ class StrategyBase:
 
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
-        for i, section in enumerate(traject.Sections):
+        for i, section in enumerate(traject.sections):
 
             # Step 1: combine measures with partial measures
             combinables = solutions_dict[section.name].MeasureData.loc[
@@ -162,23 +162,23 @@ class StrategyBase:
                         name = (
                             solutions_dict[section.name]
                             .measure_table.loc[
-                                solutions_dict[traject.Sections[i].name].measure_table["ID"]
+                                solutions_dict[traject.sections[i].name].measure_table["ID"]
                                 == indexes[0]
                             ]["Name"]
                             .values[0]
                             + "+"
                             + solutions_dict[section.name]
                             .measure_table.loc[
-                                solutions_dict[traject.Sections[i].name].measure_table["ID"]
+                                solutions_dict[traject.sections[i].name].measure_table["ID"]
                                 == indexes[1]
                             ]["Name"]
                             .values[0]
                         )
                         solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.Sections[i].name].measure_table) + 1
+                            len(solutions_dict[traject.sections[i].name].measure_table) + 1
                         ] = name
                         solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.Sections[i].name].measure_table)
+                            len(solutions_dict[traject.sections[i].name].measure_table)
                         ]["ID"] = ij
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
@@ -263,9 +263,9 @@ class StrategyBase:
         betas = {}
         for n in range(0, N):
             for i in self.mechanisms:
-                len_beta1 = traject.Sections[n].section_reliability.SectionReliability.shape[1]
+                len_beta1 = traject.sections[n].section_reliability.SectionReliability.shape[1]
                 beta1 = (
-                    traject.Sections[n]
+                    traject.sections[n]
                     .section_reliability.SectionReliability.loc[i]
                     .values.reshape((len_beta1, 1))
                     .T
@@ -677,7 +677,7 @@ class StrategyBase:
             markersize2 = self.beta_cost_settings["markersize"]
 
         if "years" not in locals():
-            years = traject.Sections[
+            years = traject.sections[
                 0
             ].section_reliability.SectionReliability.columns.values.astype("float")
             horizon = np.max(years)
@@ -950,14 +950,14 @@ class StrategyBase:
             label_ylabel = r"Betrouwbaarheidsindex $\beta$ [-/jaar]"
             label_target = "Doelbetrouwbaarheid"
             labels_xticks = []
-            for i in traject.Sections:
+            for i in traject.sections:
                 labels_xticks.append(i.name)
         elif language == "EN":
             label_xlabel = "Dike sections"
             label_ylabel = r"Reliability index $\beta$ [-/year]"
             label_target = "Target reliability"
             labels_xticks = []
-            for i in traject.Sections:
+            for i in traject.sections:
                 labels_xticks.append("S" + i[-2:])
         color = ["r", "g", "b", "k"]
 
