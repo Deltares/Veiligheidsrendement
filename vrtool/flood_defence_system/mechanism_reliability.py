@@ -5,6 +5,7 @@ import openturns as ot
 from scipy import interpolate
 
 import vrtool.flood_defence_system.mechanisms as fds_mechanisms
+from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
 from vrtool.flood_defence_system.mechanism_input import MechanismInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
     TableDist,
@@ -227,8 +228,10 @@ class MechanismReliability:
                         ).flatten(),
                         fill_value="extrapolate",
                     )
-                    SF = SFt(year)
-                    beta = np.min([beta_sf_stability_inner(SF, type="SF"), 8.0])
+                    safety_factor = SFt(year)
+                    beta = np.min(
+                        [StabilityInner.calculate_reliability(safety_factor), 8.0]
+                    )
                 elif "beta_2025" in strength.input:
 
                     betat = interpolate.interp1d(
@@ -552,14 +555,3 @@ class MechanismReliability:
 
             else:
                 pass
-
-
-def beta_sf_stability_inner(sf_or_beta, type=False, modelfactor: float = 1.06):
-    """Careful: ensure that upon using this function you clearly define the input parameter!"""
-    if type == "SF":
-        beta = ((sf_or_beta.item() / modelfactor) - 0.41) / 0.15
-        beta = np.min([beta, 8.0])
-        return beta
-    elif type == "beta":
-        SF = (0.41 + 0.15 * sf_or_beta) * modelfactor
-        return SF

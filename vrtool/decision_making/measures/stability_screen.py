@@ -2,11 +2,9 @@ import copy
 
 import numpy as np
 
-from vrtool.decision_making.measures.common_calculations import (
-    beta_sf_stability_inner,
-    determine_costs,
-)
+from vrtool.decision_making.measures.common_calculations import determine_costs
 from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
@@ -101,33 +99,33 @@ class StabilityScreen(MeasureBase):
                             # convert to SF and back:
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
-                            ].Input.input["beta_2025"] = beta_sf_stability_inner(
+                            ].Input.input[
+                                "beta_2025"
+                            ] = StabilityInner.calculate_reliability(
                                 np.add(
-                                    beta_sf_stability_inner(
+                                    StabilityInner.calculate_safety_factor(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
-                                        .Input.input["beta_2025"],
-                                        type="beta",
+                                        .Input.input["beta_2025"]
                                     ),
                                     SFincrease,
-                                ),
-                                type="SF",
+                                )
                             )
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
-                            ].Input.input["beta_2075"] = beta_sf_stability_inner(
+                            ].Input.input[
+                                "beta_2075"
+                            ] = StabilityInner.calculate_reliability(
                                 np.add(
-                                    beta_sf_stability_inner(
+                                    StabilityInner.calculate_safety_factor(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
-                                        .Input.input["beta_2075"],
-                                        type="beta",
+                                        .Input.input["beta_2075"]
                                     ),
                                     SFincrease,
-                                ),
-                                type="SF",
+                                )
                             )
                         else:
                             self.measures["Reliability"].Mechanisms[i].Reliability[
@@ -141,12 +139,13 @@ class StabilityScreen(MeasureBase):
                             )
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
-                            ].Input.input["BETA"] = beta_sf_stability_inner(
+                            ].Input.input[
+                                "BETA"
+                            ] = StabilityInner.calculate_reliability(
                                 self.measures["Reliability"]
                                 .Mechanisms[i]
                                 .Reliability[ij]
-                                .Input.input["SF"],
-                                type="SF",
+                                .Input.input["SF"]
                             )
 
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(

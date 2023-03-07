@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-from vrtool.flood_defence_system.mechanism_reliability import beta_sf_stability_inner
+from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
 from vrtool.flood_defence_system.mechanisms import overflow_hring, overflow_simple
 
 
@@ -49,19 +49,17 @@ def implement_berm_widening(
             )
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["beta_2025"] = beta_sf_stability_inner(
+                input["beta_2025"] = StabilityInner.calculate_reliability(
                     np.add(
-                        beta_sf_stability_inner(input["beta_2025"], type="beta"),
+                        StabilityInner.calculate_safety_factor(input["beta_2025"]),
                         SFincrease,
-                    ),
-                    type="SF",
+                    )
                 )
-                input["beta_2075"] = beta_sf_stability_inner(
+                input["beta_2075"] = StabilityInner.calculate_reliability(
                     np.add(
-                        beta_sf_stability_inner(input["beta_2075"], type="beta"),
+                        StabilityInner.calculate_safety_factor(input["beta_2075"]),
                         SFincrease,
-                    ),
-                    type="SF",
+                    )
                 )
         elif "BETA" in input:
             # TODO make sure input is grabbed properly. Should be read from input sheet
@@ -69,14 +67,14 @@ def implement_berm_widening(
             input["BETA"] = input["BETA"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["SF"] = beta_sf_stability_inner(
-                    np.add(input["SF"], SFincrease), type="SF"
+                input["SF"] = StabilityInner.calculate_reliability(
+                    np.add(input["SF"], SFincrease)
                 )
-                input["BETA"] = beta_sf_stability_inner(
+                input["BETA"] = StabilityInner.calculate_reliability(
                     np.add(
-                        beta_sf_stability_inner(input["BETA"], type="beta"), SFincrease
-                    ),
-                    type="SF",
+                        StabilityInner.calculate_safety_factor(input["BETA"]),
+                        SFincrease,
+                    )
                 )
         # For fragility curve as input
         elif computation_type == "FragilityCurve":
