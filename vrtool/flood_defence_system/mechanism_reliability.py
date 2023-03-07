@@ -220,61 +220,12 @@ class MechanismReliability:
                 )
         if self.type == "Simple":
             if mechanism == "StabilityInner":
-                if "SF_2025" in strength.input:
-                    # Simple interpolation of two safety factors and translation to a value of beta at 'year'.
-                    # In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
-                    SFt = interpolate.interp1d(
-                        [0, 50],
-                        np.array(
-                            [strength.input["SF_2025"], strength.input["SF_2075"]]
-                        ).flatten(),
-                        fill_value="extrapolate",
-                    )
-                    safety_factor = SFt(year)
-                    beta = np.min(
-                        [StabilityInner.calculate_reliability(safety_factor), 8.0]
-                    )
-                elif "beta_2025" in strength.input:
-
-                    betat = interpolate.interp1d(
-                        [0, 50],
-                        np.array(
-                            [strength.input["beta_2025"], strength.input["beta_2075"]]
-                        ).flatten(),
-                        fill_value="extrapolate",
-                    )
-
-                    beta = betat(year)
-                    beta = np.min([beta, 8])
-                elif (
-                    "BETA" in strength.input
-                ):  # situation where beta is constant in time
-                    beta = np.min([strength.input["BETA"].item(), 8.0])
-                else:
-                    raise Exception(
-                        "Warning: No input values SF or Beta StabilityInner"
-                    )
-                # Check if there is an elimination measure present (diaphragm wall)
-                if "Elimination" in strength.input.keys():
-                    if strength.input["Elimination"] == "yes":
-                        # Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
-                        # addition: should not be more unsafe
-                        self.Pf = np.min(
-                            [
-                                beta_to_pf(beta) * strength.input["Pf_elim"]
-                                + strength.input["Pf_with_elim"]
-                                * (1 - strength.input["Pf_elim"]),
-                                beta_to_pf(beta),
-                            ]
-                        )
-                        self.beta = pf_to_beta(self.Pf)
-                    else:
-                        raise ValueError(
-                            "Warning: Elimination defined but not turned on"
-                        )
-                else:
-                    self.beta = beta
-                    self.Pf = beta_to_pf(self.beta)
+                (
+                    self.beta,
+                    self.Pf,
+                ) = StabilityInner.calculate_reliability_and_safety_factor(
+                    strength, year
+                )
 
             elif mechanism == "Overflow":  # specific for SAFE
                 # climate change included, including a factor for HBN
