@@ -20,6 +20,10 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
     temporal_process,
 )
 
+from vrtool.failure_mechanisms.general.direct_failure_mechanism import (
+    calculate_reliability,
+)
+
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
@@ -203,10 +207,7 @@ class MechanismReliability:
         if self.type == "DirectInput":
             t_grid = list(self.Input.input["beta"].keys())
             beta_grid = list(self.Input.input["beta"].values())
-            betat = interpolate.interp1d(t_grid, beta_grid, fill_value="extrapolate")
-            beta = np.float32(betat(year))
-            self.beta = beta
-            self.Pf = beta_to_pf(self.beta)
+            self.beta, self.Pf = calculate_reliability(t_grid, beta_grid, year)
 
         if self.type == "HRING":
             if mechanism == "Overflow":

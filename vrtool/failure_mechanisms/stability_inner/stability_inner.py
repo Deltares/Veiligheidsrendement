@@ -16,9 +16,7 @@ class StabilityInner:
         Returns:
             float: the safety factor.
         """
-        beta = (
-            (safety_factor.item() / StabilityInner.__model_factor) - 0.41
-        ) / 0.15
+        beta = ((safety_factor.item() / StabilityInner.__model_factor) - 0.41) / 0.15
         beta = np.min([beta, 8.0])
         return beta
 

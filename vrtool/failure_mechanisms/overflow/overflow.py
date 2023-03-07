@@ -58,7 +58,7 @@ class Overflow:
                 input["hc_beta"].index.values.max(),
                 50,
             )
-            h_beta = t_beta_interp(year + t_0, h_grid).flatten()
+            h_beta = t_beta_interp(year + start_year, h_grid).flatten()
             new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
                 pf_to_beta(failure_probability)
             ).item()

@@ -1,4 +1,4 @@
-from typing import Tuple, list
+from typing import Tuple
 
 import numpy as np
 from scipy import interpolate
