@@ -227,7 +227,7 @@ class MechanismReliability:
                 (
                     self.beta,
                     self.Pf,
-                ) = StabilityInner.calculate_simple(mechanism_input, strength, year)
+                ) = StabilityInner.calculate_simple(mechanism_input, year)
 
             elif mechanism == "Overflow":  # specific for SAFE
                 # climate change included, including a factor for HBN

@@ -3,11 +3,12 @@ from typing import Tuple
 from scipy import interpolate
 
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.flood_defence_system.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner.stability_inner_input import (
     StabilityInnerInput,
 )
-from vrtool.failure_mechanisms.stability_inner.probability_type import ProbabilityType
+from vrtool.failure_mechanisms.stability_inner.probability_type import (
+    ReliabilityCalculationMethod,
+)
 
 
 class StabilityInner:
@@ -40,11 +41,11 @@ class StabilityInner:
         return (0.41 + 0.15 * reliability) * StabilityInner.__model_factor
 
     def calculate_simple(
-        mechanism_input: StabilityInnerInput, mech_input: MechanismInput, year: int
+        mechanism_input: StabilityInnerInput, year: int
     ) -> Tuple[float, float]:
 
-        match mechanism_input.probability_type:
-            case ProbabilityType.SAFETYFACTOR_RANGE:
+        match mechanism_input.reliability_calculation_method:
+            case ReliabilityCalculationMethod.SAFETYFACTOR_RANGE:
                 # Simple interpolation of two safety factors and translation to a value of beta at 'year'.
                 # In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
                 safety_factor_interpolate_function = interpolate.interp1d(
@@ -62,7 +63,7 @@ class StabilityInner:
                     [StabilityInner.calculate_reliability(safety_factor), 8.0]
                 )
 
-            case ProbabilityType.BETA_RANGE:
+            case ReliabilityCalculationMethod.BETA_RANGE:
                 beta_interpolate_function = interpolate.interp1d(
                     [0, 50],
                     np.array(
@@ -77,7 +78,7 @@ class StabilityInner:
                 beta = beta_interpolate_function(year)
                 beta = np.min([beta, 8])
 
-            case ProbabilityType.BETA_SINGLE:
+            case ReliabilityCalculationMethod.BETA_SINGLE:
                 # situation where beta is constant in time
                 beta = np.min([mechanism_input.beta.item(), 8.0])
 

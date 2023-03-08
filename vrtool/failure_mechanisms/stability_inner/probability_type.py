@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ProbabilityType(Enum):
+class ReliabilityCalculationMethod(Enum):
     """
     Definition of the different types of probability definitions.
     """
