@@ -24,37 +24,41 @@ class StabilityInnerInput:
     reliability_calculation_method: ReliabilityCalculationMethod
 
     @classmethod
-    def from_mechanism_input(cls, input: MechanismInput) -> StabilityInnerInput:
+    def from_mechanism_input(
+        cls, mechanism_input: MechanismInput
+    ) -> StabilityInnerInput:
         _reliability_calculation_method = None
         _safety_factor_2075 = None
         _beta_2075 = None
 
-        _safety_factor_2025 = input.input.get("SF_2025", None)
-        _beta_2025 = input.input.get("beta_2025", None)
-        _beta = input.input.get("BETA", None)
+        _safety_factor_2025 = mechanism_input.input.get("SF_2025", None)
+        _beta_2025 = mechanism_input.input.get("beta_2025", None)
+        _beta = mechanism_input.input.get("BETA", None)
 
         # If all input is defined, the safety factor takes precedence in which
         # reliability calculation method should be used
         if _safety_factor_2025:
-            _safety_factor_2075 = input.input["SF_2075"]
+            _safety_factor_2075 = mechanism_input.input["SF_2075"]
             _reliability_calculation_method = (
                 ReliabilityCalculationMethod.SAFETYFACTOR_RANGE
             )
         elif _beta_2025:
-            _beta_2075 = input.input["beta_2075"]
+            _beta_2075 = mechanism_input.input["beta_2075"]
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_RANGE
         elif _beta:
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_SINGLE
         else:
             raise Exception("Warning: No input values SF or Beta StabilityInner")
 
-        _is_eliminated = input.input.get("Elimination", None)
+        _is_eliminated = mechanism_input.input.get("Elimination", None)
         _failure_probability_elimination = None
         _failure_probability_with_elimination = None
         if _is_eliminated == "yes":
             _is_eliminated = True
-            _failure_probability_elimination = input.input["Pf_elim"]
-            _failure_probability_with_elimination = input.input["Pf_with_elim"]
+            _failure_probability_elimination = mechanism_input.input["Pf_elim"]
+            _failure_probability_with_elimination = mechanism_input.input[
+                "Pf_with_elim"
+            ]
         elif _is_eliminated:
             raise ValueError("Warning: Elimination defined but not turned on")
 
