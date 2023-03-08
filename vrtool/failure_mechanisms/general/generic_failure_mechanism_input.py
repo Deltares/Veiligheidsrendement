@@ -6,14 +6,14 @@ from vrtool.flood_defence_system.mechanism_input import MechanismInput
 
 
 @dataclass
-class DirectFailureMechanismInput:
+class GenericFailureMechanismInput:
     time_grid: list[int]
     beta_grid: list[float]
 
     @classmethod
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
-    ) -> DirectFailureMechanismInput:
+    ) -> GenericFailureMechanismInput:
         _time_grid = list(mechanism_input.input["beta"].keys())
         _beta_grid = list(mechanism_input.input["beta"].values())
 

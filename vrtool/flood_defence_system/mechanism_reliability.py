@@ -23,8 +23,8 @@ from vrtool.failure_mechanisms.stability_inner import (
     StabilityInner,
 )
 from vrtool.failure_mechanisms.general import (
-    DirectFailureMechanismInput,
-    DirectFailureMechanism,
+    GenericFailureMechanismInput,
+    GenericFailureMechanism,
 )
 
 
@@ -208,10 +208,10 @@ class MechanismReliability:
     ):
         # This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == "DirectInput":
-            mechanism_input = DirectFailureMechanismInput.from_mechanism_input(
+            mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
                 self.Input
             )
-            self.beta, self.Pf = DirectFailureMechanism.calculate_reliability(
+            self.beta, self.Pf = GenericFailureMechanism.calculate_reliability(
                 mechanism_input, year
             )
 

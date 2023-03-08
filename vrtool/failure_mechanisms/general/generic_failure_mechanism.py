@@ -4,14 +4,14 @@ import numpy as np
 from scipy import interpolate
 
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
-from vrtool.failure_mechanisms.general.direct_failure_mechanism_input import (
-    DirectFailureMechanismInput,
+from vrtool.failure_mechanisms.general.generic_failure_mechanism_input import (
+    GenericFailureMechanismInput,
 )
 
 
-class DirectFailureMechanism:
+class GenericFailureMechanism:
     def calculate_reliability(
-        mechanism_input: DirectFailureMechanismInput, year: int
+        mechanism_input: GenericFailureMechanismInput, year: int
     ) -> Tuple[float, float]:
         """
         Calculates the reliability and safety factor based on its input arguments.
