@@ -2,11 +2,9 @@ import copy
 
 import numpy as np
 import openturns as ot
-from scipy import interpolate
 
 import vrtool.flood_defence_system.mechanisms as fds_mechanisms
 from vrtool.failure_mechanisms.overflow.overflow import Overflow
-from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
 from vrtool.flood_defence_system.mechanism_input import MechanismInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
     TableDist,
@@ -18,6 +16,11 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
     pf_to_beta,
     run_prob_calc,
     temporal_process,
+)
+
+from vrtool.failure_mechanisms.stability_inner import (
+    StabilityInnerInput,
+    StabilityInner,
 )
 
 from vrtool.failure_mechanisms.general.direct_failure_mechanism import (
@@ -220,6 +223,7 @@ class MechanismReliability:
                 )
         if self.type == "Simple":
             if mechanism == "StabilityInner":
+                mechanism_input = StabilityInnerInput.from_mechanism_input(strength)
                 (
                     self.beta,
                     self.Pf,
