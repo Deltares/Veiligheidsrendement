@@ -9,7 +9,7 @@ import numpy as np
 
 
 @dataclass
-class StabilityInnerInput:
+class StabilityInnerSimpleInput:
     safety_factor_2025: np.ndarray
     safety_factor_2075: np.ndarray
 
@@ -26,7 +26,7 @@ class StabilityInnerInput:
     @classmethod
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
-    ) -> StabilityInnerInput:
+    ) -> StabilityInnerSimpleInput:
         _reliability_calculation_method = None
         _safety_factor_2075 = None
         _beta_2075 = None

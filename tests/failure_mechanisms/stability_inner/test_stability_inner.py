@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
+from vrtool.failure_mechanisms.stability_inner.stability_inner import (
+    StabilityInnerSimple,
+)
 
 
 class TestStabilityInner:
@@ -14,7 +16,7 @@ class TestStabilityInner:
         ],
     )
     def test_calculate_reliability(self, safety_factor, expected_reliability):
-        calculated_reliability = StabilityInner.calculate_reliability(
+        calculated_reliability = StabilityInnerSimple.calculate_reliability(
             np.array([safety_factor], dtype=float)
         )
 
@@ -29,7 +31,9 @@ class TestStabilityInner:
         ],
     )
     def test_calculate_safety_factory(self, reliability, expected_safety_factor):
-        calculated_safety_factor = StabilityInner.calculate_safety_factor(reliability)
+        calculated_safety_factor = StabilityInnerSimple.calculate_safety_factor(
+            reliability
+        )
 
         assert calculated_safety_factor == pytest.approx(
             expected_safety_factor, abs=1e-4

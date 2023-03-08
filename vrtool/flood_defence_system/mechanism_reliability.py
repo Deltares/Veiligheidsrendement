@@ -14,8 +14,8 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
 )
 
 from vrtool.failure_mechanisms.stability_inner import (
-    StabilityInnerInput,
-    StabilityInner,
+    StabilityInnerSimpleInput,
+    StabilityInnerSimple,
 )
 from vrtool.failure_mechanisms.general import (
     GenericFailureMechanismInput,
@@ -291,8 +291,10 @@ class MechanismReliability:
     def _calculate_simple_stability_inner(
         self, mechanism_input: MechanismInput, year: int
     ) -> tuple[float, float]:
-        _mechanism_input = StabilityInnerInput.from_mechanism_input(mechanism_input)
-        return StabilityInner.calculate_simple(_mechanism_input, year)
+        _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
+            mechanism_input
+        )
+        return StabilityInnerSimple.calculate(_mechanism_input, year)
 
     def _calculate_simple_overflow(
         self, mechanism_input: MechanismInput, year: int, load

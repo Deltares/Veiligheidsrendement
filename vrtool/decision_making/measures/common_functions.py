@@ -9,7 +9,9 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 from vrtool.failure_mechanisms.overflow.overflow import Overflow
-from vrtool.failure_mechanisms.stability_inner.stability_inner import StabilityInner
+from vrtool.failure_mechanisms.stability_inner.stability_inner import (
+    StabilityInnerSimple,
+)
 
 
 def implement_berm_widening(
@@ -49,15 +51,19 @@ def implement_berm_widening(
             )
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["beta_2025"] = StabilityInner.calculate_reliability(
+                input["beta_2025"] = StabilityInnerSimple.calculate_reliability(
                     np.add(
-                        StabilityInner.calculate_safety_factor(input["beta_2025"]),
+                        StabilityInnerSimple.calculate_safety_factor(
+                            input["beta_2025"]
+                        ),
                         SFincrease,
                     )
                 )
-                input["beta_2075"] = StabilityInner.calculate_reliability(
+                input["beta_2075"] = StabilityInnerSimple.calculate_reliability(
                     np.add(
-                        StabilityInner.calculate_safety_factor(input["beta_2075"]),
+                        StabilityInnerSimple.calculate_safety_factor(
+                            input["beta_2075"]
+                        ),
                         SFincrease,
                     )
                 )
@@ -67,12 +73,12 @@ def implement_berm_widening(
             input["BETA"] = input["BETA"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["SF"] = StabilityInner.calculate_reliability(
+                input["SF"] = StabilityInnerSimple.calculate_reliability(
                     np.add(input["SF"], SFincrease)
                 )
-                input["BETA"] = StabilityInner.calculate_reliability(
+                input["BETA"] = StabilityInnerSimple.calculate_reliability(
                     np.add(
-                        StabilityInner.calculate_safety_factor(input["BETA"]),
+                        StabilityInnerSimple.calculate_safety_factor(input["BETA"]),
                         SFincrease,
                     )
                 )
