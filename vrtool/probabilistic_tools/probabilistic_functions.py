@@ -6,7 +6,7 @@ import openturns as ot
 import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
-
+import logging
 
 # Function to calculate a safety factor:
 def calc_gamma(mechanism, traject_info):
@@ -28,28 +28,28 @@ def calc_gamma(mechanism, traject_info):
 
 
 # Function to calculate the implicated reliability from the safety factor
-def calc_beta_implicated(mechanism, sf_factor, TrajectInfo=None):
-    if sf_factor == 0:
+def calc_beta_implicated(mechanism, safety_factor, traject_info=None):
+    if safety_factor == 0:
         # print('SF for ' + mechanism + ' is 0')
         beta = 0.5
-    elif sf_factor == np.inf:
+    elif safety_factor == np.inf:
         beta = 8
     else:
         if mechanism == "Piping":
             beta = (1 / 0.37) * (
-                np.log(sf_factor / 1.04) + 0.43 * TrajectInfo["beta_max"]
+                np.log(safety_factor / 1.04) + 0.43 * traject_info["beta_max"]
             )  # -norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == "Heave":
             # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
             beta = (1 / 0.48) * (
-                np.log(sf_factor / 0.37) + 0.30 * TrajectInfo["beta_max"]
+                np.log(safety_factor / 0.37) + 0.30 * traject_info["beta_max"]
             )  # -norm.ppf(TrajectInfo['Pmax']))
         elif mechanism == "Uplift":
             beta = (1 / 0.46) * (
-                np.log(sf_factor / 0.48) + 0.27 * TrajectInfo["beta_max"]
+                np.log(safety_factor / 0.48) + 0.27 * traject_info["beta_max"]
             )  # -norm.ppf(TrajectInfo['Pmax']))
         else:
-            print("Mechanism not found")
+            logging.warn("Mechanism not found")
     return beta
 
 

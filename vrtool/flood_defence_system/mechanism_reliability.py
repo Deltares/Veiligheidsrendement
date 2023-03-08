@@ -422,7 +422,7 @@ class MechanismReliability:
                         self.SF_p = np.inf
                     self.assess_p = "voldoende" if self.SF_p > 1 else "onvoldoende"
                     self.scenario_result["beta_cs_p"][j] = calc_beta_implicated(
-                        "Piping", self.SF_p * self.gamma_pip, TrajectInfo=TrajectInfo
+                        "Piping", self.SF_p * self.gamma_pip, traject_info=TrajectInfo
                     )  #
                     # Calculate the implicated beta_cs
 
@@ -449,7 +449,7 @@ class MechanismReliability:
                     self.scenario_result["beta_cs_h"][j] = calc_beta_implicated(
                         "Heave",
                         (self.h_i_c / self.gamma_schem_heave) / self.h_i,
-                        TrajectInfo=TrajectInfo,
+                        traject_info=TrajectInfo,
                     )  # Calculate the implicated beta_cs
 
                     # Uplift
@@ -476,7 +476,7 @@ class MechanismReliability:
                     self.scenario_result["beta_cs_u"][j] = calc_beta_implicated(
                         "Uplift",
                         (self.u_dh_c / self.gamma_schem_upl) / self.u_dh,
-                        TrajectInfo=TrajectInfo,
+                        traject_info=TrajectInfo,
                     )  # Calculate the implicated beta_cs
 
                     # Check if there is an elimination measure present (VZG or diaphragm wall)
