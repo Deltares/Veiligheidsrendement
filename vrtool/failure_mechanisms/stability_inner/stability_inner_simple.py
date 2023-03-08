@@ -6,13 +6,14 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 from vrtool.failure_mechanisms.stability_inner.stability_inner_simple_input import (
     StabilityInnerSimpleInput,
 )
-from vrtool.failure_mechanisms.stability_inner.probability_type import (
+from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
 
-from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import(
-    calculate_reliability
+from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
+    calculate_reliability,
 )
+
 
 class StabilityInnerSimple:
     """
@@ -38,9 +39,7 @@ class StabilityInnerSimple:
                     fill_value="extrapolate",
                 )
                 safety_factor = safety_factor_interpolate_function(year)
-                beta = np.min(
-                    [calculate_reliability(safety_factor), 8.0]
-                )
+                beta = np.min([calculate_reliability(safety_factor), 8.0])
 
             case ReliabilityCalculationMethod.BETA_RANGE:
                 beta_interpolate_function = interpolate.interp1d(
