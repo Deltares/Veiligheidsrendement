@@ -857,8 +857,8 @@ def DetermineNewGeometry(
     crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
     In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
     such that after reinforcement the height is crest_extra + increment.
-    It has to be ensured that the BUK has x = 0, and that x increases inward'''
-    initial = ModifyGeometryInput(initial,bermheight)
+    It has to be ensured that the BUK has x = 0, and that x increases inward"""
+    initial = ModifyGeometryInput(initial,berm_height)
     # maxBermOut=20
     # if len(initial) == 6:
     #     noberm = False
@@ -938,15 +938,11 @@ def DetermineNewGeometry(
 
         dout = BUT_dx
         din  = BIT_dx
-        if dberm <= maxbermout:
+        if dberm <= max_berm_out:
 
-            hasExtra = False
             for ind, data in new_geometry.iterrows():
             # Run over points
-                if ind == 'EXT':
-                    xz = data.values
-                    hasExtra = True
-                elif ind in ['BUT_0', 'BIT_0']:
+                if ind in ['EXT', 'BUT_0', 'BIT_0']:
                     xz = data.values
                 elif ind == 'BIT':
                     xz = [data.x + dberm + dout - din, data.z]
@@ -959,12 +955,8 @@ def DetermineNewGeometry(
                     xz = [data.x + dberm, data.z]
                 new_geometry.loc[ind] = pd.Series(xz,index=['x','z'])
 
-            if hasExtra:
-                if dberm > 0 or dcrest > 0:
-                    new_geometry = addExtra(initial, new_geometry)
-
         else:
-            berm_in = dberm - maxbermout
+            berm_in = dberm - max_berm_out
             for ind, data in new_geometry.iterrows():
                 # Run over points
                 if ind in ['EXT', 'BUT_0', 'BIT_0']:
@@ -975,11 +967,11 @@ def DetermineNewGeometry(
                 elif ind == 'BBL':
                     xz = [data.x - berm_in + dout - din, data.z]
                 elif ind == 'EBL':
-                    xz = [data.x + maxbermout + dout - din, data.z]
+                    xz = [data.x + max_berm_out + dout - din, data.z]
                 elif ind in ['BIK','BUK']:
-                    xz = [data.x + maxbermout + dout, data.z + dcrest]
+                    xz = [data.x + max_berm_out + dout, data.z + dcrest]
                 elif ind == 'BUT':
-                    xz = [data.x + maxbermout, data.z]
+                    xz = [data.x + max_berm_out, data.z]
                 new_geometry.loc[ind] = pd.Series(xz,index=['x','z'])
 
             # if noberm:  # len(initial) == 4:
