@@ -24,24 +24,24 @@ class StabilityInnerInput:
     @classmethod
     def from_mechanism_input(cls, input: MechanismInput) -> StabilityInnerInput:
         _probability_type = None
+        _safety_factor_2075 = None
+        _beta_2075 = None
 
         _safety_factor_2025 = input.input.get("SF_2025", None)
-        _safety_factor_2075 = None
+        _beta_2025 = input.input.get("beta_2025", None)
+        _beta = input.input.get("BETA", None)
+
+        # If all input is defined, the safety factor takes precedence in which
+        # reliability calculation method should be used
         if _safety_factor_2025:
             _safety_factor_2075 = input.input["SF_2075"]
             _probability_type = ProbabilityType.SAFETYFACTOR_RANGE
-
-        _beta_2025 = input.input.get("beta_2025", None)
-        _beta_2075 = None
-        if _beta_2025:
+        elif _beta_2025:
             _beta_2075 = input.input["beta_2075"]
             _probability_type = ProbabilityType.BETA_RANGE
-
-        _beta = input.input.get("BETA", None)
-        if _beta:
+        elif _beta:
             _probability_type = ProbabilityType.BETA_SINGLE
-
-        if _probability_type is None:
+        else:
             raise Exception("Warning: No input values SF or Beta StabilityInner")
 
         _is_eliminated = input.input.get("Elimination", None)
