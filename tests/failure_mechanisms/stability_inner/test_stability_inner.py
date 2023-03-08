@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from vrtool.failure_mechanisms.stability_inner.stability_inner import (
+from vrtool.failure_mechanisms.stability_inner.stability_inner_simple import (
     StabilityInnerSimple,
 )
 

@@ -9,7 +9,7 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 from vrtool.failure_mechanisms.overflow.overflow import Overflow
-from vrtool.failure_mechanisms.stability_inner.stability_inner import (
+from vrtool.failure_mechanisms.stability_inner.stability_inner_simple import (
     StabilityInnerSimple,
 )
 

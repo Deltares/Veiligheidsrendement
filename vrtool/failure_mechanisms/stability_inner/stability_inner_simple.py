@@ -3,7 +3,7 @@ from typing import Tuple
 from scipy import interpolate
 
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.failure_mechanisms.stability_inner.stability_inner_input import (
+from vrtool.failure_mechanisms.stability_inner.stability_inner_simple_input import (
     StabilityInnerSimpleInput,
 )
 from vrtool.failure_mechanisms.stability_inner.probability_type import (
