@@ -10,7 +10,7 @@ from vrtool.failure_mechanisms.general.generic_failure_mechanism_input import (
 
 
 class GenericFailureMechanism:
-    def calculate_reliability(
+    def calculate(
         mechanism_input: GenericFailureMechanismInput, year: int
     ) -> Tuple[float, float]:
         """

@@ -286,7 +286,7 @@ class MechanismReliability:
         _mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
             mechanism_input
         )
-        return GenericFailureMechanism.calculate_reliability(_mechanism_input, year)
+        return GenericFailureMechanism.calculate(_mechanism_input, year)
 
     def _calculate_simple_stability_inner(
         self, mechanism_input: MechanismInput, year: int
