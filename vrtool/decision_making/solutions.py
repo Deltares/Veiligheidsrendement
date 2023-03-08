@@ -1,5 +1,4 @@
 import copy
-from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,10 +7,10 @@ import seaborn as sns
 
 from vrtool.decision_making.measures import (
     CustomMeasure,
-    DiaphragmWall,
-    SoilReinforcement,
-    StabilityScreen,
-    VerticalGeotextile,
+    DiaphragmWallMeasure,
+    SoilReinforcementMeasure,
+    StabilityScreenMeasure,
+    VerticalGeotextileMeasure,
 )
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -28,7 +27,7 @@ class Solutions:
         self.config = config
         self.T = config.T
         self.mechanisms = config.mechanisms
-        self.measures: List[MeasureBase] = []
+        self.measures: list[MeasureBase] = []
 
     def fillSolutions(self, excel_sheet):
         """This routine reads input for the measures from the Excel sheet for each section.
@@ -42,13 +41,13 @@ class Solutions:
             # TODO depending on data.loc[i].type make correct sublclass
 
             if data.loc[i].Type == "Soil reinforcement":
-                self.measures.append(SoilReinforcement(data.loc[i], self.config))
+                self.measures.append(SoilReinforcementMeasure(data.loc[i], self.config))
             elif data.loc[i].Type == "Diaphragm Wall":
-                self.measures.append(DiaphragmWall(data.loc[i], self.config))
+                self.measures.append(DiaphragmWallMeasure(data.loc[i], self.config))
             elif data.loc[i].Type == "Stability Screen":
-                self.measures.append(StabilityScreen(data.loc[i], self.config))
+                self.measures.append(StabilityScreenMeasure(data.loc[i], self.config))
             elif data.loc[i].Type == "Vertical Geotextile":
-                self.measures.append(VerticalGeotextile(data.loc[i], self.config))
+                self.measures.append(VerticalGeotextileMeasure(data.loc[i], self.config))
             elif data.loc[i].Type == "Custom":
                 data.loc[i, "File"] = excel_sheet.parent.joinpath(
                     "Measures", data.loc[i]["File"]

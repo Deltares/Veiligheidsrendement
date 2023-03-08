@@ -74,7 +74,7 @@ def calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
 
 def calculate_sellmeijer_2017(
     seepage_length: float,
-    upper_thickness: float,
+    upper_sand_layer_thickness: float,
     particle_diameter: float,
     permeability: float,
 ) -> float:
@@ -83,7 +83,7 @@ def calculate_sellmeijer_2017(
 
     Args:
         seepage_length (float):  L - Seepage Length (48)
-        upper_thickness (float): D - Thickness of upper sand layer (49)
+        upper_sand_layer_thickness (float): D - Thickness of upper sand layer (49)
         particle_diameter (float): d70 - Particle diameter (D70) (56)
         permeability (float):  k - Permeability of the upper sand layer (55)
 
@@ -106,11 +106,11 @@ def calculate_sellmeijer_2017(
     # F1        = 1.65 * eta * np.tan(theta/180*np.pi)**0.35;
     # F2        = d70m / (nu / 9.81 * k * L) ** (1/3) * (d70/d70m) ** 0.39;
     # F3        = 0.91 * (D/L)**(0.28/(((D/L)**2.8)-1)+0.04);
-    if upper_thickness == seepage_length:
+    if upper_sand_layer_thickness == seepage_length:
         Fgeometry = 1
     else:
-        Fgeometry = 0.91 * (upper_thickness / seepage_length) ** (
-            0.28 / (((upper_thickness / seepage_length) ** 2.8) - 1) + 0.04
+        Fgeometry = 0.91 * (upper_sand_layer_thickness / seepage_length) ** (
+            0.28 / (((upper_sand_layer_thickness / seepage_length) ** 2.8) - 1) + 0.04
         )
 
     delta_h_c = Fres * Fscale * Fgeometry * seepage_length

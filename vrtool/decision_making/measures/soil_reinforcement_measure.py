@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 
-from vrtool.decision_making.measures.common_calculations import (
+from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     determine_new_geometry,
     implement_berm_widening,
@@ -15,7 +15,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class SoilReinforcement(MeasureBase):
+class SoilReinforcementMeasure(MeasureBase):
     # type == 'Soil reinforcement':
     def evaluate_measure(
         self,

@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 
-from vrtool.decision_making.measures.common_calculations import (
+from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     probabilistic_design,
 )
@@ -14,7 +14,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class DiaphragmWall(MeasureBase):
+class DiaphragmWallMeasure(MeasureBase):
     # type == 'Diaphragm Wall':
     def evaluate_measure(
         self,
