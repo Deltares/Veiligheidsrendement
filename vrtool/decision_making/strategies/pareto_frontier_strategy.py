@@ -13,7 +13,7 @@ from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 
-class ParetoFrontier(StrategyBase):
+class ParetoFrontierStrategy(StrategyBase):
     """This is a subclass for generating a ParetoFrontier based on Mixed Integer evaluations with a budget limit."""
 
     def evaluate(
