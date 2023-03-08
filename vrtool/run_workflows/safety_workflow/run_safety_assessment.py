@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -72,7 +71,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
             _results.save_results()
         return _results
 
-    def _get_valid_output_dir(self, path_args: List[str]) -> Path:
+    def _get_valid_output_dir(self, path_args: list[str]) -> Path:
         _section_figures_dir = self.vr_config.output_directory.joinpath(*path_args)
         if not _section_figures_dir.exists():
             _section_figures_dir.mkdir(parents=True, exist_ok=True)

@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import warnings
 from pathlib import Path
-from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +24,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
 
 
 class DikeTraject:
-    sections: List[DikeSection]
+    sections: list[DikeSection]
     general_info: dict
     probabilities: pd.DataFrame
 

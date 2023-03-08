@@ -1,5 +1,4 @@
 import copy
-from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,7 +27,7 @@ class Solutions:
         self.config = config
         self.T = config.T
         self.mechanisms = config.mechanisms
-        self.measures: List[MeasureBase] = []
+        self.measures: list[MeasureBase] = []
 
     def fillSolutions(self, excel_sheet):
         """This routine reads input for the measures from the Excel sheet for each section.
