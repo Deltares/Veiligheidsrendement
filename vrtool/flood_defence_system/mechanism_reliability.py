@@ -27,6 +27,8 @@ from vrtool.failure_mechanisms.general import (
     GenericFailureMechanism,
 )
 
+from vrtool.failure_mechanisms.overflow import OverflowSimpleInput, Overflow
+
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
@@ -246,14 +248,10 @@ class MechanismReliability:
                 else:
                     h_t = strength.input["h_crest"] - (strength.input["dhc(t)"] * year)
 
-                self.beta, self.Pf = Overflow.overflow_simple(
-                    h_t,
-                    strength.input["q_crest"],
-                    strength.input["h_c"],
-                    strength.input["q_c"],
-                    strength.input["beta"],
-                    mode="assessment",
+                mechanism_input = OverflowSimpleInput.from_mechanism_input(
+                    strength, h_t
                 )
+                self.beta, self.Pf = Overflow.calculate_simple(mechanism_input)
             elif mechanism == "Piping":
                 pass
 
