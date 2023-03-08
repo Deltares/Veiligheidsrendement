@@ -10,37 +10,14 @@ from vrtool.failure_mechanisms.stability_inner.probability_type import (
     ReliabilityCalculationMethod,
 )
 
+from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import(
+    calculate_reliability
+)
 
 class StabilityInnerSimple:
     """
     Contains all methods related to performing a stability inner calculation.
     """
-
-    __model_factor: float = 1.06
-
-    def calculate_reliability(safety_factor: np.ndarray) -> float:
-        """
-        Calculates the reliability (beta) based on the input arguments.
-        Args:
-            safety_factor (float): the safety factor to calculate the reliability with.
-        Returns:
-            float: the safety factor.
-        """
-        beta = (
-            (safety_factor.item() / StabilityInnerSimple.__model_factor) - 0.41
-        ) / 0.15
-        beta = np.min([beta, 8.0])
-        return beta
-
-    def calculate_safety_factor(reliability: float) -> float:
-        """
-        Calculates the safety factor based on the input arguments.
-        Args:
-            reliability (float): the reliability (beta) to calculate the safety factor with.
-        Returns:
-            float: the safety factor.
-        """
-        return (0.41 + 0.15 * reliability) * StabilityInnerSimple.__model_factor
 
     def calculate(
         mechanism_input: StabilityInnerSimpleInput, year: int
@@ -62,7 +39,7 @@ class StabilityInnerSimple:
                 )
                 safety_factor = safety_factor_interpolate_function(year)
                 beta = np.min(
-                    [StabilityInnerSimple.calculate_reliability(safety_factor), 8.0]
+                    [calculate_reliability(safety_factor), 8.0]
                 )
 
             case ReliabilityCalculationMethod.BETA_RANGE:

@@ -4,9 +4,7 @@ import numpy as np
 
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.failure_mechanisms.stability_inner.stability_inner_simple import (
-    StabilityInnerSimple,
-)
+from vrtool.failure_mechanisms.stability_inner import StabilityInnerFunctions
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
@@ -103,9 +101,9 @@ class StabilityScreenMeasure(MeasureBase):
                                 ij
                             ].Input.input[
                                 "beta_2025"
-                            ] = StabilityInnerSimple.calculate_reliability(
+                            ] = StabilityInnerFunctions.calculate_reliability(
                                 np.add(
-                                    StabilityInnerSimple.calculate_safety_factor(
+                                    StabilityInnerFunctions.calculate_safety_factor(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
@@ -118,9 +116,9 @@ class StabilityScreenMeasure(MeasureBase):
                                 ij
                             ].Input.input[
                                 "beta_2075"
-                            ] = StabilityInnerSimple.calculate_reliability(
+                            ] = StabilityInnerFunctions.calculate_reliability(
                                 np.add(
-                                    StabilityInnerSimple.calculate_safety_factor(
+                                    StabilityInnerFunctions.calculate_safety_factor(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
