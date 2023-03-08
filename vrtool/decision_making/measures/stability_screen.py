@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 
-from vrtool.decision_making.measures.common_calculations import (
+from vrtool.decision_making.measures.common_functions import (
     beta_sf_stability_inner,
     determine_costs,
 )
