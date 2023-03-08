@@ -80,13 +80,6 @@ class MechanismReliabilityCollection:
 
         # NB: This could be extended with conditional failure probabilities
 
-    def constructFragilityCurves(self, input, start=5, step=0.2):
-        # Construct fragility curves for the entire collection
-        for i in self.Reliability.keys():
-            self.Reliability[i].constructFragilityCurve(
-                self.Reliability[i].mechanism, input, year=i, start=start, step=step
-            )
-
     def calcLifetimeProb(self, conditionality="no", period=None):
         # This script calculates the total probability over a certain period. It assumes independence of years.
         # This can be improved in the future to account for correlation.

@@ -7,15 +7,10 @@ import vrtool.flood_defence_system.mechanisms as fds_mechanisms
 from vrtool.failure_mechanisms.overflow.overflow import Overflow
 from vrtool.flood_defence_system.mechanism_input import MechanismInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
-    TableDist,
     add_load_char_vals,
     beta_to_pf,
     calc_beta_implicated,
-    calculate_fragility_integration,
-    iterative_fc_calculation,
     pf_to_beta,
-    run_prob_calc,
-    temporal_process,
 )
 
 from vrtool.failure_mechanisms.stability_inner import (
@@ -54,150 +49,6 @@ class MechanismReliability:
             # if i is not 'mechanism':
             if i != "mechanism":
                 setattr(self, i, None)
-
-    def constructFragilityCurve(
-        self,
-        mechanism,
-        input,
-        start=5,
-        step=0.2,
-        method="MCS",
-        splitPiping="no",
-        year=0,
-        lolim=10e-4,
-        hilim=0.995,
-    ):
-        # Script to construct fragility curves from a mechanism model.
-        if mechanism == "Piping":
-            # initialize the required lists
-            marginals = []
-            names = []
-            if splitPiping == "yes":
-                Pheave = []
-                Puplift = []
-                Ppiping = []
-                result_heave = []
-                result_uplift = []
-                result_piping = []
-                wl_heave = []
-                wl_uplift = []
-                wl_piping = []
-            else:
-                Ptotal = []
-                result_total = []
-                wl_total = []
-
-            # make list of all random variables:
-            for i in input.input.keys():
-                marginals.append(input.input[i])
-                names.append(i)
-
-            marginals.append(ot.Dirac(1.0))
-            names.append("h")
-
-            if splitPiping == "yes":
-                result_heave, Pheave, wl_heave = iterative_fc_calculation(
-                    marginals,
-                    start,
-                    names,
-                    fds_mechanisms.calculate_z_heave,
-                    method,
-                    step,
-                    lolim,
-                    hilim,
-                )
-                result_piping, Ppiping, wl_piping = iterative_fc_calculation(
-                    marginals,
-                    start,
-                    names,
-                    fds_mechanisms.calculate_z_piping,
-                    method,
-                    step,
-                    lolim,
-                    hilim,
-                )
-                result_uplift, Puplift, wl_uplift = iterative_fc_calculation(
-                    marginals,
-                    start,
-                    names,
-                    fds_mechanisms.calculate_z_uplift,
-                    method,
-                    step,
-                    lolim,
-                    hilim,
-                )
-                self.h_cUplift = ot.Distribution(
-                    TableDist(np.array(wl_uplift), np.array(Puplift), extrap=True)
-                )
-                self.resultsUplift = result_uplift
-                self.wlUplift = wl_uplift
-                self.h_cHeave = ot.Distribution(
-                    TableDist(np.array(wl_heave), np.array(Pheave), extrap=True)
-                )
-                self.resultsHeave = result_heave
-                self.wlHeave = wl_heave
-                self.h_cPiping = ot.Distribution(
-                    TableDist(np.array(wl_piping), np.array(Ppiping), extrap=True)
-                )
-                self.resultsPiping = result_piping
-                self.wlPiping = wl_piping
-
-            if splitPiping == "no":
-                result_total, Ptotal, wl_total = iterative_fc_calculation(
-                    marginals,
-                    start,
-                    names,
-                    fds_mechanisms.calculate_z_piping_total,
-                    method,
-                    step,
-                    lolim,
-                    hilim,
-                )
-                self.h_c = ot.Distribution(
-                    TableDist(np.array(wl_total), np.array(Ptotal), extrap=True)
-                )
-                self.results = result_total
-                self.wl = wl_total
-
-        elif mechanism == "Overflow":
-            # make list of all random variables:
-            marginals = []
-            names = []
-
-            for i in input.input.keys():
-                # Adapt temporal process variables
-                if i in input.temporals:
-                    # Possibly this can be done using an OpenTurns random walk object
-                    original = copy.deepcopy(input.input[i])
-                    adapt_dist = temporal_process(original, year)
-                    marginals.append(adapt_dist)
-                    names.append(i)
-                else:
-                    marginals.append(input.input[i])
-                    names.append(i)
-
-            result = []
-            marginals.append(ot.Dirac(1.0))
-            names.append("h")  # add the load
-            result, P, wl = iterative_fc_calculation(
-                marginals,
-                start,
-                names,
-                fds_mechanisms.calculate_z_overflow,
-                method,
-                step,
-                lolim,
-                hilim,
-            )
-            self.h_c = ot.Distribution(
-                TableDist(np.array(wl), np.array(P), extrap=True)
-            )
-            self.results = result
-            self.wl = wl
-        elif mechanism == "StabilityInner":
-            pass
-
-        self.type = "FragilityCurve"
 
     def calcReliability(
         self,
@@ -257,68 +108,7 @@ class MechanismReliability:
 
             self.alpha_sq = np.nan
             self.result = np.nan
-        elif self.type == "FragilityCurve":
-            # Generic function for evaluating a fragility curve with water level and change in water level (optional)
-            if hasattr(load, "dist_change"):
-                original = copy.deepcopy(load.dist_change)
-                dist_change = temporal_process(original, year)
-                # marginals = [self.Input.input['FC'], load, dist_change]
-                P, beta = calculate_fragility_integration(
-                    self.Input.input["FC"], load, WaterLevelChange=dist_change
-                )
 
-                # result missing
-                # dist = ot.ComposedDistribution(marginals)
-                # dist.setDescription(['h_c', 'h', 'dh'])
-                # TODO replace with FragilityIntegration. FragilityIntegration in ProbabilisticFunctions.py
-                self.alpha_sq = np.nan
-                self.result = np.nan
-            else:
-                marginals = [self.h_c, load.distribution]
-                dist = ot.ComposedDistribution(marginals)
-                dist.setDescription(["h_c", "h"])
-                result, P, beta, alfas_sq = run_prob_calc(
-                    ot.SymbolicFunction(["h_c", "h"], ["h_c-h"]), dist, method
-                )
-                self.result = result
-                self.alpha_sq = alfas_sq
-            self.Pf = P
-            self.beta = beta
-
-        elif self.type == "Prob":
-            # Probabilistic evaluation of a mechanism.
-            if mechanism == "Piping":
-                zFunc = fds_mechanisms.calculate_z_piping_total
-            elif mechanism == "Overflow":
-                zFunc = fds_mechanisms.calculate_z_overflow
-            elif mechanism == "simpleLSF":
-                zFunc = fds_mechanisms.calculate_simple_lsf
-            else:
-                raise ValueError("Unknown Z-function")
-
-            if hasattr(self.Input, "char_vals"):
-                start_vals = []
-                for i in descr:
-                    if i != "h" and i != "dh":
-                        start_vals.append(
-                            strength.char_vals[i]
-                        ) if i not in strength.temporals else start_vals.append(
-                            strength.char_vals[i] * year
-                        )
-                start_vals = add_load_char_vals(start_vals, self.t_0, load)
-            else:
-                start_vals = self.Input.input.getMean()
-
-            result, P, beta, alpha_sq = run_prob_calc(
-                ot.PythonFunction(self.Input.input.getDimension(), 1, zFunc),
-                self.Input.input,
-                method,
-                startpoint=start_vals,
-            )
-            self.result = result
-            self.Pf = P
-            self.beta = beta
-            self.alpha_sq = alpha_sq
         elif self.type == "SemiProb":
             # semi probabilistic assessment, only available for piping
             if mechanism == "Piping":

@@ -391,22 +391,3 @@ def calculate_z_piping_total(inp):
     z_piping = max(g_p, g_u, g_h)
     # import pdb; pdb.set_trace()
     return [z_piping]
-
-
-def calculate_z_overflow(inp):
-    if len(inp) == 4:
-        h_c, dh_c, h, dh = inp
-        h = h + dh
-    # with ageing:
-    elif len(inp) == 3:
-        h_c, dh_c, h = inp
-    elif len(inp) == 2:
-        h_c, h = inp
-        dh_c = 0
-    z = (h_c - dh_c) - h
-    return [z]
-
-
-def calculate_simple_lsf(input_tuple):
-    R, dR, S = input_tuple
-    return [(R - dR) - S]
