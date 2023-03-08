@@ -15,7 +15,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class SoilReinforcement(MeasureBase):
+class SoilReinforcementMeasure(MeasureBase):
     # type == 'Soil reinforcement':
     def evaluate_measure(
         self,

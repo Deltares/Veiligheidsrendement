@@ -14,7 +14,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class DiaphragmWall(MeasureBase):
+class DiaphragmWallMeasure(MeasureBase):
     # type == 'Diaphragm Wall':
     def evaluate_measure(
         self,
