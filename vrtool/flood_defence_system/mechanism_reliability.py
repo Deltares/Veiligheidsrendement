@@ -61,12 +61,7 @@ class MechanismReliability:
     ):
         # This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == "DirectInput":
-            mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
-                self.Input
-            )
-            self.beta, self.Pf = GenericFailureMechanism.calculate_reliability(
-                mechanism_input, year
-            )
+            self.beta, self.Pf = self._calculate_direct_input(strength, year)
 
         if self.type == "HRING":
             if mechanism == "Overflow":
@@ -79,30 +74,13 @@ class MechanismReliability:
                 )
         if self.type == "Simple":
             if mechanism == "StabilityInner":
-                mechanism_input = StabilityInnerInput.from_mechanism_input(strength)
-                (
-                    self.beta,
-                    self.Pf,
-                ) = StabilityInner.calculate_simple(mechanism_input, year)
-
-            elif mechanism == "Overflow":  # specific for SAFE
-                # climate change included, including a factor for HBN
-                if hasattr(load, "dist_change"):
-                    h_t = (
-                        strength.input["h_crest"]
-                        - (
-                            strength.input["dhc(t)"]
-                            + (load.dist_change * load.HBN_factor)
-                        )
-                        * year
-                    )
-                else:
-                    h_t = strength.input["h_crest"] - (strength.input["dhc(t)"] * year)
-
-                mechanism_input = OverflowSimpleInput.from_mechanism_input(
-                    strength, h_t
+                self.beta, self.Pf = self._calculate_simple_stability_inner(
+                    strength, year
                 )
-                self.beta, self.Pf = Overflow.calculate_simple(mechanism_input)
+            elif mechanism == "Overflow":  # specific for SAFE
+                self.beta, self.Pf = self._calculate_simple_overflow(
+                    strength, year, load
+                )
             elif mechanism == "Piping":
                 pass
 
@@ -301,3 +279,40 @@ class MechanismReliability:
 
             else:
                 pass
+
+    def _calculate_direct_input(
+        self, mechanism_input: MechanismInput, year: int
+    ) -> tuple[float, float]:
+        _mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
+            mechanism_input
+        )
+        return GenericFailureMechanism.calculate_reliability(_mechanism_input, year)
+
+    def _calculate_simple_stability_inner(
+        self, mechanism_input: MechanismInput, year: int
+    ) -> tuple[float, float]:
+        _mechanism_input = StabilityInnerInput.from_mechanism_input(mechanism_input)
+        return StabilityInner.calculate_simple(_mechanism_input, year)
+
+    def _calculate_simple_overflow(
+        self, mechanism_input: MechanismInput, year: int, load
+    ) -> tuple[float, float]:
+        # climate change included, including a factor for HBN
+        if hasattr(load, "dist_change"):
+            corrected_crest_height = (
+                mechanism_input.input["h_crest"]
+                - (
+                    mechanism_input.input["dhc(t)"]
+                    + (load.dist_change * load.HBN_factor)
+                )
+                * year
+            )
+        else:
+            corrected_crest_height = mechanism_input.input["h_crest"] - (
+                mechanism_input.input["dhc(t)"] * year
+            )
+
+        _mechanism_input = OverflowSimpleInput.from_mechanism_input(
+            mechanism_input, corrected_crest_height
+        )
+        return Overflow.calculate_simple(_mechanism_input)
