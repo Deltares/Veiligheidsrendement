@@ -22,9 +22,9 @@ from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerInput,
     StabilityInner,
 )
-
-from vrtool.failure_mechanisms.general.direct_failure_mechanism import (
-    calculate_reliability,
+from vrtool.failure_mechanisms.general import (
+    DirectFailureMechanismInput,
+    DirectFailureMechanism,
 )
 
 
@@ -208,9 +208,12 @@ class MechanismReliability:
     ):
         # This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == "DirectInput":
-            t_grid = list(self.Input.input["beta"].keys())
-            beta_grid = list(self.Input.input["beta"].values())
-            self.beta, self.Pf = calculate_reliability(t_grid, beta_grid, year)
+            mechanism_input = DirectFailureMechanismInput.from_mechanism_input(
+                self.Input
+            )
+            self.beta, self.Pf = DirectFailureMechanism.calculate_reliability(
+                mechanism_input, year
+            )
 
         if self.type == "HRING":
             if mechanism == "Overflow":
