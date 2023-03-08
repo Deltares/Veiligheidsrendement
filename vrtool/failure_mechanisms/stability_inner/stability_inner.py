@@ -35,7 +35,7 @@ class StabilityInner:
         """
         return (0.41 + 0.15 * reliability) * StabilityInner.__model_factor
 
-    def calculate_reliability_and_safety_factor(
+    def calculate_simple(
         mechanism_input: MechanismInput, year: int
     ) -> Tuple[float, float]:
 
