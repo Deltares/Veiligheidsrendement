@@ -12,10 +12,7 @@ from scipy.interpolate import interp1d
 from tools.HelperFunctions import pareto_frontier
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import (
-    calc_life_cycle_risks,
     calc_tc,
-    implement_option,
-    make_traject_df,
     measure_combinations,
     split_options,
 )
@@ -27,7 +24,7 @@ from vrtool.flood_defence_system.dike_traject import (
     plot_settings,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-
+from abc import abstractmethod
 
 class StrategyBase:
     """This defines a Strategy object, which can be allowed to evaluate a set of solutions/measures. There are currently 3 types:
@@ -1164,97 +1161,9 @@ class StrategyBase:
             )
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
+    @abstractmethod
     def determine_risk_cost_curve(self, traject: DikeTraject, input_path: Path = None):
-        """This routine writes a curve for total risk versus total cost for a certain solution. Not standard output but can be used for validation.
-        Uses output from ReliabilityToCSV"""
-
-        # TODO clean up options and make paths more generic
-        if input_path:
-            input_path.mkdir(parents=True, exist_ok=True)
-        else:
-            input_path = False
-        if not hasattr(self, "TakenMeasures"):
-            raise TypeError("TakenMeasures not found")
-        costs = {}
-        costs["TR"] = []
-        if (self.type == "Greedy") or (self.type == "TC"):  # do a loop
-
-            costs["LCC"] = np.cumsum(self.TakenMeasures["LCC"].values)
-            count = 0
-            for i in self.Probabilities:
-                if input_path:
-                    costs["TR"].append(
-                        calc_life_cycle_risks(
-                            i,
-                            self.r,
-                            np.max(traject.general_info["T"]),
-                            traject.general_info["FloodDamage"],
-                            dumpPt=input_path.joinpath(
-                                "Greedy_step_" + str(count) + ".csv"
-                            ),
-                        )
-                    )
-                else:
-                    costs["TR"].append(
-                        calc_life_cycle_risks(
-                            i,
-                            self.r,
-                            np.max(traject.general_info["T"]),
-                            traject.general_info["FloodDamage"],
-                        )
-                    )
-                count += 1
-
-        elif self.type == "MixedInteger":
-            costs["LCC"] = np.sum(self.TakenMeasures["LCC"].values)
-            # find the ids of the options
-            section = []
-            option_index = []
-            for i in self.TakenMeasures.iterrows():
-                data = i[1]
-                section.append(data["Section"])
-                if data["name"] != "Do Nothing":
-                    option_index.append(
-                        self.options[data["Section"]]
-                        .loc[
-                            (self.options[data["Section"]]["ID"] == data["ID"])
-                            & (
-                                self.options[data["Section"]]["yes/no"].values
-                                == data["yes/no"]
-                            )
-                            & (
-                                self.options[data["Section"]]["dcrest"]
-                                == data["dcrest"]
-                            )
-                            & (self.options[data["Section"]]["dberm"] == data["dberm"])
-                        ]
-                        .index.values[0]
-                    )
-                else:
-                    option_index.append(-999)
-            # implement the options 1 by 1
-            Probability = make_traject_df(traject, traject.general_info["T"])
-            ProbabilitySteps = []
-            ProbabilitySteps.append(copy.deepcopy(Probability))
-            for i in range(0, len(option_index)):
-                if option_index[i] > -999:
-                    Probability = implement_option(
-                        section[i],
-                        Probability,
-                        self.options[section[i]].iloc[option_index[i]],
-                    )
-                ProbabilitySteps.append(copy.deepcopy(Probability))
-
-            # evaluate the risk after the last step
-            costs["TR"] = calc_life_cycle_risks(
-                ProbabilitySteps[-1],
-                self.r,
-                np.max(traject.general_info["T"]),
-                traject.general_info["FloodDamage"],
-                dumpPt=input_path.joinpath("MixedInteger.csv"),
-            )
-            costs["TC"] = np.add(costs["TR"], costs["LCC"])
-        return costs
+        pass
 
     def get_safety_standard_step(self, Ptarget, t=50):
         """Get the index of the measure where the traject probability in year t is higher than the requirement"""

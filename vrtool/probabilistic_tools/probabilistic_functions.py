@@ -1,6 +1,3 @@
-import copy
-import math
-
 import numpy as np
 import openturns as ot
 import scipy as sp
@@ -84,14 +81,6 @@ def compute_decimation_height(h, p, n=2):
     h_low = hp(p[0])  # lower limit
     h_high = hp((p[0]) / (10 * n))
     return (h_high - h_low) / n
-
-
-def calculate_mhw_to_gumbel(MHW, p, d):
-    a = MHW + d * np.log(-(np.log(1 - p))) / (
-        np.log(-np.log(1 - p)) - np.log(-np.log(1 - p / 10))
-    )
-    b = d / (np.log(-np.log(1 - p)) - np.log(-np.log(1 - p / 10)))
-    return a, b
 
 
 class TableDist(ot.PythonDistribution):
@@ -470,80 +459,6 @@ def temporal_process(temporal_input, t, makePlot="off"):
         raise Exception("Distribution type for temporal process not recognized.")
     return temporal_input
 
-
-def upscale_cdf(dist, t=1, testPlot="off", change_dist=None, change_step=1, Ngrid=None):
-    # function to upscale an exceedance probability curve to another time scale
-    # change_dist provides the opportunity to include an (uncertain) temporally changing PDF (e.g. sea level rise)
-    # if that is added the function will provide the CDF of the water level for period t given a change over time
-    freq = []
-    pnew = []
-    if dist.getName() == "TableDist":
-        params = dist.getParameter()
-        if Ngrid == None:
-            x = np.split(np.array(params), 2)[0]
-        else:
-            x = np.linspace(
-                np.min(np.split(np.array(params), 2)[0]),
-                np.max(np.split(np.array(params), 2)[0]),
-                Ngrid,
-            )
-        tgrid = np.arange(1, t + 1, change_step)
-        if isinstance(change_dist, type(None)):
-            for i in x:
-                freq.append(-np.log(dist.computeCDF(i)) * t)
-                pnew.append(np.exp(-freq[-1:][0]))
-        else:
-            distcoll = []
-
-            for j in tgrid:
-                original = copy.deepcopy(change_dist)
-                distcoll.append(
-                    ot.RandomMixture(
-                        [dist, temporal_process(original, j, makePlot="off")],
-                        [1.0, 1.0],
-                        0.0,
-                    )
-                )
-                pass
-            # derive factors:
-            factors = []
-            for i in range(0, len(tgrid)):
-                if i == 0 or i == len(tgrid) - 1:
-                    factors.append((change_step / 2) + 0.5)
-                else:
-                    factors.append((change_step))
-            if tgrid[-1:] < t:
-                factors[-1:] = factors[-1:] + (t - tgrid[-1:])
-                print(
-                    "Warning: range is not optimal. Last point has been extended to end of time window"
-                )
-            # calculate frequencies
-            freq = np.empty((len(x), len(distcoll)))
-            for i in range(0, len(distcoll)):
-                for j in range(0, len(x)):
-                    freq[j, i] = -np.log(distcoll[i].computeCDF(x[j])) * factors[i]
-            frequencies = np.sum(freq, axis=1)
-            pnew = np.exp(-frequencies)
-        newdist = ot.Distribution(
-            TableDist(list(x), list(pnew), extrap=True, isload=True)
-        )
-        if testPlot == "on":
-            wl = np.arange(1, 10, 0.1)
-            pold = []
-            pnuevo = []
-            for i in wl:
-                pold.append(1 - dist.computeCDF(i))
-                pnuevo.append(1 - newdist.computeCDF(i))
-            import matplotlib.pyplot as plt
-
-            plt.plot(wl, pold)
-            plt.plot(wl, pnuevo)
-            plt.yscale("log")
-            plt.show()
-
-    return newdist
-
-
 def get_design_water_level(load, p):
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
@@ -583,40 +498,6 @@ def add_load_char_vals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, yea
     else:
         input["dh"] = 0.0
     return input
-
-
-def marginals_for_time_dep_reliability(input, load=None, year=0, type=None):
-    marginals = []
-    names = []
-
-    # Strength variables:
-    for i in input.input.keys():
-        # Adapt temporal process variables
-        if i in input.temporals:
-            original = copy.deepcopy(input.input[i])
-            adapt_dist = temporal_process(original, year)
-            marginals.append(adapt_dist)
-            names.append(i)
-        else:
-            marginals.append(input.input[i])
-            names.append(i)
-
-        # Load variables:
-        if type == "ConstructFC":
-            marginals.append(ot.Dirac(1.0))
-            names.append("h")  # add the load
-        elif type == "CalcFC" or type == "Probabilistic":
-            marginals.append(load.distribution)
-            if hasattr(load, "dist_change"):
-                original = copy.deepcopy(load.dist_change)
-                dist_change = temporal_process(original, year)
-                marginals.append(dist_change)
-                names.extend(("h", "dh"))
-
-            else:
-                names.append("h")
-
-    return marginals, names
 
 
 ###################################################################################################
@@ -690,56 +571,10 @@ def phi_cumformu(x):
 
     return phi_compcum(0) - phi_compcum(x)
 
-
-def formula(t):
-    # constants
-    c0 = 2.515517
-    c1 = 0.802853
-    c2 = 0.010328
-    d0 = 1.432788
-    d1 = 0.189269
-    d2 = 0.001308
-
-    # Formula
-    p = t - ((c2 * t + c1) * t + c0) / (((d2 * t + d1) * t + d0) * t + 1.0)
-    return p
-
-
-def phi_inv(p):
-    x1 = -formula(np.sqrt(-2.0 * np.log(p)))
-    x2 = formula(np.sqrt(-2.0 * np.log(1 - p)))
-    if np.any(np.isnan(np.where(p < 0.5, x1, x2))):
-        print()
-    return np.where(p < 0.5, x1, x2)
-    #
-    # if (p < 0.5):
-    #     # F^-1(p) = - G^-1(p)
-    #     return -formula(math.sqrt(-2.0 * math.log(p)))
-    # else:
-    #     # F^-1(p) = G^-1(1-p)
-    #     return formula(math.sqrt(-2.0 * math.log(1 - p)))
-
-    return q
-
-
 def beta_to_pf(beta):
     # alternative: use scipy
     return norm.cdf(-beta)
-    # if isinstance(beta,np.ndarray):
-    #     pf = phi(-beta.astype(np.float64))
-    # else:
-    #     pf = phi(-np.float64(beta))
-    # return pf
-
 
 def pf_to_beta(pf):
     # alternative: use scipy
     return -norm.ppf(pf)
-
-    # if isinstance(pf,np.ndarray):
-    #     beta = -phi_inv(pf.astype(np.float64))
-    #     # if np.any(np.isnan(beta)):
-    #
-    # else:
-    #     beta = -phi_inv(np.float64(pf))
-    # return beta
