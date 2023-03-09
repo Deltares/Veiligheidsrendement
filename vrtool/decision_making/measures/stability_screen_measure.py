@@ -141,7 +141,7 @@ class StabilityScreenMeasure(MeasureBase):
                                 ij
                             ].Input.input[
                                 "BETA"
-                            ] = StabilityInnerSimple.calculate_reliability(
+                            ] = StabilityInnerFunctions.calculate_reliability(
                                 self.measures["Reliability"]
                                 .Mechanisms[i]
                                 .Reliability[ij]
