@@ -1,25 +1,26 @@
+from pathlib import Path
 import numpy as np
 import pandas as pd
 
 
 def compare_investment_strategy(
-    wb_TC, wb_OI, investment_limit, output_file_path, measure_file_path
+    workbook_tc: pd.DataFrame, workbook_oi: pd.DataFrame, investment_limit: float, output_file_path: Path, measure_file_path: Path
 ):
-    investment_TC = 0
-    wb_TC["dcrest"] = np.where(wb_TC["dcrest"] == -999, "-", wb_TC["dcrest"])
-    wb_TC["dberm"] = np.where(wb_TC["dberm"] == -999, "-", wb_TC["dberm"])
-    wb_OI["dcrest"] = np.where(wb_OI["dcrest"] == -999, "-", wb_OI["dcrest"])
-    wb_OI["dberm"] = np.where(wb_OI["dberm"] == -999, "-", wb_OI["dberm"])
+    _investment_tc = 0
+    workbook_tc["dcrest"] = np.where(workbook_tc["dcrest"] == -999, "-", workbook_tc["dcrest"])
+    workbook_tc["dberm"] = np.where(workbook_tc["dberm"] == -999, "-", workbook_tc["dberm"])
+    workbook_oi["dcrest"] = np.where(workbook_oi["dcrest"] == -999, "-", workbook_oi["dcrest"])
+    workbook_oi["dberm"] = np.where(workbook_oi["dberm"] == -999, "-", workbook_oi["dberm"])
 
     # Read measure data
-    measures = pd.read_csv(measure_file_path, delimiter=";")
+    _read_measures = pd.read_csv(measure_file_path, delimiter=";")
 
     # Open a new .xlsx file in the result directory
     with pd.ExcelWriter(output_file_path) as writer:
-        df_TC = pd.DataFrame(
-            data=wb_OI["Section"].sort_values().tolist(), columns=["Dijkvak"]
+        _df_tc = pd.DataFrame(
+            data=workbook_oi["Section"].sort_values().tolist(), columns=["Dijkvak"]
         )
-        df_TC_below_limit = pd.DataFrame(
+        _df_tc_below_limit = pd.DataFrame(
             columns=[
                 "Dijkvak",
                 "Prioritering",
@@ -29,75 +30,75 @@ def compare_investment_strategy(
                 "D_Berm",
             ]
         )
-        df_TC_above_limit = pd.DataFrame(
+        _df_tc_above_limit = pd.DataFrame(
             columns=["Dijkvak", "TC Maatregel Na Limiet", "Kosten", "D_Crest", "D_Berm"]
         )
-        df_TC_below_limit["Dijkvak"] = df_TC["Dijkvak"]
-        df_TC_above_limit["Dijkvak"] = df_TC["Dijkvak"]
+        _df_tc_below_limit["Dijkvak"] = _df_tc["Dijkvak"]
+        _df_tc_above_limit["Dijkvak"] = _df_tc["Dijkvak"]
 
-        for i, j in enumerate(range(len(wb_TC["Section"]))):
-            measure_id = wb_TC["ID"][j + 1].split("+")
+        for i, j in enumerate(range(len(workbook_tc["Section"]))):
+            measure_id = workbook_tc["ID"][j + 1].split("+")
 
             # Replace the measure ID with the measure description
             if len(measure_id) == 1:
-                measure_description = measures[measures["ID"] == int(measure_id[0])][
+                measure_description = _read_measures[_read_measures["ID"] == int(measure_id[0])][
                     "Name"
                 ].values[0]
             else:
                 measure_description = (
-                    measures[measures["ID"] == int(measure_id[0])]["Name"].values[0]
+                    _read_measures[_read_measures["ID"] == int(measure_id[0])]["Name"].values[0]
                     + " + "
-                    + measures[measures["ID"] == int(measure_id[1])]["Name"].values[0]
+                    + _read_measures[_read_measures["ID"] == int(measure_id[1])]["Name"].values[0]
                 )
 
             # Count investment costs
-            investment_TC += wb_TC["LCC"][j + 1]
+            _investment_tc += workbook_tc["LCC"][j + 1]
 
             # Determine limit index
-            if investment_TC <= investment_limit:
-                index = df_TC_below_limit[
-                    df_TC_below_limit["Dijkvak"] == wb_TC["Section"][j + 1]
+            if _investment_tc <= investment_limit:
+                index = _df_tc_below_limit[
+                    _df_tc_below_limit["Dijkvak"] == workbook_tc["Section"][j + 1]
                 ].index
-                df_TC_below_limit.iloc[index, [2, 4, 5]] = [
+                _df_tc_below_limit.iloc[index, [2, 4, 5]] = [
                     measure_description,
-                    wb_TC["dcrest"][j + 1],
-                    wb_TC["dberm"][j + 1],
+                    workbook_tc["dcrest"][j + 1],
+                    workbook_tc["dberm"][j + 1],
                 ]
-                if df_TC_below_limit.iloc[index, 1].isnull().any().any():
-                    df_TC_below_limit.iloc[index, 1] = i + 1
-                if df_TC_below_limit.iloc[index, 3].isnull().any().any():
+                if _df_tc_below_limit.iloc[index, 1].isnull().any().any():
+                    _df_tc_below_limit.iloc[index, 1] = i + 1
+                if _df_tc_below_limit.iloc[index, 3].isnull().any().any():
                     costs = 0
                 else:
-                    costs = df_TC_below_limit.iloc[index, 3].values
-                costs += wb_TC["LCC"][j + 1]
-                df_TC_below_limit.iloc[index, 3] = costs
+                    costs = _df_tc_below_limit.iloc[index, 3].values
+                costs += workbook_tc["LCC"][j + 1]
+                _df_tc_below_limit.iloc[index, 3] = costs
             else:
-                index = df_TC_above_limit[
-                    df_TC_above_limit["Dijkvak"] == wb_TC["Section"][i + 1]
+                index = _df_tc_above_limit[
+                    _df_tc_above_limit["Dijkvak"] == workbook_tc["Section"][i + 1]
                 ].index
-                df_TC_above_limit.iloc[index, [1, 3, 4]] = [
+                _df_tc_above_limit.iloc[index, [1, 3, 4]] = [
                     measure_description,
-                    wb_TC["dcrest"][j + 1],
-                    wb_TC["dberm"][j + 1],
+                    workbook_tc["dcrest"][j + 1],
+                    workbook_tc["dberm"][j + 1],
                 ]
-                if df_TC_above_limit.iloc[index, 2].isnull().any().any():
+                if _df_tc_above_limit.iloc[index, 2].isnull().any().any():
                     costs = 0
                 else:
-                    costs = df_TC_above_limit.iloc[index, 2].values
-                costs += wb_TC["LCC"][j + 1]
-                df_TC_above_limit.iloc[index, 2] = costs
+                    costs = _df_tc_above_limit.iloc[index, 2].values
+                costs += workbook_tc["LCC"][j + 1]
+                _df_tc_above_limit.iloc[index, 2] = costs
 
         # Merge dataframes
-        df_TC_below_limit.drop("Dijkvak", axis=1, inplace=True)
-        df_TC_above_limit.drop("Dijkvak", axis=1, inplace=True)
-        df_TC = pd.concat(
-            [df_TC, df_TC_below_limit, df_TC_above_limit], axis=1, ignore_index=True
+        _df_tc_below_limit.drop("Dijkvak", axis=1, inplace=True)
+        _df_tc_above_limit.drop("Dijkvak", axis=1, inplace=True)
+        _df_tc = pd.concat(
+            [_df_tc, _df_tc_below_limit, _df_tc_above_limit], axis=1, ignore_index=True
         )
-        df_TC.fillna("", inplace=True)
+        _df_tc.fillna("", inplace=True)
 
-        df_OI = pd.DataFrame(
+        _df_oi = pd.DataFrame(
             {
-                "Dijkvak": wb_OI["Section"].sort_values().tolist(),
+                "Dijkvak": workbook_oi["Section"].sort_values().tolist(),
                 "OI Maatregel": "",
                 "Kosten": "",
                 "D_Crest": "",
@@ -105,43 +106,44 @@ def compare_investment_strategy(
             }
         )
 
-        for i in range(len(wb_OI["Section"])):
-            measure_id = wb_OI["ID"][i + 1].split("+")
+        for i in range(len(workbook_oi["Section"])):
+            measure_id = workbook_oi["ID"][i + 1].split("+")
 
             # Replace the measure ID with the measure description
             if len(measure_id) == 1:
-                measure_description = measures[measures["ID"] == int(measure_id[0])][
+                measure_description = _read_measures[_read_measures["ID"] == int(measure_id[0])][
                     "Name"
                 ].values[0]
             else:
                 measure_description = (
-                    measures[measures["ID"] == int(measure_id[0])]["Name"].values[0]
+                    _read_measures[_read_measures["ID"] == int(measure_id[0])]["Name"].values[0]
                     + " + "
-                    + measures[measures["ID"] == int(measure_id[1])]["Name"].values[0]
+                    + _read_measures[_read_measures["ID"] == int(measure_id[1])]["Name"].values[0]
                 )
 
-            index = df_OI[df_OI["Dijkvak"] == wb_OI["Section"][i + 1]].index
-            df_OI.iloc[index, 1:] = [
+            index = _df_oi[_df_oi["Dijkvak"] == workbook_oi["Section"][i + 1]].index
+            _df_oi.iloc[index, 1:] = [
                 measure_description,
-                wb_OI["LCC"][i + 1],
-                wb_TC["dcrest"][i + 1],
-                wb_TC["dberm"][i + 1],
+                workbook_oi["LCC"][i + 1],
+                workbook_tc["dcrest"][i + 1],
+                workbook_tc["dberm"][i + 1],
             ]
 
-        df_OI.fillna("", inplace=True)
+        _df_oi.fillna("", inplace=True)
 
         # Write data to .xlsx file
-        df_TC.to_excel(
+        _sheet_name = "TC and OI Comparison"
+        _df_tc.to_excel(
             writer,
-            sheet_name="TC and OI Comparison",
+            sheet_name=_sheet_name,
             header=False,
             index=False,
             startrow=1,
             engine="openpyxl",
         )
-        df_OI.to_excel(
+        _df_oi.to_excel(
             writer,
-            sheet_name="TC and OI Comparison",
+            sheet_name=_sheet_name,
             header=False,
             index=False,
             startrow=1,
@@ -150,7 +152,6 @@ def compare_investment_strategy(
         )
 
         # Add Header Format
-        wb = writer.book
         column_header = [
             "Dijkvak",
             "Prioritering",
@@ -169,10 +170,10 @@ def compare_investment_strategy(
             "D_Crest",
             "D_Berm",
         ]
-        header_format = wb.add_format({"bold": True})
+        header_format = writer.book.add_format({"bold": True})
 
         for col_num, value in enumerate(column_header):
-            writer.sheets["TC and OI Comparison"].write(
+            writer.sheets[_sheet_name].write(
                 0, col_num, value, header_format
             )
 
