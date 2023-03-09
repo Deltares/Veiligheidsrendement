@@ -14,19 +14,7 @@ class MechanismInput:
     # Class for input of a mechanism
     def __init__(self, mechanism):
         self.mechanism = mechanism
-
-    def fill_distributions(self, distributions, t, processIDs, parameters):
-
-        dists = copy.deepcopy(distributions)
-        self.temporals = []
-        for j in processIDs:
-            if t > 0:
-                dists[j] = temporal_process(dists[j], t)
-            else:
-                dists[j] = ot.Dirac(0.0)
-            self.temporals.append(parameters[j])
-        self.input = ot.ComposedDistribution(dists)
-        self.input.setDescription(parameters)
+        self.input = {}
 
     # This routine reads  input from an input sheet
     def fill_mechanism(
@@ -101,7 +89,6 @@ class MechanismInput:
             data = pd.read_excel(input, sheet_name=sheet)
             data = data.set_index("Name")
 
-        self.input = {}
         self.temporals = []
         self.char_vals = {}
         for i in range(len(data)):
