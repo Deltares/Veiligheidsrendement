@@ -22,6 +22,15 @@ class StabilityInnerSimple:
     def calculate(
         mechanism_input: StabilityInnerSimpleInput, year: int
     ) -> tuple[float, float]:
+        """Calculates the reliability and the safety factor based on its input arguments.
+
+        Args:
+            mechanism_input (StabilityInnerSimpleInput): The input to calculate the reliability and safety factor with.
+            year (int): The year to calculate the reliability and safety factor for.
+
+        Returns:
+            tuple[float, float]: A tuple containing the reliability and the safety factor.
+        """
 
         match mechanism_input.reliability_calculation_method:
             case ReliabilityCalculationMethod.SAFETYFACTOR_RANGE:

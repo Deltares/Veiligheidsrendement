@@ -22,11 +22,26 @@ from vrtool.flood_defence_system.load_input import LoadInput
 class PipingSemiProbabilistic:
     def calculate(
         traject_info: dict,
-        strength: MechanismInput,
+        mechanism_input: MechanismInput,
         load: LoadInput,
         year: float,
-        t_0: int,
+        initial_year: int,
     ) -> tuple[float, float]:
+        """Calculates the reliability and the safety factor.
+
+        Args:
+            traject_info (dict): A dictionary containing the traject information
+            strength (MechanismInput): The input to calculate the reliability and safety factor with
+            load (LoadInput): The load input to calculate the reliability and safety factor for
+            year (float): The year to calculate the reliability and safety factor for.
+            initial_year (int): The initial year to base the calculation on.
+
+        Raises:
+            ValueError: raised when the elimination has been flagged, but is  undefined.
+
+        Returns:
+            tuple[float, float]: A tuple containing the reliability and safety factor.
+        """
         if traject_info is None:  # Defaults, typical values for 16-3 and 16-4
             traject_info = {}
             traject_info["Pmax"] = 1.0 / 10000
@@ -37,7 +52,7 @@ class PipingSemiProbabilistic:
 
         # First calculate the SF without gamma for the three submechanisms
         # Piping:
-        strength_new = copy.deepcopy(strength)
+        strength_new = copy.deepcopy(mechanism_input)
         scenario_result = {}
         scenario_result["Scenario"] = strength_new.input["Scenario"]
         scenario_result["P_scenario"] = strength_new.input["P_scenario"]
@@ -47,8 +62,8 @@ class PipingSemiProbabilistic:
         scenario_result["Pf"] = {}
         scenario_result["Beta"] = {}
 
-        for i in strength.temporals:
-            strength_new.input[i] = strength.input[i] * year
+        for i in mechanism_input.temporals:
+            strength_new.input[i] = mechanism_input.input[i] * year
 
         # TODO:below, remove self. in for example self.gamma_pip. This is just an scenario output value. do not store.
         # calculate beta per scenario and determine overall
@@ -65,7 +80,7 @@ class PipingSemiProbabilistic:
             # TODO aanpassen met nieuwe belastingmodel
             inputs = add_load_char_vals(
                 strength_new.input_ind,
-                t_0=t_0,
+                t_0=initial_year,
                 load=load,
                 p_h=traject_info["Pmax"],
                 p_dh=0.5,
@@ -88,8 +103,8 @@ class PipingSemiProbabilistic:
             ] = PipingSemiProbabilistic.calculate_beta_uplift(traject_info, inputs)
 
             # Check if there is an elimination measure present (VZG or diaphragm wall)
-            if "Elimination" in strength.input.keys():
-                if strength.input["Elimination"] == "yes":
+            if "Elimination" in mechanism_input.input.keys():
+                if mechanism_input.input["Elimination"] == "yes":
                     # Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
                     scenario_beta = np.max(
                         [
@@ -103,9 +118,9 @@ class PipingSemiProbabilistic:
                             np.min(
                                 [
                                     beta_to_pf(scenario_beta)
-                                    * strength.input["Pf_elim"]
-                                    + strength.input["Pf_with_elim"]
-                                    * (1 - strength.input["Pf_elim"]),
+                                    * mechanism_input.input["Pf_elim"]
+                                    + mechanism_input.input["Pf_with_elim"]
+                                    * (1 - mechanism_input.input["Pf_elim"]),
                                     beta_to_pf(scenario_beta),
                                 ]
                             ),
