@@ -1,3 +1,4 @@
+from pathlib import Path
 import shelve
 
 import matplotlib.pyplot as plt
@@ -6,19 +7,18 @@ import seaborn as sns
 
 from tools.HelperFunctions import get_measure_table
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
-from vrtool.flood_defence_system.dike_traject import get_section_length_in_traject
+from vrtool.flood_defence_system.dike_traject import DikeTraject, get_section_length_in_traject
 
 
 def plot_lcc(
     strategies_list: list[StrategyBase],
-    traject,
-    PATH=False,
-    fig_size=(12, 2),
-    flip=False,
-    title_in=False,
-    subfig=False,
-    greedymode="Optimal",
-    color=False,
+    traject: DikeTraject,
+    output_dir: Path,
+    flip: bool,
+    fig_size: tuple[int, int],
+    title_in: str,
+    greedymode: str,
+    color: list[plt.Color],
 ):
     # TODO This should not be necessary:
     strategies_list[0].OptimalSolution["LCC"] = (
@@ -62,15 +62,15 @@ def plot_lcc(
         / 2
     )
     if greedymode == "Optimal":
-        GreedySolution = strategies_list[0].OptimalSolution["LCC"].values / 1e6
+        _greedy_solution = strategies_list[0].OptimalSolution["LCC"].values / 1e6
     elif greedymode == "SatisfiedStandard":
-        GreedySolution = (
+        _greedy_solution = (
             strategies_list[0].SatisfiedStandardSolution["LCC"].values / 1e6
         )
-        print()
+
     ax.bar(
         np.subtract(middles, 0.45 * widths),
-        GreedySolution,
+        _greedy_solution,
         widths * 0.9,
         color=color[0],
         label="Optimized",
@@ -92,7 +92,7 @@ def plot_lcc(
     ax.set_xticklabels(labels_xticks)
     ax.tick_params(axis="x", rotation=90)
     # make y-axis nice
-    LCCmax = (
+    lcc_max = (
         np.max(
             [
                 strategies_list[0].OptimalSolution["LCC"].values,
@@ -101,10 +101,10 @@ def plot_lcc(
         )
         / 1e6
     )
-    if LCCmax < 10:
-        ax.set_ylim(bottom=0, top=np.ceil(LCCmax / 2) * 2)
-    if LCCmax >= 10:
-        ax.set_ylim(bottom=0, top=np.ceil(LCCmax / 5) * 5)
+    if lcc_max < 10:
+        ax.set_ylim(bottom=0, top=np.ceil(lcc_max / 2) * 2)
+    if lcc_max >= 10:
+        ax.set_ylim(bottom=0, top=np.ceil(lcc_max / 5) * 5)
     ax.set_ylabel("Cost in M€")
     ax.get_xticklabels()
     ax.tick_params(axis="both", bottom=False)
@@ -114,7 +114,7 @@ def plot_lcc(
     ax.text(
         0,
         0.8,
-        "Total LCC Optimized = {:.0f}".format(np.sum(GreedySolution.astype(np.float32)))
+        "Total LCC Optimized = {:.0f}".format(np.sum(_greedy_solution.astype(np.float32)))
         + " M€ \n"
         + "Total LCC Target rel. = {:.0f}".format(
             np.sum(strategies_list[1].FinalSolution["LCC"].values / 1e6)
@@ -129,7 +129,10 @@ def plot_lcc(
     ax.grid(axis="y", linewidth=0.5, color="gray", alpha=0.5)
     if title_in:
         ax.set_title(title_in)
-    plt.savefig(PATH.joinpath("LCC.png"), dpi=300, bbox_inches="tight", format="png")
+
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
+    plt.savefig(output_dir / "LCC.png", dpi=300, bbox_inches="tight", format="png")
 
 
 def main():
@@ -277,7 +280,7 @@ def main():
     plot_lcc(
         AllStrategies,
         TestCase,
-        PATH=config.directory,
+        output_dir=config.directory,
         fig_size=figsize,
         flip=True,
         greedymode=greedy_mode,
