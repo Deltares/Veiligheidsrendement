@@ -1,5 +1,6 @@
 from pathlib import Path
-import matplotlib.pyplot as plt
+from matplotlib.pyplot import subplots, savefig
+from matplotlib.colors import ListedColormap
 import numpy as np
 import seaborn as sns
 
@@ -15,7 +16,7 @@ def plot_lcc(
     fig_size: tuple[int, int],
     title_in: str,
     greedymode: str,
-    color: list[plt.Color],
+    color: list[ListedColormap],
 ):
     # TODO This should not be necessary:
     strategies_list[0].OptimalSolution["LCC"] = (
@@ -38,7 +39,7 @@ def plot_lcc(
         color = sns.cubehelix_palette(
             n_colors=4, start=1.9, rot=1, gamma=1.5, hue=1.0, light=0.8, dark=0.3
         )
-    fig, (ax, ax1) = plt.subplots(
+    fig, (ax, ax1) = subplots(
         nrows=1,
         ncols=2,
         figsize=fig_size,
@@ -129,4 +130,4 @@ def plot_lcc(
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
-    plt.savefig(output_dir / "LCC.png", dpi=300, bbox_inches="tight", format="png")
+    savefig(output_dir / "LCC.png", dpi=300, bbox_inches="tight", format="png")
