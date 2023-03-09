@@ -57,7 +57,7 @@ class MechanismInput:
                     )[["Value", "Beta"]]
                     if count == 0:
                         data = year_data.set_index("Value").rename(
-                            columns={"Beta": year_path}
+                            columns={"Beta": year_path.stem}
                         )
 
                     else:
@@ -66,7 +66,7 @@ class MechanismInput:
                                 (
                                     data,
                                     year_data.set_index("Value").rename(
-                                        columns={"Beta": year_path}
+                                        columns={"Beta": year_path.stem}
                                     ),
                                 ),
                                 axis="columns",

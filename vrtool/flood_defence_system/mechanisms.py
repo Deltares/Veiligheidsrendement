@@ -6,7 +6,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 
 ## This script contains limit state functions for the different mechanisms.
 ## It was translated from the scripts in Matlab Open Earth Tools that were used in the safety assessment
-def overflow_hring(input, year, t_0: int, mode="assessment", Pt=None):
+def overflow_hring(input: dict, year: float, t_0: int, mode="assessment", Pt=None):
     """year is relative to start year. input contains relevant inputs"""
     if mode == "assessment":
         h_t = input["h_crest"] - input["d_crest"] * (year)
