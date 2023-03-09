@@ -7,7 +7,7 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
 )
 
 
-class TestStabilityInner:
+class TestStabilityInnerFunctions:
     @pytest.mark.parametrize(
         "safety_factor, expected_reliability",
         [
