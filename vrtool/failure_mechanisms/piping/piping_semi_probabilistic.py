@@ -24,9 +24,9 @@ class PipingSemiProbabilistic:
         traject_info: dict,
         strength: MechanismInput,
         load: LoadInput,
-        year: int,
+        year: float,
         t_0: int,
-    ):
+    ) -> tuple[float, float]:
         gamma_schem_heave = 1  # 1.05
         gamma_schem_upl = 1  # 1.05
         gamma_schem_pip = 1  # 1.05
@@ -178,16 +178,16 @@ class PipingSemiProbabilistic:
                 )
                 scenario_result["Pf"][j] = beta_to_pf(scenario_result["Beta"][j])
 
-            # multiply every scenario by probability
-            failure_probability = np.max(
-                [
-                    sum(
-                        scenario_result["Pf"][k] * scenario_result["P_scenario"][k]
-                        for k in scenario_result["Pf"]
-                    ),
-                    beta_to_pf(8.0),
-                ]
-            )
-            beta = np.min([pf_to_beta(failure_probability), 8])
+        # multiply every scenario by probability
+        failure_probability = np.max(
+            [
+                sum(
+                    scenario_result["Pf"][k] * scenario_result["P_scenario"][k]
+                    for k in scenario_result["Pf"]
+                ),
+                beta_to_pf(8.0),
+            ]
+        )
+        beta = np.min([pf_to_beta(failure_probability), 8])
 
-            return [beta, failure_probability]
+        return [beta, failure_probability]
