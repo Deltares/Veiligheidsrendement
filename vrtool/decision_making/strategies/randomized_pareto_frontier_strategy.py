@@ -6,7 +6,6 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from tools.HelperFunctions import pareto_frontier
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -315,11 +314,12 @@ class RandomizedParetoFrontierStrategy(StrategyBase):
                 Results.to_csv(output_path.joinpath("ParetoResultsGreedy.csv"))
                 print("Set " + str(j + 1) + " of " + str(set_range) + " finished")
             else:
-                p_frontX, p_frontY, index = pareto_frontier(
-                    Xs=Results["LCC"].values,
-                    Ys=Results["TR"].values,
-                    maxX=False,
-                    maxY=False,
+                p_frontX, p_frontY, index = self.pareto_frontier(
+                    Results["LCC"].values,
+                    Results["TR"].values,
+                    None,
+                    False,
+                    False,
                 )
                 Results.iloc[index].to_csv(
                     output_path.joinpath("ParetoResults" + str(j) + ".csv")

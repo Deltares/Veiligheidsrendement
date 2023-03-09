@@ -1,11 +1,21 @@
 import numpy as np
 import pandas as pd
 
-from tools.HelperFunctions import flatten
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 
 
 class MixedIntegerStrategy(StrategyBase):
+    def _flatten_list(self, list_to_flatten: list) -> list:
+        _flat_list = []
+        if not list_to_flatten:
+            return _flat_list
+        for _item_to_flatten in list_to_flatten:
+            if isinstance(_item_to_flatten, (list, tuple)):
+                _flat_list.extend(self._flatten_list(_item_to_flatten))
+            else:
+                _flat_list.append(_item_to_flatten)
+        return _flat_list
+
     def create_optimization_model(self, BudgetLimit=False):
         """Routine to create a mixed integer optimization model in CPLEX. Note that a valid installation of the CPLEX solver is required."""
         # make a model
@@ -199,9 +209,9 @@ class MixedIntegerStrategy(StrategyBase):
                                 jj[kk] = [index1]
                             else:
                                 jj[kk] = []
-                        slist = flatten(
+                        slist = self._flatten_list(
                             [Cint_nd[n, sh, :].tolist() for sh in ii]
-                        ) + flatten(
+                        ) + self._flatten_list(
                             [Oint_nd[nh, sh, t].tolist() for nh in grN for sh in jj[nh]]
                         )
                         nlist = [1.0] * len(slist)

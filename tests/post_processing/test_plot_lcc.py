@@ -1,6 +1,5 @@
 from pathlib import Path
 import pytest
-from tools.HelperFunctions import get_measure_table
 import shelve
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -166,7 +165,7 @@ class TestPlotLcc:
         # LCC-beta for t=50
         for t_plot in [0, 50]:
             for cost_type in ["Initial", "LCC"]:
-                MeasureTable = get_measure_table(_loaded_solutions, language="EN", abbrev=True)
+                MeasureTable = StrategyBase.get_measure_table(_loaded_solutions, language="EN", abbrev=True)
                 figsize = (6, 4)
                 plt.figure(102, figsize=figsize)
                 _loaded_strategies[0].plotBetaCosts(

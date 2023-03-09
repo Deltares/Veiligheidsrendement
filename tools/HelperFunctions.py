@@ -130,25 +130,6 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
     return TestCaseStrategy
 
 
-def get_measure_table(AllSolutions,language ='NL',abbrev=False):
-    OverallMeasureTable = pd.DataFrame([], columns=['ID', 'Name'])
-    for i in AllSolutions:
-        OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].measure_table])
-    OverallMeasureTable: Union[DataFrame, None, Series] = OverallMeasureTable.drop_duplicates(subset='ID')
-    if (np.max(OverallMeasureTable['Name'].str.find('Grondversterking').values) > -1) and (language == 'EN'):
-        OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking binnenwaarts', 'Soil based')
-        if abbrev:
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking met stabiliteitsscherm', 'Soil based + SS')
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Verticaal Zanddicht Geotextiel', 'VSG')
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Zelfkerende constructie', 'DW')
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Stabiliteitsscherm', 'SS')
-        else:
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking met stabiliteitsscherm', 'Soil inward + Stability Screen')
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Verticaal Zanddicht Geotextiel', 'Vertical Sandtight Geotextile')
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Zelfkerende constructie', 'Diaphragm Wall')
-            OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Stabiliteitsscherm', 'Stability Screen')
-    return OverallMeasureTable
-
 #this is a more generic function to read and write data from and to a shelve. But it is not implemented fully:
 # TODO implement DataAtShelve instead of (un)commenting snippets of code
 def DataAtShelve(dir, name, objects = None, mode = 'write'):
@@ -171,16 +152,6 @@ def DataAtShelve(dir, name, objects = None, mode = 'write'):
 
 def id_to_name(ID, MeasureTable):
     return MeasureTable.loc[MeasureTable['ID']==ID]['Name'].values[0]
-
-def flatten(l): #flatten a list
-  out = []
-  if len(l)>0:
-      for item in l:
-        if isinstance(item, (list, tuple)):
-          out.extend(flatten(item))
-        else:
-          out.append(item)
-  return out
 
 def pareto_frontier(Xs=False, Ys=False,PATH=False, maxX = True, maxY = True):
     if PATH:
