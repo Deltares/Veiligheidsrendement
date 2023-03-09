@@ -15,91 +15,72 @@ class MechanismInput:
     def __init__(self, mechanism):
         self.mechanism = mechanism
 
-    def fill_distributions(self, distributions, t, processIDs, parameters):
-
-        dists = copy.deepcopy(distributions)
-        self.temporals = []
-        for j in processIDs:
-            if t > 0:
-                dists[j] = temporal_process(dists[j], t)
-            else:
-                dists[j] = ot.Dirac(0.0)
-            self.temporals.append(parameters[j])
-        self.input = ot.ComposedDistribution(dists)
-        self.input.setDescription(parameters)
-
     # This routine reads  input from an input sheet
     def fill_mechanism(
         self,
         input_path,
         reference,
         calctype,
-        kind="csv",
-        sheet=None,
         mechanism=None,
         **kwargs,
     ):
-        if kind == "csv":
-            if mechanism != "Overflow":
-                try:
-                    data = pd.read_csv(
-                        input_path.joinpath(Path(str(reference)).name),
-                        delimiter=",",
-                        header=None,
-                    )
-                except:
-                    data = pd.read_csv(
-                        input_path.joinpath(Path(str(reference)).name + ".csv"),
-                        delimiter=",",
-                        header=None,
-                    )
+        # From CSV
+        if mechanism != "Overflow":
+            try:
+                data = pd.read_csv(
+                    input_path.joinpath(Path(str(reference)).name),
+                    delimiter=",",
+                    header=None,
+                )
+            except:
+                data = pd.read_csv(
+                    input_path.joinpath(Path(str(reference)).name + ".csv"),
+                    delimiter=",",
+                    header=None,
+                )
 
-                # TODO: fix datatypes in input such that we do not need to drop columns
-                data = data.rename(columns={list(data)[0]: "Name"})
-                data = data.set_index("Name")
-                try:
-                    data = data.drop(["InScope", "Opmerking"]).astype(np.float32)
-                except:
-                    pass
-
-            else:  #'Overflow':
-                if calctype == "Simple":
-                    data = pd.read_csv(
-                        input_path.joinpath(Path(reference).name), delimiter=","
-                    )
-                    data = data.transpose()
-                elif calctype == "HRING":
-                    # detect years
-                    years = os.listdir(input_path)
-                    for count, year in enumerate(years):
-                        year_data = read_design_table(
-                            input_path.joinpath(year, reference + ".txt")
-                        )[["Value", "Beta"]]
-                        if count == 0:
-                            data = year_data.set_index("Value").rename(
-                                columns={"Beta": year}
-                            )
-
-                        else:
-                            if all(data.index.values == year_data.Value.values):
-                                data = pd.concat(
-                                    (
-                                        data,
-                                        year_data.set_index("Value").rename(
-                                            columns={"Beta": year}
-                                        ),
-                                    ),
-                                    axis="columns",
-                                )
-                            # compare value columns:
-                        # if count>0 and Value is identical: concatenate.
-                        # else: interpolate and then concatenate.
-                else:
-                    raise Exception("Unknown input type for overflow")
-
-        elif kind == "xlsx":
-            data = pd.read_excel(input, sheet_name=sheet)
+            # TODO: fix datatypes in input such that we do not need to drop columns
+            data = data.rename(columns={list(data)[0]: "Name"})
             data = data.set_index("Name")
+            try:
+                data = data.drop(["InScope", "Opmerking"]).astype(np.float32)
+            except:
+                pass
+
+        else:  #'Overflow':
+            if calctype == "Simple":
+                data = pd.read_csv(
+                    input_path.joinpath(Path(reference).name), delimiter=","
+                )
+                data = data.transpose()
+            elif calctype == "HRING":
+                # detect years
+                years = os.listdir(input_path)
+                for count, year in enumerate(years):
+                    year_data = read_design_table(
+                        input_path.joinpath(year, reference + ".txt")
+                    )[["Value", "Beta"]]
+                    if count == 0:
+                        data = year_data.set_index("Value").rename(
+                            columns={"Beta": year}
+                        )
+
+                    else:
+                        if all(data.index.values == year_data.Value.values):
+                            data = pd.concat(
+                                (
+                                    data,
+                                    year_data.set_index("Value").rename(
+                                        columns={"Beta": year}
+                                    ),
+                                ),
+                                axis="columns",
+                            )
+                        # compare value columns:
+                    # if count>0 and Value is identical: concatenate.
+                    # else: interpolate and then concatenate.
+            else:
+                raise Exception("Unknown input type for overflow")
 
         self.input = {}
         self.temporals = []

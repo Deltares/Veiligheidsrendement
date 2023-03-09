@@ -1,7 +1,5 @@
 import os
 
-import matplotlib.pyplot as plt
-import numpy as np
 import openturns as ot
 
 from vrtool.probabilistic_tools.hydra_ring_scripts import design_table_openturns
@@ -40,12 +38,3 @@ class LoadInput:
         elif type == "gamma":
             self.dist_change = ot.Gamma()
             self.dist_change.setParameter(ot.GammaMuSigma()(parameters))
-
-    def plot_load_cdf(self):
-        data = np.array(self.distribution.getParameter())
-        x = np.split(data, 2)
-        plt.plot(x[0], 1 - x[1])
-        plt.yscale("log")
-        plt.title("Probability of non-exceedence")
-        plt.xlabel("Water level [m NAP]")
-        plt.ylabel(r"$P_{non exceedence} (-/year)$")
