@@ -1,4 +1,4 @@
-from vrtool.failure_mechanisms.overflow.overflow import Overflow
+from vrtool.failure_mechanisms.overflow.overflow_functions import overflow_hring
 from vrtool.failure_mechanisms.overflow.overflow_hydra_ring_input import (
     OverflowHydraRingInput,
 )
@@ -26,4 +26,4 @@ class OverflowHydraRing:
             hc_beta=mechanism_input.hc_beta,
         )
 
-        return Overflow.overflow_hring(input, year, initial_year)
+        return overflow_hring(input, year, initial_year)

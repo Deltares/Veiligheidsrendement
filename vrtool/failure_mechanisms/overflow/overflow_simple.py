@@ -1,4 +1,4 @@
-from vrtool.failure_mechanisms.overflow.overflow import Overflow
+from vrtool.failure_mechanisms.overflow.overflow_functions import overflow_simple
 from vrtool.failure_mechanisms.overflow.overflow_simple_input import OverflowSimpleInput
 
 from vrtool.flood_defence_system.load_input import LoadInput
@@ -27,7 +27,7 @@ class OverflowSimple:
                 mechanism_input.dhc_t * year
             )
 
-        return Overflow.overflow_simple(
+        return overflow_simple(
             corrected_crest_height,
             mechanism_input.q_crest,
             mechanism_input.h_c,
