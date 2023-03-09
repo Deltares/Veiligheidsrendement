@@ -51,32 +51,6 @@ def calc_beta_implicated(mechanism, safety_factor, traject_info=None):
             logging.warn("Mechanism not found")
     return beta
 
-
-# Calculates total probability from list of sections for a mechanism or for all mechanisms that can be found (to be programmed)
-def calc_traject_prob(sections, mechanism):
-    if isinstance(sections[0], float):
-        # traject_prob = sum(sections)
-        traject_prob = 1 - (np.prod(np.subtract(1, sections)))
-    else:
-        Psections = []
-        if mechanism == "Piping":
-            for i in range(0, len(sections)):
-                if isinstance(sections[i].Reliability.Piping.Pf, float):
-                    betaCS = pf_to_beta(sections[i].Reliability.Piping.Pf)
-                else:
-                    betaCS = max(
-                        (
-                            sections[i].Reliability.Piping.beta_cs_h,
-                            sections[i].Reliability.Piping.beta_cs_p,
-                            sections[i].Reliability.Piping.beta_cs_u,
-                        )
-                    )
-                Psections.append(beta_to_pf(betaCS))
-        # traject_prob = sum(Psections)
-        traject_prob = 1 - (np.prod(np.subtract(1, Psections)))
-    return traject_prob
-
-
 def compute_decimation_height(h, p, n=2):
     # computes the average decimation height for the lower parts of a distribution: h are water levels, p are exceedence probabilities. n is the number of 'decimations'
     hp = interp1d(p, h)
@@ -228,18 +202,18 @@ class TableDist(ot.PythonDistribution):
 
 
 def calculate_fragility_integration(
-    FragilityCurve, WaterLevelDist, WaterLevelChange=False, N=1600, PrintResults=False
+    fragility_curve, water_level_dist, water_level_change, N=1600, PrintResults=False
 ):
-    if WaterLevelChange:
-        if (WaterLevelChange.getClassName() == "Dirac") and (
-            WaterLevelDist.distribution.getName() == "TableDist"
+    if water_level_change:
+        if (water_level_change.getClassName() == "Dirac") and (
+            water_level_dist.distribution.getName() == "TableDist"
         ):
             pass
-            half = int(0.5 * len(WaterLevelDist.distribution.getParameter()))
+            half = int(0.5 * len(water_level_dist.distribution.getParameter()))
             x = np.asarray(
-                WaterLevelDist.distribution.getParameter()[0:half]
-            ) + np.asarray(WaterLevelChange.getParameter())
-            p = WaterLevelDist.distribution.getParameter()[half:]
+                water_level_dist.distribution.getParameter()[0:half]
+            ) + np.asarray(water_level_change.getParameter())
+            p = water_level_dist.distribution.getParameter()[half:]
             # plt.semilogy(x, np.subtract(1, p))
             # plt.xlim(left=5)
             # new_dist = TableDist(x, p)
@@ -250,7 +224,7 @@ def calculate_fragility_integration(
     px = norm.cdf(ux)
     interpolator = sp.interpolate.interp1d(p, x, fill_value="extrapolate")
     h = interpolator(px)
-    cdf_hc = get_value_from_fagility_curve(FragilityCurve, Value="pf", x=h)
+    cdf_hc = get_value_from_fagility_curve(fragility_curve, Value="pf", x=h)
     dx = ux[1] - ux[0]
     pdf_h = norm.pdf(ux)
     Pfs = cdf_hc * pdf_h * dx
@@ -290,7 +264,7 @@ def get_value_from_fagility_curve(FragilityCurve, Value, x):
             pf = norm.cdf(-beta_hc)
             return pf
         else:
-            return beta
+            return beta_hc
 
 
 def run_prob_calc(model, dist, method="FORM", startpoint=False):
@@ -505,75 +479,6 @@ def add_load_char_vals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, yea
 
 ###################################################################################################
 ## THESE ARE FASTER FORMULAS FOR CONVERTING BETA TO PROB AND VICE VERSA
-def erf(x):
-    """John D. Cook's implementation.http://www.johndcook.com
-    >> Formula 7.1.26 given in Abramowitz and Stegun.
-    >> Formula appears as 1 – (a1t1 + a2t2 + a3t3 + a4t4 + a5t5)exp(-x2)
-    >> A little wisdom in Horner's Method of coding polynomials:
-        1) We could evaluate a polynomial of the form a + bx + cx^2 + dx^3 by coding as a + b*x + c*x*x + d*x*x*x.
-        2) But we can save computational power by coding it as ((d*x + c)*x + b)*x + a.
-        3) The formula below was coded this way bringing down the complexity of this algorithm from O(n2) to O(n)."""
-
-    # constants
-    a1 = 0.254829592
-    a2 = -0.284496736
-    a3 = 1.421413741
-    a4 = -1.453152027
-    a5 = 1.061405429
-    p = 0.3275911
-
-    # Save the sign of x
-    # sign = 1
-    # if x < 0:
-    #     sign = -1
-    if np.any(np.isnan(np.where(x < 0, -1, 1))):
-        print()
-    sign = np.where(x < 0, -1, 1)
-    x = abs(x)
-
-    # Formula 7.1.26 given in Abramowitz and Stegun.
-    t = 1.0 / (1.0 + p * x)
-    y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * np.exp(-x * x)
-    # y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x * x)
-
-    return sign * y
-
-
-####################################################################################################
-
-
-def phi(x):
-    """Cumulative gives a probability that a statistic
-    is less than Z. This equates to the area of the
-    distribution below Z.
-    e.g:  Pr(Z = 0.69) = 0.7549. This value is usually
-    given in Z tables."""
-
-    return 0.5 * (1.0 + erf(x / math.sqrt(2)))
-
-
-#####################################################################################################
-
-
-def phi_compcum(x):
-    """Complementary cumulative gives a probability
-    that a statistic is greater than Z. This equates to
-    the area of the distribution above Z.
-    e.g: Pr(Z  =  0.69) = 1 - 0.7549 = 0.2451"""
-
-    return abs(phi(x) - 1)
-
-
-#####################################################################################################
-
-
-def phi_cumformu(x):
-    """Cumulative from mean gives a probability
-    that a statistic is between 0 (mean) and Z.
-    e.g: Pr(0 = Z = 0.69) = 0.2549"""
-
-    return phi_compcum(0) - phi_compcum(x)
-
 
 def beta_to_pf(beta):
     # alternative: use scipy

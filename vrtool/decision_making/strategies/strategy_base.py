@@ -1256,7 +1256,7 @@ class StrategyBase:
 
     @abstractmethod
     def determine_risk_cost_curve(self, traject: DikeTraject, input_path: Path = None):
-        pass
+        raise NotImplementedError("Expected concrete definition in inherited class.")
 
     def get_safety_standard_step(self, Ptarget, t=50):
         """Get the index of the measure where the traject probability in year t is higher than the requirement"""

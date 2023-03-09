@@ -161,7 +161,7 @@ class MechanismReliability:
                 dist_change = temporal_process(original, year)
                 # marginals = [self.Input.input['FC'], load, dist_change]
                 P, beta = calculate_fragility_integration(
-                    self.Input.input["FC"], load, WaterLevelChange=dist_change
+                    self.Input.input["FC"], load, water_level_change=dist_change
                 )
 
                 # result missing

@@ -1,14 +1,10 @@
-import copy
-import os
 from pathlib import Path
 
 import numpy as np
-import openturns as ot
 import pandas as pd
 
 from vrtool.probabilistic_tools.hydra_ring_scripts import read_design_table
-from vrtool.probabilistic_tools.probabilistic_functions import temporal_process
-
+import logging
 
 class MechanismInput:
     # Class for input of a mechanism
@@ -18,7 +14,7 @@ class MechanismInput:
     # This routine reads  input from an input sheet
     def fill_mechanism(
         self,
-        input_path,
+        input_path: Path,
         reference,
         calctype,
         mechanism=None,
@@ -55,14 +51,13 @@ class MechanismInput:
                 data = data.transpose()
             elif calctype == "HRING":
                 # detect years
-                years = os.listdir(input_path)
-                for count, year in enumerate(years):
+                for count, year_path in enumerate(input_path.iterdir()):
                     year_data = read_design_table(
-                        input_path.joinpath(year, reference + ".txt")
+                        year_path.joinpath(reference + ".txt")
                     )[["Value", "Beta"]]
                     if count == 0:
                         data = year_data.set_index("Value").rename(
-                            columns={"Beta": year}
+                            columns={"Beta": year_path}
                         )
 
                     else:
@@ -71,7 +66,7 @@ class MechanismInput:
                                 (
                                     data,
                                     year_data.set_index("Value").rename(
-                                        columns={"Beta": year}
+                                        columns={"Beta": year_path}
                                     ),
                                 ),
                                 axis="columns",
@@ -122,7 +117,7 @@ class MechanismInput:
                             self.input[data.index[i]] = self.input[data.index[i]] / (
                                 24 * 3600
                             )
-                            print(
+                            logging.info(
                                 "k-value modified as it was likely m/d and should be m/s"
                             )
                     except:
@@ -130,6 +125,6 @@ class MechanismInput:
                             self.input[data.index[i]] = self.input[data.index[i]] / (
                                 24 * 3600
                             )
-                            print(
+                            logging.info(
                                 "k-value modified as it was likely m/d and should be m/s"
                             )

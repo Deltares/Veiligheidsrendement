@@ -38,20 +38,17 @@ class MechanismReliabilityCollection:
         conditionality="no",
     ):
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
-        if load:
-            [
-                self.Reliability[i].calcReliability(
-                    self.Reliability[i].Input,
-                    load,
-                    mechanism=mechanism,
-                    method=method,
-                    year=float(i),
-                    TrajectInfo=trajectinfo,
-                )
-                for i in self.Reliability.keys()
-            ]
-        else:
+        if not load:
             raise ValueError("Load value should be True.")
+        for i in self.Reliability.keys():
+            self.Reliability[i].calcReliability(
+                self.Reliability[i].Input,
+                load,
+                mechanism=mechanism,
+                method=method,
+                year=float(i),
+                TrajectInfo=trajectinfo,
+            )
 
     def drawLCR(self, yscale=None, type="beta", mechanism=None):
         # Draw the life cycle reliability. Default is beta but can be set to Pf
