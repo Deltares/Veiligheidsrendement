@@ -1,16 +1,20 @@
-from pathlib import Path
-import pytest
 import shelve
-import seaborn as sns
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import pytest
+import seaborn as sns
+
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.post_processing.plot_lcc import plot_lcc
-from vrtool.defaults.vrtool_config import VrtoolConfig
+
 
 class TestPlotLcc:
-
-    @pytest.mark.skip(reason="TODO: This code needs to be adapted to new architecture and data structures.")
+    @pytest.mark.skip(
+        reason="TODO: This code needs to be adapted to new architecture and data structures."
+    )
     def test_plot_lcc_with_valid_data(self):
         """
         This test is a representation of the previous `def main()` contained in the file `plot_lcc.py`
@@ -22,6 +26,7 @@ class TestPlotLcc:
         ##PLOT SETTINGS
         t_0 = 2025
         rel_year = t_0 - 2025
+
         def get_from_shelve(output_file: Path) -> dict:
             _shelve = shelve.open(str(output_file))
             _shelve_dict = {}
@@ -29,20 +34,28 @@ class TestPlotLcc:
                 _shelve_dict[_key] = _shelve[_key]
             _shelve.close()
             return _shelve_dict
-                
-        _loaded_traject: DikeTraject = get_from_shelve(_config.output_directory / "AfterStep1.out")
+
+        _loaded_traject: DikeTraject = get_from_shelve(
+            _config.output_directory / "AfterStep1.out"
+        )
         _loaded_solutions = get_from_shelve(_config.output_directory / "AfterStep2.out")
-        _loaded_strategies: list[StrategyBase] = get_from_shelve(_config.output_directory / "FINALRESULT.out")
+        _loaded_strategies: list[StrategyBase] = get_from_shelve(
+            _config.output_directory / "FINALRESULT.out"
+        )
         _greedy_mode = "Optimal"
         # greedy_mode = 'SatisfiedStandard'
 
         _loaded_strategies[0].getSafetyStandardStep(_loaded_traject.GeneralInfo["Pmax"])
         _loaded_strategies[1].makeSolution(
-            _config.output_directory.joinpath("results", "FinalMeasures_Doorsnede-eisen.csv"),
+            _config.output_directory.joinpath(
+                "results", "FinalMeasures_Doorsnede-eisen.csv"
+            ),
             type="Final",
         )
         _loaded_strategies[0].makeSolution(
-            _config.output_directory.joinpath("results", "FinalMeasures_Veiligheidsrendement.csv"),
+            _config.output_directory.joinpath(
+                "results", "FinalMeasures_Veiligheidsrendement.csv"
+            ),
             step=_loaded_strategies[0].SafetyStandardStep,
             type="SatisfiedStandard",
         )
@@ -85,7 +98,10 @@ class TestPlotLcc:
                 show_xticks=True,
                 case_settings=case_settings,
                 custom_name="Assessment_" + plot_year + ".png",
-                title_in="(a) \n" + r"$\bf{Predicted~reliability~in~" + plot_year + "}$",
+                title_in="(a) \n"
+                + r"$\bf{Predicted~reliability~in~"
+                + plot_year
+                + "}$",
             )
             #
             # #pane 2: reliability in 2075, with Greedy optimization
@@ -142,7 +158,8 @@ class TestPlotLcc:
             crestscale=25.0,
             show_xticks=True,
             flip=True,
-            title_in="(d) \n" + r"$\bf{Target~reliability~based~investment}$ - Measures",
+            title_in="(d) \n"
+            + r"$\bf{Target~reliability~based~investment}$ - Measures",
             colors=targetrel_colors,
         )
 
@@ -165,7 +182,9 @@ class TestPlotLcc:
         # LCC-beta for t=50
         for t_plot in [0, 50]:
             for cost_type in ["Initial", "LCC"]:
-                MeasureTable = StrategyBase.get_measure_table(_loaded_solutions, language="EN", abbrev=True)
+                MeasureTable = StrategyBase.get_measure_table(
+                    _loaded_solutions, language="EN", abbrev=True
+                )
                 figsize = (6, 4)
                 plt.figure(102, figsize=figsize)
                 _loaded_strategies[0].plotBetaCosts(
@@ -203,4 +222,3 @@ class TestPlotLcc:
                     format="png",
                 )
                 plt.close()
-

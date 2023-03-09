@@ -1,7 +1,8 @@
 import copy
+from abc import abstractmethod
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,8 +24,7 @@ from vrtool.flood_defence_system.dike_traject import (
     plot_settings,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from abc import abstractmethod
-from typing import Union
+
 
 class StrategyBase:
     """This defines a Strategy object, which can be allowed to evaluate a set of solutions/measures. There are currently 3 types:
@@ -47,52 +47,76 @@ class StrategyBase:
         self.LE_in_section = config.LE_in_section
 
     @staticmethod
-    def get_measure_table(solutions_dict: dict, language: str, abbrev: bool) -> pd.DataFrame:
-        _overall_mt = pd.DataFrame([], columns=['ID', 'Name'])
+    def get_measure_table(
+        solutions_dict: dict, language: str, abbrev: bool
+    ) -> pd.DataFrame:
+        _overall_mt = pd.DataFrame([], columns=["ID", "Name"])
         for i in solutions_dict:
             _overall_mt = pd.concat([_overall_mt, solutions_dict[i].measure_table])
-        _overall_mt: Union[pd.DataFrame, None, pd.Series] = _overall_mt.drop_duplicates(subset='ID')
+        _overall_mt: Union[pd.DataFrame, None, pd.Series] = _overall_mt.drop_duplicates(
+            subset="ID"
+        )
         _name_key = "Name"
+
         def _replace_with_abbreviations(str_to_replace: str) -> str:
             return (
-                str_to_replace
-                    .replace('Grondversterking binnenwaarts', 'Soil based')
-                    .replace('Grondversterking met stabiliteitsscherm', 'Soil based + SS')
-                    .replace('Verticaal Zanddicht Geotextiel', 'VSG')
-                    .replace('Zelfkerende constructie', 'DW')
-                    .replace('Stabiliteitsscherm', 'SS'))
+                str_to_replace.replace("Grondversterking binnenwaarts", "Soil based")
+                .replace("Grondversterking met stabiliteitsscherm", "Soil based + SS")
+                .replace("Verticaal Zanddicht Geotextiel", "VSG")
+                .replace("Zelfkerende constructie", "DW")
+                .replace("Stabiliteitsscherm", "SS")
+            )
+
         def _replace_without_abbreviations(str_to_replace: str) -> str:
             return (
-                str_to_replace
-                    .replace('Grondversterking binnenwaarts', 'Soil based')
-                    .replace('Grondversterking met stabiliteitsscherm', 'Soil inward + Stability Screen')
-                    .replace('Verticaal Zanddicht Geotextiel', 'Vertical Sandtight Geotextile')
-                    .replace('Zelfkerende constructie', 'Diaphragm Wall')
-                    .replace('Stabiliteitsscherm', 'Stability Screen'))
+                str_to_replace.replace("Grondversterking binnenwaarts", "Soil based")
+                .replace(
+                    "Grondversterking met stabiliteitsscherm",
+                    "Soil inward + Stability Screen",
+                )
+                .replace(
+                    "Verticaal Zanddicht Geotextiel", "Vertical Sandtight Geotextile"
+                )
+                .replace("Zelfkerende constructie", "Diaphragm Wall")
+                .replace("Stabiliteitsscherm", "Stability Screen")
+            )
 
-        if (np.max(_overall_mt[_name_key].str.find('Grondversterking').values) > -1) and (language == 'EN'):
+        if (
+            np.max(_overall_mt[_name_key].str.find("Grondversterking").values) > -1
+        ) and (language == "EN"):
             if abbrev:
-                _overall_mt[_name_key] = _replace_with_abbreviations(_overall_mt[_name_key].str)
+                _overall_mt[_name_key] = _replace_with_abbreviations(
+                    _overall_mt[_name_key].str
+                )
             else:
-                _overall_mt[_name_key] = _replace_without_abbreviations(_overall_mt[_name_key].str)
+                _overall_mt[_name_key] = _replace_without_abbreviations(
+                    _overall_mt[_name_key].str
+                )
         return _overall_mt
 
-
     @staticmethod
-    def pareto_frontier(x_array: np.ndarray, y_array: np.ndarray, input_path: Path, max_x: bool, max_y: bool) -> tuple[list, list, list]:
+    def pareto_frontier(
+        x_array: np.ndarray,
+        y_array: np.ndarray,
+        input_path: Path,
+        max_x: bool,
+        max_y: bool,
+    ) -> tuple[list, list, list]:
         if input_path:
             x_array = np.array([])  # LCC
             y_array = np.array([])  # TR
             # read info from path
             for _input_file in input_path.iterdir():
-                if _input_file.is_file() and 'ParetoResults' in _input_file.stem:
+                if _input_file.is_file() and "ParetoResults" in _input_file.stem:
                     data = pd.read_csv(_input_file)
-                    x_array = np.concatenate((x_array, data['LCC'].values))
-                    y_array = np.concatenate((y_array, data['TR'].values))
+                    x_array = np.concatenate((x_array, data["LCC"].values))
+                    y_array = np.concatenate((y_array, data["TR"].values))
         elif not x_array.size or not y_array.size:
-            raise ValueError('No input provided')
+            raise ValueError("No input provided")
 
-        myList = sorted([[x_array[i], y_array[i]] for i in range(len(x_array))], reverse=max_x)
+        myList = sorted(
+            [[x_array[i], y_array[i]] for i in range(len(x_array))], reverse=max_x
+        )
         index_order = np.argsort(x_array)
         p_front = [myList[0]]
         index = [index_order[0]]
@@ -110,11 +134,10 @@ class StrategyBase:
                     if pair[0] < p_front[-1][0]:
                         p_front.append(pair)
                         index.append(index_order[count])
-            count +=1
+            count += 1
         p_frontX = [pair[0] for pair in p_front]
         p_frontY = [pair[1] for pair in p_front]
         return p_frontX, p_frontY, index
-
 
     def get_measure_from_index(self, index, section_order=False, print_measure=False):
         """ "Converts an index (n,sh,sg) to a printout of the measure data"""

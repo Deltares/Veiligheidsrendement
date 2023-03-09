@@ -1,11 +1,15 @@
 from pathlib import Path
-from matplotlib.pyplot import subplots, savefig
-from matplotlib.colors import ListedColormap
+
 import numpy as np
 import seaborn as sns
+from matplotlib.colors import ListedColormap
+from matplotlib.pyplot import savefig, subplots
 
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
-from vrtool.flood_defence_system.dike_traject import DikeTraject, get_section_length_in_traject
+from vrtool.flood_defence_system.dike_traject import (
+    DikeTraject,
+    get_section_length_in_traject,
+)
 
 
 def plot_lcc(
@@ -112,7 +116,9 @@ def plot_lcc(
     ax.text(
         0,
         0.8,
-        "Total LCC Optimized = {:.0f}".format(np.sum(_greedy_solution.astype(np.float32)))
+        "Total LCC Optimized = {:.0f}".format(
+            np.sum(_greedy_solution.astype(np.float32))
+        )
         + " M€ \n"
         + "Total LCC Target rel. = {:.0f}".format(
             np.sum(strategies_list[1].FinalSolution["LCC"].values / 1e6)

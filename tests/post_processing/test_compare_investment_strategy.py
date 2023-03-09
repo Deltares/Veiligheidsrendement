@@ -1,13 +1,22 @@
 import shutil
-import pytest
 from pathlib import Path
-import pandas as pd
-from vrtool.post_processing.compare_investment_strategy import compare_investment_strategy
-from tests import test_data, test_results
-class TestCompareInvestmentStrategy:
 
-    @pytest.mark.skip(reason="TODO: This test misses all the input data and results verification.")
-    def test_compare_investment_strategy_with_valid_data(self, request: pytest.FixtureRequest):
+import pandas as pd
+import pytest
+
+from tests import test_data, test_results
+from vrtool.post_processing.compare_investment_strategy import (
+    compare_investment_strategy,
+)
+
+
+class TestCompareInvestmentStrategy:
+    @pytest.mark.skip(
+        reason="TODO: This test misses all the input data and results verification."
+    )
+    def test_compare_investment_strategy_with_valid_data(
+        self, request: pytest.FixtureRequest
+    ):
         """
         This used to be the code contained at the previous `def main()` in the target file.
         """
@@ -17,22 +26,30 @@ class TestCompareInvestmentStrategy:
 
         _input_test_dir = test_data / "SAFEInput" / _traject / "Input"
         _measure_test_file = _input_test_dir / "measures.csv"
-        assert _measure_test_file.exists(), "Measure test file not found at {}".format(_measure_test_file)        
+        assert _measure_test_file.exists(), "Measure test file not found at {}".format(
+            _measure_test_file
+        )
 
         _tc_test_file = _input_test_dir / "TakenMeasures_TC.csv"
-        assert _tc_test_file.exists(), "Not found TC measures file {}".format(_tc_test_file)
+        assert _tc_test_file.exists(), "Not found TC measures file {}".format(
+            _tc_test_file
+        )
 
         _oi_test_file = _input_test_dir / "TakenMeasures_OI.csv"
-        assert _oi_test_file.exists(), "Not found OI measures file {}".format(_oi_test_file)
+        assert _oi_test_file.exists(), "Not found OI measures file {}".format(
+            _oi_test_file
+        )
 
-        # Cleanse / generate the results dir.        
+        # Cleanse / generate the results dir.
         _results_dir = test_results / request.node.name / "results_{}".format(_traject)
         if _results_dir.exists():
             shutil.rmtree(_results_dir)
         _results_dir.mkdir(parents=True)
 
         _xlsx_results_filename = (
-            "TC_OI_comparison_traject_{}_investment_limit_{}.xlsx".format(_traject, _investment_limit)
+            "TC_OI_comparison_traject_{}_investment_limit_{}.xlsx".format(
+                _traject, _investment_limit
+            )
         )
         _xlsx_results_file = _results_dir / _xlsx_results_filename
         if _xlsx_results_file.exists():

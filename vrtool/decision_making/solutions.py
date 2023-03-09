@@ -47,7 +47,9 @@ class Solutions:
             elif data.loc[i].Type == "Stability Screen":
                 self.measures.append(StabilityScreenMeasure(data.loc[i], self.config))
             elif data.loc[i].Type == "Vertical Geotextile":
-                self.measures.append(VerticalGeotextileMeasure(data.loc[i], self.config))
+                self.measures.append(
+                    VerticalGeotextileMeasure(data.loc[i], self.config)
+                )
             elif data.loc[i].Type == "Custom":
                 data.loc[i, "File"] = excel_sheet.parent.joinpath(
                     "Measures", data.loc[i]["File"]

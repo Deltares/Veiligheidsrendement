@@ -1,9 +1,11 @@
+import logging
+
 import numpy as np
 import openturns as ot
 import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
-import logging
+
 
 # Function to calculate a safety factor:
 def calc_gamma(mechanism, traject_info):
@@ -459,6 +461,7 @@ def temporal_process(temporal_input, t, makePlot="off"):
         raise Exception("Distribution type for temporal process not recognized.")
     return temporal_input
 
+
 def get_design_water_level(load, p):
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
@@ -571,9 +574,11 @@ def phi_cumformu(x):
 
     return phi_compcum(0) - phi_compcum(x)
 
+
 def beta_to_pf(beta):
     # alternative: use scipy
     return norm.cdf(-beta)
+
 
 def pf_to_beta(pf):
     # alternative: use scipy

@@ -91,6 +91,7 @@ def implement_berm_widening(
         input["Lachter"] = (input["Lachter"] - measure_input["dberm"]).clip(0)
     return input
 
+
 def calculate_area(geometry):
     polypoints = []
     for label, points in geometry.iterrows():

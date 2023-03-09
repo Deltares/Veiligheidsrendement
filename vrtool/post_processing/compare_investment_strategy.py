@@ -177,5 +177,3 @@ def compare_investment_strategy(
             )
 
         writer.save()
-
-
