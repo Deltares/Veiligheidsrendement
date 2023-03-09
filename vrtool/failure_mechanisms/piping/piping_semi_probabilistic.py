@@ -27,10 +27,6 @@ class PipingSemiProbabilistic:
         year: float,
         t_0: int,
     ) -> tuple[float, float]:
-        gamma_schem_heave = 1  # 1.05
-        gamma_schem_upl = 1  # 1.05
-        gamma_schem_pip = 1  # 1.05
-
         if traject_info is None:  # Defaults, typical values for 16-3 and 16-4
             traject_info = {}
             traject_info["Pmax"] = 1.0 / 10000
@@ -76,61 +72,20 @@ class PipingSemiProbabilistic:
                 year=year,
             )
 
-            Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
-            gamma_pip = traject_info["gammaPiping"]
-            # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
-            # Calculate needed safety factor
-
-            SF_p = np.inf
-            if p_dh != 0:
-                SF_p = (p_dh_c / (gamma_pip * gamma_schem_pip)) / p_dh
-
-            assess_p = "voldoende" if SF_p > 1 else "onvoldoende"
-            scenario_result["beta_cs_p"][j] = calc_beta_implicated(
-                "Piping", SF_p * gamma_pip, traject_info=traject_info
-            )  #
-            # Calculate the implicated beta_cs
+            # Piping
+            scenario_result["beta_cs_p"][
+                j
+            ] = PipingSemiProbabilistic.calculate_beta_piping(traject_info, inputs)
 
             # Heave:
-            Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
-            gamma_h = traject_info[
-                "gammaHeave"
-            ]  # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
-            # Calculate
-            # needed safety factor
-            # TODO: check formula Sander Kapinga
-            SF_h = (h_i_c / (gamma_schem_heave * gamma_h)) / h_i
-            assess_h = (
-                "voldoende"
-                if (h_i_c / (gamma_schem_heave * gamma_h)) / h_i > 1
-                else "onvoldoende"
-            )
-            scenario_result["beta_cs_h"][j] = calc_beta_implicated(
-                "Heave",
-                (h_i_c / gamma_schem_heave) / h_i,
-                traject_info=traject_info,
-            )  # Calculate the implicated beta_cs
+            scenario_result["beta_cs_h"][
+                j
+            ] = PipingSemiProbabilistic.calculate_beta_heave(traject_info, inputs)
 
             # Uplift
-            Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
-            gamma_u = traject_info[
-                "gammaUplift"
-            ]  # ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
-            # Calculate
-            # needed safety factor
-            # TODO: check formula Sander Kapinga
-            SF_u = (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh
-
-            assess_u = (
-                "voldoende"
-                if (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh > 1
-                else "onvoldoende"
-            )
-            scenario_result["beta_cs_u"][j] = calc_beta_implicated(
-                "Uplift",
-                (u_dh_c / gamma_schem_upl) / u_dh,
-                traject_info=traject_info,
-            )  # Calculate the implicated beta_cs
+            scenario_result["beta_cs_u"][
+                j
+            ] = PipingSemiProbabilistic.calculate_beta_uplift(traject_info, inputs)
 
             # Check if there is an elimination measure present (VZG or diaphragm wall)
             if "Elimination" in strength.input.keys():
@@ -191,3 +146,64 @@ class PipingSemiProbabilistic:
         beta = np.min([pf_to_beta(failure_probability), 8])
 
         return [beta, failure_probability]
+
+    def calculate_beta_piping(traject_info: dict, inputs):
+        gamma_schem_pip = 1  # 1.05
+
+        Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
+        gamma_pip = traject_info["gammaPiping"]
+        # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
+        # Calculate needed safety factor
+
+        SF_p = np.inf
+        if p_dh != 0:
+            SF_p = (p_dh_c / (gamma_pip * gamma_schem_pip)) / p_dh
+
+        assess_p = "voldoende" if SF_p > 1 else "onvoldoende"
+        return calc_beta_implicated(
+            "Piping", SF_p * gamma_pip, traject_info=traject_info
+        )
+
+    def calculate_beta_heave(traject_info: dict, inputs):
+        gamma_schem_heave = 1  # 1.05
+
+        Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
+        gamma_h = traject_info["gammaHeave"]
+
+        # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
+        # Calculate
+        # needed safety factor
+        # TODO: check formula Sander Kapinga
+        SF_h = (h_i_c / (gamma_schem_heave * gamma_h)) / h_i
+        assess_h = (
+            "voldoende"
+            if (h_i_c / (gamma_schem_heave * gamma_h)) / h_i > 1
+            else "onvoldoende"
+        )
+        return calc_beta_implicated(
+            "Heave",
+            (h_i_c / gamma_schem_heave) / h_i,
+            traject_info=traject_info,
+        )  # Calculate the implicated beta_cs
+
+    def calculate_beta_uplift(traject_info: dict, inputs):
+        gamma_schem_upl = 1  # 1.05
+
+        Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
+        gamma_u = traject_info["gammaUplift"]
+        # ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
+        # Calculate
+        # needed safety factor
+        # TODO: check formula Sander Kapinga
+        SF_u = (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh
+
+        assess_u = (
+            "voldoende"
+            if (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh > 1
+            else "onvoldoende"
+        )
+        return calc_beta_implicated(
+            "Uplift",
+            (u_dh_c / gamma_schem_upl) / u_dh,
+            traject_info=traject_info,
+        )  # Calculate the implicated beta_cs
