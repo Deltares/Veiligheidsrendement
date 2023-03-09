@@ -1,6 +1,5 @@
 import numpy as np
 
-from vrtool.failure_mechanisms.overflow.overflow import Overflow
 from vrtool.flood_defence_system.mechanism_input import MechanismInput
 
 
@@ -13,7 +12,11 @@ from vrtool.failure_mechanisms.general import (
     GenericFailureMechanism,
 )
 
-from vrtool.failure_mechanisms.overflow import OverflowSimpleInput, Overflow
+from vrtool.failure_mechanisms.overflow import (
+    OverflowSimpleInput,
+    Overflow,
+    OverflowSimple,
+)
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilistic
 
 
@@ -123,4 +126,4 @@ class MechanismReliability:
         _mechanism_input = OverflowSimpleInput.from_mechanism_input(
             mechanism_input, corrected_crest_height
         )
-        return Overflow.calculate_simple(_mechanism_input)
+        return OverflowSimple.calculate(_mechanism_input)
