@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 
@@ -181,34 +179,3 @@ def compare_investment_strategy(
         writer.save()
 
 
-def main():
-    # General settings
-    investment_limit = 20000000
-    traject = "16-4"
-    casename = "backup"
-    path = Path("D:\SAFE\data\SAFE\SAFE_" + traject + "_geenLE_Vakindeling_v5.2")
-    directory = path.joinpath("Case_" + casename, "results")
-    measure_path = Path("D:\SAFE\data\InputFiles\SAFEInput").joinpath(traject, "Input")
-    TC_file = "TakenMeasures_TC.csv"
-    OI_file = "TakenMeasures_OI.csv"
-    measure_file = "measures.csv"
-    output_file = (
-        "TC_OI_comparison_traject_"
-        + traject
-        + "_investment_limit_"
-        + str(investment_limit)
-        + ".xlsx"
-    )
-
-    # Open TC and OI files
-    wb_TC = pd.read_csv(directory.joinpath(TC_file), index_col=[0], skiprows=[1])
-    wb_OI = pd.read_csv(directory.joinpath(OI_file), index_col=[0], skiprows=[1])
-
-    # Compare TC and OI investment limit
-    compare_investment_strategy(
-        wb_TC,
-        wb_OI,
-        investment_limit,
-        directory.joinpath(output_file),
-        measure_path.joinpath(measure_file),
-    )
