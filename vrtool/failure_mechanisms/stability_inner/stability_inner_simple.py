@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Tuple
 from scipy import interpolate
 
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
@@ -22,7 +21,7 @@ class StabilityInnerSimple:
 
     def calculate(
         mechanism_input: StabilityInnerSimpleInput, year: int
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
 
         match mechanism_input.reliability_calculation_method:
             case ReliabilityCalculationMethod.SAFETYFACTOR_RANGE:

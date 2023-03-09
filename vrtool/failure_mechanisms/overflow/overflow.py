@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import numpy as np
 from scipy import interpolate
 
@@ -18,7 +16,7 @@ class Overflow:
         start_year: int,
         mode: str = "assessment",
         failure_probability: float = None,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculates the overflow based on a HydraRing.
         Args:
@@ -76,7 +74,7 @@ class Overflow:
         design_variable: str = None,
         iterative_solve: bool = False,
         beta_t: bool = False,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculates the overflow with a simple approximation.
         Args:
@@ -130,7 +128,7 @@ class Overflow:
         mechanism_input: OverflowSimpleInput,
         iterative_solve: bool = False,
         beta_t=False,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculates the overflow with a simple approximation.
         Args:

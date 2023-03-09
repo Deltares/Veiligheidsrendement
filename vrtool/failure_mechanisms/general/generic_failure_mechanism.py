@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 from scipy import interpolate
 
@@ -12,7 +10,7 @@ from vrtool.failure_mechanisms.general.generic_failure_mechanism_input import (
 class GenericFailureMechanism:
     def calculate(
         mechanism_input: GenericFailureMechanismInput, year: int
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculates the reliability and safety factor based on its input arguments.
 
