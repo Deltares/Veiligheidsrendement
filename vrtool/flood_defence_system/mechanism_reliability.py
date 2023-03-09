@@ -14,7 +14,8 @@ from vrtool.failure_mechanisms.general import (
 
 from vrtool.failure_mechanisms.overflow import (
     OverflowSimpleInput,
-    Overflow,
+    OverflowHydraRingInput,
+    OverflowHydraRing,
     OverflowSimple,
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilistic
@@ -60,7 +61,7 @@ class MechanismReliability:
 
         if self.type == "HRING":
             if mechanism == "Overflow":
-                self.beta, self.Pf = Overflow.overflow_hring(
+                self.beta, self.Pf = self._calculate_hydra_ring_overflow(
                     self.Input.input, year, self.t_0
                 )
             else:
@@ -111,3 +112,9 @@ class MechanismReliability:
 
         _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
         return OverflowSimple.calculate(_mechanism_input, year, load)
+
+    def _calculate_hydra_ring_overflow(self, mechanism_input:MechanismInput, year:int, initial_year:int):
+        _mechanism_input = OverflowHydraRingInput.from_mechanism_input(mechanism_input)
+
+        return OverflowHydraRing.calculate(_mechanism_input, year, initial_year)
+        
