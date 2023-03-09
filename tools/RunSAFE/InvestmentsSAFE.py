@@ -1,7 +1,7 @@
 """ This script can calculate life-cycle reliability and costs for all measures for various mechanisms. It uses both a target reliability based approach and a greedy search optimization"""
 
 import sys
-import src.config as config
+import vrtool.config as config
 import SAFE_config as case_config
 #Import a bunch of packages
 import matplotlib.pyplot as plt
@@ -10,10 +10,10 @@ import time
 
 sys.path.append('../../src')
 sys.path.append('..')
-from FloodDefenceSystem.DikeTraject import DikeTraject
-from HelperFunctions import getMeasureTable
+from flood_defence_system.dike_traject import DikeTraject
+from HelperFunctions import get_measure_table
 from RunModel import runFullModel
-from DecisionMaking.StrategyEvaluation import calcTrajectProb
+from decision_making.strategy_evaluation import calcTrajectProb
 import shelve
 
 #General and global settings:
@@ -60,7 +60,7 @@ def main():
     #Now some general output figures and csv's are generated:
     
     #First make a table of all the solutions:
-    MeasureTable = getMeasureTable(AllSolutions)
+    MeasureTable = get_measure_table(AllSolutions)
     
     #plot beta costs for t=0
     figure_size = (12, 7)

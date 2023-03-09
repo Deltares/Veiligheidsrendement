@@ -1,24 +1,26 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from src.defaults.vrtool_config import VrtoolConfig
-from src.FloodDefenceSystem.DikeTraject import DikeTraject
-from src.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from src.run_workflows.measures_workflow.run_measures import RunMeasures
-from src.run_workflows.optimization_workflow.results_optimization import (
+from tests import get_test_results_dir, test_data
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
-from src.run_workflows.optimization_workflow.run_optimization import RunOptimization
-from src.run_workflows.safety_workflow.results_safety_assessment import (
+from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
+from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
-from src.run_workflows.safety_workflow.run_safety_assessment import RunSafetyAssessment
-from src.run_workflows.vrtool_plot_mode import VrToolPlotMode
-from src.run_workflows.vrtool_run_full_model import RunFullModel
-from tests import get_test_results_dir, test_data
+from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
+    RunSafetyAssessment,
+)
+from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
+from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 _acceptance_test_cases = [
@@ -30,7 +32,9 @@ _acceptance_test_cases = [
 
 @pytest.mark.slow
 class TestAcceptance:
-    def _validate_acceptance_result_cases(self, test_results_dir: Path, test_reference_dir: Path):
+    def _validate_acceptance_result_cases(
+        self, test_results_dir: Path, test_reference_dir: Path
+    ):
         comparison_errors = []
         files_to_compare = [
             "TakenMeasures_Doorsnede-eisen.csv",
@@ -42,9 +46,7 @@ class TestAcceptance:
             reference = pd.read_csv(
                 test_reference_dir.joinpath("results", file), index_col=0
             )
-            result = pd.read_csv(
-                test_results_dir / file, index_col=0
-            )
+            result = pd.read_csv(test_results_dir / file, index_col=0)
             if not reference.equals(result):
                 comparison_errors.append("{} is different.".format(file))
 
@@ -54,7 +56,11 @@ class TestAcceptance:
         )
 
     @pytest.mark.parametrize(
-        "casename, traject", _acceptance_test_cases,
+        "casename, traject",
+        _acceptance_test_cases,
+    )
+    @pytest.mark.skip(
+        reason="Duplicated in run_full_model, this should become just an integration test."
     )
     def test_run_as_sandbox(
         self, casename: str, traject: str, request: pytest.FixtureRequest
@@ -81,7 +87,9 @@ class TestAcceptance:
         assert isinstance(_selected_traject, DikeTraject)
 
         # Step 1. Safety assessment.
-        _safety_assessment = RunSafetyAssessment(_vr_config, _selected_traject, plot_mode=_plot_mode)
+        _safety_assessment = RunSafetyAssessment(
+            _vr_config, _selected_traject, plot_mode=_plot_mode
+        )
         _safety_result = _safety_assessment.run()
         assert isinstance(_safety_result, ResultsSafetyAssessment)
 
@@ -98,11 +106,13 @@ class TestAcceptance:
         # 3. Verify expectations.
         self._validate_acceptance_result_cases(_results_dir, _test_dir / "reference")
 
-
     @pytest.mark.parametrize(
-        "casename, traject",_acceptance_test_cases,
+        "casename, traject",
+        _acceptance_test_cases,
     )
-    def test_run_full_model(self, casename: str, traject: str, request: pytest.FixtureRequest):
+    def test_run_full_model(
+        self, casename: str, traject: str, request: pytest.FixtureRequest
+    ):
         """
         This test so far only checks the output values after optimization.
         """
@@ -127,4 +137,6 @@ class TestAcceptance:
         RunFullModel(_test_config, _test_traject, VrToolPlotMode.STANDARD).run()
 
         # 3. Verify final expectations.
-        self._validate_acceptance_result_cases(_test_results_directory, _test_reference_path)
+        self._validate_acceptance_result_cases(
+            _test_results_directory, _test_reference_path
+        )
