@@ -212,7 +212,3 @@ def main():
         directory.joinpath(output_file),
         measure_path.joinpath(measure_file),
     )
-
-
-if __name__ == "__main__":
-    main()
