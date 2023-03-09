@@ -15,7 +15,7 @@ from vrtool.failure_mechanisms.piping.piping_functions import (
     calculate_z_uplift,
 )
 
-from vrtool.flood_defence_system.mechanism_input import MechanismInput
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.load_input import LoadInput
 
 

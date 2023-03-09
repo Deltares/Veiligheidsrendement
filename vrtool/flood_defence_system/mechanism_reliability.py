@@ -1,6 +1,6 @@
 import numpy as np
 
-from vrtool.flood_defence_system.mechanism_input import MechanismInput
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 
 
 from vrtool.failure_mechanisms.stability_inner import (

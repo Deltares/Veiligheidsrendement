@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 from dataclasses import dataclass
 
-from vrtool.flood_defence_system.mechanism_input import MechanismInput
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 
 
 @dataclass
