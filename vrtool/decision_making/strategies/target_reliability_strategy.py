@@ -5,7 +5,6 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from tools.HelperFunctions import id_to_name
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategy_evaluation import (
@@ -28,12 +27,17 @@ class TargetReliabilityStrategy(StrategyBase):
         solutions_dict: Dict[str, Solutions],
         splitparams=False,
     ):
+        def id_to_name(found_id, measure_table):
+            """
+            Previously in tools. Only used once within this evaluate method.
+            """
+            return measure_table.loc[measure_table['ID']==found_id]['Name'].values[0]
+
         cols = list(
             solutions_dict[list(solutions_dict.keys())[0]]
             .MeasureData["Section"]
             .columns.values
         )
-
         # compute cross sectional requirements
         N_piping = 1 + (
             traject.general_info["aPiping"]

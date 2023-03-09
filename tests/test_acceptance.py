@@ -5,8 +5,9 @@ import pandas as pd
 import pytest
 
 from tests import get_test_results_dir, test_data
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -140,3 +141,62 @@ class TestAcceptance:
         self._validate_acceptance_result_cases(
             _test_results_directory, _test_reference_path
         )
+
+    @pytest.mark.skip(reason="TODO. No (test) input data available..")
+    def test_investments_safe(self):
+        """
+        Test migrated from previous tools.RunSAFE.InvestmentsSafe
+        """
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        
+        ## MAKE TRAJECT OBJECT
+        _test_config = VrtoolConfig()
+        _test_traject = DikeTraject.from_vr_config(_test_config)
+        
+        ## READ ALL DATA
+        ##First we read all the input data for the different sections. We store these in a Traject object.
+        #Initialize a list of all sections that are of relevance (these start with DV).
+        _results = RunFullModel(_test_config, _test_traject, VrToolPlotMode.STANDARD).run()
+        
+        #Now some general output figures and csv's are generated:
+        
+        #First make a table of all the solutions:
+        _measure_table = StrategyBase.get_measure_table(_results.results_solutions, language="EN", abbrev=True)
+        
+        #plot beta costs for t=0
+        figure_size = (12, 7)
+        
+        # LCC-beta for t = 0
+        plt.figure(101, figsize=figure_size)
+        _results.results_strategies[0].plot_beta_costs(_test_traject, save_dir = _test_config.directory, fig_id=101, series_name=_test_config.design_methods[0],MeasureTable=_measure_table,color='b')
+        _results.results_strategies[1].plot_beta_costs(_test_traject, save_dir = _test_config.directory,  fig_id=101, series_name=_test_config.design_methods[1],MeasureTable=_measure_table,last='yes')
+        plt.savefig(_test_config.directory.joinpath('Priority order Beta vs LCC_' + str(_test_config.t_0) + '.png'), dpi=300, bbox_inches='tight', format='png')
+        
+        # LCC-beta for t=50
+        plt.figure(102, figsize=figure_size)
+        _results.results_strategies[0].plot_beta_costs(_test_traject, save_dir = _test_config.directory,  t=50, fig_id=102, series_name=_test_config.design_methods[0], MeasureTable=_measure_table, color='b' )
+        _results.results_strategies[1].plot_beta_costs(_test_traject, save_dir = _test_config.directory,  t=50, fig_id=102, series_name=_test_config.design_methods[1], MeasureTable=_measure_table, last='yes')
+        plt.savefig(_test_config.directory.joinpath('Priority order Beta vs LCC_' + str(_test_config.t_0+50) + '.png'), dpi=300, bbox_inches='tight', format='png')
+        
+        # Costs2025-beta
+        plt.figure(103, figsize=figure_size)
+        _results.results_strategies[0].plot_beta_costs(_test_traject, save_dir = _test_config.directory,  cost_type='Initial', fig_id=103, series_name=_test_config.design_methods[0], MeasureTable=_measure_table, color='b')
+        _results.results_strategies[1].plot_beta_costs(_test_traject, save_dir = _test_config.directory,  cost_type='Initial', fig_id=103, series_name=_test_config.design_methods[1], MeasureTable=_measure_table, last='yes')
+        plt.savefig(_test_config.directory.joinpath('Priority order Beta vs Costs_' + str(_test_config.t_0+50) + '.png'), dpi=300, bbox_inches='tight', format='png')
+        
+        _results.results_strategies[0].plot_investment_limit(_test_traject, investmentlimit= 20e6, path= _test_config.directory.joinpath('figures'), figure_size = (12,6),years=[0],flip=True)
+        
+        ## write a LOG of all probabilities for all steps:
+        _investment_steps_dir = _test_config.output_directory / "results" / "investment_steps"
+        if not _investment_steps_dir.exists():
+            _investment_steps_dir.mkdir(parents=True)
+        _results.results_strategies[0].write_reliability_to_csv(_investment_steps_dir, type=_test_config.design_methods[0])
+        _results.results_strategies[1].write_reliability_to_csv(_investment_steps_dir, type=_test_config.design_methods[1])
+        
+        for count, _result_strategy in enumerate(_results.results_strategies):
+            ps = []
+            for i in _result_strategy.Probabilities:
+                beta_t, p_t = calc_traject_prob(i, horizon=100)
+                ps.append(p_t)
+            pd.DataFrame(ps, columns=range(100)).to_csv(path_or_buf=_test_config.directory.joinpath('results', 'investment_steps', 'PfT_' + _test_config.design_methods[count] + '.csv'))
