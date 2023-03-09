@@ -87,19 +87,6 @@ def measure_combinations(
     return _combined_measures
 
 
-def get_traject_prob(traject: DikeTraject, traject_prob, trange):
-    for mechanism in range(0, len(traject.general_info["Mechanisms"])):
-        traject_prob[mechanism, :, :] = (
-            traject.probabilities.loc[
-                traject.probabilities["index"]
-                == traject.general_info["Mechanisms"][mechanism]
-            ]
-            .drop(["index", "Section", "Length"], axis=1)
-            .values
-        )
-    return traject_prob
-
-
 def make_traject_df(traject: DikeTraject, cols):
     # cols = cols[1:]
     sections = []

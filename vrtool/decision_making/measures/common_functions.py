@@ -91,40 +91,6 @@ def implement_berm_widening(
         input["Lachter"] = (input["Lachter"] - measure_input["dberm"]).clip(0)
     return input
 
-
-def add_berm(initial, geometry, new_geometry, bermheight, dberm):
-    i = int(initial[initial.type == "innertoe"].index.values)
-    j = int(initial[initial.type == "innercrest"].index.values)
-    if (initial.type == "extra").any():
-        new_geometry[0][0] = new_geometry[0][0] - 100
-
-    slope_inner = (geometry[j][1] - geometry[i][1]) / (geometry[j][0] - geometry[i][0])
-    extra = np.empty((1, 2))
-    extra[0, 0] = new_geometry[i][0] + (1 / slope_inner) * bermheight
-    extra[0, 1] = new_geometry[i][1] + bermheight
-    new_geometry = np.append(new_geometry, np.array(extra), axis=0)
-    extra2 = np.empty((1, 2))
-    extra2[0, 0] = new_geometry[i][0] + (1 / slope_inner) * bermheight + dberm
-    extra2[0, 1] = new_geometry[i][1] + bermheight
-    new_geometry = np.append(new_geometry, np.array(extra2), axis=0)
-    new_geometry = new_geometry[new_geometry[:, 0].argsort()]
-    if (initial.type == "extra").any():
-        new_geometry[0][0] = new_geometry[0][0] + 100
-    return new_geometry
-
-
-def add_extra(initial, new_geometry):
-    i = int(initial[initial.type == "innertoe"].index.values)
-    k = int(initial[initial.type == "extra"].index.values)
-    new_geometry[0, 0] = initial.x[i]
-    new_geometry[0, 1] = initial.z[i]
-    extra3 = np.empty((1, 2))
-    extra3[0, 0] = initial.x[k]
-    extra3[0, 1] = initial.z[k]
-    new_geometry = np.append(np.array(extra3), new_geometry, axis=0)
-    return new_geometry
-
-
 def calculate_area(geometry):
     polypoints = []
     for label, points in geometry.iterrows():

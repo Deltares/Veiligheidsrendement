@@ -55,13 +55,3 @@ def read_design_table(filename: Path):
     data = pd.DataFrame(values, columns=headers).rename(columns={"Beta\n": "Beta"})
     f.close()
     return data
-
-
-# script to plot a value-exceedance probability graph based on a designtable from HydraRing.
-def plot_designtable(data):
-    data.plot(x="Value", y="Failure probability", kind="line")
-    plt.ylabel(r"Exceedance Probability")
-    plt.legend(loc="upper right")
-    # plt.ylim(ymin=0)
-    plt.yscale("log")
-    plt.tight_layout()
