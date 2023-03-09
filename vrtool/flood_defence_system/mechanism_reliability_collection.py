@@ -63,7 +63,7 @@ class MechanismReliabilityCollection:
                     mechanism=mechanism,
                     method=method,
                     year=float(i),
-                    TrajectInfo=trajectinfo,
+                    traject_info=trajectinfo,
                 )
                 for i in self.Reliability.keys()
             ]
@@ -73,7 +73,7 @@ class MechanismReliabilityCollection:
                     mechanism=mechanism,
                     method=method,
                     year=float(i),
-                    TrajectInfo=trajectinfo,
+                    traject_info=trajectinfo,
                 )
                 for i in self.Reliability.keys()
             ]

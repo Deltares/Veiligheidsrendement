@@ -21,8 +21,8 @@ from vrtool.flood_defence_system.load_input import LoadInput
 
 class PipingSemiProbabilistic:
     def calculate(
-        traject_info: dict,
         mechanism_input: MechanismInput,
+        traject_info: dict,
         load: LoadInput,
         year: float,
         initial_year: int,

@@ -53,7 +53,7 @@ class MechanismReliability:
         mechanism=None,
         method="FORM",
         year=0,
-        TrajectInfo=None,
+        traject_info=None,
     ):
         # This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == "DirectInput":
@@ -87,7 +87,7 @@ class MechanismReliability:
             # semi probabilistic assessment, only available for piping
             if mechanism == "Piping":
                 self.Beta, self.Pf = PipingSemiProbabilistic.calculate(
-                    TrajectInfo, strength, load, year, self.t_0
+                    strength, traject_info, load, year, self.t_0
                 )
 
     def _calculate_direct_input(
