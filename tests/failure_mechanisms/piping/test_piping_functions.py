@@ -1,12 +1,12 @@
 import pytest
 
-from vrtool.flood_defence_system.mechanisms import (
+from vrtool.failure_mechanisms.piping.piping_functions import (
     calculate_lsf_heave,
     calculate_lsf_sellmeijer,
 )
 
 
-class TestMechanisms:
+class TestPipingFunctions:
     def test_lsf_heave(self):
         # set tests data
         r_exit = 0.9
