@@ -62,7 +62,7 @@ class MechanismReliability:
         if self.type == "HRING":
             if mechanism == "Overflow":
                 self.beta, self.Pf = self._calculate_hydra_ring_overflow(
-                    self.Input.input, year, self.t_0
+                    self.Input, year, self.t_0
                 )
             else:
                 raise Exception(
