@@ -8,7 +8,8 @@ from vrtool.flood_defence_system.mechanism_input import MechanismInput
 
 @dataclass
 class OverflowSimpleInput:
-    corrected_crest_height: np.ndarray
+    dhc_t: np.ndarray
+    h_crest: np.ndarray
     q_crest: np.ndarray
     h_c: np.ndarray
     q_c: np.ndarray
@@ -16,10 +17,11 @@ class OverflowSimpleInput:
 
     @classmethod
     def from_mechanism_input(
-        cls, mechanism_input: MechanismInput, corrected_crest_height: np.ndarray
+        cls, mechanism_input: MechanismInput
     ) -> OverflowSimpleInput:
         return cls(
-            corrected_crest_height=corrected_crest_height,
+            dhc_t=mechanism_input.input["dhc(t)"],
+            h_crest=mechanism_input.input["h_crest"],
             q_crest=mechanism_input.input["q_crest"],
             h_c=mechanism_input.input["h_c"],
             q_c=mechanism_input.input["q_c"],

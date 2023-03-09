@@ -108,22 +108,6 @@ class MechanismReliability:
     def _calculate_simple_overflow(
         self, mechanism_input: MechanismInput, year: int, load
     ) -> tuple[float, float]:
-        # climate change included, including a factor for HBN
-        if hasattr(load, "dist_change"):
-            corrected_crest_height = (
-                mechanism_input.input["h_crest"]
-                - (
-                    mechanism_input.input["dhc(t)"]
-                    + (load.dist_change * load.HBN_factor)
-                )
-                * year
-            )
-        else:
-            corrected_crest_height = mechanism_input.input["h_crest"] - (
-                mechanism_input.input["dhc(t)"] * year
-            )
 
-        _mechanism_input = OverflowSimpleInput.from_mechanism_input(
-            mechanism_input, corrected_crest_height
-        )
-        return OverflowSimple.calculate(_mechanism_input)
+        _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
+        return OverflowSimple.calculate(_mechanism_input, year, load)
