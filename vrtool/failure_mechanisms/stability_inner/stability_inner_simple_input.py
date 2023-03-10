@@ -39,18 +39,29 @@ class StabilityInnerSimpleInput:
         # reliability calculation method should be used
         if _safety_factor_2025:
             _safety_factor_2075 = mechanism_input.input["SF_2075"]
+
+            _beta_2025 = None
+            _beta = None
+
             _reliability_calculation_method = (
                 ReliabilityCalculationMethod.SAFETYFACTOR_RANGE
             )
         elif _beta_2025:
             _beta_2075 = mechanism_input.input["beta_2075"]
+
+            _safety_factor_2025 = None
+            _beta = None
+
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_RANGE
         elif _beta:
+            _safety_factor_2025 = None
+            _beta_2025 = None
+
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_SINGLE
         else:
             raise Exception("Warning: No input values SF or Beta StabilityInner")
 
-        _is_eliminated = mechanism_input.input.get("Elimination", None)
+        _is_eliminated = mechanism_input.input.get("Elimination", False)
         _failure_probability_elimination = None
         _failure_probability_with_elimination = None
         if _is_eliminated == "yes":
