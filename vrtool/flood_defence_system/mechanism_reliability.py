@@ -79,10 +79,6 @@ class MechanismReliability:
                 )
             elif mechanism == "Piping":
                 pass
-
-            self.alpha_sq = np.nan
-            self.result = np.nan
-
         elif self.type == "SemiProb":
             # semi probabilistic assessment, only available for piping
             if mechanism == "Piping":
