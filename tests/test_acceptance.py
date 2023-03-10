@@ -22,6 +22,8 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
+import matplotlib.pyplot as plt
+import pandas as pd
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 _acceptance_test_cases = [
@@ -147,9 +149,6 @@ class TestAcceptance:
         """
         Test migrated from previous tools.RunSAFE.InvestmentsSafe
         """
-        import matplotlib.pyplot as plt
-        import pandas as pd
-
         ## MAKE TRAJECT OBJECT
         _test_config = VrtoolConfig()
         _test_traject = DikeTraject.from_vr_config(_test_config)
