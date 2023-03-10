@@ -125,15 +125,15 @@ def replaceNames(TestCaseStrategy, TestCaseSolutions):
             id = '+'.join(id)
 
         section = TestCaseStrategy.TakenMeasures.iloc[i]['Section']
-        name = TestCaseSolutions[section].MeasureTable.loc[TestCaseSolutions[section].MeasureTable['ID'] == id]['Name'].values
+        name = TestCaseSolutions[section].measure_table.loc[TestCaseSolutions[section].measure_table['ID'] == id]['Name'].values
         TestCaseStrategy.TakenMeasures.at[i, 'name'] = name
     return TestCaseStrategy
 
 
-def getMeasureTable(AllSolutions,language ='NL',abbrev=False):
+def get_measure_table(AllSolutions,language ='NL',abbrev=False):
     OverallMeasureTable = pd.DataFrame([], columns=['ID', 'Name'])
     for i in AllSolutions:
-        OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].MeasureTable])
+        OverallMeasureTable = pd.concat([OverallMeasureTable, AllSolutions[i].measure_table])
     OverallMeasureTable: Union[DataFrame, None, Series] = OverallMeasureTable.drop_duplicates(subset='ID')
     if (np.max(OverallMeasureTable['Name'].str.find('Grondversterking').values) > -1) and (language == 'EN'):
         OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Grondversterking binnenwaarts', 'Soil based')
@@ -148,13 +148,6 @@ def getMeasureTable(AllSolutions,language ='NL',abbrev=False):
             OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Zelfkerende constructie', 'Diaphragm Wall')
             OverallMeasureTable['Name'] = OverallMeasureTable['Name'].str.replace('Stabiliteitsscherm', 'Stability Screen')
     return OverallMeasureTable
-
-
-
-
-def createDir(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
 
 #this is a more generic function to read and write data from and to a shelve. But it is not implemented fully:
 # TODO implement DataAtShelve instead of (un)commenting snippets of code
@@ -176,7 +169,7 @@ def DataAtShelve(dir, name, objects = None, mode = 'write'):
         if len(keys) == 1:
             return locals()[keys[0]]
 
-def IDtoName(ID, MeasureTable):
+def id_to_name(ID, MeasureTable):
     return MeasureTable.loc[MeasureTable['ID']==ID]['Name'].values[0]
 
 def flatten(l): #flatten a list

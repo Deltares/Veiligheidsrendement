@@ -81,8 +81,6 @@ It is also possible to check all the above possibilities via the `--help` argume
 python -m vrtool --help
 ```
 
-> Note, you will have to call to `src` instead of `vrtool` as the directory is not yet renamed.
-
 ## Contribution guidelines ##
 
 * Writing tests

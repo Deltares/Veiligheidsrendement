@@ -2,7 +2,7 @@
 
 #IMPORT PACKAGES
 from DikeTraject import DikeTraject
-from HelperFunctions import DataAtShelve,getMeasureTable, replaceNames, pareto_frontier
+from HelperFunctions import DataAtShelve,get_measure_table, replaceNames, pareto_frontier
 from Strategy import GreedyStrategy, MixedIntegerStrategy, ParetoFrontier
 from Solutions import Solutions
 from pathlib import Path
@@ -81,7 +81,7 @@ if RUN_GREEDY:
     StrategyGreedy = replaceNames(StrategyGreedy,SolutionsCollection)
     StrategyGreedy.plotBetaCosts(TrajectObject,path= PATH.joinpath('Solutions'),typ='multi',
                                      fig_id=101, symbolmode='on',linecolor='b', labels='Greedy',
-                                     MeasureTable=getMeasureTable(SolutionsCollection),beta_or_prob='beta',outputcsv=True,last='yes')
+                                     MeasureTable=get_measure_table(SolutionsCollection),beta_or_prob='beta',outputcsv=True,last='yes')
     # write to csv's
     for i in StrategyGreedy.options: StrategyGreedy.options[i].to_csv(
         PATH.joinpath('Solutions').joinpath(i + '_Options.csv'))
@@ -135,7 +135,7 @@ if RUN_PARETOFRONTIER:
 if READ_MIXEDINTEGER:
     StrategyMixedInteger = DataAtShelve(dir = PATH, name = 'MixedIntegerStrategy.out', mode = 'read')
     MixedIntegerResults= DataAtShelve(dir = PATH, name = 'MixedIntegerResults.out', mode = 'read')
-    StrategyMixedInteger.readResults(MixedIntegerResults,dir = PATH.joinpath(CASE),MeasureTable=getMeasureTable(
+    StrategyMixedInteger.readResults(MixedIntegerResults,dir = PATH.joinpath(CASE),MeasureTable=get_measure_table(
         SolutionsCollection))
 
 
