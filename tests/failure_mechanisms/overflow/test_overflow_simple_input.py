@@ -5,6 +5,7 @@ import numpy as np
 
 class TestOverFlowSimpleInput:
     def test_from_mechanism_input_creates_expected_input(self):
+        # Setup
         mechanism_input = MechanismInput("")
         mechanism_input.input["dhc(t)"] = np.array(0.1)
         mechanism_input.input["h_crest"] = np.array(0.2)
@@ -13,10 +14,12 @@ class TestOverFlowSimpleInput:
         mechanism_input.input["q_c"] = np.array(0.5)
         mechanism_input.input["beta"] = np.array(0.6)
 
+        # Call
         overflow_simple_input = OverflowSimpleInput.from_mechanism_input(
             mechanism_input
         )
 
+        # Assert
         assert overflow_simple_input.dhc_t == mechanism_input.input["dhc(t)"]
         assert overflow_simple_input.h_crest == mechanism_input.input["h_crest"]
         assert overflow_simple_input.q_crest == mechanism_input.input["q_crest"]
