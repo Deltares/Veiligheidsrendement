@@ -43,7 +43,7 @@ class PipingSemiProbabilistic:
         Returns:
             tuple[float, float]: A tuple containing the reliability and safety factor.
         """
-        if traject_info is None:  # Defaults, typical values for 16-3 and 16-4
+        if not traject_info:  # Defaults, typical values for 16-3 and 16-4
             traject_info = {}
             traject_info["Pmax"] = 1.0 / 10000
             traject_info["omegaPiping"] = 0.24
@@ -175,7 +175,6 @@ class PipingSemiProbabilistic:
         if p_dh != 0:
             SF_p = (p_dh_c / (gamma_pip * gamma_schem_pip)) / p_dh
 
-        assess_p = "voldoende" if SF_p > 1 else "onvoldoende"
         return calc_beta_implicated(
             "Piping", SF_p * gamma_pip, traject_info=traject_info
         )
@@ -191,11 +190,6 @@ class PipingSemiProbabilistic:
         # needed safety factor
         # TODO: check formula Sander Kapinga
         SF_h = (h_i_c / (gamma_schem_heave * gamma_h)) / h_i
-        assess_h = (
-            "voldoende"
-            if (h_i_c / (gamma_schem_heave * gamma_h)) / h_i > 1
-            else "onvoldoende"
-        )
         return calc_beta_implicated(
             "Heave",
             (h_i_c / gamma_schem_heave) / h_i,
@@ -213,11 +207,6 @@ class PipingSemiProbabilistic:
         # TODO: check formula Sander Kapinga
         SF_u = (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh
 
-        assess_u = (
-            "voldoende"
-            if (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh > 1
-            else "onvoldoende"
-        )
         return calc_beta_implicated(
             "Uplift",
             (u_dh_c / gamma_schem_upl) / u_dh,
