@@ -37,7 +37,7 @@ class TestCommonFunctions:
         max_berm_out = 20.0
 
         test_sheet_new = test_data.joinpath(
-            "integrated_SAFE_16-3_small", "DV53_new.xlsx"
+            "integrated_SAFE_16-3_small", "DV53.xlsx"
         )
         initial_new = pd.read_excel(
             test_sheet_new,
