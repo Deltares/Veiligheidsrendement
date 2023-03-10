@@ -57,11 +57,11 @@ class MechanismReliability:
     ):
         # This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == "DirectInput":
-            self.beta, self.Pf = self._calculate_direct_input(strength, year)
+            self.beta, self.Pf = MechanismReliability._calculate_direct_input(strength, year)
 
         if self.type == "HRING":
             if mechanism == "Overflow":
-                self.beta, self.Pf = self._calculate_hydra_ring_overflow(
+                self.beta, self.Pf = MechanismReliability._calculate_hydra_ring_overflow(
                     self.Input, year, self.t_0
                 )
             else:
@@ -70,11 +70,11 @@ class MechanismReliability:
                 )
         if self.type == "Simple":
             if mechanism == "StabilityInner":
-                self.beta, self.Pf = self._calculate_simple_stability_inner(
+                self.beta, self.Pf = MechanismReliability._calculate_simple_stability_inner(
                     strength, year
                 )
             elif mechanism == "Overflow":  # specific for SAFE
-                self.beta, self.Pf = self._calculate_simple_overflow(
+                self.beta, self.Pf = MechanismReliability._calculate_simple_overflow(
                     strength, year, load
                 )
             elif mechanism == "Piping":
@@ -91,7 +91,7 @@ class MechanismReliability:
                 )
 
     def _calculate_direct_input(
-        self, mechanism_input: MechanismInput, year: int
+        mechanism_input: MechanismInput, year: int
     ) -> tuple[float, float]:
         _mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
             mechanism_input
@@ -99,7 +99,7 @@ class MechanismReliability:
         return GenericFailureMechanism.calculate(_mechanism_input, year)
 
     def _calculate_simple_stability_inner(
-        self, mechanism_input: MechanismInput, year: int
+        mechanism_input: MechanismInput, year: int
     ) -> tuple[float, float]:
         _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
             mechanism_input
@@ -107,13 +107,13 @@ class MechanismReliability:
         return StabilityInnerSimple.calculate(_mechanism_input, year)
 
     def _calculate_simple_overflow(
-        self, mechanism_input: MechanismInput, year: int, load
+        mechanism_input: MechanismInput, year: int, load
     ) -> tuple[float, float]:
 
         _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
         return OverflowSimple.calculate(_mechanism_input, year, load)
 
-    def _calculate_hydra_ring_overflow(self, mechanism_input:MechanismInput, year:int, initial_year:int):
+    def _calculate_hydra_ring_overflow(mechanism_input:MechanismInput, year:int, initial_year:int):
         _mechanism_input = OverflowHydraRingInput.from_mechanism_input(mechanism_input)
 
         return OverflowHydraRing.calculate(_mechanism_input, year, initial_year)
