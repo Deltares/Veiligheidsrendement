@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -121,6 +121,19 @@ class VrtoolConfig:
     )
 
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
+
+    def __post_init__(self):
+        """
+        After initialization and set of the values through the constructor we modify certain properties to ensure they are of the correct type.
+        """
+        def _convert_to_path(value: Union[None, Path, str]) -> Union[None, Path]:
+            if not value:
+                return None
+            if isinstance(value, str):
+                return Path(value)
+            return value
+        self.output_directory = _convert_to_path(self.output_directory)
+        self.input_directory = _convert_to_path(self.output_directory)
 
     def export(self, export_path: Path):
         """
