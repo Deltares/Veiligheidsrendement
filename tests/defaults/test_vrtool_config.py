@@ -1,6 +1,8 @@
 import json
+from pathlib import Path
 import shutil
 from dataclasses import asdict
+from typing import Union
 
 import pytest
 
@@ -144,3 +146,49 @@ class TestVrtoolConfig:
         # 3. Verify expectations.
         assert isinstance(_vrtool_config, VrtoolConfig)
         assert _vrtool_config.traject == "MyCustomTraject"
+
+    @pytest.mark.parametrize("custom_path", [pytest.param("just\\a\\path", id="Double slash"), pytest.param("with\simple\slash", id="Simple slash")])
+    def test_init_with_mapproperty_as_str_sets_to_path(self, custom_path: str):
+        # 1. Define test data
+        _paths_dict = dict(
+            output_directory=custom_path,
+            input_directory=custom_path
+        )
+
+        # 2. Run test
+        _vrtool_config = VrtoolConfig(**_paths_dict)
+
+        # 3. Verify expectations.
+        _custom_path = Path(custom_path)
+        assert _vrtool_config.output_directory == _custom_path
+        assert _vrtool_config.input_directory == _custom_path
+    
+    @pytest.mark.parametrize("none_value", [pytest.param("", id="Empty string"), pytest.param(None, id="None")])
+    def test_init_with_not_value_returns_none(self, none_value: Union[str, None]):
+        # 1. Define test data
+        _paths_dict = dict(
+            output_directory=none_value,
+            input_directory=none_value
+        )
+
+        # 2. Run test
+        _vrtool_config = VrtoolConfig(**_paths_dict)
+
+        # 3. Verify expectations.
+        assert _vrtool_config.output_directory is None
+        assert _vrtool_config.input_directory is None
+
+    def test_init_with_path_returns_same(self):
+        # 1. Define test data
+        _test_path = Path("just\\a\\path")
+        _paths_dict = dict(
+            output_directory=_test_path,
+            input_directory=_test_path
+        )
+
+        # 2. Run test
+        _vrtool_config = VrtoolConfig(**_paths_dict)
+
+        # 3. Verify expectations.
+        assert _vrtool_config.input_directory == _test_path
+        assert _vrtool_config.output_directory == _test_path
