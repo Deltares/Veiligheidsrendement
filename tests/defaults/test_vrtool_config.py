@@ -177,3 +177,18 @@ class TestVrtoolConfig:
         # 3. Verify expectations.
         assert _vrtool_config.output_directory is None
         assert _vrtool_config.input_directory is None
+
+    def test_init_with_path_returns_same(self):
+        # 1. Define test data
+        _test_path = Path("just\\a\\path")
+        _paths_dict = dict(
+            output_directory=_test_path,
+            input_directory=_test_path
+        )
+
+        # 2. Run test
+        _vrtool_config = VrtoolConfig(**_paths_dict)
+
+        # 3. Verify expectations.
+        assert _vrtool_config.input_directory == _test_path
+        assert _vrtool_config.output_directory == _test_path
