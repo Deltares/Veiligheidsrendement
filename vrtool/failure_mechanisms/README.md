@@ -7,3 +7,9 @@ There is a generic input that can be used to host information for every failure 
 * Definitions for failure mechanism specific input.
 * A general function library of a failure mechanism which is used througout the application and is not limited to calculating the reliability and the safety factor.
 * An implementation to calculate the reliability and the safety factor.
+
+The idea for each failure mechanism module is as follows:
+
+* A module has a specific input which unpacks the `MechaninismInput` into the elements and properties that are required for the implementation of calculating the reliability and the safety factor.
+* The specific input of the previous point is subsequently used by the implementation of the failure mechanism to calculate the reliability and the safety factor. Note that the calculation can be dependent on other parameters as well.
+* In case certain functionality is not only used in the failure mechanism implementation, but also at other parts of the application, a failure mechanism specific function library can be introduced. 

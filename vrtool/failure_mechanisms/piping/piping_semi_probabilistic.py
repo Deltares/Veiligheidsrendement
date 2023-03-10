@@ -30,14 +30,15 @@ class PipingSemiProbabilistic:
         """Calculates the reliability and the safety factor.
 
         Args:
-            traject_info (dict): A dictionary containing the traject information
-            strength (MechanismInput): The input to calculate the reliability and safety factor with
-            load (LoadInput): The load input to calculate the reliability and safety factor for
+            mechanism_input (MechanismInput): The mechanism input to calculate the reliability and safety factor for.
+            traject_info (dict): A dictionary containing the traject information.
+            strength (MechanismInput): The input to calculate the reliability and safety factor with.
+            load (LoadInput): The load input to calculate the reliability and safety factor for.
             year (float): The year to calculate the reliability and safety factor for.
             initial_year (int): The initial year to base the calculation on.
 
         Raises:
-            ValueError: raised when the elimination has been flagged, but is  undefined.
+            ValueError: raised when the elimination has been flagged, but is undefined.
 
         Returns:
             tuple[float, float]: A tuple containing the reliability and safety factor.
