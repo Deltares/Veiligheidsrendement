@@ -1,16 +1,11 @@
-import copy
-from pathlib import Path
-
-import numpy as np
 import pandas as pd
 import pytest
-from shapely.geometry import Polygon
 
 from vrtool.decision_making.measures.common_functions import determine_new_geometry
 from tests import test_data
 
 
-class TestMeasure:
+class TestCommonFunctions:
     def test_new_geom_inward(self):
         # Inward comparison (can be done for several geometry changes). And we can also include initial geometries without a berm.
         geometry_change = (0.5, 10.0)
