@@ -38,7 +38,6 @@ class TestVrtoolConfig:
     def test_init_vrtool_config_default_values(self):
         # 1. Define test data.
         _expected_keys = [
-            "directory",
             "language",
             "timing",
             "traject",
@@ -84,7 +83,6 @@ class TestVrtoolConfig:
         )
 
         # Verify default values.
-        assert _config.directory is None
         assert _config.language == "EN"
         assert not _config.timing
         assert _config.input_directory is None

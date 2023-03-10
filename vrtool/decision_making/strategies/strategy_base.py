@@ -1,7 +1,8 @@
 import copy
+from abc import abstractmethod
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,13 +10,9 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
-from tools.HelperFunctions import pareto_frontier
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import (
-    calc_life_cycle_risks,
     calc_tc,
-    implement_option,
-    make_traject_df,
     measure_combinations,
     split_options,
 )
@@ -48,6 +45,54 @@ class StrategyBase:
         self.beta_cost_settings = config.beta_cost_settings
         self.beta_or_prob = config.beta_or_prob
         self.LE_in_section = config.LE_in_section
+
+    @staticmethod
+    def get_measure_table(
+        solutions_dict: dict, language: str, abbrev: bool
+    ) -> pd.DataFrame:
+        _overall_mt = pd.DataFrame([], columns=["ID", "Name"])
+        for i in solutions_dict:
+            _overall_mt = pd.concat([_overall_mt, solutions_dict[i].measure_table])
+        _overall_mt: Union[pd.DataFrame, None, pd.Series] = _overall_mt.drop_duplicates(
+            subset="ID"
+        )
+        _name_key = "Name"
+
+        def _replace_with_abbreviations(str_to_replace: str) -> str:
+            return (
+                str_to_replace.replace("Grondversterking binnenwaarts", "Soil based")
+                .replace("Grondversterking met stabiliteitsscherm", "Soil based + SS")
+                .replace("Verticaal Zanddicht Geotextiel", "VSG")
+                .replace("Zelfkerende constructie", "DW")
+                .replace("Stabiliteitsscherm", "SS")
+            )
+
+        def _replace_without_abbreviations(str_to_replace: str) -> str:
+            return (
+                str_to_replace.replace("Grondversterking binnenwaarts", "Soil based")
+                .replace(
+                    "Grondversterking met stabiliteitsscherm",
+                    "Soil inward + Stability Screen",
+                )
+                .replace(
+                    "Verticaal Zanddicht Geotextiel", "Vertical Sandtight Geotextile"
+                )
+                .replace("Zelfkerende constructie", "Diaphragm Wall")
+                .replace("Stabiliteitsscherm", "Stability Screen")
+            )
+
+        if (
+            np.max(_overall_mt[_name_key].str.find("Grondversterking").values) > -1
+        ) and (language == "EN"):
+            if abbrev:
+                _overall_mt[_name_key] = _replace_with_abbreviations(
+                    _overall_mt[_name_key].str
+                )
+            else:
+                _overall_mt[_name_key] = _replace_without_abbreviations(
+                    _overall_mt[_name_key].str
+                )
+        return _overall_mt
 
     def get_measure_from_index(self, index, section_order=False, print_measure=False):
         """ "Converts an index (n,sh,sg) to a printout of the measure data"""
@@ -490,58 +535,6 @@ class StrategyBase:
         )  # np.zeros((N,Sh+1,T))
         # add a few general parameters
         self.opt_parameters = {"N": N, "T": T, "Sg": Sg + 1, "Sh": Sh + 1}
-
-    def filter(self, traject: DikeTraject, type="ParetoPerSection"):
-        """This is an optional routine that can be used to filter measures per section.
-        It is based on defining a Pareto front, its main idea is that you throw out measures that have a certain reliability but are more costly than other measures that provide the same reliability."""
-        self.options_height, self.options_geotechnical = split_options(self.options)
-        if type == "ParetoPerSection":
-            damage = traject.general_info["FloodDamage"]
-            r = self.r
-            horizon = np.max(self.T)
-            self.options_g_filtered = copy.deepcopy(self.options_geotechnical)
-
-            # we filter the options for each section, such that only interesting ones remain
-
-            # filter only geotechnical
-            for i in self.options_g_filtered.keys():
-
-                # indexes part 1: only the pareto front for stability and piping
-                LCC = calc_tc(self.options_g_filtered[i])
-
-                tgrid = self.options_g_filtered[i]["StabilityInner"].columns.values
-                pf_SI = beta_to_pf(self.options_g_filtered[i]["StabilityInner"])
-                pf_pip = beta_to_pf(self.options_g_filtered[i]["Piping"])
-
-                pftot1 = interp1d(tgrid, np.add(pf_SI, pf_pip))
-                risk1 = np.sum(
-                    pftot1(np.arange(0, horizon, 1))
-                    * (damage / (1 + r) ** np.arange(0, horizon, 1)),
-                    axis=1,
-                )
-                paretolcc, paretorisk, index1 = pareto_frontier(
-                    LCC, risk1, maxX=False, maxY=False
-                )
-                index = index1
-
-                self.options_g_filtered[i] = self.options_g_filtered[i].iloc[index]
-                self.options_g_filtered[i]["LCC"] = LCC[index]
-                self.options_g_filtered[i] = self.options_g_filtered[i].reset_index(
-                    drop=True
-                )
-                print(
-                    "For dike section "
-                    + i
-                    + " reduced size from "
-                    + str(len(LCC))
-                    + " to "
-                    + str(len(index))
-                )
-
-            # swap filtered and original measures:
-            self.options_old_geotechnical = copy.deepcopy(self.options_geotechnical)
-            self.options_geotechnical_filtered = copy.deepcopy(self.options_g_filtered)
-            del self.options_g_filtered
 
     def make_solution(self, csv_path, step=False, type="Final"):
         """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
@@ -1164,97 +1157,9 @@ class StrategyBase:
             )
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
+    @abstractmethod
     def determine_risk_cost_curve(self, traject: DikeTraject, input_path: Path = None):
-        """This routine writes a curve for total risk versus total cost for a certain solution. Not standard output but can be used for validation.
-        Uses output from ReliabilityToCSV"""
-
-        # TODO clean up options and make paths more generic
-        if input_path:
-            input_path.mkdir(parents=True, exist_ok=True)
-        else:
-            input_path = False
-        if not hasattr(self, "TakenMeasures"):
-            raise TypeError("TakenMeasures not found")
-        costs = {}
-        costs["TR"] = []
-        if (self.type == "Greedy") or (self.type == "TC"):  # do a loop
-
-            costs["LCC"] = np.cumsum(self.TakenMeasures["LCC"].values)
-            count = 0
-            for i in self.Probabilities:
-                if input_path:
-                    costs["TR"].append(
-                        calc_life_cycle_risks(
-                            i,
-                            self.r,
-                            np.max(traject.general_info["T"]),
-                            traject.general_info["FloodDamage"],
-                            dumpPt=input_path.joinpath(
-                                "Greedy_step_" + str(count) + ".csv"
-                            ),
-                        )
-                    )
-                else:
-                    costs["TR"].append(
-                        calc_life_cycle_risks(
-                            i,
-                            self.r,
-                            np.max(traject.general_info["T"]),
-                            traject.general_info["FloodDamage"],
-                        )
-                    )
-                count += 1
-
-        elif self.type == "MixedInteger":
-            costs["LCC"] = np.sum(self.TakenMeasures["LCC"].values)
-            # find the ids of the options
-            section = []
-            option_index = []
-            for i in self.TakenMeasures.iterrows():
-                data = i[1]
-                section.append(data["Section"])
-                if data["name"] != "Do Nothing":
-                    option_index.append(
-                        self.options[data["Section"]]
-                        .loc[
-                            (self.options[data["Section"]]["ID"] == data["ID"])
-                            & (
-                                self.options[data["Section"]]["yes/no"].values
-                                == data["yes/no"]
-                            )
-                            & (
-                                self.options[data["Section"]]["dcrest"]
-                                == data["dcrest"]
-                            )
-                            & (self.options[data["Section"]]["dberm"] == data["dberm"])
-                        ]
-                        .index.values[0]
-                    )
-                else:
-                    option_index.append(-999)
-            # implement the options 1 by 1
-            Probability = make_traject_df(traject, traject.general_info["T"])
-            ProbabilitySteps = []
-            ProbabilitySteps.append(copy.deepcopy(Probability))
-            for i in range(0, len(option_index)):
-                if option_index[i] > -999:
-                    Probability = implement_option(
-                        section[i],
-                        Probability,
-                        self.options[section[i]].iloc[option_index[i]],
-                    )
-                ProbabilitySteps.append(copy.deepcopy(Probability))
-
-            # evaluate the risk after the last step
-            costs["TR"] = calc_life_cycle_risks(
-                ProbabilitySteps[-1],
-                self.r,
-                np.max(traject.general_info["T"]),
-                traject.general_info["FloodDamage"],
-                dumpPt=input_path.joinpath("MixedInteger.csv"),
-            )
-            costs["TC"] = np.add(costs["TR"], costs["LCC"])
-        return costs
+        raise NotImplementedError("Expected concrete definition in inherited class.")
 
     def get_safety_standard_step(self, Ptarget, t=50):
         """Get the index of the measure where the traject probability in year t is higher than the requirement"""

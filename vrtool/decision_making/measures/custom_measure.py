@@ -1,4 +1,3 @@
-
 import copy
 
 import numpy as np
@@ -98,7 +97,7 @@ class CustomMeasure(MeasureBase):
                     # remove other input:
                     if i == "Overflow":
                         if self.parameters["h_crest_new"] != None:
-                            # type: simple
+                            # type = simple
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
                             ].Input.input["h_crest"] = self.parameters["h_crest_new"]
@@ -133,7 +132,8 @@ class CustomMeasure(MeasureBase):
                                     0
                                 ]
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
-                dike_section.section_reliability.Load, mechanism=i, trajectinfo=traject_info
+                dike_section.section_reliability.Load,
+                mechanism=i,
+                trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()
-

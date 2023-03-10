@@ -570,19 +570,6 @@ class DikeTraject:
             if last:
                 plt.close()
 
-    def run_full_assessment(self):
-        for i in self.sections:
-            for j in self.general_info["Mechanisms"]:
-                i.section_reliability.Mechanisms[j].generateLCRProfile(
-                    i.section_reliability.Load,
-                    mechanism=j,
-                    trajectinfo=self.general_info,
-                )
-
-            i.section_reliability.calculate_section_reliability(
-                TrajectInfo=self.general_info, length=i.Length
-            )
-
     def plot_assessment_results(
         self, output_directory: Path, section_ids=None, t_start=2020
     ):

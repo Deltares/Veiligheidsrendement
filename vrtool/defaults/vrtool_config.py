@@ -41,7 +41,6 @@ class VrtoolConfig:
     """
 
     # Directory to write the results to
-    directory: Optional[Path] = None
     output_directory: Optional[Path] = None
     language: str = "EN"
     timing: bool = False
