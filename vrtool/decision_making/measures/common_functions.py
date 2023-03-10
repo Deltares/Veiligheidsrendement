@@ -192,7 +192,7 @@ def determine_new_geometry(
     In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
     such that after reinforcement the height is crest_extra + increment.
     It has to be ensured that the BUK has x = 0, and that x increases inward"""
-    initial = modify_geometry_input(initial,berm_height)
+    initial = modify_geometry_input(initial, berm_height)
     # maxBermOut=20
     # if len(initial) == 6:
     #     noberm = False
@@ -255,7 +255,8 @@ def determine_new_geometry(
         BIT_dx = 0.0
     # z_innertoe = (initial.z[int(initial[initial.type == 'innertoe'].index.values)])
 
-    if direction == 'outward':
+    dhouse = 0.0
+    if direction == "outward":
         # nieuwe opzet:
         # if outward:
         #    verplaats buitenkruin en buitenteen
@@ -271,42 +272,42 @@ def determine_new_geometry(
         new_geometry = copy.deepcopy(initial)
 
         dout = BUT_dx
-        din  = BIT_dx
+        din = BIT_dx
         if dberm <= max_berm_out:
 
             for ind, data in new_geometry.iterrows():
-            # Run over points
-                if ind in ['EXT', 'BUT_0', 'BIT_0']:
+                # Run over points
+                if ind in ["EXT", "BUT_0", "BIT_0"]:
                     xz = data.values
-                elif ind == 'BIT':
+                elif ind == "BIT":
                     xz = [data.x + dberm + dout - din, data.z]
-                    dhouse = max(0,-(dberm + dout - din))
-                elif ind in ['BBL', 'EBL']:
+                    dhouse = max(0, -(dberm + dout - din))
+                elif ind in ["BBL", "EBL"]:
                     xz = [data.x + dberm + dout - din, data.z]
-                elif ind in ['BIK','BUK']:
+                elif ind in ["BIK", "BUK"]:
                     xz = [data.x + dberm + dout, data.z + dcrest]
-                elif ind == 'BUT':
+                elif ind == "BUT":
                     xz = [data.x + dberm, data.z]
-                new_geometry.loc[ind] = pd.Series(xz,index=['x','z'])
+                new_geometry.loc[ind] = pd.Series(xz, index=["x", "z"])
 
         else:
             berm_in = dberm - max_berm_out
             for ind, data in new_geometry.iterrows():
                 # Run over points
-                if ind in ['EXT', 'BUT_0', 'BIT_0']:
+                if ind in ["EXT", "BUT_0", "BIT_0"]:
                     xz = data.values
-                elif ind == 'BIT':
+                elif ind == "BIT":
                     xz = [data.x - berm_in + dout - din, data.z]
-                    dhouse = max(0,-(-berm_in + dout - din))
-                elif ind == 'BBL':
+                    dhouse = max(0, -(-berm_in + dout - din))
+                elif ind == "BBL":
                     xz = [data.x - berm_in + dout - din, data.z]
-                elif ind == 'EBL':
+                elif ind == "EBL":
                     xz = [data.x + max_berm_out + dout - din, data.z]
-                elif ind in ['BIK','BUK']:
+                elif ind in ["BIK", "BUK"]:
                     xz = [data.x + max_berm_out + dout, data.z + dcrest]
-                elif ind == 'BUT':
+                elif ind == "BUT":
                     xz = [data.x + max_berm_out, data.z]
-                new_geometry.loc[ind] = pd.Series(xz,index=['x','z'])
+                new_geometry.loc[ind] = pd.Series(xz, index=["x", "z"])
 
             # if noberm:  # len(initial) == 4:
             #     if dberm > 0:
@@ -421,7 +422,6 @@ def determine_new_geometry(
     # old:
     # return new_geometry, area_difference
     return new_geometry, area_extra, area_excavate, dhouse
-
 
 
 # Script to determine the costs of a reinforcement:
