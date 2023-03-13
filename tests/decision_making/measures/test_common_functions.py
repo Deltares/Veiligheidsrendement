@@ -29,7 +29,7 @@ class TestCommonFunctions:
         _reinforced_geometry = determine_new_geometry(
             (dx, dy),
             direction=direction,
-            max_berm_out= 0.0,
+            max_berm_out= 20.0,
             initial=_traject_test_data,
             berm_height=2,
             geometry_plot=False,
