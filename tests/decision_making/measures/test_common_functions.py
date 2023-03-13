@@ -11,8 +11,8 @@ class TestCommonFunctions:
 
     @pytest.mark.parametrize("direction, dx, dy, expected_values",  
         [
-            pytest.param("inward", 0.5, 10, (37.8, 13.06)),
-            pytest.param("outward", 0, 20, (91.23, 0.0)),
+            pytest.param("inward", 0.5, 10, (37.8, 13.06), id="Inward case"),
+            pytest.param("outward", 0, 20, (91.23, 0.0), id="Outward case"),
         ])
     def test_new_geom(self, direction: str, dx: float, dy: float, expected_values: tuple[float, float]):
         # 1. Define test data.        
@@ -26,7 +26,7 @@ class TestCommonFunctions:
         )
 
         # 2. Run test.
-        new_geometry_reinforced = determine_new_geometry(
+        _reinforced_geometry = determine_new_geometry(
             (dx, dy),
             direction=direction,
             max_berm_out= 0.0,
@@ -37,6 +37,6 @@ class TestCommonFunctions:
 
         # 3. Verify expectations.
         _tolerance = 0.01
-        _left_result, _right_result = expected_values
-        assert new_geometry_reinforced[1] == pytest.approx(_left_result, _tolerance)
-        assert new_geometry_reinforced[3] == pytest.approx(_right_result, _tolerance)
+        _reinforcement_1, _reinforcement_3 = expected_values
+        assert _reinforced_geometry[1] == pytest.approx(_reinforcement_1, _tolerance)
+        assert _reinforced_geometry[3] == pytest.approx(_reinforcement_3, _tolerance)
