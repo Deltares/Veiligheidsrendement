@@ -12,7 +12,10 @@ from vrtool.failure_mechanisms.overflow.overflow_functions import (
     calculate_overflow_hydra_ring_design,
     calculate_overflow_simple_design,
 )
-from vrtool.failure_mechanisms.stability_inner import StabilityInnerFunctions
+from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
+    calculate_safety_factor,
+    calculate_reliability,
+)
 
 
 def implement_berm_widening(
@@ -52,19 +55,15 @@ def implement_berm_widening(
             )
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["beta_2025"] = StabilityInnerFunctions.calculate_reliability(
+                input["beta_2025"] = calculate_reliability(
                     np.add(
-                        StabilityInnerFunctions.calculate_safety_factor(
-                            input["beta_2025"]
-                        ),
+                        calculate_safety_factor(input["beta_2025"]),
                         SFincrease,
                     )
                 )
-                input["beta_2075"] = StabilityInnerFunctions.calculate_reliability(
+                input["beta_2075"] = calculate_reliability(
                     np.add(
-                        StabilityInnerFunctions.calculate_safety_factor(
-                            input["beta_2075"]
-                        ),
+                        calculate_safety_factor(input["beta_2075"]),
                         SFincrease,
                     )
                 )
@@ -74,12 +73,10 @@ def implement_berm_widening(
             input["BETA"] = input["BETA"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["SF"] = StabilityInnerFunctions.calculate_reliability(
-                    np.add(input["SF"], SFincrease)
-                )
-                input["BETA"] = StabilityInnerFunctions.calculate_reliability(
+                input["SF"] = calculate_reliability(np.add(input["SF"], SFincrease))
+                input["BETA"] = calculate_reliability(
                     np.add(
-                        StabilityInnerFunctions.calculate_safety_factor(input["BETA"]),
+                        calculate_safety_factor(input["BETA"]),
                         SFincrease,
                     )
                 )

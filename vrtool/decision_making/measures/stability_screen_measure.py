@@ -4,7 +4,10 @@ import numpy as np
 
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.failure_mechanisms.stability_inner import StabilityInnerFunctions
+from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
+    calculate_reliability,
+    calculate_safety_factor
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
@@ -101,9 +104,9 @@ class StabilityScreenMeasure(MeasureBase):
                                 ij
                             ].Input.input[
                                 "beta_2025"
-                            ] = StabilityInnerFunctions.calculate_reliability(
+                            ] = calculate_reliability(
                                 np.add(
-                                    StabilityInnerFunctions.calculate_safety_factor(
+                                    calculate_safety_factor(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
@@ -116,9 +119,9 @@ class StabilityScreenMeasure(MeasureBase):
                                 ij
                             ].Input.input[
                                 "beta_2075"
-                            ] = StabilityInnerFunctions.calculate_reliability(
+                            ] = calculate_reliability(
                                 np.add(
-                                    StabilityInnerFunctions.calculate_safety_factor(
+                                    calculate_safety_factor(
                                         self.measures["Reliability"]
                                         .Mechanisms[i]
                                         .Reliability[ij]
@@ -141,7 +144,7 @@ class StabilityScreenMeasure(MeasureBase):
                                 ij
                             ].Input.input[
                                 "BETA"
-                            ] = StabilityInnerFunctions.calculate_reliability(
+                            ] = calculate_reliability(
                                 self.measures["Reliability"]
                                 .Mechanisms[i]
                                 .Reliability[ij]
