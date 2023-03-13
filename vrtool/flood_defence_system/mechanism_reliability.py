@@ -14,7 +14,7 @@ from vrtool.failure_mechanisms.overflow import (
     OverflowSimpleInput,
     OverflowHydraRingInput,
     OverflowHydraRing,
-    OverflowSimple,
+    OverflowSimpleCalculator,
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilistic
 
@@ -108,7 +108,8 @@ class MechanismReliability:
     ) -> tuple[float, float]:
 
         _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
-        return OverflowSimple.calculate(_mechanism_input, year, load)
+        calculator = OverflowSimpleCalculator(_mechanism_input, load)
+        return calculator.calculate(year)
 
     def _calculate_hydra_ring_overflow(self, mechanism_input:MechanismInput, year:int, initial_year:int):
         _mechanism_input = OverflowHydraRingInput.from_mechanism_input(mechanism_input)
