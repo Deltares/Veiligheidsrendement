@@ -28,6 +28,9 @@ class StabilityInnerSimple:
             mechanism_input (StabilityInnerSimpleInput): The input to calculate the reliability and the probability of failure with.
             year (int): The year to calculate the reliability and the probability of failure for.
 
+        Raises:
+            ValueError: raised when the ReliabilityCalculationMethod is undefined.
+
         Returns:
             tuple[float, float]: A tuple containing the reliability and the probability of failure.
         """
@@ -67,6 +70,9 @@ class StabilityInnerSimple:
             case ReliabilityCalculationMethod.BETA_SINGLE:
                 # situation where beta is constant in time
                 beta = np.min([mechanism_input.beta.item(), 8.0])
+
+            case _:
+                raise ValueError("Undefined ReliabilityCalculationMethod.")
 
         # Check if there is an elimination measure present (diaphragm wall)
         if mechanism_input.is_eliminated:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Union
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
@@ -27,6 +28,14 @@ class StabilityInnerSimpleInput:
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
     ) -> StabilityInnerSimpleInput:
+        def _get_valid_bool_value(input_value: Union[str, bool]) -> bool:
+            if isinstance(input_value, bool):
+                return input_value
+
+            if input_value.lower() == "yes":
+                return True
+            return False
+
         _reliability_calculation_method = None
         _safety_factor_2075 = None
         _beta_2075 = None
@@ -64,7 +73,7 @@ class StabilityInnerSimpleInput:
         _is_eliminated = mechanism_input.input.get("Elimination", False)
         _failure_probability_elimination = None
         _failure_probability_with_elimination = None
-        if _is_eliminated == "yes":
+        if _get_valid_bool_value(_is_eliminated):
             _is_eliminated = True
             _failure_probability_elimination = mechanism_input.input["Pf_elim"]
             _failure_probability_with_elimination = mechanism_input.input[
