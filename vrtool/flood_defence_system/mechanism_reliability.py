@@ -13,12 +13,13 @@ from vrtool.failure_mechanisms.general import (
 from vrtool.failure_mechanisms.overflow import (
     OverflowSimpleInput,
     OverflowHydraRingInput,
-    OverflowHydraRing,
+    OverflowHydraRingCalculator,
     OverflowSimpleCalculator,
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilistic
 
 from vrtool.flood_defence_system.load_input import LoadInput
+
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
@@ -47,11 +48,11 @@ class MechanismReliability:
 
     def calcReliability(
         self,
-        mechanism:str,
-        year:float,
-        traject_info:dict,
+        mechanism: str,
+        year: float,
+        traject_info: dict,
         strength: Optional[MechanismInput],
-        load: Optional[LoadInput]
+        load: Optional[LoadInput],
     ):
         # This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == "DirectInput":
@@ -111,8 +112,10 @@ class MechanismReliability:
         calculator = OverflowSimpleCalculator(_mechanism_input, load)
         return calculator.calculate(year)
 
-    def _calculate_hydra_ring_overflow(self, mechanism_input:MechanismInput, year:int, initial_year:int):
+    def _calculate_hydra_ring_overflow(
+        self, mechanism_input: MechanismInput, year: int, initial_year: int
+    ):
         _mechanism_input = OverflowHydraRingInput.from_mechanism_input(mechanism_input)
+        calculator = OverflowHydraRingCalculator(_mechanism_input, initial_year)
 
-        return OverflowHydraRing.calculate(_mechanism_input, year, initial_year)
-        
+        return calculator.calculate(year)
