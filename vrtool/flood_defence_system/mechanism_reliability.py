@@ -49,11 +49,11 @@ class MechanismReliability:
 
     def calcReliability(
         self,
+        strength: MechanismInput,
+        load: LoadInput,
         mechanism: str,
         year: float,
         traject_info: dict,
-        strength: Optional[MechanismInput],
-        load: Optional[LoadInput],
     ):
         calculator = self._get_failure_mechanism_calculator(
             mechanism, traject_info, strength, load
