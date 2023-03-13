@@ -19,6 +19,7 @@ from vrtool.failure_mechanisms.overflow import (
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
 
 from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 
 
 class MechanismReliability:
@@ -54,68 +55,80 @@ class MechanismReliability:
         strength: Optional[MechanismInput],
         load: Optional[LoadInput],
     ):
-        # This routine calculates cross-sectional reliability indices based on different types of calculations.
+        calculator = self._get_failure_mechanism_calculator(
+            mechanism, traject_info, strength, load
+        )
+
+        self.Beta, self.Pf = calculator.calculate(year)
+
+    def _get_failure_mechanism_calculator(
+        self,
+        mechanism: str,
+        traject_info: dict,
+        strength: Optional[MechanismInput],
+        load: Optional[LoadInput],
+    ) -> FailureMechanismCalculatorProtocol:
+
         if self.type == "DirectInput":
-            self.beta, self.Pf = self._calculate_direct_input(strength, year)
+            return self._get_direct_input_calculator(strength)
 
         if self.type == "HRING":
-            if mechanism == "Overflow":
-                self.beta, self.Pf = self._calculate_hydra_ring_overflow(
-                    self.Input, year, self.t_0
-                )
-            else:
-                raise Exception(
-                    "Unknown computation type HRING for {}".format(mechanism)
-                )
-        if self.type == "Simple":
-            if mechanism == "StabilityInner":
-                self.beta, self.Pf = self._calculate_simple_stability_inner(
-                    strength, year
-                )
-            elif mechanism == "Overflow":  # specific for SAFE
-                self.beta, self.Pf = self._calculate_simple_overflow(
-                    strength, year, load
-                )
-            elif mechanism == "Piping":
-                pass
-        elif self.type == "SemiProb":
-            # semi probabilistic assessment, only available for piping
-            if mechanism == "Piping":
-                calculator = PipingSemiProbabilisticCalculator(
-                    strength, load, self.t_0, traject_info
-                )
-                self.Beta, self.Pf = calculator.calculate(year)
+            return self._get_hydra_ring_calculator(mechanism, self.Input)
 
-    def _calculate_direct_input(
-        self, mechanism_input: MechanismInput, year: int
-    ) -> tuple[float, float]:
+        if self.type == "Simple":
+            return self._get_simple_calculator(mechanism, strength, load)
+
+        if self.type == "SemiProb":
+            return self._get_semi_probabilistic_calculator(
+                mechanism, strength, load, traject_info
+            )
+
+        raise Exception("Unknown computation type {}".format(self.type))
+
+    def _get_direct_input_calculator(
+        self, mechanism_input: MechanismInput
+    ) -> FailureMechanismCalculatorProtocol:
         _mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
             mechanism_input
         )
-        calculator = GenericFailureMechanismCalculator(_mechanism_input)
-        return calculator.calculate(year)
+        return GenericFailureMechanismCalculator(_mechanism_input)
 
-    def _calculate_simple_stability_inner(
-        self, mechanism_input: MechanismInput, year: int
-    ) -> tuple[float, float]:
-        _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
-        )
-        calculator = StabilityInnerSimpleCalculator(_mechanism_input)
-        return calculator.calculate(year)
+    def _get_hydra_ring_calculator(
+        self, mechanism: str, mechanism_input: MechanismInput, initial_year: int
+    ) -> FailureMechanismCalculatorProtocol:
+        if mechanism == "Overflow":
+            _mechanism_input = OverflowHydraRingInput.from_mechanism_input(
+                mechanism_input
+            )
+            return OverflowHydraRingCalculator(_mechanism_input, initial_year)
 
-    def _calculate_simple_overflow(
-        self, mechanism_input: MechanismInput, year: int, load
-    ) -> tuple[float, float]:
+        raise Exception("Unknown computation type HRING for {}".format(mechanism))
 
-        _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
-        calculator = OverflowSimpleCalculator(_mechanism_input, load)
-        return calculator.calculate(year)
+    def _get_simple_calculator(
+        self, mechanism, mechanism_input: MechanismInput, load: LoadInput
+    ) -> FailureMechanismCalculatorProtocol:
+        if mechanism == "StabilityInner":
+            _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
+                mechanism_input
+            )
+            return StabilityInnerSimpleCalculator(_mechanism_input)
 
-    def _calculate_hydra_ring_overflow(
-        self, mechanism_input: MechanismInput, year: int, initial_year: int
-    ):
-        _mechanism_input = OverflowHydraRingInput.from_mechanism_input(mechanism_input)
-        calculator = OverflowHydraRingCalculator(_mechanism_input, initial_year)
+        if mechanism == "Overflow":  # specific for SAFE
+            _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
+            return OverflowSimpleCalculator(_mechanism_input, load)
 
-        return calculator.calculate(year)
+        raise Exception("Unknown computation type Simple for {}".format(mechanism))
+
+    def _get_semi_probabilistic_calculator(
+        self,
+        mechanism: str,
+        mechanism_input: MechanismInput,
+        load: LoadInput,
+        traject_info: dict,
+    ) -> FailureMechanismCalculatorProtocol:
+        if mechanism == "Piping":
+            return PipingSemiProbabilisticCalculator(
+                mechanism_input, load, self.t_0, traject_info
+            )
+
+        raise Exception("Unknown computation type SemiProb for {}".format(mechanism))
