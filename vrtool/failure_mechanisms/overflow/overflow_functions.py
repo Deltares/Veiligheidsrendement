@@ -103,7 +103,6 @@ def calculate_overflow_simple_assessment(
 
 
 def calculate_overflow_simple_design(
-    h_crest: np.ndarray,
     q_crest: np.ndarray,
     h_c: np.ndarray,
     q_c: np.ndarray,
@@ -114,7 +113,6 @@ def calculate_overflow_simple_design(
     """
     Calculates the overflow with a simple approximation for the design calculation.
     Args:
-        h_crest (ndarray): Current creat height.
         q_crest (ndarray): Critical crest height.
         h_c (ndarray): _description_
         q_c (ndarray): _description_

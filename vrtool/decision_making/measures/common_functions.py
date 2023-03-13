@@ -520,7 +520,6 @@ def probabilistic_design(
         if type == "SAFE":
             # determine the crest required for the target
             h_crest, beta = calculate_overflow_simple_design(
-                strength_input["h_crest"],
                 strength_input["q_crest"],
                 strength_input["h_c"],
                 strength_input["q_c"],
