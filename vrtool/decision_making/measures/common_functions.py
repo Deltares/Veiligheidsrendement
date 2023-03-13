@@ -561,7 +561,6 @@ def probabilistic_design(
                 strength_input["h_c"],
                 strength_input["q_c"],
                 strength_input["beta"],
-                mode="design",
                 failure_probability=p_t,
                 design_variable=design_variable,
             )
