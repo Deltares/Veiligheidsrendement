@@ -27,21 +27,21 @@ class PipingSemiProbabilistic:
         year: float,
         initial_year: int,
     ) -> tuple[float, float]:
-        """Calculates the reliability and the safety factor.
+        """Calculates the reliability and the the probability of failure.
 
         Args:
-            mechanism_input (MechanismInput): The mechanism input to calculate the reliability and safety factor for.
+            mechanism_input (MechanismInput): The mechanism input to calculate the reliability and the probability of failure for.
             traject_info (dict): A dictionary containing the traject information.
-            strength (MechanismInput): The input to calculate the reliability and safety factor with.
-            load (LoadInput): The load input to calculate the reliability and safety factor for.
-            year (float): The year to calculate the reliability and safety factor for.
+            strength (MechanismInput): The input to calculate the reliability and the probability of failure with.
+            load (LoadInput): The load input to calculate the reliability and the probability of failure for.
+            year (float): The year to calculate the reliability and the probability of failure for.
             initial_year (int): The initial year to base the calculation on.
 
         Raises:
             ValueError: raised when the elimination has been flagged, but is undefined.
 
         Returns:
-            tuple[float, float]: A tuple containing the reliability and safety factor.
+            tuple[float, float]: A tuple containing the reliability and the probability of failure.
         """
         if not traject_info:  # Defaults, typical values for 16-3 and 16-4
             traject_info = {}

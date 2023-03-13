@@ -9,15 +9,15 @@ class OverflowHydraRing:
         mechanism_input: OverflowHydraRingInput, year: int, initial_year: int
     ) -> tuple[float, float]:
         """
-        Calculates the reliability and safety factor.
+        Calculates the reliability and the probability of failure.
 
         Args:
             mechanism_input (OverflowHydraRingInput): The input to perform the calculation with.
-            year (int): The year to calculate the reliability and safety factor for.
+            year (int): The year to calculate the reliability and the probability of failure for.
             initial_year (int): The initial year.
 
         Returns:
-            tuple[float, float]: A tuple with the calculated reliability and safety factor.
+            tuple[float, float]: A tuple with the calculated reliability and the probability of failure.
         """
 
         input = dict(
