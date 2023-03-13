@@ -94,13 +94,13 @@ class MechanismReliability:
         return GenericFailureMechanismCalculator(_mechanism_input)
 
     def _get_hydra_ring_calculator(
-        self, mechanism: str, mechanism_input: MechanismInput, initial_year: int
+        self, mechanism: str, mechanism_input: MechanismInput
     ) -> FailureMechanismCalculatorProtocol:
         if mechanism == "Overflow":
             _mechanism_input = OverflowHydraRingInput.from_mechanism_input(
                 mechanism_input
             )
-            return OverflowHydraRingCalculator(_mechanism_input, initial_year)
+            return OverflowHydraRingCalculator(_mechanism_input, self.t_0)
 
         raise Exception("Unknown computation type HRING for {}".format(mechanism))
 
