@@ -1,11 +1,12 @@
-from src.defaults.vrtool_config import VrtoolConfig
-from src.FloodDefenceSystem.DikeTraject import DikeTraject
-from src.run_workflows.vrtool_run_full_model import RunFullModel
-from src.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 import pytest
 
-class TestVrtoolRunFullModel:
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
+from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
+
+class TestVrtoolRunFullModel:
     def test_init_with_valid_data(self):
         # 1. Define test data
         _vr_config = VrtoolConfig()

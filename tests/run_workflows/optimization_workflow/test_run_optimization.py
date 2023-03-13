@@ -1,8 +1,8 @@
 import pytest
 
-from src.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from src.run_workflows.optimization_workflow.run_optimization import RunOptimization
-from src.run_workflows.vrtool_run_protocol import VrToolRunProtocol
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
+from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class TestRunOptimization:

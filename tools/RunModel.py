@@ -2,8 +2,8 @@ import time
 
 import matplotlib.pyplot as plt
 
-from src.DecisionMaking.Solutions import Solutions
-from src.DecisionMaking.Strategy import GreedyStrategy, TargetReliabilityStrategy
+from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 
 try:
     import cPickle as pickle
@@ -16,9 +16,9 @@ import shelve
 import numpy as np
 import pandas as pd
 
-import src.ProbabilisticTools.ProbabilisticFunctions as ProbabilisticFunctions
-from src.defaults.vrtool_config import VrtoolConfig
-from src.FloodDefenceSystem.DikeTraject import DikeTraject
+import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from tools.HelperFunctions import replaceNames
 
 """The function below is the main one for any calculation for SAFE. It contains 3 main steps:
@@ -47,22 +47,22 @@ def runFullModel(
     print("Start step 1: safety assessment")
 
     # Loop over sections and do the assessment.
-    for i, section in enumerate(TrajectObject.Sections):
+    for i, section in enumerate(TrajectObject.sections):
         # get design water level:
         # TODO remove this line?
         # section.Reliability.Load.NormWaterLevel = ProbabilisticFunctions.getDesignWaterLevel(section.Reliability.Load,TrajectObject.GeneralInfo['Pmax'])
 
         # compute reliability in time for each mechanism:
         # print(section.End)
-        for j in TrajectObject.GeneralInfo["MechanismsConsidered"]:
-            section.Reliability.Mechanisms[j].generateLCRProfile(
-                section.Reliability.Load,
+        for j in TrajectObject.general_info["MechanismsConsidered"]:
+            section.section_reliability.Mechanisms[j].generateLCRProfile(
+                section.section_reliability.Load,
                 mechanism=j,
-                trajectinfo=TrajectObject.GeneralInfo,
+                trajectinfo=TrajectObject.general_info,
             )
 
         # aggregate to section reliability:
-        section.Reliability.calcSectionReliability()
+        section.section_reliability.calculate_section_reliability()
 
         # optional: plot reliability in time for each section
         # TODO make a function of this statement to clean code even further.
@@ -70,17 +70,17 @@ def runFullModel(
             # Plot the initial reliability-time:
             plt.figure(1)
             [
-                section.Reliability.Mechanisms[j].drawLCR(mechanism=j)
+                section.section_reliability.Mechanisms[j].drawLCR(mechanism=j)
                 for j in config.mechanisms
             ]
             plt.plot(
                 [config.t_0, config.t_0 + np.max(config.T)],
                 [
-                    ProbabilisticFunctions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
+                    pb_functions.pf_to_beta(
+                        TrajectObject.general_info["Pmax"]
                     ),
-                    ProbabilisticFunctions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
+                    pb_functions.pf_to_beta(
+                        TrajectObject.general_info["Pmax"]
                     ),
                 ],
                 "k--",
@@ -102,7 +102,7 @@ def runFullModel(
             plt.close()
 
     # aggregate computed initial probabilities to DataFrame in TrajectObject:
-    TrajectObject.setProbabilities()
+    TrajectObject.set_probabilities()
 
     # Plot initial reliability for TrajectObject:
     case_settings = {
@@ -111,7 +111,7 @@ def runFullModel(
         "beta_or_prob": config.beta_or_prob,
     }
     if plot_mode != "test":
-        TrajectObject.plotAssessment(
+        TrajectObject.plot_assessment(
             fig_size=(12, 4),
             draw_targetbeta="off",
             last=True,
@@ -152,14 +152,14 @@ def runFullModel(
     else:
         AllSolutions = {}
         # Calculate per section, for each measure the cost-reliability-time relations:
-        for i in TrajectObject.Sections:
+        for i in TrajectObject.sections:
             AllSolutions[i.name] = Solutions(i, config)
             AllSolutions[i.name].fillSolutions(
                 config.input_directory.joinpath(i.name + ".xlsx")
             )
-            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.GeneralInfo)
+            AllSolutions[i.name].evaluateSolutions(i, TrajectObject.general_info)
 
-    for i in TrajectObject.Sections:
+    for i in TrajectObject.sections:
         AllSolutions[i.name].SolutionstoDataFrame(filtering="off", splitparams=True)
 
     # Store intermediate results:
@@ -185,12 +185,12 @@ def runFullModel(
 
         plt_mech = ["Section", "Piping", "StabilityInner", "Overflow"]
 
-        for i in TrajectObject.Sections:
+        for i in TrajectObject.sections:
             for betaind in betaind_array:
                 for mech in plt_mech:
-                    requiredbeta = ProbabilisticFunctions.pf_to_beta(
-                        TrajectObject.GeneralInfo["Pmax"]
-                        * (i.Length / TrajectObject.GeneralInfo["TrajectLength"])
+                    requiredbeta = pb_functions.pf_to_beta(
+                        TrajectObject.general_info["Pmax"]
+                        * (i.Length / TrajectObject.general_info["TrajectLength"])
                     )
                     plt.figure(1001)
                     AllSolutions[i.name].plotBetaTimeEuro(
@@ -247,12 +247,12 @@ def runFullModel(
 
                 # plot beta time for all measure steps for each strategy
                 if plot_mode == "extensive":
-                    GreedyOptimization.plotBetaTime(
+                    GreedyOptimization.plot_beta_time(
                         TrajectObject, typ="single", path=config.directory
                     )
 
                 GreedyOptimization = replaceNames(GreedyOptimization, AllSolutions)
-                cost_Greedy = GreedyOptimization.determineRiskCostCurve(TrajectObject)
+                cost_Greedy = GreedyOptimization.determine_risk_cost_curve(TrajectObject)
 
                 # write to csv's
                 GreedyOptimization.TakenMeasures.to_csv(
@@ -273,7 +273,7 @@ def runFullModel(
                     config.directory.joinpath("results", "TotalCostValues_Greedy.csv"),
                     float_format="%.1f",
                 )
-                GreedyOptimization.makeSolution(
+                GreedyOptimization.make_solution(
                     config.directory.joinpath(
                         "results",
                         "TakenMeasures_Optimal_" + GreedyOptimization.type + ".csv",
@@ -281,7 +281,7 @@ def runFullModel(
                     step=cost_Greedy["TC_min"] + 1,
                     type="Optimal",
                 )
-                GreedyOptimization.makeSolution(
+                GreedyOptimization.make_solution(
                     config.directory.joinpath(
                         "results", "FinalMeasures_" + GreedyOptimization.type + ".csv"
                     ),
@@ -294,7 +294,7 @@ def runFullModel(
                             j + "_Options_" + GreedyOptimization.type + ".csv",
                         )
                     )
-                costs = GreedyOptimization.determineRiskCostCurve(TrajectObject)
+                costs = GreedyOptimization.determine_risk_cost_curve(TrajectObject)
                 TR = costs["TR"]
                 LCC = costs["LCC"]
                 pd.DataFrame(
@@ -324,7 +324,7 @@ def runFullModel(
                 TargetReliabilityBased.evaluate(
                     TrajectObject, AllSolutions, splitparams=True
                 )
-                TargetReliabilityBased.makeSolution(
+                TargetReliabilityBased.make_solution(
                     config.directory.joinpath(
                         "results",
                         "FinalMeasures_" + TargetReliabilityBased.type + ".csv",
@@ -334,7 +334,7 @@ def runFullModel(
 
                 # plot beta time for all measure steps for each strategy
                 if plot_mode == "extensive":
-                    TargetReliabilityBased.plotBetaTime(
+                    TargetReliabilityBased.plot_beta_time(
                         TrajectObject, typ="single", path=config.directory
                     )
 

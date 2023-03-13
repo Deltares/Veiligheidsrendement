@@ -1,7 +1,7 @@
-from src.run_workflows.optimization_workflow.results_optimization import (
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
-from src.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
+from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
 class TestResultsOptimization:

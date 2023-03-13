@@ -1,5 +1,5 @@
-from src.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from src.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
 class TestResultsMeasures:

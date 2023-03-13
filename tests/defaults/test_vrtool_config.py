@@ -1,11 +1,12 @@
-from dataclasses import asdict
+import json
 import shutil
+from dataclasses import asdict
 
 import pytest
 
-from src.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
-from tests import test_results, test_data
-import json
+from tests import test_data, test_results
+from vrtool.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
+
 
 class TestVrtoolConfig:
     def test_load_default_unit_costs(self):

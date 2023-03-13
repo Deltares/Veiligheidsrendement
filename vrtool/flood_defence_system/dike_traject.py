@@ -1,0 +1,705 @@
+from __future__ import annotations
+
+import copy
+import warnings
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy.interpolate import interp1d
+
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.flood_defence_system.mechanism_reliability_collection import (
+    MechanismReliabilityCollection,
+)
+from vrtool.probabilistic_tools.probabilistic_functions import (
+    beta_to_pf,
+    calc_gamma,
+    pf_to_beta,
+)
+
+
+class DikeTraject:
+    sections: list[DikeSection]
+    general_info: dict
+    probabilities: pd.DataFrame
+
+    # This class contains general information on the dike traject and is used to store all data on the sections
+    def __init__(self, config: VrtoolConfig, traject=None):
+        if traject == None:
+            print("Warning: no traject given in config. Default was chosen")
+            self.traject = "Not specified"
+        else:
+            self.traject = traject
+
+        self.config = config
+        self.mechanisms = config.mechanisms
+        self.assessment_plot_years = config.assessment_plot_years
+        self.flip_traject = config.flip_traject
+        self.t_0 = config.t_0
+        self.sections = []
+        self.general_info = {
+            "omegaPiping": 0.24,
+            "omegaStabilityInner": 0.04,
+            "omegaOverflow": 0.24,
+            "bPiping": 300,
+            "aStabilityInner": 0.033,
+            "bStabilityInner": 50,
+            "MechanismsConsidered": self.mechanisms,
+        }
+
+        # Basic traject info
+        # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
+        # Pmax is the ondergrens as given by law
+        # TODO check whether this is a sensible value
+        # TODO read these values from a generic input file.
+        if traject == "16-4":
+            self.general_info["aPiping"] = 0.9
+            self.general_info["FloodDamage"] = 23e9
+            self.general_info["TrajectLength"] = 19480
+            self.general_info["Pmax"] = 1.0 / 10000
+        elif traject == "16-3":
+            self.general_info["FloodDamage"] = 23e9
+            self.general_info["TrajectLength"] = 19899
+            self.general_info["Pmax"] = 1.0 / 10000
+            self.general_info["aPiping"] = 0.9
+            # NB: klopt a hier?????!!!!
+        elif traject == "16-3 en 16-4":
+            self.general_info["FloodDamage"] = 23e9
+            self.general_info[
+                "TrajectLength"
+            ] = 19500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
+            # gebruiken
+            self.general_info["Pmax"] = 1.0 / 10000
+            self.general_info["aPiping"] = 0.9
+
+        elif traject == "38-1":
+            self.general_info["FloodDamage"] = 14e9
+            self.general_info[
+                "TrajectLength"
+            ] = 29500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
+            # gebruiken
+            self.general_info["Pmax"] = 1.0 / 30000
+            self.general_info["aPiping"] = 0.9
+
+        elif traject == "16-1":
+            self.general_info["FloodDamage"] = 29e9
+            self.general_info["TrajectLength"] = 15000
+            self.general_info["Pmax"] = 1.0 / 30000
+            self.general_info["aPiping"] = 0.4
+        else:
+            warnings.warn(
+                "Warning: dike traject not found, using default assumptions for traject."
+            )
+            self.general_info["FloodDamage"] = 5e9
+            self.general_info["Pmax"] = 1.0 / 10000
+            self.general_info["omegaPiping"] = 0.24
+            self.general_info["aPiping"] = 0.9
+            self.general_info["bPiping"] = 300
+            self.general_info["omegaStabilityInner"] = 0.04
+            self.general_info["aStabilityInner"] = 0.033
+            self.general_info["bStabilityInner"] = 50
+            self.general_info["omegaOverflow"] = 0.24
+
+    @classmethod
+    def from_vr_config(cls, vr_config: VrtoolConfig) -> DikeTraject:
+        """
+        Initializes a `DikeTraject` instance by also reading all its related input from the directory defined in the `vr_config`.
+
+        Args:
+            vr_config (VrtoolConfig): Valid instance containing required data by a `DikeTraject`
+
+        Returns:
+            DikeTraject: Valid instance of a loaded dike traject.
+        """
+        _traject = cls(vr_config, traject=vr_config.traject)
+        _traject.read_all_traject_input(input_path=vr_config.input_directory)
+        return _traject
+
+    def read_all_traject_input(self, input_path: Path, makesubdirs=True):
+        # Make a case directory and inside a figures and results directory if it doesnt exist yet
+        # #TODO check if these are obsolete
+        # if not config.path.joinpath(config.directory).is_dir():
+        #     config.path.joinpath(config.directory).mkdir(parents=True, exist_ok=True)
+        #     if makesubdirs:
+        #         config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
+        #         config.directory.joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
+
+        # Routine to read the input for all sections based on the default input format.
+        files = [i for i in input_path.glob("*DV*") if i.is_file()]
+        if len(files) == 0:
+            raise IOError("Error: no dike sections found. Check path!")
+        for i in range(len(files)):
+            # Read the general information for each section:
+            self.sections.append(DikeSection(files[i].stem, self.traject))
+            self.sections[i].read_general_info(input_path, "General")
+
+            # Read the data per mechanism, and first the load frequency line:
+            self.sections[i].section_reliability.Load = LoadInput(
+                list(self.sections[i].__dict__.keys())
+            )
+            if (
+                self.sections[i].section_reliability.Load.load_type == "HRING"
+            ):  # 2 HRING computations for different years
+                self.sections[i].section_reliability.Load.set_HRING_input(
+                    input_path.joinpath("Waterstand"), self.sections[i]
+                )  # input folder, location
+            elif (
+                self.sections[i].section_reliability.Load.load_type == "SAFE"
+            ):  # 2 computation as done for SAFE
+                self.sections[i].section_reliability.Load.set_fromDesignTable(
+                    input_path.joinpath("Toetspeil", self.sections[i].LoadData)
+                )
+                self.sections[i].section_reliability.Load.set_annual_change(
+                    type="SAFE",
+                    parameters=[
+                        self.sections[i].YearlyWLRise,
+                        self.sections[i].HBNRise_factor,
+                    ],
+                )
+
+            # Then the input for all the mechanisms:
+            self.sections[i].section_reliability.Mechanisms = {}
+            for j in self.mechanisms:
+                mech_input_path = input_path.joinpath(j)
+                self.sections[i].section_reliability.Mechanisms[
+                    j
+                ] = MechanismReliabilityCollection(
+                    j, self.sections[i].mechanism_data[j][1], self.config
+                )
+                for k in (
+                    self.sections[i]
+                    .section_reliability.Mechanisms[j]
+                    .Reliability.keys()
+                ):
+                    if self.sections[i].section_reliability.Load.load_type == "HRING":
+                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
+                            k
+                        ].Input.fill_mechanism(
+                            mech_input_path,
+                            *self.sections[i].mechanism_data[j],
+                            mechanism=j,
+                            crest_height=self.sections[i].Kruinhoogte,
+                            dcrest=self.sections[i].Kruindaling,
+                        )
+                    else:
+                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
+                            k
+                        ].Input.fill_mechanism(
+                            mech_input_path,
+                            *self.sections[i].mechanism_data[j],
+                            mechanism=j,
+                        )
+
+            # #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
+            # if not input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:
+            #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
+            #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
+
+        # Traject length is lengt of all sections together:
+        self.general_info["TrajectLength"] = 0
+        for i in self.sections:
+            self.general_info["TrajectLength"] += i.Length
+
+        self.general_info["beta_max"] = pf_to_beta(self.general_info["Pmax"])
+        self.general_info["gammaHeave"] = calc_gamma("Heave", self.general_info)
+        self.general_info["gammaUplift"] = calc_gamma("Uplift", self.general_info)
+        self.general_info["gammaPiping"] = calc_gamma("Piping", self.general_info)
+
+    def set_probabilities(self):
+        """routine to make 1 dataframe of all probabilities of a TrajectObject"""
+        for i, section in enumerate(self.sections):
+            if i == 0:
+                _assessment = (
+                    section.section_reliability.SectionReliability.reset_index()
+                )
+                _assessment["Section"] = section.name
+                _assessment["Length"] = section.Length
+                _assessment.columns = _assessment.columns.astype(str)
+                if "mechanism" in _assessment.columns:
+                    _assessment = _assessment.rename(columns={"mechanism": "index"})
+            else:
+                data_to_add = (
+                    section.section_reliability.SectionReliability.reset_index()
+                )
+                data_to_add["Section"] = section.name
+                data_to_add["Length"] = section.Length
+                data_to_add.columns = data_to_add.columns.astype(str)
+                if "mechanism" in data_to_add.columns:
+                    data_to_add = data_to_add.rename(columns={"mechanism": "index"})
+
+                _assessment = pd.concat((_assessment, data_to_add))
+        _assessment = _assessment.rename(
+            columns={"index": "mechanism", "Section": "name"}
+        )
+        self.probabilities = _assessment.reset_index(drop=True).set_index(
+            ["name", "mechanism"]
+        )
+
+    def plot_assessment(
+        self,
+        fig_size=(6, 4),
+        draw_targetbeta="off",
+        last=True,
+        alpha=1,
+        colors=False,
+        labels_limited=False,
+        system_rel=False,
+        custom_name=False,
+        title_in=False,
+        reinforcement_strategy=False,
+        greedymode="Optimal",
+        show_xticks=True,
+        t_list=[],
+        case_settings={"directory": Path(""), "language": "NL", "beta_or_prob": "beta"},
+    ):
+        """Routine to plot traject reliability"""
+        if reinforcement_strategy:
+            if reinforcement_strategy.__class__.__name__ == "GreedyStrategy":
+                if greedymode == "Optimal":
+                    ProbabilityFrame = reinforcement_strategy.Probabilities[
+                        reinforcement_strategy.OptimalStep
+                    ]
+                elif greedymode == "SatisfiedStandard":
+                    Ptarget = self.general_info["Pmax"]
+                    for i in reversed(reinforcement_strategy.Probabilities):
+                        beta_traj, Pf_traj = calc_traject_prob(i, ts=50)
+                        if Pf_traj < Ptarget:  # satisfactory solution
+                            ProbabilityFrame = i
+                        else:
+                            if not "ProbabilityFrame" in locals():
+                                warnings.warn(
+                                    "No satisfactory solution found, skipping plot"
+                                )
+                            return
+            else:
+                ProbabilityFrame = reinforcement_strategy.Probabilities[-1]
+        else:
+            ProbabilityFrame = self.probabilities
+            ProbabilityFrame = ProbabilityFrame.drop(["Length"], axis=1)
+        ProbabilityFrame.columns = ProbabilityFrame.columns.values.astype(np.int64)
+        plot_settings()
+
+        self.probabilities.to_csv(
+            case_settings["directory"].joinpath("InitialAssessment_Betas.csv")
+        )
+        # English or Dutch labels and titles
+        if case_settings["language"] == "NL":
+            label_xlabel = "Dijkvakken"
+            if case_settings["beta_or_prob"] == "beta":
+                label_ylabel = r"Betrouwbaarheidsindex $\beta$ [-/jaar]"
+                label_target = "Doelbetrouwbaarheid"
+            elif case_settings["beta_or_prob"] == "prob":
+                label_ylabel = r"Faalkans $P_f$ [-/jaar]"
+                label_target = "Doelfaalkans"
+            labels_xticks = []
+            for i in self.sections:
+                labels_xticks.append(i.name)
+        elif case_settings["language"] == "EN":
+            label_xlabel = "Dike sections"
+            if case_settings["beta_or_prob"] == "beta":
+                if labels_limited:
+                    label_ylabel = r"$\beta$ [-/year]"
+                else:
+                    label_ylabel = r"Reliability index $\beta$ [-/year]"
+                label_target = r"$\beta_\mathrm{target}$"
+            elif case_settings["beta_or_prob"] == "prob":
+                label_ylabel = r"Failure probability $P_f$ [-/year]"
+                label_target = "Target failure prob."
+            labels_xticks = []
+            for i in self.sections:
+                labels_xticks.append("S" + i.name[2:])
+
+        cumlength, xticks1, middles = get_section_length_in_traject(
+            self.probabilities["Length"]
+            .loc[self.probabilities.index.get_level_values(1) == "Overflow"]
+            .values
+        )
+
+        if colors:
+            color = sns.cubehelix_palette(**colors)
+        else:
+            color = sns.cubehelix_palette(
+                n_colors=4, start=1.9, rot=1, gamma=1.5, hue=1.0, light=0.8, dark=0.3
+            )
+        # color = sns.cubehelix_palette(n_colors=4, start=0.7,rot=1,gamma=1.5,hue=0.0,light=0.8,dark=0.3)
+        markers = ["o", "v", "d"]
+
+        # We will make plots for different years
+        year = 0
+        line = {}
+        mid = {}
+        legend_line = {}
+        if len(t_list) == 0:
+            t_list = self.assessment_plot_years
+        for ii in t_list:
+            if system_rel:
+                fig, (ax, ax1) = plt.subplots(
+                    nrows=1,
+                    ncols=2,
+                    figsize=fig_size,
+                    sharey="row",
+                    gridspec_kw={
+                        "width_ratios": [20, 1],
+                        "wspace": 0.08,
+                        "left": 0.03,
+                        "right": 0.98,
+                    },
+                )
+            else:
+                fig, ax = plt.subplots(figsize=fig_size)
+            col = 0
+            mech = 0
+            for j in self.mechanisms:
+                # get data to plot
+                # plotdata = self.Probabilities[str(ii)].loc[self.Probabilities['index'] == j].values
+                plotdata = (
+                    ProbabilityFrame[ii]
+                    .loc[ProbabilityFrame.index.get_level_values(1) == j]
+                    .values
+                )
+                if case_settings["beta_or_prob"] == "prob":
+                    plotdata = beta_to_pf(plotdata)
+                ydata = copy.deepcopy(plotdata)
+                for ij in range(0, len(plotdata)):
+                    ydata = np.insert(ydata, ij * 2, plotdata[ij])
+
+                if year < 1000:  # year == 0:
+                    # define the lines for the first time. Else replace the data.
+                    (line[mech],) = ax.plot(
+                        xticks1, ydata, color=color[col], linestyle="-", alpha=alpha
+                    )
+                    (mid[mech],) = ax.plot(
+                        middles,
+                        plotdata,
+                        color=color[col],
+                        linestyle="",
+                        marker=markers[col],
+                        alpha=alpha,
+                    )
+                    (legend_line[mech],) = ax.plot(
+                        -999,
+                        -999,
+                        color=color[col],
+                        linestyle="-",
+                        marker=markers[col],
+                        alpha=alpha,
+                        label=j,
+                    )
+                else:
+                    line[mech].set_ydata(ydata)
+                    mid[mech].set_ydata(plotdata)
+                col += 1
+                mech += 1
+            if system_rel:
+                (legend_line[mech],) = ax.plot(
+                    -999,
+                    -999,
+                    color=color[col],
+                    linestyle="-",
+                    alpha=alpha,
+                    label="System",
+                )
+            col = 0
+            # Whether to draw the target reliability for each individula mechanism.
+            if draw_targetbeta == "on" and last:
+                for j in self.mechanisms:
+                    dash = [2, 2]
+                    if j == "StabilityInner":
+                        N = (
+                            self.general_info["TrajectLength"]
+                            * self.general_info["aStabilityInner"]
+                            / self.general_info["bStabilityInner"]
+                        )
+                        pt = (
+                            self.general_info["Pmax"]
+                            * self.general_info["omegaStabilityInner"]
+                            / N
+                        )
+                        # dash = [1,2]
+                    elif j == "Piping":
+                        N = (
+                            self.general_info["TrajectLength"]
+                            * self.general_info["aPiping"]
+                            / self.general_info["bPiping"]
+                        )
+                        pt = (
+                            self.general_info["Pmax"]
+                            * self.general_info["omegaPiping"]
+                            / N
+                        )
+                        # dash = [1,3]
+                    elif j == "Overflow":
+                        pt = (
+                            self.general_info["Pmax"]
+                            * self.general_info["omegaOverflow"]
+                        )
+                        # dash = [1,2]
+                    if case_settings["beta_or_prob"] == "beta":
+                        ax.plot(
+                            [0, max(cumlength)],
+                            [
+                                pf_to_beta(pt),
+                                pf_to_beta(pt),
+                            ],
+                            color=color[col],
+                            linestyle=":",
+                            label=label_target + " " + j,
+                            dashes=dash,
+                            alpha=0.5,
+                            linewidth=1,
+                        )
+                    elif case_settings["beta_or_prob"] == "prob":
+                        ax.plot(
+                            [0, max(cumlength)],
+                            [pt, pt],
+                            color=color[col],
+                            linestyle=":",
+                            label=label_target + " " + j,
+                            dashes=dash,
+                            alpha=0.5,
+                            linewidth=1,
+                        )
+                    col += 1
+            if last:
+                for i in cumlength:
+                    ax.axvline(
+                        x=i, color="gray", linestyle="-", linewidth=0.5, alpha=0.5
+                    )
+                if case_settings["beta_or_prob"] == "beta":
+                    # should be in legend
+                    ax.plot(
+                        [0, max(cumlength)],
+                        [
+                            pf_to_beta(self.general_info["Pmax"]),
+                            pf_to_beta(self.general_info["Pmax"]),
+                        ],
+                        "k--",
+                        label=label_target,
+                        linewidth=1,
+                    )
+                if case_settings["beta_or_prob"] == "prob":
+                    ax.plot(
+                        [0, max(cumlength)],
+                        [self.general_info["Pmax"], self.general_info["Pmax"]],
+                        "k--",
+                        label=label_target,
+                        linewidth=1,
+                    )
+
+                ax.legend(loc=1)
+                if not labels_limited:
+                    ax.set_xlabel(label_xlabel)
+                ax.set_ylabel(label_ylabel)
+                ax.set_xticks(middles)
+                if show_xticks:
+                    ax.set_xticklabels(labels_xticks)
+                else:
+                    ax.set_xticklabels("")
+                ax.tick_params(axis="x", rotation=90)
+                ax.set_xlim([0, max(cumlength)])
+                ax.tick_params(axis="both", bottom=False)
+                if case_settings["beta_or_prob"] == "beta":
+                    ax.set_ylim([0.5, 8.5])
+
+                if case_settings["beta_or_prob"] == "prob":
+                    ax.set_ylim([1e-1, 1e-9])
+                    ax.set_yscale("log")
+
+                ax.grid(axis="y", linewidth=0.5, color="gray", alpha=0.5)
+
+                if self.flip_traject:
+                    ax.invert_xaxis()
+            if system_rel:
+                col = 0
+                mech = 0
+                line1 = {}
+                mid1 = {}
+                bars = {}
+                pt_tot = 0
+                for m in self.mechanisms:
+                    beta_t, p_t = calc_traject_prob(ProbabilityFrame, ts=ii, mechs=[m])
+                    # pt_tot +=p_t
+                    pt_tot = 1 - ((1 - pt_tot) * (1 - p_t))
+                    # line1[mech], = ax1.plot([0,1], [beta_t,beta_t], color=color[col], linestyle='-', label=j, alpha=alpha)
+                    # mid1[mech], = ax1.plot(0.5, beta_t, color=color[col], linestyle='', marker=markers[col], alpha=alpha)
+                    bars[mech] = ax1.bar(col, beta_t, color=color[col])
+                    col += 1
+                    mech += 1
+                beta_tot = pf_to_beta(pt_tot)
+                print(beta_tot)
+                ax1.plot([-2, 3], [beta_tot, beta_tot], color=color[col])
+                ax1.axhline(
+                    pf_to_beta(self.general_info["Pmax"]),
+                    linestyle="--",
+                    color="black",
+                    label=label_target,
+                    linewidth=1,
+                )
+                ax1.grid(axis="y", linewidth=0.5, color="gray", alpha=0.5)
+                ax1.set_xticks([0, 1, 2])
+                ax1.set_xlim(left=-0.4, right=2.4)
+                ax1.set_title("System \n reliability")
+                if show_xticks:
+                    ax1.set_xticklabels(self.mechanisms, rotation=90, fontsize=6)
+                else:
+                    ax1.set_xticklabels("")
+                ax1.tick_params(axis="both", bottom=False)
+                if title_in:
+                    ax.set_title(title_in)
+            if not custom_name:
+                custom_name = (
+                    case_settings["beta_or_prob"]
+                    + "_"
+                    + str(self.t_0 + ii)
+                    + "_Assessment.png"
+                )
+            plt.savefig(
+                case_settings["directory"].joinpath(custom_name),
+                dpi=300,
+                bbox_inches="tight",
+                format="png",
+            )
+            plt.close()
+            custom_name = False
+            year += 1
+            if last:
+                plt.close()
+
+    def run_full_assessment(self):
+        for i in self.sections:
+            for j in self.general_info["Mechanisms"]:
+                i.section_reliability.Mechanisms[j].generateLCRProfile(
+                    i.section_reliability.Load,
+                    mechanism=j,
+                    trajectinfo=self.general_info,
+                )
+
+            i.section_reliability.calculate_section_reliability(
+                TrajectInfo=self.general_info, length=i.Length
+            )
+
+    def plot_assessment_results(
+        self, output_directory: Path, section_ids=None, t_start=2020
+    ):
+        # for all or a selection of sections:
+        if section_ids == None:
+            sections = self.sections
+        else:
+            sections = []
+            for i in section_ids:
+                sections.append(self.sections[i])
+
+        if not output_directory.exists():
+            output_directory.mkdir(parents=True)
+
+        # generate plots
+        for i in sections:
+            plt.figure(1)
+            [
+                i.section_reliability.Mechanisms[j].drawLCR(
+                    label=j, type="Standard", tstart=t_start
+                )
+                for j in self.general_info["Mechanisms"]
+            ]
+            plt.plot(
+                [t_start, t_start + np.max(self.general_info["T"])],
+                [
+                    pf_to_beta(self.general_info["Pmax"]),
+                    pf_to_beta(self.general_info["Pmax"]),
+                ],
+                "k--",
+                label="Requirement",
+            )
+            plt.legend()
+            plt.title(i.name)
+            plt.savefig(output_directory.joinpath(i.name + ".png"), bbox_inches="tight")
+            plt.close()
+
+    def update_probabilities(self, probabilities, changed_section=False):
+        # This function is to update the probabilities after a reinforcement.
+        for i in self.sections:
+            if changed_section and (i.name == changed_section):
+                i.section_reliability.SectionReliability = probabilities.loc[
+                    changed_section
+                ].astype(float)
+            elif not changed_section:
+                i.section_reliability.SectionReliability = probabilities.loc[
+                    i.name
+                ].astype(float)
+
+
+def plot_settings(labels: str = "NL"):
+    # a bunch of settings to make it look nice:
+    SMALL_SIZE = 8
+    MEDIUM_SIZE = 10
+    BIGGER_SIZE = 12
+
+    plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
+    plt.rc("axes", titlesize=MEDIUM_SIZE)  # fontsize of the axes title
+    plt.rc("axes", labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+    plt.rc("xtick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+    plt.rc("ytick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+    plt.rc("legend", fontsize=SMALL_SIZE)  # legend fontsize
+    plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+
+def get_section_length_in_traject(length):
+    # Derive some coordinates to properly plot everything according to the length of the different sections:
+    cumlength = np.cumsum(length)
+    cumlength = np.insert(cumlength, 0, 0)
+    xticks1 = copy.deepcopy(cumlength)
+    for i in range(1, len(cumlength) - 1):
+        xticks1 = np.insert(xticks1, i * 2, cumlength[i])
+    middles = (cumlength[:-1] + cumlength[1:]) / 2
+    return cumlength, xticks1, middles
+
+
+def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=False):
+    pfs = {}
+    if horizon:
+        trange = np.arange(0, horizon, 1)
+    elif ts != None:
+        trange = [ts]
+    else:
+        raise ValueError("No range defined")
+    if datatype == "DataFrame":
+        ts = base.columns.values
+        if not mechs:
+            mechs = np.unique(base.index.get_level_values("mechanism").values)
+        # mechs = ['Overflow']
+    # pf_traject = np.zeros((len(ts),))
+    pf_traject = np.zeros((len(trange),))
+
+    for i in mechs:
+        if i != "Section":
+            if datatype == "DataFrame":
+                betas = base.xs(i, level="mechanism").values.astype("float")
+            else:
+                betas = base[i]
+            beta_interp = interp1d(np.array(ts).astype(np.int_), betas)
+            pfs[i] = beta_to_pf(beta_interp(trange))
+            # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
+            pnonfs = 1 - pfs[i]
+            if i == "Overflow":
+                # pf_traject += np.max(pfs[i], axis=0)
+                pf_traject = 1 - np.multiply(1 - pf_traject, 1 - np.max(pfs[i], axis=0))
+            else:
+                # pf_traject += np.sum(pfs[i], axis=0)
+                # pf_traject += 1-np.prod(pnonfs, axis=0)
+                pf_traject = 1 - np.multiply(1 - pf_traject, np.prod(pnonfs, axis=0))
+
+    ## INTERPOLATION AFTER COMBINATION:
+    # pfail = interp1d(ts,pf_traject)
+    # p_t1 = ProbabilisticFunctions.beta_to_pf(pfail(trange))
+    # betafail = interp1d(ts, ProbabilisticFunctions.pf_to_beta(pf_traject),kind='linear')
+    # beta_t = betafail(trange)
+    # p_t = ProbabilisticFunctions.beta_to_pf(np.array(beta_t, dtype=np.float64))
+
+    beta_t = pf_to_beta(pf_traject)
+    p_t = pf_traject
+    return beta_t, p_t

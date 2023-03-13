@@ -1,18 +1,19 @@
 import shutil
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
-from src import __main__
-from src.defaults.vrtool_config import VrtoolConfig
 from tests import test_data, test_results
-import pytest
+from vrtool import __main__
+from vrtool.defaults.vrtool_config import VrtoolConfig
+
 
 class TestMain:
     def test_given_invalid_directory_when_run_full_then_fails(self):
         # 1. Define test data.
         _invalid_path = "not\\a\\path"
-        
+
         # 2. Run test.
         _run_result = CliRunner().invoke(
             __main__.run_full,
@@ -22,14 +23,16 @@ class TestMain:
         # 3. Verify expectations.
         assert _run_result.exit_code == 2
 
-    def test_given_valid_path_without_config_when_run_full_then_fails(self, request: pytest.FixtureRequest):
+    def test_given_valid_path_without_config_when_run_full_then_fails(
+        self, request: pytest.FixtureRequest
+    ):
         # 1. Define test data.
         _input_dir = test_results / request.node.name
         if not _input_dir.exists():
             _input_dir.mkdir(parents=True)
 
         assert _input_dir.exists()
-        
+
         # 2. Run test.
         _run_result = CliRunner().invoke(
             __main__.run_full,
@@ -60,7 +63,9 @@ class TestMain:
         # 3. Verify final expectations.
         assert _run_result.exit_code == 0
 
-    def test_given_directory_without_json_raises_error(self, request: pytest.FixtureRequest):
+    def test_given_directory_without_json_raises_error(
+        self, request: pytest.FixtureRequest
+    ):
         # 1. Define test data.
         _input_dir = test_results / request.node.name
         if not _input_dir.exists():
@@ -73,14 +78,18 @@ class TestMain:
             __main__._get_valid_vrtool_config(_input_dir)
 
         # 3. Verify expectations.
-        assert str(exception_error.value) == "No json config file found in the model directory. {}".format(_input_dir)
-    
-    def test_given_directory_with_too_many_jsons_raises_error(self, request: pytest.FixtureRequest):
+        assert str(
+            exception_error.value
+        ) == "No json config file found in the model directory. {}".format(_input_dir)
+
+    def test_given_directory_with_too_many_jsons_raises_error(
+        self, request: pytest.FixtureRequest
+    ):
         # 1. Define test data.
         _input_dir = test_results / request.node.name
         if _input_dir.exists():
             shutil.rmtree(_input_dir)
-        
+
         _input_dir.mkdir(parents=True)
         Path.joinpath(_input_dir, "first.json").touch()
         Path.joinpath(_input_dir, "second.json").touch()
@@ -90,8 +99,12 @@ class TestMain:
             __main__._get_valid_vrtool_config(_input_dir)
 
         # 3. Verify expectations.
-        assert str(exception_error.value) == "More than one json file found in the directory {}. Only one json at the root directory supported.".format(_input_dir)
-    
+        assert str(
+            exception_error.value
+        ) == "More than one json file found in the directory {}. Only one json at the root directory supported.".format(
+            _input_dir
+        )
+
     def test_given_directory_with_valid_config_returns_vrtool_config(self):
         # 1. Define test data.
         _input_dir = test_data / "vrtool_config"
