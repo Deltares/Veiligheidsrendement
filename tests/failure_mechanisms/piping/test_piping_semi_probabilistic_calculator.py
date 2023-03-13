@@ -1,0 +1,75 @@
+import pytest
+
+import numpy as np
+
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
+from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
+    FailureMechanismCalculatorProtocol,
+)
+from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
+
+
+class TestPipingSemiProbabilisticCalculator:
+    def test_init_with_valid_data(self):
+        # Setup
+        _mechanism_input = MechanismInput("")
+        _load = LoadInput([])
+
+        # Call
+        _calculator = PipingSemiProbabilisticCalculator(_mechanism_input, _load, 0, {})
+
+        # Assert
+        assert isinstance(_calculator, PipingSemiProbabilisticCalculator)
+        assert isinstance(_calculator, FailureMechanismCalculatorProtocol)
+
+    def test_init_with_invalid_mechanism_input(self):
+        # Setup
+        _load = LoadInput([])
+
+        # Call
+        with pytest.raises(ValueError) as exception_error:
+            PipingSemiProbabilisticCalculator("NotMechanismInput", _load, 0, {})
+
+        # Assert
+        assert str(exception_error.value) == "Expected instance of a MechanismInput."
+
+    def test_init_with_invalid_load_input(self):
+        # Setup
+        _mechanism_input = MechanismInput("")
+        _load = LoadInput([])
+
+        # Call
+        with pytest.raises(ValueError) as exception_error:
+            PipingSemiProbabilisticCalculator(_mechanism_input, "NotLoad", 0, {})
+
+        # Assert
+        assert str(exception_error.value) == "Expected instance of a LoadInput."
+
+    def test_init_with_invalid_initial_year(self):
+        # Setup
+        _mechanism_input = MechanismInput("")
+        _load = LoadInput([])
+
+        # Call
+        with pytest.raises(ValueError) as exception_error:
+            PipingSemiProbabilisticCalculator(
+                _mechanism_input, _load, "NotInitialYear", {}
+            )
+
+        # Assert
+        assert str(exception_error.value) == "Expected instance of a int."
+
+    def test_init_with_invalid_trajec_info(self):
+        # Setup
+        _mechanism_input = MechanismInput("")
+        _load = LoadInput([])
+
+        # Call
+        with pytest.raises(ValueError) as exception_error:
+            PipingSemiProbabilisticCalculator(
+                _mechanism_input, _load, 0, "NotATrajectInfo"
+            )
+
+        # Assert
+        assert str(exception_error.value) == "Expected instance of a dict."

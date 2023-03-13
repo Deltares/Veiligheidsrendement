@@ -16,7 +16,7 @@ from vrtool.failure_mechanisms.overflow import (
     OverflowHydraRingCalculator,
     OverflowSimpleCalculator,
 )
-from vrtool.failure_mechanisms.piping import PipingSemiProbabilistic
+from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
 
 from vrtool.flood_defence_system.load_input import LoadInput
 
@@ -81,9 +81,10 @@ class MechanismReliability:
         elif self.type == "SemiProb":
             # semi probabilistic assessment, only available for piping
             if mechanism == "Piping":
-                self.Beta, self.Pf = PipingSemiProbabilistic.calculate(
-                    strength, traject_info, load, year, self.t_0
+                calculator = PipingSemiProbabilisticCalculator(
+                    strength, load, self.t_0, traject_info
                 )
+                self.Beta, self.Pf = calculator.calculate(year)
 
     def _calculate_direct_input(
         self, mechanism_input: MechanismInput, year: int
@@ -92,7 +93,6 @@ class MechanismReliability:
             mechanism_input
         )
         calculator = GenericFailureMechanismCalculator(_mechanism_input)
-
         return calculator.calculate(year)
 
     def _calculate_simple_stability_inner(
