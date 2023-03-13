@@ -58,12 +58,11 @@ class MechanismReliabilityCollection:
         if load:
             [
                 self.Reliability[i].calcReliability(
-                    self.Reliability[i].Input,
-                    load,
                     mechanism=mechanism,
-                    method=method,
                     year=float(i),
                     traject_info=trajectinfo,
+                    strength = self.Reliability[i].Input,
+                    load = load,
                 )
                 for i in self.Reliability.keys()
             ]
@@ -71,7 +70,6 @@ class MechanismReliabilityCollection:
             [
                 self.Reliability[i].calcReliability(
                     mechanism=mechanism,
-                    method=method,
                     year=float(i),
                     traject_info=trajectinfo,
                 )

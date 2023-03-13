@@ -1,6 +1,6 @@
+from typing import Optional
+
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
-
-
 from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleInput,
     StabilityInnerSimple,
@@ -18,6 +18,7 @@ from vrtool.failure_mechanisms.overflow import (
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilistic
 
+from vrtool.flood_defence_system.load_input import LoadInput
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
@@ -46,12 +47,11 @@ class MechanismReliability:
 
     def calcReliability(
         self,
-        strength=False,
-        load=False,
-        mechanism=None,
-        method="FORM",
-        year=0,
-        traject_info=None,
+        mechanism:str,
+        year:float,
+        traject_info:dict,
+        strength: Optional[MechanismInput],
+        load: Optional[LoadInput]
     ):
         # This routine calculates cross-sectional reliability indices based on different types of calculations.
         if self.type == "DirectInput":
