@@ -5,8 +5,8 @@ from scipy import interpolate
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
-def calculate_hydra_ring_design(
-    input:dict, year: int, start_year: int, failure_probability: float
+def calculate_overflow_hydra_ring_design(
+    input: dict, year: int, start_year: int, failure_probability: float
 ) -> tuple[float, float]:
     """
     Calculates the overflow based on a HydraRing design calculation.
@@ -38,11 +38,7 @@ def calculate_hydra_ring_design(
 
 
 def calculate_overflow_hydra_ring_assessment(
-    year: int,
-    initial_year: int,
-    h_crest: float,
-    d_crest: float,
-    hc_beta: pd.DataFrame
+    year: int, initial_year: int, h_crest: float, d_crest: float, hc_beta: pd.DataFrame
 ):
     """
     Calculates the overflow based on a HydraRing assessment calculation.
@@ -73,63 +69,73 @@ def calculate_overflow_hydra_ring_assessment(
     return beta, beta_to_pf(beta)
 
 
-def overflow_simple(
-    h_crest: float,
-    q_crest: float,
-    h_c: float,
-    q_c: float,
-    beta: float,
-    mode: str = "assessment",
-    failure_probability: float = None,
-    design_variable: str = None,
-    iterative_solve: bool = False,
-    beta_t: bool = False,
-) -> tuple[float, float]:
+def calculate_overflow_simple_assessment(
+    h_crest: np.ndarray,
+    q_crest: np.ndarray,
+    h_c: np.ndarray,
+    q_c: np.ndarray,
+    beta: np.ndarray,
+):
     """
-    Calculates the overflow with a simple approximation.
+    Calculates the overflow with a simple approximation of the assessment calculation.
     Args:
-        h_crest (float): Current creat height.
-        q_crest (float): Critical crest height.
-        h_c (float): _description_
-        q_c (float): _description_
-        beta (float): The reliability
-        mode (str, optional): The calculation mode. Defaults to "assessment".
+        h_crest (ndarray): Current creat height.
+        q_crest (ndarray): Critical crest height.
+        h_c (ndarray): _description_
+        q_c (ndarray): _description_
+        beta (ndarray): The reliability
+    Returns:
+        Tuple[float, float]: A tuple with the reliability and the probability of failure.
+    """
+
+    if q_c[0] != q_c[-1:]:
+        beta_hc = interpolate.interp2d(
+            h_c, q_c, beta, kind="linear", fill_value="extrapolate"
+        )
+        beta = np.min([beta_hc(h_crest, q_crest), 8.0])
+    else:
+        beta_hc = interpolate.interp1d(
+            h_c, beta, kind="linear", fill_value="extrapolate"
+        )
+        beta = np.min([beta_hc(h_crest), [8.0]])
+
+    return beta, beta_to_pf(beta)
+
+
+def calculate_overflow_simple_design(
+    h_crest: np.ndarray,
+    q_crest: np.ndarray,
+    h_c: np.ndarray,
+    q_c: np.ndarray,
+    beta: np.ndarray,
+    failure_probability: float,
+    design_variable: str,
+):
+    """
+    Calculates the overflow with a simple approximation for the design calculation.
+    Args:
+        h_crest (ndarray): Current creat height.
+        q_crest (ndarray): Critical crest height.
+        h_c (ndarray): _description_
+        q_c (ndarray): _description_
+        beta (ndarray): The reliability
         failure_probability (float, optional): The failure probability Pt. Defaults to None.
         design_variable (str, optional): The design variable to calculate for. Defaults to None.
-        iterative_solve (bool, optional): Flag whether the solution needs to be solved iteratively. Defaults to False.
-        beta_t (bool, optional): _description_. Defaults to False.
     Returns:
         Tuple[float, float]: A tuple with the calculated height of the new crest and the reliability.
     """
 
-    if mode == "assessment":
+    beta_t = pf_to_beta(failure_probability)
+    if design_variable == "h_crest":
         if q_c[0] != q_c[-1:]:
             beta_hc = interpolate.interp2d(
-                h_c, q_c, beta, kind="linear", fill_value="extrapolate"
+                beta, q_c, h_c, kind="linear", fill_value="extrapolate"
             )
-            beta = np.min([beta_hc(h_crest, q_crest), 8.0])
+            h_crest = beta_hc(beta_t, q_crest)
         else:
             beta_hc = interpolate.interp1d(
-                h_c, beta, kind="linear", fill_value="extrapolate"
+                beta, h_c, kind="linear", fill_value="extrapolate"
             )
-            beta = np.min([beta_hc(h_crest), [8.0]])
-        Pf = beta_to_pf(beta)
-        if not iterative_solve:
-            return beta, Pf
-        else:
-            return beta - beta_t
-    elif mode == "design":
-        beta_t = pf_to_beta(failure_probability)
-        if design_variable == "h_crest":
-            if q_c[0] != q_c[-1:]:
-                beta_hc = interpolate.interp2d(
-                    beta, q_c, h_c, kind="linear", fill_value="extrapolate"
-                )
-                h_crest = beta_hc(beta_t, q_crest)
-            else:
-                beta_hc = interpolate.interp1d(
-                    beta, h_c, kind="linear", fill_value="extrapolate"
-                )
-                h_crest = beta_hc(beta_t)
-            return h_crest, beta_t
-        pass
+            h_crest = beta_hc(beta_t)
+
+        return h_crest, beta_t

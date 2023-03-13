@@ -9,8 +9,8 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 from vrtool.failure_mechanisms.overflow.overflow_functions import (
-    calculate_hydra_ring_design,
-    overflow_simple,
+    calculate_overflow_hydra_ring_design,
+    calculate_overflow_simple_design,
 )
 from vrtool.failure_mechanisms.stability_inner import StabilityInnerFunctions
 
@@ -555,7 +555,7 @@ def probabilistic_design(
     if mechanism == "Overflow":
         if type == "SAFE":
             # determine the crest required for the target
-            h_crest, beta = overflow_simple(
+            h_crest, beta = calculate_overflow_simple_design(
                 strength_input["h_crest"],
                 strength_input["q_crest"],
                 strength_input["h_c"],
@@ -569,7 +569,7 @@ def probabilistic_design(
             h_crest = h_crest + horizon * (strength_input["dhc(t)"] + load_change)
             return h_crest
         elif type == "HRING":
-            h_crest, beta = calculate_hydra_ring_design(
+            h_crest, beta = calculate_overflow_hydra_ring_design(
                 strength_input, horizon, t_0, p_t
             )
             return h_crest
