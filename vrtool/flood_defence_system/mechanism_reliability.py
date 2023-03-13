@@ -3,7 +3,7 @@ from typing import Optional
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleInput,
-    StabilityInnerSimple,
+    StabilityInnerSimpleCalculator,
 )
 from vrtool.failure_mechanisms.general import (
     GenericFailureMechanismInput,
@@ -98,7 +98,8 @@ class MechanismReliability:
         _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
             mechanism_input
         )
-        return StabilityInnerSimple.calculate(_mechanism_input, year)
+        calculator = StabilityInnerSimpleCalculator(_mechanism_input)
+        return calculator.calculate(year)
 
     def _calculate_simple_overflow(
         self, mechanism_input: MechanismInput, year: int, load
