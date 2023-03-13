@@ -36,6 +36,9 @@ def overflow_hring(input: dict, year: float, t_0: int, mode="assessment", Pt=Non
         new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
             pf_to_beta(Pt)
         ).item()
+        #add expected crest decline
+        new_crest += year * input['d_crest']
+
         return new_crest, pf_to_beta(Pt)
 
 
