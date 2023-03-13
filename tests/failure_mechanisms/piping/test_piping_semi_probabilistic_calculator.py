@@ -4,9 +4,7 @@ import numpy as np
 
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.load_input import LoadInput
-from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
-    FailureMechanismCalculatorProtocol,
-)
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
 
 

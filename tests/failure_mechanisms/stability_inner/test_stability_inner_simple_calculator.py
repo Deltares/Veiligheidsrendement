@@ -3,9 +3,7 @@ import pytest
 import numpy as np
 
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
-from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
-    FailureMechanismCalculatorProtocol,
-)
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleCalculator,
     StabilityInnerSimpleInput,
