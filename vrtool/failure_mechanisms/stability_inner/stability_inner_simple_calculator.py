@@ -97,7 +97,7 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
                     * self._mechanism_input.failure_probability_elimination
                     + self._mechanism_input.failure_probability_with_elimination
                     * (1 - self._mechanism_input.failure_probability_elimination),
-                    beta_to_pf(beta),
+                    beta_to_pf(beta), 
                 ]
             )
             beta = pf_to_beta(failure_probability)

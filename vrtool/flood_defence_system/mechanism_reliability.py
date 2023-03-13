@@ -7,7 +7,7 @@ from vrtool.failure_mechanisms.stability_inner import (
 )
 from vrtool.failure_mechanisms.general import (
     GenericFailureMechanismInput,
-    GenericFailureMechanism,
+    GenericFailureMechanismCalculator,
 )
 
 from vrtool.failure_mechanisms.overflow import (
@@ -90,7 +90,9 @@ class MechanismReliability:
         _mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
             mechanism_input
         )
-        return GenericFailureMechanism.calculate(_mechanism_input, year)
+        calculator = GenericFailureMechanismCalculator(_mechanism_input)
+
+        return calculator.calculate(year)
 
     def _calculate_simple_stability_inner(
         self, mechanism_input: MechanismInput, year: int
