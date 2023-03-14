@@ -1,4 +1,4 @@
-from vrtool.failure_mechanisms import (FailureMechanismCalculatorProtocol)
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.overflow import (
     OverflowHydraRingInput,
     OverflowHydraRingCalculator,
