@@ -165,7 +165,13 @@ class TestStabilityInnerInput:
             == mechanism_input.input["Pf_with_elim"]
         )
 
-    @pytest.mark.parametrize("elimination", [("NotYes"), ("   ")])
+    @pytest.mark.parametrize(
+        "elimination",
+        [
+            pytest.param("NotYes", id="Not a valid string"),
+            pytest.param("   ", id="Empty string"),
+        ],
+    )
     def test_from_mechanism_input_with_elimination_without_valid_value_raises_value_error(
         self, elimination: str
     ):

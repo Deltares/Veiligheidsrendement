@@ -32,9 +32,7 @@ class StabilityInnerSimpleInput:
             if isinstance(input_value, bool):
                 return input_value
 
-            if input_value.lower() == "yes":
-                return True
-            return False
+            return input_value.lower() == "yes"
 
         _reliability_calculation_method = None
         _safety_factor_2075 = None
