@@ -3,7 +3,7 @@ name: ci-normalize-code
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   normalize-code:
