@@ -51,6 +51,7 @@ def calc_beta_implicated(mechanism, safety_factor, traject_info=None):
             logging.warn("Mechanism not found")
     return beta
 
+
 def compute_decimation_height(h, p, n=2):
     # computes the average decimation height for the lower parts of a distribution: h are water levels, p are exceedence probabilities. n is the number of 'decimations'
     hp = interp1d(p, h)
@@ -413,6 +414,7 @@ def add_load_char_vals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, yea
 
 ###################################################################################################
 ## THESE ARE FASTER FORMULAS FOR CONVERTING BETA TO PROB AND VICE VERSA
+
 
 def beta_to_pf(beta):
     # alternative: use scipy

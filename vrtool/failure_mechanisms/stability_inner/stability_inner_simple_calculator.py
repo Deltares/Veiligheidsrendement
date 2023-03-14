@@ -4,17 +4,16 @@ from scipy import interpolate
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.failure_mechanisms.stability_inner.stability_inner_simple_input import (
-    StabilityInnerSimpleInput,
-)
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
-
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     calculate_reliability,
 )
+from vrtool.failure_mechanisms.stability_inner.stability_inner_simple_input import (
+    StabilityInnerSimpleInput,
+)
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
@@ -97,7 +96,7 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
                     * self._mechanism_input.failure_probability_elimination
                     + self._mechanism_input.failure_probability_with_elimination
                     * (1 - self._mechanism_input.failure_probability_elimination),
-                    beta_to_pf(beta), 
+                    beta_to_pf(beta),
                 ]
             )
             beta = pf_to_beta(failure_probability)

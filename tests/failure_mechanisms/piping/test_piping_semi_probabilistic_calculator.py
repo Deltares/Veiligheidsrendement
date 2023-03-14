@@ -1,11 +1,10 @@
+import numpy as np
 import pytest
 
-import numpy as np
-
-from vrtool.failure_mechanisms.mechanism_input import MechanismInput
-from vrtool.flood_defence_system.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
+from vrtool.flood_defence_system.load_input import LoadInput
 
 
 class TestPipingSemiProbabilisticCalculator:

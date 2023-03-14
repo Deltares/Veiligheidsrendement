@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Union
+
+import numpy as np
+
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
-import numpy as np
 
 
 @dataclass

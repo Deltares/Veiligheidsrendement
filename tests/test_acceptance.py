@@ -1,6 +1,7 @@
 import shutil
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 
@@ -22,8 +23,6 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
-import matplotlib.pyplot as plt
-import pandas as pd
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 _acceptance_test_cases = [
@@ -288,28 +287,29 @@ class TestAcceptance:
                 )
             )
 
-
-    @pytest.mark.skip(reason="TODO. No (test) input data available. Needs to be adapted to new architecture.")
+    @pytest.mark.skip(
+        reason="TODO. No (test) input data available. Needs to be adapted to new architecture."
+    )
     def test_run_pilot(self):
         # 1. Define test data.
-        _traject = '38-1'        
+        _traject = "38-1"
         _vr_config_data = dict(
-            shelves = True,
-            reuse_output = True,
-            beta_or_prob = 'beta',
+            shelves=True,
+            reuse_output=True,
+            beta_or_prob="beta",
             # Settings for step 1 :
-            plot_reliability_in_time = False,
-            plot_measure_reliability = False,
-            flip_traject = True,
-            assessment_plot_years = [0,20,50],
+            plot_reliability_in_time=False,
+            plot_measure_reliability=False,
+            flip_traject=True,
+            assessment_plot_years=[0, 20, 50],
             # Settings for step 2 :
-            geometry_plot = False,
+            geometry_plot=False,
             # Settings for step 3:
-            design_methods = ['Veiligheidsrendement','Doorsnede-eisen'],
-            #dictionary with settings for beta-cost curve:,
-            beta_cost_settings = {'symbols':True, 'markersize':10},
+            design_methods=["Veiligheidsrendement", "Doorsnede-eisen"],
+            # dictionary with settings for beta-cost curve:,
+            beta_cost_settings={"symbols": True, "markersize": 10},
         )
-        
+
         _test_config = VrtoolConfig(**_vr_config_data)
         _traject = DikeTraject.from_vr_config(_test_config)
 
@@ -325,34 +325,97 @@ class TestAcceptance:
 
         # LCC-beta for t = 0
         plt.figure(101, figsize=figure_size)
-        _results.results_strategies[0].plot_beta_costs(_traject, save_dir=_test_config.output_directory, fig_id=101,
-                                    series_name=_test_config.design_methods[0], MeasureTable=_measure_table, color='b')
-        _results.results_strategies[1].plot_beta_costs(_traject, save_dir=_test_config.output_directory, fig_id=101,
-                                    series_name=_test_config.design_methods[1], MeasureTable=_measure_table, last='yes')
-        plt.savefig(_test_config.output_directory.joinpath('Priority order Beta vs LCC_' + str(_test_config.t_0) + '.png'), dpi=300,
-                    bbox_inches='tight', format='png')
+        _results.results_strategies[0].plot_beta_costs(
+            _traject,
+            save_dir=_test_config.output_directory,
+            fig_id=101,
+            series_name=_test_config.design_methods[0],
+            MeasureTable=_measure_table,
+            color="b",
+        )
+        _results.results_strategies[1].plot_beta_costs(
+            _traject,
+            save_dir=_test_config.output_directory,
+            fig_id=101,
+            series_name=_test_config.design_methods[1],
+            MeasureTable=_measure_table,
+            last="yes",
+        )
+        plt.savefig(
+            _test_config.output_directory.joinpath(
+                "Priority order Beta vs LCC_" + str(_test_config.t_0) + ".png"
+            ),
+            dpi=300,
+            bbox_inches="tight",
+            format="png",
+        )
 
         # LCC-beta for t=50
         plt.figure(102, figsize=figure_size)
-        _results.results_strategies[0].plot_beta_costs(_traject, save_dir=_test_config.output_directory, t=50, fig_id=102,
-                                    series_name=_test_config.design_methods[0], MeasureTable=_measure_table, color='b')
-        _results.results_strategies[1].plot_beta_costs(_traject, save_dir=_test_config.output_directory, t=50, fig_id=102,
-                                    series_name=_test_config.design_methods[1], MeasureTable=_measure_table, last='yes')
-        plt.savefig(_test_config.output_directory.joinpath('Priority order Beta vs LCC_' + str(_test_config.t_0 + 50) + '.png'), dpi=300,
-                    bbox_inches='tight', format='png')
+        _results.results_strategies[0].plot_beta_costs(
+            _traject,
+            save_dir=_test_config.output_directory,
+            t=50,
+            fig_id=102,
+            series_name=_test_config.design_methods[0],
+            MeasureTable=_measure_table,
+            color="b",
+        )
+        _results.results_strategies[1].plot_beta_costs(
+            _traject,
+            save_dir=_test_config.output_directory,
+            t=50,
+            fig_id=102,
+            series_name=_test_config.design_methods[1],
+            MeasureTable=_measure_table,
+            last="yes",
+        )
+        plt.savefig(
+            _test_config.output_directory.joinpath(
+                "Priority order Beta vs LCC_" + str(_test_config.t_0 + 50) + ".png"
+            ),
+            dpi=300,
+            bbox_inches="tight",
+            format="png",
+        )
 
         # Costs2025-beta
         plt.figure(103, figsize=figure_size)
-        _results.results_strategies[0].plot_beta_costs(_traject, save_dir=_test_config.output_directory, cost_type='Initial', fig_id=103,
-                                    series_name=_test_config.design_methods[0], MeasureTable=_measure_table, color='b')
-        _results.results_strategies[1].plot_beta_costs(_traject, save_dir=_test_config.output_directory, cost_type='Initial', fig_id=103,
-                                    series_name=_test_config.design_methods[1], MeasureTable=_measure_table, last='yes')
-        plt.savefig(_test_config.output_directory.joinpath('Priority order Beta vs Costs_' + str(_test_config.t_0 + 50) + '.png'),
-                    dpi=300, bbox_inches='tight', format='png')
+        _results.results_strategies[0].plot_beta_costs(
+            _traject,
+            save_dir=_test_config.output_directory,
+            cost_type="Initial",
+            fig_id=103,
+            series_name=_test_config.design_methods[0],
+            MeasureTable=_measure_table,
+            color="b",
+        )
+        _results.results_strategies[1].plot_beta_costs(
+            _traject,
+            save_dir=_test_config.output_directory,
+            cost_type="Initial",
+            fig_id=103,
+            series_name=_test_config.design_methods[1],
+            MeasureTable=_measure_table,
+            last="yes",
+        )
+        plt.savefig(
+            _test_config.output_directory.joinpath(
+                "Priority order Beta vs Costs_" + str(_test_config.t_0 + 50) + ".png"
+            ),
+            dpi=300,
+            bbox_inches="tight",
+            format="png",
+        )
 
-        _results.results_strategies[0].plot_investment_limit(_traject, investmentlimit=20e6,
-                                            path=_test_config.output_directory.joinpath('figures'), figure_size=(12, 6), years=[0],
-                                            flip=True)
+        _results.results_strategies[0].plot_investment_limit(
+            _traject,
+            investmentlimit=20e6,
+            path=_test_config.output_directory.joinpath("figures"),
+            figure_size=(12, 6),
+            years=[0],
+            flip=True,
+        )
 
         ## write a LOG of all probabilities for all steps:
         _investment_steps_dir = (
@@ -360,10 +423,12 @@ class TestAcceptance:
         )
         if not _investment_steps_dir.exists():
             _investment_steps_dir.mkdir(parents=True)
-        _results.results_strategies[0].write_reliability_to_csv(path=_investment_steps_dir,
-                                            type=_test_config.design_methods[0])
-        _results.results_strategies[1].write_reliability_to_csv(path=_investment_steps_dir,
-                                            type=_test_config.design_methods[1])
+        _results.results_strategies[0].write_reliability_to_csv(
+            path=_investment_steps_dir, type=_test_config.design_methods[0]
+        )
+        _results.results_strategies[1].write_reliability_to_csv(
+            path=_investment_steps_dir, type=_test_config.design_methods[1]
+        )
 
         for count, Strategy in enumerate(_results.results_strategies):
             ps = []
@@ -371,4 +436,7 @@ class TestAcceptance:
                 beta_t, p_t = calc_traject_prob(i, horizon=100)
                 ps.append(p_t)
             pd.DataFrame(ps, columns=range(100)).to_csv(
-                path_or_buf=_investment_steps_dir.joinpath('PfT_' + _test_config.design_methods[count] + '.csv'))
+                path_or_buf=_investment_steps_dir.joinpath(
+                    "PfT_" + _test_config.design_methods[count] + ".csv"
+                )
+            )

@@ -13,8 +13,8 @@ from vrtool.failure_mechanisms.overflow.overflow_functions import (
     calculate_overflow_simple_design,
 )
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
-    calculate_safety_factor,
     calculate_reliability,
+    calculate_safety_factor,
 )
 
 

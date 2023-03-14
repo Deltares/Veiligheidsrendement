@@ -126,12 +126,14 @@ class VrtoolConfig:
         """
         After initialization and set of the values through the constructor we modify certain properties to ensure they are of the correct type.
         """
+
         def _convert_to_path(value: Union[None, Path, str]) -> Union[None, Path]:
             if not value:
                 return None
             if isinstance(value, str):
                 return Path(value)
             return value
+
         self.output_directory = _convert_to_path(self.output_directory)
         self.input_directory = _convert_to_path(self.output_directory)
 

@@ -1,13 +1,12 @@
-from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
-from vrtool.failure_mechanisms.overflow import (
-    OverflowHydraRingInput,
-    OverflowHydraRingCalculator,
-)
-
-from vrtool.failure_mechanisms.mechanism_input import MechanismInput
-
 import pandas as pd
 import pytest
+
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
+from vrtool.failure_mechanisms.overflow import (
+    OverflowHydraRingCalculator,
+    OverflowHydraRingInput,
+)
 
 
 class TestOverflowHydraRingCalculator:

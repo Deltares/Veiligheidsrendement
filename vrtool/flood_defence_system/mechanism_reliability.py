@@ -1,25 +1,23 @@
 from typing import Optional
 
-from vrtool.failure_mechanisms.mechanism_input import MechanismInput
-from vrtool.failure_mechanisms.stability_inner import (
-    StabilityInnerSimpleInput,
-    StabilityInnerSimpleCalculator,
-)
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.general import (
-    GenericFailureMechanismInput,
     GenericFailureMechanismCalculator,
+    GenericFailureMechanismInput,
 )
-
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.overflow import (
-    OverflowSimpleInput,
-    OverflowHydraRingInput,
     OverflowHydraRingCalculator,
+    OverflowHydraRingInput,
     OverflowSimpleCalculator,
+    OverflowSimpleInput,
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
-
+from vrtool.failure_mechanisms.stability_inner import (
+    StabilityInnerSimpleCalculator,
+    StabilityInnerSimpleInput,
+)
 from vrtool.flood_defence_system.load_input import LoadInput
-from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 
 
 class MechanismReliability:

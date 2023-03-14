@@ -16,7 +16,9 @@ class TestStabilityInnerFunctions:
             (0.5, 0.41),
         ],
     )
-    def test_calculate_reliability(self, safety_factor:float, expected_reliability:float):
+    def test_calculate_reliability(
+        self, safety_factor: float, expected_reliability: float
+    ):
         # Call
         calculated_reliability = calculate_reliability(
             np.array([safety_factor], dtype=float)
@@ -33,7 +35,9 @@ class TestStabilityInnerFunctions:
             (-0.5, 0.3550),
         ],
     )
-    def test_calculate_safety_factor(self, reliability:float, expected_safety_factor:float):
+    def test_calculate_safety_factor(
+        self, reliability: float, expected_safety_factor: float
+    ):
         # Call
         calculated_safety_factor = calculate_safety_factor(reliability)
 

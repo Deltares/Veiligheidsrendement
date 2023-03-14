@@ -1,5 +1,6 @@
 from typing import Protocol, runtime_checkable
 
+
 @runtime_checkable
 class FailureMechanismCalculatorProtocol(Protocol):
     def calculate(self, year: int) -> tuple[float, float]:

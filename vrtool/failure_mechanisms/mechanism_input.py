@@ -1,10 +1,11 @@
+import logging
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from vrtool.probabilistic_tools.hydra_ring_scripts import read_design_table
-import logging
+
 
 class MechanismInput:
     # Class for input of a mechanism

@@ -1,12 +1,11 @@
-from vrtool.failure_mechanisms.overflow.overflow_hydra_ring_input import (
-    OverflowHydraRingInput,
+from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
+    FailureMechanismCalculatorProtocol,
 )
 from vrtool.failure_mechanisms.overflow.overflow_functions import (
     calculate_overflow_hydra_ring_assessment,
 )
-
-from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
-    FailureMechanismCalculatorProtocol,
+from vrtool.failure_mechanisms.overflow.overflow_hydra_ring_input import (
+    OverflowHydraRingInput,
 )
 
 

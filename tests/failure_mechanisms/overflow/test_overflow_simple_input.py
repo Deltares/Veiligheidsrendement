@@ -1,6 +1,7 @@
-from vrtool.failure_mechanisms.overflow import OverflowSimpleInput
-from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 import numpy as np
+
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
+from vrtool.failure_mechanisms.overflow import OverflowSimpleInput
 
 
 class TestOverFlowSimpleInput:

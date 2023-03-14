@@ -4,10 +4,10 @@ from scipy import interpolate
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 from vrtool.failure_mechanisms.general.generic_failure_mechanism_input import (
     GenericFailureMechanismInput,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class GenericFailureMechanismCalculator(FailureMechanismCalculatorProtocol):

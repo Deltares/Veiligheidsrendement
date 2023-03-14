@@ -1,16 +1,29 @@
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
 
 def compare_investment_strategy(
-    workbook_tc: pd.DataFrame, workbook_oi: pd.DataFrame, investment_limit: float, output_file_path: Path, measure_file_path: Path
+    workbook_tc: pd.DataFrame,
+    workbook_oi: pd.DataFrame,
+    investment_limit: float,
+    output_file_path: Path,
+    measure_file_path: Path,
 ):
     _investment_tc = 0
-    workbook_tc["dcrest"] = np.where(workbook_tc["dcrest"] == -999, "-", workbook_tc["dcrest"])
-    workbook_tc["dberm"] = np.where(workbook_tc["dberm"] == -999, "-", workbook_tc["dberm"])
-    workbook_oi["dcrest"] = np.where(workbook_oi["dcrest"] == -999, "-", workbook_oi["dcrest"])
-    workbook_oi["dberm"] = np.where(workbook_oi["dberm"] == -999, "-", workbook_oi["dberm"])
+    workbook_tc["dcrest"] = np.where(
+        workbook_tc["dcrest"] == -999, "-", workbook_tc["dcrest"]
+    )
+    workbook_tc["dberm"] = np.where(
+        workbook_tc["dberm"] == -999, "-", workbook_tc["dberm"]
+    )
+    workbook_oi["dcrest"] = np.where(
+        workbook_oi["dcrest"] == -999, "-", workbook_oi["dcrest"]
+    )
+    workbook_oi["dberm"] = np.where(
+        workbook_oi["dberm"] == -999, "-", workbook_oi["dberm"]
+    )
 
     # Read measure data
     _read_measures = pd.read_csv(measure_file_path, delimiter=";")
@@ -41,14 +54,18 @@ def compare_investment_strategy(
 
             # Replace the measure ID with the measure description
             if len(measure_id) == 1:
-                measure_description = _read_measures[_read_measures["ID"] == int(measure_id[0])][
-                    "Name"
-                ].values[0]
+                measure_description = _read_measures[
+                    _read_measures["ID"] == int(measure_id[0])
+                ]["Name"].values[0]
             else:
                 measure_description = (
-                    _read_measures[_read_measures["ID"] == int(measure_id[0])]["Name"].values[0]
+                    _read_measures[_read_measures["ID"] == int(measure_id[0])][
+                        "Name"
+                    ].values[0]
                     + " + "
-                    + _read_measures[_read_measures["ID"] == int(measure_id[1])]["Name"].values[0]
+                    + _read_measures[_read_measures["ID"] == int(measure_id[1])][
+                        "Name"
+                    ].values[0]
                 )
 
             # Count investment costs
@@ -111,14 +128,18 @@ def compare_investment_strategy(
 
             # Replace the measure ID with the measure description
             if len(measure_id) == 1:
-                measure_description = _read_measures[_read_measures["ID"] == int(measure_id[0])][
-                    "Name"
-                ].values[0]
+                measure_description = _read_measures[
+                    _read_measures["ID"] == int(measure_id[0])
+                ]["Name"].values[0]
             else:
                 measure_description = (
-                    _read_measures[_read_measures["ID"] == int(measure_id[0])]["Name"].values[0]
+                    _read_measures[_read_measures["ID"] == int(measure_id[0])][
+                        "Name"
+                    ].values[0]
                     + " + "
-                    + _read_measures[_read_measures["ID"] == int(measure_id[1])]["Name"].values[0]
+                    + _read_measures[_read_measures["ID"] == int(measure_id[1])][
+                        "Name"
+                    ].values[0]
                 )
 
             index = _df_oi[_df_oi["Dijkvak"] == workbook_oi["Section"][i + 1]].index
@@ -173,8 +194,6 @@ def compare_investment_strategy(
         header_format = writer.book.add_format({"bold": True})
 
         for col_num, value in enumerate(column_header):
-            writer.sheets[_sheet_name].write(
-                0, col_num, value, header_format
-            )
+            writer.sheets[_sheet_name].write(0, col_num, value, header_format)
 
         writer.save()

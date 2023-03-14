@@ -1,23 +1,21 @@
 import copy
+import logging
+from pathlib import Path
 from typing import Dict
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.mixed_integer_strategy import (
     MixedIntegerStrategy,
 )
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategy_evaluation import calc_tc, split_options
 from vrtool.flood_defence_system.dike_traject import DikeTraject
-from pathlib import Path
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
-from vrtool.decision_making.strategy_evaluation import (
-    calc_tc,
-    split_options,
-)
-from scipy.interpolate import interp1d
-import logging
+
 
 class ParetoFrontierStrategy(StrategyBase):
     """This is a subclass for generating a ParetoFrontier based on Mixed Integer evaluations with a budget limit."""
@@ -83,7 +81,6 @@ class ParetoFrontierStrategy(StrategyBase):
         # Summarize results:
         # print csvs of TakenMeasures with name: path + Pareto_LCC= LCClist[j]
         # Generate TCs_pareto (LCC, TR, TC)
-
 
     def filter(self, traject: DikeTraject, type="ParetoPerSection"):
         """This is an optional routine that can be used to filter measures per section.
@@ -181,4 +178,3 @@ class ParetoFrontierStrategy(StrategyBase):
             p_frontX = [pair[0] for pair in p_front]
             p_frontY = [pair[1] for pair in p_front]
             return p_frontX, p_frontY, index
-
