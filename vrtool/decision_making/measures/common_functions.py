@@ -26,6 +26,15 @@ def implement_berm_widening(
     computation_type,
     SFincrease=0.2,
 ):
+    def calculate_stability_inner_reliability_with_safety_screen(reliability):
+        # convert to SF and back:
+        return calculate_reliability(
+            np.add(
+                calculate_safety_factor(reliability),
+                SFincrease,
+            )
+        )
+
     # this function implements a berm widening based on the relevant inputs
     if mechanism == "Overflow":
         input["h_crest"] = input["h_crest"] + measure_input["dcrest"]
@@ -54,18 +63,15 @@ def implement_berm_widening(
                 measure_input["dberm"] * input["dbeta/dberm"]
             )
             if measure_parameters["StabilityScreen"] == "yes":
-                # convert to SF and back:
-                input["beta_2025"] = calculate_reliability(
-                    np.add(
-                        calculate_safety_factor(input["beta_2025"]),
-                        SFincrease,
-                    )
+                input[
+                    "beta_2025"
+                ] = calculate_stability_inner_reliability_with_safety_screen(
+                    input["beta_2025"]
                 )
-                input["beta_2075"] = calculate_reliability(
-                    np.add(
-                        calculate_safety_factor(input["beta_2075"]),
-                        SFincrease,
-                    )
+                input[
+                    "beta_2075"
+                ] = calculate_stability_inner_reliability_with_safety_screen(
+                    input["beta_2075"]
                 )
         elif "BETA" in input:
             # TODO make sure input is grabbed properly. Should be read from input sheet
@@ -74,11 +80,10 @@ def implement_berm_widening(
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
                 input["SF"] = calculate_reliability(np.add(input["SF"], SFincrease))
-                input["BETA"] = calculate_reliability(
-                    np.add(
-                        calculate_safety_factor(input["BETA"]),
-                        SFincrease,
-                    )
+                input[
+                    "BETA"
+                ] = calculate_stability_inner_reliability_with_safety_screen(
+                    input["BETA"]
                 )
         # For fragility curve as input
         elif computation_type == "FragilityCurve":
