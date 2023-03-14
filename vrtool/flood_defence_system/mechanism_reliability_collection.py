@@ -45,9 +45,8 @@ class MechanismReliabilityCollection:
                 self.Reliability[i].Input,
                 load,
                 mechanism=mechanism,
-                method=method,
                 year=float(i),
-                TrajectInfo=trajectinfo,
+                traject_info=trajectinfo,
             )
 
     def drawLCR(self, yscale=None, type="beta", mechanism=None):

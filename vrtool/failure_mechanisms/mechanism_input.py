@@ -10,6 +10,7 @@ class MechanismInput:
     # Class for input of a mechanism
     def __init__(self, mechanism):
         self.mechanism = mechanism
+        self.input = {}
 
     # This routine reads  input from an input sheet
     def fill_mechanism(
@@ -77,7 +78,6 @@ class MechanismInput:
             else:
                 raise Exception("Unknown input type for overflow")
 
-        self.input = {}
         self.temporals = []
         self.char_vals = {}
         for i in range(len(data)):

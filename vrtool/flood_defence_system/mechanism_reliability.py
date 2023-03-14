@@ -1,22 +1,25 @@
-import copy
+from typing import Optional
 
-import numpy as np
-import openturns as ot
-from scipy import interpolate
-
-import vrtool.flood_defence_system.mechanisms as fds_mechanisms
-from vrtool.flood_defence_system.mechanism_input import MechanismInput
-from vrtool.probabilistic_tools.probabilistic_functions import (
-    TableDist,
-    add_load_char_vals,
-    beta_to_pf,
-    calc_beta_implicated,
-    calculate_fragility_integration,
-    iterative_fc_calculation,
-    pf_to_beta,
-    run_prob_calc,
-    temporal_process,
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
+from vrtool.failure_mechanisms.stability_inner import (
+    StabilityInnerSimpleInput,
+    StabilityInnerSimpleCalculator,
 )
+from vrtool.failure_mechanisms.general import (
+    GenericFailureMechanismInput,
+    GenericFailureMechanismCalculator,
+)
+
+from vrtool.failure_mechanisms.overflow import (
+    OverflowSimpleInput,
+    OverflowHydraRingInput,
+    OverflowHydraRingCalculator,
+    OverflowSimpleCalculator,
+)
+from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
+
+from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 
 
 class MechanismReliability:
@@ -46,376 +49,86 @@ class MechanismReliability:
 
     def calcReliability(
         self,
-        strength=False,
-        load=False,
-        mechanism=None,
-        method="FORM",
-        year=0,
-        TrajectInfo=None,
+        strength: MechanismInput,
+        load: LoadInput,
+        mechanism: str,
+        year: float,
+        traject_info: dict,
     ):
-        # This routine calculates cross-sectional reliability indices based on different types of calculations.
+        calculator = self._get_failure_mechanism_calculator(
+            mechanism, traject_info, strength, load
+        )
+
+        self.Beta, self.Pf = calculator.calculate(year)
+
+    def _get_failure_mechanism_calculator(
+        self,
+        mechanism: str,
+        traject_info: dict,
+        strength: Optional[MechanismInput],
+        load: Optional[LoadInput],
+    ) -> FailureMechanismCalculatorProtocol:
+
         if self.type == "DirectInput":
-            t_grid = list(self.Input.input["beta"].keys())
-            beta_grid = list(self.Input.input["beta"].values())
-            betat = interpolate.interp1d(t_grid, beta_grid, fill_value="extrapolate")
-            beta = np.float32(betat(year))
-            self.beta = beta
-            self.Pf = beta_to_pf(self.beta)
+            return self._get_direct_input_calculator(strength)
 
         if self.type == "HRING":
-            if mechanism == "Overflow":
-                self.beta, self.Pf = fds_mechanisms.overflow_hring(
-                    self.Input.input, year, self.t_0
-                )
-            else:
-                raise Exception(
-                    "Unknown computation type HRING for {}".format(mechanism)
-                )
+            return self._get_hydra_ring_calculator(mechanism, self.Input)
+
         if self.type == "Simple":
-            if mechanism == "StabilityInner":
-                if "SF_2025" in strength.input:
-                    # Simple interpolation of two safety factors and translation to a value of beta at 'year'.
-                    # In this model we do not explicitly consider climate change, as it is already in de SF estimates by Sweco
-                    SFt = interpolate.interp1d(
-                        [0, 50],
-                        np.array(
-                            [strength.input["SF_2025"], strength.input["SF_2075"]]
-                        ).flatten(),
-                        fill_value="extrapolate",
-                    )
-                    SF = SFt(year)
-                    beta = np.min([beta_sf_stability_inner(SF, type="SF"), 8.0])
-                elif "beta_2025" in strength.input:
+            return self._get_simple_calculator(mechanism, strength, load)
 
-                    betat = interpolate.interp1d(
-                        [0, 50],
-                        np.array(
-                            [strength.input["beta_2025"], strength.input["beta_2075"]]
-                        ).flatten(),
-                        fill_value="extrapolate",
-                    )
-
-                    beta = betat(year)
-                    beta = np.min([beta, 8])
-                elif (
-                    "BETA" in strength.input
-                ):  # situation where beta is constant in time
-                    beta = np.min([strength.input["BETA"].item(), 8.0])
-                else:
-                    raise Exception(
-                        "Warning: No input values SF or Beta StabilityInner"
-                    )
-                # Check if there is an elimination measure present (diaphragm wall)
-                if "Elimination" in strength.input.keys():
-                    if strength.input["Elimination"] == "yes":
-                        # Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
-                        # addition: should not be more unsafe
-                        self.Pf = np.min(
-                            [
-                                beta_to_pf(beta) * strength.input["Pf_elim"]
-                                + strength.input["Pf_with_elim"]
-                                * (1 - strength.input["Pf_elim"]),
-                                beta_to_pf(beta),
-                            ]
-                        )
-                        self.beta = pf_to_beta(self.Pf)
-                    else:
-                        raise ValueError(
-                            "Warning: Elimination defined but not turned on"
-                        )
-                else:
-                    self.beta = beta
-                    self.Pf = beta_to_pf(self.beta)
-
-            elif mechanism == "Overflow":  # specific for SAFE
-                # climate change included, including a factor for HBN
-                if hasattr(load, "dist_change"):
-                    h_t = (
-                        strength.input["h_crest"]
-                        - (
-                            strength.input["dhc(t)"]
-                            + (load.dist_change * load.HBN_factor)
-                        )
-                        * year
-                    )
-                else:
-                    h_t = strength.input["h_crest"] - (strength.input["dhc(t)"] * year)
-
-                self.beta, self.Pf = fds_mechanisms.overflow_simple(
-                    h_t,
-                    strength.input["q_crest"],
-                    strength.input["h_c"],
-                    strength.input["q_c"],
-                    strength.input["beta"],
-                    mode="assessment",
-                )
-            elif mechanism == "Piping":
-                pass
-
-            self.alpha_sq = np.nan
-            self.result = np.nan
-        elif self.type == "FragilityCurve":
-            # Generic function for evaluating a fragility curve with water level and change in water level (optional)
-            if hasattr(load, "dist_change"):
-                original = copy.deepcopy(load.dist_change)
-                dist_change = temporal_process(original, year)
-                # marginals = [self.Input.input['FC'], load, dist_change]
-                P, beta = calculate_fragility_integration(
-                    self.Input.input["FC"], load, water_level_change=dist_change
-                )
-
-                # result missing
-                # dist = ot.ComposedDistribution(marginals)
-                # dist.setDescription(['h_c', 'h', 'dh'])
-                # TODO replace with FragilityIntegration. FragilityIntegration in ProbabilisticFunctions.py
-                self.alpha_sq = np.nan
-                self.result = np.nan
-            else:
-                marginals = [self.h_c, load.distribution]
-                dist = ot.ComposedDistribution(marginals)
-                dist.setDescription(["h_c", "h"])
-                result, P, beta, alfas_sq = run_prob_calc(
-                    ot.SymbolicFunction(["h_c", "h"], ["h_c-h"]), dist, method
-                )
-                self.result = result
-                self.alpha_sq = alfas_sq
-            self.Pf = P
-            self.beta = beta
-
-        elif self.type == "Prob":
-            # Probabilistic evaluation of a mechanism.
-            if mechanism == "Piping":
-                zFunc = fds_mechanisms.calculate_z_piping_total
-            elif mechanism == "Overflow":
-                zFunc = fds_mechanisms.calculate_z_overflow
-            elif mechanism == "simpleLSF":
-                zFunc = fds_mechanisms.calculate_simple_lsf
-            else:
-                raise ValueError("Unknown Z-function")
-
-            if hasattr(self.Input, "char_vals"):
-                start_vals = []
-                for i in descr:
-                    if i != "h" and i != "dh":
-                        start_vals.append(
-                            strength.char_vals[i]
-                        ) if i not in strength.temporals else start_vals.append(
-                            strength.char_vals[i] * year
-                        )
-                start_vals = add_load_char_vals(start_vals, self.t_0, load)
-            else:
-                start_vals = self.Input.input.getMean()
-
-            result, P, beta, alpha_sq = run_prob_calc(
-                ot.PythonFunction(self.Input.input.getDimension(), 1, zFunc),
-                self.Input.input,
-                method,
-                startpoint=start_vals,
+        if self.type == "SemiProb":
+            return self._get_semi_probabilistic_calculator(
+                mechanism, strength, load, traject_info
             )
-            self.result = result
-            self.Pf = P
-            self.beta = beta
-            self.alpha_sq = alpha_sq
-        elif self.type == "SemiProb":
-            # semi probabilistic assessment, only available for piping
-            if mechanism == "Piping":
-                if TrajectInfo == None:  # Defaults, typical values for 16-3 and 16-4
-                    TrajectInfo = {}
-                    TrajectInfo["Pmax"] = 1.0 / 10000
-                    TrajectInfo["omegaPiping"] = 0.24
-                    TrajectInfo["bPiping"] = 300
-                    TrajectInfo["aPiping"] = 0.9
-                    TrajectInfo["TrajectLength"] = 20000
-                # First calculate the SF without gamma for the three submechanisms
-                # Piping:
-                strength_new = copy.deepcopy(strength)
-                self.scenario_result = {}
-                self.scenario_result["Scenario"] = strength_new.input["Scenario"]
-                self.scenario_result["P_scenario"] = strength_new.input["P_scenario"]
-                self.scenario_result["beta_cs_p"] = {}
-                self.scenario_result["beta_cs_h"] = {}
-                self.scenario_result["beta_cs_u"] = {}
-                self.scenario_result["Pf"] = {}
-                self.scenario_result["Beta"] = {}
 
-                for i in strength.temporals:
-                    strength_new.input[i] = strength.input[i] * year
+        raise Exception("Unknown computation type {}".format(self.type))
 
-                # TODO:below, remove self. in for example self.gamma_pip. This is just an scenario output value. do not store.
-                # calculate beta per scenario and determine overall
-                for j in range(0, len(strength_new.input["Scenario"])):
-                    strength_new.input_ind = {}
-                    for i in strength_new.input:  # select values of scenario j
-                        try:
-                            strength_new.input_ind[i] = strength_new.input[i][j]
-                        except:
-                            pass  # TODO: make more clean, na measures doorloopt hij deze loop nogmaals, niet voor alle variabelen in strength_new.input is een array beschikbaar.
+    def _get_direct_input_calculator(
+        self, mechanism_input: MechanismInput
+    ) -> FailureMechanismCalculatorProtocol:
+        _mechanism_input = GenericFailureMechanismInput.from_mechanism_input(
+            mechanism_input
+        )
+        return GenericFailureMechanismCalculator(_mechanism_input)
 
-                    # inputs = addLoadCharVals(strength_new.input, load=None, p_h=TrajectInfo['Pmax'], p_dh=0.5, year=year)
-                    # inputs['h'] = load.NormWaterLevel
-                    # TODO aanpassen met nieuwe belastingmodel
-                    inputs = add_load_char_vals(
-                        strength_new.input_ind,
-                        t_0=self.t_0,
-                        load=load,
-                        p_h=TrajectInfo["Pmax"],
-                        p_dh=0.5,
-                        year=year,
-                    )
+    def _get_hydra_ring_calculator(
+        self, mechanism: str, mechanism_input: MechanismInput
+    ) -> FailureMechanismCalculatorProtocol:
+        if mechanism == "Overflow":
+            _mechanism_input = OverflowHydraRingInput.from_mechanism_input(
+                mechanism_input
+            )
+            return OverflowHydraRingCalculator(_mechanism_input, self.t_0)
 
-                    Z, self.p_dh, self.p_dh_c = fds_mechanisms.calculate_z_piping(
-                        inputs, mode="SemiProb"
-                    )
-                    self.gamma_pip = TrajectInfo["gammaPiping"]
-                    # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
-                    # Calculate needed safety factor
+        raise Exception("Unknown computation type HRING for {}".format(mechanism))
 
-                    if self.p_dh != 0:
-                        self.SF_p = (
-                            self.p_dh_c / (self.gamma_pip * self.gamma_schem_pip)
-                        ) / self.p_dh
-                    else:
-                        self.SF_p = np.inf
-                    self.assess_p = "voldoende" if self.SF_p > 1 else "onvoldoende"
-                    self.scenario_result["beta_cs_p"][j] = calc_beta_implicated(
-                        "Piping", self.SF_p * self.gamma_pip, traject_info=TrajectInfo
-                    )  #
-                    # Calculate the implicated beta_cs
+    def _get_simple_calculator(
+        self, mechanism, mechanism_input: MechanismInput, load: LoadInput
+    ) -> FailureMechanismCalculatorProtocol:
+        if mechanism == "StabilityInner":
+            _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
+                mechanism_input
+            )
+            return StabilityInnerSimpleCalculator(_mechanism_input)
 
-                    # Heave:
-                    Z, self.h_i, self.h_i_c = fds_mechanisms.calculate_z_heave(
-                        inputs, mode="SemiProb"
-                    )
-                    self.gamma_h = TrajectInfo[
-                        "gammaHeave"
-                    ]  # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
-                    # Calculate
-                    # needed safety factor
-                    # TODO: check formula Sander Kapinga
-                    self.SF_h = (
-                        self.h_i_c / (self.gamma_schem_heave * self.gamma_h)
-                    ) / self.h_i
-                    self.assess_h = (
-                        "voldoende"
-                        if (self.h_i_c / (self.gamma_schem_heave * self.gamma_h))
-                        / self.h_i
-                        > 1
-                        else "onvoldoende"
-                    )
-                    self.scenario_result["beta_cs_h"][j] = calc_beta_implicated(
-                        "Heave",
-                        (self.h_i_c / self.gamma_schem_heave) / self.h_i,
-                        traject_info=TrajectInfo,
-                    )  # Calculate the implicated beta_cs
+        if mechanism == "Overflow":  # specific for SAFE
+            _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
+            return OverflowSimpleCalculator(_mechanism_input, load)
 
-                    # Uplift
-                    Z, self.u_dh, self.u_dh_c = fds_mechanisms.calculate_z_uplift(
-                        inputs, mode="SemiProb"
-                    )
-                    self.gamma_u = TrajectInfo[
-                        "gammaUplift"
-                    ]  # ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
-                    # Calculate
-                    # needed safety factor
-                    # TODO: check formula Sander Kapinga
-                    self.SF_u = (
-                        self.u_dh_c / (self.gamma_schem_upl * self.gamma_u)
-                    ) / self.u_dh
+        raise Exception("Unknown computation type Simple for {}".format(mechanism))
 
-                    self.assess_u = (
-                        "voldoende"
-                        if (self.u_dh_c / (self.gamma_schem_upl * self.gamma_u))
-                        / self.u_dh
-                        > 1
-                        else "onvoldoende"
-                    )
-                    self.scenario_result["beta_cs_u"][j] = calc_beta_implicated(
-                        "Uplift",
-                        (self.u_dh_c / self.gamma_schem_upl) / self.u_dh,
-                        traject_info=TrajectInfo,
-                    )  # Calculate the implicated beta_cs
+    def _get_semi_probabilistic_calculator(
+        self,
+        mechanism: str,
+        mechanism_input: MechanismInput,
+        load: LoadInput,
+        traject_info: dict,
+    ) -> FailureMechanismCalculatorProtocol:
+        if mechanism == "Piping":
+            return PipingSemiProbabilisticCalculator(
+                mechanism_input, load, self.t_0, traject_info
+            )
 
-                    # Check if there is an elimination measure present (VZG or diaphragm wall)
-                    if "Elimination" in strength.input.keys():
-                        if strength.input["Elimination"] == "yes":
-                            # Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
-                            scenario_beta = np.max(
-                                [
-                                    self.scenario_result["beta_cs_h"][j],
-                                    self.scenario_result["beta_cs_u"][j],
-                                    self.scenario_result["beta_cs_p"][j],
-                                ]
-                            )
-                            self.scenario_result["Pf"][j] = np.max(
-                                [
-                                    np.min(
-                                        [
-                                            beta_to_pf(scenario_beta)
-                                            * strength.input["Pf_elim"]
-                                            + strength.input["Pf_with_elim"]
-                                            * (1 - strength.input["Pf_elim"]),
-                                            beta_to_pf(scenario_beta),
-                                        ]
-                                    ),
-                                    beta_to_pf(8.0),
-                                ]
-                            )
-                            self.scenario_result["Beta"][j] = np.min(
-                                [pf_to_beta(self.scenario_result["Pf"][j]), 8.0]
-                            )
-
-                        else:
-                            raise ValueError(
-                                "Warning: Elimination defined but not turned on"
-                            )
-                    else:
-                        self.scenario_result["Beta"][j] = np.min(
-                            [
-                                np.max(
-                                    [
-                                        self.scenario_result["beta_cs_h"][j],
-                                        self.scenario_result["beta_cs_u"][j],
-                                        self.scenario_result["beta_cs_p"][j],
-                                    ]
-                                ),
-                                8,
-                            ]
-                        )
-                        self.scenario_result["Pf"][j] = beta_to_pf(
-                            self.scenario_result["Beta"][j]
-                        )
-
-                # multiply every scenario by probability
-                self.Pf = np.max(
-                    [
-                        sum(
-                            self.scenario_result["Pf"][k]
-                            * self.scenario_result["P_scenario"][k]
-                            for k in self.scenario_result["Pf"]
-                        ),
-                        beta_to_pf(8.0),
-                    ]
-                )
-                self.Beta = np.min([pf_to_beta(self.Pf), 8])
-
-                self.WLchar = copy.deepcopy(
-                    inputs["h"]
-                )  # add water level as used in the assessment
-                self.alpha_sq = np.nan
-                self.result = np.nan
-                # if year == 50:
-                #      print(year, self.beta_cs_u ,self.beta_cs_h,self.beta_cs_p, self.WLchar)
-
-            else:
-                pass
-
-
-def beta_sf_stability_inner(sf_or_beta, type=False, modelfactor: float = 1.06):
-    """Careful: ensure that upon using this function you clearly define the input parameter!"""
-    if type == "SF":
-        beta = ((sf_or_beta.item() / modelfactor) - 0.41) / 0.15
-        beta = np.min([beta, 8.0])
-        return beta
-    elif type == "beta":
-        SF = (0.41 + 0.15 * sf_or_beta) * modelfactor
-        return SF
+        raise Exception("Unknown computation type SemiProb for {}".format(mechanism))

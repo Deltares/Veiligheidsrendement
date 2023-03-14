@@ -8,8 +8,14 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-from vrtool.flood_defence_system.mechanism_reliability import beta_sf_stability_inner
-from vrtool.flood_defence_system.mechanisms import overflow_hring, overflow_simple
+from vrtool.failure_mechanisms.overflow.overflow_functions import (
+    calculate_overflow_hydra_ring_design,
+    calculate_overflow_simple_design,
+)
+from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
+    calculate_safety_factor,
+    calculate_reliability,
+)
 
 
 def implement_berm_widening(
@@ -20,6 +26,17 @@ def implement_berm_widening(
     computation_type,
     SFincrease=0.2,
 ):
+    def calculate_stability_inner_reliability_with_safety_screen(
+        reliability: np.ndarray,
+    ):
+        # convert to SF and back:
+        return calculate_reliability(
+            np.add(
+                calculate_safety_factor(reliability),
+                SFincrease,
+            )
+        )
+
     # this function implements a berm widening based on the relevant inputs
     if mechanism == "Overflow":
         input["h_crest"] = input["h_crest"] + measure_input["dcrest"]
@@ -48,20 +65,15 @@ def implement_berm_widening(
                 measure_input["dberm"] * input["dbeta/dberm"]
             )
             if measure_parameters["StabilityScreen"] == "yes":
-                # convert to SF and back:
-                input["beta_2025"] = beta_sf_stability_inner(
-                    np.add(
-                        beta_sf_stability_inner(input["beta_2025"], type="beta"),
-                        SFincrease,
-                    ),
-                    type="SF",
+                input[
+                    "beta_2025"
+                ] = calculate_stability_inner_reliability_with_safety_screen(
+                    input["beta_2025"]
                 )
-                input["beta_2075"] = beta_sf_stability_inner(
-                    np.add(
-                        beta_sf_stability_inner(input["beta_2075"], type="beta"),
-                        SFincrease,
-                    ),
-                    type="SF",
+                input[
+                    "beta_2075"
+                ] = calculate_stability_inner_reliability_with_safety_screen(
+                    input["beta_2075"]
                 )
         elif "BETA" in input:
             # TODO make sure input is grabbed properly. Should be read from input sheet
@@ -69,14 +81,11 @@ def implement_berm_widening(
             input["BETA"] = input["BETA"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
                 # convert to SF and back:
-                input["SF"] = beta_sf_stability_inner(
-                    np.add(input["SF"], SFincrease), type="SF"
-                )
-                input["BETA"] = beta_sf_stability_inner(
-                    np.add(
-                        beta_sf_stability_inner(input["BETA"], type="beta"), SFincrease
-                    ),
-                    type="SF",
+                input["SF"] = calculate_reliability(np.add(input["SF"], SFincrease))
+                input[
+                    "BETA"
+                ] = calculate_stability_inner_reliability_with_safety_screen(
+                    input["BETA"]
                 )
         # For fragility curve as input
         elif computation_type == "FragilityCurve":
@@ -494,22 +503,20 @@ def probabilistic_design(
     if mechanism == "Overflow":
         if type == "SAFE":
             # determine the crest required for the target
-            h_crest, beta = overflow_simple(
-                strength_input["h_crest"],
+            h_crest, beta = calculate_overflow_simple_design(
                 strength_input["q_crest"],
                 strength_input["h_c"],
                 strength_input["q_c"],
                 strength_input["beta"],
-                mode="design",
-                Pt=p_t,
+                failure_probability=p_t,
                 design_variable=design_variable,
             )
             # add temporal changes due to settlement and climate change
             h_crest = h_crest + horizon * (strength_input["dhc(t)"] + load_change)
             return h_crest
         elif type == "HRING":
-            h_crest, beta = overflow_hring(
-                strength_input, horizon, t_0, mode="design", Pt=p_t
+            h_crest, beta = calculate_overflow_hydra_ring_design(
+                strength_input, horizon, t_0, p_t
             )
             return h_crest
         else:
