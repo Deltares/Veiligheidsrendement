@@ -26,7 +26,9 @@ def implement_berm_widening(
     computation_type,
     SFincrease=0.2,
 ):
-    def calculate_stability_inner_reliability_with_safety_screen(reliability):
+    def calculate_stability_inner_reliability_with_safety_screen(
+        reliability: np.ndarray,
+    ):
         # convert to SF and back:
         return calculate_reliability(
             np.add(
