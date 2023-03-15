@@ -7,3 +7,4 @@ dependencies:
   - pip
   - poetry
   - conda-forge::openturns=1.19
+  - conda-forge::commitizen=2.28.1
