@@ -48,7 +48,7 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
         cd C:\repos\vrtool_repo
         conda env create -f .config\environment.yml
         conda activate vrtool_env
-        poetry install --with dev,test
+        poetry install
         ```
     2. With `pypi`:
         ```bash
