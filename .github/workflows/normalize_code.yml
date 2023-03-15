@@ -48,7 +48,7 @@ jobs:
           poetry config virtualenvs.path ~/.virtualenvs
 
       - name: Install Dependencies
-        run: poetry install
+        run: poetry install --with dev
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Autoformat code if the check fails
