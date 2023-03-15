@@ -39,6 +39,7 @@ black = "^22.8.0"
 isort = "^5.10.1"
 coverage = "^6.4.4"
 teamcity-messages = "^1.32"
+commitizen = "^2.42.1"
 
 [tool.black]
 line-length = 88
