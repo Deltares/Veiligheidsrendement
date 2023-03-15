@@ -34,6 +34,10 @@ def calculate_overflow_hydra_ring_design(
     new_crest = interpolate.interp1d(h_beta, h_grid, fill_value="extrapolate")(
         pf_to_beta(failure_probability)
     ).item()
+    
+    # add expected crest decline
+    new_crest += year * input['d_crest']
+
     return new_crest, pf_to_beta(failure_probability)
 
 
