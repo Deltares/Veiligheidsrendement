@@ -796,7 +796,7 @@ class StrategyBase:
                         base / (3 * interval),
                     ]
                 )
-            ycoords = np.tile(ycoord, np.int(np.ceil(len(Costs) / len(ycoord))))
+            ycoords = np.tile(ycoord, np.int32(np.ceil(len(Costs) / len(ycoord))))
 
             for i in range(len(Costs)):
                 line = self.TakenMeasures.iloc[i]
@@ -1249,7 +1249,7 @@ class StrategyBase:
             lines[col] = ax.fill_between(
                 xticks1,
                 0,
-                np.array(ydata, dtype=np.float),
+                np.array(ydata, dtype=np.float32),
                 color=color[col],
                 linestyle="-",
                 alpha=1,
