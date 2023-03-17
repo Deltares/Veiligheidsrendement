@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from scipy.interpolate import interp1d
 
 from vrtool.decision_making.solutions import Solutions
@@ -556,26 +557,25 @@ class StrategyBase:
         # sections = np.unique(AllMeasures['Section'][1:])
         sections = list(self.options.keys())
         Solution = pd.DataFrame(columns=AllMeasures.columns)
+        Solution = Solution.drop(columns=["option_index", "BC"])
+
         for section in sections:
-            lines = AllMeasures.loc[AllMeasures["Section"] == section]
+            lines = AllMeasures.loc[AllMeasures["Section"] == section].drop(columns=["option_index", "BC"])
             if len(lines) > 1:
                 lcctot = np.sum(lines["LCC"])
                 lines.loc[lines.index.values[-1], "LCC"] = lcctot
-                lines.loc[lines.index.values[-1], "BC"] = np.nan
                 Solution = pd.concat([Solution, lines[-1:]])
             elif len(lines) == 0:
                 lines = pd.DataFrame(
                     np.array(
                         [
-                            np.nan,
+                            0,
                             section,
                             0,
-                            "No Measure",
-                            -999.0,
-                            -999.0,
-                            -999.0,
-                            -999.0,
-                            0.0,
+                            "No measure",
+                            "no",
+                            0.,
+                            0.,
                         ]
                     ).reshape(1, len(Solution.columns)),
                     columns=Solution.columns,
@@ -583,14 +583,12 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
             else:
                 Solution = pd.concat([Solution, lines])
-                Solution.iloc[-1:]["BC"] = np.nan
-        Solution = Solution.drop(columns=["option_index", "BC"])
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
         Solution = Solution[colorder]
-        names = []
-        for i in Solution["name"]:
-            names.append(i[0])
-        Solution["name"] = names
+        for count, row in Solution.iterrows():
+            if isinstance(row['name'],np.ndarray): #clean output
+                Solution.loc[count, 'name'] = row['name'][0]
+
         if type == "Final":
             self.FinalSolution = Solution
             self.FinalSolution.to_csv(csv_path)
@@ -796,7 +794,7 @@ class StrategyBase:
                         base / (3 * interval),
                     ]
                 )
-            ycoords = np.tile(ycoord, np.int(np.ceil(len(Costs) / len(ycoord))))
+            ycoords = np.tile(ycoord, np.int32(np.ceil(len(Costs) / len(ycoord))))
 
             for i in range(len(Costs)):
                 line = self.TakenMeasures.iloc[i]
@@ -1249,7 +1247,7 @@ class StrategyBase:
             lines[col] = ax.fill_between(
                 xticks1,
                 0,
-                np.array(ydata, dtype=np.float),
+                np.array(ydata, dtype=np.float32),
                 color=color[col],
                 linestyle="-",
                 alpha=1,
