@@ -21,7 +21,7 @@ After the environment is created we need to activate it: `conda activate vrtool_
 We proceed now by installing the `vrtool` package, for this example we will install the version related to commit `#b8f4d87`:
 
 ```
-pip install git+https://github.com/Deltares/Veiligheidsrendement.git@b8f4d87
+pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v.0.0.2
 ```
 ## Model preparation
 For the next sections we will assume that the dataset for a dike traject is present in our working directory, in particular we will be using the `integrated_SAFE_16-3_small` model present as test data in the [vrtool test bench](https://github.com/Deltares/Veiligheidsrendement/tree/main/tests/test_data/integrated_SAFE_16-3_small)
@@ -67,7 +67,7 @@ Commands:
   run_full      Full run of the model in the given directory.
 ```
 
-It works, which means we can do a full run of a model we have in our repository such as `vrtool\integrated_SAFE_16-3_small`, which correspondes to the traject `16-3`.
+It works, which means we can do a full run of a model we have in our repository such as `vrtool\integrated_SAFE_16-3_small`, which corresponds to a dataset related to traject `16-3`.
 
 ```console
 (vrtool_env) D:\repos\vrtool-example>python -m vrtool run_full integrated_SAFE_16-3_small
