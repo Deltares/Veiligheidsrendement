@@ -14,12 +14,14 @@ repository = "https://github.com/Deltares/veiligheidsrendement"
 packages = [{include="vrtool"},]
 keywords = ["civil-engineering", "dikes", "flood-defence", "deltares"]
 classifiers = [
-  'Intended Audience :: Science/Research',
-  'Natural Language :: English',
   'Programming Language :: Python :: 3',
+  'Natural Language :: English',
+  'Intended Audience :: Science/Research',
   'Topic :: Software Development :: Libraries :: Python Modules',
   'Topic :: Scientific/Engineering',
-  'Topic :: Scientific/Engineering :: GIS'
+  'Topic :: Scientific/Engineering :: GIS',
+  'Topic :: Scientific/Engineering :: Mathematics',
+  'Topic :: Scientific/Engineering :: Hydrology',
 ]
 
 [tool.poetry.dependencies]
