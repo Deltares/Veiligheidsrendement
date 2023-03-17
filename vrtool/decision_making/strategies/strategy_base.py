@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from scipy.interpolate import interp1d
 
 from vrtool.decision_making.solutions import Solutions
@@ -584,6 +585,9 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
         Solution = Solution[colorder]
+        for count, row in Solution.iterrows():
+            if isinstance(row['name'],np.ndarray): #clean output
+                Solution.loc[count, 'name'] = row['name'][0]
 
         if type == "Final":
             self.FinalSolution = Solution
