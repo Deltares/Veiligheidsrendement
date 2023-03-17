@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
 from scipy.interpolate import interp1d
 
 from vrtool.decision_making.solutions import Solutions
@@ -560,7 +559,9 @@ class StrategyBase:
         Solution = Solution.drop(columns=["option_index", "BC"])
 
         for section in sections:
-            lines = AllMeasures.loc[AllMeasures["Section"] == section].drop(columns=["option_index", "BC"])
+            lines = AllMeasures.loc[AllMeasures["Section"] == section].drop(
+                columns=["option_index", "BC"]
+            )
             if len(lines) > 1:
                 lcctot = np.sum(lines["LCC"])
                 lines.loc[lines.index.values[-1], "LCC"] = lcctot
@@ -574,8 +575,8 @@ class StrategyBase:
                             0,
                             "No measure",
                             "no",
-                            0.,
-                            0.,
+                            0.0,
+                            0.0,
                         ]
                     ).reshape(1, len(Solution.columns)),
                     columns=Solution.columns,
@@ -586,8 +587,8 @@ class StrategyBase:
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
         Solution = Solution[colorder]
         for count, row in Solution.iterrows():
-            if isinstance(row['name'],np.ndarray): #clean output
-                Solution.loc[count, 'name'] = row['name'][0]
+            if isinstance(row["name"], np.ndarray):  # clean output
+                Solution.loc[count, "name"] = row["name"][0]
 
         if type == "Final":
             self.FinalSolution = Solution
