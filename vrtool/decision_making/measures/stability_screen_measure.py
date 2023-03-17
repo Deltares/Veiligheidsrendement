@@ -129,20 +129,14 @@ class StabilityScreenMeasure(MeasureBase):
                         else:
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
-                            ].Input.input["SF"] = np.add(
-                                self.measures["Reliability"]
-                                .Mechanisms[i]
-                                .Reliability[ij]
-                                .Input.input["SF"],
-                                SFincrease,
-                            )
-                            self.measures["Reliability"].Mechanisms[i].Reliability[
-                                ij
                             ].Input.input["BETA"] = calculate_reliability(
-                                self.measures["Reliability"]
-                                .Mechanisms[i]
-                                .Reliability[ij]
-                                .Input.input["SF"]
+                                np.add(
+                                        self.measures["Reliability"]
+                                        .Mechanisms[i]
+                                        .Reliability[ij]
+                                        .Input.input["SF"],
+                                        SFincrease,
+                                    )
                             )
 
             self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
