@@ -584,10 +584,7 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
         Solution = Solution[colorder]
-        names = []
-        for i in Solution["name"]:
-            names.append(i[0])
-        Solution["name"] = names
+
         if type == "Final":
             self.FinalSolution = Solution
             self.FinalSolution.to_csv(csv_path)
