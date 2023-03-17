@@ -556,12 +556,13 @@ class StrategyBase:
         # sections = np.unique(AllMeasures['Section'][1:])
         sections = list(self.options.keys())
         Solution = pd.DataFrame(columns=AllMeasures.columns)
+        Solution = Solution.drop(columns=["option_index", "BC"])
+
         for section in sections:
-            lines = AllMeasures.loc[AllMeasures["Section"] == section]
+            lines = AllMeasures.loc[AllMeasures["Section"] == section].drop(columns=["option_index", "BC"])
             if len(lines) > 1:
                 lcctot = np.sum(lines["LCC"])
                 lines.loc[lines.index.values[-1], "LCC"] = lcctot
-                lines.loc[lines.index.values[-1], "BC"] = np.nan
                 Solution = pd.concat([Solution, lines[-1:]])
             elif len(lines) == 0:
                 lines = pd.DataFrame(
@@ -583,8 +584,6 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
             else:
                 Solution = pd.concat([Solution, lines])
-                Solution.iloc[-1:]["BC"] = np.nan
-        Solution = Solution.drop(columns=["option_index", "BC"])
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
         Solution = Solution[colorder]
         names = []
