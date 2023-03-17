@@ -33,9 +33,9 @@ class StrategyBase:
     MixedInteger: a Mixed Integer optimization. Note that this has exponential runtime for large systems so it should not be used for more than approximately 13 sections.
     Note that this is the main class. Each type has a different subclass"""
 
-    def __init__(self, type, config: VrtoolConfig, r=0.03):
+    def __init__(self, type, config: VrtoolConfig):
         self.type = type
-        self.r = r
+        self.discount_rate = config.discount_rate
 
         self.config = config
         self.OI_year = config.OI_year
@@ -255,7 +255,7 @@ class StrategyBase:
             if filtering == "on":
                 StrategyData = copy.deepcopy(StrategyData)
                 StrategyData = StrategyData.reset_index(drop=True)
-                LCC = calc_tc(StrategyData)
+                LCC = calc_tc(StrategyData,self.discount_rate)
                 ind = np.argsort(LCC)
                 LCC_sort = LCC[ind]
                 StrategyData = StrategyData.iloc[ind]
@@ -358,8 +358,8 @@ class StrategyBase:
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
         for n in range(0, len(keys)):
             self.LCCOption[n, 0, 0] = 0.0
-            LCC_sh = calc_tc(self.options_height[keys[n]])
-            LCC_sg = calc_tc(self.options_geotechnical[keys[n]])
+            LCC_sh = calc_tc(self.options_height[keys[n]],self.discount_rate)
+            LCC_sg = calc_tc(self.options_geotechnical[keys[n]],self.discount_rate)
             # LCC_tot = calcTC(self.options[keys[n]])
             for sh in range(0, len(self.options_height[keys[n]])):
                 # if it is a full type, it should only be combined with another full of the same type
@@ -521,7 +521,7 @@ class StrategyBase:
         # add discounted damage [T,]
         self.D = np.array(
             traject.general_info["FloodDamage"]
-            * (1 / ((1 + self.r) ** np.arange(0, T, 1)))
+            * (1 / ((1 + self.discount_rate) ** np.arange(0, T, 1)))
         )
 
         # expected damage for overflow and for piping & slope stability
@@ -556,25 +556,26 @@ class StrategyBase:
         # sections = np.unique(AllMeasures['Section'][1:])
         sections = list(self.options.keys())
         Solution = pd.DataFrame(columns=AllMeasures.columns)
+        Solution = Solution.drop(columns=["option_index", "BC"])
+
         for section in sections:
-            lines = AllMeasures.loc[AllMeasures["Section"] == section]
+            lines = AllMeasures.loc[AllMeasures["Section"] == section].drop(
+                columns=["option_index", "BC"]
+            )
             if len(lines) > 1:
                 lcctot = np.sum(lines["LCC"])
                 lines.loc[lines.index.values[-1], "LCC"] = lcctot
-                lines.loc[lines.index.values[-1], "BC"] = np.nan
                 Solution = pd.concat([Solution, lines[-1:]])
             elif len(lines) == 0:
                 lines = pd.DataFrame(
                     np.array(
                         [
-                            np.nan,
+                            0,
                             section,
                             0,
-                            "No Measure",
-                            -999.0,
-                            -999.0,
-                            -999.0,
-                            -999.0,
+                            "No measure",
+                            "no",
+                            0.0,
                             0.0,
                         ]
                     ).reshape(1, len(Solution.columns)),
@@ -583,14 +584,12 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
             else:
                 Solution = pd.concat([Solution, lines])
-                Solution.iloc[-1:]["BC"] = np.nan
-        Solution = Solution.drop(columns=["option_index", "BC"])
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
         Solution = Solution[colorder]
-        names = []
-        for i in Solution["name"]:
-            names.append(i[0])
-        Solution["name"] = names
+        for count, row in Solution.iterrows():
+            if isinstance(row["name"], np.ndarray):  # clean output
+                Solution.loc[count, "name"] = row["name"][0]
+
         if type == "Final":
             self.FinalSolution = Solution
             self.FinalSolution.to_csv(csv_path)
@@ -796,7 +795,7 @@ class StrategyBase:
                         base / (3 * interval),
                     ]
                 )
-            ycoords = np.tile(ycoord, np.int(np.ceil(len(Costs) / len(ycoord))))
+            ycoords = np.tile(ycoord, np.int32(np.ceil(len(Costs) / len(ycoord))))
 
             for i in range(len(Costs)):
                 line = self.TakenMeasures.iloc[i]
@@ -1249,7 +1248,7 @@ class StrategyBase:
             lines[col] = ax.fill_between(
                 xticks1,
                 0,
-                np.array(ydata, dtype=np.float),
+                np.array(ydata, dtype=np.float32),
                 color=color[col],
                 linestyle="-",
                 alpha=1,

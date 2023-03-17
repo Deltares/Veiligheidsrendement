@@ -4,7 +4,7 @@
 25,6,DV49,3415750.2693277663,Zelfkerende constructie,yes,-999.0,-999
 15,5+2,DV50,447883.81284075486,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.0,8
 22,6,DV51,9364174.650495235,Zelfkerende constructie,yes,-999.0,-999
-0,-999.0,nan,0,-,-999.0,-999.0,0.0
+0,0,0,DV53,No measure,no,0.0,0.0
 24,7,DV54,2180187.01196448,Stabiliteitsscherm,yes,-999.0,-999
 21,7,DV55,742318.24419136,Stabiliteitsscherm,yes,-999.0,-999
 26,5+2,DV56,1736161.6897733621,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,12

@@ -147,7 +147,7 @@ class TargetReliabilityStrategy(StrategyBase):
             # calculate LCC
             LCC = calc_tc(
                 PossibleMeasures,
-                r=self.r,
+                self.discount_rate,
                 horizon=self.options[i.name]["Overflow"].columns[-1],
             )
 
@@ -162,7 +162,7 @@ class TargetReliabilityStrategy(StrategyBase):
                 measure,
                 TrajectProbability,
                 original_section=TrajectProbability.loc[i.name],
-                r=self.r,
+                discount_rate = self.discount_rate,
                 horizon=cols[-1],
                 damage=traject.general_info["FloodDamage"],
             )

@@ -54,6 +54,7 @@ class TestVrtoolConfig:
             "BC_stop",
             "max_greedy_iterations",
             "f_cautious",
+            "discount_rate",
             "shelves",
             "reuse_output",
             "beta_or_prob",
@@ -102,6 +103,7 @@ class TestVrtoolConfig:
         assert _config.BC_stop == pytest.approx(0.1)
         assert _config.max_greedy_iterations == 150
         assert _config.f_cautious == pytest.approx(1.5)
+        assert _config.discount_rate == pytest.approx(0.03)
         assert not _config.shelves
         assert not _config.reuse_output
         assert _config.beta_or_prob == "beta"
