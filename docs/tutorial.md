@@ -18,7 +18,7 @@ Which we can create in our working directory as follows: `conda env create -f en
 After the environment is created we need to activate it: `conda activate vrtool_env`.
 
 ## Installing the package
-We proceed now by installing the `vrtool` package, for this example we will install the version related to commit `#b8f4d87`:
+We proceed now by installing the `vrtool` package, for this example we will install the version corresponding to the latest tag `v0.0.2`:
 
 ```
 pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v.0.0.2
