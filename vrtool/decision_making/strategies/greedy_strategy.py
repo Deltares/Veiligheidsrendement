@@ -461,7 +461,6 @@ class GreedyStrategy(StrategyBase):
                 costs["TR"].append(
                     calc_life_cycle_risks(
                         i,
-                        self.r,
                         np.max(self.T),
                         traject.general_info["FloodDamage"],
                         dumpPt=output_path.joinpath(
@@ -473,7 +472,6 @@ class GreedyStrategy(StrategyBase):
                 costs["TR"].append(
                     calc_life_cycle_risks(
                         i,
-                        self.r,
                         np.max(self.T),
                         traject.general_info["FloodDamage"],
                     )

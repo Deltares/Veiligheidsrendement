@@ -110,10 +110,10 @@ def make_traject_df(traject: DikeTraject, cols):
 
 
 # hereafter a bunch of functions to compute costs, risks and probabilities over time are defined:
-def calc_tc(section_options, r=0.03, horizon=100):
+def calc_tc(section_options, horizon=100):
     costs = section_options["cost"].values
     years = section_options["year"].values
-    discountfactors = list(map(lambda x: 1 / (1 + r) ** np.array(x), years))
+    discountfactors = list(map(lambda x: 1 / (1 + VrtoolConfig.discount_rate) ** np.array(x), years))
     TC = list(map(lambda c, r: c * r, costs, discountfactors))
     return np.array(list(map(lambda c: np.sum(c), TC)))
 
@@ -123,7 +123,6 @@ def calc_tr(
     section_options,
     base_traject,
     original_section,
-    r=0.03,
     horizon=100,
     damage=1e9,
 ):
@@ -162,7 +161,6 @@ def calc_tr(
     if "section_options_array" in locals():
         base_risk = calc_life_cycle_risks(
             base_array,
-            r,
             horizon,
             damage,
             datatype="Array",
@@ -173,7 +171,6 @@ def calc_tr(
         for i in range(range_idx):
             TR = calc_life_cycle_risks(
                 base_array,
-                r,
                 horizon,
                 damage,
                 change=section_options_array,
@@ -186,11 +183,11 @@ def calc_tr(
             TotalRisk.append(TR)
             dR.append(base_risk - TR)
     else:
-        base_risk = calc_life_cycle_risks(base_traject, r, horizon, damage)
+        base_risk = calc_life_cycle_risks(base_traject, horizon, damage)
         if isinstance(section_options, pd.DataFrame):
             for i, row in section_options.iterrows():
                 TR = calc_life_cycle_risks(
-                    base_traject, r, horizon, damage, change=row, section=section
+                    base_traject, horizon, damage, change=row, section=section
                 )
                 TotalRisk.append(TR)
                 dR.append(base_risk - TR)
@@ -198,7 +195,6 @@ def calc_tr(
         elif isinstance(section_options, pd.Series):
             TR = calc_life_cycle_risks(
                 base_traject,
-                r,
                 horizon,
                 damage,
                 change=section_options,
@@ -212,7 +208,6 @@ def calc_tr(
 
 def calc_life_cycle_risks(
     base0,
-    r,
     horizon,
     damage,
     change=None,
@@ -250,7 +245,7 @@ def calc_life_cycle_risks(
 
     # trange = np.arange(0, horizon + 1, 1)
     trange = np.arange(0, horizon, 1)
-    D_t = damage / (1 + r) ** trange
+    D_t = damage / (1 + VrtoolConfig.discount_rate) ** trange
     risk_t = p_t * D_t
     if dumpPt:
         np.savetxt(dumpPt, p_t, delimiter=",")

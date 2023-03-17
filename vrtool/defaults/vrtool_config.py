@@ -76,6 +76,8 @@ class VrtoolConfig:
     max_greedy_iterations: int = 150
     # cautiousness factor for the greedy search algorithm. Larger values result in larger steps but lower accuracy and larger probability of finding a local optimum
     f_cautious: float = 1.5
+    # discount rate
+    discount_rate: float = 0.03
 
     ## OUTPUT SETTINGS:
     # General settings:

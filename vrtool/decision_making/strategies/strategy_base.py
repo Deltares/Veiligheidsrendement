@@ -33,9 +33,9 @@ class StrategyBase:
     MixedInteger: a Mixed Integer optimization. Note that this has exponential runtime for large systems so it should not be used for more than approximately 13 sections.
     Note that this is the main class. Each type has a different subclass"""
 
-    def __init__(self, type, config: VrtoolConfig, r=0.03):
+    def __init__(self, type, config: VrtoolConfig):
         self.type = type
-        self.r = r
+        self.r = config.discount_rate
 
         self.config = config
         self.OI_year = config.OI_year
@@ -521,7 +521,7 @@ class StrategyBase:
         # add discounted damage [T,]
         self.D = np.array(
             traject.general_info["FloodDamage"]
-            * (1 / ((1 + self.r) ** np.arange(0, T, 1)))
+            * (1 / ((1 + VrtoolConfig.discount_rate) ** np.arange(0, T, 1)))
         )
 
         # expected damage for overflow and for piping & slope stability
