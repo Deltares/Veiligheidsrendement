@@ -24,7 +24,7 @@ We proceed now by installing the `vrtool` package, for this example we will inst
 pip install git+https://github.com/Deltares/Veiligheidsrendement.git@b8f4d87
 ```
 ## Model preparation
-For the next sections we will assume that a model example is present in our working directory, in particular we will be using the `integrated_SAFE_16-3_small` model present as test data in the [vrtool test bench](https://github.com/Deltares/Veiligheidsrendement/tree/main/tests/test_data/integrated_SAFE_16-3_small)
+For the next sections we will assume that the dataset for a dike traject is present in our working directory, in particular we will be using the `integrated_SAFE_16-3_small` model present as test data in the [vrtool test bench](https://github.com/Deltares/Veiligheidsrendement/tree/main/tests/test_data/integrated_SAFE_16-3_small)
 
 Since `vrtool` version `0.0.2` it is required to have a `.json` configuration file defining concrete properties, in particular we **need** to define which traject will be selected. For example, our model example contains its configuration in `custom_config.json`:
 ```json
