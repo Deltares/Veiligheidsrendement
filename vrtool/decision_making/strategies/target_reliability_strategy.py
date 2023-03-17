@@ -162,7 +162,7 @@ class TargetReliabilityStrategy(StrategyBase):
                 measure,
                 TrajectProbability,
                 original_section=TrajectProbability.loc[i.name],
-                discount_rate = self.discount_rate,
+                discount_rate=self.discount_rate,
                 horizon=cols[-1],
                 damage=traject.general_info["FloodDamage"],
             )

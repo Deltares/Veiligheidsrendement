@@ -190,7 +190,12 @@ def calc_tr(
         if isinstance(section_options, pd.DataFrame):
             for i, row in section_options.iterrows():
                 TR = calc_life_cycle_risks(
-                    base_traject, discount_rate, horizon, damage, change=row, section=section
+                    base_traject,
+                    discount_rate,
+                    horizon,
+                    damage,
+                    change=row,
+                    section=section,
                 )
                 TotalRisk.append(TR)
                 dR.append(base_risk - TR)

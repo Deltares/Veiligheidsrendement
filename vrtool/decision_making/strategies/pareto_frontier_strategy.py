@@ -98,7 +98,9 @@ class ParetoFrontierStrategy(StrategyBase):
             for i in self.options_g_filtered.keys():
 
                 # indexes part 1: only the pareto front for stability and piping
-                _calculated_lcc = calc_tc(self.options_g_filtered[i],self.discount_rate)
+                _calculated_lcc = calc_tc(
+                    self.options_g_filtered[i], self.discount_rate
+                )
 
                 tgrid = self.options_g_filtered[i]["StabilityInner"].columns.values
                 pf_SI = beta_to_pf(self.options_g_filtered[i]["StabilityInner"])
