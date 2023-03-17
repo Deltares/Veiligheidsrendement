@@ -568,15 +568,13 @@ class StrategyBase:
                 lines = pd.DataFrame(
                     np.array(
                         [
-                            np.nan,
+                            0,
                             section,
                             0,
-                            "No Measure",
-                            -999.0,
-                            -999.0,
-                            -999.0,
-                            -999.0,
-                            0.0,
+                            "No measure",
+                            "no",
+                            0.,
+                            0.,
                         ]
                     ).reshape(1, len(Solution.columns)),
                     columns=Solution.columns,
