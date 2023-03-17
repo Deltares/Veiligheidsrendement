@@ -21,6 +21,7 @@ classifiers = [
   'Topic :: Scientific/Engineering',
   'Topic :: Scientific/Engineering :: GIS',
   'Topic :: Scientific/Engineering :: Mathematics',
+  'Topic :: Scientific/Engineering :: Physics',
   'Topic :: Scientific/Engineering :: Hydrology',
 ]
 
