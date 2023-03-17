@@ -35,7 +35,7 @@ class StrategyBase:
 
     def __init__(self, type, config: VrtoolConfig):
         self.type = type
-        self.r = config.discount_rate
+        self.discount_rate = config.discount_rate
 
         self.config = config
         self.OI_year = config.OI_year
@@ -255,7 +255,7 @@ class StrategyBase:
             if filtering == "on":
                 StrategyData = copy.deepcopy(StrategyData)
                 StrategyData = StrategyData.reset_index(drop=True)
-                LCC = calc_tc(StrategyData)
+                LCC = calc_tc(StrategyData,self.discount_rate)
                 ind = np.argsort(LCC)
                 LCC_sort = LCC[ind]
                 StrategyData = StrategyData.iloc[ind]
@@ -358,8 +358,8 @@ class StrategyBase:
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
         for n in range(0, len(keys)):
             self.LCCOption[n, 0, 0] = 0.0
-            LCC_sh = calc_tc(self.options_height[keys[n]])
-            LCC_sg = calc_tc(self.options_geotechnical[keys[n]])
+            LCC_sh = calc_tc(self.options_height[keys[n]],self.discount_rate)
+            LCC_sg = calc_tc(self.options_geotechnical[keys[n]],self.discount_rate)
             # LCC_tot = calcTC(self.options[keys[n]])
             for sh in range(0, len(self.options_height[keys[n]])):
                 # if it is a full type, it should only be combined with another full of the same type
@@ -521,7 +521,7 @@ class StrategyBase:
         # add discounted damage [T,]
         self.D = np.array(
             traject.general_info["FloodDamage"]
-            * (1 / ((1 + VrtoolConfig.discount_rate) ** np.arange(0, T, 1)))
+            * (1 / ((1 + self.discount_rate) ** np.arange(0, T, 1)))
         )
 
         # expected damage for overflow and for piping & slope stability
