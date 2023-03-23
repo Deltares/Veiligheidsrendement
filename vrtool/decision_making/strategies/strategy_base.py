@@ -1236,7 +1236,7 @@ class StrategyBase:
             Solution = copy.deepcopy(self.FinalSolution)
         # Solution['dcrest'].iloc[0]=0.5; print('careful: test line included')
         for i in types:
-            data = Solution[i].values
+            data = Solution[i].values.astype(np.float32)
             data[np.where(data.astype(np.float32) < -900)] = 0.01
             if i == "dcrest":
                 if np.nanmax(data) > 0.2:
