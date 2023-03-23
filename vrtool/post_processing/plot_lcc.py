@@ -35,8 +35,8 @@ def plot_lcc(
 
     # now for 2 strategies: plots an LCC bar chart
     cumlength, xticks1, middles = get_section_length_in_traject(
-        traject.Probabilities["Length"]
-        .loc[traject.Probabilities.index.get_level_values(1) == "Overflow"]
+        traject.probabilities["Length"]
+        .loc[traject.probabilities.index.get_level_values(1) == "Overflow"]
         .values
     )
     if not color:
@@ -58,8 +58,8 @@ def plot_lcc(
     for i in cumlength:
         ax.axvline(x=i, color="gray", linestyle="-", linewidth=0.5, alpha=0.5)
     widths = (
-        traject.Probabilities["Length"]
-        .loc[traject.Probabilities.index.get_level_values(1) == "Overflow"]
+        traject.probabilities["Length"]
+        .loc[traject.probabilities.index.get_level_values(1) == "Overflow"]
         .values
         / 2
     )
@@ -88,7 +88,7 @@ def plot_lcc(
     # make x-axis nice
     ax.set_xlim(left=0, right=np.max(cumlength))
     labels_xticks = []
-    for i in traject.Sections:
+    for i in traject.sections:
         labels_xticks.append("S" + i.name[-2:])
     ax.set_xticks(middles)
     ax.set_xticklabels(labels_xticks)
