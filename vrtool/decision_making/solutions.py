@@ -280,7 +280,7 @@ class Solutions:
 
                             envelope_beta.append(betamax)
 
-                if self.measures[np.int(i) - 1].parameters["Name"][-4:] != "2045":
+                if self.measures[np.int_(i) - 1].parameters["Name"][-4:] != "2045":
                     plt.plot(
                         envelope_costs,
                         envelope_beta,
@@ -292,7 +292,7 @@ class Solutions:
                     plt.plot(
                         y["cost"],
                         y[(mechanism, beta_ind)],
-                        label=self.measures[np.int(i) - 1].parameters["Name"],
+                        label=self.measures[np.int_(i) - 1].parameters["Name"],
                         marker="o",
                         markersize=6,
                         color=colors[color],
@@ -303,21 +303,12 @@ class Solutions:
                     )
 
                     color += 1
-            elif isinstance(self.measures[np.int(i) - 1].measures, dict):
+            elif isinstance(self.measures[np.int_(i) - 1].measures, dict):
                 data = copy.deepcopy(self.MeasureData.loc[self.MeasureData["ID"] == i])
-                #
-                # inputs = []; type = self.Measures[np.int(i)].parameters['Type']
-                # if type == 'Vertical Geotextile': designvars = self.Measures[np.int(i)].measures['VZG']
-                # if type == 'Diaphragm Wall': designvars = self.Measures[np.int(i)].measures['DiaphragmWall']
-                # betas = list(self.Measures[np.int(i)].measures['Reliability'].SectionReliability.loc[mechanism])
-                # cost = self.Measures[np.int(i)].measures['Cost']
-                # inputs.append(type); inputs.append(designvars); inputs.append(cost);
-                # for ij in range(0, len(betas)): inputs.append(betas[ij])
-                # data = data.append(pd.DataFrame([inputs], columns=cols))
                 plt.plot(
                     data["cost"],
                     data[(mechanism, beta_ind)],
-                    label=self.measures[np.int(i) - 1].parameters["Name"],
+                    label=self.measures[np.int_(i) - 1].parameters["Name"],
                     marker="d",
                     markersize=10,
                     markerfacecolor=colors[color],
