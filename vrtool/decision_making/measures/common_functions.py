@@ -84,10 +84,6 @@ def implement_berm_widening(
                 ] = calculate_stability_inner_reliability_with_safety_screen(
                     input["BETA"]
                 )
-        # For fragility curve as input
-        elif computation_type == "FragilityCurve":
-            raise Exception("Not implemented")
-            # TODO Here we can develop code to add berms to sections with a fragility curve.
         else:
             raise Exception("Unknown input data for stability when widening the berm")
 
