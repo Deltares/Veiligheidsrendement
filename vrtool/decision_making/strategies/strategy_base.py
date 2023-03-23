@@ -570,8 +570,8 @@ class StrategyBase:
                 lines = pd.DataFrame(
                     np.array(
                         [
-                            0,
                             section,
+                            0,
                             0,
                             "No measure",
                             "no",
