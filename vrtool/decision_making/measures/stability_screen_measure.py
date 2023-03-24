@@ -130,11 +130,13 @@ class StabilityScreenMeasure(MeasureBase):
                             self.measures["Reliability"].Mechanisms[i].Reliability[
                                 ij
                             ].Input.input["BETA"] = calculate_reliability(
-                                np.add(calculate_safety_factor(
-                                    self.measures["Reliability"]
-                                    .Mechanisms[i]
-                                    .Reliability[ij]
-                                    .Input.input["BETA"]),
+                                np.add(
+                                    calculate_safety_factor(
+                                        self.measures["Reliability"]
+                                        .Mechanisms[i]
+                                        .Reliability[ij]
+                                        .Input.input["BETA"]
+                                    ),
                                     SFincrease,
                                 )
                             )
