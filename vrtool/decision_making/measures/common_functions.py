@@ -76,21 +76,14 @@ def implement_berm_widening(
                     input["beta_2075"]
                 )
         elif "BETA" in input:
-            # TODO make sure input is grabbed properly. Should be read from input sheet
-            input["SF"] = input["SF"] + (0.02 * measure_input["dberm"])
+            # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
             input["BETA"] = input["BETA"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
-                # convert to SF and back:
-                input["SF"] = calculate_reliability(np.add(input["SF"], SFincrease))
                 input[
                     "BETA"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
                     input["BETA"]
                 )
-        # For fragility curve as input
-        elif computation_type == "FragilityCurve":
-            raise Exception("Not implemented")
-            # TODO Here we can develop code to add berms to sections with a fragility curve.
         else:
             raise Exception("Unknown input data for stability when widening the berm")
 
