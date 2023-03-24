@@ -285,11 +285,10 @@ class MixedIntegerStrategy(StrategyBase):
 
         measure = {}
         for i in range(0, len(sections)):
-            measure[np.int(str(sections[i])[1:4])] = [
-                np.int(str(sections[i])[4:7]),
-                np.int(str(sections[i])[7:]),
+            measure[np.int_(str(sections[i])[1:4])] = [
+                np.int_(str(sections[i])[4:7]),
+                np.int_(str(sections[i])[7:]),
             ]
-            # measure.append((np.int(str(sections[i][0])[1:4]), np.int(str(sections[i][0])[4:7])))
 
         LCCTotal = 0
         sectionnames = list(self.options.keys())
