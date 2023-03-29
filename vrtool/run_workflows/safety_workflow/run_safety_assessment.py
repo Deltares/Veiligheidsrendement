@@ -58,6 +58,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
             if self.vr_config.plot_reliability_in_time:
                 self._plot_reliability_in_time(_section)
 
+
         # aggregate computed initial probabilities to DataFrame in selected_traject:
         self.selected_traject.set_probabilities()
 

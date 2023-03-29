@@ -17,6 +17,8 @@ from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleCalculator,
     StabilityInnerSimpleInput,
 )
+from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calculator import \
+    StabilityInnerDStabilityCalculator, StabilityInnerDStabilityInput
 from vrtool.flood_defence_system.load_input import LoadInput
 
 
@@ -66,6 +68,7 @@ class MechanismReliability:
         strength: Optional[MechanismInput],
         load: Optional[LoadInput],
     ) -> FailureMechanismCalculatorProtocol:
+        print(self.type)
 
         if self.type == "DirectInput":
             return self._get_direct_input_calculator(strength)
@@ -80,6 +83,8 @@ class MechanismReliability:
             return self._get_semi_probabilistic_calculator(
                 mechanism, strength, load, traject_info
             )
+        if self.type == "DStability":
+            return self._get_d_stability_calculator(mechanism, strength)
 
         raise Exception("Unknown computation type {}".format(self.type))
 
@@ -130,3 +135,20 @@ class MechanismReliability:
             )
 
         raise Exception("Unknown computation type SemiProb for {}".format(mechanism))
+
+    def _get_d_stability_calculator(
+            self,
+            mechanism: str,
+            mechanism_input: MechanismInput,
+
+    ) -> FailureMechanismCalculatorProtocol:
+        if mechanism == "StabilityInner":
+            print(mechanism_input.mechanism)
+            print(mechanism_input.input)
+            _mechanism_input = StabilityInnerDStabilityInput.from_stix_input(
+                stix_input=mechanism_input
+            )
+            return StabilityInnerDStabilityCalculator(_mechanism_input)
+
+
+

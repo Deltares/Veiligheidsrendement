@@ -15,37 +15,22 @@ class MechanismInput:
 
     # This routine reads  input from an input sheet
     def fill_mechanism(
-        self,
-        input_path: Path,
-        reference,
-        calctype,
-        mechanism=None,
-        **kwargs,
+            self,
+            input_path: Path,
+            reference,
+            calctype,
+            mechanism=None,
+            **kwargs,
     ):
-        # From CSV
-        if mechanism != "Overflow":
-            try:
-                data = pd.read_csv(
-                    input_path.joinpath(Path(str(reference)).name),
-                    delimiter=",",
-                    header=None,
-                )
-            except:
-                data = pd.read_csv(
-                    input_path.joinpath(Path(str(reference)).name + ".csv"),
-                    delimiter=",",
-                    header=None,
-                )
 
-            # TODO: fix datatypes in input such that we do not need to drop columns
-            data = data.rename(columns={list(data)[0]: "Name"})
-            data = data.set_index("Name")
-            try:
-                data = data.drop(["InScope", "Opmerking"]).astype(np.float32)
-            except:
-                pass
+        if mechanism == "StabilityInner":
+            if calctype == 'DStability':
+                # TODO: only keep the STIX attribute?
+                data = self.read_data_from_csv(input_path, reference)
+            else:
+                data = self.read_data_from_csv(input_path, reference)
 
-        else:  #'Overflow':
+        elif mechanism == 'Overflow':
             if calctype == "Simple":
                 data = pd.read_csv(
                     input_path.joinpath(Path(reference).name), delimiter=","
@@ -78,6 +63,9 @@ class MechanismInput:
                     # else: interpolate and then concatenate.
             else:
                 raise Exception("Unknown input type for overflow")
+
+        else:
+            data = self.read_data_from_csv(input_path, reference)
 
         self.temporals = []
         self.char_vals = {}
@@ -113,10 +101,10 @@ class MechanismInput:
                 if data.index[i] == "k":
                     try:
                         if any(
-                            self.input[data.index[i]] > 1.0
+                                self.input[data.index[i]] > 1.0
                         ):  # if k>1 it is likely in m/d
                             self.input[data.index[i]] = self.input[data.index[i]] / (
-                                24 * 3600
+                                    24 * 3600
                             )
                             logging.info(
                                 "k-value modified as it was likely m/d and should be m/s"
@@ -124,8 +112,33 @@ class MechanismInput:
                     except:
                         if self.input[data.index[i]] > 1.0:
                             self.input[data.index[i]] = self.input[data.index[i]] / (
-                                24 * 3600
+                                    24 * 3600
                             )
                             logging.info(
                                 "k-value modified as it was likely m/d and should be m/s"
                             )
+
+    @staticmethod
+    def read_data_from_csv(input_path: Path, reference) -> pd.DataFrame:
+        """Read a mechanism data from a csv file and return a pandas dataframe"""
+        try:
+            data = pd.read_csv(
+                input_path.joinpath(Path(str(reference)).name),
+                delimiter=",",
+                header=None,
+            )
+        except:
+            data = pd.read_csv(
+                input_path.joinpath(Path(str(reference)).name + ".csv"),
+                delimiter=",",
+                header=None,
+            )
+
+        # TODO: fix datatypes in input such that we do not need to drop columns
+        data = data.rename(columns={list(data)[0]: "Name"})
+        data = data.set_index("Name")
+        try:
+            data = data.drop(["InScope", "Opmerking"]).astype(np.float32)
+        except:
+            pass
+        return data
