@@ -55,6 +55,6 @@ class StabilityInnerDStabilityCalculator(FailureMechanismCalculatorProtocol):
         """Calculate the reliability and the probability of failure from an input safety factor of a stix file.
         The reliability is insensitive to the year.
         """
-        beta = np.min([self._mechanism_input.safety_factor, 8.0])
+        beta = np.min([calculate_reliability(self._mechanism_input.safety_factor), 8.0])
 
         return beta, beta_to_pf(beta)

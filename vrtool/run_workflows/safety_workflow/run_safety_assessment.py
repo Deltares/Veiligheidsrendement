@@ -38,7 +38,6 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
         # Loop over sections and do the assessment.
         for _, _section in enumerate(self.selected_traject.sections):
-
             # get design water level:
             # TODO remove this line?
             # section.Reliability.Load.NormWaterLevel = pb.getDesignWaterLevel(section.Reliability.Load,selected_traject.GeneralInfo['Pmax'])
@@ -58,7 +57,6 @@ class RunSafetyAssessment(VrToolRunProtocol):
             # optional: plot reliability in time for each section
             if self.vr_config.plot_reliability_in_time:
                 self._plot_reliability_in_time(_section)
-
 
         # aggregate computed initial probabilities to DataFrame in selected_traject:
         self.selected_traject.set_probabilities()
