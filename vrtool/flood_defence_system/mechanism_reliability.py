@@ -68,7 +68,6 @@ class MechanismReliability:
         strength: Optional[MechanismInput],
         load: Optional[LoadInput],
     ) -> FailureMechanismCalculatorProtocol:
-        print(self.type)
 
         if self.type == "DirectInput":
             return self._get_direct_input_calculator(strength)
@@ -143,10 +142,8 @@ class MechanismReliability:
 
     ) -> FailureMechanismCalculatorProtocol:
         if mechanism == "StabilityInner":
-            print(mechanism_input.mechanism)
-            print(mechanism_input.input)
             _mechanism_input = StabilityInnerDStabilityInput.from_stix_input(
-                stix_input=mechanism_input
+                mechanism_input=mechanism_input
             )
             return StabilityInnerDStabilityCalculator(_mechanism_input)
 

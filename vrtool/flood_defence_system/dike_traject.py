@@ -131,6 +131,7 @@ class DikeTraject:
 
         # Routine to read the input for all sections based on the default input format.
         files = [i for i in input_path.glob("*DV*") if i.is_file()]
+        stix_input_path = input_path.joinpath("Stix")  # TODO: make an assert to check that the folder exists
         if len(files) == 0:
             raise IOError("Error: no dike sections found. Check path!")
         for i in range(len(files)):
@@ -143,13 +144,13 @@ class DikeTraject:
                 list(self.sections[i].__dict__.keys())
             )
             if (
-                self.sections[i].section_reliability.Load.load_type == "HRING"
+                    self.sections[i].section_reliability.Load.load_type == "HRING"
             ):  # 2 HRING computations for different years
                 self.sections[i].section_reliability.Load.set_HRING_input(
                     input_path.joinpath("Waterstand"), self.sections[i]
                 )  # input folder, location
             elif (
-                self.sections[i].section_reliability.Load.load_type == "SAFE"
+                    self.sections[i].section_reliability.Load.load_type == "SAFE"
             ):  # 2 computation as done for SAFE
                 self.sections[i].section_reliability.Load.set_fromDesignTable(
                     input_path.joinpath("Toetspeil", self.sections[i].LoadData)
@@ -172,15 +173,16 @@ class DikeTraject:
                     j, self.sections[i].mechanism_data[j][1], self.config
                 )
                 for k in (
-                    self.sections[i]
-                    .section_reliability.Mechanisms[j]
-                    .Reliability.keys()
+                        self.sections[i]
+                                .section_reliability.Mechanisms[j]
+                                .Reliability.keys()
                 ):
                     if self.sections[i].section_reliability.Load.load_type == "HRING":
                         self.sections[i].section_reliability.Mechanisms[j].Reliability[
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
+                            stix_input_path,
                             *self.sections[i].mechanism_data[j],
                             mechanism=j,
                             crest_height=self.sections[i].Kruinhoogte,
@@ -191,6 +193,7 @@ class DikeTraject:
                             k
                         ].Input.fill_mechanism(
                             mech_input_path,
+                            stix_input_path,
                             *self.sections[i].mechanism_data[j],
                             mechanism=j,
                         )
@@ -241,21 +244,21 @@ class DikeTraject:
         )
 
     def plot_assessment(
-        self,
-        fig_size=(6, 4),
-        draw_targetbeta="off",
-        last=True,
-        alpha=1,
-        colors=False,
-        labels_limited=False,
-        system_rel=False,
-        custom_name=False,
-        title_in=False,
-        reinforcement_strategy=False,
-        greedymode="Optimal",
-        show_xticks=True,
-        t_list=[],
-        case_settings={"directory": Path(""), "language": "NL", "beta_or_prob": "beta"},
+            self,
+            fig_size=(6, 4),
+            draw_targetbeta="off",
+            last=True,
+            alpha=1,
+            colors=False,
+            labels_limited=False,
+            system_rel=False,
+            custom_name=False,
+            title_in=False,
+            reinforcement_strategy=False,
+            greedymode="Optimal",
+            show_xticks=True,
+            t_list=[],
+            case_settings={"directory": Path(""), "language": "NL", "beta_or_prob": "beta"},
     ):
         """Routine to plot traject reliability"""
         if reinforcement_strategy:
@@ -411,32 +414,32 @@ class DikeTraject:
                     dash = [2, 2]
                     if j == "StabilityInner":
                         N = (
-                            self.general_info["TrajectLength"]
-                            * self.general_info["aStabilityInner"]
-                            / self.general_info["bStabilityInner"]
+                                self.general_info["TrajectLength"]
+                                * self.general_info["aStabilityInner"]
+                                / self.general_info["bStabilityInner"]
                         )
                         pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaStabilityInner"]
-                            / N
+                                self.general_info["Pmax"]
+                                * self.general_info["omegaStabilityInner"]
+                                / N
                         )
                         # dash = [1,2]
                     elif j == "Piping":
                         N = (
-                            self.general_info["TrajectLength"]
-                            * self.general_info["aPiping"]
-                            / self.general_info["bPiping"]
+                                self.general_info["TrajectLength"]
+                                * self.general_info["aPiping"]
+                                / self.general_info["bPiping"]
                         )
                         pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaPiping"]
-                            / N
+                                self.general_info["Pmax"]
+                                * self.general_info["omegaPiping"]
+                                / N
                         )
                         # dash = [1,3]
                     elif j == "Overflow":
                         pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaOverflow"]
+                                self.general_info["Pmax"]
+                                * self.general_info["omegaOverflow"]
                         )
                         # dash = [1,2]
                     if case_settings["beta_or_prob"] == "beta":
@@ -553,10 +556,10 @@ class DikeTraject:
                     ax.set_title(title_in)
             if not custom_name:
                 custom_name = (
-                    case_settings["beta_or_prob"]
-                    + "_"
-                    + str(self.t_0 + ii)
-                    + "_Assessment.png"
+                        case_settings["beta_or_prob"]
+                        + "_"
+                        + str(self.t_0 + ii)
+                        + "_Assessment.png"
                 )
             plt.savefig(
                 case_settings["directory"].joinpath(custom_name),
@@ -571,7 +574,7 @@ class DikeTraject:
                 plt.close()
 
     def plot_assessment_results(
-        self, output_directory: Path, section_ids=None, t_start=2020
+            self, output_directory: Path, section_ids=None, t_start=2020
     ):
         # for all or a selection of sections:
         if section_ids == None:

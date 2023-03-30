@@ -38,6 +38,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
         # Loop over sections and do the assessment.
         for _, _section in enumerate(self.selected_traject.sections):
+
             # get design water level:
             # TODO remove this line?
             # section.Reliability.Load.NormWaterLevel = pb.getDesignWaterLevel(section.Reliability.Load,selected_traject.GeneralInfo['Pmax'])

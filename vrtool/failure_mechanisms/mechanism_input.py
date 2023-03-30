@@ -17,16 +17,29 @@ class MechanismInput:
     def fill_mechanism(
             self,
             input_path: Path,
+            stix_folder_path: Path,
             reference,
             calctype,
             mechanism=None,
             **kwargs,
     ):
+        """
+
+        :param input_path: Path to the dataset folder of the corresponding mechanism.
+        :param stix_folder_path: Path to the folder containing all the stix files.
+        :param reference:
+        :param calctype: Calculation type for the given mechanism, one of ['Simple', 'HRING', 'DStability', 'DirectInput'].
+        :param mechanism:
+        :param kwargs:
+        :return:
+
+        """
 
         if mechanism == "StabilityInner":
             if calctype == 'DStability':
-                # TODO: only keep the STIX attribute?
                 data = self.read_data_from_csv(input_path, reference)
+                data = data[data.index == 'STIXNAAM']  # only keep the row with the STIX name
+                data.loc['STIXNAAM'] = str(stix_folder_path) + "/" + data.loc['STIXNAAM']
             else:
                 data = self.read_data_from_csv(input_path, reference)
 
