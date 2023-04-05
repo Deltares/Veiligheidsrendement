@@ -82,6 +82,7 @@ def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str
         #     merge_dijkmaterial=True,
         #     fill_polygons=fill_polygons
         # )
+
         test_sandbox(
             dstability_model=_dstability_model,
 
@@ -90,13 +91,13 @@ def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str
             stage_id=stage_id,
             merge_dijkmaterial=False,
             fill_polygons=fill_polygons,
-            list_points_geom_me=list_points_geom_me
-
+            list_points_geom_me=list_points_geom_me,
+            crop=True
 
         )
 
     _output_folder = Path(r"C:\Users\hauth\OneDrive - Stichting Deltares\Documents\tempo")
-    output_stix_name = str(stix_path.parts[-1])[:-4] + measure_name + ".stix"
+    output_stix_name = f"{str(stix_path.parts[-1])[:-5]}_{measure_name}.stix"
     print(_output_folder.joinpath(output_stix_name))
     _dstability_model.serialize(_output_folder.joinpath(output_stix_name))
 
@@ -255,6 +256,20 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
     id_dijk = find_layer_id_dijk_layer(layers)
     dike_layer = [layer for layer in layers  if layer.Id == id_dijk][0]
 
+    #Update all non-dike layers
+    for layer in layers:
+        if layer.Id == id_dijk:
+            continue
+        obj = Polygon([(p.X, p.Z) for p in layer.Points])
+
+        list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in
+                             obj.exterior.coords]
+        list_points.pop()
+        list_points = [list_points[-1]] + list_points
+
+        layer.Points = list_points
+
+
     dike_polygon = Polygon([(p.X, p.Z) for p in dike_layer.Points])
     # if crop:
     # dike_polygon = crop_polygons_below_surface_line([dike_polygon], list_points_geom_me)[0]
@@ -265,21 +280,106 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
 
     for obj in union_surface_dike.geoms:
         if isinstance(obj, Polygon):
-            list_points = [PersistablePoint(X=p[0], Z=p[1]) for p in
+            list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in
                                  obj.exterior.coords]
-
             list_points.pop()
             list_points = [list_points[-1]] + list_points
-            dike_layer.Points = list_points    # this is a tricky case ... another layer has to be created
+            dike_layer.Points = list_points
 
 
 
     for fill_polygon in fill_polygons:
 
+        if fill_polygon.area < 1: # drop poylgon that are too small (below 1m2)
+            continue
+        # if centroid is before 0
+        if fill_polygon.centroid.coords[0][0] < 0:
+            continue
+        #
+        liste = []
+        list_geolibpoint_filling = [GeolibPoint(x=round(pp[0], 3), z=round(pp[1], 3), tolerance=0.01) for pp in fill_polygon.exterior.coords]
+        for i, geolib_pp in enumerate(list_geolibpoint_filling):
+
+            a = False
+            for ppp in list_points:
+                geolib_ppp = GeolibPoint(x=ppp.X, z=ppp.Z, tolerance=0.01)
+
+                # a = geolib_ppp.__eq__(geolib_pp)
+                # print(a, geolib_ppp, geolib_pp)
+                if abs(geolib_ppp.z -geolib_pp.z) < 0.01 and abs(geolib_ppp.x - geolib_pp.x) < 0.01:
+                    a = True
+                    print('Yes', geolib_ppp, geolib_pp)
+                    liste.append(geolib_ppp)
+                    break
+
+            if not a:
+                liste.append(geolib_pp)
+
+
+        # add_layer_custom(model=dstability_model,
+        #                      points=[GeolibPoint(x=p[0], z=p[1]) for p in fill_polygon.exterior.coords],
+        #                      soil_code="Dijksmateriaal", stage_id=int(stage_id))
 
         add_layer_custom(model=dstability_model,
-                             points=[GeolibPoint(x=p[0], z=p[1]) for p in fill_polygon.exterior.coords],
+                             points=liste,
                              soil_code="Dijksmateriaal", stage_id=int(stage_id))
+
+    # reupdate other layer ... again? find out why is it needed 2 times?
+    for layer in layers:
+        if layer.Id == id_dijk:
+            continue
+        obj = Polygon([(p.X, p.Z) for p in layer.Points])
+        list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in
+                             obj.exterior.coords]
+        # two lines below necessary to clean up the polygons and make them valid according to D-Stability
+        list_points.pop()
+        list_points = [list_points[-1]] + list_points
+        layer.Points = list_points
+
+
+def test_sandbox_merge(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
+                             merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None, list_points_geom_me=None, crop: bool = False):
+
+    geometry = dstability_model.datastructure.geometries[int(stage_id)]
+    layers = geometry.Layers
+    id_dijk = find_layer_id_dijk_layer(layers)
+    dike_layer = [layer for layer in layers  if layer.Id == id_dijk][0]
+
+    dike_polygon = Polygon([(p.X, p.Z) for p in dike_layer.Points])
+    # if crop:
+    # dike_polygon = crop_polygons_below_surface_line([dike_polygon], list_points_geom_me)[0]
+
+
+    # merge adjacent polygons to dike_polygons:
+    # for fill_poly in fill_polygons:
+    #     if dike_polygon.touches(fill_poly):
+    #         dike_polygon = unary_union([dike_polygon, fill_poly])
+
+    dike_polygon = unary_union([fill_polygons + [dike_polygon]])
+
+    if isinstance(dike_polygon, Polygon):
+        list_points = [PersistablePoint(X=p[0], Z=p[1]) for p in
+                             dike_polygon.exterior.coords]
+
+        list_points.pop()
+        list_points = [list_points[-1]] + list_points
+        dike_layer.Points = list_points    # this is a tricky case ... another layer has to be created
+    elif isinstance(dike_polygon, MultiPolygon):
+        area = 0
+        for merged_poly in dike_polygon.geoms:
+            if merged_poly.area > area:
+                area = merged_poly.area
+                biggest_poly = merged_poly
+
+        list_points = [PersistablePoint(X=p[0], Z=p[1]) for p in
+                       biggest_poly.exterior.coords]
+
+        list_points.pop()
+        list_points = [list_points[-1]] + list_points
+        dike_layer.Points = list_points  # this is a tricky case ... another layer has to be created
+
+
+
 
 def rebuild_geom(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
                              merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None):

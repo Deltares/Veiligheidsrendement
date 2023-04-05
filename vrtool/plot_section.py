@@ -86,12 +86,13 @@ print("DO measure")
 _measures = RunMeasures(_vr_config, _selected_traject, plot_mode=_plot_mode)
 _measures_result = _measures.run()
 
-print(_measures_result.solutions_dict)
 
 # stop
 
 for section in _selected_traject.sections:
     print(f'============NEW SECTION {section.name} =============')
+    # if section.name == "DV01A":
+    #     continue
 
     stix_name = MAPPING_STIX_DV[section.name]
     stix_path = _input_model.joinpath("Stix/" + stix_name)
@@ -112,24 +113,23 @@ for section in _selected_traject.sections:
     for meas in measures:
         if isinstance(meas, SoilReinforcementMeasure):
             for i, soil_measure in enumerate(meas.measures):
-                if i == 20:
+                if i == 10:
                     df = soil_measure["Geometry"]
-                    print(df)
                     # Remove the virtual points and add straight line until x=100
                     df = df[df.index != "EXT"]
                     df = df[df.index != "BIT_0"]
-                    df = df[df.index != "BUT"]
-                    df = df[df.index != "BUT_0"]
-                    df.loc["BIT_1"] = [100, df.loc["BIT", "z"]]
+                    # df = df[df.index != "BUT"]
+                    # df = df[df.index != "BUT_0"]
+                    df.loc["BIT_1"] = [100, df.loc["BIT", "z"]] # this is horizontal line to hinterland
 
 
                     # transform df in list of point:
                     list_points_geom_me = [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
                     # list_points_geom_me.pop(0)
 
-                    # write into a pickle
-                    with open("data2.pkl", "wb") as f:
-                        pickle.dump(dict(collection_polygon=collection_polygon, list_points_geom_me=list_points_geom_me), f)
+                    # # write into a pickle
+                    # with open("data2.pkl", "wb") as f:
+                    #     pickle.dump(dict(collection_polygon=collection_polygon, list_points_geom_me=list_points_geom_me), f)
 
 
                     fill_polygons = find_polygons_to_fill_to_measure(collection_polygon, list_points_geom_me)
@@ -142,7 +142,7 @@ for section in _selected_traject.sections:
                         fill_polygons=fill_polygons,
                         new_polygons=new_polygons,
                     )
-                    plot_measure_profile(polygons_dict, list_points_geom_me)
+                    # plot_measure_profile(polygons_dict, list_points_geom_me)
 
                     modify_stix(stix_path, fill_polygons, str(i), collection_polygon, list_points_geom_me)
         break  # TDOD remove this line. this is to prevent looping over all the measures within one DV
