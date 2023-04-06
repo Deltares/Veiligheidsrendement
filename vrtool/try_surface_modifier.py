@@ -255,20 +255,23 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
     geometry = dstability_model.datastructure.geometries[int(stage_id)]
     layers = geometry.Layers
     id_dijk = find_layer_id_dijk_layer(layers)
-    dike_layer = [layer for layer in layers  if layer.Id == id_dijk][0]
+    dike_layer = [layer for layer in layers if layer.Id == id_dijk][0]
 
     dike_polygon = Polygon([(p.X, p.Z) for p in dike_layer.Points])
     # if crop:
     # dike_polygon = crop_polygons_below_surface_line([dike_polygon], list_points_geom_me)[0]
     ls_surface = LineString(list_points_geom_me)
 
-    union_surface_dike = unary_union([ls_surface, dike_polygon]) # this creates a new Polygon for the dike that incorporates
-    # the intersection points with the surface line.
+
+
+    # Modify in-place the dike polygon
+    union_surface_dike = unary_union([ls_surface, dike_polygon])
+    # this creates a new Polygon for the dike that incorporates the intersection points with the surface line.
+    #TODO not so satisfied with this technique to get the intersection points, it sometimes to inaccuracies of the points
 
     for obj in union_surface_dike.geoms:
         if isinstance(obj, Polygon):
-            list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in
-                                 obj.exterior.coords]
+            list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in obj.exterior.coords]
             list_points.pop()
             list_points = [list_points[-1]] + list_points
             list_points.pop()
@@ -277,7 +280,8 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
             previous_point = PersistablePoint(X=999, Z=999)
             # remove duplicate point from list:
             for p in list_points:
-                if p.X == previous_point.X and p.Z == previous_point.Z:
+                # if p.X == previous_point.X and p.Z == previous_point.Z:
+                if abs(p.X - previous_point.X) < 0.01 and abs(p.Z - previous_point.Z) < 0.01: # This condition is suppose to eliminate points from the dike polygon that are not supposed to exsit, i.e. the points added from the previous unary_union with the new geometry
                     previous_point = p
                     continue
                 else:
