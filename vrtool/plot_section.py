@@ -91,8 +91,6 @@ _measures_result = _measures.run()
 
 for section in _selected_traject.sections:
     print(f'============NEW SECTION {section.name} =============')
-    # if section.name == "DV01A":
-    #     continue
 
     stix_name = MAPPING_STIX_DV[section.name]
     stix_path = _input_model.joinpath("Stix/" + stix_name)
@@ -147,8 +145,5 @@ for section in _selected_traject.sections:
                     modify_stix(stix_path, fill_polygons, str(i), collection_polygon, list_points_geom_me)
         break  # TDOD remove this line. this is to prevent looping over all the measures within one DV
 
-        # TODO: change geom of all stages
-        # TODO: update the current geometry of the stix (remove excedent parts)
         # TODO: fix how the left limit connects with the model
         # TODO: run the stix
-        # TODO try unary_union with different precision

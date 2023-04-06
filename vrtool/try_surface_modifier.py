@@ -100,6 +100,7 @@ def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str
     output_stix_name = f"{str(stix_path.parts[-1])[:-5]}_{measure_name}.stix"
     print(_output_folder.joinpath(output_stix_name))
     _dstability_model.serialize(_output_folder.joinpath(output_stix_name))
+    # _dstability_model.execute()
 
 
 
@@ -256,20 +257,6 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
     id_dijk = find_layer_id_dijk_layer(layers)
     dike_layer = [layer for layer in layers  if layer.Id == id_dijk][0]
 
-    #Update all non-dike layers
-    for layer in layers:
-        if layer.Id == id_dijk:
-            continue
-        obj = Polygon([(p.X, p.Z) for p in layer.Points])
-
-        list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in
-                             obj.exterior.coords]
-        list_points.pop()
-        list_points = [list_points[-1]] + list_points
-
-        layer.Points = list_points
-
-
     dike_polygon = Polygon([(p.X, p.Z) for p in dike_layer.Points])
     # if crop:
     # dike_polygon = crop_polygons_below_surface_line([dike_polygon], list_points_geom_me)[0]
@@ -284,10 +271,27 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
                                  obj.exterior.coords]
             list_points.pop()
             list_points = [list_points[-1]] + list_points
-            dike_layer.Points = list_points
+            list_points.pop()
+
+            new_list = []
+            previous_point = PersistablePoint(X=999, Z=999)
+            # remove duplicate point from list:
+            for p in list_points:
+                if p.X == previous_point.X and p.Z == previous_point.Z:
+                    previous_point = p
+                    continue
+                else:
+                    new_list.append(p)
+                    previous_point = p
 
 
 
+            # dike_layer.Points = list_points
+            dike_layer.Points = new_list
+
+
+
+    # add the filling polygons and readjuste their coordinates when necessary.
     for fill_polygon in fill_polygons:
 
         if fill_polygon.area < 1: # drop poylgon that are too small (below 1m2)
@@ -308,33 +312,40 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
                 # print(a, geolib_ppp, geolib_pp)
                 if abs(geolib_ppp.z -geolib_pp.z) < 0.01 and abs(geolib_ppp.x - geolib_pp.x) < 0.01:
                     a = True
-                    print('Yes', geolib_ppp, geolib_pp)
                     liste.append(geolib_ppp)
+                    if geolib_pp.x == -0:
+                        continue
+                        print('geolib_pp YEYSYSYYSYS', geolib_pp)
                     break
 
             if not a:
+                if geolib_pp.x == -0:
+                    print('geolib_pp YEYSYSYYSYS', geolib_pp)
                 liste.append(geolib_pp)
+        liste.pop()
 
-
-        # add_layer_custom(model=dstability_model,
-        #                      points=[GeolibPoint(x=p[0], z=p[1]) for p in fill_polygon.exterior.coords],
-        #                      soil_code="Dijksmateriaal", stage_id=int(stage_id))
+        new_list = []
+        previous_point = GeolibPoint(x=999, z=999)
+        # remove duplicate point from list:
+        for p in liste:
+            if p.x == previous_point.x and p.z == previous_point.z:
+                previous_point = p
+                continue
+            else:
+                new_list.append(p)
+                previous_point = p
 
         add_layer_custom(model=dstability_model,
-                             points=liste,
+                             points=new_list,
                              soil_code="Dijksmateriaal", stage_id=int(stage_id))
 
-    # reupdate other layer ... again? find out why is it needed 2 times?
+    # Geometry consistency check: round all points to 3 decimals
     for layer in layers:
         if layer.Id == id_dijk:
             continue
-        obj = Polygon([(p.X, p.Z) for p in layer.Points])
-        list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in
-                             obj.exterior.coords]
-        # two lines below necessary to clean up the polygons and make them valid according to D-Stability
-        list_points.pop()
-        list_points = [list_points[-1]] + list_points
-        layer.Points = list_points
+
+        layer.Points = [PersistablePoint(X=round(p.X, 3), Z=round(p.Z, 3)) for p in
+                             layer.Points]
 
 
 def test_sandbox_merge(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
