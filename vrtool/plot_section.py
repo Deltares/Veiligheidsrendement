@@ -14,7 +14,7 @@ from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasu
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.stability_geometry_helper import find_polygons_to_fill_to_measure, crop_polygons_below_surface_line
-from vrtool.try_surface_modifier import plot_measure_profile, modify_stix
+from vrtool.try_surface_modifier import plot_measure_profile, modify_stix, get_modified_meas_geom
 
 # path_to_stixfolder = Path(
 #     r"C:\Users\hauth\OneDrive - Stichting Deltares\Desktop\projects\VRTools\TestCases\TestCase1_38-1_no_housing_SMALL\Stix")
@@ -112,18 +112,12 @@ for section in _selected_traject.sections:
         if isinstance(meas, SoilReinforcementMeasure):
             for i, soil_measure in enumerate(meas.measures):
                 if i == 10:
-                    df = soil_measure["Geometry"]
-                    # Remove the virtual points and add straight line until x=100
-                    df = df[df.index != "EXT"]
-                    df = df[df.index != "BIT_0"]
-                    # df = df[df.index != "BUT"]
-                    # df = df[df.index != "BUT_0"]
-                    df.loc["BIT_1"] = [100, df.loc["BIT", "z"]] # this is horizontal line to hinterland
-
-
                     # transform df in list of point:
-                    list_points_geom_me = [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
-                    # list_points_geom_me.pop(0)
+                    list_points_geom_me = get_modified_meas_geom(soil_measure=soil_measure,
+                                                                 straight_lin=False,
+                                                                 polygons=collection_polygon,
+                                                                 )
+
 
                     # # write into a pickle
                     # with open("data2.pkl", "wb") as f:
@@ -141,8 +135,9 @@ for section in _selected_traject.sections:
                         new_polygons=new_polygons,
                     )
                     # plot_measure_profile(polygons_dict, list_points_geom_me)
+                    # stop
 
-                    modify_stix(stix_path, fill_polygons, str(i), collection_polygon, list_points_geom_me)
+                    modify_stix(stix_path, fill_polygons, str(i), collection_polygon, list_points_geom_me, polygons_dict)
         break  # TDOD remove this line. this is to prevent looping over all the measures within one DV
 
         # TODO: fix how the left limit connects with the model

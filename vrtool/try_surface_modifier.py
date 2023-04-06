@@ -1,6 +1,7 @@
+import copy
 import math
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union, Tuple
 
 import numpy as np
 import shapely
@@ -57,7 +58,9 @@ def preprocess_dstab_model(dstability_model: DStabilityModel):
     dstability_model.meta.console_folder = Path(
         "C:\Program Files (x86)\Deltares\D-GEO Suite\D-Stability 2022.01.2/bin")
 
-def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str, collection_polygon: List[Polygon], list_points_geom_me: List[Point]):
+
+def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str, collection_polygon: List[Polygon],
+                list_points_geom_me: List[Point], polygons_dict):
     _stix_path = Path(
         # r"C:\Users\hauth\OneDrive - Stichting Deltares\Documents\tempo/RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix")
         r"C:\Users\hauth\OneDrive - Stichting Deltares\Desktop\projects\VRTools\TestCases/TestCase1_38-1_no_housing_SMALL/Stix/RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix")
@@ -65,9 +68,6 @@ def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str
     _dstability_model.parse(stix_path)
 
     preprocess_dstab_model(_dstability_model)
-
-
-
 
     # add_filling_polygons_to_dstability_model(_dstability_model, fill_polygons)
     stage_ids = [stage.Id for stage in _dstability_model.stages]
@@ -85,12 +85,10 @@ def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str
 
         test_sandbox(
             dstability_model=_dstability_model,
+            polygons_dict=polygons_dict,
 
-            modified_polygons=fill_polygons,
-            # modified_polygons=collection_polygon,
             stage_id=stage_id,
             merge_dijkmaterial=False,
-            fill_polygons=fill_polygons,
             list_points_geom_me=list_points_geom_me,
             crop=True
 
@@ -101,7 +99,6 @@ def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str
     print(_output_folder.joinpath(output_stix_name))
     _dstability_model.serialize(_output_folder.joinpath(output_stix_name))
     # _dstability_model.execute()
-
 
 
 def add_filling_polygons_to_dstability_model(dstability_model: DStabilityModel, fill_polygons: List[Polygon],
@@ -190,28 +187,34 @@ def add_layer_custom(
     soillayerscollection.add_soillayer(layer_id=persistable_layer.Id, soil_id=soil.id)
     return int(persistable_layer.Id)
 
-def find_layer_id_dijk_layer(layers: List[PersistableLayer]) -> str:
+
+def find_layer_id_dijk_layer(layers: List[PersistableLayer]) -> Tuple[str, int]:
     """
     Loop over all the layers from a .stix geometry and find the layer of the dike (assumed with the highest point) adn
     return its id.
-
-
     """
     highest_point = 0
     highest_point_layer = None
-    for layer in layers:
+    list_index = 0
+    for i, layer in enumerate(layers):
         for point in layer.Points:
             if point.Z > highest_point:
                 highest_point = point.Z
                 highest_point_layer = layer
-    return highest_point_layer.Id
-def update_dstability_layers_with_cropped(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
-                             merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None):
+                list_index = i
+    return highest_point_layer.Id, list_index
+
+
+def update_dstability_layers_with_cropped(dstability_model: DStabilityModel, modified_polygons: List[Polygon],
+                                          stage_id: str,
+                                          merge_dijkmaterial: bool = True,
+                                          fill_polygons: Optional[List[Polygon]] = None):
     geometry = dstability_model.datastructure.geometries[int(stage_id)]
     layers = geometry.Layers
     for layer, new_poly in zip(layers, modified_polygons):
         layer.Points = [PersistablePoint(X=p[0], Z=p[1]) for p in
                         new_poly.exterior.coords]  # this is a tricky case ... another layer has to be created
+
 
 def update_dstability_layers(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
                              merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None):
@@ -219,7 +222,7 @@ def update_dstability_layers(dstability_model: DStabilityModel, modified_polygon
     layers = geometry.Layers
 
     if merge_dijkmaterial:
-        id_dijk = find_layer_id_dijk_layer(layers)
+        id_dijk, _ = find_layer_id_dijk_layer(layers)
 
     for layer, new_poly in zip(layers, modified_polygons):
 
@@ -234,7 +237,7 @@ def update_dstability_layers(dstability_model: DStabilityModel, modified_polygon
                     layer.Points = [PersistablePoint(X=p[0], Z=p[1]) for p in merge.exterior.coords]
                 elif isinstance(merge, MultiPolygon):
                     print(1)
-                    #find biggest polygon
+                    # find biggest polygon
                     # area = 0
                     # for merged_poly in merge.geoms:
                     #     if merged_poly.area > area:
@@ -242,32 +245,37 @@ def update_dstability_layers(dstability_model: DStabilityModel, modified_polygon
                     #         biggest_poly = merged_poly
 
                     # layer.Points = [PersistablePoint(X=p[0], Z=p[1]) for p in biggest_poly.exterior.coords] # this is a tricky case ... another layer has to be created
-                    layer.Points = [PersistablePoint(X=p[0], Z=p[1]) for p in merge.geoms[0].exterior.coords] # this is a tricky case ... another layer has to be created
+                    layer.Points = [PersistablePoint(X=p[0], Z=p[1]) for p in merge.geoms[
+                        0].exterior.coords]  # this is a tricky case ... another layer has to be created
 
         else:
             dstability_model.add_layer(points=[GeolibPoint(x=p[0], z=p[1]) for p in new_poly.exterior.coords],
                                        soil_code="Dijksmateriaal")
 
 
-def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
-                             merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None, list_points_geom_me=None, crop: bool = False):
+def get_appended_dike_polygon(initial_dike_polygon, use_line: bool, geometry_line=Optional[np.array],
+                              filling_polygons=Optional[List[Polygon]]) -> Union[MultiPolygon, Polygon]:
+    """
+    Function that takes as input the original dike polygon and add the new intersectings points with the new geometry.
+    This is requried ot make D-Stability polygon consistent.
 
-    geometry = dstability_model.datastructure.geometries[int(stage_id)]
-    layers = geometry.Layers
-    id_dijk = find_layer_id_dijk_layer(layers)
-    dike_layer = [layer for layer in layers if layer.Id == id_dijk][0]
+    """
 
-    dike_polygon = Polygon([(p.X, p.Z) for p in dike_layer.Points])
-    # if crop:
-    # dike_polygon = crop_polygons_below_surface_line([dike_polygon], list_points_geom_me)[0]
-    ls_surface = LineString(list_points_geom_me)
+    if use_line:
+        ls_surface = LineString(geometry_line)
 
+        # Modify in-place the dike polygon
+        union_surface_dike = unary_union([ls_surface, initial_dike_polygon])
+        return union_surface_dike
 
 
-    # Modify in-place the dike polygon
-    union_surface_dike = unary_union([ls_surface, dike_polygon])
+def modify_polygon_from_stix(current_polygon: Polygon, geometry_line, fill_polygons: List[Polygon], layer):
+    union_surface_dike = get_appended_dike_polygon(initial_dike_polygon=current_polygon,
+                                                   use_line=True,
+                                                   geometry_line=geometry_line,
+                                                   filling_polygons=fill_polygons)
     # this creates a new Polygon for the dike that incorporates the intersection points with the surface line.
-    #TODO not so satisfied with this technique to get the intersection points, it sometimes to inaccuracies of the points
+    # TODO not so satisfied with this technique to get the intersection points, it sometimes to inaccuracies of the points
 
     for obj in union_surface_dike.geoms:
         if isinstance(obj, Polygon):
@@ -281,31 +289,90 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
             # remove duplicate point from list:
             for p in list_points:
                 # if p.X == previous_point.X and p.Z == previous_point.Z:
-                if abs(p.X - previous_point.X) < 0.01 and abs(p.Z - previous_point.Z) < 0.01: # This condition is suppose to eliminate points from the dike polygon that are not supposed to exsit, i.e. the points added from the previous unary_union with the new geometry
+                if abs(p.X - previous_point.X) < 0.01 and abs(
+                        p.Z - previous_point.Z) < 0.01:  # This condition is suppose to eliminate points from the dike polygon that are not supposed to exsit, i.e. the points added from the previous unary_union with the new geometry
                     previous_point = p
                     continue
                 else:
                     new_list.append(p)
                     previous_point = p
 
+            # dike_layer.Points = list_points
+            layer.Points = new_list
+def test_sandbox(dstability_model: DStabilityModel, polygons_dict: Dict[str, List[Polygon]], stage_id: str,
+                 merge_dijkmaterial: bool = True,
+                 list_points_geom_me=None, crop: bool = False):
 
+    fill_polygons=polygons_dict['fill_polygons']
+    new_polygons = polygons_dict["new_polygons"]
+
+    geometry = dstability_model.datastructure.geometries[int(stage_id)]
+    layers = geometry.Layers
+    id_dijk, list_index = find_layer_id_dijk_layer(layers)
+    dike_layer = [layer for layer in layers if layer.Id == id_dijk][0]
+
+    dike_polygon = Polygon([(p.X, p.Z) for p in dike_layer.Points])
+    # if crop:
+    # dike_polygon = crop_polygons_below_surface_line([dike_polygon], list_points_geom_me)[0]
+    ls_surface = LineString(list_points_geom_me)
+
+    # Modify in-place the dike polygon
+    union_surface_dike = unary_union([ls_surface, dike_polygon])
+    # modify_polygon_from_stix(current_polygon=dike_polygon,
+    #                          geometry_line=list_points_geom_me,
+    #                          fill_polygons=fill_polygons,
+    #                          layer=dike_layer)
+    # union_surface_dike = get_appended_dike_polygon(initial_dike_polygon=dike_polygon,
+    #                                                use_line=True,
+    #                                                geometry_line=list_points_geom_me,
+    #                                                filling_polygons=fill_polygons)
+    # # this creates a new Polygon for the dike that incorporates the intersection points with the surface line.
+    # # TODO not so satisfied with this technique to get the intersection points, it sometimes to inaccuracies of the points
+    #
+    for obj in union_surface_dike.geoms:
+        if isinstance(obj, Polygon):
+            list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in obj.exterior.coords]
+            list_points.pop()
+            list_points = [list_points[-1]] + list_points
+            list_points.pop()
+
+            new_list = []
+            previous_point = PersistablePoint(X=999, Z=999)
+            # remove duplicate point from list:
+            for p in list_points:
+                # if p.X == previous_point.X and p.Z == previous_point.Z:
+                if abs(p.X - previous_point.X) < 0.01 and abs(
+                        p.Z - previous_point.Z) < 0.01:  # This condition is suppose to eliminate points from the dike polygon that are not supposed to exsit, i.e. the points added from the previous unary_union with the new geometry
+                    previous_point = p
+                    continue
+                else:
+                    new_list.append(p)
+                    previous_point = p
 
             # dike_layer.Points = list_points
             dike_layer.Points = new_list
 
-
+    for layer in layers:
+        if layer.Id == id_dijk:
+            continue
+        poly = Polygon([(round(p.X, 3), round(p.Z, 3)) for p in layer.Points])
+        modify_polygon_from_stix(current_polygon=poly,
+                                 geometry_line=list_points_geom_me,
+                                 fill_polygons=fill_polygons,
+                                 layer=layer)
 
     # add the filling polygons and readjuste their coordinates when necessary.
     for fill_polygon in fill_polygons:
 
-        if fill_polygon.area < 1: # drop poylgon that are too small (below 1m2)
+        if fill_polygon.area < 1:  # drop poylgon that are too small (below 1m2)
             continue
         # if centroid is before 0
         if fill_polygon.centroid.coords[0][0] < 0:
             continue
         #
         liste = []
-        list_geolibpoint_filling = [GeolibPoint(x=round(pp[0], 3), z=round(pp[1], 3), tolerance=0.01) for pp in fill_polygon.exterior.coords]
+        list_geolibpoint_filling = [GeolibPoint(x=round(pp[0], 3), z=round(pp[1], 3), tolerance=0.01) for pp in
+                                    fill_polygon.exterior.coords]
         for i, geolib_pp in enumerate(list_geolibpoint_filling):
 
             a = False
@@ -314,7 +381,7 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
 
                 # a = geolib_ppp.__eq__(geolib_pp)
                 # print(a, geolib_ppp, geolib_pp)
-                if abs(geolib_ppp.z -geolib_pp.z) < 0.01 and abs(geolib_ppp.x - geolib_pp.x) < 0.01:
+                if abs(geolib_ppp.z - geolib_pp.z) < 0.01 and abs(geolib_ppp.x - geolib_pp.x) < 0.01:
                     a = True
                     liste.append(geolib_ppp)
                     if geolib_pp.x == -0:
@@ -340,30 +407,33 @@ def test_sandbox(dstability_model: DStabilityModel, modified_polygons: List[Poly
                 previous_point = p
 
         add_layer_custom(model=dstability_model,
-                             points=new_list,
-                             soil_code="Dijksmateriaal", stage_id=int(stage_id))
+                         points=new_list,
+                         soil_code="Dijksmateriaal", stage_id=int(stage_id))
 
     # Geometry consistency check: round all points to 3 decimals
-    for layer in layers:
-        if layer.Id == id_dijk:
-            continue
-
-        layer.Points = [PersistablePoint(X=round(p.X, 3), Z=round(p.Z, 3)) for p in
-                             layer.Points]
+    # for layer in layers:
+    #     if layer.Id == id_dijk:
+    #         continue
+    #     poly = Polygon([(round(p.X, 3), round(p.Z, 3)) for p in layer.Points])
+    #     modify_polygon_from_stix(current_polygon=poly,
+    #                              geometry_line=list_points_geom_me,
+    #                              fill_polygons=fill_polygons,
+    #                              layer=layer)
+        # layer.Points = [PersistablePoint(X=round(p.X, 3), Z=round(p.Z, 3)) for p in
+        #                 layer.Points]
 
 
 def test_sandbox_merge(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
-                             merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None, list_points_geom_me=None, crop: bool = False):
-
+                       merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None,
+                       list_points_geom_me=None, crop: bool = False):
     geometry = dstability_model.datastructure.geometries[int(stage_id)]
     layers = geometry.Layers
     id_dijk = find_layer_id_dijk_layer(layers)
-    dike_layer = [layer for layer in layers  if layer.Id == id_dijk][0]
+    dike_layer = [layer for layer in layers if layer.Id == id_dijk][0]
 
     dike_polygon = Polygon([(p.X, p.Z) for p in dike_layer.Points])
     # if crop:
     # dike_polygon = crop_polygons_below_surface_line([dike_polygon], list_points_geom_me)[0]
-
 
     # merge adjacent polygons to dike_polygons:
     # for fill_poly in fill_polygons:
@@ -374,11 +444,11 @@ def test_sandbox_merge(dstability_model: DStabilityModel, modified_polygons: Lis
 
     if isinstance(dike_polygon, Polygon):
         list_points = [PersistablePoint(X=p[0], Z=p[1]) for p in
-                             dike_polygon.exterior.coords]
+                       dike_polygon.exterior.coords]
 
         list_points.pop()
         list_points = [list_points[-1]] + list_points
-        dike_layer.Points = list_points    # this is a tricky case ... another layer has to be created
+        dike_layer.Points = list_points  # this is a tricky case ... another layer has to be created
     elif isinstance(dike_polygon, MultiPolygon):
         area = 0
         for merged_poly in dike_polygon.geoms:
@@ -394,11 +464,8 @@ def test_sandbox_merge(dstability_model: DStabilityModel, modified_polygons: Lis
         dike_layer.Points = list_points  # this is a tricky case ... another layer has to be created
 
 
-
-
 def rebuild_geom(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
-                             merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None):
-
+                 merge_dijkmaterial: bool = True, fill_polygons: Optional[List[Polygon]] = None):
     stage_id = dstability_model.add_stage('NEW', 'NEW')
     # geometry = dstability_model.datastructure.geometries[int(stage_id)]
     # layers = geometry.Layers
@@ -408,8 +475,7 @@ def rebuild_geom(dstability_model: DStabilityModel, modified_polygons: List[Poly
         #                  points=[GeolibPoint(x=p[0], z=p[1]) for p in poly.exterior.coords],
         #                  soil_code="Dijksmateriaal", stage_id=stage_id)
         dstability_model.add_layer(points=[GeolibPoint(x=p[0], z=p[1]) for p in poly.exterior.coords],
-                         soil_code="Dijksmateriaal", stage_id=stage_id)
-
+                                   soil_code="Dijksmateriaal", stage_id=stage_id)
 
 
 def plot_polygon(polygon_list: List[Polygon], surface_line: np.array):
@@ -712,45 +778,92 @@ def plot_measure_profile(polygons: Dict[str, List[Polygon]], surface):
     return
 
 
+# for layer, new_poly in zip(layers, modified_polygons):
+#        if id_dijk == layer.Id:
+#            dike_polygon = Polygon([(p.X, p.Z) for p in layer.Points])
+#            print(dike_polygon.is_valid)
+#            intersection_points_profile = dike_polygon.intersection(ls_surface)
+#
+#
+#            list_of_all_points_to_be_added = []
+#            for line in intersection_points_profile.geoms:
+#                if isinstance(line, LineString):
+#                    list_of_all_points_to_be_added.append(line.coords[0])
+#                    list_of_all_points_to_be_added.append(line.coords[-1])
+#
+#            list_point = [(p.X, p.Z) for p in layer.Points] + list_of_all_points_to_be_added
+#            new_polygon = Polygon(list_point)
+#            print(new_polygon)
+#            print(new_polygon.is_valid)
+#            layer.Points = [PersistablePoint(X=p[0], Z=p[1]) for p in
+#                            new_polygon.geoms[0].exterior.coords]  # this is a tricky case ... another layer has to be created
 
- # for layer, new_poly in zip(layers, modified_polygons):
- #        if id_dijk == layer.Id:
- #            dike_polygon = Polygon([(p.X, p.Z) for p in layer.Points])
- #            print(dike_polygon.is_valid)
- #            intersection_points_profile = dike_polygon.intersection(ls_surface)
- #
- #
- #            list_of_all_points_to_be_added = []
- #            for line in intersection_points_profile.geoms:
- #                if isinstance(line, LineString):
- #                    list_of_all_points_to_be_added.append(line.coords[0])
- #                    list_of_all_points_to_be_added.append(line.coords[-1])
- #
- #            list_point = [(p.X, p.Z) for p in layer.Points] + list_of_all_points_to_be_added
- #            new_polygon = Polygon(list_point)
- #            print(new_polygon)
- #            print(new_polygon.is_valid)
- #            layer.Points = [PersistablePoint(X=p[0], Z=p[1]) for p in
- #                            new_polygon.geoms[0].exterior.coords]  # this is a tricky case ... another layer has to be created
 
-
-def clockwiseangle_and_distance(point, origin=[6, 6], refvec=[0,1]):
+def clockwiseangle_and_distance(point, origin=[6, 6], refvec=[0, 1]):
     # Vector between point and the origin: v = p - o
-    vector = [point[0]-origin[0], point[1]-origin[1]]
+    vector = [point[0] - origin[0], point[1] - origin[1]]
     # Length of vector: ||v||
     lenvector = math.hypot(vector[0], vector[1])
     # If length is zero there is no angle
     if lenvector == 0:
         return -math.pi, 0
     # Normalize vector: v/||v||
-    normalized = [vector[0]/lenvector, vector[1]/lenvector]
-    dotprod  = normalized[0]*refvec[0] + normalized[1]*refvec[1]     # x1*x2 + y1*y2
-    diffprod = refvec[1]*normalized[0] - refvec[0]*normalized[1]     # x1*y2 - y1*x2
+    normalized = [vector[0] / lenvector, vector[1] / lenvector]
+    dotprod = normalized[0] * refvec[0] + normalized[1] * refvec[1]  # x1*x2 + y1*y2
+    diffprod = refvec[1] * normalized[0] - refvec[0] * normalized[1]  # x1*y2 - y1*x2
     angle = math.atan2(diffprod, dotprod)
     # Negative angles represent counter-clockwise angles so we need to subtract them
     # from 2*pi (360 degrees)
     if angle < 0:
-        return 2*math.pi+angle, lenvector
+        return 2 * math.pi + angle, lenvector
     # I return first the angle because that's the primary sorting criterium
     # but if two vectors have the same angle then the shorter distance should come first.
     return angle, lenvector
+
+
+
+def get_modified_meas_geom(soil_measure, straight_lin: bool, polygons: Optional[List[Polygon]]):
+    merged_polygon = unary_union(polygons)
+
+    df = soil_measure["Geometry"]
+    # Remove the virtual points and add straight line until x=100
+    df = df[df.index != "EXT"]
+    df = df[df.index != "BIT_0"]
+    # df = df[df.index != "BUT"]
+    # df = df[df.index != "BUT_0"]
+    # df.loc["BIT_1"] = [100, df.loc["BIT", "z"]]  # this is horizontal line to hinterland
+
+    # transform df in list of point:
+    if straight_lin:
+        df.loc["BIT_1"] = [100, df.loc["BIT", "z"]]  # this is horizontal line to hinterland
+        list_points_geom_me = [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
+        return list_points_geom_me
+    else:
+        start = [df.loc["BUK", "x"], df.loc["BUK", "z"]]
+        end = [df.loc["BUT", "x"], df.loc["BUT", "z"]]
+
+        # extend beyond start with the same slope
+        m = (end[1] - start[1]) / (end[0] - start[0])
+
+        # Determine the desired length of the extended line
+        desired_length = 10
+
+        # Calculate the new endpoint of the extended line
+        x3 = end[0] - (desired_length / math.sqrt(1 + m**2))
+        y3 = end[1] + m * (x3 - end[0])
+
+        df.loc["left"] = [x3, y3]
+
+        df.loc["BIT_1"] = [100, df.loc["BIT", "z"]]  # this is horizontal line to hinterland
+
+        # sort df by ascending x:
+        df = df.sort_values(by="x")
+        list_points_geom_me = [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
+        return list_points_geom_me
+
+        # extend beyond end with the same slope
+
+
+
+
+
