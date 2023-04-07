@@ -95,10 +95,12 @@ def modify_stix(stix_path: Path, fill_polygons: List[Polygon], measure_name: str
         )
 
     _output_folder = Path(r"C:\Users\hauth\OneDrive - Stichting Deltares\Documents\tempo")
+    # _output_folder = Path(r"C:\Users\hauth\OneDrive - Stichting Deltares\Desktop\projects\VRTools\output")
     output_stix_name = f"{str(stix_path.parts[-1])[:-5]}_{measure_name}.stix"
-    print(_output_folder.joinpath(output_stix_name))
     _dstability_model.serialize(_output_folder.joinpath(output_stix_name))
     # _dstability_model.execute()
+    # outputs = _dstability_model.output
+    # print("RESULT", [output.FactorOfSafety for output in outputs])
 
 
 def add_filling_polygons_to_dstability_model(dstability_model: DStabilityModel, fill_polygons: List[Polygon],
@@ -269,11 +271,13 @@ def get_appended_dike_polygon(initial_dike_polygon, use_line: bool, geometry_lin
         return union_surface_dike
 
 
-def modify_polygon_from_stix(current_polygon: Polygon, geometry_line, fill_polygons: List[Polygon], layer):
+def modify_polygon_from_stix(current_polygon: Polygon, geometry_line, fill_polygons: List[Polygon], layer,
+                             list_all_point: Optional[List]):
     union_surface_dike = get_appended_dike_polygon(initial_dike_polygon=current_polygon,
                                                    use_line=True,
                                                    geometry_line=geometry_line,
-                                                   filling_polygons=fill_polygons)
+                                                   filling_polygons=fill_polygons,
+                                                   )
     # this creates a new Polygon for the dike that incorporates the intersection points with the surface line.
     # TODO not so satisfied with this technique to get the intersection points, it sometimes to inaccuracies of the points
 
@@ -299,11 +303,14 @@ def modify_polygon_from_stix(current_polygon: Polygon, geometry_line, fill_polyg
 
             # dike_layer.Points = list_points
             layer.Points = new_list
+            list_all_point.extend([[p.X, p.Z] for p in new_list])
+
+
+
 def test_sandbox(dstability_model: DStabilityModel, polygons_dict: Dict[str, List[Polygon]], stage_id: str,
                  merge_dijkmaterial: bool = True,
                  list_points_geom_me=None, crop: bool = False):
-
-    fill_polygons=polygons_dict['fill_polygons']
+    fill_polygons = polygons_dict['fill_polygons']
     new_polygons = polygons_dict["new_polygons"]
 
     geometry = dstability_model.datastructure.geometries[int(stage_id)]
@@ -329,6 +336,7 @@ def test_sandbox(dstability_model: DStabilityModel, polygons_dict: Dict[str, Lis
     # # this creates a new Polygon for the dike that incorporates the intersection points with the surface line.
     # # TODO not so satisfied with this technique to get the intersection points, it sometimes to inaccuracies of the points
     #
+    list_all_initial_point = []  # list of all the points in the initial stix
     for obj in union_surface_dike.geoms:
         if isinstance(obj, Polygon):
             list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in obj.exterior.coords]
@@ -351,7 +359,9 @@ def test_sandbox(dstability_model: DStabilityModel, polygons_dict: Dict[str, Lis
 
             # dike_layer.Points = list_points
             dike_layer.Points = new_list
+            list_all_initial_point.extend([[p.X, p.Z] for p in new_list])
 
+    # Loop over all other layers except the dike
     for layer in layers:
         if layer.Id == id_dijk:
             continue
@@ -359,8 +369,12 @@ def test_sandbox(dstability_model: DStabilityModel, polygons_dict: Dict[str, Lis
         modify_polygon_from_stix(current_polygon=poly,
                                  geometry_line=list_points_geom_me,
                                  fill_polygons=fill_polygons,
-                                 layer=layer)
+                                 layer=layer,
+                                 list_all_point=list_all_initial_point)
 
+    list_all_initial_point = list(set([tuple(p) for p in list_all_initial_point]))
+    print((-18.221, 2.804) in list_all_initial_point)
+    print([p for p in list_all_initial_point if -17 > p[0] > -19])
     # add the filling polygons and readjuste their coordinates when necessary.
     for fill_polygon in fill_polygons:
 
@@ -376,8 +390,8 @@ def test_sandbox(dstability_model: DStabilityModel, polygons_dict: Dict[str, Lis
         for i, geolib_pp in enumerate(list_geolibpoint_filling):
 
             a = False
-            for ppp in list_points:
-                geolib_ppp = GeolibPoint(x=ppp.X, z=ppp.Z, tolerance=0.01)
+            for ppp in list_all_initial_point:
+                geolib_ppp = GeolibPoint(x=ppp[0], z=ppp[1], tolerance=0.01)
 
                 # a = geolib_ppp.__eq__(geolib_pp)
                 # print(a, geolib_ppp, geolib_pp)
@@ -419,8 +433,8 @@ def test_sandbox(dstability_model: DStabilityModel, polygons_dict: Dict[str, Lis
     #                              geometry_line=list_points_geom_me,
     #                              fill_polygons=fill_polygons,
     #                              layer=layer)
-        # layer.Points = [PersistablePoint(X=round(p.X, 3), Z=round(p.Z, 3)) for p in
-        #                 layer.Points]
+    # layer.Points = [PersistablePoint(X=round(p.X, 3), Z=round(p.Z, 3)) for p in
+    #                 layer.Points]
 
 
 def test_sandbox_merge(dstability_model: DStabilityModel, modified_polygons: List[Polygon], stage_id: str,
@@ -721,7 +735,7 @@ def redefine_top_surface_polygons(polygons: List[Polygon], top_surface: np.array
 # modify_stix(None, None)
 
 
-def plot_measure_profile(polygons: Dict[str, List[Polygon]], surface):
+def plot_measure_profile(polygons: Dict[str, List[Polygon]], surface, title=str):
     fig = go.Figure()
     #
     # dict(inital_polygons=collection_polygon,
@@ -762,18 +776,19 @@ def plot_measure_profile(polygons: Dict[str, List[Polygon]], surface):
             legendgroup='filling',
             fill='toself', ))
 
-    for i, poly in enumerate(polygons['new_polygons']):
-        fig.add_trace(go.Scatter(
-            name='new_polygons',
-            x=[p[0] for p in poly.exterior.coords],
-            y=[p[1] for p in poly.exterior.coords],
-            mode='lines',
-            fillcolor='red',
-            opacity=0.7,
-            line=dict(color='red'),
-            showlegend=True if i == 0 else False,
-            legendgroup='new_polygons',
-            fill='toself', ))
+    # for i, poly in enumerate(polygons['new_polygons']):
+    #     fig.add_trace(go.Scatter(
+    #         name='new_polygons',
+    #         x=[p[0] for p in poly.exterior.coords],
+    #         y=[p[1] for p in poly.exterior.coords],
+    #         mode='lines',
+    #         fillcolor='red',
+    #         opacity=0.7,
+    #         line=dict(color='red'),
+    #         showlegend=True if i == 0 else False,
+    #         legendgroup='new_polygons',
+    #         fill='toself'))
+    fig.update_layout(title=title)
     fig.show()
     return
 
@@ -821,7 +836,6 @@ def clockwiseangle_and_distance(point, origin=[6, 6], refvec=[0, 1]):
     return angle, lenvector
 
 
-
 def get_modified_meas_geom(soil_measure, straight_lin: bool, polygons: Optional[List[Polygon]]):
     merged_polygon = unary_union(polygons)
 
@@ -839,6 +853,8 @@ def get_modified_meas_geom(soil_measure, straight_lin: bool, polygons: Optional[
         list_points_geom_me = [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
         return list_points_geom_me
     else:
+
+        ##LETS SIDE
         start = [df.loc["BUK", "x"], df.loc["BUK", "z"]]
         end = [df.loc["BUT", "x"], df.loc["BUT", "z"]]
 
@@ -849,21 +865,32 @@ def get_modified_meas_geom(soil_measure, straight_lin: bool, polygons: Optional[
         desired_length = 10
 
         # Calculate the new endpoint of the extended line
-        x3 = end[0] - (desired_length / math.sqrt(1 + m**2))
+        x3 = end[0] - (desired_length / math.sqrt(1 + m ** 2))
         y3 = end[1] + m * (x3 - end[0])
 
         df.loc["left"] = [x3, y3]
 
-        df.loc["BIT_1"] = [100, df.loc["BIT", "z"]]  # this is horizontal line to hinterland
+        ## RIGHT SIDE
+        start = [df.loc["EBL", "x"], df.loc["EBL", "z"]]
+        end = [df.loc["BIT", "x"], df.loc["BIT", "z"]]
+        # extend beyond start with the same slope
+        m = (end[1] - start[1]) / (end[0] - start[0])
+
+        # Determine the desired length of the extended line
+        desired_length = 10
+
+        # Calculate the new endpoint of the extended line
+        x4 = end[0] + (desired_length / math.sqrt(1 + m ** 2))
+        y4 = end[1] + m * (x4 - end[0])
+
+        df.loc["right"] = [x4, y4]
+
+        # df.loc["BIT_1"] = [100, df.loc["BIT", "z"]]  # this is horizontal line to hinterland
 
         # sort df by ascending x:
         df = df.sort_values(by="x")
+
         list_points_geom_me = [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
         return list_points_geom_me
 
         # extend beyond end with the same slope
-
-
-
-
-

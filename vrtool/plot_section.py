@@ -110,35 +110,29 @@ for section in _selected_traject.sections:
 
     for meas in measures:
         if isinstance(meas, SoilReinforcementMeasure):
+
             for i, soil_measure in enumerate(meas.measures):
-                if i == 10:
-                    # transform df in list of point:
-                    list_points_geom_me = get_modified_meas_geom(soil_measure=soil_measure,
-                                                                 straight_lin=False,
-                                                                 polygons=collection_polygon,
-                                                                 )
+                if i != 30:
+                    continue
+                # transform df in list of point:
+                list_points_geom_me = get_modified_meas_geom(soil_measure=soil_measure,
+                                                             straight_lin=False,
+                                                             polygons=collection_polygon,
+                                                             )
 
 
-                    # # write into a pickle
-                    # with open("data2.pkl", "wb") as f:
-                    #     pickle.dump(dict(collection_polygon=collection_polygon, list_points_geom_me=list_points_geom_me), f)
+                fill_polygons = find_polygons_to_fill_to_measure(collection_polygon, list_points_geom_me)
+                new_polygons = crop_polygons_below_surface_line(collection_polygon, list_points_geom_me)
 
+                polygon_final = fill_polygons + new_polygons
 
-                    fill_polygons = find_polygons_to_fill_to_measure(collection_polygon, list_points_geom_me)
-                    new_polygons = crop_polygons_below_surface_line(collection_polygon, list_points_geom_me)
+                polygons_dict = dict(
+                    initial_polygons=collection_polygon,
+                    fill_polygons=fill_polygons,
+                    new_polygons=new_polygons,
+                )
+#                plot_measure_profile(polygons_dict, list_points_geom_me, title=f'{section.name}_berm_{i}')
 
-                    polygon_final = fill_polygons + new_polygons
-
-                    polygons_dict = dict(
-                        initial_polygons=collection_polygon,
-                        fill_polygons=fill_polygons,
-                        new_polygons=new_polygons,
-                    )
-                    # plot_measure_profile(polygons_dict, list_points_geom_me)
-                    # stop
-
-                    modify_stix(stix_path, fill_polygons, str(i), collection_polygon, list_points_geom_me, polygons_dict)
+                modify_stix(stix_path, fill_polygons, str(i), collection_polygon, list_points_geom_me, polygons_dict)
         break  # TDOD remove this line. this is to prevent looping over all the measures within one DV
 
-        # TODO: fix how the left limit connects with the model
-        # TODO: run the stix
