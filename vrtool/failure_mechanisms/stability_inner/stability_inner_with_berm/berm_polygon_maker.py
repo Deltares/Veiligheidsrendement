@@ -1,8 +1,67 @@
-from typing import List, Union
+import math
+from typing import List, Union, Tuple
 
 import numpy as np
 from shapely import Polygon, LineString, MultiPolygon, Point, unary_union
 
+def get_modified_meas_geom(soil_measure, straight_line: bool) -> List[Tuple[float, float]]:
+    """
+    Adapt and modify the geometry of the soil measure and return the surface line as a list of points.
+
+    :param soil_measure: soil measure
+    :param straight_line: if True, the geometry is a straight line from the BIT in the hinterland
+                          if False, the geometry of the measure is extended
+    :return: list of points
+    """
+
+    df = soil_measure["Geometry"]
+    # EXT and BIT_0 are virtual points and must be removed
+    df = df[df.index != "EXT"]
+    df = df[df.index != "BIT_0"]
+
+    # Continue the geometry in the hinterland as a straight line
+    if straight_line:
+        df.loc["BIT_1"] = [100, df.loc["BIT", "z"]]  # this is horizontal line to hinterland2
+        return [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
+
+    else:
+        ##extend geometry LEFT SIDE
+        start = (df.loc["BUK", "x"], df.loc["BUK", "z"])
+        end = (df.loc["BUT", "x"], df.loc["BUT", "z"])
+        x3, y3 = find_extended_end(start, end, 'left', 10)
+        df.loc["left"] = [x3, y3]
+
+        ##extend geometry RIGHT SIDE
+        start = (df.loc["EBL", "x"], df.loc["EBL", "z"])
+        end = (df.loc["BIT", "x"], df.loc["BIT", "z"])
+        x4, y4 = find_extended_end(start, end, 'right', 10)
+        df.loc["right"] = [x4, y4]
+
+        # sort df by ascending x:
+        df = df.sort_values(by="x")
+        return [(x, z) for x, z in zip(df["x"].values, df["z"].values)]
+
+
+def find_extended_end(start_point: Tuple[float, float], end_point: Tuple[float, float], side: str,
+                      desired_length: float) -> Tuple[float, float]:
+    """
+    Extend a line with a given length in a given direction.
+
+    :param start_point: start point of the line
+    :param end_point: end point of the line
+    :param side: if the line is extended on the right (hinterland) or left (foreland) of the embankment
+    :param desired_length: length of the extension
+
+    :return: new end point of the extended line
+    """
+    sign = 1 if side == "right" else -1
+
+    m = (end_point[1] - start_point[1]) / (end_point[0] - start_point[0])
+
+    # Calculate the new endpoint of the extended line
+    new_x = end_point[0] + sign * (desired_length / math.sqrt(1 + m ** 2))
+    new_y = end_point[1] + m * (new_x - end_point[0])
+    return new_x, new_y
 
 def crop_polygons_below_surface_line(polygons: List[Polygon], top_surface: np.array) -> List[Polygon]:
     """
