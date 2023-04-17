@@ -190,6 +190,7 @@ class RunOptimization(VrToolRunProtocol):
     def run(self) -> ResultsOptimization:
         logging.info("Start step 3: Optimization")
         _results_optimization = ResultsOptimization()
+        _results_optimization.vr_config = self.vr_config
         if self.vr_config.reuse_output:
             _results_optimization.load_results()
         else:
@@ -205,7 +206,6 @@ class RunOptimization(VrToolRunProtocol):
 
         logging.info("Finished step 3: Optimization")
         _results_optimization.selected_traject = self.selected_traject
-        _results_optimization.vr_config = self.vr_config
         _results_optimization.results_solutions = self._solutions_dict
         if self.vr_config.shelves:
             _results_optimization.save_results()
