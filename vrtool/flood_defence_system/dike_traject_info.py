@@ -45,7 +45,7 @@ class DikeTrajectInfo:
         )
         betacs = pf_to_beta(Pcs)
         betamax = pf_to_beta(self.Pmax)
-        
+
         if mechanism == "Piping":
             return 1.04 * np.exp(0.37 * betacs - 0.43 * betamax)
         elif mechanism == "Heave":
@@ -125,17 +125,6 @@ class DikeTrajectInfo:
             _general_info["TrajectLength"] = 15000
             _general_info["Pmax"] = 1.0 / 30000
         else:
-            logging.warn(
-                "Dike traject not found, using default assumptions for traject."
-            )
-            _general_info["aPiping"] = 0.9
-            _general_info["FloodDamage"] = 5e9
-            _general_info["Pmax"] = 1.0 / 10000
-            _general_info["omegaPiping"] = 0.24
-            _general_info["omegaStabilityInner"] = 0.04
-            _general_info["omegaOverflow"] = 0.24
-            _general_info["bPiping"] = 300
-            _general_info["aStabilityInner"] = 0.033
-            _general_info["bStabilityInner"] = 50
+            raise ValueError(f"Warning: Traject {traject_name} not recognised.")
 
         return cls(**_general_info)

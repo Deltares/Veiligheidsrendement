@@ -157,23 +157,11 @@ class TestDikeTrajectInfo:
         self, traject_name: str
     ):
         # Call
-        info = DikeTrajectInfo.from_traject_name(traject_name)
+        with pytest.raises(ValueError) as exception_error:
+            DikeTrajectInfo.from_traject_name(traject_name)
 
         # Assert
-        assert info.traject_name == traject_name
-        assert info.aPiping == 0.9
-        assert info.FloodDamage == 5e9
-        assert info.TrajectLength == 0
-        assert info.Pmax == 1.0 / 10000
-
-        assert info.omegaPiping == 0.24
-        assert info.omegaStabilityInner == 0.04
-        assert info.omegaOverflow == 0.24
-
-        assert info.aStabilityInner == 0.033
-        assert info.bStabilityInner == 50
-
-        assert info.beta_max == approx(3.7190164854556804)
-        assert info.gammaHeave == approx(1.292463569010036)
-        assert info.gammaPiping == approx(1.3024230063783075)
-        assert info.gammaUplift == approx(1.698591299284156)
+        assert (
+            str(exception_error.value)
+            == f"Warning: Traject {traject_name} not recognised."
+        )
