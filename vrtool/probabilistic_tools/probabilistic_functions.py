@@ -6,26 +6,6 @@ import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
 
-
-# Function to calculate a safety factor:
-def calc_gamma(mechanism, traject_info):
-    if mechanism == "Piping" or mechanism == "Heave" or mechanism == "Uplift":
-        Pcs = (
-            traject_info["Pmax"] * traject_info["omegaPiping"] * traject_info["bPiping"]
-        ) / (traject_info["aPiping"] * traject_info["TrajectLength"])
-        betacs = pf_to_beta(Pcs)
-        betamax = pf_to_beta(traject_info["Pmax"])
-        if mechanism == "Piping":
-            gamma = 1.04 * np.exp(0.37 * betacs - 0.43 * betamax)
-        elif mechanism == "Heave":
-            gamma = 0.37 * np.exp(0.48 * betacs - 0.3 * betamax)
-        elif mechanism == "Uplift":
-            gamma = 0.48 * np.exp(0.46 * betacs - 0.27 * betamax)
-        else:
-            print("Mechanism not found")
-    return gamma
-
-
 # Function to calculate the implicated reliability from the safety factor
 def calc_beta_implicated(mechanism, safety_factor, traject_info=None):
     if safety_factor == 0:

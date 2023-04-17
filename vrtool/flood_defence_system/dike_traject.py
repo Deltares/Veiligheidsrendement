@@ -12,29 +12,26 @@ from scipy.interpolate import interp1d
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import (
     beta_to_pf,
-    calc_gamma,
     pf_to_beta,
 )
 
 
 class DikeTraject:
     sections: list[DikeSection]
-    general_info: dict
+    general_info: DikeTrajectInfo
     probabilities: pd.DataFrame
 
     # This class contains general information on the dike traject and is used to store all data on the sections
-    def __init__(self, config: VrtoolConfig, traject=None):
-        if traject == None:
-            print("Warning: no traject given in config. Default was chosen")
-            self.traject = "Not specified"
-        else:
-            self.traject = traject
+    def __init__(self, config: VrtoolConfig):
+        if not config.traject:
+            raise ValueError("No traject given in config.")
 
         self.config = config
         self.mechanisms = config.mechanisms
@@ -42,68 +39,6 @@ class DikeTraject:
         self.flip_traject = config.flip_traject
         self.t_0 = config.t_0
         self.sections = []
-        self.general_info = {
-            "omegaPiping": 0.24,
-            "omegaStabilityInner": 0.04,
-            "omegaOverflow": 0.24,
-            "bPiping": 300,
-            "aStabilityInner": 0.033,
-            "bStabilityInner": 50,
-            "MechanismsConsidered": self.mechanisms,
-        }
-
-        # Basic traject info
-        # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
-        # Pmax is the ondergrens as given by law
-        # TODO check whether this is a sensible value
-        # TODO read these values from a generic input file.
-        if traject == "16-4":
-            self.general_info["aPiping"] = 0.9
-            self.general_info["FloodDamage"] = 23e9
-            self.general_info["TrajectLength"] = 19480
-            self.general_info["Pmax"] = 1.0 / 10000
-        elif traject == "16-3":
-            self.general_info["FloodDamage"] = 23e9
-            self.general_info["TrajectLength"] = 19899
-            self.general_info["Pmax"] = 1.0 / 10000
-            self.general_info["aPiping"] = 0.9
-            # NB: klopt a hier?????!!!!
-        elif traject == "16-3 en 16-4":
-            self.general_info["FloodDamage"] = 23e9
-            self.general_info[
-                "TrajectLength"
-            ] = 19500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
-            # gebruiken
-            self.general_info["Pmax"] = 1.0 / 10000
-            self.general_info["aPiping"] = 0.9
-
-        elif traject == "38-1":
-            self.general_info["FloodDamage"] = 14e9
-            self.general_info[
-                "TrajectLength"
-            ] = 29500  # voor doorsnede-eisen wel ongeveer lengte individueel traject
-            # gebruiken
-            self.general_info["Pmax"] = 1.0 / 30000
-            self.general_info["aPiping"] = 0.9
-
-        elif traject == "16-1":
-            self.general_info["FloodDamage"] = 29e9
-            self.general_info["TrajectLength"] = 15000
-            self.general_info["Pmax"] = 1.0 / 30000
-            self.general_info["aPiping"] = 0.4
-        else:
-            warnings.warn(
-                "Warning: dike traject not found, using default assumptions for traject."
-            )
-            self.general_info["FloodDamage"] = 5e9
-            self.general_info["Pmax"] = 1.0 / 10000
-            self.general_info["omegaPiping"] = 0.24
-            self.general_info["aPiping"] = 0.9
-            self.general_info["bPiping"] = 300
-            self.general_info["omegaStabilityInner"] = 0.04
-            self.general_info["aStabilityInner"] = 0.033
-            self.general_info["bStabilityInner"] = 50
-            self.general_info["omegaOverflow"] = 0.24
 
     @classmethod
     def from_vr_config(cls, vr_config: VrtoolConfig) -> DikeTraject:
@@ -116,7 +51,7 @@ class DikeTraject:
         Returns:
             DikeTraject: Valid instance of a loaded dike traject.
         """
-        _traject = cls(vr_config, traject=vr_config.traject)
+        _traject = cls(vr_config)
         _traject.read_all_traject_input(input_path=vr_config.input_directory)
         return _traject
 
@@ -200,15 +135,14 @@ class DikeTraject:
             #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
             #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
 
-        # Traject length is lengt of all sections together:
-        self.general_info["TrajectLength"] = 0
+        # Traject length is length of all sections together:
+        traject_length = 0
         for i in self.sections:
-            self.general_info["TrajectLength"] += i.Length
+            traject_length += i.Length
 
-        self.general_info["beta_max"] = pf_to_beta(self.general_info["Pmax"])
-        self.general_info["gammaHeave"] = calc_gamma("Heave", self.general_info)
-        self.general_info["gammaUplift"] = calc_gamma("Uplift", self.general_info)
-        self.general_info["gammaPiping"] = calc_gamma("Piping", self.general_info)
+        self.general_info = DikeTrajectInfo.from_traject_info(
+            self.config.traject, traject_length
+        )
 
     def set_probabilities(self):
         """routine to make 1 dataframe of all probabilities of a TrajectObject"""
