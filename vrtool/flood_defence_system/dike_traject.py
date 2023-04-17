@@ -607,18 +607,6 @@ class DikeTraject:
             plt.savefig(output_directory.joinpath(i.name + ".png"), bbox_inches="tight")
             plt.close()
 
-    def update_probabilities(self, probabilities, changed_section=False):
-        # This function is to update the probabilities after a reinforcement.
-        for i in self.sections:
-            if changed_section and (i.name == changed_section):
-                i.section_reliability.SectionReliability = probabilities.loc[
-                    changed_section
-                ].astype(float)
-            elif not changed_section:
-                i.section_reliability.SectionReliability = probabilities.loc[
-                    i.name
-                ].astype(float)
-
 
 def plot_settings(labels: str = "NL"):
     # a bunch of settings to make it look nice:
