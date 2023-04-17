@@ -13,6 +13,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
 
 
 class StabilityScreenMeasure(MeasureBase):
@@ -20,7 +21,7 @@ class StabilityScreenMeasure(MeasureBase):
     def evaluate_measure(
         self,
         dike_section: DikeSection,
-        traject_info: dict[str, any],
+        traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
         SFincrease: float = 0.2,
     ):
