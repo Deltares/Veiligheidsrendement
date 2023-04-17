@@ -47,14 +47,15 @@ class VrToolLogger:
         
   
     @staticmethod
-    def add_handler(handler: logging.StreamHandler, logging_level: logging._Level):
+    def add_handler(handler: logging.StreamHandler, logging_level: int):
         """
         Adds a new handler to the VrTool logger.
 
         Args:
             handler (logging.StreamHandler): Handler to be added.
+            logging_level (int): Logging level.
         """
-        # Set logger
+        # Set (root) logger.
         _logger = logging.getLogger("")
         _logger.setLevel(logging_level)
         _logger.addHandler(handler)
