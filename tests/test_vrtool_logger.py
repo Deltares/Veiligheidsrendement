@@ -32,13 +32,14 @@ class TestVrToolLogger:
 
         # 2. Run test.
         with pytest.raises(ValueError) as exception_error:
-            VrToolLogger.init_file_handler(log_file)
+            VrToolLogger.init_file_handler(log_file, logging.INFO)
 
         # 3. Verify expectations.
         assert str(exception_error.value) == _error_mssg
 
     def test_init_file_handler_adds_handler_to_logging(self, request: pytest.FixtureRequest):
         # 1. Define expectations
+        _logging_level = logging.INFO
         _handler_name = "VrTool log file handler"
         _log_file = test_results / request.node.name / "vrtool.log"
         if _log_file.exists():
@@ -49,12 +50,13 @@ class TestVrToolLogger:
         assert not any(_handler.name == _handler_name for _handler in _vrtool_logger.handlers)
         
         # 2. Run test
-        VrToolLogger.init_file_handler(_log_file)
+        VrToolLogger.init_file_handler(_log_file, _logging_level)
 
         # 3. Verify expectations.
         _console_handler = next((_handler for _handler in _vrtool_logger.handlers if _handler.name == _handler_name), None)
         assert isinstance(_console_handler, logging.FileHandler)
-        assert _console_handler.level == logging.INFO
+        assert _console_handler.level == _logging_level
+        assert _vrtool_logger.level == _logging_level
 
     def test_init_file_handler_creates_file_and_directories(self, request: pytest.FixtureRequest):
         # 1. Define test data.
@@ -63,7 +65,7 @@ class TestVrToolLogger:
             shutil.rmtree(_log_file.parent)
 
         # 2. Run test.
-        VrToolLogger.init_file_handler(_log_file)
+        VrToolLogger.init_file_handler(_log_file, logging.INFO)
 
         # 3. Verify final expectations.
         assert _log_file.parent.exists()
@@ -76,7 +78,7 @@ class TestVrToolLogger:
             shutil.rmtree(_log_file.parent)
 
         # 2. Run test.
-        VrToolLogger.init_file_handler(_log_file)
+        VrToolLogger.init_file_handler(_log_file, logging.INFO)
 
         # 3. Verify final expectations.
         assert _log_file.parent.exists()
@@ -86,18 +88,19 @@ class TestVrToolLogger:
     def test_init_console_handler_adds_handler_to_logging(self):
         # 1. Define expectations
         _handler_name = "VrTool log console handler"
+        _logging_level = logging.INFO
         # Assumes the vrtool logger is the root one 
         _vrtool_logger = logging.getLogger("")  
         assert not any(_handler.name == _handler_name for _handler in _vrtool_logger.handlers)
         
         # 2. Run test
-        VrToolLogger.init_console_handler()
+        VrToolLogger.init_console_handler(_logging_level)
 
         # 3. Verify expectations.
         _console_handler = next((_handler for _handler in _vrtool_logger.handlers if _handler.name == _handler_name), None)
         assert isinstance(_console_handler, logging.StreamHandler)
-        assert _console_handler.level == logging.INFO
-
+        assert _console_handler.level == _logging_level
+        assert _vrtool_logger.level == _logging_level
 
     @pytest.mark.parametrize("logging_level", [pytest.param(logging.INFO, id="INFO"), pytest.param(logging.WARN, id="WARN"), pytest.param(logging.DEBUG, id="DEBUG"), pytest.param(logging.ERROR, id="ERROR")])
     def test_add_handler_sets_the_logging_level(self, logging_level: int):
@@ -114,8 +117,3 @@ class TestVrToolLogger:
         # 3. Verify expectations.
         assert _test_handler in _vrtool_logger.handlers
         assert _vrtool_logger.level == logging_level
-        
-
-    def test_get_vrtool_formatter(self):
-        _formatter = VrToolLogger.get_vrtool_formatter()
-        assert isinstance(_formatter, logging.Formatter)

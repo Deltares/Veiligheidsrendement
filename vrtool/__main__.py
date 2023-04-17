@@ -122,5 +122,5 @@ def run_full(**kwargs):
 
 
 if __name__ == "__main__":
-    VrToolLogger.init_console_handler()
+    VrToolLogger.init_console_handler(logging.INFO)
     cli()
