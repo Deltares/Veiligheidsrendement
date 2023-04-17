@@ -10,6 +10,7 @@ class TestRunMeasures:
     def test_init_with_valid_data(self):
         # 1. Define test data
         _vr_config = VrtoolConfig()
+        _vr_config.traject = "A traject"
         _traject = DikeTraject(_vr_config)
 
         # 2. Run test
