@@ -88,8 +88,8 @@ class RunSafetyAssessment(VrToolRunProtocol):
         plt.plot(
             [self.vr_config.t_0, self.vr_config.t_0 + np.max(self.vr_config.T)],
             [
-                pf_to_beta(self.selected_traject.general_info["Pmax"]),
-                pf_to_beta(self.selected_traject.general_info["Pmax"]),
+                pf_to_beta(self.selected_traject.general_info.Pmax),
+                pf_to_beta(self.selected_traject.general_info.Pmax),
             ],
             "k--",
             label="Norm",
