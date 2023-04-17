@@ -87,7 +87,9 @@ class DikeTrajectInfo:
         self.gammaPiping = self.calculate_gamma("Piping")
 
     @classmethod
-    def from_traject_name(cls, traject_name: str) -> DikeTrajectInfo:
+    def from_traject_info(
+        cls, traject_name: str, traject_length: float
+    ) -> DikeTrajectInfo:
         # Basic traject info
         # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
         # Pmax is the ondergrens as given by law
@@ -97,34 +99,46 @@ class DikeTrajectInfo:
         if traject_name == "16-4":
             _general_info["aPiping"] = 0.9
             _general_info["FloodDamage"] = 23e9
-            _general_info["TrajectLength"] = 19480
+            _general_info["TrajectLength"] = traject_length
             _general_info["Pmax"] = 1.0 / 10000
         elif traject_name == "16-3":
             _general_info["aPiping"] = 0.9
             _general_info["FloodDamage"] = 23e9
-            _general_info["TrajectLength"] = 19899
+            _general_info["TrajectLength"] = traject_length
             _general_info["Pmax"] = 1.0 / 10000
             # NB: klopt a hier?????!!!!
         elif traject_name == "16-3 en 16-4":
             _general_info["aPiping"] = 0.9
             _general_info["FloodDamage"] = 23e9
             # voor doorsnede-eisen wel ongeveer lengte individueel traject
-            _general_info["TrajectLength"] = 19500
+            _general_info["TrajectLength"] = traject_length
             # gebruiken
             _general_info["Pmax"] = 1.0 / 10000
         elif traject_name == "38-1":
             _general_info["aPiping"] = 0.9
             _general_info["FloodDamage"] = 14e9
             # voor doorsnede-eisen wel ongeveer lengte individueel traject
-            _general_info["TrajectLength"] = 29500
+            _general_info["TrajectLength"] = traject_length
             # gebruiken
             _general_info["Pmax"] = 1.0 / 30000
         elif traject_name == "16-1":
             _general_info["aPiping"] = 0.4
             _general_info["FloodDamage"] = 29e9
-            _general_info["TrajectLength"] = 15000
+            _general_info["TrajectLength"] = traject_length
             _general_info["Pmax"] = 1.0 / 30000
         else:
-            raise ValueError(f"Warning: Traject {traject_name} not recognised.")
+            logging.warn(
+                "Dike traject not found, using default assumptions for traject."
+            )
+            _general_info["aPiping"] = 0.9
+            _general_info["FloodDamage"] = 5e9
+            _general_info["Pmax"] = 1.0 / 10000
+            _general_info["omegaPiping"] = 0.24
+            _general_info["omegaStabilityInner"] = 0.04
+            _general_info["omegaOverflow"] = 0.24
+            _general_info["bPiping"] = 300
+            _general_info["aStabilityInner"] = 0.033
+            _general_info["bStabilityInner"] = 50
+            _general_info["TrajectLength"] = traject_length
 
         return cls(**_general_info)
