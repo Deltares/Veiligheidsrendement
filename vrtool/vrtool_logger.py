@@ -30,6 +30,7 @@ class VrToolLogger:
 
         # Set file handler
         _file_handler = logging.FileHandler(filename=log_file, mode="a")
+        _file_handler.set_name("VrTool log file handler")
         _file_handler.setLevel(logging.INFO)
         _file_handler.setFormatter(VrToolLogger.get_vrtool_formatter())
         VrToolLogger.add_handler(_file_handler, logging.INFO)
@@ -41,6 +42,8 @@ class VrToolLogger:
         """
         # Set console handler
         _console_handler = logging.StreamHandler()
+        _console_handler.set_name("VrTool log console handler")
+
         _console_handler.setLevel(logging.INFO)  # Can be also set to WARNING
         _console_handler.setFormatter(VrToolLogger.get_vrtool_formatter())
         VrToolLogger.add_handler(_console_handler, logging.INFO)
@@ -64,6 +67,12 @@ class VrToolLogger:
 
     @staticmethod
     def get_vrtool_formatter() -> logging.Formatter:
+        """
+        Returns the default formatter to be used by the vrtool logging messages.
+
+        Returns:
+            logging.Formatter: VrTool log message formatter.
+        """
         # Create a formatter and add to the file and console handlers.
         return logging.Formatter(
             fmt="%(asctime)s - [%(filename)s:%(lineno)d] - %(name)s - %(levelname)s - %(message)s",
