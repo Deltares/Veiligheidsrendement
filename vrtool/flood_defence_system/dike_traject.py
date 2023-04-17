@@ -199,7 +199,7 @@ class DikeTraject:
                         reinforcement_strategy.OptimalStep
                     ]
                 elif greedymode == "SatisfiedStandard":
-                    Ptarget = self.general_info["Pmax"]
+                    Ptarget = self.general_info.Pmax
                     for i in reversed(reinforcement_strategy.Probabilities):
                         beta_traj, Pf_traj = calc_traject_prob(i, ts=50)
                         if Pf_traj < Ptarget:  # satisfactory solution
@@ -345,33 +345,30 @@ class DikeTraject:
                     dash = [2, 2]
                     if j == "StabilityInner":
                         N = (
-                            self.general_info["TrajectLength"]
-                            * self.general_info["aStabilityInner"]
-                            / self.general_info["bStabilityInner"]
+                            self.general_info.TrajectLength
+                            * self.general_info.aStabilityInner
+                            / self.general_info.bStabilityInner
                         )
                         pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaStabilityInner"]
+                            self.general_info.Pmax
+                            * self.general_info.omegaStabilityInner
                             / N
                         )
                         # dash = [1,2]
                     elif j == "Piping":
                         N = (
-                            self.general_info["TrajectLength"]
-                            * self.general_info["aPiping"]
-                            / self.general_info["bPiping"]
+                            self.general_info.TrajectLength
+                            * self.general_info.aPiping
+                            / self.general_info.bPiping
                         )
                         pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaPiping"]
+                            self.general_info.Pmax
+                            * self.general_info.omegaStabilityInner
                             / N
                         )
                         # dash = [1,3]
                     elif j == "Overflow":
-                        pt = (
-                            self.general_info["Pmax"]
-                            * self.general_info["omegaOverflow"]
-                        )
+                        pt = self.general_info.Pmax * self.general_info.omegaOverflow
                         # dash = [1,2]
                     if case_settings["beta_or_prob"] == "beta":
                         ax.plot(
@@ -409,8 +406,8 @@ class DikeTraject:
                     ax.plot(
                         [0, max(cumlength)],
                         [
-                            pf_to_beta(self.general_info["Pmax"]),
-                            pf_to_beta(self.general_info["Pmax"]),
+                            pf_to_beta(self.general_info.Pmax),
+                            pf_to_beta(self.general_info.Pmax),
                         ],
                         "k--",
                         label=label_target,
@@ -419,7 +416,7 @@ class DikeTraject:
                 if case_settings["beta_or_prob"] == "prob":
                     ax.plot(
                         [0, max(cumlength)],
-                        [self.general_info["Pmax"], self.general_info["Pmax"]],
+                        [self.general_info.Pmax, self.general_info.Pmax],
                         "k--",
                         label=label_target,
                         linewidth=1,
@@ -468,7 +465,7 @@ class DikeTraject:
                 print(beta_tot)
                 ax1.plot([-2, 3], [beta_tot, beta_tot], color=color[col])
                 ax1.axhline(
-                    pf_to_beta(self.general_info["Pmax"]),
+                    pf_to_beta(self.general_info.Pmax),
                     linestyle="--",
                     color="black",
                     label=label_target,
@@ -530,8 +527,8 @@ class DikeTraject:
             plt.plot(
                 [t_start, t_start + np.max(self.general_info["T"])],
                 [
-                    pf_to_beta(self.general_info["Pmax"]),
-                    pf_to_beta(self.general_info["Pmax"]),
+                    pf_to_beta(self.general_info.Pmax),
+                    pf_to_beta(self.general_info.Pmax),
                 ],
                 "k--",
                 label="Requirement",
