@@ -18,6 +18,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
     calc_beta_implicated,
     pf_to_beta,
 )
+from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
 
 
 class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
@@ -26,7 +27,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         mechanism_input: MechanismInput,
         load: LoadInput,
         initial_year: int,
-        traject_info: dict,
+        traject_info: DikeTrajectInfo,
     ) -> None:
         """Initializes a calculator for piping semi-probabilistic calculations
 
@@ -34,7 +35,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             mechanism_input (MechanismInput): The input for the mechanism.
             load (LoadInput): The load input.
             initial_year (int): The initial year to base the calculation on.
-            traject_info (dict): A dictionary containing the traject info.
+            traject_info (DikeTrajectInfo): A DikeTrajectInfo containing the traject info.
         """
         if not isinstance(mechanism_input, MechanismInput):
             raise ValueError(
@@ -47,8 +48,10 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         if not isinstance(initial_year, int):
             raise ValueError("Expected instance of a {}.".format(int.__name__))
 
-        if not isinstance(traject_info, dict):
-            raise ValueError("Expected instance of a {}.".format(dict.__name__))
+        if not isinstance(traject_info, DikeTrajectInfo):
+            raise ValueError(
+                "Expected instance of a {}.".format(DikeTrajectInfo.__name__)
+            )
 
         self._mechanism_input = mechanism_input
         self._load = load
@@ -88,7 +91,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                 strength_new.input_ind,
                 t_0=self._initial_year,
                 load=self._load,
-                p_h=self._traject_info["Pmax"],
+                p_h=self._traject_info.Pmax,
                 p_dh=0.5,
                 year=year,
             )
@@ -166,7 +169,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         gamma_schem_pip = 1  # 1.05
 
         Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
-        gamma_pip = self._traject_info["gammaPiping"]
+        gamma_pip = self._traject_info.gammaPiping
         # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
         # Calculate needed safety factor
 
@@ -182,7 +185,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         gamma_schem_heave = 1  # 1.05
 
         Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
-        gamma_h = self._traject_info["gammaHeave"]
+        gamma_h = self._traject_info.gammaHeave
 
         # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
         # Calculate
@@ -199,7 +202,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         gamma_schem_upl = 1  # 1.05
 
         Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
-        gamma_u = self._traject_info["gammaUplift"]
+        gamma_u = self._traject_info.gammaUplift
         # ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
         # Calculate
         # needed safety factor

@@ -3,6 +3,7 @@ import openturns as ot
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
 
 
 # A collection of MechanismReliability objects in time
@@ -33,7 +34,7 @@ class MechanismReliabilityCollection:
         load=False,
         mechanism="Overflow",
         method="FORM",
-        trajectinfo=None,
+        trajectinfo=DikeTrajectInfo,
         interpolate="False",
         conditionality="no",
     ):
