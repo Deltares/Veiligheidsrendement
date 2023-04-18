@@ -1157,7 +1157,7 @@ class StrategyBase:
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
     @abstractmethod
-    def determine_risk_cost_curve(self, traject: DikeTraject, input_path: Path = None):
+    def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
         raise NotImplementedError("Expected concrete definition in inherited class.")
 
     def get_safety_standard_step(self, Ptarget, t=50):

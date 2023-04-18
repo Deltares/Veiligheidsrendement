@@ -443,7 +443,7 @@ class GreedyStrategy(StrategyBase):
             combined = combined.set_index(["name", "mechanism"])
             self.Probabilities.append(combined)
 
-    def determine_risk_cost_curve(self, traject: DikeTraject, output_path: Path = None):
+    def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
         """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""
         if output_path:
             output_path.mkdir(parents=True, exist_ok=True)
@@ -463,7 +463,7 @@ class GreedyStrategy(StrategyBase):
                         i,
                         self.discount_rate,
                         np.max(self.T),
-                        traject.general_info.FloodDamage,
+                        flood_damage,
                         dumpPt=output_path.joinpath(
                             "Greedy_step_" + str(count) + ".csv"
                         ),
@@ -475,7 +475,7 @@ class GreedyStrategy(StrategyBase):
                         i,
                         self.discount_rate,
                         np.max(self.T),
-                        traject.general_info.FloodDamage,
+                        flood_damage,
                     )
                 )
             count += 1
