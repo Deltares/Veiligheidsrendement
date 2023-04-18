@@ -69,4 +69,4 @@ class VrToolLogger:
         _logger = logging.getLogger("")
         _logger.setLevel(logging_level)
         _logger.addHandler(handler)
-        logging.info(f"Initialized VrTool logger.")
+        logging.info("Initialized VrTool logger.")
