@@ -123,6 +123,8 @@ We base the `vrtool` code standards on:
 
 - Descriptive modules, files, classes, methods and variable names.
     - [snake case formatting](https://en.wikipedia.org/wiki/Snake_case) for everything except classes, which will use [upper camel case formatting](https://en.wikipedia.org/wiki/Camel_case) (also known as PascalCase).
+- One file consists of one (and only one) class.
+    - As a general rule of thumb, the file containing a class will have the same name (snake case for the file, upper camel case for the class).
 - Use of [type hinting](https://docs.python.org/3/library/typing.html)
 - Methods contain [google docstrings](https://google.github.io/styleguide/pyguide.html)
 - Code formatting with black and sort. (This is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main` with a [Github workflow](../.github/workflows/normalize_code.yml)).
