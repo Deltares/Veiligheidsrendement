@@ -12,9 +12,7 @@ class TestDikeTraject:
 
         # Call
         with pytest.raises(ValueError) as value_error:
-            DikeTraject.from_vr_config(config)
+            DikeTraject(config)
 
         # Assert
-        assert (
-            str(value_error.value) == "No traject given in config."
-        )
+        assert str(value_error.value) == "No traject given in config."
