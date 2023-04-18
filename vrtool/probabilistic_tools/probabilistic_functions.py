@@ -330,7 +330,9 @@ def get_design_water_level(load, p):
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
 
-def add_load_char_vals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0):
+def add_load_char_vals(
+    input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0
+) -> dict:
     # TODO this function should be moved elsewhere
     # input = list of all strength variables
 
