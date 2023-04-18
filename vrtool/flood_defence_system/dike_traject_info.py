@@ -28,33 +28,6 @@ class DikeTrajectInfo:
     FloodDamage: float = float("nan")
     TrajectLength: float = 0
 
-    def calculate_gamma(self, mechanism: str) -> np.ndarray:
-        """Calculates the gamma based on the mechanism
-
-        Args:
-            mechanism (str): The mechanism to calculate the gamma for.
-
-        Raises:
-            NotImplementedError: Raised when the mechanism is not supported.
-
-        Returns:
-            np.ndarray: An array containing the gamma value.
-        """
-        Pcs = (self.Pmax * self.omegaPiping * self.bPiping) / (
-            self.aPiping * self.TrajectLength
-        )
-        betacs = pf_to_beta(Pcs)
-        betamax = pf_to_beta(self.Pmax)
-
-        if mechanism == "Piping":
-            return 1.04 * np.exp(0.37 * betacs - 0.43 * betamax)
-        elif mechanism == "Heave":
-            return 0.37 * np.exp(0.48 * betacs - 0.3 * betamax)
-        elif mechanism == "Uplift":
-            return 0.48 * np.exp(0.46 * betacs - 0.27 * betamax)
-        else:
-            raise NotImplementedError("Mechanism not found")
-
     def calculate_implicated_beta(
         self, mechanism: str, safety_factor: float
     ) -> np.ndarray:
@@ -84,11 +57,38 @@ class DikeTrajectInfo:
             logging.warn("Mechanism not found")
             return float("nan")
 
+    def __calculate_gamma(self, mechanism: str) -> np.ndarray:
+        """Calculates the gamma based on the mechanism
+
+        Args:
+            mechanism (str): The mechanism to calculate the gamma for.
+
+        Raises:
+            NotImplementedError: Raised when the mechanism is not supported.
+
+        Returns:
+            np.ndarray: An array containing the gamma value.
+        """
+        Pcs = (self.Pmax * self.omegaPiping * self.bPiping) / (
+            self.aPiping * self.TrajectLength
+        )
+        betacs = pf_to_beta(Pcs)
+        betamax = pf_to_beta(self.Pmax)
+
+        if mechanism == "Piping":
+            return 1.04 * np.exp(0.37 * betacs - 0.43 * betamax)
+        elif mechanism == "Heave":
+            return 0.37 * np.exp(0.48 * betacs - 0.3 * betamax)
+        elif mechanism == "Uplift":
+            return 0.48 * np.exp(0.46 * betacs - 0.27 * betamax)
+        else:
+            raise NotImplementedError("Mechanism not found")
+
     def __post_init__(self):
         self.beta_max = pf_to_beta(self.Pmax)
-        self.gammaHeave = self.calculate_gamma("Heave")
-        self.gammaUplift = self.calculate_gamma("Uplift")
-        self.gammaPiping = self.calculate_gamma("Piping")
+        self.gammaHeave = self.__calculate_gamma("Heave")
+        self.gammaUplift = self.__calculate_gamma("Uplift")
+        self.gammaPiping = self.__calculate_gamma("Piping")
 
     @classmethod
     def from_traject_info(
