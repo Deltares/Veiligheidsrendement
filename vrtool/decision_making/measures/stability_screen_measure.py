@@ -53,29 +53,37 @@ class StabilityScreenMeasure(MeasureBase):
         )
         self.measures["Reliability"] = SectionReliability()
         self.measures["Reliability"].Mechanisms = {}
-        for i in mechanisms:
-            calc_type = dike_section.mechanism_data[i][1]
-            self.measures["Reliability"].Mechanisms[i] = MechanismReliabilityCollection(
-                i, calc_type, self.config
+        for mechanism in mechanisms:
+            calc_type = dike_section.mechanism_data[mechanism][1]
+            self.measures["Reliability"].Mechanisms[
+                mechanism
+            ] = MechanismReliabilityCollection(
+                mechanism, calc_type, self.config.T, self.config.t_0, 0
             )
-            for ij in self.measures["Reliability"].Mechanisms[i].Reliability.keys():
-                self.measures["Reliability"].Mechanisms[i].Reliability[
+            for ij in (
+                self.measures["Reliability"].Mechanisms[mechanism].Reliability.keys()
+            ):
+                self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
+                    dike_section.section_reliability.Mechanisms[mechanism]
+                    .Reliability[ij]
+                    .Input
                 )
-                if i == "Overflow" or i == "Piping":  # Copy results
-                    self.measures["Reliability"].Mechanisms[i].Reliability[
+                if mechanism == "Overflow" or mechanism == "Piping":  # Copy results
+                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                         ij
                     ] = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[i].Reliability[ij]
+                        dike_section.section_reliability.Mechanisms[
+                            mechanism
+                        ].Reliability[ij]
                     )
                     pass  # no influence
-                elif i == "StabilityInner":
-                    self.measures["Reliability"].Mechanisms[i].Reliability[
+                elif mechanism == "StabilityInner":
+                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                         ij
                     ].Input = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[i]
+                        dike_section.section_reliability.Mechanisms[mechanism]
                         .Reliability[ij]
                         .Input
                     )
@@ -83,44 +91,48 @@ class StabilityScreenMeasure(MeasureBase):
                         if (
                             "SF_2025"
                             in self.measures["Reliability"]
-                            .Mechanisms[i]
+                            .Mechanisms[mechanism]
                             .Reliability[ij]
                             .Input.input
                         ):
-                            self.measures["Reliability"].Mechanisms[i].Reliability[
-                                ij
-                            ].Input.input["SF_2025"] += SFincrease
-                            self.measures["Reliability"].Mechanisms[i].Reliability[
-                                ij
-                            ].Input.input["SF_2075"] += SFincrease
+                            self.measures["Reliability"].Mechanisms[
+                                mechanism
+                            ].Reliability[ij].Input.input["SF_2025"] += SFincrease
+                            self.measures["Reliability"].Mechanisms[
+                                mechanism
+                            ].Reliability[ij].Input.input["SF_2075"] += SFincrease
                         elif (
                             "beta_2025"
                             in self.measures["Reliability"]
-                            .Mechanisms[i]
+                            .Mechanisms[mechanism]
                             .Reliability[ij]
                             .Input.input
                         ):
                             # convert to SF and back:
-                            self.measures["Reliability"].Mechanisms[i].Reliability[
-                                ij
-                            ].Input.input["beta_2025"] = calculate_reliability(
+                            self.measures["Reliability"].Mechanisms[
+                                mechanism
+                            ].Reliability[ij].Input.input[
+                                "beta_2025"
+                            ] = calculate_reliability(
                                 np.add(
                                     calculate_safety_factor(
                                         self.measures["Reliability"]
-                                        .Mechanisms[i]
+                                        .Mechanisms[mechanism]
                                         .Reliability[ij]
                                         .Input.input["beta_2025"]
                                     ),
                                     SFincrease,
                                 )
                             )
-                            self.measures["Reliability"].Mechanisms[i].Reliability[
-                                ij
-                            ].Input.input["beta_2075"] = calculate_reliability(
+                            self.measures["Reliability"].Mechanisms[
+                                mechanism
+                            ].Reliability[ij].Input.input[
+                                "beta_2075"
+                            ] = calculate_reliability(
                                 np.add(
                                     calculate_safety_factor(
                                         self.measures["Reliability"]
-                                        .Mechanisms[i]
+                                        .Mechanisms[mechanism]
                                         .Reliability[ij]
                                         .Input.input["beta_2075"]
                                     ),
@@ -128,13 +140,15 @@ class StabilityScreenMeasure(MeasureBase):
                                 )
                             )
                         else:
-                            self.measures["Reliability"].Mechanisms[i].Reliability[
-                                ij
-                            ].Input.input["BETA"] = calculate_reliability(
+                            self.measures["Reliability"].Mechanisms[
+                                mechanism
+                            ].Reliability[ij].Input.input[
+                                "BETA"
+                            ] = calculate_reliability(
                                 np.add(
                                     calculate_safety_factor(
                                         self.measures["Reliability"]
-                                        .Mechanisms[i]
+                                        .Mechanisms[mechanism]
                                         .Reliability[ij]
                                         .Input.input["BETA"]
                                     ),
@@ -142,9 +156,9 @@ class StabilityScreenMeasure(MeasureBase):
                                 )
                             )
 
-            self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
+            self.measures["Reliability"].Mechanisms[mechanism].generateLCRProfile(
                 dike_section.section_reliability.Load,
-                mechanism=i,
+                mechanism=mechanism,
                 trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()

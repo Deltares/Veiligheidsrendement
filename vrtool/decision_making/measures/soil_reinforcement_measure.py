@@ -171,20 +171,26 @@ class SoilReinforcementMeasure(MeasureBase):
             self.measures[-1]["Reliability"] = SectionReliability()
             self.measures[-1]["Reliability"].Mechanisms = {}
 
-            for i in mechanisms:
-                calc_type = dike_section.mechanism_data[i][1]
+            for mechanism in mechanisms:
+                calc_type = dike_section.mechanism_data[mechanism][1]
                 self.measures[-1]["Reliability"].Mechanisms[
-                    i
+                    mechanism
                 ] = MechanismReliabilityCollection(
-                    i, calc_type, self.config, measure_year=self.parameters["year"]
+                    mechanism,
+                    calc_type,
+                    self.config.T,
+                    self.config.t_0,
+                    self.parameters["year"],
                 )
                 for ij, reliability_input in (
-                    self.measures[-1]["Reliability"].Mechanisms[i].Reliability.items()
+                    self.measures[-1]["Reliability"]
+                    .Mechanisms[mechanism]
+                    .Reliability.items()
                 ):
                     # for all time steps considered.
                     # first copy the data
                     reliability_input = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[i]
+                        dike_section.section_reliability.Mechanisms[mechanism]
                         .Reliability[ij]
                         .Input
                     )
@@ -194,16 +200,18 @@ class SoilReinforcementMeasure(MeasureBase):
                             input=reliability_input.input,
                             measure_input=self.measures[-1],
                             measure_parameters=self.parameters,
-                            mechanism=i,
+                            mechanism=mechanism,
                             computation_type=calc_type,
                         )
                     # put them back in the object
-                    self.measures[-1]["Reliability"].Mechanisms[i].Reliability[
+                    self.measures[-1]["Reliability"].Mechanisms[mechanism].Reliability[
                         ij
                     ].Input = reliability_input
-                self.measures[-1]["Reliability"].Mechanisms[i].generateLCRProfile(
+                self.measures[-1]["Reliability"].Mechanisms[
+                    mechanism
+                ].generateLCRProfile(
                     dike_section.section_reliability.Load,
-                    mechanism=i,
+                    mechanism=mechanism,
                     trajectinfo=traject_info,
                 )
             self.measures[-1]["Reliability"].calculate_section_reliability()

@@ -36,22 +36,28 @@ class DiaphragmWallMeasure(MeasureBase):
         )
         self.measures["Reliability"] = SectionReliability()
         self.measures["Reliability"].Mechanisms = {}
-        for i in mechanisms:
-            calc_type = dike_section.mechanism_data[i][1]
-            self.measures["Reliability"].Mechanisms[i] = MechanismReliabilityCollection(
-                i, calc_type, self.config
+        for mechanism in mechanisms:
+            calc_type = dike_section.mechanism_data[mechanism][1]
+            self.measures["Reliability"].Mechanisms[
+                mechanism
+            ] = MechanismReliabilityCollection(
+                mechanism, calc_type, self.config.T, self.config.t_0, 0
             )
-            for ij in self.measures["Reliability"].Mechanisms[i].Reliability.keys():
-                self.measures["Reliability"].Mechanisms[i].Reliability[
+            for ij in (
+                self.measures["Reliability"].Mechanisms[mechanism].Reliability.keys()
+            ):
+                self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
+                    dike_section.section_reliability.Mechanisms[mechanism]
+                    .Reliability[ij]
+                    .Input
                 )
                 if float(ij) >= self.parameters["year"]:
-                    if i == "Overflow":
+                    if mechanism == "Overflow":
                         Pt = traject_info.Pmax * traject_info.omegaOverflow
                         if (
-                            dike_section.section_reliability.Mechanisms[i]
+                            dike_section.section_reliability.Mechanisms[mechanism]
                             .Reliability[ij]
                             .type
                             == "Simple"
@@ -99,30 +105,30 @@ class DiaphragmWallMeasure(MeasureBase):
                                 mechanism="Overflow",
                             )
 
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                             ij
                         ].Input.input["h_crest"] = np.max(
                             [
                                 hc,
                                 self.measures["Reliability"]
-                                .Mechanisms[i]
+                                .Mechanisms[mechanism]
                                 .Reliability[ij]
                                 .Input.input["h_crest"],
                             ]
                         )  # should not become weaker!
-                    elif i == "StabilityInner" or i == "Piping":
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                    elif mechanism == "StabilityInner" or mechanism == "Piping":
+                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                             ij
                         ].Input.input["Elimination"] = "yes"
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                             ij
                         ].Input.input["Pf_elim"] = self.parameters["P_solution"]
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
+                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                             ij
                         ].Input.input["Pf_with_elim"] = self.parameters["Pf_solution"]
-            self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
+            self.measures["Reliability"].Mechanisms[mechanism].generateLCRProfile(
                 dike_section.section_reliability.Load,
-                mechanism=i,
+                mechanism=mechanism,
                 trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()

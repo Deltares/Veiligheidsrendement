@@ -4,19 +4,37 @@ import openturns as ot
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
+from vrtool.flood_defence_system.load_input import LoadInput
 
 
 # A collection of MechanismReliability objects in time
 class MechanismReliabilityCollection:
+    """Represents a collection of MechanismReliability objects over time."""
+
     def __init__(
-        self, mechanism, computation_type, config: VrtoolConfig, measure_year=0
+        self,
+        mechanism: str,
+        computation_type: str,
+        computation_years: list[int],
+        t_0: float,
+        measure_year: int,
     ):
+        """Creates a new instance of the MechanismReliabilityCollection
+
+        Args:
+            mechanism (str): The mechanism.
+            computation_type (str): The computation type.
+            computation_years (list[int]): The collection of years to compute the reliability for.
+            t_0 (float): The initial year.
+            measure_year (int): The year to compute the measure for
+        """
+
         # Initialize and make collection of MechanismReliability objects
         # mechanism, type, years are universal.
         # Measure_year is to indicate whether the reliability has to be recalculated or can be copied
         # (the latter is the case if a measure is taken later than the considered point in time)
-        self.T = config.T
-        self.t_0 = config.t_0
+        self.T = computation_years
+        self.t_0 = t_0
         self.Reliability = {}
 
         for i in self.T:
@@ -30,24 +48,14 @@ class MechanismReliabilityCollection:
                 )
 
     def generateLCRProfile(
-        self,
-        load=False,
-        mechanism="Overflow",
-        method="FORM",
-        trajectinfo=DikeTrajectInfo,
-        interpolate="False",
-        conditionality="no",
+        self, load: LoadInput, mechanism: str, trajectinfo=DikeTrajectInfo
     ):
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
         if not load:
             raise ValueError("Load value should be True.")
         for i in self.Reliability.keys():
             self.Reliability[i].calcReliability(
-                self.Reliability[i].Input,
-                load,
-                mechanism=mechanism,
-                year=float(i),
-                traject_info=trajectinfo,
+                self.Reliability[i].Input, load, mechanism, float(i), trajectinfo
             )
 
     def drawLCR(self, yscale=None, type="beta", mechanism=None):

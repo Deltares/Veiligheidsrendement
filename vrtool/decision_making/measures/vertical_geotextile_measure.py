@@ -33,42 +33,50 @@ class VerticalGeotextileMeasure(MeasureBase):
         self.measures["Reliability"] = SectionReliability()
         self.measures["Reliability"].Mechanisms = {}
 
-        for i in mechanisms:
-            calc_type = dike_section.mechanism_data[i][1]
-            self.measures["Reliability"].Mechanisms[i] = MechanismReliabilityCollection(
-                i, calc_type, self.config
+        for mechanism in mechanisms:
+            calc_type = dike_section.mechanism_data[mechanism][1]
+            self.measures["Reliability"].Mechanisms[
+                mechanism
+            ] = MechanismReliabilityCollection(
+                mechanism, calc_type, self.config.T, self.config.t_0
             )
-            for ij in self.measures["Reliability"].Mechanisms[i].Reliability.keys():
-                self.measures["Reliability"].Mechanisms[i].Reliability[
+            for ij in (
+                self.measures["Reliability"].Mechanisms[mechanism].Reliability.keys()
+            ):
+                self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[i].Reliability[ij].Input
+                    dike_section.section_reliability.Mechanisms[mechanism]
+                    .Reliability[ij]
+                    .Input
                 )
                 if (
-                    i == "Overflow"
-                    or i == "StabilityInner"
-                    or (i == "Piping" and int(ij) < self.parameters["year"])
+                    mechanism == "Overflow"
+                    or mechanism == "StabilityInner"
+                    or (mechanism == "Piping" and int(ij) < self.parameters["year"])
                 ):  # Copy results
-                    self.measures["Reliability"].Mechanisms[i].Reliability[
+                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                         ij
                     ] = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[i].Reliability[ij]
+                        dike_section.section_reliability.Mechanisms[
+                            mechanism
+                        ].Reliability[ij]
                     )
-                elif i == "Piping" and int(ij) >= self.parameters["year"]:
-                    self.measures["Reliability"].Mechanisms[i].Reliability[
+                elif mechanism == "Piping" and int(ij) >= self.parameters["year"]:
+                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                         ij
                     ].Input.input["Elimination"] = "yes"
-                    self.measures["Reliability"].Mechanisms[i].Reliability[
+                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                         ij
                     ].Input.input["Pf_elim"] = self.parameters["P_solution"]
-                    self.measures["Reliability"].Mechanisms[i].Reliability[
+                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
                         ij
                     ].Input.input["Pf_with_elim"] = np.min(
                         [self.parameters["Pf_solution"], 1.0e-16]
                     )
-            self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
+            self.measures["Reliability"].Mechanisms[mechanism].generateLCRProfile(
                 dike_section.section_reliability.Load,
-                mechanism=i,
+                mechanism=mechanism,
                 trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()
