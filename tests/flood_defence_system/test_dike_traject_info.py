@@ -226,21 +226,12 @@ class TestDikeTrajectInfo:
         # Assert
         assert math.isnan(beta)
 
-    def test_calculate_implicated_beta_safety_factor_0_returns_expected_beta(self):
-        # Setup
-        traject_name = "16-1"
-        traject_length = 15000
-
-        info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
-
-        # Call
-        beta = info.calculate_implicated_beta(None, 0)
-
-        # Assert
-        assert beta == 0.5
-
-    def test_calculate_implicated_beta_safety_factor_infinite_returns_expected_beta(
-        self,
+    @pytest.mark.parametrize(
+        "mechanism",
+        [("Piping"), ("Uplift"), ("Heave")],
+    )
+    def test_calculate_implicated_beta_safety_factor_0_returns_expected_beta(
+        self, mechanism: str
     ):
         # Setup
         traject_name = "16-1"
@@ -249,7 +240,26 @@ class TestDikeTrajectInfo:
         info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
 
         # Call
-        beta = info.calculate_implicated_beta(None, np.inf)
+        beta = info.calculate_implicated_beta(mechanism, 0)
+
+        # Assert
+        assert beta == 0.5
+
+    @pytest.mark.parametrize(
+        "mechanism",
+        [("Piping"), ("Uplift"), ("Heave")],
+    )
+    def test_calculate_implicated_beta_safety_factor_infinite_returns_expected_beta(
+        self, mechanism: str
+    ):
+        # Setup
+        traject_name = "16-1"
+        traject_length = 15000
+
+        info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
+
+        # Call
+        beta = info.calculate_implicated_beta(mechanism, np.inf)
 
         # Assert
         assert beta == 8

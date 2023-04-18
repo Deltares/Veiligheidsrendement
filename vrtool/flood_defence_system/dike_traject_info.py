@@ -40,7 +40,7 @@ class DikeTrajectInfo:
         Returns:
             np.ndarray: An array containing the implicated reliability.
         """
-        if mechanism != "Piping" or mechanism != "Heave" or mechanism != "Uplift":
+        if mechanism != "Piping" and mechanism != "Heave" and mechanism != "Uplift":
             logging.warn("Mechanism not found")
             return float("nan")
 
