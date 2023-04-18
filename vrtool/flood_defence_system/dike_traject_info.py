@@ -55,30 +55,34 @@ class DikeTrajectInfo:
         else:
             raise NotImplementedError("Mechanism not found")
 
-    # Function to calculate the implicated reliability from the safety factor
-    def calc_beta_implicated(self, mechanism: str, safety_factor: float) -> np.ndarray:
+    def calculate_implicated_beta(
+        self, mechanism: str, safety_factor: float
+    ) -> np.ndarray:
+        """Calculates the implicated reliability from the safety factor.
+
+        Args:
+            mechanism (str): The mechanism to calculate the reliability for.
+            safety_factor (float): The safety factor to calculate the reliabity with.
+
+        Returns:
+            np.ndarray: An array containing the implicated reliability.
+        """
         if safety_factor == 0:
-            logging.warn("SF for " + mechanism + " is 0")
-            beta = 0.5
+            logging.warn(f'SF for "{mechanism}" is 0')
+            return 0.5
         elif safety_factor == np.inf:
-            beta = 8
+            return 8
+
+        if mechanism == "Piping":
+            return (1 / 0.37) * (np.log(safety_factor / 1.04) + 0.43 * self.beta_max)
+        elif mechanism == "Heave":
+            # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
+            return (1 / 0.48) * (np.log(safety_factor / 0.37) + 0.30 * self.beta_max)
+        elif mechanism == "Uplift":
+            return (1 / 0.46) * (np.log(safety_factor / 0.48) + 0.27 * self.beta_max)
         else:
-            if mechanism == "Piping":
-                beta = (1 / 0.37) * (
-                    np.log(safety_factor / 1.04) + 0.43 * self.beta_max
-                )
-            elif mechanism == "Heave":
-                # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
-                beta = (1 / 0.48) * (
-                    np.log(safety_factor / 0.37) + 0.30 * self.beta_max
-                )
-            elif mechanism == "Uplift":
-                beta = (1 / 0.46) * (
-                    np.log(safety_factor / 0.48) + 0.27 * self.beta_max
-                )
-            else:
-                logging.warn("Mechanism not found")
-        return beta
+            logging.warn("Mechanism not found")
+            return float("nan")
 
     def __post_init__(self):
         self.beta_max = pf_to_beta(self.Pmax)

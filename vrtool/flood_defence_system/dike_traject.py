@@ -34,6 +34,7 @@ class DikeTraject:
             raise ValueError("No traject given in config.")
 
         self.config = config
+        self.traject = config.traject
         self.mechanisms = config.mechanisms
         self.assessment_plot_years = config.assessment_plot_years
         self.flip_traject = config.flip_traject
@@ -141,7 +142,7 @@ class DikeTraject:
             traject_length += i.Length
 
         self.general_info = DikeTrajectInfo.from_traject_info(
-            self.config.traject, traject_length
+            self.traject, traject_length
         )
 
     def set_probabilities(self):

@@ -15,7 +15,6 @@ from vrtool.flood_defence_system.load_input import LoadInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
     add_load_char_vals,
     beta_to_pf,
-    calc_beta_implicated,
     pf_to_beta,
 )
 from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
@@ -177,9 +176,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         if p_dh != 0:
             SF_p = (p_dh_c / (gamma_pip * gamma_schem_pip)) / p_dh
 
-        return calc_beta_implicated(
-            "Piping", SF_p * gamma_pip, traject_info=self._traject_info
-        )
+        return self._traject_info.calculate_implicated_beta("Piping", SF_p * gamma_pip)
 
     def _calculate_beta_heave(self, inputs):
         gamma_schem_heave = 1  # 1.05
@@ -192,10 +189,8 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         # needed safety factor
         # TODO: check formula Sander Kapinga
         SF_h = (h_i_c / (gamma_schem_heave * gamma_h)) / h_i
-        return calc_beta_implicated(
-            "Heave",
-            (h_i_c / gamma_schem_heave) / h_i,
-            traject_info=self._traject_info,
+        return self._traject_info.calculate_implicated_beta(
+            "Heave", (h_i_c / gamma_schem_heave) / h_i
         )  # Calculate the implicated beta_cs
 
     def _calculate_beta_uplift(self, inputs):
@@ -209,8 +204,6 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         # TODO: check formula Sander Kapinga
         SF_u = (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh
 
-        return calc_beta_implicated(
-            "Uplift",
-            (u_dh_c / gamma_schem_upl) / u_dh,
-            traject_info=self._traject_info,
+        return self._traject_info.calculate_implicated_beta(
+            "Uplift", (u_dh_c / gamma_schem_upl) / u_dh
         )  # Calculate the implicated beta_cs

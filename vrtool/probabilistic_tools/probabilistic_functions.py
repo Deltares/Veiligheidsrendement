@@ -6,31 +6,6 @@ import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
 
-# Function to calculate the implicated reliability from the safety factor
-def calc_beta_implicated(mechanism, safety_factor, traject_info=None):
-    if safety_factor == 0:
-        # print('SF for ' + mechanism + ' is 0')
-        beta = 0.5
-    elif safety_factor == np.inf:
-        beta = 8
-    else:
-        if mechanism == "Piping":
-            beta = (1 / 0.37) * (
-                np.log(safety_factor / 1.04) + 0.43 * traject_info["beta_max"]
-            )  # -norm.ppf(TrajectInfo['Pmax']))
-        elif mechanism == "Heave":
-            # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
-            beta = (1 / 0.48) * (
-                np.log(safety_factor / 0.37) + 0.30 * traject_info["beta_max"]
-            )  # -norm.ppf(TrajectInfo['Pmax']))
-        elif mechanism == "Uplift":
-            beta = (1 / 0.46) * (
-                np.log(safety_factor / 0.48) + 0.27 * traject_info["beta_max"]
-            )  # -norm.ppf(TrajectInfo['Pmax']))
-        else:
-            logging.warn("Mechanism not found")
-    return beta
-
 
 def compute_decimation_height(h, p, n=2):
     # computes the average decimation height for the lower parts of a distribution: h are water levels, p are exceedence probabilities. n is the number of 'decimations'
