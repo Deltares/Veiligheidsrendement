@@ -100,23 +100,14 @@ class DikeTrajectInfo:
         # TODO check whether this is a sensible value
         # TODO read these values from a generic input file.
         _general_info = {"traject_name": traject_name}
-        if traject_name == "16-4":
+        if (
+            traject_name == "16-4"
+            or traject_name == "16-3"
+            or traject_name == "16-3 en 16-4"
+        ):
             _general_info["aPiping"] = 0.9
             _general_info["FloodDamage"] = 23e9
             _general_info["TrajectLength"] = traject_length
-            _general_info["Pmax"] = 1.0 / 10000
-        elif traject_name == "16-3":
-            _general_info["aPiping"] = 0.9
-            _general_info["FloodDamage"] = 23e9
-            _general_info["TrajectLength"] = traject_length
-            _general_info["Pmax"] = 1.0 / 10000
-            # NB: klopt a hier?????!!!!
-        elif traject_name == "16-3 en 16-4":
-            _general_info["aPiping"] = 0.9
-            _general_info["FloodDamage"] = 23e9
-            # voor doorsnede-eisen wel ongeveer lengte individueel traject
-            _general_info["TrajectLength"] = traject_length
-            # gebruiken
             _general_info["Pmax"] = 1.0 / 10000
         elif traject_name == "38-1":
             _general_info["aPiping"] = 0.9
