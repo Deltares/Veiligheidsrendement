@@ -32,7 +32,6 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
 | You can also do the above with a commit-hash for development branches (e.g.:`@40bd07d`)
 
 
-
 ### Development mode
 1. Checkout the code from github in a directory of your choice. You can either do this by downloading the source zip or (better) using git, for instance:
     ```bash
@@ -88,9 +87,7 @@ python -m vrtool --help
 
 ## Contribution guidelines ##
 
-* Writing tests
-* Code review
-* Other guidelines
+To know how to collaborate within this project please refer to our [contributing page](./docs/CONTRIBUTING.md).
 
 ## Who do I talk to? ##
 
