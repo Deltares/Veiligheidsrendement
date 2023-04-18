@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-import warnings
+import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -13,14 +13,7 @@ from scipy.interpolate import interp1d
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
-from vrtool.flood_defence_system.load_input import LoadInput
-from vrtool.flood_defence_system.mechanism_reliability_collection import (
-    MechanismReliabilityCollection,
-)
-from vrtool.probabilistic_tools.probabilistic_functions import (
-    beta_to_pf,
-    pf_to_beta,
-)
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class DikeTraject:
@@ -33,116 +26,18 @@ class DikeTraject:
         if not config.traject:
             raise ValueError("No traject given in config.")
 
-        self.config = config
-        self.traject = config.traject
         self.mechanisms = config.mechanisms
         self.assessment_plot_years = config.assessment_plot_years
         self.flip_traject = config.flip_traject
         self.t_0 = config.t_0
-        self.sections = []
+        self.T = config.T
+        self.mechanisms = config.mechanisms
 
-    @classmethod
-    def from_vr_config(cls, vr_config: VrtoolConfig) -> DikeTraject:
-        """
-        Initializes a `DikeTraject` instance by also reading all its related input from the directory defined in the `vr_config`.
+        self.sections = DikeSection.get_dike_sections_from_vr_config(config)
 
-        Args:
-            vr_config (VrtoolConfig): Valid instance containing required data by a `DikeTraject`
-
-        Returns:
-            DikeTraject: Valid instance of a loaded dike traject.
-        """
-        _traject = cls(vr_config)
-        _traject.read_all_traject_input(input_path=vr_config.input_directory)
-        return _traject
-
-    def read_all_traject_input(self, input_path: Path, makesubdirs=True):
-        # Make a case directory and inside a figures and results directory if it doesnt exist yet
-        # #TODO check if these are obsolete
-        # if not config.path.joinpath(config.directory).is_dir():
-        #     config.path.joinpath(config.directory).mkdir(parents=True, exist_ok=True)
-        #     if makesubdirs:
-        #         config.directory.joinpath('figures').mkdir(parents=True, exist_ok=True)
-        #         config.directory.joinpath('results', 'investment_steps').mkdir(parents=True, exist_ok=True)
-
-        # Routine to read the input for all sections based on the default input format.
-        files = [i for i in input_path.glob("*DV*") if i.is_file()]
-        if len(files) == 0:
-            raise IOError("Error: no dike sections found. Check path!")
-        for i in range(len(files)):
-            # Read the general information for each section:
-            self.sections.append(DikeSection(files[i].stem, self.traject))
-            self.sections[i].read_general_info(input_path, "General")
-
-            # Read the data per mechanism, and first the load frequency line:
-            self.sections[i].section_reliability.Load = LoadInput(
-                list(self.sections[i].__dict__.keys())
-            )
-            if (
-                self.sections[i].section_reliability.Load.load_type == "HRING"
-            ):  # 2 HRING computations for different years
-                self.sections[i].section_reliability.Load.set_HRING_input(
-                    input_path.joinpath("Waterstand"), self.sections[i]
-                )  # input folder, location
-            elif (
-                self.sections[i].section_reliability.Load.load_type == "SAFE"
-            ):  # 2 computation as done for SAFE
-                self.sections[i].section_reliability.Load.set_fromDesignTable(
-                    input_path.joinpath("Toetspeil", self.sections[i].LoadData)
-                )
-                self.sections[i].section_reliability.Load.set_annual_change(
-                    type="SAFE",
-                    parameters=[
-                        self.sections[i].YearlyWLRise,
-                        self.sections[i].HBNRise_factor,
-                    ],
-                )
-
-            # Then the input for all the mechanisms:
-            self.sections[i].section_reliability.Mechanisms = {}
-            for j in self.mechanisms:
-                mech_input_path = input_path.joinpath(j)
-                self.sections[i].section_reliability.Mechanisms[
-                    j
-                ] = MechanismReliabilityCollection(
-                    j, self.sections[i].mechanism_data[j][1], self.config
-                )
-                for k in (
-                    self.sections[i]
-                    .section_reliability.Mechanisms[j]
-                    .Reliability.keys()
-                ):
-                    if self.sections[i].section_reliability.Load.load_type == "HRING":
-                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
-                            k
-                        ].Input.fill_mechanism(
-                            mech_input_path,
-                            *self.sections[i].mechanism_data[j],
-                            mechanism=j,
-                            crest_height=self.sections[i].Kruinhoogte,
-                            dcrest=self.sections[i].Kruindaling,
-                        )
-                    else:
-                        self.sections[i].section_reliability.Mechanisms[j].Reliability[
-                            k
-                        ].Input.fill_mechanism(
-                            mech_input_path,
-                            *self.sections[i].mechanism_data[j],
-                            mechanism=j,
-                        )
-
-            # #Make in the figures directory a Initial and Measures direcotry if they don't exist yet
-            # if not input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name).is_dir() and makesubdirs:
-            #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Initial').mkdir(parents=True, exist_ok=True)
-            #     input_path.joinpath(config.directory).joinpath('figures', self.Sections[i].name, 'Measures').mkdir(parents=True, exist_ok=True)
-
-        # Traject length is length of all sections together:
-        traject_length = 0
-        for i in self.sections:
-            traject_length += i.Length
-
+        traject_length = sum(map(lambda x: x.Length, self.sections))
         self.general_info = DikeTrajectInfo.from_traject_info(
-            self.traject, traject_length
+            config.traject, traject_length
         )
 
     def set_probabilities(self):
@@ -207,7 +102,7 @@ class DikeTraject:
                             ProbabilityFrame = i
                         else:
                             if not "ProbabilityFrame" in locals():
-                                warnings.warn(
+                                logging.warn(
                                     "No satisfactory solution found, skipping plot"
                                 )
                             return
@@ -362,11 +257,7 @@ class DikeTraject:
                             * self.general_info.aPiping
                             / self.general_info.bPiping
                         )
-                        pt = (
-                            self.general_info.Pmax
-                            * self.general_info.omegaStabilityInner
-                            / N
-                        )
+                        pt = self.general_info.Pmax * self.general_info.omegaPiping / N
                         # dash = [1,3]
                     elif j == "Overflow":
                         pt = self.general_info.Pmax * self.general_info.omegaOverflow
@@ -523,10 +414,10 @@ class DikeTraject:
                 i.section_reliability.Mechanisms[j].drawLCR(
                     label=j, type="Standard", tstart=t_start
                 )
-                for j in self.general_info["Mechanisms"]
+                for j in self.mechanisms
             ]
             plt.plot(
-                [t_start, t_start + np.max(self.general_info["T"])],
+                [t_start, t_start + np.max(self.T)],
                 [
                     pf_to_beta(self.general_info.Pmax),
                     pf_to_beta(self.general_info.Pmax),
