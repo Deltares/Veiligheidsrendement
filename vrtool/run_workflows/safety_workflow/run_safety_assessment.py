@@ -44,7 +44,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
             # compute reliability in time for each mechanism:
             # logging.info(section.End)
-            for j in self.selected_traject.general_info["MechanismsConsidered"]:
+            for j in self.selected_traject.mechanisms:
                 _section.section_reliability.Mechanisms[j].generateLCRProfile(
                     _section.section_reliability.Load,
                     mechanism=j,

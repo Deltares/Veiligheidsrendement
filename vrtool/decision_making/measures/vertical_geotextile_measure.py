@@ -38,7 +38,7 @@ class VerticalGeotextileMeasure(MeasureBase):
             self.measures["Reliability"].Mechanisms[
                 mechanism
             ] = MechanismReliabilityCollection(
-                mechanism, calc_type, self.config.T, self.config.t_0
+                mechanism, calc_type, self.config.T, self.config.t_0, 0
             )
             for ij in (
                 self.measures["Reliability"].Mechanisms[mechanism].Reliability.keys()
