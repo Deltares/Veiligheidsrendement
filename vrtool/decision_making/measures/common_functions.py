@@ -16,6 +16,7 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
     calculate_reliability,
     calculate_safety_factor,
 )
+import logging
 
 
 def implement_berm_widening(
@@ -409,8 +410,8 @@ def determine_costs(
 ) -> float:
     if (type == "Soil reinforcement") and (direction == "outward") and (dberm_in > 0.0):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
-        print(
-            "Warning: encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
+        logging.warn(
+            "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
         )
     if type == "Soil reinforcement":
         if direction == "inward":
@@ -478,7 +479,7 @@ def determine_costs(
     elif type == "Stability Screen":
         total_cost = unit_costs["Sheetpile"] * parameters["Depth"] * length
     else:
-        print("Unknown type")
+        logging.info("Unknown type")
     return total_cost
 
 

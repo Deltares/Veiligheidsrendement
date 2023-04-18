@@ -99,7 +99,7 @@ def draw_alpha_bar_plot(
 
     alfas = DataFrame(alphas, columns=labels)
     alfas.plot.bar(stacked=True, label=xlabels)
-    # print('done')
+
     if Pvalues != None:
         plt.plot(range(0, len(xlabels)), Pvalues, "b", label="Fragility Curve")
 
@@ -181,7 +181,7 @@ def adapt_input(
 
             _geo_risk_cases[-1].GeneralInfo["P_scen"] = row[
                 "p"
-            ]  # print(str(row['k']) + '   ' + str(new_r_exit))
+            ]
     return _geo_risk_cases
 
 
