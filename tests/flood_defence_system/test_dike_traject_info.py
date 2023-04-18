@@ -221,7 +221,7 @@ class TestDikeTrajectInfo:
         info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
 
         # Call
-        beta = info.calculate_implicated_beta(mechanism, float("nan"))
+        beta = info.calculate_implicated_beta(mechanism, 0)
 
         # Assert
         assert math.isnan(beta)
