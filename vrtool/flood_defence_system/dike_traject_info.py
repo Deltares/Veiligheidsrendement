@@ -40,6 +40,10 @@ class DikeTrajectInfo:
         Returns:
             np.ndarray: An array containing the implicated reliability.
         """
+        if mechanism != "Piping" or mechanism != "Heave" or mechanism != "Uplift":
+            logging.warn("Mechanism not found")
+            return float("nan")
+
         if safety_factor == 0:
             logging.warn(f'SF for "{mechanism}" is 0')
             return 0.5
@@ -53,9 +57,6 @@ class DikeTrajectInfo:
             return (1 / 0.48) * (np.log(safety_factor / 0.37) + 0.30 * self.beta_max)
         elif mechanism == "Uplift":
             return (1 / 0.46) * (np.log(safety_factor / 0.48) + 0.27 * self.beta_max)
-        else:
-            logging.warn("Mechanism not found")
-            return float("nan")
 
     def __calculate_gamma(self, mechanism: str) -> np.ndarray:
         """Calculates the gamma based on the mechanism
