@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-import warnings
+import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ class DikeTraject:
     # This class contains general information on the dike traject and is used to store all data on the sections
     def __init__(self, config: VrtoolConfig, traject=None):
         if traject == None:
-            print("Warning: no traject given in config. Default was chosen")
+            logging.warn("No traject given in config. Default was chosen")
             self.traject = "Not specified"
         else:
             self.traject = traject
@@ -92,7 +92,7 @@ class DikeTraject:
             self.general_info["Pmax"] = 1.0 / 30000
             self.general_info["aPiping"] = 0.4
         else:
-            warnings.warn(
+            logging.warn(
                 "Warning: dike traject not found, using default assumptions for traject."
             )
             self.general_info["FloodDamage"] = 5e9
@@ -272,7 +272,7 @@ class DikeTraject:
                             ProbabilityFrame = i
                         else:
                             if not "ProbabilityFrame" in locals():
-                                warnings.warn(
+                                logging.warn(
                                     "No satisfactory solution found, skipping plot"
                                 )
                             return
@@ -531,7 +531,7 @@ class DikeTraject:
                     col += 1
                     mech += 1
                 beta_tot = pf_to_beta(pt_tot)
-                print(beta_tot)
+                logging.info(beta_tot)
                 ax1.plot([-2, 3], [beta_tot, beta_tot], color=color[col])
                 ax1.axhline(
                     pf_to_beta(self.general_info["Pmax"]),
