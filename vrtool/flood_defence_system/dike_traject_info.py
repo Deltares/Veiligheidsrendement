@@ -58,7 +58,7 @@ class DikeTrajectInfo:
         elif mechanism == "Uplift":
             return (1 / 0.46) * (np.log(safety_factor / 0.48) + 0.27 * self.beta_max)
 
-    def __calculate_gamma(self, mechanism: str) -> np.ndarray:
+    def _calculate_gamma(self, mechanism: str) -> np.ndarray:
         """Calculates the gamma based on the mechanism
 
         Args:
