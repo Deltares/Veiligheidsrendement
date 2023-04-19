@@ -313,7 +313,9 @@ class RandomizedParetoFrontierStrategy(StrategyBase):
             )
             if greedystrategy and j == set_range - 1:
                 Results.to_csv(output_path.joinpath("ParetoResultsGreedy.csv"))
-                logging.info("Set " + str(j + 1) + " of " + str(set_range) + " finished")
+                logging.info(
+                    "Set " + str(j + 1) + " of " + str(set_range) + " finished"
+                )
             else:
                 p_frontX, p_frontY, index = self.pareto_frontier(
                     Results["LCC"].values,
@@ -325,4 +327,6 @@ class RandomizedParetoFrontierStrategy(StrategyBase):
                 Results.iloc[index].to_csv(
                     output_path.joinpath("ParetoResults" + str(j) + ".csv")
                 )
-                logging.info("Set " + str(j + 1) + " of " + str(set_range) + " finished")
+                logging.info(
+                    "Set " + str(j + 1) + " of " + str(set_range) + " finished"
+                )

@@ -66,7 +66,9 @@ class ParetoFrontierStrategy(StrategyBase):
             )
             TC.append(MIPObjects[-1].results["TC"])
             ObjectiveValue.append(MIPResult["ObjectiveValue"])
-            logging.info(MIPModels[-1].solution.status[MIPModels[-1].solution.get_status()])
+            logging.info(
+                MIPModels[-1].solution.status[MIPModels[-1].solution.get_status()]
+            )
 
         self.costs = pd.DataFrame(
             np.array([LCC, TR, TC]).T, columns=["LCC", "TR", "TC"]

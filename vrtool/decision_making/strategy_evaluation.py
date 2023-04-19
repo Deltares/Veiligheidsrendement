@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import numpy as np
 import pandas as pd
@@ -7,7 +8,7 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-import logging
+
 
 # This script combines two sets of measures to a single option
 def measure_combinations(
@@ -673,7 +674,9 @@ def overflow_bundling(
             index_counter[ind_weakest] += 1
             # take next step, exception if there is no valid measure. In that case exit the routine.
             if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
-                logging.error("Bundle quit, weakest section has no more available measures")
+                logging.error(
+                    "Bundle quit, weakest section has no more available measures"
+                )
                 break
         else:
             logging.error("Bundle quit, weakest section has no more available measures")

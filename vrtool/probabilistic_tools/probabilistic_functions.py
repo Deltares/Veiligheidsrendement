@@ -268,7 +268,9 @@ def run_DIRS(
     # end = time.time()
     logging.info(event.getName())
     logging.info("%15s" % "Pf = ", "{0:.2E}".format(probability))
-    logging.info("%15s" % "CoV = ", "{0:.2f}".format(result.getCoefficientOfVariation()))
+    logging.info(
+        "%15s" % "CoV = ", "{0:.2f}".format(result.getCoefficientOfVariation())
+    )
     logging.info("%15s" % "N = ", "{0:.0f}".format(result.getOuterSampling()))
     return result, algo
 

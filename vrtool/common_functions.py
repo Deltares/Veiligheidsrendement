@@ -179,9 +179,7 @@ def adapt_input(
                         "r_exit"
                     ] = new_r_exit
 
-            _geo_risk_cases[-1].GeneralInfo["P_scen"] = row[
-                "p"
-            ]
+            _geo_risk_cases[-1].GeneralInfo["P_scen"] = row["p"]
     return _geo_risk_cases
 
 

@@ -1,4 +1,5 @@
 import copy
+import logging
 from pathlib import Path
 from typing import Union
 
@@ -15,7 +16,6 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
     calculate_reliability,
     calculate_safety_factor,
 )
-import logging
 
 
 def implement_berm_widening(

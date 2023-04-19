@@ -1,7 +1,7 @@
 import copy
+import logging
 from abc import abstractmethod
 from collections import OrderedDict
-import logging
 from pathlib import Path
 from typing import Dict, Union
 
@@ -147,7 +147,9 @@ class StrategyBase:
                 or (sg.type.values == "Stability Screen")
                 or (sg.type.values == "Custom")
             ):
-                logging.info(" The geotechnical measure is a {}".format(sg.type.values[0]))
+                logging.info(
+                    " The geotechnical measure is a {}".format(sg.type.values[0])
+                )
             elif isinstance(sg.type.values[0], list):  # VZG+Soil
                 logging.info(
                     " The geotechnical measure is a {} in year {} with a {} with dberm = {} in year {}".format(

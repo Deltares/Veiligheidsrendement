@@ -14,6 +14,7 @@ from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 from vrtool.vrtool_logger import VrToolLogger
 
+
 @click.group()
 def cli():
     """
