@@ -26,12 +26,11 @@ class DikeTraject:
         if not config.traject:
             raise ValueError("No traject given in config.")
 
-        self.mechanisms = config.mechanisms
+        self.mechanism_names = config.mechanisms
         self.assessment_plot_years = config.assessment_plot_years
         self.flip_traject = config.flip_traject
         self.t_0 = config.t_0
         self.T = config.T
-        self.mechanisms = config.mechanisms
 
         self.sections = DikeSection.get_dike_sections_from_vr_config(config)
 
@@ -184,7 +183,7 @@ class DikeTraject:
                 fig, ax = plt.subplots(figsize=fig_size)
             col = 0
             mech = 0
-            for j in self.mechanisms:
+            for j in self.mechanism_names:
                 # get data to plot
                 # plotdata = self.Probabilities[str(ii)].loc[self.Probabilities['index'] == j].values
                 plotdata = (
@@ -237,7 +236,7 @@ class DikeTraject:
             col = 0
             # Whether to draw the target reliability for each individula mechanism.
             if draw_targetbeta == "on" and last:
-                for j in self.mechanisms:
+                for j in self.mechanism_names:
                     dash = [2, 2]
                     if j == "StabilityInner":
                         N = (
@@ -344,7 +343,7 @@ class DikeTraject:
                 mid1 = {}
                 bars = {}
                 pt_tot = 0
-                for m in self.mechanisms:
+                for m in self.mechanism_names:
                     beta_t, p_t = calc_traject_prob(ProbabilityFrame, ts=ii, mechs=[m])
                     # pt_tot +=p_t
                     pt_tot = 1 - ((1 - pt_tot) * (1 - p_t))
@@ -368,7 +367,7 @@ class DikeTraject:
                 ax1.set_xlim(left=-0.4, right=2.4)
                 ax1.set_title("System \n reliability")
                 if show_xticks:
-                    ax1.set_xticklabels(self.mechanisms, rotation=90, fontsize=6)
+                    ax1.set_xticklabels(self.mechanism_names, rotation=90, fontsize=6)
                 else:
                     ax1.set_xticklabels("")
                 ax1.tick_params(axis="both", bottom=False)
@@ -414,7 +413,7 @@ class DikeTraject:
                 i.section_reliability.Mechanisms[j].drawLCR(
                     label=j, type="Standard", tstart=t_start
                 )
-                for j in self.mechanisms
+                for j in self.mechanism_names
             ]
             plt.plot(
                 [t_start, t_start + np.max(self.T)],
