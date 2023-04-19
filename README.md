@@ -32,14 +32,13 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
 | You can also do the above with a commit-hash for development branches (e.g.:`@40bd07d`)
 
 
-
 ### Development mode
 1. Checkout the code from github in a directory of your choice. You can either do this by downloading the source zip or (better) using git, for instance:
     ```bash
     cd C:\repos
     git clone https://github.com/Deltares/Veiligheidsrendement.git vrtool_repo
     ```
-    | Note, the above steps are based on a Windows setup. If you are not familiar with Git we recommend using the [GitHub desktop tool](https://desktop.github.com/).
+    | Note, the above steps are based on a Windows setup. If you are not familiar with Git, we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
 2. Navigate to your `Veiligheidsrendement` repository and then install the `vrtool` package with your preferred step:
 
@@ -88,9 +87,7 @@ python -m vrtool --help
 
 ## Contribution guidelines ##
 
-* Writing tests
-* Code review
-* Other guidelines
+To know how to collaborate within this project please refer to our [contributing page](./docs/CONTRIBUTING.md).
 
 ## Who do I talk to? ##
 
