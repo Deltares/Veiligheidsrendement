@@ -69,7 +69,6 @@ class RunMeasures(VrToolRunProtocol):
                     filtering="off", splitparams=True
                 )
 
-
         # Store intermediate results:
         if self.vr_config.shelves:
             _results_measures.save_results()
