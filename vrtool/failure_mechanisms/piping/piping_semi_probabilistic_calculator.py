@@ -34,7 +34,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             mechanism_input (MechanismInput): The input for the mechanism.
             load (LoadInput): The load input.
             initial_year (int): The initial year to base the calculation on.
-            traject_info (DikeTrajectInfo): A DikeTrajectInfo containing the traject info.
+            traject_info (DikeTrajectInfo): An object containing the traject info.
         """
         if not isinstance(mechanism_input, MechanismInput):
             raise ValueError(
@@ -75,11 +75,11 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
         # TODO:below, remove self. in for example self.gamma_pip. This is just an scenario output value. do not store.
         # calculate beta per scenario and determine overall
-        for j in range(0, len(strength_new.input["Scenario"])):
+        for scenario in range(0, len(strength_new.input["Scenario"])):
             strength_new.input_ind = {}
             for i in strength_new.input:  # select values of scenario j
                 try:
-                    strength_new.input_ind[i] = strength_new.input[i][j]
+                    strength_new.input_ind[i] = strength_new.input[i][scenario]
                 except:
                     pass  # TODO: make more clean, na measures doorloopt hij deze loop nogmaals, niet voor alle variabelen in strength_new.input is een array beschikbaar.
 
@@ -96,13 +96,13 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             )
 
             # Piping
-            scenario_result["beta_cs_p"][j] = self._calculate_beta_piping(inputs)
+            scenario_result["beta_cs_p"][scenario] = self._calculate_beta_piping(inputs)
 
             # Heave:
-            scenario_result["beta_cs_h"][j] = self._calculate_beta_heave(inputs)
+            scenario_result["beta_cs_h"][scenario] = self._calculate_beta_heave(inputs)
 
             # Uplift
-            scenario_result["beta_cs_u"][j] = self._calculate_beta_uplift(inputs)
+            scenario_result["beta_cs_u"][scenario] = self._calculate_beta_uplift(inputs)
 
             # Check if there is an elimination measure present (VZG or diaphragm wall)
             if "Elimination" in self._mechanism_input.input.keys():
@@ -110,12 +110,12 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                     # Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
                     scenario_beta = np.max(
                         [
-                            scenario_result["beta_cs_h"][j],
-                            scenario_result["beta_cs_u"][j],
-                            scenario_result["beta_cs_p"][j],
+                            scenario_result["beta_cs_h"][scenario],
+                            scenario_result["beta_cs_u"][scenario],
+                            scenario_result["beta_cs_p"][scenario],
                         ]
                     )
-                    scenario_result["Pf"][j] = np.max(
+                    scenario_result["Pf"][scenario] = np.max(
                         [
                             np.min(
                                 [
@@ -129,26 +129,26 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                             beta_to_pf(8.0),
                         ]
                     )
-                    scenario_result["Beta"][j] = np.min(
-                        [pf_to_beta(scenario_result["Pf"][j]), 8.0]
+                    scenario_result["Beta"][scenario] = np.min(
+                        [pf_to_beta(scenario_result["Pf"][scenario]), 8.0]
                     )
 
                 else:
                     raise ValueError("Warning: Elimination defined but not turned on")
             else:
-                scenario_result["Beta"][j] = np.min(
+                scenario_result["Beta"][scenario] = np.min(
                     [
                         np.max(
                             [
-                                scenario_result["beta_cs_h"][j],
-                                scenario_result["beta_cs_u"][j],
-                                scenario_result["beta_cs_p"][j],
+                                scenario_result["beta_cs_h"][scenario],
+                                scenario_result["beta_cs_u"][scenario],
+                                scenario_result["beta_cs_p"][scenario],
                             ]
                         ),
                         8,
                     ]
                 )
-                scenario_result["Pf"][j] = beta_to_pf(scenario_result["Beta"][j])
+                scenario_result["Pf"][scenario] = beta_to_pf(scenario_result["Beta"][scenario])
 
         # multiply every scenario by probability
         failure_probability = np.max(
@@ -164,7 +164,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
         return [beta, failure_probability]
 
-    def _calculate_beta_piping(self, inputs):
+    def _calculate_beta_piping(self, inputs:dict):
         gamma_schem_pip = 1  # 1.05
 
         Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
@@ -178,7 +178,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
         return self._traject_info.calculate_implicated_beta("Piping", SF_p * gamma_pip)
 
-    def _calculate_beta_heave(self, inputs):
+    def _calculate_beta_heave(self, inputs:dict):
         gamma_schem_heave = 1  # 1.05
 
         Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
@@ -193,7 +193,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             "Heave", (h_i_c / gamma_schem_heave) / h_i
         )  # Calculate the implicated beta_cs
 
-    def _calculate_beta_uplift(self, inputs):
+    def _calculate_beta_uplift(self, inputs:dict):
         gamma_schem_upl = 1  # 1.05
 
         Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
