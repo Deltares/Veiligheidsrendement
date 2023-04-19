@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import numpy as np
 
@@ -87,7 +88,7 @@ class SoilReinforcementMeasure(MeasureBase):
             )
             if d_cover_input:
                 if d_cover_input.size > 1:
-                    print("d_cover has more values than 1.")
+                    logging.info("d_cover has more values than 1.")
 
                 self.parameters["Depth"] = max([d_cover_input[0] + 1.0, 8.0])
             else:

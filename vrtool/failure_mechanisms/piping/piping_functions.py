@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 
 
@@ -19,7 +20,7 @@ def calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm):
     elif int(kwelscherm) == 0:
         i_c = 0.3
     else:
-        print("The LSF of heave has no clue what to do")
+        logging.info("The LSF of heave has no clue what to do")
 
     # According to Formula Sander Kapinga,veilighiedsfactor heave
     if r_exit > 0:
@@ -59,7 +60,6 @@ def calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat):
         dh_c = 0
     else:
         dh_c = d_cover * (gamma_sat - gamma_w) / gamma_w
-    # print(dh_c)
     dh = (h - h_exit) * r_exit
 
     # According to Formula Sander Kapinga,veilighiedsfactor openbarsten

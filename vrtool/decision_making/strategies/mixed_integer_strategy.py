@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import pandas as pd
 
@@ -95,7 +96,7 @@ class MixedIntegerStrategy(StrategyBase):
             * self.opt_parameters["T"]
         )
         if nvar != len(VarNames):
-            print(" ******  inconsistency with number of variables")
+            logging.error(" ******  inconsistency with number of variables")
 
         # -------------------------------------------------------------------------
         #         objective function and bounds
@@ -157,7 +158,7 @@ class MixedIntegerStrategy(StrategyBase):
         # b = b+[1.0]*self.opt_parameters['N']
         b = b + [1.0] * len(C1)
 
-        print("constraint 1 implemented")
+        logging.info("constraint 1 implemented")
 
         # constraint 2: there is only 1 weakest section for overflow at any point in time
         C2 = list()
@@ -172,7 +173,7 @@ class MixedIntegerStrategy(StrategyBase):
         b = b + [1.0] * len(C2)
         # b = b+ [1.0]*(self.opt_parameters['N']*self.opt_parameters['S'])
 
-        print("constraint 2 implemented")
+        logging.info("constraint 2 implemented")
         # Add constraints to model:
         model.linear_constraints.add(lin_expr=A, senses=senseV, rhs=b)
 
@@ -181,7 +182,6 @@ class MixedIntegerStrategy(StrategyBase):
         import sys
 
         for t in grT:
-            # print('Constraint 3 for t=' + str(t))
             for n in grN:
                 C3 = list()
                 for nst in grN:
@@ -221,13 +221,12 @@ class MixedIntegerStrategy(StrategyBase):
                 senseV = "L" * len(C3)
                 b = [1.0] * len(C3)
                 model.linear_constraints.add(lin_expr=C3, senses=senseV, rhs=b)
-            # print(str(sys.getsizeof(C3)) + ' bytes at t=' + str(t) + ' and n = ' + str(n+1))
 
         # A = A + C3
         # senseV = senseV + "L"*len(C3) # L means <=
         # b = b+[1.0]*len(C3)
 
-        print("constraint 3 implemented")
+        logging.info("constraint 3 implemented")
         # constraint 4: If Cint = 0 OR 1 for sh, sg, n Gint should also be 0 OR 1.
         C4 = list()
         for n in grN:
@@ -256,7 +255,6 @@ class MixedIntegerStrategy(StrategyBase):
 
         # slist = Cint_nd[:, :, :].ravel().tolist()
         # nlist = [1.0] * (self.opt_parameters['Sg'] * self.opt_parameters['Sh'])
-        # print('binary constraints implemented in restriction of variables')
 
         # # Add constraints to model:
         # model.linear_constraints.add(lin_expr=A, senses=senseV, rhs=b)
@@ -302,7 +300,6 @@ class MixedIntegerStrategy(StrategyBase):
         ID2 = []
         for i in measure.keys():
             sections.append(sectionnames[i])
-            # print(sectionnames[i])
             if isinstance(measure_table, pd.DataFrame):
                 if np.sum(measure[i]) != 0:
                     ID.append(
@@ -318,7 +315,6 @@ class MixedIntegerStrategy(StrategyBase):
                         )  # fout
                         if ID[-1][-1] != ID2[-1]:
                             ID[-1] = ID[-1] + "+" + ID2[-1]
-                            # print(ID[-1])
                 else:
                     ID.append("0")
                     ID2.append("0")
@@ -406,7 +402,6 @@ class MixedIntegerStrategy(StrategyBase):
         )
 
         pd.set_option("display.max_columns", None)  # prevents trailing elipses
-        # print(TakenMeasures)
         if dir:
             TakenMeasures.to_csv(dir.joinpath("TakenMeasures_MIP.csv"))
         else:
@@ -443,9 +438,9 @@ class MixedIntegerStrategy(StrategyBase):
             GG[n] = np.sum(self.results["C_int"][n, :])
 
         if (GG == 1).all():
-            print("constraint 1 satisfied")
+            logging.info("constraint 1 satisfied")
         else:
-            print("Warning: constraint 1 not satisfied")
+            logging.warn("constraint 1 not satisfied")
             AllConstraintsSatisfied = False
         # C2
         GG = np.tile(1.0, T)
@@ -453,9 +448,9 @@ class MixedIntegerStrategy(StrategyBase):
             GG[t] = sum(sum(self.results["D_int"][:, :, t]))
 
         if (GG == 1).all():
-            print("constraint C2 satisfied")
+            logging.info("constraint C2 satisfied")
         else:
-            print(" ******  warning: constraint C2 not satisfied")
+            logging.warn("constraint C2 not satisfied")
             AllConstraintsSatisfied = False
 
             # C3
