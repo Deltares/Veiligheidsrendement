@@ -19,6 +19,8 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
 )
 from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
 
+import logging
+
 
 class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
     def __init__(
@@ -148,7 +150,9 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                         8,
                     ]
                 )
-                scenario_result["Pf"][scenario] = beta_to_pf(scenario_result["Beta"][scenario])
+                scenario_result["Pf"][scenario] = beta_to_pf(
+                    scenario_result["Beta"][scenario]
+                )
 
         # multiply every scenario by probability
         failure_probability = np.max(
@@ -164,7 +168,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
         return [beta, failure_probability]
 
-    def _calculate_beta_piping(self, inputs:dict):
+    def _calculate_beta_piping(self, inputs: dict):
         gamma_schem_pip = 1  # 1.05
 
         Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
@@ -178,7 +182,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
 
         return self._traject_info.calculate_implicated_beta("Piping", SF_p * gamma_pip)
 
-    def _calculate_beta_heave(self, inputs:dict):
+    def _calculate_beta_heave(self, inputs: dict):
         gamma_schem_heave = 1  # 1.05
 
         Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
@@ -193,7 +197,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             "Heave", (h_i_c / gamma_schem_heave) / h_i
         )  # Calculate the implicated beta_cs
 
-    def _calculate_beta_uplift(self, inputs:dict):
+    def _calculate_beta_uplift(self, inputs: dict):
         gamma_schem_upl = 1  # 1.05
 
         Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
@@ -207,3 +211,31 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         return self._traject_info.calculate_implicated_beta(
             "Uplift", (u_dh_c / gamma_schem_upl) / u_dh
         )  # Calculate the implicated beta_cs
+
+    def _calculate_implicated_beta(
+        self, mechanism_name: str, safety_factor: float
+    ) -> np.ndarray:
+        """Calculates the implicated reliability from the safety factor.
+
+        Args:
+            mechanism_name (str): The name of the mechanism to calculate the reliability for.
+            safety_factor (float): The safety factor to calculate the reliabity with.
+
+        Returns:
+            np.ndarray: An array containing the implicated reliability.
+        """
+
+        if safety_factor == 0:
+            logging.warn(f'SF for "{mechanism_name}" is 0')
+            return 0.5
+        elif safety_factor == np.inf:
+            return 8
+
+        beta_max = self._traject_info.beta_max
+        if mechanism_name == "Piping":
+            return (1 / 0.37) * (np.log(safety_factor / 1.04) + 0.43 * beta_max)
+        elif mechanism_name == "Heave":
+            # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
+            return (1 / 0.48) * (np.log(safety_factor / 0.37) + 0.30 * beta_max)
+        elif mechanism_name == "Uplift":
+            return (1 / 0.46) * (np.log(safety_factor / 0.48) + 0.27 * beta_max)
