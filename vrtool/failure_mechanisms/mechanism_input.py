@@ -1,9 +1,11 @@
 import logging
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import pandas as pd
 
+from vrtool.failure_mechanisms.mechanism_reader import read_data_from_csv
 from vrtool.probabilistic_tools.hydra_ring_scripts import read_design_table
 
 
@@ -15,35 +17,42 @@ class MechanismInput:
 
     # This routine reads  input from an input sheet
     def fill_mechanism(
-            self,
-            input_path: Path,
-            stix_folder_path: Path,
-            reference,
-            calctype,
-            mechanism=None,
-            **kwargs,
+        self,
+        input_path: Path,
+        stix_folder_path: Path,
+        reference: Union[int, str],
+        calctype: str,
+        mechanism=None,
+        **kwargs,
     ):
         """
+        Args:
+            input_path (str): Path to the dataset folder of the corresponding mechanism.
+            stix_folder_path (str): Path to the folder containing all the stix files.
+            reference (str): A reference to use for the calculation.
+            calctype (str): Calculation type for the given mechanism, one of ['Simple', 'HRING', 'DStability', 'DirectInput'].
+            mechanism (str): The mechanism to use for the calculation.
+            **kwargs: Additional keyword arguments to pass.
 
-        :param input_path: Path to the dataset folder of the corresponding mechanism.
-        :param stix_folder_path: Path to the folder containing all the stix files.
-        :param reference:
-        :param calctype: Calculation type for the given mechanism, one of ['Simple', 'HRING', 'DStability', 'DirectInput'].
-        :param mechanism:
-        :param kwargs:
-        :return:
-
+        Returns:
+            None.
         """
 
         if mechanism == "StabilityInner":
-            if calctype == 'DStability':
-                data = self.read_data_from_csv(input_path, reference)
-                data = data[data.index == 'STIXNAAM']  # only keep the row with the STIX name
-                data.loc['STIXNAAM'] = str(stix_folder_path) + "/" + data.loc['STIXNAAM']
+            if calctype == "DStability":
+                data = read_data_from_csv(input_path, reference)
+                # only keep the row with the following names: a
+                data = data.loc[
+                    data.index.isin(["STIXNAAM", "RERUN", "STAGEID"])
+                ]  # only keep the row with the STIX name
+                data.loc["STIXNAAM"] = (
+                    str(stix_folder_path) + "/" + data.loc["STIXNAAM"]
+                )
+                print(data)
             else:
-                data = self.read_data_from_csv(input_path, reference)
+                data = read_data_from_csv(input_path, reference)
 
-        elif mechanism == 'Overflow':
+        elif mechanism == "Overflow":
             if calctype == "Simple":
                 data = pd.read_csv(
                     input_path.joinpath(Path(reference).name), delimiter=","
@@ -78,7 +87,7 @@ class MechanismInput:
                 raise Exception("Unknown input type for overflow")
 
         else:
-            data = self.read_data_from_csv(input_path, reference)
+            data = read_data_from_csv(input_path, reference)
 
         self.temporals = []
         self.char_vals = {}
@@ -114,10 +123,10 @@ class MechanismInput:
                 if data.index[i] == "k":
                     try:
                         if any(
-                                self.input[data.index[i]] > 1.0
+                            self.input[data.index[i]] > 1.0
                         ):  # if k>1 it is likely in m/d
                             self.input[data.index[i]] = self.input[data.index[i]] / (
-                                    24 * 3600
+                                24 * 3600
                             )
                             logging.info(
                                 "k-value modified as it was likely m/d and should be m/s"
@@ -125,33 +134,8 @@ class MechanismInput:
                     except:
                         if self.input[data.index[i]] > 1.0:
                             self.input[data.index[i]] = self.input[data.index[i]] / (
-                                    24 * 3600
+                                24 * 3600
                             )
                             logging.info(
                                 "k-value modified as it was likely m/d and should be m/s"
                             )
-
-    @staticmethod
-    def read_data_from_csv(input_path: Path, reference) -> pd.DataFrame:
-        """Read a mechanism data from a csv file and return a pandas dataframe"""
-        try:
-            data = pd.read_csv(
-                input_path.joinpath(Path(str(reference)).name),
-                delimiter=",",
-                header=None,
-            )
-        except:
-            data = pd.read_csv(
-                input_path.joinpath(Path(str(reference)).name + ".csv"),
-                delimiter=",",
-                header=None,
-            )
-
-        # TODO: fix datatypes in input such that we do not need to drop columns
-        data = data.rename(columns={list(data)[0]: "Name"})
-        data = data.set_index("Name")
-        try:
-            data = data.drop(["InScope", "Opmerking"]).astype(np.float32)
-        except:
-            pass
-        return data
