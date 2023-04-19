@@ -2,7 +2,7 @@
 
 We thank you already for your interest and time to contribute within this project.
 
-When contributing to [vrtool](https://github.com/Deltares/Veiligheidsrendement) you need to [install it for development](#install-before-contributing), please first [create a JIRA issue](#how-to-create-an-issue) to describe (and possible discuss) your contribution(s) follow-up by creating a [related GitHub branch](#creating-new-branches) then [commit](#commiting-changes) your changes following the vrtool's [code standards](#code-standards) and don't forget that [before making a pull request](#before-making-a-pull-request) you should consider to [add documentation](#adding-documentation). 
+The first step for contributing to [vrtool](https://github.com/Deltares/Veiligheidsrendement) is to [install it for development](#install-before-contributing). Then you can proceed to [create a JIRA issue](#how-to-create-an-issue) to describe (and possible discuss) your contribution(s) followed-up by creating a [related GitHub branch](#creating-new-branches). Changes can then be [committed](#commiting-changes) following the vrtool's [code standards](#code-standards) and don't forget that [before making a pull request](#before-making-a-pull-request) you should consider to [add documentation](#adding-documentation).
 
 ## Install before contributing
 If you have not installed the `vrtool` for development please do so now: 
@@ -12,9 +12,9 @@ If you have not installed the `vrtool` for development please do so now:
     cd C:\repos
     git clone https://github.com/Deltares/Veiligheidsrendement.git vrtool_repo
     ```
-    | Note, the above steps are based on a Windows setup. If you are not familiar with Git we recommend using the [GitHub desktop tool](https://desktop.github.com/).
+    | Note, the above steps are based on a Windows setup. If you are not familiar with Git, we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
-2. Navigate to your `Veiligheidsrendement` repository and then install the `vrtool` package with [Anaconda](https://www.anaconda.com/) (our recommendation):    
+2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda](https://www.anaconda.com/) (our recommendation):    
     ```bash
     cd C:\repos\vrtool_repo
     conda env create -f .config\environment.yml
@@ -88,6 +88,15 @@ All created branches should adhere to the pattern `prefix\VRTOOL-##_title_in_sna
 
 So, as an example the documentation issue `VRTOOL-71 Create collaboration How to` would be carried out in a branch named as `docs/VRTOOL-71_create_collaboration_how_to`.
 
+### Adding dependencies
+
+This project makes use of [Poetry](https://python-poetry.org/). In order to properly add a dependency use the poetry command line `poetry add _dependency_name`. In `vrtool`, we distinguish these types of dependencies.
+- general ( `poetry add _dependency_`) . A dependency that __needs__ to be distributed with the package because it is required for a correct functioning of the tool. Think of packages such as `pandas` or `numpy`.
+- test (`poetry add _dependency_to_add_ --group test`). A dependency only used during testing, think of `pytest` or libraries used to generate code coverage reports.
+- dev (`poetry add _dependency_to_add_ --group dev` ). Think of dependencies needed by developers to help in their tasks, such as `black` or `isort`. 
+- docs ( `poetry add _dependency_to_add_ --group docs). Dependencies required to generate documentation. At the moment we are not using this.
+
+
 ### Commiting changes
 
 In this repository we try to commit following the [Conventional Commits standard](https://www.conventionalcommits.org/en/v1.0.0/). This allows us for easy interpretation of ones contribution as well as to automatically maintain our `CHANGELOG.md`.
@@ -111,7 +120,7 @@ Do not forget to notify the other contributors about the Pull-Request by moving 
 
 ### Approving and merging a pull-request.
 
-Only after a succesful review and "green" quality gates will a pull-request be merged back to `main`. This approval will be explicetly set by the code reviewer and it can directly merge the changes or wait for the original contributor to do so.
+Only after a succesful review and "green" quality gates a pull-request will be merged back to `main`. This approval will be explicetly set by the code reviewer and it can directly merge the changes or wait for the original contributor to do so.
 
 When "merging a pull-request" three options are displayed. Our preferred way will be, unless otherwise stated, to "Create a merge commit".
 
@@ -138,7 +147,7 @@ Contributors should also extend the test bench for the `vrtool`. Vrtool usages [
 
 The [tests module](../tests/) "mirrors" the directory structure of the `vrtool` one. Hence, for each new module a new "test module" (with same name) should be created, for a new source file a new test file should be created (with the `test_` prefix) and each class should be tested with a related test class (with the `Test` prefix such as `class TestMyClass:`).
 
-When required to add test data for references or as input, you may do so by adding it to the [test_data](../tests/test_data/) directory and then reference to it via the tests root import `from tests import test_data`. Similarly, when generating new files of any type during a test, please try to output it directly to the `tests_results` directory, which can also be imported as `from tests import test_results`.
+When required to add test data for referencing or as input, you may do so by adding it to the [test_data](../tests/test_data/) directory and then reference to it via the tests root import `from tests import test_data`. Similarly, when generating new files of any type during a test, please try to output it directly to the `tests_results` directory, which can also be imported as `from tests import test_results`.
 
 We only distinguish, at the moment, two different categories of tests in `vrtool`. Regular tests (untagged) and `slow` tests. You can tag a `slow` test when its run takes more than one minute such as:
 
@@ -181,7 +190,7 @@ def given_valid_input_when_run_assessment_then_succeeds(self):
 
 ## Adding documentation
 
-Besides the in-code documentation via docstrings, adding new features or modifying some pieces of code my require the addition of more documentation. Possible options are:
+Besides the in-code documentation via docstrings, adding new features or modifying some pieces of code may require the addition of more documentation. Possible options are:
 
 1. Create a `README.md` at the module's level. For instance in `vrtool.defaults` you will find one specific file describing the purpose of said module.
 2. Create an extensive markdown file in the [docs](.) directory, like this `CONTRIBUTING.md` file.
