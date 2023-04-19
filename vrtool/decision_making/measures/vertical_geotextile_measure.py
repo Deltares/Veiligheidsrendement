@@ -21,7 +21,7 @@ class VerticalGeotextileMeasure(MeasureBase):
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
-        mechanisms = dike_section.section_reliability.Mechanisms.keys()
+        mechanism_names = dike_section.section_reliability.Mechanisms.keys()
 
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years
@@ -33,50 +33,54 @@ class VerticalGeotextileMeasure(MeasureBase):
         self.measures["Reliability"] = SectionReliability()
         self.measures["Reliability"].Mechanisms = {}
 
-        for mechanism in mechanisms:
-            calc_type = dike_section.mechanism_data[mechanism][1]
+        for mechanism_name in mechanism_names:
+            calc_type = dike_section.mechanism_data[mechanism_name][1]
             self.measures["Reliability"].Mechanisms[
-                mechanism
+                mechanism_name
             ] = MechanismReliabilityCollection(
-                mechanism, calc_type, self.config.T, self.config.t_0, 0
+                mechanism_name, calc_type, self.config.T, self.config.t_0, 0
             )
             for ij in (
-                self.measures["Reliability"].Mechanisms[mechanism].Reliability.keys()
+                self.measures["Reliability"]
+                .Mechanisms[mechanism_name]
+                .Reliability.keys()
             ):
-                self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[mechanism]
+                    dike_section.section_reliability.Mechanisms[mechanism_name]
                     .Reliability[ij]
                     .Input
                 )
                 if (
-                    mechanism == "Overflow"
-                    or mechanism == "StabilityInner"
-                    or (mechanism == "Piping" and int(ij) < self.parameters["year"])
+                    mechanism_name == "Overflow"
+                    or mechanism_name == "StabilityInner"
+                    or (
+                        mechanism_name == "Piping" and int(ij) < self.parameters["year"]
+                    )
                 ):  # Copy results
-                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                         ij
                     ] = copy.deepcopy(
                         dike_section.section_reliability.Mechanisms[
-                            mechanism
+                            mechanism_name
                         ].Reliability[ij]
                     )
-                elif mechanism == "Piping" and int(ij) >= self.parameters["year"]:
-                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                elif mechanism_name == "Piping" and int(ij) >= self.parameters["year"]:
+                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                         ij
                     ].Input.input["Elimination"] = "yes"
-                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                         ij
                     ].Input.input["Pf_elim"] = self.parameters["P_solution"]
-                    self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                         ij
                     ].Input.input["Pf_with_elim"] = np.min(
                         [self.parameters["Pf_solution"], 1.0e-16]
                     )
-            self.measures["Reliability"].Mechanisms[mechanism].generateLCRProfile(
+            self.measures["Reliability"].Mechanisms[mechanism_name].generateLCRProfile(
                 dike_section.section_reliability.Load,
-                mechanism=mechanism,
+                mechanism=mechanism_name,
                 trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()

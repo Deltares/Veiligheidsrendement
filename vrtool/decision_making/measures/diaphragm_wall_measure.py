@@ -25,7 +25,7 @@ class DiaphragmWallMeasure(MeasureBase):
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
-        mechanisms = dike_section.section_reliability.Mechanisms.keys()
+        mechanism_names = dike_section.section_reliability.Mechanisms.keys()
         # StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
         # It is assumed that the diaphragm wall is extendable after that.
         # Only 1 parameterized version with a lifetime of 100 years
@@ -36,28 +36,28 @@ class DiaphragmWallMeasure(MeasureBase):
         )
         self.measures["Reliability"] = SectionReliability()
         self.measures["Reliability"].Mechanisms = {}
-        for mechanism in mechanisms:
-            calc_type = dike_section.mechanism_data[mechanism][1]
+        for mechanism_name in mechanism_names:
+            calc_type = dike_section.mechanism_data[mechanism_name][1]
             self.measures["Reliability"].Mechanisms[
-                mechanism
+                mechanism_name
             ] = MechanismReliabilityCollection(
-                mechanism, calc_type, self.config.T, self.config.t_0, 0
+                mechanism_name, calc_type, self.config.T, self.config.t_0, 0
             )
             for ij in (
-                self.measures["Reliability"].Mechanisms[mechanism].Reliability.keys()
+                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability.keys()
             ):
-                self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                     ij
                 ].Input = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[mechanism]
+                    dike_section.section_reliability.Mechanisms[mechanism_name]
                     .Reliability[ij]
                     .Input
                 )
                 if float(ij) >= self.parameters["year"]:
-                    if mechanism == "Overflow":
+                    if mechanism_name == "Overflow":
                         Pt = traject_info.Pmax * traject_info.omegaOverflow
                         if (
-                            dike_section.section_reliability.Mechanisms[mechanism]
+                            dike_section.section_reliability.Mechanisms[mechanism_name]
                             .Reliability[ij]
                             .type
                             == "Simple"
@@ -105,30 +105,30 @@ class DiaphragmWallMeasure(MeasureBase):
                                 mechanism="Overflow",
                             )
 
-                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                             ij
                         ].Input.input["h_crest"] = np.max(
                             [
                                 hc,
                                 self.measures["Reliability"]
-                                .Mechanisms[mechanism]
+                                .Mechanisms[mechanism_name]
                                 .Reliability[ij]
                                 .Input.input["h_crest"],
                             ]
                         )  # should not become weaker!
-                    elif mechanism == "StabilityInner" or mechanism == "Piping":
-                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                    elif mechanism_name == "StabilityInner" or mechanism_name == "Piping":
+                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                             ij
                         ].Input.input["Elimination"] = "yes"
-                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                             ij
                         ].Input.input["Pf_elim"] = self.parameters["P_solution"]
-                        self.measures["Reliability"].Mechanisms[mechanism].Reliability[
+                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                             ij
                         ].Input.input["Pf_with_elim"] = self.parameters["Pf_solution"]
-            self.measures["Reliability"].Mechanisms[mechanism].generateLCRProfile(
+            self.measures["Reliability"].Mechanisms[mechanism_name].generateLCRProfile(
                 dike_section.section_reliability.Load,
-                mechanism=mechanism,
+                mechanism=mechanism_name,
                 trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()
