@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import logging
-import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -93,7 +92,7 @@ class DikeTraject:
             self.general_info["Pmax"] = 1.0 / 30000
             self.general_info["aPiping"] = 0.4
         else:
-            warnings.warn(
+            logging.warn(
                 "Warning: dike traject not found, using default assumptions for traject."
             )
             self.general_info["FloodDamage"] = 5e9
@@ -273,7 +272,7 @@ class DikeTraject:
                             ProbabilityFrame = i
                         else:
                             if not "ProbabilityFrame" in locals():
-                                warnings.warn(
+                                logging.warn(
                                     "No satisfactory solution found, skipping plot"
                                 )
                             return

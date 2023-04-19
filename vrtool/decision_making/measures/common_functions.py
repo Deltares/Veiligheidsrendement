@@ -1,5 +1,4 @@
 import copy
-import warnings
 from pathlib import Path
 from typing import Union
 
@@ -448,7 +447,7 @@ def determine_costs(
         # add costs for housing
         if isinstance(housing, pd.DataFrame) and dberm_in > 0.0:
             if dberm_in > housing.size:
-                warnings.warn(
+                logging.warn(
                     "Inwards reinforcement distance exceeds data for housing database at section {}".format(
                         section
                     )

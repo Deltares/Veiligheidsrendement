@@ -5,14 +5,13 @@ from pathlib import Path
 
 
 class VrToolLogger:
-
     @staticmethod
     def init_file_handler(log_file: Path, logging_level: int) -> None:
         """
         Creates an empty log file, a root logger and sets the log stream to output its content to said file with the mininmum logging level.
 
         Args:
-            log_file (Optional[Path]): Location where the log file will be saved.
+            log_file (Path): Location where the log file will be saved.
             logging_level (int): Logging level.
 
         Raises:
@@ -46,8 +45,7 @@ class VrToolLogger:
         _console_handler = logging.StreamHandler()
         _console_handler.set_name("VrTool log console handler")
         VrToolLogger.add_handler(_console_handler, logging_level)
-        
-  
+
     @staticmethod
     def add_handler(handler: logging.StreamHandler, logging_level: int):
         """
@@ -64,7 +62,7 @@ class VrToolLogger:
         )
         handler.setFormatter(_formatter)
         handler.setLevel(logging_level)
-        
+
         # Set (root) logger.
         _logger = logging.getLogger("")
         _logger.setLevel(logging_level)
