@@ -17,6 +17,31 @@ class SectionData(BaseModel):
 class Mechanism(BaseModel):
     name: TextField(unique=True)
 
+class MechanismPerSection(BaseModel):
+    section = ForeignKeyField(SectionData, backref="mechanisms")
+    mechanism = ForeignKeyField(Mechanism, backref="sections")
+
+class ComputationType(BaseModel):
+    name = TextField()
+
+class ComputationScenario(BaseModel):
+    mechanism_per_section = ForeignKeyField(MechanismPerSection, backref="computation_scenarios")
+    computation_type = ForeignKeyField(ComputationType, backref="computation_scenarios")
+    computation_name = TextField()
+    scenario_name = TextField()
+    scenario_probability = FloatField()
+    probability_of_failure = FloatField()
+
+class Parameter(BaseModel):
+    computation_scenario = ForeignKeyField(ComputationScenario, backref="parameters")
+    parameter = TextField(unique=True)
+    value = FloatField()
+
+class MechanismTable(BaseModel):
+    computation_scenario = ForeignKeyField(ComputationScenario, backref="mechanism_tables")
+    year = IntegerField()
+    value = FloatField()
+    beta = FloatField()
 
 class CharacteristicPoint(BaseModel):
     name = TextField(unique=True)
@@ -42,11 +67,9 @@ class Buildings(BaseModel):
     number_of_buildings = IntegerField()
 
 class MeasureType(BaseModel):
-    # TODO: This was possible to have as an enum
     name = TextField(primary_key=True)
 
 class CombinableType(BaseModel):
-    # TODO: This was possible to have as an enum
     name = TextField(primary_key=True)
 
 class Measure(BaseModel):
