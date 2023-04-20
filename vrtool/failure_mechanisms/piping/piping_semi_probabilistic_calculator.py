@@ -11,6 +11,9 @@ from vrtool.failure_mechanisms.piping.piping_functions import (
     calculate_z_piping,
     calculate_z_uplift,
 )
+from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
+    PipingProbabilisticHelper,
+)
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
     add_load_char_vals,
@@ -18,8 +21,6 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
     pf_to_beta,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-
-import logging
 
 
 class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
@@ -58,6 +59,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         self._load = load
         self._traject_info = traject_info
         self._initial_year = initial_year
+        self._probabilistic_helper = PipingProbabilisticHelper(traject_info)
 
     def calculate(self, year: float) -> tuple[float, float]:
         # First calculate the SF without gamma for the three submechanisms
@@ -169,10 +171,11 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         return [beta, failure_probability]
 
     def _calculate_beta_piping(self, inputs: dict):
+        mechanism_name = "Piping"
         gamma_schem_pip = 1  # 1.05
 
         Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
-        gamma_pip = self._traject_info.gammaPiping
+        gamma_pip = self._probabilistic_helper.calculate_gamma(mechanism_name)
         # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
         # Calculate needed safety factor
 
@@ -180,67 +183,39 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         if p_dh != 0:
             SF_p = (p_dh_c / (gamma_pip * gamma_schem_pip)) / p_dh
 
-        return self._calculate_implicated_beta("Piping", SF_p * gamma_pip)
+        return self._probabilistic_helper.calculate_implicated_beta(
+            mechanism_name, SF_p * gamma_pip
+        )
 
     def _calculate_beta_heave(self, inputs: dict):
+        mechanism_name = "Heave"
         gamma_schem_heave = 1  # 1.05
 
         Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
-        gamma_h = self._traject_info.gammaHeave
+        gamma_h = self._probabilistic_helper.calculate_gamma(mechanism_name)
 
         # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
         # Calculate
         # needed safety factor
         # TODO: check formula Sander Kapinga
         SF_h = (h_i_c / (gamma_schem_heave * gamma_h)) / h_i
-        return self._calculate_implicated_beta(
-            "Heave", (h_i_c / gamma_schem_heave) / h_i
+        return self._probabilistic_helper.calculate_implicated_beta(
+            mechanism_name, (h_i_c / gamma_schem_heave) / h_i
         )  # Calculate the implicated beta_cs
 
     def _calculate_beta_uplift(self, inputs: dict):
+        mechanism_name = "Uplift"
         gamma_schem_upl = 1  # 1.05
 
         Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
-        gamma_u = self._traject_info.gammaUplift
+        gamma_u = self._probabilistic_helper.calculate_gamma(mechanism_name)
+
         # ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
         # Calculate
         # needed safety factor
         # TODO: check formula Sander Kapinga
         SF_u = (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh
 
-        return self._calculate_implicated_beta(
-            "Uplift", (u_dh_c / gamma_schem_upl) / u_dh
+        return self._probabilistic_helper.calculate_implicated_beta(
+            mechanism_name, (u_dh_c / gamma_schem_upl) / u_dh
         )  # Calculate the implicated beta_cs
-
-    def _calculate_implicated_beta(
-        self, mechanism_name: str, safety_factor: float
-    ) -> np.ndarray:
-        """Calculates the implicated reliability from the safety factor.
-
-        Args:
-            mechanism_name (str): The name of the mechanism to calculate the reliability for.
-            safety_factor (float): The safety factor to calculate the reliabity with.
-
-        Raises:
-            NotImplementedError: Raised when the mechanism is not supported.
-            
-        Returns:
-            np.ndarray: An array containing the implicated reliability.
-        """
-        if mechanism_name not in ["Piping", "Heave", "Uplift"]:
-            raise NotImplementedError(f'Mechanism "{mechanism_name}" is not supported.')
-
-        if safety_factor == 0:
-            logging.warn(f'SF for "{mechanism_name}" is 0')
-            return 0.5
-        elif safety_factor == np.inf:
-            return 8
-
-        beta_max = self._traject_info.beta_max
-        if mechanism_name == "Piping":
-            return (1 / 0.37) * (np.log(safety_factor / 1.04) + 0.43 * beta_max)
-        elif mechanism_name == "Heave":
-            # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
-            return (1 / 0.48) * (np.log(safety_factor / 0.37) + 0.30 * beta_max)
-        elif mechanism_name == "Uplift":
-            return (1 / 0.46) * (np.log(safety_factor / 0.48) + 0.27 * beta_max)
