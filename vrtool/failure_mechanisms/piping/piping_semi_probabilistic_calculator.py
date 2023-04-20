@@ -180,7 +180,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         if p_dh != 0:
             SF_p = (p_dh_c / (gamma_pip * gamma_schem_pip)) / p_dh
 
-        return self._traject_info.calculate_implicated_beta("Piping", SF_p * gamma_pip)
+        return self._calculate_implicated_beta("Piping", SF_p * gamma_pip)
 
     def _calculate_beta_heave(self, inputs: dict):
         gamma_schem_heave = 1  # 1.05
@@ -193,7 +193,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         # needed safety factor
         # TODO: check formula Sander Kapinga
         SF_h = (h_i_c / (gamma_schem_heave * gamma_h)) / h_i
-        return self._traject_info.calculate_implicated_beta(
+        return self._calculate_implicated_beta(
             "Heave", (h_i_c / gamma_schem_heave) / h_i
         )  # Calculate the implicated beta_cs
 
@@ -208,7 +208,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         # TODO: check formula Sander Kapinga
         SF_u = (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh
 
-        return self._traject_info.calculate_implicated_beta(
+        return self._calculate_implicated_beta(
             "Uplift", (u_dh_c / gamma_schem_upl) / u_dh
         )  # Calculate the implicated beta_cs
 
