@@ -9,7 +9,7 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 )
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
-from tests.utils.mocked_dike_traject import MockedDikeTraject
+from tests.run_workflows import MockedDikeTraject
 
 
 class TestRunSafetyAssessment:

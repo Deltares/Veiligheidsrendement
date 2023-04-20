@@ -4,7 +4,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
-from tests.utils.mocked_dike_traject import MockedDikeTraject
+from tests.run_workflows import MockedDikeTraject
 
 
 class TestVrtoolRunFullModel:
