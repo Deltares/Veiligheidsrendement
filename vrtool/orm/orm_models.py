@@ -1,6 +1,6 @@
 from peewee import IntegerField, BooleanField, FloatField, ForeignKeyField, CharField
 from peewee import Model
-from vrtool.orm import vrtool_db
+from vrtool.orm.orm_db import vrtool_db
 
 def _get_table_name(qual_name: str) -> str:
     """
