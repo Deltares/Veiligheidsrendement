@@ -12,7 +12,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class DiaphragmWallMeasure(MeasureBase):
@@ -44,7 +44,9 @@ class DiaphragmWallMeasure(MeasureBase):
                 mechanism_name, calc_type, self.config.T, self.config.t_0, 0
             )
             for ij in (
-                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability.keys()
+                self.measures["Reliability"]
+                .Mechanisms[mechanism_name]
+                .Reliability.keys()
             ):
                 self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                     ij
@@ -105,9 +107,9 @@ class DiaphragmWallMeasure(MeasureBase):
                                 mechanism="Overflow",
                             )
 
-                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                            ij
-                        ].Input.input["h_crest"] = np.max(
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].Input.input["h_crest"] = np.max(
                             [
                                 hc,
                                 self.measures["Reliability"]
@@ -116,16 +118,22 @@ class DiaphragmWallMeasure(MeasureBase):
                                 .Input.input["h_crest"],
                             ]
                         )  # should not become weaker!
-                    elif mechanism_name == "StabilityInner" or mechanism_name == "Piping":
-                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                            ij
-                        ].Input.input["Elimination"] = "yes"
-                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                            ij
-                        ].Input.input["Pf_elim"] = self.parameters["P_solution"]
-                        self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                            ij
-                        ].Input.input["Pf_with_elim"] = self.parameters["Pf_solution"]
+                    elif (
+                        mechanism_name == "StabilityInner" or mechanism_name == "Piping"
+                    ):
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].Input.input["Elimination"] = "yes"
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].Input.input["Pf_elim"] = self.parameters[
+                            "P_solution"
+                        ]
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].Input.input["Pf_with_elim"] = self.parameters[
+                            "Pf_solution"
+                        ]
             self.measures["Reliability"].Mechanisms[mechanism_name].generateLCRProfile(
                 dike_section.section_reliability.Load,
                 mechanism=mechanism_name,

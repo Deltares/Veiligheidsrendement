@@ -15,7 +15,7 @@ from vrtool.decision_making.measures import (
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class Solutions:

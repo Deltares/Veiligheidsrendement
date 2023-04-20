@@ -1,7 +1,7 @@
 import pytest
 
 from pytest import approx
-from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class TestDikeTrajectInfo:

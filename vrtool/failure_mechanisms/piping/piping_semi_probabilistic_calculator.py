@@ -17,7 +17,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import (
     beta_to_pf,
     pf_to_beta,
 )
-from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 import logging
 

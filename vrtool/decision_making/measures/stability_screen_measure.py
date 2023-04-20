@@ -13,7 +13,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class StabilityScreenMeasure(MeasureBase):
@@ -61,7 +61,9 @@ class StabilityScreenMeasure(MeasureBase):
                 mechanism_name, calc_type, self.config.T, self.config.t_0, 0
             )
             for ij in (
-                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability.keys()
+                self.measures["Reliability"]
+                .Mechanisms[mechanism_name]
+                .Reliability.keys()
             ):
                 self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                     ij
@@ -70,7 +72,9 @@ class StabilityScreenMeasure(MeasureBase):
                     .Reliability[ij]
                     .Input
                 )
-                if mechanism_name == "Overflow" or mechanism_name == "Piping":  # Copy results
+                if (
+                    mechanism_name == "Overflow" or mechanism_name == "Piping"
+                ):  # Copy results
                     self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                         ij
                     ] = copy.deepcopy(
