@@ -7,6 +7,9 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
     PipingProbabilisticHelper,
 )
+from vrtool.failure_mechanisms.piping.piping_failure_submechanism import (
+    PipingFailureSubmechanism,
+)
 
 
 @pytest.fixture
@@ -24,85 +27,53 @@ class TestPipingProbabilisticHelper:
         self._probabilistic_functions = configured_functions
 
     @pytest.mark.parametrize(
-        "mechanism_name",
+        "submechanism, expected_gamma",
         [
-            pytest.param(None, id="None mechanism name"),
-            pytest.param("   ", id="Whitespace mechanism name"),
-            pytest.param("", id="Empty mechanism name"),
-            pytest.param("akdjsakld", id="Any mechanism name"),
-        ],
-    )
-    def test_calculate_gamma_unknown_mechanism_raises_error(self, mechanism_name: str):
-        # Call
-        with pytest.raises(ValueError) as value_error:
-            self._probabilistic_functions.calculate_gamma(mechanism_name)
-
-        # Assert
-        assert (
-            str(value_error.value) == f'Mechanism "{mechanism_name}" is not supported.'
-        )
-
-    @pytest.mark.parametrize(
-        "mechanism_name, expected_gamma",
-        [
-            pytest.param("Piping", 1.1624370714852628),
-            pytest.param("Heave", 1.1952560367631886),
-            pytest.param("Uplift", 1.5833969960581846),
+            pytest.param(PipingFailureSubmechanism.PIPING, 1.1624370714852628),
+            pytest.param(PipingFailureSubmechanism.HEAVE, 1.1952560367631886),
+            pytest.param(PipingFailureSubmechanism.UPLIFT, 1.5833969960581846),
         ],
     )
     def test_calculate_gamma_supported_mechanism_returns_expected_gamma(
-        self, mechanism_name: str, expected_gamma: float
+        self, submechanism: PipingFailureSubmechanism, expected_gamma: float
     ):
         # Call
-        beta = self._probabilistic_functions.calculate_gamma(mechanism_name)
+        beta = self._probabilistic_functions.calculate_gamma(submechanism)
 
         # Assert
         assert beta == approx(expected_gamma)
 
     @pytest.mark.parametrize(
-        "mechanism_name",
+        "submechanism",
         [
-            pytest.param(None, id="None mechanism name"),
-            pytest.param("   ", id="Whitespace mechanism name"),
-            pytest.param("", id="Empty mechanism name"),
-            pytest.param("akdjsakld", id="Any mechanism name"),
+            (PipingFailureSubmechanism.PIPING),
+            (PipingFailureSubmechanism.UPLIFT),
+            (PipingFailureSubmechanism.HEAVE),
         ],
     )
-    def test_calculate_implicated_beta_unknown_mechanism_raises_error(
-        self, mechanism_name: str
-    ):
-        # Call
-        with pytest.raises(ValueError) as value_error:
-            self._probabilistic_functions.calculate_implicated_beta(mechanism_name, 0)
-
-        # Assert
-        assert (
-            str(value_error.value) == f'Mechanism "{mechanism_name}" is not supported.'
-        )
-
-    @pytest.mark.parametrize(
-        "mechanism",
-        [("Piping"), ("Uplift"), ("Heave")],
-    )
     def test_calculate_implicated_beta_safety_factor_0_returns_expected_beta(
-        self, mechanism: str
+        self, submechanism: PipingFailureSubmechanism
     ):
         # Call
-        beta = self._probabilistic_functions.calculate_implicated_beta(mechanism, 0)
+        beta = self._probabilistic_functions.calculate_implicated_beta(submechanism, 0)
 
         # Assert
         assert beta == 0.5
 
     @pytest.mark.parametrize(
-        "mechanism",
-        [("Piping"), ("Uplift"), ("Heave")],
+        "submechanism",
+        [
+            (PipingFailureSubmechanism.PIPING),
+            (PipingFailureSubmechanism.UPLIFT),
+            (PipingFailureSubmechanism.HEAVE),
+        ],
     )
     def test_calculate_implicated_beta_safety_factor_infinite_returns_expected_beta(
-        self, mechanism: str
+        self, submechanism: PipingFailureSubmechanism
     ):
         # Call
         beta = self._probabilistic_functions.calculate_implicated_beta(
-            mechanism, np.inf
+            submechanism, np.inf
         )
 
         # Assert
@@ -126,7 +97,7 @@ class TestPipingProbabilisticHelper:
     ):
         # Call
         beta = self._probabilistic_functions.calculate_implicated_beta(
-            "Piping", safety_factor
+            PipingFailureSubmechanism.PIPING, safety_factor
         )
 
         # Assert
@@ -150,7 +121,7 @@ class TestPipingProbabilisticHelper:
     ):
         # Call
         beta = self._probabilistic_functions.calculate_implicated_beta(
-            "Uplift", safety_factor
+            PipingFailureSubmechanism.UPLIFT, safety_factor
         )
 
         # Assert
@@ -174,7 +145,7 @@ class TestPipingProbabilisticHelper:
     ):
         # Call
         beta = self._probabilistic_functions.calculate_implicated_beta(
-            "Heave", safety_factor
+            PipingFailureSubmechanism.HEAVE, safety_factor
         )
 
         # Assert

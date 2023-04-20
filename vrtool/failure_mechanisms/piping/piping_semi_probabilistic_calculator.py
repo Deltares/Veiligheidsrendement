@@ -14,6 +14,9 @@ from vrtool.failure_mechanisms.piping.piping_functions import (
 from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
     PipingProbabilisticHelper,
 )
+from vrtool.failure_mechanisms.piping.piping_failure_submechanism import (
+    PipingFailureSubmechanism,
+)
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
     add_load_char_vals,
@@ -171,51 +174,48 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         return [beta, failure_probability]
 
     def _calculate_beta_piping(self, inputs: dict):
-        mechanism_name = "Piping"
+        submechanism = PipingFailureSubmechanism.PIPING
         gamma_schem_pip = 1  # 1.05
 
         Z, p_dh, p_dh_c = calculate_z_piping(inputs, mode="SemiProb")
-        gamma_pip = self._probabilistic_helper.calculate_gamma(mechanism_name)
-        # ProbabilisticFunctions.calc_gamma('Piping', TrajectInfo=TrajectInfo) #
-        # Calculate needed safety factor
+        gamma_pip = self._probabilistic_helper.calculate_gamma(submechanism)
 
+        # Calculate needed safety factor
         SF_p = np.inf
         if p_dh != 0:
             SF_p = (p_dh_c / (gamma_pip * gamma_schem_pip)) / p_dh
 
         return self._probabilistic_helper.calculate_implicated_beta(
-            mechanism_name, SF_p * gamma_pip
+            submechanism, SF_p * gamma_pip
         )
 
     def _calculate_beta_heave(self, inputs: dict):
-        mechanism_name = "Heave"
+        submechanism = PipingFailureSubmechanism.HEAVE
         gamma_schem_heave = 1  # 1.05
 
         Z, h_i, h_i_c = calculate_z_heave(inputs, mode="SemiProb")
-        gamma_h = self._probabilistic_helper.calculate_gamma(mechanism_name)
+        gamma_h = self._probabilistic_helper.calculate_gamma(submechanism)
 
-        # ProbabilisticFunctions.calc_gamma('Heave',TrajectInfo=TrajectInfo)  #
         # Calculate
         # needed safety factor
         # TODO: check formula Sander Kapinga
         SF_h = (h_i_c / (gamma_schem_heave * gamma_h)) / h_i
         return self._probabilistic_helper.calculate_implicated_beta(
-            mechanism_name, (h_i_c / gamma_schem_heave) / h_i
+            submechanism, (h_i_c / gamma_schem_heave) / h_i
         )  # Calculate the implicated beta_cs
 
     def _calculate_beta_uplift(self, inputs: dict):
-        mechanism_name = "Uplift"
+        submechanism = PipingFailureSubmechanism.UPLIFT
         gamma_schem_upl = 1  # 1.05
 
         Z, u_dh, u_dh_c = calculate_z_uplift(inputs, mode="SemiProb")
-        gamma_u = self._probabilistic_helper.calculate_gamma(mechanism_name)
+        gamma_u = self._probabilistic_helper.calculate_gamma(submechanism)
 
-        # ProbabilisticFunctions.calc_gamma('Uplift',TrajectInfo=TrajectInfo)
         # Calculate
         # needed safety factor
         # TODO: check formula Sander Kapinga
         SF_u = (u_dh_c / (gamma_schem_upl * gamma_u)) / u_dh
 
         return self._probabilistic_helper.calculate_implicated_beta(
-            mechanism_name, (u_dh_c / gamma_schem_upl) / u_dh
+            submechanism, (u_dh_c / gamma_schem_upl) / u_dh
         )  # Calculate the implicated beta_cs
