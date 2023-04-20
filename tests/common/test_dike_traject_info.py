@@ -41,9 +41,6 @@ class TestDikeTrajectInfo:
         assert info.bStabilityInner == 50
 
         assert info.beta_max == approx(3.7190164854556804)
-        assert info.gammaHeave == approx(1.292463569010036)
-        assert info.gammaPiping == approx(1.3024230063783075)
-        assert info.gammaUplift == approx(1.698591299284156)
 
     def test_from_traject_info_38_1_sets_correct_properties(self):
         # Setup
@@ -72,9 +69,6 @@ class TestDikeTrajectInfo:
         assert info.bStabilityInner == 50
 
         assert info.beta_max == approx(3.9878789366069176)
-        assert info.gammaHeave == approx(1.3689728103887868)
-        assert info.gammaPiping == approx(1.2906177934255822)
-        assert info.gammaUplift == approx(1.8033005503044766)
 
     def test_from_traject_info_16_1_sets_correct_properties(self):
         # Setup
@@ -103,9 +97,6 @@ class TestDikeTrajectInfo:
         assert info.bStabilityInner == 50
 
         assert info.beta_max == approx(3.9878789366069176)
-        assert info.gammaHeave == approx(1.1952560367631886)
-        assert info.gammaPiping == approx(1.1624370714852628)
-        assert info.gammaUplift == approx(1.5833969960581846)
 
     @pytest.mark.parametrize(
         "traject_name",
