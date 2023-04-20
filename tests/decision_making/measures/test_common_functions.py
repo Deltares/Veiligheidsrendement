@@ -12,7 +12,13 @@ class TestCommonFunctions:
         "sheetFileName, direction, dx, dy, expected_values",
         [
             pytest.param(
-                "DV56.xlsx", "outward", 0, 20, (91.48, 0.0), id="No Berm case"
+                "AW035_087.xlsx", "outward", 0, 20, (83.67, 0.0), id="No Berm case 1a"
+            ),
+            pytest.param(
+                "AW035_087.xlsx", "inward", 0, 20, (40.00, 20.0), id="No Berm case 1b"
+            ),
+            pytest.param(
+                "DV56.xlsx", "outward", 0, 20, (91.48, 0.0), id="No Berm case 2"
             ),
             pytest.param(
                 "DV53.xlsx", "inward", 0.5, 10, (37.8, 13.06), id="Inward case"
