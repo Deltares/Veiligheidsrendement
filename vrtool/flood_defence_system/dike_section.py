@@ -27,6 +27,17 @@ class DikeSection:
     def get_dike_sections_from_vr_config(
         cls, vrtool_config: VrtoolConfig
     ) -> list[DikeSection]:
+        """Gets a collection of dike sections based on the config.
+
+        Args:
+            vrtool_config (VrtoolConfig): The configuration to retrieve the collection of dike sections with.
+
+        Raises:
+            IOError: Raised when no dike sections are found.
+
+        Returns:
+            list[DikeSection]: A collection of dike sections.
+        """
         files = [i for i in vrtool_config.input_directory.glob("*DV*") if i.is_file()]
         if len(files) == 0:
             raise IOError("Error: no dike sections found. Check path!")
@@ -46,6 +57,12 @@ class DikeSection:
         return list(map(get_dike_section, files))
 
     def read_general_info(self, section_filepath: Path, sheet_name: str):
+        """Reads the general information of a dike section.
+
+        Args:
+            section_filepath (Path): The path to read the data from.
+            sheet_name (str): The name of the sheet to read the data from.
+        """
         # Read general data from sheet in standardized xlsx file
         df = pd.read_excel(section_filepath, sheet_name=None)
 
@@ -88,12 +105,20 @@ class DikeSection:
         )
 
     def set_section_reliability(
-        self, input_path: Path, mechanisms: list[str], t_value: float, t_0: float
+        self, input_path: Path, mechanism_names: list[str], t_value: float, t_0: float
     ):
+        """Sets the reliability of the dike section.
+
+        Args:
+            input_path (Path): The path to retrieve the input from.
+            mechanism_names (list[str]): A collection of the names of the mechanisms to consider.
+            t_value (float): The year to compute the reliability for.
+            t_0 (float): The initial year.
+        """
         self.section_reliability = SectionReliability()
         self.section_reliability.Load = self._get_load_input(input_path)
         # Then the input for all the mechanisms:
-        for mechanism_name in mechanisms:
+        for mechanism_name in mechanism_names:
             self.section_reliability.Mechanisms[
                 mechanism_name
             ] = self._get_mechanism_collection(
