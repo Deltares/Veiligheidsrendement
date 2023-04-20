@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 import openturns as ot
-import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
 

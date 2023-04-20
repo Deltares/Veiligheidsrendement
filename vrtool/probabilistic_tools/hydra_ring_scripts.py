@@ -1,7 +1,6 @@
 import subprocess
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import openturns as ot
 import pandas as pd
