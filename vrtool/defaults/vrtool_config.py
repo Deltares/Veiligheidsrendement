@@ -9,7 +9,6 @@ import pandas as pd
 
 from vrtool.defaults import default_unit_costs_csv
 
-
 def _load_default_unit_costs() -> dict:
     """
     Returns the _default_ unit costs read from the default csv file, with columns: 'Description', 'Cost' and 'Unit'.
@@ -30,7 +29,6 @@ def _load_default_unit_costs() -> dict:
         unit_cost[_series["Description"]] = _series["Cost"]
     return unit_cost
 
-
 @dataclass
 class VrtoolConfig:
     """
@@ -45,6 +43,7 @@ class VrtoolConfig:
     language: str = "EN"
     timing: bool = False
     input_directory: Optional[Path] = None
+    external_wrappers: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
     traject: str = ""
@@ -136,7 +135,8 @@ class VrtoolConfig:
             return value
 
         self.output_directory = _convert_to_path(self.output_directory)
-        self.input_directory = _convert_to_path(self.output_directory)
+        self.input_directory = _convert_to_path(self.input_directory)
+        self.external_wrappers = _convert_to_path(self.external_wrappers)
 
     def export(self, export_path: Path):
         """

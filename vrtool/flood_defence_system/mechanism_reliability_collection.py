@@ -21,11 +21,11 @@ class MechanismReliabilityCollection:
         for i in self.T:
             if measure_year > i:
                 self.Reliability[str(i)] = MechanismReliability(
-                    mechanism, computation_type, self.t_0, copy_or_calculate="copy"
+                    mechanism, computation_type, self.t_0, config.external_wrappers, copy_or_calculate="copy"
                 )
             else:
                 self.Reliability[str(i)] = MechanismReliability(
-                    mechanism, computation_type, self.t_0
+                    mechanism, computation_type, config.external_wrappers, self.t_0
                 )
 
     def generateLCRProfile(

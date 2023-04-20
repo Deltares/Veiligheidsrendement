@@ -1,3 +1,4 @@
 {
-    "traject": "MyCustomTraject"
+    "traject": "MyCustomTraject",
+    "externals_wrappers": "C://..."
 }

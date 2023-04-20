@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
@@ -21,17 +22,20 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calcu
     StabilityInnerDStabilityCalculator,
     StabilityInnerDStabilityInput,
 )
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
+
 from vrtool.flood_defence_system.load_input import LoadInput
 
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
-    def __init__(self, mechanism, type, t_0: int, copy_or_calculate="calculate"):
+    def __init__(self, mechanism, type, t_0: int, externals_directory: Path, copy_or_calculate="calculate"):
         # Initialize: set mechanism and type. These are the most important basic parameters
         self.mechanism = mechanism
         self.type = type
         self.t_0 = t_0
         self.copy_or_calculate = copy_or_calculate
+        self._externals_directory
 
         self.Input = MechanismInput(self.mechanism)
         if mechanism == "Piping":
@@ -146,6 +150,7 @@ class MechanismReliability:
         if mechanism == "StabilityInner":
             _mechanism_input = StabilityInnerDStabilityInput.from_stix_input(
                 mechanism_input=mechanism_input,
+                self._externals_directory,
             )
             return StabilityInnerDStabilityCalculator(_mechanism_input)
 
