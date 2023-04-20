@@ -1,10 +1,22 @@
 from vrtool.orm.models.base_model import BaseModel
 from peewee import IntegerField, TextField, BooleanField, FloatField, BlobField, ForeignKeyField
 
+def _get_table_name(qual_name: str) -> str:
+    """
+    When invoking the Meta inner class we can access the `__qual__` attribute which contains its parent class with the name to be used as a SQLite table
+
+    Args:
+        qual_name (str): Value of the `__qual__` attribute.
+
+    Returns:
+        str: Name of the table.
+    """
+    return qual_name.split(".")[0]
+
 class SectionData(BaseModel):
     section_name: TextField(unique=True)
-    dijkpaal_start: TextField()
-    dijkpaal_end: TextField()
+    dijkpaal_start: TextField(null=True)
+    dijkpaal_end: TextField(null=True)
     meas_start: FloatField()
     meas_end: FloatField()
     section_length: FloatField()
@@ -14,69 +26,131 @@ class SectionData(BaseModel):
     cover_layer_thickness: FloatField(default=7)
     pleistocene_level: FloatField(default=25)
 
+    class Meta:
+        table_name = _get_table_name(__qualname__)
+
 class Mechanism(BaseModel):
     name: TextField(unique=True)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class MechanismPerSection(BaseModel):
     section = ForeignKeyField(SectionData, backref="mechanisms")
     mechanism = ForeignKeyField(Mechanism, backref="sections")
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class ComputationType(BaseModel):
     name = TextField()
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class ComputationScenario(BaseModel):
     mechanism_per_section = ForeignKeyField(MechanismPerSection, backref="computation_scenarios")
     computation_type = ForeignKeyField(ComputationType, backref="computation_scenarios")
-    computation_name = TextField()
+    computation_name = TextField(null=False)
     scenario_name = TextField()
-    scenario_probability = FloatField()
+    scenario_probability = FloatField(null=False)
     probability_of_failure = FloatField()
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class Parameter(BaseModel):
     computation_scenario = ForeignKeyField(ComputationScenario, backref="parameters")
     parameter = TextField(unique=True)
-    value = FloatField()
+    value = FloatField(null=False)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class MechanismTable(BaseModel):
     computation_scenario = ForeignKeyField(ComputationScenario, backref="mechanism_tables")
-    year = IntegerField()
-    value = FloatField()
-    beta = FloatField()
+    year = IntegerField(null=False)
+    value = FloatField(null=False)
+    beta = FloatField(null=False)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class CharacteristicPoint(BaseModel):
     name = TextField(unique=True)
 
+    class Meta:
+        table_name = _get_table_name(__qualname__)
+
+class ProfilePointType(BaseModel):
+    """
+    6 values are possible `BIT`, `BUT`, `BUK`, `BIK`, (optionals: `EBL`, `BBL`)
+    """
+    name = TextField()
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
+
 class ProfilePoint(BaseModel):
-    point_name = TextField(unique=True)
-    characteristic_point = ForeignKeyField(CharacteristicPoint, backref='profile_points')
+    point_name = ForeignKeyField(ProfilePointType, backref="profile_points")
+    profile_point = ForeignKeyField(CharacteristicPoint, backref='profile_points')
     section_data = ForeignKeyField(SectionData, backref="profile_points")
-    x_coordinate = FloatField()
-    y_coordinate = FloatField()
+    x_coordinate = FloatField(null=False)
+    y_coordinate = FloatField(null=False)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class WaterlevelData(BaseModel):
     section_data = ForeignKeyField(SectionData, backref="water_level_data_list")
-    water_level_location_id = IntegerField()
-    year = IntegerField()
-    water_level = FloatField()
-    beta = FloatField()
+    water_level_location_id = IntegerField(null=False)
+    year = IntegerField(null=False)
+    water_level = FloatField(null=False)
+    beta = FloatField(null=False)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class Buildings(BaseModel):
     section_data = ForeignKeyField(SectionData, backref="buildings_list")
 
-    distance_from_toe = TextField()
-    number_of_buildings = IntegerField()
+    distance_from_toe = TextField(null=False)
+    number_of_buildings = IntegerField(null=False)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class MeasureType(BaseModel):
+    """
+    Existing types:
+        * Soil reinforcement
+        * Stability screen
+        * Soil reinforcement with stability screen
+        * Vertical Geotextile
+        * Diaphragm wall
+    """
     name = TextField(primary_key=True)
 
+    class Meta:
+        table_name = _get_table_name(__qualname__)
+
 class CombinableType(BaseModel):
+    """
+    Existing types:
+        * full
+        * combinable
+        * partial
+    """
     name = TextField(primary_key=True)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class Measure(BaseModel):
     measure_type = ForeignKeyField(MeasureType, backref="measures")
     combinable_type = ForeignKeyField(CombinableType, backref="measures")
     name = TextField(primary_key=True)
     year = IntegerField(default=2025)
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
 
 class Default(Measure):
     max_inward_reinforcement = IntegerField(default=50)
@@ -89,9 +163,14 @@ class Default(Measure):
     failure_probability_with_solution = FloatField(default=10**-12)
     stability_screen_s_f_increase = FloatField(default=0.2)
 
+    class Meta:
+        table_name = _get_table_name(__qualname__)
+
 class Custom(Measure):
     mechanism = ForeignKeyField(Mechanism, backref="measures")
-    cost = FloatField()
-    beta = FloatField()
-    year = IntegerField()
+    cost = FloatField(null=False)
+    beta = FloatField(null=False)
+    year = IntegerField(null=False)
 
+    class Meta:
+        table_name = _get_table_name(__qualname__)
