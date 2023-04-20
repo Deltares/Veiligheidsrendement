@@ -2,7 +2,7 @@ import shutil
 from vrtool.orm import vrtool_db
 from tests import test_results
 import pytest
-from vrtool.orm.models.sql_models import *
+from vrtool.orm.orm_models import *
 
 def test_initialize_db(request: pytest.FixtureRequest):
     _db_file = test_results / request.node.name / "vrtool_db.db"
