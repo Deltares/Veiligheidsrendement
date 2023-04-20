@@ -202,3 +202,6 @@ class DikeTrajectInfo(BaseModel):
     p_max = FloatField(default=float("nan"))
     flood_damage = FloatField(default=float("nan"))
     traject_length = FloatField(default=float("nan"))
+
+    class Meta:
+        table_name = _get_table_name(__qualname__)
