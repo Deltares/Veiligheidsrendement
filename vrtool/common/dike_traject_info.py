@@ -26,11 +26,11 @@ class DikeTrajectInfo:
     FloodDamage: float = float("nan")
     TrajectLength: float = 0
 
-    def _calculate_gamma(self, mechanism: str) -> np.ndarray:
+    def _calculate_gamma(self, mechanism_name: str) -> np.ndarray:
         """Calculates the gamma based on the mechanism
 
         Args:
-            mechanism (str): The mechanism to calculate the gamma for.
+            mechanism_name (str): The name of the mechanism to calculate the gamma for.
 
         Raises:
             NotImplementedError: Raised when the mechanism is not supported.
@@ -44,14 +44,14 @@ class DikeTrajectInfo:
         betacs = pf_to_beta(Pcs)
         betamax = pf_to_beta(self.Pmax)
 
-        if mechanism == "Piping":
+        if mechanism_name == "Piping":
             return 1.04 * np.exp(0.37 * betacs - 0.43 * betamax)
-        elif mechanism == "Heave":
+        elif mechanism_name == "Heave":
             return 0.37 * np.exp(0.48 * betacs - 0.3 * betamax)
-        elif mechanism == "Uplift":
+        elif mechanism_name == "Uplift":
             return 0.48 * np.exp(0.46 * betacs - 0.27 * betamax)
         else:
-            raise NotImplementedError("Mechanism not found")
+            raise NotImplementedError(f'Mechanism "{mechanism_name}" is not supported.')
 
     def __post_init__(self):
         self.beta_max = pf_to_beta(self.Pmax)

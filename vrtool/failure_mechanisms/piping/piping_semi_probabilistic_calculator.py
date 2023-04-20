@@ -221,9 +221,14 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             mechanism_name (str): The name of the mechanism to calculate the reliability for.
             safety_factor (float): The safety factor to calculate the reliabity with.
 
+        Raises:
+            NotImplementedError: Raised when the mechanism is not supported.
+            
         Returns:
             np.ndarray: An array containing the implicated reliability.
         """
+        if mechanism_name not in ["Piping", "Heave", "Uplift"]:
+            raise NotImplementedError(f'Mechanism "{mechanism_name}" is not supported.')
 
         if safety_factor == 0:
             logging.warn(f'SF for "{mechanism_name}" is 0')
