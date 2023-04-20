@@ -13,18 +13,19 @@ def _get_table_name(qual_name: str) -> str:
     """
     return qual_name.split(".")[0]
 
+
 class SectionData(BaseModel):
-    section_name: TextField(unique=True)
-    dijkpaal_start: TextField(null=True)
-    dijkpaal_end: TextField(null=True)
-    meas_start: FloatField()
-    meas_end: FloatField()
-    section_length: FloatField()
-    in_analysis: BooleanField()
-    crest_height: FloatField()
-    annual_crest_decline: FloatField()
-    cover_layer_thickness: FloatField(default=7)
-    pleistocene_level: FloatField(default=25)
+    section_name = TextField(unique=True)
+    dijkpaal_start = TextField(null=True)
+    dijkpaal_end = TextField(null=True)
+    meas_start = FloatField()
+    meas_end = FloatField()
+    section_length = FloatField()
+    in_analysis = BooleanField()
+    crest_height = FloatField()
+    annual_crest_decline = FloatField()
+    cover_layer_thickness = FloatField(default=7)
+    pleistocene_level = FloatField(default=25)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
@@ -42,7 +43,13 @@ class MechanismPerSection(BaseModel):
         table_name = _get_table_name(__qualname__)
 
 class ComputationType(BaseModel):
-    name = TextField()
+    """
+    Possible values:
+        * Simple
+        * HRING
+        * SemiProb
+    """
+    name = TextField(unique=True)
     class Meta:
         table_name = _get_table_name(__qualname__)
 
@@ -73,24 +80,22 @@ class MechanismTable(BaseModel):
     class Meta:
         table_name = _get_table_name(__qualname__)
 
-class CharacteristicPoint(BaseModel):
+class CharacteristicPointType(BaseModel):
+    """
+    Possible values:
+        * `BIT`,
+        * `BUT`,
+        * `BUK`,
+        * `BIK`, 
+        * (optionals: `EBL`, `BBL`)
+    """
     name = TextField(unique=True)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
 
-class ProfilePointType(BaseModel):
-    """
-    6 values are possible `BIT`, `BUT`, `BUK`, `BIK`, (optionals: `EBL`, `BBL`)
-    """
-    name = TextField()
-
-    class Meta:
-        table_name = _get_table_name(__qualname__)
-
 class ProfilePoint(BaseModel):
-    point_name = ForeignKeyField(ProfilePointType, backref="profile_points")
-    profile_point = ForeignKeyField(CharacteristicPoint, backref='profile_points')
+    profile_point_type = ForeignKeyField(CharacteristicPointType, backref="profile_points")
     section_data = ForeignKeyField(SectionData, backref="profile_points")
     x_coordinate = FloatField(null=False)
     y_coordinate = FloatField(null=False)
@@ -126,7 +131,7 @@ class MeasureType(BaseModel):
         * Vertical Geotextile
         * Diaphragm wall
     """
-    name = TextField(primary_key=True)
+    name = TextField(unique=True)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
@@ -138,21 +143,24 @@ class CombinableType(BaseModel):
         * combinable
         * partial
     """
-    name = TextField(primary_key=True)
+    name = TextField(unique=True)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
 
 class Measure(BaseModel):
+    """
+    This should be defined as an abstract class.
+    """
     measure_type = ForeignKeyField(MeasureType, backref="measures")
     combinable_type = ForeignKeyField(CombinableType, backref="measures")
-    name = TextField(primary_key=True)
+    name = TextField()
     year = IntegerField(default=2025)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
 
-class Default(Measure):
+class StandardMeasure(Measure):
     max_inward_reinforcement = IntegerField(default=50)
     max_outward_reinforcement = IntegerField(default=0)
     direction = TextField(default='Inward')
@@ -166,7 +174,7 @@ class Default(Measure):
     class Meta:
         table_name = _get_table_name(__qualname__)
 
-class Custom(Measure):
+class CustomMeasure(Measure):
     mechanism = ForeignKeyField(Mechanism, backref="measures")
     cost = FloatField(null=False)
     beta = FloatField(null=False)
