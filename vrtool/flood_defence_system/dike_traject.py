@@ -22,12 +22,9 @@ class DikeTraject:
     probabilities: pd.DataFrame
 
     # This class contains general information on the dike traject and is used to store all data on the sections
-    def __init__(self, config: VrtoolConfig, traject=None):
-        if traject == None:
-            logging.warn("No traject given in config. Default was chosen")
-            self.traject = "Not specified"
-        else:
-            self.traject = traject
+    def __init__(self, config: VrtoolConfig):
+        if not config.traject:
+            raise ValueError("No traject given in config.")
 
         self.mechanism_names = config.mechanisms
         self.assessment_plot_years = config.assessment_plot_years

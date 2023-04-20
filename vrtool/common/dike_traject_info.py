@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
-
 import numpy as np
 
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
@@ -71,6 +69,9 @@ class DikeTrajectInfo:
             traject_name (str): the name of the traject.
             traject_length (float): the overall length of the traject.
 
+        Raises:
+            ValueError: Raised when the traject is not supported.
+
         Returns:
             DikeTrajectInfo: The object containing dike traject information.
         """
@@ -98,18 +99,6 @@ class DikeTrajectInfo:
             _general_info["TrajectLength"] = traject_length
             _general_info["Pmax"] = 1.0 / 30000
         else:
-            logging.warn(
-                "Dike traject not found, using default assumptions for traject."
-            )
-            _general_info["aPiping"] = 0.9
-            _general_info["FloodDamage"] = 5e9
-            _general_info["Pmax"] = 1.0 / 10000
-            _general_info["omegaPiping"] = 0.24
-            _general_info["omegaStabilityInner"] = 0.04
-            _general_info["omegaOverflow"] = 0.24
-            _general_info["bPiping"] = 300
-            _general_info["aStabilityInner"] = 0.033
-            _general_info["bStabilityInner"] = 50
-            _general_info["TrajectLength"] = traject_length
+            raise ValueError(f"Traject {traject_name} is not supported.")
 
         return cls(**_general_info)

@@ -116,33 +116,13 @@ class TestDikeTrajectInfo:
             pytest.param("akdjsakld", id="Any traject name"),
         ],
     )
-    def test_from_traject_info_unknown_traject_sets_default_properties(
-        self, traject_name: str
-    ):
+    def test_from_traject_info_unknown_traject_raises_error(self, traject_name: str):
         # Setup
         traject_length = 15000
 
         # Call
-        info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
+        with pytest.raises(ValueError) as value_error:
+            DikeTrajectInfo.from_traject_info(traject_name, traject_length)
 
         # Assert
-        assert info.traject_name == traject_name
-        assert info.TrajectLength == traject_length
-
-        assert info.aPiping == 0.9
-        assert info.FloodDamage == 5e9
-        assert info.Pmax == 1.0 / 10000
-
-        assert info.omegaPiping == 0.24
-        assert info.omegaStabilityInner == 0.04
-        assert info.omegaOverflow == 0.24
-
-        assert info.bPiping == 300
-
-        assert info.aStabilityInner == 0.033
-        assert info.bStabilityInner == 50
-
-        assert info.beta_max == approx(3.7190164854556804)
-        assert info.gammaHeave == approx(1.2610262138090147)
-        assert info.gammaPiping == approx(1.2779345640411361)
-        assert info.gammaUplift == approx(1.658976716933591)
+        assert str(value_error.value) == f"Traject {traject_name} is not supported."
