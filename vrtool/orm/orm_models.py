@@ -1,4 +1,4 @@
-from peewee import IntegerField, TextField, BooleanField, FloatField, ForeignKeyField
+from peewee import IntegerField, BooleanField, FloatField, ForeignKeyField, CharField
 from peewee import Model
 from vrtool.orm import vrtool_db
 
@@ -14,14 +14,16 @@ def _get_table_name(qual_name: str) -> str:
     """
     return qual_name.split(".")[0]
 
+_max_char_length = 128
+
 class BaseModel(Model):
     class Meta:
         database = vrtool_db
 
 class SectionData(BaseModel):
-    section_name = TextField(unique=True)
-    dijkpaal_start = TextField(null=True)
-    dijkpaal_end = TextField(null=True)
+    section_name = CharField(unique=True, max_length=_max_char_length)
+    dijkpaal_start = CharField(null=True, max_length=_max_char_length)
+    dijkpaal_end = CharField(null=True, max_length=_max_char_length)
     meas_start = FloatField()
     meas_end = FloatField()
     section_length = FloatField()
@@ -35,7 +37,7 @@ class SectionData(BaseModel):
         table_name = _get_table_name(__qualname__)
 
 class Mechanism(BaseModel):
-    name: TextField(unique=True)
+    name: CharField(unique=True, max_length=_max_char_length)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
@@ -53,15 +55,15 @@ class ComputationType(BaseModel):
         * HRING
         * SemiProb
     """
-    name = TextField(unique=True)
+    name = CharField(unique=True, max_length=_max_char_length)
     class Meta:
         table_name = _get_table_name(__qualname__)
 
 class ComputationScenario(BaseModel):
     mechanism_per_section = ForeignKeyField(MechanismPerSection, backref="computation_scenarios")
     computation_type = ForeignKeyField(ComputationType, backref="computation_scenarios")
-    computation_name = TextField(null=False)
-    scenario_name = TextField()
+    computation_name = CharField(null=False, max_length=_max_char_length)
+    scenario_name = CharField(max_length=_max_char_length)
     scenario_probability = FloatField(null=False)
     probability_of_failure = FloatField()
     class Meta:
@@ -69,7 +71,7 @@ class ComputationScenario(BaseModel):
 
 class Parameter(BaseModel):
     computation_scenario = ForeignKeyField(ComputationScenario, backref="parameters")
-    parameter = TextField(unique=True)
+    parameter = CharField(unique=True, max_length=_max_char_length)
     value = FloatField(null=False)
 
     class Meta:
@@ -93,7 +95,7 @@ class CharacteristicPointType(BaseModel):
         * `BIK`, 
         * (optionals: `EBL`, `BBL`)
     """
-    name = TextField(unique=True)
+    name = CharField(unique=True, max_length=_max_char_length)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
@@ -120,7 +122,7 @@ class WaterlevelData(BaseModel):
 class Buildings(BaseModel):
     section_data = ForeignKeyField(SectionData, backref="buildings_list")
 
-    distance_from_toe = TextField(null=False)
+    distance_from_toe = CharField(null=False, max_length=_max_char_length)
     number_of_buildings = IntegerField(null=False)
 
     class Meta:
@@ -135,7 +137,7 @@ class MeasureType(BaseModel):
         * Vertical Geotextile
         * Diaphragm wall
     """
-    name = TextField(unique=True, choices=["SOIL_REINFORCEMENT"])
+    name = CharField(unique=True)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
@@ -147,7 +149,7 @@ class CombinableType(BaseModel):
         * combinable
         * partial
     """
-    name = TextField(unique=True)
+    name = CharField(unique=True, max_length=_max_char_length)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
@@ -158,7 +160,7 @@ class Measure(BaseModel):
     """
     measure_type = ForeignKeyField(MeasureType, backref="measures")
     combinable_type = ForeignKeyField(CombinableType, backref="measures")
-    name = TextField()
+    name = CharField(max_length=_max_char_length)
     year = IntegerField(default=2025)
 
     class Meta:
@@ -167,7 +169,7 @@ class Measure(BaseModel):
 class StandardMeasure(Measure):
     max_inward_reinforcement = IntegerField(default=50)
     max_outward_reinforcement = IntegerField(default=0)
-    direction = TextField(default='Inward')
+    direction = CharField(default='Inward', max_length=_max_char_length)
     crest_step = FloatField(default=0.5)
     max_crest_increase = FloatField(default=2)
     stability_screen = BooleanField(default=0)

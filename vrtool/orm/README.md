@@ -19,7 +19,8 @@ We know that some of the properties represented as `int` are actually `booleans`
 
 | SQLite Type | ORM Type | Python Type | Remarks |
 | --- | --- | --- | --- |
-| text | TextField | str | |
+| text | CharField | str | Max 128 characters|
+| text | TextField | str | For large pieces of text (>128 characters)|
 | int / integer | IntegerField | int | |
 | int / integer | BooleanField | bool | Only on given occassions. |
 | real | FloatField | float | |
