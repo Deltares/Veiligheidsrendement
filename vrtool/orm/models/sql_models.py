@@ -1,5 +1,6 @@
-from vrtool.orm.models.base_model import BaseModel
-from peewee import IntegerField, TextField, BooleanField, FloatField, BlobField, ForeignKeyField
+from peewee import IntegerField, TextField, BooleanField, FloatField, ForeignKeyField
+from peewee import Model
+from vrtool.orm import vrtool_db
 
 def _get_table_name(qual_name: str) -> str:
     """
@@ -13,6 +14,9 @@ def _get_table_name(qual_name: str) -> str:
     """
     return qual_name.split(".")[0]
 
+class BaseModel(Model):
+    class Meta:
+        database = vrtool_db
 
 class SectionData(BaseModel):
     section_name = TextField(unique=True)
@@ -131,7 +135,7 @@ class MeasureType(BaseModel):
         * Vertical Geotextile
         * Diaphragm wall
     """
-    name = TextField(unique=True)
+    name = TextField(unique=True, choices=["SOIL_REINFORCEMENT"])
 
     class Meta:
         table_name = _get_table_name(__qualname__)
