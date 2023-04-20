@@ -13,6 +13,6 @@ def test_initialize_db(request: pytest.FixtureRequest):
 
     vrtool_db.init(_db_file)
     vrtool_db.connect()
-    vrtool_db.create_tables([SectionData, Buildings, Mechanism, MechanismPerSection, ComputationType, ComputationScenario, Parameter, MechanismTable, CharacteristicPointType, ProfilePoint, WaterlevelData, MeasureType, CombinableType, Measure, StandardMeasure, CustomMeasure])
+    vrtool_db.create_tables([SectionData, Buildings, Mechanism, MechanismPerSection, ComputationType, ComputationScenario, Parameter, MechanismTable, CharacteristicPointType, ProfilePoint, WaterlevelData, MeasureType, CombinableType, Measure, StandardMeasure, CustomMeasure, DikeTrajectInfo])
 
     assert _db_file.exists()
