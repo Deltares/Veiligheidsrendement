@@ -17,7 +17,7 @@ from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleCalculator,
     StabilityInnerSimpleInput,
 )
-from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
 
 

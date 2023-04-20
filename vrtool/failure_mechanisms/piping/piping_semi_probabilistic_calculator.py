@@ -11,7 +11,7 @@ from vrtool.failure_mechanisms.piping.piping_functions import (
     calculate_z_piping,
     calculate_z_uplift,
 )
-from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
     add_load_char_vals,
     beta_to_pf,
