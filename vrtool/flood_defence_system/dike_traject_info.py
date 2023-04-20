@@ -57,14 +57,23 @@ class DikeTrajectInfo:
 
     def __post_init__(self):
         self.beta_max = pf_to_beta(self.Pmax)
-        self.gammaHeave = self.__calculate_gamma("Heave")
-        self.gammaUplift = self.__calculate_gamma("Uplift")
-        self.gammaPiping = self.__calculate_gamma("Piping")
+        self.gammaHeave = self._calculate_gamma("Heave")
+        self.gammaUplift = self._calculate_gamma("Uplift")
+        self.gammaPiping = self._calculate_gamma("Piping")
 
     @classmethod
     def from_traject_info(
         cls, traject_name: str, traject_length: float
     ) -> DikeTrajectInfo:
+        """Creates an instance based on its input arguments.
+
+        Args:
+            traject_name (str): the name of the traject.
+            traject_length (float): the overall length of the traject.
+
+        Returns:
+            DikeTrajectInfo: The object containing dike traject information.
+        """
         # Basic traject info
         # Flood damage is based on Economic damage in 2011 as given in https://www.helpdeskwater.nl/publish/pages/132790/factsheets_compleet19122016.pdf
         # Pmax is the ondergrens as given by law

@@ -5,9 +5,18 @@ from vrtool.flood_defence_system.dike_traject_info import DikeTrajectInfo
 
 
 class TestDikeTrajectInfo:
-    def test_from_traject_info_16_4_sets_correct_properties(self):
+    @pytest.mark.parametrize(
+        "traject_name",
+        [
+            pytest.param("16-3", id="None traject name"),
+            pytest.param("16-4", id="Whitespace traject name"),
+            pytest.param("16-3 en 16-4", id="Empty traject name"),
+        ],
+    )
+    def test_from_traject_info_16_3_or_16_4_sets_correct_properties(
+        self, traject_name: str
+    ):
         # Setup
-        traject_name = "16-4"
         traject_length = 19480
 
         # Call
@@ -35,68 +44,6 @@ class TestDikeTrajectInfo:
         assert info.gammaHeave == approx(1.292463569010036)
         assert info.gammaPiping == approx(1.3024230063783075)
         assert info.gammaUplift == approx(1.698591299284156)
-
-    def test_from_traject_info_16_3_sets_correct_properties(self):
-        # Setup
-        traject_name = "16-3"
-        traject_length = 19899
-
-        # Call
-        info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
-
-        # Assert
-        assert info.traject_name == traject_name
-        assert info.TrajectLength == traject_length
-
-        assert info.aPiping == 0.9
-        assert info.FloodDamage == 23e9
-        assert info.TrajectLength == 19899
-        assert info.Pmax == 1.0 / 10000
-
-        assert info.omegaPiping == 0.24
-        assert info.omegaStabilityInner == 0.04
-        assert info.omegaOverflow == 0.24
-
-        assert info.bPiping == 300
-
-        assert info.aStabilityInner == 0.033
-        assert info.bStabilityInner == 50
-
-        assert info.beta_max == approx(3.7190164854556804)
-        assert info.gammaHeave == approx(1.2950442241929623)
-        assert info.gammaPiping == approx(1.3044271319230847)
-        assert info.gammaUplift == approx(1.7018414171067793)
-
-    def test_from_traject_info_16_3_and_16_4_sets_correct_properties(self):
-        # Setup
-        traject_name = "16-3 en 16-4"
-        traject_length = 19500
-
-        # Call
-        info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
-
-        # Assert
-        assert info.traject_name == traject_name
-        assert info.TrajectLength == traject_length
-
-        assert info.aPiping == 0.9
-        assert info.FloodDamage == 23e9
-        assert info.TrajectLength == 19500
-        assert info.Pmax == 1.0 / 10000
-
-        assert info.omegaPiping == 0.24
-        assert info.omegaStabilityInner == 0.04
-        assert info.omegaOverflow == 0.24
-
-        assert info.bPiping == 300
-
-        assert info.aStabilityInner == 0.033
-        assert info.bStabilityInner == 50
-
-        assert info.beta_max == approx(3.7190164854556804)
-        assert info.gammaHeave == approx(1.2925879351795069)
-        assert info.gammaPiping == approx(1.3025196096211376)
-        assert info.gammaUplift == approx(1.698747934195857)
 
     def test_from_traject_info_38_1_sets_correct_properties(self):
         # Setup
