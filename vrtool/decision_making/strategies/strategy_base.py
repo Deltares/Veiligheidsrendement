@@ -1,4 +1,5 @@
 import copy
+import logging
 from abc import abstractmethod
 from collections import OrderedDict
 from pathlib import Path
@@ -97,8 +98,8 @@ class StrategyBase:
     def get_measure_from_index(self, index, section_order=False, print_measure=False):
         """ "Converts an index (n,sh,sg) to a printout of the measure data"""
         if not section_order:
-            print(
-                "Warning: deriving section order from unordered dictionary. Might be wrong"
+            logging.warn(
+                "Deriving section order from unordered dictionary. Might be wrong"
             )
             section_order = list(self.options_height.keys())
         section = section_order[index[0]]
@@ -117,8 +118,8 @@ class StrategyBase:
                     raise Exception("Illegal combination")
             else:
                 sg = "No measure"
-                print("SECTION {}".format(section))
-                print(
+                logging.info("SECTION {}".format(section))
+                logging.info(
                     "No measures are taken at this section: sh and sg are: {} and {}".format(
                         sh, sg
                     )
@@ -128,11 +129,11 @@ class StrategyBase:
             sg = self.options_geotechnical[section_order[index[0]]].iloc[index[2] - 1]
 
         if print_measure:
-            print("SECTION {}".format(section))
+            logging.info("SECTION {}".format(section))
             if isinstance(sh, str):
-                print("There is no measure for height")
+                logging.info("There is no measure for height")
             else:
-                print(
+                logging.info(
                     "The measure for height is a {} in year {} with dcrest={} meters of the class {}.".format(
                         sh["type"].values[0],
                         sh["year"].values[0],
@@ -146,9 +147,11 @@ class StrategyBase:
                 or (sg.type.values == "Stability Screen")
                 or (sg.type.values == "Custom")
             ):
-                print(" The geotechnical measure is a {}".format(sg.type.values[0]))
+                logging.info(
+                    " The geotechnical measure is a {}".format(sg.type.values[0])
+                )
             elif isinstance(sg.type.values[0], list):  # VZG+Soil
-                print(
+                logging.info(
                     " The geotechnical measure is a {} in year {} with a {} with dberm = {} in year {}".format(
                         sg.type.values[0][0],
                         sg.year.values[0][0],
@@ -158,7 +161,7 @@ class StrategyBase:
                     )
                 )
             elif sg.type.values == "Soil reinforcement":
-                print(
+                logging.info(
                     " The geotechnical measure is a {} in year {} of class {} with dberm = {}".format(
                         sg.type.values[0],
                         sg.year.values[0],
@@ -1060,10 +1063,10 @@ class StrategyBase:
             for i in range(0, 2):
                 if i == 0:
                     step1 = 0
-                    step2 = time2  # ; print(step1); print(step2)
+                    step2 = time2
                 if i == 1:
                     step1 = time2
-                    step2 = -1  # ; print(step1); print(step2)
+                    step2 = -1
                 col = 0
                 mech = 0
                 line1 = {}
@@ -1166,12 +1169,12 @@ class StrategyBase:
             beta_traj, Pf_traj = calc_traject_prob(self.Probabilities[i], ts=t)
             if Pf_traj < Ptarget:
                 self.SafetyStandardStep = i
-                print("found step {} with {:.2f}".format(i, beta_traj[0]))
+                logging.info("found step {} with {:.2f}".format(i, beta_traj[0]))
                 break
 
             if i == len(self.Probabilities) - 1:
                 self.SafetyStandardStep = i
-                print("Warning: safety standard not met. Using final step for plotting")
+                logging.warn("safety standard not met. Using final step for plotting")
 
     def plot_measures(
         self,
@@ -1234,7 +1237,7 @@ class StrategyBase:
 
         else:
             Solution = copy.deepcopy(self.FinalSolution)
-        # Solution['dcrest'].iloc[0]=0.5; print('careful: test line included')
+        # Solution['dcrest'].iloc[0]=0.5
         for i in types:
             data = Solution[i].values.astype(np.float32)
             data[np.where(data.astype(np.float32) < -900)] = 0.01
@@ -1312,7 +1315,7 @@ class StrategyBase:
                 marker=markers[2],
                 label="DW",
             )
-        print(col)
+        logging.info(col)
         if len(Customs) > 0:
             measures["Customs"] = ax.plot(
                 Customs,

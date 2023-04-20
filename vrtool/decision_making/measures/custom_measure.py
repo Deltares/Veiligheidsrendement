@@ -47,8 +47,6 @@ class CustomMeasure(MeasureBase):
         self.parameters["year"] = np.int32(base_data["year"] - self.t_0)
 
         # TODO check these values:
-        # for testing:
-        # print('test values in Custom Measure')
         # base_data['kruinhoogte']=6.
         # base_data['extra kwelweg'] = 10.
         annual_dhc = (
@@ -62,7 +60,6 @@ class CustomMeasure(MeasureBase):
             )
         else:
             self.parameters["h_crest_new"] = None
-        # print('Warning: kruinhoogte of custom measure should be adapted')
         # TODO modify kruinhoogte_2075 to 2025 using change of crest in time.
         self.parameters["L_added"] = base_data["verlenging kwelweg"]
         self.measures["Cost"] = base_data["cost"].values[0]

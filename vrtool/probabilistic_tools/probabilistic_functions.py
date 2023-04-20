@@ -186,7 +186,7 @@ def run_prob_calc(model, dist, method="FORM", startpoint=False):
         Pf = result.getProbabilityEstimate()
     elif method == "MCS":
         ot.RandomGenerator.SetSeed(5000)
-        print("Warning, Random Generator state is currently fixed!")
+        logging.warn("Random Generator state is currently fixed!")
         experiment = ot.MonteCarloExperiment()
         algo = ot.ProbabilitySimulationAlgorithm(event, experiment)
         algo.setMaximumCoefficientOfVariation(0.05)
@@ -222,11 +222,12 @@ def run_DIRS(
     result = algo.getResult()
     probability = result.getProbabilityEstimate()
     # end = time.time()
-    print(event.getName())
-    print("%15s" % "Pf = ", "{0:.2E}".format(probability))
-    print("%15s" % "CoV = ", "{0:.2f}".format(result.getCoefficientOfVariation()))
-    print("%15s" % "N = ", "{0:.0f}".format(result.getOuterSampling()))
-    # print('%15s' % 'Time elapsed = ', "{0:.2f}".format(end-start), 's')
+    logging.info(event.getName())
+    logging.info("%15s" % "Pf = ", "{0:.2E}".format(probability))
+    logging.info(
+        "%15s" % "CoV = ", "{0:.2f}".format(result.getCoefficientOfVariation())
+    )
+    logging.info("%15s" % "N = ", "{0:.0f}".format(result.getOuterSampling()))
     return result, algo
 
 
@@ -243,7 +244,7 @@ def iterative_fc_calculation(
     result_list = []
     P_list = []
     while P > hilim or P < lolim:
-        print("changed start value")
+        logging.info("changed start value")
         WL = WL - 1 if P > hilim else WL + 1
         marginals[len(marginals) - 1] = ot.Dirac(float(WL))
         dist = ot.ComposedDistribution(marginals)
@@ -268,7 +269,7 @@ def iterative_fc_calculation(
         result_list.append(result)
         wl_list.append(WL)
         P_list.append(P)
-        print(str(count) + " calculations made for fragility curve")
+        logging.info(str(count) + " calculations made for fragility curve")
     WL = max(wl_list)
     while P < hilim:
         WL += step
@@ -282,7 +283,7 @@ def iterative_fc_calculation(
         result_list.append(result)
         wl_list.append(WL)
         P_list.append(P)
-        print(str(count) + " calculations made for fragility curve")
+        logging.info(str(count) + " calculations made for fragility curve")
 
     indices = list(np.argsort(wl_list))
     wl_list = [wl_list[i] for i in indices]
@@ -297,7 +298,6 @@ def iterative_fc_calculation(
             P_list.pop(i - rm_items)
             rm_items += 1
     # remove the non increasing values
-    print()
     return result_list, P_list, wl_list
 
 

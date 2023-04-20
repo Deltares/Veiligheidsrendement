@@ -22,9 +22,12 @@ class DikeTraject:
     probabilities: pd.DataFrame
 
     # This class contains general information on the dike traject and is used to store all data on the sections
-    def __init__(self, config: VrtoolConfig):
-        if not config.traject:
-            raise ValueError("No traject given in config.")
+    def __init__(self, config: VrtoolConfig, traject=None):
+        if traject == None:
+            logging.warn("No traject given in config. Default was chosen")
+            self.traject = "Not specified"
+        else:
+            self.traject = traject
 
         self.mechanism_names = config.mechanisms
         self.assessment_plot_years = config.assessment_plot_years
@@ -353,7 +356,7 @@ class DikeTraject:
                     col += 1
                     mech += 1
                 beta_tot = pf_to_beta(pt_tot)
-                print(beta_tot)
+                logging.info(beta_tot)
                 ax1.plot([-2, 3], [beta_tot, beta_tot], color=color[col])
                 ax1.axhline(
                     pf_to_beta(self.general_info.Pmax),
@@ -428,18 +431,6 @@ class DikeTraject:
             plt.title(i.name)
             plt.savefig(output_directory.joinpath(i.name + ".png"), bbox_inches="tight")
             plt.close()
-
-    def update_probabilities(self, probabilities, changed_section=False):
-        # This function is to update the probabilities after a reinforcement.
-        for i in self.sections:
-            if changed_section and (i.name == changed_section):
-                i.section_reliability.SectionReliability = probabilities.loc[
-                    changed_section
-                ].astype(float)
-            elif not changed_section:
-                i.section_reliability.SectionReliability = probabilities.loc[
-                    i.name
-                ].astype(float)
 
 
 def plot_settings(labels: str = "NL"):
