@@ -2,53 +2,8 @@ import logging
 
 import numpy as np
 import openturns as ot
-import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
-
-
-# Function to calculate a safety factor:
-def calc_gamma(mechanism, traject_info):
-    if mechanism == "Piping" or mechanism == "Heave" or mechanism == "Uplift":
-        Pcs = (
-            traject_info["Pmax"] * traject_info["omegaPiping"] * traject_info["bPiping"]
-        ) / (traject_info["aPiping"] * traject_info["TrajectLength"])
-        betacs = pf_to_beta(Pcs)
-        betamax = pf_to_beta(traject_info["Pmax"])
-        if mechanism == "Piping":
-            gamma = 1.04 * np.exp(0.37 * betacs - 0.43 * betamax)
-        elif mechanism == "Heave":
-            gamma = 0.37 * np.exp(0.48 * betacs - 0.3 * betamax)
-        elif mechanism == "Uplift":
-            gamma = 0.48 * np.exp(0.46 * betacs - 0.27 * betamax)
-        else:
-            logging.info("Mechanism not found")
-    return gamma
-
-
-# Function to calculate the implicated reliability from the safety factor
-def calc_beta_implicated(mechanism, safety_factor, traject_info=None):
-    if safety_factor == 0:
-        beta = 0.5
-    elif safety_factor == np.inf:
-        beta = 8
-    else:
-        if mechanism == "Piping":
-            beta = (1 / 0.37) * (
-                np.log(safety_factor / 1.04) + 0.43 * traject_info["beta_max"]
-            )  # -norm.ppf(TrajectInfo['Pmax']))
-        elif mechanism == "Heave":
-            # TODO troubleshoot the RuntimeWarning errors with invalid values in log.
-            beta = (1 / 0.48) * (
-                np.log(safety_factor / 0.37) + 0.30 * traject_info["beta_max"]
-            )  # -norm.ppf(TrajectInfo['Pmax']))
-        elif mechanism == "Uplift":
-            beta = (1 / 0.46) * (
-                np.log(safety_factor / 0.48) + 0.27 * traject_info["beta_max"]
-            )  # -norm.ppf(TrajectInfo['Pmax']))
-        else:
-            logging.warn("Mechanism not found")
-    return beta
 
 
 def compute_decimation_height(h, p, n=2):
@@ -374,7 +329,9 @@ def get_design_water_level(load, p):
     return np.array(load.distribution.computeQuantile(1 - p))[0]
 
 
-def add_load_char_vals(input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0):
+def add_load_char_vals(
+    input, t_0: int, load, p_h: float, p_dh: float, year: float
+) -> dict:
     # TODO this function should be moved elsewhere
     # input = list of all strength variables
 

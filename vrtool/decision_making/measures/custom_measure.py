@@ -9,6 +9,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class CustomMeasure(MeasureBase):
@@ -68,69 +69,83 @@ class CustomMeasure(MeasureBase):
     def evaluate_measure(
         self,
         dike_section: DikeSection,
-        traject_info: dict[str, any],
+        traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
     ):
-        mechanisms = list(dike_section.section_reliability.Mechanisms.keys())
+        mechanism_names = list(dike_section.section_reliability.Mechanisms.keys())
 
         # first read and set the data:
         self.set_input(dike_section)
 
         # loop over mechanisms to modify the reliability
-        for i in mechanisms:
+        for mechanism_name in mechanism_names:
 
-            self.measures["Reliability"].Mechanisms[i] = MechanismReliabilityCollection(
-                i, computation_type=False, config=self.config
+            self.measures["Reliability"].Mechanisms[
+                mechanism_name
+            ] = MechanismReliabilityCollection(
+                mechanism_name, "", self.config.T, self.config.t_0, 0
             )
-            for ij in self.measures["Reliability"].Mechanisms[i].Reliability.keys():
-                self.measures["Reliability"].Mechanisms[i].Reliability[
+            for ij in (
+                self.measures["Reliability"]
+                .Mechanisms[mechanism_name]
+                .Reliability.keys()
+            ):
+                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
                     ij
                 ] = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[i].Reliability[ij]
+                    dike_section.section_reliability.Mechanisms[
+                        mechanism_name
+                    ].Reliability[ij]
                 )
 
                 # only adapt after year of implementation:
                 if np.int_(ij) >= self.parameters["year"]:
                     # remove other input:
-                    if i == "Overflow":
+                    if mechanism_name == "Overflow":
                         if self.parameters["h_crest_new"] != None:
                             # type = simple
-                            self.measures["Reliability"].Mechanisms[i].Reliability[
-                                ij
-                            ].Input.input["h_crest"] = self.parameters["h_crest_new"]
+                            self.measures["Reliability"].Mechanisms[
+                                mechanism_name
+                            ].Reliability[ij].Input.input["h_crest"] = self.parameters[
+                                "h_crest_new"
+                            ]
 
                         # change crest
-                    elif i == "Piping":
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
-                            ij
-                        ].Input.input["Lvoor"] += self.parameters["L_added"].values
+                    elif mechanism_name == "Piping":
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].Input.input["Lvoor"] += self.parameters[
+                            "L_added"
+                        ].values
                         # change Lvoor
                     else:
                         # Direct input: remove existing inputs and replace with beta
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
-                            ij
-                        ].type = "DirectInput"
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
-                            ij
-                        ].Input.input = {}
-                        self.measures["Reliability"].Mechanisms[i].Reliability[
-                            ij
-                        ].Input.input["beta"] = {}
-                        for input in self.reliability_data[i]:
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].type = "DirectInput"
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].Input.input = {}
+                        self.measures["Reliability"].Mechanisms[
+                            mechanism_name
+                        ].Reliability[ij].Input.input["beta"] = {}
+                        for input in self.reliability_data[mechanism_name]:
                             # only read non-nan values:
-                            if not np.isnan(self.reliability_data[i, input].values[0]):
-                                self.measures["Reliability"].Mechanisms[i].Reliability[
-                                    ij
-                                ].Input.input["beta"][
+                            if not np.isnan(
+                                self.reliability_data[mechanism_name, input].values[0]
+                            ):
+                                self.measures["Reliability"].Mechanisms[
+                                    mechanism_name
+                                ].Reliability[ij].Input.input["beta"][
                                     input - self.t_0
                                 ] = self.reliability_data[
-                                    i, input
+                                    mechanism_name, input
                                 ].values[
                                     0
                                 ]
-            self.measures["Reliability"].Mechanisms[i].generateLCRProfile(
+            self.measures["Reliability"].Mechanisms[mechanism_name].generateLCRProfile(
                 dike_section.section_reliability.Load,
-                mechanism=i,
+                mechanism=mechanism_name,
                 trajectinfo=traject_info,
             )
         self.measures["Reliability"].calculate_section_reliability()

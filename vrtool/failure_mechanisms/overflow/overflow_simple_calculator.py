@@ -5,7 +5,7 @@ from vrtool.failure_mechanisms.overflow.overflow_functions import (
     calculate_overflow_simple_assessment,
 )
 from vrtool.failure_mechanisms.overflow.overflow_simple_input import OverflowSimpleInput
-from vrtool.flood_defence_system.load_input import LoadInput
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 
 
 class OverflowSimpleCalculator(FailureMechanismCalculatorProtocol):

@@ -117,7 +117,7 @@ _plot_mode = VrToolPlotMode.STANDARD
 
 # 3. "Run" the model.
 # Step 0. Load Traject
-_selected_traject = DikeTraject.from_vr_config(_vr_config)
+_selected_traject = DikeTraject(_vr_config)
 assert isinstance(_selected_traject, DikeTraject)
 
 # Step 1. Safety assessment.
