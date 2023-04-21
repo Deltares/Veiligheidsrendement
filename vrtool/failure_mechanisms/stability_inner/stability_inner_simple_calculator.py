@@ -27,27 +27,11 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
                 "Expected instance of a {}.".format(StabilityInnerSimpleInput.__name__)
             )
 
-        if not self._is_supported_reliability_calculation_method(
+        ReliabilityCalculationMethod.is_valid(
             mechanism_input.reliability_calculation_method
-        ):
-            raise ValueError(
-                "Unsupported value of {}.".format(ReliabilityCalculationMethod.__name__)
-            )
+        )
 
         self._mechanism_input = mechanism_input
-
-    def _is_supported_reliability_calculation_method(
-        self, calculation_method: ReliabilityCalculationMethod
-    ):
-        match calculation_method:
-            case ReliabilityCalculationMethod.SAFETYFACTOR_RANGE:
-                return True
-            case ReliabilityCalculationMethod.BETA_RANGE:
-                return True
-            case ReliabilityCalculationMethod.BETA_SINGLE:
-                return True
-            case _:
-                return False
 
     def calculate(self, year: int) -> tuple[float, float]:
         match self._mechanism_input.reliability_calculation_method:
