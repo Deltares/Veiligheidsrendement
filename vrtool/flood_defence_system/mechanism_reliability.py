@@ -26,8 +26,6 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabil
 from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calculator import (
     StabilityInnerDStabilityCalculator
 )
-from vrtool.flood_defence_system.load_input import LoadInput
-
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
