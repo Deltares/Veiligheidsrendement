@@ -1,10 +1,10 @@
-import numpy as np
 import pytest
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
-from vrtool.flood_defence_system.load_input import LoadInput
 
 
 class TestPipingSemiProbabilisticCalculator:
@@ -14,7 +14,9 @@ class TestPipingSemiProbabilisticCalculator:
         _load = LoadInput([])
 
         # Call
-        _calculator = PipingSemiProbabilisticCalculator(_mechanism_input, _load, 0, {})
+        _calculator = PipingSemiProbabilisticCalculator(
+            _mechanism_input, _load, 0, DikeTrajectInfo(traject_name="")
+        )
 
         # Assert
         assert isinstance(_calculator, PipingSemiProbabilisticCalculator)
@@ -26,7 +28,9 @@ class TestPipingSemiProbabilisticCalculator:
 
         # Call
         with pytest.raises(ValueError) as exception_error:
-            PipingSemiProbabilisticCalculator("NotMechanismInput", _load, 0, {})
+            PipingSemiProbabilisticCalculator(
+                "NotMechanismInput", _load, 0, DikeTrajectInfo(traject_name="")
+            )
 
         # Assert
         assert str(exception_error.value) == "Expected instance of a MechanismInput."
@@ -38,7 +42,9 @@ class TestPipingSemiProbabilisticCalculator:
 
         # Call
         with pytest.raises(ValueError) as exception_error:
-            PipingSemiProbabilisticCalculator(_mechanism_input, "NotLoad", 0, {})
+            PipingSemiProbabilisticCalculator(
+                _mechanism_input, "NotLoad", 0, DikeTrajectInfo(traject_name="")
+            )
 
         # Assert
         assert str(exception_error.value) == "Expected instance of a LoadInput."
@@ -51,7 +57,10 @@ class TestPipingSemiProbabilisticCalculator:
         # Call
         with pytest.raises(ValueError) as exception_error:
             PipingSemiProbabilisticCalculator(
-                _mechanism_input, _load, "NotInitialYear", {}
+                _mechanism_input,
+                _load,
+                "NotInitialYear",
+                DikeTrajectInfo(traject_name=""),
             )
 
         # Assert
@@ -69,4 +78,4 @@ class TestPipingSemiProbabilisticCalculator:
             )
 
         # Assert
-        assert str(exception_error.value) == "Expected instance of a dict."
+        assert str(exception_error.value) == "Expected instance of a DikeTrajectInfo."

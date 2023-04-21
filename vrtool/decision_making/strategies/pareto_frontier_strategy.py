@@ -79,7 +79,7 @@ class ParetoFrontierStrategy(StrategyBase):
         It is based on defining a Pareto front, its main idea is that you throw out measures that have a certain reliability but are more costly than other measures that provide the same reliability."""
         self.options_height, self.options_geotechnical = split_options(self.options)
         if type == "ParetoPerSection":
-            damage = traject.general_info["FloodDamage"]
+            damage = traject.general_info.FloodDamage
             r = self.r
             horizon = np.max(self.T)
             self.options_g_filtered = copy.deepcopy(self.options_geotechnical)

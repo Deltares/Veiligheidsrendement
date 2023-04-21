@@ -523,7 +523,7 @@ class StrategyBase:
 
         # add discounted damage [T,]
         self.D = np.array(
-            traject.general_info["FloodDamage"]
+            traject.general_info.FloodDamage
             * (1 / ((1 + self.discount_rate) ** np.arange(0, T, 1)))
         )
 
@@ -621,8 +621,8 @@ class StrategyBase:
             plt.plot(
                 [2025, 2025 + horizon],
                 [
-                    pf_to_beta(traject.general_info["Pmax"]),
-                    pf_to_beta(traject.general_info["Pmax"]),
+                    pf_to_beta(traject.general_info.Pmax),
+                    pf_to_beta(traject.general_info.Pmax),
                 ],
                 "k--",
                 label="Norm",
@@ -881,8 +881,8 @@ class StrategyBase:
                 plt.plot(
                     [0, ceiling],
                     [
-                        pf_to_beta(traject.general_info["Pmax"]),
-                        pf_to_beta(traject.general_info["Pmax"]),
+                        pf_to_beta(traject.general_info.Pmax),
+                        pf_to_beta(traject.general_info.Pmax),
                     ],
                     "k--",
                     label="Safety standard",
@@ -892,7 +892,7 @@ class StrategyBase:
             if self.beta_or_prob == "prob":
                 plt.plot(
                     [0, ceiling],
-                    [traject.general_info["Pmax"], traject.general_info["Pmax"]],
+                    [traject.general_info.Pmax, traject.general_info.Pmax],
                     "k--",
                     label="Safety standard",
                 )
@@ -1023,8 +1023,8 @@ class StrategyBase:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pf_to_beta(traject.general_info["Pmax"]),
-                        pf_to_beta(traject.general_info["Pmax"]),
+                        pf_to_beta(traject.general_info.Pmax),
+                        pf_to_beta(traject.general_info.Pmax),
                     ],
                     "k--",
                     label=label_target,
@@ -1105,8 +1105,8 @@ class StrategyBase:
                 ax.plot(
                     [0, max(cumlength)],
                     [
-                        pf_to_beta(traject.general_info["Pmax"]),
-                        pf_to_beta(traject.general_info["Pmax"]),
+                        pf_to_beta(traject.general_info.Pmax),
+                        pf_to_beta(traject.general_info.Pmax),
                     ],
                     "k--",
                     label=label_target,
@@ -1160,7 +1160,7 @@ class StrategyBase:
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
 
     @abstractmethod
-    def determine_risk_cost_curve(self, traject: DikeTraject, input_path: Path = None):
+    def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
         raise NotImplementedError("Expected concrete definition in inherited class.")
 
     def get_safety_standard_step(self, Ptarget, t=50):
@@ -1227,7 +1227,7 @@ class StrategyBase:
             if greedymode == "Optimal":
                 Solution = copy.deepcopy(self.OptimalSolution)
             elif greedymode == "SatisfiedStandard":
-                self.get_safety_standard_step(traject.general_info["Pmax"])
+                self.get_safety_standard_step(traject.general_info.Pmax)
                 self.make_solution(
                     input_path.joinpath("SatisfiedStandardGreedy.csv"),
                     step=self.SafetyStandardStep + 1,

@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures import (
     CustomMeasure,
     DiaphragmWallMeasure,
@@ -84,7 +85,7 @@ class Solutions:
     def evaluate_solutions(
         self,
         dike_section: DikeSection,
-        traject_info: dict[str, any],
+        traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
     ):
         """This is the base routine to evaluate (i.e., determine costs and reliability) for each defined measure.
