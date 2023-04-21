@@ -1,10 +1,10 @@
 import pytest
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
-from vrtool.common.hydraulic_loads.load_input import LoadInput
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class TestPipingSemiProbabilisticCalculator:

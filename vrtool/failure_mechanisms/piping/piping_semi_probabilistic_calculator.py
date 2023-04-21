@@ -2,10 +2,15 @@ import copy
 
 import numpy as np
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
+from vrtool.failure_mechanisms.piping.piping_failure_submechanism import (
+    PipingFailureSubmechanism,
+)
 from vrtool.failure_mechanisms.piping.piping_functions import (
     calculate_z_heave,
     calculate_z_piping,
@@ -14,16 +19,11 @@ from vrtool.failure_mechanisms.piping.piping_functions import (
 from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
     PipingProbabilisticHelper,
 )
-from vrtool.failure_mechanisms.piping.piping_failure_submechanism import (
-    PipingFailureSubmechanism,
-)
-from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.probabilistic_tools.probabilistic_functions import (
     add_load_char_vals,
     beta_to_pf,
     pf_to_beta,
 )
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):

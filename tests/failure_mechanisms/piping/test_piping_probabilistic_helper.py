@@ -1,14 +1,13 @@
+import numpy as np
 import pytest
 from pytest import approx
 
-import numpy as np
-
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
-    PipingProbabilisticHelper,
-)
 from vrtool.failure_mechanisms.piping.piping_failure_submechanism import (
     PipingFailureSubmechanism,
+)
+from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
+    PipingProbabilisticHelper,
 )
 
 
@@ -33,7 +32,6 @@ class TestPipingProbabilisticHelper:
 
         # Assert
         assert str(exception_error.value) == "Expected instance of a DikeTrajectInfo."
-
 
     @pytest.mark.parametrize(
         "submechanism, expected_gamma",

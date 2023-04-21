@@ -1,8 +1,8 @@
 import numpy as np
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 """Important: a measure is a single type of reinforcement, so for instance a stability screen. A solution can be a COMBINATION of measures (e.g. a stability screen with a berm)"""
 

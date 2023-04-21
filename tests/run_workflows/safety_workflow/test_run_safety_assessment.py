@@ -3,13 +3,12 @@ import shutil
 import pytest
 
 from tests import test_results
+from tests.run_workflows import MockedDikeTraject
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
-
-from tests.run_workflows import MockedDikeTraject
 
 
 class TestRunSafetyAssessment:

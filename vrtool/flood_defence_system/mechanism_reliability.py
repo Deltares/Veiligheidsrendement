@@ -1,5 +1,7 @@
 from typing import Optional
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.general import (
     GenericFailureMechanismCalculator,
@@ -17,8 +19,6 @@ from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleCalculator,
     StabilityInnerSimpleInput,
 )
-from vrtool.common.hydraulic_loads.load_input import LoadInput
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class MechanismReliability:

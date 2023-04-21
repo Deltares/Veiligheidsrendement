@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     determine_new_geometry,
@@ -14,7 +15,6 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class SoilReinforcementMeasure(MeasureBase):

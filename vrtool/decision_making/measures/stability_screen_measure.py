@@ -2,6 +2,7 @@ import copy
 
 import numpy as np
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
@@ -13,7 +14,6 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 
 class StabilityScreenMeasure(MeasureBase):

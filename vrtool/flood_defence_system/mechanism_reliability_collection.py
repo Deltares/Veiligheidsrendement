@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import openturns as ot
 
-from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
 
 # A collection of MechanismReliability objects in time
@@ -49,7 +49,6 @@ class MechanismReliabilityCollection:
 
     def generateLCRProfile(
         self, load: LoadInput, mechanism: str, trajectinfo: DikeTrajectInfo
-
     ):
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
         if not load:

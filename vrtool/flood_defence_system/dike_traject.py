@@ -10,9 +10,9 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 

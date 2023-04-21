@@ -1,6 +1,6 @@
 import pytest
-
 from pytest import approx
+
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 

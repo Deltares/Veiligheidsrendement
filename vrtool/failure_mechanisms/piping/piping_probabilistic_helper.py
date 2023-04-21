@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
@@ -5,8 +7,6 @@ from vrtool.failure_mechanisms.piping.piping_failure_submechanism import (
     PipingFailureSubmechanism,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
-
-import logging
 
 
 class PipingProbabilisticHelper:
