@@ -26,12 +26,8 @@ class DStabilityWrapper:
         """
 
         if stage_id_result is None:
-            try:
-                return self._dstability_model.output[-1].FactorOfSafety
-            # If the last stage does not have result, rerun the stix first automatically
-            except:
-                self.rerun_stix()
-                return self._dstability_model.output[-1].FactorOfSafety
+            return self._dstability_model.output[-1].FactorOfSafety
+
 
         _result_id = self._dstability_model.datastructure.stages[
             stage_id_result
@@ -45,8 +41,4 @@ class DStabilityWrapper:
         for stage_output in self._dstability_model.output:
 
             if stage_output is not None and stage_output.Id == _result_id:
-                try:
-                    return stage_output.FactorOfSafety
-                except:
-                    self.rerun_stix()
-                    return stage_output.FactorOfSafety
+                return stage_output.FactorOfSafety
