@@ -3,14 +3,20 @@ import pandas as pd
 
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
-
+from vrtool.flood_defence_system.failure_mechanism_collection import (
+    FailureMechanismCollection,
+)
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 
 # Class describing safety assessments of a section:
 class SectionReliability:
     Mechanisms = dict[str, MechanismReliability]
+    Load: LoadInput
+    failure_mechanisms: FailureMechanismCollection
 
     def __init__(self) -> None:
         self.Mechanisms = {}
+        self.failure_mechanisms = FailureMechanismCollection()
 
     def calculate_section_reliability(self):
         # This routine translates cross-sectional to section reliability indices
