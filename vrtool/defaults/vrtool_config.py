@@ -9,14 +9,11 @@ import pandas as pd
 
 from vrtool.defaults import default_unit_costs_csv
 
-
 def _load_default_unit_costs() -> dict:
     """
     Returns the _default_ unit costs read from the default csv file, with columns: 'Description', 'Cost' and 'Unit'.
-
     Raises:
         FileNotFoundError: When the default "unit_costs.csv" file is not found.
-
     Returns:
         dict: Unit costs dictionary.
     """
@@ -29,7 +26,6 @@ def _load_default_unit_costs() -> dict:
     for _, _series in _unit_cost_data.iterrows():
         unit_cost[_series["Description"]] = _series["Cost"]
     return unit_cost
-
 
 @dataclass
 class VrtoolConfig:
@@ -45,6 +41,7 @@ class VrtoolConfig:
     language: str = "EN"
     timing: bool = False
     input_directory: Optional[Path] = None
+    externals: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
     traject: str = ""
@@ -134,14 +131,13 @@ class VrtoolConfig:
             if isinstance(value, str):
                 return Path(value)
             return value
-
         self.output_directory = _convert_to_path(self.output_directory)
-        self.input_directory = _convert_to_path(self.output_directory)
+        self.input_directory = _convert_to_path(self.input_directory)
+        self.externals = _convert_to_path(self.externals)
 
     def export(self, export_path: Path):
         """
         Exports the non-default values of this configuration into a JSON file.
-
         Args:
             export_path (Path): Location where to export the configuration.
         """
@@ -161,10 +157,8 @@ class VrtoolConfig:
     def from_json(cls, json_path: Path) -> VrtoolConfig:
         """
         Loads all the custom properties defined in a json file into an instance of `VrtoolConfig`.
-
         Args:
             json_path (Path): Valid path to a json file.
-
         Returns:
             VrtoolConfig: Valid instance with custom configuration values.
         """

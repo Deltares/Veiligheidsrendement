@@ -117,10 +117,11 @@ class DikeTraject:
             DikeTraject: Valid instance of a loaded dike traject.
         """
         _traject = cls(vr_config, traject=vr_config.traject)
-        _traject.read_all_traject_input(input_path=vr_config.input_directory)
+        _traject.read_all_traject_input(input_path=vr_config.input_directory,
+                                        externals_path=vr_config.externals)
         return _traject
 
-    def read_all_traject_input(self, input_path: Path, makesubdirs=True):
+    def read_all_traject_input(self, input_path: Path, externals_path: Path, makesubdirs=True):
         # Make a case directory and inside a figures and results directory if it doesnt exist yet
         # #TODO check if these are obsolete
         # if not config.path.joinpath(config.directory).is_dir():
@@ -187,6 +188,7 @@ class DikeTraject:
                         ].Input.fill_mechanism(
                             mech_input_path,
                             stix_input_path,
+                            externals_path,
                             *self.sections[i].mechanism_data[j],
                             mechanism=j,
                             crest_height=self.sections[i].Kruinhoogte,
@@ -198,6 +200,7 @@ class DikeTraject:
                         ].Input.fill_mechanism(
                             mech_input_path,
                             stix_input_path,
+                            externals_path,
                             *self.sections[i].mechanism_data[j],
                             mechanism=j,
                         )
