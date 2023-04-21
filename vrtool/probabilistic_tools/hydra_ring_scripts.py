@@ -1,7 +1,6 @@
 import subprocess
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import openturns as ot
 import pandas as pd
@@ -21,7 +20,6 @@ def run_hydraring(
 def design_table_openturns(filename: Path, gridpoints=2000):
     data = read_design_table(filename)
     wls = list(data.iloc[:, 0])
-    # print('Warning water levels reduced')
     # wls = np.subtract(wls, 0.5)
     p_nexc = list(1 - data.iloc[:, 1])
     h = TableDist(np.array(wls), np.array(p_nexc), extrap=True, isload=True)

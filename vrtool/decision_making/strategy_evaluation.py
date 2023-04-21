@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import numpy as np
 import pandas as pd
@@ -65,7 +66,6 @@ def measure_combinations(
                     ps = beta_to_pf(np.array(betas)[indices])
                     p = np.sum(ps)  # TODO replace with correct formula
                     betas.append(pf_to_beta(p))
-                    # print(ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]))
                     # if ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]) > 1e-8:
                     #     pass
             if splitparams:
@@ -133,7 +133,7 @@ def calc_tr(
     # takenmeasures: object with all measures taken
     # original section: series of probabilities of section, before taking a measure.
     if damage == 1e9:
-        print("WARNING NO DAMAGE DEFINED")
+        logging.warn("No damage defined.")
 
     TotalRisk = []
     dR = []
@@ -450,8 +450,8 @@ def overflow_bundling(
                     GeotechnicalOptions.iloc[investment_id]["type"].values[0][0]
                     == "Soil reinforcement"
                 ):
-                    print(
-                        "Warning, first combined measure is a soil reinforcement. This might not result in the intended behaviour"
+                    logging.warn(
+                        "First combined measure is a soil reinforcement. This might not result in the intended behaviour"
                     )
                 current_type = GeotechnicalOptions.iloc[investment_id]["type"].values[
                     0
@@ -620,11 +620,9 @@ def overflow_bundling(
             for count, row in subset.iterrows():
                 types = row["type"].values[0]
                 if not "Vertical Geotextile" in types:
-                    # print('Drop row {}'.format(count))
                     subset = subset.drop(axis=0, index=row.name)
                 else:
                     pass
-                    # print('Keep row {}'.format(count))
             # matrix indices:
             ids = subset.index.values + 1
             # get LCC with correct geotechnical measure:
@@ -652,7 +650,7 @@ def overflow_bundling(
             ]
 
         else:
-            print("This one is not covered yet!")
+            logging.error("This one is not covered yet!")
 
     new_overflow_risk = copy.deepcopy(init_overflow_risk)
     # Step 3: determine various bundles for overflow:
@@ -676,10 +674,12 @@ def overflow_bundling(
             index_counter[ind_weakest] += 1
             # take next step, exception if there is no valid measure. In that case exit the routine.
             if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
-                print("Bundle quit, weakest section has no more available measures")
+                logging.error(
+                    "Bundle quit, weakest section has no more available measures"
+                )
                 break
         else:
-            print("Bundle quit, weakest section has no more available measures")
+            logging.error("Bundle quit, weakest section has no more available measures")
             break
 
         # insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
@@ -737,6 +737,6 @@ def overflow_bundling(
     else:
         BC_out = 0
         measure_index = []
-        print("Warning: no more measures for weakest overflow section")
+        logging.warn("No more measures for weakest overflow section")
 
     return measure_index, BC_out

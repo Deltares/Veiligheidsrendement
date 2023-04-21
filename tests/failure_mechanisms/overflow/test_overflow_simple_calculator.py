@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
 
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.overflow import (
     OverflowSimpleCalculator,
     OverflowSimpleInput,
 )
-from vrtool.flood_defence_system.load_input import LoadInput
 
 
 class TestOverflowSimpleCalculator:

@@ -1,4 +1,5 @@
 import copy
+import logging
 import time
 from pathlib import Path
 from typing import Dict
@@ -129,7 +130,7 @@ class GreedyStrategy(StrategyBase):
                 ids = np.argwhere(np.isnan(BC))
                 for i in range(0, ids.shape[0]):
                     error_measure = self.get_measure_from_index(ids[i, :])
-                    print(error_measure)
+                    logging.error(error_measure)
                     # TODO think about a more sophisticated error catch here, as currently tracking the error is extremely difficult.
                 raise ValueError("nan value encountered in BC-ratio")
             if (np.max(BC) > BCstop) or (BC_bundle > BCstop):
@@ -200,7 +201,7 @@ class GreedyStrategy(StrategyBase):
                     Measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
-                    print("Single measure in step " + str(count))
+                    logging.info("Single measure in step " + str(count))
                 elif BC_bundle > np.max(BC):
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -228,7 +229,7 @@ class GreedyStrategy(StrategyBase):
                     # add the height measures in separate entries in the measure list
 
                     # write them to the measure_list
-                    print("Bundled measures in step " + str(count))
+                    logging.info("Bundled measures in step " + str(count))
 
             else:  # stop the search
                 break
@@ -237,7 +238,7 @@ class GreedyStrategy(StrategyBase):
                 pass
                 # Probabilities.append(copy.deepcopy(init_probability))
 
-        print("Elapsed time for greedy algorithm: " + str(time.time() - start))
+        logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
         # #make dump
         # import shelve
@@ -340,13 +341,13 @@ class GreedyStrategy(StrategyBase):
                     else:
                         ID.append(ID1)
                 else:
-                    print(i)
-                    print(
+                    logging.info(i)
+                    logging.info(
                         self.options_geotechnical[traject.sections[i[0]].name].iloc[
                             i[2] - 1
                         ]
                     )
-                    print(
+                    logging.info(
                         self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
                     )
                     raise ValueError("warning, conflicting IDs found for measures")
@@ -443,7 +444,7 @@ class GreedyStrategy(StrategyBase):
             combined = combined.set_index(["name", "mechanism"])
             self.Probabilities.append(combined)
 
-    def determine_risk_cost_curve(self, traject: DikeTraject, output_path: Path = None):
+    def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
         """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""
         if output_path:
             output_path.mkdir(parents=True, exist_ok=True)
@@ -463,7 +464,7 @@ class GreedyStrategy(StrategyBase):
                         i,
                         self.discount_rate,
                         np.max(self.T),
-                        traject.general_info["FloodDamage"],
+                        flood_damage,
                         dumpPt=output_path.joinpath(
                             "Greedy_step_" + str(count) + ".csv"
                         ),
@@ -475,7 +476,7 @@ class GreedyStrategy(StrategyBase):
                         i,
                         self.discount_rate,
                         np.max(self.T),
-                        traject.general_info["FloodDamage"],
+                        flood_damage,
                     )
                 )
             count += 1

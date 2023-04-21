@@ -1,0 +1,10 @@
+name: vrtool_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - conda-forge::openturns=1.19
+  - pip:
+    - commitizen==2.28.1
