@@ -11,13 +11,27 @@ class FailureMechanismCollection:
     def __init__(self) -> None:
         self._failure_mechanisms = {}
 
-    def get_available_mechanisms(self) -> list[str]:
+    def get_available_mechanisms(self) -> set[str]:
         """Gets the available failure mechanisms.
 
         Returns:
-            list[str]: A collection with all the available failure mechanisms.
+            set[str]: A collection with all the available failure mechanisms.
         """
         return self._failure_mechanisms.keys()
+
+    def get_calculation_years(self) -> list[str]:
+        """Gets the collection of years that are calculated.
+
+        Returns:
+            list[str]: A collection of the years that are calculated. Empty when the collection contains no failure mechanisms.
+        """
+        if not self._failure_mechanisms:
+            return []
+
+        mechanism_name = list(self._failure_mechanisms)[0]
+        return list(
+            self.get_mechanism_reliability_collection(mechanism_name).Reliability.keys()
+        )
 
     def add_failure_mechanism(
         self,

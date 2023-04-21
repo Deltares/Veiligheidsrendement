@@ -120,3 +120,31 @@ class TestFailureMechanismCollection:
             str(exception_error.value)
             == f'Mechanism "{mechanism_to_add}" already added.'
         )
+
+    def test_get_calculation_years_with_empty_collection_returns_empty_collection(self):
+        # Setup
+        collection = FailureMechanismCollection()
+
+        # Call
+        years = collection.get_calculation_years()
+
+        # Assert
+        assert len(years) == 0
+
+    def test_get_calculation_years_with_filled_collection_returns_years_of_first_mechanism(
+        self,
+    ):
+        # Setup
+        collection = FailureMechanismCollection()
+        collection.add_failure_mechanism(
+            "mechanism 1", MechanismReliabilityCollection("", "", [4, 5, 6], 0, 0)
+        )
+        collection.add_failure_mechanism(
+            "mechanism 2", MechanismReliabilityCollection("", "", [1, 2, 3], 0, 0)
+        )
+
+        # Call
+        years = collection.get_calculation_years()
+
+        # Assert
+        assert years == ["4", "5", "6"]
