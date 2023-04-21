@@ -11,6 +11,8 @@ from vrtool.flood_defence_system.mechanism_reliability import MechanismReliabili
 class MechanismReliabilityCollection:
     """Represents a collection of MechanismReliability objects over time."""
 
+    Reliability: dict[str, MechanismReliability]
+
     def __init__(
         self,
         mechanism: str,
