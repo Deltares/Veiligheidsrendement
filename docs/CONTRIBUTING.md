@@ -19,8 +19,13 @@ If you have not installed the `vrtool` for development please do so now:
     cd C:\repos\vrtool_repo
     conda env create -f .config\environment.yml
     conda activate vrtool_env
-    poetry install
     ```
+
+3. Install [Poetry](https://python-poetry.org/). This is a dependency manager package which helps us normalize the compatible version between packages and ensure they are always working with the latest greatest (if desired) versions of them. You can install `poetry` either:
+    1. with pip (`pip install conda`),
+    2. or conda-forge (`conda install -c conda-forge poetry`).
+
+4. Now install the `vrtool` package using `poetry` simply with `poetry install`.
 
 ## Before making a pull request.
 1. Make sure you followed our [code standards](#code-standards).
