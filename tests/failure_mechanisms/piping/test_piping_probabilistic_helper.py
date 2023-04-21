@@ -26,6 +26,15 @@ class TestPipingProbabilisticHelper:
     def setup(self, configured_functions: PipingProbabilisticHelper):
         self._probabilistic_functions = configured_functions
 
+    def test_init_with_invalid_dike_traject_info(self):
+        # Call
+        with pytest.raises(ValueError) as exception_error:
+            PipingProbabilisticHelper("NotDikeTrajectInfo")
+
+        # Assert
+        assert str(exception_error.value) == "Expected instance of a DikeTrajectInfo."
+
+
     @pytest.mark.parametrize(
         "submechanism, expected_gamma",
         [

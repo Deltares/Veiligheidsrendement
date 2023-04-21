@@ -10,9 +10,22 @@ import logging
 
 
 class PipingProbabilisticHelper:
-    """Class containing functions to calculate probabilistic properties for piping."""
+    """Helper class containing functions to calculate probabilistic properties for piping."""
 
     def __init__(self, traject_info: DikeTrajectInfo) -> None:
+        """Initializes the helper class containing probabilistic properties for piping.
+
+        Args:
+            traject_info (DikeTrajectInfo): An object containing the dike traject info.
+
+        Raises:
+            ValueError: Raised when traject_info is invalid.
+        """
+        if not isinstance(traject_info, DikeTrajectInfo):
+            raise ValueError(
+                "Expected instance of a {}.".format(DikeTrajectInfo.__name__)
+            )
+
         self.traject_info = traject_info
 
     def calculate_gamma(self, submechanism: PipingFailureSubmechanism) -> np.ndarray:
