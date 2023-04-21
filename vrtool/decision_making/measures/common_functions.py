@@ -139,10 +139,7 @@ def modify_geometry_input(initial, berm_height):
         initial.loc["BBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "z"] = initial.loc["BIT"].z + berm_height
         initial.loc["EBL", "z"] = initial.loc["BIT"].z + berm_height
-        if "EXT" in initial.index:
-            initial = initial.reindex(["BUT", "BUK", "BIK", "BBL", "EBL", "BIT", "EXT"])
-        else:
-            initial = initial.reindex(["BUT", "BUK", "BIK", "BBL", "EBL", "BIT"])
+        initial = initial.reindex(["BUT", "BUK", "BIK", "BBL", "EBL", "BIT"])
 
     return initial
 
