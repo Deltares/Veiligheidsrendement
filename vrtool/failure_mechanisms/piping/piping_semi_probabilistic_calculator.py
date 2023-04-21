@@ -95,11 +95,11 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             # TODO aanpassen met nieuwe belastingmodel
             inputs = add_load_char_vals(
                 strength_new.input_ind,
-                t_0=self._initial_year,
-                load=self._load,
-                p_h=self._traject_info.Pmax,
-                p_dh=0.5,
-                year=year,
+                self._initial_year,
+                self._load,
+                self._traject_info.Pmax,
+                0.5,
+                year,
             )
 
             # Piping
