@@ -40,6 +40,8 @@ class PipingProbabilisticHelper:
         Returns:
             np.ndarray: An array containing the gamma value.
         """
+        PipingFailureSubmechanism.is_valid(submechanism)
+
         Pcs = (
             self.traject_info.Pmax
             * self.traject_info.omegaPiping
@@ -75,21 +77,7 @@ class PipingProbabilisticHelper:
         Returns:
             np.ndarray: An array containing the implicated reliability.
         """
-
-        def _validate_sub_mechanism(submechanism: PipingFailureSubmechanism) -> bool:
-            match submechanism:
-                case PipingFailureSubmechanism.PIPING:
-                    return True
-                case PipingFailureSubmechanism.HEAVE:
-                    return True
-                case PipingFailureSubmechanism.UPLIFT:
-                    return True
-                case _:
-                    raise ValueError(
-                        f"Unsupported value of {PipingFailureSubmechanism.__name__}."
-                    )
-
-        _validate_sub_mechanism(submechanism)
+        PipingFailureSubmechanism.is_valid(submechanism)
 
         if safety_factor == 0:
             logging.warn(f'SF for "{submechanism}" is 0')
