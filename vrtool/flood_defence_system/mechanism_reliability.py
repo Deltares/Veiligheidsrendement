@@ -1,4 +1,7 @@
+from pathlib import Path
 from typing import Optional
+
+import numpy as np
 
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.general import (
@@ -17,9 +20,9 @@ from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleCalculator,
     StabilityInnerSimpleInput,
 )
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
 from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calculator import (
-    StabilityInnerDStabilityCalculator,
-    StabilityInnerDStabilityInput,
+    StabilityInnerDStabilityCalculator
 )
 from vrtool.flood_defence_system.load_input import LoadInput
 
@@ -144,9 +147,12 @@ class MechanismReliability:
     ) -> FailureMechanismCalculatorProtocol:
 
         if mechanism == "StabilityInner":
-            _mechanism_input = StabilityInnerDStabilityInput.from_stix_input(
-                mechanism_input=mechanism_input,
-            )
+
+            _wrapper = DStabilityWrapper(stix_path=Path(mechanism_input.input.get("STIXNAAM", "")),
+                                         externals_path=Path(mechanism_input.input.get("DStability_exe_path")))
+            if mechanism_input.input.get("RERUN_STIX"):
+                _wrapper.rerun_stix()
+            _mechanism_input = np.array(_wrapper.get_safety_factor(int(mechanism_input.input.get("STAGEID")[0])))
             return StabilityInnerDStabilityCalculator(_mechanism_input)
 
         raise Exception("Unknown computation type DStability for {}".format(mechanism))

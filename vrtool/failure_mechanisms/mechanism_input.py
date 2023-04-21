@@ -20,6 +20,7 @@ class MechanismInput:
         self,
         input_path: Path,
         stix_folder_path: Path,
+        externals_path: Path,
         reference: Union[int, str],
         calctype: str,
         mechanism=None,
@@ -29,6 +30,7 @@ class MechanismInput:
         Args:
             input_path (str): Path to the dataset folder of the corresponding mechanism.
             stix_folder_path (str): Path to the folder containing all the stix files.
+            externals_path (str): Path to the folder containing all the externals.
             reference (str): A reference to use for the calculation.
             calctype (str): Calculation type for the given mechanism, one of ['Simple', 'HRING', 'DStability', 'DirectInput'].
             mechanism (str): The mechanism to use for the calculation.
@@ -41,14 +43,13 @@ class MechanismInput:
         if mechanism == "StabilityInner":
             if calctype == "DStability":
                 data = read_data_from_csv(input_path, reference)
-                # only keep the row with the following names: a
                 data = data.loc[
                     data.index.isin(["STIXNAAM", "RERUN", "STAGEID"])
-                ]  # only keep the row with the STIX name
+                ]
                 data.loc["STIXNAAM"] = (
                     str(stix_folder_path) + "/" + data.loc["STIXNAAM"]
                 )
-                print(data)
+                data.loc["DStability_exe_path"] = str(externals_path)
             else:
                 data = read_data_from_csv(input_path, reference)
 
