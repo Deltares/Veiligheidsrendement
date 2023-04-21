@@ -3,12 +3,14 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_results, test_data
-from vrtool.orm.orm_controllers import initialize_database, open_database
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.orm.orm_controllers import initialize_database, open_database, get_dike_traject
 from vrtool.orm.orm_models import *
 
 class TestOrmControllers:
 
-    def test_initialize_db(self, request: pytest.FixtureRequest):
+    def test_create_db(self, request: pytest.FixtureRequest):
         # 1. Define test data.
         _db_file = test_results / request.node.name / "vrtool_db.db"
         if _db_file.parent.exists():
@@ -43,3 +45,17 @@ class TestOrmControllers:
         assert _section_data.annual_crest_decline == 2.0
         assert _section_data.cover_layer_thickness == 3.0
         assert _section_data.pleistocene_level == 4.0
+
+    def test_get_dike_traject(self):
+        # 1. Define test data.
+        _db_file = test_data / "test_db" / "vrtool_db.db"
+        assert _db_file.is_file()
+
+        _config = VrtoolConfig(input_database_path=_db_file, traject="16-1")
+
+        # 2. Run test.
+        _dike_traject = get_dike_traject(_config)
+
+        # 3. Verify expectations.
+        assert isinstance(_dike_traject, DikeTraject)
+        assert len(_dike_traject.sections) == 2

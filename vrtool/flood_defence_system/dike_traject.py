@@ -17,27 +17,49 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 
 
 class DikeTraject:
-    sections: list[DikeSection]
     general_info: DikeTrajectInfo
+    sections: list[DikeSection]
     probabilities: pd.DataFrame
+    mechanism_names: list[str]
+    assessment_plot_years: list[int]
+    flip_traject: bool
+    t_0: int
+    T: list[int]
 
     # This class contains general information on the dike traject and is used to store all data on the sections
-    def __init__(self, config: VrtoolConfig):
+    @classmethod
+    def from_config(cls, config: VrtoolConfig) -> DikeTraject:
+        """
+        Generates a `DikeTraject` from a simple `VrtoolConfig` object.
+
+        Args:
+            config (VrtoolConfig): valid `VrtoolConfig` object.
+
+        Raises:
+            ValueError: When no traject value has been provided.
+
+        Returns:
+            DikeTraject: object containing the related values from the config.
+        """
         if not config.traject:
             raise ValueError("No traject given in config.")
 
-        self.mechanism_names = config.mechanisms
-        self.assessment_plot_years = config.assessment_plot_years
-        self.flip_traject = config.flip_traject
-        self.t_0 = config.t_0
-        self.T = config.T
+        _dike_traject = cls()
 
-        self.sections = DikeSection.get_dike_sections_from_vr_config(config)
+        _dike_traject.mechanism_names = config.mechanisms
+        _dike_traject.assessment_plot_years = config.assessment_plot_years
+        _dike_traject.flip_traject = config.flip_traject
+        _dike_traject.t_0 = config.t_0
+        _dike_traject.T = config.T
 
-        traject_length = sum(map(lambda x: x.Length, self.sections))
-        self.general_info = DikeTrajectInfo.from_traject_info(
-            config.traject, traject_length
+        _dike_traject.sections = DikeSection.get_dike_sections_from_vr_config(config)
+
+        _traject_length = sum(map(lambda x: x.Length, _dike_traject.sections))
+        _dike_traject.general_info = DikeTrajectInfo.from_traject_info(
+            config.traject, _traject_length
         )
+
+        return _dike_traject
 
     def set_probabilities(self):
         """routine to make 1 dataframe of all probabilities of a TrajectObject"""
