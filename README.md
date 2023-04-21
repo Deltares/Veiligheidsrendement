@@ -33,28 +33,9 @@ pip install git+https://github.com/Deltares/Veiligheidsrendement.git@v0.0.1
 
 
 ### Development mode
-1. Checkout the code from github in a directory of your choice. You can either do this by downloading the source zip or (better) using git, for instance:
-    ```bash
-    cd C:\repos
-    git clone https://github.com/Deltares/Veiligheidsrendement.git vrtool_repo
-    ```
-    | Note, the above steps are based on a Windows setup. If you are not familiar with Git, we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
-2. Navigate to your `Veiligheidsrendement` repository and then install the `vrtool` package with your preferred step:
+We recommend you to check our `CONTRIBUTING.md` document and its [installation steps section](./docs/CONTRIBUTING.md#install-before-contributing).
 
-    1. With [Anaconda](https://www.anaconda.com/) (our recommendation):    
-        ```bash
-        cd C:\repos\vrtool_repo
-        conda env create -f .config\environment.yml
-        conda activate vrtool_env
-        poetry install
-        ```
-    2. With `pypi`:
-        ```bash
-        cd C:\repos\vrtool_repo
-        pip install .
-        ```
-        | Note, this will not install `Poetry`, which is required to properly maintain the interdependencies of `Veiligheidsrendement` tool.
 
 ### Dependencies / Pre-requirements.
 We found out a hard dependency when working under a Windows environment with the [library `openturns`](https://openturns.github.io/www/index.html), which forced us to work under the version 1.19. This is automatically resolved for you when following the steps specified for [development mode](#development-mode).
