@@ -48,7 +48,8 @@ class MechanismReliabilityCollection:
                 )
 
     def generateLCRProfile(
-        self, load: LoadInput, mechanism: str, trajectinfo=DikeTrajectInfo
+        self, load: LoadInput, mechanism: str, trajectinfo: DikeTrajectInfo
+
     ):
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
         if not load:
