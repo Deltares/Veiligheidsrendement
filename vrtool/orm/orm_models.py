@@ -37,14 +37,14 @@ class SectionData(BaseModel):
         table_name = _get_table_name(__qualname__)
 
 class Mechanism(BaseModel):
-    name: CharField(unique=True, max_length=_max_char_length)
+    name = CharField(max_length=_max_char_length)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
 
 class MechanismPerSection(BaseModel):
-    section = ForeignKeyField(SectionData, backref="mechanisms")
-    mechanism = ForeignKeyField(Mechanism, backref="sections")
+    section = ForeignKeyField(SectionData, backref="mechanisms_per_section")
+    mechanism = ForeignKeyField(Mechanism, backref="sections_per_mechanism")
     class Meta:
         table_name = _get_table_name(__qualname__)
 

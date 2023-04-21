@@ -34,13 +34,13 @@ class TestOrmControllers:
         assert isinstance(_sql_db, SqliteDatabase)
         assert any(SectionData.select())
         _section_data: SectionData = SectionData.get_by_id(1)
-        assert _section_data.section_name == "test_section"
+        assert _section_data.section_name == "section_one"
         assert _section_data.dijkpaal_start == "start_point"
         assert _section_data.dijkpaal_end == "end_point"
         assert _section_data.meas_start == 2.4
         assert _section_data.meas_end == 4.2
         assert _section_data.section_length == 123
-        assert not _section_data.in_analysis
+        assert _section_data.in_analysis
         assert _section_data.crest_height == 1.0
         assert _section_data.annual_crest_decline == 2.0
         assert _section_data.cover_layer_thickness == 3.0

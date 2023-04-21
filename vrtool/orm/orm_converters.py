@@ -1,11 +1,10 @@
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.orm_models import DikeTrajectInfo as OrmDikeTrajectInfo
-from vrtool.orm.orm_models import SectionData as OrmDikeSection
+from vrtool.orm import orm_models
 from vrtool.flood_defence_system.dike_section import DikeSection
 
-def import_dike_traject_info(orm_dike_traject: OrmDikeTrajectInfo) -> DikeTrajectInfo:
+def import_dike_traject_info(orm_dike_traject: orm_models.DikeTrajectInfo) -> DikeTrajectInfo:
     if not orm_dike_traject:
-        raise ValueError(f"No valid value given for {OrmDikeTrajectInfo.__name__}.")
+        raise ValueError(f"No valid value given for {orm_models.DikeTrajectInfo.__name__}.")
 
     return DikeTrajectInfo(
         traject_name=orm_dike_traject.traject_name,
@@ -22,12 +21,13 @@ def import_dike_traject_info(orm_dike_traject: OrmDikeTrajectInfo) -> DikeTrajec
         TrajectLength=orm_dike_traject.traject_length
     )
 
-def import_dike_section(orm_dike_section: OrmDikeSection) -> DikeSection:
+def import_dike_section(orm_dike_section: orm_models.SectionData) -> DikeSection:
     _dike_section = DikeSection()
     _dike_section.name = orm_dike_section.section_name
+    _mechanisms = orm_dike_section.mechanisms_per_section.select(orm_models.MechanismPerSection.mechanism)
 
     return _dike_section
 
 
-def import_dike_section_list(orm_dike_section_list: list[OrmDikeSection]) -> list[DikeSection]:
+def import_dike_section_list(orm_dike_section_list: list[orm_models.SectionData]) -> list[DikeSection]:
     return list(map(import_dike_section, orm_dike_section_list))

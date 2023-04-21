@@ -54,9 +54,6 @@ def open_database(database_path: Path) -> SqliteDatabase:
 def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     """
     Returns a dike traject with all the required section data.
-
-    Args:
-        config (VrtoolConfig): _description_
     """
     open_database(config.input_database_path)
     _dike_traject_info = import_dike_traject_info(orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject))
