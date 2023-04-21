@@ -14,13 +14,23 @@ If you have not installed the `vrtool` for development please do so now:
     ```
     | Note, the above steps are based on a Windows setup. If you are not familiar with Git, we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
-2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda](https://www.anaconda.com/) (our recommendation):    
+2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda](https://www.anaconda.com/) (or check [other options](#other-installation-options)):    
     ```bash
     cd C:\repos\vrtool_repo
     conda env create -f .config\environment.yml
     conda activate vrtool_env
     poetry install
     ```
+    | Note, [Poetry](https://python-poetry.org/) should have been installed with the `environment.yml` file, otherwise add it manually via pip (`pip install conda`) or conda-forge (`conda install -c conda-forge poetry`). Then you can proceed to do `poetry install`.
+
+### Other installation options.
+
+It is also possible to contribute to the project without the use of `conda` and `poetry`. For instance, directly with pip (`pypi`):
+```bash
+cd C:\repos\vrtool_repo
+pip install .
+```
+| Note, this will not install `Poetry`, which is required to properly maintain the interdependencies of `Veiligheidsrendement` tool.
 
 ## Before making a pull request.
 1. Make sure you followed our [code standards](#code-standards).
