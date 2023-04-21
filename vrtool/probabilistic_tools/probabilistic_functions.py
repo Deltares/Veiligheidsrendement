@@ -5,6 +5,8 @@ import openturns as ot
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.stats import norm
 
+from vrtool.common.hydraulic_loads.load_input import LoadInput
+
 
 def compute_decimation_height(h, p, n=2):
     # computes the average decimation height for the lower parts of a distribution: h are water levels, p are exceedence probabilities. n is the number of 'decimations'
@@ -330,7 +332,7 @@ def get_design_water_level(load, p):
 
 
 def add_load_char_vals(
-    input, t_0: int, load=None, p_h=1.0 / 1000, p_dh=0.5, year=0
+    input, t_0: int, load:LoadInput, p_h:float, p_dh:float, year:float
 ) -> dict:
     # TODO this function should be moved elsewhere
     # input = list of all strength variables
