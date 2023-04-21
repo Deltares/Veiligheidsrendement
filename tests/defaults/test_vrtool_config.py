@@ -66,6 +66,7 @@ class TestVrtoolConfig:
             "beta_cost_settings",
             "design_methods",
             "unit_costs",
+            "externals"
         ]
 
         # 2. Run test.
@@ -77,6 +78,7 @@ class TestVrtoolConfig:
         expected_set = set(_expected_keys)
         actual_keys_set = set(asdict(_config).keys())
         _different_entries = expected_set.symmetric_difference(actual_keys_set)
+        print(_different_entries)
         assert not any(
             _different_entries
         ), "Mismatch between expected entries and retrieved: {}".format(
