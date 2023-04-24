@@ -1,39 +1,50 @@
-import pytest
-import shutil
 import filecmp
+import shutil
+
+import pytest
+
 from tests import test_data, test_externals, test_results
-from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
+    DStabilityWrapper,
+)
 
 
 class TestDStabilityWrapper:
-
     def test_initialize_with_valid_values(self):
         pass
 
     def test_initialize_missing_stix_path_raises(self):
         with pytest.raises(ValueError) as exception_error:
             DStabilityWrapper(None, test_externals)
-        
+
         assert str(exception_error.value) == "Missing argument value stix_path."
 
     def test_initialize_missing_externals_path_raises(self):
-        _path_test_stix = test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
 
         with pytest.raises(ValueError) as exception_error:
             DStabilityWrapper(_path_test_stix, None)
-        
+
         assert str(exception_error.value) == "Missing argument value externals_path."
-    
-    def test_rerun_stix_with_invalid_externals_path_raises(self, request: pytest.FixtureRequest):
-        _path_test_stix = test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+
+    def test_rerun_stix_with_invalid_externals_path_raises(
+        self, request: pytest.FixtureRequest
+    ):
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
         _invalid_externals = test_data / request.node.name
         assert not _invalid_externals.exists(), "This (test) folder should not exist."
 
-        _expected_error = "Console executable not found at {}.".format(_invalid_externals.joinpath("DStabilityConsole\\D-Stability Console.exe"))
+        _expected_error = "Console executable not found at {}.".format(
+            _invalid_externals.joinpath("DStabilityConsole\\D-Stability Console.exe")
+        )
 
         with pytest.raises(Exception) as exception_error:
             DStabilityWrapper(_path_test_stix, _invalid_externals).rerun_stix()
-        
+
         # This CalculationError exception comes from d-geolib.
         assert str(exception_error.value.message) == _expected_error
 
@@ -41,10 +52,14 @@ class TestDStabilityWrapper:
     @pytest.mark.slow
     def test_rerun_stix_with_valid_externals_path(self, request: pytest.FixtureRequest):
         # 1. Define test data.
-        assert test_externals.joinpath("DStabilityConsole").exists(), "No d-stability console available for testing."
-        _path_test_stix = test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        assert test_externals.joinpath(
+            "DStabilityConsole"
+        ).exists(), "No d-stability console available for testing."
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
         assert _path_test_stix.exists(), "No valid stix file available."
-        
+
         # Create a copy of the file to avoid issues on other tests.
         _test_file = test_results / request.node.name / "file_to_rerun.stix"
         if _test_file.exists():
@@ -68,9 +83,12 @@ class TestDStabilityWrapper:
         Test the get_safety_factor method of the DStabilityWrapper class for stage_id_result=None and without running D-Stability
         """
         # Setup
-        _path_test_stix = test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
-        _dstab_wrapper = DStabilityWrapper(stix_path=_path_test_stix,
-                                           externals_path=test_externals)
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstab_wrapper = DStabilityWrapper(
+            stix_path=_path_test_stix, externals_path=test_externals
+        )
 
         # Call
         _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=None)
@@ -84,9 +102,12 @@ class TestDStabilityWrapper:
         Test the get_safety_factor method of the DStabilityWrapper class for a valid stage id and without running D-Stability
         """
         # Setup
-        _path_test_stix = test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
-        _dstab_wrapper = DStabilityWrapper(stix_path=_path_test_stix,
-                                           externals_path=test_externals)
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstab_wrapper = DStabilityWrapper(
+            stix_path=_path_test_stix, externals_path=test_externals
+        )
 
         # Call
         _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=1)
@@ -100,15 +121,18 @@ class TestDStabilityWrapper:
         Test the get_safety_factor method of the DStabilityWrapper class for a valid stage id and raise and Exception
         """
         # Setup
-        _path_test_stix = test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
-        _dstab_wrapper = DStabilityWrapper(stix_path=_path_test_stix,
-                                           externals_path=test_externals)
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstab_wrapper = DStabilityWrapper(
+            stix_path=_path_test_stix, externals_path=test_externals
+        )
 
         # Call
         with pytest.raises(Exception) as exception_error:
             _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=0)
         # Assert
         assert (
-                str(exception_error.value)
-                == "The requested stage id None does not have saved results in the provided stix RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix, please rerun DStability"
+            str(exception_error.value)
+            == "The requested stage id None does not have saved results in the provided stix RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix, please rerun DStability"
         )

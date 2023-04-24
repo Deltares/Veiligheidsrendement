@@ -66,7 +66,7 @@ class TestVrtoolConfig:
             "beta_cost_settings",
             "design_methods",
             "unit_costs",
-            "externals"
+            "externals",
         ]
 
         # 2. Run test.

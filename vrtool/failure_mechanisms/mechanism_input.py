@@ -43,9 +43,7 @@ class MechanismInput:
         if mechanism == "StabilityInner":
             if calctype == "DStability":
                 data = read_data_from_csv(input_path, reference)
-                data = data.loc[
-                    data.index.isin(["STIXNAAM", "RERUN", "STAGEID"])
-                ]
+                data = data.loc[data.index.isin(["STIXNAAM", "RERUN", "STAGEID"])]
                 data.loc["STIXNAAM"] = (
                     str(stix_folder_path) + "/" + data.loc["STIXNAAM"]
                 )

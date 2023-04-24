@@ -51,7 +51,7 @@ class DikeSection:
                 vrtool_config.mechanisms,
                 vrtool_config.T,
                 vrtool_config.t_0,
-                vrtool_config.externals
+                vrtool_config.externals,
             )
             return _dike_section
 
@@ -104,7 +104,12 @@ class DikeSection:
         )
 
     def set_section_reliability(
-        self, input_path: Path, mechanism_names: list[str], t_value: float, t_0: float, externals_path: Path = None
+        self,
+        input_path: Path,
+        mechanism_names: list[str],
+        t_value: float,
+        t_0: float,
+        externals_path: Path = None,
     ):
         """Sets the reliability of the dike section.
 

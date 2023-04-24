@@ -1,13 +1,15 @@
 from pathlib import Path
 from typing import Optional
+
 from geolib import DStabilityModel
+
 
 class DStabilityWrapper:
     def __init__(self, stix_path: Path, externals_path: Path) -> None:
 
         if not stix_path:
             raise ValueError("Missing argument value stix_path.")
-        
+
         if not externals_path:
             raise ValueError("Missing argument value externals_path.")
 
@@ -48,5 +50,5 @@ class DStabilityWrapper:
         for stage_output in self._dstability_model.output:
             if stage_output is not None and stage_output.Id == _result_id:
                 return stage_output.FactorOfSafety
-        
+
         raise ValueError(f"No output found for the provided stage: {stage_id_result}.")

@@ -9,6 +9,7 @@ import pandas as pd
 
 from vrtool.defaults import default_unit_costs_csv
 
+
 def _load_default_unit_costs() -> dict:
     """
     Returns the _default_ unit costs read from the default csv file, with columns: 'Description', 'Cost' and 'Unit'.
@@ -26,6 +27,7 @@ def _load_default_unit_costs() -> dict:
     for _, _series in _unit_cost_data.iterrows():
         unit_cost[_series["Description"]] = _series["Cost"]
     return unit_cost
+
 
 @dataclass
 class VrtoolConfig:
@@ -131,6 +133,7 @@ class VrtoolConfig:
             if isinstance(value, str):
                 return Path(value)
             return value
+
         self.output_directory = _convert_to_path(self.output_directory)
         self.input_directory = _convert_to_path(self.input_directory)
         self.externals = _convert_to_path(self.externals)

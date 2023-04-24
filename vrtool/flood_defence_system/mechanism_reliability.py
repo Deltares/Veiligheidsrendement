@@ -22,10 +22,13 @@ from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleCalculator,
     StabilityInnerSimpleInput,
 )
-from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
-from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calculator import (
-    StabilityInnerDStabilityCalculator
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
+    DStabilityWrapper,
 )
+from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calculator import (
+    StabilityInnerDStabilityCalculator,
+)
+
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
@@ -147,11 +150,17 @@ class MechanismReliability:
     ) -> FailureMechanismCalculatorProtocol:
 
         if mechanism != "StabilityInner":
-            raise Exception("Unknown computation type DStability for {}".format(mechanism))
+            raise Exception(
+                "Unknown computation type DStability for {}".format(mechanism)
+            )
 
-        _wrapper = DStabilityWrapper(stix_path=Path(mechanism_input.input.get("STIXNAAM", "")),
-                                        externals_path=Path(mechanism_input.input.get("DStability_exe_path")))
+        _wrapper = DStabilityWrapper(
+            stix_path=Path(mechanism_input.input.get("STIXNAAM", "")),
+            externals_path=Path(mechanism_input.input.get("DStability_exe_path")),
+        )
         if mechanism_input.input.get("RERUN_STIX"):
             _wrapper.rerun_stix()
-        _mechanism_input = np.array(_wrapper.get_safety_factor(int(mechanism_input.input.get("STAGEID")[0])))
+        _mechanism_input = np.array(
+            _wrapper.get_safety_factor(int(mechanism_input.input.get("STAGEID")[0]))
+        )
         return StabilityInnerDStabilityCalculator(_mechanism_input)
