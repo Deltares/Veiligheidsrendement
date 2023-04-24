@@ -15,6 +15,9 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
+    ModifiedDikeGeometryMeasureInput,
+)
 
 
 class SoilReinforcementMeasure(MeasureBase):
@@ -36,20 +39,23 @@ class SoilReinforcementMeasure(MeasureBase):
         type = self.parameters["Type"]
         mechanism_names = dike_section.section_reliability.Mechanisms.keys()
 
-        crestrange = self._get_crest_range()
-        bermrange = self._get_berm_range()
+        self.measures = []
+        if self.parameters["StabilityScreen"] == "yes":
+            self.parameters["Depth"] = self._get_depth(dike_section)
 
-        measures = [[x, y] for x in crestrange for y in bermrange]
+        crest_range = self._get_crest_range()
+        berm_range = self._get_berm_range()
+        modified_dike_geometry_measures = self._get_modified_dike_geometry_measures(
+            crest_range, berm_range, dike_section, preserve_slope, plot_dir
+        )
+
+        measures = [[x, y] for x in crest_range for y in berm_range]
         if not preserve_slope:
             slope_in = 4
             slope_out = 3  # inner and outer slope
         else:
             slope_in = False
             slope_out = False
-
-        self.measures = []
-        if self.parameters["StabilityScreen"] == "yes":
-            self.parameters["Depth"] = self._get_depth(dike_section)
 
         for j in measures:
             if self.parameters["Direction"] == "outward":
@@ -230,8 +236,101 @@ class SoilReinforcementMeasure(MeasureBase):
         if d_cover_input:
             if d_cover_input.size > 1:
                 logging.info("d_cover has more values than 1.")
-            
+
             return max([d_cover_input[0] + 1.0, 8.0])
         else:
             # TODO remove shaky assumption on depth
             return 6.0
+
+    def _get_modified_dike_geometry_measures(
+        self,
+        crest_range: np.ndarray,
+        berm_range: np.ndarray,
+        dike_section: DikeSection,
+        preserve_slope: bool,
+        plot_dir: bool = False,
+    ) -> list[ModifiedDikeGeometryMeasureInput]:
+
+        dike_modifications = [
+            (modified_crest, modified_berm)
+            for modified_crest in crest_range
+            for modified_berm in berm_range
+        ]
+
+        inputs = []
+        for dike_modification in dike_modifications:
+            modified_geometry_properties = self._determine_new_geometry(
+                dike_section, dike_modification, preserve_slope, plot_dir
+            )
+
+            measure_input_dictionary = {
+                "d_crest": dike_modification[0],
+                "d_berm": dike_modification[1],
+                "modified_geometry": modified_geometry_properties[0],
+                "area_extra": modified_geometry_properties[1],
+                "area_excavated": modified_geometry_properties[2],
+                "d_house": modified_geometry_properties[3],
+            }
+
+            inputs.append(
+                ModifiedDikeGeometryMeasureInput.from_dictionary(
+                    measure_input_dictionary
+                )
+            )
+
+        return inputs
+
+    def _determine_new_geometry(
+        self,
+        dike_section: DikeSection,
+        dike_modification: tuple[float],
+        preserve_slope: bool,
+        plot_dir: bool,
+    ) -> list:
+        if not preserve_slope:
+            slope_in = 4
+            slope_out = 3  # inner and outer slope
+        else:
+            slope_in = False
+            slope_out = False
+
+        if self.parameters["Direction"] == "outward":
+            k = max(
+                0, dike_modification[1] - self.parameters["max_inward"]
+            )  # correction max_outward
+        else:
+            k = dike_modification[1]
+
+        if hasattr(dike_section, "Kruinhoogte"):
+            if dike_section.Kruinhoogte != np.max(dike_section.InitialGeometry.z):
+                # In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
+                return determine_new_geometry(
+                    dike_modification,
+                    self.parameters["Direction"],
+                    self.parameters["max_outward"],
+                    copy.deepcopy(dike_section.InitialGeometry),
+                    self.geometry_plot,
+                    **{
+                        "plot_dir": plot_dir,
+                        "slope_in": slope_in,
+                        "crest_extra": dike_section.Kruinhoogte,
+                    },
+                )
+            else:
+                return determine_new_geometry(
+                    dike_modification,
+                    self.parameters["Direction"],
+                    self.parameters["max_outward"],
+                    copy.deepcopy(dike_section.InitialGeometry),
+                    self.geometry_plot,
+                    **{"plot_dir": plot_dir, "slope_in": slope_in},
+                )
+        else:
+            return determine_new_geometry(
+                dike_modification,
+                self.parameters["Direction"],
+                self.parameters["max_outward"],
+                copy.deepcopy(dike_section.InitialGeometry),
+                self.geometry_plot,
+                **{"plot_dir": plot_dir, "slope_in": slope_in},
+            )
