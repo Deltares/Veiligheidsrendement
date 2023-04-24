@@ -1,9 +1,11 @@
 import logging
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import pandas as pd
 
+from vrtool.failure_mechanisms.mechanism_reader import read_data_from_csv
 from vrtool.probabilistic_tools.hydra_ring_scripts import read_design_table
 
 
@@ -17,35 +19,39 @@ class MechanismInput:
     def fill_mechanism(
         self,
         input_path: Path,
-        reference,
-        calctype,
+        stix_folder_path: Path,
+        externals_path: Path,
+        reference: Union[int, str],
+        calctype: str,
         mechanism=None,
         **kwargs,
     ):
-        # From CSV
-        if mechanism != "Overflow":
-            try:
-                data = pd.read_csv(
-                    input_path.joinpath(Path(str(reference)).name),
-                    delimiter=",",
-                    header=None,
-                )
-            except:
-                data = pd.read_csv(
-                    input_path.joinpath(Path(str(reference)).name + ".csv"),
-                    delimiter=",",
-                    header=None,
-                )
+        """
+        Args:
+            input_path (str): Path to the dataset folder of the corresponding mechanism.
+            stix_folder_path (str): Path to the folder containing all the stix files.
+            externals_path (str): Path to the folder containing all the externals.
+            reference (str): A reference to use for the calculation.
+            calctype (str): Calculation type for the given mechanism, one of ['Simple', 'HRING', 'DStability', 'DirectInput'].
+            mechanism (str): The mechanism to use for the calculation.
+            **kwargs: Additional keyword arguments to pass.
 
-            # TODO: fix datatypes in input such that we do not need to drop columns
-            data = data.rename(columns={list(data)[0]: "Name"})
-            data = data.set_index("Name")
-            try:
-                data = data.drop(["InScope", "Opmerking"]).astype(np.float32)
-            except:
-                pass
+        Returns:
+            None.
+        """
 
-        else:  #'Overflow':
+        if mechanism == "StabilityInner":
+            if calctype == "DStability":
+                data = read_data_from_csv(input_path, reference)
+                data = data.loc[data.index.isin(["STIXNAAM", "RERUN", "STAGEID"])]
+                data.loc["STIXNAAM"] = (
+                    str(stix_folder_path) + "/" + data.loc["STIXNAAM"]
+                )
+                data.loc["DStability_exe_path"] = str(externals_path)
+            else:
+                data = read_data_from_csv(input_path, reference)
+
+        elif mechanism == "Overflow":
             if calctype == "Simple":
                 data = pd.read_csv(
                     input_path.joinpath(Path(reference).name), delimiter=","
@@ -78,6 +84,9 @@ class MechanismInput:
                     # else: interpolate and then concatenate.
             else:
                 raise Exception("Unknown input type for overflow")
+
+        else:
+            data = read_data_from_csv(input_path, reference)
 
         self.temporals = []
         self.char_vals = {}

@@ -27,7 +27,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9, <3.11"
-numpy = "^1.24.2"
 matplotlib = "^3.7.0"
 pandas = "^1.5.3"
 shapely = "^2.0.1"
@@ -37,6 +36,8 @@ openturns = "1.19"
 openpyxl = "^3.1.1"
 click = "^8.1.3"
 peewee = "^3.16.1"
+d-geolib = "^0.6.0"
+
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.1"
@@ -47,7 +48,8 @@ teamcity-messages = "^1.32"
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"
 isort = "^5.10.1"
-commitizen = "2.28.1"
+commitizen = "^3.0.1"
+
 
 [tool.black]
 line-length = 88
@@ -82,6 +84,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "externals: marks tests that require of external binaries (deselect with '-m \"not externals\"')",
 ]
 
 [tool.commitizen]
