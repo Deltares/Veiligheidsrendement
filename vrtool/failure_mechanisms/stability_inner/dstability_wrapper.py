@@ -28,17 +28,17 @@ class DStabilityWrapper:
         if stage_id_result is None:
             return self._dstability_model.output[-1].FactorOfSafety
 
-
         _result_id = self._dstability_model.datastructure.stages[
             stage_id_result
         ].ResultId
 
         if _result_id is None:
-            raise Exception(
+            raise ValueError(
                 f"The requested stage id {_result_id} does not have saved results in the provided stix {self.stix_name}, please rerun DStability"
             )
 
         for stage_output in self._dstability_model.output:
-
             if stage_output is not None and stage_output.Id == _result_id:
                 return stage_output.FactorOfSafety
+        
+        raise ValueError(f"No output found for the provided stage: {stage_id_result}.")

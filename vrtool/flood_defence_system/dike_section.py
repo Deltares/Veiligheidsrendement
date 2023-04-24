@@ -153,7 +153,7 @@ class DikeSection:
         self,
         mechanism_path: Path,
         stix_path: Path,
-        external_path: Path,
+        externals_path: Path,
         mechanism: str,
         mechanism_data,
         t_value: float,
@@ -168,7 +168,7 @@ class DikeSection:
                 _mechanism_collection.Reliability[k].Input.fill_mechanism(
                     mechanism_path,
                     stix_path,
-                    external_path,
+                    externals_path,
                     *mechanism_data,
                     mechanism=mechanism,
                     crest_height=self.Kruinhoogte,
@@ -178,7 +178,7 @@ class DikeSection:
                 _mechanism_collection.Reliability[k].Input.fill_mechanism(
                     mechanism_path,
                     stix_path,
-                    external_path,
+                    externals_path,
                     *mechanism_data,
                     mechanism=mechanism,
                 )
