@@ -1,4 +1,5 @@
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import orm_models
 from vrtool.flood_defence_system.dike_section import DikeSection
 
@@ -20,6 +21,21 @@ def import_dike_traject_info(orm_dike_traject: orm_models.DikeTrajectInfo) -> Di
         FloodDamage=orm_dike_traject.flood_damage,
         TrajectLength=orm_dike_traject.traject_length
     )
+
+def import_dike_traject(orm_dike_traject_info: orm_models.DikeTrajectInfo) -> DikeTraject:
+    _dike_traject = DikeTraject()
+    _dike_traject.general_info = import_dike_traject_info(orm_dike_traject_info)
+
+    # Currently it is assumed that all SectionData present in a db belongs to whatever traject name has been provided.
+    _dike_traject.sections = import_dike_section_list(orm_dike_traject_info.dike_sections.select().where(orm_models.SectionData.in_analysis == True))
+
+    # _dike_traject.mechanism_names = config.mechanisms
+    # _dike_traject.assessment_plot_years = config.assessment_plot_years
+    # _dike_traject.flip_traject = config.flip_traject
+    # _dike_traject.t_0 = config.t_0
+    # _dike_traject.T = config.T
+
+    return _dike_traject
 
 def import_dike_section(orm_dike_section: orm_models.SectionData) -> DikeSection:
     _dike_section = DikeSection()

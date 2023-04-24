@@ -3,7 +3,7 @@ from peewee import SqliteDatabase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.orm import orm_models as orm
-from vrtool.orm.orm_converters import import_dike_traject_info, import_dike_section_list
+from vrtool.orm.orm_converters import import_dike_traject
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 def initialize_database(database_path: Path):
@@ -56,17 +56,5 @@ def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     Returns a dike traject with all the required section data.
     """
     open_database(config.input_database_path)
-    _dike_traject_info = import_dike_traject_info(orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject))
-
-    _dike_traject = DikeTraject()
-    _dike_traject.general_info = _dike_traject_info
-
-    _dike_traject.mechanism_names = config.mechanisms
-    _dike_traject.assessment_plot_years = config.assessment_plot_years
-    _dike_traject.flip_traject = config.flip_traject
-    _dike_traject.t_0 = config.t_0
-    _dike_traject.T = config.T
-
-    # Currently it is assumed that all SectionData present in a db belongs to whatever traject name has been provided.
-    _dike_traject.sections = import_dike_section_list(orm.SectionData.select().where(orm.SectionData.in_analysis == True))
+    _dike_traject = import_dike_traject(orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject))
     return _dike_traject
