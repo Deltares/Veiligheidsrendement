@@ -38,6 +38,7 @@ class TestDStabilityWrapper:
         assert str(exception_error.value.message) == _expected_error
 
     @pytest.mark.externals
+    @pytest.mark.slow
     def test_rerun_stix_with_valid_externals_path(self, request: pytest.FixtureRequest):
         # 1. Define test data.
         assert test_externals.joinpath("DStabilityConsole").exists(), "No d-stability console available for testing."
@@ -57,7 +58,7 @@ class TestDStabilityWrapper:
         assert filecmp.cmp(str(_path_test_stix), str(_test_file))
 
         # 2. Run test.
-        DStabilityWrapper(_path_test_stix, test_externals).rerun_stix()
+        DStabilityWrapper(_test_file, test_externals).rerun_stix()
 
         # 3. Verify expectations.
         assert not filecmp.cmp(str(_path_test_stix), str(_test_file))
