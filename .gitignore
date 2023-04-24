@@ -50,6 +50,7 @@ Thumbs.db
 
 # IDE related code
 .vscode/
+.env/
 
 # Pytest related files
 .pytest_cache/
