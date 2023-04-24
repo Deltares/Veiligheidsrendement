@@ -10,6 +10,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
 
 class CustomMeasure(MeasureBase):
@@ -63,8 +64,6 @@ class CustomMeasure(MeasureBase):
         # TODO modify kruinhoogte_2075 to 2025 using change of crest in time.
         self.parameters["L_added"] = base_data["verlenging kwelweg"]
         self.measures["Cost"] = base_data["cost"].values[0]
-        self.measures["Reliability"] = SectionReliability()
-        self.measures["Reliability"].Mechanisms = {}
 
     def evaluate_measure(
         self,
@@ -72,80 +71,92 @@ class CustomMeasure(MeasureBase):
         traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
     ):
-        mechanism_names = list(dike_section.section_reliability.Mechanisms.keys())
-
         # first read and set the data:
         self.set_input(dike_section)
 
-        # loop over mechanisms to modify the reliability
-        for mechanism_name in mechanism_names:
-
-            self.measures["Reliability"].Mechanisms[
-                mechanism_name
-            ] = MechanismReliabilityCollection(
-                mechanism_name, "", self.config.T, self.config.t_0, 0
-            )
-            for ij in (
-                self.measures["Reliability"]
-                .Mechanisms[mechanism_name]
-                .Reliability.keys()
-            ):
-                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                    ij
-                ] = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[
-                        mechanism_name
-                    ].Reliability[ij]
-                )
-
-                # only adapt after year of implementation:
-                if np.int_(ij) >= self.parameters["year"]:
-                    # remove other input:
-                    if mechanism_name == "Overflow":
-                        if self.parameters["h_crest_new"] != None:
-                            # type = simple
-                            self.measures["Reliability"].Mechanisms[
-                                mechanism_name
-                            ].Reliability[ij].Input.input["h_crest"] = self.parameters[
-                                "h_crest_new"
-                            ]
-
-                        # change crest
-                    elif mechanism_name == "Piping":
-                        self.measures["Reliability"].Mechanisms[
-                            mechanism_name
-                        ].Reliability[ij].Input.input["Lvoor"] += self.parameters[
-                            "L_added"
-                        ].values
-                        # change Lvoor
-                    else:
-                        # Direct input: remove existing inputs and replace with beta
-                        self.measures["Reliability"].Mechanisms[
-                            mechanism_name
-                        ].Reliability[ij].type = "DirectInput"
-                        self.measures["Reliability"].Mechanisms[
-                            mechanism_name
-                        ].Reliability[ij].Input.input = {}
-                        self.measures["Reliability"].Mechanisms[
-                            mechanism_name
-                        ].Reliability[ij].Input.input["beta"] = {}
-                        for input in self.reliability_data[mechanism_name]:
-                            # only read non-nan values:
-                            if not np.isnan(
-                                self.reliability_data[mechanism_name, input].values[0]
-                            ):
-                                self.measures["Reliability"].Mechanisms[
-                                    mechanism_name
-                                ].Reliability[ij].Input.input["beta"][
-                                    input - self.t_0
-                                ] = self.reliability_data[
-                                    mechanism_name, input
-                                ].values[
-                                    0
-                                ]
-            self.measures["Reliability"].Mechanisms[mechanism_name].generateLCRProfile(
-                dike_section.section_reliability.Load,
-                mechanism=mechanism_name,
-                trajectinfo=traject_info,
-            )
+        self.measures["Reliability"] = self._get_configured_section_reliability(
+            dike_section, traject_info
+        )
         self.measures["Reliability"].calculate_section_reliability()
+
+    def _get_configured_section_reliability(
+        self, dike_section: DikeSection, traject_info: DikeTrajectInfo
+    ) -> SectionReliability:
+        section_reliability = SectionReliability()
+        section_reliability.Mechanisms = {}
+
+        mechanism_names = dike_section.section_reliability.Mechanisms.keys()
+        for mechanism_name in mechanism_names:
+            section_reliability.Mechanisms[
+                mechanism_name
+            ] = self._get_configured_mechanism_reliability_collection(
+                mechanism_name, dike_section, traject_info
+            )
+
+        return section_reliability
+
+    def _get_configured_mechanism_reliability_collection(
+        self,
+        mechanism_name: str,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+    ) -> MechanismReliabilityCollection:
+        mechanism_reliability_collection = MechanismReliabilityCollection(
+            mechanism_name, "", self.config.T, self.config.t_0, 0
+        )
+
+        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
+            mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ] = copy.deepcopy(
+                dike_section.section_reliability.Mechanisms[mechanism_name].Reliability[
+                    year_to_calculate
+                ]
+            )
+
+            mechanism_reliability = mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ]
+            if np.int_(year_to_calculate) >= self.parameters["year"]:
+                if mechanism_name == "Overflow":
+                    self._configure_overflow(mechanism_reliability)
+                elif mechanism_name == "Piping":
+                    self._configure_piping(mechanism_reliability)
+                else:
+                    self._configure_other(mechanism_reliability, mechanism_name)
+
+        mechanism_reliability_collection.generateLCRProfile(
+            dike_section.section_reliability.Load,
+            mechanism=mechanism_name,
+            trajectinfo=traject_info,
+        )
+
+        return mechanism_reliability_collection
+
+    def _configure_overflow(self, mechanism_reliability: MechanismReliability) -> None:
+        if self.parameters["h_crest_new"] != None:
+            # type = simple
+            mechanism_reliability.Input.input["h_crest"] = self.parameters[
+                "h_crest_new"
+            ]
+
+        # change crest
+
+    def _configure_piping(self, mechanism_reliability: MechanismReliability) -> None:
+        mechanism_reliability.Input.input["Lvoor"] += self.parameters["L_added"].values
+        # change Lvoor
+
+    def _configure_other(
+        self, mechanism_reliability: MechanismReliability, mechanism_name: str
+    ) -> None:
+        # Direct input: remove existing inputs and replace with beta
+        mechanism_reliability.type = "DirectInput"
+        mechanism_reliability.Input.input = {}
+        mechanism_reliability.Input.input["beta"] = {}
+
+        for input in self.reliability_data[mechanism_name]:
+            # only read non-nan values:
+            if not np.isnan(self.reliability_data[mechanism_name, input].values[0]):
+                mechanism_reliability.Input.input["beta"][
+                    input - self.t_0
+                ] = self.reliability_data[mechanism_name, input].values[0]
