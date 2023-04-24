@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Optional
 from geolib import DStabilityModel
-import logging
 
 class DStabilityWrapper:
     def __init__(self, stix_path: Path, externals_path: Path) -> None:
