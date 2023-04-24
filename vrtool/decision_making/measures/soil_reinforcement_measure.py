@@ -39,7 +39,6 @@ class SoilReinforcementMeasure(MeasureBase):
         type = self.parameters["Type"]
         mechanism_names = dike_section.section_reliability.Mechanisms.keys()
 
-        self.measures = []
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
 
@@ -57,78 +56,25 @@ class SoilReinforcementMeasure(MeasureBase):
             slope_in = False
             slope_out = False
 
-        for j in measures:
-            if self.parameters["Direction"] == "outward":
-                k = max(
-                    0, j[1] - self.parameters["max_inward"]
-                )  # correction max_outward
-            else:
-                k = j[1]
+        self.measures = []
+        for modified_dike_geometry_measure in modified_dike_geometry_measures:
             self.measures.append({})
-            self.measures[-1]["dcrest"] = j[0]
-            self.measures[-1]["dberm"] = j[1]
-            if hasattr(dike_section, "Kruinhoogte"):
-                if dike_section.Kruinhoogte != np.max(dike_section.InitialGeometry.z):
-                    # In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
-                    (
-                        self.measures[-1]["Geometry"],
-                        area_extra,
-                        area_excavated,
-                        dhouse,
-                    ) = determine_new_geometry(
-                        j,
-                        self.parameters["Direction"],
-                        self.parameters["max_outward"],
-                        copy.deepcopy(dike_section.InitialGeometry),
-                        self.geometry_plot,
-                        **{
-                            "plot_dir": plot_dir,
-                            "slope_in": slope_in,
-                            "crest_extra": dike_section.Kruinhoogte,
-                        },
-                    )
-                else:
-                    (
-                        self.measures[-1]["Geometry"],
-                        area_extra,
-                        area_excavated,
-                        dhouse,
-                    ) = determine_new_geometry(
-                        j,
-                        self.parameters["Direction"],
-                        self.parameters["max_outward"],
-                        copy.deepcopy(dike_section.InitialGeometry),
-                        self.geometry_plot,
-                        **{"plot_dir": plot_dir, "slope_in": slope_in},
-                    )
-            else:
-                (
-                    self.measures[-1]["Geometry"],
-                    area_extra,
-                    area_excavated,
-                    dhouse,
-                ) = determine_new_geometry(
-                    j,
-                    self.parameters["Direction"],
-                    self.parameters["max_outward"],
-                    copy.deepcopy(dike_section.InitialGeometry),
-                    self.geometry_plot,
-                    **{"plot_dir": plot_dir, "slope_in": slope_in},
-                )
-
+            self.measures[-1]["dcrest"] = modified_dike_geometry_measure.d_crest
+            self.measures[-1]["dberm"] = modified_dike_geometry_measure.d_berm
             self.measures[-1]["Cost"] = determine_costs(
                 self.parameters,
                 type,
                 dike_section.Length,
                 self.unit_costs,
-                dcrest=j[0],
-                dberm_in=int(dhouse),
+                dcrest=modified_dike_geometry_measure.d_crest,
+                dberm_in=int(modified_dike_geometry_measure.d_house),
                 housing=dike_section.houses,
-                area_extra=area_extra,
-                area_excavated=area_excavated,
+                area_extra=modified_dike_geometry_measure.area_extra,
+                area_excavated=modified_dike_geometry_measure.area_excavated,
                 direction=self.parameters["Direction"],
                 section=dike_section.name,
             )
+
             self.measures[-1]["Reliability"] = SectionReliability()
             self.measures[-1]["Reliability"].Mechanisms = {}
 
