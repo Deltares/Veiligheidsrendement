@@ -82,6 +82,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "externals: marks tests that require of external binaries (deselect with '-m \"not externals\"')",
 ]
 
 [tool.commitizen]
