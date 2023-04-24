@@ -54,3 +54,6 @@ Thumbs.db
 # Pytest related files
 .pytest_cache/
 test_results/
+
+# Externals related files
+externals/
