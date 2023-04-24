@@ -35,42 +35,9 @@ class SoilReinforcementMeasure(MeasureBase):
 
         type = self.parameters["Type"]
         mechanism_names = dike_section.section_reliability.Mechanisms.keys()
-        crest_step = self.crest_step
-        berm_step = self.berm_step
-        crestrange = np.linspace(
-            self.parameters["dcrest_min"],
-            self.parameters["dcrest_max"],
-            np.int_(
-                1
-                + (self.parameters["dcrest_max"] - self.parameters["dcrest_min"])
-                / crest_step
-            ),
-        )
-        # TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
-        if self.parameters["Direction"] == "outward":
-            if np.size(berm_step) > 1:
-                max_berm = (
-                    self.parameters["max_outward"] + self.parameters["max_inward"]
-                )
-                bermrange = berm_step[: len(np.where((berm_step <= max_berm))[0])]
-            else:
-                bermrange = np.linspace(
-                    0.0,
-                    self.parameters["max_outward"],
-                    np.int_(1 + (self.parameters["max_outward"] / berm_step)),
-                )
-        elif self.parameters["Direction"] == "inward":
-            if np.size(berm_step) > 1:
-                max_berm = self.parameters["max_inward"]
-                bermrange = berm_step[: len(np.where((berm_step <= max_berm))[0])]
-            else:
-                bermrange = np.linspace(
-                    0.0,
-                    self.parameters["max_inward"],
-                    np.int_(1 + (self.parameters["max_inward"] / berm_step)),
-                )
-        else:
-            raise Exception("unkown direction")
+
+        crestrange = self._get_crest_range()
+        bermrange = self._get_berm_range()
 
         measures = [[x, y] for x in crestrange for y in bermrange]
         if not preserve_slope:
@@ -82,20 +49,7 @@ class SoilReinforcementMeasure(MeasureBase):
 
         self.measures = []
         if self.parameters["StabilityScreen"] == "yes":
-            d_cover_input = (
-                dike_section.section_reliability.Mechanisms["StabilityInner"]
-                .Reliability["0"]
-                .Input.input.get("d_cover", None)
-            )
-            if d_cover_input:
-                if d_cover_input.size > 1:
-                    logging.info("d_cover has more values than 1.")
-
-                self.parameters["Depth"] = max([d_cover_input[0] + 1.0, 8.0])
-            else:
-                self.parameters[
-                    "Depth"
-                ] = 6.0  # TODO: implement a better depth estimate based on d_cover
+            self.parameters["Depth"] = self._get_depth(dike_section)
 
         for j in measures:
             if self.parameters["Direction"] == "outward":
@@ -216,3 +170,68 @@ class SoilReinforcementMeasure(MeasureBase):
                     trajectinfo=traject_info,
                 )
             self.measures[-1]["Reliability"].calculate_section_reliability()
+
+    def _get_crest_range(self) -> np.ndarray:
+        crest_step = self.crest_step
+        return np.linspace(
+            self.parameters["dcrest_min"],
+            self.parameters["dcrest_max"],
+            np.int_(
+                1
+                + (self.parameters["dcrest_max"] - self.parameters["dcrest_min"])
+                / crest_step
+            ),
+        )
+
+    def _get_berm_range(self) -> np.ndarray:
+        """Generates the range of the berm.
+
+        Raises:
+            Exception: Raised when an unknown direction is specified
+
+        Returns:
+            np.ndarray: A collection of the berm range.
+        """
+        berm_step = self.berm_step
+
+        # TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
+        if self.parameters["Direction"] == "outward":
+            if np.size(berm_step) > 1:
+                max_berm = (
+                    self.parameters["max_outward"] + self.parameters["max_inward"]
+                )
+                return berm_step[: len(np.where((berm_step <= max_berm))[0])]
+            else:
+                return np.linspace(
+                    0.0,
+                    self.parameters["max_outward"],
+                    np.int_(1 + (self.parameters["max_outward"] / berm_step)),
+                )
+        elif self.parameters["Direction"] == "inward":
+            if np.size(berm_step) > 1:
+                max_berm = self.parameters["max_inward"]
+                return berm_step[: len(np.where((berm_step <= max_berm))[0])]
+            else:
+                return np.linspace(
+                    0.0,
+                    self.parameters["max_inward"],
+                    np.int_(1 + (self.parameters["max_inward"] / berm_step)),
+                )
+        else:
+            raise Exception("unkown direction")
+
+    def _get_depth(self, dike_section: DikeSection) -> float:
+        d_cover_input = (
+            dike_section.section_reliability.Mechanisms["StabilityInner"]
+            .Reliability["0"]
+            .Input.input.get("d_cover", None)
+        )
+
+        if d_cover_input:
+            if d_cover_input.size > 1:
+                logging.info("d_cover has more values than 1.")
+            
+            return max([d_cover_input[0] + 1.0, 8.0])
+        else:
+            # TODO remove shaky assumption on depth
+            return 6.0
