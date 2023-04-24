@@ -33,9 +33,6 @@ class SoilReinforcementMeasure(MeasureBase):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
         # self. parameters = measure.parameters
-
-        SFincrease = 0.2  # for stability screen
-
         type = self.parameters["Type"]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
@@ -184,13 +181,6 @@ class SoilReinforcementMeasure(MeasureBase):
         else:
             slope_in = False
             slope_out = False
-
-        if self.parameters["Direction"] == "outward":
-            k = max(
-                0, dike_modification[1] - self.parameters["max_inward"]
-            )  # correction max_outward
-        else:
-            k = dike_modification[1]
 
         if hasattr(dike_section, "Kruinhoogte"):
             if dike_section.Kruinhoogte != np.max(dike_section.InitialGeometry.z):
