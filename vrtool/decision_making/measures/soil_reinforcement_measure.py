@@ -65,52 +65,9 @@ class SoilReinforcementMeasure(MeasureBase):
                 section=dike_section.name,
             )
 
-            self.measures[-1]["Reliability"] = SectionReliability()
-            self.measures[-1]["Reliability"].Mechanisms = {}
-
-            for mechanism_name in mechanism_names:
-                calc_type = dike_section.mechanism_data[mechanism_name][1]
-                self.measures[-1]["Reliability"].Mechanisms[
-                    mechanism_name
-                ] = MechanismReliabilityCollection(
-                    mechanism_name,
-                    calc_type,
-                    self.config.T,
-                    self.config.t_0,
-                    self.parameters["year"],
-                )
-                for year_to_calculate, reliability_input in (
-                    self.measures[-1]["Reliability"]
-                    .Mechanisms[mechanism_name]
-                    .Reliability.items()
-                ):
-                    # for all time steps considered.
-                    # first copy the data
-                    reliability_input = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[mechanism_name]
-                        .Reliability[year_to_calculate]
-                        .Input
-                    )
-                    # Adapt inputs for reliability calculation, but only after year of implementation.
-                    if float(year_to_calculate) >= self.parameters["year"]:
-                        reliability_input.input = implement_berm_widening(
-                            input=reliability_input.input,
-                            measure_input=self.measures[-1],
-                            measure_parameters=self.parameters,
-                            mechanism=mechanism_name,
-                            computation_type=calc_type,
-                        )
-                    # put them back in the object
-                    self.measures[-1]["Reliability"].Mechanisms[
-                        mechanism_name
-                    ].Reliability[year_to_calculate].Input = reliability_input
-                self.measures[-1]["Reliability"].Mechanisms[
-                    mechanism_name
-                ].generateLCRProfile(
-                    dike_section.section_reliability.Load,
-                    mechanism=mechanism_name,
-                    trajectinfo=traject_info,
-                )
+            self.measures[-1]["Reliability"] = self._get_configured_section_reliability(
+                dike_section, traject_info
+            )
             self.measures[-1]["Reliability"].calculate_section_reliability()
 
     def _get_crest_range(self) -> np.ndarray:
@@ -270,3 +227,54 @@ class SoilReinforcementMeasure(MeasureBase):
                 self.geometry_plot,
                 **{"plot_dir": plot_dir, "slope_in": slope_in},
             )
+
+    def _get_configured_section_reliability(
+        self, dike_section: DikeSection, traject_info: DikeTrajectInfo
+    ) -> SectionReliability:
+        section_reliability = SectionReliability()
+        section_reliability.Mechanisms = {}
+
+        mechanism_names = dike_section.section_reliability.Mechanisms.keys()
+
+        for mechanism_name in mechanism_names:
+            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            section_reliability.Mechanisms[
+                mechanism_name
+            ] = MechanismReliabilityCollection(
+                mechanism_name,
+                calc_type,
+                self.config.T,
+                self.config.t_0,
+                self.parameters["year"],
+            )
+            for year_to_calculate, reliability_input in section_reliability.Mechanisms[
+                mechanism_name
+            ].Reliability.items():
+                # for all time steps considered.
+                # first copy the data
+                reliability_input = copy.deepcopy(
+                    dike_section.section_reliability.Mechanisms[mechanism_name]
+                    .Reliability[year_to_calculate]
+                    .Input
+                )
+                # Adapt inputs for reliability calculation, but only after year of implementation.
+                if float(year_to_calculate) >= self.parameters["year"]:
+                    reliability_input.input = implement_berm_widening(
+                        input=reliability_input.input,
+                        measure_input=self.measures[-1],
+                        measure_parameters=self.parameters,
+                        mechanism=mechanism_name,
+                        computation_type=calc_type,
+                    )
+                # put them back in the object
+                section_reliability.Mechanisms[mechanism_name].Reliability[
+                    year_to_calculate
+                ].Input = reliability_input
+
+            section_reliability.Mechanisms[mechanism_name].generateLCRProfile(
+                dike_section.section_reliability.Load,
+                mechanism=mechanism_name,
+                trajectinfo=traject_info,
+            )
+
+        return section_reliability
