@@ -47,6 +47,7 @@ teamcity-messages = "^1.32"
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"
 isort = "^5.10.1"
+commitizen = "^3.0.1"
 
 [tool.black]
 line-length = 88
