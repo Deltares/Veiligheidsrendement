@@ -57,3 +57,4 @@ test_results/
 
 # Externals related files
 externals/
+tests/externals/
