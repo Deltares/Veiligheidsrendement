@@ -402,12 +402,12 @@ def determine_new_geometry(
             if not plot_dir.joinpath("Geometry").is_dir():
                 # plot_dir.joinpath.mkdir(parents=True, exist_ok=True)
                 plot_dir.joinpath("Geometry").mkdir(parents=True, exist_ok=True)
-            plt.plot(geometry[:, 0], geometry[:, 1], "k")
-            plt.plot(new_geometry[:, 0], new_geometry[:, 1], "--r")
+            plt.plot(initial.loc[:, 'x'], initial.loc[:, 'z'], "k")
+            plt.plot(new_geometry.loc[:, 'x'], new_geometry.loc[:, 'z'], "--r")
             if poly_diff.area > 0:
                 if hasattr(poly_diff, "geoms"):
                     for i in range(len(poly_diff.geoms)):
-                        x1, y1 = poly_diff[i].exterior.xy
+                        x1, y1 = poly_diff.geoms[i].exterior.xy
                         plt.fill(x1, y1, "r--", alpha=0.1)
                 else:
                     x1, y1 = poly_diff.exterior.xy
@@ -415,7 +415,7 @@ def determine_new_geometry(
             if poly_diff2.area > 0:
                 if hasattr(poly_diff2, "geoms"):
                     for i in range(len(poly_diff2.geoms)):
-                        x1, y1 = poly_diff2[i].exterior.xy
+                        x1, y1 = poly_diff2.geoms[i].exterior.xy
                         plt.fill(x1, y1, "b--", alpha=0.8)
                 else:
                     x1, y1 = poly_diff2.exterior.xy
@@ -430,8 +430,8 @@ def determine_new_geometry(
             # plt.show()
 
             plt.text(
-                np.mean(new_geometry[:, 0]),
-                np.max(new_geometry[:, 1]),
+                np.mean(new_geometry.loc[:, 'x']),
+                np.max(new_geometry.loc[:, 'z']),
                 "Area extra = {:.4} $m^2$, area excavated = {:.4} $m^2$".format(
                     str(area_extra), str(area_excavate)
                 ),
