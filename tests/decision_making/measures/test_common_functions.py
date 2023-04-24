@@ -26,6 +26,9 @@ class TestCommonFunctions:
             pytest.param(
                 "DV53.xlsx", "outward", 0, 20, (91.23, 0.0), id="Outward case"
             ),
+            pytest.param(
+                "DV86.xlsx", "outward", 0, 30, (90.38, 10.0), id="Outward 30m case"
+            ),
         ],
     )
     def test_new_geom(

@@ -318,19 +318,21 @@ def determine_new_geometry(
             berm_in = dberm - max_berm_out
             for ind, data in new_geometry.iterrows():
                 # Run over points
-                if ind in ["EXT", "BUT_0", "BIT_0"]:
+                if ind in ["EXT", "BIT_0"]:
                     xz = data.values
+                elif ind in ["BUT_0"]:
+                    xz = data.values - max_berm_out
                 elif ind == "BIT":
-                    xz = [data.x - berm_in + dout - din, data.z]
+                    xz = [data.x + max_berm_out - berm_in + dout - din, data.z]
                     dhouse = max(0, -(-berm_in + dout - din))
                 elif ind == "BBL":
-                    xz = [data.x - berm_in + dout - din, data.z]
+                    xz = [data.x - max_berm_out + dout - din, data.z]
                 elif ind == "EBL":
-                    xz = [data.x + max_berm_out + dout - din, data.z]
+                    xz = [data.x + berm_in, data.z]
                 elif ind in ["BIK", "BUK"]:
-                    xz = [data.x + max_berm_out + dout, data.z + dcrest]
+                    xz = [data.x - max_berm_out + dout, data.z + dcrest]
                 elif ind == "BUT":
-                    xz = [data.x + max_berm_out, data.z]
+                    xz = [data.x - max_berm_out, data.z]
                 new_geometry.loc[ind] = pd.Series(xz, index=["x", "z"])
 
             # if noberm:  # len(initial) == 4:
