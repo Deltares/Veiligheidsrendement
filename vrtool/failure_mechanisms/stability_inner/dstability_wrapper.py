@@ -1,14 +1,23 @@
 from pathlib import Path
 from typing import Optional
 from geolib import DStabilityModel
-
+import logging
 
 class DStabilityWrapper:
     def __init__(self, stix_path: Path, externals_path: Path) -> None:
+
+        if not stix_path:
+            raise ValueError("Missing argument value stix_path.")
+        
+        if not externals_path:
+            raise ValueError("Missing argument value externals_path.")
+
         self.stix_name = stix_path.parts[-1]
         self._dstability_model = DStabilityModel()
         self._dstability_model.parse(stix_path)
-        self._dstability_model.meta.console_folder = externals_path / "DStabilityBinaries"
+        # We only need to provide where the "DStabilityConsole" directory is.
+        # https://deltares.github.io/GEOLib/latest/user/setup.html
+        self._dstability_model.meta.console_folder = externals_path
 
     def rerun_stix(self) -> None:
         self._dstability_model.execute()
