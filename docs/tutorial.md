@@ -29,10 +29,16 @@ For the next sections we will assume that the dataset for a dike traject is pres
 Since `vrtool` version `0.0.2` it is required to have a `.json` configuration file defining concrete properties, in particular we **need** to define which traject will be selected. For example, our model example contains its configuration in `custom_config.json`:
 ```json
 {
-    "traject": "16-3"
+    "traject": "16-3",
+    "externals": "C:\\repos\\external_libraries",
 }
 ```
 > At the moment the software **assumes** only one `json` file is present in the root model directory.
+
+## Running a D-Stability model.
+For a `D-Stability` run it is needed to add its respective console as done for [GeoLib](https://deltares.github.io/GEOLib/latest/user/setup.html) (`vrtool` depends on `d-geolib`). The console directory needs then to be located directly under our `externals` directory. GeoLib implicitly adds to our externals path the subdirectory `\\DStabilityConsole` and the console `D-Stability Console.exe`.
+
+This means, that in our directory `"C:\\repos\\external_libraries` we will need to place the `DStabilityConsole` and all of its contents such as the path to the console can be found`C:\\repos\\external_libraries\\DStabilityConsole\\D-Stability Console.exe`. We do not need to provide this path, as its __implicit__ by GeoLib.
 
 ## Running the CLI
 If the installation was correct we should now be able to run the `vrtool` module directly from the command line. Let's quickly verify it with the help command:
