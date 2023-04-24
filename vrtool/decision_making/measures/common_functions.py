@@ -239,7 +239,7 @@ def determine_new_geometry(
         initial.loc["BUT_0", "x"] = initial.loc["BUT"].x
         initial.loc["BUT_0", "z"] = initial.loc["BUT"].z
         initial = initial.reindex(
-            ["BUT_0","BUT", "BUK", "BIK", "BBL", "EBL", "BIT", "EXT"]
+            ["BUT", "BUT_0", "BUK", "BIK", "BBL", "EBL", "BIT", "EXT"]
         )
 
     # Geometry is always from inner to outer toe
@@ -432,7 +432,7 @@ def determine_new_geometry(
             plt.text(
                 np.mean(new_geometry.loc[:, 'x']),
                 np.max(new_geometry.loc[:, 'z']),
-                "Area extra = {:.4} $m^2$,\nArea excavated = {:.4} $m^2$".format(
+                "Area extra = {:.4} $m^2$, area excavated = {:.4} $m^2$".format(
                     str(area_extra), str(area_excavate)
                 ),
             )
