@@ -16,6 +16,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
+import logging
 
 class StabilityScreenMeasure(MeasureBase):
     # type == 'Stability Screen':
@@ -41,19 +42,17 @@ class StabilityScreenMeasure(MeasureBase):
         self.measures["Reliability"].calculate_section_reliability()
 
     def _get_depth(self, dike_section: DikeSection) -> float:
-        stability_inner_reliability_input = (
+        d_cover_input = (
             dike_section.section_reliability.Mechanisms["StabilityInner"]
             .Reliability["0"]
-            .Input.input
+            .Input.input.get("d_cover", None)
         )
 
-        if "d_cover" in stability_inner_reliability_input:
-            return max(
-                [
-                    stability_inner_reliability_input["d_cover"][0] + 1.0,
-                    8.0,
-                ]
-            )
+        if d_cover_input:
+            if d_cover_input.size > 1:
+                logging.info("d_cover has more values than 1.")
+            
+            return max([d_cover_input[0] + 1.0, 8.0])
         else:
             # TODO remove shaky assumption on depth
             return 6.0
