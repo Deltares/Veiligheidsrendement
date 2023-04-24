@@ -3,8 +3,8 @@ import shutil
 import pytest
 
 from tests import test_results
+from tests.run_workflows import MockedDikeTraject
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
@@ -15,7 +15,7 @@ class TestRunSafetyAssessment:
     def test_init_with_valid_args(self):
         # 1. Define test data
         _vr_config = VrtoolConfig()
-        _traject = DikeTraject(_vr_config)
+        _traject = MockedDikeTraject()
 
         # 2. Run test.
         _assessment = RunSafetyAssessment(_vr_config, _traject, "sth")
@@ -48,7 +48,7 @@ class TestRunSafetyAssessment:
     ):
         # 1. Define test data
         _vr_config = VrtoolConfig()
-        _traject = DikeTraject(_vr_config)
+        _traject = MockedDikeTraject()
         _assessment = RunSafetyAssessment(_vr_config, _traject, "sth")
         _assessment.vr_config = VrtoolConfig()
         _assessment.vr_config.output_directory = test_results / request.node.name

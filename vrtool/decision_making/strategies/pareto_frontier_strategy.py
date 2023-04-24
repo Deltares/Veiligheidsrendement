@@ -27,9 +27,6 @@ class ParetoFrontierStrategy(StrategyBase):
         lcc_list: bool = False,
         strategy_path=False,
     ):
-        if not lcc_list:
-            print()
-            # run optimization and generate list on that
         _mip_object = MixedIntegerStrategy("MIPObject")
         _mip_object.combine(traject, solutions_dict, splitparams=True)
         _mip_object.make_optimization_input(traject, solutions_dict)
@@ -69,25 +66,20 @@ class ParetoFrontierStrategy(StrategyBase):
             )
             TC.append(MIPObjects[-1].results["TC"])
             ObjectiveValue.append(MIPResult["ObjectiveValue"])
-            print(MIPModels[-1].solution.status[MIPModels[-1].solution.get_status()])
+            logging.info(
+                MIPModels[-1].solution.status[MIPModels[-1].solution.get_status()]
+            )
 
         self.costs = pd.DataFrame(
             np.array([LCC, TR, TC]).T, columns=["LCC", "TR", "TC"]
         )
-        # print(LCC)
-        # print(TR)
-        #
-        # print(ObjectiveValue)
-        # Summarize results:
-        # print csvs of TakenMeasures with name: path + Pareto_LCC= LCClist[j]
-        # Generate TCs_pareto (LCC, TR, TC)
 
     def filter(self, traject: DikeTraject, type="ParetoPerSection"):
         """This is an optional routine that can be used to filter measures per section.
         It is based on defining a Pareto front, its main idea is that you throw out measures that have a certain reliability but are more costly than other measures that provide the same reliability."""
         self.options_height, self.options_geotechnical = split_options(self.options)
         if type == "ParetoPerSection":
-            damage = traject.general_info["FloodDamage"]
+            damage = traject.general_info.FloodDamage
             r = self.r
             horizon = np.max(self.T)
             self.options_g_filtered = copy.deepcopy(self.options_geotechnical)

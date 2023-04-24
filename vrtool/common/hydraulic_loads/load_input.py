@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import openturns as ot
 
@@ -13,13 +14,13 @@ class LoadInput:
         elif "YearlyWLRise" in section_fields:
             self.load_type = "SAFE"
 
-    def set_HRING_input(self, folder, section, gridpoints=1000):
+    def set_HRING_input(self, folder: Path, section_attributes: dict, gridpoints=1000):
         years = os.listdir(folder)
         self.distribution = {}
         for year in years:
             self.distribution[year] = design_table_openturns(
                 folder.joinpath(
-                    year, "{}.txt".format(getattr(section, "Load_{}".format(year)))
+                    year, "{}.txt".format(section_attributes["Load_{}".format(year)])
                 ),
                 gridpoints=gridpoints,
             )

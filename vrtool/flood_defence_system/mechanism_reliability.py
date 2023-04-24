@@ -3,6 +3,8 @@ from typing import Optional
 
 import numpy as np
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.general import (
     GenericFailureMechanismCalculator,
@@ -24,8 +26,6 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabil
 from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calculator import (
     StabilityInnerDStabilityCalculator
 )
-from vrtool.flood_defence_system.load_input import LoadInput
-
 
 class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
@@ -58,7 +58,7 @@ class MechanismReliability:
         load: LoadInput,
         mechanism: str,
         year: float,
-        traject_info: dict,
+        traject_info: DikeTrajectInfo,
     ):
         calculator = self._get_failure_mechanism_calculator(
             mechanism, traject_info, strength, load
@@ -69,7 +69,7 @@ class MechanismReliability:
     def _get_failure_mechanism_calculator(
         self,
         mechanism: str,
-        traject_info: dict,
+        traject_info: DikeTrajectInfo,
         strength: Optional[MechanismInput],
         load: Optional[LoadInput],
     ) -> FailureMechanismCalculatorProtocol:
@@ -131,7 +131,7 @@ class MechanismReliability:
         mechanism: str,
         mechanism_input: MechanismInput,
         load: LoadInput,
-        traject_info: dict,
+        traject_info: DikeTrajectInfo,
     ) -> FailureMechanismCalculatorProtocol:
         if mechanism == "Piping":
             return PipingSemiProbabilisticCalculator(

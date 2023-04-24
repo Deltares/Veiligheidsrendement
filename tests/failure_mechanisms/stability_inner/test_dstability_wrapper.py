@@ -22,7 +22,7 @@ class TestDStabilityWrapper:
         _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=None)
 
         # Assert
-        assert isinstance(_safety_factor, np.ndarray)
+        assert isinstance(_safety_factor, float)
         assert pytest.approx(1.3380575991293264) == _safety_factor
 
     def test_get_safety_factor_no_run_specified_valid_id(self):

@@ -1,5 +1,5 @@
 import copy
-import warnings
+import logging
 from pathlib import Path
 from typing import Union
 
@@ -139,6 +139,7 @@ def modify_geometry_input(initial, berm_height):
         initial.loc["BBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "z"] = initial.loc["BIT"].z + berm_height
         initial.loc["EBL", "z"] = initial.loc["BIT"].z + berm_height
+        initial = initial.reindex(["BUT", "BUK", "BIK", "BBL", "EBL", "BIT"])
 
     return initial
 
@@ -409,8 +410,8 @@ def determine_costs(
 ) -> float:
     if (type == "Soil reinforcement") and (direction == "outward") and (dberm_in > 0.0):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
-        print(
-            "Warning: encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
+        logging.warn(
+            "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
         )
     if type == "Soil reinforcement":
         if direction == "inward":
@@ -447,7 +448,7 @@ def determine_costs(
         # add costs for housing
         if isinstance(housing, pd.DataFrame) and dberm_in > 0.0:
             if dberm_in > housing.size:
-                warnings.warn(
+                logging.warn(
                     "Inwards reinforcement distance exceeds data for housing database at section {}".format(
                         section
                     )
@@ -478,7 +479,7 @@ def determine_costs(
     elif type == "Stability Screen":
         total_cost = unit_costs["Sheetpile"] * parameters["Depth"] * length
     else:
-        print("Unknown type")
+        logging.info("Unknown type")
     return total_cost
 
 

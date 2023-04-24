@@ -1,5 +1,6 @@
 import numpy as np
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
@@ -27,7 +28,7 @@ class MeasureBase:
     def evaluate_measure(
         self,
         dike_section: DikeSection,
-        traject_info: dict[str, any],
+        traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
     ):
         raise Exception("define subclass of measure")

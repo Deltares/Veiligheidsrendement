@@ -74,7 +74,7 @@ class RunOptimization(VrToolRunProtocol):
             _greedy_optimization, self._solutions_dict
         )
         _cost_greedy = _greedy_optimization.determine_risk_cost_curve(
-            self.selected_traject
+            self.selected_traject.general_info.FloodDamage, None
         )
 
         # write to csv's
@@ -113,7 +113,9 @@ class RunOptimization(VrToolRunProtocol):
                     j + "_Options_" + _greedy_optimization.type + ".csv",
                 )
             )
-        costs = _greedy_optimization.determine_risk_cost_curve(self.selected_traject)
+        costs = _greedy_optimization.determine_risk_cost_curve(
+            self.selected_traject.general_info.FloodDamage, None
+        )
         _tr_costs = costs["TR"]
         _lcc_costs = costs["LCC"]
         pd.DataFrame(
@@ -190,6 +192,7 @@ class RunOptimization(VrToolRunProtocol):
     def run(self) -> ResultsOptimization:
         logging.info("Start step 3: Optimization")
         _results_optimization = ResultsOptimization()
+        _results_optimization.vr_config = self.vr_config
         if self.vr_config.reuse_output:
             _results_optimization.load_results()
         else:
@@ -205,7 +208,6 @@ class RunOptimization(VrToolRunProtocol):
 
         logging.info("Finished step 3: Optimization")
         _results_optimization.selected_traject = self.selected_traject
-        _results_optimization.vr_config = self.vr_config
         _results_optimization.results_solutions = self._solutions_dict
         if self.vr_config.shelves:
             _results_optimization.save_results()
