@@ -42,19 +42,9 @@ class SoilReinforcementMeasure(MeasureBase):
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
 
-        crest_range = self._get_crest_range()
-        berm_range = self._get_berm_range()
         modified_dike_geometry_measures = self._get_modified_dike_geometry_measures(
-            crest_range, berm_range, dike_section, preserve_slope, plot_dir
+            dike_section, preserve_slope, plot_dir
         )
-
-        measures = [[x, y] for x in crest_range for y in berm_range]
-        if not preserve_slope:
-            slope_in = 4
-            slope_out = 3  # inner and outer slope
-        else:
-            slope_in = False
-            slope_out = False
 
         self.measures = []
         for modified_dike_geometry_measure in modified_dike_geometry_measures:
@@ -89,7 +79,7 @@ class SoilReinforcementMeasure(MeasureBase):
                     self.config.t_0,
                     self.parameters["year"],
                 )
-                for ij, reliability_input in (
+                for year_to_calculate, reliability_input in (
                     self.measures[-1]["Reliability"]
                     .Mechanisms[mechanism_name]
                     .Reliability.items()
@@ -98,11 +88,11 @@ class SoilReinforcementMeasure(MeasureBase):
                     # first copy the data
                     reliability_input = copy.deepcopy(
                         dike_section.section_reliability.Mechanisms[mechanism_name]
-                        .Reliability[ij]
+                        .Reliability[year_to_calculate]
                         .Input
                     )
                     # Adapt inputs for reliability calculation, but only after year of implementation.
-                    if float(ij) >= self.parameters["year"]:
+                    if float(year_to_calculate) >= self.parameters["year"]:
                         reliability_input.input = implement_berm_widening(
                             input=reliability_input.input,
                             measure_input=self.measures[-1],
@@ -113,7 +103,7 @@ class SoilReinforcementMeasure(MeasureBase):
                     # put them back in the object
                     self.measures[-1]["Reliability"].Mechanisms[
                         mechanism_name
-                    ].Reliability[ij].Input = reliability_input
+                    ].Reliability[year_to_calculate].Input = reliability_input
                 self.measures[-1]["Reliability"].Mechanisms[
                     mechanism_name
                 ].generateLCRProfile(
@@ -190,12 +180,12 @@ class SoilReinforcementMeasure(MeasureBase):
 
     def _get_modified_dike_geometry_measures(
         self,
-        crest_range: np.ndarray,
-        berm_range: np.ndarray,
         dike_section: DikeSection,
         preserve_slope: bool,
         plot_dir: bool = False,
     ) -> list[ModifiedDikeGeometryMeasureInput]:
+        crest_range = self._get_crest_range()
+        berm_range = self._get_berm_range()
 
         dike_modifications = [
             (modified_crest, modified_berm)
