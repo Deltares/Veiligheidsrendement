@@ -4,8 +4,5 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - pip
-  - poetry
+  - conda-forge::poetry
   - conda-forge::openturns=1.19
-  - pip:
-    - commitizen==2.28.1
