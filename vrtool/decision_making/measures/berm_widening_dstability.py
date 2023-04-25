@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Tuple, Union, Dict, Optional
 
 import numpy as np
+import pandas as pd
 from geolib.geometry import Point as GeolibPoint
 from geolib.models.dstability.internal import PersistablePoint, PersistableLayer
 from shapely import LineString, Polygon, unary_union, MultiPolygon
@@ -15,9 +16,19 @@ class BermWideningDStability:
         self.geometry = measure_input['Geometry']
         self.dberm = measure_input['dberm']
         self.dcrest = measure_input['dcrest']
-        self._measure_geometry_points = self.get_modified_meas_geom(straight_line=False)
+        self._measure_geometry_points = None
         self.dstability_wrapper = dstability_wrapper
         self._dstability_model = dstability_wrapper.get_dstability_model
+
+    @property
+    def measure_geometry_points(self):
+        return self._measure_geometry_points
+
+    # write a setter for the measure_geometry_points
+    @measure_geometry_points.setter
+    def measure_geometry_points(self, value):
+        self._measure_geometry_points = value
+
 
     def create_new_dstability_model(self, path_intermediate_stix: Path) -> str:
         """
@@ -37,6 +48,8 @@ class BermWideningDStability:
         # the first stage. If False, then this routine must be rerun for every stage.
         _collection_polygon = [Polygon([(p.X, p.Z) for p in layer.Points]) for layer in
                                self._dstability_model.datastructure.geometries[0].Layers]
+        self.measure_geometry_points = self.get_modified_meas_geom(straight_line=False)
+
 
         # 1. Run first routine to find the polygons to fill.
         _fill_polygons = self.find_polygons_to_fill_to_measure(_collection_polygon)
@@ -123,9 +136,8 @@ class BermWideningDStability:
 
 
         """
-
         # create two polygons that lie above and below the surface line to + infinity (=30) and - infinity (=-50)
-        new_surface_line = LineString(self._measure_geometry_points)
+        new_surface_line = LineString(self.measure_geometry_points)
         polygon_above_surface = Polygon([pt for pt in new_surface_line.coords] + [(100, 30), (-100, 30)])
         polygon_below_surface = Polygon([pt for pt in new_surface_line.coords] + [(100, -50), (-100, -50)])
 
@@ -162,9 +174,8 @@ class BermWideningDStability:
         keep_poly = []
 
         # Find the intersection between the bounding box and the polygon
-        bbox = self.get_bounding_box(self._measure_geometry_points, cropped_polygon_below_surface)
+        bbox = self.get_bounding_box(self.measure_geometry_points, cropped_polygon_below_surface)
         intersection = diff_poly_and_surface.intersection(bbox)
-
         if isinstance(intersection, Polygon):  # if the intersection is a polygon, add it to the list directly
             keep_poly.append(intersection)
         else:
@@ -208,7 +219,7 @@ class BermWideningDStability:
             self.modify_geometry(
                 fill_polygons=fill_polygons,
                 stage_id=stage_id)
-        new_filename = self.dstability_wrapper.stix_name + f'_dberm={self.dberm}' + f'_dcrest={self.dcrest}.stix'
+        new_filename = self.dstability_wrapper.stix_name[:-5] + f'_dberm={self.dberm}' + f'_dcrest={self.dcrest}.stix'
 
         self.dstability_wrapper.save_dstability_model(new_filename=new_filename,
                                                       save_path=path_intermediate_stix)
@@ -234,7 +245,7 @@ class BermWideningDStability:
         for layer in _layers:
             poly = Polygon([(round(p.X, 3), round(p.Z, 3)) for p in layer.Points])
             self.modify_polygon_from_stix(current_polygon=poly,
-                                          geometry_line=self._measure_geometry_points,
+                                          geometry_line=self.measure_geometry_points,
                                           layer=layer,
                                           list_all_point=list_all_initial_point)
 

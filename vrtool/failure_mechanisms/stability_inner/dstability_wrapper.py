@@ -13,7 +13,7 @@ class DStabilityWrapper:
         if not externals_path:
             raise ValueError("Missing argument value externals_path.")
 
-        self.stix_name = stix_path.parts[-1].split('.')[0]
+        self.stix_name = stix_path.parts[-1]
         self._dstability_model = DStabilityModel()
         self._dstability_model.parse(stix_path)
         # We only need to provide where the "DStabilityConsole" directory is.
@@ -35,7 +35,6 @@ class DStabilityWrapper:
         Returns:
             None
         """
-
         self._dstability_model.serialize(save_path.joinpath(new_filename))
 
     def get_all_stage_ids(self) -> List[int]:
