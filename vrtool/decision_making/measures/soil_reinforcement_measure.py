@@ -220,15 +220,19 @@ class SoilReinforcementMeasure(MeasureBase):
         self, dike_section: DikeSection, traject_info: DikeTrajectInfo
     ) -> SectionReliability:
         section_reliability = SectionReliability()
-        section_reliability.Mechanisms = {}
 
-        mechanism_names = dike_section.section_reliability.Mechanisms.keys()
+        mechanism_names = (
+            dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
+        )
         for mechanism_name in mechanism_names:
             calc_type = dike_section.mechanism_data[mechanism_name][1]
-            section_reliability.Mechanisms[
-                mechanism_name
-            ] = self._get_configured_mechanism_reliability_collection(
-                mechanism_name, calc_type, dike_section, traject_info
+            mechanism_reliability_collection = (
+                self._get_configured_mechanism_reliability_collection(
+                    mechanism_name, calc_type, dike_section, traject_info
+                )
+            )
+            section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
+                mechanism_reliability_collection
             )
 
         return section_reliability
@@ -254,7 +258,9 @@ class SoilReinforcementMeasure(MeasureBase):
             # for all time steps considered.
             # first copy the data
             reliability_input = copy.deepcopy(
-                dike_section.section_reliability.Mechanisms[mechanism_name]
+                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                    mechanism_name
+                )
                 .Reliability[year_to_calculate]
                 .Input
             )

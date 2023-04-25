@@ -22,20 +22,29 @@ class SectionReliability:
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
+        available_mechanisms = self.failure_mechanisms.get_available_mechanisms()
+        calculation_years = self.failure_mechanisms.get_calculation_years()
+
         trange = [
             int(i)
-            for i in self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()
+            for i in calculation_years
         ]
-        pf_mechanisms_time = np.zeros((len(self.Mechanisms.keys()), len(trange)))
+        pf_mechanisms_time = np.zeros((len(available_mechanisms), len(trange)))
         count = 0
-        for i in self.Mechanisms.keys():  # mechanisms
+        for mechanism_name in available_mechanisms:  # mechanisms
             for j in range(0, len(trange)):
-                if i == "Overflow":
-                    pf_mechanisms_time[count, j] = (
-                        self.Mechanisms[i].Reliability[str(trange[j])].Pf
+                mechanism_collection = (
+                    self.failure_mechanisms.get_mechanism_reliability_collection(
+                        mechanism_name
                     )
-                elif i == "StabilityInner":
-                    pf = self.Mechanisms[i].Reliability[str(trange[j])].Pf
+                )
+
+                if mechanism_name == "Overflow":
+                    pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
+                        str(trange[j])
+                    ].Pf
+                elif mechanism_name == "StabilityInner":
+                    pf = mechanism_collection.Reliability[str(trange[j])].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1
                     # N = length/TrajectInfo['bStabilityInner']
@@ -44,8 +53,8 @@ class SectionReliability:
                     # pf_mechanisms_time[count,j] = min(1 - (1 - pf) ** N,1./100)
                     pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N, 1.0 / 2)
 
-                elif i == "Piping":
-                    pf = self.Mechanisms[i].Reliability[str(trange[j])].Pf
+                elif mechanism_name == "Piping":
+                    pf = mechanism_collection.Reliability[str(trange[j])].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1
                     # N = length/TrajectInfo['bPiping']
@@ -57,16 +66,12 @@ class SectionReliability:
         # Do we want beta or failure probability? Preferably beta as output
         beta_mech_time = pd.DataFrame(
             pb_functions.pf_to_beta(pf_mechanisms_time),
-            columns=list(
-                self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()
-            ),
-            index=list(self.Mechanisms.keys()),
+            columns=calculation_years,
+            index=list(available_mechanisms),
         )
         beta_time = pd.DataFrame(
             [pb_functions.pf_to_beta(np.sum(pf_mechanisms_time, axis=0))],
-            columns=list(
-                self.Mechanisms[list(self.Mechanisms.keys())[0]].Reliability.keys()
-            ),
+            columns=calculation_years,
             index=["Section"],
         )
         self.SectionReliability = pd.concat((beta_mech_time, beta_time))
