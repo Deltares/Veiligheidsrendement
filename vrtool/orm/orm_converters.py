@@ -47,3 +47,7 @@ def import_dike_section(orm_dike_section: orm_models.SectionData) -> DikeSection
 
 def import_dike_section_list(orm_dike_section_list: list[orm_models.SectionData]) -> list[DikeSection]:
     return list(map(import_dike_section, orm_dike_section_list))
+
+
+def import_measure(orm_measure_list: list[orm_models.Measure]):
+    pass

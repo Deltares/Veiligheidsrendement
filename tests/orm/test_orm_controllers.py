@@ -21,6 +21,20 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert _db_file.exists()
+    
+    @pytest.mark.skip(reason="Only meant to (re)generate test data")
+    def test_create_db_with_data(self, request: pytest.FixtureRequest):
+        # 1. Define datbase file.
+        _db_file = test_results / request.node.name / "vrtool_db.db"
+        if _db_file.parent.exists():
+            shutil.rmtree(_db_file.parent)
+        _db_file.parent.mkdir(parents=True)
+        _db_file.touch()
+
+        # 2. Define models.
+
+        # 3. Save tables.
+        pytest.fail("Work in progress.")
 
     def test_open_database(self): 
         # 1. Define test data.
@@ -46,6 +60,7 @@ class TestOrmControllers:
         assert _section_data.cover_layer_thickness == 3.0
         assert _section_data.pleistocene_level == 4.0
 
+    @pytest.mark.skip(reason="Work in progress")
     def test_get_dike_traject(self):
         # 1. Define test data.
         _db_file = test_data / "test_db" / "vrtool_db.db"
