@@ -10,7 +10,7 @@ from vrtool.common.hydraulic_loads.load_input import LoadInput
 
 # Class describing safety assessments of a section:
 class SectionReliability:
-    Load: LoadInput
+    load: LoadInput
     failure_mechanisms: FailureMechanismCollection
 
     def __init__(self) -> None:

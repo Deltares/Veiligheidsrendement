@@ -142,7 +142,7 @@ class CustomMeasure(MeasureBase):
                     self._configure_other(mechanism_reliability, mechanism_name)
 
         mechanism_reliability_collection.generate_LCR_profile(
-            dike_section.section_reliability.Load,
+            dike_section.section_reliability.load,
             traject_info=traject_info,
         )
 

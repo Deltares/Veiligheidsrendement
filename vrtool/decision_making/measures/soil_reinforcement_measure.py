@@ -295,7 +295,7 @@ class SoilReinforcementMeasure(MeasureBase):
             ].Input = reliability_input
 
         mechanism_reliability_collection.generate_LCR_profile(
-            dike_section.section_reliability.Load,
+            dike_section.section_reliability.load,
             traject_info=traject_info,
         )
 

@@ -48,7 +48,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
                 _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism_name
                 ).generate_LCR_profile(
-                    _section.section_reliability.Load,
+                    _section.section_reliability.load,
                     self.selected_traject.general_info,
                 )
 
