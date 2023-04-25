@@ -296,11 +296,30 @@ class StrategyBase:
     def make_optimization_input(self, traject: DikeTraject):
         """This subroutine organizes the input into an optimization problem such that it can be accessed by the evaluation algorithm"""
 
+        def get_geotechnical_probability_of_failure(
+            probability_of_failure_lookup: dict[str, float]
+        ) -> float:
+            probability_failure_stability_inner = probability_of_failure_lookup.get(
+                "StabilityInner", 0
+            )
+            probability_failure_piping = probability_of_failure_lookup.get("Piping", 0)
+
+            return 1 - np.multiply(
+                1 - probability_failure_stability_inner, 1 - probability_failure_piping
+            )
+
+        def get_overflow_probability_of_failure(
+            probability_of_failure_lookup: dict[str, float]
+        ) -> float:
+            return probability_of_failure_lookup.get("Overflow", 0)
+
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
         #  do have costs higher than the correct option (sh=0m, sg=0.5+VZG) so they will never be selected. This
         #  should be fixed though
 
-        self.options_height, self.options_geotechnical = split_options(self.options)
+        self.options_height, self.options_geotechnical = split_options(
+            self.options, traject.mechanism_names
+        )
 
         N = len(self.options)  # Number of dike sections
         T = np.max(self.T)  # Number of time steps
@@ -529,11 +548,11 @@ class StrategyBase:
 
         # expected damage for overflow and for piping & slope stability
         # self.RiskGeotechnical = np.zeros((N,Sg+1,T))
-        self.RiskGeotechnical = (
-            1 - np.multiply(1 - self.Pf["StabilityInner"], 1 - self.Pf["Piping"])
+        self.RiskGeotechnical = get_geotechnical_probability_of_failure(
+            self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = self.Pf["Overflow"] * np.tile(
+        self.RiskOverflow = get_overflow_probability_of_failure(self.Pf) * np.tile(
             self.D.T, (N, Sh + 1, 1)
         )  # np.zeros((N,Sh+1,T))
         # add a few general parameters

@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from pathlib import Path
+
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures import (
     CustomMeasure,
@@ -16,6 +18,8 @@ from vrtool.decision_making.measures import (
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
+
+import logging
 
 
 class Solutions:
@@ -30,7 +34,7 @@ class Solutions:
         self.mechanisms = config.mechanisms
         self.measures: list[MeasureBase] = []
 
-    def fillSolutions(self, excel_sheet):
+    def fillSolutions(self, excel_sheet: Path):
         """This routine reads input for the measures from the Excel sheet for each section.
         It identifies combinables and partials and identifies possible combinations of measures this way.
         These are then stored in the MeasureTable, which is later evaluated.
@@ -41,13 +45,31 @@ class Solutions:
         for i in data.index:
             # TODO depending on data.loc[i].type make correct sublclass
 
-            if data.loc[i].Type == "Soil reinforcement":
-                self.measures.append(SoilReinforcementMeasure(data.loc[i], self.config))
-            elif data.loc[i].Type == "Diaphragm Wall":
+            loc_data = data.loc[i]
+            measure_type = data.loc[i].Type
+            if measure_type == "Soil reinforcement":
+                if not self._is_soil_reinforcement_measure_valid(
+                    loc_data.StabilityScreen
+                ):
+                    logging.warn(
+                        f'No stability inner mechanism present for soil reinforcement with stability screen measure "{loc_data.ID}" in "{excel_sheet.stem}."'
+                    )
+                else:
+                    self.measures.append(
+                        SoilReinforcementMeasure(data.loc[i], self.config)
+                    )
+            elif measure_type == "Diaphragm Wall":
                 self.measures.append(DiaphragmWallMeasure(data.loc[i], self.config))
-            elif data.loc[i].Type == "Stability Screen":
-                self.measures.append(StabilityScreenMeasure(data.loc[i], self.config))
-            elif data.loc[i].Type == "Vertical Geotextile":
+            elif measure_type == "Stability Screen":
+                if not self._is_stability_screen_measure_valid():
+                    logging.warn(
+                        f'No stability inner mechanism present for stability screen measure "{loc_data.ID}" in "{excel_sheet.stem}."'
+                    )
+                else:
+                    self.measures.append(
+                        StabilityScreenMeasure(data.loc[i], self.config)
+                    )
+            elif measure_type == "Vertical Geotextile":
                 self.measures.append(
                     VerticalGeotextileMeasure(data.loc[i], self.config)
                 )
@@ -81,6 +103,15 @@ class Solutions:
                     str(partials[i][1]) + "+" + str(combinables[j][1]),
                 ]
                 count += 1
+
+    def _is_stability_screen_measure_valid(self) -> bool:
+        return "StabilityInner" in self.mechanisms
+
+    def _is_soil_reinforcement_measure_valid(self, stability_screen: str) -> bool:
+        if stability_screen == "yes":
+            return self._is_stability_screen_measure_valid()
+
+        return True
 
     def evaluate_solutions(
         self,
