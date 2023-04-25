@@ -131,8 +131,6 @@ class DikeSection:
                 reliability_collection
             )
 
-            self.section_reliability.Mechanisms[mechanism_name] = reliability_collection
-
     def _get_load_input(self, input_path: Path) -> LoadInput:
         # Read the data per mechanism, and first the load frequency line:
         _load = LoadInput(list(self.__dict__.keys()))

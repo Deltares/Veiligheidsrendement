@@ -115,12 +115,28 @@ class SoilReinforcementMeasure(MeasureBase):
             raise Exception("unkown direction")
 
     def _get_depth(self, dike_section: DikeSection) -> float:
-        d_cover_input = (
-            dike_section.section_reliability.Mechanisms["StabilityInner"]
-            .Reliability["0"]
-            .Input.input.get("d_cover", None)
-        )
+        """Gets the depth for the stability screen application.
 
+        Args:
+            dike_section (DikeSection): The section to retrieve the depth from.
+
+        Raises:
+            ValueError: Raised when there is no stability inner failure mechanism present.
+
+        Returns:
+            float: The depth to be used for the stability screen calculation.
+        """
+        stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+            "StabilityInner"
+        )
+        if not stability_inner_reliability_collection:
+            error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
+            logging.error(error_message)
+            raise ValueError(error_message)
+
+        d_cover_input = stability_inner_reliability_collection.Reliability[
+            "0"
+        ].Input.input.get("d_cover", None)
         if d_cover_input:
             if d_cover_input.size > 1:
                 logging.info("d_cover has more values than 1.")

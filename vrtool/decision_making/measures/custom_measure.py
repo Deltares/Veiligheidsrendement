@@ -12,6 +12,8 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
+import logging
+
 
 class CustomMeasure(MeasureBase):
     def set_input(self, section: DikeSection):
@@ -50,20 +52,28 @@ class CustomMeasure(MeasureBase):
         # TODO check these values:
         # base_data['kruinhoogte']=6.
         # base_data['extra kwelweg'] = 10.
-        annual_dhc = (
-            section.section_reliability.Mechanisms["Overflow"]
-            .Reliability["0"]
-            .Input.input["dhc(t)"]
-        )
-        if base_data["kruinhoogte_2075"].values > 0:
-            self.parameters["h_crest_new"] = (
-                base_data["kruinhoogte_2075"].values + 50 * annual_dhc
-            )
-        else:
-            self.parameters["h_crest_new"] = None
         # TODO modify kruinhoogte_2075 to 2025 using change of crest in time.
+        self.parameters["h_crest_new"] = self._get_h_crest_new(section, base_data)
         self.parameters["L_added"] = base_data["verlenging kwelweg"]
         self.measures["Cost"] = base_data["cost"].values[0]
+
+    def _get_h_crest_new(self, section: DikeSection, base_data: pd.DataFrame) -> float:
+        overflow_reliability_collection = section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+            "Overflow"
+        )
+        if not overflow_reliability_collection:
+            logging.warn(f'Overflow data is not present in section "{section.name}"')
+
+        else:
+            if base_data["kruinhoogte_2075"].values > 0:
+                annual_dhc = overflow_reliability_collection.Reliability[
+                    "0"
+                ].Input.input["dhc(t)"]
+                return base_data["kruinhoogte_2075"].values + 50 * annual_dhc
+            else:
+                logging.warn("kruinhoogte 2075 is not found.")
+
+        return None
 
     def evaluate_measure(
         self,

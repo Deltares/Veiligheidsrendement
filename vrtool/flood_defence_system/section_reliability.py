@@ -10,12 +10,10 @@ from vrtool.common.hydraulic_loads.load_input import LoadInput
 
 # Class describing safety assessments of a section:
 class SectionReliability:
-    Mechanisms = dict[str, MechanismReliability]
     Load: LoadInput
     failure_mechanisms: FailureMechanismCollection
 
     def __init__(self) -> None:
-        self.Mechanisms = {}
         self.failure_mechanisms = FailureMechanismCollection()
 
     def calculate_section_reliability(self):
@@ -25,10 +23,7 @@ class SectionReliability:
         available_mechanisms = self.failure_mechanisms.get_available_mechanisms()
         calculation_years = self.failure_mechanisms.get_calculation_years()
 
-        trange = [
-            int(i)
-            for i in calculation_years
-        ]
+        trange = [int(i) for i in calculation_years]
         pf_mechanisms_time = np.zeros((len(available_mechanisms), len(trange)))
         count = 0
         for mechanism_name in available_mechanisms:  # mechanisms
