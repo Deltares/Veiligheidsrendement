@@ -37,6 +37,9 @@ class TestBermWideningDStability:
 
         # 2. Assert name of modified stix file
         path_intermediate_stix = test_results / "test_intermediate_stix"
+        if not path_intermediate_stix.exists():
+            path_intermediate_stix.mkdir(parents=True)
+
         name_stix = _berm_widening_dstability.create_new_dstability_model(path_intermediate_stix)
         assert isinstance(name_stix, str)
         assert name_stix == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_dberm=0_dcrest=0.stix"
@@ -60,6 +63,9 @@ class TestBermWideningDStability:
 
         # 1. Run berm widening routine and create the intermediate stix file.
         path_intermediate_stix = test_results / "test_intermediate_stix"
+        if not path_intermediate_stix.exists():
+            path_intermediate_stix.mkdir(parents=True)
+
         name_stix = _berm_widening_dstability.create_new_dstability_model(path_intermediate_stix)
 
         # 2. Define test data.
