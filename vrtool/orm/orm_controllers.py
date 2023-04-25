@@ -6,12 +6,15 @@ from vrtool.orm import orm_models as orm
 from vrtool.orm.orm_converters import import_dike_traject
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 
-def initialize_database(database_path: Path):
+def initialize_database(database_path: Path) -> SqliteDatabase:
     """
     Generates an empty SQLite database with all the tables requried by the `Vrtool`.
 
     Args:
         database_path (Path): Location where to save the database.
+    
+    Returns:
+        SqliteDatabase: The initialized instance of the database.
     """
     if not database_path.exists():
         database_path.parent.mkdir(parents=True)
