@@ -45,12 +45,11 @@ class RunSafetyAssessment(VrToolRunProtocol):
             # compute reliability in time for each mechanism:
             # logging.info(section.End)
             for mechanism_name in self.selected_traject.mechanism_names:
-                _section.section_reliability.Mechanisms[
+                _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism_name
-                ].generateLCRProfile(
+                ).generate_LCR_profile(
                     _section.section_reliability.Load,
-                    mechanism=mechanism_name,
-                    trajectinfo=self.selected_traject.general_info,
+                    self.selected_traject.general_info,
                 )
 
             # aggregate to section reliability:
@@ -84,8 +83,12 @@ class RunSafetyAssessment(VrToolRunProtocol):
         # Plot the initial reliability-time:
         plt.figure(1)
         [
-            selected_section.section_reliability.Mechanisms[j].drawLCR(mechanism=j)
-            for j in self.vr_config.mechanisms
+            selected_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                mechanism_name
+            ).drawLCR(
+                mechanism=mechanism_name
+            )
+            for mechanism_name in self.vr_config.mechanisms
         ]
         plt.plot(
             [self.vr_config.t_0, self.vr_config.t_0 + np.max(self.vr_config.T)],

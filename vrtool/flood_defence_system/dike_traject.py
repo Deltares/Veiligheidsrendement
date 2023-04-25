@@ -410,10 +410,12 @@ class DikeTraject:
         for i in sections:
             plt.figure(1)
             [
-                i.section_reliability.Mechanisms[j].drawLCR(
-                    label=j, type="Standard", tstart=t_start
+                i.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                    mechanism_name
+                ).drawLCR(
+                    label=mechanism_name, type="Standard", tstart=t_start
                 )
-                for j in self.mechanism_names
+                for mechanism_name in self.mechanism_names
             ]
             plt.plot(
                 [t_start, t_start + np.max(self.T)],
