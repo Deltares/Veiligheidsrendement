@@ -127,8 +127,8 @@ class DikeSection:
                 self.section_reliability.Load.load_type,
             )
 
-            self.section_reliability.failure_mechanisms.add_failure_mechanism(
-                mechanism_name, reliability_collection
+            self.section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
+                reliability_collection
             )
 
             self.section_reliability.Mechanisms[mechanism_name] = reliability_collection

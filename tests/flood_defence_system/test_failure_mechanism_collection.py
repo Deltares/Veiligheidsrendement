@@ -25,14 +25,14 @@ class TestFailureMechanismCollection:
         mechanism_name_three = "mechanism 3"
 
         collection = FailureMechanismCollection()
-        collection.add_failure_mechanism(
-            mechanism_name_one, MechanismReliabilityCollection("", "", [], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection(mechanism_name_one, "", [], 0, 0)
         )
-        collection.add_failure_mechanism(
-            mechanism_name_two, MechanismReliabilityCollection("", "", [], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection(mechanism_name_two, "", [], 0, 0)
         )
-        collection.add_failure_mechanism(
-            mechanism_name_three, MechanismReliabilityCollection("", "", [], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection(mechanism_name_three, "", [], 0, 0)
         )
 
         # When
@@ -47,8 +47,8 @@ class TestFailureMechanismCollection:
     def test_get_reliability_collection_when_not_in_collection_returns_None(self):
         # Setup
         collection = FailureMechanismCollection()
-        collection.add_failure_mechanism(
-            "mechanism", MechanismReliabilityCollection("", "", [], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection("mechanism", "", [], 0, 0)
         )
 
         # Call
@@ -64,12 +64,14 @@ class TestFailureMechanismCollection:
     ):
         # Setup
         mechanism_to_retrieve = "mechanism"
-        collection_to_retrieve = MechanismReliabilityCollection("", "", [], 0, 0)
+        collection_to_retrieve = MechanismReliabilityCollection(
+            mechanism_to_retrieve, "", [], 0, 0
+        )
 
         collection = FailureMechanismCollection()
-        collection.add_failure_mechanism(mechanism_to_retrieve, collection_to_retrieve)
-        collection.add_failure_mechanism(
-            "other mechanism", MechanismReliabilityCollection("", "", [], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(collection_to_retrieve)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection("other mechanism", "", [], 0, 0)
         )
 
         # Call
@@ -80,16 +82,18 @@ class TestFailureMechanismCollection:
         # Assert
         assert reliability_collection is collection_to_retrieve
 
-    def test_add_failure_mechanism_and_mechanism_not_in_collection_adds_failure_mechanism(
+    def test_add_reliability_collection_and_mechanism_not_in_collection_adds_reliability_collection(
         self,
     ):
         # Setup
         mechanism_to_add = "mechanism"
-        collection_to_add = MechanismReliabilityCollection("", "", [], 0, 0)
+        collection_to_add = MechanismReliabilityCollection(
+            mechanism_to_add, "", [], 0, 0
+        )
         collection = FailureMechanismCollection()
 
         # Call
-        collection.add_failure_mechanism(mechanism_to_add, collection_to_add)
+        collection.add_failure_mechanism_reliability_collection(collection_to_add)
 
         # Assert
         available_mechanisms = collection.get_available_mechanisms()
@@ -101,24 +105,24 @@ class TestFailureMechanismCollection:
         )
         assert retrieved_collection is collection_to_add
 
-    def test_add_failure_mechanism_and_mechanism_in_collection_raises_error(self):
+    def test_add_reliability_collection_and_mechanism_in_collection_raises_error(self):
         # Setup
-        mechanism_to_add = "mechanism"
+        duplicate_mechanism = "mechanism"
         collection = FailureMechanismCollection()
-        collection.add_failure_mechanism(
-            mechanism_to_add, MechanismReliabilityCollection("", "", [], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection(duplicate_mechanism, "", [], 0, 0)
         )
 
         # Call
         with pytest.raises(ValueError) as exception_error:
-            collection.add_failure_mechanism(
-                mechanism_to_add, MechanismReliabilityCollection("", "", [], 0, 0)
+            collection.add_failure_mechanism_reliability_collection(
+                MechanismReliabilityCollection(duplicate_mechanism, "", [], 0, 0)
             )
 
         # Assert
         assert (
             str(exception_error.value)
-            == f'Mechanism "{mechanism_to_add}" already added.'
+            == f'Mechanism "{duplicate_mechanism}" already added.'
         )
 
     def test_get_calculation_years_with_empty_collection_returns_empty_collection(self):
@@ -136,11 +140,11 @@ class TestFailureMechanismCollection:
     ):
         # Setup
         collection = FailureMechanismCollection()
-        collection.add_failure_mechanism(
-            "mechanism 1", MechanismReliabilityCollection("", "", [4, 5, 6], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection("mechanism 1", "", [4, 5, 6], 0, 0)
         )
-        collection.add_failure_mechanism(
-            "mechanism 2", MechanismReliabilityCollection("", "", [1, 2, 3], 0, 0)
+        collection.add_failure_mechanism_reliability_collection(
+            MechanismReliabilityCollection("mechanism 2", "", [1, 2, 3], 0, 0)
         )
 
         # Call

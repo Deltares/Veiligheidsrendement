@@ -33,20 +33,19 @@ class FailureMechanismCollection:
             self.get_mechanism_reliability_collection(mechanism_name).Reliability.keys()
         )
 
-    def add_failure_mechanism(
+    def add_failure_mechanism_reliability_collection(
         self,
-        mechanism_name: str,
         reliability_collection: MechanismReliabilityCollection,
     ) -> None:
-        """Adds a failure mechanism to the collection.
+        """Adds a failure mechanism reliability collection to this collection.
 
         Args:
-            mechanism_name (str): The name of the failure mechanism to be added.
-            reliability_collection (MechanismReliabilityCollection): The collection of reliabilities for the given failure mechanism.
+            reliability_collection (MechanismReliabilityCollection): The collection of reliabilities for a given failure mechanism.
 
         Raises:
-            ValueError: Raised when the failure mechanism was already added.
+            ValueError: Raised when a collection with the same failure mechanism was already added.
         """
+        mechanism_name = reliability_collection.mechanism_name
         if mechanism_name in self._failure_mechanisms:
             raise ValueError(f'Mechanism "{mechanism_name}" already added.')
 
@@ -61,7 +60,7 @@ class FailureMechanismCollection:
             mechanism_name (str): The name of the failure mechanism to retrieve the collection of reliabilities for.
 
         Returns:
-            MechanismReliabilityCollection: A collection of reliabilities.
+            MechanismReliabilityCollection: A collection of reliabilities. None if the mechanism was not present.
         """
         if mechanism_name not in self._failure_mechanisms:
             return None
