@@ -26,7 +26,7 @@ class StabilityScreenMeasure(MeasureBase):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
-        SFincrease: float = 0.2,
+        safety_factor_increase: float = 0.2,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
@@ -38,7 +38,7 @@ class StabilityScreenMeasure(MeasureBase):
         )
 
         self.measures["Reliability"] = self._get_configured_section_reliability(
-            dike_section, traject_info, SFincrease
+            dike_section, traject_info, safety_factor_increase
         )
         self.measures["Reliability"].calculate_section_reliability()
 
@@ -78,7 +78,7 @@ class StabilityScreenMeasure(MeasureBase):
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        SFIncrease: float,
+        safety_factor_increase: float,
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
@@ -89,7 +89,11 @@ class StabilityScreenMeasure(MeasureBase):
             calc_type = dike_section.mechanism_data[mechanism_name][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
-                    mechanism_name, calc_type, dike_section, traject_info, SFIncrease
+                    mechanism_name,
+                    calc_type,
+                    dike_section,
+                    traject_info,
+                    safety_factor_increase,
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -104,7 +108,7 @@ class StabilityScreenMeasure(MeasureBase):
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        SFincrease: float,
+        safety_factor_increase: float,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism_name, calc_type, self.config.T, self.config.t_0, 0
@@ -132,13 +136,12 @@ class StabilityScreenMeasure(MeasureBase):
             if float(year_to_calculate) >= self.parameters["year"]:
                 if mechanism_name == "StabilityInner":
                     self._configure_stability_inner(
-                        mechanism_reliability, year_to_calculate, SFincrease
+                        mechanism_reliability, year_to_calculate, safety_factor_increase
                     )
                 if mechanism_name in ["Piping", "Overflow"]:
                     self._copy_results(
                         mechanism_reliability, dike_section_mechanism_reliability
-                    )
-                    pass  # No influence
+                    )  # No influence
 
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.Load,
