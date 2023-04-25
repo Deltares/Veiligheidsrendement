@@ -59,7 +59,7 @@ def run_step_assessment(**kwargs):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject(_vr_config)
+    _selected_traject = DikeTraject.from_config(_vr_config)
 
     # Step 1. Safety assessment.
     _safety_assessment = RunSafetyAssessment(
@@ -78,7 +78,7 @@ def run_step_measures(**kwargs):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject(_vr_config)
+    _selected_traject = DikeTraject.from_config(_vr_config)
 
     # Step 2. Measures.
     _measures = RunMeasures(
@@ -96,7 +96,7 @@ def run_step_optimization(**kwargs):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject(_vr_config)
+    _selected_traject = DikeTraject.from_config(_vr_config)
     _plot_mode = VrToolPlotMode.STANDARD
 
     # Step 2. Measures.
@@ -115,7 +115,7 @@ def run_full(**kwargs):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject(_vr_config)
+    _selected_traject = DikeTraject.from_config(_vr_config)
 
     # Run all steps with one command.
     _measures = RunFullModel(_vr_config, _selected_traject, VrToolPlotMode.STANDARD)
