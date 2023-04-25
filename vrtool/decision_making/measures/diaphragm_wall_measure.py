@@ -87,10 +87,9 @@ class DiaphragmWallMeasure(MeasureBase):
                 if mechanism_name in ["Piping", "StabilityInner"]:
                     self._configure_piping_or_stability_inner(mechanism_reliability)
 
-        mechanism_reliability_collection.generateLCRProfile(
+        mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.Load,
-            mechanism=mechanism_name,
-            trajectinfo=traject_info,
+            traject_info=traject_info,
         )
 
         return mechanism_reliability_collection

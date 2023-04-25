@@ -18,6 +18,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 import logging
 
+
 class StabilityScreenMeasure(MeasureBase):
     # type == 'Stability Screen':
     def evaluate_measure(
@@ -51,7 +52,7 @@ class StabilityScreenMeasure(MeasureBase):
         if d_cover_input:
             if d_cover_input.size > 1:
                 logging.info("d_cover has more values than 1.")
-            
+
             return max([d_cover_input[0] + 1.0, 8.0])
         else:
             # TODO remove shaky assumption on depth
@@ -117,10 +118,9 @@ class StabilityScreenMeasure(MeasureBase):
                     )
                     pass  # No influence
 
-        mechanism_reliability_collection.generateLCRProfile(
+        mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.Load,
-            mechanism=mechanism_name,
-            trajectinfo=traject_info,
+            traject_info=traject_info,
         )
 
         return mechanism_reliability_collection

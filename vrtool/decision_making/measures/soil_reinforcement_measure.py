@@ -272,10 +272,9 @@ class SoilReinforcementMeasure(MeasureBase):
                 year_to_calculate
             ].Input = reliability_input
 
-        mechanism_reliability_collection.generateLCRProfile(
+        mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.Load,
-            mechanism=mechanism_name,
-            trajectinfo=traject_info,
+            traject_info=traject_info,
         )
 
         return mechanism_reliability_collection
