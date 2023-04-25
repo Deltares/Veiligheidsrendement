@@ -62,7 +62,4 @@ class FailureMechanismCollection:
         Returns:
             MechanismReliabilityCollection: A collection of reliabilities. None if the mechanism was not present.
         """
-        if mechanism_name not in self._failure_mechanisms:
-            return None
-
-        return self._failure_mechanisms[mechanism_name]
+        return self._failure_mechanisms.get(mechanism_name)

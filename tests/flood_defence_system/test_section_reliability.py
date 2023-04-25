@@ -7,4 +7,4 @@ class TestSectionReliability:
         reliability = SectionReliability()
 
         # Assert
-        assert len(reliability.failure_mechanisms.get_available_mechanisms) == 0
+        assert len(reliability.failure_mechanisms.get_available_mechanisms()) == 0
