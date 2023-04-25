@@ -185,7 +185,8 @@ class Measure(BaseModel):
     class Meta:
         table_name = _get_table_name(__qualname__)
 
-class StandardMeasure(Measure):
+class StandardMeasure(BaseModel):
+    measure = ForeignKeyField(Measure, backref="standard_measure", unique=True)
     max_inward_reinforcement = IntegerField(default=50)
     max_outward_reinforcement = IntegerField(default=0)
     direction = CharField(default='Inward', max_length=_max_char_length)
@@ -199,7 +200,8 @@ class StandardMeasure(Measure):
     class Meta:
         table_name = _get_table_name(__qualname__)
 
-class CustomMeasure(Measure):
+class CustomMeasure(BaseModel):
+    measure = ForeignKeyField(Measure, backref="custom_measures", unique=True)
     mechanism = ForeignKeyField(Mechanism, backref="measures")
     cost = FloatField(null=False)
     beta = FloatField(null=False)
