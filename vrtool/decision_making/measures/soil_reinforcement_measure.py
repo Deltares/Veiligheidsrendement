@@ -203,6 +203,7 @@ class SoilReinforcementMeasure(MeasureBase):
                             measure_parameters=self.parameters,
                             mechanism=mechanism_name,
                             computation_type=calc_type,
+                            path_intermediate_stix=self.config.output_directory / 'intermediate_result'
                         )
                     # put them back in the object
                     self.measures[-1]["Reliability"].Mechanisms[

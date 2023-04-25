@@ -148,7 +148,6 @@ class MechanismReliability:
         mechanism: str,
         mechanism_input: MechanismInput,
     ) -> FailureMechanismCalculatorProtocol:
-
         if mechanism != "StabilityInner":
             raise Exception(
                 "Unknown computation type DStability for {}".format(mechanism)

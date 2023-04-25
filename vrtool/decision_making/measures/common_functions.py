@@ -8,10 +8,12 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
+from vrtool.decision_making.measures.berm_widening_dstability import BermWideningDStability
 from vrtool.failure_mechanisms.overflow.overflow_functions import (
     calculate_overflow_hydra_ring_design,
     calculate_overflow_simple_design,
 )
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     calculate_reliability,
     calculate_safety_factor,
@@ -24,8 +26,25 @@ def implement_berm_widening(
     measure_parameters,
     mechanism,
     computation_type,
+    path_intermediate_stix: Path,
     SFincrease=0.2,
 ):
+    """
+
+    Args:
+        input (dict): input dictionary of the mechanism
+        measure_input (dict): input dictionary of the measure
+        measure_parameters (dict): parameters dictionary of the measure
+        mechanism (str): name of the mechanism, one of ['Piping', 'Overflow', 'StabilityInner']
+        computation_type (str): type of computation for the mechanism
+        path_intermediate_stix (Path): path to the intermediate stix files
+        SFincrease (float): increase in safety factor
+
+    Returns:
+        dict: input dictionary of the mechanism with the berm widened
+
+    """
+
     def calculate_stability_inner_reliability_with_safety_screen(
         reliability: np.ndarray,
     ):
@@ -41,6 +60,21 @@ def implement_berm_widening(
     if mechanism == "Overflow":
         input["h_crest"] = input["h_crest"] + measure_input["dcrest"]
     elif mechanism == "StabilityInner":
+        # Case where the berm widened through DStability and the stability factors will be recalculated
+        if computation_type == "DStability":
+            _dstability_wrapper = DStabilityWrapper(stix_path=Path(input['STIXNAAM']),
+                                                    externals_path=Path(input['DStability_exe_path']))
+
+            _dstability_berm_widening = BermWideningDStability(measure_input=measure_input,
+                                                               dstability_wrapper=_dstability_wrapper)
+
+            _new_stix_name = _dstability_berm_widening.create_new_dstability_model(path_intermediate_stix)
+
+            input['STIXNAAM'] = path_intermediate_stix.joinpath(_new_stix_name)  # cant modify the
+            input['RERUN_STIX'] = True
+
+            return input
+
         # For stability factors
         if "SF_2025" in input:
             # For now, inward and outward are the same!
