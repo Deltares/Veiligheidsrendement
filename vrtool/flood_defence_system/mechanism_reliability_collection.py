@@ -99,7 +99,7 @@ class MechanismReliabilityCollection:
                     )
             else:
                 y.append(self.Reliability[i].Pf) if type == "pf" else y.append(
-                    self.Reliability[i].beta
+                    self.Reliability[i].Beta
                 )
 
         plt.plot(t, y, label=mechanism)

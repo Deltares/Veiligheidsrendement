@@ -82,6 +82,32 @@ class TestFailureMechanismCollection:
         # Assert
         assert reliability_collection is collection_to_retrieve
 
+    def test_get_all_reliability_collection_when_collection_empty_returns_empty_collection(self):
+        # Setup
+        collection = FailureMechanismCollection()
+
+        # Call
+        reliability_collections = collection.get_all_mechanism_reliability_collections()
+
+        # Assert
+        assert len(reliability_collections) == 0
+
+    def test_get_all_reliability_collection_when_collection_not_empty_returns_expected_collection(self):
+        # Setup
+        reliability_collection_one = MechanismReliabilityCollection("mechanism 1", "", [4, 5, 6], 0, 0)
+        reliability_collection_two = MechanismReliabilityCollection("mechanism 2", "", [4, 5, 6], 0, 0)
+
+        collection = FailureMechanismCollection()
+        collection.add_failure_mechanism_reliability_collection(reliability_collection_one)
+        collection.add_failure_mechanism_reliability_collection(reliability_collection_two)
+
+        # Call
+        reliability_collections = collection.get_all_mechanism_reliability_collections()
+
+        # Assert
+        assert len(reliability_collections) == 2
+        assert reliability_collections == [reliability_collection_one, reliability_collection_two]
+
     def test_add_reliability_collection_and_mechanism_not_in_collection_adds_reliability_collection(
         self,
     ):

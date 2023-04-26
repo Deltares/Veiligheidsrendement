@@ -63,3 +63,13 @@ class FailureMechanismCollection:
             MechanismReliabilityCollection: A collection of reliabilities. None if the mechanism was not present.
         """
         return self._failure_mechanisms.get(mechanism_name)
+
+    def get_all_mechanism_reliability_collections(
+        self,
+    ) -> list[MechanismReliabilityCollection]:
+        """Gets all the mechanism reliability collections that are stored within the container.
+
+        Returns:
+            list[MechanismReliabilityCollection]: The collection of stored mechanism reliability collections
+        """
+        return list(self._failure_mechanisms.values())
