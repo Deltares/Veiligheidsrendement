@@ -14,7 +14,3 @@ class ModifiedDikeGeometryMeasureInput:
     d_house: float
     d_berm: float
     d_crest: float
-
-    @classmethod
-    def from_dictionary(cls, dict: dict) -> ModifiedDikeGeometryMeasureInput:
-        return cls(**dict)

@@ -176,11 +176,7 @@ class SoilReinforcementMeasure(MeasureBase):
                 "d_house": modified_geometry_properties[3],
             }
 
-            inputs.append(
-                ModifiedDikeGeometryMeasureInput.from_dictionary(
-                    measure_input_dictionary
-                )
-            )
+            inputs.append(ModifiedDikeGeometryMeasureInput(**measure_input_dictionary))
 
         return inputs
 
