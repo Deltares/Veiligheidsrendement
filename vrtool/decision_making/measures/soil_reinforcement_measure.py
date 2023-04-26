@@ -10,14 +10,14 @@ from vrtool.decision_making.measures.common_functions import (
     implement_berm_widening,
 )
 from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
+    ModifiedDikeGeometryMeasureInput,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
-    ModifiedDikeGeometryMeasureInput,
-)
 
 
 class SoilReinforcementMeasure(MeasureBase):

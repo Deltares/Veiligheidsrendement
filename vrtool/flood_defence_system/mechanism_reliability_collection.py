@@ -51,9 +51,7 @@ class MechanismReliabilityCollection:
                     mechanism, computation_type, self.t_0
                 )
 
-    def generate_LCR_profile(
-        self, load: LoadInput, traject_info: DikeTrajectInfo
-    ):
+    def generate_LCR_profile(self, load: LoadInput, traject_info: DikeTrajectInfo):
         """Generates the LCR profile.
 
         Args:

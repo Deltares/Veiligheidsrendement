@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import numpy as np
 
@@ -10,13 +11,11 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
     calculate_safety_factor,
 )
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-
-import logging
 
 
 class StabilityScreenMeasure(MeasureBase):
