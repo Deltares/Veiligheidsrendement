@@ -6,6 +6,7 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
@@ -21,7 +22,6 @@ class VerticalGeotextileMeasure(MeasureBase):
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
-        mechanism_names = dike_section.section_reliability.Mechanisms.keys()
 
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years
@@ -30,57 +30,97 @@ class VerticalGeotextileMeasure(MeasureBase):
         self.measures["Cost"] = determine_costs(
             self.parameters, type, dike_section.Length, self.unit_costs
         )
-        self.measures["Reliability"] = SectionReliability()
-        self.measures["Reliability"].Mechanisms = {}
 
+        self.measures["Reliability"] = self._get_configured_section_reliability(
+            dike_section, traject_info
+        )
+        self.measures["Reliability"].calculate_section_reliability()
+
+    def _get_configured_section_reliability(
+        self, dike_section: DikeSection, traject_info: DikeTrajectInfo
+    ) -> SectionReliability:
+        section_reliability = SectionReliability()
+
+        mechanism_names = (
+            dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
+        )
         for mechanism_name in mechanism_names:
             calc_type = dike_section.mechanism_data[mechanism_name][1]
-            self.measures["Reliability"].Mechanisms[
-                mechanism_name
-            ] = MechanismReliabilityCollection(
-                mechanism_name, calc_type, self.config.T, self.config.t_0, 0
-            )
-            for ij in (
-                self.measures["Reliability"]
-                .Mechanisms[mechanism_name]
-                .Reliability.keys()
-            ):
-                self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                    ij
-                ].Input = copy.deepcopy(
-                    dike_section.section_reliability.Mechanisms[mechanism_name]
-                    .Reliability[ij]
-                    .Input
+            mechanism_reliability_collection = (
+                self._get_configured_mechanism_reliability_collection(
+                    mechanism_name, calc_type, dike_section, traject_info
                 )
-                if (
-                    mechanism_name == "Overflow"
-                    or mechanism_name == "StabilityInner"
-                    or (
-                        mechanism_name == "Piping" and int(ij) < self.parameters["year"]
-                    )
-                ):  # Copy results
-                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                        ij
-                    ] = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[
-                            mechanism_name
-                        ].Reliability[ij]
-                    )
-                elif mechanism_name == "Piping" and int(ij) >= self.parameters["year"]:
-                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                        ij
-                    ].Input.input["Elimination"] = "yes"
-                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                        ij
-                    ].Input.input["Pf_elim"] = self.parameters["P_solution"]
-                    self.measures["Reliability"].Mechanisms[mechanism_name].Reliability[
-                        ij
-                    ].Input.input["Pf_with_elim"] = np.min(
-                        [self.parameters["Pf_solution"], 1.0e-16]
-                    )
-            self.measures["Reliability"].Mechanisms[mechanism_name].generateLCRProfile(
-                dike_section.section_reliability.Load,
-                mechanism=mechanism_name,
-                trajectinfo=traject_info,
             )
-        self.measures["Reliability"].calculate_section_reliability()
+            section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
+                mechanism_reliability_collection
+            )
+
+        return section_reliability
+
+    def _get_configured_mechanism_reliability_collection(
+        self,
+        mechanism_name: str,
+        calc_type: str,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+    ) -> MechanismReliabilityCollection:
+        mechanism_reliability_collection = MechanismReliabilityCollection(
+            mechanism_name, calc_type, self.config.T, self.config.t_0, 0
+        )
+
+        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
+            mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ].Input = copy.deepcopy(
+                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                    mechanism_name
+                )
+                .Reliability[year_to_calculate]
+                .Input
+            )
+
+            mechanism_reliability = mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ]
+            dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                mechanism_name
+            ).Reliability[
+                year_to_calculate
+            ]
+            if mechanism_name == "Piping":
+                self._configure_piping(
+                    mechanism_reliability,
+                    year_to_calculate,
+                    dike_section_mechanism_reliability,
+                )
+            if mechanism_name in ["Overflow", "StabilityInner"]:
+                self._copy_results(
+                    mechanism_reliability, dike_section_mechanism_reliability
+                )
+
+        mechanism_reliability_collection.generate_LCR_profile(
+            dike_section.section_reliability.load,
+            traject_info=traject_info,
+        )
+
+        return mechanism_reliability_collection
+
+    def _copy_results(
+        self, target: MechanismReliability, source_input: MechanismReliability
+    ) -> None:
+        target.Input = copy.deepcopy(source_input.Input)
+
+    def _configure_piping(
+        self,
+        mechanism_reliability: MechanismReliability,
+        year_to_calculate: str,
+        dike_section_piping_reliability: MechanismReliability,
+    ) -> None:
+        if int(year_to_calculate) < self.parameters["year"]:
+            self._copy_results(mechanism_reliability, dike_section_piping_reliability)
+
+        mechanism_reliability.Input.input["Elimination"] = "yes"
+        mechanism_reliability.Input.input["Pf_elim"] = self.parameters["P_solution"]
+        mechanism_reliability.Input.input["Pf_with_elim"] = np.min(
+            [self.parameters["Pf_solution"], 1.0e-16]
+        )
