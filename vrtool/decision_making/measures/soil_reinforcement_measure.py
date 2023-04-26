@@ -15,6 +15,9 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
+    ModifiedDikeGeometryMeasureInput,
+)
 
 
 class SoilReinforcementMeasure(MeasureBase):
@@ -30,14 +33,43 @@ class SoilReinforcementMeasure(MeasureBase):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
         # self. parameters = measure.parameters
-
-        SFincrease = 0.2  # for stability screen
-
         type = self.parameters["Type"]
-        mechanism_names = dike_section.section_reliability.Mechanisms.keys()
+        if self.parameters["StabilityScreen"] == "yes":
+            self.parameters["Depth"] = self._get_depth(dike_section)
+
+        def get_measure_data(
+            modified_measure: ModifiedDikeGeometryMeasureInput,
+        ) -> dict:
+            _modified_measure = {}
+            _modified_measure["dcrest"] = modified_measure.d_crest
+            _modified_measure["dberm"] = modified_measure.d_berm
+            _modified_measure["Cost"] = determine_costs(
+                self.parameters,
+                type,
+                dike_section.Length,
+                self.unit_costs,
+                dcrest=modified_measure.d_crest,
+                dberm_in=int(modified_measure.d_house),
+                housing=dike_section.houses,
+                area_extra=modified_measure.area_extra,
+                area_excavated=modified_measure.area_excavated,
+                direction=self.parameters["Direction"],
+                section=dike_section.name,
+            )
+            _modified_measure["Reliability"] = self._get_configured_section_reliability(
+                dike_section, traject_info, _modified_measure
+            )
+            _modified_measure["Reliability"].calculate_section_reliability()
+            return _modified_measure
+
+        modified_dike_geometry_measures = self._get_modified_dike_geometry_measures(
+            dike_section, preserve_slope, plot_dir
+        )
+        self.measures = list(map(get_measure_data, modified_dike_geometry_measures))
+
+    def _get_crest_range(self) -> np.ndarray:
         crest_step = self.crest_step
-        berm_step = self.berm_step
-        crestrange = np.linspace(
+        return np.linspace(
             self.parameters["dcrest_min"],
             self.parameters["dcrest_max"],
             np.int_(
@@ -46,15 +78,27 @@ class SoilReinforcementMeasure(MeasureBase):
                 / crest_step
             ),
         )
+
+    def _get_berm_range(self) -> np.ndarray:
+        """Generates the range of the berm.
+
+        Raises:
+            Exception: Raised when an unknown direction is specified
+
+        Returns:
+            np.ndarray: A collection of the berm range.
+        """
+        berm_step = self.berm_step
+
         # TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
         if self.parameters["Direction"] == "outward":
             if np.size(berm_step) > 1:
                 max_berm = (
                     self.parameters["max_outward"] + self.parameters["max_inward"]
                 )
-                bermrange = berm_step[: len(np.where((berm_step <= max_berm))[0])]
+                return berm_step[: len(np.where((berm_step <= max_berm))[0])]
             else:
-                bermrange = np.linspace(
+                return np.linspace(
                     0.0,
                     self.parameters["max_outward"],
                     np.int_(1 + (self.parameters["max_outward"] / berm_step)),
@@ -62,9 +106,9 @@ class SoilReinforcementMeasure(MeasureBase):
         elif self.parameters["Direction"] == "inward":
             if np.size(berm_step) > 1:
                 max_berm = self.parameters["max_inward"]
-                bermrange = berm_step[: len(np.where((berm_step <= max_berm))[0])]
+                return berm_step[: len(np.where((berm_step <= max_berm))[0])]
             else:
-                bermrange = np.linspace(
+                return np.linspace(
                     0.0,
                     self.parameters["max_inward"],
                     np.int_(1 + (self.parameters["max_inward"] / berm_step)),
@@ -72,7 +116,79 @@ class SoilReinforcementMeasure(MeasureBase):
         else:
             raise Exception("unkown direction")
 
-        measures = [[x, y] for x in crestrange for y in bermrange]
+    def _get_depth(self, dike_section: DikeSection) -> float:
+        """Gets the depth for the stability screen application.
+
+        Args:
+            dike_section (DikeSection): The section to retrieve the depth from.
+
+        Raises:
+            ValueError: Raised when there is no stability inner failure mechanism present.
+
+        Returns:
+            float: The depth to be used for the stability screen calculation.
+        """
+        stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+            "StabilityInner"
+        )
+        if not stability_inner_reliability_collection:
+            error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
+            logging.error(error_message)
+            raise ValueError(error_message)
+
+        d_cover_input = stability_inner_reliability_collection.Reliability[
+            "0"
+        ].Input.input.get("d_cover", None)
+        if d_cover_input:
+            if d_cover_input.size > 1:
+                logging.info("d_cover has more values than 1.")
+
+            return max([d_cover_input[0] + 1.0, 8.0])
+        else:
+            # TODO remove shaky assumption on depth
+            return 6.0
+
+    def _get_modified_dike_geometry_measures(
+        self,
+        dike_section: DikeSection,
+        preserve_slope: bool,
+        plot_dir: bool = False,
+    ) -> list[ModifiedDikeGeometryMeasureInput]:
+        crest_range = self._get_crest_range()
+        berm_range = self._get_berm_range()
+
+        dike_modifications = [
+            (modified_crest, modified_berm)
+            for modified_crest in crest_range
+            for modified_berm in berm_range
+        ]
+
+        inputs = []
+        for dike_modification in dike_modifications:
+            modified_geometry_properties = self._determine_new_geometry(
+                dike_section, dike_modification, preserve_slope, plot_dir
+            )
+
+            measure_input_dictionary = {
+                "d_crest": dike_modification[0],
+                "d_berm": dike_modification[1],
+                "modified_geometry": modified_geometry_properties[0],
+                "area_extra": modified_geometry_properties[1],
+                "area_excavated": modified_geometry_properties[2],
+                "d_house": modified_geometry_properties[3],
+            }
+
+            inputs.append(ModifiedDikeGeometryMeasureInput(**measure_input_dictionary))
+
+        return inputs
+
+    def _determine_new_geometry(
+        self,
+        dike_section: DikeSection,
+        dike_modification: tuple[float],
+        preserve_slope: bool,
+        plot_dir: bool,
+    ) -> list:
         if not preserve_slope:
             slope_in = 4
             slope_out = 3  # inner and outer slope
@@ -80,75 +196,24 @@ class SoilReinforcementMeasure(MeasureBase):
             slope_in = False
             slope_out = False
 
-        self.measures = []
-        if self.parameters["StabilityScreen"] == "yes":
-            d_cover_input = (
-                dike_section.section_reliability.Mechanisms["StabilityInner"]
-                .Reliability["0"]
-                .Input.input.get("d_cover", None)
-            )
-            if d_cover_input:
-                if d_cover_input.size > 1:
-                    logging.info("d_cover has more values than 1.")
-
-                self.parameters["Depth"] = max([d_cover_input[0] + 1.0, 8.0])
+        if hasattr(dike_section, "Kruinhoogte"):
+            if dike_section.Kruinhoogte != np.max(dike_section.InitialGeometry.z):
+                # In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
+                return determine_new_geometry(
+                    dike_modification,
+                    self.parameters["Direction"],
+                    self.parameters["max_outward"],
+                    copy.deepcopy(dike_section.InitialGeometry),
+                    self.geometry_plot,
+                    **{
+                        "plot_dir": plot_dir,
+                        "slope_in": slope_in,
+                        "crest_extra": dike_section.Kruinhoogte,
+                    },
+                )
             else:
-                self.parameters[
-                    "Depth"
-                ] = 6.0  # TODO: implement a better depth estimate based on d_cover
-
-        for j in measures:
-            if self.parameters["Direction"] == "outward":
-                k = max(
-                    0, j[1] - self.parameters["max_inward"]
-                )  # correction max_outward
-            else:
-                k = j[1]
-            self.measures.append({})
-            self.measures[-1]["dcrest"] = j[0]
-            self.measures[-1]["dberm"] = j[1]
-            if hasattr(dike_section, "Kruinhoogte"):
-                if dike_section.Kruinhoogte != np.max(dike_section.InitialGeometry.z):
-                    # In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
-                    (
-                        self.measures[-1]["Geometry"],
-                        area_extra,
-                        area_excavated,
-                        dhouse,
-                    ) = determine_new_geometry(
-                        j,
-                        self.parameters["Direction"],
-                        self.parameters["max_outward"],
-                        copy.deepcopy(dike_section.InitialGeometry),
-                        self.geometry_plot,
-                        **{
-                            "plot_dir": plot_dir,
-                            "slope_in": slope_in,
-                            "crest_extra": dike_section.Kruinhoogte,
-                        },
-                    )
-                else:
-                    (
-                        self.measures[-1]["Geometry"],
-                        area_extra,
-                        area_excavated,
-                        dhouse,
-                    ) = determine_new_geometry(
-                        j,
-                        self.parameters["Direction"],
-                        self.parameters["max_outward"],
-                        copy.deepcopy(dike_section.InitialGeometry),
-                        self.geometry_plot,
-                        **{"plot_dir": plot_dir, "slope_in": slope_in},
-                    )
-            else:
-                (
-                    self.measures[-1]["Geometry"],
-                    area_extra,
-                    area_excavated,
-                    dhouse,
-                ) = determine_new_geometry(
-                    j,
+                return determine_new_geometry(
+                    dike_modification,
                     self.parameters["Direction"],
                     self.parameters["max_outward"],
                     copy.deepcopy(dike_section.InitialGeometry),
@@ -156,63 +221,88 @@ class SoilReinforcementMeasure(MeasureBase):
                     **{"plot_dir": plot_dir, "slope_in": slope_in},
                 )
 
-            self.measures[-1]["Cost"] = determine_costs(
-                self.parameters,
-                type,
-                dike_section.Length,
-                self.unit_costs,
-                dcrest=j[0],
-                dberm_in=int(dhouse),
-                housing=dike_section.houses,
-                area_extra=area_extra,
-                area_excavated=area_excavated,
-                direction=self.parameters["Direction"],
-                section=dike_section.name,
-            )
-            self.measures[-1]["Reliability"] = SectionReliability()
-            self.measures[-1]["Reliability"].Mechanisms = {}
+        return determine_new_geometry(
+            dike_modification,
+            self.parameters["Direction"],
+            self.parameters["max_outward"],
+            copy.deepcopy(dike_section.InitialGeometry),
+            self.geometry_plot,
+            **{"plot_dir": plot_dir, "slope_in": slope_in},
+        )
 
-            for mechanism_name in mechanism_names:
-                calc_type = dike_section.mechanism_data[mechanism_name][1]
-                self.measures[-1]["Reliability"].Mechanisms[
-                    mechanism_name
-                ] = MechanismReliabilityCollection(
+    def _get_configured_section_reliability(
+        self,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+        modified_geometry_measure: dict,
+    ) -> SectionReliability:
+        section_reliability = SectionReliability()
+
+        mechanism_names = (
+            dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
+        )
+        for mechanism_name in mechanism_names:
+            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            mechanism_reliability_collection = (
+                self._get_configured_mechanism_reliability_collection(
                     mechanism_name,
                     calc_type,
-                    self.config.T,
-                    self.config.t_0,
-                    self.parameters["year"],
+                    dike_section,
+                    traject_info,
+                    modified_geometry_measure,
                 )
-                for ij, reliability_input in (
-                    self.measures[-1]["Reliability"]
-                    .Mechanisms[mechanism_name]
-                    .Reliability.items()
-                ):
-                    # for all time steps considered.
-                    # first copy the data
-                    reliability_input = copy.deepcopy(
-                        dike_section.section_reliability.Mechanisms[mechanism_name]
-                        .Reliability[ij]
-                        .Input
-                    )
-                    # Adapt inputs for reliability calculation, but only after year of implementation.
-                    if float(ij) >= self.parameters["year"]:
-                        reliability_input.input = implement_berm_widening(
-                            input=reliability_input.input,
-                            measure_input=self.measures[-1],
-                            measure_parameters=self.parameters,
-                            mechanism=mechanism_name,
-                            computation_type=calc_type,
-                        )
-                    # put them back in the object
-                    self.measures[-1]["Reliability"].Mechanisms[
-                        mechanism_name
-                    ].Reliability[ij].Input = reliability_input
-                self.measures[-1]["Reliability"].Mechanisms[
+            )
+            section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
+                mechanism_reliability_collection
+            )
+
+        return section_reliability
+
+    def _get_configured_mechanism_reliability_collection(
+        self,
+        mechanism_name: str,
+        calc_type: str,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+        modified_geometry_measure: dict,
+    ) -> MechanismReliabilityCollection:
+        mechanism_reliability_collection = MechanismReliabilityCollection(
+            mechanism_name,
+            calc_type,
+            self.config.T,
+            self.config.t_0,
+            self.parameters["year"],
+        )
+        for (
+            year_to_calculate,
+            reliability_input,
+        ) in mechanism_reliability_collection.Reliability.items():
+            # for all time steps considered.
+            # first copy the data
+            reliability_input = copy.deepcopy(
+                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism_name
-                ].generateLCRProfile(
-                    dike_section.section_reliability.Load,
-                    mechanism=mechanism_name,
-                    trajectinfo=traject_info,
                 )
-            self.measures[-1]["Reliability"].calculate_section_reliability()
+                .Reliability[year_to_calculate]
+                .Input
+            )
+            # Adapt inputs for reliability calculation, but only after year of implementation.
+            if float(year_to_calculate) >= self.parameters["year"]:
+                reliability_input.input = implement_berm_widening(
+                    input=reliability_input.input,
+                    measure_input=modified_geometry_measure,
+                    measure_parameters=self.parameters,
+                    mechanism=mechanism_name,
+                    computation_type=calc_type,
+                )
+            # put them back in the object
+            mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ].Input = reliability_input
+
+        mechanism_reliability_collection.generate_LCR_profile(
+            dike_section.section_reliability.load,
+            traject_info=traject_info,
+        )
+
+        return mechanism_reliability_collection

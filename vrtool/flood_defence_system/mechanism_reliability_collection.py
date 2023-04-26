@@ -11,6 +11,9 @@ from vrtool.flood_defence_system.mechanism_reliability import MechanismReliabili
 class MechanismReliabilityCollection:
     """Represents a collection of MechanismReliability objects over time."""
 
+    Reliability: dict[str, MechanismReliability]
+    mechanism_name: str
+
     def __init__(
         self,
         mechanism: str,
@@ -22,7 +25,7 @@ class MechanismReliabilityCollection:
         """Creates a new instance of the MechanismReliabilityCollection
 
         Args:
-            mechanism (str): The mechanism.
+            mechanism (str): The name of the mechanism.
             computation_type (str): The computation type.
             computation_years (list[int]): The collection of years to compute the reliability for.
             t_0 (float): The initial year.
@@ -35,6 +38,7 @@ class MechanismReliabilityCollection:
         # (the latter is the case if a measure is taken later than the considered point in time)
         self.T = computation_years
         self.t_0 = t_0
+        self.mechanism_name = mechanism
         self.Reliability = {}
 
         for i in self.T:
@@ -47,15 +51,28 @@ class MechanismReliabilityCollection:
                     mechanism, computation_type, self.t_0
                 )
 
-    def generateLCRProfile(
-        self, load: LoadInput, mechanism: str, trajectinfo: DikeTrajectInfo
+    def generate_LCR_profile(
+        self, load: LoadInput, traject_info: DikeTrajectInfo
     ):
+        """Generates the LCR profile.
+
+        Args:
+            load (LoadInput): The load input.
+            traject_info (DikeTrajectInfo): The object containing the traject info.
+
+        Raises:
+            ValueError: Raised when an invalid load is provided.
+        """
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
         if not load:
             raise ValueError("Load value should be True.")
         for i in self.Reliability.keys():
             self.Reliability[i].calcReliability(
-                self.Reliability[i].Input, load, mechanism, float(i), trajectinfo
+                self.Reliability[i].Input,
+                load,
+                self.mechanism_name,
+                float(i),
+                traject_info,
             )
 
     def drawLCR(self, yscale=None, type="beta", mechanism=None):
@@ -82,7 +99,7 @@ class MechanismReliabilityCollection:
                     )
             else:
                 y.append(self.Reliability[i].Pf) if type == "pf" else y.append(
-                    self.Reliability[i].beta
+                    self.Reliability[i].Beta
                 )
 
         plt.plot(t, y, label=mechanism)
