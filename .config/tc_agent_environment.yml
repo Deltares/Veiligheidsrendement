@@ -3,5 +3,5 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - conda-forge::python=3.10
   - conda-forge::openturns=1.19
