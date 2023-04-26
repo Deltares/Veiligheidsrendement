@@ -2,6 +2,7 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import orm_models
 from vrtool.flood_defence_system.dike_section import DikeSection
+import pandas as pd
 
 def import_dike_traject_info(orm_dike_traject: orm_models.DikeTrajectInfo) -> DikeTrajectInfo:
     if not orm_dike_traject:
@@ -37,11 +38,17 @@ def import_dike_traject(orm_dike_traject_info: orm_models.DikeTrajectInfo) -> Di
 
     return _dike_traject
 
+def import_buildings_list(buildings_list: list[orm_models.Buildings]) -> pd.DataFrame:
+    _buildings_data = [[_building.distance_from_toe, _building.number_of_buildings] for _building in buildings_list]
+    return pd.DataFrame(_buildings_data, columns=['distancefromtoe', 'cumulative'])
+
 def import_dike_section(orm_dike_section: orm_models.SectionData) -> DikeSection:
     _dike_section = DikeSection()
     _dike_section.name = orm_dike_section.section_name
-    _mechanisms = orm_dike_section.mechanisms_per_section.select(orm_models.MechanismPerSection.mechanism)
-
+    _dike_section.houses = import_buildings_list(orm_dike_section.buildings_list)
+    _dike_section.mechanism_data = {}
+    for _mechanism_per_section in orm_dike_section.mechanisms_per_section:
+        _dike_section.mechanism_data[_mechanism_per_section.mechanism.name] = ()
     return _dike_section
 
 

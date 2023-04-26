@@ -98,7 +98,6 @@ class TestOrmControllers:
         assert _section_data.cover_layer_thickness == _expected_data["cover_layer_thickness"]
         assert _section_data.pleistocene_level == _expected_data["pleistocene_level"]
 
-    @pytest.mark.skip(reason="Work in progress")
     def test_get_dike_traject(self):
         # 1. Define test data.
         _db_file = test_data / "test_db" / "vrtool_db.db"
@@ -111,4 +110,4 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert isinstance(_dike_traject, DikeTraject)
-        assert len(_dike_traject.sections) == 2
+        assert len(_dike_traject.sections) == 1
