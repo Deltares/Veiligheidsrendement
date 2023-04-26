@@ -94,7 +94,7 @@ def make_traject_df(traject: DikeTraject, cols):
     for i in traject.sections:
         sections.append(i.name)
 
-    mechanisms = list(traject.sections[0].mechanism_data.keys()) + ["Section"]
+    mechanisms = list(traject.mechanism_names) + ["Section"]
     df_index = pd.MultiIndex.from_product(
         [sections, mechanisms], names=["name", "mechanism"]
     )
@@ -572,11 +572,12 @@ def overflow_bundling(
                 # order = np.dstack(np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape[0], LCCs.shape[1])))
                 order = np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape))
                 orderedLCCs = LCCs[order[0], order[1]]
+                orderedLCCs = orderedLCCs[orderedLCCs < 1e60]
 
-                sg_indices[i, 0 : len(orderedLCCs)] = sg_opts[order[1]]
-                sorted_sh[i, 0 : len(orderedLCCs)] = sh_opts[order[0]]
+                sg_indices[i, 0 : len(orderedLCCs)] = sg_opts[order[1][0 : len(orderedLCCs)]]
+                sorted_sh[i, 0 : len(orderedLCCs)] = sh_opts[order[0][0 : len(orderedLCCs)]]
                 sorted_sh[i, 0 : len(orderedLCCs)] = np.where(
-                    orderedLCCs > 1e60, 999, sh_opts[order[0]]
+                    orderedLCCs > 1e60, 999, sh_opts[order[0][0 : len(orderedLCCs)]]
                 )
 
         # For a stability screen, we should check if it can be extended with a berm or crest. Note that not allowing this might result in a local optimum.

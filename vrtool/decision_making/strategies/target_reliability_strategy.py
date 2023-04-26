@@ -109,29 +109,23 @@ class TargetReliabilityStrategy(StrategyBase):
                 beta_T_piping = beta_cs_piping
                 beta_T_stabinner = beta_cs_stabinner
             beta_T_overflow = beta_cs_overflow
-
+            beta_T = {'Piping': beta_T_piping, 'StabilityInner': beta_T_stabinner, 'Overflow': beta_T_overflow}
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
             if isinstance(self.OI_year, int):
                 targetyear = 50  # OI_year + 50
             else:
                 targetyear = 50
-
-            # filter for overflow
+            # make PossibleMeasures dataframe
             PossibleMeasures = copy.deepcopy(
-                self.options[i.name].loc[
-                    self.options[i.name][("Overflow", targetyear)] > beta_T_overflow
-                ]
+                self.options[i.name]
             )
+            # filter for mechanisms that are considered
+            for mechanism in traject.mechanism_names:
+                PossibleMeasures = PossibleMeasures.loc[
+                        self.options[i.name][(mechanism, targetyear)] > beta_T[mechanism]
+                    ]
 
-            # filter for piping
-            PossibleMeasures = PossibleMeasures.loc[
-                self.options[i.name][("Piping", targetyear)] > beta_T_piping
-            ]
 
-            # filter for stabilityinner
-            PossibleMeasures = PossibleMeasures.loc[
-                PossibleMeasures[("StabilityInner", targetyear)] > beta_T_stabinner
-            ]
             if len(PossibleMeasures) == 0:
                 # continue to next section if weakest has no more measures
                 logging.warn(
