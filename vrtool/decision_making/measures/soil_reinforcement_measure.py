@@ -37,33 +37,35 @@ class SoilReinforcementMeasure(MeasureBase):
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
 
-        modified_dike_geometry_measures = self._get_modified_dike_geometry_measures(
-            dike_section, preserve_slope, plot_dir
-        )
-
-        self.measures = []
-        for modified_dike_geometry_measure in modified_dike_geometry_measures:
-            self.measures.append({})
-            self.measures[-1]["dcrest"] = modified_dike_geometry_measure.d_crest
-            self.measures[-1]["dberm"] = modified_dike_geometry_measure.d_berm
-            self.measures[-1]["Cost"] = determine_costs(
+        def get_measure_data(
+            modified_measure: ModifiedDikeGeometryMeasureInput,
+        ) -> dict:
+            _modified_measure = {}
+            _modified_measure["dcrest"] = modified_measure.d_crest
+            _modified_measure["dberm"] = modified_measure.d_berm
+            _modified_measure["Cost"] = determine_costs(
                 self.parameters,
                 type,
                 dike_section.Length,
                 self.unit_costs,
-                dcrest=modified_dike_geometry_measure.d_crest,
-                dberm_in=int(modified_dike_geometry_measure.d_house),
+                dcrest=modified_measure.d_crest,
+                dberm_in=int(modified_measure.d_house),
                 housing=dike_section.houses,
-                area_extra=modified_dike_geometry_measure.area_extra,
-                area_excavated=modified_dike_geometry_measure.area_excavated,
+                area_extra=modified_measure.area_extra,
+                area_excavated=modified_measure.area_excavated,
                 direction=self.parameters["Direction"],
                 section=dike_section.name,
             )
-
-            self.measures[-1]["Reliability"] = self._get_configured_section_reliability(
-                dike_section, traject_info
+            _modified_measure["Reliability"] = self._get_configured_section_reliability(
+                dike_section, traject_info, _modified_measure
             )
-            self.measures[-1]["Reliability"].calculate_section_reliability()
+            _modified_measure["Reliability"].calculate_section_reliability()
+            return _modified_measure
+
+        modified_dike_geometry_measures = self._get_modified_dike_geometry_measures(
+            dike_section, preserve_slope, plot_dir
+        )
+        self.measures = list(map(get_measure_data, modified_dike_geometry_measures))
 
     def _get_crest_range(self) -> np.ndarray:
         crest_step = self.crest_step
@@ -218,18 +220,21 @@ class SoilReinforcementMeasure(MeasureBase):
                     self.geometry_plot,
                     **{"plot_dir": plot_dir, "slope_in": slope_in},
                 )
-        else:
-            return determine_new_geometry(
-                dike_modification,
-                self.parameters["Direction"],
-                self.parameters["max_outward"],
-                copy.deepcopy(dike_section.InitialGeometry),
-                self.geometry_plot,
-                **{"plot_dir": plot_dir, "slope_in": slope_in},
-            )
+
+        return determine_new_geometry(
+            dike_modification,
+            self.parameters["Direction"],
+            self.parameters["max_outward"],
+            copy.deepcopy(dike_section.InitialGeometry),
+            self.geometry_plot,
+            **{"plot_dir": plot_dir, "slope_in": slope_in},
+        )
 
     def _get_configured_section_reliability(
-        self, dike_section: DikeSection, traject_info: DikeTrajectInfo
+        self,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+        modified_geometry_measure: dict,
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
@@ -240,7 +245,11 @@ class SoilReinforcementMeasure(MeasureBase):
             calc_type = dike_section.mechanism_data[mechanism_name][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
-                    mechanism_name, calc_type, dike_section, traject_info
+                    mechanism_name,
+                    calc_type,
+                    dike_section,
+                    traject_info,
+                    modified_geometry_measure,
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -255,6 +264,7 @@ class SoilReinforcementMeasure(MeasureBase):
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
+        modified_geometry_measure: dict,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism_name,
@@ -280,7 +290,7 @@ class SoilReinforcementMeasure(MeasureBase):
             if float(year_to_calculate) >= self.parameters["year"]:
                 reliability_input.input = implement_berm_widening(
                     input=reliability_input.input,
-                    measure_input=self.measures[-1],
+                    measure_input=modified_geometry_measure,
                     measure_parameters=self.parameters,
                     mechanism=mechanism_name,
                     computation_type=calc_type,
