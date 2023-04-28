@@ -190,7 +190,7 @@ class BermWideningDStability:
 
         return bounding_box
 
-    def apply_measure_to_dstability(self, fill_polygons: list[Polygon], path_intermediate_stix: Path) -> str:
+    def apply_measure_to_dstability_model(self, fill_polygons: list[Polygon], path_intermediate_stix: Path) -> Path:
         """
         Apply the measure to the dstability model and save it to a new stix file.
 
