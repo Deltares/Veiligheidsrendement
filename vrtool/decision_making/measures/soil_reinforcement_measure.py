@@ -41,6 +41,7 @@ class SoilReinforcementMeasure(MeasureBase):
             modified_measure: ModifiedDikeGeometryMeasureInput,
         ) -> dict:
             _modified_measure = {}
+            _modified_measure["geometry"] = modified_measure.modified_geometry
             _modified_measure["dcrest"] = modified_measure.d_crest
             _modified_measure["dberm"] = modified_measure.d_berm
             _modified_measure["Cost"] = determine_costs(

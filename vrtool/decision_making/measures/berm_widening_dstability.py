@@ -22,7 +22,7 @@ class BermWideningDStability:
     dstability_wrapper: DStabilityWrapper
 
     def __init__(self, measure_input: dict, dstability_wrapper: DStabilityWrapper):
-        self.geometry = measure_input["Geometry"]
+        self.geometry = measure_input["geometry"]
         self.dberm = measure_input["dberm"]
         self.dcrest = measure_input["dcrest"]
         self.measure_geometry_points = None
