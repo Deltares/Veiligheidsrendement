@@ -1,14 +1,16 @@
 import math
 from pathlib import Path
-from typing import Tuple, Union, Optional
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from geolib.geometry import Point as GeolibPoint
-from geolib.models.dstability.internal import PersistablePoint, PersistableLayer
+from geolib.models.dstability.internal import PersistableLayer, PersistablePoint
 from pandas import DataFrame
-from shapely import LineString, Polygon, unary_union, MultiPolygon, Point
+from shapely import LineString, MultiPolygon, Point, Polygon, unary_union
 
-from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
+    DStabilityWrapper,
+)
 
 
 class BermWideningDStability:
@@ -19,14 +21,12 @@ class BermWideningDStability:
     dcrest: float
     dstability_wrapper: DStabilityWrapper
 
-
     def __init__(self, measure_input: dict, dstability_wrapper: DStabilityWrapper):
-        self.geometry = measure_input['Geometry']
-        self.dberm = measure_input['dberm']
-        self.dcrest = measure_input['dcrest']
+        self.geometry = measure_input["Geometry"]
+        self.dberm = measure_input["dberm"]
+        self.dcrest = measure_input["dcrest"]
         self.measure_geometry_points = None
         self.dstability_wrapper = dstability_wrapper
-
 
     def create_new_dstability_model(self, path_intermediate_stix: Path) -> Path:
         """
@@ -40,16 +40,21 @@ class BermWideningDStability:
         # Get all the polygons from the stix file.
         # It is assumed that all the stages share the same surface line, so we only need to find the filling polygons for
         # the first stage. If False, then this routine must be rerun for every stage.
-        _collection_polygon = [Polygon([(p.X, p.Z) for p in layer.Points]) for layer in
-                               self.dstability_wrapper._dstability_model.datastructure.geometries[0].Layers]
+        _collection_polygon = [
+            Polygon([(p.X, p.Z) for p in layer.Points])
+            for layer in self.dstability_wrapper._dstability_model.datastructure.geometries[
+                0
+            ].Layers
+        ]
         self.measure_geometry_points = self.get_modified_meas_geom(straight_line=False)
-
 
         # 1. Run first routine to find the polygons to fill.
         _fill_polygons = self.find_polygons_to_fill_to_measure(_collection_polygon)
 
         # 2. Run second routine to apply the measure to the dstability model.
-        return self.apply_measure_to_dstability_model(_fill_polygons, path_intermediate_stix)
+        return self.apply_measure_to_dstability_model(
+            _fill_polygons, path_intermediate_stix
+        )
 
     def get_modified_meas_geom(self, straight_line: bool) -> list[Tuple[float, float]]:
         """
@@ -71,29 +76,42 @@ class BermWideningDStability:
 
         # Continue the geometry in the hinterland as a straight line
         if straight_line:
-            self.geometry.loc["BIT_1"] = [100, self.geometry.loc["BIT", "z"]]  # this is horizontal line to hinterland
-            return [(x, z) for x, z in zip(self.geometry["x"].values, self.geometry["z"].values)]
+            self.geometry.loc["BIT_1"] = [
+                100,
+                self.geometry.loc["BIT", "z"],
+            ]  # this is horizontal line to hinterland
+            return [
+                (x, z)
+                for x, z in zip(self.geometry["x"].values, self.geometry["z"].values)
+            ]
 
         else:
             ##extend geometry LEFT SIDE
             start = (self.geometry.loc["BUK", "x"], self.geometry.loc["BUK", "z"])
             end = (self.geometry.loc["BUT", "x"], self.geometry.loc["BUT", "z"])
-            x3, y3 = self.find_extended_end(start, end, 'left', 10)
+            x3, y3 = self.find_extended_end(start, end, "left", 10)
             self.geometry.loc["left"] = [x3, y3]
 
             ##extend geometry RIGHT SIDE
             start = (self.geometry.loc["EBL", "x"], self.geometry.loc["EBL", "z"])
             end = (self.geometry.loc["BIT", "x"], self.geometry.loc["BIT", "z"])
-            x4, y4 = self.find_extended_end(start, end, 'right', 10)
+            x4, y4 = self.find_extended_end(start, end, "right", 10)
             self.geometry.loc["right"] = [x4, y4]
 
             # sort self.geometry by ascending x:
             self.geometry = self.geometry.sort_values(by="x")
-            return [(x, z) for x, z in zip(self.geometry["x"].values, self.geometry["z"].values)]
+            return [
+                (x, z)
+                for x, z in zip(self.geometry["x"].values, self.geometry["z"].values)
+            ]
 
     @staticmethod
-    def find_extended_end(start_point: Tuple[float, float], end_point: Tuple[float, float], side: str,
-                          desired_length: float) -> Tuple[float, float]:
+    def find_extended_end(
+        start_point: Tuple[float, float],
+        end_point: Tuple[float, float],
+        side: str,
+        desired_length: float,
+    ) -> Tuple[float, float]:
         """
         Extend a line with a given length in a given direction.
 
@@ -111,11 +129,13 @@ class BermWideningDStability:
         m = (end_point[1] - start_point[1]) / (end_point[0] - start_point[0])
 
         # Calculate the new endpoint of the extended line
-        new_x = end_point[0] + sign * (desired_length / math.sqrt(1 + m ** 2))
+        new_x = end_point[0] + sign * (desired_length / math.sqrt(1 + m**2))
         new_y = end_point[1] + m * (new_x - end_point[0])
         return new_x, new_y
 
-    def find_polygons_to_fill_to_measure(self, polygons: list[Polygon]) -> list[Polygon]:
+    def find_polygons_to_fill_to_measure(
+        self, polygons: list[Polygon]
+    ) -> list[Polygon]:
         """
         Find all the polygons that fill the gap between the original collection of polygons from a stix file and the new
         line of the top surface from the measure.
@@ -130,8 +150,12 @@ class BermWideningDStability:
         """
         # create two polygons that lie above and below the surface line to + infinity (=30) and - infinity (=-50)
         new_surface_line = LineString(self.measure_geometry_points)
-        polygon_above_surface = Polygon([pt for pt in new_surface_line.coords] + [(100, 30), (-100, 30)])
-        polygon_below_surface = Polygon([pt for pt in new_surface_line.coords] + [(100, -50), (-100, -50)])
+        polygon_above_surface = Polygon(
+            [pt for pt in new_surface_line.coords] + [(100, 30), (-100, 30)]
+        )
+        polygon_below_surface = Polygon(
+            [pt for pt in new_surface_line.coords] + [(100, -50), (-100, -50)]
+        )
 
         # merge all input polygons together
         merged_polygon = unary_union(polygons)
@@ -145,12 +169,17 @@ class BermWideningDStability:
         diff_poly_and_surface = polygon_below_surface.difference(merged_polygon)
 
         # Get the polygons that will fill the gap between the merged polygon and the surface line.
-        filling_polygons = self.get_filling_polygons(diff_poly_and_surface, cropped_polygon_below_surface)
+        filling_polygons = self.get_filling_polygons(
+            diff_poly_and_surface, cropped_polygon_below_surface
+        )
 
         return filling_polygons
 
-    def get_filling_polygons(self, diff_poly_and_surface: Union[MultiPolygon, Polygon],
-                             cropped_polygon_below_surface: Polygon) -> list[Polygon]:
+    def get_filling_polygons(
+        self,
+        diff_poly_and_surface: Union[MultiPolygon, Polygon],
+        cropped_polygon_below_surface: Polygon,
+    ) -> list[Polygon]:
         """
         Get the polygons that need to be filled to the top surface.
 
@@ -166,18 +195,26 @@ class BermWideningDStability:
         keep_poly = []
 
         # Find the intersection between the bounding box and the polygon
-        bbox = self.get_bounding_box(self.measure_geometry_points, cropped_polygon_below_surface)
+        bbox = self.get_bounding_box(
+            self.measure_geometry_points, cropped_polygon_below_surface
+        )
         intersection = diff_poly_and_surface.intersection(bbox)
-        if isinstance(intersection, Polygon):  # if the intersection is a polygon, add it to the list directly
+        if isinstance(
+            intersection, Polygon
+        ):  # if the intersection is a polygon, add it to the list directly
             keep_poly.append(intersection)
         else:
             for intersected_polygon in intersection.geoms:
-                if isinstance(intersected_polygon, Polygon):  # eliminate weird linestrings
+                if isinstance(
+                    intersected_polygon, Polygon
+                ):  # eliminate weird linestrings
                     keep_poly.append(intersected_polygon)
         return keep_poly
 
     @staticmethod
-    def get_bounding_box(top_surface: np.array, cropped_polygon_below_surface: Polygon) -> Polygon:
+    def get_bounding_box(
+        top_surface: np.array, cropped_polygon_below_surface: Polygon
+    ) -> Polygon:
         """
         Get the bounding box of the polygon that is below the top surface line
 
@@ -190,12 +227,17 @@ class BermWideningDStability:
         """
         min_x, min_y, max_x, _ = cropped_polygon_below_surface.bounds
         max_y = max(
-            [p[1] for p in top_surface])  # the max of the bounding box should be the top of the measure geometry
-        bounding_box = Polygon([(min_x, min_y), (min_x, max_y), (max_x, max_y), (max_x, min_y)])
+            [p[1] for p in top_surface]
+        )  # the max of the bounding box should be the top of the measure geometry
+        bounding_box = Polygon(
+            [(min_x, min_y), (min_x, max_y), (max_x, max_y), (max_x, min_y)]
+        )
 
         return bounding_box
 
-    def apply_measure_to_dstability_model(self, fill_polygons: list[Polygon], path_intermediate_stix: Path) -> Path:
+    def apply_measure_to_dstability_model(
+        self, fill_polygons: list[Polygon], path_intermediate_stix: Path
+    ) -> Path:
         """
         Apply the measure to the dstability model and save it to a new stix file.
 
@@ -208,11 +250,11 @@ class BermWideningDStability:
         """
 
         for stage_id in self.dstability_wrapper.get_all_stage_ids():
-            self.modify_geometry(
-                fill_polygons=fill_polygons,
-                stage_id=stage_id)
+            self.modify_geometry(fill_polygons=fill_polygons, stage_id=stage_id)
         _original_name = self.dstability_wrapper.stix_path.stem
-        new_file_name = self.dstability_wrapper.stix_path.with_stem(_original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}").name
+        new_file_name = self.dstability_wrapper.stix_path.with_stem(
+            _original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}"
+        ).name
 
         _export_path = path_intermediate_stix / new_file_name
         self.dstability_wrapper.save_dstability_model(_export_path)
@@ -230,16 +272,20 @@ class BermWideningDStability:
 
         """
 
-        _layers = self.dstability_wrapper._dstability_model.datastructure.geometries[stage_id].Layers
+        _layers = self.dstability_wrapper._dstability_model.datastructure.geometries[
+            stage_id
+        ].Layers
 
         # 1. Loop over all other layers and modify in-place their geometry
         list_all_initial_point = []  # list of all the points in the initial stix
         for layer in _layers:
             poly = Polygon([(round(p.X, 3), round(p.Z, 3)) for p in layer.Points])
-            self.modify_polygon_from_stix(current_polygon=poly,
-                                          geometry_line=self.measure_geometry_points,
-                                          layer=layer,
-                                          list_all_point=list_all_initial_point)
+            self.modify_polygon_from_stix(
+                current_polygon=poly,
+                geometry_line=self.measure_geometry_points,
+                layer=layer,
+                list_all_point=list_all_initial_point,
+            )
 
         list_all_initial_point = list(set([tuple(p) for p in list_all_initial_point]))
 
@@ -250,7 +296,9 @@ class BermWideningDStability:
                 continue
 
             # Consistency check: Fix the coordinates of the filling polygons
-            list_points_to_add = self.fix_coordinates_filling_polygons(fill_polygon, list_all_initial_point)
+            list_points_to_add = self.fix_coordinates_filling_polygons(
+                fill_polygon, list_all_initial_point
+            )
 
             # Consistency check: remove duplicate point from list:
             new_list = []
@@ -265,12 +313,16 @@ class BermWideningDStability:
 
             # add layer to the model, keep the custom function until GEOLIB is updated/debugged
             self.dstability_wrapper._dstability_model.add_layer(
-                points=new_list,
-                soil_code="Dijksmateriaal", stage_id=stage_id)
+                points=new_list, soil_code="Dijksmateriaal", stage_id=stage_id
+            )
 
-    def modify_polygon_from_stix(self, current_polygon: Polygon, geometry_line: list[Tuple[float, float]],
-                                 layer: PersistableLayer,
-                                 list_all_point: Optional[list]):
+    def modify_polygon_from_stix(
+        self,
+        current_polygon: Polygon,
+        geometry_line: list[Tuple[float, float]],
+        layer: PersistableLayer,
+        list_all_point: Optional[list],
+    ):
         """
         Routine to make sure that the modified geometry is valid for D-Stability. It removes duplicate points that are
         too close and add intersections between polygons and the surface line.
@@ -286,11 +338,15 @@ class BermWideningDStability:
             None
         """
         # this creates a new Polygon for the dike that incorporates the intersection points with the surface line.
-        union_surface_dike = self.add_points_from_surface_intersection_to_polygon(initial_polygon=current_polygon,
-                                                                                  geometry_line=geometry_line)
+        union_surface_dike = self.add_points_from_surface_intersection_to_polygon(
+            initial_polygon=current_polygon, geometry_line=geometry_line
+        )
         for obj in union_surface_dike.geoms:
             if isinstance(obj, Polygon):
-                list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in obj.exterior.coords]
+                list_points = [
+                    PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3))
+                    for p in obj.exterior.coords
+                ]
                 list_points.pop()
                 list_points.insert(0, list_points.pop())
 
@@ -299,8 +355,10 @@ class BermWideningDStability:
                 # remove duplicate point from list:
                 for p in list_points:
                     # if p.X == previous_point.X and p.Z == previous_point.Z:
-                    if abs(p.X - previous_point.X) < 0.01 and abs(
-                            p.Z - previous_point.Z) < 0.01:  # This condition is suppose to eliminate points from the dike polygon that are not supposed to exsit, i.e. the points added from the previous unary_union with the new geometry
+                    if (
+                        abs(p.X - previous_point.X) < 0.01
+                        and abs(p.Z - previous_point.Z) < 0.01
+                    ):  # This condition is suppose to eliminate points from the dike polygon that are not supposed to exsit, i.e. the points added from the previous unary_union with the new geometry
                         previous_point = p
                         continue
                     else:
@@ -311,8 +369,9 @@ class BermWideningDStability:
                 layer.Points = new_list
                 list_all_point.extend([[p.X, p.Z] for p in new_list])
 
-    def fix_coordinates_filling_polygons(self, fill_polygon: Polygon, list_all_initial_point: list) -> list[
-        GeolibPoint]:
+    def fix_coordinates_filling_polygons(
+        self, fill_polygon: Polygon, list_all_initial_point: list
+    ) -> list[GeolibPoint]:
         """
         The coordinates of the intersection points between the fill_polygon and the polygon of the original geometry do not
         necessarily match because of very tiny inaccuracies in order of magnitude 1e-3. This leads to an inconsistent
@@ -328,32 +387,43 @@ class BermWideningDStability:
         """
 
         list_points_to_add = []
-        list_geolibpoint_filling = [GeolibPoint(x=round(pp[0], 3), z=round(pp[1], 3), tolerance=0.01) for pp in
-                                    fill_polygon.exterior.coords]
+        list_geolibpoint_filling = [
+            GeolibPoint(x=round(pp[0], 3), z=round(pp[1], 3), tolerance=0.01)
+            for pp in fill_polygon.exterior.coords
+        ]
         for i, geolib_pp in enumerate(list_geolibpoint_filling):
 
             a = False
             for initial_pt in list_all_initial_point:
-                geolib_ppp = GeolibPoint(x=initial_pt[0], z=initial_pt[1], tolerance=0.01)
+                geolib_ppp = GeolibPoint(
+                    x=initial_pt[0], z=initial_pt[1], tolerance=0.01
+                )
 
                 # if geolib_ppp.__eq__(geolib_pp):
-                if abs(geolib_ppp.z - geolib_pp.z) < 0.01 and abs(geolib_ppp.x - geolib_pp.x) < 0.01:
+                if (
+                    abs(geolib_ppp.z - geolib_pp.z) < 0.01
+                    and abs(geolib_ppp.x - geolib_pp.x) < 0.01
+                ):
                     a = True
                     list_points_to_add.append(geolib_ppp)
-                    if geolib_pp.x == -0:  # Consistency check: Eliminate the point with x=-0 which leads to errors
+                    if (
+                        geolib_pp.x == -0
+                    ):  # Consistency check: Eliminate the point with x=-0 which leads to errors
                         continue
                     break
 
             if not a:
-                if geolib_pp.x == -0:  # Consistency check: Eliminate the point with x=-0 which leads to errors
+                if (
+                    geolib_pp.x == -0
+                ):  # Consistency check: Eliminate the point with x=-0 which leads to errors
                     continue
                 list_points_to_add.append(geolib_pp)
         list_points_to_add.pop()
         return list_points_to_add
 
-    def add_points_from_surface_intersection_to_polygon(self, initial_polygon: Polygon,
-                                                        geometry_line: list[Tuple[float, float]]) -> \
-            Union[MultiPolygon, Polygon]:
+    def add_points_from_surface_intersection_to_polygon(
+        self, initial_polygon: Polygon, geometry_line: list[Tuple[float, float]]
+    ) -> Union[MultiPolygon, Polygon]:
         """
         Add points from the intersection of the surface line and the initial polygon to the initial polygon.
         This function is mandatory in order to create a consistent geometry in the DStability model.

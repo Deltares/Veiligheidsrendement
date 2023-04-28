@@ -45,13 +45,14 @@ def _get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
 
     if not _vr_config.output_directory:
         _vr_config.output_directory = _vr_config.input_directory / "results"
-        _vr_config.intermediate_stix_dir = _vr_config.output_directory / "intermediate_stix"
+        _vr_config.intermediate_stix_dir = (
+            _vr_config.output_directory / "intermediate_stix"
+        )
 
     if not _vr_config.output_directory.exists():
         _vr_config.output_directory.mkdir(parents=True)
     if not _vr_config.intermediate_stix_dir.exists():
         _vr_config.intermediate_stix_dir.mkdir(parents=True)
-
 
     return _vr_config
 

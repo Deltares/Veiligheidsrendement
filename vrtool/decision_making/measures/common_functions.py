@@ -8,12 +8,16 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-from vrtool.decision_making.measures.berm_widening_dstability import BermWideningDStability
+from vrtool.decision_making.measures.berm_widening_dstability import (
+    BermWideningDStability,
+)
 from vrtool.failure_mechanisms.overflow.overflow_functions import (
     calculate_overflow_hydra_ring_design,
     calculate_overflow_simple_design,
 )
-from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
+    DStabilityWrapper,
+)
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     calculate_reliability,
     calculate_safety_factor,
@@ -62,17 +66,24 @@ def implement_berm_widening(
     elif mechanism == "StabilityInner":
         # Case where the berm widened through DStability and the stability factors will be recalculated
         if computation_type == "DStability":
-            _dstability_wrapper = DStabilityWrapper(stix_path=Path(berm_input['STIXNAAM']),
-                                                    externals_path=Path(berm_input['DStability_exe_path']))
+            _dstability_wrapper = DStabilityWrapper(
+                stix_path=Path(berm_input["STIXNAAM"]),
+                externals_path=Path(berm_input["DStability_exe_path"]),
+            )
 
-            _dstability_berm_widening = BermWideningDStability(measure_input=measure_input,
-                                                               dstability_wrapper=_dstability_wrapper)
+            _dstability_berm_widening = BermWideningDStability(
+                measure_input=measure_input, dstability_wrapper=_dstability_wrapper
+            )
 
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
             # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
             # model, hence RERUN_STIX set to True.
-            berm_input['STIXNAAM'] = _dstability_berm_widening.create_new_dstability_model(path_intermediate_stix)
-            berm_input['RERUN_STIX'] = True
+            berm_input[
+                "STIXNAAM"
+            ] = _dstability_berm_widening.create_new_dstability_model(
+                path_intermediate_stix
+            )
+            berm_input["RERUN_STIX"] = True
 
             return berm_input
 

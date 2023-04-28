@@ -1,6 +1,6 @@
 from pathlib import Path
-
 from typing import Optional
+
 from geolib import DStabilityModel
 
 
