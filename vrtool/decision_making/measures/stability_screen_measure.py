@@ -1,11 +1,16 @@
 import copy
+<<<<<<< Updated upstream
 import logging
+=======
+from pathlib import Path
+>>>>>>> Stashed changes
 
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     calculate_reliability,
     calculate_safety_factor,
@@ -21,11 +26,19 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 class StabilityScreenMeasure(MeasureBase):
     # type == 'Stability Screen':
     def evaluate_measure(
+<<<<<<< Updated upstream
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
         safety_factor_increase: float = 0.2,
+=======
+            self,
+            dike_section: DikeSection,
+            traject_info: DikeTrajectInfo,
+            preserve_slope: bool = False,
+            SFincrease: float = 0.2,
+>>>>>>> Stashed changes
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
@@ -78,12 +91,14 @@ class StabilityScreenMeasure(MeasureBase):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         safety_factor_increase: float,
+
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
         mechanism_names = (
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
+
         for mechanism_name in mechanism_names:
             calc_type = dike_section.mechanism_data[mechanism_name][1]
             mechanism_reliability_collection = (
@@ -108,6 +123,7 @@ class StabilityScreenMeasure(MeasureBase):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         safety_factor_increase: float,
+
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism_name, calc_type, self.config.T, self.config.t_0, 0
@@ -127,16 +143,20 @@ class StabilityScreenMeasure(MeasureBase):
             mechanism_reliability = mechanism_reliability_collection.Reliability[
                 year_to_calculate
             ]
-            dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+            dike_section_mechanism_reliability = \
+            dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                 mechanism_name
             ).Reliability[
                 year_to_calculate
             ]
             if float(year_to_calculate) >= self.parameters["year"]:
                 if mechanism_name == "StabilityInner":
-                    self._configure_stability_inner(
-                        mechanism_reliability, year_to_calculate, safety_factor_increase
-                    )
+                    if calc_type == "DStability":
+                        self._configure_stability_inner_dstability(mechanism_reliability)
+                    else:
+                        self._configure_stability_inner(
+                            mechanism_reliability, year_to_calculate, safety_factor_increase
+                        )
                 if mechanism_name in ["Piping", "Overflow"]:
                     self._copy_results(
                         mechanism_reliability, dike_section_mechanism_reliability
@@ -150,15 +170,15 @@ class StabilityScreenMeasure(MeasureBase):
         return mechanism_reliability_collection
 
     def _copy_results(
-        self, target: MechanismReliability, source_input: MechanismReliability
+            self, target: MechanismReliability, source_input: MechanismReliability
     ) -> None:
         target.Input = copy.deepcopy(source_input.Input)
 
     def _configure_stability_inner(
-        self,
-        mechanism_reliability: MechanismReliability,
-        year_to_calculate: str,
-        SFincrease: float = 0.2,
+            self,
+            mechanism_reliability: MechanismReliability,
+            year_to_calculate: str,
+            SFincrease: float = 0.2,
     ) -> None:
 
         mechanism_reliability_input = mechanism_reliability.Input.input
@@ -191,3 +211,23 @@ class StabilityScreenMeasure(MeasureBase):
                         SFincrease,
                     )
                 )
+
+    def _configure_stability_inner_dstability(self, mechanism_reliability: MechanismReliability) -> None:
+        mechanism_reliability_input = mechanism_reliability.Input.input
+
+
+
+        print(self.parameters)
+        print(self.measures)
+        depth = self.parameters["depth"]
+
+
+        _dstability_wrapper = DStabilityWrapper(stix_path=Path(mechanism_reliability_input['STIXNAAM']),
+                                                externals_path=Path(mechanism_reliability_input['DStability_exe_path']))
+        _dstability_wrapper.add_stability_screen(depth=depth, location=10) #TODO link location from BIT
+
+        # _dstability_berm_widening = BermWideningDStability(measure_input=measure_input,
+        #                                                    dstability_wrapper=_dstability_wrapper)
+
+
+        pass

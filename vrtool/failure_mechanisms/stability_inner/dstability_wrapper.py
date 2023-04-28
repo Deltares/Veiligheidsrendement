@@ -1,7 +1,9 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from geolib import DStabilityModel
+from geolib.geometry import Point as GeolibPoint
+from geolib.models.dstability.reinforcements import ForbiddenLine
 
 
 class DStabilityWrapper:
@@ -37,7 +39,7 @@ class DStabilityWrapper:
         """
         self._dstability_model.serialize(save_path)
 
-    def get_all_stage_ids(self) -> list[int]:
+    def get_all_stage_ids(self) -> List[int]:
         """Return a list with all the stage ids as integer from the dstability model"""
         return [int(stage.Id) for stage in self._dstability_model.stages]
 
@@ -73,3 +75,16 @@ class DStabilityWrapper:
                 return stage_output.FactorOfSafety
 
         raise ValueError(f"No output found for the provided stage: {stage_id_result}.")
+
+
+    def add_stability_screen(self, depth: float, location: float) -> None:
+        _dstability_model = self._dstability_model
+
+        # The top of the stability screen is hardcoded at 20m to be sure it is above surface level.
+        _start_screen = GeolibPoint(x=location, z=20)
+        _end_screen = GeolibPoint(x=location, z=depth)
+        _stability_screen = ForbiddenLine(_start_screen, _end_screen)
+
+        for id in self.get_all_stage_ids():
+            _dstability_model.add_reinforcement(_stability_screen
+                                                , stage_id=id)
