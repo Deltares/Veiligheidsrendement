@@ -1,5 +1,11 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
 from peewee import CharField, FloatField
+
+from vrtool.orm.models.orm_base_model import (
+    OrmBaseModel,
+    _get_table_name,
+    _max_char_length,
+)
+
 
 class DikeTrajectInfo(OrmBaseModel):
     traject_name = CharField(max_length=_max_char_length)

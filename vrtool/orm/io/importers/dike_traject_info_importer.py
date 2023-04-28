@@ -1,6 +1,7 @@
-from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
+
 
 class DikeTrajectInfoImporter(OrmImporterProtocol):
 

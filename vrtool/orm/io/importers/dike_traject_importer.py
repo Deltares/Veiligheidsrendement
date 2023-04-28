@@ -1,10 +1,11 @@
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
+from vrtool.orm.io.importers.dike_traject_info_importer import DikeTrajectInfoImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.models.section_data import SectionData
-from vrtool.flood_defence_system.dike_traject import DikeTraject
-from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
-from vrtool.orm.io.importers.dike_traject_info_importer import DikeTrajectInfoImporter
+
 
 class DikeTrajectImporter(OrmImporterProtocol):
 

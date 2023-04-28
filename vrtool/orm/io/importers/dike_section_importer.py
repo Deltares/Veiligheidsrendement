@@ -1,8 +1,10 @@
-from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.section_data import SectionData
-from vrtool.orm.models.buildings import Buildings
-from vrtool.flood_defence_system.dike_section import DikeSection
 import pandas as pd
+
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
+from vrtool.orm.models.buildings import Buildings
+from vrtool.orm.models.section_data import SectionData
+
 
 class DikeSectionImporter(OrmImporterProtocol):
 

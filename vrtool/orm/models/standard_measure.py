@@ -1,6 +1,12 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
+from peewee import BooleanField, CharField, FloatField, ForeignKeyField, IntegerField
+
 from vrtool.orm.models.measure import Measure
-from peewee import ForeignKeyField, IntegerField, FloatField, CharField, BooleanField
+from vrtool.orm.models.orm_base_model import (
+    OrmBaseModel,
+    _get_table_name,
+    _max_char_length,
+)
+
 
 class StandardMeasure(OrmBaseModel):
     measure = ForeignKeyField(Measure, backref="standard_measure", unique=True)

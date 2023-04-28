@@ -1,10 +1,13 @@
 from pathlib import Path
+
 from peewee import SqliteDatabase
+
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.orm_db import vrtool_db
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import models as orm
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.orm.orm_db import vrtool_db
+
 
 def initialize_database(database_path: Path) -> SqliteDatabase:
     """

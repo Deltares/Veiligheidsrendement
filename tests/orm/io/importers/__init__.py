@@ -1,7 +1,9 @@
 import pytest
+from peewee import SqliteDatabase
+
 from tests import test_data
 from vrtool.orm.orm_controllers import open_database
-from peewee import SqliteDatabase
+
 
 @pytest.fixture(autouse=False, scope="module")
 def db_fixture():

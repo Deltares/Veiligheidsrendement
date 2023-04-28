@@ -1,10 +1,12 @@
-from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
-from vrtool.orm.models.section_data import SectionData
-from tests.orm.io.importers import db_fixture
-from peewee import SqliteDatabase
 import pandas as pd
+from peewee import SqliteDatabase
+
+from tests.orm.io.importers import db_fixture
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
+from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
+from vrtool.orm.models.section_data import SectionData
+
 
 class TestDikeSectionImporter:
 

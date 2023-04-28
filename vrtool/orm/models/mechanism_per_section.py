@@ -1,7 +1,9 @@
+from peewee import ForeignKeyField
+
+from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from vrtool.orm.models.section_data import SectionData
-from vrtool.orm.models.mechanism import Mechanism
-from peewee import ForeignKeyField
+
 
 class MechanismPerSection(OrmBaseModel):
     section = ForeignKeyField(SectionData, backref="mechanisms_per_section")

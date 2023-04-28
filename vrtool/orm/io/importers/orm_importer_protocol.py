@@ -1,5 +1,7 @@
-from typing import Protocol, Any, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
+
 from vrtool.orm.models.orm_base_model import OrmBaseModel
+
 
 @runtime_checkable
 class OrmImporterProtocol(Protocol):

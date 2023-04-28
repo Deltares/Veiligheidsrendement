@@ -1,7 +1,9 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
+from peewee import FloatField, ForeignKeyField, IntegerField
+
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.mechanism import Mechanism
-from peewee import ForeignKeyField, FloatField, IntegerField
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
+
 
 class CustomMeasure(OrmBaseModel):
     measure = ForeignKeyField(Measure, backref="custom_measures", unique=True)

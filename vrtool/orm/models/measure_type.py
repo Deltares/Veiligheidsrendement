@@ -1,5 +1,7 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from peewee import CharField
+
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
+
 
 class MeasureType(OrmBaseModel):
     """

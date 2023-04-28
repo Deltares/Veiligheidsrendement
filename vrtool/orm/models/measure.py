@@ -1,7 +1,13 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
-from peewee import ForeignKeyField, CharField, IntegerField
-from vrtool.orm.models.measure_type import MeasureType
+from peewee import CharField, ForeignKeyField, IntegerField
+
 from vrtool.orm.models.combinable_type import CombinableType
+from vrtool.orm.models.measure_type import MeasureType
+from vrtool.orm.models.orm_base_model import (
+    OrmBaseModel,
+    _get_table_name,
+    _max_char_length,
+)
+
 
 class Measure(OrmBaseModel):
     """

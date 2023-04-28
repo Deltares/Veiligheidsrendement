@@ -1,6 +1,12 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
-from peewee import CharField, FloatField, BooleanField, ForeignKeyField
+from peewee import BooleanField, CharField, FloatField, ForeignKeyField
+
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.orm_base_model import (
+    OrmBaseModel,
+    _get_table_name,
+    _max_char_length,
+)
+
 
 class SectionData(OrmBaseModel):
     dike_traject = ForeignKeyField(DikeTrajectInfo, backref="dike_sections")

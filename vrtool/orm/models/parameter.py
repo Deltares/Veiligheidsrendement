@@ -1,6 +1,12 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
+from peewee import CharField, FloatField, ForeignKeyField
+
 from vrtool.orm.models.computation_scenario import ComputationScenario
-from peewee import ForeignKeyField, CharField, FloatField
+from vrtool.orm.models.orm_base_model import (
+    OrmBaseModel,
+    _get_table_name,
+    _max_char_length,
+)
+
 
 class Parameter(OrmBaseModel):
     computation_scenario = ForeignKeyField(ComputationScenario, backref="parameters")

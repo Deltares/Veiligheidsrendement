@@ -1,12 +1,18 @@
 import shutil
+
 import pytest
 from peewee import SqliteDatabase
 
-from tests import test_results, test_data
+from tests import test_data, test_results
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
-from vrtool.orm.orm_controllers import initialize_database, open_database, get_dike_traject
 from vrtool.orm.models import *
+from vrtool.orm.orm_controllers import (
+    get_dike_traject,
+    initialize_database,
+    open_database,
+)
+
 
 class DummyModelsData:
 

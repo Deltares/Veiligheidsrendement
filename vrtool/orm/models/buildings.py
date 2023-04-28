@@ -1,6 +1,12 @@
-from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
-from peewee import ForeignKeyField, CharField, IntegerField
+from peewee import CharField, ForeignKeyField, IntegerField
+
+from vrtool.orm.models.orm_base_model import (
+    OrmBaseModel,
+    _get_table_name,
+    _max_char_length,
+)
 from vrtool.orm.models.section_data import SectionData
+
 
 class Buildings(OrmBaseModel):
     section_data = ForeignKeyField(SectionData, backref="buildings_list")

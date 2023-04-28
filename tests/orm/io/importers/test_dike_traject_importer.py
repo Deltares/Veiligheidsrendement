@@ -1,6 +1,7 @@
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 
+
 class TestDikeTrajectInfoImporter:
 
     def test_initialize(self):
