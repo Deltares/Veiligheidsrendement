@@ -1,8 +1,8 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name, _max_char_length
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name, _max_char_length
 from vrtool.orm.models.measure import Measure
 from peewee import ForeignKeyField, IntegerField, FloatField, CharField, BooleanField
 
-class StandardMeasure(BaseModel):
+class StandardMeasure(OrmBaseModel):
     measure = ForeignKeyField(Measure, backref="standard_measure", unique=True)
     max_inward_reinforcement = IntegerField(default=50)
     max_outward_reinforcement = IntegerField(default=0)

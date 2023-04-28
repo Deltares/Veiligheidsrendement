@@ -1,9 +1,9 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name, _max_char_length
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name, _max_char_length
 from peewee import ForeignKeyField, CharField, IntegerField
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.combinable_type import CombinableType
 
-class Measure(BaseModel):
+class Measure(OrmBaseModel):
     """
     This should be defined as an abstract class.
     """

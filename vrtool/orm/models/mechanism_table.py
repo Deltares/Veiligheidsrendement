@@ -1,8 +1,8 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name
 from peewee import IntegerField, ForeignKeyField, FloatField
 from vrtool.orm.models.computation_scenario import ComputationScenario
 
-class MechanismTable(BaseModel):
+class MechanismTable(OrmBaseModel):
     computation_scenario = ForeignKeyField(ComputationScenario, backref="mechanism_tables")
     year = IntegerField(null=False)
     value = FloatField(null=False)

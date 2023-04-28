@@ -1,7 +1,7 @@
-from vrtool.orm.models.base_model import BaseModel, _max_char_length, _get_table_name
+from vrtool.orm.models.base_model import OrmBaseModel, _max_char_length, _get_table_name
 from peewee import CharField
 
-class Mechanism(BaseModel):
+class Mechanism(OrmBaseModel):
     name = CharField(max_length=_max_char_length)
 
     class Meta:

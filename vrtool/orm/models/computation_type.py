@@ -1,7 +1,7 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name, _max_char_length
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name, _max_char_length
 from peewee import CharField
 
-class ComputationType(BaseModel):
+class ComputationType(OrmBaseModel):
     """
     Possible values:
         * Simple

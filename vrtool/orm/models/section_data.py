@@ -1,8 +1,8 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name, _max_char_length
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name, _max_char_length
 from peewee import CharField, FloatField, BooleanField, ForeignKeyField
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 
-class SectionData(BaseModel):
+class SectionData(OrmBaseModel):
     dike_traject = ForeignKeyField(DikeTrajectInfo, backref="dike_sections")
     section_name = CharField(unique=True, max_length=_max_char_length)
     dijkpaal_start = CharField(null=True, max_length=_max_char_length)

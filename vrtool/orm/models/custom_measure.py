@@ -1,9 +1,9 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.mechanism import Mechanism
 from peewee import ForeignKeyField, FloatField, IntegerField
 
-class CustomMeasure(BaseModel):
+class CustomMeasure(OrmBaseModel):
     measure = ForeignKeyField(Measure, backref="custom_measures", unique=True)
     mechanism = ForeignKeyField(Mechanism, backref="measures")
     cost = FloatField(null=False)

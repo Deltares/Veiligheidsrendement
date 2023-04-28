@@ -1,8 +1,8 @@
 from peewee import ForeignKeyField, IntegerField, FloatField
-from vrtool.orm.models.base_model import BaseModel, _get_table_name
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name
 from vrtool.orm.models.section_data import SectionData
 
-class WaterlevelData(BaseModel):
+class WaterlevelData(OrmBaseModel):
     section_data = ForeignKeyField(SectionData, backref="water_level_data_list")
     water_level_location_id = IntegerField(null=False)
     year = IntegerField(null=False)

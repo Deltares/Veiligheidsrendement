@@ -1,8 +1,8 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name, _max_char_length
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name, _max_char_length
 from peewee import ForeignKeyField, CharField, IntegerField
 from vrtool.orm.models.section_data import SectionData
 
-class Buildings(BaseModel):
+class Buildings(OrmBaseModel):
     section_data = ForeignKeyField(SectionData, backref="buildings_list")
 
     distance_from_toe = CharField(null=False, max_length=_max_char_length)

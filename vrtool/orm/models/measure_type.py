@@ -1,7 +1,7 @@
-from vrtool.orm.models.base_model import BaseModel, _get_table_name
+from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name
 from peewee import CharField
 
-class MeasureType(BaseModel):
+class MeasureType(OrmBaseModel):
     """
     Existing types:
         * Soil reinforcement

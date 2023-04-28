@@ -15,6 +15,6 @@ def _get_table_name(qual_name: str) -> str:
 
 _max_char_length = 128
 
-class BaseModel(Model):
+class OrmBaseModel(Model):
     class Meta:
         database = vrtool_db
