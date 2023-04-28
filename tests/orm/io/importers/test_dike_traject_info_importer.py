@@ -6,6 +6,7 @@ from vrtool.orm.io.importers.dike_traject_info_importer import DikeTrajectInfoIm
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as DikeTrajectInfo
 
+import pytest
 
 class TestDikeTrajectInfoImporter:
     def test_initialize(self):
@@ -22,16 +23,15 @@ class TestDikeTrajectInfoImporter:
 
         # 3. Verify final expectations.
         assert isinstance(_dike_traject_info, VrtoolDikeTrajectInfo)
-        assert _dike_traject_info.traject_name == "sth"
-        assert _dike_traject_info.traject_name == 1
-        assert _dike_traject_info.omegaPiping == 2
-        assert _dike_traject_info.omegaStabilityInner == 3
-        assert _dike_traject_info.omegaOverflow == 4
-        assert _dike_traject_info.aPiping == 5
-        assert _dike_traject_info.bPiping == 6
-        assert _dike_traject_info.aStabilityInner == 7
-        assert _dike_traject_info.bStabilityInner == 8
-        assert _dike_traject_info.beta_max == 0
-        assert _dike_traject_info.Pmax == 8
-        assert _dike_traject_info.FloodDamage == 8
-        assert _dike_traject_info.TrajectLength == 6
+        assert _dike_traject_info.traject_name == "16-1"
+        assert _dike_traject_info.omegaPiping == 0.25
+        assert _dike_traject_info.omegaStabilityInner == 0.04
+        assert _dike_traject_info.omegaOverflow == 0.24
+        assert _dike_traject_info.aPiping is None
+        assert _dike_traject_info.bPiping == 300
+        assert _dike_traject_info.aStabilityInner == 0.033
+        assert _dike_traject_info.bStabilityInner == 50
+        assert _dike_traject_info.beta_max == pytest.approx(3.7190164854556804)
+        assert _dike_traject_info.Pmax == 0.0001
+        assert _dike_traject_info.FloodDamage is None
+        assert _dike_traject_info.TrajectLength == 0
