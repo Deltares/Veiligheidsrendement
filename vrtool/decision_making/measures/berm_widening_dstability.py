@@ -31,10 +31,6 @@ class BermWideningDStability:
         Args:
             path_intermediate_stix: path to the intermediate stix file
 
-        Returns:
-            The name of the new modified stix file.
-
-
         """
         # Get all the polygons from the stix file.
         # It is assumed that all the stages share the same surface line, so we only need to find the filling polygons for
