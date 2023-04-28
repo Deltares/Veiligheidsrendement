@@ -8,7 +8,6 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as DikeTrajectIn
 
 
 class TestDikeTrajectInfoImporter:
-
     def test_initialize(self):
         _importer = DikeTrajectInfoImporter()
         assert isinstance(_importer, DikeTrajectInfoImporter)
@@ -24,15 +23,15 @@ class TestDikeTrajectInfoImporter:
         # 3. Verify final expectations.
         assert isinstance(_dike_traject_info, VrtoolDikeTrajectInfo)
         assert _dike_traject_info.traject_name == "sth"
-        assert _dike_traject_info.traject_name==1
-        assert _dike_traject_info.omegaPiping==2
-        assert _dike_traject_info.omegaStabilityInner==3
-        assert _dike_traject_info.omegaOverflow==4
-        assert _dike_traject_info.aPiping==5
-        assert _dike_traject_info.bPiping==6
-        assert _dike_traject_info.aStabilityInner==7
-        assert _dike_traject_info.bStabilityInner==8
-        assert _dike_traject_info.beta_max==0
-        assert _dike_traject_info.Pmax==8
-        assert _dike_traject_info.FloodDamage==8
-        assert _dike_traject_info.TrajectLength==6
+        assert _dike_traject_info.traject_name == 1
+        assert _dike_traject_info.omegaPiping == 2
+        assert _dike_traject_info.omegaStabilityInner == 3
+        assert _dike_traject_info.omegaOverflow == 4
+        assert _dike_traject_info.aPiping == 5
+        assert _dike_traject_info.bPiping == 6
+        assert _dike_traject_info.aStabilityInner == 7
+        assert _dike_traject_info.bStabilityInner == 8
+        assert _dike_traject_info.beta_max == 0
+        assert _dike_traject_info.Pmax == 8
+        assert _dike_traject_info.FloodDamage == 8
+        assert _dike_traject_info.TrajectLength == 6

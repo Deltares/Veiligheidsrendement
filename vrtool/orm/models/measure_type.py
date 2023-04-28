@@ -12,8 +12,8 @@ class MeasureType(OrmBaseModel):
         * Vertical Geotextile
         * Diaphragm wall
     """
+
     name = CharField(unique=True)
 
     class Meta:
         table_name = _get_table_name(__qualname__)
-

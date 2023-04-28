@@ -6,7 +6,9 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class ProfilePoint(OrmBaseModel):
-    profile_point_type = ForeignKeyField(CharacteristicPointType, backref="profile_points")
+    profile_point_type = ForeignKeyField(
+        CharacteristicPointType, backref="profile_points"
+    )
     section_data = ForeignKeyField(SectionData, backref="profile_points")
     x_coordinate = FloatField(null=False)
     y_coordinate = FloatField(null=False)

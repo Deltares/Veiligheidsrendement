@@ -7,10 +7,12 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class DikeSectionImporter(OrmImporterProtocol):
-
     def _import_buildings_list(self, buildings_list: list[Buildings]) -> pd.DataFrame:
-        _buildings_data = [[_building.distance_from_toe, _building.number_of_buildings] for _building in buildings_list]
-        return pd.DataFrame(_buildings_data, columns=['distancefromtoe', 'cumulative'])
+        _buildings_data = [
+            [_building.distance_from_toe, _building.number_of_buildings]
+            for _building in buildings_list
+        ]
+        return pd.DataFrame(_buildings_data, columns=["distancefromtoe", "cumulative"])
 
     def import_orm(self, orm_model: SectionData) -> DikeSection:
         _dike_section = DikeSection()

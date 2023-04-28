@@ -15,7 +15,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
 
     Args:
         database_path (Path): Location where to save the database.
-    
+
     Returns:
         SqliteDatabase: The initialized instance of the database.
     """
@@ -24,24 +24,28 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
 
     vrtool_db.init(database_path)
     vrtool_db.connect()
-    vrtool_db.create_tables([
-        orm.SectionData,
-        orm.Buildings,
-        orm.Mechanism,
-        orm.MechanismPerSection,
-        orm.ComputationType,
-        orm.ComputationScenario,
-        orm.Parameter,
-        orm.MechanismTable,
-        orm.CharacteristicPointType,
-        orm.ProfilePoint,
-        orm.WaterlevelData,
-        orm.MeasureType,
-        orm.CombinableType,
-        orm.Measure,
-        orm.StandardMeasure,
-        orm.CustomMeasure,
-        orm.DikeTrajectInfo])
+    vrtool_db.create_tables(
+        [
+            orm.SectionData,
+            orm.Buildings,
+            orm.Mechanism,
+            orm.MechanismPerSection,
+            orm.ComputationType,
+            orm.ComputationScenario,
+            orm.Parameter,
+            orm.MechanismTable,
+            orm.CharacteristicPointType,
+            orm.ProfilePoint,
+            orm.WaterlevelData,
+            orm.MeasureType,
+            orm.CombinableType,
+            orm.Measure,
+            orm.StandardMeasure,
+            orm.CustomMeasure,
+            orm.DikeTrajectInfo,
+        ]
+    )
+
 
 def open_database(database_path: Path) -> SqliteDatabase:
     """
@@ -57,10 +61,13 @@ def open_database(database_path: Path) -> SqliteDatabase:
     vrtool_db.connect()
     return vrtool_db
 
+
 def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     """
     Returns a dike traject with all the required section data.
     """
     open_database(config.input_database_path)
-    _dike_traject = DikeTrajectImporter().import_orm(orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject))
+    _dike_traject = DikeTrajectImporter().import_orm(
+        orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject)
+    )
     return _dike_traject

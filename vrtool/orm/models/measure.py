@@ -13,6 +13,7 @@ class Measure(OrmBaseModel):
     """
     This should be defined as an abstract class.
     """
+
     measure_type = ForeignKeyField(MeasureType, backref="measures")
     combinable_type = ForeignKeyField(CombinableType, backref="measures")
     name = CharField(max_length=_max_char_length)

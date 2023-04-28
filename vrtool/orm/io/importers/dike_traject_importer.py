@@ -8,8 +8,9 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class DikeTrajectImporter(OrmImporterProtocol):
-
-    def _import_dike_section_list(self, orm_dike_section_list: list[SectionData]) -> list[DikeSection]:
+    def _import_dike_section_list(
+        self, orm_dike_section_list: list[SectionData]
+    ) -> list[DikeSection]:
         _ds_importer = DikeSectionImporter()
         return list(map(_ds_importer.import_orm, orm_dike_section_list))
 
@@ -18,7 +19,9 @@ class DikeTrajectImporter(OrmImporterProtocol):
         _dike_traject.general_info = DikeTrajectInfoImporter().import_orm(orm_model)
 
         # Currently it is assumed that all SectionData present in a db belongs to whatever traject name has been provided.
-        _dike_traject.sections = self._import_dike_section_list(orm_model.dike_sections.select().where(SectionData.in_analysis == True))
+        _dike_traject.sections = self._import_dike_section_list(
+            orm_model.dike_sections.select().where(SectionData.in_analysis == True)
+        )
 
         # _dike_traject.mechanism_names = config.mechanisms
         # _dike_traject.assessment_plot_years = config.assessment_plot_years

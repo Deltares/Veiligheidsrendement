@@ -13,9 +13,10 @@ class CharacteristicPointType(OrmBaseModel):
         * `BIT`,
         * `BUT`,
         * `BUK`,
-        * `BIK`, 
+        * `BIK`,
         * (optionals: `EBL`, `BBL`)
     """
+
     name = CharField(unique=True, max_length=_max_char_length)
 
     class Meta:

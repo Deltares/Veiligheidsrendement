@@ -4,10 +4,11 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajec
 
 
 class DikeTrajectInfoImporter(OrmImporterProtocol):
-
     def import_orm(self, orm_model: OrmDikeTrajectInfo) -> DikeTrajectInfo:
         if not orm_model:
-            raise ValueError(f"No valid value given for {orm_model.DikeTrajectInfo.__name__}.")
+            raise ValueError(
+                f"No valid value given for {orm_model.DikeTrajectInfo.__name__}."
+            )
 
         return DikeTrajectInfo(
             traject_name=orm_model.traject_name,
@@ -21,5 +22,5 @@ class DikeTrajectInfoImporter(OrmImporterProtocol):
             beta_max=orm_model.beta_max,
             Pmax=orm_model.p_max,
             FloodDamage=orm_model.flood_damage,
-            TrajectLength=orm_model.traject_length
+            TrajectLength=orm_model.traject_length,
         )

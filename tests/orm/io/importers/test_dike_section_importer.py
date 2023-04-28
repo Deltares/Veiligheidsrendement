@@ -9,7 +9,6 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class TestDikeSectionImporter:
-
     def test_initialize(self):
         _importer = DikeSectionImporter()
         assert isinstance(_importer, DikeSectionImporter)
@@ -28,4 +27,3 @@ class TestDikeSectionImporter:
         assert isinstance(_dike_section.houses, pd.DataFrame)
         assert isinstance(_dike_section.mechanism_data, dict)
         assert any(_dike_section.mechanism_data.items())
-

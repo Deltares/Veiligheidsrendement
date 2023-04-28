@@ -15,7 +15,9 @@ def _get_table_name(qual_name: str) -> str:
     """
     return qual_name.split(".")[0]
 
+
 _max_char_length = 128
+
 
 class OrmBaseModel(Model):
     class Meta:

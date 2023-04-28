@@ -14,6 +14,8 @@ class ComputationType(OrmBaseModel):
         * HRING
         * SemiProb
     """
+
     name = CharField(unique=True, max_length=_max_char_length)
+
     class Meta:
         table_name = _get_table_name(__qualname__)
