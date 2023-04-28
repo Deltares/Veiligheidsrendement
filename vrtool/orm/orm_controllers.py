@@ -2,7 +2,7 @@ from pathlib import Path
 from peewee import SqliteDatabase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_db import vrtool_db
-from vrtool.orm import orm_models as orm
+from vrtool.orm import models as orm
 from vrtool.orm.orm_converters import import_dike_traject
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 

@@ -1,6 +1,6 @@
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.dike_traject import DikeTraject
-from vrtool.orm import orm_models
+from vrtool.orm import models as orm_models
 from vrtool.flood_defence_system.dike_section import DikeSection
 import pandas as pd
 
