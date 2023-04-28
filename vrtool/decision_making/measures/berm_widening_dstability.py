@@ -211,8 +211,7 @@ class BermWideningDStability:
         _original_name = self.dstability_wrapper.stix_path.stem
         new_file_name = self.dstability_wrapper.stix_path.with_stem(_original_name + f"_dberm={self.dberm}_dcrest={self.dcrest}").name
 
-        self.dstability_wrapper.save_dstability_model(new_filename=new_filename,
-                                                      save_path=path_intermediate_stix)
+        self.dstability_wrapper.save_dstability_model(path_intermediate_stix / new_file_name)
 
         return new_filename
 
