@@ -28,7 +28,8 @@ from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 _acceptance_test_cases = [
     pytest.param("integrated_SAFE_16-3_small", "16-3"),
     pytest.param("TestCase1_38-1_no_housing", "38-1"),
-    pytest.param("TestCase2_38-1_overflow_no_housing", "38-1"),
+    pytest.param("TestCase2_38-1_overflow_no_housing", "38-1",),
+    pytest.param("TestCase1_38-1_no_housing_DStability_small", "38-1"),
 ]
 
 
@@ -132,6 +133,7 @@ class TestAcceptance:
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
+        print(_test_config.output_directory)
         _test_config.traject = traject
         _test_traject = DikeTraject(_test_config)
 
