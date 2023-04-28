@@ -98,7 +98,7 @@ class TestOrmControllers:
         assert _section_data.cover_layer_thickness == _expected_data["cover_layer_thickness"]
         assert _section_data.pleistocene_level == _expected_data["pleistocene_level"]
 
-    def test_get_dike_traject(self):
+    def test_import_dike_traject(self):
         # 1. Define test data.
         _db_file = test_data / "test_db" / "vrtool_db.db"
         assert _db_file.is_file()

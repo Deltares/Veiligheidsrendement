@@ -3,7 +3,7 @@ from peewee import SqliteDatabase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.orm import models as orm
-from vrtool.orm.orm_converters import import_dike_traject
+from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 def initialize_database(database_path: Path) -> SqliteDatabase:
@@ -59,5 +59,5 @@ def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     Returns a dike traject with all the required section data.
     """
     open_database(config.input_database_path)
-    _dike_traject = import_dike_traject(orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject))
+    _dike_traject = DikeTrajectImporter().import_orm(orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject))
     return _dike_traject
