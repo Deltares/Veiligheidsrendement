@@ -1,4 +1,4 @@
-from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from peewee import IntegerField, ForeignKeyField, FloatField
 from vrtool.orm.models.computation_scenario import ComputationScenario
 

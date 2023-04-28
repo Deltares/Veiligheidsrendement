@@ -1,4 +1,4 @@
-from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from peewee import ForeignKeyField, FloatField
 from vrtool.orm.models.characteristic_point_type import CharacteristicPointType, SectionData
 

@@ -1,5 +1,5 @@
 from typing import Protocol
-from vrtool.orm.models.base_model import OrmBaseModel
+from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 class OrmImporterProtocol(Protocol):
 

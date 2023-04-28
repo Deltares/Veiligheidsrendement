@@ -1,5 +1,5 @@
 from peewee import ForeignKeyField, IntegerField, FloatField
-from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from vrtool.orm.models.section_data import SectionData
 
 class WaterlevelData(OrmBaseModel):

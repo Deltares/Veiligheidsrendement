@@ -1,4 +1,4 @@
-from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name, _max_char_length
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
 from peewee import ForeignKeyField, CharField, FloatField
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.computation_type import ComputationType

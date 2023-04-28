@@ -1,4 +1,4 @@
-from vrtool.orm.models.base_model import OrmBaseModel, _get_table_name, _max_char_length
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max_char_length
 from vrtool.orm.models.measure import Measure
 from peewee import ForeignKeyField, IntegerField, FloatField, CharField, BooleanField
 
