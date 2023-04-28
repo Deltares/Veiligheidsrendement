@@ -1,4 +1,6 @@
 import copy
+import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -6,13 +8,11 @@ import pandas as pd
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
-
-import logging
 
 
 class CustomMeasure(MeasureBase):
@@ -57,7 +57,9 @@ class CustomMeasure(MeasureBase):
         self.parameters["L_added"] = base_data["verlenging kwelweg"]
         self.measures["Cost"] = base_data["cost"].values[0]
 
-    def _get_h_crest_new(self, section: DikeSection, base_data: pd.DataFrame) -> float:
+    def _get_h_crest_new(
+        self, section: DikeSection, base_data: pd.DataFrame
+    ) -> Optional[float]:
         overflow_reliability_collection = section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
             "Overflow"
         )
@@ -142,7 +144,7 @@ class CustomMeasure(MeasureBase):
                     self._configure_other(mechanism_reliability, mechanism_name)
 
         mechanism_reliability_collection.generate_LCR_profile(
-            dike_section.section_reliability.Load,
+            dike_section.section_reliability.load,
             traject_info=traject_info,
         )
 

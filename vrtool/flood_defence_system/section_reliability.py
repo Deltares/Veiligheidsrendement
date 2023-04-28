@@ -2,15 +2,16 @@ import numpy as np
 import pandas as pd
 
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
-from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+
 
 # Class describing safety assessments of a section:
 class SectionReliability:
-    Load: LoadInput
+    load: LoadInput
     failure_mechanisms: FailureMechanismCollection
 
     def __init__(self) -> None:
@@ -38,23 +39,20 @@ class SectionReliability:
                     pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
                         str(trange[j])
                     ].Pf
-                elif mechanism_name == "StabilityInner":
+                elif mechanism_name in ["StabilityInner", "Piping"]:
                     pf = mechanism_collection.Reliability[str(trange[j])].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1
+                    # For StabilityInner:
                     # N = length/TrajectInfo['bStabilityInner']
                     # N = TrajectInfo['aStabilityInner']*length/TrajectInfo['bStabilityInner']
-
-                    # pf_mechanisms_time[count,j] = min(1 - (1 - pf) ** N,1./100)
-                    pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N, 1.0 / 2)
-
-                elif mechanism_name == "Piping":
-                    pf = mechanism_collection.Reliability[str(trange[j])].Pf
-                    # underneath one can choose whether to upscale within sections or not:
-                    N = 1
+                    #
+                    # For Piping:
                     # N = length/TrajectInfo['bPiping']
                     # N = TrajectInfo['aPiping'] * length / TrajectInfo['bPiping']
                     # pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N,1./100)
+
+                    # pf_mechanisms_time[count,j] = min(1 - (1 - pf) ** N,1./100)
                     pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N, 1.0 / 2)
             count += 1
 

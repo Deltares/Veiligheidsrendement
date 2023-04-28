@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import pandas as pd
 from dataclasses import dataclass
+
+import pandas as pd
 
 
 @dataclass
@@ -14,7 +15,3 @@ class ModifiedDikeGeometryMeasureInput:
     d_house: float
     d_berm: float
     d_crest: float
-
-    @classmethod
-    def from_dictionary(cls, dict: dict) -> ModifiedDikeGeometryMeasureInput:
-        return cls(**dict)

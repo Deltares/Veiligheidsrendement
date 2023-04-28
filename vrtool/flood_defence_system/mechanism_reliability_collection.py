@@ -51,9 +51,7 @@ class MechanismReliabilityCollection:
                     mechanism, computation_type, self.t_0
                 )
 
-    def generate_LCR_profile(
-        self, load: LoadInput, traject_info: DikeTrajectInfo
-    ):
+    def generate_LCR_profile(self, load: LoadInput, traject_info: DikeTrajectInfo):
         """Generates the LCR profile.
 
         Args:
@@ -99,7 +97,7 @@ class MechanismReliabilityCollection:
                     )
             else:
                 y.append(self.Reliability[i].Pf) if type == "pf" else y.append(
-                    self.Reliability[i].beta
+                    self.Reliability[i].Beta
                 )
 
         plt.plot(t, y, label=mechanism)

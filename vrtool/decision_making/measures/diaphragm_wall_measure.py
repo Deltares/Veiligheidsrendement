@@ -9,10 +9,10 @@ from vrtool.decision_making.measures.common_functions import (
 )
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
@@ -94,7 +94,7 @@ class DiaphragmWallMeasure(MeasureBase):
                     self._configure_piping_or_stability_inner(mechanism_reliability)
 
         mechanism_reliability_collection.generate_LCR_profile(
-            dike_section.section_reliability.Load,
+            dike_section.section_reliability.load,
             traject_info=traject_info,
         )
 

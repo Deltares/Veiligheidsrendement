@@ -25,7 +25,7 @@ class TestModifiedDikeGeometryOutput:
         }
 
         # Call
-        output = ModifiedDikeGeometryMeasureInput.from_dictionary(measure_input)
+        output = ModifiedDikeGeometryMeasureInput(**measure_input)
 
         # Assert
         assert output.modified_geometry is new_geometry
