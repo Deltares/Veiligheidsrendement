@@ -57,8 +57,10 @@ class RunMeasures(VrToolRunProtocol):
         _results_measures = ResultsMeasures()
         _results_measures.vr_config = self.vr_config
         _results_measures.selected_traject = self.selected_traject
+
         if self.vr_config.reuse_output:
             _results_measures.load_results()
+
         else:
             _results_measures.solutions_dict.update(
                 dict(map(self._get_section_solution, self.selected_traject.sections))
