@@ -42,9 +42,7 @@ class BermWideningDStability:
         _fill_polygons = self.find_polygons_to_fill_to_measure(_collection_polygon)
 
         # 2. Run second routine to apply the measure to the dstability model.
-        _new_stix_name = self.apply_measure_to_dstability(_fill_polygons, path_intermediate_stix)
-
-        return path_intermediate_stix / _new_stix_name
+        return self.apply_measure_to_dstability_model(_fill_polygons, path_intermediate_stix)
 
     def get_modified_meas_geom(self, straight_line: bool) -> list[Tuple[float, float]]:
         """
