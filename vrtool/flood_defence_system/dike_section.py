@@ -120,12 +120,11 @@ class DikeSection:
             t_0 (float): The initial year.
         """
         self.section_reliability = SectionReliability()
-        self.section_reliability.Load = self._get_load_input(input_path)
+        self.section_reliability.load = self._get_load_input(input_path)
+
         # Then the input for all the mechanisms:
         for mechanism_name in mechanism_names:
-            self.section_reliability.Mechanisms[
-                mechanism_name
-            ] = self._get_mechanism_collection(
+            reliability_collection = self._get_mechanism_reliability_collection(
                 input_path.joinpath(mechanism_name),
                 input_path.joinpath("Stix"),
                 externals_path,
@@ -133,7 +132,11 @@ class DikeSection:
                 self.mechanism_data[mechanism_name],
                 t_value,
                 t_0,
-                self.section_reliability.Load.load_type,
+                self.section_reliability.load.load_type,
+            )
+
+            self.section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
+                reliability_collection
             )
 
     def _get_load_input(self, input_path: Path) -> LoadInput:
@@ -154,7 +157,7 @@ class DikeSection:
             )
         return _load
 
-    def _get_mechanism_collection(
+    def _get_mechanism_reliability_collection(
         self,
         mechanism_path: Path,
         stix_path: Path,
