@@ -4,9 +4,11 @@ This module focuses on mapping the input database tables (in SQLite) to an objec
 
 ## Module structure.
 
-* Readers: The classes responsible to read one or many tables from a database and trigger the corresponding mappings to `vrtool` objects.
-* Writers: The classes responsible to write in one or many tables of a database with the current status of our `vrtool` objects.
-* Classes: `Python` objects representing the database entities and their relationships.
+* Importers: The classes responsible to read one or many tables from a database and trigger the corresponding mappings to `vrtool` objects. They are located in the `vrtool.orm.importers` module.
+* Exporters: The classes responsible to write in one or many tables of a database with the current status of our `vrtool` objects. They are located in the `vrtool.orm.exporters` module.
+* Models: `Python` objects representing the database entities and their relationships. They are located in the `vrtool.orm.models` module.
+* Controllers: A series of endpoints to trigger different actions related to read or write from / to the database. For now located in the `vrtool.orm.orm_controllers.py` file.
+* `orm_db.py`. File containing the simple definition of the current (`SQLite` database).
 
 ## Database integration.
 To achieve a correct integration with / from the database, we will be using the `peewee` library, which is MIT licensed. You may find more about it in the [peewee GitHub repo](https://github.com/coleifer/peewee).
