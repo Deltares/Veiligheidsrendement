@@ -23,7 +23,7 @@ class BermWideningDStability:
     measure_geometry_points: list[Point]
 
 
-    def create_new_dstability_model(self, path_intermediate_stix: Path) -> str:
+    def create_dstability_model(self, path_intermediate_stix: Path):
         """
         Find the new geometry of the dstability model to account for the berm widening measure and create a new stix
         stix file accordingly.
