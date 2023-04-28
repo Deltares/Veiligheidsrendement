@@ -209,9 +209,9 @@ class BermWideningDStability:
         _original_name = self._dstability_wrapper.stix_path.stem
         new_file_name = self._dstability_wrapper.stix_path.with_stem(_original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}").name
 
-        self._dstability_wrapper.save_dstability_model(path_intermediate_stix / new_file_name)
-
-        return new_file_name
+        _export_path = path_intermediate_stix / new_file_name
+        self._dstability_wrapper.save_dstability_model(_export_path )
+        return _export_path
 
     def modify_geometry(self, fill_polygons: list[Polygon], stage_id: int):
         """
