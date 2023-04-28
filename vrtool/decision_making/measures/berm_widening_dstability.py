@@ -20,14 +20,7 @@ class BermWideningDStability:
         self.dstability_wrapper = dstability_wrapper
         self._dstability_model = dstability_wrapper.get_dstability_model
 
-    @property
-    def measure_geometry_points(self):
-        return self._measure_geometry_points
-
-    # write a setter for the measure_geometry_points
-    @measure_geometry_points.setter
-    def measure_geometry_points(self, value):
-        self._measure_geometry_points = value
+    measure_geometry_points: list[Point]
 
 
     def create_new_dstability_model(self, path_intermediate_stix: Path) -> str:
