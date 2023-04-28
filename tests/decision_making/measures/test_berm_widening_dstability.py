@@ -1,7 +1,6 @@
 import filecmp
 import shutil
 from pathlib import Path
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -12,7 +11,7 @@ from tests import test_data, test_results, test_externals
 from vrtool.decision_making.measures.berm_widening_dstability import BermWideningDStability
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
 
-_MEASURE_INPUT = {"Geometry": pd.DataFrame.from_dict(
+_measure_input_test = {"Geometry": pd.DataFrame.from_dict(
     {'x': {'BUT': -17.0, 'BUK': 0.0, 'BIK': 3.5, 'BBL': 25.0, 'EBL': 42.0, 'BIT': 47.0, 'BIT_0': 47.0, 'EXT': 3.5},
      'z': {'BUT': 4.996, 'BUK': 10.51, 'BIK': 10.51, 'BBL': 6.491, 'EBL': 5.694, 'BIT': 5.104, 'BIT_0': 5.104,
            'EXT': 4.996}}
@@ -26,9 +25,8 @@ class TestBermWideningDStability:
         _path_test_stix = (
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
-        _measure_input = _MEASURE_INPUT
-        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=Path())
-        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input,
+        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=test_externals)
+        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input_test,
                                                            dstability_wrapper=_dstability_wrapper,
                                                            )
 
@@ -40,9 +38,9 @@ class TestBermWideningDStability:
         if not path_intermediate_stix.exists():
             path_intermediate_stix.mkdir(parents=True)
 
-        name_stix = _berm_widening_dstability.create_new_dstability_model(path_intermediate_stix)
-        assert isinstance(name_stix, str)
-        assert name_stix == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_dberm=0_dcrest=0.stix"
+        path_new_stix = _berm_widening_dstability.create_new_dstability_model(path_intermediate_stix)
+        assert isinstance(path_new_stix, Path)
+        assert path_new_stix.parts[-1] == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_dberm_0_dcrest_0.stix"
 
     @pytest.mark.externals
     @pytest.mark.slow
@@ -55,9 +53,8 @@ class TestBermWideningDStability:
         _path_test_stix = (
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
-        _measure_input = _MEASURE_INPUT
         _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=test_externals)
-        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input,
+        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input_test,
                                                            dstability_wrapper=_dstability_wrapper,
                                                            )
 
@@ -98,9 +95,8 @@ class TestBermWideningDStability:
         _path_test_stix = (
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
-        _measure_input = _MEASURE_INPUT
-        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=Path())
-        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input,
+        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=test_externals)
+        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input_test,
                                                            dstability_wrapper=_dstability_wrapper,
                                                            )
 
@@ -111,7 +107,7 @@ class TestBermWideningDStability:
         filling_polygons = _berm_widening_dstability.find_polygons_to_fill_to_measure(_list_polygons)
 
         # Assert
-        assert isinstance(filling_polygons, List)
+        assert isinstance(filling_polygons, list)
         assert len(filling_polygons) == 1
         assert isinstance(filling_polygons[0], Polygon)
         assert filling_polygons[0] == Polygon([[1, 1], [2, 2], [2, 1], [1, 1]])
@@ -121,9 +117,8 @@ class TestBermWideningDStability:
         _path_test_stix = (
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
-        _measure_input = _MEASURE_INPUT
-        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=Path())
-        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input,
+        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=test_externals)
+        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input_test,
                                                            dstability_wrapper=_dstability_wrapper,
                                                            )
 
@@ -134,7 +129,7 @@ class TestBermWideningDStability:
         filling_polygons = _berm_widening_dstability.find_polygons_to_fill_to_measure(_list_polygons)
 
         # Assert
-        assert isinstance(filling_polygons, List)
+        assert isinstance(filling_polygons, list)
         assert len(filling_polygons) == 2
         assert isinstance(filling_polygons[0], Polygon)
         assert filling_polygons[0] == Polygon([[0, 1], [0, 2], [0.5, 1], [0, 1]])
@@ -144,16 +139,14 @@ class TestBermWideningDStability:
         _path_test_stix = (
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
-        _measure_input = _MEASURE_INPUT
-        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=Path())
-        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input,
+        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=test_externals)
+        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input_test,
                                                            dstability_wrapper=_dstability_wrapper,
                                                            )
         # Call
         measure_geometry_points = _berm_widening_dstability.get_modified_meas_geom(straight_line=True)
 
         # Assert
-        assert isinstance(measure_geometry_points, List)
         assert measure_geometry_points == [(-17.0, 4.996), (0.0, 10.51), (3.5, 10.51), (25.0, 6.491), (42.0, 5.694),
                                            (47.0, 5.104), (100.0, 5.104)]
 
@@ -162,16 +155,14 @@ class TestBermWideningDStability:
         _path_test_stix = (
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
-        _measure_input = _MEASURE_INPUT
-        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=Path())
-        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input,
+        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=test_externals)
+        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input_test,
                                                            dstability_wrapper=_dstability_wrapper,
                                                            )
         # Call
         measure_geometry_points = _berm_widening_dstability.get_modified_meas_geom(straight_line=False)
 
         # Assert
-        assert isinstance(measure_geometry_points, List)
         np.testing.assert_almost_equal(measure_geometry_points,
                                               [(-26.512148305110998, 1.9107067203304688), (-17.0, 4.996), (0.0, 10.51),
                                                (3.5, 10.51), (25.0, 6.491), (42.0, 5.694), (47.0, 5.104),
@@ -183,7 +174,7 @@ class TestBermWideningDStability:
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
 
-        _dstability_wrapper = DStabilityWrapper(_path_test_stix, Path())
+        _dstability_wrapper = DStabilityWrapper(_path_test_stix, test_externals)
         _measure_input = {'Geometry': None, 'dcrest': 0, 'dberm': 0}
         _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input,
                                                            dstability_wrapper=_dstability_wrapper,

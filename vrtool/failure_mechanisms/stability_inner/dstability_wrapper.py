@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from typing import Optional, List
+from typing import Optional
 from geolib import DStabilityModel
 
 
@@ -13,9 +13,10 @@ class DStabilityWrapper:
         if not externals_path:
             raise ValueError("Missing argument value externals_path.")
 
+        self.stix_path = stix_path
         self.stix_name = stix_path.parts[-1]
         self._dstability_model = DStabilityModel()
-        self._dstability_model.parse(stix_path)
+        self._dstability_model.parse(self.stix_path)
         # We only need to provide where the "DStabilityConsole" directory is.
         # https://deltares.github.io/GEOLib/latest/user/setup.html
         self._dstability_model.meta.console_folder = externals_path
@@ -35,9 +36,9 @@ class DStabilityWrapper:
         Returns:
             None
         """
-        self._dstability_model.serialize(save_path.joinpath(new_filename))
+        self._dstability_model.serialize(save_path)
 
-    def get_all_stage_ids(self) -> List[int]:
+    def get_all_stage_ids(self) -> list[int]:
         """Return a list with all the stage ids as integer from the dstability model"""
         return [int(stage.Id) for stage in self._dstability_model.stages]
 

@@ -1,29 +1,27 @@
 import math
 from pathlib import Path
-from typing import List, Tuple, Union, Dict, Optional
+from typing import Tuple, Union, Optional
 
 import numpy as np
-import pandas as pd
 from geolib.geometry import Point as GeolibPoint
 from geolib.models.dstability.internal import PersistablePoint, PersistableLayer
-from shapely import LineString, Polygon, unary_union, MultiPolygon
+from shapely import LineString, Polygon, unary_union, MultiPolygon, Point
 
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
 
 
 class BermWideningDStability:
-    def __init__(self, measure_input: Dict, dstability_wrapper: DStabilityWrapper):
+    def __init__(self, measure_input: dict, dstability_wrapper: DStabilityWrapper):
         self.geometry = measure_input['Geometry']
         self.dberm = measure_input['dberm']
         self.dcrest = measure_input['dcrest']
         self._measure_geometry_points = None
-        self.dstability_wrapper = dstability_wrapper
-        self._dstability_model = dstability_wrapper.get_dstability_model
+        self._dstability_wrapper = dstability_wrapper
 
-    measure_geometry_points: list[Point]
+    measure_geometry_points: list
 
 
-    def create_dstability_model(self, path_intermediate_stix: Path):
+    def create_new_dstability_model(self, path_intermediate_stix: Path) -> Path:
         """
         Find the new geometry of the dstability model to account for the berm widening measure and create a new stix
         stix file accordingly.
@@ -36,7 +34,7 @@ class BermWideningDStability:
         # It is assumed that all the stages share the same surface line, so we only need to find the filling polygons for
         # the first stage. If False, then this routine must be rerun for every stage.
         _collection_polygon = [Polygon([(p.X, p.Z) for p in layer.Points]) for layer in
-                               self._dstability_model.datastructure.geometries[0].Layers]
+                               self._dstability_wrapper._dstability_model.datastructure.geometries[0].Layers]
         self.measure_geometry_points = self.get_modified_meas_geom(straight_line=False)
 
 
@@ -46,9 +44,9 @@ class BermWideningDStability:
         # 2. Run second routine to apply the measure to the dstability model.
         _new_stix_name = self.apply_measure_to_dstability(_fill_polygons, path_intermediate_stix)
 
-        return _new_stix_name
+        return path_intermediate_stix / _new_stix_name
 
-    def get_modified_meas_geom(self, straight_line: bool) -> List[Tuple[float, float]]:
+    def get_modified_meas_geom(self, straight_line: bool) -> list[Tuple[float, float]]:
         """
         Adapt and modify the geometry of the soil measure and return the surface line as a list of points.
         The geometry is either extended to the hinterland as a straight line or it is extended in the direction of the
@@ -112,7 +110,7 @@ class BermWideningDStability:
         new_y = end_point[1] + m * (new_x - end_point[0])
         return new_x, new_y
 
-    def find_polygons_to_fill_to_measure(self, polygons: List[Polygon]) -> List[Polygon]:
+    def find_polygons_to_fill_to_measure(self, polygons: list[Polygon]) -> list[Polygon]:
         """
         Find all the polygons that fill the gap between the original collection of polygons from a stix file and the new
         line of the top surface from the measure.
@@ -147,7 +145,7 @@ class BermWideningDStability:
         return filling_polygons
 
     def get_filling_polygons(self, diff_poly_and_surface: Union[MultiPolygon, Polygon],
-                             cropped_polygon_below_surface: Polygon) -> List[Polygon]:
+                             cropped_polygon_below_surface: Polygon) -> list[Polygon]:
         """
         Get the polygons that need to be filled to the top surface.
 
@@ -192,7 +190,7 @@ class BermWideningDStability:
 
         return bounding_box
 
-    def apply_measure_to_dstability(self, fill_polygons: List[Polygon], path_intermediate_stix: Path) -> str:
+    def apply_measure_to_dstability(self, fill_polygons: list[Polygon], path_intermediate_stix: Path) -> str:
         """
         Apply the measure to the dstability model and save it to a new stix file.
 
@@ -201,21 +199,21 @@ class BermWideningDStability:
             path_intermediate_stix: The path where the intermediate stix files are saved
 
         Returns:
-            The name of the new stix file
+            The Path of the new stix file
         """
 
-        for stage_id in self.dstability_wrapper.get_all_stage_ids():
+        for stage_id in self._dstability_wrapper.get_all_stage_ids():
             self.modify_geometry(
                 fill_polygons=fill_polygons,
                 stage_id=stage_id)
-        _original_name = self.dstability_wrapper.stix_path.stem
-        new_file_name = self.dstability_wrapper.stix_path.with_stem(_original_name + f"_dberm={self.dberm}_dcrest={self.dcrest}").name
+        _original_name = self._dstability_wrapper.stix_path.stem
+        new_file_name = self._dstability_wrapper.stix_path.with_stem(_original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}").name
 
-        self.dstability_wrapper.save_dstability_model(path_intermediate_stix / new_file_name)
+        self._dstability_wrapper.save_dstability_model(path_intermediate_stix / new_file_name)
 
-        return new_filename
+        return new_file_name
 
-    def modify_geometry(self, fill_polygons: List[Polygon], stage_id: int):
+    def modify_geometry(self, fill_polygons: list[Polygon], stage_id: int):
         """
         Modify in place the geometry of the dstability model for a given stage adding the filling polygons.
         The excess parts of the initial geometry above the surface line are NOT removed.
@@ -227,7 +225,7 @@ class BermWideningDStability:
 
         """
 
-        _layers = self._dstability_model.datastructure.geometries[stage_id].Layers
+        _layers = self._dstability_wrapper._dstability_model.datastructure.geometries[stage_id].Layers
 
         # 1. Loop over all other layers and modify in-place their geometry
         list_all_initial_point = []  # list of all the points in the initial stix
@@ -261,13 +259,13 @@ class BermWideningDStability:
                     previous_point = p
 
             # add layer to the model, keep the custom function until GEOLIB is updated/debugged
-            self._dstability_model.add_layer(
+            self._dstability_wrapper._dstability_model.add_layer(
                 points=new_list,
                 soil_code="Dijksmateriaal", stage_id=stage_id)
 
-    def modify_polygon_from_stix(self, current_polygon: Polygon, geometry_line: List[Tuple[float, float]],
+    def modify_polygon_from_stix(self, current_polygon: Polygon, geometry_line: list[Tuple[float, float]],
                                  layer: PersistableLayer,
-                                 list_all_point: Optional[List]):
+                                 list_all_point: Optional[list]):
         """
         Routine to make sure that the modified geometry is valid for D-Stability. It removes duplicate points that are
         too close and add intersections between polygons and the surface line.
@@ -309,7 +307,7 @@ class BermWideningDStability:
                 layer.Points = new_list
                 list_all_point.extend([[p.X, p.Z] for p in new_list])
 
-    def fix_coordinates_filling_polygons(self, fill_polygon: Polygon, list_all_initial_point: List) -> List[
+    def fix_coordinates_filling_polygons(self, fill_polygon: Polygon, list_all_initial_point: list) -> list[
         GeolibPoint]:
         """
         The coordinates of the intersection points between the fill_polygon and the polygon of the original geometry do not
@@ -350,7 +348,7 @@ class BermWideningDStability:
         return list_points_to_add
 
     def add_points_from_surface_intersection_to_polygon(self, initial_polygon: Polygon,
-                                                        geometry_line: List[Tuple[float, float]]) -> \
+                                                        geometry_line: list[Tuple[float, float]]) -> \
             Union[MultiPolygon, Polygon]:
         """
         Add points from the intersection of the surface line and the initial polygon to the initial polygon.
