@@ -6,7 +6,7 @@ from tests import test_results, test_data
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import initialize_database, open_database, get_dike_traject
-from vrtool.orm.orm_models import *
+from vrtool.orm.models import *
 
 class DummyModelsData:
 
