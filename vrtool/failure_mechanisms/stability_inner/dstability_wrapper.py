@@ -65,7 +65,7 @@ class DStabilityWrapper:
 
         if _result_id is None:
             raise ValueError(
-                f"The requested stage id {_result_id} does not have saved results in the provided stix {self.stix_name}, please rerun DStability"
+                f"The requested stage id {_result_id} does not have saved results in the provided stix {self.stix_path.stem}, please rerun DStability"
             )
 
         for stage_output in self._dstability_model.output:
