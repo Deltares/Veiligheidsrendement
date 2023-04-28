@@ -8,9 +8,15 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
+from vrtool.decision_making.measures.berm_widening_dstability import (
+    BermWideningDStability,
+)
 from vrtool.failure_mechanisms.overflow.overflow_functions import (
     calculate_overflow_hydra_ring_design,
     calculate_overflow_simple_design,
+)
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
+    DStabilityWrapper,
 )
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     calculate_reliability,
@@ -19,13 +25,30 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
 
 
 def implement_berm_widening(
-    input,
+    berm_input,
     measure_input,
     measure_parameters,
     mechanism,
     computation_type,
+    path_intermediate_stix: Path,
     SFincrease=0.2,
 ):
+    """
+
+    Args:
+        berm_input (dict): input dictionary of the mechanism
+        measure_input (dict): input dictionary of the measure
+        measure_parameters (dict): parameters dictionary of the measure
+        mechanism (str): name of the mechanism, one of ['Piping', 'Overflow', 'StabilityInner']
+        computation_type (str): type of computation for the mechanism
+        path_intermediate_stix (Path): path to the intermediate stix files
+        SFincrease (float): increase in safety factor
+
+    Returns:
+        dict: input dictionary of the mechanism with the berm widened
+
+    """
+
     def calculate_stability_inner_reliability_with_safety_screen(
         reliability: np.ndarray,
     ):
@@ -39,59 +62,82 @@ def implement_berm_widening(
 
     # this function implements a berm widening based on the relevant inputs
     if mechanism == "Overflow":
-        input["h_crest"] = input["h_crest"] + measure_input["dcrest"]
+        berm_input["h_crest"] = berm_input["h_crest"] + measure_input["dcrest"]
     elif mechanism == "StabilityInner":
+        # Case where the berm widened through DStability and the stability factors will be recalculated
+        if computation_type == "DStability":
+            _dstability_wrapper = DStabilityWrapper(
+                stix_path=Path(berm_input["STIXNAAM"]),
+                externals_path=Path(berm_input["DStability_exe_path"]),
+            )
+
+            _dstability_berm_widening = BermWideningDStability(
+                measure_input=measure_input, dstability_wrapper=_dstability_wrapper
+            )
+
+            #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
+            # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
+            # model, hence RERUN_STIX set to True.
+            berm_input[
+                "STIXNAAM"
+            ] = _dstability_berm_widening.create_new_dstability_model(
+                path_intermediate_stix
+            )
+            berm_input["RERUN_STIX"] = True
+
+            return berm_input
+
         # For stability factors
-        if "SF_2025" in input:
+        if "SF_2025" in berm_input:
             # For now, inward and outward are the same!
             if (measure_parameters["Direction"] == "inward") or (
                 measure_parameters["Direction"] == "outward"
             ):
-                input["SF_2025"] = input["SF_2025"] + (
-                    measure_input["dberm"] * input["dSF/dberm"]
+                berm_input["SF_2025"] = berm_input["SF_2025"] + (
+                    measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
-                input["SF_2075"] = input["SF_2075"] + (
-                    measure_input["dberm"] * input["dSF/dberm"]
+                berm_input["SF_2075"] = berm_input["SF_2075"] + (
+                    measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
             if measure_parameters["StabilityScreen"] == "yes":
-                input["SF_2025"] += SFincrease
-                input["SF_2075"] += SFincrease
+                berm_input["SF_2025"] += SFincrease
+                berm_input["SF_2075"] += SFincrease
         # For betas as input
-        elif "beta_2025" in input:
-            input["beta_2025"] = input["beta_2025"] + (
-                measure_input["dberm"] * input["dbeta/dberm"]
+        elif "beta_2025" in berm_input:
+            berm_input["beta_2025"] = berm_input["beta_2025"] + (
+                measure_input["dberm"] * berm_input["dbeta/dberm"]
             )
-            input["beta_2075"] = input["beta_2075"] + (
-                measure_input["dberm"] * input["dbeta/dberm"]
+            berm_input["beta_2075"] = berm_input["beta_2075"] + (
+                measure_input["dberm"] * berm_input["dbeta/dberm"]
             )
             if measure_parameters["StabilityScreen"] == "yes":
-                input[
+                berm_input[
                     "beta_2025"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    input["beta_2025"]
+                    berm_input["beta_2025"]
                 )
-                input[
+                berm_input[
                     "beta_2075"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    input["beta_2075"]
+                    berm_input["beta_2075"]
                 )
-        elif "BETA" in input:
+        elif "BETA" in berm_input:
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
-            input["BETA"] = input["BETA"] + (0.13 * measure_input["dberm"])
+            berm_input["BETA"] = berm_input["BETA"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
-                input[
+                berm_input[
                     "BETA"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    input["BETA"]
+                    berm_input["BETA"]
                 )
         else:
             raise Exception("Unknown input data for stability when widening the berm")
 
     elif mechanism == "Piping":
-        input["Lvoor"] = input["Lvoor"] + measure_input["dberm"]
+        berm_input["Lvoor"] = berm_input["Lvoor"] + measure_input["dberm"]
         # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
-        input["Lachter"] = (input["Lachter"] - measure_input["dberm"]).clip(0)
-    return input
+        berm_input["Lachter"] = (berm_input["Lachter"] - measure_input["dberm"]).clip(0)
+    return berm_input
 
 
 def calculate_area(geometry):

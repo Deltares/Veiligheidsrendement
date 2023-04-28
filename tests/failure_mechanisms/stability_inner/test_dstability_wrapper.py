@@ -130,9 +130,10 @@ class TestDStabilityWrapper:
 
         # Call
         with pytest.raises(Exception) as exception_error:
+
             _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=0)
         # Assert
         assert (
             str(exception_error.value)
-            == "The requested stage id None does not have saved results in the provided stix RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix, please rerun DStability"
+            == "The requested stage id None does not have saved results in the provided stix RW001.+096_STBI_maatgevend_Segment_38005_1D1, please rerun DStability"
         )
