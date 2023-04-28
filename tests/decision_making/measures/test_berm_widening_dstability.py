@@ -172,10 +172,10 @@ class TestBermWideningDStability:
 
         # Assert
         assert isinstance(measure_geometry_points, List)
-        assert np.testing.assert_almost_equal(measure_geometry_points,
+        np.testing.assert_almost_equal(measure_geometry_points,
                                               [(-26.512148305110998, 1.9107067203304688), (-17.0, 4.996), (0.0, 10.51),
                                                (3.5, 10.51), (25.0, 6.491), (42.0, 5.694), (47.0, 5.104),
-                                               (56.931098707062795, 3.932130352566591)], decimal=3) is None
+                                               (56.931098707062795, 3.932130352566591)], decimal=3)
 
     def test_get_bounding_box(self):
         # SetUp
