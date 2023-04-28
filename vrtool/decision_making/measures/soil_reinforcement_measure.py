@@ -289,7 +289,7 @@ class SoilReinforcementMeasure(MeasureBase):
             # Adapt inputs for reliability calculation, but only after year of implementation.
             if float(year_to_calculate) >= self.parameters["year"]:
                 reliability_input.input = implement_berm_widening(
-                    input=reliability_input.input,
+                    berm_input=reliability_input.input,
                     measure_input=modified_geometry_measure,
                     measure_parameters=self.parameters,
                     mechanism=mechanism_name,

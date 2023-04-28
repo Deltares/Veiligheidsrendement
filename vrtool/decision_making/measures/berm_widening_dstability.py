@@ -292,8 +292,7 @@ class BermWideningDStability:
             if isinstance(obj, Polygon):
                 list_points = [PersistablePoint(X=round(p[0], 3), Z=round(p[1], 3)) for p in obj.exterior.coords]
                 list_points.pop()
-                list_points = [list_points[-1]] + list_points
-                list_points.pop()
+                list_points.insert(0, list_points.pop())
 
                 new_list = []
                 previous_point = PersistablePoint(X=999, Z=999)
