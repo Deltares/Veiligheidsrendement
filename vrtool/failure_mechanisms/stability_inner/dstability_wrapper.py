@@ -24,7 +24,7 @@ class DStabilityWrapper:
     def get_dstability_model(self) -> DStabilityModel:
         return self._dstability_model
 
-    def save_dstability_model(self, new_filename: str, save_path: Path) -> None:
+    def save_dstability_model(self, save_path: Path) -> None:
         """
         Serialize the dstability model to a new file with a given name at a given directory.
         Args:
