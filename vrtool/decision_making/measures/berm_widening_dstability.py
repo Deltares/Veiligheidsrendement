@@ -5,20 +5,27 @@ from typing import Tuple, Union, Optional
 import numpy as np
 from geolib.geometry import Point as GeolibPoint
 from geolib.models.dstability.internal import PersistablePoint, PersistableLayer
+from pandas import DataFrame
 from shapely import LineString, Polygon, unary_union, MultiPolygon, Point
 
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import DStabilityWrapper
 
 
 class BermWideningDStability:
+
+    measure_geometry_points: list
+    geometry: DataFrame
+    dberm: float
+    dcrest: float
+    dstability_wrapper: DStabilityWrapper
+
+
     def __init__(self, measure_input: dict, dstability_wrapper: DStabilityWrapper):
         self.geometry = measure_input['Geometry']
         self.dberm = measure_input['dberm']
         self.dcrest = measure_input['dcrest']
-        self._measure_geometry_points = None
-        self._dstability_wrapper = dstability_wrapper
-
-    measure_geometry_points: list
+        self.measure_geometry_points = None
+        self.dstability_wrapper = dstability_wrapper
 
 
     def create_new_dstability_model(self, path_intermediate_stix: Path) -> Path:
@@ -34,7 +41,7 @@ class BermWideningDStability:
         # It is assumed that all the stages share the same surface line, so we only need to find the filling polygons for
         # the first stage. If False, then this routine must be rerun for every stage.
         _collection_polygon = [Polygon([(p.X, p.Z) for p in layer.Points]) for layer in
-                               self._dstability_wrapper._dstability_model.datastructure.geometries[0].Layers]
+                               self.dstability_wrapper._dstability_model.datastructure.geometries[0].Layers]
         self.measure_geometry_points = self.get_modified_meas_geom(straight_line=False)
 
 
@@ -200,15 +207,15 @@ class BermWideningDStability:
             The Path of the new stix file
         """
 
-        for stage_id in self._dstability_wrapper.get_all_stage_ids():
+        for stage_id in self.dstability_wrapper.get_all_stage_ids():
             self.modify_geometry(
                 fill_polygons=fill_polygons,
                 stage_id=stage_id)
-        _original_name = self._dstability_wrapper.stix_path.stem
-        new_file_name = self._dstability_wrapper.stix_path.with_stem(_original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}").name
+        _original_name = self.dstability_wrapper.stix_path.stem
+        new_file_name = self.dstability_wrapper.stix_path.with_stem(_original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}").name
 
         _export_path = path_intermediate_stix / new_file_name
-        self._dstability_wrapper.save_dstability_model(_export_path )
+        self.dstability_wrapper.save_dstability_model(_export_path)
         return _export_path
 
     def modify_geometry(self, fill_polygons: list[Polygon], stage_id: int):
@@ -223,7 +230,7 @@ class BermWideningDStability:
 
         """
 
-        _layers = self._dstability_wrapper._dstability_model.datastructure.geometries[stage_id].Layers
+        _layers = self.dstability_wrapper._dstability_model.datastructure.geometries[stage_id].Layers
 
         # 1. Loop over all other layers and modify in-place their geometry
         list_all_initial_point = []  # list of all the points in the initial stix
@@ -257,7 +264,7 @@ class BermWideningDStability:
                     previous_point = p
 
             # add layer to the model, keep the custom function until GEOLIB is updated/debugged
-            self._dstability_wrapper._dstability_model.add_layer(
+            self.dstability_wrapper._dstability_model.add_layer(
                 points=new_list,
                 soil_code="Dijksmateriaal", stage_id=stage_id)
 

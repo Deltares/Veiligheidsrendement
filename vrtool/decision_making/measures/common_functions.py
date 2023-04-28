@@ -70,7 +70,11 @@ def implement_berm_widening(
 
             _new_stix_name = _dstability_berm_widening.create_new_dstability_model(path_intermediate_stix)
 
-            input['STIXNAAM'] = path_intermediate_stix.joinpath(_new_stix_name)  # cant modify the
+
+            #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
+            # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
+            # model, hence RERUN_STIX set to True.
+            input['STIXNAAM'] = path_intermediate_stix.joinpath(_new_stix_name)
             input['RERUN_STIX'] = True
 
             return input

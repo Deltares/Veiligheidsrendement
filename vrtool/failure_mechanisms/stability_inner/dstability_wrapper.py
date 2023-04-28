@@ -14,7 +14,6 @@ class DStabilityWrapper:
             raise ValueError("Missing argument value externals_path.")
 
         self.stix_path = stix_path
-        self.stix_name = stix_path.parts[-1]
         self._dstability_model = DStabilityModel()
         self._dstability_model.parse(self.stix_path)
         # We only need to provide where the "DStabilityConsole" directory is.

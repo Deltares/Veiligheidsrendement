@@ -20,7 +20,7 @@ _measure_input_test = {"Geometry": pd.DataFrame.from_dict(
 
 class TestBermWideningDStability:
 
-    def test_berm_widening_dstability_flow_with_valid_input(self):
+    def test_initialization_berm_widening_dstability_with_valid_input(self):
         # SetUp
         _path_test_stix = (
                 test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
@@ -30,21 +30,32 @@ class TestBermWideningDStability:
                                                            dstability_wrapper=_dstability_wrapper,
                                                            )
 
-        # 1. Assert instance of BermWideningDStability
+        # Assert instance of BermWideningDStability
         assert isinstance(_berm_widening_dstability, BermWideningDStability)
 
-        # 2. Assert name of modified stix file
+    def test_berm_widening_dstability_create_new_dstability_model_with_valid_input(self):
+        # SetUp
+        _path_test_stix = (
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstability_wrapper = DStabilityWrapper(_path_test_stix, externals_path=test_externals)
+        _berm_widening_dstability = BermWideningDStability(measure_input=_measure_input_test,
+                                                           dstability_wrapper=_dstability_wrapper,
+                                                           )
+
         path_intermediate_stix = test_results / "test_intermediate_stix"
         if not path_intermediate_stix.exists():
             path_intermediate_stix.mkdir(parents=True)
 
         path_new_stix = _berm_widening_dstability.create_new_dstability_model(path_intermediate_stix)
+
+        # Assert
         assert isinstance(path_new_stix, Path)
         assert path_new_stix.parts[-1] == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_dberm_0_dcrest_0.stix"
 
     @pytest.mark.externals
     @pytest.mark.slow
-    def test_berm_widening_dstability_with_rerun(self, request: pytest.FixtureRequest):
+    def test_when_create_new_dstability_model_then_rerun_with_valid_input(self, request: pytest.FixtureRequest):
         # SetUp
         assert test_externals.joinpath(
             "DStabilityConsole"
@@ -67,7 +78,6 @@ class TestBermWideningDStability:
 
         # 2. Define test data.
         _path_test_stix = path_intermediate_stix / name_stix
-        assert _path_test_stix.exists(), "No valid stix file available."
 
         # Create a copy of the file to avoid issues on other tests.
         _test_file = test_results / request.node.name / "file_to_rerun.stix"
@@ -76,10 +86,6 @@ class TestBermWideningDStability:
 
         _test_file.parent.mkdir(parents=True)
         shutil.copy(str(_path_test_stix), str(_test_file))
-        assert _test_file.exists()
-
-        # Verify both files are the same.
-        assert filecmp.cmp(str(_path_test_stix), str(_test_file))
 
         # 3. Run test.
         _dstability_wrapper.stix_name = _test_file
