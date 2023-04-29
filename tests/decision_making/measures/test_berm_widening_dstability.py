@@ -16,7 +16,7 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
 )
 
 _measure_input_test = {
-    "Geometry": pd.DataFrame.from_dict(
+    "geometry": pd.DataFrame.from_dict(
         {
             "x": {
                 "BUT": -17.0,
@@ -269,7 +269,7 @@ class TestBermWideningDStability:
         )
 
         _dstability_wrapper = DStabilityWrapper(_path_test_stix, test_externals)
-        _measure_input = {"Geometry": None, "dcrest": 0, "dberm": 0}
+        _measure_input = {"geometry": None, "dcrest": 0, "dberm": 0}
         _berm_widening_dstability = BermWideningDStability(
             measure_input=_measure_input,
             dstability_wrapper=_dstability_wrapper,
