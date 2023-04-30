@@ -29,10 +29,9 @@ class DStabilityWrapper:
     def save_dstability_model(self, save_path: Path) -> None:
         """
         Serialize the dstability model to a new file with a given name at a given directory.
-        Args:
-            new_filename: The name of the new file.
-            save_path: The path to the directory where the new file will be saved.
 
+        Args:
+            save_path: The path to the directory where the new file will be saved.
 
         Returns:
             None
@@ -78,13 +77,22 @@ class DStabilityWrapper:
 
 
     def add_stability_screen(self, depth: float, location: float) -> None:
+        """
+        Add a stability screen to the dstability model.
+
+        Args:
+            depth: The depth of the stability screen.
+            location: The location x of the stability screen in the D-Stability model.
+
+        Returns:
+            None
+        """
         _dstability_model = self._dstability_model
 
-        # The top of the stability screen is hardcoded at 20m to be sure it is above surface level.
+        # The top of the stability screen is hardcoded at 20m to make sure it is above surface level.
         _start_screen = GeolibPoint(x=location, z=20)
         _end_screen = GeolibPoint(x=location, z=depth)
-        _stability_screen = ForbiddenLine(_start_screen, _end_screen)
+        _stability_screen = ForbiddenLine(start=_start_screen, end=_end_screen)
 
         for id in self.get_all_stage_ids():
-            _dstability_model.add_reinforcement(_stability_screen
-                                                , stage_id=id)
+            _dstability_model.add_reinforcement(_stability_screen, stage_id=id)
