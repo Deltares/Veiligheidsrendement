@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.decision_making.measures.berm_widening_dstability import BermWideningDStability
 from vrtool.decision_making.measures.common_functions import determine_costs, determine_new_geometry
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.decision_making.measures.modified_dike_geometry_measure_input import ModifiedDikeGeometryMeasureInput
@@ -288,8 +289,10 @@ class StabilityScreenMeasure(MeasureBase):
             if float(year_to_calculate) >= self.parameters["year"]:
                 if mechanism_name == "StabilityInner":
                     if calc_type == "DStability":
-                        self._configure_stability_inner_dstability(mechanism_reliability, dike_section,
-                                                                   modified_geometry_measure)
+                        self._configure_stability_inner_dstability(mechanism_reliability,
+                                                                   dike_section,
+                                                                   modified_geometry_measure,
+                                                                   self.config.output_directory / "intermediate_result")
                     else:
                         self._configure_stability_inner(
                             mechanism_reliability, year_to_calculate, safety_factor_increase
@@ -350,19 +353,42 @@ class StabilityScreenMeasure(MeasureBase):
                 )
 
     def _configure_stability_inner_dstability(self, mechanism_reliability: MechanismReliability,
-                                              dike_section: DikeSection, modified_geometry_measure: dict) -> None:
+                                              dike_section: DikeSection, modified_geometry_measure: dict,
+                                              path_intermediate_stix: Path) -> None:
         """
-        Call the DStability wrapper to implemente the stability screen measure into
-        """
-        mechanism_reliability_input = mechanism_reliability.Input.input
+        Call the DStability wrapper to add the stability screen and the berm widening to the DStability model. The
+        screen is always placed at the BIT.
 
+        Args:
+            mechanism_reliability: mechanism input for the StabilityInner mechanism
+            dike_section: dike section
+            modified_geometry_measure: geometry input of the measure
+            path_intermediate_stix: Path to the directory where the intermediate stix will be saved
+
+        Return:
+            None
+        """
+        _mechanism_reliability_input = mechanism_reliability.Input.input
         _depth = self._get_depth(dike_section)
         _BIT = modified_geometry_measure['geometry'].loc["BIT"]
 
-        _dstability_wrapper = DStabilityWrapper(stix_path=Path(mechanism_reliability_input['STIXNAAM']),
-                                                externals_path=Path(mechanism_reliability_input['DStability_exe_path']))
-        _dstability_wrapper.add_stability_screen(depth=_BIT.z - _depth, location=_BIT.x)
+        _dstability_wrapper = DStabilityWrapper(stix_path=Path(_mechanism_reliability_input['STIXNAAM']),
+                                                externals_path=Path(_mechanism_reliability_input['DStability_exe_path']))
 
-        print(mechanism_reliability_input)
-        # _dstability_wrapper.rerun_stix()
+        # 1. Add the stability screen to the DStability model
+        _dstability_wrapper.add_stability_screen(bottom_screen=_BIT.z - _depth, location=_BIT.x)
 
+        # 2. Modify the geometry of the Berm in the same way as for SoilReinforcementMeasure
+        _dstability_berm_widening = BermWideningDStability(
+            measure_input=modified_geometry_measure, dstability_wrapper=_dstability_wrapper
+        )
+
+        #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
+        # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
+        # model, hence RERUN_STIX set to True.
+        _mechanism_reliability_input[
+            "STIXNAAM"
+        ] = _dstability_berm_widening.create_new_dstability_model(
+            path_intermediate_stix
+        )
+        _mechanism_reliability_input["RERUN_STIX"] = True

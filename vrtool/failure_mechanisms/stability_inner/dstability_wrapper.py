@@ -76,12 +76,12 @@ class DStabilityWrapper:
         raise ValueError(f"No output found for the provided stage: {stage_id_result}.")
 
 
-    def add_stability_screen(self, depth: float, location: float) -> None:
+    def add_stability_screen(self, bottom_screen: float, location: float) -> None:
         """
         Add a stability screen to the dstability model.
 
         Args:
-            depth: The depth of the stability screen.
+            bottom_screen: The bottom level of the stability screen.
             location: The location x of the stability screen in the D-Stability model.
 
         Returns:
@@ -91,7 +91,7 @@ class DStabilityWrapper:
 
         # The top of the stability screen is hardcoded at 20m to make sure it is above surface level.
         _start_screen = GeolibPoint(x=location, z=20)
-        _end_screen = GeolibPoint(x=location, z=depth)
+        _end_screen = GeolibPoint(x=location, z=bottom_screen)
         _stability_screen = ForbiddenLine(start=_start_screen, end=_end_screen)
 
         for id in self.get_all_stage_ids():

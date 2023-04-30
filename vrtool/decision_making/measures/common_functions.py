@@ -48,7 +48,6 @@ def implement_berm_widening(
         dict: input dictionary of the mechanism with the berm widened
 
     """
-
     def calculate_stability_inner_reliability_with_safety_screen(
         reliability: np.ndarray,
     ):

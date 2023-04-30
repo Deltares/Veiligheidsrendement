@@ -148,7 +148,7 @@ class TestDStabilityWrapper:
         )
 
         # Call the method
-        _dstab_wrapper.add_stability_screen(depth=5, location=10)
+        _dstab_wrapper.add_stability_screen(bottom_screen=5, location=10)
 
         # Assert that
         assert len(_dstab_wrapper.get_dstability_model.datastructure.reinforcements) == 2
