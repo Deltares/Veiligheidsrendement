@@ -25,14 +25,14 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
 
 
 def implement_berm_widening(
-        berm_input,
-        measure_input,
-        measure_parameters,
-        mechanism,
-        computation_type,
-        path_intermediate_stix: Path,
-        SFincrease=0.2,
-        depth_screen: Optional[float] = None
+    berm_input,
+    measure_input,
+    measure_parameters,
+    mechanism,
+    computation_type,
+    path_intermediate_stix: Path,
+    SFincrease=0.2,
+    depth_screen: Optional[float] = None,
 ):
     """
 
@@ -52,7 +52,7 @@ def implement_berm_widening(
     """
 
     def calculate_stability_inner_reliability_with_safety_screen(
-            reliability: np.ndarray,
+        reliability: np.ndarray,
     ):
         # convert to SF and back:
         return calculate_reliability(
@@ -77,9 +77,11 @@ def implement_berm_widening(
                 measure_input=measure_input, dstability_wrapper=_dstability_wrapper
             )
 
-            if measure_input["StabilityScreen"] == 'Yes':
+            if measure_input["StabilityScreen"] == "Yes":
                 _BIT = measure_input["geometry"].loc["BIT"]
-                _dstability_wrapper.add_stability_screen(bottom_screen=_BIT.z - depth_screen, location=_BIT.x)
+                _dstability_wrapper.add_stability_screen(
+                    bottom_screen=_BIT.z - depth_screen, location=_BIT.x
+                )
 
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
             # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
@@ -97,13 +99,13 @@ def implement_berm_widening(
         if "SF_2025" in berm_input:
             # For now, inward and outward are the same!
             if (measure_parameters["Direction"] == "inward") or (
-                    measure_parameters["Direction"] == "outward"
+                measure_parameters["Direction"] == "outward"
             ):
                 berm_input["SF_2025"] = berm_input["SF_2025"] + (
-                        measure_input["dberm"] * berm_input["dSF/dberm"]
+                    measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
                 berm_input["SF_2075"] = berm_input["SF_2075"] + (
-                        measure_input["dberm"] * berm_input["dSF/dberm"]
+                    measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
             if measure_parameters["StabilityScreen"] == "yes":
                 berm_input["SF_2025"] += SFincrease
@@ -111,10 +113,10 @@ def implement_berm_widening(
         # For betas as input
         elif "beta_2025" in berm_input:
             berm_input["beta_2025"] = berm_input["beta_2025"] + (
-                    measure_input["dberm"] * berm_input["dbeta/dberm"]
+                measure_input["dberm"] * berm_input["dbeta/dberm"]
             )
             berm_input["beta_2075"] = berm_input["beta_2075"] + (
-                    measure_input["dberm"] * berm_input["dbeta/dberm"]
+                measure_input["dberm"] * berm_input["dbeta/dberm"]
             )
             if measure_parameters["StabilityScreen"] == "yes":
                 berm_input[
@@ -198,15 +200,15 @@ def modify_geometry_input(initial, berm_height):
 
 # This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
 def determine_new_geometry(
-        geometry_change,
-        direction,
-        max_berm_out,
-        initial,
-        geometry_plot: bool,
-        plot_dir: Union[Path, None] = None,
-        berm_height: float = 2,
-        slope_in: bool = False,
-        crest_extra: bool = False,
+    geometry_change,
+    direction,
+    max_berm_out,
+    initial,
+    geometry_plot: bool,
+    plot_dir: Union[Path, None] = None,
+    berm_height: float = 2,
+    slope_in: bool = False,
+    crest_extra: bool = False,
 ):
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
     If this is not the case and it is input of the old type, first it is transformed to obey that.
@@ -448,17 +450,17 @@ def determine_new_geometry(
 
 # Script to determine the costs of a reinforcement:
 def determine_costs(
-        parameters,
-        type: str,
-        length: float,
-        unit_costs: dict,
-        dcrest: float = 0.0,
-        dberm_in: float = 0.0,
-        housing: bool = False,
-        area_extra: bool = False,
-        area_excavated: bool = False,
-        direction: bool = False,
-        section: str = "",
+    parameters,
+    type: str,
+    length: float,
+    unit_costs: dict,
+    dcrest: float = 0.0,
+    dberm_in: float = 0.0,
+    housing: bool = False,
+    area_extra: bool = False,
+    area_excavated: bool = False,
+    direction: bool = False,
+    section: str = "",
 ) -> float:
     if (type == "Soil reinforcement") and (direction == "outward") and (dberm_in > 0.0):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
@@ -468,8 +470,8 @@ def determine_costs(
     if type == "Soil reinforcement":
         if direction == "inward":
             total_cost = (
-                    unit_costs["Inward added volume"] * area_extra * length
-                    + unit_costs["Inward starting costs"] * length
+                unit_costs["Inward added volume"] * area_extra * length
+                + unit_costs["Inward starting costs"] * length
             )
         elif direction == "outward":
             volume_excavated = area_excavated * length
@@ -477,7 +479,7 @@ def determine_costs(
             reusable_volume = unit_costs["Outward reuse factor"] * volume_excavated
             # excavate and remove part of existing profile:
             total_cost = unit_costs["Outward removed volume"] * (
-                    volume_excavated - reusable_volume
+                volume_excavated - reusable_volume
             )
 
             # apply reusable volume
@@ -489,9 +491,9 @@ def determine_costs(
 
             # compensate:
             total_cost += (
-                    unit_costs["Outward removed volume"]
-                    * unit_costs["Outward compensation factor"]
-                    * volume_extra
+                unit_costs["Outward removed volume"]
+                * unit_costs["Outward compensation factor"]
+                * volume_extra
             )
 
         else:
@@ -507,13 +509,13 @@ def determine_costs(
                 )
                 # raise Exception('inwards distance exceeds housing database')
                 total_cost += (
-                        unit_costs["House removal"]
-                        * housing.loc[housing.size]["cumulative"]
+                    unit_costs["House removal"]
+                    * housing.loc[housing.size]["cumulative"]
                 )
             else:
                 total_cost += (
-                        unit_costs["House removal"]
-                        * housing.loc[float(dberm_in)]["cumulative"]
+                    unit_costs["House removal"]
+                    * housing.loc[float(dberm_in)]["cumulative"]
                 )
 
         # add costs for stability screen
@@ -537,14 +539,14 @@ def determine_costs(
 
 # Script to determine the required crest height for a certain year
 def probabilistic_design(
-        design_variable: str,
-        strength_input,
-        p_t: float,
-        t_0: int,
-        horizon: int = 50,
-        load_change: float = 0,
-        mechanism: str = "Overflow",
-        type: str = "SAFE",
+    design_variable: str,
+    strength_input,
+    p_t: float,
+    t_0: int,
+    horizon: int = 50,
+    load_change: float = 0,
+    mechanism: str = "Overflow",
+    type: str = "SAFE",
 ) -> float:
     if mechanism == "Overflow":
         if type == "SAFE":

@@ -75,7 +75,6 @@ class DStabilityWrapper:
 
         raise ValueError(f"No output found for the provided stage: {stage_id_result}.")
 
-
     def add_stability_screen(self, bottom_screen: float, location: float) -> None:
         """
         Add a stability screen to the dstability model.

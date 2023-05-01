@@ -151,5 +151,14 @@ class TestDStabilityWrapper:
         _dstab_wrapper.add_stability_screen(bottom_screen=5, location=10)
 
         # Assert that
-        assert len(_dstab_wrapper.get_dstability_model.datastructure.reinforcements) == 2
-        assert len(_dstab_wrapper.get_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
+        assert (
+            len(_dstab_wrapper.get_dstability_model.datastructure.reinforcements) == 2
+        )
+        assert (
+            len(
+                _dstab_wrapper.get_dstability_model.datastructure.reinforcements[
+                    0
+                ].ForbiddenLines
+            )
+            == 1
+        )
