@@ -94,7 +94,7 @@ def make_traject_df(traject: DikeTraject, cols):
     for i in traject.sections:
         sections.append(i.name)
 
-    mechanisms = list(traject.sections[0].mechanism_data.keys()) + ["Section"]
+    mechanisms = list(traject.mechanism_names) + ["Section"]
     df_index = pd.MultiIndex.from_product(
         [sections, mechanisms], names=["name", "mechanism"]
     )
@@ -272,7 +272,37 @@ def implement_option(section, traject_probability, new_probability):
     return traject_probability
 
 
-def split_options(options):
+def split_options(
+    options: dict[str, pd.DataFrame], available_mechanism_names: list[str]
+) -> list[dict[str, pd.DataFrame]]:
+    """Splits the options for the measures.
+
+    Args:
+        options (_type_): The available options to split.
+        available_mechanism_names (list[str]): The collection of the names of the available mechanisms for the evaluation.
+
+    Returns:
+        list[dict[str, pd.DataFrame]]: The collection of options to split
+    """
+
+    def get_height_options(available_mechanism_names: list[str]) -> list[str]:
+        options = []
+        for available_mechanism_name in available_mechanism_names:
+            if available_mechanism_name in ["StabilityInner", "Piping"]:
+                options.append(available_mechanism_name)
+
+        options.append("Section")
+        return options
+
+    def get_geotechnical_options(available_mechanism_names: list[str]) -> list[str]:
+        options = []
+        for available_mechanism_name in available_mechanism_names:
+            if available_mechanism_name in ["Overflow"]:
+                options.append(available_mechanism_name)
+
+        options.append("Section")
+        return options
+
     options_height = copy.deepcopy(options)
     options_geotechnical = copy.deepcopy(options)
     for i in options:
@@ -340,8 +370,12 @@ def split_options(options):
                 newcosts.append(options_geotechnical[i].iloc[ij]["cost"].values[0])
         options_geotechnical[i]["cost"] = newcosts
         # only keep reliability of relevant mechanisms in dictionary
-        options_height[i].drop(["Piping", "StabilityInner", "Section"], axis=1, level=0)
-        options_geotechnical[i].drop(["Overflow", "Section"], axis=1, level=0)
+        options_height[i].drop(
+            get_height_options(available_mechanism_names), axis=1, level=0
+        )
+        options_geotechnical[i].drop(
+            get_geotechnical_options(available_mechanism_names), axis=1, level=0
+        )
     return options_height, options_geotechnical
 
 
@@ -538,11 +572,12 @@ def overflow_bundling(
                 # order = np.dstack(np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape[0], LCCs.shape[1])))
                 order = np.unravel_index(np.argsort(LCCs.ravel()), (LCCs.shape))
                 orderedLCCs = LCCs[order[0], order[1]]
+                orderedLCCs = orderedLCCs[orderedLCCs < 1e60]
 
-                sg_indices[i, 0 : len(orderedLCCs)] = sg_opts[order[1]]
-                sorted_sh[i, 0 : len(orderedLCCs)] = sh_opts[order[0]]
+                sg_indices[i, 0 : len(orderedLCCs)] = sg_opts[order[1][0 : len(orderedLCCs)]]
+                sorted_sh[i, 0 : len(orderedLCCs)] = sh_opts[order[0][0 : len(orderedLCCs)]]
                 sorted_sh[i, 0 : len(orderedLCCs)] = np.where(
-                    orderedLCCs > 1e60, 999, sh_opts[order[0]]
+                    orderedLCCs > 1e60, 999, sh_opts[order[0][0 : len(orderedLCCs)]]
                 )
 
         # For a stability screen, we should check if it can be extended with a berm or crest. Note that not allowing this might result in a local optimum.

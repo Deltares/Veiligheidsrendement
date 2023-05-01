@@ -20,6 +20,7 @@ class DikeTraject:
     sections: list[DikeSection]
     general_info: DikeTrajectInfo
     probabilities: pd.DataFrame
+    mechanism_names: list[str]
 
     # This class contains general information on the dike traject and is used to store all data on the sections
     def __init__(self, config: VrtoolConfig):
