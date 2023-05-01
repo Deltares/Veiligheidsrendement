@@ -29,7 +29,6 @@ _acceptance_test_cases = [
     pytest.param("integrated_SAFE_16-3_small", "16-3"),
     pytest.param("TestCase1_38-1_no_housing", "38-1"),
     pytest.param("TestCase2_38-1_overflow_no_housing", "38-1",),
-    # pytest.param("TestCase1_38-1_no_housing_DStability_small", "38-1"),
 ]
 
 

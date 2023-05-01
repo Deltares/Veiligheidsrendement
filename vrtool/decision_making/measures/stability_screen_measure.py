@@ -57,7 +57,8 @@ class StabilityScreenMeasure(MeasureBase):
             dike_section, preserve_slope
         )
 
-        self.measures = list(map(get_measure_data, modified_dike_geometry_measures))
+        self.measures = list(map(get_measure_data, modified_dike_geometry_measures))[0]
+        # print(self.measures)
 
     def _get_crest_range(self) -> np.ndarray:
         crest_step = self.crest_step
