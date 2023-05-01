@@ -134,9 +134,12 @@ class StabilityScreenMeasure(MeasureBase):
             ]
             if float(year_to_calculate) >= self.parameters["year"]:
                 if mechanism_name == "StabilityInner":
-                    self._configure_stability_inner(
-                        mechanism_reliability, year_to_calculate, safety_factor_increase
-                    )
+                    if calc_type == "DStability":
+                        pass  # TODO in VRTOOL-60
+                    else:
+                        self._configure_stability_inner(
+                            mechanism_reliability, year_to_calculate, safety_factor_increase
+                        )
                 if mechanism_name in ["Piping", "Overflow"]:
                     self._copy_results(
                         mechanism_reliability, dike_section_mechanism_reliability
