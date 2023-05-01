@@ -6,6 +6,7 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.models.buildings import Buildings
 
 
 class TestDikeSectionImporter:
@@ -27,3 +28,19 @@ class TestDikeSectionImporter:
         assert isinstance(_dike_section.houses, pd.DataFrame)
         assert isinstance(_dike_section.mechanism_data, dict)
         assert any(_dike_section.mechanism_data.items())
+
+    def test_import_buildings_list(self, db_fixture: SqliteDatabase):
+        # 1. Define test data.
+        _importer = DikeSectionImporter()
+        _section_data = SectionData.get_by_id(1)
+        _buildings_query = Buildings.select().where(Buildings.section_data == _section_data)
+
+        # 2. Run test
+        _buildings_frame = _importer._import_buildings_list(_buildings_query)
+
+        # 3. Verify expectations.
+        assert isinstance(_buildings_frame, pd.DataFrame)
+        assert list(_buildings_frame.columns) == ["distancefromtoe", "cumulative"]
+        assert len(_buildings_frame) == 2
+        assert list(_buildings_frame.loc[0]) == ["24", 2]
+        assert list(_buildings_frame.loc[1]) == ["42", 1]
