@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 from geolib import DStabilityModel
 from geolib.geometry import Point as GeolibPoint
@@ -38,7 +38,7 @@ class DStabilityWrapper:
         """
         self._dstability_model.serialize(save_path)
 
-    def get_all_stage_ids(self) -> List[int]:
+    def get_all_stage_ids(self) -> list[int]:
         """Return a list with all the stage ids as integer from the dstability model"""
         return [int(stage.Id) for stage in self._dstability_model.stages]
 
