@@ -45,7 +45,9 @@ class DikeSection:
         def get_dike_section(section_filepath: Path) -> DikeSection:
             _dike_section = cls()
             _dike_section.name = section_filepath.stem
-            _dike_section.read_general_info(section_filepath, "General",vrtool_config.mechanisms)
+            _dike_section.read_general_info(
+                section_filepath, "General", vrtool_config.mechanisms
+            )
             _dike_section.set_section_reliability(
                 vrtool_config.input_directory,
                 vrtool_config.mechanisms,
@@ -57,7 +59,9 @@ class DikeSection:
 
         return list(map(get_dike_section, files))
 
-    def read_general_info(self, section_filepath: Path, sheet_name: str, available_mechs: list):
+    def read_general_info(
+        self, section_filepath: Path, sheet_name: str, available_mechs: list
+    ):
         """Reads the general information of a dike section.
 
         Args:
@@ -72,9 +76,7 @@ class DikeSection:
                 data = df[name].set_index(list(df[name])[0])
                 self.mechanism_data = {}
                 for i in range(len(data)):
-                    if (
-                        data.index[i] in available_mechs
-                    ):
+                    if data.index[i] in available_mechs:
                         self.mechanism_data[data.index[i]] = (
                             data.loc[data.index[i]][0],
                             data.loc[data.index[i]][1],

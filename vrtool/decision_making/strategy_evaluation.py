@@ -574,8 +574,12 @@ def overflow_bundling(
                 orderedLCCs = LCCs[order[0], order[1]]
                 orderedLCCs = orderedLCCs[orderedLCCs < 1e60]
 
-                sg_indices[i, 0 : len(orderedLCCs)] = sg_opts[order[1][0 : len(orderedLCCs)]]
-                sorted_sh[i, 0 : len(orderedLCCs)] = sh_opts[order[0][0 : len(orderedLCCs)]]
+                sg_indices[i, 0 : len(orderedLCCs)] = sg_opts[
+                    order[1][0 : len(orderedLCCs)]
+                ]
+                sorted_sh[i, 0 : len(orderedLCCs)] = sh_opts[
+                    order[0][0 : len(orderedLCCs)]
+                ]
                 sorted_sh[i, 0 : len(orderedLCCs)] = np.where(
                     orderedLCCs > 1e60, 999, sh_opts[order[0][0 : len(orderedLCCs)]]
                 )
