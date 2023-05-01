@@ -1,7 +1,7 @@
 import copy
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,6 +32,7 @@ def implement_berm_widening(
     computation_type,
     path_intermediate_stix: Path,
     SFincrease=0.2,
+    depth_screen: Optional[float] = None
 ):
     """
 
@@ -43,6 +44,7 @@ def implement_berm_widening(
         computation_type (str): type of computation for the mechanism
         path_intermediate_stix (Path): path to the intermediate stix files
         SFincrease (float): increase in safety factor
+        depth_screen (float): depth of the stability screen
 
     Returns:
         dict: input dictionary of the mechanism with the berm widened
@@ -73,6 +75,17 @@ def implement_berm_widening(
             _dstability_berm_widening = BermWideningDStability(
                 measure_input=measure_input, dstability_wrapper=_dstability_wrapper
             )
+            print(measure_input.keys())
+            if measure_input["StabilityScreen"] == 'Yes':
+                _BIT = measure_input["geometry"].loc["BIT"]
+
+                # _dstability_wrapper = DStabilityWrapper(stix_path=Path(_mechanism_reliability_input['STIXNAAM']),
+                #                                         externals_path=Path(
+                #                                             _mechanism_reliability_input['DStability_exe_path']))
+
+                # 1. Add the stability screen to the DStability model
+                _dstability_wrapper.add_stability_screen(bottom_screen=_BIT.z - depth_screen, location=_BIT.x)
+
 
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
             # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability

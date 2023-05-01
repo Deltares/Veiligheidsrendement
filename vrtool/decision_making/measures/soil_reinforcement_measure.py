@@ -44,6 +44,7 @@ class SoilReinforcementMeasure(MeasureBase):
             _modified_measure["geometry"] = modified_measure.modified_geometry
             _modified_measure["dcrest"] = modified_measure.d_crest
             _modified_measure["dberm"] = modified_measure.d_berm
+            _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
             _modified_measure["Cost"] = determine_costs(
                 self.parameters,
                 type,
@@ -61,6 +62,7 @@ class SoilReinforcementMeasure(MeasureBase):
                 dike_section, traject_info, _modified_measure
             )
             _modified_measure["Reliability"].calculate_section_reliability()
+
             return _modified_measure
 
         modified_dike_geometry_measures = self._get_modified_dike_geometry_measures(
@@ -297,6 +299,7 @@ class SoilReinforcementMeasure(MeasureBase):
                     computation_type=calc_type,
                     path_intermediate_stix=self.config.output_directory
                     / "intermediate_result",
+                    depth_screen=self._get_depth(dike_section),
                 )
             # put them back in the object
             mechanism_reliability_collection.Reliability[
