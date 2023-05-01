@@ -7,7 +7,7 @@ from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.buildings import Buildings
-
+import pytest
 
 class TestDikeSectionImporter:
     def test_initialize(self):
@@ -44,3 +44,15 @@ class TestDikeSectionImporter:
         assert len(_buildings_frame) == 2
         assert list(_buildings_frame.loc[0]) == ["24", 2]
         assert list(_buildings_frame.loc[1]) == ["42", 1]
+
+    def test_import_orm_without_model_raises_value(self):
+        # 1. Define test data.
+        _importer = DikeSectionImporter()
+        _expected_mssg = "No valid value given for SectionData."
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(None)
+
+        # 3. Verify expectations.
+        assert str(value_error.value) == _expected_mssg

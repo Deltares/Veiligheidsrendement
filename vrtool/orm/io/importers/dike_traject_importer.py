@@ -15,6 +15,9 @@ class DikeTrajectImporter(OrmImporterProtocol):
         return list(map(_ds_importer.import_orm, orm_dike_section_list))
 
     def import_orm(self, orm_model: OrmDikeTrajectInfo) -> DikeTraject:
+        if not orm_model:
+            raise ValueError(f"No valid value given for {OrmDikeTrajectInfo.__name__}.")
+
         _dike_traject = DikeTraject()
         _dike_traject.general_info = DikeTrajectInfoImporter().import_orm(orm_model)
 

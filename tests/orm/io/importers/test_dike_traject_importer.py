@@ -6,6 +6,7 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
+import pytest
 
 class TestDikeTrajectInfoImporter:
     def test_initialize(self):
@@ -26,3 +27,15 @@ class TestDikeTrajectInfoImporter:
         assert isinstance(_dike_traject.sections, list)
         assert any(_dike_traject.sections)
         assert all(isinstance(_section, DikeSection) for _section in _dike_traject.sections)
+
+    def test_import_orm_without_model_raises_value(self):
+        # 1. Define test data.
+        _importer = DikeTrajectImporter()
+        _expected_mssg = "No valid value given for DikeTrajectInfo."
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(None)
+
+        # 3. Verify expectations.
+        assert str(value_error.value) == _expected_mssg

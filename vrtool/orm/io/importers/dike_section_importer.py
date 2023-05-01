@@ -15,6 +15,9 @@ class DikeSectionImporter(OrmImporterProtocol):
         return pd.DataFrame(_buildings_data, columns=["distancefromtoe", "cumulative"])
 
     def import_orm(self, orm_model: SectionData) -> DikeSection:
+        if not orm_model:
+            raise ValueError(f"No valid value given for {SectionData.__name__}.")
+
         _dike_section = DikeSection()
         _dike_section.name = orm_model.section_name
         _dike_section.houses = self._import_buildings_list(orm_model.buildings_list)
