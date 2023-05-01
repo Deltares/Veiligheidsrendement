@@ -33,6 +33,7 @@ class StabilityScreenMeasure(MeasureBase):
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         type = self.parameters["Type"]
+        self.parameters["Direction"] = 'inward'
         self.parameters["Depth"] = self._get_depth(dike_section)
 
         def get_measure_data(
