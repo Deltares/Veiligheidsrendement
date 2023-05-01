@@ -7,7 +7,7 @@ class DikeTrajectInfoImporter(OrmImporterProtocol):
     def import_orm(self, orm_model: OrmDikeTrajectInfo) -> DikeTrajectInfo:
         if not orm_model:
             raise ValueError(
-                f"No valid value given for {orm_model.DikeTrajectInfo.__name__}."
+                f"No valid value given for {OrmDikeTrajectInfo.__name__}."
             )
 
         return DikeTrajectInfo(

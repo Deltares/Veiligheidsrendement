@@ -35,3 +35,15 @@ class TestDikeTrajectInfoImporter:
         assert _dike_traject_info.Pmax == 0.0001
         assert _dike_traject_info.FloodDamage is None
         assert _dike_traject_info.TrajectLength == 0
+
+    def test_import_orm_without_model_raises_value(self):
+        # 1. Define test data.
+        _importer = DikeTrajectInfoImporter()
+        _expected_mssg = "No valid value given for DikeTrajectInfo."
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(None)
+
+        # 3. Verify expectations.
+        assert str(value_error.value) == _expected_mssg
