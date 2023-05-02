@@ -10,7 +10,29 @@ This module focuses on mapping the input database tables (in SQLite) to an objec
 * Controllers: A series of endpoints to trigger different actions related to read or write from / to the database. For now located in the `vrtool.orm.orm_controllers.py` file.
 * `orm_db.py`. File containing the simple definition of the current (`SQLite` database).
 
+## How to use it?
+
+This module is meant to be used locally. However, it is technical possible to generate a database when using the tool as a sandbox. A simple example can be shown below:
+
+```python
+from vrtool.orm.orm_controllers import initialize_database
+from pathlib import Path
+
+_my_database_location = Path("C:\\my_repo\\my_database.db")
+initialize_database(_my_database_location)
+```
+
+It is also possible to load an existing database:
+
+```python
+from vrtool.orm.orm_controllers import open_database
+from pathlib import Path
+
+_my_database_location = Path("C:\\my_repo\\my_database.db")
+open_database(_my_database_location)
 ## Database integration.
+```
+
 To achieve a correct integration with / from the database, we will be using the `peewee` library, which is MIT licensed. You may find more about it in the [peewee GitHub repo](https://github.com/coleifer/peewee).
 
 We make the mappings based on the documentation's diagram:
