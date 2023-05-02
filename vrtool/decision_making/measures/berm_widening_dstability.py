@@ -22,7 +22,7 @@ class BermWideningDStability:
     dstability_wrapper: DStabilityWrapper
 
     def __init__(self, measure_input: dict, dstability_wrapper: DStabilityWrapper):
-        self.geometry = measure_input["Geometry"]
+        self.geometry = measure_input["geometry"]
         self.dberm = measure_input["dberm"]
         self.dcrest = measure_input["dcrest"]
         self.measure_geometry_points = None
@@ -257,6 +257,9 @@ class BermWideningDStability:
         ).name
 
         _export_path = path_intermediate_stix / new_file_name
+
+        if not _export_path.parent.exists():
+            _export_path.parent.mkdir(parents=True)
         self.dstability_wrapper.save_dstability_model(_export_path)
         return _export_path
 

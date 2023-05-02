@@ -137,3 +137,28 @@ class TestDStabilityWrapper:
             str(exception_error.value)
             == "The requested stage id None does not have saved results in the provided stix RW001.+096_STBI_maatgevend_Segment_38005_1D1, please rerun DStability"
         )
+
+    def test_add_stability_screen(self):
+        # Setup
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstab_wrapper = DStabilityWrapper(
+            stix_path=_path_test_stix, externals_path=test_externals
+        )
+
+        # Call the method
+        _dstab_wrapper.add_stability_screen(bottom_screen=5, location=10)
+
+        # Assert that
+        assert (
+            len(_dstab_wrapper.get_dstability_model.datastructure.reinforcements) == 2
+        )
+        assert (
+            len(
+                _dstab_wrapper.get_dstability_model.datastructure.reinforcements[
+                    0
+                ].ForbiddenLines
+            )
+            == 1
+        )

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 
-from tests import get_test_results_dir, test_data
+from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
@@ -133,6 +133,7 @@ class TestAcceptance:
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
         _test_config.traject = traject
+        _test_config.externals = test_externals
         _test_traject = DikeTraject(_test_config)
 
         # 2. Run test.
