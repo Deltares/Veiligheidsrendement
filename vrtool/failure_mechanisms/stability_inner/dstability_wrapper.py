@@ -86,7 +86,6 @@ class DStabilityWrapper:
         Returns:
             None
         """
-        _dstability_model = self._dstability_model
 
         # The top of the stability screen is hardcoded at 20m to make sure it is above surface level.
         _start_screen = GeolibPoint(x=location, z=20)
@@ -94,4 +93,4 @@ class DStabilityWrapper:
         _stability_screen = ForbiddenLine(start=_start_screen, end=_end_screen)
 
         for id in self.get_all_stage_ids():
-            _dstability_model.add_reinforcement(_stability_screen, stage_id=id)
+            self._dstability_model.add_reinforcement(_stability_screen, stage_id=id)
