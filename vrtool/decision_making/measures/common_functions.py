@@ -78,9 +78,9 @@ def implement_berm_widening(
             )
 
             if measure_input["StabilityScreen"] == "Yes":
-                _BIT = measure_input["geometry"].loc["BIT"]
+                _inner_toe = measure_input["geometry"].loc["BIT"]
                 _dstability_wrapper.add_stability_screen(
-                    bottom_screen=_BIT.z - depth_screen, location=_BIT.x
+                    bottom_screen=_inner_toe.z - depth_screen, location=_inner_toe.x
                 )
 
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
