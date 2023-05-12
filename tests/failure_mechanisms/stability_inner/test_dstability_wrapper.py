@@ -74,7 +74,7 @@ class TestDStabilityWrapper:
         assert filecmp.cmp(str(_path_test_stix), str(_test_file))
 
         # 2. Run test.
-        DStabilityWrapper(_path_test_stix, test_externals).rerun_stix()
+        DStabilityWrapper(_test_file, test_externals).rerun_stix()
 
         # 3. Verify expectations.
         assert not filecmp.cmp(str(_path_test_stix), str(_test_file))
