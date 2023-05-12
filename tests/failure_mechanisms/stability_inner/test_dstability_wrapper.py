@@ -55,9 +55,10 @@ class TestDStabilityWrapper:
         assert test_externals.joinpath(
             "DStabilityConsole"
         ).exists(), "No d-stability console available for testing."
+
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
-        )
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix")
+
         assert _path_test_stix.exists(), "No valid stix file available."
 
         # Create a copy of the file to avoid issues on other tests.
@@ -73,7 +74,7 @@ class TestDStabilityWrapper:
         assert filecmp.cmp(str(_path_test_stix), str(_test_file))
 
         # 2. Run test.
-        DStabilityWrapper(_test_file, test_externals).rerun_stix()
+        DStabilityWrapper(_path_test_stix, test_externals).rerun_stix()
 
         # 3. Verify expectations.
         assert not filecmp.cmp(str(_path_test_stix), str(_test_file))

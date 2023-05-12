@@ -108,6 +108,8 @@ class TestBermWideningDStability:
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
         )
+        _dstability_wrapper.rerun_stix()
+
         _berm_widening_dstability = BermWideningDStability(
             measure_input=_measure_input_test,
             dstability_wrapper=_dstability_wrapper,
