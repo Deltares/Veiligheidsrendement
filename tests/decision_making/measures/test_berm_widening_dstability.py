@@ -108,7 +108,6 @@ class TestBermWideningDStability:
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
         )
-        _dstability_wrapper.rerun_stix()
 
         _berm_widening_dstability = BermWideningDStability(
             measure_input=_measure_input_test,
@@ -134,6 +133,9 @@ class TestBermWideningDStability:
 
         _test_file.parent.mkdir(parents=True)
         shutil.copy(str(_path_test_stix), str(_test_file))
+        
+        # Open the file to avoid geolib error (VRTOOL-105).
+        _test_file.open(mode="+r").close()
 
         # 3. Run test.
         _dstability_wrapper.stix_name = _test_file

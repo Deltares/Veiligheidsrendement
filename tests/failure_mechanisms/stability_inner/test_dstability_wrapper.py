@@ -70,6 +70,9 @@ class TestDStabilityWrapper:
         shutil.copy(str(_path_test_stix), str(_test_file))
         assert _test_file.exists()
 
+        # Open the file to avoid geolib error (VRTOOL-105).
+        _test_file.open(mode="+r").close()
+
         # Verify both files are the same.
         assert filecmp.cmp(str(_path_test_stix), str(_test_file))
 
