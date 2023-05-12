@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Optional
 
 from geolib import DStabilityModel
+from geolib.geometry import Point as GeolibPoint
+from geolib.models.dstability.reinforcements import ForbiddenLine
 
 
 class DStabilityWrapper:
@@ -27,10 +29,9 @@ class DStabilityWrapper:
     def save_dstability_model(self, save_path: Path) -> None:
         """
         Serialize the dstability model to a new file with a given name at a given directory.
-        Args:
-            new_filename: The name of the new file.
-            save_path: The path to the directory where the new file will be saved.
 
+        Args:
+            save_path: The path to the directory where the new file will be saved.
 
         Returns:
             None
@@ -73,3 +74,23 @@ class DStabilityWrapper:
                 return stage_output.FactorOfSafety
 
         raise ValueError(f"No output found for the provided stage: {stage_id_result}.")
+
+    def add_stability_screen(self, bottom_screen: float, location: float) -> None:
+        """
+        Add a stability screen to the dstability model.
+
+        Args:
+            bottom_screen: The bottom level of the stability screen.
+            location: The location x of the stability screen in the D-Stability model.
+
+        Returns:
+            None
+        """
+
+        # The top of the stability screen is hardcoded at 20m to make sure it is above surface level.
+        _start_screen = GeolibPoint(x=location, z=20)
+        _end_screen = GeolibPoint(x=location, z=bottom_screen)
+        _stability_screen = ForbiddenLine(start=_start_screen, end=_end_screen)
+
+        for id in self.get_all_stage_ids():
+            self._dstability_model.add_reinforcement(_stability_screen, stage_id=id)

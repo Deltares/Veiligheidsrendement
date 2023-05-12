@@ -43,13 +43,10 @@ class StabilityScreenMeasure(MeasureBase):
 
     def _get_depth(self, dike_section: DikeSection) -> float:
         """Gets the depth for the stability screen application.
-
         Args:
             dike_section (DikeSection): The section to retrieve the depth from.
-
         Raises:
             ValueError: Raised when there is no stability inner failure mechanism present.
-
         Returns:
             float: The depth to be used for the stability screen calculation.
         """

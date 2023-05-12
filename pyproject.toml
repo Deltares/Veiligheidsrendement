@@ -49,6 +49,7 @@ teamcity-messages = "^1.32"
 black = "^22.8.0"
 isort = "^5.10.1"
 commitizen = "^3.0.1"
+urllib3 = "1.26.15"
 
 
 [tool.black]
