@@ -135,7 +135,8 @@ class TestBermWideningDStability:
         shutil.copy(str(_path_test_stix), str(_test_file))
         
         # Open the file to avoid geolib error (VRTOOL-105).
-        _test_file.open(mode="+r").close()
+        from geolib import DStabilityModel
+        DStabilityModel().parse(_test_file)
 
         # 3. Run test.
         _dstability_wrapper.stix_name = _test_file
