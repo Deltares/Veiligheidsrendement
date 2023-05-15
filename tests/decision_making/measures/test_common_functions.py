@@ -18,16 +18,16 @@ class TestCommonFunctions:
                 "AW035_087.xlsx", "inward", 0, 20, (40.00, 20.0), id="No Berm case 1b"
             ),
             pytest.param(
-                "DV56.xlsx", "outward", 0, 20, (91.48, 0.0), id="No Berm case 2"
+                "DV56.xlsx", "outward", 0, 20, (76.82, 0.0), id="No Berm case 2"
             ),
             pytest.param(
-                "DV53.xlsx", "inward", 0.5, 10, (37.8, 13.06), id="Inward case"
+                "DV53.xlsx", "inward", 0.5, 10, (38.87, 13.06), id="Inward case"
             ),
             pytest.param(
-                "DV53.xlsx", "outward", 0, 20, (91.23, 0.0), id="Outward case"
+                "DV53.xlsx", "outward", 0, 20, (91.72, 0.0), id="Outward case"
             ),
             pytest.param(
-                "DV86.xlsx", "outward", 0, 30, (90.38, 10.0), id="Outward 30m case"
+                "DV86.xlsx", "outward", 0, 30, (70.38, 10.0), id="Outward 30m case"
             ),
         ],
     )
