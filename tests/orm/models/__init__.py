@@ -21,5 +21,6 @@ def empty_db_fixture(request: pytest.FixtureRequest):
     assert isinstance(_db, SqliteDatabase)
 
     yield _db
+    _db.close()
 
     shutil.rmtree(_db_file.parent)
