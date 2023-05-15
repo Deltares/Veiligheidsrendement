@@ -9,7 +9,7 @@ from vrtool.orm.orm_controllers import initialize_database
 def empty_db_fixture(request: pytest.FixtureRequest):
     _parts = request.node.nodeid.split("::")
     _db_file = test_results / _parts[-2] / f"{_parts[-1]}_db.db"
-    if _db_file.is_file():
+    if _db_file.exists():
         _db_file.unlink()
 
     _db = initialize_database(_db_file)

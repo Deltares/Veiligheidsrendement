@@ -19,7 +19,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
     Returns:
         SqliteDatabase: The initialized instance of the database.
     """
-    if not database_path.exists():
+    if not database_path.parent.exists():
         database_path.parent.mkdir(parents=True)
 
     vrtool_db.init(database_path)
@@ -46,6 +46,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.SupportingFile
         ]
     )
+    return vrtool_db
 
 
 def open_database(database_path: Path) -> SqliteDatabase:
