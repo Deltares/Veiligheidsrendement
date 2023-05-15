@@ -4,11 +4,6 @@ from peewee import SqliteDatabase
 
 from tests import test_results
 from vrtool.orm.orm_controllers import initialize_database
-from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.mechanism import Mechanism
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.section_data import SectionData
 
 @pytest.fixture(autouse=False)
 def empty_db_fixture(request: pytest.FixtureRequest):

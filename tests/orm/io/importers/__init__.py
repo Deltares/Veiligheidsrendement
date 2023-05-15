@@ -14,3 +14,5 @@ def db_fixture():
     assert isinstance(_db, SqliteDatabase)
 
     yield _db
+
+    _db.close()
