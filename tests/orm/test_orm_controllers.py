@@ -47,8 +47,8 @@ class DummyModelsData:
         dict(name="a_mechanism"),dict(name="b_mechanism")
     ]
     buildings_data = [
-        dict(distance_from_toe="24", number_of_buildings=2),
-        dict(distance_from_toe="42", number_of_buildings=1),
+        dict(distance_from_toe=24, number_of_buildings=2),
+        dict(distance_from_toe=42, number_of_buildings=1),
     ]
 
 

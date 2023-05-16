@@ -16,7 +16,7 @@ class ComputationScenario(OrmBaseModel):
     computation_type = ForeignKeyField(ComputationType, backref="computation_scenarios")
     computation_name = CharField(max_length=_max_char_length)
     scenario_name = CharField(max_length=_max_char_length)
-    scenario_probability = FloatField(default=float("nan"))
+    scenario_probability = FloatField(default=float("nan"), null=True)
     probability_of_failure = FloatField()
 
     class Meta:
