@@ -1,3 +1,4 @@
+import math
 import pytest
 from peewee import SqliteDatabase
 
@@ -27,14 +28,14 @@ class TestDikeTrajectInfoImporter:
         assert _dike_traject_info.omegaPiping == 0.25
         assert _dike_traject_info.omegaStabilityInner == 0.04
         assert _dike_traject_info.omegaOverflow == 0.24
-        assert _dike_traject_info.aPiping is None
+        assert math.isnan(_dike_traject_info.aPiping)
         assert _dike_traject_info.bPiping == 300
         assert _dike_traject_info.aStabilityInner == 0.033
         assert _dike_traject_info.bStabilityInner == 50
         assert _dike_traject_info.beta_max == pytest.approx(3.7190164854556804)
         assert _dike_traject_info.Pmax == 0.0001
-        assert _dike_traject_info.FloodDamage is None
-        assert _dike_traject_info.TrajectLength == 0
+        assert math.isnan(_dike_traject_info.FloodDamage)
+        assert math.isnan(_dike_traject_info.TrajectLength)
 
     def test_import_orm_without_model_raises_value(self):
         # 1. Define test data.
