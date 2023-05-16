@@ -37,3 +37,4 @@ class TestWaterlevelData:
         assert isinstance(_water_level_data, OrmBaseModel)
         assert _water_level_data.section_data == _test_section_data
         assert _water_level_data in _test_section_data.water_level_data_list
+        assert _water_level_data.water_level_location_id == 4

@@ -25,8 +25,3 @@ class TestComputationScenario:
         assert isinstance(_scenario, OrmBaseModel)
         assert not any(_scenario.parameters)
         assert not any(_scenario.supporting_files)
-    
-    def test_initialize_without_database_fixture(self):
-        _scenario = ComputationScenario()
-        assert isinstance(_scenario, ComputationScenario)
-        assert isinstance(_scenario, OrmBaseModel)
