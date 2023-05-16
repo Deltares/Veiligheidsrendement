@@ -2,6 +2,7 @@ from peewee import Model
 
 from vrtool.orm.orm_db import vrtool_db
 
+_max_char_length = 128
 
 def _get_table_name(qual_name: str) -> str:
     """
@@ -14,9 +15,6 @@ def _get_table_name(qual_name: str) -> str:
         str: Name of the table.
     """
     return qual_name.split(".")[0]
-
-
-_max_char_length = 128
 
 
 class OrmBaseModel(Model):
