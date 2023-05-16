@@ -85,7 +85,7 @@ class TestAcceptance:
 
         # 2. Run test.
         # Step 0. Load Traject
-        _selected_traject = DikeTraject(_vr_config)
+        _selected_traject = DikeTraject.from_config(_vr_config)
         assert isinstance(_selected_traject, DikeTraject)
 
         # Step 1. Safety assessment.
@@ -133,8 +133,7 @@ class TestAcceptance:
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
         _test_config.traject = traject
-        _test_config.externals = test_externals
-        _test_traject = DikeTraject(_test_config)
+        _test_traject = DikeTraject.from_config(_test_config)
 
         # 2. Run test.
         RunFullModel(_test_config, _test_traject, VrToolPlotMode.STANDARD).run()
@@ -151,7 +150,7 @@ class TestAcceptance:
         """
         ## MAKE TRAJECT OBJECT
         _test_config = VrtoolConfig()
-        _test_traject = DikeTraject(_test_config)
+        _test_traject = DikeTraject.from_config(_test_config)
 
         ## READ ALL DATA
         ##First we read all the input data for the different sections. We store these in a Traject object.
@@ -312,7 +311,7 @@ class TestAcceptance:
         )
 
         _test_config = VrtoolConfig(**_vr_config_data)
-        _traject = DikeTraject(_test_config)
+        _traject = DikeTraject.from_config(_test_config)
 
         # 2. Run test.
         _results = RunFullModel(_test_config, _traject, VrToolPlotMode.EXTENSIVE)
