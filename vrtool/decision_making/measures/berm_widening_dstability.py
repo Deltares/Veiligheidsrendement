@@ -251,6 +251,8 @@ class BermWideningDStability:
 
         for stage_id in self.dstability_wrapper.get_all_stage_ids():
             self.modify_geometry(fill_polygons=fill_polygons, stage_id=stage_id)
+
+        self.adjust_calculation_settings()
         _original_name = self.dstability_wrapper.stix_path.stem
         new_file_name = self.dstability_wrapper.stix_path.with_stem(
             _original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}"
@@ -318,6 +320,28 @@ class BermWideningDStability:
             self.dstability_wrapper._dstability_model.add_layer(
                 points=new_list, soil_code="Dijksmateriaal", stage_id=stage_id
             )
+
+    def adjust_calculation_settings(self):
+        """
+        Adjust the calculation settings of the last stage to accomodate the new geometry:
+            - Shift the search area of the slip place to the right
+            - Shift the constraints to the right
+        """
+        _calculation_setting = self.dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+
+        if _calculation_setting.AnalysisType == 'UpliftVanParticleSwarm':
+            # Only shift the Search area B to the right with increment dberm, Search area A is not modified.
+            _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X += self.dberm
+            _calculation_setting.UpliftVanParticleSwarm.TangentArea.TopZ += self.dcrest
+            if _calculation_setting.UpliftVanParticleSwarm.SlipPlaneConstraints.IsZoneAConstraintsEnabled:
+                _calculation_setting.UpliftVanParticleSwarm.SlipPlaneConstraints.XLeftZoneA = self.geometry.loc["BUK", "x"]
+                _calculation_setting.UpliftVanParticleSwarm.SlipPlaneConstraints.WidthZoneA = self.geometry.loc["BIK", "x"] - self.geometry.loc["BUK", "x"]
+        elif _calculation_setting.AnalysisType == 'BishopBruteForce':
+            _calculation_setting.BishopBruteForce.SearchGrid.BottomLeft.X += self.dberm
+            _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines += max(1, np.floor(self.dcrest / _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines))
+            if _calculation_setting.BishopBruteForce.SlipPlaneConstraints.IsZoneAConstraintsEnabled:
+                _calculation_setting.BishopBruteForce.SlipPlaneConstraints.XLeftZoneA = self.geometry.loc["BUK", "x"]
+                _calculation_setting.BishopBruteForce.SlipPlaneConstraints.WidthZoneA = self.geometry.loc["BIK", "x"] - self.geometry.loc["BUK", "x"]
 
     def modify_polygon_from_stix(
         self,
