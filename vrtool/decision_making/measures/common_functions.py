@@ -157,7 +157,7 @@ def calculate_area(geometry):
     return areaPol, polygonXZ
 
 
-def modify_geometry_input(initial, berm_height):
+def modify_geometry_input(initial: pd.DataFrame, berm_height: float):
     """Checks geometry and corrects if necessary"""
     # TODO move this to the beginning for the input.
     # modify the old structure
@@ -199,16 +199,17 @@ def modify_geometry_input(initial, berm_height):
 
 
 def add_extra_points(
-    geom: pd.DataFrame, base: pd.DataFrame, dberm: float, dxCrest: float
+    geom: pd.DataFrame, base: pd.DataFrame, to_left_right: tuple[float, float]
 ):
-    dx = 1.0 + dberm + 2 * dxCrest
+    dxL = 1.0 + to_left_right[0]
+    dxR = 1.0 + to_left_right[1]
     dz = 1.0
 
-    ltp = [base.loc["BUT"].x - dx, base.loc["BUT"].z]
+    ltp = [base.loc["BUT"].x - dxL, base.loc["BUT"].z]
     lowestz = min(base.loc["BUT"].z, base.loc["BIT"].z) - dz
-    lbp = [base.loc["BUT"].x - dx, lowestz]
-    rtp = [base.loc["BIT"].x + dx, base.loc["BIT"].z]
-    rbp = [base.loc["BIT"].x + dx, lowestz]
+    lbp = [base.loc["BUT"].x - dxL, lowestz]
+    rtp = [base.loc["BIT"].x + dxR, base.loc["BIT"].z]
+    rbp = [base.loc["BIT"].x + dxR, lowestz]
 
     geom.loc["LBT"] = pd.Series(lbp, index=["x", "z"])
     geom.loc["LTP"] = pd.Series(ltp, index=["x", "z"])
@@ -223,15 +224,15 @@ def add_extra_points(
 
 # This script determines the new geometry for a soil reinforcement based on a 4 or 6 point profile
 def determine_new_geometry(
-    geometry_change,
-    direction,
-    max_berm_out,
-    initial,
+    geometry_change: tuple[float, float],
+    direction: float,
+    max_berm_out: float,
+    initial: pd.DataFrame,
     geometry_plot: bool,
     plot_dir: Union[Path, None] = None,
     berm_height: float = 2,
     slope_in: bool = False,
-    crest_extra: bool = False,
+    crest_extra: float = np.nan,
 ):
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
     If this is not the case and it is input of the old type, first it is transformed to obey that.
@@ -244,15 +245,11 @@ def determine_new_geometry(
     # Geometry is always from inner to outer toe
     dcrest = geometry_change[0]
     dberm = geometry_change[1]
-    if crest_extra:
-        if (crest_extra > initial["z"].max()) & (dcrest > 0.0):
-            # if overflow crest is higher than profile, in case of reinforcement ensure that everything is heightened to that level + increment:
-            pass
-        elif crest_extra < initial["z"].max():
-            # case where cross section for overflow has a lower spot, but majority of section is higher.
-            # in that case the crest height is modified to the level of the overflow computation which is a conservative estimate.
-            initial.loc["BIK", "z"] = crest_extra
-            initial.loc["BUK", "z"] = crest_extra
+    if (~np.isnan(crest_extra)) and crest_extra < initial["z"].max():
+        # case where cross section for overflow has a lower spot, but majority of section is higher.
+        # in that case the crest height is modified to the level of the overflow computation which is a conservative estimate.
+        initial.loc["BIK", "z"] = crest_extra
+        initial.loc["BUK", "z"] = crest_extra
 
     # crest heightening
     if dcrest > 0:
@@ -271,39 +268,41 @@ def determine_new_geometry(
     else:
         BUT_dx = 0.0
         BIT_dx = 0.0
-    # z_innertoe = (initial.z[int(initial[initial.type == 'innertoe'].index.values)])
 
     new_geometry = copy.deepcopy(initial)
 
-    # apply dcrest and dberm as we have inward reinforcement
-    new_geometry.loc["BUK"].x += BUT_dx
-    new_geometry.loc["BUK"].z += dcrest
-    new_geometry.loc["BIK"].x += BUT_dx
-    new_geometry.loc["BIK"].z += dcrest
-    new_geometry.loc["BBL"].x += 2 * BUT_dx
-    new_geometry.loc["EBL"].x += 2 * BUT_dx + dberm
-    new_geometry.loc["BIT"].x += 2 * BUT_dx + dberm
-
-    # modify entire profile
+    # get effects of inward/outward:
     dhouse = 0.0
     if direction == "outward":
         dout = BUT_dx
         din = BIT_dx
         if dberm <= max_berm_out:
             dhouse = max(0, -(dberm + dout - din))
-            new_geometry["x"] = np.subtract(initial["x"], dberm)
+            shift = dberm
         else:
             berm_in = dberm - max_berm_out
             dhouse = max(0, -(-berm_in + dout - din))
-            new_geometry["x"] = np.subtract(initial["x"], max_berm_out)
+            shift = max_berm_out
     else:
         # all changes inward.
         dhouse = max(0, dberm + BUT_dx + BIT_dx)
+        shift = 0.0
+
+    # apply dcrest, dberm and shift due to inward/outward:
+    max_to_right = BUT_dx + BIT_dx + dberm - shift
+    new_geometry.loc["BUT"].x -= shift
+    new_geometry.loc["BUK"].x += BUT_dx - shift
+    new_geometry.loc["BIK"].x += BUT_dx - shift
+    new_geometry.loc["BBL"].x += BUT_dx + BIT_dx - shift
+    new_geometry.loc["EBL"].x += max_to_right
+    new_geometry.loc["BIT"].x += max_to_right
+    new_geometry.loc["BUK"].z += dcrest
+    new_geometry.loc["BIK"].z += dcrest
 
     # add extra points:
     base = copy.deepcopy(initial)
-    initial = add_extra_points(initial, base, dberm, BUT_dx)
-    new_geometry = add_extra_points(new_geometry, base, dberm, BUT_dx)
+    initial = add_extra_points(initial, base, (shift, max_to_right))
+    new_geometry = add_extra_points(new_geometry, base, (shift, max_to_right))
 
     # calculate the area difference
     area_old, polygon_old = calculate_area(initial)
@@ -381,9 +380,6 @@ def determine_new_geometry(
             )
             plt.close()
 
-    area_difference = np.max([0.0, area_extra + 0.5 * area_excavate])
-    # old:
-    # return new_geometry, area_difference
     return new_geometry, area_extra, area_excavate, dhouse
 
 
