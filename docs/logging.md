@@ -1,5 +1,5 @@
 # Vrtool Logging
-When running the vrtool package [via CLI](./tutorial.md#running-the-cli), by default, its logging messages will be displayed in the console. However, this will not be the case while [sandboxing](./tutorial.md#sandboxing), it is therefore the user's responsibility to configure the logging options. This pages shows how to do so.
+When running the vrtool package [via CLI](https://deltares.github.io/VrtoolDocumentation/tutorials/vrtool_tutorial.html#running-the-cli), by default, its logging messages will be displayed in the console. However, this will not be the case while [sandboxing](https://deltares.github.io/VrtoolDocumentation/tutorials/vrtool_tutorial.html#sandboxing), it is therefore the user's responsibility to configure the logging options. This pages shows how to do so.
 
 ## The VrToolLogger
 In `vrtool.vrtool_logger` we find the class `VrToolLogger` which contains all necessary (static) methods to interact with the `logging` library from a 'VrTool' perspective. The potential options are:
