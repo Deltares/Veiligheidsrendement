@@ -43,9 +43,7 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
-    mechanism_data = [
-        dict(name="a_mechanism"),dict(name="b_mechanism")
-    ]
+    mechanism_data = [dict(name="a_mechanism"), dict(name="b_mechanism")]
     buildings_data = [
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
@@ -91,9 +89,11 @@ class TestOrmControllers:
         for _m_dict in DummyModelsData.mechanism_data:
             _mechanism = Mechanism.create(**_m_dict)
             _mechanism.save()
-            _mechanism_section = MechanismPerSection.create(mechanism=_mechanism, section=_dike_section)
+            _mechanism_section = MechanismPerSection.create(
+                mechanism=_mechanism, section=_dike_section
+            )
             _mechanism_section.save()
-        
+
         for _b_dict in DummyModelsData.buildings_data:
             Buildings.create(**(_b_dict | dict(section_data=_dike_section))).save()
 

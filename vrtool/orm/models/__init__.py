@@ -14,5 +14,5 @@ from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.profile_point import ProfilePoint
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.standard_measure import StandardMeasure
-from vrtool.orm.models.water_level_data import WaterlevelData
 from vrtool.orm.models.supporting_file import SupportingFile
+from vrtool.orm.models.water_level_data import WaterlevelData

@@ -43,7 +43,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.StandardMeasure,
             orm.CustomMeasure,
             orm.DikeTrajectInfo,
-            orm.SupportingFile
+            orm.SupportingFile,
         ]
     )
     return vrtool_db
