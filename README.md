@@ -40,7 +40,7 @@ We recommend you to check our `CONTRIBUTING.md` document and its [installation s
 ### Dependencies / Pre-requirements.
 
 #### D-Stability
-It is responsibility of the user to have their own DStabilityConsole binaries locally available in order to run it with the `vrtool`. For a correct functioning we advise you to have a look on our tutorial section [Running a D-Stability model](https://deltares.github.io/VrtoolDocumentation/tutorials/vrtool_tutorial.html#running-a-d-stability-model).
+It is the responsibility of the user to have their own DStabilityConsole binaries locally available in order to run it with the `vrtool`. For a correct functioning we advise you to have a look on our tutorial section [Running a D-Stability model](https://deltares.github.io/VrtoolDocumentation/tutorials/vrtool_tutorial.html#running-a-d-stability-model).
 
 #### openturns
 We found out a hard dependency when working under a Windows environment with the [library `openturns`](https://openturns.github.io/www/index.html), which forced us to work under the version 1.19. This is automatically resolved for you when following the steps specified for [development mode](#development-mode).
