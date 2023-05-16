@@ -70,7 +70,7 @@ class TestOrmControllers:
         reason="Test database already exists. Won't overwrite.",
     )
     def test_create_db_with_data(self):
-        # 1. Define datbase file.
+        # 1. Define database file.
         _db_file = test_data / "test_db" / "vrtool_db.db"
         if _db_file.parent.exists():
             shutil.rmtree(_db_file.parent)
