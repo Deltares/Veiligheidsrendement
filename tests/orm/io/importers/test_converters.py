@@ -1,8 +1,9 @@
-from vrtool.orm.io.importers.converters import to_valid_float
 import math
 
-class TestConverters:
+from vrtool.orm.io.importers.converters import to_valid_float
 
+
+class TestConverters:
     def test_none_to_valid_float(self):
         _return_value = to_valid_float(None)
         assert math.isnan(_return_value)

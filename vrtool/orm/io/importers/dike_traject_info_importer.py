@@ -1,8 +1,8 @@
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.io.importers.converters import to_valid_float
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
 
-from vrtool.orm.io.importers.converters import to_valid_float
 
 class DikeTrajectInfoImporter(OrmImporterProtocol):
     def import_orm(self, orm_model: OrmDikeTrajectInfo) -> DikeTrajectInfo:
