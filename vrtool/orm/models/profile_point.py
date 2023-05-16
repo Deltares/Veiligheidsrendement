@@ -10,8 +10,8 @@ class ProfilePoint(OrmBaseModel):
         CharacteristicPointType, backref="profile_points"
     )
     section_data = ForeignKeyField(SectionData, backref="profile_points")
-    x_coordinate = FloatField(null=False)
-    y_coordinate = FloatField(null=False)
+    x_coordinate = FloatField()
+    y_coordinate = FloatField()
 
     class Meta:
         table_name = _get_table_name(__qualname__)

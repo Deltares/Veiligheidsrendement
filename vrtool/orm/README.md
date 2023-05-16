@@ -48,4 +48,3 @@ We know that some of the properties represented as `int` are actually `booleans`
 | int / integer | IntegerField | int | |
 | int / integer | BooleanField | bool | Only on given occassions. |
 | real | FloatField | float | |
-| blob | BlobField | To be determined | We are not sure yet whether this is applicable |

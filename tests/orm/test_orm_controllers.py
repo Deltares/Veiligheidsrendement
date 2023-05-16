@@ -43,6 +43,11 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
+    mechanism_data = [dict(name="a_mechanism"), dict(name="b_mechanism")]
+    buildings_data = [
+        dict(distance_from_toe=24, number_of_buildings=2),
+        dict(distance_from_toe=42, number_of_buildings=1),
+    ]
 
 
 class TestOrmControllers:
@@ -63,7 +68,7 @@ class TestOrmControllers:
         reason="Test database already exists. Won't overwrite.",
     )
     def test_create_db_with_data(self):
-        # 1. Define datbase file.
+        # 1. Define database file.
         _db_file = test_data / "test_db" / "vrtool_db.db"
         if _db_file.parent.exists():
             shutil.rmtree(_db_file.parent)
@@ -80,6 +85,17 @@ class TestOrmControllers:
             **(dict(dike_traject=_dike_traject_info) | DummyModelsData.section_data)
         )
         _dike_section.save()
+
+        for _m_dict in DummyModelsData.mechanism_data:
+            _mechanism = Mechanism.create(**_m_dict)
+            _mechanism.save()
+            _mechanism_section = MechanismPerSection.create(
+                mechanism=_mechanism, section=_dike_section
+            )
+            _mechanism_section.save()
+
+        for _b_dict in DummyModelsData.buildings_data:
+            Buildings.create(**(_b_dict | dict(section_data=_dike_section))).save()
 
         # 3. Save tables.
         assert _db_file.exists()
