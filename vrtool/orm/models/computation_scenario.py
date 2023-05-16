@@ -14,9 +14,9 @@ class ComputationScenario(OrmBaseModel):
         MechanismPerSection, backref="computation_scenarios"
     )
     computation_type = ForeignKeyField(ComputationType, backref="computation_scenarios")
-    computation_name = CharField(null=False, max_length=_max_char_length)
+    computation_name = CharField(max_length=_max_char_length)
     scenario_name = CharField(max_length=_max_char_length)
-    scenario_probability = FloatField(null=False)
+    scenario_probability = FloatField(default=float("nan"))
     probability_of_failure = FloatField()
 
     class Meta:

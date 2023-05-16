@@ -8,9 +8,9 @@ class MechanismTable(OrmBaseModel):
     computation_scenario = ForeignKeyField(
         ComputationScenario, backref="mechanism_tables"
     )
-    year = IntegerField(null=False)
-    value = FloatField(null=False)
-    beta = FloatField(null=False)
+    year = IntegerField()
+    value = FloatField()
+    beta = FloatField()
 
     class Meta:
         table_name = _get_table_name(__qualname__)
