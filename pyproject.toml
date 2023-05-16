@@ -58,18 +58,15 @@ target-version = ['py310']
 exclude = '''
 (
   /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
+      \.git         # exclude a few common directories in the
+    | \.github          # root of the project
     | \.env
-    | _build
-    | buck-out
-    | build
-    | dist
-    | \.virtualenvs
+    | \.venv
+    | \.config
+    | .pytest_cache
+    | .scannerwork
+    | .vscode
+    | site
   )/
 )
 '''
@@ -78,6 +75,7 @@ exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
+skip = [".git", ".github", ".env", ".venv", ".config", ".pytest_cache", ".scannerwork", ".vscode", "site"]
 
 [build-system]
 requires = ["poetry-core"]
