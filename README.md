@@ -39,30 +39,8 @@ We recommend you to check our `CONTRIBUTING.md` document and its [installation s
 
 ### Dependencies / Pre-requirements.
 
-#### DStability
-It is responsibility of the user to have their own DStabilityConsole binaries locally available in order to run it with the `vrtool`. For a correct functioning we expect a directory structure such as:
-```
-C:/
-├── ...
-├── repos/
-    ├── ...
-    ├── external_libraries/
-        ├── ...
-        ├── DStabilityConsole/
-            ├── ...
-            ├── D-Stability Console.exe
-```
-
-To use such directory structure in the `vrtool` we simply need to add its absolute path to the `externals` property in the `json` configuration file:
-
-```json
-{
-    "traject": "16-3",
-    "externals": "C:\\repos\\external_libraries",
-}
-```
-
-When running the tool as a sandbox, this property (`externals`) can be set in the `VrtoolConfig` dataclass.
+#### D-Stability
+It is responsibility of the user to have their own DStabilityConsole binaries locally available in order to run it with the `vrtool`. For a correct functioning we advise you to have a look on our tutorial section [Running a D-Stability model](https://deltares.github.io/VrtoolDocumentation/tutorials/vrtool_tutorial.html#running-a-d-stability-model).
 
 #### openturns
 We found out a hard dependency when working under a Windows environment with the [library `openturns`](https://openturns.github.io/www/index.html), which forced us to work under the version 1.19. This is automatically resolved for you when following the steps specified for [development mode](#development-mode).
