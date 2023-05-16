@@ -1,27 +1,27 @@
 ,ID,Section,LCC,name,yes/no,dcrest,dberm
-148,5+2,DV30,2483464.018744515,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-125,5+2,DV31,4475108.062225924,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,20
-154,5+2,DV32,6258677.110638684,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15
-143,5+2,DV33A,1232529.3016412586,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,15
-142,5+2,DV33B,1208950.7645901558,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,20
-157,2,DV34,1557363.3591553827,Grondversterking binnenwaarts 2025,-999,0.5,15
-162,5+2,DV35A,1410159.6917828615,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-149,5+2,DV35B,278946.63877622836,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,8
-152,2,DV35C,3788119.112398714,Grondversterking binnenwaarts 2025,-999,0.5,30
-150,2,DV36,1865103.1352474117,Grondversterking binnenwaarts 2025,-999,1.0,30
-131,5+2,DV37A,647776.5828708459,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15
-146,5+2,DV37B,912019.0311123857,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0
-145,2,DV38,724997.9333575707,Grondversterking binnenwaarts 2025,-999,1.0,0
-98,2,DV39,1972447.1384130514,Grondversterking binnenwaarts 2025,-999,1.0,20
-155,2,DV40,918680.0866172143,Grondversterking binnenwaarts 2025,-999,0.5,8
-151,5+2,DV41,1617397.276793627,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,10
-147,2,DV42,902162.094791278,Grondversterking binnenwaarts 2025,-999,0.5,20
-144,2,DV43A,2656705.3751995983,Grondversterking binnenwaarts 2025,-999,0.5,20
-160,2,DV43B,521983.11955232074,Grondversterking binnenwaarts 2025,-999,0.5,5
-161,2,DV44,1350193.8372993472,Grondversterking binnenwaarts 2025,-999,1.0,8
-158,2,DV45,1976836.693405678,Grondversterking binnenwaarts 2025,-999,0.5,0
-136,2,DV46,4922373.376676109,Grondversterking binnenwaarts 2025,-999,1.0,20
-137,2,DV47,1114751.3302381982,Grondversterking binnenwaarts 2025,-999,1.0,20
-153,2,DV48,698755.296732878,Grondversterking binnenwaarts 2025,-999,1.0,30
-139,2,DV49,1215076.397287662,Grondversterking binnenwaarts 2025,-999,1.0,20
-159,2,DV50,632016.3360589417,Grondversterking binnenwaarts 2025,-999,0.5,0
+104,5+2,DV30,2483464.018744515,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+86,5+2,DV31,4475108.062225923,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,20
+84,5+2,DV32,2589225.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+87,2,DV33A,276165.0,Grondversterking binnenwaarts 2025,-999,1.0,30
+122,5+2,DV33B,666425.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+110,2,DV34,2201796.297332225,Grondversterking binnenwaarts 2025,-999,1.0,15
+111,5+2,DV35A,1410159.6917828624,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+119,5+2,DV35B,295837.69757682434,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+114,5+2,DV35C,3936577.352398717,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,10
+118,5+2,DV36,1042245.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+112,5+2,DV37A,666443.7731700109,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+113,5+2,DV37B,912019.0311123859,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0
+74,2,DV38,184680.0,Grondversterking binnenwaarts 2025,-999,0.5,30
+120,2,DV39,1760801.0802797312,Grondversterking binnenwaarts 2025,-999,0.5,30
+79,2,DV40,288135.0,Grondversterking binnenwaarts 2025,-999,0.5,30
+115,5+2,DV41,716680.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
+103,2,DV42,902162.0947912778,Grondversterking binnenwaarts 2025,-999,0.5,20
+95,2,DV43A,505305.0,Grondversterking binnenwaarts 2025,-999,1.0,30
+126,2,DV43B,521983.11955232074,Grondversterking binnenwaarts 2025,-999,0.5,5
+97,2,DV44,452295.0,Grondversterking binnenwaarts 2025,-999,1.0,30
+124,2,DV45,970425.0,Grondversterking binnenwaarts 2025,-999,0.5,30
+98,2,DV46,1207260.0,Grondversterking binnenwaarts 2025,-999,1.0,30
+99,2,DV47,304380.0,Grondversterking binnenwaarts 2025,-999,1.0,30
+100,2,DV48,178695.0,Grondversterking binnenwaarts 2025,-999,1.0,30
+101,2,DV49,1215076.397287663,Grondversterking binnenwaarts 2025,-999,1.0,20
+125,2,DV50,286425.0,Grondversterking binnenwaarts 2025,-999,0.5,30
