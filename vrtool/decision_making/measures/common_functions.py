@@ -1,7 +1,7 @@
 import copy
 import logging
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
