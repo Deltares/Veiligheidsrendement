@@ -5,7 +5,7 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 
 class TestDikeTraject:
-    def test_config_without_traject_raises_ValueError(
+    def test_from_config_without_traject_raises_value_error(
         self,
     ):
         # Setup
@@ -13,7 +13,7 @@ class TestDikeTraject:
 
         # Call
         with pytest.raises(ValueError) as value_error:
-            DikeTraject(config)
+            DikeTraject.from_config(config)
 
         # Assert
         assert str(value_error.value) == "No traject given in config."

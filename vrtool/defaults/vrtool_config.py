@@ -39,11 +39,12 @@ class VrtoolConfig:
     """
 
     # Directory to write the results to
+    input_database_path: Path = None
+    input_directory: Optional[Path] = None
     output_directory: Optional[Path] = None
+    externals: Optional[Path] = None
     language: str = "EN"
     timing: bool = False
-    input_directory: Optional[Path] = None
-    externals: Optional[Path] = None
 
     ## RELIABILITY COMPUTATION
     traject: str = ""
@@ -134,8 +135,9 @@ class VrtoolConfig:
                 return Path(value)
             return value
 
+        self.input_directory = _convert_to_path(self.output_directory)
         self.output_directory = _convert_to_path(self.output_directory)
-        self.input_directory = _convert_to_path(self.input_directory)
+        self.input_database_path = _convert_to_path(self.input_database_path)
         self.externals = _convert_to_path(self.externals)
 
     def export(self, export_path: Path):

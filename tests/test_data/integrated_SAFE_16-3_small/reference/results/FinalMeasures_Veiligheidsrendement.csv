@@ -1,11 +1,12 @@
 ,ID,Section,LCC,name,yes/no,dcrest,dberm
-16,6,DV47,15788964.709993199,Zelfkerende constructie,yes,-999.0,-999
-13,7,DV48,1056522.8563230399,Stabiliteitsscherm,yes,-999.0,-999
-25,6,DV49,3415750.2693277663,Zelfkerende constructie,yes,-999.0,-999
-30,5+2,DV50,491108.25932961656,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.0,10
-22,6,DV51,9364174.650495235,Zelfkerende constructie,yes,-999.0,-999
-39,2,DV53,5737449.709070063,Grondversterking binnenwaarts 2025,-999,0.5,0
-37,6,DV54,14988785.707255801,Zelfkerende constructie,yes,-999.0,-999
-38,6,DV55,5103437.9288155995,Zelfkerende constructie,yes,-999.0,-999
-35,5+2,DV56,2694771.0553538688,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,15
-36,5+2,DV57,2204418.949134481,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0
+21,6,DV47,15788964.709993199,Zelfkerende constructie,yes,-999.0,-999
+18,7,DV48,1056522.8563230399,Stabiliteitsscherm,yes,-999.0,-999
+31,6,DV49,3415750.2693277667,Zelfkerende constructie,yes,-999.0,-999
+36,5+2,DV50,491108.2593296163,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.0,10
+27,6,DV51,9364174.650495235,Zelfkerende constructie,yes,-999.0,-999
+45,2,DV53,5737449.709070064,Grondversterking binnenwaarts 2025,-999,0.5,0
+43,6,DV54,14988785.707255801,Zelfkerende constructie,yes,-999.0,-999
+44,6,DV55,5103437.9288155995,Zelfkerende constructie,yes,-999.0,-999
+41,5+2,DV56,2694771.0553538688,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,15
+42,5+2,DV57,2204418.949134481,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0
+28,2,DV86,2680325.6679455554,Grondversterking buitenwaarts 2025,-999,0.0,20

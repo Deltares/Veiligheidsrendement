@@ -67,6 +67,7 @@ class TestVrtoolConfig:
             "design_methods",
             "unit_costs",
             "externals",
+            "input_database_path",
         ]
 
         # 2. Run test.

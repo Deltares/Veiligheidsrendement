@@ -40,32 +40,58 @@ _measure_input = _measure_input_test = {
 
 class TestCommonFunctions:
     @pytest.mark.parametrize(
-        "sheetFileName, direction, dx, dy, expected_values",
+        "sheetFileName, direction, dxdy, dcrest_extra, expected_values",
         [
             pytest.param(
-                "AW035_087.xlsx", "outward", 0, 20, (83.67, 0.0), id="No Berm case 1a"
+                "AW035_087.xlsx",
+                "outward",
+                (0, 20),
+                0,
+                (83.67, 0.0),
+                id="No Berm case 1a",
             ),
             pytest.param(
-                "AW035_087.xlsx", "inward", 0, 20, (40.00, 20.0), id="No Berm case 1b"
+                "AW035_087.xlsx",
+                "inward",
+                (0, 20),
+                0,
+                (40.00, 20.0),
+                id="No Berm case 1b",
             ),
             pytest.param(
-                "DV56.xlsx", "outward", 0, 20, (91.48, 0.0), id="No Berm case 2"
+                "DV56.xlsx", "outward", (0, 20), 0, (76.82, 0.0), id="No Berm case 2"
             ),
             pytest.param(
-                "DV53.xlsx", "inward", 0.5, 10, (37.8, 13.06), id="Inward case"
+                "DV53.xlsx", "inward", (0.5, 10), 0, (37.80, 13.06), id="Inward case"
             ),
             pytest.param(
-                "DV53.xlsx", "outward", 0, 20, (91.23, 0.0), id="Outward case"
+                "DV53.xlsx", "outward", (0, 20), 0, (91.72, 0.0), id="Outward case"
+            ),
+            pytest.param(
+                "DV86.xlsx",
+                "outward",
+                (0, 30),
+                0,
+                (90.375, 10.0),
+                id="Outward 30m case",
+            ),
+            pytest.param(
+                "DV53.xlsx",
+                "inward",
+                (0.5, 10),
+                0.4,
+                (38.18, 13.37),
+                id="Inward case with crest extra",
             ),
         ],
     )
     def test_new_geom(
-            self,
-            sheetFileName: str,
-            direction: str,
-            dx: float,
-            dy: float,
-            expected_values: tuple[float, float],
+        self,
+        sheetFileName: str,
+        direction: str,
+        dxdy: tuple[float, float],
+        dcrest_extra: float,
+        expected_values: tuple[float, float],
     ):
         # 1. Define test data.
         _traject_test_file = test_data.joinpath(
@@ -82,14 +108,25 @@ class TestCommonFunctions:
         )
 
         # 2. Run test.
-        _reinforced_geometry = determine_new_geometry(
-            (dx, dy),
-            direction=direction,
-            max_berm_out=20.0,
-            initial=_traject_test_data,
-            berm_height=2,
-            geometry_plot=False,
-        )
+        if dcrest_extra > 0.0:
+            _reinforced_geometry = determine_new_geometry(
+                dxdy,
+                direction=direction,
+                max_berm_out=20.0,
+                initial=_traject_test_data,
+                berm_height=2,
+                geometry_plot=False,
+                crest_extra=_traject_test_data["z"].max() - dcrest_extra,
+            )
+        else:
+            _reinforced_geometry = determine_new_geometry(
+                dxdy,
+                direction=direction,
+                max_berm_out=20.0,
+                initial=_traject_test_data,
+                berm_height=2,
+                geometry_plot=False,
+            )
 
         # 3. Verify expectations.
         _tolerance = 0.001
