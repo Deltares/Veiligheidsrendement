@@ -7,7 +7,7 @@ from geolib import DStabilityModel
 from tests import test_data, test_results, test_externals
 from vrtool.decision_making.measures.common_functions import determine_new_geometry, implement_berm_widening
 
-_measure_input = _measure_input_test = {
+_measure_input = {
     "geometry": pd.DataFrame.from_dict(
         {
             "x": {
