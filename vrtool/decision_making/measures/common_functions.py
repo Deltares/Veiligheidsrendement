@@ -76,8 +76,7 @@ def implement_berm_widening(
             _dstability_berm_widening = BermWideningDStability(
                 measure_input=measure_input, dstability_wrapper=_dstability_wrapper
             )
-
-            if measure_input["StabilityScreen"] == "Yes":
+            if measure_input["StabilityScreen"].lower() == "yes":
                 _inner_toe = measure_input["geometry"].loc["BIT"]
                 _dstability_wrapper.add_stability_screen(
                     bottom_screen=_inner_toe.z - depth_screen, location=_inner_toe.x
