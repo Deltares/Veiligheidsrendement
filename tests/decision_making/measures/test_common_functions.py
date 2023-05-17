@@ -4,8 +4,11 @@ import pandas as pd
 import pytest
 from geolib import DStabilityModel
 
-from tests import test_data, test_results, test_externals
-from vrtool.decision_making.measures.common_functions import determine_new_geometry, implement_berm_widening
+from tests import test_data, test_externals, test_results
+from vrtool.decision_making.measures.common_functions import (
+    determine_new_geometry,
+    implement_berm_widening,
+)
 
 _measure_input = {
     "geometry": pd.DataFrame.from_dict(
@@ -34,7 +37,7 @@ _measure_input = {
     ),
     "dcrest": 0,
     "dberm": 0,
-    "StabilityScreen": 'yes'
+    "StabilityScreen": "yes",
 }
 
 
@@ -137,35 +140,32 @@ class TestCommonFunctions:
     def test_implement_berm_widening_dstability_with_screen(self):
 
         _berm_input = {
-            'STIXNAAM': test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix",
-            'DStability_exe_path' : test_externals.joinpath("DStabilityConsole")
+            "STIXNAAM": test_data
+            / "stix"
+            / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix",
+            "DStability_exe_path": test_externals.joinpath("DStabilityConsole"),
         }
         _path_intermediate_stix = test_results / "test_intermediate_stix"
-        implement_berm_widening(_berm_input,
-                                _measure_input,
-                                measure_parameters={},
-                                mechanism='StabilityInner',
-                                computation_type='DStability',
-                                path_intermediate_stix=_path_intermediate_stix,
-                                SFincrease=0.2,
-                                depth_screen=6.0)
+        implement_berm_widening(
+            _berm_input,
+            _measure_input,
+            measure_parameters={},
+            mechanism="StabilityInner",
+            computation_type="DStability",
+            path_intermediate_stix=_path_intermediate_stix,
+            SFincrease=0.2,
+            depth_screen=6.0,
+        )
 
         _dstability_model = DStabilityModel()
-        _modified_stix_name = "RW001.+096_STBI_maatgevend_Segment_38005_1D1" + f"_dberm_{_measure_input['dberm']}_dcrest_{_measure_input['dcrest']}.stix"
+        _modified_stix_name = (
+            "RW001.+096_STBI_maatgevend_Segment_38005_1D1"
+            + f"_dberm_{_measure_input['dberm']}_dcrest_{_measure_input['dcrest']}.stix"
+        )
         _dstability_model.parse(_path_intermediate_stix / _modified_stix_name)
 
         # Assert that
+        assert len(_dstability_model.datastructure.reinforcements) == 2
         assert (
-            len(_dstability_model.datastructure.reinforcements) == 2
+            len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
         )
-        assert (
-            len(
-                _dstability_model.datastructure.reinforcements[
-                    0
-                ].ForbiddenLines
-            )
-            == 1
-        )
-
-
-
