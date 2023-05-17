@@ -22,6 +22,7 @@ class DikeSection:
     section_reliability: SectionReliability
     TrajectInfo: DikeTrajectInfo
     name: str
+    InitialGeometry: pd.DataFrame
 
     @classmethod
     def get_dike_sections_from_vr_config(
