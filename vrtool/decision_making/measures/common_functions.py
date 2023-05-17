@@ -200,7 +200,7 @@ def modify_geometry_input(initial: pd.DataFrame, berm_height: float):
 
 def add_extra_points(
     geom: pd.DataFrame, base: pd.DataFrame, to_left_right: tuple[float, float]
-):
+) -> pd.DataFrame:
     dxL = 1.0 + to_left_right[0]
     dxR = 1.0 + to_left_right[1]
     dz = 1.0
