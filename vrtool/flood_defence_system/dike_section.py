@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+from pandas import DataFrame
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -22,6 +23,7 @@ class DikeSection:
     section_reliability: SectionReliability
     TrajectInfo: DikeTrajectInfo
     name: str
+    InitialGeometry: DataFrame
 
     @classmethod
     def get_dike_sections_from_vr_config(

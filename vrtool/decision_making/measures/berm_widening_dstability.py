@@ -15,6 +15,7 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
 
 class BermWideningDStability:
 
+    measure_id: int
     measure_geometry_points: list
     geometry: DataFrame
     dberm: float
@@ -22,6 +23,7 @@ class BermWideningDStability:
     dstability_wrapper: DStabilityWrapper
 
     def __init__(self, measure_input: dict, dstability_wrapper: DStabilityWrapper):
+        self.measure_id = measure_input["id"]
         self.geometry = measure_input["geometry"]
         self.dberm = measure_input["dberm"]
         self.dcrest = measure_input["dcrest"]
@@ -253,7 +255,7 @@ class BermWideningDStability:
             self.modify_geometry(fill_polygons=fill_polygons, stage_id=stage_id)
         _original_name = self.dstability_wrapper.stix_path.stem
         new_file_name = self.dstability_wrapper.stix_path.with_stem(
-            _original_name + f"_dberm_{self.dberm}_dcrest_{self.dcrest}"
+            _original_name + f"_ID_{self.measure_id}_dberm_{self.dberm}m_dcrest_{self.dcrest}m"
         ).name
 
         _export_path = path_intermediate_stix / new_file_name
