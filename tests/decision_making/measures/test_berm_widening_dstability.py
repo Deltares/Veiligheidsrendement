@@ -285,3 +285,49 @@ class TestBermWideningDStability:
         # Assert
         assert isinstance(bbox, Polygon)
         assert bbox.bounds == (0.0, 0.0, 1.0, 0.5)
+
+    def test_adjust_calculation_settings_UpliftVan(self):
+        # SetUp
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstability_wrapper = DStabilityWrapper(
+            _path_test_stix, externals_path=test_externals
+        )
+        _berm_widening_dstability = BermWideningDStability(
+            measure_input=_measure_input_test,
+            dstability_wrapper=_dstability_wrapper,
+        )
+        _calculation_setting = _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        _berm_widening_dstability.dberm = 2
+
+        # Call
+        _berm_widening_dstability.adjust_calculation_settings()
+
+        # Assert
+        assert _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X == 40.026
+
+    def test_adjust_calculation_settings_Bishop(self):
+        # SetUp
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1_Bishop.stix"
+        )
+        _dstability_wrapper = DStabilityWrapper(
+            _path_test_stix, externals_path=test_externals
+        )
+        _berm_widening_dstability = BermWideningDStability(
+            measure_input=_measure_input_test,
+            dstability_wrapper=_dstability_wrapper,
+        )
+        _calculation_setting = _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        _berm_widening_dstability.dberm = 2
+
+        # Call
+        _berm_widening_dstability.adjust_calculation_settings()
+
+        # Assert
+        assert _calculation_setting.BishopBruteForce.SearchGrid.BottomLeft.X == 6.103
+        assert _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines == 26
+
+
+

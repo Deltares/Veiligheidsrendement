@@ -329,19 +329,21 @@ class BermWideningDStability:
         """
         _calculation_setting = self.dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
 
-        if _calculation_setting.AnalysisType == 'UpliftVanParticleSwarm':
+        if _calculation_setting.AnalysisType.value == 'UpliftVanParticleSwarm':
             # Only shift the Search area B to the right with increment dberm, Search area A is not modified.
             _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X += self.dberm
             _calculation_setting.UpliftVanParticleSwarm.TangentArea.TopZ += self.dcrest
             if _calculation_setting.UpliftVanParticleSwarm.SlipPlaneConstraints.IsZoneAConstraintsEnabled:
                 _calculation_setting.UpliftVanParticleSwarm.SlipPlaneConstraints.XLeftZoneA = self.geometry.loc["BUK", "x"]
                 _calculation_setting.UpliftVanParticleSwarm.SlipPlaneConstraints.WidthZoneA = self.geometry.loc["BIK", "x"] - self.geometry.loc["BUK", "x"]
-        elif _calculation_setting.AnalysisType == 'BishopBruteForce':
+        elif _calculation_setting.AnalysisType.value == 'BishopBruteForce':
             _calculation_setting.BishopBruteForce.SearchGrid.BottomLeft.X += self.dberm
             _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines += max(1, np.floor(self.dcrest / _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines))
             if _calculation_setting.BishopBruteForce.SlipPlaneConstraints.IsZoneAConstraintsEnabled:
                 _calculation_setting.BishopBruteForce.SlipPlaneConstraints.XLeftZoneA = self.geometry.loc["BUK", "x"]
                 _calculation_setting.BishopBruteForce.SlipPlaneConstraints.WidthZoneA = self.geometry.loc["BIK", "x"] - self.geometry.loc["BUK", "x"]
+        else:
+            raise ValueError("The analysis type is not supported")
 
     def modify_polygon_from_stix(
         self,
