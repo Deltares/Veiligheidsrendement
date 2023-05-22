@@ -32,7 +32,11 @@ class TestDikeTrajectInfoImporter:
         assert all(
             isinstance(_section, DikeSection) for _section in _dike_traject.sections
         )
-        assert _dike_traject.mechanism_names == ["a_mechanism", "b_mechanism"]
+        assert _dike_traject.mechanism_names == [
+            "a_mechanism",
+            "b_mechanism",
+            "Overflow",
+        ]
 
     def test_import_orm_without_model_raises_value(self):
         # 1. Define test data.
@@ -57,5 +61,5 @@ class TestDikeTrajectInfoImporter:
 
         # 3. Verify expectations.
         assert isinstance(_mechanisms, list)
-        assert len(_mechanisms) == 2
+        assert len(_mechanisms) == 3
         assert all(isinstance(_m, OrmMechanism) for _m in _mechanisms)
