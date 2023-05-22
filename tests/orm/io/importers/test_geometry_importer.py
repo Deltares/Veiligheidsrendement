@@ -1,7 +1,6 @@
-from peewee import SqliteDatabase
-
 import pandas as pd
 import pytest
+from peewee import SqliteDatabase
 
 from tests.orm.io.importers import db_fixture
 from vrtool.orm.io.importers.geometry_importer import GeometryImporter
