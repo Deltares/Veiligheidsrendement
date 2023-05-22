@@ -90,7 +90,7 @@ class TestBermWideningDStability:
         assert isinstance(path_new_stix, Path)
         assert (
             path_new_stix.parts[-1]
-            == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_dberm_0_dcrest_0.stix"
+            == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m.stix"
         )
 
     @pytest.mark.externals
@@ -270,7 +270,7 @@ class TestBermWideningDStability:
         )
 
         _dstability_wrapper = DStabilityWrapper(_path_test_stix, test_externals)
-        _measure_input = {"geometry": None, "dcrest": 0, "dberm": 0}
+        _measure_input = {"geometry": None, "dcrest": 0, "dberm": 0, "id": 1}
         _berm_widening_dstability = BermWideningDStability(
             measure_input=_measure_input,
             dstability_wrapper=_dstability_wrapper,

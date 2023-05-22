@@ -22,6 +22,7 @@ class TestModifiedDikeGeometryOutput:
             "d_house": d_house,
             "d_crest": d_crest,
             "d_berm": d_berm,
+            "id": 1
         }
 
         # Call
