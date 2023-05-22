@@ -2,7 +2,6 @@ from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.parameter import Parameter
-from vrtool.orm.models.supporting_file import SupportingFile
 
 
 class DStabilityImporter(OrmImporterProtocol):
@@ -15,15 +14,16 @@ class DStabilityImporter(OrmImporterProtocol):
     def import_orm(self, orm_model: ComputationScenario) -> MechanismInput:
         mechanism_input = MechanismInput("StabilityInner")
 
-        id = orm_model.select().get().id
-        sp = SupportingFile()
-        file = (
-            sp.select()
-            .where(SupportingFile.computation_scenario_id == id)
-            .get()
-            .filename
-        )
-        mechanism_input.input["stix_file"] = file
+        self._set_parameters(mechanism_input, orm_model.parameters.select())
+
+        SupportingFiles = orm_model.supporting_files.select()
+
+        if len(SupportingFiles) != 1:
+            raise Exception("invalid number of stix files")
+
+        for file in SupportingFiles:
+            mechanism_input.input["stix_file"] = file.filename
+
         mechanism_tables = orm_model.mechanism_tables.select()
 
         return mechanism_input
