@@ -56,3 +56,4 @@ Thumbs.db
 .pytest_cache/
 test_results/
 test_externals/
+vrtool/run_workflows/plotting/
