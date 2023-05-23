@@ -1,11 +1,16 @@
 import copy
 import logging
+from pathlib import Path
+from typing import Optional
 
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
+    DStabilityWrapper,
+)
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     calculate_reliability,
     calculate_safety_factor,
@@ -132,7 +137,10 @@ class StabilityScreenMeasure(MeasureBase):
             if float(year_to_calculate) >= self.parameters["year"]:
                 if mechanism_name == "StabilityInner":
                     self._configure_stability_inner(
-                        mechanism_reliability, year_to_calculate, safety_factor_increase
+                        mechanism_reliability,
+                        year_to_calculate,
+                        dike_section,
+                        safety_factor_increase,
                     )
                 if mechanism_name in ["Piping", "Overflow"]:
                     self._copy_results(
@@ -155,36 +163,75 @@ class StabilityScreenMeasure(MeasureBase):
         self,
         mechanism_reliability: MechanismReliability,
         year_to_calculate: str,
+        dike_section: DikeSection,
         SFincrease: float = 0.2,
     ) -> None:
 
+        _calc_type = dike_section.mechanism_data["StabilityInner"][1]
+
         mechanism_reliability_input = mechanism_reliability.Input.input
-        if int(year_to_calculate) >= self.parameters["year"]:
-            if "SF_2025" in mechanism_reliability_input:
-                mechanism_reliability_input["SF_2025"] += SFincrease
-                mechanism_reliability_input["SF_2075"] += SFincrease
-            elif "beta_2025" in mechanism_reliability.Input.input:
-                # convert to SF and back:
-                mechanism_reliability_input["beta_2025"] = calculate_reliability(
-                    np.add(
-                        calculate_safety_factor(
-                            mechanism_reliability_input["beta_2025"]
-                        ),
-                        SFincrease,
+        if _calc_type == "DStability":
+
+            # Add screen to model
+            _dstability_wrapper = DStabilityWrapper(
+                Path(mechanism_reliability_input["STIXNAAM"]),
+                Path(mechanism_reliability_input["DStability_exe_path"]),
+            )
+            _depth_screen = self._get_depth(dike_section)
+            _inner_toe = dike_section.InitialGeometry.loc["BIT"]
+            _dstability_wrapper.add_stability_screen(
+                bottom_screen=_inner_toe.z - _depth_screen, location=_inner_toe.x
+            )
+
+            # Save and run new model
+            _original_name = _dstability_wrapper.stix_path.stem
+            _export_path = (
+                self.config.output_directory
+                / "intermediate_result"
+                / _dstability_wrapper.stix_path.with_stem(
+                    _original_name + f"_stability_screen"
+                ).name
+            )
+
+            if not _export_path.parent.exists():
+                _export_path.parent.mkdir(parents=True)
+            _dstability_wrapper.save_dstability_model(_export_path)
+            _dstability_wrapper.rerun_stix()
+
+            # Calculate reliaiblity
+            mechanism_reliability_input["BETA"] = calculate_reliability(
+                np.array(_dstability_wrapper.get_safety_factor(None))
+            )
+
+        elif _calc_type == "Simple":
+            if int(year_to_calculate) >= self.parameters["year"]:
+                if "SF_2025" in mechanism_reliability_input:
+                    mechanism_reliability_input["SF_2025"] += SFincrease
+                    mechanism_reliability_input["SF_2075"] += SFincrease
+                elif "beta_2025" in mechanism_reliability.Input.input:
+                    # convert to SF and back:
+                    mechanism_reliability_input["beta_2025"] = calculate_reliability(
+                        np.add(
+                            calculate_safety_factor(
+                                mechanism_reliability_input["beta_2025"]
+                            ),
+                            SFincrease,
+                        )
                     )
-                )
-                mechanism_reliability_input["beta_2075"] = calculate_reliability(
-                    np.add(
-                        calculate_safety_factor(
-                            mechanism_reliability_input["beta_2075"]
-                        ),
-                        SFincrease,
+                    mechanism_reliability_input["beta_2075"] = calculate_reliability(
+                        np.add(
+                            calculate_safety_factor(
+                                mechanism_reliability_input["beta_2075"]
+                            ),
+                            SFincrease,
+                        )
                     )
-                )
-            else:
-                mechanism_reliability_input["BETA"] = calculate_reliability(
-                    np.add(
-                        calculate_safety_factor(mechanism_reliability_input["BETA"]),
-                        SFincrease,
+                else:
+                    mechanism_reliability_input["BETA"] = calculate_reliability(
+                        np.add(
+                            calculate_safety_factor(
+                                mechanism_reliability_input["BETA"]
+                            ),
+                            SFincrease,
+                        )
                     )
-                )

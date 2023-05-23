@@ -42,6 +42,7 @@ _measure_input_test = {
     ),
     "dcrest": 0,
     "dberm": 0,
+    "id": 1,
 }
 
 
@@ -89,7 +90,7 @@ class TestBermWideningDStability:
         assert isinstance(path_new_stix, Path)
         assert (
             path_new_stix.parts[-1]
-            == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_dberm_0_dcrest_0.stix"
+            == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m.stix"
         )
 
     @pytest.mark.externals
@@ -269,7 +270,7 @@ class TestBermWideningDStability:
         )
 
         _dstability_wrapper = DStabilityWrapper(_path_test_stix, test_externals)
-        _measure_input = {"geometry": None, "dcrest": 0, "dberm": 0}
+        _measure_input = {"geometry": None, "dcrest": 0, "dberm": 0, "id": 1}
         _berm_widening_dstability = BermWideningDStability(
             measure_input=_measure_input,
             dstability_wrapper=_dstability_wrapper,
@@ -285,3 +286,81 @@ class TestBermWideningDStability:
         # Assert
         assert isinstance(bbox, Polygon)
         assert bbox.bounds == (0.0, 0.0, 1.0, 0.5)
+
+    def test_adjust_calculation_settings_UpliftVan(self):
+        # SetUp
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstability_wrapper = DStabilityWrapper(
+            _path_test_stix, externals_path=test_externals
+        )
+        _berm_widening_dstability = BermWideningDStability(
+            measure_input=_measure_input_test,
+            dstability_wrapper=_dstability_wrapper,
+        )
+        _calculation_setting = (
+            _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        )
+        _berm_widening_dstability.dberm = 2
+
+        # Call
+        _berm_widening_dstability.adjust_calculation_settings()
+
+        # Assert
+        assert (
+            _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X == 40.026
+        )
+
+    def test_adjust_calculation_settings_Bishop(self):
+        # SetUp
+        _path_test_stix = (
+            test_data
+            / "stix"
+            / "RW001.+096_STBI_maatgevend_Segment_38005_1D1_Bishop.stix"
+        )
+        _dstability_wrapper = DStabilityWrapper(
+            _path_test_stix, externals_path=test_externals
+        )
+        _berm_widening_dstability = BermWideningDStability(
+            measure_input=_measure_input_test,
+            dstability_wrapper=_dstability_wrapper,
+        )
+        _calculation_setting = (
+            _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        )
+        _berm_widening_dstability.dberm = 2
+
+        # Call
+        _berm_widening_dstability.adjust_calculation_settings()
+
+        # Assert
+        assert _calculation_setting.BishopBruteForce.SearchGrid.BottomLeft.X == 6.103
+        assert (
+            _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines
+            == 26
+        )
+
+    def test_adjust_calculation_settings_invalid_analyse_type_raises_error(self):
+        # SetUp
+        _path_test_stix = (
+            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        )
+        _dstability_wrapper = DStabilityWrapper(
+            _path_test_stix, externals_path=test_externals
+        )
+        _berm_widening_dstability = BermWideningDStability(
+            measure_input=_measure_input_test,
+            dstability_wrapper=_dstability_wrapper,
+        )
+        _calculation_setting = (
+            _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        )
+        _calculation_setting.AnalysisType = "Bishop"
+
+        # Call
+        with pytest.raises(ValueError) as exception_error:
+            _safety_factor = _berm_widening_dstability.adjust_calculation_settings()
+
+        # Assert
+        assert str(exception_error.value) == "The analysis type is not supported"

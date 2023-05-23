@@ -1,13 +1,13 @@
 ,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm
 0,,,0.0,,,,,,
-1,DV51,0,9364174.650495235,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-2,DV86,0,2680325.6679455554,[],2,['Grondversterking buitenwaarts 2025'],-999,0.0,20
-3,DV49,0,3415750.2693277667,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-4,DV47,0,15788964.709993199,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-5,DV50,1,447883.81284075463,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,8
-6,DV57,1,1800876.136083176,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,0
-7,DV56,0,1105086.525459838,[],2,['Grondversterking binnenwaarts 2025'],-999,0.5,10
-8,DV54,21,11419686.72560843,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,10
-9,DV55,66,742318.24419136,[],7,['Stabiliteitsscherm'],yes,-999.0,-999
-10,DV48,71,1056522.8563230399,[],7,['Stabiliteitsscherm'],yes,-999.0,-999
+1,DV51,81,9364174.650495235,[],6,['Zelfkerende constructie'],yes,-999.0,-999
+2,DV86,6,2680325.6679455554,[],2,['Grondversterking buitenwaarts 2025'],-999,0.0,20
+3,DV49,81,3415750.2693277667,[],6,['Zelfkerende constructie'],yes,-999.0,-999
+4,DV47,81,15788964.709993199,[],6,['Zelfkerende constructie'],yes,-999.0,-999
+5,DV50,85,447883.81284075463,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,8
+6,DV57,91,1800876.136083176,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,0
+7,DV56,11,1105086.525459838,[],2,['Grondversterking binnenwaarts 2025'],-999,0.5,10
+8,DV54,86,11419686.72560843,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,10
+9,DV55,82,742318.24419136,[],7,['Stabiliteitsscherm'],yes,-999.0,-999
+10,DV48,82,1056522.8563230399,[],7,['Stabiliteitsscherm'],yes,-999.0,-999
 11,DV53,0,78290.14926158176,[],2,['Grondversterking binnenwaarts 2025'],-999,0.0,0

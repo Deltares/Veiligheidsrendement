@@ -146,7 +146,7 @@ class TargetReliabilityStrategy(StrategyBase):
             idx = np.argmin(LCC)
 
             measure = PossibleMeasures.iloc[idx]
-
+            option_index = PossibleMeasures.index[idx]
             # calculate achieved risk reduction & BC ratio compared to base situation
             R_base, dR, TR = calc_tr(
                 i.name,
@@ -167,7 +167,7 @@ class TargetReliabilityStrategy(StrategyBase):
                     [
                         [
                             i.name,
-                            idx,
+                            option_index,
                             LCC[idx],
                             BC,
                             measure["ID"].values[0],
@@ -184,7 +184,7 @@ class TargetReliabilityStrategy(StrategyBase):
                     [
                         [
                             i.name,
-                            idx,
+                            option_index,
                             LCC[idx],
                             BC,
                             measure["ID"].values[0],

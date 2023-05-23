@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
 import pandas as pd
 import pytest
 from geolib import DStabilityModel
@@ -37,6 +40,7 @@ _measure_input = {
     ),
     "dcrest": 0,
     "dberm": 0,
+    "id": 1,
     "StabilityScreen": "yes",
 }
 
@@ -137,16 +141,26 @@ class TestCommonFunctions:
         assert _reinforced_geometry[1] == pytest.approx(_reinforcement_1, _tolerance)
         assert _reinforced_geometry[3] == pytest.approx(_reinforcement_3, _tolerance)
 
-    def test_implement_berm_widening_dstability_with_screen(self):
-
+    def test_implement_berm_widening_dstability_with_screen_generates_intermediate_stix_file(
+        self, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
         _berm_input = {
             "STIXNAAM": test_data
             / "stix"
             / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix",
             "DStability_exe_path": test_externals.joinpath("DStabilityConsole"),
         }
-        _path_intermediate_stix = test_results / "test_intermediate_stix"
-        implement_berm_widening(
+        _path_intermediate_stix = test_results / request.node.name
+        _expected_file_name = (
+            "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m"
+        )
+
+        if _path_intermediate_stix.exists():
+            shutil.rmtree(_path_intermediate_stix)
+
+        # 2. Run test.
+        _berm_input_new = implement_berm_widening(
             _berm_input,
             _measure_input,
             measure_parameters={},
@@ -157,14 +171,15 @@ class TestCommonFunctions:
             depth_screen=6.0,
         )
 
-        _dstability_model = DStabilityModel()
-        _modified_stix_name = (
-            "RW001.+096_STBI_maatgevend_Segment_38005_1D1"
-            + f"_dberm_{_measure_input['dberm']}_dcrest_{_measure_input['dcrest']}.stix"
-        )
-        _dstability_model.parse(_path_intermediate_stix / _modified_stix_name)
+        # 3. Verify final expectations.
+        _intermediate_stix_file = _berm_input_new["STIXNAAM"]
+        assert isinstance(_intermediate_stix_file, Path)
+        assert _intermediate_stix_file.stem == _expected_file_name
+        assert _intermediate_stix_file.exists()
 
-        # Assert that
+        # Verify content of the file through the wrapper.
+        _dstability_model = DStabilityModel()
+        _dstability_model.parse(_intermediate_stix_file)
         assert len(_dstability_model.datastructure.reinforcements) == 2
         assert (
             len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1

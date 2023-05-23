@@ -34,7 +34,6 @@ _acceptance_test_cases = [
         "TestCase1_38-1_no_housing_stix",
         "38-1",
         id="Traject 38-1, no housing, with dstability",
-        marks=pytest.mark.skip(reason="To be solved in VRTOOL-59"),
     ),
     pytest.param(
         "TestCase2_38-1_overflow_no_housing",
