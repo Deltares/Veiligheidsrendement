@@ -4,7 +4,6 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture
-from tests.orm.io.importers import db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo as VrtoolDikeTrajectInfo
 from vrtool.orm.io.importers.dike_traject_info_importer import DikeTrajectInfoImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
