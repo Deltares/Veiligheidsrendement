@@ -167,6 +167,13 @@ class TestCommonFunctions:
         )
 
         # 3. Verify final expectations.
-        assert isinstance(_berm_input_new["STIXNAAM"], Path)
-        assert _berm_input_new["STIXNAAM"].stem == _expected_file_name
-        assert _berm_input_new["STIXNAAM"].exists()
+        _intermediate_stix_file = _berm_input_new["STIXNAAM"]
+        assert isinstance(_intermediate_stix_file, Path)
+        assert _intermediate_stix_file.stem == _expected_file_name
+        assert _intermediate_stix_file.exists()
+
+        # Verify content of the file through the wrapper.
+        _dstability_model = DStabilityModel()
+        _dstability_model.parse(_intermediate_stix_file)
+        assert len(_dstability_model.datastructure.reinforcements) == 2
+        assert len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
