@@ -16,12 +16,11 @@ class DStabilityImporter(OrmImporterProtocol):
 
         self._set_parameters(mechanism_input, orm_model.parameters.select())
 
-        SupportingFiles = orm_model.supporting_files.select()
+        supporting_files = orm_model.supporting_files.select()
 
-        if len(SupportingFiles) != 1:
-            raise Exception("invalid number of stix files")
+        if len(supporting_files) != 1:
+            raise ValueError("Invalid number of stix files.")
 
-        for file in SupportingFiles:
-            mechanism_input.input["stix_file"] = file.filename
+        mechanism_input.input["stix_file"] = supporting_files.get().filename
 
         return mechanism_input
