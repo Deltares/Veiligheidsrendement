@@ -5,11 +5,11 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel
-from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.section_data import SectionData
+
 
 class TestParameter:
-    
     def test_initialize_with_database_fixture(self, empty_db_fixture):
         # 1. Define test data.
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
@@ -38,7 +38,9 @@ class TestParameter:
         )
 
         # 2. Run test.
-        _parameter = Parameter.create(computation_scenario=_scenario, parameter="TestParameter", value=4.2)
+        _parameter = Parameter.create(
+            computation_scenario=_scenario, parameter="TestParameter", value=4.2
+        )
 
         # 3. Verify expectations
         assert isinstance(_parameter, Parameter)
@@ -49,8 +51,9 @@ class TestParameter:
 
         assert _parameter in _scenario.parameters
 
-
-    def test_initialize_two_parameters_with_same_name_with_database_fixture(self, empty_db_fixture):
+    def test_initialize_two_parameters_with_same_name_with_database_fixture(
+        self, empty_db_fixture
+    ):
         # 1. Define test data.
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
@@ -86,8 +89,12 @@ class TestParameter:
         )
 
         # 2. Run test.
-        _parameter_a = Parameter.create(computation_scenario=_scenario_a, parameter="TestParameter", value=4.2)
-        _parameter_b = Parameter.create(computation_scenario=_scenario_b, parameter="TestParameter", value=2.4)
+        _parameter_a = Parameter.create(
+            computation_scenario=_scenario_a, parameter="TestParameter", value=4.2
+        )
+        _parameter_b = Parameter.create(
+            computation_scenario=_scenario_b, parameter="TestParameter", value=2.4
+        )
 
         # 3. Verify expectations
         assert _parameter_a in _scenario_a.parameters
