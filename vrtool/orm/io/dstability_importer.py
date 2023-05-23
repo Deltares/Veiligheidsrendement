@@ -24,6 +24,4 @@ class DStabilityImporter(OrmImporterProtocol):
         for file in SupportingFiles:
             mechanism_input.input["stix_file"] = file.filename
 
-        mechanism_tables = orm_model.mechanism_tables.select()
-
         return mechanism_input
