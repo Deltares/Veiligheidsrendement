@@ -59,6 +59,8 @@ def open_database(database_path: Path) -> SqliteDatabase:
     Returns:
         SqliteDatabase: Initialized database.
     """
+    if not database_path.exists():
+        raise ValueError("No file was found at {}".format(database_path))
     vrtool_db.init(database_path)
     vrtool_db.connect()
     return vrtool_db

@@ -130,6 +130,18 @@ class TestOrmControllers:
         )
         assert _section_data.pleistocene_level == _expected_data["pleistocene_level"]
 
+    def test_open_database_when_file_doesnot_exist_raises_value_error(self, request: pytest.FixtureRequest):
+        # 1. Define test data.
+        _db_file = test_results / request.node.name / "vrtool_db.db"
+        assert not _db_file.exists()
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            open_database(_db_file)
+
+        # 3. Verify expectations
+        assert str(exc_err.value) == "No file was found at {}".format(_db_file)
+
     def test_import_dike_traject(self):
         # 1. Define test data.
         _db_file = test_data / "test_db" / "vrtool_db.db"
