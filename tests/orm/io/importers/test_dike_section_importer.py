@@ -8,17 +8,27 @@ from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.section_data import SectionData
-
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from tests import test_data, test_results
 
 class TestDikeSectionImporter:
-    def test_initialize(self):
-        _importer = DikeSectionImporter()
+
+    @pytest.fixture
+    def valid_config(self) -> VrtoolConfig:
+        _vr_config = VrtoolConfig()
+        _vr_config.input_directory = test_data
+        _vr_config.output_directory = test_results
+
+        yield _vr_config
+
+    def test_initialize(self, valid_config: VrtoolConfig):
+        _importer = DikeSectionImporter(valid_config)
         assert isinstance(_importer, DikeSectionImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, db_fixture: SqliteDatabase):
+    def test_import_orm(self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig):
         # 1. Define test data.
-        _importer = DikeSectionImporter()
+        _importer = DikeSectionImporter(valid_config)
 
         # 2. Run test
         _dike_section = _importer.import_orm(SectionData.get_by_id(1))
@@ -40,9 +50,9 @@ class TestDikeSectionImporter:
         assert but_point["x"] == pytest.approx(-17)
         assert but_point["z"] == pytest.approx(4.996)
 
-    def test_import_buildings_list(self, db_fixture: SqliteDatabase):
+    def test_import_buildings_list(self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig):
         # 1. Define test data.
-        _importer = DikeSectionImporter()
+        _importer = DikeSectionImporter(valid_config)
         _section_data = SectionData.get_by_id(1)
         _buildings_query = Buildings.select().where(
             Buildings.section_data == _section_data
@@ -58,9 +68,9 @@ class TestDikeSectionImporter:
         assert list(_buildings_frame.loc[0]) == [24, 2]
         assert list(_buildings_frame.loc[1]) == [42, 1]
 
-    def test_import_orm_without_model_raises_value(self):
+    def test_import_orm_without_model_raises_value(self, valid_config: VrtoolConfig):
         # 1. Define test data.
-        _importer = DikeSectionImporter()
+        _importer = DikeSectionImporter(valid_config)
         _expected_mssg = "No valid value given for SectionData."
 
         # 2. Run test.

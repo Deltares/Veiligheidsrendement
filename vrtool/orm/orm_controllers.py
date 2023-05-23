@@ -71,7 +71,7 @@ def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     Returns a dike traject with all the required section data.
     """
     open_database(config.input_database_path)
-    _dike_traject = DikeTrajectImporter().import_orm(
+    _dike_traject = DikeTrajectImporter(config).import_orm(
         orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject)
     )
     return _dike_traject

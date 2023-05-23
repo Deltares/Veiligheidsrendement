@@ -9,13 +9,19 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajec
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+from vrtool.defaults.vrtool_config import VrtoolConfig
 
 
 class DikeTrajectImporter(OrmImporterProtocol):
+    _vrtool_config: VrtoolConfig
+
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
+        self._vrtool_config = vrtool_config
+
     def _import_dike_section_list(
         self, orm_dike_section_list: list[SectionData]
     ) -> list[DikeSection]:
-        _ds_importer = DikeSectionImporter()
+        _ds_importer = DikeSectionImporter(self._vrtool_config)
         return list(map(_ds_importer.import_orm, orm_dike_section_list))
 
     def _select_available_mechanisms(
