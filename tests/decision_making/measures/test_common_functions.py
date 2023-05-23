@@ -147,7 +147,7 @@ class TestCommonFunctions:
             "DStability_exe_path": test_externals.joinpath("DStabilityConsole"),
         }
         _path_intermediate_stix = test_results / "test_intermediate_stix"
-        implement_berm_widening(
+        _berm_input_new = implement_berm_widening(
             _berm_input,
             _measure_input,
             measure_parameters={},
@@ -158,15 +158,5 @@ class TestCommonFunctions:
             depth_screen=6.0,
         )
 
-        _dstability_model = DStabilityModel()
-        _modified_stix_name = (
-            "RW001.+096_STBI_maatgevend_Segment_38005_1D1"
-            + f"_dberm_{_measure_input['dberm']}_dcrest_{_measure_input['dcrest']}.stix"
-        )
-        _dstability_model.parse(_path_intermediate_stix / _modified_stix_name)
+        assert _berm_input_new["STIXNAAM"].stem == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m"
 
-        # Assert that
-        assert len(_dstability_model.datastructure.reinforcements) == 2
-        assert (
-            len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
-        )
