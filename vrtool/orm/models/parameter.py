@@ -10,7 +10,7 @@ from vrtool.orm.models.orm_base_model import (
 
 class Parameter(OrmBaseModel):
     computation_scenario = ForeignKeyField(ComputationScenario, backref="parameters")
-    parameter = CharField(unique=True, max_length=_max_char_length)
+    parameter = CharField(max_length=_max_char_length)
     value = FloatField()
 
     class Meta:
