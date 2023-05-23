@@ -3,6 +3,7 @@ import math
 import pytest
 from peewee import SqliteDatabase
 
+from tests.orm import empty_db_fixture
 from tests.orm.io.importers import db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo as VrtoolDikeTrajectInfo
 from vrtool.orm.io.importers.dike_traject_info_importer import DikeTrajectInfoImporter
@@ -16,12 +17,29 @@ class TestDikeTrajectInfoImporter:
         assert isinstance(_importer, DikeTrajectInfoImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, db_fixture: SqliteDatabase):
+    def test_import_orm(self, empty_db_fixture: SqliteDatabase):
         # 1. Define test data.
+        with empty_db_fixture.atomic() as transaction:
+            _orm_dike_traject_info = DikeTrajectInfo.create(
+                traject_name="16-1",
+                omega_piping=0.25,
+                omega_stability_inner=0.04,
+                omega_overflow=0.24,
+                a_piping=None,
+                b_piping=300,
+                a_stability_inner=0.033,
+                b_stability_inner=50,
+                beta_max=3.7190164854556804,
+                p_max=0.0001,
+                flood_damage=None,
+                traject_length=None,
+            )
+            transaction.commit
+
         _importer = DikeTrajectInfoImporter()
 
         # 2. Run test.
-        _dike_traject_info = _importer.import_orm(DikeTrajectInfo.get_by_id(1))
+        _dike_traject_info = _importer.import_orm(_orm_dike_traject_info)
 
         # 3. Verify final expectations.
         assert isinstance(_dike_traject_info, VrtoolDikeTrajectInfo)
