@@ -1,4 +1,4 @@
-from tests.orm.models import empty_db_fixture
+from tests.orm import empty_db_fixture
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.section_data import SectionData
