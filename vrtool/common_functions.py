@@ -4,7 +4,6 @@ except:
     import pickle
 
 import collections
-import copy
 from pathlib import Path
 from shutil import copyfile, rmtree
 
@@ -17,8 +16,6 @@ from pandas import DataFrame
 
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
-from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.dike_traject import DikeTraject
 
 """
 TODO: [CS] Having such file is dangerous as logic should be placed where needed and proper relationships / inheritance used where needed.
