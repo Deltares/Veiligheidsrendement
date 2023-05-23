@@ -63,8 +63,9 @@ class TestOverflowHydraRingImporter:
             9.76,
             10.01,
         ]
-        year_one = 2023
-        year_two = 2100
+
+        years = [2023, 2100]
+        year_one = years[0]
         mechanism_table_year_one = [
             {
                 "year": year_one,
@@ -82,6 +83,8 @@ class TestOverflowHydraRingImporter:
                 "beta": 3.7217,
             },
         ]
+
+        year_two = years[1]
         mechanism_table_year_two = [
             {
                 "year": year_two,
@@ -141,7 +144,7 @@ class TestOverflowHydraRingImporter:
         _mechanism_table_data = _mechanism_input.input["hc_beta"]
         assert isinstance(_mechanism_table_data, pd.DataFrame)
 
-        assert list(_mechanism_table_data.columns) == [str(year_one), str(year_two)]
+        assert list(_mechanism_table_data.columns) == [str(year) for year in years]
         assert _mechanism_table_data.index.to_list() == values
 
         assert list(_mechanism_table_data[str(year_one)]) == [
