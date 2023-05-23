@@ -189,7 +189,7 @@ class StabilityScreenMeasure(MeasureBase):
 
             # Calculate reliaiblity
             mechanism_reliability_input["BETA"] = calculate_reliability(
-                np.array(_dstability_wrapper.get_safety_factor()))
+                np.array(_dstability_wrapper.get_safety_factor(None)))
 
         elif _calc_type == "Simple":
             if int(year_to_calculate) >= self.parameters["year"]:

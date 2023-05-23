@@ -45,7 +45,7 @@ class DStabilityWrapper:
     def rerun_stix(self) -> None:
         self._dstability_model.execute()
 
-    def get_safety_factor(self, stage_id_result: Optional[int] = None) -> float:
+    def get_safety_factor(self, stage_id_result: Optional[int]) -> float:
         """
         Get the safety factor of a DStability calculation.
 
