@@ -12,6 +12,11 @@ class DStabilityImporter(OrmImporterProtocol):
             input.input[parameter.parameter] = parameter.value
 
     def import_orm(self, orm_model: ComputationScenario) -> MechanismInput:
+        if not orm_model:
+            raise ValueError(
+                f"No valid value given for {ComputationScenario.__name__}."
+            )
+
         mechanism_input = MechanismInput("StabilityInner")
 
         self._set_parameters(mechanism_input, orm_model.parameters.select())

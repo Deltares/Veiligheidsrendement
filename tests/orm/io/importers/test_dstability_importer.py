@@ -4,6 +4,7 @@ from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture
 from vrtool.orm.io.dstability_importer import DStabilityImporter
+from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
@@ -48,6 +49,11 @@ class TestDStabilityImporter:
         for item in source:
             item["computation_scenario_id"] = computation_scenario_id
 
+    def test_initialize(self):
+        _importer = DStabilityImporter()
+        assert isinstance(_importer, DStabilityImporter)
+        assert isinstance(_importer, OrmImporterProtocol)
+
     def test_import_orm(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _supporting_files = [{"filename": "myfile.stix"}]
@@ -67,6 +73,7 @@ class TestDStabilityImporter:
         _mechanism_input = _importer.import_orm(_computation_scenario)
 
         # Assert
+        assert _mechanism_input.mechanism == "StabilityInner"
         assert len(_mechanism_input.input) == 1
         assert _mechanism_input.input["stix_file"] == _supporting_files[0]["filename"]
 
@@ -93,4 +100,16 @@ class TestDStabilityImporter:
 
         # Assert
         _expected_mssg = "Invalid number of stix files."
+        assert str(value_error.value) == _expected_mssg
+
+    def test_import_orm_without_model_raises_value_error(self):
+        # Setup
+        _importer = DStabilityImporter()
+        _expected_mssg = "No valid value given for ComputationScenario."
+
+        # Call
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(None)
+
+        # Assert
         assert str(value_error.value) == _expected_mssg
