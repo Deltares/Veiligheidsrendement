@@ -58,7 +58,7 @@ class TestDikeSectionImporter:
         assert list(_buildings_frame.loc[0]) == [24, 2]
         assert list(_buildings_frame.loc[1]) == [42, 1]
 
-    def test_import_orm_without_model_raises_value(self):
+    def test_import_orm_without_model_raises_value_error(self):
         # 1. Define test data.
         _importer = DikeSectionImporter()
         _expected_mssg = "No valid value given for SectionData."

@@ -38,7 +38,7 @@ class TestDikeTrajectInfoImporter:
             "Overflow",
         ]
 
-    def test_import_orm_without_model_raises_value(self):
+    def test_import_orm_without_model_raises_value_error(self):
         # 1. Define test data.
         _importer = DikeTrajectImporter()
         _expected_mssg = "No valid value given for DikeTrajectInfo."

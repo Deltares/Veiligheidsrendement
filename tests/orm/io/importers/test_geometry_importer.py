@@ -33,7 +33,7 @@ class TestGeometryImporter:
         self._assert_characteristic_point(geometry, "EBL", 42, 5.694)
         self._assert_characteristic_point(geometry, "BIT", 47, 5.104)
 
-    def test_import_orm_without_model_raises_value(self):
+    def test_import_orm_without_model_raises_value_error(self):
         # Setup
         _importer = GeometryImporter()
         _expected_mssg = "No valid value given for list."

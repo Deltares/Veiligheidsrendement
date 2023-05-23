@@ -38,7 +38,7 @@ class TestDikeTrajectInfoImporter:
         assert math.isnan(_dike_traject_info.FloodDamage)
         assert math.isnan(_dike_traject_info.TrajectLength)
 
-    def test_import_orm_without_model_raises_value(self):
+    def test_import_orm_without_model_raises_value_error(self):
         # 1. Define test data.
         _importer = DikeTrajectInfoImporter()
         _expected_mssg = "No valid value given for DikeTrajectInfo."
