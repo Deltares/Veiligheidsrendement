@@ -41,7 +41,7 @@ class SoilReinforcementMeasure(MeasureBase):
             modified_measure: ModifiedDikeGeometryMeasureInput,
         ) -> dict:
             _modified_measure = {}
-            _modified_measure['id'] = modified_measure.id
+            _modified_measure["id"] = modified_measure.id
             _modified_measure["geometry"] = modified_measure.modified_geometry
             _modified_measure["dcrest"] = modified_measure.d_crest
             _modified_measure["dberm"] = modified_measure.d_berm
@@ -179,7 +179,7 @@ class SoilReinforcementMeasure(MeasureBase):
                 "area_extra": modified_geometry_properties[1],
                 "area_excavated": modified_geometry_properties[2],
                 "d_house": modified_geometry_properties[3],
-                "id": self.parameters["ID"]
+                "id": self.parameters["ID"],
             }
 
             inputs.append(ModifiedDikeGeometryMeasureInput(**measure_input_dictionary))

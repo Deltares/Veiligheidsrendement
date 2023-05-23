@@ -1,6 +1,7 @@
 from __future__ import annotations
-from pathlib import Path
+
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -140,7 +141,9 @@ class TestCommonFunctions:
         assert _reinforced_geometry[1] == pytest.approx(_reinforcement_1, _tolerance)
         assert _reinforced_geometry[3] == pytest.approx(_reinforcement_3, _tolerance)
 
-    def test_implement_berm_widening_dstability_with_screen_generates_intermediate_stix_file(self, request: pytest.FixtureRequest):
+    def test_implement_berm_widening_dstability_with_screen_generates_intermediate_stix_file(
+        self, request: pytest.FixtureRequest
+    ):
         # 1. Define test data.
         _berm_input = {
             "STIXNAAM": test_data
@@ -149,8 +152,10 @@ class TestCommonFunctions:
             "DStability_exe_path": test_externals.joinpath("DStabilityConsole"),
         }
         _path_intermediate_stix = test_results / request.node.name
-        _expected_file_name = "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m"
-        
+        _expected_file_name = (
+            "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m"
+        )
+
         if _path_intermediate_stix.exists():
             shutil.rmtree(_path_intermediate_stix)
 
@@ -176,4 +181,6 @@ class TestCommonFunctions:
         _dstability_model = DStabilityModel()
         _dstability_model.parse(_intermediate_stix_file)
         assert len(_dstability_model.datastructure.reinforcements) == 2
-        assert len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
+        assert (
+            len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
+        )

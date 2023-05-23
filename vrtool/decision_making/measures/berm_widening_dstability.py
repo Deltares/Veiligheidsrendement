@@ -255,7 +255,8 @@ class BermWideningDStability:
             self.modify_geometry(fill_polygons=fill_polygons, stage_id=stage_id)
         _original_name = self.dstability_wrapper.stix_path.stem
         new_file_name = self.dstability_wrapper.stix_path.with_stem(
-            _original_name + f"_ID_{self.measure_id}_dberm_{self.dberm}m_dcrest_{self.dcrest}m"
+            _original_name
+            + f"_ID_{self.measure_id}_dberm_{self.dberm}m_dcrest_{self.dcrest}m"
         ).name
 
         _export_path = path_intermediate_stix / new_file_name
