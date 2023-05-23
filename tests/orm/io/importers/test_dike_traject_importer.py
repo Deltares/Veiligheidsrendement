@@ -36,6 +36,7 @@ class TestDikeTrajectInfoImporter:
             "a_mechanism",
             "b_mechanism",
             "Overflow",
+            "DStability",
         ]
 
     def test_import_orm_without_model_raises_value_error(self):
@@ -61,5 +62,5 @@ class TestDikeTrajectInfoImporter:
 
         # 3. Verify expectations.
         assert isinstance(_mechanisms, list)
-        assert len(_mechanisms) == 3
+        assert len(_mechanisms) == 4
         assert all(isinstance(_m, OrmMechanism) for _m in _mechanisms)
