@@ -299,19 +299,25 @@ class TestBermWideningDStability:
             measure_input=_measure_input_test,
             dstability_wrapper=_dstability_wrapper,
         )
-        _calculation_setting = _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        _calculation_setting = (
+            _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        )
         _berm_widening_dstability.dberm = 2
 
         # Call
         _berm_widening_dstability.adjust_calculation_settings()
 
         # Assert
-        assert _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X == 40.026
+        assert (
+            _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X == 40.026
+        )
 
     def test_adjust_calculation_settings_Bishop(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1_Bishop.stix"
+            test_data
+            / "stix"
+            / "RW001.+096_STBI_maatgevend_Segment_38005_1D1_Bishop.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -320,7 +326,9 @@ class TestBermWideningDStability:
             measure_input=_measure_input_test,
             dstability_wrapper=_dstability_wrapper,
         )
-        _calculation_setting = _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        _calculation_setting = (
+            _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        )
         _berm_widening_dstability.dberm = 2
 
         # Call
@@ -328,7 +336,10 @@ class TestBermWideningDStability:
 
         # Assert
         assert _calculation_setting.BishopBruteForce.SearchGrid.BottomLeft.X == 6.103
-        assert _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines == 26
+        assert (
+            _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines
+            == 26
+        )
 
     def test_adjust_calculation_settings_invalid_analyse_type_raises_error(self):
         # SetUp
@@ -342,7 +353,9 @@ class TestBermWideningDStability:
             measure_input=_measure_input_test,
             dstability_wrapper=_dstability_wrapper,
         )
-        _calculation_setting = _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        _calculation_setting = (
+            _dstability_wrapper._dstability_model.datastructure.calculationsettings[-1]
+        )
         _calculation_setting.AnalysisType = "Bishop"
 
         # Call
@@ -350,9 +363,4 @@ class TestBermWideningDStability:
             _safety_factor = _berm_widening_dstability.adjust_calculation_settings()
 
         # Assert
-        assert (
-            str(exception_error.value)
-            == "The analysis type is not supported"
-        )
-
-
+        assert str(exception_error.value) == "The analysis type is not supported"
