@@ -132,7 +132,7 @@ class TestOverflowHydraRingImporter:
 
         # Assert
         assert _mechanism_input.mechanism == "Overflow"
-        assert len(_mechanism_input.input) == 3
+        assert len(_mechanism_input.input) == len(parameters) + 1
         for parameter in parameters:
             _mechanism_input.input[parameter.get("parameter")] == pytest.approx(
                 parameter.get("value")
@@ -163,37 +163,37 @@ class TestOverflowHydraRingImporter:
         # Assert
         assert str(value_error.value) == _expected_mssg
 
-    def test_import_empty_orm_crest_heights_unequal_raises_value_error(
+    def test_import_orm_crest_heights_unequal_raises_value_error(
         self, empty_db_fixture: SqliteDatabase
     ):
         # Setup
+        _mechanism_table_source = [
+            {
+                "year": 2023,
+                "value": 1.1,
+                "beta": 3.3,
+            },
+            {
+                "year": 2100,
+                "value": 2.2,
+                "beta": 4.4,
+            },
+        ]
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = self._get_valid_computation_scenario()
-
-            _mechanism_table_source = [
-                {
-                    "computation_scenario_id": _computation_scenario.id,
-                    "year": 2023,
-                    "value": 1.1,
-                    "beta": 3.3,
-                },
-                {
-                    "computation_scenario_id": _computation_scenario.id,
-                    "year": 2100,
-                    "value": 2.2,
-                    "beta": 4.4,
-                },
-            ]
+            self._add_computation_scenario_id(
+                _mechanism_table_source, _computation_scenario.id
+            )
 
             MechanismTable.insert_many(_mechanism_table_source).execute()
             transaction.commit()
 
         _importer = OverFlowHydraRingImporter()
-        _expected_mssg = f"Crest heights not equal for scenario {_computation_scenario.scenario_name}."
 
         # Call
         with pytest.raises(ValueError) as value_error:
             _importer.import_orm(_computation_scenario)
 
         # Assert
+        _expected_mssg = f"Crest heights not equal for scenario {_computation_scenario.scenario_name}."
         assert str(value_error.value) == _expected_mssg
