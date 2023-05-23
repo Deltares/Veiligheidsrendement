@@ -16,13 +16,14 @@ class TestOverflowHydraRingImporter:
         assert isinstance(_importer, OrmImporterProtocol)
 
     def test_import_orm(self, db_fixture: SqliteDatabase):
-        # 1. Define test data.
+        # Setup
         _importer = OverFlowHydraRingImporter()
 
-        # 2. Run test
+        # Call
         _mechanism_input = _importer.import_orm(ComputationScenario.get_by_id(1))
 
-        # 3. Verify expectations.
+        # Assert
+        assert _mechanism_input.mechanism == "Overflow"
         assert len(_mechanism_input.input) == 3
         assert _mechanism_input.input["h_crest"] == pytest.approx(9.13)
         assert _mechanism_input.input["d_crest"] == pytest.approx(0.005)
@@ -79,7 +80,9 @@ class TestOverflowHydraRingImporter:
             6.618,
         ]
 
-    def test_import_orm_without_model_raises_value(self):
+    def test_import_orm_without_model_raises_value_error(
+        self, db_fixture: SqliteDatabase
+    ):
         # Setup
         _importer = OverFlowHydraRingImporter()
         _expected_mssg = "No valid value given for ComputationScenario."
@@ -87,6 +90,22 @@ class TestOverflowHydraRingImporter:
         # Call
         with pytest.raises(ValueError) as value_error:
             _importer.import_orm(None)
+
+        # Assert
+        assert str(value_error.value) == _expected_mssg
+
+    def test_import_orm_crest_heights_unequal_raises_value_error(
+        self, db_fixture: SqliteDatabase
+    ):
+        # Setup
+        _computation_scenario = ComputationScenario.get_by_id(3)
+
+        _importer = OverFlowHydraRingImporter()
+        _expected_mssg = f"Crest heights not equal for scenario {_computation_scenario.scenario_name}."
+
+        # Call
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(_computation_scenario)
 
         # Assert
         assert str(value_error.value) == _expected_mssg

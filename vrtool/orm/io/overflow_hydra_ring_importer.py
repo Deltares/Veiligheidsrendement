@@ -15,7 +15,7 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
             input.input[parameter.parameter] = parameter.value
 
     def _get_crest_height_beta(
-        self, mechanism_table_rows: list[MechanismTable]
+        self, mechanism_table_rows: list[MechanismTable], scenario_name: str
     ) -> pd.DataFrame:
         def get_records_by_year(rows: list[MechanismTable]) -> dict[int, list[tuple]]:
             lookup = {}
@@ -44,27 +44,24 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
         for count, year in enumerate(records.keys()):
             crest_height_beta_mapping = [r for r in records[year]]
 
-            if count == 0 or (
-                count > 0
-                and is_crest_height_equal(
-                    crest_height_beta_data, crest_height_beta_mapping
-                )
+            if count > 0 and not is_crest_height_equal(
+                crest_height_beta_data, crest_height_beta_mapping
             ):
-                crest_height_row_name = "Crest_Height"
-                beta_column_name = "Beta"
-                beta_for_year = pd.DataFrame(
-                    {
-                        crest_height_row_name: [
-                            i[0] for i in crest_height_beta_mapping
-                        ],
-                        beta_column_name: [i[1] for i in crest_height_beta_mapping],
-                    }
+                raise ValueError(
+                    f"Crest heights not equal for scenario {scenario_name}."
                 )
-                beta_for_year.set_index(crest_height_row_name, inplace=True, drop=True)
-                beta_for_year.rename(
-                    columns={beta_column_name: str(year)}, inplace=True
-                )
-                crest_height_beta_data.append(beta_for_year)
+
+            crest_height_row_name = "Crest_Height"
+            beta_column_name = "Beta"
+            beta_for_year = pd.DataFrame(
+                {
+                    crest_height_row_name: [i[0] for i in crest_height_beta_mapping],
+                    beta_column_name: [i[1] for i in crest_height_beta_mapping],
+                }
+            )
+            beta_for_year.set_index(crest_height_row_name, inplace=True, drop=True)
+            beta_for_year.rename(columns={beta_column_name: str(year)}, inplace=True)
+            crest_height_beta_data.append(beta_for_year)
 
         return pd.concat(crest_height_beta_data, axis=1)
 
@@ -77,7 +74,7 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
         mechanism_input = MechanismInput("Overflow")
         self._set_parameters(mechanism_input, orm_model.parameters.select())
         mechanism_input.input["hc_beta"] = self._get_crest_height_beta(
-            orm_model.mechanism_tables.select()
+            orm_model.mechanism_tables.select(), orm_model.scenario_name
         )
 
         return mechanism_input
