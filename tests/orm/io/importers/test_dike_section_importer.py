@@ -30,6 +30,16 @@ class TestDikeSectionImporter:
         assert isinstance(_dike_section.mechanism_data, dict)
         assert any(_dike_section.mechanism_data.items())
 
+        assert isinstance(_dike_section.InitialGeometry, pd.DataFrame)
+
+        section_geometry = _dike_section.InitialGeometry
+        assert section_geometry.shape == (6, 2)
+        assert list(section_geometry.columns) == ["x", "z"]
+
+        but_point = section_geometry.loc["BUT"]
+        assert but_point["x"] == pytest.approx(-17)
+        assert but_point["z"] == pytest.approx(4.996)
+
     def test_import_buildings_list(self, db_fixture: SqliteDatabase):
         # 1. Define test data.
         _importer = DikeSectionImporter()
