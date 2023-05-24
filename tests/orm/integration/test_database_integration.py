@@ -6,12 +6,19 @@ from typing import Union
 
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.models import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.models.section_data import SectionData
 
 
 class TestDatabaseIntegration:
+    def _assert_float(self, actual: float, expected: Union[float, None]) -> None:
+        if not expected:
+            assert math.isnan(actual)
+        else:
+            assert actual == pytest.approx(expected)
+
     def test_import_dike_traject_imports_all_data(
         self, valid_data_db_fixture: SqliteDatabase
     ):
@@ -31,6 +38,9 @@ class TestDatabaseIntegration:
             SectionData.in_analysis
         )
         assert len(_dike_traject.sections) == len(_orm_dike_sections)
+
+        _first_dike_section = _orm_dike_sections[0]
+        self._assert_dike_section(_dike_traject.sections[0], _first_dike_section)
 
     def _assert_dike_traject_info(
         self, actual: DikeTrajectInfo, expected: OrmDikeTrajectInfo
@@ -53,8 +63,19 @@ class TestDatabaseIntegration:
         self._assert_float(actual.FloodDamage, expected.flood_damage)
         self._assert_float(actual.TrajectLength, expected.traject_length)
 
-    def _assert_float(self, actual: float, expected: Union[float, None]) -> None:
-        if not expected:
-            assert math.isnan(actual)
-        else:
-            assert actual == pytest.approx(expected)
+    def _assert_dike_section(self, actual: DikeSection, expected: SectionData) -> None:
+        # Note that currently the other columns in the SectionData are not being mapped on the DikeSection.
+        assert actual.name == expected.section_name
+
+        # Note that the database does not contain any entries for the buildings and is not asserted further
+        assert actual.houses.shape == (0, 2)
+
+        _expected_profile_points = expected.profile_points
+        assert len(actual.InitialGeometry) == len(_expected_profile_points)
+
+        for expected_profile_point in _expected_profile_points:
+            actual_profile_point = actual.InitialGeometry.loc[
+                expected_profile_point.profile_point_type.name
+            ]
+            assert actual_profile_point["x"] == expected_profile_point.x_coordinate
+            assert actual_profile_point["z"] == expected_profile_point.y_coordinate
