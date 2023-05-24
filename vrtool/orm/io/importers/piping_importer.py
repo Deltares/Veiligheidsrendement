@@ -7,22 +7,31 @@ from vrtool.orm.models.parameter import Parameter
 
 class PipingImporter(OrmImporterProtocol):
     def _set_parameters(
-        self, input: MechanismInput, parameters: list[Parameter], isFirst: bool
+        self,
+        input: MechanismInput,
+        parameters: list[Parameter],
+        index: int,
+        nrScenarios: int,
     ) -> None:
         for parameter in parameters:
-            if isFirst:
-                input.input[parameter.parameter] = np.array([parameter.value])
+            key = parameter.parameter
+            if index == 0:
+                input.input[key] = np.zeros(nrScenarios)
+
+            if key in input.input:
+                input.input[key][index] = parameter.value
             else:
-                input.input[parameter.parameter] = np.append(
-                    input.input[parameter.parameter], parameter.value
-                )
+                raise ValueError("key not defined for first scenario: " + key)
 
     def import_orm(self, orm_model: list[ComputationScenario]) -> MechanismInput:
         mechanism_input = MechanismInput("Piping")
 
-        isFirst = True
+        index = 0
+        nrScenarios = len(orm_model)
         for scenario in orm_model:
-            self._set_parameters(mechanism_input, scenario.parameters.select(), isFirst)
-            isFirst = False
+            self._set_parameters(
+                mechanism_input, scenario.parameters.select(), index, nrScenarios
+            )
+            index += 1
 
         return mechanism_input

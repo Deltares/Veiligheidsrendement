@@ -55,13 +55,28 @@ class TestPipingImporter:
         for item in source:
             item["computation_scenario_id"] = computation_scenario_id
 
-    def test_initialize(self):
+    def test_initialize_piping_importer(self):
         _importer = PipingImporter()
         assert isinstance(_importer, PipingImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    # class TestDStabilityImporter:
-    def test_import_orm(self, empty_db_fixture: SqliteDatabase):
+    def get_mechanism_table(self, id: int):
+        return [
+            {
+                "computation_scenario_id": id,
+                "year": 2023,
+                "value": 1.1,
+                "beta": 3.3,
+            },
+            {
+                "computation_scenario_id": id,
+                "year": 2100,
+                "value": 2.2,
+                "beta": 4.4,
+            },
+        ]
+
+    def test_import_piping(self, empty_db_fixture: SqliteDatabase):
         # Setup
         with empty_db_fixture.atomic() as transaction:
             _section_data = self._get_valid_section_data()
@@ -72,20 +87,9 @@ class TestPipingImporter:
                 _section_data, 2
             )
 
-            _mechanism_table_source = [
-                {
-                    "computation_scenario_id": _computation_scenario1.id,
-                    "year": 2023,
-                    "value": 1.1,
-                    "beta": 3.3,
-                },
-                {
-                    "computation_scenario_id": _computation_scenario1.id,
-                    "year": 2100,
-                    "value": 2.2,
-                    "beta": 4.4,
-                },
-            ]
+            _mechanism_table_source = self.get_mechanism_table(
+                _computation_scenario1.id
+            )
             parameters1 = [
                 {
                     "parameter": "D",
@@ -126,3 +130,52 @@ class TestPipingImporter:
         assert _mechanism_input.input["D"][1] == pytest.approx(41.0)
         assert _mechanism_input.input["d70"][0] == pytest.approx(0.000226)
         assert _mechanism_input.input["d70"][1] == pytest.approx(0.000227)
+
+    def test_import_piping_invalid(self, empty_db_fixture: SqliteDatabase):
+        # Setup
+        with empty_db_fixture.atomic() as transaction:
+            _section_data = self._get_valid_section_data()
+            _computation_scenario1 = self._get_valid_computation_scenario(
+                _section_data, 1
+            )
+            _computation_scenario2 = self._get_valid_computation_scenario(
+                _section_data, 2
+            )
+
+            _mechanism_table_source = self.get_mechanism_table(
+                _computation_scenario1.id
+            )
+            parameters1 = [
+                # parameter D is only defined for scenario 2, this is not valid
+                {
+                    "parameter": "d70",
+                    "value": 0.000226,
+                },
+            ]
+            parameters2 = [
+                {
+                    "parameter": "D",
+                    "value": 41.0,
+                },
+                {
+                    "parameter": "d70",
+                    "value": 0.000227,
+                },
+            ]
+
+            self._add_computation_scenario_id(parameters1, _computation_scenario1.id)
+            self._add_computation_scenario_id(parameters2, _computation_scenario2.id)
+
+            MechanismTable.insert_many(_mechanism_table_source).execute()
+            Parameter.insert_many(parameters1 + parameters2).execute()
+            transaction.commit()
+
+        # 1. Define test data.
+        _importer = PipingImporter()
+
+        # 2. Run test
+        with pytest.raises(ValueError) as exception_error:
+            _importer.import_orm(ComputationScenario.select())
+
+        # Assert
+        assert str(exception_error.value) == "key not defined for first scenario: D"
