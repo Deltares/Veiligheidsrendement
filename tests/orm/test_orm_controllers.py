@@ -48,6 +48,18 @@ class DummyModelsData:
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
     ]
+    characteristic_point_type = [
+        "BIT", "BUT", "BUK", "BIK", "EBL", "BBL"
+    ]
+
+    profile_points = [
+        dict(x_coordinate=47.0,y_coordinate= 5.104),
+        dict(x_coordinate=-17.0,y_coordinate= 4.996),
+        dict(x_coordinate=0, y_coordinate=10.939),
+        dict(x_coordinate=3.5, y_coordinate=10.937),
+        dict(x_coordinate=42.0,y_coordinate= 5.694),
+        dict(x_coordinate=25.0,y_coordinate= 6.491),
+    ]
 
 
 class TestOrmControllers:
@@ -96,6 +108,11 @@ class TestOrmControllers:
 
         for _b_dict in DummyModelsData.buildings_data:
             Buildings.create(**(_b_dict | dict(section_data=_dike_section))).save()
+        
+        for idx, _p_point in enumerate(DummyModelsData.profile_points):
+            _c_point = CharacteristicPointType.create(**dict(name=DummyModelsData.characteristic_point_type[idx]))
+            _c_point.save()
+            ProfilePoint.create(**(_p_point | dict(section_data=_dike_section, profile_point_type=_c_point))).save()
 
         # 3. Save tables.
         assert _db_file.exists()
