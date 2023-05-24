@@ -127,10 +127,10 @@ class VrtoolConfig:
         """
         After initialization and set of the values through the constructor we modify certain properties to ensure they are of the correct type.
         """
-
         def _convert_to_path(value: Union[None, Path, str]) -> Union[None, Path]:
             if not value:
                 return None
+
             if isinstance(value, str):
                 return Path(value)
             return value
@@ -139,6 +139,25 @@ class VrtoolConfig:
         self.output_directory = _convert_to_path(self.output_directory)
         self.input_database_path = _convert_to_path(self.input_database_path)
         self.externals = _convert_to_path(self.externals)
+
+    def _relative_paths_to_absolute(self, parent_path: Path):
+        """
+        Converts all relevant relative paths to absolute paths.
+
+        Args:
+            parent_path (Path): Parent path to apply to the relative values.
+        """
+        def _relative_to_absolute(value: Union[None, Path]) -> Union[None, Path]:
+            if not value:
+                return value
+            if value.is_absolute():
+                return value
+            return parent_path.joinpath(value).resolve()
+
+        self.input_directory = _relative_to_absolute(self.output_directory)
+        self.output_directory = _relative_to_absolute(self.output_directory)
+        self.input_database_path = _relative_to_absolute(self.input_database_path)
+        self.externals = _relative_to_absolute(self.externals)
 
     def export(self, export_path: Path):
         """
@@ -169,4 +188,5 @@ class VrtoolConfig:
         """
         _custom_config = json.loads(json_path.read_text())
         _vrtool_config = cls(**_custom_config)
+        _vrtool_config._relative_paths_to_absolute(json_path.parent)
         return _vrtool_config
