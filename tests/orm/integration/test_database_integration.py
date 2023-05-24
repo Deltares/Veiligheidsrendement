@@ -157,8 +157,8 @@ class TestDatabaseIntegration:
         # Note that currently the other columns in the SectionData are not being mapped on the DikeSection.
         assert actual.name == expected.section_name
 
-        # Note that the database does not contain any entries for the buildings and is not asserted further
-        assert actual.houses.shape == (0, 2)
+        # Note that the database contains faulty entries for the buildings and is not asserted further
+        assert actual.houses.shape == (52, 2)
 
         _expected_profile_points = expected.profile_points
         assert len(actual.InitialGeometry) == len(_expected_profile_points)
