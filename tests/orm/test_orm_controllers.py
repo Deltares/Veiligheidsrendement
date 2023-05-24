@@ -110,7 +110,8 @@ class TestOrmControllers:
             Buildings.create(**(_b_dict | dict(section_data=_dike_section))).save()
         
         for idx, _p_point in enumerate(DummyModelsData.profile_points):
-            _c_point = CharacteristicPointType.create(**dict(name=DummyModelsData.characteristic_point_type[idx])).save()
+            _c_point = CharacteristicPointType.create(**dict(name=DummyModelsData.characteristic_point_type[idx]))
+            _c_point.save()
             ProfilePoint.create(**(_p_point | dict(section_data=_dike_section, profile_point_type=_c_point))).save()
 
         # 3. Save tables.
