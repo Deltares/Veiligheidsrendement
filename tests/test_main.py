@@ -43,7 +43,7 @@ class TestMain:
         assert _run_result.exit_code == 1
 
     @pytest.mark.slow
-    @pytest.mark.skip(reason="Needs a valid database to verify the full run.")
+    @pytest.mark.skip(reason="Missing the full import of the DikeSection.")
     def test_given_valid_input_when_run_full_then_succeeds(self):
         # TODO: Ideally we want a really small test.
         # 1. Define test data.

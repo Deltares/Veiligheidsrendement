@@ -1,4 +1,4 @@
 {
-    "traject": "16-3",
-    "input_database_path": "..\\test_db\\vrtool_db.db"
+    "traject": "38-1",
+    "input_database_path": "..\\test_db\\with_valid_data.db"
 }
