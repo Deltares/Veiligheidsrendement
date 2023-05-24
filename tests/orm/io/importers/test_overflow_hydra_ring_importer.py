@@ -6,7 +6,9 @@ from peewee import SqliteDatabase
 from tests.orm import empty_db_fixture
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.io.overflow_hydra_ring_importer import OverFlowHydraRingImporter
+from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
+    OverFlowHydraRingImporter,
+)
 from vrtool.orm.models import Mechanism
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
