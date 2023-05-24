@@ -8,6 +8,7 @@ from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
 )
@@ -17,6 +18,7 @@ from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
+from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -63,7 +65,7 @@ class TestDatabaseIntegration:
         _mechanisms_per_first_section = (
             MechanismPerSection.select()
             .join(SectionData, on=MechanismPerSection.section)
-            .where(SectionData.id == _orm_dike_section.id)
+            .where(SectionData.id == _orm_dike_section.get_id())
         )
 
         _overflow_per_first_section = (
@@ -89,6 +91,45 @@ class TestDatabaseIntegration:
         # Assert
         self._assert_overflow_mechanism_input(
             _mechanism_input, _overflow_computation_scenario
+        )
+
+    def test_import_dstability_imports_all_data(
+        self, valid_data_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        # Note: only the first and second sections have a reference to the STIX files
+        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
+        _orm_dike_section = (
+            _orm_dike_traject_info.dike_sections.select()
+            .where(SectionData.id == 1)
+            .get()
+        )
+
+        _mechanisms_per_first_section = (
+            MechanismPerSection.select()
+            .join(SectionData, on=MechanismPerSection.section)
+            .where(SectionData.id == _orm_dike_section.get_id())
+        )
+
+        _dstability_per_first_section = (
+            _mechanisms_per_first_section.select()
+            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
+            .where(Mechanism.name == "Stability")
+        )
+
+        computation_scenarios = ComputationScenario.select().where(
+            ComputationScenario.mechanism_per_section
+            == _dstability_per_first_section[0]
+        )
+
+        _importer = DStabilityImporter()
+
+        # Call
+        _mechanism_input = _importer.import_orm(computation_scenarios[0])
+
+        # Assert
+        self._assert_dstability_mechanism_input(
+            _mechanism_input, computation_scenarios[0]
         )
 
     def _assert_dike_traject_info(
@@ -136,10 +177,7 @@ class TestDatabaseIntegration:
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters) + 1
-        for parameter in expected_parameters:
-            assert actual.input[parameter.get("parameter")] == pytest.approx(
-                parameter.get("value")
-            )
+        self._assert_parameters(actual, expected_parameters)
 
         expected_mechanism_table_entries = expected.mechanism_tables.select()
         expected_years = set(
@@ -162,3 +200,24 @@ class TestDatabaseIntegration:
                     MechanismTable.year == int(expected_year)
                 )
             ]
+
+    def _assert_dstability_mechanism_input(
+        self, actual: MechanismInput, expected: ComputationScenario
+    ) -> None:
+        assert actual.mechanism == "StabilityInner"
+
+        expected_parameters = expected.parameters.select()
+        assert len(actual.input) == len(expected_parameters) + 1
+        self._assert_parameters(actual, expected_parameters)
+
+        assert (
+            actual.input["stix_file"] == expected.supporting_files.select()[0].filename
+        )
+
+    def _assert_parameters(
+        self, actual: MechanismInput, expected_parameters: list[Parameter]
+    ) -> None:
+        for expected_parameter in expected_parameters:
+            assert actual.input[expected_parameter.parameter] == pytest.approx(
+                expected_parameter.value
+            )
