@@ -19,6 +19,9 @@ class DikeSectionImporter(OrmImporterProtocol):
     externals: Path
 
     def __init__(self, vrtool_config: VrtoolConfig) -> DikeSectionImporter: 
+        if not vrtool_config:
+            raise ValueError("VrtoolConfig not provided.")
+
         self.input_directory = vrtool_config.input_directory
         self.selected_mechanisms = vrtool_config.mechanisms
         self.T = vrtool_config.T
@@ -47,4 +50,13 @@ class DikeSectionImporter(OrmImporterProtocol):
         _dike_section.mechanism_data = {}
         for _mechanism_per_section in orm_model.mechanisms_per_section:
             _dike_section.mechanism_data[_mechanism_per_section.mechanism.name] = ()
+
+        _dike_section.set_section_reliability(
+            self.input_directory,
+            self.selected_mechanisms,
+            self.T,
+            self.t_0,
+            self.externals
+        )        
+
         return _dike_section

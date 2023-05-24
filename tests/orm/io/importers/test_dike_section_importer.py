@@ -26,6 +26,12 @@ class TestDikeSectionImporter:
         assert isinstance(_importer, DikeSectionImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
+    def test_initialize_without_vrtoolconfig_raises(self):
+        with pytest.raises(ValueError) as exc_err:
+            DikeSectionImporter(None)
+        
+        assert str(exc_err.value) == "VrtoolConfig not provided."
+
     def test_import_orm(self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig):
         # 1. Define test data.
         _importer = DikeSectionImporter(valid_config)
