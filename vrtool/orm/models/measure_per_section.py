@@ -1,10 +1,7 @@
 from peewee import ForeignKeyField
-from vrtool.orm.models.measure import Measure
 
-from vrtool.orm.models.orm_base_model import (
-    OrmBaseModel,
-    _get_table_name,
-)
+from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from vrtool.orm.models.section_data import SectionData
 
 
