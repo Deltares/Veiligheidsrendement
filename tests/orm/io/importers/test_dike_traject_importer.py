@@ -42,6 +42,10 @@ class TestDikeTrajectImporter:
             isinstance(_section, DikeSection) for _section in _dike_traject.sections
         )
         assert _dike_traject.mechanism_names == list(set(["a_mechanism", "b_mechanism"]))
+        assert _dike_traject.assessment_plot_years == [0, 20, 50]
+        assert _dike_traject.flip_traject
+        assert _dike_traject.t_0 == 2025
+        assert _dike_traject.T == [0, 19, 20, 25, 50, 75, 100]
 
     def test_import_orm_without_model_raises_value(self, valid_config: VrtoolConfig):
         # 1. Define test data.
