@@ -142,7 +142,7 @@ class TestOverflowHydraRingImporter:
         assert _mechanism_input.mechanism == "Overflow"
         assert len(_mechanism_input.input) == len(parameters) + 1
         for parameter in parameters:
-            _mechanism_input.input[parameter.get("parameter")] == pytest.approx(
+            assert _mechanism_input.input[parameter.get("parameter")] == pytest.approx(
                 parameter.get("value")
             )
 
