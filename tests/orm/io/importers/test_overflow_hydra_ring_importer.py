@@ -4,6 +4,7 @@ import pandas as pd
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.overflow_hydra_ring_importer import OverFlowHydraRingImporter
 from vrtool.orm.models import Mechanism
@@ -134,6 +135,8 @@ class TestOverflowHydraRingImporter:
         _mechanism_input = _importer.import_orm(_computation_scenario)
 
         # Assert
+        assert isinstance(_mechanism_input, MechanismInput)
+
         assert _mechanism_input.mechanism == "Overflow"
         assert len(_mechanism_input.input) == len(parameters) + 1
         for parameter in parameters:

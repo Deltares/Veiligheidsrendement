@@ -3,6 +3,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
@@ -73,6 +74,8 @@ class TestDStabilityImporter:
         _mechanism_input = _importer.import_orm(_computation_scenario)
 
         # Assert
+        assert isinstance(_mechanism_input, MechanismInput)
+
         assert _mechanism_input.mechanism == "StabilityInner"
         assert len(_mechanism_input.input) == 1
         assert _mechanism_input.input["stix_file"] == _supporting_files[0]["filename"]
