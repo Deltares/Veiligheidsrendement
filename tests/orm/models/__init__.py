@@ -4,6 +4,7 @@ from peewee import SqliteDatabase
 from tests import test_data
 from vrtool.orm.orm_controllers import open_database
 
+
 @pytest.fixture(autouse=False)
 def empty_db_fixture():
     _db_file = test_data / "test_db" / f"empty_db.db"

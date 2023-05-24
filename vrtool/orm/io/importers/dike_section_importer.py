@@ -1,14 +1,16 @@
 from __future__ import annotations
+
 from pathlib import Path
+
 import pandas as pd
 
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.geometry_importer import GeometryImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.profile_point import ProfilePoint
 from vrtool.orm.models.section_data import SectionData
-from vrtool.defaults.vrtool_config import VrtoolConfig
 
 
 class DikeSectionImporter(OrmImporterProtocol):
@@ -18,7 +20,7 @@ class DikeSectionImporter(OrmImporterProtocol):
     t_0: int
     externals: Path
 
-    def __init__(self, vrtool_config: VrtoolConfig) -> DikeSectionImporter: 
+    def __init__(self, vrtool_config: VrtoolConfig) -> DikeSectionImporter:
         if not vrtool_config:
             raise ValueError("VrtoolConfig not provided.")
 

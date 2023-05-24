@@ -130,7 +130,9 @@ class TestOrmControllers:
         )
         assert _section_data.pleistocene_level == _expected_data["pleistocene_level"]
 
-    def test_open_database_when_file_doesnot_exist_raises_value_error(self, request: pytest.FixtureRequest):
+    def test_open_database_when_file_doesnot_exist_raises_value_error(
+        self, request: pytest.FixtureRequest
+    ):
         # 1. Define test data.
         _db_file = test_results / request.node.name / "vrtool_db.db"
         assert not _db_file.exists()

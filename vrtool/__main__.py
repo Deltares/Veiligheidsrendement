@@ -4,6 +4,7 @@ from pathlib import Path
 import click
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.orm.orm_controllers import get_dike_traject
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
@@ -12,7 +13,7 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 from vrtool.vrtool_logger import VrToolLogger
-from vrtool.orm.orm_controllers import get_dike_traject
+
 
 @click.group()
 def cli():

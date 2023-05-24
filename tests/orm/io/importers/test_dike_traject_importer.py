@@ -1,16 +1,17 @@
 import pytest
 from peewee import SqliteDatabase
 
+from tests import test_data, test_results
 from tests.orm.io.importers import db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.models.mechanism import Mechanism as OrmMechanism
-from vrtool.defaults.vrtool_config import VrtoolConfig
-from tests import test_data, test_results
+
 
 class TestDikeTrajectImporter:
     @pytest.fixture
@@ -41,7 +42,9 @@ class TestDikeTrajectImporter:
         assert all(
             isinstance(_section, DikeSection) for _section in _dike_traject.sections
         )
-        assert _dike_traject.mechanism_names == list(set(["a_mechanism", "b_mechanism"]))
+        assert _dike_traject.mechanism_names == list(
+            set(["a_mechanism", "b_mechanism"])
+        )
         assert _dike_traject.assessment_plot_years == [0, 20, 50]
         assert _dike_traject.flip_traject
         assert _dike_traject.t_0 == 2025
@@ -59,7 +62,9 @@ class TestDikeTrajectImporter:
         # 3. Verify expectations.
         assert str(value_error.value) == _expected_mssg
 
-    def test_select_available_mechanisms(self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig):
+    def test_select_available_mechanisms(
+        self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig
+    ):
         # 1. Define test data.
         _importer = DikeTrajectImporter(valid_config)
 

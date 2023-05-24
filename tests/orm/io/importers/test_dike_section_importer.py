@@ -2,17 +2,17 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
+from tests import test_data, test_results
 from tests.orm.io.importers import db_fixture
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.section_data import SectionData
-from vrtool.defaults.vrtool_config import VrtoolConfig
-from tests import test_data, test_results
+
 
 class TestDikeSectionImporter:
-
     @pytest.fixture
     def valid_config(self) -> VrtoolConfig:
         _vr_config = VrtoolConfig()
@@ -29,7 +29,7 @@ class TestDikeSectionImporter:
     def test_initialize_without_vrtoolconfig_raises(self):
         with pytest.raises(ValueError) as exc_err:
             DikeSectionImporter(None)
-        
+
         assert str(exc_err.value) == "VrtoolConfig not provided."
 
     def test_import_orm(self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig):
@@ -56,7 +56,9 @@ class TestDikeSectionImporter:
         assert but_point["x"] == pytest.approx(-17)
         assert but_point["z"] == pytest.approx(4.996)
 
-    def test_import_buildings_list(self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig):
+    def test_import_buildings_list(
+        self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig
+    ):
         # 1. Define test data.
         _importer = DikeSectionImporter(valid_config)
         _section_data = SectionData.get_by_id(1)

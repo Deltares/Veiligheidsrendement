@@ -1,5 +1,6 @@
 from peewee import JOIN
 
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
@@ -9,7 +10,6 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajec
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
-from vrtool.defaults.vrtool_config import VrtoolConfig
 
 
 class DikeTrajectImporter(OrmImporterProtocol):

@@ -127,6 +127,7 @@ class VrtoolConfig:
         """
         After initialization and set of the values through the constructor we modify certain properties to ensure they are of the correct type.
         """
+
         def _convert_to_path(value: Union[None, Path, str]) -> Union[None, Path]:
             if not value:
                 return None
@@ -147,6 +148,7 @@ class VrtoolConfig:
         Args:
             parent_path (Path): Parent path to apply to the relative values.
         """
+
         def _relative_to_absolute(value: Union[None, Path]) -> Union[None, Path]:
             if not value:
                 return value
