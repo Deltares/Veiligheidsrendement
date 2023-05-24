@@ -51,12 +51,4 @@ class DikeSectionImporter(OrmImporterProtocol):
         for _mechanism_per_section in orm_model.mechanisms_per_section:
             _dike_section.mechanism_data[_mechanism_per_section.mechanism.name] = ()
 
-        _dike_section.set_section_reliability(
-            self.input_directory,
-            self.selected_mechanisms,
-            self.T,
-            self.t_0,
-            self.externals
-        )        
-
         return _dike_section
