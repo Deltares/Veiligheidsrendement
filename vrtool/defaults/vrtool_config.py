@@ -154,7 +154,7 @@ class VrtoolConfig:
                 return value
             return parent_path.joinpath(value).resolve()
 
-        self.input_directory = _relative_to_absolute(self.output_directory)
+        self.input_directory = _relative_to_absolute(self.input_directory)
         self.output_directory = _relative_to_absolute(self.output_directory)
         self.input_database_path = _relative_to_absolute(self.input_database_path)
         self.externals = _relative_to_absolute(self.externals)

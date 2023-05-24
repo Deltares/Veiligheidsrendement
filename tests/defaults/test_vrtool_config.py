@@ -194,3 +194,21 @@ class TestVrtoolConfig:
         # 3. Verify expectations.
         assert _vrtool_config.input_directory == _test_path
         assert _vrtool_config.output_directory == _test_path
+
+    @pytest.mark.parametrize("path_value, expected_value", [pytest.param(Path(".\\my_relative_path"), test_results / "my_relative_path", id="Relative path"), pytest.param(test_data / "my_absolute_path", test_data / "my_absolute_path", id="Absolute path"), pytest.param(None, None, id="No Path")])
+    def test_relative_paths_to_absolute_given_relative_path(self, path_value: Path, expected_value: Path):
+        # 1. Define test data.
+        _vrtool_config = VrtoolConfig()
+        _vrtool_config.input_directory = path_value
+        _vrtool_config.output_directory = path_value
+        _vrtool_config.input_database_path = path_value
+        _vrtool_config.externals = path_value
+
+        # 2. Run test.
+        _vrtool_config._relative_paths_to_absolute(test_results)
+
+        # 3. Verify expectations.
+        assert _vrtool_config.input_directory == expected_value
+        assert _vrtool_config.output_directory == expected_value
+        assert _vrtool_config.input_database_path == expected_value
+        assert _vrtool_config.externals == expected_value
