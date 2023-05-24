@@ -52,9 +52,9 @@ class DikeTrajectImporter(OrmImporterProtocol):
         _dike_traject.sections = self._import_dike_section_list(_selected_sections)
         _mechanisms = self._select_available_mechanisms(orm_model)
         _dike_traject.mechanism_names = list(set([_m.name for _m in _mechanisms]))
-        # _dike_traject.assessment_plot_years = config.assessment_plot_years
-        # _dike_traject.flip_traject = config.flip_traject
-        # _dike_traject.t_0 = config.t_0
-        # _dike_traject.T = config.T
+        _dike_traject.assessment_plot_years = self._vrtool_config.assessment_plot_years
+        _dike_traject.flip_traject = self._vrtool_config.flip_traject
+        _dike_traject.t_0 = self._vrtool_config.t_0
+        _dike_traject.T = self._vrtool_config.T
 
         return _dike_traject

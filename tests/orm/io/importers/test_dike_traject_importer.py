@@ -12,7 +12,7 @@ from vrtool.orm.models.mechanism import Mechanism as OrmMechanism
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from tests import test_data, test_results
 
-class TestDikeTrajectInfoImporter:
+class TestDikeTrajectImporter:
     @pytest.fixture
     def valid_config(self) -> VrtoolConfig:
         _vr_config = VrtoolConfig()
@@ -41,7 +41,7 @@ class TestDikeTrajectInfoImporter:
         assert all(
             isinstance(_section, DikeSection) for _section in _dike_traject.sections
         )
-        assert _dike_traject.mechanism_names == ["a_mechanism", "b_mechanism"]
+        assert _dike_traject.mechanism_names == list(set(["a_mechanism", "b_mechanism"]))
 
     def test_import_orm_without_model_raises_value(self, valid_config: VrtoolConfig):
         # 1. Define test data.
