@@ -6,9 +6,17 @@ from typing import Union
 
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
+    OverFlowHydraRingImporter,
+)
 from vrtool.orm.models import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
+from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -23,8 +31,9 @@ class TestDatabaseIntegration:
         self, valid_data_db_fixture: SqliteDatabase
     ):
         # Setup
-        _importer = DikeTrajectImporter()
         _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
+
+        _importer = DikeTrajectImporter()
 
         # Call
         _dike_traject = _importer.import_orm(_orm_dike_traject_info)
@@ -41,6 +50,46 @@ class TestDatabaseIntegration:
 
         _first_dike_section = _orm_dike_sections[0]
         self._assert_dike_section(_dike_traject.sections[0], _first_dike_section)
+
+    def test_import_overflow_imports_all_data(
+        self, valid_data_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
+        _orm_dike_section = _orm_dike_traject_info.dike_sections.select().where(
+            SectionData.in_analysis
+        )[0]
+
+        _mechanisms_per_first_section = (
+            MechanismPerSection.select()
+            .join(SectionData, on=MechanismPerSection.section)
+            .where(SectionData.id == _orm_dike_section.id)
+        )
+
+        _overflow_per_first_section = (
+            _mechanisms_per_first_section.select()
+            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
+            .where(Mechanism.name == "Overflow")
+        )
+
+        # Precondition
+        assert len(_overflow_per_first_section) == 1
+
+        computation_scenarios = ComputationScenario.select().where(
+            ComputationScenario.mechanism_per_section == _overflow_per_first_section[0]
+        )
+        assert len(computation_scenarios) == 1
+
+        _overflow_computation_scenario = computation_scenarios[0]
+        _importer = OverFlowHydraRingImporter()
+
+        # Call
+        _mechanism_input = _importer.import_orm(_overflow_computation_scenario)
+
+        # Assert
+        self._assert_overflow_mechanism_input(
+            _mechanism_input, _overflow_computation_scenario
+        )
 
     def _assert_dike_traject_info(
         self, actual: DikeTrajectInfo, expected: OrmDikeTrajectInfo
@@ -79,3 +128,37 @@ class TestDatabaseIntegration:
             ]
             assert actual_profile_point["x"] == expected_profile_point.x_coordinate
             assert actual_profile_point["z"] == expected_profile_point.y_coordinate
+
+    def _assert_overflow_mechanism_input(
+        self, actual: MechanismInput, expected: ComputationScenario
+    ) -> None:
+        assert actual.mechanism == "Overflow"
+
+        expected_parameters = expected.parameters.select()
+        assert len(actual.input) == len(expected_parameters) + 1
+        for parameter in expected_parameters:
+            assert actual.input[parameter.get("parameter")] == pytest.approx(
+                parameter.get("value")
+            )
+
+        expected_mechanism_table_entries = expected.mechanism_tables.select()
+        expected_years = set(
+            [str(table_entry.year) for table_entry in expected_mechanism_table_entries]
+        )
+
+        actual_crest_height_beta = actual.input["hc_beta"]
+        assert len(expected_years.symmetric_difference(actual_crest_height_beta)) == 0
+        assert actual_crest_height_beta.index.to_list() == [
+            table_entry.value
+            for table_entry in expected_mechanism_table_entries.where(
+                MechanismTable.year == expected_mechanism_table_entries[0].year
+            )
+        ]
+
+        for expected_year in iter(expected_years):
+            assert list(actual_crest_height_beta[str(expected_year)]) == [
+                table_entry.beta
+                for table_entry in expected_mechanism_table_entries.where(
+                    MechanismTable.year == int(expected_year)
+                )
+            ]
