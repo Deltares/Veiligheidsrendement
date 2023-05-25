@@ -23,6 +23,8 @@ class PipingImporter(OrmImporterProtocol):
             if key in input.input:
                 input.input[key][index] = parameter.value
             else:
+                # note that we do not check on the presence of all keys
+                # except for the first scenario; if it is missing the value stays at 0.0
                 raise ValueError("key not defined for first scenario: " + key)
 
     def import_orm(self, orm_model: list[ComputationScenario]) -> MechanismInput:
