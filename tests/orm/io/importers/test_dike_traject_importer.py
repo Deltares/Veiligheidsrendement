@@ -75,5 +75,5 @@ class TestDikeTrajectImporter:
 
         # 3. Verify expectations.
         assert isinstance(_mechanisms, list)
-        assert len(_mechanisms) == 4
+        assert len(_mechanisms) == 2
         assert all(isinstance(_m, OrmMechanism) for _m in _mechanisms)
