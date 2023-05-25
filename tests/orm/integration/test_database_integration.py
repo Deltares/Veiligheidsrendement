@@ -119,8 +119,11 @@ class TestDatabaseIntegration:
         _dstability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "Stability")
+            .where(Mechanism.name == "StabilityInner")
         )
+
+        # Precondition
+        assert len(_dstability_per_first_section) == 1
 
         computation_scenarios = ComputationScenario.select().where(
             ComputationScenario.mechanism_per_section
@@ -159,17 +162,21 @@ class TestDatabaseIntegration:
         _stability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "Stability")
+            .where(Mechanism.name == "StabilityInner")
         )
+
+        # Precondition
+        assert len(_stability_per_first_section) == 1
 
         computation_scenarios = ComputationScenario.select().where(
             ComputationScenario.mechanism_per_section == _stability_per_first_section[0]
         )
 
+        assert len(computation_scenarios) == 1
+
         _importer = StabilityInnerSimpleImporter()
 
         # Call
-        # Multiple computation scenarios are defined while only one scenario is supported by the application itself
         _mechanism_input = _importer.import_orm(computation_scenarios[0])
 
         # Assert
@@ -197,6 +204,9 @@ class TestDatabaseIntegration:
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
             .where(Mechanism.name == "Piping")
         )
+
+        # Precondition
+        assert len(_piping_per_first_section) == 1
 
         computation_scenarios = ComputationScenario.select().where(
             ComputationScenario.mechanism_per_section == _piping_per_first_section[0]
@@ -235,8 +245,13 @@ class TestDatabaseIntegration:
         # Note that currently the other columns in the SectionData are not being mapped on the DikeSection.
         assert actual.name == expected.section_name
 
-        # Note that the database contains faulty entries for the buildings and is not asserted further
-        assert actual.houses.shape == (52, 2)
+        for count, building in enumerate(expected.buildings_list.select()):
+            assert actual.houses.loc[count]["distancefromtoe"] == pytest.approx(
+                building.distance_from_toe
+            )
+            assert actual.houses.loc[count]["cumulative"] == pytest.approx(
+                building.number_of_buildings
+            )
 
         _expected_profile_points = expected.profile_points
         assert len(actual.InitialGeometry) == len(_expected_profile_points)
