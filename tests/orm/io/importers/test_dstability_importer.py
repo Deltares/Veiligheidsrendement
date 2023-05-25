@@ -6,6 +6,7 @@ from tests.orm import empty_db_fixture
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
+from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
@@ -59,12 +60,28 @@ class TestDStabilityImporter:
         # Setup
         _supporting_files = [{"filename": "myfile.stix"}]
 
+        parameters = [
+            {
+                "parameter": "beta",
+                "value": 9.13,
+            },
+            {
+                "parameter": "beta2",
+                "value": 0.005,
+            },
+        ]
+
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = self._get_valid_computation_scenario()
             self._add_computation_scenario_id(
-                _supporting_files, _computation_scenario.id
+                _supporting_files, _computation_scenario.get_id()
             )
             SupportingFile.insert_many(_supporting_files).execute()
+
+            self._add_computation_scenario_id(
+                parameters, _computation_scenario.get_id()
+            )
+            Parameter.insert_many(parameters).execute()
 
             transaction.commit()
 
@@ -77,8 +94,13 @@ class TestDStabilityImporter:
         assert isinstance(_mechanism_input, MechanismInput)
 
         assert _mechanism_input.mechanism == "StabilityInner"
-        assert len(_mechanism_input.input) == 1
+        assert len(_mechanism_input.input) == len(parameters) + 1
         assert _mechanism_input.input["stix_file"] == _supporting_files[0]["filename"]
+
+        for parameter in parameters:
+            assert _mechanism_input.input[parameter.get("parameter")] == pytest.approx(
+                parameter.get("value")
+            )
 
     def test_import_orm_with_multiple_supporting_files_raises_value_error(
         self, empty_db_fixture: SqliteDatabase
