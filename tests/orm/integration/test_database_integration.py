@@ -1,5 +1,4 @@
 import math
-import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 from typing import Union
@@ -11,6 +10,9 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
+)
+from vrtool.orm.io.importers.stability_inner_simple_importer import (
+    StabilityInnerSimpleImporter,
 )
 from vrtool.orm.models import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
@@ -125,10 +127,50 @@ class TestDatabaseIntegration:
         _importer = DStabilityImporter()
 
         # Call
+        # Multiple computation scenarios are defined while only one scenario is supported by the application itself
         _mechanism_input = _importer.import_orm(computation_scenarios[0])
 
         # Assert
         self._assert_dstability_mechanism_input(
+            _mechanism_input, computation_scenarios[0]
+        )
+
+    def test_import_stability_simple_imports_all_data(
+        self, valid_data_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        # Note: Section 22B (id 23) only contains a parameter without stix file support
+        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
+        _orm_dike_section = (
+            _orm_dike_traject_info.dike_sections.select()
+            .where(SectionData.id == 23)
+            .get()
+        )
+
+        _mechanisms_per_first_section = (
+            MechanismPerSection.select()
+            .join(SectionData, on=MechanismPerSection.section)
+            .where(SectionData.id == _orm_dike_section.get_id())
+        )
+
+        _stability_per_first_section = (
+            _mechanisms_per_first_section.select()
+            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
+            .where(Mechanism.name == "Stability")
+        )
+
+        computation_scenarios = ComputationScenario.select().where(
+            ComputationScenario.mechanism_per_section == _stability_per_first_section[0]
+        )
+
+        _importer = StabilityInnerSimpleImporter()
+
+        # Call
+        # Multiple computation scenarios are defined while only one scenario is supported by the application itself
+        _mechanism_input = _importer.import_orm(computation_scenarios[0])
+
+        # Assert
+        self._assert_stability_simple_mechanism_input(
             _mechanism_input, computation_scenarios[0]
         )
 
@@ -213,6 +255,15 @@ class TestDatabaseIntegration:
         assert (
             actual.input["stix_file"] == expected.supporting_files.select()[0].filename
         )
+
+    def _assert_stability_simple_mechanism_input(
+        self, actual: MechanismInput, expected: ComputationScenario
+    ) -> None:
+        assert actual.mechanism == "StabilityInner"
+
+        expected_parameters = expected.parameters.select()
+        assert len(actual.input) == len(expected_parameters)
+        self._assert_parameters(actual, expected_parameters)
 
     def _assert_parameters(
         self, actual: MechanismInput, expected_parameters: list[Parameter]
