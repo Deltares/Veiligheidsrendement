@@ -313,13 +313,24 @@ class TestDatabaseIntegration:
             ]
         )
 
-        assert len(actual.input) == expected[0].parameters.select().count()
+        assert len(actual.input) == expected[0].parameters.select().count() + 1
 
         for count, computation_scenario in enumerate(expected):
+            assert actual.input["P_scenario"][count] == pytest.approx(
+                computation_scenario.scenario_probability
+            )
             for expected_parameter in computation_scenario.parameters.select():
                 assert actual.input[expected_parameter.parameter][
                     count
                 ] == pytest.approx(expected_parameter.value)
+
+        temporalCnt = (
+            expected[0]
+            .parameters.select()
+            .where(Parameter.parameter.endswith("(t)"))
+            .count()
+        )
+        assert temporalCnt == len(actual.temporals)
 
     def _assert_parameters(
         self, actual: MechanismInput, expected_parameters: list[Parameter]
