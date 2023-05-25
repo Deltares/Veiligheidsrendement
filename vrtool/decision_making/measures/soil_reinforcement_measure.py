@@ -50,6 +50,7 @@ class SoilReinforcementMeasure(MeasureBase):
                 self.parameters,
                 type,
                 dike_section.Length,
+                self.parameters["Depth"],
                 self.unit_costs,
                 dcrest=modified_measure.d_crest,
                 dberm_in=int(modified_measure.d_house),

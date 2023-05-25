@@ -385,8 +385,9 @@ def determine_new_geometry(
 # Script to determine the costs of a reinforcement:
 def determine_costs(
     parameters,
-    type: str,
+    measure_type: str,
     length: float,
+    depth: float,
     unit_costs: dict,
     dcrest: float = 0.0,
     dberm_in: float = 0.0,
@@ -396,12 +397,12 @@ def determine_costs(
     direction: bool = False,
     section: str = "",
 ) -> float:
-    if (type == "Soil reinforcement") and (direction == "outward") and (dberm_in > 0.0):
+    if (measure_type == "Soil reinforcement") and (direction == "outward") and (dberm_in > 0.0):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
         logging.warn(
             "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
         )
-    if type == "Soil reinforcement":
+    if measure_type == "Soil reinforcement":
         if direction == "inward":
             total_cost = (
                 unit_costs["Inward added volume"] * area_extra * length
@@ -453,19 +454,20 @@ def determine_costs(
                 )
 
         # add costs for stability screen
+        # TODO: only passing parameters because of this.
         if parameters["StabilityScreen"] == "yes":
-            total_cost += unit_costs["Sheetpile"] * parameters["Depth"] * length
+            total_cost += unit_costs["Sheetpile"] * depth * length
 
         if dcrest > 0.0:
             total_cost += unit_costs["Road renewal"] * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
-    elif type == "Vertical Geotextile":
+    elif measure_type == "Vertical Geotextile":
         total_cost = unit_costs["Vertical Geotextile"] * length
-    elif type == "Diaphragm Wall":
+    elif measure_type == "Diaphragm Wall":
         total_cost = unit_costs["Diaphragm wall"] * length
-    elif type == "Stability Screen":
-        total_cost = unit_costs["Sheetpile"] * parameters["Depth"] * length
+    elif measure_type == "Stability Screen":
+        total_cost = unit_costs["Sheetpile"] * depth * length
     else:
         logging.info("Unknown type")
     return total_cost
