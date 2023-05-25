@@ -17,6 +17,8 @@ class PipingImporter(OrmImporterProtocol):
             key = parameter.parameter
             if index == 0:
                 input.input[key] = np.zeros(nrScenarios)
+                if key[-3:] == "(t)":
+                    input.temporals.append(key)
 
             if key in input.input:
                 input.input[key][index] = parameter.value
@@ -25,13 +27,17 @@ class PipingImporter(OrmImporterProtocol):
 
     def import_orm(self, orm_model: list[ComputationScenario]) -> MechanismInput:
         mechanism_input = MechanismInput("Piping")
+        mechanism_input.temporals = []
 
         index = 0
         nrScenarios = len(orm_model)
+        keyPscenario = "P_scenario"
+        mechanism_input.input[keyPscenario] = np.zeros(nrScenarios)
         for scenario in orm_model:
             self._set_parameters(
                 mechanism_input, scenario.parameters.select(), index, nrScenarios
             )
+            mechanism_input.input[keyPscenario][index] = scenario.scenario_probability
             index += 1
 
         return mechanism_input

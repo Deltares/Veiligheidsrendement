@@ -45,8 +45,8 @@ class TestPipingImporter:
             computation_type=_computation_type,
             computation_name=f"Computation Name {id}",
             scenario_name="Scenario Name",
-            scenario_probability=1,
-            probability_of_failure=1,
+            scenario_probability=1 - 0.1 * id,
+            probability_of_failure=1 - 0.123 * id,
         )
 
     def _add_computation_scenario_id(
@@ -99,6 +99,10 @@ class TestPipingImporter:
                     "parameter": "d70",
                     "value": 0.000226,
                 },
+                {
+                    "parameter": "dh_exit(t)",
+                    "value": 0.0051,
+                },
             ]
             parameters2 = [
                 {
@@ -108,6 +112,10 @@ class TestPipingImporter:
                 {
                     "parameter": "d70",
                     "value": 0.000227,
+                },
+                {
+                    "parameter": "dh_exit(t)",
+                    "value": 0.0052,
                 },
             ]
 
@@ -125,11 +133,17 @@ class TestPipingImporter:
         _mechanism_input = _importer.import_orm(ComputationScenario.select())
 
         # 3. Verify expectations.
-        assert len(_mechanism_input.input) == 2
+        assert len(_mechanism_input.input) == 4
         assert _mechanism_input.input["D"][0] == pytest.approx(49.0)
         assert _mechanism_input.input["D"][1] == pytest.approx(41.0)
         assert _mechanism_input.input["d70"][0] == pytest.approx(0.000226)
         assert _mechanism_input.input["d70"][1] == pytest.approx(0.000227)
+        assert _mechanism_input.input["P_scenario"][0] == pytest.approx(0.9)
+        assert _mechanism_input.input["P_scenario"][1] == pytest.approx(0.8)
+        assert _mechanism_input.input["dh_exit(t)"][0] == pytest.approx(0.0051)
+        assert _mechanism_input.input["dh_exit(t)"][1] == pytest.approx(0.0052)
+        assert len(_mechanism_input.temporals) == 1
+        assert _mechanism_input.temporals[0] == "dh_exit(t)"
 
     def test_import_piping_invalid(self, empty_db_fixture: SqliteDatabase):
         # Setup
