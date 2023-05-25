@@ -11,6 +11,7 @@ from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
 )
+from vrtool.orm.io.importers.piping_importer import PipingImporter
 from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
@@ -55,7 +56,7 @@ class TestDatabaseIntegration:
         _first_dike_section = _orm_dike_sections[0]
         self._assert_dike_section(_dike_traject.sections[0], _first_dike_section)
 
-    def test_import_overflow_imports_all_data(
+    def test_import_overflow_imports_all_overflow_data(
         self, valid_data_db_fixture: SqliteDatabase
     ):
         # Setup
@@ -95,7 +96,7 @@ class TestDatabaseIntegration:
             _mechanism_input, _overflow_computation_scenario
         )
 
-    def test_import_dstability_imports_all_data(
+    def test_import_dstability_imports_all__dstability_data(
         self, valid_data_db_fixture: SqliteDatabase
     ):
         # Setup
@@ -135,7 +136,7 @@ class TestDatabaseIntegration:
             _mechanism_input, computation_scenarios[0]
         )
 
-    def test_import_stability_simple_imports_all_data(
+    def test_import_stability_simple_imports_all_stability_data(
         self, valid_data_db_fixture: SqliteDatabase
     ):
         # Setup
@@ -173,6 +174,39 @@ class TestDatabaseIntegration:
         self._assert_stability_simple_mechanism_input(
             _mechanism_input, computation_scenarios[0]
         )
+
+    def test_import_piping_imports_all_piping_data(
+        self, valid_data_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
+        _orm_dike_section = _orm_dike_traject_info.dike_sections.select().where(
+            SectionData.in_analysis
+        )[0]
+
+        _mechanisms_per_first_section = (
+            MechanismPerSection.select()
+            .join(SectionData, on=MechanismPerSection.section)
+            .where(SectionData.id == _orm_dike_section.get_id())
+        )
+
+        _piping_per_first_section = (
+            _mechanisms_per_first_section.select()
+            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
+            .where(Mechanism.name == "Piping")
+        )
+
+        computation_scenarios = ComputationScenario.select().where(
+            ComputationScenario.mechanism_per_section == _piping_per_first_section[0]
+        )
+
+        _importer = PipingImporter()
+
+        # Call
+        _mechanism_input = _importer.import_orm(computation_scenarios)
+
+        # Assert
+        self._assert_piping_mechanism_input(_mechanism_input, computation_scenarios)
 
     def _assert_dike_traject_info(
         self, actual: DikeTrajectInfo, expected: OrmDikeTrajectInfo
@@ -264,6 +298,26 @@ class TestDatabaseIntegration:
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters)
         self._assert_parameters(actual, expected_parameters)
+
+    def _assert_piping_mechanism_input(
+        self, actual: MechanismInput, expected: list[ComputationScenario]
+    ) -> None:
+        assert actual.mechanism == "Piping"
+
+        assert all(
+            [
+                len(input_parameter) == len(expected)
+                for input_parameter in actual.input.values()
+            ]
+        )
+
+        assert len(actual.input) == expected[0].parameters.select().count()
+
+        for count, computation_scenario in enumerate(expected):
+            for expected_parameter in computation_scenario.parameters.select():
+                assert actual.input[expected_parameter.parameter][
+                    count
+                ] == pytest.approx(expected_parameter.value)
 
     def _assert_parameters(
         self, actual: MechanismInput, expected_parameters: list[Parameter]
