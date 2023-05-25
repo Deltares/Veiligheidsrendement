@@ -1,5 +1,10 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 import pandas as pd
 
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.geometry_importer import GeometryImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -9,6 +14,22 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class DikeSectionImporter(OrmImporterProtocol):
+    input_directory: Path
+    selected_mechanisms: list[str]
+    T: list[int]
+    t_0: int
+    externals: Path
+
+    def __init__(self, vrtool_config: VrtoolConfig) -> DikeSectionImporter:
+        if not vrtool_config:
+            raise ValueError("VrtoolConfig not provided.")
+
+        self.input_directory = vrtool_config.input_directory
+        self.selected_mechanisms = vrtool_config.mechanisms
+        self.T = vrtool_config.T
+        self.t_0 = vrtool_config.t_0
+        self.externals = vrtool_config.externals
+
     def _import_buildings_list(self, buildings_list: list[Buildings]) -> pd.DataFrame:
         _buildings_data = [
             [_building.distance_from_toe, _building.number_of_buildings]
@@ -31,4 +52,5 @@ class DikeSectionImporter(OrmImporterProtocol):
         _dike_section.mechanism_data = {}
         for _mechanism_per_section in orm_model.mechanisms_per_section:
             _dike_section.mechanism_data[_mechanism_per_section.mechanism.name] = ()
+
         return _dike_section
