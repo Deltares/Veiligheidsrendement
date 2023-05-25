@@ -1,5 +1,6 @@
 from peewee import JOIN
 
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
@@ -12,10 +13,15 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class DikeTrajectImporter(OrmImporterProtocol):
+    _vrtool_config: VrtoolConfig
+
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
+        self._vrtool_config = vrtool_config
+
     def _import_dike_section_list(
         self, orm_dike_section_list: list[SectionData]
     ) -> list[DikeSection]:
-        _ds_importer = DikeSectionImporter()
+        _ds_importer = DikeSectionImporter(self._vrtool_config)
         return list(map(_ds_importer.import_orm, orm_dike_section_list))
 
     def _select_available_mechanisms(
@@ -45,10 +51,10 @@ class DikeTrajectImporter(OrmImporterProtocol):
         )
         _dike_traject.sections = self._import_dike_section_list(_selected_sections)
         _mechanisms = self._select_available_mechanisms(orm_model)
-        _dike_traject.mechanism_names = [_m.name for _m in _mechanisms]
-        # _dike_traject.assessment_plot_years = config.assessment_plot_years
-        # _dike_traject.flip_traject = config.flip_traject
-        # _dike_traject.t_0 = config.t_0
-        # _dike_traject.T = config.T
+        _dike_traject.mechanism_names = list(set([_m.name for _m in _mechanisms]))
+        _dike_traject.assessment_plot_years = self._vrtool_config.assessment_plot_years
+        _dike_traject.flip_traject = self._vrtool_config.flip_traject
+        _dike_traject.t_0 = self._vrtool_config.t_0
+        _dike_traject.T = self._vrtool_config.T
 
         return _dike_traject

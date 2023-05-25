@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.orm.orm_controllers import get_dike_traject
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
@@ -62,9 +62,9 @@ def _get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
 def run_step_assessment(**kwargs):
     logging.info("Assess, {0}!".format(kwargs["model_directory"]))
 
-    # Define VrToolConfig and Selected Traject
+    # Get the selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject.from_config(_vr_config)
+    _selected_traject = get_dike_traject(_vr_config)
 
     # Step 1. Safety assessment.
     _safety_assessment = RunSafetyAssessment(
@@ -83,7 +83,7 @@ def run_step_measures(**kwargs):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject.from_config(_vr_config)
+    _selected_traject = get_dike_traject(_vr_config)
 
     # Step 2. Measures.
     _measures = RunMeasures(
@@ -101,7 +101,7 @@ def run_step_optimization(**kwargs):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject.from_config(_vr_config)
+    _selected_traject = get_dike_traject(_vr_config)
     _plot_mode = VrToolPlotMode.STANDARD
 
     # Step 2. Measures.
@@ -120,7 +120,7 @@ def run_full(**kwargs):
 
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    _selected_traject = DikeTraject.from_config(_vr_config)
+    _selected_traject = get_dike_traject(_vr_config)
 
     # Run all steps with one command.
     _measures = RunFullModel(_vr_config, _selected_traject, VrToolPlotMode.STANDARD)
