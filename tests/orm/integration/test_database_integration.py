@@ -5,6 +5,7 @@ from typing import Union
 
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
@@ -38,7 +39,8 @@ class TestDatabaseIntegration:
         # Setup
         _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
 
-        _importer = DikeTrajectImporter()
+        _vr_config = VrtoolConfig()
+        _importer = DikeTrajectImporter(_vr_config)
 
         # Call
         _dike_traject = _importer.import_orm(_orm_dike_traject_info)
