@@ -46,13 +46,6 @@ class MeasureImporter(OrmImporterProtocol):
         _measure = measure_type()
         self._set_base_values(_measure)
         _measure.crest_step = orm_measure.crest_step
-        _measure.config = self._vrtool_config
-        _measure.crest_step = orm_measure.crest_step
-        _measure.berm_step = self.berm_step
-        _measure.t_0 = self.t_0
-        _measure.geometry_plot = self.geometry_plot
-        _measure.unit_costs = self.unit_costs
-        _measure.parameters = {}
         _measure.parameters["Type"] = orm_measure.measure.measure_type.name
         _measure.parameters["Direction"] = orm_measure.direction
         _measure.parameters["StabilityScreen"] = "yes" if orm_measure.stability_screen else "no"
