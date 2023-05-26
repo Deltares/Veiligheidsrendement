@@ -3,12 +3,17 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data, test_results
+from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
 from tests.orm import empty_db_fixture
-
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.measure_per_section import MeasurePerSection
+from vrtool.orm.models.section_data import SectionData
+import pandas as pd
+from tests.orm.io.importers.test_measure_importer import TestMeasureImporter
 
 class TestSolutionsImporter:
     @pytest.fixture
@@ -35,5 +40,87 @@ class TestSolutionsImporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == f"No valid value given for SectionData."
 
-    def test_given_section_without_measures_doesnot_raise(self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
-        pass
+    @pytest.fixture
+    def valid_section_data_without_measures(self, empty_db_fixture: SqliteDatabase):
+        _traject = DikeTrajectInfo.create(traject_name="A traject")
+        _section_data = SectionData.create(
+            dike_traject=_traject,
+            section_name="E4E5",
+            meas_start=1.2,
+            meas_end=2.3,
+            section_length=3.4,
+            in_analysis=True,
+            crest_height=4.5,
+            annual_crest_decline=5.6)
+        yield _section_data
+
+    def test_given_different_sectiondata_and_dikesection_raises_valueerror(self, valid_config: VrtoolConfig, valid_section_data_without_measures: SectionData):
+        # 1. Define test data.
+        _dike_section = DikeSection()
+        _dike_section.name = "ACDC"
+        _importer = SolutionsImporter(valid_config, _dike_section)
+        _expected_error = "The provided SectionData ({}) does not match the given DikeSection ({}).".format(valid_section_data_without_measures.section_name, _dike_section.name)
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            _importer.import_orm(valid_section_data_without_measures)
+
+        # 3. Verify expectations.
+        assert str(exc_err.value) == _expected_error
+
+    def test_given_section_without_measures_doesnot_raise(self, valid_config: VrtoolConfig, valid_section_data_without_measures: SectionData):
+        # 1. Define test data.
+        _dike_section = DikeSection()
+        _dike_section.name = valid_section_data_without_measures.section_name
+        _dike_section.Length = 42
+        _dike_section.InitialGeometry = pd.DataFrame.from_dict(
+        {
+            "x": [0, 1, 2, 3, 4], "y": [4,3,2,1,0]})
+        _importer = SolutionsImporter(valid_config, _dike_section)
+
+        # 2. Run test.
+        _imported_solution = _importer.import_orm(valid_section_data_without_measures)
+
+        # 3. Verify expectations.
+        assert isinstance(_imported_solution, Solutions)
+        assert _imported_solution.section_name == _dike_section.name
+        assert _imported_solution.length == _dike_section.Length
+        assert _imported_solution.initial_geometry.equals(_dike_section.InitialGeometry)
+        assert _imported_solution.config == valid_config
+        assert _imported_solution.T == valid_config.T
+        assert _imported_solution.mechanisms == valid_config.mechanisms
+        assert not any(_imported_solution.measures)
+
+    @pytest.fixture
+    def valid_section_data_with_measures(self, valid_section_data_without_measures: SectionData) -> SectionData:
+        _test_helper = TestMeasureImporter()
+        _standard_measure = _test_helper._get_valid_measure("Soil reinforcement", "combinable", _test_helper._set_standard_measure)
+        _custom_measure = _test_helper._get_valid_measure("Custom", "full", _test_helper._set_custom_measure)
+        
+        MeasurePerSection.create(section = valid_section_data_without_measures, measure = _standard_measure)
+        MeasurePerSection.create(section = valid_section_data_without_measures, measure = _custom_measure)
+
+        yield valid_section_data_without_measures
+
+    def test_given_section_with_measures_imports_them_all(self, valid_config: VrtoolConfig, valid_section_data_with_measures: SectionData):
+        # 1. Define test data.
+        _dike_section = DikeSection()
+        _dike_section.name = valid_section_data_with_measures.section_name
+        _dike_section.Length = 42
+        _dike_section.InitialGeometry = pd.DataFrame.from_dict(
+        {
+            "x": [0, 1, 2, 3, 4], "y": [4,3,2,1,0]})
+        _importer = SolutionsImporter(valid_config, _dike_section)
+
+        # 2. Run test.
+        _imported_solution = _importer.import_orm(valid_section_data_with_measures)
+
+        # 3. Verify expectations.
+        assert isinstance(_imported_solution, Solutions)
+        assert _imported_solution.section_name == _dike_section.name
+        assert _imported_solution.length == _dike_section.Length
+        assert _imported_solution.initial_geometry.equals(_dike_section.InitialGeometry)
+        assert _imported_solution.config == valid_config
+        assert _imported_solution.T == valid_config.T
+        assert _imported_solution.mechanisms == valid_config.mechanisms
+        assert len(_imported_solution.measures) == 2
