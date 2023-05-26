@@ -23,11 +23,7 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
         """Creates a new instance of the MechanismReliabilityCollectionImporter
 
         Args:
-            mechanism (str): The name of the mechanism.
-            computation_type (str): The computation type.
-            computation_years (list[int]): The collection of years to compute the reliability for.
-            t_0 (float): The initial year.
-            measure_year (int): The year to compute the measure for
+            vrtool_config (VrtoolConfig): A valid `VrtoolConfig` object.
         """
         self.computation_years = vrtool_config.T
         self.t_0 = vrtool_config.t_0
