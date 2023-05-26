@@ -1,10 +1,12 @@
 from peewee import CharField, FloatField, ForeignKeyField
+
+from vrtool.orm.models.custom_measure import CustomMeasure
 from vrtool.orm.models.orm_base_model import (
     OrmBaseModel,
     _get_table_name,
     _max_char_length,
 )
-from vrtool.orm.models.custom_measure import CustomMeasure
+
 
 class MeasureParameter(OrmBaseModel):
     custom_measure = ForeignKeyField(CustomMeasure, backref="parameters")

@@ -397,7 +397,11 @@ def determine_costs(
     direction: bool = False,
     section: str = "",
 ) -> float:
-    if (measure_type == "Soil reinforcement") and (direction == "outward") and (dberm_in > 0.0):
+    if (
+        (measure_type == "Soil reinforcement")
+        and (direction == "outward")
+        and (dberm_in > 0.0)
+    ):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
         logging.warn(
             "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"

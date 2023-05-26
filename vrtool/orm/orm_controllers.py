@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from peewee import SqliteDatabase
-from vrtool.decision_making.solutions import Solutions
 
+from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -82,7 +82,10 @@ def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     )
     return _dike_traject
 
-def get_dike_section_solutions(config: VrtoolConfig, dike_section: DikeSection) -> Solutions:
+
+def get_dike_section_solutions(
+    config: VrtoolConfig, dike_section: DikeSection
+) -> Solutions:
     """
     Gets the `solutions` instance with all measures (`MeasureBase`) mapped to the orm `Measure` table.
 
@@ -94,5 +97,7 @@ def get_dike_section_solutions(config: VrtoolConfig, dike_section: DikeSection) 
         Solutions: instance with all related measures (standard and / or custom).
     """
     _importer = SolutionsImporter(config, dike_section)
-    _orm_section_data = orm.SectionData.get(orm.SectionData.section_name == dike_section.name)
+    _orm_section_data = orm.SectionData.get(
+        orm.SectionData.section_name == dike_section.name
+    )
     return _importer.import_orm(_orm_section_data)

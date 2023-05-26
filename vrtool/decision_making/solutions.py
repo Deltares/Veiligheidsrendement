@@ -19,6 +19,7 @@ from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
+
 class Solutions:
     # This class contains possible solutions/measures
     section_name: str
