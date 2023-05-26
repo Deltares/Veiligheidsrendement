@@ -19,23 +19,21 @@ from vrtool.orm.models.standard_measure import StandardMeasure
 
 class MeasureImporter(OrmImporterProtocol):
 
-    _vrtool_config: VrtoolConfig
-    dike_section: DikeSection
+    _config: VrtoolConfig
     berm_step: list[int]
     t_0: int
     geometry_plot: bool
     unit_costs: dict
 
-    def __init__(self, vrtool_config: VrtoolConfig, dike_section: DikeSection) -> None:
-        self._vrtool_config = vrtool_config
-        self.dike_section = dike_section
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
+        self._config = vrtool_config
         self.berm_step = vrtool_config.berm_step
         self.t_0 = vrtool_config.t_0
         self.geometry_plot = vrtool_config.geometry_plot
         self.unit_costs = vrtool_config.unit_costs
 
     def _set_base_values(self, measure: MeasureBase):
-        measure.config = self._vrtool_config
+        measure.config = self._config
         measure.berm_step = self.berm_step
         measure.t_0 = self.t_0
         measure.geometry_plot = self.geometry_plot

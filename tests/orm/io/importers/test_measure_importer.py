@@ -14,7 +14,6 @@ from vrtool.decision_making.measures import (
 from vrtool.decision_making.measures.custom_measure import CustomMeasure
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
@@ -39,13 +38,13 @@ class TestMeasureImporter:
         yield _vr_config
 
     def test_initialize(self, valid_config: VrtoolConfig):
-        _importer = MeasureImporter(valid_config, DikeSection())
+        _importer = MeasureImporter(valid_config)
         assert isinstance(_importer, MeasureImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
     def test_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config, DikeSection())
+        _importer = MeasureImporter(valid_config)
 
         # 2. Run test.
         with pytest.raises(ValueError) as exc_err:
@@ -134,7 +133,7 @@ class TestMeasureImporter:
         empty_db_fixture: SqliteDatabase,
     ):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config, DikeSection())
+        _importer = MeasureImporter(valid_config)
         _orm_measure = self._get_valid_measure(
             measure_type, combinable_type, self._set_standard_measure
         )
@@ -164,7 +163,7 @@ class TestMeasureImporter:
         self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase
     ):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config, DikeSection())
+        _importer = MeasureImporter(valid_config)
         _measure_type_name = "Custom"
         _orm_measure = self._get_valid_measure(
             _measure_type_name, "combinable", self._set_custom_measure
@@ -195,7 +194,7 @@ class TestMeasureImporter:
         self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase
     ):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config, DikeSection())
+        _importer = MeasureImporter(valid_config)
         _measure_type_name = "Not a valid measure"
         _orm_measure = self._get_valid_measure(
             _measure_type_name, "combinable", self._set_standard_measure

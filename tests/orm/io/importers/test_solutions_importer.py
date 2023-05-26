@@ -1,10 +1,13 @@
 import pytest
 
+from peewee import SqliteDatabase
+
 from tests import test_data, test_results
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
+from tests.orm import empty_db_fixture
 
 
 class TestSolutionsImporter:
@@ -31,3 +34,6 @@ class TestSolutionsImporter:
 
         # 3. Verify expectations.
         assert str(exc_err.value) == f"No valid value given for SectionData."
+
+    def test_given_section_without_measures_doesnot_raise(self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
+        pass

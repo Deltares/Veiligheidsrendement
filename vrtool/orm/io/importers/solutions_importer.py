@@ -15,7 +15,7 @@ class SolutionsImporter(OrmImporterProtocol):
         self._dike_section = dike_section
 
     def _import_measures(self, orm_measures: list[OrmMeasure]) -> list[MeasureBase]:
-        _measure_importer = MeasureImporter(self._config, self._dike_section)
+        _measure_importer = MeasureImporter(self._config)
         return list(map(_measure_importer.import_orm, orm_measures))
 
     def import_orm(self, orm_model: SectionData) -> Solutions:
