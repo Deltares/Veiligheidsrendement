@@ -1,18 +1,17 @@
 import pytest
-
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.parameter import Parameter
-from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.computation_type import ComputationType
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.supporting_file import SupportingFile
 
 

@@ -1,13 +1,15 @@
 import math
+from typing import Union
+
 import pytest
 from peewee import SqliteDatabase
-from typing import Union
 
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
@@ -17,7 +19,6 @@ from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
 from vrtool.orm.models import DikeTrajectInfo as OrmDikeTrajectInfo
-from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection

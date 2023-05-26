@@ -1,6 +1,5 @@
-import pytest
 import pandas as pd
-
+import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture
