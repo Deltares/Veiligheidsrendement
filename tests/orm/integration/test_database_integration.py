@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 from typing import Union
 
 import pytest
@@ -131,7 +132,9 @@ class TestDatabaseIntegration:
             == _dstability_per_first_section[0]
         )
 
-        _importer = DStabilityImporter()
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
 
         # Call
         # Multiple computation scenarios are defined while only one scenario is supported by the application itself
@@ -139,7 +142,10 @@ class TestDatabaseIntegration:
 
         # Assert
         self._assert_dstability_mechanism_input(
-            _mechanism_input, computation_scenarios[0]
+            _mechanism_input,
+            computation_scenarios[0],
+            _externals_directory,
+            _stix_directory,
         )
 
     def test_import_stability_simple_imports_all_stability_data(
@@ -295,17 +301,23 @@ class TestDatabaseIntegration:
             ]
 
     def _assert_dstability_mechanism_input(
-        self, actual: MechanismInput, expected: ComputationScenario
+        self,
+        actual: MechanismInput,
+        expected: ComputationScenario,
+        externals_directory: Path,
+        stix_directory: Path,
     ) -> None:
         assert actual.mechanism == "StabilityInner"
 
         expected_parameters = expected.parameters.select()
-        assert len(actual.input) == len(expected_parameters) + 1
+        assert len(actual.input) == len(expected_parameters) + 2
         self._assert_parameters(actual, expected_parameters)
 
         assert (
-            actual.input["stix_file"] == expected.supporting_files.select()[0].filename
+            actual.input["STIXNAAM"]
+            == stix_directory / expected.supporting_files.select()[0].filename
         )
+        assert actual.input["DStability_exe_path"] == str(externals_directory)
 
     def _assert_stability_simple_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
