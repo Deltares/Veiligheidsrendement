@@ -20,3 +20,14 @@ class TestSolutionsImporter:
         _importer = SolutionsImporter(valid_config, DikeSection())
         assert isinstance(_importer, SolutionsImporter)
         assert isinstance(_importer, OrmImporterProtocol)
+
+    def test_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
+        # 1. Define test data.
+        _importer = SolutionsImporter(valid_config, DikeSection())
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            _importer.import_orm(None)
+
+        # 3. Verify expectations.
+        assert str(exc_err.value) == f"No valid value given for SectionData."

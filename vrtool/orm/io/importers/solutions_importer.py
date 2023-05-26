@@ -19,6 +19,10 @@ class SolutionsImporter(OrmImporterProtocol):
         return list(map(_measure_importer.import_orm, orm_measures))
 
     def import_orm(self, orm_model: SectionData) -> Solutions:
+
+        if not orm_model:
+            raise ValueError(f"No valid value given for {SectionData.__name__}.")
+
         _solutions = Solutions(self._dike_section, self._config)
         _solutions.measures = self._import_measures(
             orm_model.measures_per_section.select(MeasurePerSection.measure)
