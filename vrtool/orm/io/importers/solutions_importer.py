@@ -11,7 +11,7 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 
 
-class SolutionImporter(OrmImporterProtocol):
+class SolutionsImporter(OrmImporterProtocol):
 
     def __init__(self, vrtool_config: VrtoolConfig, dike_section: DikeSection) -> None:
         self._config = vrtool_config
