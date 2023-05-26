@@ -289,14 +289,14 @@ def determine_new_geometry(
 
     # apply dcrest, dberm and shift due to inward/outward:
     max_to_right = BUT_dx + BIT_dx + dberm - shift
-    new_geometry.loc["BUT","x"] -= shift
-    new_geometry.loc["BUK","x"] += BUT_dx - shift
-    new_geometry.loc["BIK","x"] += BUT_dx - shift
-    new_geometry.loc["BBL","x"] += BUT_dx + BIT_dx - shift
-    new_geometry.loc["EBL","x"] += max_to_right
-    new_geometry.loc["BIT","x"] += max_to_right
-    new_geometry.loc["BUK","z"] += dcrest
-    new_geometry.loc["BIK","z"] += dcrest
+    new_geometry.loc["BUT", "x"] -= shift
+    new_geometry.loc["BUK", "x"] += BUT_dx - shift
+    new_geometry.loc["BIK", "x"] += BUT_dx - shift
+    new_geometry.loc["BBL", "x"] += BUT_dx + BIT_dx - shift
+    new_geometry.loc["EBL", "x"] += max_to_right
+    new_geometry.loc["BIT", "x"] += max_to_right
+    new_geometry.loc["BUK", "z"] += dcrest
+    new_geometry.loc["BIK", "z"] += dcrest
 
     # add extra points:
     base = copy.deepcopy(initial)
