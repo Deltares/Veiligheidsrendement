@@ -89,6 +89,6 @@ class MeasureImporter(OrmImporterProtocol):
     def import_orm(self, orm_model: OrmMeasure) -> MeasureBase:
         _measure_type = orm_model.measure_type.name.lower()
         if _measure_type == "custom":
-            return self._import_custom_measure(orm_model.custom_measures[0])
-        return self._import_standard_measure(orm_model.standard_measure[0])
+            return self._import_custom_measure(orm_model.custom_measures.select().get())
+        return self._import_standard_measure(orm_model.standard_measure.select().get())
 
