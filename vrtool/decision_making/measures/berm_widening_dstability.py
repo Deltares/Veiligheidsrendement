@@ -48,7 +48,8 @@ class BermWideningDStability:
                 0
             ].Layers
         ]
-        self.measure_geometry_points = self.get_modified_meas_geom(straight_line=False)
+        self.measure_geometry_points = self.get_modified_meas_geom(straight_line=False,
+                                                                   collection_polygons=_collection_polygon)
 
         # 1. Run first routine to find the polygons to fill.
         _fill_polygons = self.find_polygons_to_fill_to_measure(_collection_polygon)
@@ -58,7 +59,7 @@ class BermWideningDStability:
             _fill_polygons, path_intermediate_stix
         )
 
-    def get_modified_meas_geom(self, straight_line: bool) -> list[Tuple[float, float]]:
+    def get_modified_meas_geom(self, straight_line: bool, collection_polygons: Optional[list[Polygon]]) -> list[Tuple[float, float]]:
         """
         Adapt and modify the geometry of the soil measure and return the surface line as a list of points.
         The geometry is either extended to the hinterland as a straight line or it is extended in the direction of the
@@ -66,15 +67,20 @@ class BermWideningDStability:
 
         Args:
             straight_line: if True, the geometry is a straight line from the BIT in the hinterland
+            collection_polygons: collection of the initial polygons from the stix file
 
         Returns:
             list of characteristic points for the dike's geometry
 
         """
 
-        # EXT and BIT_0 are virtual points and must be removed
+        # Only keep the actual physical points of the geometry:
         self.geometry = self.geometry[self.geometry.index != "EXT"]
         self.geometry = self.geometry[self.geometry.index != "BIT_0"]
+        self.geometry = self.geometry[self.geometry.index != "LBT"]
+        self.geometry = self.geometry[self.geometry.index != "LTP"]
+        self.geometry = self.geometry[self.geometry.index != "RBP"]
+        self.geometry = self.geometry[self.geometry.index != "RTP"]
 
         # Continue the geometry in the hinterland as a straight line
         if straight_line:
@@ -88,17 +94,24 @@ class BermWideningDStability:
             ]
 
         else:
+            _polygons_envelop = unary_union(collection_polygons)
+            if not isinstance(_polygons_envelop, Polygon):
+                raise ValueError("Invalid geometries in the stix file.")
+
             ##extend geometry LEFT SIDE
             start = (self.geometry.loc["BUK", "x"], self.geometry.loc["BUK", "z"])
             end = (self.geometry.loc["BUT", "x"], self.geometry.loc["BUT", "z"])
             x3, y3 = self.find_extended_end(start, end, "left", 10)
-            self.geometry.loc["left"] = [x3, y3]
+            if not Point(x3, y3).within(_polygons_envelop):
+                self.geometry.loc["left"] = [x3, y3]
+            # Implicitly else: do nothing
 
             ##extend geometry RIGHT SIDE
             start = (self.geometry.loc["EBL", "x"], self.geometry.loc["EBL", "z"])
             end = (self.geometry.loc["BIT", "x"], self.geometry.loc["BIT", "z"])
             x4, y4 = self.find_extended_end(start, end, "right", 10)
-            self.geometry.loc["right"] = [x4, y4]
+            if not Point(x4, y4).within(_polygons_envelop):
+                self.geometry.loc["right"] = [x4, y4]
 
             # sort self.geometry by ascending x:
             self.geometry = self.geometry.sort_values(by="x")

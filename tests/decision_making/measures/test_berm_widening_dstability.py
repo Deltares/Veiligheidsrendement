@@ -50,7 +50,7 @@ class TestBermWideningDStability:
     def test_initialization_berm_widening_dstability_with_valid_input(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -64,11 +64,11 @@ class TestBermWideningDStability:
         assert isinstance(_berm_widening_dstability, BermWideningDStability)
 
     def test_berm_widening_dstability_create_new_dstability_model_with_valid_input(
-        self,
+            self,
     ):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -89,14 +89,14 @@ class TestBermWideningDStability:
         # Assert
         assert isinstance(path_new_stix, Path)
         assert (
-            path_new_stix.parts[-1]
-            == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m.stix"
+                path_new_stix.parts[-1]
+                == "RW001.+096_STBI_maatgevend_Segment_38005_1D1_ID_1_dberm_0m_dcrest_0m.stix"
         )
 
     @pytest.mark.externals
     @pytest.mark.slow
     def test_when_create_new_dstability_model_then_rerun_with_valid_input(
-        self, request: pytest.FixtureRequest
+            self, request: pytest.FixtureRequest
     ):
         # SetUp
         assert test_externals.joinpath(
@@ -104,7 +104,7 @@ class TestBermWideningDStability:
         ).exists(), "No d-stability console available for testing."
 
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -146,7 +146,7 @@ class TestBermWideningDStability:
     def test_find_polygons_to_fill_to_measure_one_polygon_returned(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -173,7 +173,7 @@ class TestBermWideningDStability:
     def test_find_polygons_to_fill_to_measure_multiple_polygons_returned(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -205,7 +205,7 @@ class TestBermWideningDStability:
     def test_get_modified_meas_geom_with_straight_line(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -216,7 +216,7 @@ class TestBermWideningDStability:
         )
         # Call
         measure_geometry_points = _berm_widening_dstability.get_modified_meas_geom(
-            straight_line=True
+            straight_line=True, collection_polygons=[]
         )
 
         # Assert
@@ -233,7 +233,7 @@ class TestBermWideningDStability:
     def test_get_modified_meas_geom_without_straight_line(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -242,23 +242,23 @@ class TestBermWideningDStability:
             measure_input=_measure_input_test,
             dstability_wrapper=_dstability_wrapper,
         )
+        _collection_polygon = [
+            Polygon([(p.X, p.Z) for p in layer.Points])
+            for layer in _dstability_wrapper._dstability_model.datastructure.geometries[
+                0
+            ].Layers
+        ]
+
         # Call
         measure_geometry_points = _berm_widening_dstability.get_modified_meas_geom(
-            straight_line=False
+            straight_line=False, collection_polygons=_collection_polygon
         )
 
         # Assert
         np.testing.assert_almost_equal(
             measure_geometry_points,
             [
-                (-26.512148305110998, 1.9107067203304688),
-                (-17.0, 4.996),
-                (0.0, 10.51),
-                (3.5, 10.51),
-                (25.0, 6.491),
-                (42.0, 5.694),
-                (47.0, 5.104),
-                (56.931098707062795, 3.932130352566591),
+                (-17.0, 4.996), (0.0, 10.51), (3.5, 10.51), (25.0, 6.491), (42.0, 5.694), (47.0, 5.104)
             ],
             decimal=3,
         )
@@ -266,7 +266,7 @@ class TestBermWideningDStability:
     def test_get_bounding_box(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
 
         _dstability_wrapper = DStabilityWrapper(_path_test_stix, test_externals)
@@ -290,7 +290,7 @@ class TestBermWideningDStability:
     def test_adjust_calculation_settings_UpliftVan(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -309,15 +309,15 @@ class TestBermWideningDStability:
 
         # Assert
         assert (
-            _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X == 40.026
+                _calculation_setting.UpliftVanParticleSwarm.SearchAreaB.TopLeft.X == 40.026
         )
 
     def test_adjust_calculation_settings_Bishop(self):
         # SetUp
         _path_test_stix = (
-            test_data
-            / "stix"
-            / "RW001.+096_STBI_maatgevend_Segment_38005_1D1_Bishop.stix"
+                test_data
+                / "stix"
+                / "RW001.+096_STBI_maatgevend_Segment_38005_1D1_Bishop.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
@@ -337,14 +337,14 @@ class TestBermWideningDStability:
         # Assert
         assert _calculation_setting.BishopBruteForce.SearchGrid.BottomLeft.X == 6.103
         assert (
-            _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines
-            == 26
+                _calculation_setting.BishopBruteForce.TangentLines.NumberOfTangentLines
+                == 26
         )
 
     def test_adjust_calculation_settings_invalid_analyse_type_raises_error(self):
         # SetUp
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+                test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
             _path_test_stix, externals_path=test_externals
