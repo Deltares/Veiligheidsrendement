@@ -30,7 +30,7 @@ class TestSolutionsImporter:
         assert isinstance(_importer, MeasureImporter)
         assert isinstance(_importer, OrmImporterProtocol)
     
-    def _get_standard_measure(self, measure: Measure) -> StandardMeasure:
+    def _set_standard_measure(self, measure: Measure) -> StandardMeasure:
         _measure = StandardMeasure(
             measure=measure,
             crest_step = 4.2,
@@ -42,15 +42,15 @@ class TestSolutionsImporter:
             prob_of_solution_failure = 0.4,
             failure_probability_with_solution = 0.5)
         _measure.save()
-        return _measure
 
-    def _get_measure(self, measure_type: str, combinable_type: str) -> Measure:
+    def _get_valid_measure(self, measure_type: str, combinable_type: str) -> Measure:
         _measure_type = MeasureType(name=measure_type)
         _measure_type.save()
         _combinable_type = CombinableType(name=combinable_type)
         _combinable_type.save()
         _measure = Measure(measure_type = _measure_type, combinable_type=_combinable_type, name="Test Measure", year=2023)
         _measure.save()
+        self._set_standard_measure(_measure)
         return _measure
 
     @pytest.mark.parametrize("measure_type, combinable_type, expected_type",
@@ -60,7 +60,7 @@ class TestSolutionsImporter:
     def test_import_orm_with_standard_measure(self, measure_type: str, combinable_type: str, expected_type: Type[MeasureBase], valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config, DikeSection())
-        _orm_measure = self._get_measure(measure_type, combinable_type)
+        _orm_measure = self._get_valid_measure(measure_type, combinable_type)
 
         # 2. Run test.
         _imported_measure = _importer.import_orm(_orm_measure)
@@ -73,7 +73,7 @@ class TestSolutionsImporter:
         # 1. Define test data.
         _importer = MeasureImporter(valid_config, DikeSection())
         _measure_type_name = "Not a valid measure"
-        _orm_measure = self._get_measure(_measure_type_name, "combinable")
+        _orm_measure = self._get_valid_measure(_measure_type_name, "combinable")
 
         # 2. Run test.
         with pytest.raises(NotImplementedError) as exc_err:

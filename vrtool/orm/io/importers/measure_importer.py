@@ -73,13 +73,13 @@ class MeasureImporter(OrmImporterProtocol):
 
     def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureBase:
         _mapping_types = {
-            "Soil Reinforcement": SoilReinforcementMeasure,
-            "Diaphragm Wall": DiaphragmWallMeasure,
-            "Stability Screen": StabilityScreenMeasure,
-            "Vertical Geotextile": VerticalGeotextileMeasure,
+            "soil reinforcement": SoilReinforcementMeasure,
+            "diaphragm wall": DiaphragmWallMeasure,
+            "stability screen": StabilityScreenMeasure,
+            "vertical geotextile": VerticalGeotextileMeasure,
         }
 
-        _found_type =_mapping_types.get(orm_measure.measure.measure_type.name, None)
+        _found_type =_mapping_types.get(orm_measure.measure.measure_type.name.lower().strip(), None)
         if not _found_type:
             raise NotImplementedError("No import available for {}.".format(orm_measure.measure.measure_type.name))
         
@@ -89,5 +89,5 @@ class MeasureImporter(OrmImporterProtocol):
         _measure_type = orm_model.measure_type.name.lower()
         if _measure_type == "custom":
             return self._import_custom_measure()
-        return self._import_standard_measure(orm_model.standard_measure)
+        return self._import_standard_measure(orm_model.standard_measure[0])
 
