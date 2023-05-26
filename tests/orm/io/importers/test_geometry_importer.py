@@ -66,7 +66,7 @@ class TestGeometryImporter:
         _importer = GeometryImporter()
 
         # Call
-        geometry = _importer.import_orm(section_data.profile_points)
+        geometry = _importer.import_orm(section_data)
 
         # Assert
         assert geometry.shape == (6, 2)
