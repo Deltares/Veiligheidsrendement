@@ -13,7 +13,7 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.section_data import SectionData
 import pandas as pd
-from tests.orm.io.importers.test_measure_importer import TestMeasureImporter
+from tests.orm.io.importers.test_measure_importer import _get_valid_measure, _set_custom_measure, _set_standard_measure
 
 class TestSolutionsImporter:
     @pytest.fixture
@@ -105,9 +105,8 @@ class TestSolutionsImporter:
 
     @pytest.fixture
     def valid_section_data_with_measures(self, valid_section_data_without_measures: SectionData) -> SectionData:
-        _test_helper = TestMeasureImporter()
-        _standard_measure = _test_helper._get_valid_measure("Soil reinforcement", "combinable", _test_helper._set_standard_measure)
-        _custom_measure = _test_helper._get_valid_measure("Custom", "full", _test_helper._set_custom_measure)
+        _standard_measure = _get_valid_measure("Soil reinforcement", "combinable", _set_standard_measure)
+        _custom_measure = _get_valid_measure("Custom", "full", _set_custom_measure)
         
         MeasurePerSection.create(section = valid_section_data_without_measures, measure = _standard_measure)
         MeasurePerSection.create(section = valid_section_data_without_measures, measure = _custom_measure)

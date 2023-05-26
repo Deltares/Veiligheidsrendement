@@ -24,6 +24,45 @@ from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.standard_measure import StandardMeasure
 
+def _set_standard_measure(measure: Measure) -> None:
+    StandardMeasure.create(
+        measure=measure,
+        crest_step=4.2,
+        direction="onwards",
+        stability_screen=False,
+        max_crest_increase=0.1,
+        max_outward_reinforcement=2,
+        max_inward_reinforcement=3,
+        prob_of_solution_failure=0.4,
+        failure_probability_with_solution=0.5,
+    )
+
+def _set_custom_measure(measure: Measure) -> None:
+    _mechanism = Mechanism.create(name="Just a mechanism")
+    _measure = OrmCustomMeasure.create(
+        measure=measure,
+        mechanism=_mechanism,
+        cost=1234.56,
+        beta=42.24,
+        year=2023,
+    )
+    MeasureParameter.create(
+        custom_measure=_measure, parameter="DummyParameter", value=24.42
+    )
+
+def _get_valid_measure(
+    measure_type: str, combinable_type: str, set_measure: Callable
+) -> Measure:
+    _measure_type = MeasureType.create(name=measure_type)
+    _combinable_type = CombinableType.create(name=combinable_type)
+    _measure = Measure.create(
+        measure_type=_measure_type,
+        combinable_type=_combinable_type,
+        name="Test Measure",
+        year=2023,
+    )
+    set_measure(_measure)
+    return _measure
 
 class TestMeasureImporter:
     @pytest.fixture
@@ -45,9 +84,7 @@ class TestMeasureImporter:
     def test_initialize_given_no_vrtoolconfig_raises_valueerror(self):
         with pytest.raises(ValueError) as exc_err:
             MeasureImporter(None)
-
-        assert str(exc_err.value) == "VrtoolConfig not provided."
-    
+        assert str(exc_err.value) == "VrtoolConfig not provided."    
 
     def test_import_orm_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
         # 1. Define test data.
@@ -59,46 +96,6 @@ class TestMeasureImporter:
 
         # 3. Verify expectations.
         assert str(exc_err.value) == f"No valid value given for Measure."
-
-    def _set_standard_measure(self, measure: Measure) -> None:
-        StandardMeasure.create(
-            measure=measure,
-            crest_step=4.2,
-            direction="onwards",
-            stability_screen=False,
-            max_crest_increase=0.1,
-            max_outward_reinforcement=2,
-            max_inward_reinforcement=3,
-            prob_of_solution_failure=0.4,
-            failure_probability_with_solution=0.5,
-        )
-
-    def _set_custom_measure(self, measure: Measure) -> None:
-        _mechanism = Mechanism.create(name="Just a mechanism")
-        _measure = OrmCustomMeasure.create(
-            measure=measure,
-            mechanism=_mechanism,
-            cost=1234.56,
-            beta=42.24,
-            year=2023,
-        )
-        MeasureParameter.create(
-            custom_measure=_measure, parameter="DummyParameter", value=24.42
-        )
-
-    def _get_valid_measure(
-        self, measure_type: str, combinable_type: str, set_measure: Callable
-    ) -> Measure:
-        _measure_type = MeasureType.create(name=measure_type)
-        _combinable_type = CombinableType.create(name=combinable_type)
-        _measure = Measure.create(
-            measure_type=_measure_type,
-            combinable_type=_combinable_type,
-            name="Test Measure",
-            year=2023,
-        )
-        set_measure(_measure)
-        return _measure
 
     @pytest.mark.parametrize(
         "measure_type, expected_type",
@@ -141,8 +138,8 @@ class TestMeasureImporter:
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _orm_measure = self._get_valid_measure(
-            measure_type, combinable_type, self._set_standard_measure
+        _orm_measure = _get_valid_measure(
+            measure_type, combinable_type, _set_standard_measure
         )
 
         # 2. Run test.
@@ -172,8 +169,8 @@ class TestMeasureImporter:
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
         _measure_type_name = "Custom"
-        _orm_measure = self._get_valid_measure(
-            _measure_type_name, "combinable", self._set_custom_measure
+        _orm_measure = _get_valid_measure(
+            _measure_type_name, "combinable", _set_custom_measure
         )
 
         # 2. Run test.
@@ -203,8 +200,8 @@ class TestMeasureImporter:
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
         _measure_type_name = "Not a valid measure"
-        _orm_measure = self._get_valid_measure(
-            _measure_type_name, "combinable", self._set_standard_measure
+        _orm_measure = _get_valid_measure(
+            _measure_type_name, "combinable", _set_standard_measure
         )
 
         # 2. Run test.
