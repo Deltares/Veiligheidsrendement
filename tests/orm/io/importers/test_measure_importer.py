@@ -1,5 +1,6 @@
-from typing import Type
+from typing import Callable, Type
 import pytest
+from vrtool.decision_making.measures.custom_measure import CustomMeasure
 from vrtool.decision_making.measures.measure_base import MeasureBase
 from vrtool.decision_making.measures import (
     DiaphragmWallMeasure,
@@ -16,8 +17,11 @@ from tests.orm import empty_db_fixture
 from peewee import SqliteDatabase
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_parameter import MeasureParameter
 from vrtool.orm.models.measure_type import MeasureType
+from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.standard_measure import StandardMeasure
+from vrtool.orm.models.custom_measure import CustomMeasure as OrmCustomMeasure
 from collections.abc import Iterator
 
 class TestSolutionsImporter:
@@ -27,7 +31,10 @@ class TestSolutionsImporter:
         _vr_config = VrtoolConfig()
         _vr_config.input_directory = test_data
         _vr_config.output_directory = test_results
-
+        _vr_config.berm_step = 4.2
+        _vr_config.t_0 = 42
+        _vr_config.geometry_plot = True
+        _vr_config.unit_costs = { "lorem ipsum": 123 }
         yield _vr_config
 
     def test_initialize(self, valid_config: VrtoolConfig):
@@ -48,14 +55,29 @@ class TestSolutionsImporter:
             failure_probability_with_solution = 0.5)
         _measure.save()
 
-    def _get_valid_measure(self, measure_type: str, combinable_type: str) -> Measure:
+    def _set_custom_measure(self, measure: Measure) -> OrmCustomMeasure:
+        _mechanism = Mechanism(name="Just a mechanism")
+        _mechanism.save()
+        _measure = OrmCustomMeasure(
+            measure=measure,
+            mechanism=_mechanism,
+            cost=1234.56,
+            beta=42.24,
+            year=2023,
+        )
+        _measure.save()
+
+        MeasureParameter.create(custom_measure=_measure, parameter="DummyParameter", value=24.42)
+        
+
+    def _get_valid_measure(self, measure_type: str, combinable_type: str, set_measure: Callable) -> Measure:
         _measure_type = MeasureType(name=measure_type)
         _measure_type.save()
         _combinable_type = CombinableType(name=combinable_type)
         _combinable_type.save()
         _measure = Measure(measure_type = _measure_type, combinable_type=_combinable_type, name="Test Measure", year=2023)
         _measure.save()
-        self._set_standard_measure(_measure)
+        set_measure(_measure)
         return _measure
 
     @pytest.mark.parametrize("measure_type, expected_type",
@@ -72,25 +94,15 @@ class TestSolutionsImporter:
     ])
     def test_import_orm_with_standard_measure(self, measure_type: str, combinable_type: str, expected_type: Type[MeasureBase], valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
         # 1. Define test data.
-        valid_config.berm_step = 4.2
-        valid_config.t_0 = 42
-        valid_config.geometry_plot = True
-        valid_config.unit_costs = { "lorem ipsum": 123 }
-
         _importer = MeasureImporter(valid_config, DikeSection())
-        _orm_measure = self._get_valid_measure(measure_type, combinable_type)
+        _orm_measure = self._get_valid_measure(measure_type, combinable_type, self._set_standard_measure)
 
         # 2. Run test.
         _imported_measure = _importer.import_orm(_orm_measure)
 
         # 3. Verify final expectations.
-        assert isinstance(_imported_measure, MeasureBase)
         assert isinstance(_imported_measure, expected_type)
-        assert _imported_measure.config == valid_config
-        assert _imported_measure.berm_step == 4.2
-        assert _imported_measure.t_0 == 42
-        assert _imported_measure.geometry_plot
-        assert _imported_measure.unit_costs == { "lorem ipsum": 123 }
+        self._validate_measure_base_values(_imported_measure, valid_config)
         assert _imported_measure.parameters["Type"] == measure_type
         assert _imported_measure.parameters["Direction"] == "onwards"
         assert _imported_measure.parameters["StabilityScreen"] == "no"
@@ -102,12 +114,37 @@ class TestSolutionsImporter:
         assert _imported_measure.parameters["P_solution"] == 0.4
         assert _imported_measure.parameters["Pf_solution"] == 0.5
         assert _imported_measure.parameters["ID"] == _orm_measure.standard_measure[0].get_id()
-    
+
+    def test_import_custom_measure(self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
+        # 1. Define test data.
+        _importer = MeasureImporter(valid_config, DikeSection())
+        _measure_type_name = "Custom"
+        _orm_measure = self._get_valid_measure(_measure_type_name, "combinable", self._set_custom_measure)
+
+        # 2. Run test.
+        _imported_measure = _importer.import_orm(_orm_measure)
+
+        # 3. Verify expectations.
+        assert isinstance(_imported_measure, CustomMeasure)
+        self._validate_measure_base_values(_imported_measure, valid_config)
+        _imported_measure.measures["Cost"] == 1234.56
+        _imported_measure.measures["Reliability"] == 42.24
+        _imported_measure.parameters["year"] == 2023
+        _imported_measure.parameters["DummyParameter"] == 24.42
+
+    def _validate_measure_base_values(self, measure_base: MeasureBase, valid_config: VrtoolConfig):
+        assert isinstance(measure_base, MeasureBase)
+        assert measure_base.config == valid_config
+        assert measure_base.berm_step == 4.2
+        assert measure_base.t_0 == 42
+        assert measure_base.geometry_plot
+        assert measure_base.unit_costs == { "lorem ipsum": 123 }
+
     def test_import_orm_with_unknown_standard_measure_raises_error(self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config, DikeSection())
         _measure_type_name = "Not a valid measure"
-        _orm_measure = self._get_valid_measure(_measure_type_name, "combinable")
+        _orm_measure = self._get_valid_measure(_measure_type_name, "combinable", self._set_standard_measure)
 
         # 2. Run test.
         with pytest.raises(NotImplementedError) as exc_err:

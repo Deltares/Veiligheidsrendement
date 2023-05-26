@@ -62,6 +62,7 @@ class MeasureImporter(OrmImporterProtocol):
     def _import_custom_measure(self, orm_measure: OrmCustomMeasure) -> CustomMeasure:
         _measure = CustomMeasure()
         self._set_base_values(_measure)
+        _measure.measures = {}
         _measure.measures["Cost"] = orm_measure.cost
         _measure.measures["Reliability"] = orm_measure.beta
         _measure.parameters["year"] = orm_measure.year
@@ -88,6 +89,6 @@ class MeasureImporter(OrmImporterProtocol):
     def import_orm(self, orm_model: OrmMeasure) -> MeasureBase:
         _measure_type = orm_model.measure_type.name.lower()
         if _measure_type == "custom":
-            return self._import_custom_measure()
+            return self._import_custom_measure(orm_model.custom_measures[0])
         return self._import_standard_measure(orm_model.standard_measure[0])
 
