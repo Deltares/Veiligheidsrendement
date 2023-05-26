@@ -32,14 +32,14 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
         self.computation_years = vrtool_config.T
         self.t_0 = vrtool_config.t_0
         self.externals_path = vrtool_config.externals
-        self.stix_files_directory = vrtool_config.input_directory.joinpath("stix")
 
         self._overflow_hydra_ring_importer = OverFlowHydraRingImporter()
         self._piping_importer = PipingImporter()
         self._stability_inner_simple_importer = StabilityInnerSimpleImporter()
 
-        # TODO Adjust DStability importer to set externals and stix directory
-        self._dstability_importer = DStabilityImporter()
+        self._dstability_importer = DStabilityImporter(
+            vrtool_config.externals, vrtool_config.input_directory / "stix"
+        )
 
     def import_orm(
         self, orm_model: MechanismPerSection

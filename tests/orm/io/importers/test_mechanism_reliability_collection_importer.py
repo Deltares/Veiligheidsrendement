@@ -1,3 +1,4 @@
+from pathlib import Path
 from peewee import SqliteDatabase
 
 from tests import test_data
@@ -77,6 +78,7 @@ class TestMechanismReliabilityCollectionImporter:
             transaction.commit()
 
         _config = self._create_valid_config()
+        _config.externals = Path("Path/to/externals")
         _importer = MechanismReliabilityCollectionImporter(_config)
 
         # Call
@@ -85,6 +87,16 @@ class TestMechanismReliabilityCollectionImporter:
         # Assert
         self._assert_common_collection_properties(collection, _config)
         self._assert_mechanism_properties(collection, _mechanism, _computation_type)
+
+        mechanism_reliability_input = [
+            mechanism_input.Input for mechanism_input in collection.Reliability.values()
+        ]
+        assert all(
+            [
+                input.input["DStability_exe_path"] == str(_config.externals)
+                for input in mechanism_reliability_input
+            ]
+        )
 
     def test_import_orm_for_overflow_hydra_ring(self, empty_db_fixture: SqliteDatabase):
         # Setup
