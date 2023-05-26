@@ -3,6 +3,7 @@ import numpy as np
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.parameter import Parameter
 
 
@@ -28,19 +29,23 @@ class PipingImporter(OrmImporterProtocol):
                 # except for the first scenario; if it is missing the value stays at 0.0
                 raise ValueError("key not defined for first scenario: " + key)
 
-    def import_orm(self, orm_model: list[ComputationScenario]) -> MechanismInput:
+    def import_orm(self, orm_model: MechanismPerSection) -> MechanismInput:
         mechanism_input = MechanismInput("Piping")
         mechanism_input.temporals = []
 
         index = 0
-        nrScenarios = len(orm_model)
-        keyPscenario = "P_scenario"
-        mechanism_input.input[keyPscenario] = np.zeros(nrScenarios)
-        for scenario in orm_model:
+
+        computation_scenarios = orm_model.computation_scenarios.select()
+        nr_of_scenarios = len(computation_scenarios)
+        scenario_probablity_key = "P_scenario"
+        mechanism_input.input[scenario_probablity_key] = np.zeros(nr_of_scenarios)
+        for scenario in computation_scenarios:
             self._set_parameters(
-                mechanism_input, scenario.parameters.select(), index, nrScenarios
+                mechanism_input, scenario.parameters.select(), index, nr_of_scenarios
             )
-            mechanism_input.input[keyPscenario][index] = scenario.scenario_probability
+            mechanism_input.input[scenario_probablity_key][
+                index
+            ] = scenario.scenario_probability
             index += 1
 
         return mechanism_input

@@ -29,18 +29,16 @@ class TestPipingImporter:
         )
         return _test_section
 
-    def _get_valid_computation_scenario(
-        self, section: SectionData, id: int
-    ) -> ComputationScenario:
-
+    def _get_mechanism_per_section(self, section: SectionData) -> MechanismPerSection:
         _mechanism = Mechanism.create(name="mechanism")
-        _mechanism_per_section = MechanismPerSection.create(
-            section=section, mechanism=_mechanism
-        )
+        return MechanismPerSection.create(section=section, mechanism=_mechanism)
 
+    def _get_valid_computation_scenario(
+        self, mechanism_per_section: MechanismPerSection, id: int
+    ) -> ComputationScenario:
         _computation_type = ComputationType.create(name=f"irrelevant{id}")
         return ComputationScenario.create(
-            mechanism_per_section=_mechanism_per_section,
+            mechanism_per_section=mechanism_per_section,
             computation_type=_computation_type,
             computation_name=f"Computation Name {id}",
             scenario_name="Scenario Name",
@@ -59,36 +57,18 @@ class TestPipingImporter:
         assert isinstance(_importer, PipingImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def get_mechanism_table(self, id: int):
-        return [
-            {
-                "computation_scenario_id": id,
-                "year": 2023,
-                "value": 1.1,
-                "beta": 3.3,
-            },
-            {
-                "computation_scenario_id": id,
-                "year": 2100,
-                "value": 2.2,
-                "beta": 4.4,
-            },
-        ]
-
     def test_import_piping(self, empty_db_fixture: SqliteDatabase):
         # Setup
         with empty_db_fixture.atomic() as transaction:
             _section_data = self._get_valid_section_data()
+            _piping_per_section = self._get_mechanism_per_section(_section_data)
             _computation_scenario1 = self._get_valid_computation_scenario(
-                _section_data, 1
+                _piping_per_section, 1
             )
             _computation_scenario2 = self._get_valid_computation_scenario(
-                _section_data, 2
+                _piping_per_section, 2
             )
 
-            _mechanism_table_source = self.get_mechanism_table(
-                _computation_scenario1.id
-            )
             parameters1 = [
                 {
                     "parameter": "D",
@@ -121,7 +101,6 @@ class TestPipingImporter:
             self._add_computation_scenario_id(parameters1, _computation_scenario1.id)
             self._add_computation_scenario_id(parameters2, _computation_scenario2.id)
 
-            MechanismTable.insert_many(_mechanism_table_source).execute()
             Parameter.insert_many(parameters1 + parameters2).execute()
             transaction.commit()
 
@@ -129,7 +108,7 @@ class TestPipingImporter:
         _importer = PipingImporter()
 
         # 2. Run test
-        _mechanism_input = _importer.import_orm(ComputationScenario.select())
+        _mechanism_input = _importer.import_orm(_piping_per_section)
 
         # 3. Verify expectations.
         assert len(_mechanism_input.input) == 4
@@ -148,16 +127,14 @@ class TestPipingImporter:
         # Setup
         with empty_db_fixture.atomic() as transaction:
             _section_data = self._get_valid_section_data()
+            _piping_per_section = self._get_mechanism_per_section(_section_data)
             _computation_scenario1 = self._get_valid_computation_scenario(
-                _section_data, 1
+                _piping_per_section, 1
             )
             _computation_scenario2 = self._get_valid_computation_scenario(
-                _section_data, 2
+                _piping_per_section, 2
             )
 
-            _mechanism_table_source = self.get_mechanism_table(
-                _computation_scenario1.id
-            )
             parameters1 = [
                 # parameter D is only defined for scenario 2, this is not valid
                 {
@@ -178,8 +155,6 @@ class TestPipingImporter:
 
             self._add_computation_scenario_id(parameters1, _computation_scenario1.id)
             self._add_computation_scenario_id(parameters2, _computation_scenario2.id)
-
-            MechanismTable.insert_many(_mechanism_table_source).execute()
             Parameter.insert_many(parameters1 + parameters2).execute()
             transaction.commit()
 
@@ -188,7 +163,7 @@ class TestPipingImporter:
 
         # 2. Run test
         with pytest.raises(ValueError) as exception_error:
-            _importer.import_orm(ComputationScenario.select())
+            _importer.import_orm(_piping_per_section)
 
         # Assert
         assert str(exception_error.value) == "key not defined for first scenario: D"
