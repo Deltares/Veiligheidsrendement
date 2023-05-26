@@ -73,12 +73,12 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if mechanism == "StabilityInner" and computation_type == "Simple":
+        if mechanism == "StabilityInner" and computation_type == "SIMPLE":
             return self._stability_inner_simple_importer.import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if mechanism == "StabilityInner" and computation_type == "DStability":
+        if mechanism == "StabilityInner" and computation_type == "DSTABILITY":
             return self._dstability_importer.import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )

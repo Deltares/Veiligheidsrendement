@@ -1,5 +1,3 @@
-import pytest
-
 from peewee import SqliteDatabase
 
 from tests import test_data
@@ -62,7 +60,7 @@ class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_for_DStability(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _mechanism = "StabilityInner"
-        _computation_type = "DStability"
+        _computation_type = "DSTABILITY"
         _file_name = "something.stix"
         with empty_db_fixture.atomic() as transaction:
             mechanism_per_section = self._get_mechanism_per_section_with_scenario(
@@ -91,7 +89,7 @@ class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_for_overflow_hydra_ring(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _mechanism = "Overflow"
-        _computation_type = "HRing"
+        _computation_type = "HRING"
         with empty_db_fixture.atomic() as transaction:
             mechanism_per_section = self._get_mechanism_per_section_with_scenario(
                 _mechanism
@@ -122,7 +120,7 @@ class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_for_piping(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _mechanism = "Piping"
-        _computation_type = "SemiProb"
+        _computation_type = "SEMIPROB"
         with empty_db_fixture.atomic() as transaction:
             mechanism_per_section = self._get_mechanism_per_section_with_scenario(
                 _mechanism
@@ -146,7 +144,7 @@ class TestMechanismReliabilityCollectionImporter:
     ):
         # Setup
         _mechanism = "StabilityInner"
-        _computation_type = "Simple"
+        _computation_type = "SIMPLE"
         with empty_db_fixture.atomic() as transaction:
             mechanism_per_section = self._get_mechanism_per_section_with_scenario(
                 _mechanism
