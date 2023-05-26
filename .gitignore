@@ -56,3 +56,4 @@ Thumbs.db
 .pytest_cache/
 test_results/
 test_externals/
+**/__pycache__/**
