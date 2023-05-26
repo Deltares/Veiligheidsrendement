@@ -21,19 +21,19 @@ class MeasureBase:
     unit_costs: dict
     input_directory: Path
 
-    def __init__(self, inputs, config: VrtoolConfig):
-        self.parameters = {}
-        for i in range(0, len(inputs)):
-            if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
-                self.parameters[inputs.index[i]] = inputs[i]
+    # def __init__(self, inputs, config: VrtoolConfig):
+    #     self.parameters = {}
+    #     for i in range(0, len(inputs)):
+    #         if ~(inputs[i] is np.nan or inputs[i] != inputs[i]):
+    #             self.parameters[inputs.index[i]] = inputs[i]
 
-        self.config = config
-        self.crest_step = config.crest_step
-        self.berm_step = config.berm_step
-        self.input_directory = config.input_directory
-        self.t_0 = config.t_0
-        self.geometry_plot = config.geometry_plot
-        self.unit_costs = config.unit_costs
+    #     self.config = config
+    #     self.crest_step = config.crest_step
+    #     self.berm_step = config.berm_step
+    #     self.input_directory = config.input_directory
+    #     self.t_0 = config.t_0
+    #     self.geometry_plot = config.geometry_plot
+    #     self.unit_costs = config.unit_costs
 
     def evaluate_measure(
         self,

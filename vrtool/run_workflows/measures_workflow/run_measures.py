@@ -13,6 +13,7 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
+from vrtool.orm.orm_controllers import get_dike_section_solutions
 
 
 class RunMeasures(VrToolRunProtocol):
@@ -35,14 +36,16 @@ class RunMeasures(VrToolRunProtocol):
         self,
         selected_section: DikeSection,
     ) -> Tuple[str, Solutions]:
-        # Calculate per section, for each measure the cost-reliability-time relations:
-        _solution = Solutions(selected_section, self.vr_config)
-        _solution.fillSolutions(
-            self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
-        )
-        _solution.evaluate_solutions(
-            selected_section, self.selected_traject.general_info
-        )
+        _solution = get_dike_section_solutions(self.vr_config, selected_section)
+        
+        # # Calculate per section, for each measure the cost-reliability-time relations:
+        # _solution = Solutions(selected_section, self.vr_config)
+        # _solution.load_solutions_from_file(
+        #     self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
+        # )
+        # _solution.evaluate_solutions(
+        #     selected_section, self.selected_traject.general_info
+        # )
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:

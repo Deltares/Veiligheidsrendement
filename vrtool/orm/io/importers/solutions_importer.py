@@ -10,14 +10,16 @@ from vrtool.decision_making.measures import (
     VerticalGeotextileMeasure,
 )
 from vrtool.decision_making.measures import CustomMeasure
+from vrtool.decision_making.solutions import Solutions
 from vrtool.flood_defence_system.dike_section import DikeSection
 
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.custom_measure import CustomMeasure as OrmCustomMeasure
-from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.standard_measure import StandardMeasure
+from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 
 
 class MeasureImporter(OrmImporterProtocol):
@@ -97,8 +99,24 @@ class MeasureImporter(OrmImporterProtocol):
         
         return self._get_standard_measure(_found_type, orm_measure)
 
-    def import_orm(self, orm_model: Measure) -> MeasureBase:
+    def import_orm(self, orm_model: OrmMeasure) -> MeasureBase:
         _measure_type = orm_model.measure_type.name.lower()
         if _measure_type == "custom":
             return self._import_custom_measure()
         return self._import_standard_measure(orm_model.standard_measure)
+
+
+class SolutionImporter(OrmImporterProtocol):
+
+    def __init__(self, vrtool_config: VrtoolConfig, dike_section: DikeSection) -> None:
+        self._config = vrtool_config
+        self._dike_section = dike_section
+
+    def _import_measures(self, orm_measures: list[OrmMeasure]) -> list[MeasureBase]:
+        _measure_importer = MeasureImporter(self._config, self._dike_section)
+        return list(map(_measure_importer.import_orm, orm_measures))
+
+    def import_orm(self, orm_model: SectionData) -> Solutions:
+        _solutions = Solutions(self._dike_section, self._config)
+        _solutions.measures = self._import_measures(orm_model.measures_per_section.select(MeasurePerSection.measure))
+        return 
