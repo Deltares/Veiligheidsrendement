@@ -209,16 +209,15 @@ class TestDatabaseIntegration:
         # Precondition
         assert len(_piping_per_first_section) == 1
 
-        computation_scenarios = ComputationScenario.select().where(
-            ComputationScenario.mechanism_per_section == _piping_per_first_section[0]
-        )
-
         _importer = PipingImporter()
 
         # Call
-        _mechanism_input = _importer.import_orm(computation_scenarios)
+        _mechanism_input = _importer.import_orm(_piping_per_first_section[0])
 
         # Assert
+        computation_scenarios = ComputationScenario.select().where(
+            ComputationScenario.mechanism_per_section == _piping_per_first_section[0]
+        )
         self._assert_piping_mechanism_input(_mechanism_input, computation_scenarios)
 
     def _assert_dike_traject_info(
