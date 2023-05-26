@@ -82,7 +82,7 @@ class TestGeometryImporter:
     def test_import_orm_without_model_raises_value_error(self):
         # Setup
         _importer = GeometryImporter()
-        _expected_mssg = "No valid value given for list."
+        _expected_mssg = "No valid value given for SectionData."
 
         # Call
         with pytest.raises(ValueError) as value_error:

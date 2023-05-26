@@ -9,7 +9,6 @@ from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
 
@@ -167,3 +166,15 @@ class TestPipingImporter:
 
         # Assert
         assert str(exception_error.value) == "key not defined for first scenario: D"
+
+    def test_import_orm_without_model_raises_value_error(self):
+        # Setup
+        _importer = PipingImporter()
+        _expected_mssg = "No valid value given for MechanismPerSection."
+
+        # Call
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(None)
+
+        # Assert
+        assert str(value_error.value) == _expected_mssg

@@ -44,6 +44,11 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
     def import_orm(
         self, orm_model: MechanismPerSection
     ) -> MechanismReliabilityCollection:
+        if not orm_model:
+            raise ValueError(
+                f"No valid value given for {MechanismPerSection.__name__}."
+            )
+
         mechanism_name = orm_model.mechanism.name
 
         # Assume computation type is the same accross the computation scenarios

@@ -1,5 +1,6 @@
 from pathlib import Path
 from peewee import SqliteDatabase
+import pytest
 
 from tests import test_data
 from tests.orm import empty_db_fixture
@@ -174,6 +175,19 @@ class TestMechanismReliabilityCollectionImporter:
         # Assert
         self._assert_common_collection_properties(collection, _config)
         self._assert_mechanism_properties(collection, _mechanism, _computation_type)
+
+    def test_import_orm_without_model_raises_value_error(self):
+        # Setup
+        _config = self._create_valid_config()
+        _importer = MechanismReliabilityCollectionImporter(_config)
+        _expected_mssg = "No valid value given for MechanismPerSection."
+
+        # Call
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(None)
+
+        # Assert
+        assert str(value_error.value) == _expected_mssg
 
     def _assert_common_collection_properties(
         self, collection: MechanismReliabilityCollection, config=VrtoolConfig

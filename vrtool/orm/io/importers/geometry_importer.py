@@ -8,7 +8,7 @@ from vrtool.orm.models.profile_point import ProfilePoint
 class GeometryImporter(OrmImporterProtocol):
     def import_orm(self, orm_model: SectionData) -> pd.DataFrame:
         if not orm_model:
-            raise ValueError(f"No valid value given for {list[ProfilePoint].__name__}.")
+            raise ValueError(f"No valid value given for {SectionData.__name__}.")
 
         records = [self._to_dict(point) for point in orm_model.profile_points]
         geometry = pd.DataFrame.from_records(records)

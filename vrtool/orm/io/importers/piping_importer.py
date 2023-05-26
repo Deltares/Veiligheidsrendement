@@ -30,6 +30,11 @@ class PipingImporter(OrmImporterProtocol):
                 raise ValueError("key not defined for first scenario: " + key)
 
     def import_orm(self, orm_model: MechanismPerSection) -> MechanismInput:
+        if not orm_model:
+            raise ValueError(
+                f"No valid value given for {MechanismPerSection.__name__}."
+            )
+
         mechanism_input = MechanismInput("Piping")
         mechanism_input.temporals = []
 
