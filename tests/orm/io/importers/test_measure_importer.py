@@ -1,7 +1,12 @@
 from typing import Type
 import pytest
 from vrtool.decision_making.measures.measure_base import MeasureBase
-from vrtool.decision_making.measures.soil_reinforcement_measure import SoilReinforcementMeasure
+from vrtool.decision_making.measures import (
+    DiaphragmWallMeasure,
+    SoilReinforcementMeasure,
+    StabilityScreenMeasure,
+    VerticalGeotextileMeasure,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from tests import test_data, test_results
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -35,10 +40,10 @@ class TestSolutionsImporter:
             measure=measure,
             crest_step = 4.2,
             direction = "onwards",
-            stability_screen = 0,
+            stability_screen = False,
             max_crest_increase = 0.1,
-            max_outward_reinforcement = 0.2,
-            max_inward_reinforcement = 0.3,
+            max_outward_reinforcement = 2,
+            max_inward_reinforcement = 3,
             prob_of_solution_failure = 0.4,
             failure_probability_with_solution = 0.5)
         _measure.save()
@@ -53,12 +58,25 @@ class TestSolutionsImporter:
         self._set_standard_measure(_measure)
         return _measure
 
-    @pytest.mark.parametrize("measure_type, combinable_type, expected_type",
+    @pytest.mark.parametrize("measure_type, expected_type",
         [
-            pytest.param("Soil reinforcement", "combinable", SoilReinforcementMeasure,id="Soil reinforcement measure.")
+            pytest.param("Soil reinforcement", SoilReinforcementMeasure,id="Soil Reinforcement measure."),
+            pytest.param("Diaphragm wall", DiaphragmWallMeasure,id="Diaphragm Wall measure."),
+            pytest.param("Stability Screen", StabilityScreenMeasure,id="Stability Screen measure."),
+            pytest.param("Vertical Geotextile", VerticalGeotextileMeasure,id="Vertical Geotextile measure."),
         ])
+    @pytest.mark.parametrize("combinable_type", [
+        pytest.param("combinable"),
+        pytest.param("partial"),
+        pytest.param("full"),
+    ])
     def test_import_orm_with_standard_measure(self, measure_type: str, combinable_type: str, expected_type: Type[MeasureBase], valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
         # 1. Define test data.
+        valid_config.berm_step = 4.2
+        valid_config.t_0 = 42
+        valid_config.geometry_plot = True
+        valid_config.unit_costs = { "lorem ipsum": 123 }
+
         _importer = MeasureImporter(valid_config, DikeSection())
         _orm_measure = self._get_valid_measure(measure_type, combinable_type)
 
@@ -68,6 +86,22 @@ class TestSolutionsImporter:
         # 3. Verify final expectations.
         assert isinstance(_imported_measure, MeasureBase)
         assert isinstance(_imported_measure, expected_type)
+        assert _imported_measure.config == valid_config
+        assert _imported_measure.berm_step == 4.2
+        assert _imported_measure.t_0 == 42
+        assert _imported_measure.geometry_plot
+        assert _imported_measure.unit_costs == { "lorem ipsum": 123 }
+        assert _imported_measure.parameters["Type"] == measure_type
+        assert _imported_measure.parameters["Direction"] == "onwards"
+        assert _imported_measure.parameters["StabilityScreen"] == "no"
+        assert _imported_measure.parameters["dcrest_min"] == None
+        assert _imported_measure.parameters["dcrest_max"] == 0.1
+        assert _imported_measure.parameters["max_outward"] == 2
+        assert _imported_measure.parameters["max_inward"] == 3
+        assert _imported_measure.parameters["year"] == 2023
+        assert _imported_measure.parameters["P_solution"] == 0.4
+        assert _imported_measure.parameters["Pf_solution"] == 0.5
+        assert _imported_measure.parameters["ID"] == _orm_measure.standard_measure[0].get_id()
     
     def test_import_orm_with_unknown_standard_measure_raises_error(self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase):
         # 1. Define test data.
