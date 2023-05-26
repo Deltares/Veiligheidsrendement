@@ -39,7 +39,7 @@ class Solutions:
         self.measures: list[MeasureBase] = []
 
     def load_solutions_from_file(self, excel_sheet: Path):
-        """This routine reads input for the measures from the Excel sheet for each section.
+        """DEPRECATED (we use the SQLite database now): This routine reads input for the measures from the Excel sheet for each section.
         It identifies combinables and partials and identifies possible combinations of measures this way.
         These are then stored in the MeasureTable, which is later evaluated.
         """
