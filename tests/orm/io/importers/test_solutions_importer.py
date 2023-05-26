@@ -29,7 +29,19 @@ class TestSolutionsImporter:
         assert isinstance(_importer, SolutionsImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
+    def test_initialize_given_no_vrtoolconfig_raises_valueerror(self):
+        with pytest.raises(ValueError) as exc_err:
+            SolutionsImporter(None, DikeSection())
+        
+        assert str(exc_err.value) == "VrtoolConfig not provided."
+    
+    def test_initialize_given_no_dike_section_raises_valueerror(self, valid_config: VrtoolConfig):
+        with pytest.raises(ValueError) as exc_err:
+            SolutionsImporter(valid_config, None)
+        
+        assert str(exc_err.value) == "DikeSection not provided."
+
+    def test_import_orm_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
         # 1. Define test data.
         _importer = SolutionsImporter(valid_config, DikeSection())
 

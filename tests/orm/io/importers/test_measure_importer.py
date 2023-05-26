@@ -42,7 +42,14 @@ class TestMeasureImporter:
         assert isinstance(_importer, MeasureImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
+    def test_initialize_given_no_vrtoolconfig_raises_valueerror(self):
+        with pytest.raises(ValueError) as exc_err:
+            MeasureImporter(None)
+
+        assert str(exc_err.value) == "VrtoolConfig not provided."
+    
+
+    def test_import_orm_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
 

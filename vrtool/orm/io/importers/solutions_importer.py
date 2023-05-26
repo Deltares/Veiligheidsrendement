@@ -11,6 +11,11 @@ from vrtool.orm.models.section_data import SectionData
 
 class SolutionsImporter(OrmImporterProtocol):
     def __init__(self, vrtool_config: VrtoolConfig, dike_section: DikeSection) -> None:
+        if not vrtool_config:
+            raise ValueError("{} not provided.".format(VrtoolConfig.__name__))
+        if not dike_section:
+            raise ValueError("{} not provided.".format(DikeSection.__name__))
+
         self._config = vrtool_config
         self._dike_section = dike_section
 

@@ -26,6 +26,9 @@ class MeasureImporter(OrmImporterProtocol):
     unit_costs: dict
 
     def __init__(self, vrtool_config: VrtoolConfig) -> None:
+        if not vrtool_config:
+            raise ValueError("VrtoolConfig not provided.")
+
         self._config = vrtool_config
         self.berm_step = vrtool_config.berm_step
         self.t_0 = vrtool_config.t_0
