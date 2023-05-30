@@ -9,7 +9,13 @@ from vrtool.probabilistic_tools.probabilistic_functions import TableDist, beta_t
 
 
 class WaterLevelImporter(OrmImporterProtocol):
-    def import_orm(self, orm_model: SectionData, gridpoints=1000) -> LoadInput:
+    gridpoint: int
+
+    def __init__(self, gridpoints: int) -> None:
+        super().__init__()
+        self.gridpoint = gridpoints
+
+    def import_orm(self, orm_model: SectionData) -> LoadInput:
 
         years = orm_model.water_level_data_list.select(WaterlevelData.year).distinct()
 
@@ -37,7 +43,7 @@ class WaterLevelImporter(OrmImporterProtocol):
                     p_nexc,
                     extrap=True,
                     isload=True,
-                    gridpoints=gridpoints,
+                    gridpoints=self.gridpoint,
                 )
             )
         return load
