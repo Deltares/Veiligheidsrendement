@@ -133,7 +133,7 @@ class TestAcceptance:
         _test_input_directory = Path.joinpath(test_data, casename)
         assert _test_input_directory.exists()
 
-        _test_results_directory = get_test_results_dir(request).joinpath(casename)
+        _test_results_directory = get_test_results_dir(request) / casename
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
 
