@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from peewee import SqliteDatabase
 from pytest import approx
+import pytest
 
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
 from vrtool.orm.models.section_data import SectionData
@@ -104,5 +107,87 @@ class TestWaterLevelImporter:
         _load = _importer.import_orm(_section_data)
 
         # 3. Verify expectations.
-        sd = _load.distribution.getStandardDeviation()[0]
+        sd = _load.distribution[2023].getStandardDeviation()[0]
         assert sd == approx(2.0278)
+
+    @pytest.mark.parametrize(
+        "shuffle",
+        [
+            pytest.param(
+                True,
+            ),
+            pytest.param(
+                False,
+            ),
+        ],
+    )
+    def test_import_water_level_two_years(
+        self, empty_db_fixture: SqliteDatabase, shuffle
+    ):
+        # Setup
+        with empty_db_fixture.atomic() as transaction:
+            _section_data = self._get_valid_section_data()
+
+            _computation_scenario1 = self._get_valid_computation_scenario(
+                _section_data, 1
+            )
+
+            _mechanism_table_source = self.get_mechanism_table(
+                _computation_scenario1.id
+            )
+
+            wl1 = [
+                {
+                    "section_data_id": 1,
+                    "water_level": 2.0,
+                    "year": 2030,
+                    "beta": 2.2,
+                },
+            ]
+            wl2 = [
+                {
+                    "section_data_id": 1,
+                    "water_level": 4.0,
+                    "year": 2030,
+                    "beta": 4.4,
+                },
+            ]
+            wl3 = [
+                {
+                    "section_data_id": 1,
+                    "water_level": 2.3,
+                    "year": 2050,
+                    "beta": 2.2,
+                },
+            ]
+            wl4 = [
+                {
+                    "section_data_id": 1,
+                    "water_level": 4.3,
+                    "year": 2050,
+                    "beta": 4.4,
+                },
+            ]
+
+            MechanismTable.insert_many(_mechanism_table_source).execute()
+            if shuffle:
+                WaterlevelData.insert_many(wl2 + wl4 + wl3 + wl1).execute()
+            else:
+                WaterlevelData.insert_many(wl1 + wl2 + wl3 + wl4).execute()
+            transaction.commit()
+
+        # 1. Define test data.
+        _importer = WaterLevelImporter()
+
+        # 2. Run test
+        _load = _importer.import_orm(_section_data)
+
+        # 3. Verify expectations.
+        sd2030 = _load.distribution[2030].getStandardDeviation()[0]
+        assert sd2030 == approx(2.0278)
+        sd2050 = _load.distribution[2050].getStandardDeviation()[0]
+        assert sd2050 == approx(2.0278)
+        mean2030 = _load.distribution[2030].getMean()[0]
+        mean2050 = _load.distribution[2050].getMean()[0]
+        diff = mean2050 - mean2030
+        assert diff == approx(0.3)
