@@ -63,7 +63,6 @@ class DStabilityWrapper:
             _results = self._dstability_model.output[-1]
             return _results.FactorOfSafety
 
-
     def add_stability_screen(self, bottom_screen: float, location: float) -> None:
         """
         Add a stability screen to the dstability model.
