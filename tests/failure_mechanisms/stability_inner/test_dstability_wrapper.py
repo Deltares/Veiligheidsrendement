@@ -91,13 +91,13 @@ class TestDStabilityWrapper:
         )
 
         # Call
-        _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=None)
+        _safety_factor = _dstab_wrapper.get_safety_factor()
 
         # Assert
         assert isinstance(_safety_factor, float)
         assert pytest.approx(1.3380575991293264) == _safety_factor
 
-    def test_get_safety_factor_no_run_specified_valid_id(self):
+    def test_get_safety_factor_no_rerun(self):
         """
         Test the get_safety_factor method of the DStabilityWrapper class for a valid stage id and without running D-Stability
         """
@@ -110,33 +110,37 @@ class TestDStabilityWrapper:
         )
 
         # Call
-        _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=1)
+        _safety_factor = _dstab_wrapper.get_safety_factor()
 
         # Assert
         assert isinstance(_safety_factor, float)
         assert pytest.approx(1.3380575991293264) == _safety_factor
 
-    def test_get_safety_factor_no_run_specified_invalid_id(self):
+    def test_get_safety_factor_with_rerun(self, request: pytest.FixtureRequest):
         """
         Test the get_safety_factor method of the DStabilityWrapper class for a valid stage id and raise and Exception
         """
         # Setup
+        _stix_name = "RW001.+096_STBI_maatgevend_Segment_38005_1D1_no_results_saved.stix"
         _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+            test_data / "stix" / _stix_name
         )
         _dstab_wrapper = DStabilityWrapper(
             stix_path=_path_test_stix, externals_path=test_externals
         )
+        _export_path = test_results / request.node.name
+
+        # Save the rerun file to avoid overwriting the original file.
+        if not _export_path.exists():
+            _export_path.mkdir(parents=True)
+        _dstab_wrapper.save_dstability_model(_export_path / _stix_name)
 
         # Call
-        with pytest.raises(Exception) as exception_error:
+        _safety_factor = _dstab_wrapper.get_safety_factor()
 
-            _safety_factor = _dstab_wrapper.get_safety_factor(stage_id_result=0)
         # Assert
-        assert (
-            str(exception_error.value)
-            == "The requested stage id None does not have saved results in the provided stix RW001.+096_STBI_maatgevend_Segment_38005_1D1, please rerun DStability"
-        )
+        assert isinstance(_safety_factor, float)
+        assert pytest.approx(1.3400996495000572) == _safety_factor
 
     def test_add_stability_screen(self):
         # Setup

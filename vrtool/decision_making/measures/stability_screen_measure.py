@@ -200,7 +200,7 @@ class StabilityScreenMeasure(MeasureBase):
 
             # Calculate reliaiblity
             mechanism_reliability_input["BETA"] = calculate_reliability(
-                np.array(_dstability_wrapper.get_safety_factor(None))
+                np.array(_dstability_wrapper.get_safety_factor())
             )
 
         elif _calc_type == "Simple":

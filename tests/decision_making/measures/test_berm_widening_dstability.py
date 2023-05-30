@@ -137,7 +137,7 @@ class TestBermWideningDStability:
         # 3. Run test.
         _dstability_wrapper.stix_name = _test_file
         _dstability_wrapper.rerun_stix()
-        _safety_factor = _dstability_wrapper.get_safety_factor(None)
+        _safety_factor = _dstability_wrapper.get_safety_factor()
 
         # 4. Assert
         assert isinstance(_safety_factor, float)

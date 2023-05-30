@@ -157,9 +157,7 @@ class MechanismReliability:
             stix_path=Path(mechanism_input.input.get("STIXNAAM", "")),
             externals_path=Path(mechanism_input.input.get("DStability_exe_path")),
         )
-        if mechanism_input.input.get("RERUN_STIX"):
-            _wrapper.rerun_stix()
         _mechanism_input = np.array(
-            _wrapper.get_safety_factor(int(mechanism_input.input.get("STAGEID")[0]))
+            _wrapper.get_safety_factor()
         )
         return StabilityInnerDStabilityCalculator(_mechanism_input)
