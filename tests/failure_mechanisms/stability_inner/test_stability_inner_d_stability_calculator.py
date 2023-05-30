@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tests import test_data
+from tests import test_data, test_results
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
@@ -19,7 +19,7 @@ class TestStabilityInnerSimpleCalculator:
         _dstab_wrapper = DStabilityWrapper(
             stix_path=Path(_path_test_stix), externals_path=Path("")
         )
-        _input = _dstab_wrapper.get_safety_factor(stage_id_result=None)
+        _input = _dstab_wrapper.get_safety_factor()
 
         # Call
         _calculator = StabilityInnerDStabilityCalculator(_input)
