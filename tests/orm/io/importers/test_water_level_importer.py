@@ -1,19 +1,19 @@
 from __future__ import annotations
 
+import pytest
 from peewee import SqliteDatabase
 from pytest import approx
-import pytest
 
-from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
-from vrtool.orm.models.section_data import SectionData
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models import Mechanism
-from vrtool.orm.models.mechanism_table import MechanismTable
-from vrtool.orm.models.water_level_data import WaterlevelData
 from tests.orm import empty_db_fixture
+from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
+from vrtool.orm.models import Mechanism
+from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.computation_type import ComputationType
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.mechanism_table import MechanismTable
+from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.models.water_level_data import WaterlevelData
 
 wl1 = [
     {
