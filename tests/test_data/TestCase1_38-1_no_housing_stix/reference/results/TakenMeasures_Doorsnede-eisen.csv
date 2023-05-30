@@ -1,12 +1,12 @@
 ,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm
 0,,,0.0,,,,,,
 1,DV15,98,4098844.1821173024,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,30
-2,DV01B,98,493810.0,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,30
-3,DV04,106,1673710.0,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,30
+2,DV01B,98,1396369.650620405,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,30
+3,DV04,106,5959299.469514022,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,30
 4,DV01A,2,6713300.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-5,DV12,102,1905320.0,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10
+5,DV12,102,4255839.830552387,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10
 6,DV34,21,2201796.2973322254,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,15
 7,DV37B,99,912019.0311123859,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,0
-8,DV40,18,288135.0,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,8
-9,DV33A,15,276165.0,[],2,['Grondversterking binnenwaarts 2025'],-999,0.5,30
-10,DV50,16,286425.0,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,0
+8,DV40,18,1272078.2215925117,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,8
+9,DV33A,15,945983.0816412588,[],2,['Grondversterking binnenwaarts 2025'],-999,0.5,30
+10,DV50,16,1008515.5009024186,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,0
