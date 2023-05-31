@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 from typing import Union
 
 import pytest
@@ -133,16 +134,26 @@ class TestDatabaseIntegration:
             == _dstability_per_first_section[0]
         )
 
-        _importer = DStabilityImporter()
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
 
         # Call
         # Multiple computation scenarios are defined while only one scenario is supported by the application itself
         _mechanism_input = _importer.import_orm(computation_scenarios[0])
 
         # Assert
-        self._assert_dstability_mechanism_input(
-            _mechanism_input, computation_scenarios[0]
+        assert _mechanism_input.mechanism == "StabilityInner"
+
+        expected_parameters = computation_scenarios[0].parameters.select()
+        assert len(_mechanism_input.input) == len(expected_parameters) + 2
+        self._assert_parameters(_mechanism_input, expected_parameters)
+
+        assert (
+            _mechanism_input.input["STIXNAAM"]
+            == _stix_directory / computation_scenarios[0].supporting_files.select()[0].filename
         )
+        assert _mechanism_input.input["DStability_exe_path"] == str(_externals_directory)
 
     @pytest.mark.skip(reason="This test should not exist. It is also now failing.")
     def test_import_stability_simple_imports_all_stability_data(
@@ -213,16 +224,15 @@ class TestDatabaseIntegration:
         # Precondition
         assert len(_piping_per_first_section) == 1
 
-        computation_scenarios = ComputationScenario.select().where(
-            ComputationScenario.mechanism_per_section == _piping_per_first_section[0]
-        )
-
         _importer = PipingImporter()
 
         # Call
-        _mechanism_input = _importer.import_orm(computation_scenarios)
+        _mechanism_input = _importer.import_orm(_piping_per_first_section[0])
 
         # Assert
+        computation_scenarios = ComputationScenario.select().where(
+            ComputationScenario.mechanism_per_section == _piping_per_first_section[0]
+        )
         self._assert_piping_mechanism_input(_mechanism_input, computation_scenarios)
 
     def _assert_dike_traject_info(
@@ -298,19 +308,6 @@ class TestDatabaseIntegration:
                     MechanismTable.year == int(expected_year)
                 )
             ]
-
-    def _assert_dstability_mechanism_input(
-        self, actual: MechanismInput, expected: ComputationScenario
-    ) -> None:
-        assert actual.mechanism == "StabilityInner"
-
-        expected_parameters = expected.parameters.select()
-        assert len(actual.input) == len(expected_parameters) + 1
-        self._assert_parameters(actual, expected_parameters)
-
-        assert (
-            actual.input["stix_file"] == expected.supporting_files.select()[0].filename
-        )
 
     def _assert_stability_simple_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario

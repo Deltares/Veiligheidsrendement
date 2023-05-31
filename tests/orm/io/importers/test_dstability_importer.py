@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 from peewee import SqliteDatabase
 
@@ -16,7 +17,7 @@ from vrtool.orm.models.supporting_file import SupportingFile
 
 
 class TestDStabilityImporter:
-    def _get_valid_computation_scenario(self) -> ComputationScenario:
+    def _get_valid_mechanism_per_section(self) -> MechanismPerSection:
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
             dike_traject=_test_dike_traject,
@@ -30,11 +31,12 @@ class TestDStabilityImporter:
         )
 
         _mechanism = Mechanism.create(name="mechanism")
-        _mechanism_per_section = MechanismPerSection.create(
-            section=_test_section, mechanism=_mechanism
-        )
+        return MechanismPerSection.create(section=_test_section, mechanism=_mechanism)
 
-        _computation_type = ComputationType.create(name="irrelevant")
+    def _get_valid_computation_scenario(self) -> ComputationScenario:
+        _mechanism_per_section = self._get_valid_mechanism_per_section()
+
+        _computation_type = ComputationType.create(name="DSTABILITY")
         return ComputationScenario.create(
             mechanism_per_section=_mechanism_per_section,
             computation_type=_computation_type,
@@ -51,7 +53,14 @@ class TestDStabilityImporter:
             item["computation_scenario_id"] = computation_scenario_id
 
     def test_initialize(self):
-        _importer = DStabilityImporter()
+        # Setup
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+
+        # Call
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
+
+        # Assert
         assert isinstance(_importer, DStabilityImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
@@ -84,7 +93,9 @@ class TestDStabilityImporter:
 
             transaction.commit()
 
-        _importer = DStabilityImporter()
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
 
         # Call
         _mechanism_input = _importer.import_orm(_computation_scenario)
@@ -93,13 +104,56 @@ class TestDStabilityImporter:
         assert isinstance(_mechanism_input, MechanismInput)
 
         assert _mechanism_input.mechanism == "StabilityInner"
-        assert len(_mechanism_input.input) == len(parameters) + 1
-        assert _mechanism_input.input["stix_file"] == _supporting_files[0]["filename"]
+        assert len(_mechanism_input.input) == len(parameters) + 2
+        assert (
+            _mechanism_input.input["STIXNAAM"]
+            == _stix_directory / _supporting_files[0]["filename"]
+        )
+        assert _mechanism_input.input["DStability_exe_path"] == str(
+            _externals_directory
+        )
 
         for parameter in parameters:
             assert _mechanism_input.input[parameter.get("parameter")] == pytest.approx(
                 parameter.get("value")
             )
+
+    def test_import_orm_with_invalid_computation_type_raises_value_error(
+        self, empty_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        _supporting_files = [{"filename": "myfile.stix"}]
+
+        with empty_db_fixture.atomic() as transaction:
+            _mechanism_per_section = self._get_valid_mechanism_per_section()
+
+            _invalid_computation_type = ComputationType.create(name="NotDSTABILITY")
+            _computation_scenario = ComputationScenario.create(
+                mechanism_per_section=_mechanism_per_section,
+                computation_type=_invalid_computation_type,
+                computation_name="Computation Name",
+                scenario_name="Scenario Name",
+                scenario_probability=1,
+                probability_of_failure=1,
+            )
+            self._add_computation_scenario_id(
+                _supporting_files, _computation_scenario.id
+            )
+            SupportingFile.insert_many(_supporting_files).execute()
+
+            transaction.commit()
+
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
+
+        # Call
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(_computation_scenario)
+
+        # Assert
+        _expected_mssg = "Computation type must be 'DSTABILITY'."
+        assert str(value_error.value) == _expected_mssg
 
     def test_import_orm_with_multiple_supporting_files_raises_value_error(
         self, empty_db_fixture: SqliteDatabase
@@ -116,7 +170,29 @@ class TestDStabilityImporter:
 
             transaction.commit()
 
-        _importer = DStabilityImporter()
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
+
+        # Call
+        with pytest.raises(ValueError) as value_error:
+            _importer.import_orm(_computation_scenario)
+
+        # Assert
+        _expected_mssg = "Invalid number of stix files."
+        assert str(value_error.value) == _expected_mssg
+
+    def test_import_orm_with_no_supporting_files_raises_value_error(
+        self, empty_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        with empty_db_fixture.atomic() as transaction:
+            _computation_scenario = self._get_valid_computation_scenario()
+            transaction.commit()
+
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
 
         # Call
         with pytest.raises(ValueError) as value_error:
@@ -128,7 +204,9 @@ class TestDStabilityImporter:
 
     def test_import_orm_without_model_raises_value_error(self):
         # Setup
-        _importer = DStabilityImporter()
+        _externals_directory = Path("path/to/externals")
+        _stix_directory = Path("path/to/stix")
+        _importer = DStabilityImporter(_externals_directory, _stix_directory)
         _expected_mssg = "No valid value given for ComputationScenario."
 
         # Call
