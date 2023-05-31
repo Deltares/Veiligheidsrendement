@@ -13,7 +13,6 @@ if not test_results.is_dir():
 
 def get_test_results_dir(request: FixtureRequest) -> Path:
     _test_dir: Path = test_results / request.node.originalname
-    if _test_dir.is_dir():
-        shutil.rmtree(_test_dir)
-    _test_dir.mkdir(parents=True)
+    if not _test_dir.is_dir():
+        _test_dir.mkdir(parents=True)
     return _test_dir

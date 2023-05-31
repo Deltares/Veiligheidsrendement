@@ -137,11 +137,11 @@ class TestBermWideningDStability:
         # 3. Run test.
         _dstability_wrapper.stix_name = _test_file
         _dstability_wrapper.rerun_stix()
-        _safety_factor = _dstability_wrapper.get_safety_factor(None)
+        _safety_factor = _dstability_wrapper.get_safety_factor()
 
         # 4. Assert
         assert isinstance(_safety_factor, float)
-        assert pytest.approx(1.4588235147100288) == _safety_factor
+        assert pytest.approx(1.3400506446227483) == _safety_factor
 
     def test_find_polygons_to_fill_to_measure_one_polygon_returned(self):
         # SetUp
@@ -216,7 +216,7 @@ class TestBermWideningDStability:
         )
         # Call
         measure_geometry_points = _berm_widening_dstability.get_modified_meas_geom(
-            straight_line=True
+            straight_line=True, collection_polygons=[]
         )
 
         # Assert
@@ -242,23 +242,28 @@ class TestBermWideningDStability:
             measure_input=_measure_input_test,
             dstability_wrapper=_dstability_wrapper,
         )
+        _collection_polygon = [
+            Polygon([(p.X, p.Z) for p in layer.Points])
+            for layer in _dstability_wrapper._dstability_model.datastructure.geometries[
+                0
+            ].Layers
+        ]
+
         # Call
         measure_geometry_points = _berm_widening_dstability.get_modified_meas_geom(
-            straight_line=False
+            straight_line=False, collection_polygons=_collection_polygon
         )
 
         # Assert
         np.testing.assert_almost_equal(
             measure_geometry_points,
             [
-                (-26.512148305110998, 1.9107067203304688),
                 (-17.0, 4.996),
                 (0.0, 10.51),
                 (3.5, 10.51),
                 (25.0, 6.491),
                 (42.0, 5.694),
                 (47.0, 5.104),
-                (56.931098707062795, 3.932130352566591),
             ],
             decimal=3,
         )
