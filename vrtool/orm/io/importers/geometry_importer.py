@@ -1,8 +1,8 @@
 import pandas as pd
-from vrtool.orm.models.section_data import SectionData
 
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.profile_point import ProfilePoint
+from vrtool.orm.models.section_data import SectionData
 
 
 class GeometryImporter(OrmImporterProtocol):

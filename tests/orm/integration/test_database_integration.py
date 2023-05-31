@@ -149,9 +149,12 @@ class TestDatabaseIntegration:
 
         assert (
             _mechanism_input.input["STIXNAAM"]
-            == _stix_directory / computation_scenarios[0].supporting_files.select()[0].filename
+            == _stix_directory
+            / computation_scenarios[0].supporting_files.select()[0].filename
         )
-        assert _mechanism_input.input["DStability_exe_path"] == str(_externals_directory)
+        assert _mechanism_input.input["DStability_exe_path"] == str(
+            _externals_directory
+        )
 
     def test_import_stability_simple_imports_all_stability_data(
         self, valid_data_db_fixture: SqliteDatabase

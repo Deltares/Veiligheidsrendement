@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -13,7 +15,7 @@ from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from pathlib import Path
+
 
 class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
 
@@ -81,7 +83,10 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if _mechanism_name == "stabilityinner" and _computation_type_name == "DSTABILITY":
+        if (
+            _mechanism_name == "stabilityinner"
+            and _computation_type_name == "DSTABILITY"
+        ):
             _dstability_importer = DStabilityImporter(
                 self.externals_path, self.stix_directory
             )
