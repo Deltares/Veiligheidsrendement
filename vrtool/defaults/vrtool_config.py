@@ -136,7 +136,7 @@ class VrtoolConfig:
                 return Path(value)
             return value
 
-        self.input_directory = _convert_to_path(self.output_directory)
+        self.input_directory = _convert_to_path(self.input_directory)
         self.output_directory = _convert_to_path(self.output_directory)
         self.input_database_path = _convert_to_path(self.input_database_path)
         self.externals = _convert_to_path(self.externals)

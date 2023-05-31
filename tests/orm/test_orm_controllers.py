@@ -171,7 +171,7 @@ class TestOrmControllers:
         _db_file = test_data / "test_db" / "vrtool_db.db"
         assert _db_file.is_file()
 
-        _config = VrtoolConfig(input_database_path=_db_file, traject="16-1")
+        _config = VrtoolConfig(input_database_path=_db_file, traject="16-1", input_directory=test_data)
 
         # 2. Run test.
         _dike_traject = get_dike_traject(_config)

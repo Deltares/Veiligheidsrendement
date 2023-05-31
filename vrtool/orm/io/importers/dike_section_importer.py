@@ -12,7 +12,7 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-
+import logging
 
 class DikeSectionImporter(OrmImporterProtocol):
     input_directory: Path
@@ -47,7 +47,11 @@ class DikeSectionImporter(OrmImporterProtocol):
         _importer = MechanismReliabilityCollectionImporter(self._config)
         _mechanism_data = {}
         for _mechanism_per_section in section_data.mechanisms_per_section:
-            _mechanism_data[_mechanism_per_section.mechanism.name] = _importer.import_orm(_mechanism_per_section)
+            if not any(_mechanism_per_section.computation_scenarios):
+                logging.error("No computation scenarios available for Section {} - Mechanism: {}".format(_mechanism_per_section.section.section_name, _mechanism_per_section.mechanism.name))
+                _mechanism_data[_mechanism_per_section.mechanism.name] = ()
+            else:
+                _mechanism_data[_mechanism_per_section.mechanism.name] = _importer.import_orm(_mechanism_per_section)
         return _mechanism_data
 
     def import_orm(self, orm_model: SectionData) -> DikeSection:
