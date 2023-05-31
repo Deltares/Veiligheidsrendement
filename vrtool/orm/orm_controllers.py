@@ -80,6 +80,7 @@ def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     _dike_traject = DikeTrajectImporter(config).import_orm(
         orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject)
     )
+    vrtool_db.close()
     return _dike_traject
 
 
@@ -96,8 +97,11 @@ def get_dike_section_solutions(
     Returns:
         Solutions: instance with all related measures (standard and / or custom).
     """
+    open_database(config.input_database_path)
     _importer = SolutionsImporter(config, dike_section)
     _orm_section_data = orm.SectionData.get(
         orm.SectionData.section_name == dike_section.name
     )
-    return _importer.import_orm(_orm_section_data)
+    _solutions = _importer.import_orm(_orm_section_data)
+    vrtool_db.close()
+    return _solutions
