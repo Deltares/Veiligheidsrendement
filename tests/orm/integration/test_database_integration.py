@@ -26,7 +26,7 @@ from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
-
+from tests import test_data
 
 class TestDatabaseIntegration:
     def _assert_float(self, actual: float, expected: Union[float, None]) -> None:
@@ -42,6 +42,7 @@ class TestDatabaseIntegration:
         _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
 
         _vr_config = VrtoolConfig()
+        _vr_config.input_directory = test_data
         _importer = DikeTrajectImporter(_vr_config)
 
         # Call
