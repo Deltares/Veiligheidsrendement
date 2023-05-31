@@ -67,7 +67,7 @@ class DikeSectionImporter(OrmImporterProtocol):
                 logging.error("No mechanism data available for {}".format(_mechanism_name))
                 continue
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(_mechanism_data)
-        
+
         return _section_reliability
 
     def import_orm(self, orm_model: SectionData) -> DikeSection:
