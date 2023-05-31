@@ -22,7 +22,7 @@ class TestSolutionsImporter:
         _vr_config.input_directory = test_data
         _vr_config.output_directory = test_results
 
-        yield _vr_config
+        return _vr_config
 
     def test_initialize(self, valid_config: VrtoolConfig):
         _importer = SolutionsImporter(valid_config, DikeSection())
@@ -64,7 +64,7 @@ class TestSolutionsImporter:
             in_analysis=True,
             crest_height=4.5,
             annual_crest_decline=5.6)
-        yield _section_data
+        return _section_data
 
     def test_given_different_sectiondata_and_dikesection_raises_valueerror(self, valid_config: VrtoolConfig, valid_section_data_without_measures: SectionData):
         # 1. Define test data.
@@ -111,7 +111,7 @@ class TestSolutionsImporter:
         MeasurePerSection.create(section = valid_section_data_without_measures, measure = _standard_measure)
         MeasurePerSection.create(section = valid_section_data_without_measures, measure = _custom_measure)
 
-        yield valid_section_data_without_measures
+        return valid_section_data_without_measures
 
     def test_given_section_with_measures_imports_them_all(self, valid_config: VrtoolConfig, valid_section_data_with_measures: SectionData):
         # 1. Define test data.

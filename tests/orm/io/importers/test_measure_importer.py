@@ -74,7 +74,7 @@ class TestMeasureImporter:
         _vr_config.t_0 = 42
         _vr_config.geometry_plot = True
         _vr_config.unit_costs = {"lorem ipsum": 123}
-        yield _vr_config
+        return _vr_config
 
     def test_initialize(self, valid_config: VrtoolConfig):
         _importer = MeasureImporter(valid_config)
