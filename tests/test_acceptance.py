@@ -145,6 +145,10 @@ class TestAcceptance:
         _test_config.output_directory = _test_results_directory
         _test_config.traject = traject
         _test_config.externals = test_externals
+        _test_config.input_database_path = _test_input_directory.joinpath("vrtool_input.db")
+
+        assert _test_config.input_database_path.exists(), "No database found at {}.".format(_test_config.input_database_path)
+
         _test_traject = DikeTraject.from_config(_test_config)
 
         # 2. Run test.
