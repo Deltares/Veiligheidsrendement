@@ -62,7 +62,10 @@ class DikeSectionImporter(OrmImporterProtocol):
         _section_reliability = SectionReliability()
         _section_reliability.load =  WaterLevelImporter(gridpoints=1000).import_orm(section_data)
 
-        for _mechanism_data in mechanism_collection.values():
+        for _mechanism_name, _mechanism_data in mechanism_collection.items():
+            if not _mechanism_data:
+                logging.error("No mechanism data available for {}".format(_mechanism_name))
+                continue
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(_mechanism_data)
         
         return _section_reliability
