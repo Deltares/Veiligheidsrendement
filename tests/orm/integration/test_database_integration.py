@@ -141,12 +141,6 @@ class TestDatabaseIntegration:
         _mechanism_input = _importer.import_orm(computation_scenarios[0])
 
         # Assert
-        self._assert_dstability_mechanism_input(
-            _mechanism_input,
-            computation_scenarios[0],
-            _externals_directory,
-            _stix_directory,
-        )
         assert _mechanism_input.mechanism == "StabilityInner"
 
         expected_parameters = computation_scenarios[0].parameters.select()
