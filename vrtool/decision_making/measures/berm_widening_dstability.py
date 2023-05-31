@@ -48,8 +48,9 @@ class BermWideningDStability:
                 0
             ].Layers
         ]
-        self.measure_geometry_points = self.get_modified_meas_geom(straight_line=False,
-                                                                   collection_polygons=_collection_polygon)
+        self.measure_geometry_points = self.get_modified_meas_geom(
+            straight_line=False, collection_polygons=_collection_polygon
+        )
 
         # 1. Run first routine to find the polygons to fill.
         _fill_polygons = self.find_polygons_to_fill_to_measure(_collection_polygon)
@@ -59,7 +60,9 @@ class BermWideningDStability:
             _fill_polygons, path_intermediate_stix
         )
 
-    def get_modified_meas_geom(self, straight_line: bool, collection_polygons: Optional[list[Polygon]]) -> list[Tuple[float, float]]:
+    def get_modified_meas_geom(
+        self, straight_line: bool, collection_polygons: Optional[list[Polygon]]
+    ) -> list[Tuple[float, float]]:
         """
         Adapt and modify the geometry of the soil measure and return the surface line as a list of points.
         The geometry is either extended to the hinterland as a straight line or it is extended in the direction of the
