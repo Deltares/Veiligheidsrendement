@@ -9,20 +9,9 @@ from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
-from vrtool.run_workflows.optimization_workflow.results_optimization import (
-    ResultsOptimization,
-)
-from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
-from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
-    ResultsSafetyAssessment,
-)
-from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
-    RunSafetyAssessment,
-)
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
+from vrtool.orm.orm_controllers import get_dike_traject
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 _acceptance_test_cases = [
@@ -98,7 +87,7 @@ class TestAcceptance:
 
         assert _test_config.input_database_path.exists(), "No database found at {}.".format(_test_config.input_database_path)
 
-        _test_traject = DikeTraject.from_config(_test_config)
+        _test_traject = get_dike_traject(_test_config)
 
         # 2. Run test.
         RunFullModel(_test_config, _test_traject, VrToolPlotMode.STANDARD).run()
