@@ -58,12 +58,14 @@ class DikeSectionImporter(OrmImporterProtocol):
                 _mechanism_data[_mechanism_per_section.mechanism.name] = _importer.import_orm(_mechanism_per_section)
         return _mechanism_data
 
-    def _get_section_reliability(self, mechanism_collection: dict[str, MechanismReliabilityCollection], section_data: SectionData) -> SectionReliability:
+    def _get_section_reliability(self, section_data: SectionData, mechanism_collection: dict[str, MechanismReliabilityCollection]) -> SectionReliability:
         _section_reliability = SectionReliability()
         _section_reliability.load =  WaterLevelImporter(gridpoints=1000).import_orm(section_data)
 
         for _mechanism_data in mechanism_collection.values():
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(_mechanism_data)
+        
+        return _section_reliability
 
     def import_orm(self, orm_model: SectionData) -> DikeSection:
         if not orm_model:
@@ -75,7 +77,7 @@ class DikeSectionImporter(OrmImporterProtocol):
         _dike_section.InitialGeometry = self._import_geometry(orm_model)
         # TODO: Not entirely sure mechanism_data is correctly set. Technically should not be needed anymore.
         _dike_section.mechanism_data = self._get_mechanism_data(orm_model) 
-        _dike_section.section_reliability = self._get_section_reliability(_dike_section.mechanism_data)
+        _dike_section.section_reliability = self._get_section_reliability(orm_model, _dike_section.mechanism_data)
 
         return _dike_section
 
