@@ -1,8 +1,10 @@
+from __future__ import annotations
 from pathlib import Path
+from typing import Callable
 from peewee import SqliteDatabase
 import pytest
 
-from tests import test_data
+from tests import test_data, test_externals
 from tests.orm import empty_db_fixture
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -21,15 +23,19 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.supporting_file import SupportingFile
 
 
-class TestMechanismReliabilityCollectionImporter:
-    def _create_valid_config(self):
+class TestDataHelper:
+    
+    @staticmethod
+    def create_valid_config():
         _config = VrtoolConfig()
         _config.input_directory = test_data
+        _config.externals = test_externals
 
         return _config
 
+    @staticmethod
     def _create_valid_scenario(
-        self, mechanism_per_section: MechanismPerSection, computation_type: str
+        mechanism_per_section: MechanismPerSection, computation_type: str
     ) -> ComputationScenario:
         _computation_type = ComputationType.create(name=computation_type)
         return ComputationScenario.create(
@@ -41,8 +47,9 @@ class TestMechanismReliabilityCollectionImporter:
             probability_of_failure=0.8,
         )
 
-    def _get_mechanism_per_section_with_scenario(
-        self, mechanism: str
+    @staticmethod
+    def get_mechanism_per_section_with_scenario(
+        mechanism: str
     ) -> ComputationScenario:
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
@@ -59,31 +66,63 @@ class TestMechanismReliabilityCollectionImporter:
         _mechanism = Mechanism.create(name=mechanism)
         return MechanismPerSection.create(section=_test_section, mechanism=_mechanism)
 
-    def test_import_orm_for_DStability(self, empty_db_fixture: SqliteDatabase):
+    @staticmethod
+    def get_valid_mechanism_per_section(mechanism: str, computation_type: str) -> MechanismPerSection:
+        mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
+            mechanism
+        )
+        TestDataHelper._create_valid_scenario(
+            mechanism_per_section, computation_type
+        )
+
+        return mechanism_per_section
+
+    @staticmethod
+    def get_mechanism_per_section_with_supporting_file(mechanism: str, computation_type: str) -> MechanismPerSection:
+        _file_name = "something.stix"
+        mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
+            mechanism
+        )
+        computation_scenario = TestDataHelper._create_valid_scenario(
+            mechanism_per_section, computation_type
+        )
+
+        SupportingFile.create(
+            computation_scenario=computation_scenario, filename=_file_name
+        )
+        return mechanism_per_section
+
+    @staticmethod
+    def get_overflow_hydraring_mechanism_per_section(mechanism: str, computation_type: str) -> MechanismPerSection:
+        mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
+            mechanism
+        )
+        computation_scenario = TestDataHelper._create_valid_scenario(
+            mechanism_per_section, computation_type
+        )
+
+        MechanismTable.create(
+            year=2023,
+            value=1.0,
+            beta=3.053,
+            computation_scenario=computation_scenario,
+        )
+        return mechanism_per_section
+
+
+
+class TestMechanismReliabilityCollectionImporter:
+
+    def test_import_orm_for_dstability(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _mechanism = "StabilityInner"
         _computation_type = "DSTABILITY"
-        _file_name = "something.stix"
-        with empty_db_fixture.atomic() as transaction:
-            mechanism_per_section = self._get_mechanism_per_section_with_scenario(
-                _mechanism
-            )
-            computation_scenario = self._create_valid_scenario(
-                mechanism_per_section, _computation_type
-            )
-
-            SupportingFile.create(
-                computation_scenario=computation_scenario, filename=_file_name
-            )
-
-            transaction.commit()
-
-        _config = self._create_valid_config()
-        _config.externals = Path("Path/to/externals")
+        _config = TestDataHelper.create_valid_config()
         _importer = MechanismReliabilityCollectionImporter(_config)
+        _mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_supporting_file(_mechanism, _computation_type)
 
         # Call
-        collection = _importer.import_orm(mechanism_per_section)
+        collection = _importer.import_orm(_mechanism_per_section)
 
         # Assert
         self._assert_common_collection_properties(collection, _config)
@@ -94,91 +133,36 @@ class TestMechanismReliabilityCollectionImporter:
         ]
         assert all(
             [
-                input.input["DStability_exe_path"] == str(_config.externals)
-                for input in mechanism_reliability_input
+                _mr_input.input["DStability_exe_path"] == str(_config.externals)
+                for _mr_input in mechanism_reliability_input
             ]
         )
 
-    def test_import_orm_for_overflow_hydra_ring(self, empty_db_fixture: SqliteDatabase):
-        # Setup
-        _mechanism = "Overflow"
-        _computation_type = "HRING"
-        with empty_db_fixture.atomic() as transaction:
-            mechanism_per_section = self._get_mechanism_per_section_with_scenario(
-                _mechanism
-            )
-            computation_scenario = self._create_valid_scenario(
-                mechanism_per_section, _computation_type
-            )
-
-            MechanismTable.create(
-                year=2023,
-                value=1.0,
-                beta=3.053,
-                computation_scenario=computation_scenario,
-            )
-
-            transaction.commit()
-
-        _config = self._create_valid_config()
-        _importer = MechanismReliabilityCollectionImporter(_config)
-
-        # Call
-        collection = _importer.import_orm(mechanism_per_section)
-
-        # Assert
-        self._assert_common_collection_properties(collection, _config)
-        self._assert_mechanism_properties(collection, _mechanism, _computation_type)
-
-    def test_import_orm_for_piping(self, empty_db_fixture: SqliteDatabase):
-        # Setup
-        _mechanism = "Piping"
-        _computation_type = "SEMIPROB"
-        with empty_db_fixture.atomic() as transaction:
-            mechanism_per_section = self._get_mechanism_per_section_with_scenario(
-                _mechanism
-            )
-            self._create_valid_scenario(mechanism_per_section, _computation_type)
-
-            transaction.commit()
-
-        _config = self._create_valid_config()
-        _importer = MechanismReliabilityCollectionImporter(_config)
-
-        # Call
-        collection = _importer.import_orm(mechanism_per_section)
-
-        # Assert
-        self._assert_common_collection_properties(collection, _config)
-        self._assert_mechanism_properties(collection, _mechanism, _computation_type)
-
-    def test_import_orm_for_stability_inner_simple(
-        self, empty_db_fixture: SqliteDatabase
+    @pytest.mark.parametrize(
+        "mechanism, computation_type, get_mechanism_per_section",
+        [
+            pytest.param("StabilityInner", "SIMPLE", TestDataHelper.get_valid_mechanism_per_section, id="Stability Inner simple"),
+            pytest.param("Piping", "SEMIPROB", TestDataHelper.get_valid_mechanism_per_section, id="Piping SEMIPROB"),
+            pytest.param("Overflow", "HRING", TestDataHelper.get_overflow_hydraring_mechanism_per_section, id="Overflow HRING"),
+        ])
+    def test_import_orm_with_simple_mechanism_per_section(
+        self, mechanism: str, computation_type: str, get_mechanism_per_section: Callable, empty_db_fixture: SqliteDatabase
     ):
         # Setup
-        _mechanism = "StabilityInner"
-        _computation_type = "SIMPLE"
-        with empty_db_fixture.atomic() as transaction:
-            mechanism_per_section = self._get_mechanism_per_section_with_scenario(
-                _mechanism
-            )
-            self._create_valid_scenario(mechanism_per_section, _computation_type)
-
-            transaction.commit()
-
-        _config = self._create_valid_config()
+        _config = TestDataHelper.create_valid_config()
         _importer = MechanismReliabilityCollectionImporter(_config)
+        _mechanism_per_section = get_mechanism_per_section(mechanism, computation_type)
 
         # Call
-        collection = _importer.import_orm(mechanism_per_section)
+        collection = _importer.import_orm(_mechanism_per_section)
 
         # Assert
         self._assert_common_collection_properties(collection, _config)
-        self._assert_mechanism_properties(collection, _mechanism, _computation_type)
+        self._assert_mechanism_properties(collection, mechanism, computation_type)
 
     def test_import_orm_without_model_raises_value_error(self):
         # Setup
-        _config = self._create_valid_config()
+        _config = TestDataHelper.create_valid_config()
         _importer = MechanismReliabilityCollectionImporter(_config)
         _expected_mssg = "No valid value given for MechanismPerSection."
 

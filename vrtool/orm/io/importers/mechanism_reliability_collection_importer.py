@@ -13,9 +13,15 @@ from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-
+from pathlib import Path
 
 class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
+
+    computation_years: list[int]
+    t_0: int
+    externals_path: Path
+    stix_directory: Path
+
     def __init__(
         self,
         vrtool_config: VrtoolConfig,
@@ -28,14 +34,7 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
         self.computation_years = vrtool_config.T
         self.t_0 = vrtool_config.t_0
         self.externals_path = vrtool_config.externals
-
-        self._overflow_hydra_ring_importer = OverFlowHydraRingImporter()
-        self._piping_importer = PipingImporter()
-        self._stability_inner_simple_importer = StabilityInnerSimpleImporter()
-
-        self._dstability_importer = DStabilityImporter(
-            vrtool_config.externals, vrtool_config.input_directory / "stix"
-        )
+        self.stix_directory = vrtool_config.input_directory / "stix"
 
     def import_orm(
         self, orm_model: MechanismPerSection
@@ -69,22 +68,28 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
         mechanism: str,
         computation_type: str,
     ) -> MechanismInput:
-        if mechanism == "Overflow":
-            return self._overflow_hydra_ring_importer.import_orm(
+        _mechanism_name = mechanism.lower().strip()
+        _computation_type_name = computation_type.upper().strip()
+
+        if _mechanism_name == "overflow":
+            return OverFlowHydraRingImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if mechanism == "StabilityInner" and computation_type == "SIMPLE":
-            return self._stability_inner_simple_importer.import_orm(
+        if _mechanism_name == "stabilityinner" and _computation_type_name == "SIMPLE":
+            return StabilityInnerSimpleImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if mechanism == "StabilityInner" and computation_type == "DSTABILITY":
-            return self._dstability_importer.import_orm(
+        if _mechanism_name == "stabilityinner" and _computation_type_name == "DSTABILITY":
+            _dstability_importer = DStabilityImporter(
+                self.externals_path, self.stix_directory
+            )
+            return _dstability_importer.import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if mechanism == "Piping":
-            return self._piping_importer.import_orm(mechanism_per_section)
+        if _mechanism_name == "piping":
+            return PipingImporter().import_orm(mechanism_per_section)
 
         raise ValueError(f"Mechanism {mechanism} not supported.")

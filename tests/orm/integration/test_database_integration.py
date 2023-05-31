@@ -147,6 +147,17 @@ class TestDatabaseIntegration:
             _externals_directory,
             _stix_directory,
         )
+        assert _mechanism_input.mechanism == "StabilityInner"
+
+        expected_parameters = computation_scenarios[0].parameters.select()
+        assert len(_mechanism_input.input) == len(expected_parameters) + 2
+        self._assert_parameters(_mechanism_input, expected_parameters)
+
+        assert (
+            _mechanism_input.input["STIXNAAM"]
+            == _stix_directory / computation_scenarios[0].supporting_files.select()[0].filename
+        )
+        assert _mechanism_input.input["DStability_exe_path"] == str(_externals_directory)
 
     def test_import_stability_simple_imports_all_stability_data(
         self, valid_data_db_fixture: SqliteDatabase
@@ -299,25 +310,6 @@ class TestDatabaseIntegration:
                     MechanismTable.year == int(expected_year)
                 )
             ]
-
-    def _assert_dstability_mechanism_input(
-        self,
-        actual: MechanismInput,
-        expected: ComputationScenario,
-        externals_directory: Path,
-        stix_directory: Path,
-    ) -> None:
-        assert actual.mechanism == "StabilityInner"
-
-        expected_parameters = expected.parameters.select()
-        assert len(actual.input) == len(expected_parameters) + 2
-        self._assert_parameters(actual, expected_parameters)
-
-        assert (
-            actual.input["STIXNAAM"]
-            == stix_directory / expected.supporting_files.select()[0].filename
-        )
-        assert actual.input["DStability_exe_path"] == str(externals_directory)
 
     def _assert_stability_simple_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
