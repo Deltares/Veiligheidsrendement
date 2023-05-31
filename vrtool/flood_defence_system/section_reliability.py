@@ -7,6 +7,7 @@ from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
 
+
 # Class describing safety assessments of a section:
 class SectionReliability:
     load: LoadInput

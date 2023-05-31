@@ -16,6 +16,7 @@ from vrtool.orm.io.importers.stability_inner_simple_importer import (
 )
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
+
 class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
 
     computation_years: list[int]

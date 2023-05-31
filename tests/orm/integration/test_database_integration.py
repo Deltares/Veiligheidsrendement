@@ -5,6 +5,7 @@ from typing import Union
 import pytest
 from peewee import SqliteDatabase
 
+from tests import test_data
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -26,7 +27,7 @@ from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
-from tests import test_data
+
 
 class TestDatabaseIntegration:
     def _assert_float(self, actual: float, expected: Union[float, None]) -> None:

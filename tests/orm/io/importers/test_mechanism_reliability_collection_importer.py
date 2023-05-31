@@ -112,7 +112,6 @@ class TestDataHelper:
 
 
 class TestMechanismReliabilityCollectionImporter:
-
     def test_import_orm_for_dstability(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _mechanism = "StabilityInner"
