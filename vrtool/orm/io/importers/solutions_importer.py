@@ -1,4 +1,4 @@
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_base import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -19,7 +19,7 @@ class SolutionsImporter(OrmImporterProtocol):
         self._config = vrtool_config
         self._dike_section = dike_section
 
-    def _import_measures(self, orm_measures: list[OrmMeasure]) -> list[MeasureBase]:
+    def _import_measures(self, orm_measures: list[OrmMeasure]) -> list[MeasureProtocol]:
         _measure_importer = MeasureImporter(self._config)
         return list(map(_measure_importer.import_orm, orm_measures))
 

@@ -8,7 +8,7 @@ from vrtool.decision_making.measures import (
     VerticalGeotextileMeasure,
 )
 from vrtool.decision_making.measures.custom_measure import CustomMeasure
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_base import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -35,7 +35,7 @@ class MeasureImporter(OrmImporterProtocol):
         self.geometry_plot = vrtool_config.geometry_plot
         self.unit_costs = vrtool_config.unit_costs
 
-    def _set_base_values(self, measure: MeasureBase):
+    def _set_base_values(self, measure: MeasureProtocol):
         measure.config = self._config
         measure.berm_step = self.berm_step
         measure.t_0 = self.t_0
@@ -44,8 +44,8 @@ class MeasureImporter(OrmImporterProtocol):
         measure.parameters = {}
 
     def _get_standard_measure(
-        self, measure_type: Type[MeasureBase], orm_measure: StandardMeasure
-    ) -> MeasureBase:
+        self, measure_type: Type[MeasureProtocol], orm_measure: StandardMeasure
+    ) -> MeasureProtocol:
         _measure = measure_type()
         self._set_base_values(_measure)
         _measure.crest_step = orm_measure.crest_step
@@ -81,9 +81,10 @@ class MeasureImporter(OrmImporterProtocol):
 
         return _measure
 
-    def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureBase:
+    def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureProtocol:
         _mapping_types = {
             "soil reinforcement": SoilReinforcementMeasure,
+            "soil reinforcement with stability screen": SoilReinforcementMeasure,
             "diaphragm wall": DiaphragmWallMeasure,
             "stability screen": StabilityScreenMeasure,
             "vertical geotextile": VerticalGeotextileMeasure,
@@ -101,7 +102,7 @@ class MeasureImporter(OrmImporterProtocol):
 
         return self._get_standard_measure(_found_type, orm_measure)
 
-    def import_orm(self, orm_model: OrmMeasure) -> MeasureBase:
+    def import_orm(self, orm_model: OrmMeasure) -> MeasureProtocol:
 
         if not orm_model:
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")

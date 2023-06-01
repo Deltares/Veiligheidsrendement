@@ -12,7 +12,7 @@ from vrtool.decision_making.measures import (
     VerticalGeotextileMeasure,
 )
 from vrtool.decision_making.measures.custom_measure import CustomMeasure
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_base import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -138,7 +138,7 @@ class TestMeasureImporter:
         self,
         measure_type: str,
         combinable_type: str,
-        expected_type: Type[MeasureBase],
+        expected_type: Type[MeasureProtocol],
         valid_config: VrtoolConfig,
         empty_db_fixture: SqliteDatabase,
     ):
@@ -191,9 +191,9 @@ class TestMeasureImporter:
         _imported_measure.parameters["DummyParameter"] == 24.42
 
     def _validate_measure_base_values(
-        self, measure_base: MeasureBase, valid_config: VrtoolConfig
+        self, measure_base: MeasureProtocol, valid_config: VrtoolConfig
     ):
-        assert isinstance(measure_base, MeasureBase)
+        assert isinstance(measure_base, MeasureProtocol)
         assert measure_base.config == valid_config
         assert measure_base.berm_step == 4.2
         assert measure_base.t_0 == 42
