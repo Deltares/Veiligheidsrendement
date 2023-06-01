@@ -107,5 +107,6 @@ class DikeSectionImporter(OrmImporterProtocol):
         _dike_section.section_reliability = self._get_section_reliability(
             orm_model, _dike_section.mechanism_data
         )
+        _dike_section.Length = orm_model.section_length
 
         return _dike_section
