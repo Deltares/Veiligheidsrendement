@@ -2,9 +2,10 @@ import shutil
 
 import pytest
 from peewee import SqliteDatabase
-
+import pandas as pd
 from tests import test_data, test_results
 from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -18,6 +19,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models import *
 from vrtool.orm.orm_controllers import (
     get_dike_traject,
+    get_dike_section_solutions,
     initialize_database,
     open_database,
 )
@@ -175,17 +177,19 @@ class TestOrmControllers:
         # 3. Verify expectations
         assert str(exc_err.value) == "No file was found at {}".format(_db_file)
 
-    def test_import_dike_traject(self):
+    @pytest.fixture
+    def database_vrtool_config(self) -> VrtoolConfig:
         # 1. Define test data.
         _db_file = test_data / "test_db" / "with_valid_data.db"
         assert _db_file.is_file()
 
-        _config = VrtoolConfig(
+        return VrtoolConfig(
             input_database_path=_db_file, traject="38-1", input_directory=test_data
         )
 
+    def test_get_dike_traject(self, database_vrtool_config: VrtoolConfig):
         # 2. Run test.
-        _dike_traject = get_dike_traject(_config)
+        _dike_traject = get_dike_traject(database_vrtool_config)
 
         # 3. Verify expectations.
         assert isinstance(_dike_traject, DikeTraject)
@@ -220,3 +224,31 @@ class TestOrmControllers:
 
         assert all(any(_ds.mechanism_data.items()) for _ds in _dike_traject.sections)
         all(map(check_section_reliability, _dike_traject.sections))
+
+    def test_get_dike_section_solutions(self, database_vrtool_config: VrtoolConfig):
+        # 1. Define test data.
+        _dike_section = DikeSection()
+        _dike_section.name = "01A"
+        _dike_section.Length = 359.0
+        _initial_geom = {
+            "BUT": [-17.0, 4.996],
+            "BUK": [0, 10.939],
+            "BIK": [3.5, 10.937],
+            "BBL": [25.0, 6.491],
+            "EBL": [42.0, 5.694],
+            "BIT": [47.0, 5.104],
+        }
+
+        def _to_record(geom_item: tuple[str, list[int]]) -> dict:
+            return dict(type=geom_item[0], x=geom_item[1][0], y=geom_item[1][1])
+
+        _dike_section.InitialGeometry = pd.DataFrame.from_records(
+            map(_to_record, _initial_geom.items())
+        )
+
+        # 2. Run test.
+        _solutions = get_dike_section_solutions(database_vrtool_config, _dike_section)
+
+        # 3. Verify expectations.
+        assert isinstance(_solutions, Solutions)
+        assert any(_solutions.measures)
