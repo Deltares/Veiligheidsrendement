@@ -70,14 +70,14 @@ class StabilityInnerSimpleInput:
         else:
             raise Exception("Warning: No input values SF or Beta StabilityInner")
 
-        _is_eliminated = mechanism_input.input.get("Elimination", False)
+        _is_eliminated = mechanism_input.input.get("elimination", False)
         _failure_probability_elimination = None
         _failure_probability_with_elimination = None
         if _get_valid_bool_value(_is_eliminated):
             _is_eliminated = True
-            _failure_probability_elimination = mechanism_input.input["Pf_elim"]
+            _failure_probability_elimination = mechanism_input.input["pf_elim"]
             _failure_probability_with_elimination = mechanism_input.input[
-                "Pf_with_elim"
+                "pf_with_elim"
             ]
         elif _is_eliminated:
             raise ValueError("Warning: Elimination defined but not turned on")

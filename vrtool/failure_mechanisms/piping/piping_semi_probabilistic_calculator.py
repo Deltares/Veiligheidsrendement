@@ -112,8 +112,8 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
             scenario_result["beta_cs_u"][scenario] = self._calculate_beta_uplift(inputs)
 
             # Check if there is an elimination measure present (VZG or diaphragm wall)
-            if "Elimination" in self._mechanism_input.input.keys():
-                if self._mechanism_input.input["Elimination"] == "yes":
+            if "elimination" in self._mechanism_input.input.keys():
+                if self._mechanism_input.input["elimination"] == "yes":
                     # Fault tree: Pf = P(f|elimination fails)*P(elimination fails) + P(f|elimination works)* P(elimination works)
                     scenario_beta = np.max(
                         [
@@ -127,9 +127,9 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                             np.min(
                                 [
                                     beta_to_pf(scenario_beta)
-                                    * self._mechanism_input.input["Pf_elim"]
-                                    + self._mechanism_input.input["Pf_with_elim"]
-                                    * (1 - self._mechanism_input.input["Pf_elim"]),
+                                    * self._mechanism_input.input["pf_elim"]
+                                    + self._mechanism_input.input["pf_with_elim"]
+                                    * (1 - self._mechanism_input.input["pf_elim"]),
                                     beta_to_pf(scenario_beta),
                                 ]
                             ),

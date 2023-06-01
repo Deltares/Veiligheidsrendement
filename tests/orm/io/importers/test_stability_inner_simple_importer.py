@@ -64,11 +64,11 @@ class TestStabilityInnerSimpleImporter:
         # Setup
         parameters = [
             {
-                "parameter": "SF_2025",
+                "parameter": "sf_2025",
                 "value": 0.9719626168224299,
             },
             {
-                "parameter": "SF_2075",
+                "parameter": "sf_2075",
                 "value": 0.9626168224299065,
             },
             {
@@ -76,7 +76,7 @@ class TestStabilityInnerSimpleImporter:
                 "value": 3.778095454216003,
             },
             {
-                "parameter": "dSF/dberm",
+                "parameter": "dsf/dberm",
                 "value": 0.02,
             },
             {

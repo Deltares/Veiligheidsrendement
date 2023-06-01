@@ -70,7 +70,7 @@ class TestPipingImporter:
 
             parameters1 = [
                 {
-                    "parameter": "D",
+                    "parameter": "d_wvp",
                     "value": 49.0,
                 },
                 {
@@ -84,7 +84,7 @@ class TestPipingImporter:
             ]
             parameters2 = [
                 {
-                    "parameter": "D",
+                    "parameter": "d_wvp",
                     "value": 41.0,
                 },
                 {
@@ -110,9 +110,10 @@ class TestPipingImporter:
         _mechanism_input = _importer.import_orm(_piping_per_section)
 
         # 3. Verify expectations.
-        assert len(_mechanism_input.input) == 4
-        assert _mechanism_input.input["D"][0] == pytest.approx(49.0)
-        assert _mechanism_input.input["D"][1] == pytest.approx(41.0)
+        assert len(_mechanism_input.input) == 5
+        assert _mechanism_input.input["Scenario"] == [_computation_scenario1.scenario_name, _computation_scenario2.scenario_name]
+        assert _mechanism_input.input["d_wvp"][0] == pytest.approx(49.0)
+        assert _mechanism_input.input["d_wvp"][1] == pytest.approx(41.0)
         assert _mechanism_input.input["d70"][0] == pytest.approx(0.000226)
         assert _mechanism_input.input["d70"][1] == pytest.approx(0.000227)
         assert _mechanism_input.input["P_scenario"][0] == pytest.approx(0.9)
@@ -143,7 +144,7 @@ class TestPipingImporter:
             ]
             parameters2 = [
                 {
-                    "parameter": "D",
+                    "parameter": "d_wvp",
                     "value": 41.0,
                 },
                 {

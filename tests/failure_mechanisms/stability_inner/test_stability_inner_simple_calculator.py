@@ -13,8 +13,8 @@ class TestStabilityInnerSimpleCalculator:
     def test_init_with_valid_data(self):
         # Setup
         _mechanism_input = MechanismInput("")
-        _mechanism_input.input["SF_2025"] = np.array([0.1], dtype=float)
-        _mechanism_input.input["SF_2075"] = np.array([0.2], dtype=float)
+        _mechanism_input.input["sf_2025"] = np.array([0.1], dtype=float)
+        _mechanism_input.input["sf_2075"] = np.array([0.2], dtype=float)
 
         _input = StabilityInnerSimpleInput.from_mechanism_input(_mechanism_input)
 

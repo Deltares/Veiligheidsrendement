@@ -14,8 +14,8 @@ class TestStabilityInnerInput:
     ):
         # Setup
         mechanism_input = MechanismInput("")
-        mechanism_input.input["SF_2025"] = np.array([0.1], dtype=float)
-        mechanism_input.input["SF_2075"] = np.array([0.2], dtype=float)
+        mechanism_input.input["sf_2025"] = np.array([0.1], dtype=float)
+        mechanism_input.input["sf_2075"] = np.array([0.2], dtype=float)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
@@ -29,11 +29,11 @@ class TestStabilityInnerInput:
         )
         assert (
             failure_mechanism_input.safety_factor_2025
-            == mechanism_input.input["SF_2025"]
+            == mechanism_input.input["sf_2025"]
         )
         assert (
             failure_mechanism_input.safety_factor_2075
-            == mechanism_input.input["SF_2075"]
+            == mechanism_input.input["sf_2075"]
         )
 
         assert failure_mechanism_input.beta_2025 is None
@@ -68,7 +68,7 @@ class TestStabilityInnerInput:
     def test_from_mechanism_input_with_beta_returns_input_with_beta(self):
         # Setup
         mechanism_input = MechanismInput("")
-        mechanism_input.input["BETA"] = np.array([0.1], dtype=float)
+        mechanism_input.input["beta"] = np.array([0.1], dtype=float)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
@@ -80,7 +80,7 @@ class TestStabilityInnerInput:
             failure_mechanism_input.reliability_calculation_method
             == ReliabilityCalculationMethod.BETA_SINGLE
         )
-        assert failure_mechanism_input.beta == mechanism_input.input["BETA"]
+        assert failure_mechanism_input.beta == mechanism_input.input["beta"]
 
         assert failure_mechanism_input.beta_2025 is None
         assert failure_mechanism_input.beta_2075 is None
@@ -109,11 +109,11 @@ class TestStabilityInnerInput:
     ):
         # Setup
         mechanism_input = MechanismInput("")
-        mechanism_input.input["SF_2025"] = np.array([0.1], dtype=float)
-        mechanism_input.input["SF_2075"] = np.array([0.2], dtype=float)
+        mechanism_input.input["sf_2025"] = np.array([0.1], dtype=float)
+        mechanism_input.input["sf_2075"] = np.array([0.2], dtype=float)
         mechanism_input.input["beta_2075"] = np.array([0.3], dtype=float)
         mechanism_input.input["beta_2075"] = np.array([0.4], dtype=float)
-        mechanism_input.input["BETA"] = np.array([0.5], dtype=float)
+        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
@@ -127,11 +127,11 @@ class TestStabilityInnerInput:
         )
         assert (
             failure_mechanism_input.safety_factor_2025
-            == mechanism_input.input["SF_2025"]
+            == mechanism_input.input["sf_2025"]
         )
         assert (
             failure_mechanism_input.safety_factor_2075
-            == mechanism_input.input["SF_2075"]
+            == mechanism_input.input["sf_2075"]
         )
 
         assert failure_mechanism_input.beta_2025 is None
@@ -144,10 +144,10 @@ class TestStabilityInnerInput:
     ):
         # Setup
         mechanism_input = MechanismInput("")
-        mechanism_input.input["BETA"] = np.array([0.5], dtype=float)
-        mechanism_input.input["Elimination"] = "yes"
-        mechanism_input.input["Pf_elim"] = np.array([0.2], dtype=float)
-        mechanism_input.input["Pf_with_elim"] = np.array([0.3], dtype=float)
+        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
+        mechanism_input.input["elimination"] = "yes"
+        mechanism_input.input["pf_elim"] = np.array([0.2], dtype=float)
+        mechanism_input.input["pf_with_elim"] = np.array([0.3], dtype=float)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
@@ -158,11 +158,11 @@ class TestStabilityInnerInput:
         assert failure_mechanism_input.is_eliminated
         assert (
             failure_mechanism_input.failure_probability_elimination
-            == mechanism_input.input["Pf_elim"]
+            == mechanism_input.input["pf_elim"]
         )
         assert (
             failure_mechanism_input.failure_probability_with_elimination
-            == mechanism_input.input["Pf_with_elim"]
+            == mechanism_input.input["pf_with_elim"]
         )
 
     @pytest.mark.parametrize(
@@ -177,8 +177,8 @@ class TestStabilityInnerInput:
     ):
         # Setup
         mechanism_input = MechanismInput("")
-        mechanism_input.input["BETA"] = np.array([0.5], dtype=float)
-        mechanism_input.input["Elimination"] = elimination
+        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
+        mechanism_input.input["elimination"] = elimination
 
         # Call
         with pytest.raises(ValueError) as exception_error:

@@ -123,8 +123,8 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         if int(year_to_calculate) < self.parameters["year"]:
             self._copy_results(mechanism_reliability, dike_section_piping_reliability)
 
-        mechanism_reliability.Input.input["Elimination"] = "yes"
-        mechanism_reliability.Input.input["Pf_elim"] = self.parameters["P_solution"]
-        mechanism_reliability.Input.input["Pf_with_elim"] = np.min(
-            [self.parameters["Pf_solution"], 1.0e-16]
+        mechanism_reliability.Input.input["elimination"] = "yes"
+        mechanism_reliability.Input.input["pf_elim"] = self.parameters["P_solution"]
+        mechanism_reliability.Input.input["pf_with_elim"] = np.min(
+            [self.parameters["pf_solution"], 1.0e-16]
         )

@@ -153,8 +153,8 @@ class DiaphragmWallMeasure(MeasureProtocol):
     def _configure_piping_or_stability_inner(
         self, mechanism_reliability: MechanismReliability
     ) -> None:
-        mechanism_reliability.Input.input["Elimination"] = "yes"
-        mechanism_reliability.Input.input["Pf_elim"] = self.parameters["P_solution"]
-        mechanism_reliability.Input.input["Pf_with_elim"] = self.parameters[
+        mechanism_reliability.Input.input["elimination"] = "yes"
+        mechanism_reliability.Input.input["pf_elim"] = self.parameters["p_solution"]
+        mechanism_reliability.Input.input["pf_with_elim"] = self.parameters[
             "Pf_solution"
         ]
