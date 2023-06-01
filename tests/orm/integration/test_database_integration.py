@@ -5,6 +5,7 @@ from typing import Union
 import pytest
 from peewee import SqliteDatabase
 
+from tests import test_data
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -42,6 +43,7 @@ class TestDatabaseIntegration:
         _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
 
         _vr_config = VrtoolConfig()
+        _vr_config.input_directory = test_data
         _importer = DikeTrajectImporter(_vr_config)
 
         # Call

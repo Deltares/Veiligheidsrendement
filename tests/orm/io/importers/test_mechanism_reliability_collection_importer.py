@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Callable
 
 import pytest
@@ -29,7 +28,6 @@ class TestDataHelper:
     @staticmethod
     def create_valid_config():
         _config = VrtoolConfig()
-        _config.input_directory = test_data
         _config.externals = test_externals
 
         return _config
@@ -119,6 +117,8 @@ class TestMechanismReliabilityCollectionImporter:
         _mechanism = "StabilityInner"
         _computation_type = "DSTABILITY"
         _config = TestDataHelper.create_valid_config()
+        _config.input_directory = test_data
+
         _importer = MechanismReliabilityCollectionImporter(_config)
         _mechanism_per_section = (
             TestDataHelper.get_mechanism_per_section_with_supporting_file(

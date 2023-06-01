@@ -6,7 +6,6 @@ from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
 
 # Class describing safety assessments of a section:
