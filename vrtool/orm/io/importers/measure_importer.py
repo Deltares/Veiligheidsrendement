@@ -54,7 +54,9 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.parameters["StabilityScreen"] = (
             "yes" if orm_measure.stability_screen else "no"
         )
-        _measure.parameters["dcrest_min"] = None
+
+        # dcrest_min is a fix value to 0. For now we keep the property in the params dictionary. Eventually can be removed.
+        _measure.parameters["dcrest_min"] = 0
         _measure.parameters["dcrest_max"] = orm_measure.max_crest_increase
         _measure.parameters["max_outward"] = orm_measure.max_outward_reinforcement
         _measure.parameters["max_inward"] = orm_measure.max_inward_reinforcement

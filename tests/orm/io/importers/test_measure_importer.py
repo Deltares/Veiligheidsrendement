@@ -157,7 +157,7 @@ class TestMeasureImporter:
         assert _imported_measure.parameters["Type"] == measure_type
         assert _imported_measure.parameters["Direction"] == "onwards"
         assert _imported_measure.parameters["StabilityScreen"] == "no"
-        assert _imported_measure.parameters["dcrest_min"] == None
+        assert _imported_measure.parameters["dcrest_min"] == 0
         assert _imported_measure.parameters["dcrest_max"] == 0.1
         assert _imported_measure.parameters["max_outward"] == 2
         assert _imported_measure.parameters["max_inward"] == 3
