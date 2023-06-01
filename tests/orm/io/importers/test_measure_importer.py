@@ -24,6 +24,7 @@ from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.standard_measure import StandardMeasure
 
+
 def _set_standard_measure(measure: Measure) -> None:
     StandardMeasure.create(
         measure=measure,
@@ -36,6 +37,7 @@ def _set_standard_measure(measure: Measure) -> None:
         prob_of_solution_failure=0.4,
         failure_probability_with_solution=0.5,
     )
+
 
 def _set_custom_measure(measure: Measure) -> None:
     _mechanism = Mechanism.create(name="Just a mechanism")
@@ -50,6 +52,7 @@ def _set_custom_measure(measure: Measure) -> None:
         custom_measure=_measure, parameter="DummyParameter", value=24.42
     )
 
+
 def _get_valid_measure(
     measure_type: str, combinable_type: str, set_measure: Callable
 ) -> Measure:
@@ -63,6 +66,7 @@ def _get_valid_measure(
     )
     set_measure(_measure)
     return _measure
+
 
 class TestMeasureImporter:
     @pytest.fixture
@@ -84,9 +88,11 @@ class TestMeasureImporter:
     def test_initialize_given_no_vrtoolconfig_raises_valueerror(self):
         with pytest.raises(ValueError) as exc_err:
             MeasureImporter(None)
-        assert str(exc_err.value) == "VrtoolConfig not provided."    
+        assert str(exc_err.value) == "VrtoolConfig not provided."
 
-    def test_import_orm_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
+    def test_import_orm_given_no_orm_model_raises_valueerror(
+        self, valid_config: VrtoolConfig
+    ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
 

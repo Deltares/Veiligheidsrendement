@@ -37,7 +37,7 @@ class Solutions:
         self.config = config
         self.T = config.T
         # Mechanisms is deprecated, it will be replaced by "excluded_mechanisms".
-        self.mechanisms = config.mechanisms        
+        self.mechanisms = config.mechanisms
         self.measures: list[MeasureBase] = []
 
     def load_solutions_from_file(self, excel_sheet: Path):

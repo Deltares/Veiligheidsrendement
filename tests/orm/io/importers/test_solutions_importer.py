@@ -1,19 +1,23 @@
+import pandas as pd
 import pytest
-
 from peewee import SqliteDatabase
 
 from tests import test_data, test_results
+from tests.orm import empty_db_fixture
+from tests.orm.io.importers.test_measure_importer import (
+    _get_valid_measure,
+    _set_custom_measure,
+    _set_standard_measure,
+)
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
-from tests.orm import empty_db_fixture
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.section_data import SectionData
-import pandas as pd
-from tests.orm.io.importers.test_measure_importer import _get_valid_measure, _set_custom_measure, _set_standard_measure
+
 
 class TestSolutionsImporter:
     @pytest.fixture
@@ -32,16 +36,20 @@ class TestSolutionsImporter:
     def test_initialize_given_no_vrtoolconfig_raises_valueerror(self):
         with pytest.raises(ValueError) as exc_err:
             SolutionsImporter(None, DikeSection())
-        
+
         assert str(exc_err.value) == "VrtoolConfig not provided."
-    
-    def test_initialize_given_no_dike_section_raises_valueerror(self, valid_config: VrtoolConfig):
+
+    def test_initialize_given_no_dike_section_raises_valueerror(
+        self, valid_config: VrtoolConfig
+    ):
         with pytest.raises(ValueError) as exc_err:
             SolutionsImporter(valid_config, None)
-        
+
         assert str(exc_err.value) == "DikeSection not provided."
 
-    def test_import_orm_given_no_orm_model_raises_valueerror(self, valid_config: VrtoolConfig):
+    def test_import_orm_given_no_orm_model_raises_valueerror(
+        self, valid_config: VrtoolConfig
+    ):
         # 1. Define test data.
         _importer = SolutionsImporter(valid_config, DikeSection())
 
@@ -63,15 +71,22 @@ class TestSolutionsImporter:
             section_length=3.4,
             in_analysis=True,
             crest_height=4.5,
-            annual_crest_decline=5.6)
+            annual_crest_decline=5.6,
+        )
         return _section_data
 
-    def test_given_different_sectiondata_and_dikesection_raises_valueerror(self, valid_config: VrtoolConfig, valid_section_data_without_measures: SectionData):
+    def test_given_different_sectiondata_and_dikesection_raises_valueerror(
+        self,
+        valid_config: VrtoolConfig,
+        valid_section_data_without_measures: SectionData,
+    ):
         # 1. Define test data.
         _dike_section = DikeSection()
         _dike_section.name = "ACDC"
         _importer = SolutionsImporter(valid_config, _dike_section)
-        _expected_error = "The provided SectionData ({}) does not match the given DikeSection ({}).".format(valid_section_data_without_measures.section_name, _dike_section.name)
+        _expected_error = "The provided SectionData ({}) does not match the given DikeSection ({}).".format(
+            valid_section_data_without_measures.section_name, _dike_section.name
+        )
 
         # 2. Run test.
         with pytest.raises(ValueError) as exc_err:
@@ -80,14 +95,18 @@ class TestSolutionsImporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error
 
-    def test_given_section_without_measures_doesnot_raise(self, valid_config: VrtoolConfig, valid_section_data_without_measures: SectionData):
+    def test_given_section_without_measures_doesnot_raise(
+        self,
+        valid_config: VrtoolConfig,
+        valid_section_data_without_measures: SectionData,
+    ):
         # 1. Define test data.
         _dike_section = DikeSection()
         _dike_section.name = valid_section_data_without_measures.section_name
         _dike_section.Length = 42
         _dike_section.InitialGeometry = pd.DataFrame.from_dict(
-        {
-            "x": [0, 1, 2, 3, 4], "y": [4,3,2,1,0]})
+            {"x": [0, 1, 2, 3, 4], "y": [4, 3, 2, 1, 0]}
+        )
         _importer = SolutionsImporter(valid_config, _dike_section)
 
         # 2. Run test.
@@ -104,23 +123,33 @@ class TestSolutionsImporter:
         assert not any(_imported_solution.measures)
 
     @pytest.fixture
-    def valid_section_data_with_measures(self, valid_section_data_without_measures: SectionData) -> SectionData:
-        _standard_measure = _get_valid_measure("Soil reinforcement", "combinable", _set_standard_measure)
+    def valid_section_data_with_measures(
+        self, valid_section_data_without_measures: SectionData
+    ) -> SectionData:
+        _standard_measure = _get_valid_measure(
+            "Soil reinforcement", "combinable", _set_standard_measure
+        )
         _custom_measure = _get_valid_measure("Custom", "full", _set_custom_measure)
-        
-        MeasurePerSection.create(section = valid_section_data_without_measures, measure = _standard_measure)
-        MeasurePerSection.create(section = valid_section_data_without_measures, measure = _custom_measure)
+
+        MeasurePerSection.create(
+            section=valid_section_data_without_measures, measure=_standard_measure
+        )
+        MeasurePerSection.create(
+            section=valid_section_data_without_measures, measure=_custom_measure
+        )
 
         return valid_section_data_without_measures
 
-    def test_given_section_with_measures_imports_them_all(self, valid_config: VrtoolConfig, valid_section_data_with_measures: SectionData):
+    def test_given_section_with_measures_imports_them_all(
+        self, valid_config: VrtoolConfig, valid_section_data_with_measures: SectionData
+    ):
         # 1. Define test data.
         _dike_section = DikeSection()
         _dike_section.name = valid_section_data_with_measures.section_name
         _dike_section.Length = 42
         _dike_section.InitialGeometry = pd.DataFrame.from_dict(
-        {
-            "x": [0, 1, 2, 3, 4], "y": [4,3,2,1,0]})
+            {"x": [0, 1, 2, 3, 4], "y": [4, 3, 2, 1, 0]}
+        )
         _importer = SolutionsImporter(valid_config, _dike_section)
 
         # 2. Run test.

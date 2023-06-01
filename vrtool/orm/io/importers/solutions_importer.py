@@ -29,10 +29,18 @@ class SolutionsImporter(OrmImporterProtocol):
             raise ValueError(f"No valid value given for {SectionData.__name__}.")
 
         if self._dike_section.name != orm_model.section_name:
-            raise ValueError("The provided SectionData ({}) does not match the given DikeSection ({}).".format(orm_model.section_name, self._dike_section.name))
+            raise ValueError(
+                "The provided SectionData ({}) does not match the given DikeSection ({}).".format(
+                    orm_model.section_name, self._dike_section.name
+                )
+            )
 
         _solutions = Solutions(self._dike_section, self._config)
         _solutions.measures = self._import_measures(
-            list(OrmMeasure.select().join(MeasurePerSection).where(orm_model.id == MeasurePerSection.section_id))
+            list(
+                OrmMeasure.select()
+                .join(MeasurePerSection)
+                .where(orm_model.id == MeasurePerSection.section_id)
+            )
         )
         return _solutions
