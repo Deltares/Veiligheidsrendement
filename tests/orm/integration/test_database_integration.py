@@ -5,6 +5,7 @@ from typing import Union
 import pytest
 from peewee import SqliteDatabase
 
+from tests import test_data
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -42,6 +43,7 @@ class TestDatabaseIntegration:
         _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
 
         _vr_config = VrtoolConfig()
+        _vr_config.input_directory = test_data
         _importer = DikeTrajectImporter(_vr_config)
 
         # Call
@@ -151,9 +153,12 @@ class TestDatabaseIntegration:
 
         assert (
             _mechanism_input.input["STIXNAAM"]
-            == _stix_directory / computation_scenarios[0].supporting_files.select()[0].filename
+            == _stix_directory
+            / computation_scenarios[0].supporting_files.select()[0].filename
         )
-        assert _mechanism_input.input["DStability_exe_path"] == str(_externals_directory)
+        assert _mechanism_input.input["DStability_exe_path"] == str(
+            _externals_directory
+        )
 
     @pytest.mark.skip(reason="This test should not exist. It is also now failing.")
     def test_import_stability_simple_imports_all_stability_data(

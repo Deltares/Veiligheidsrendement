@@ -1,8 +1,9 @@
 from __future__ import annotations
-from pathlib import Path
+
 from typing import Callable
-from peewee import SqliteDatabase
+
 import pytest
+from peewee import SqliteDatabase
 
 from tests import test_data, test_externals
 from tests.orm import empty_db_fixture
@@ -24,11 +25,9 @@ from vrtool.orm.models.supporting_file import SupportingFile
 
 
 class TestDataHelper:
-    
     @staticmethod
     def create_valid_config():
         _config = VrtoolConfig()
-        _config.input_directory = test_data
         _config.externals = test_externals
 
         return _config
@@ -48,9 +47,7 @@ class TestDataHelper:
         )
 
     @staticmethod
-    def get_mechanism_per_section_with_scenario(
-        mechanism: str
-    ) -> ComputationScenario:
+    def get_mechanism_per_section_with_scenario(mechanism: str) -> ComputationScenario:
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
             dike_traject=_test_dike_traject,
@@ -67,18 +64,20 @@ class TestDataHelper:
         return MechanismPerSection.create(section=_test_section, mechanism=_mechanism)
 
     @staticmethod
-    def get_valid_mechanism_per_section(mechanism: str, computation_type: str) -> MechanismPerSection:
+    def get_valid_mechanism_per_section(
+        mechanism: str, computation_type: str
+    ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
         )
-        TestDataHelper._create_valid_scenario(
-            mechanism_per_section, computation_type
-        )
+        TestDataHelper._create_valid_scenario(mechanism_per_section, computation_type)
 
         return mechanism_per_section
 
     @staticmethod
-    def get_mechanism_per_section_with_supporting_file(mechanism: str, computation_type: str) -> MechanismPerSection:
+    def get_mechanism_per_section_with_supporting_file(
+        mechanism: str, computation_type: str
+    ) -> MechanismPerSection:
         _file_name = "something.stix"
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
@@ -93,7 +92,9 @@ class TestDataHelper:
         return mechanism_per_section
 
     @staticmethod
-    def get_overflow_hydraring_mechanism_per_section(mechanism: str, computation_type: str) -> MechanismPerSection:
+    def get_overflow_hydraring_mechanism_per_section(
+        mechanism: str, computation_type: str
+    ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
         )
@@ -110,16 +111,20 @@ class TestDataHelper:
         return mechanism_per_section
 
 
-
 class TestMechanismReliabilityCollectionImporter:
-
     def test_import_orm_for_dstability(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _mechanism = "StabilityInner"
         _computation_type = "DSTABILITY"
         _config = TestDataHelper.create_valid_config()
+        _config.input_directory = test_data
+
         _importer = MechanismReliabilityCollectionImporter(_config)
-        _mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_supporting_file(_mechanism, _computation_type)
+        _mechanism_per_section = (
+            TestDataHelper.get_mechanism_per_section_with_supporting_file(
+                _mechanism, _computation_type
+            )
+        )
 
         # Call
         collection = _importer.import_orm(_mechanism_per_section)
@@ -141,12 +146,32 @@ class TestMechanismReliabilityCollectionImporter:
     @pytest.mark.parametrize(
         "mechanism, computation_type, get_mechanism_per_section",
         [
-            pytest.param("StabilityInner", "SIMPLE", TestDataHelper.get_valid_mechanism_per_section, id="Stability Inner simple"),
-            pytest.param("Piping", "SEMIPROB", TestDataHelper.get_valid_mechanism_per_section, id="Piping SEMIPROB"),
-            pytest.param("Overflow", "HRING", TestDataHelper.get_overflow_hydraring_mechanism_per_section, id="Overflow HRING"),
-        ])
+            pytest.param(
+                "StabilityInner",
+                "SIMPLE",
+                TestDataHelper.get_valid_mechanism_per_section,
+                id="Stability Inner simple",
+            ),
+            pytest.param(
+                "Piping",
+                "SEMIPROB",
+                TestDataHelper.get_valid_mechanism_per_section,
+                id="Piping SEMIPROB",
+            ),
+            pytest.param(
+                "Overflow",
+                "HRING",
+                TestDataHelper.get_overflow_hydraring_mechanism_per_section,
+                id="Overflow HRING",
+            ),
+        ],
+    )
     def test_import_orm_with_simple_mechanism_per_section(
-        self, mechanism: str, computation_type: str, get_mechanism_per_section: Callable, empty_db_fixture: SqliteDatabase
+        self,
+        mechanism: str,
+        computation_type: str,
+        get_mechanism_per_section: Callable,
+        empty_db_fixture: SqliteDatabase,
     ):
         # Setup
         _config = TestDataHelper.create_valid_config()

@@ -4,8 +4,17 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data, test_results
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.flood_defence_system.failure_mechanism_collection import (
+    FailureMechanismCollection,
+)
+from vrtool.flood_defence_system.mechanism_reliability_collection import (
+    MechanismReliabilityCollection,
+)
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models import *
 from vrtool.orm.orm_controllers import (
     get_dike_traject,
@@ -168,14 +177,46 @@ class TestOrmControllers:
 
     def test_import_dike_traject(self):
         # 1. Define test data.
-        _db_file = test_data / "test_db" / "vrtool_db.db"
+        _db_file = test_data / "test_db" / "with_valid_data.db"
         assert _db_file.is_file()
 
-        _config = VrtoolConfig(input_database_path=_db_file, traject="16-1")
+        _config = VrtoolConfig(
+            input_database_path=_db_file, traject="38-1", input_directory=test_data
+        )
 
         # 2. Run test.
         _dike_traject = get_dike_traject(_config)
 
         # 3. Verify expectations.
         assert isinstance(_dike_traject, DikeTraject)
-        assert len(_dike_traject.sections) == 1
+        assert len(_dike_traject.sections) == 60
+
+        def check_section_reliability(section: DikeSection):
+            _recognized_keys = [
+                "Overflow",
+                "Piping",
+                "StabilityInner",
+            ]
+
+            def check_key_value(key_value):
+                assert (
+                    key_value[0] in _recognized_keys
+                ), "Mechanism {} not recognized.".format(key_value[0])
+                assert isinstance(key_value[1], MechanismReliabilityCollection)
+
+            assert isinstance(section.section_reliability, SectionReliability)
+            assert isinstance(section.section_reliability.load, LoadInput)
+            assert isinstance(
+                section.section_reliability.failure_mechanisms,
+                FailureMechanismCollection,
+            )
+
+            all(
+                map(
+                    check_key_value,
+                    section.section_reliability.failure_mechanisms._failure_mechanisms.items(),
+                )
+            )
+
+        assert all(any(_ds.mechanism_data.items()) for _ds in _dike_traject.sections)
+        all(map(check_section_reliability, _dike_traject.sections))
