@@ -37,15 +37,6 @@ class RunMeasures(VrToolRunProtocol):
         selected_section: DikeSection,
     ) -> Tuple[str, Solutions]:
         _solution = get_dike_section_solutions(self.vr_config, selected_section)
-
-        # # Calculate per section, for each measure the cost-reliability-time relations:
-        # _solution = Solutions(selected_section, self.vr_config)
-        # _solution.load_solutions_from_file(
-        #     self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
-        # )
-        # _solution.evaluate_solutions(
-        #     selected_section, self.selected_traject.general_info
-        # )
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:
