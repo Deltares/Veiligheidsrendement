@@ -9,7 +9,7 @@ from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
     implement_berm_widening,
 )
-from vrtool.decision_making.measures.measure_base import MeasureProtocol
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
     ModifiedDikeGeometryMeasureInput,
 )

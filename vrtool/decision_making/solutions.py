@@ -15,7 +15,7 @@ from vrtool.decision_making.measures import (
     StabilityScreenMeasure,
     VerticalGeotextileMeasure,
 )
-from vrtool.decision_making.measures.measure_base import MeasureProtocol
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
