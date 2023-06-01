@@ -52,6 +52,9 @@ Thumbs.db
 .vscode/
 .env/
 
+# Python cached files
+__pycache__/
+
 # Pytest related files
 .pytest_cache/
 test_results/
