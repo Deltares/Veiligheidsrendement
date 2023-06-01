@@ -119,24 +119,23 @@ def calculate_sellmeijer_2017(
     return delta_h_c
 
 
-def calculate_z_uplift(inp, mode: str = "Prob"):
+def calculate_z_uplift(z_input, mode: str = "Prob"):
     # if it is a dictionary: split according to names
-    if isinstance(inp, dict):
-        D = inp["D"]
-        d_cover = inp["d_cover"]
-        h_exit = inp["h_exit"]
-        r_exit = inp["r_exit"]
-        L = inp["Lvoor"] + inp["Lachter"]
-        d70 = inp["d70"]
-        k = inp["k"]
-        gamma_sat = inp["gamma_sat"]
-        kwelscherm = inp["kwelscherm"]
+    if isinstance(z_input, dict):
+        d_cover = z_input["d_cover"]
+        h_exit = z_input["h_exit"]
+        r_exit = z_input["r_exit"]
+        L = z_input["l_voor"] + z_input["l_achter"]
+        d70 = z_input["d70"]
+        k = z_input["k"]
+        gamma_sat = z_input["gamma_sat"]
+        kwelscherm = z_input["kwelscherm"]
         mPiping = 1.0
-        h_exit = h_exit - inp["dh_exit(t)"]
-        h = inp["h"] + inp["dh"]
+        h_exit = h_exit - z_input["dh_exit(t)"]
+        h = z_input["h"] + z_input["dh"]
     # with ageing & water level change:
     else:
-        if len(inp) == 13:
+        if len(z_input) == 13:
             (
                 D,
                 d_cover,
@@ -151,10 +150,10 @@ def calculate_z_uplift(inp, mode: str = "Prob"):
                 dh_exit,
                 h,
                 dh,
-            ) = inp
+            ) = z_input
             h_exit = h_exit - dh_exit
             h = h + dh  # with ageing:
-        if len(inp) == 12:
+        if len(z_input) == 12:
             (
                 D,
                 d_cover,
@@ -168,10 +167,10 @@ def calculate_z_uplift(inp, mode: str = "Prob"):
                 mPiping,
                 dh_exit,
                 h,
-            ) = inp
+            ) = z_input
             h_exit = h_exit - dh_exit
         # without ageing:
-        elif len(inp) == 11:
+        elif len(z_input) == 11:
             (
                 D,
                 d_cover,
@@ -184,7 +183,7 @@ def calculate_z_uplift(inp, mode: str = "Prob"):
                 kwelscherm,
                 mPiping,
                 h,
-            ) = inp
+            ) = z_input
     g_u, dh_u, dhc_u = calculate_lsf_uplift(r_exit, h, h_exit, d_cover, gamma_sat)
     if mode == "Prob":
         return [g_u]
@@ -195,11 +194,10 @@ def calculate_z_uplift(inp, mode: str = "Prob"):
 def calculate_z_heave(inp, mode: str = "Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
-        D = inp["D"]
         d_cover = inp["d_cover"]
         h_exit = inp["h_exit"]
         r_exit = inp["r_exit"]
-        L = inp["Lvoor"] + inp["Lachter"]
+        L = inp["l_voor"] + inp["l_achter"]
         d70 = inp["d70"]
         k = inp["k"]
         gamma_sat = inp["gamma_sat"]
@@ -266,24 +264,24 @@ def calculate_z_heave(inp, mode: str = "Prob"):
         return g_h, i, i_c
 
 
-def calculate_z_piping(inp, mode: str = "Prob"):
+def calculate_z_piping(piping_input, mode: str = "Prob"):
     # if it is a dictionary: split according to names
-    if isinstance(inp, dict):
-        D = inp["D"]
-        d_cover = inp["d_cover"]
-        h_exit = inp["h_exit"]
-        r_exit = inp["r_exit"]
-        L = inp["Lvoor"] + inp["Lachter"]
-        d70 = inp["d70"]
-        k = inp["k"]
-        gamma_sat = inp["gamma_sat"]
-        kwelscherm = inp["kwelscherm"]
+    if isinstance(piping_input, dict):
+        D = piping_input["d_wvp"]
+        d_cover = piping_input["d_cover"]
+        h_exit = piping_input["h_exit"]
+        r_exit = piping_input["r_exit"]
+        L = piping_input["l_voor"] + piping_input["l_achter"]
+        d70 = piping_input["d70"]
+        k = piping_input["k"]
+        gamma_sat = piping_input["gamma_sat"]
+        kwelscherm = piping_input["kwelscherm"]
         mPiping = 1.0  # inp['mPiping']
-        h_exit = h_exit - inp["dh_exit(t)"]
-        h = inp["h"] + inp["dh"]
+        h_exit = h_exit - piping_input["dh_exit(t)"]
+        h = piping_input["h"] + piping_input["dh"]
     # with ageing & water level change:
     else:
-        if len(inp) == 13:
+        if len(piping_input) == 13:
             (
                 D,
                 d_cover,
@@ -298,10 +296,10 @@ def calculate_z_piping(inp, mode: str = "Prob"):
                 dh_exit,
                 h,
                 dh,
-            ) = inp
+            ) = piping_input
             h_exit = h_exit - dh_exit
             h = h + dh  # with ageing:
-        if len(inp) == 12:
+        if len(piping_input) == 12:
             (
                 D,
                 d_cover,
@@ -315,10 +313,10 @@ def calculate_z_piping(inp, mode: str = "Prob"):
                 mPiping,
                 dh_exit,
                 h,
-            ) = inp
+            ) = piping_input
             h_exit = h_exit - dh_exit
         # without ageing:
-        elif len(inp) == 11:
+        elif len(piping_input) == 11:
             (
                 D,
                 d_cover,
@@ -331,7 +329,7 @@ def calculate_z_piping(inp, mode: str = "Prob"):
                 kwelscherm,
                 mPiping,
                 h,
-            ) = inp
+            ) = piping_input
 
     g_p, dh_p, dhc_p = calculate_lsf_sellmeijer(
         h, h_exit, d_cover, L, D, d70, k, mPiping

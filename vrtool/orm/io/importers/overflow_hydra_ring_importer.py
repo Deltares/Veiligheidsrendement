@@ -76,5 +76,6 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
         mechanism_input.input["hc_beta"] = self._get_crest_height_beta(
             orm_model.mechanism_tables.select(), orm_model.scenario_name
         )
+        # mechanism_input.input["Scenario"] = orm_model.computation_name
 
         return mechanism_input

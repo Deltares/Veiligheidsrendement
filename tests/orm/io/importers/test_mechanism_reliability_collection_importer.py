@@ -215,7 +215,7 @@ class TestMechanismReliabilityCollectionImporter:
         assert all(
             [
                 mechanism_reliability.mechanism == mechanism
-                and mechanism_reliability.type == computation_type
+                and mechanism_reliability.mechanism_type == computation_type
                 for mechanism_reliability in mechanism_reliabilities
             ]
         )

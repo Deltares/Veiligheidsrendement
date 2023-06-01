@@ -18,7 +18,7 @@ class StabilityInnerSimpleInput:
 
     beta_2025: np.ndarray
     beta_2075: np.ndarray
-    beta: np.ndarray
+    beta: float
 
     failure_probability_with_elimination: np.ndarray
     failure_probability_elimination: np.ndarray
@@ -40,14 +40,14 @@ class StabilityInnerSimpleInput:
         _safety_factor_2075 = None
         _beta_2075 = None
 
-        _safety_factor_2025 = mechanism_input.input.get("SF_2025", None)
+        _safety_factor_2025 = mechanism_input.input.get("sf_2025", None)
         _beta_2025 = mechanism_input.input.get("beta_2025", None)
-        _beta = mechanism_input.input.get("BETA", None)
+        _beta = mechanism_input.input.get("beta", None)
 
         # If all input is defined, the safety factor takes precedence in which
         # reliability calculation method should be used
         if _safety_factor_2025:
-            _safety_factor_2075 = mechanism_input.input["SF_2075"]
+            _safety_factor_2075 = mechanism_input.input["sf_2075"]
 
             _beta_2025 = None
             _beta = None
@@ -65,7 +65,7 @@ class StabilityInnerSimpleInput:
         elif _beta:
             _safety_factor_2025 = None
             _beta_2025 = None
-
+            _beta = _beta[0]
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_SINGLE
         else:
             raise Exception("Warning: No input values SF or Beta StabilityInner")

@@ -80,7 +80,7 @@ class MechanismReliabilityCollection:
 
         for i in self.Reliability.keys():
             t.append(float(i) + self.t_0)
-            if self.Reliability[i].type == "Probabilistic":
+            if self.Reliability[i].mechanism_type == "Probabilistic":
                 if self.Reliability[i].result.getClassName() == "SimulationResult":
                     y.append(
                         self.Reliability[i].result.getProbabilityEstimate()

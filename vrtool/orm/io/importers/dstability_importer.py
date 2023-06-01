@@ -50,5 +50,6 @@ class DStabilityImporter(OrmImporterProtocol):
         mechanism_input.input["DStability_exe_path"] = str(
             self._dstability_exe_directory
         )
+        # mechanism_input.input["Scenario"] = orm_model.computation_name
 
         return mechanism_input

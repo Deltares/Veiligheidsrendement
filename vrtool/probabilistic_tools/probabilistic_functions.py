@@ -347,8 +347,10 @@ def add_load_char_vals(
                 # for each year, compute WL
                 years = [np.int32(i) for i in list(load.distribution.keys())]
                 wls = []
-                for j in years:
-                    wls.append(load.distribution[str(j)].computeQuantile(1 - p_h)[0])
+                for _dist_year in years:
+                    wls.append(
+                        load.distribution[_dist_year].computeQuantile(1 - p_h)[0]
+                    )
                 h_norm = interp1d(years, wls, fill_value="extrapolate")(year + t_0)
                 # then interpolate for given year
         else:

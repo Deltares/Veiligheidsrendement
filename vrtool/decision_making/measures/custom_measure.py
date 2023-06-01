@@ -167,7 +167,7 @@ class CustomMeasure(MeasureProtocol):
         self, mechanism_reliability: MechanismReliability, mechanism_name: str
     ) -> None:
         # Direct input: remove existing inputs and replace with beta
-        mechanism_reliability.type = "DirectInput"
+        mechanism_reliability.mechanism_type = "DirectInput"
         mechanism_reliability.Input.input = {}
         mechanism_reliability.Input.input["beta"] = {}
 

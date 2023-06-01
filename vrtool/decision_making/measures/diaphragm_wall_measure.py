@@ -113,7 +113,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
         Pt = traject_info.Pmax * traject_info.omegaOverflow
 
         mechanism_input = mechanism_reliability.Input.input
-        if mechanism_reliability.type == "Simple":
+        if mechanism_reliability.mechanism_type == "Simple":
             if hasattr(dike_section, "HBNRise_factor"):
                 hc = probabilistic_design(
                     "h_crest",
