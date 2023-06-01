@@ -49,7 +49,6 @@ class TestDStabilityWrapper:
         assert str(exception_error.value.message) == _expected_error
 
     @pytest.mark.externals
-    @pytest.mark.slow
     def test_rerun_stix_with_valid_externals_path(self, request: pytest.FixtureRequest):
         # 1. Define test data.
         assert test_externals.joinpath(
@@ -78,6 +77,7 @@ class TestDStabilityWrapper:
         # 3. Verify expectations.
         assert not filecmp.cmp(str(_path_test_stix), str(_test_file))
 
+    @pytest.mark.slow
     def test_get_safety_factor_no_run_no_stage(self):
         """
         Test the get_safety_factor method of the DStabilityWrapper class for stage_id_result=None and without running D-Stability
@@ -116,6 +116,7 @@ class TestDStabilityWrapper:
         assert isinstance(_safety_factor, float)
         assert pytest.approx(1.3380575991293264) == _safety_factor
 
+    @pytest.mark.slow
     def test_get_safety_factor_with_rerun(self, request: pytest.FixtureRequest):
         """
         Test the get_safety_factor method of the DStabilityWrapper class for a valid stage id and raise and Exception

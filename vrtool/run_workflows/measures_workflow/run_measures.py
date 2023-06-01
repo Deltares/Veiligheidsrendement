@@ -7,6 +7,7 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.orm.orm_controllers import get_dike_section_solutions
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
@@ -35,14 +36,7 @@ class RunMeasures(VrToolRunProtocol):
         self,
         selected_section: DikeSection,
     ) -> Tuple[str, Solutions]:
-        # Calculate per section, for each measure the cost-reliability-time relations:
-        _solution = Solutions(selected_section, self.vr_config)
-        _solution.fillSolutions(
-            self.vr_config.input_directory.joinpath(selected_section.name + ".xlsx")
-        )
-        _solution.evaluate_solutions(
-            selected_section, self.selected_traject.general_info
-        )
+        _solution = get_dike_section_solutions(self.vr_config, selected_section)
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:

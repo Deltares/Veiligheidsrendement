@@ -23,6 +23,7 @@ class DikeSection:
     TrajectInfo: DikeTrajectInfo
     name: str
     InitialGeometry: pd.DataFrame
+    Length: float
 
     @classmethod
     def get_dike_sections_from_vr_config(

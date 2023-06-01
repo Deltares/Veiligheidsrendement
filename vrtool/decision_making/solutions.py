@@ -22,6 +22,13 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 
 class Solutions:
     # This class contains possible solutions/measures
+    section_name: str
+    length: float
+    initial_geometry: pd.DataFrame
+    config: VrtoolConfig
+    T: list[int]
+    measures: list[MeasureBase]
+
     def __init__(self, dike_section: DikeSection, config: VrtoolConfig):
         self.section_name = dike_section.name
         self.length = dike_section.Length
@@ -29,11 +36,12 @@ class Solutions:
 
         self.config = config
         self.T = config.T
-        self.mechanisms = config.mechanisms
+        # Mechanisms is deprecated, it will be replaced by "excluded_mechanisms".
+        self.mechanisms = config.mechanisms        
         self.measures: list[MeasureBase] = []
 
-    def fillSolutions(self, excel_sheet: Path):
-        """This routine reads input for the measures from the Excel sheet for each section.
+    def load_solutions_from_file(self, excel_sheet: Path):
+        """DEPRECATED (we use the SQLite database now): This routine reads input for the measures from the Excel sheet for each section.
         It identifies combinables and partials and identifies possible combinations of measures this way.
         These are then stored in the MeasureTable, which is later evaluated.
         """

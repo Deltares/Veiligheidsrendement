@@ -38,7 +38,11 @@ class StabilityScreenMeasure(MeasureBase):
         self.measures["Stability Screen"] = "yes"
         self.parameters["Depth"] = self._get_depth(dike_section)
         self.measures["Cost"] = determine_costs(
-            self.parameters, type, dike_section.Length, self.unit_costs
+            self.parameters,
+            type,
+            dike_section.Length,
+            self.parameters["Depth"],
+            self.unit_costs,
         )
 
         self.measures["Reliability"] = self._get_configured_section_reliability(

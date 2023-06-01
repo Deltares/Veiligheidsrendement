@@ -89,7 +89,7 @@ class TestOrmControllers:
     def test_create_db_with_data(self):
         # 1. Define database file.
         _db_file = test_data / "test_db" / "vrtool_db.db"
-        if _db_file.parent.exists():
+        if _db_file.exists():
             _db_file.unlink()
 
         initialize_database(_db_file)

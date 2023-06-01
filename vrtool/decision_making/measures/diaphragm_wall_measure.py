@@ -32,7 +32,11 @@ class DiaphragmWallMeasure(MeasureBase):
         self.measures = {}
         self.measures["DiaphragmWall"] = "yes"
         self.measures["Cost"] = determine_costs(
-            self.parameters, type, dike_section.Length, self.unit_costs
+            self.parameters,
+            type,
+            dike_section.Length,
+            self.parameters.get("Depth", float("nan")),
+            self.unit_costs,
         )
         self.measures["Reliability"] = self._get_configured_section_reliability(
             dike_section, traject_info
