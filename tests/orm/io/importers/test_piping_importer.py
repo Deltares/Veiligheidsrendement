@@ -111,7 +111,10 @@ class TestPipingImporter:
 
         # 3. Verify expectations.
         assert len(_mechanism_input.input) == 5
-        assert _mechanism_input.input["Scenario"] == [_computation_scenario1.scenario_name, _computation_scenario2.scenario_name]
+        assert _mechanism_input.input["Scenario"] == [
+            _computation_scenario1.scenario_name,
+            _computation_scenario2.scenario_name,
+        ]
         assert _mechanism_input.input["d_wvp"][0] == pytest.approx(49.0)
         assert _mechanism_input.input["d_wvp"][1] == pytest.approx(41.0)
         assert _mechanism_input.input["d70"][0] == pytest.approx(0.000226)
@@ -166,7 +169,7 @@ class TestPipingImporter:
             _importer.import_orm(_piping_per_section)
 
         # Assert
-        assert str(exception_error.value) == "key not defined for first scenario: D"
+        assert str(exception_error.value) == "key not defined for first scenario: d_wvp"
 
     def test_import_orm_without_model_raises_value_error(self):
         # Setup
