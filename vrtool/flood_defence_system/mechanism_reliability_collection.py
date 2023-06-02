@@ -63,9 +63,8 @@ class MechanismReliabilityCollection:
         """
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
         if not load:
-            # TODO: Is this correct or should we still raise an error?
-            return
-            # raise ValueError("Load value should be True.")
+            raise ValueError("A {} is required.".format(LoadInput.__name__))
+
         for i in self.Reliability.keys():
             self.Reliability[i].calculate_reliability(
                 self.Reliability[i].Input,
