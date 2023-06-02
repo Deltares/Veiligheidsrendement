@@ -50,6 +50,7 @@ class MeasureImporter(OrmImporterProtocol):
         self._set_base_values(_measure)
         _measure.crest_step = orm_measure.crest_step
         _measure.parameters["Type"] = orm_measure.measure.measure_type.name
+        _measure.parameters["Class"] = orm_measure.measure.combinable_type.name
         _measure.parameters["Direction"] = orm_measure.direction
         _measure.parameters["StabilityScreen"] = (
             "yes" if orm_measure.stability_screen else "no"
