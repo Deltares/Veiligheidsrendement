@@ -31,18 +31,28 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calcu
 
 
 class MechanismReliability:
+    Pf: float
+    Beta: np.ndarray
+
     # This class contains evaluations of the reliability for a mechanism in a given year.
     def __init__(
-        self, mechanism, mechanism_type: str, t_0: int, copy_or_calculate="calculate"
+        self,
+        mechanism_name: str,
+        mechanism_type: str,
+        t_0: int,
+        copy_or_calculate="calculate",
     ):
         # Initialize: set mechanism and type. These are the most important basic parameters
-        self.mechanism = mechanism
+        self.mechanism = mechanism_name
         self.mechanism_type = mechanism_type
         self.t_0 = t_0
         self.copy_or_calculate = copy_or_calculate
 
         self.Input = MechanismInput(self.mechanism)
-        if mechanism == "Piping":
+        self.Pf = float("nan")
+        self.Beta = float("nan")
+
+        if mechanism_name == "Piping":
             self.gamma_schem_heave = 1  # 1.05
             self.gamma_schem_upl = 1  # 1.05
             self.gamma_schem_pip = 1  # 1.05
@@ -57,7 +67,7 @@ class MechanismReliability:
             if i != "mechanism":
                 setattr(self, i, None)
 
-    def calcReliability(
+    def calculate_reliability(
         self,
         strength: MechanismInput,
         load: LoadInput,

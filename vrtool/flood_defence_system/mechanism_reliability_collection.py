@@ -41,13 +41,13 @@ class MechanismReliabilityCollection:
         self.mechanism_name = mechanism
         self.Reliability = {}
 
-        for i in self.T:
-            if measure_year > i:
-                self.Reliability[str(i)] = MechanismReliability(
+        for _computation_year in computation_years:
+            if measure_year > _computation_year:
+                self.Reliability[str(_computation_year)] = MechanismReliability(
                     mechanism, computation_type, self.t_0, copy_or_calculate="copy"
                 )
             else:
-                self.Reliability[str(i)] = MechanismReliability(
+                self.Reliability[str(_computation_year)] = MechanismReliability(
                     mechanism, computation_type, self.t_0
                 )
 
@@ -67,7 +67,7 @@ class MechanismReliabilityCollection:
             return
             # raise ValueError("Load value should be True.")
         for i in self.Reliability.keys():
-            self.Reliability[i].calcReliability(
+            self.Reliability[i].calculate_reliability(
                 self.Reliability[i].Input,
                 load,
                 self.mechanism_name,
