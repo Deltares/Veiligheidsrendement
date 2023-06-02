@@ -12,8 +12,8 @@ class StabilityInnerSimpleImporter(OrmImporterProtocol):
         self, input: MechanismInput, parameters: list[Parameter]
     ) -> None:
         for parameter in parameters:
-            input.input[parameter.parameter.lower().strip()] = pd.array(
-                [np.float32(parameter.value)]
+            input.input[parameter.parameter.lower().strip()] = np.array(
+                [float(parameter.value)]
             )
 
     def import_orm(self, orm_model: ComputationScenario) -> MechanismInput:

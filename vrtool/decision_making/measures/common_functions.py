@@ -403,8 +403,9 @@ def determine_costs(
     direction: bool = False,
     section: str = "",
 ) -> float:
+    _measure_type_name = measure_type.lower().strip()
     if (
-        (measure_type == "Soil reinforcement")
+        (_measure_type_name == "soil reinforcement")
         and (direction == "outward")
         and (dberm_in > 0.0)
     ):
@@ -412,7 +413,7 @@ def determine_costs(
         logging.warn(
             "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
         )
-    if measure_type == "Soil reinforcement":
+    if "soil reinforcement" in _measure_type_name:
         if direction == "inward":
             total_cost = (
                 unit_costs["Inward added volume"] * area_extra * length
@@ -472,14 +473,15 @@ def determine_costs(
             total_cost += unit_costs["Road renewal"] * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
-    elif measure_type == "Vertical Geotextile":
+    elif _measure_type_name == "vertical geotextile":
         total_cost = unit_costs["Vertical Geotextile"] * length
-    elif measure_type == "Diaphragm Wall":
+    elif _measure_type_name == "diaphragm wall":
         total_cost = unit_costs["Diaphragm wall"] * length
-    elif measure_type == "Stability Screen":
+    elif _measure_type_name == "stability screen":
         total_cost = unit_costs["Sheetpile"] * depth * length
     else:
-        logging.info("Unknown type")
+        logging.error("Unknown measure type: {}".format(measure_type))
+        total_cost = float("nan")
     return total_cost
 
 
