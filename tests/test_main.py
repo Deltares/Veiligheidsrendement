@@ -7,6 +7,7 @@ from click.testing import CliRunner
 from tests import test_data, test_results
 from vrtool import __main__
 from vrtool.defaults.vrtool_config import VrtoolConfig
+import json
 
 
 class TestMain:
@@ -42,12 +43,39 @@ class TestMain:
         # 3. Verify expectations.
         assert _run_result.exit_code == 1
 
+    @pytest.fixture
+    def cli_config_fixture(self, request: pytest.FixtureRequest):
+        _test_case = request.param
+        _input_dir = test_data / _test_case
+        _output_dir = test_results.joinpath(request.node.name)
+        if _output_dir.exists():
+            shutil.rmtree(_output_dir)
+
+        json_config = {
+            "input_database_path": str(_input_dir / "vrtool_input.db"),
+            "traject": "38-1",
+            "output_directory": str(_output_dir),
+        }
+        json_file = _input_dir.joinpath("test_config.json")
+        json_file.touch()
+        json_file.write_text(json.dumps(json_config, indent=4))
+
+        yield _input_dir, _output_dir
+
+        json_file.unlink()
+
     @pytest.mark.slow
-    def test_given_valid_input_when_run_full_then_succeeds(self):
+    @pytest.mark.parametrize(
+        "cli_config_fixture", ["TestCase1_38-1_no_housing"], indirect=True
+    )
+    def test_given_valid_input_when_run_full_then_succeeds(
+        self, cli_config_fixture: tuple[Path, Path]
+    ):
         # TODO: Ideally we want a really small test.
         # 1. Define test data.
-        _input_dir = test_data / "TestCase1_38-1_no_housing"
+        _input_dir, _output_dir = cli_config_fixture
         assert _input_dir.exists()
+        assert not _output_dir.exists()
 
         # Ensure we have a clean results dir.
         _results_dir = _input_dir / "results"
@@ -62,6 +90,8 @@ class TestMain:
 
         # 3. Verify final expectations.
         assert _run_result.exit_code == 0
+        assert _output_dir.exists()
+        assert any(_output_dir.glob("*"))
 
     def test_given_directory_without_json_raises_error(
         self, request: pytest.FixtureRequest
