@@ -76,6 +76,7 @@ class DikeSectionImporter(OrmImporterProtocol):
         mechanism_collection: dict[str, MechanismReliabilityCollection],
     ) -> SectionReliability:
         _section_reliability = SectionReliability()
+
         _section_reliability.load = WaterLevelImporter(gridpoints=1000).import_orm(
             section_data
         )

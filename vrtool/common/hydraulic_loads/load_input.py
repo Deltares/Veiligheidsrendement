@@ -25,17 +25,19 @@ class LoadInput:
                 gridpoints=gridpoints,
             )
 
-    def set_fromDesignTable(self, filelocation, gridpoints=1000):
+    def set_fromDesignTable(self, filelocation: Path, gridpoints: int = 1000):
         # Load is given by exceedence probability-water level table from Hydra-Ring
         self.distribution = design_table_openturns(filelocation, gridpoints=gridpoints)
 
-    def set_annual_change(self, type="determinist", parameters=[0]):
+    def set_annual_change(
+        self, change_type: str = "determinist", parameters: list[float] = [0]
+    ):
         # set an annual change of the water level
-        if type == "determinist":
+        if change_type == "determinist":
             self.dist_change = ot.Dirac(parameters)
-        elif type == "SAFE":  # specific formulation for SAFE
+        elif change_type == "SAFE":  # specific formulation for SAFE
             self.dist_change = parameters[0]
             self.HBN_factor = parameters[1]
-        elif type == "gamma":
+        elif change_type == "gamma":
             self.dist_change = ot.Gamma()
             self.dist_change.setParameter(ot.GammaMuSigma()(parameters))

@@ -141,6 +141,9 @@ class DikeSection:
             )
 
     def _get_load_input(self, input_path: Path) -> LoadInput:
+        """
+        TODO: Deprecated as we now load from database.
+        """
         # Read the data per mechanism, and first the load frequency line:
         _load = LoadInput(list(self.__dict__.keys()))
         if _load.load_type == "HRING":  # 2 HRING computations for different years
@@ -150,7 +153,7 @@ class DikeSection:
         elif _load.load_type == "SAFE":  # 2 computation as done for SAFE
             _load.set_fromDesignTable(input_path.joinpath("Toetspeil", self.LoadData))
             _load.set_annual_change(
-                type="SAFE",
+                change_type="SAFE",
                 parameters=[
                     self.YearlyWLRise,
                     self.HBNRise_factor,

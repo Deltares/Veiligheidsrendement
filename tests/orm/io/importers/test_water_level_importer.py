@@ -5,6 +5,7 @@ from peewee import SqliteDatabase
 from pytest import approx
 
 from tests.orm import empty_db_fixture
+from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
 from vrtool.orm.models import Mechanism
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -98,6 +99,24 @@ class TestWaterLevelImporter:
                 "beta": 4.4,
             },
         ]
+
+    def test_initialize_water_level_importer(self):
+        _importer = WaterLevelImporter(42)
+        assert isinstance(_importer, WaterLevelImporter)
+        assert isinstance(_importer, OrmImporterProtocol)
+        assert _importer.gridpoint == 42
+
+    def test_import_orm_without_no_water_level_data_doesnot_raise(self, empty_db_fixture: SqliteDatabase):
+        # 1. Define test data.
+        _importer = WaterLevelImporter(42)
+        _section_data = self._get_valid_section_data()
+        assert not any(_section_data.water_level_data_list)
+
+        # 2. Run test.
+        _load_input = _importer.import_orm(_section_data)
+
+        # 3. Verify expectations.
+        assert _load_input is None
 
     @pytest.fixture
     def valid_section_data(
