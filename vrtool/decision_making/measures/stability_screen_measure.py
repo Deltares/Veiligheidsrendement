@@ -91,7 +91,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name,
@@ -171,7 +171,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         SFincrease: float = 0.2,
     ) -> None:
 
-        _calc_type = dike_section.mechanism_data["StabilityInner"][1]
+        _calc_type = dike_section.mechanism_data["StabilityInner"][0][1]
 
         mechanism_reliability_input = mechanism_reliability.Input.input
         if _calc_type == "DStability":

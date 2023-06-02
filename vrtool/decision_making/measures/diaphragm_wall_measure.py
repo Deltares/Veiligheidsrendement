@@ -52,7 +52,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name, calc_type, dike_section, traject_info
@@ -154,7 +154,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
         self, mechanism_reliability: MechanismReliability
     ) -> None:
         mechanism_reliability.Input.input["elimination"] = "yes"
-        mechanism_reliability.Input.input["pf_elim"] = self.parameters["p_solution"]
+        mechanism_reliability.Input.input["pf_elim"] = self.parameters["P_solution"]
         mechanism_reliability.Input.input["pf_with_elim"] = self.parameters[
             "Pf_solution"
         ]

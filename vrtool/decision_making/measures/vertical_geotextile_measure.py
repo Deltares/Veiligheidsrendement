@@ -49,7 +49,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name, calc_type, dike_section, traject_info
@@ -126,5 +126,5 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         mechanism_reliability.Input.input["elimination"] = "yes"
         mechanism_reliability.Input.input["pf_elim"] = self.parameters["P_solution"]
         mechanism_reliability.Input.input["pf_with_elim"] = np.min(
-            [self.parameters["pf_solution"], 1.0e-16]
+            [self.parameters["Pf_solution"], 1.0e-16]
         )
