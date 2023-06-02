@@ -11,7 +11,7 @@ def calculate_reliability(safety_factor: np.ndarray) -> float:
     Returns:
         float: the safety factor.
     """
-    beta = ((safety_factor.item() / __model_factor) - 0.41) / 0.15
+    beta = ((safety_factor[0] / __model_factor) - 0.41) / 0.15
     beta = np.min([beta, 8.0])
     return beta
 

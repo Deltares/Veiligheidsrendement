@@ -46,7 +46,7 @@ class TestMain:
     def test_given_valid_input_when_run_full_then_succeeds(self):
         # TODO: Ideally we want a really small test.
         # 1. Define test data.
-        _input_dir = test_data / "integrated_SAFE_16-3_small"
+        _input_dir = test_data / "TestCase1_38-1_no_housing"
         assert _input_dir.exists()
 
         # Ensure we have a clean results dir.

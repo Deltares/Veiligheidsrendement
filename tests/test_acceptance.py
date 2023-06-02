@@ -15,12 +15,6 @@ from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 
 """This is a test based on 10 sections from traject 16-4 of the SAFE project"""
 _acceptance_test_cases = [
-    pytest.param(
-        "integrated_SAFE_16-3_small",
-        "16-3",
-        id="Traject 16-3, small (fast) test",
-        marks=[pytest.mark.skip(reason="Deprecated")],
-    ),
     pytest.param("TestCase1_38-1_no_housing", "38-1", id="Traject 38-1, no housing"),
     pytest.param(
         "TestCase1_38-1_no_housing_stix",

@@ -95,20 +95,20 @@ def implement_berm_widening(
             return berm_input
 
         # For stability factors
-        if "SF_2025" in berm_input:
+        if "sf_2025" in berm_input:
             # For now, inward and outward are the same!
             if (measure_parameters["Direction"] == "inward") or (
                 measure_parameters["Direction"] == "outward"
             ):
-                berm_input["SF_2025"] = berm_input["SF_2025"] + (
+                berm_input["sf_2025"] = berm_input["sf_2025"] + (
                     measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
-                berm_input["SF_2075"] = berm_input["SF_2075"] + (
+                berm_input["sf_2075"] = berm_input["sf_2075"] + (
                     measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input["SF_2025"] += SFincrease
-                berm_input["SF_2075"] += SFincrease
+                berm_input["sf_2025"] += SFincrease
+                berm_input["sf_2075"] += SFincrease
         # For betas as input
         elif "beta_2025" in berm_input:
             berm_input["beta_2025"] = berm_input["beta_2025"] + (
@@ -128,22 +128,28 @@ def implement_berm_widening(
                 ] = calculate_stability_inner_reliability_with_safety_screen(
                     berm_input["beta_2075"]
                 )
-        elif "BETA" in berm_input:
+        elif "beta" in berm_input:
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
-            berm_input["BETA"] = berm_input["BETA"] + (0.13 * measure_input["dberm"])
+            berm_input["beta"] = berm_input["beta"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
                 berm_input[
-                    "BETA"
+                    "beta"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["BETA"]
+                    berm_input["beta"]
                 )
         else:
-            raise Exception("Unknown input data for stability when widening the berm")
+            raise NotImplementedError(
+                "Unknown input data for stability when widening the berm, available: {}".format(
+                    ",".join(berm_input.keys())
+                )
+            )
 
     elif mechanism == "Piping":
-        berm_input["Lvoor"] = berm_input["Lvoor"] + measure_input["dberm"]
+        berm_input["l_voor"] = berm_input["l_voor"] + measure_input["dberm"]
         # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
-        berm_input["Lachter"] = (berm_input["Lachter"] - measure_input["dberm"]).clip(0)
+        berm_input["l_achter"] = (berm_input["l_achter"] - measure_input["dberm"]).clip(
+            0
+        )
     return berm_input
 
 

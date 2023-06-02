@@ -93,6 +93,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
             np.ndarray: A collection of the berm range.
         """
         berm_step = self.berm_step
+        if not isinstance(berm_step, np.ndarray):
+            berm_step = np.array(berm_step)
 
         # TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
         if self.parameters["Direction"] == "outward":
@@ -246,7 +248,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name,

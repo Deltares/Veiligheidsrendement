@@ -66,6 +66,7 @@ class MeasureImporter(OrmImporterProtocol):
             "Pf_solution"
         ] = orm_measure.failure_probability_with_solution
         _measure.parameters["ID"] = orm_measure.get_id()
+
         return _measure
 
     def _import_custom_measure(self, orm_measure: OrmCustomMeasure) -> CustomMeasure:

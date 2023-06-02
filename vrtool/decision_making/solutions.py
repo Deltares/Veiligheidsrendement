@@ -36,6 +36,7 @@ class Solutions:
 
         self.config = config
         self.T = config.T
+        self.trange = config.T
         # Mechanisms is deprecated, it will be replaced by "excluded_mechanisms".
         self.mechanisms = config.mechanisms
         self.measures: list[MeasureProtocol] = []
@@ -123,41 +124,21 @@ class Solutions:
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        preserve_slope: bool = False,
+        preserve_slope: bool,
     ):
         """This is the base routine to evaluate (i.e., determine costs and reliability) for each defined measure.
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures."""
-        self.trange = self.T
-        removal = []
-        for i, measure in enumerate(self.measures):
-            if measure.parameters["available"] == 1:
-                # old: measure.evaluateMeasure(DikeSection, TrajectInfo, preserve_slope = preserve_slope)
-                measure.evaluate_measure(
-                    dike_section, traject_info, preserve_slope=preserve_slope
-                )
-
-                # if measure.parameters['Type'] == 'Soil reinforcement':
-                #     A = Soilreinforcement()
-                #     A.evaluateMeasure(measure, DikeSection, TrajectInfo, preserve_slope = preserve_slope)
-                # elif measure.parameters['Type'] == 'DiaphragmWall':
-                #     DiaphragmWall.evaluateMeasure(measure,DikeSection, TrajectInfo)
-                # elif measure.parameters['Type'] == 'StabilityScreen':
-                #     StabilityScreen.evaluateMeasure(measure,DikeSection, TrajectInfo)
-                # elif measure.parameters['Type'] == 'VerticalGeotextile':
-                #     VerticalGeotextile.evaluateMeasure(measure,DikeSection, TrajectInfo)
-                # elif measure.parameters['Type'] == 'Custom':
-                #     CustomMeasure.evaluateMeasure(measure)
-            else:
-                removal.append(i)
-        # remove measures that are set to unavailable:
-        if len(removal) > 0:
-            for i in reversed(removal):
-                self.measures.pop(i)
+        # self.trange = self.T
+        for measure in self.measures:
+            measure.evaluate_measure(
+                dike_section, traject_info, preserve_slope=preserve_slope
+            )
 
     def solutions_to_dataframe(self, filtering=False, splitparams=False):
         # write all solutions to one single dataframe:
 
-        years = self.trange
+        years = self.T
+        # years = self.trange
         cols_r = pd.MultiIndex.from_product(
             [self.mechanisms + ["Section"], years], names=["base", "year"]
         )
