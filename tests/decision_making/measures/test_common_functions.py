@@ -77,12 +77,15 @@ _geometry_cases = {
 
 class TestCommonFunctions:
     def _from_dict_to_pd_geometry(self, geom_dict: dict) -> pd.DataFrame:
-        _dict = defaultdict(dict)
+        _dict = defaultdict(list)
         for _point_name, _point_values_dict in geom_dict.items():
+            _dict["type"].append(_point_name)
             for _coord_name, _coord_value in _point_values_dict.items():
-                _dict[_coord_name][_point_name] = _coord_value
+                _dict[_coord_name].append(_coord_value)
 
-        return pd.DataFrame.from_dict(_dict)
+        _df_geometry = pd.DataFrame(_dict)
+        _df_geometry.set_index("type")
+        return _df_geometry
 
     @pytest.mark.parametrize(
         "geometry_dictionary, direction, dxdy, expected_values",
