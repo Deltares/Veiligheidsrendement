@@ -47,43 +47,40 @@ _measure_input = {
 
 _geometry_cases = {
     "AW035_087": {
-        "BUT": {"x": -15, "z": 0.37},
-        "BUK": {"x": 0, "z": 5.37},
-        "BIK": {"x": 6, "z": 5.37},
-        "BIT": {"x": 21, "z": 0.37},
+        "BUT": [-15, 0.37],
+        "BUK": [0, 5.37],
+        "BIK": [6, 5.37],
+        "BIT": [21, 0.37],
     },
     "DV56": {
-        "innertoe": {"x": -24, "z": 1.392649},
-        "innercrest": {"x": -6, "z": 6.41152},
-        "outercrest": {"x": 0, "z": 6.41152},
-        "outertoe": {"x": 14, "z": 1.833213},
+        "innertoe": [-24, 1.392649],
+        "innercrest": [-6, 6.41152],
+        "outercrest": [0, 6.41152],
+        "outertoe": [14, 1.833213],
     },
     "DV53": {
-        "BIT": {"x": -28, "z": 1.253734},
-        "EBL": {"x": -22, "z": 3.016411},
-        "BBL": {"x": -16, "z": 3.016411},
-        "BIK": {"x": -6, "z": 6.616051},
-        "BUK": {"x": 0, "z": 6.616051},
-        "BUT": {"x": 18, "z": 1.229376},
+        "BIT": [-28, 1.253734],
+        "EBL": [-22, 3.016411],
+        "BBL": [-16, 3.016411],
+        "BIK": [-6, 6.616051],
+        "BUK": [0, 6.616051],
+        "BUT": [18, 1.229376],
     },
     "DV86": {
-        "innertoe": {"x": -22, "z": 1.287424},
-        "innercrest": {"x": -14, "z": 4.857041},
-        "outercrest": {"x": 0, "z": 4.857041},
-        "outertoe": {"x": 10, "z": 1.156215},
+        "innertoe": [-22, 1.287424],
+        "innercrest": [-14, 4.857041],
+        "outercrest": [0, 4.857041],
+        "outertoe": [10, 1.156215],
     },
 }
 
 
 class TestCommonFunctions:
     def _from_dict_to_pd_geometry(self, geom_dict: dict) -> pd.DataFrame:
-        _dict = defaultdict(list)
-        for _point_name, _point_values_dict in geom_dict.items():
-            _dict["type"].append(_point_name)
-            for _coord_name, _coord_value in _point_values_dict.items():
-                _dict[_coord_name].append(_coord_value)
+        def _to_record(geom_item) -> dict:
+            return dict(type=geom_item[0], x=geom_item[1][0], z=geom_item[1][1])
 
-        _df_geometry = pd.DataFrame(_dict)
+        _df_geometry = pd.DataFrame.from_records(map(_to_record, geom_dict.items()))
         _df_geometry.set_index("type")
         return _df_geometry
 
