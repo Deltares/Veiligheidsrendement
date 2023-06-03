@@ -11,6 +11,7 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
+import numpy as np
 
 
 class TestPipingImporter:
@@ -110,7 +111,7 @@ class TestPipingImporter:
         _mechanism_input = _importer.import_orm(_piping_per_section)
 
         # 3. Verify expectations.
-        assert len(_mechanism_input.input) == 5
+        assert len(_mechanism_input.input) == 7
         assert _mechanism_input.input["Scenario"] == [
             _computation_scenario1.scenario_name,
             _computation_scenario2.scenario_name,
@@ -123,6 +124,8 @@ class TestPipingImporter:
         assert _mechanism_input.input["P_scenario"][1] == pytest.approx(0.8)
         assert _mechanism_input.input["dh_exit(t)"][0] == pytest.approx(0.0051)
         assert _mechanism_input.input["dh_exit(t)"][1] == pytest.approx(0.0052)
+        assert _mechanism_input.input["Pf"] == 0.754
+        assert np.array_equal(_mechanism_input.input["Beta"], np.array([0, 0]))
         assert len(_mechanism_input.temporals) == 1
         assert _mechanism_input.temporals[0] == "dh_exit(t)"
 
