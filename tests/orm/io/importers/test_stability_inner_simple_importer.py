@@ -1,4 +1,4 @@
-import pandas as pd
+import numpy as np
 import pytest
 from peewee import SqliteDatabase
 
@@ -113,7 +113,7 @@ class TestStabilityInnerSimpleImporter:
         assert len(_mechanism_input.input) == len(parameters)
         for parameter in parameters:
             mechanism_parameter = _mechanism_input.input[parameter.get("parameter")]
-            assert isinstance(mechanism_parameter, pd.arrays.FloatingArray)
+            assert isinstance(mechanism_parameter, np.ndarray)
             assert mechanism_parameter == pytest.approx(parameter.get("value"))
 
     def test_import_orm_without_model_raises_value_error(self):

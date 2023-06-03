@@ -16,7 +16,8 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.orm.models import *
+import vrtool.orm.models as orm_models
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.orm_controllers import (
     get_dike_traject,
     get_dike_section_solutions,
@@ -97,33 +98,35 @@ class TestOrmControllers:
         initialize_database(_db_file)
 
         # 2. Define models.
-        _dike_traject_info: DikeTrajectInfo = DikeTrajectInfo.create(
-            **DummyModelsData.dike_traject_info
+        _dike_traject_info: orm_models.DikeTrajectInfo = (
+            orm_models.DikeTrajectInfo.create(**DummyModelsData.dike_traject_info)
         )
         _dike_traject_info.save()
 
-        _dike_section: SectionData = SectionData.create(
+        _dike_section: orm_models.SectionData = orm_models.SectionData.create(
             **(dict(dike_traject=_dike_traject_info) | DummyModelsData.section_data)
         )
         _dike_section.save()
 
         for _m_dict in DummyModelsData.mechanism_data:
-            _mechanism = Mechanism.create(**_m_dict)
+            _mechanism = orm_models.Mechanism.create(**_m_dict)
             _mechanism.save()
-            _mechanism_section = MechanismPerSection.create(
+            _mechanism_section = orm_models.MechanismPerSection.create(
                 mechanism=_mechanism, section=_dike_section
             )
             _mechanism_section.save()
 
         for _b_dict in DummyModelsData.buildings_data:
-            Buildings.create(**(_b_dict | dict(section_data=_dike_section))).save()
+            orm_models.Buildings.create(
+                **(_b_dict | dict(section_data=_dike_section))
+            ).save()
 
         for idx, _p_point in enumerate(DummyModelsData.profile_points):
-            _c_point = CharacteristicPointType.create(
+            _c_point = orm_models.CharacteristicPointType.create(
                 **dict(name=DummyModelsData.characteristic_point_type[idx])
             )
             _c_point.save()
-            ProfilePoint.create(
+            orm_models.ProfilePoint.create(
                 **(
                     _p_point
                     | dict(section_data=_dike_section, profile_point_type=_c_point)
@@ -144,8 +147,8 @@ class TestOrmControllers:
 
         # 3. Verify expectations
         assert isinstance(_sql_db, SqliteDatabase)
-        assert any(SectionData.select())
-        _section_data: SectionData = SectionData.get_by_id(1)
+        assert any(orm_models.SectionData.select())
+        _section_data: orm_models.SectionData = orm_models.SectionData.get_by_id(1)
         assert _section_data.section_name == _expected_data["section_name"]
         assert _section_data.dijkpaal_start == _expected_data["dijkpaal_start"]
         assert _section_data.dijkpaal_end == _expected_data["dijkpaal_end"]
@@ -238,6 +241,7 @@ class TestOrmControllers:
             "EBL": [42.0, 5.694],
             "BIT": [47.0, 5.104],
         }
+        _general_info = DikeTrajectInfo()
 
         def _to_record(geom_item: tuple[str, list[int]]) -> dict:
             return dict(type=geom_item[0], x=geom_item[1][0], y=geom_item[1][1])
@@ -247,7 +251,9 @@ class TestOrmControllers:
         )
 
         # 2. Run test.
-        _solutions = get_dike_section_solutions(database_vrtool_config, _dike_section)
+        _solutions = get_dike_section_solutions(
+            database_vrtool_config, _dike_section, _general_info
+        )
 
         # 3. Verify expectations.
         assert isinstance(_solutions, Solutions)

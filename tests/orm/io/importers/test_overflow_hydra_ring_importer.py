@@ -141,8 +141,13 @@ class TestOverflowHydraRingImporter:
         assert _mechanism_input.mechanism == "Overflow"
         assert len(_mechanism_input.input) == len(parameters) + 1
         for parameter in parameters:
-            assert _mechanism_input.input[parameter.get("parameter")] == pytest.approx(
-                parameter.get("value")
+            assert _mechanism_input.input[parameter["parameter"]] == pytest.approx(
+                parameter["value"],
+                "Different values for {}: {}, got: {}".format(
+                    parameter["parameter"],
+                    parameter["value"],
+                    _mechanism_input.input[parameter["parameter"]],
+                ),
             )
 
         _mechanism_table_data = _mechanism_input.input["hc_beta"]

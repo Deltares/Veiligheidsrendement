@@ -25,6 +25,14 @@ class DikeSection:
     InitialGeometry: pd.DataFrame
     Length: float
 
+    def __init__(self) -> None:
+        self.mechanism_data = {}
+        self.section_reliability = SectionReliability()
+        self.TrajectInfo = None
+        self.name = ""
+        self.Length = float("nan")
+        self.InitialGeometry = None
+
     @classmethod
     def get_dike_sections_from_vr_config(
         cls, vrtool_config: VrtoolConfig
