@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import defaultdict
 
 import shutil
 from pathlib import Path
@@ -44,46 +45,123 @@ _measure_input = {
     "StabilityScreen": "yes",
 }
 
+_geometry_cases = {
+    "AW035_087": {
+        "BUT": {"x": -15, "z": 0.37},
+        "BUK": {"x": 0, "z": 5.37},
+        "BIK": {"x": 6, "z": 5.37},
+        "BIT": {"x": 21, "z": 0.37},
+    },
+    "DV56": {
+        "innertoe": {"x": -24, "z": 1.392649},
+        "innercrest": {"x": -6, "z": 6.41152},
+        "outercrest": {"x": 0, "z": 6.41152},
+        "outertoe": {"x": 14, "z": 1.833213},
+    },
+    "DV53": {
+        "BIT": {"x": -28, "z": 1.253734},
+        "EBL": {"x": -22, "z": 3.016411},
+        "BBL": {"x": -16, "z": 3.016411},
+        "BIK": {"x": -6, "z": 6.616051},
+        "BUK": {"x": 0, "z": 6.616051},
+        "BUT": {"x": 18, "z": 1.229376},
+    },
+    "DV86": {
+        "innertoe": {"x": -22, "z": 1.287424},
+        "innercrest": {"x": -14, "z": 4.857041},
+        "outercrest": {"x": 0, "z": 4.857041},
+        "outertoe": {"x": 10, "z": 1.156215},
+    },
+}
+
 
 class TestCommonFunctions:
+    def _from_dict_to_pd_geometry(self, geom_dict: dict) -> pd.DataFrame:
+        _dict = defaultdict(dict)
+        for _point_name, _point_values_dict in geom_dict.items():
+            for _coord_name, _coord_value in _point_values_dict.items():
+                _dict[_coord_name][_point_name] = _coord_value
+
+        return pd.DataFrame.from_dict(_dict)
+
     @pytest.mark.parametrize(
-        "sheetFileName, direction, dxdy, dcrest_extra, expected_values",
+        "geometry_dictionary, direction, dxdy, expected_values",
         [
             pytest.param(
-                "AW035_087.xlsx",
+                _geometry_cases["AW035_087"],
                 "outward",
                 (0, 20),
-                0,
                 (83.67, 0.0),
-                id="No Berm case 1a",
+                id="No Berm - AW035_087",
             ),
             pytest.param(
-                "AW035_087.xlsx",
+                _geometry_cases["AW035_087"],
                 "inward",
                 (0, 20),
-                0,
                 (40.00, 20.0),
-                id="No Berm case 1b",
+                id="No Berm - AW035_087",
             ),
             pytest.param(
-                "DV56.xlsx", "outward", (0, 20), 0, (76.82, 0.0), id="No Berm case 2"
+                _geometry_cases["DV56"],
+                "outward",
+                (0, 20),
+                (76.82, 0.0),
+                id="No Berm - DV56",
             ),
             pytest.param(
-                "DV53.xlsx", "inward", (0.5, 10), 0, (37.80, 13.06), id="Inward case"
+                _geometry_cases["DV53"],
+                "inward",
+                (0.5, 10),
+                (37.80, 13.06),
+                id="Inward - DV53",
             ),
             pytest.param(
-                "DV53.xlsx", "outward", (0, 20), 0, (91.72, 0.0), id="Outward case"
+                _geometry_cases["DV53"],
+                "outward",
+                (0, 20),
+                (91.72, 0.0),
+                id="Outward - DV53",
             ),
             pytest.param(
-                "DV86.xlsx",
+                _geometry_cases["DV86"],
                 "outward",
                 (0, 30),
-                0,
                 (90.375, 10.0),
-                id="Outward 30m case",
+                id="Outward 30m - DV86",
             ),
+        ],
+    )
+    def test_determine_new_geometry_dcrest_extra_greater_than_zero(
+        self,
+        geometry_dictionary: dict,
+        direction: str,
+        dxdy: tuple[float, float],
+        expected_values: tuple[float, float],
+    ):
+        # 1. Define test data.
+        _traject_test_data = self._from_dict_to_pd_geometry(geometry_dictionary)
+
+        # 2. Run test.
+        _reinforced_geometry = determine_new_geometry(
+            dxdy,
+            direction=direction,
+            max_berm_out=20.0,
+            initial=_traject_test_data,
+            berm_height=2,
+            geometry_plot=False,
+        )
+
+        # 3. Verify expectations.
+        _tolerance = 0.001
+        _reinforcement_1, _reinforcement_3 = expected_values
+        assert _reinforced_geometry[1] == pytest.approx(_reinforcement_1, _tolerance)
+        assert _reinforced_geometry[3] == pytest.approx(_reinforcement_3, _tolerance)
+
+    @pytest.mark.parametrize(
+        "geometry_dictionary, direction, dxdy, dcrest_extra, expected_values",
+        [
             pytest.param(
-                "DV53.xlsx",
+                _geometry_cases["DV53"],
                 "inward",
                 (0.5, 10),
                 0.4,
@@ -92,48 +170,27 @@ class TestCommonFunctions:
             ),
         ],
     )
-    def test_new_geom(
+    def test_determine_new_geometry_dcrest_extra_less_or_equal_than_zero(
         self,
-        sheetFileName: str,
+        geometry_dictionary: dict,
         direction: str,
         dxdy: tuple[float, float],
         dcrest_extra: float,
         expected_values: tuple[float, float],
     ):
         # 1. Define test data.
-        _traject_test_file = test_data.joinpath(
-            "integrated_SAFE_16-3_small", sheetFileName
-        )
-        assert _traject_test_file.exists(), "No test file found at {}".format(
-            _traject_test_file
-        )
-
-        _traject_test_data = pd.read_excel(
-            _traject_test_file,
-            sheet_name="Geometry",
-            index_col=0,
-        )
+        _traject_test_data = self._from_dict_to_pd_geometry(geometry_dictionary)
 
         # 2. Run test.
-        if dcrest_extra > 0.0:
-            _reinforced_geometry = determine_new_geometry(
-                dxdy,
-                direction=direction,
-                max_berm_out=20.0,
-                initial=_traject_test_data,
-                berm_height=2,
-                geometry_plot=False,
-                crest_extra=_traject_test_data["z"].max() - dcrest_extra,
-            )
-        else:
-            _reinforced_geometry = determine_new_geometry(
-                dxdy,
-                direction=direction,
-                max_berm_out=20.0,
-                initial=_traject_test_data,
-                berm_height=2,
-                geometry_plot=False,
-            )
+        _reinforced_geometry = determine_new_geometry(
+            dxdy,
+            direction=direction,
+            max_berm_out=20.0,
+            initial=_traject_test_data,
+            berm_height=2,
+            geometry_plot=False,
+            crest_extra=_traject_test_data["z"].max() - dcrest_extra,
+        )
 
         # 3. Verify expectations.
         _tolerance = 0.001
