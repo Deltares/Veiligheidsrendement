@@ -8,7 +8,11 @@ from vrtool.probabilistic_tools.hydra_ring_scripts import design_table_openturns
 
 class LoadInput:
     # class to store load data
-    def __init__(self, section_fields):
+    load_type: str
+
+    def __init__(self, section_fields: list[str]):
+        self.load_type = ""
+        self.input = {}
         if "Load_2025" in section_fields:
             self.load_type = "HRING"
         elif "YearlyWLRise" in section_fields:

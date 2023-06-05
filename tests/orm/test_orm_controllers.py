@@ -12,6 +12,7 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
@@ -181,14 +182,19 @@ class TestOrmControllers:
         assert str(exc_err.value) == "No file was found at {}".format(_db_file)
 
     @pytest.fixture
-    def database_vrtool_config(self) -> VrtoolConfig:
+    def database_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
         _db_file = test_data / "test_db" / "with_valid_data.db"
         assert _db_file.is_file()
 
-        return VrtoolConfig(
+        _vrtool_config = VrtoolConfig(
             input_database_path=_db_file, traject="38-1", input_directory=test_data
         )
+        _vrtool_config.output_directory = test_results.joinpath(request.node.name)
+        if _vrtool_config.output_directory.exists():
+            shutil.rmtree(_vrtool_config.output_directory)
+
+        yield _vrtool_config
 
     def test_get_dike_traject(self, database_vrtool_config: VrtoolConfig):
         # 2. Run test.
@@ -229,10 +235,32 @@ class TestOrmControllers:
         all(map(check_section_reliability, _dike_traject.sections))
 
     def test_get_dike_section_solutions(self, database_vrtool_config: VrtoolConfig):
+
         # 1. Define test data.
+        database_vrtool_config.plot_measure_reliability = False
+        database_vrtool_config.T = [0]
+        _general_info = DikeTrajectInfo()
         _dike_section = DikeSection()
         _dike_section.name = "01A"
         _dike_section.Length = 359.0
+
+        # Stability Inner
+        _water_load_input = LoadInput([])
+        _water_load_input.input["d_cover"] = None
+        _water_load_input.input["beta"] = 42.24
+        _stability_inner_collection = MechanismReliabilityCollection(
+            "StabilityInner", "combinable", database_vrtool_config.T, 2023, 2025
+        )
+        _stability_inner_collection.Reliability["0"].Input = _water_load_input
+        _dike_section.section_reliability.load = _water_load_input
+        _dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
+            "StabilityInner"
+        ] = _stability_inner_collection
+
+        # Initial Geometry
+        def _to_record(geom_item: tuple[str, list[int]]) -> dict:
+            return dict(type=geom_item[0], x=geom_item[1][0], z=geom_item[1][1])
+
         _initial_geom = {
             "BUT": [-17.0, 4.996],
             "BUK": [0, 10.939],
@@ -241,15 +269,15 @@ class TestOrmControllers:
             "EBL": [42.0, 5.694],
             "BIT": [47.0, 5.104],
         }
-        _general_info = DikeTrajectInfo()
-
-        def _to_record(geom_item: tuple[str, list[int]]) -> dict:
-            return dict(type=geom_item[0], x=geom_item[1][0], y=geom_item[1][1])
-
         _dike_section.InitialGeometry = pd.DataFrame.from_records(
             map(_to_record, _initial_geom.items())
         )
 
+        # Mechanism data
+        _dike_section.mechanism_data["StabilityInner"] = [
+            ("RW000", "SIMPLE"),
+            "combinable",
+        ]
         # 2. Run test.
         _solutions = get_dike_section_solutions(
             database_vrtool_config, _dike_section, _general_info

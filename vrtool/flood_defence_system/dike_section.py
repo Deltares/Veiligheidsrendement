@@ -24,6 +24,7 @@ class DikeSection:
     name: str
     InitialGeometry: pd.DataFrame
     Length: float
+    houses: pd.DataFrame
 
     def __init__(self) -> None:
         self.mechanism_data = {}
@@ -32,6 +33,7 @@ class DikeSection:
         self.name = ""
         self.Length = float("nan")
         self.InitialGeometry = None
+        self.houses = None
 
     @classmethod
     def get_dike_sections_from_vr_config(
