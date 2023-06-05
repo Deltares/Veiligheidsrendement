@@ -28,6 +28,7 @@ class Solutions:
     config: VrtoolConfig
     T: list[int]
     measures: list[MeasureProtocol]
+    measure_table = pd.DataFrame
 
     def __init__(self, dike_section: DikeSection, config: VrtoolConfig):
         self.section_name = dike_section.name
@@ -40,6 +41,7 @@ class Solutions:
         # Mechanisms is deprecated, it will be replaced by "excluded_mechanisms".
         self.mechanisms = config.mechanisms
         self.measures: list[MeasureProtocol] = []
+        self.measure_table = pd.DataFrame(columns=["ID", "Name"])
 
     def load_solutions_from_file(self, excel_sheet: Path):
         """DEPRECATED (we use the SQLite database now): This routine reads input for the measures from the Excel sheet for each section.

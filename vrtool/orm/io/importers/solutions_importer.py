@@ -23,6 +23,30 @@ class SolutionsImporter(OrmImporterProtocol):
         _measure_importer = MeasureImporter(self._config)
         return list(map(_measure_importer.import_orm, orm_measures))
 
+    def _set_measure_table(self, solution: Solutions):
+        _combinables = []
+        _partials = []
+        for i, measure in enumerate(solution.measures):
+            solution.measure_table.loc[i] = [
+                str(measure.parameters["ID"]),
+                measure.parameters["Name"],
+            ]
+            # also add the potential combined solutions up front
+            if measure.parameters["Class"] == "combinable":
+                _combinables.append(
+                    (measure.parameters["ID"], measure.parameters["Name"])
+                )
+            if measure.parameters["Class"] == "partial":
+                _partials.append((measure.parameters["ID"], measure.parameters["Name"]))
+        count = 0
+        for i in range(0, len(_partials)):
+            for j in range(0, len(_combinables)):
+                solution.measure_table.loc[count + len(solution.measures) + 1] = [
+                    str(_partials[i][0]) + "+" + str(_combinables[j][0]),
+                    str(_partials[i][1]) + "+" + str(_combinables[j][1]),
+                ]
+                count += 1
+
     def import_orm(self, orm_model: SectionData) -> Solutions:
 
         if not orm_model:
@@ -43,4 +67,5 @@ class SolutionsImporter(OrmImporterProtocol):
                 .where(orm_model.id == MeasurePerSection.section_id)
             )
         )
+        self._set_measure_table(_solutions)
         return _solutions

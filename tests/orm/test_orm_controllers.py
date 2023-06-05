@@ -237,7 +237,6 @@ class TestOrmControllers:
     def test_get_dike_section_solutions(self, database_vrtool_config: VrtoolConfig):
 
         # 1. Define test data.
-        database_vrtool_config.plot_measure_reliability = False
         database_vrtool_config.T = [0]
         _general_info = DikeTrajectInfo()
         _dike_section = DikeSection()
