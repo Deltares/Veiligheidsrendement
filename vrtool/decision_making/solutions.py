@@ -43,81 +43,11 @@ class Solutions:
         self.measures: list[MeasureProtocol] = []
         self.measure_table = pd.DataFrame(columns=["ID", "Name"])
 
-    def load_solutions_from_file(self, excel_sheet: Path):
-        """DEPRECATED (we use the SQLite database now): This routine reads input for the measures from the Excel sheet for each section.
-        It identifies combinables and partials and identifies possible combinations of measures this way.
-        These are then stored in the MeasureTable, which is later evaluated.
-        """
-        data = pd.read_excel(excel_sheet, "Measures")
-        combinables = []
-        partials = []
-        for i in data.index:
-            # TODO depending on data.loc[i].type make correct sublclass
-
-            loc_data = data.loc[i]
-            measure_type = data.loc[i].Type
-            if measure_type == "Soil reinforcement":
-                if not self._is_soil_reinforcement_measure_valid(
-                    loc_data.StabilityScreen
-                ):
-                    logging.warn(
-                        f'No stability inner mechanism present for soil reinforcement with stability screen measure "{loc_data.ID}" in "{excel_sheet.stem}."'
-                    )
-                else:
-                    self.measures.append(
-                        SoilReinforcementMeasure(data.loc[i], self.config)
-                    )
-            elif measure_type == "Diaphragm Wall":
-                self.measures.append(DiaphragmWallMeasure(data.loc[i], self.config))
-            elif measure_type == "Stability Screen":
-                if not self._is_stability_screen_measure_valid():
-                    logging.warn(
-                        f'No stability inner mechanism present for stability screen measure "{loc_data.ID}" in "{excel_sheet.stem}."'
-                    )
-                else:
-                    self.measures.append(
-                        StabilityScreenMeasure(data.loc[i], self.config)
-                    )
-            elif measure_type == "Vertical Geotextile":
-                self.measures.append(
-                    VerticalGeotextileMeasure(data.loc[i], self.config)
-                )
-            elif data.loc[i].Type == "Custom":
-                data.loc[i, "File"] = excel_sheet.parent.joinpath(
-                    "Measures", data.loc[i]["File"]
-                )
-                self.measures.append(CustomMeasure(data.loc[i], self.config))
-
-        self.measure_table = pd.DataFrame(columns=["ID", "Name"])
-        for i, measure in enumerate(self.measures):
-            if measure.parameters["available"] == 1:
-                self.measure_table.loc[i] = [
-                    str(measure.parameters["ID"]),
-                    measure.parameters["Name"],
-                ]
-                # also add the potential combined solutions up front
-                if measure.parameters["Class"] == "combinable":
-                    combinables.append(
-                        (measure.parameters["ID"], measure.parameters["Name"])
-                    )
-                if measure.parameters["Class"] == "partial":
-                    partials.append(
-                        (measure.parameters["ID"], measure.parameters["Name"])
-                    )
-        count = 0
-        for i in range(0, len(partials)):
-            for j in range(0, len(combinables)):
-                self.measure_table.loc[count + len(self.measures) + 1] = [
-                    str(partials[i][0]) + "+" + str(combinables[j][0]),
-                    str(partials[i][1]) + "+" + str(combinables[j][1]),
-                ]
-                count += 1
-
     def _is_stability_screen_measure_valid(self) -> bool:
         return "StabilityInner" in self.mechanisms
 
     def _is_soil_reinforcement_measure_valid(self, stability_screen: str) -> bool:
-        if stability_screen == "yes":
+        if stability_screen.lower().strip() == "yes":
             return self._is_stability_screen_measure_valid()
 
         return True
