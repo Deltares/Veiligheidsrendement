@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from peewee import SqliteDatabase
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection

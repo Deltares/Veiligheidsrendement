@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from peewee import SqliteDatabase
 
@@ -11,7 +12,6 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
-import numpy as np
 
 
 class TestPipingImporter:
