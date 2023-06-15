@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -19,7 +18,6 @@ from vrtool.orm.io.importers.mechanism_reliability_collection_importer import (
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
 from vrtool.orm.models.buildings import Buildings
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -46,17 +44,19 @@ class DikeSectionImporter(OrmImporterProtocol):
             [_building.distance_from_toe, _building.number_of_buildings]
             for _building in buildings_list
         ]
-        return pd.DataFrame(_buildings_data, columns=["distancefromtoe", "cumulative"])
+        return pd.DataFrame(
+            _buildings_data, columns=["distancefromtoe", "cumulative"]
+        ).set_index("distancefromtoe")
 
     def _import_geometry(self, section_data: SectionData) -> pd.DataFrame:
         _importer = GeometryImporter()
         return _importer.import_orm(section_data)
 
-    def _get_mechanism_data(
+    def _get_mechanism_reliability_collection_list(
         self, section_data: SectionData
-    ) -> dict[str, MechanismReliabilityCollection]:
+    ) -> list[MechanismReliabilityCollection]:
         _importer = MechanismReliabilityCollectionImporter(self._config)
-        _mechanism_data = {}
+        _mechanism_data = []
         for _mechanism_per_section in section_data.mechanisms_per_section:
             if not any(_mechanism_per_section.computation_scenarios):
                 logging.error(
@@ -65,29 +65,35 @@ class DikeSectionImporter(OrmImporterProtocol):
                         _mechanism_per_section.mechanism.name,
                     )
                 )
-                _mechanism_data[_mechanism_per_section.mechanism.name] = ()
             else:
-                _mechanism_data[
-                    _mechanism_per_section.mechanism.name
-                ] = _importer.import_orm(_mechanism_per_section)
+                _mechanism_data.append(_importer.import_orm(_mechanism_per_section))
+        return _mechanism_data
+
+    def _get_mechanism_data(
+        self, section_data: SectionData
+    ) -> dict[str, tuple[str, str]]:
+        _mechanism_data = {}
+        for _mechanism_per_section in section_data.mechanisms_per_section:
+            _available_cs = []
+            for _cs in _mechanism_per_section.computation_scenarios:
+                _available_cs.append((_cs.scenario_name, _cs.computation_type.name))
+            _mechanism_data[_mechanism_per_section.mechanism.name] = _available_cs
         return _mechanism_data
 
     def _get_section_reliability(
         self,
         section_data: SectionData,
-        mechanism_collection: dict[str, MechanismReliabilityCollection],
     ) -> SectionReliability:
         _section_reliability = SectionReliability()
+
         _section_reliability.load = WaterLevelImporter(gridpoints=1000).import_orm(
             section_data
         )
 
-        for _mechanism_name, _mechanism_data in mechanism_collection.items():
-            if not _mechanism_data:
-                logging.error(
-                    "No mechanism data available for {}".format(_mechanism_name)
-                )
-                continue
+        _mechanism_collection = self._get_mechanism_reliability_collection_list(
+            section_data
+        )
+        for _mechanism_data in _mechanism_collection:
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
                 _mechanism_data
             )
@@ -104,8 +110,7 @@ class DikeSectionImporter(OrmImporterProtocol):
         _dike_section.InitialGeometry = self._import_geometry(orm_model)
         # TODO: Not entirely sure mechanism_data is correctly set. Technically should not be needed anymore.
         _dike_section.mechanism_data = self._get_mechanism_data(orm_model)
-        _dike_section.section_reliability = self._get_section_reliability(
-            orm_model, _dike_section.mechanism_data
-        )
+        _dike_section.section_reliability = self._get_section_reliability(orm_model)
+        _dike_section.Length = orm_model.section_length
 
         return _dike_section

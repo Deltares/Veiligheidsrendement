@@ -7,7 +7,7 @@ from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     probabilistic_design,
 )
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -16,7 +16,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class DiaphragmWallMeasure(MeasureBase):
+class DiaphragmWallMeasure(MeasureProtocol):
     # type == 'Diaphragm Wall':
     def evaluate_measure(
         self,
@@ -52,7 +52,7 @@ class DiaphragmWallMeasure(MeasureBase):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name, calc_type, dike_section, traject_info
@@ -113,7 +113,7 @@ class DiaphragmWallMeasure(MeasureBase):
         Pt = traject_info.Pmax * traject_info.omegaOverflow
 
         mechanism_input = mechanism_reliability.Input.input
-        if mechanism_reliability.type == "Simple":
+        if mechanism_reliability.mechanism_type == "Simple":
             if hasattr(dike_section, "HBNRise_factor"):
                 hc = probabilistic_design(
                     "h_crest",
@@ -153,8 +153,8 @@ class DiaphragmWallMeasure(MeasureBase):
     def _configure_piping_or_stability_inner(
         self, mechanism_reliability: MechanismReliability
     ) -> None:
-        mechanism_reliability.Input.input["Elimination"] = "yes"
-        mechanism_reliability.Input.input["Pf_elim"] = self.parameters["P_solution"]
-        mechanism_reliability.Input.input["Pf_with_elim"] = self.parameters[
+        mechanism_reliability.Input.input["elimination"] = "yes"
+        mechanism_reliability.Input.input["pf_elim"] = self.parameters["P_solution"]
+        mechanism_reliability.Input.input["pf_with_elim"] = self.parameters[
             "Pf_solution"
         ]

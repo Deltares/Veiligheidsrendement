@@ -9,7 +9,7 @@ from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
     implement_berm_widening,
 )
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
     ModifiedDikeGeometryMeasureInput,
 )
@@ -20,8 +20,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class SoilReinforcementMeasure(MeasureBase):
-    # type == 'Soil reinforcement':
+class SoilReinforcementMeasure(MeasureProtocol):
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -94,6 +93,8 @@ class SoilReinforcementMeasure(MeasureBase):
             np.ndarray: A collection of the berm range.
         """
         berm_step = self.berm_step
+        if not isinstance(berm_step, np.ndarray):
+            berm_step = np.array(berm_step)
 
         # TODO: CLEAN UP, make distinction between inwards and outwards, so xin, xout and y,and adapt DetermineNewGeometry
         if self.parameters["Direction"] == "outward":
@@ -247,7 +248,7 @@ class SoilReinforcementMeasure(MeasureBase):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name,

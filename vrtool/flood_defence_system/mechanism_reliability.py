@@ -31,16 +31,28 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calcu
 
 
 class MechanismReliability:
+    Pf: float
+    Beta: np.ndarray
+
     # This class contains evaluations of the reliability for a mechanism in a given year.
-    def __init__(self, mechanism, type, t_0: int, copy_or_calculate="calculate"):
+    def __init__(
+        self,
+        mechanism_name: str,
+        mechanism_type: str,
+        t_0: int,
+        copy_or_calculate="calculate",
+    ):
         # Initialize: set mechanism and type. These are the most important basic parameters
-        self.mechanism = mechanism
-        self.type = type
+        self.mechanism = mechanism_name
+        self.mechanism_type = mechanism_type
         self.t_0 = t_0
         self.copy_or_calculate = copy_or_calculate
 
         self.Input = MechanismInput(self.mechanism)
-        if mechanism == "Piping":
+        self.Pf = float("nan")
+        self.Beta = float("nan")
+
+        if mechanism_name == "Piping":
             self.gamma_schem_heave = 1  # 1.05
             self.gamma_schem_upl = 1  # 1.05
             self.gamma_schem_pip = 1  # 1.05
@@ -55,7 +67,7 @@ class MechanismReliability:
             if i != "mechanism":
                 setattr(self, i, None)
 
-    def calcReliability(
+    def calculate_reliability(
         self,
         strength: MechanismInput,
         load: LoadInput,
@@ -76,24 +88,24 @@ class MechanismReliability:
         strength: Optional[MechanismInput],
         load: Optional[LoadInput],
     ) -> FailureMechanismCalculatorProtocol:
-
-        if self.type == "DirectInput":
+        _normalized_type = self.mechanism_type.lower().strip()
+        if _normalized_type == "directinput":
             return self._get_direct_input_calculator(strength)
 
-        if self.type == "HRING":
+        if _normalized_type == "hring":
             return self._get_hydra_ring_calculator(mechanism, self.Input)
 
-        if self.type == "Simple":
+        if _normalized_type == "simple":
             return self._get_simple_calculator(mechanism, strength, load)
 
-        if self.type == "SemiProb":
+        if _normalized_type == "semiprob":
             return self._get_semi_probabilistic_calculator(
                 mechanism, strength, load, traject_info
             )
-        if self.type == "DStability":
+        if _normalized_type == "dstability":
             return self._get_d_stability_calculator(mechanism, strength)
 
-        raise Exception("Unknown computation type {}".format(self.type))
+        raise Exception("Unknown computation type {}".format(self.mechanism_type))
 
     def _get_direct_input_calculator(
         self, mechanism_input: MechanismInput

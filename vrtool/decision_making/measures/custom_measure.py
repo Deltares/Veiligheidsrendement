@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -15,7 +15,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class CustomMeasure(MeasureBase):
+class CustomMeasure(MeasureProtocol):
     def set_input(self, section: DikeSection):
         try:
             try:
@@ -167,7 +167,7 @@ class CustomMeasure(MeasureBase):
         self, mechanism_reliability: MechanismReliability, mechanism_name: str
     ) -> None:
         # Direct input: remove existing inputs and replace with beta
-        mechanism_reliability.type = "DirectInput"
+        mechanism_reliability.mechanism_type = "DirectInput"
         mechanism_reliability.Input.input = {}
         mechanism_reliability.Input.input["beta"] = {}
 

@@ -7,7 +7,7 @@ import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
 )
@@ -23,7 +23,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class StabilityScreenMeasure(MeasureBase):
+class StabilityScreenMeasure(MeasureProtocol):
     # type == 'Stability Screen':
     def evaluate_measure(
         self,
@@ -91,7 +91,7 @@ class StabilityScreenMeasure(MeasureBase):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name,
@@ -171,7 +171,7 @@ class StabilityScreenMeasure(MeasureBase):
         SFincrease: float = 0.2,
     ) -> None:
 
-        _calc_type = dike_section.mechanism_data["StabilityInner"][1]
+        _calc_type = dike_section.mechanism_data["StabilityInner"][0][1]
 
         mechanism_reliability_input = mechanism_reliability.Input.input
         if _calc_type == "DStability":

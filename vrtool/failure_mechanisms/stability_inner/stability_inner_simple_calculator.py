@@ -68,7 +68,7 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
 
             case ReliabilityCalculationMethod.BETA_SINGLE:
                 # situation where beta is constant in time
-                beta = np.min([self._mechanism_input.beta.item(), 8.0])
+                beta = np.min([self._mechanism_input.beta, 8.0])
 
         # Check if there is an elimination measure present (diaphragm wall)
         if self._mechanism_input.is_eliminated:

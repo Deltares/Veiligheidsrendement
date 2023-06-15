@@ -6,38 +6,45 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.water_level_data import WaterlevelData
 from vrtool.probabilistic_tools.probabilistic_functions import TableDist, beta_to_pf
+import logging
 
 
 class WaterLevelImporter(OrmImporterProtocol):
     gridpoint: int
 
     def __init__(self, gridpoints: int) -> None:
-        super().__init__()
         self.gridpoint = gridpoints
 
     def import_orm(self, orm_model: SectionData) -> LoadInput:
 
-        years = orm_model.water_level_data_list.select(WaterlevelData.year).distinct()
+        _available_years = orm_model.water_level_data_list.select(
+            WaterlevelData.year
+        ).distinct()
+        if not any(_available_years):
+            logging.warning(
+                f"No available water level data for {orm_model.section_name}."
+            )
+            return None
 
-        load = LoadInput([])
-        load.distribution = {}
-        for yr in years:
+        _load_input = LoadInput([])
+        _load_input.distribution = {}
+        for yr in _available_years:
             year = yr.year
-            waterLevels = (
+            _water_level_list = (
                 orm_model.water_level_data_list.select()
                 .where(WaterlevelData.year == year)
                 .order_by(WaterlevelData.water_level.asc())
             )
-            waterLevelsCnt = len(waterLevels)
-            wls = np.zeros(waterLevelsCnt)
-            p_nexc = np.zeros(waterLevelsCnt)
+            _wl_count = len(_water_level_list)
+            wls = np.zeros(_wl_count)
+            p_nexc = np.zeros(_wl_count)
             index = 0
-            for waterLevel in waterLevels:
+            for waterLevel in _water_level_list:
                 wls[index] = waterLevel.water_level
                 p_nexc[index] = 1.0 - beta_to_pf(waterLevel.beta)
                 index += 1
 
-            load.distribution[year] = ot.Distribution(
+            _load_input.distribution[year] = ot.Distribution(
                 TableDist(
                     wls,
                     p_nexc,
@@ -46,4 +53,4 @@ class WaterLevelImporter(OrmImporterProtocol):
                     gridpoints=self.gridpoint,
                 )
             )
-        return load
+        return _load_input

@@ -18,7 +18,7 @@ class StabilityInnerSimpleInput:
 
     beta_2025: np.ndarray
     beta_2075: np.ndarray
-    beta: np.ndarray
+    beta: float
 
     failure_probability_with_elimination: np.ndarray
     failure_probability_elimination: np.ndarray
@@ -40,14 +40,14 @@ class StabilityInnerSimpleInput:
         _safety_factor_2075 = None
         _beta_2075 = None
 
-        _safety_factor_2025 = mechanism_input.input.get("SF_2025", None)
+        _safety_factor_2025 = mechanism_input.input.get("sf_2025", None)
         _beta_2025 = mechanism_input.input.get("beta_2025", None)
-        _beta = mechanism_input.input.get("BETA", None)
+        _beta = mechanism_input.input.get("beta", None)
 
         # If all input is defined, the safety factor takes precedence in which
         # reliability calculation method should be used
         if _safety_factor_2025:
-            _safety_factor_2075 = mechanism_input.input["SF_2075"]
+            _safety_factor_2075 = mechanism_input.input["sf_2075"]
 
             _beta_2025 = None
             _beta = None
@@ -65,19 +65,20 @@ class StabilityInnerSimpleInput:
         elif _beta:
             _safety_factor_2025 = None
             _beta_2025 = None
-
+            if isinstance(_beta, np.ndarray):
+                _beta = _beta[0]
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_SINGLE
         else:
             raise Exception("Warning: No input values SF or Beta StabilityInner")
 
-        _is_eliminated = mechanism_input.input.get("Elimination", False)
+        _is_eliminated = mechanism_input.input.get("elimination", False)
         _failure_probability_elimination = None
         _failure_probability_with_elimination = None
         if _get_valid_bool_value(_is_eliminated):
             _is_eliminated = True
-            _failure_probability_elimination = mechanism_input.input["Pf_elim"]
+            _failure_probability_elimination = mechanism_input.input["pf_elim"]
             _failure_probability_with_elimination = mechanism_input.input[
-                "Pf_with_elim"
+                "pf_with_elim"
             ]
         elif _is_eliminated:
             raise ValueError("Warning: Elimination defined but not turned on")

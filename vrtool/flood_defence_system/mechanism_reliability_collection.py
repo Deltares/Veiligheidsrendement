@@ -41,13 +41,13 @@ class MechanismReliabilityCollection:
         self.mechanism_name = mechanism
         self.Reliability = {}
 
-        for i in self.T:
-            if measure_year > i:
-                self.Reliability[str(i)] = MechanismReliability(
+        for _computation_year in computation_years:
+            if measure_year > _computation_year:
+                self.Reliability[str(_computation_year)] = MechanismReliability(
                     mechanism, computation_type, self.t_0, copy_or_calculate="copy"
                 )
             else:
-                self.Reliability[str(i)] = MechanismReliability(
+                self.Reliability[str(_computation_year)] = MechanismReliability(
                     mechanism, computation_type, self.t_0
                 )
 
@@ -63,9 +63,10 @@ class MechanismReliabilityCollection:
         """
         # this function generates life-cycle reliability based on the years that have been calculated (so reliability in time)
         if not load:
-            raise ValueError("Load value should be True.")
+            raise ValueError("A {} is required.".format(LoadInput.__name__))
+
         for i in self.Reliability.keys():
-            self.Reliability[i].calcReliability(
+            self.Reliability[i].calculate_reliability(
                 self.Reliability[i].Input,
                 load,
                 self.mechanism_name,
@@ -80,7 +81,7 @@ class MechanismReliabilityCollection:
 
         for i in self.Reliability.keys():
             t.append(float(i) + self.t_0)
-            if self.Reliability[i].type == "Probabilistic":
+            if self.Reliability[i].mechanism_type == "Probabilistic":
                 if self.Reliability[i].result.getClassName() == "SimulationResult":
                     y.append(
                         self.Reliability[i].result.getProbabilityEstimate()

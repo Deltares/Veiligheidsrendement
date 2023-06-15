@@ -9,10 +9,10 @@ from vrtool.orm.models.parameter import Parameter
 
 class OverFlowHydraRingImporter(OrmImporterProtocol):
     def _set_parameters(
-        self, input: MechanismInput, parameters: list[Parameter]
+        self, mechanism_input: MechanismInput, parameters: list[Parameter]
     ) -> None:
         for parameter in parameters:
-            input.input[parameter.parameter] = parameter.value
+            mechanism_input.input[parameter.parameter] = parameter.value
 
     def _get_crest_height_beta(
         self, mechanism_table_rows: list[MechanismTable], scenario_name: str
@@ -76,5 +76,11 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
         mechanism_input.input["hc_beta"] = self._get_crest_height_beta(
             orm_model.mechanism_tables.select(), orm_model.scenario_name
         )
+        mechanism_input.input[
+            "h_crest"
+        ] = orm_model.mechanism_per_section.section.crest_height
+        mechanism_input.input[
+            "d_crest"
+        ] = orm_model.mechanism_per_section.section.annual_crest_decline
 
         return mechanism_input

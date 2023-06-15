@@ -61,6 +61,7 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
 
         for year in collection.Reliability.keys():
             collection.Reliability[year].Input = mechanism_input
+            # collection.Reliability[year].calculate_reliability(mechanism_input, self.load_input, )
 
         return collection
 

@@ -36,7 +36,9 @@ class RunMeasures(VrToolRunProtocol):
         self,
         selected_section: DikeSection,
     ) -> Tuple[str, Solutions]:
-        _solution = get_dike_section_solutions(self.vr_config, selected_section)
+        _solution = get_dike_section_solutions(
+            self.vr_config, selected_section, self.selected_traject.general_info
+        )
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:

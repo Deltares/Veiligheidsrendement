@@ -15,7 +15,7 @@ from vrtool.decision_making.measures import (
     StabilityScreenMeasure,
     VerticalGeotextileMeasure,
 )
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
@@ -27,7 +27,8 @@ class Solutions:
     initial_geometry: pd.DataFrame
     config: VrtoolConfig
     T: list[int]
-    measures: list[MeasureBase]
+    measures: list[MeasureProtocol]
+    measure_table = pd.DataFrame
 
     def __init__(self, dike_section: DikeSection, config: VrtoolConfig):
         self.section_name = dike_section.name
@@ -36,85 +37,17 @@ class Solutions:
 
         self.config = config
         self.T = config.T
+        self.trange = config.T
         # Mechanisms is deprecated, it will be replaced by "excluded_mechanisms".
         self.mechanisms = config.mechanisms
-        self.measures: list[MeasureBase] = []
-
-    def load_solutions_from_file(self, excel_sheet: Path):
-        """DEPRECATED (we use the SQLite database now): This routine reads input for the measures from the Excel sheet for each section.
-        It identifies combinables and partials and identifies possible combinations of measures this way.
-        These are then stored in the MeasureTable, which is later evaluated.
-        """
-        data = pd.read_excel(excel_sheet, "Measures")
-        combinables = []
-        partials = []
-        for i in data.index:
-            # TODO depending on data.loc[i].type make correct sublclass
-
-            loc_data = data.loc[i]
-            measure_type = data.loc[i].Type
-            if measure_type == "Soil reinforcement":
-                if not self._is_soil_reinforcement_measure_valid(
-                    loc_data.StabilityScreen
-                ):
-                    logging.warn(
-                        f'No stability inner mechanism present for soil reinforcement with stability screen measure "{loc_data.ID}" in "{excel_sheet.stem}."'
-                    )
-                else:
-                    self.measures.append(
-                        SoilReinforcementMeasure(data.loc[i], self.config)
-                    )
-            elif measure_type == "Diaphragm Wall":
-                self.measures.append(DiaphragmWallMeasure(data.loc[i], self.config))
-            elif measure_type == "Stability Screen":
-                if not self._is_stability_screen_measure_valid():
-                    logging.warn(
-                        f'No stability inner mechanism present for stability screen measure "{loc_data.ID}" in "{excel_sheet.stem}."'
-                    )
-                else:
-                    self.measures.append(
-                        StabilityScreenMeasure(data.loc[i], self.config)
-                    )
-            elif measure_type == "Vertical Geotextile":
-                self.measures.append(
-                    VerticalGeotextileMeasure(data.loc[i], self.config)
-                )
-            elif data.loc[i].Type == "Custom":
-                data.loc[i, "File"] = excel_sheet.parent.joinpath(
-                    "Measures", data.loc[i]["File"]
-                )
-                self.measures.append(CustomMeasure(data.loc[i], self.config))
-
+        self.measures: list[MeasureProtocol] = []
         self.measure_table = pd.DataFrame(columns=["ID", "Name"])
-        for i, measure in enumerate(self.measures):
-            if measure.parameters["available"] == 1:
-                self.measure_table.loc[i] = [
-                    str(measure.parameters["ID"]),
-                    measure.parameters["Name"],
-                ]
-                # also add the potential combined solutions up front
-                if measure.parameters["Class"] == "combinable":
-                    combinables.append(
-                        (measure.parameters["ID"], measure.parameters["Name"])
-                    )
-                if measure.parameters["Class"] == "partial":
-                    partials.append(
-                        (measure.parameters["ID"], measure.parameters["Name"])
-                    )
-        count = 0
-        for i in range(0, len(partials)):
-            for j in range(0, len(combinables)):
-                self.measure_table.loc[count + len(self.measures) + 1] = [
-                    str(partials[i][0]) + "+" + str(combinables[j][0]),
-                    str(partials[i][1]) + "+" + str(combinables[j][1]),
-                ]
-                count += 1
 
     def _is_stability_screen_measure_valid(self) -> bool:
         return "StabilityInner" in self.mechanisms
 
     def _is_soil_reinforcement_measure_valid(self, stability_screen: str) -> bool:
-        if stability_screen == "yes":
+        if stability_screen.lower().strip() == "yes":
             return self._is_stability_screen_measure_valid()
 
         return True
@@ -123,41 +56,21 @@ class Solutions:
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        preserve_slope: bool = False,
+        preserve_slope: bool,
     ):
         """This is the base routine to evaluate (i.e., determine costs and reliability) for each defined measure.
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures."""
-        self.trange = self.T
-        removal = []
-        for i, measure in enumerate(self.measures):
-            if measure.parameters["available"] == 1:
-                # old: measure.evaluateMeasure(DikeSection, TrajectInfo, preserve_slope = preserve_slope)
-                measure.evaluate_measure(
-                    dike_section, traject_info, preserve_slope=preserve_slope
-                )
-
-                # if measure.parameters['Type'] == 'Soil reinforcement':
-                #     A = Soilreinforcement()
-                #     A.evaluateMeasure(measure, DikeSection, TrajectInfo, preserve_slope = preserve_slope)
-                # elif measure.parameters['Type'] == 'DiaphragmWall':
-                #     DiaphragmWall.evaluateMeasure(measure,DikeSection, TrajectInfo)
-                # elif measure.parameters['Type'] == 'StabilityScreen':
-                #     StabilityScreen.evaluateMeasure(measure,DikeSection, TrajectInfo)
-                # elif measure.parameters['Type'] == 'VerticalGeotextile':
-                #     VerticalGeotextile.evaluateMeasure(measure,DikeSection, TrajectInfo)
-                # elif measure.parameters['Type'] == 'Custom':
-                #     CustomMeasure.evaluateMeasure(measure)
-            else:
-                removal.append(i)
-        # remove measures that are set to unavailable:
-        if len(removal) > 0:
-            for i in reversed(removal):
-                self.measures.pop(i)
+        # self.trange = self.T
+        for measure in self.measures:
+            measure.evaluate_measure(
+                dike_section, traject_info, preserve_slope=preserve_slope
+            )
 
     def solutions_to_dataframe(self, filtering=False, splitparams=False):
         # write all solutions to one single dataframe:
 
-        years = self.trange
+        years = self.T
+        # years = self.trange
         cols_r = pd.MultiIndex.from_product(
             [self.mechanisms + ["Section"], years], names=["base", "year"]
         )

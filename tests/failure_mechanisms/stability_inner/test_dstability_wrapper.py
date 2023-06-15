@@ -77,7 +77,6 @@ class TestDStabilityWrapper:
         # 3. Verify expectations.
         assert not filecmp.cmp(str(_path_test_stix), str(_test_file))
 
-    @pytest.mark.slow
     def test_get_safety_factor_no_run_no_stage(self):
         """
         Test the get_safety_factor method of the DStabilityWrapper class for stage_id_result=None and without running D-Stability

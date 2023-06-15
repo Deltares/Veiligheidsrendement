@@ -4,7 +4,7 @@ import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
-from vrtool.decision_making.measures.measure_base import MeasureBase
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -13,7 +13,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class VerticalGeotextileMeasure(MeasureBase):
+class VerticalGeotextileMeasure(MeasureProtocol):
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -49,7 +49,7 @@ class VerticalGeotextileMeasure(MeasureBase):
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
         for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][1]
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
                     mechanism_name, calc_type, dike_section, traject_info
@@ -123,8 +123,8 @@ class VerticalGeotextileMeasure(MeasureBase):
         if int(year_to_calculate) < self.parameters["year"]:
             self._copy_results(mechanism_reliability, dike_section_piping_reliability)
 
-        mechanism_reliability.Input.input["Elimination"] = "yes"
-        mechanism_reliability.Input.input["Pf_elim"] = self.parameters["P_solution"]
-        mechanism_reliability.Input.input["Pf_with_elim"] = np.min(
+        mechanism_reliability.Input.input["elimination"] = "yes"
+        mechanism_reliability.Input.input["pf_elim"] = self.parameters["P_solution"]
+        mechanism_reliability.Input.input["pf_with_elim"] = np.min(
             [self.parameters["Pf_solution"], 1.0e-16]
         )
