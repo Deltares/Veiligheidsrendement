@@ -31,7 +31,12 @@ class TestDikeTrajectImporter:
 
         # 3. Verify final expectations.
         assert isinstance(_dike_traject, DikeTraject)
-        # assert isinstance(_dike_traject.general_info, DikeTrajectInfo)
+
+        assert _dike_traject.assessment_plot_years == config.assessment_plot_years
+        assert _dike_traject.flip_traject == config.flip_traject
+        assert _dike_traject.t_0 == config.t_0
+        assert _dike_traject.T == config.T
+
         assert _dike_traject.general_info.traject_name == "123"
 
     def test_import_orm_without_model_raises_value(self, empty_db_fixture):
