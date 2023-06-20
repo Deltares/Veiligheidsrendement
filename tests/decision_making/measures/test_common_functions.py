@@ -1,7 +1,7 @@
 from __future__ import annotations
-from collections import defaultdict
 
 import shutil
+from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd

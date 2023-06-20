@@ -106,7 +106,9 @@ class TestWaterLevelImporter:
         assert isinstance(_importer, OrmImporterProtocol)
         assert _importer.gridpoint == 42
 
-    def test_import_orm_without_no_water_level_data_doesnot_raise(self, empty_db_fixture: SqliteDatabase):
+    def test_import_orm_without_no_water_level_data_doesnot_raise(
+        self, empty_db_fixture: SqliteDatabase
+    ):
         # 1. Define test data.
         _importer = WaterLevelImporter(42)
         _section_data = self._get_valid_section_data()

@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import openturns as ot
 
@@ -6,7 +8,6 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.water_level_data import WaterlevelData
 from vrtool.probabilistic_tools.probabilistic_functions import TableDist, beta_to_pf
-import logging
 
 
 class WaterLevelImporter(OrmImporterProtocol):

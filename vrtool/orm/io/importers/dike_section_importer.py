@@ -44,7 +44,9 @@ class DikeSectionImporter(OrmImporterProtocol):
             [_building.distance_from_toe, _building.number_of_buildings]
             for _building in buildings_list
         ]
-        return pd.DataFrame(_buildings_data, columns=["distancefromtoe", "cumulative"])
+        return pd.DataFrame(
+            _buildings_data, columns=["distancefromtoe", "cumulative"]
+        ).set_index("distancefromtoe")
 
     def _import_geometry(self, section_data: SectionData) -> pd.DataFrame:
         _importer = GeometryImporter()

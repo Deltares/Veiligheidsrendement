@@ -1,3 +1,4 @@
+import json
 import shutil
 from pathlib import Path
 
@@ -7,7 +8,6 @@ from click.testing import CliRunner
 from tests import test_data, test_results
 from vrtool import __main__
 from vrtool.defaults.vrtool_config import VrtoolConfig
-import json
 
 
 class TestMain:

@@ -1,8 +1,10 @@
 import shutil
 
+import pandas as pd
 import pytest
 from peewee import SqliteDatabase
-import pandas as pd
+
+import vrtool.orm.models as orm_models
 from tests import test_data, test_results
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
@@ -17,11 +19,10 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-import vrtool.orm.models as orm_models
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.orm_controllers import (
-    get_dike_traject,
     get_dike_section_solutions,
+    get_dike_traject,
     initialize_database,
     open_database,
 )
