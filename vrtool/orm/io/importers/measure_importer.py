@@ -82,6 +82,10 @@ class MeasureImporter(OrmImporterProtocol):
         for _measure_parameter in orm_measure.parameters:
             _measure.parameters[_measure_parameter.parameter] = _measure_parameter.value
 
+        _measure.parameters["Class"] = orm_measure.measure.combinable_type.name
+        _measure.parameters["Name"] = orm_measure.measure.name
+        _measure.parameters["ID"] = orm_measure.get_id()
+
         return _measure
 
     def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureProtocol:
