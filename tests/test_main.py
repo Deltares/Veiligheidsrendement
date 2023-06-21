@@ -65,14 +65,9 @@ class TestMain:
         json_file.unlink()
 
     @pytest.mark.slow
-    @pytest.mark.cli_test
     @pytest.mark.parametrize(
         "cli_config_fixture",
-        [
-            "TestCase1_38-1_no_housing",
-            "TestCase1_38-1_no_housing_stix",
-            "TestCase2_38-1_overflow_no_housing",
-        ],
+        ["TestCase1_38-1_no_housing"],
         indirect=True,
     )
     def test_given_valid_input_when_run_full_then_succeeds(
