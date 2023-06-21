@@ -71,10 +71,11 @@ class TestDikeSectionImporter:
 
         # 3. Verify expectations.
         assert isinstance(_buildings_frame, pd.DataFrame)
-        assert list(_buildings_frame.columns) == ["distancefromtoe", "cumulative"]
+        assert list(_buildings_frame.columns) == ["cumulative"]
+        assert _buildings_frame.index.name == "distancefromtoe"
         assert len(_buildings_frame) == 2
-        assert list(_buildings_frame.loc[0]) == [24, 2]
-        assert list(_buildings_frame.loc[1]) == [42, 1]
+        assert list(_buildings_frame.loc[24]) == [2]
+        assert list(_buildings_frame.loc[42]) == [1]
 
     def test_import_orm_without_model_raises_value(self, valid_config: VrtoolConfig):
         # 1. Define test data.
