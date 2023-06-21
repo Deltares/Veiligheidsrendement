@@ -4,16 +4,9 @@ from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.mechanism_table import MechanismTable
-from vrtool.orm.models.parameter import Parameter
 
 
 class OverFlowHydraRingImporter(OrmImporterProtocol):
-    def _set_parameters(
-        self, mechanism_input: MechanismInput, parameters: list[Parameter]
-    ) -> None:
-        for parameter in parameters:
-            mechanism_input.input[parameter.parameter] = parameter.value
-
     def _get_crest_height_beta(
         self, mechanism_table_rows: list[MechanismTable], scenario_name: str
     ) -> pd.DataFrame:
@@ -72,7 +65,6 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
             )
 
         mechanism_input = MechanismInput("Overflow")
-        self._set_parameters(mechanism_input, orm_model.parameters.select())
         mechanism_input.input["hc_beta"] = self._get_crest_height_beta(
             orm_model.mechanism_tables.select(), orm_model.scenario_name
         )
