@@ -14,7 +14,6 @@ from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
-from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -105,18 +104,6 @@ class TestOverflowHydraRingImporter:
             },
         ]
 
-        # TODO: This is coming from dike section. Confirm with PO.
-        # parameters = [
-        #     {
-        #         "parameter": "h_crest",
-        #         "value": 9.13,
-        #     },
-        #     {
-        #         "parameter": "d_crest",
-        #         "value": 0.005,
-        #     },
-        # ]
-
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = self._get_valid_computation_scenario()
 
@@ -125,9 +112,6 @@ class TestOverflowHydraRingImporter:
                 _mechanism_tables, _computation_scenario.id
             )
             MechanismTable.insert_many(_mechanism_tables).execute()
-
-            # self._add_computation_scenario_id(parameters, _computation_scenario.id)
-            # Parameter.insert_many(parameters).execute()
 
             transaction.commit()
 
@@ -148,17 +132,10 @@ class TestOverflowHydraRingImporter:
         assert (
             _mechanism_input.input["d_crest"] == _orm_section_data.annual_crest_decline
         )
-        # for parameter in parameters:
-        #     assert _mechanism_input.input[parameter["parameter"]] == pytest.approx(
-        #         parameter["value"],
-        #         "Different values for {}: {}, got: {}".format(
-        #             parameter["parameter"],
-        #             parameter["value"],
-        #             _mechanism_input.input[parameter["parameter"]],
-        #         ),
-        #     )
 
         _mechanism_table_data = _mechanism_input.input["hc_beta"]
+        assert _mechanism_input.input["h_crest"] == 24
+        assert _mechanism_input.input["d_crest"] == 42
         assert isinstance(_mechanism_table_data, pd.DataFrame)
 
         assert list(_mechanism_table_data.columns) == [str(year) for year in years]
