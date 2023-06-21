@@ -6,3 +6,4 @@ channels:
 dependencies:
   - conda-forge::python=3.10
   - conda-forge::openturns=1.19
+  - conda-forge::matplotlib=3.7.1

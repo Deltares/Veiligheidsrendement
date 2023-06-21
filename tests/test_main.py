@@ -66,7 +66,9 @@ class TestMain:
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
-        "cli_config_fixture", ["TestCase1_38-1_no_housing"], indirect=True
+        "cli_config_fixture",
+        ["TestCase1_38-1_no_housing"],
+        indirect=True,
     )
     def test_given_valid_input_when_run_full_then_succeeds(
         self, cli_config_fixture: tuple[Path, Path]
