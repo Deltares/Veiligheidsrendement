@@ -1,6 +1,4 @@
 import copy
-import logging
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,13 +6,6 @@ import pandas as pd
 import seaborn as sns
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.decision_making.measures import (
-    CustomMeasure,
-    DiaphragmWallMeasure,
-    SoilReinforcementMeasure,
-    StabilityScreenMeasure,
-    VerticalGeotextileMeasure,
-)
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -37,7 +28,6 @@ class Solutions:
 
         self.config = config
         self.T = config.T
-        self.trange = config.T
         # Mechanisms is deprecated, it will be replaced by "excluded_mechanisms".
         self.mechanisms = config.mechanisms
         self.measures: list[MeasureProtocol] = []
@@ -60,7 +50,6 @@ class Solutions:
     ):
         """This is the base routine to evaluate (i.e., determine costs and reliability) for each defined measure.
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures."""
-        # self.trange = self.T
         for measure in self.measures:
             measure.evaluate_measure(
                 dike_section, traject_info, preserve_slope=preserve_slope
@@ -70,7 +59,6 @@ class Solutions:
         # write all solutions to one single dataframe:
 
         years = self.T
-        # years = self.trange
         cols_r = pd.MultiIndex.from_product(
             [self.mechanisms + ["Section"], years], names=["base", "year"]
         )
@@ -185,7 +173,7 @@ class Solutions:
         # mechanism can be used to select a single or all ('Section') mechanisms
         # beta can be used to use a criterion for selecting the 'best' designs, such as the beta at 't0'
         cols = ["type", "parameters", "Cost"]
-        [cols.append("beta" + str(i)) for i in self.trange]
+        [cols.append("beta" + str(i)) for i in self.T]
         data = pd.DataFrame(columns=cols)
         num_plots = 5
         colors = sns.color_palette("hls", n_colors=num_plots)

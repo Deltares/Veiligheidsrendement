@@ -104,6 +104,6 @@ def get_dike_section_solutions(
         orm.SectionData.section_name == dike_section.name
     )
     _solutions = _importer.import_orm(_orm_section_data)
-    _solutions.evaluate_solutions(dike_section, general_info, preserve_slope=False)
     vrtool_db.close()
+    _solutions.evaluate_solutions(dike_section, general_info, preserve_slope=False)
     return _solutions
