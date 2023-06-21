@@ -67,7 +67,7 @@ def implement_berm_widening(
         berm_input["h_crest"] = berm_input["h_crest"] + measure_input["dcrest"]
     elif mechanism == "StabilityInner":
         # Case where the berm widened through DStability and the stability factors will be recalculated
-        if computation_type == "DStability":
+        if computation_type.lower() == "dstability":
             _dstability_wrapper = DStabilityWrapper(
                 stix_path=Path(berm_input["STIXNAAM"]),
                 externals_path=Path(berm_input["DStability_exe_path"]),

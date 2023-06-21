@@ -185,10 +185,13 @@ class TestMeasureImporter:
         # 3. Verify expectations.
         assert isinstance(_imported_measure, CustomMeasure)
         self._validate_measure_base_values(_imported_measure, valid_config)
-        _imported_measure.measures["Cost"] == 1234.56
-        _imported_measure.measures["Reliability"] == 42.24
-        _imported_measure.parameters["year"] == 2023
-        _imported_measure.parameters["DummyParameter"] == 24.42
+        assert _imported_measure.measures["Cost"] == 1234.56
+        assert _imported_measure.measures["Reliability"] == 42.24
+        assert _imported_measure.parameters["year"] == 2023
+        assert _imported_measure.parameters["DummyParameter"] == 24.42
+        assert _imported_measure.parameters["ID"] == 1
+        assert _imported_measure.parameters["Name"] == "Test Measure"
+        assert _imported_measure.parameters["Class"] == "combinable"
 
     def _validate_measure_base_values(
         self, measure_base: MeasureProtocol, valid_config: VrtoolConfig

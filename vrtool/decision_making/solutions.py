@@ -97,7 +97,10 @@ class Solutions:
                 for j in range(len(measure.measures)):
                     measure_in = []
                     reliability_in = []
-                    if type in ["Soil reinforcement", "Soil reinforcement with stability screen"]:
+                    if type in [
+                        "Soil reinforcement",
+                        "Soil reinforcement with stability screen",
+                    ]:
                         designvars = (
                             measure.measures[j]["dcrest"],
                             measure.measures[j]["dberm"],
