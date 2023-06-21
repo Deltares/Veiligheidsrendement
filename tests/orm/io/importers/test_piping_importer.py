@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture
+from tests.orm import empty_db_fixture, get_basic_mechanism_per_section
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.piping_importer import PipingImporter
 from vrtool.orm.models import Mechanism
@@ -15,24 +15,6 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class TestPipingImporter:
-    def _get_valid_section_data(self) -> SectionData:
-        _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
-        _test_section = SectionData.create(
-            dike_traject=_test_dike_traject,
-            section_name="TestSection",
-            meas_start=2.4,
-            meas_end=4.2,
-            section_length=123,
-            in_analysis=True,
-            crest_height=24,
-            annual_crest_decline=42,
-        )
-        return _test_section
-
-    def _get_mechanism_per_section(self, section: SectionData) -> MechanismPerSection:
-        _mechanism = Mechanism.create(name="mechanism")
-        return MechanismPerSection.create(section=section, mechanism=_mechanism)
-
     def _get_valid_computation_scenario(
         self, mechanism_per_section: MechanismPerSection, id: int
     ) -> ComputationScenario:
@@ -60,8 +42,7 @@ class TestPipingImporter:
     def test_import_piping(self, empty_db_fixture: SqliteDatabase):
         # Setup
         with empty_db_fixture.atomic() as transaction:
-            _section_data = self._get_valid_section_data()
-            _piping_per_section = self._get_mechanism_per_section(_section_data)
+            _piping_per_section = get_basic_mechanism_per_section()
             _computation_scenario1 = self._get_valid_computation_scenario(
                 _piping_per_section, 1
             )
@@ -132,8 +113,7 @@ class TestPipingImporter:
     def test_import_piping_invalid(self, empty_db_fixture: SqliteDatabase):
         # Setup
         with empty_db_fixture.atomic() as transaction:
-            _section_data = self._get_valid_section_data()
-            _piping_per_section = self._get_mechanism_per_section(_section_data)
+            _piping_per_section = get_basic_mechanism_per_section()
             _computation_scenario1 = self._get_valid_computation_scenario(
                 _piping_per_section, 1
             )

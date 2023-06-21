@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture
+from tests.orm import empty_db_fixture, get_basic_computation_scenario
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
@@ -105,7 +105,7 @@ class TestOverflowHydraRingImporter:
         ]
 
         with empty_db_fixture.atomic() as transaction:
-            _computation_scenario = self._get_valid_computation_scenario()
+            _computation_scenario = get_basic_computation_scenario()
 
             _mechanism_tables = mechanism_table_year_one + mechanism_table_year_two
             self._add_computation_scenario_id(
@@ -177,7 +177,7 @@ class TestOverflowHydraRingImporter:
             },
         ]
         with empty_db_fixture.atomic() as transaction:
-            _computation_scenario = self._get_valid_computation_scenario()
+            _computation_scenario = get_basic_computation_scenario()
             self._add_computation_scenario_id(
                 _mechanism_table_source, _computation_scenario.id
             )
