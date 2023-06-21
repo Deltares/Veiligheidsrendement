@@ -2,6 +2,12 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
+from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.computation_type import ComputationType
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import open_database
 
 
@@ -15,3 +21,42 @@ def empty_db_fixture():
         yield _db
         transaction.rollback()
     _db.close()
+
+
+def get_basic_dike_traject_info() -> DikeTrajectInfo:
+    return DikeTrajectInfo.create(traject_name="123")
+
+
+def get_basic_section_data() -> SectionData:
+    _test_dike_traject = get_basic_dike_traject_info()
+    return SectionData.create(
+        dike_traject=_test_dike_traject,
+        section_name="TestSection",
+        meas_start=2.4,
+        meas_end=4.2,
+        section_length=123,
+        in_analysis=True,
+        crest_height=24,
+        annual_crest_decline=42,
+    )
+
+
+def get_basic_mechanism_per_section() -> MechanismPerSection:
+    _test_section = get_basic_section_data()
+
+    _mechanism = Mechanism.create(name="mechanism")
+    return MechanismPerSection.create(section=_test_section, mechanism=_mechanism)
+
+
+def get_basic_computation_scenario() -> ComputationScenario:
+    _mech_per_section = get_basic_mechanism_per_section()
+
+    _computation_type = ComputationType.create(name="TestComputation")
+    return ComputationScenario.create(
+        mechanism_per_section=_mech_per_section,
+        computation_type=_computation_type,
+        computation_name="Test Computation",
+        scenario_name="test_name",
+        scenario_probability=0.42,
+        probability_of_failure=0.24,
+    )
