@@ -1,27 +1,27 @@
 ,ID,Section,LCC,name,yes/no,dcrest,dberm
-104,5+2,DV30,2483464.018744515,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-132,5+2,DV31,4889466.622225923,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
-134,6,DV32,22159500.0,Zelfkerende constructie,yes,-999.0,-999
-131,5+2,DV33A,705755.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-122,5+2,DV33B,666425.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-138,2,DV34,2355557.047332226,Grondversterking binnenwaarts 2025,-999,1.0,20
-111,5+2,DV35A,1410159.6917828624,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-119,5+2,DV35B,295837.69757682434,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-130,5+2,DV35C,4061647.528398717,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,12
-118,5+2,DV36,1042245.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-112,5+2,DV37A,666443.7731700109,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-113,5+2,DV37B,912019.0311123859,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0
-133,5+2,DV38,471960.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
-136,2,DV39,2252064.938413051,Grondversterking binnenwaarts 2025,-999,1.0,30
-79,2,DV40,288135.0,Grondversterking binnenwaarts 2025,-999,0.5,30
-115,5+2,DV41,716680.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,30
-128,5+2,DV42,1016449.1347912778,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,10
-95,2,DV43A,505305.0,Grondversterking binnenwaarts 2025,-999,1.0,30
-129,5+2,DV43B,835863.1195523208,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,5
-97,2,DV44,452295.0,Grondversterking binnenwaarts 2025,-999,1.0,30
-124,2,DV45,970425.0,Grondversterking binnenwaarts 2025,-999,0.5,30
-139,5+2,DV46,3085220.0,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
-99,2,DV47,304380.0,Grondversterking binnenwaarts 2025,-999,1.0,30
-100,2,DV48,178695.0,Grondversterking binnenwaarts 2025,-999,1.0,30
-137,2,DV49,1406110.0972876628,Grondversterking binnenwaarts 2025,-999,1.0,30
-125,2,DV50,286425.0,Grondversterking binnenwaarts 2025,-999,0.5,30
+170,5+2,30,3202384.02840245,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
+162,5+2,31,4889466.622225923,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
+184,5+2,32,8016750.965578288,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,20
+175,5+2,33A,1642667.9442793091,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15
+173,5+2,33B,1596150.1774154468,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,20
+151,4,34,1634139.0473322251,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
+171,5+2,35A,1448652.532833356,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15
+188,5+2,35B,293213.19877622835,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,12
+186,5+2,35C,5141004.751876537,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,12
+153,5+2,36,2499513.135247411,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
+182,5+2,37A,691097.7979151434,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,20
+183,5+2,37B,1139231.4489529096,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,0
+185,4,38,933900.426377741,Grondversterking met stabiliteitsscherm 2025,-999,1.5,30
+142,4,39,1312941.538413051,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
+165,4,40,899708.2339480813,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
+191,5+2,41,1657999.4159554646,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15
+187,5+2,42,1273085.0582205346,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,10
+176,4,43A,1577491.0838752855,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
+180,4,43B,584390.9182672214,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
+189,4,44,1569075.5481958303,Grondversterking met stabiliteitsscherm 2025,-999,1.5,30
+192,4,45,2833085.3881966816,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
+194,4,46,4912671.011038914,Grondversterking met stabiliteitsscherm 2025,-999,1.5,30
+136,2,47,1115046.5911701464,Grondversterking binnenwaarts 2025,-999,1.0,20
+130,4,48,677391.2567810647,Grondversterking met stabiliteitsscherm 2025,-999,1.5,30
+190,2,49,1405066.1294807256,Grondversterking binnenwaarts 2025,-999,1.0,30
+193,4,50,944063.7786281833,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
