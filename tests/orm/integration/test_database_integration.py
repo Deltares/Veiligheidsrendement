@@ -265,13 +265,10 @@ class TestDatabaseIntegration:
         # Note that currently the other columns in the SectionData are not being mapped on the DikeSection.
         assert actual.name == expected.section_name
 
-        for count, building in enumerate(expected.buildings_list.select()):
-            assert actual.houses.loc[count]["distancefromtoe"] == pytest.approx(
-                building.distance_from_toe
-            )
-            assert actual.houses.loc[count]["cumulative"] == pytest.approx(
-                building.number_of_buildings
-            )
+        for building in expected.buildings_list.select():
+            assert actual.houses.loc[building.distance_from_toe][
+                "cumulative"
+            ] == pytest.approx(building.number_of_buildings)
 
         _expected_profile_points = expected.profile_points
         assert len(actual.InitialGeometry) == len(_expected_profile_points)
