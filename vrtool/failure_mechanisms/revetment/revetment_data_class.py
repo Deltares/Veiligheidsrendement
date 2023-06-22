@@ -3,13 +3,13 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass, field
 
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePart
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
+from vrtool.failure_mechanisms.revetment.slope_part import SlopePart
 
 
 @dataclass
