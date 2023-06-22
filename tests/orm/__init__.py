@@ -24,10 +24,22 @@ def empty_db_fixture():
 
 
 def get_basic_dike_traject_info() -> DikeTrajectInfo:
+    """
+    Gets a basic dike traject info entity.
+
+    Returns:
+        DikeTrajectInfo: The created dike traject info entity in the database.
+    """
     return DikeTrajectInfo.create(traject_name="123")
 
 
 def get_basic_section_data() -> SectionData:
+    """
+    Gets a basic section data entity.
+
+    Returns:
+        SectionData: The created section data entity in the database.
+    """
     _test_dike_traject = get_basic_dike_traject_info()
     return SectionData.create(
         dike_traject=_test_dike_traject,
@@ -42,6 +54,12 @@ def get_basic_section_data() -> SectionData:
 
 
 def get_basic_mechanism_per_section() -> MechanismPerSection:
+    """
+    Gets a basic mechanism per section entity.
+
+    Returns:
+        MechanismPerSection: The created mechanism per section entity in the database.
+    """
     _test_section = get_basic_section_data()
 
     _mechanism = Mechanism.create(name="mechanism")
@@ -49,6 +67,12 @@ def get_basic_mechanism_per_section() -> MechanismPerSection:
 
 
 def get_basic_computation_scenario() -> ComputationScenario:
+    """
+    Gets a basic computation scenario entity.
+
+    Returns:
+        ComputationScenario: The created computation scenario entity in the database.
+    """
     _mech_per_section = get_basic_mechanism_per_section()
 
     _computation_type = ComputationType.create(name="TestComputation")
