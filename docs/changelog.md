@@ -1,3 +1,45 @@
+## v0.0.3 (2023-06-22)
+
+### Feat
+
+- Added MeasureImporter to be used by the SolutionsImporter
+- Added controler to load solutions
+- Added missing Table MeasureParameters
+- **solutions_importer.py**: Created first solutions importer and adapted some logic from the vrtool domain
+- Selected DikeTraject is now loaded from the database
+- Added missing table MeasurePerSection
+- **supporting_file.py**: Added new table and its own backreference
+- **orm_converters.py**: Added converters to read from the database a dike traject and all its related information
+- **DikeTrajectInfo**: Added orm model for dike traject info
+- Added orm sql models
+- **ORM**: Added peewee as orm for SQLite. Created some basic implementations to map all entities
+- **vrtool_logger.py**: Added new (static) class to initialize the logger
+
+### Fix
+
+- update Testcase2_38-1_overflow_no_housing
+- update reference for TestCase1_38-1_no_housing
+- throw houses out of overflow database
+- incorrect writing of measures. Small update to input db for consistency
+- correct stabilityscreen parameter in StandardMeasure Table
+- Set buildings index to distancefromtoe
+- copy to slice warning for profile changes
+- change idx to option_index
+- retry, fix order of reindex
+- ensure that run can be made with StabilityInner or Piping turned off.
+- added safe retrieval for mechanism properties when they are not present
+- added method to retrieve the years that are used for the calculation
+- added mechanism collection to the section reliability
+- added collection object to host all failure mechanisms and their related data
+- updated logic after discussing with PO:
+- updated logic after discussing with PO:
+- modify order of loading the config to ensure that reuse_output can actually be used in the workflow
+- remove 2 calls to SF parameter
+- use correct references in plot_lcc
+- force datatype in strategy_base
+- data types for integers in mixed_integer_strategy
+- data types for integers in solutions
+
 ## v0.0.2 (2023-03-17)
 
 ### Fix
