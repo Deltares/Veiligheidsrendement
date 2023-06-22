@@ -6,7 +6,7 @@ authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
 maintainers = [
   "Carles S. Soriano Pérez <carles.sorianoperez@deltares.nl>",
   "Dennis Tang <dennis.tang@deltares.nl>",
-  "Edwin Spee <edwin.spee@delatres.nl>",
+  "Edwin Spee <edwin.spee@deltares.nl>",
   "Stephan Rikkert <stephan.rikkert@deltares.nl>",
 ]
 readme = "README.md"
