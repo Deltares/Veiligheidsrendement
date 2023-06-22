@@ -1,6 +1,6 @@
 import pytest
 
-from vrtool.failure_mechanisms.revetment.revertment_data_class import (
+from vrtool.failure_mechanisms.revetment.revetment_data_class import (
     SlopePart,
     RelationGrassRevetment,
     RelationStoneRevetment,
