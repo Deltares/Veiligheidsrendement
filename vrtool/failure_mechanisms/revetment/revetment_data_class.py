@@ -1,5 +1,7 @@
 import numpy as np
 
+GRASS_TYPE = 20.0
+
 
 class SlopePart:
     # Stores data for slope part
@@ -16,6 +18,9 @@ class SlopePart:
         self.tan_alpha = tan_alpha
         self.top_layer_type = top_layer_type
         self.top_layer_thickness = top_layer_thickness
+
+    def is_grass(self) -> bool:
+        return self.top_layer_type == GRASS_TYPE
 
 
 class RelationGrassRevetment:
@@ -38,9 +43,6 @@ class RelationStoneRevetment:
 
 
 class RevetmentDataClass:
-
-    GRASS_TYPE = 20.0
-
     def __init__(self):
         self.slope_parts = []  # for a list of SlopePart
         self.grass_relations = []  # for a list of RelationGrassRevetment
@@ -48,12 +50,12 @@ class RevetmentDataClass:
 
     def current_transition_level(self) -> float:
         min_value_grass = 1e99
-        for self.slope_part in self.slope_parts:
-            if self.slope_part.top_layer_type == self.GRASS_TYPE:
-                if self.slope_part.begin_part < min_value_grass:
-                    min_value_grass = self.slope_part.begin_part
+        for slope_part in self.slope_parts:
+            if slope_part.is_grass():
+                if slope_part.begin_part < min_value_grass:
+                    min_value_grass = slope_part.begin_part
 
         if min_value_grass == 1e99:
-            raise Exception("No slope part with grass found")
+            raise ValueError("No slope part with grass found")
 
         return min_value_grass

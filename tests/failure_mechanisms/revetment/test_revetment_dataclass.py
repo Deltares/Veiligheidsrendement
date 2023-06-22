@@ -57,7 +57,7 @@ class TestRevetmentDataClass:
         revetments.slope_parts.append(SlopePart(1, 2, 0.31, 5, 0.1))
         revetments.slope_parts.append(SlopePart(2, 3, 0.32, 26.1, 0.15))
 
-        with pytest.raises(Exception) as exception_error:
+        with pytest.raises(ValueError) as exception_error:
             revetments.current_transition_level()
 
         # Assert
