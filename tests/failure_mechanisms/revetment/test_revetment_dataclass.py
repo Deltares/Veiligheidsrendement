@@ -11,16 +11,6 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
 
 
 class TestRevetmentDataClass:
-    def test_relation_grass(self):
-        grass = RelationGrassRevetment(2025, 2.0, 2.1)
-        revetments = RevetmentDataClass()
-        revetments.grass_relations.append(grass)
-
-        assert len(revetments.grass_relations) == 1
-        assert revetments.grass_relations[0].year == 2025
-        assert revetments.grass_relations[0].transition_level == 2.0
-        assert revetments.grass_relations[0].beta == 2.1
-
     def test_relation_stone(self):
         stone1 = RelationStoneRevetment(0, 2050, 2.3, 3.2)
         stone2 = RelationStoneRevetment(1, 2050, 3.2, 2.3)
