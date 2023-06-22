@@ -10,7 +10,7 @@ class RevetmentDataClass:
     def current_transition_level(self) -> float:
         min_value_grass = 1e99
         for slope_part in self.slope_parts:
-            if slope_part.is_grass():
+            if slope_part.is_grass:
                 if slope_part.begin_part < min_value_grass:
                     min_value_grass = slope_part.begin_part
 

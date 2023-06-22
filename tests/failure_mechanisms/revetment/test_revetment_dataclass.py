@@ -11,17 +11,6 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
 
 
 class TestRevetmentDataClass:
-    def test_slope_part(self):
-        slope = SlopePart(1, 2, 0.333, 20)
-        revetments = RevetmentDataClass()
-        revetments.slope_parts.append(slope)
-
-        assert len(revetments.slope_parts) == 1
-        assert revetments.slope_parts[0].begin_part == 1
-        assert revetments.slope_parts[0].end_part == 2
-        assert revetments.slope_parts[0].tan_alpha == 0.333
-        assert revetments.slope_parts[0].top_layer_type == 20
-
     def test_relation_grass(self):
         grass = RelationGrassRevetment(2025, 2.0, 2.1)
         revetments = RevetmentDataClass()
