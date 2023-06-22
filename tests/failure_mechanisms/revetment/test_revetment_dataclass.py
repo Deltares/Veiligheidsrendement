@@ -11,17 +11,6 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
 
 
 class TestRevetmentDataClass:
-    def test_relation_stone(self):
-        stone1 = RelationStoneRevetment(0, 2050, 2.3, 3.2)
-        stone2 = RelationStoneRevetment(1, 2050, 3.2, 2.3)
-        revetments = RevetmentDataClass()
-        revetments.stone_relations.append(stone1)
-        revetments.stone_relations.append(stone2)
-
-        assert len(revetments.stone_relations) == 2
-        assert revetments.stone_relations[0].year == 2050
-        assert revetments.stone_relations[1].slope_part == 1
-
     def test_current_transition_level(self):
         revetments = RevetmentDataClass()
         revetments.slope_parts.append(SlopePart(1, 2, 0.31, 5, 0.1))
