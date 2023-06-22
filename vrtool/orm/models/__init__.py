@@ -1,3 +1,4 @@
+from vrtool.orm.models.block_revetment_relation import BlockRevetmentRelation
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.characteristic_point_type import CharacteristicPointType
 from vrtool.orm.models.combinable_type import CombinableType
@@ -5,6 +6,7 @@ from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.custom_measure import CustomMeasure
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_parameter import MeasureParameter
 from vrtool.orm.models.measure_per_section import MeasurePerSection
@@ -15,9 +17,7 @@ from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.profile_point import ProfilePoint
 from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.models.slope_part import SlopePart
 from vrtool.orm.models.standard_measure import StandardMeasure
 from vrtool.orm.models.supporting_file import SupportingFile
 from vrtool.orm.models.water_level_data import WaterlevelData
-from vrtool.orm.models.slope_part import SlopePart
-from vrtool.orm.models.block_revetment_relation import BlockRevetmentRelation
-from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation

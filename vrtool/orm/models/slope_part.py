@@ -1,10 +1,7 @@
 from peewee import FloatField, ForeignKeyField
-from vrtool.orm.models.computation_scenario import ComputationScenario
 
-from vrtool.orm.models.orm_base_model import (
-    OrmBaseModel,
-    _get_table_name,
-)
+from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 
 class SlopePart(OrmBaseModel):

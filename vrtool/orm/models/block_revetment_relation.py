@@ -1,9 +1,6 @@
-from peewee import IntegerField, FloatField, ForeignKeyField
+from peewee import FloatField, ForeignKeyField, IntegerField
 
-from vrtool.orm.models.orm_base_model import (
-    OrmBaseModel,
-    _get_table_name,
-)
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from vrtool.orm.models.slope_part import SlopePart
 
 

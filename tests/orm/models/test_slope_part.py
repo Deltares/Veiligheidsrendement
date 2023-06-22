@@ -1,5 +1,4 @@
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
-
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.slope_part import SlopePart
 
