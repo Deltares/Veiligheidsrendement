@@ -2,29 +2,14 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture
+from tests.orm import empty_db_fixture, get_basic_section_data
 from vrtool.orm.io.importers.geometry_importer import GeometryImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.characteristic_point_type import CharacteristicPointType
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.profile_point import ProfilePoint
-from vrtool.orm.models.section_data import SectionData
 
 
 class TestGeometryImporter:
-    def _get_valid_section_data(self) -> SectionData:
-        _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
-        return SectionData.create(
-            dike_traject=_test_dike_traject,
-            section_name="TestSection",
-            meas_start=2.4,
-            meas_end=4.2,
-            section_length=123,
-            in_analysis=True,
-            crest_height=24,
-            annual_crest_decline=42,
-        )
-
     def test_initialize(self):
         _importer = GeometryImporter()
         assert isinstance(_importer, GeometryImporter)
@@ -51,7 +36,7 @@ class TestGeometryImporter:
         ]
 
         with empty_db_fixture.atomic() as transaction:
-            section_data = self._get_valid_section_data()
+            section_data = get_basic_section_data()
             CharacteristicPointType.insert_many(point_types).execute()
 
             for count, point in enumerate(points):

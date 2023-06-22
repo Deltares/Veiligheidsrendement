@@ -1,30 +1,12 @@
-from tests.orm import empty_db_fixture
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from tests.orm import empty_db_fixture, get_basic_section_data
 from vrtool.orm.models.orm_base_model import OrmBaseModel
-from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.water_level_data import WaterlevelData
 
 
 class TestWaterlevelData:
-    def _get_valid_section_data(self) -> SectionData:
-        # 1. Define test data.
-        _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
-        _test_section = SectionData.create(
-            dike_traject=_test_dike_traject,
-            section_name="TestSection",
-            meas_start=2.4,
-            meas_end=4.2,
-            section_length=123,
-            in_analysis=True,
-            crest_height=24,
-            annual_crest_decline=42,
-        )
-        return _test_section
-
     def test_initialize_with_database_fixture(self, empty_db_fixture):
         # 1. Define test data.
-        _test_section_data = self._get_valid_section_data()
-
+        _test_section_data = get_basic_section_data()
         # 2. Run test.
         _water_level_data = WaterlevelData.create(
             section_data=_test_section_data, year=2023, water_level=42, beta=24
@@ -40,7 +22,7 @@ class TestWaterlevelData:
         self, empty_db_fixture
     ):
         # 1. Define test data.
-        _test_section_data = self._get_valid_section_data()
+        _test_section_data = get_basic_section_data()
 
         # 2. Run test.
         _water_level_data = WaterlevelData.create(

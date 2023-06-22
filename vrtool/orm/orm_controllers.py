@@ -10,7 +10,6 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import models as orm
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
-from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_db import vrtool_db
 
 
@@ -51,6 +50,9 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.SupportingFile,
             orm.MeasurePerSection,
             orm.MeasureParameter,
+            orm.SlopePart,
+            orm.BlockRevetmentRelation,
+            orm.GrassRevetmentRelation,
         ]
     )
     return vrtool_db
