@@ -4,23 +4,23 @@ from scipy.special import ndtri
 from scipy.interpolate import interp1d
 
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
-    RelationStoneRevetment,
-)
 
 
 class revetmentCalculation:
-    def beta_comb(self, betaZST, betaGEBU):
+    def __init__(self, revetment: RevetmentDataClass) -> None:
+        self.r = revetment
+
+    def beta_comb(self, betaZST: list[float], betaGEBU: float):
 
         if np.all(np.isnan(betaZST)):
             probZST = 0.0
         else:
             probZST = norm.cdf(-np.nanmin(betaZST))
 
-        if np.all(np.isnan(betaGEBU)):
+        if np.isnan(betaGEBU):
             probGEBU = 0.0
         else:
-            probGEBU = norm.cdf(-np.nanmin(betaGEBU))
+            probGEBU = norm.cdf(-betaGEBU)
 
         probComb = probZST + probGEBU
         betaComb = -ndtri(probComb)
@@ -40,49 +40,47 @@ class revetmentCalculation:
 
         return beta
 
-    def evaluate_bekleding(self, revetment: RevetmentDataClass):
+    def evaluate_bekleding(self):
 
         betaZST = []
-        betaGEBU = []
+        betaGEBU = np.nan
 
-        for i in range(len(revetment.slope_parts)):
+        for i in range(len(self.r.slope_parts)):
 
-            if revetment.slope_parts[i].is_block:  # for steen
+            if self.r.slope_parts[i].is_block:  # for steen
 
                 D_opt = []
                 betaFalen = []
-                for rel in revetment.stone_relations:
+                for rel in self.r.stone_relations:
                     if rel.slope_part == i:
                         D_opt.append(rel.top_layer_thickness)
                         betaFalen.append(rel.beta)
                 betaZST.append(
                     self.evaluate_steen(
-                        revetment.slope_parts[i].top_layer_thickness,
+                        self.r.slope_parts[i].top_layer_thickness,
                         D_opt,
                         betaFalen,
                     )
                 )
-                betaGEBU.append(np.nan)
 
-            elif revetment.slope_parts[i].is_grass:  # for gras
+            elif self.r.slope_parts[i].is_grass and np.isnan(betaGEBU):  # for gras
 
                 betaZST.append(np.nan)
+
                 transitions = []
                 betaFalen = []
-                for rel in revetment.grass_relations:
+                for rel in self.r.grass_relations:
                     transitions.append(rel.transition_level)
                     betaFalen.append(rel.beta)
-                betaGEBU.append(
-                    self.evaluate_gras(
-                        revetment.current_transition_level,
-                        transitions,
-                        betaFalen,
-                    )
+
+                betaGEBU = self.evaluate_gras(
+                    self.r.current_transition_level,
+                    transitions,
+                    betaFalen,
                 )
 
             else:
 
                 betaZST.append(np.nan)
-                betaGEBU.append(np.nan)
 
         return betaZST, betaGEBU
