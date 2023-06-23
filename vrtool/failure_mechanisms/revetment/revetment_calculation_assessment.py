@@ -4,6 +4,9 @@ from scipy.special import ndtri
 from scipy.interpolate import interp1d
 
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
+    RelationStoneRevetment,
+)
 
 
 class revetmentCalculation:
@@ -44,7 +47,7 @@ class revetmentCalculation:
 
         for i in range(len(revetment.slope_parts)):
 
-            if revetment.slope_parts[i].is_asphalt:  # for steen
+            if revetment.slope_parts[i].is_block:  # for steen
 
                 D_opt = []
                 betaFalen = []
