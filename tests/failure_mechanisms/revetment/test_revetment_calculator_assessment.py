@@ -69,12 +69,11 @@ class TestRevetmentAssessmentCalculator:
     def test_revetment_calculation(self):
         revetment = self.getRevetmentInput(2025, 0)
 
-        calc = revetmentCalculation()
-        betaZST_ini, betaGEBU_ini = calc.evaluate_bekleding(revetment)
+        calc = revetmentCalculation(revetment)
+        betaZST_ini, betaGEBU_ini = calc.evaluate_bekleding()
         betaZST = np.nanmin(betaZST_ini)
-        betaGEBU = np.nanmin(betaGEBU_ini)
         beta_ini = calc.beta_comb(betaZST_ini, betaGEBU_ini)
 
         assert beta_ini == pytest.approx(3.6112402089287357, rel=1e-8)
-        assert betaGEBU == pytest.approx(4.90234375, rel=1e-8)
+        assert betaGEBU_ini == pytest.approx(4.90234375, rel=1e-8)
         assert betaZST == pytest.approx(3.61204720537867, rel=1e-8)
