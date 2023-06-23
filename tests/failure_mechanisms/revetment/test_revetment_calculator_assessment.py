@@ -35,7 +35,7 @@ class TestRevetmentAssessmentCalculator:
                 dataZST["D huidig"][n],
             )
             revetment.slope_parts.append(slopepart)
-            if slopepart.is_asphalt:
+            if slopepart.is_block:
                 key = f"deelvak {n}"
                 nBeta = len(dataZST[key]["betaFalen"])
                 for m in range(nBeta):
