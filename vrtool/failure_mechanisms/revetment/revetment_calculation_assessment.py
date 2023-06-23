@@ -26,16 +26,29 @@ class revetmentCalculation:
         betaComb = -ndtri(probComb)
         return betaComb
 
-    def evaluate_steen(self, D, D_opt, betaFalen):
+    def evaluate_steen(self, D, i):
+
+        D_opt = []
+        betaFalen = []
+        for rel in self.r.stone_relations:
+            if rel.slope_part == i:
+                D_opt.append(rel.top_layer_thickness)
+                betaFalen.append(rel.beta)
 
         fsteen = interp1d(D_opt, betaFalen, fill_value=("extrapolate"))
         beta = fsteen(D)
 
         return beta
 
-    def evaluate_gras(self, h_onder, grasbekleding_begin, betaFalen):
+    def evaluate_gras(self):
+        h_onder = self.r.current_transition_level
+        transitions = []
+        betaFalen = []
+        for rel in self.r.grass_relations:
+            transitions.append(rel.transition_level)
+            betaFalen.append(rel.beta)
 
-        fgras = interp1d(grasbekleding_begin, betaFalen, fill_value=("extrapolate"))
+        fgras = interp1d(transitions, betaFalen, fill_value=("extrapolate"))
         beta = fgras(h_onder)
 
         return beta
@@ -49,35 +62,15 @@ class revetmentCalculation:
 
             if self.r.slope_parts[i].is_block:  # for steen
 
-                D_opt = []
-                betaFalen = []
-                for rel in self.r.stone_relations:
-                    if rel.slope_part == i:
-                        D_opt.append(rel.top_layer_thickness)
-                        betaFalen.append(rel.beta)
                 betaZST.append(
-                    self.evaluate_steen(
-                        self.r.slope_parts[i].top_layer_thickness,
-                        D_opt,
-                        betaFalen,
-                    )
+                    self.evaluate_steen(self.r.slope_parts[i].top_layer_thickness, i)
                 )
 
             elif self.r.slope_parts[i].is_grass and np.isnan(betaGEBU):  # for gras
 
                 betaZST.append(np.nan)
 
-                transitions = []
-                betaFalen = []
-                for rel in self.r.grass_relations:
-                    transitions.append(rel.transition_level)
-                    betaFalen.append(rel.beta)
-
-                betaGEBU = self.evaluate_gras(
-                    self.r.current_transition_level,
-                    transitions,
-                    betaFalen,
-                )
+                betaGEBU = self.evaluate_gras()
 
             else:
 
