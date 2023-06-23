@@ -26,51 +26,50 @@ class revetmentCalculation:
         betaComb = -ndtri(probComb)
         return betaComb
 
-    def evaluate_steen(self, D, i):
+    def evaluate_block(self, D: float, slopePartIndex: int):
 
         D_opt = []
-        betaFalen = []
-        for rel in self.r.stone_relations:
-            if rel.slope_part == i:
+        betaFailure = []
+        for rel in self.r.block_relations:
+            if rel.slope_part == slopePartIndex:
                 D_opt.append(rel.top_layer_thickness)
-                betaFalen.append(rel.beta)
+                betaFailure.append(rel.beta)
 
-        fsteen = interp1d(D_opt, betaFalen, fill_value=("extrapolate"))
-        beta = fsteen(D)
+        fBlock = interp1d(D_opt, betaFailure, fill_value=("extrapolate"))
+        beta = fBlock(D)
 
         return beta
 
-    def evaluate_gras(self):
-        h_onder = self.r.current_transition_level
+    def evaluate_grass(self):
         transitions = []
-        betaFalen = []
+        betaFailure = []
         for rel in self.r.grass_relations:
             transitions.append(rel.transition_level)
-            betaFalen.append(rel.beta)
+            betaFailure.append(rel.beta)
 
-        fgras = interp1d(transitions, betaFalen, fill_value=("extrapolate"))
-        beta = fgras(h_onder)
+        fgrass = interp1d(transitions, betaFailure, fill_value=("extrapolate"))
+        beta = fgrass(self.r.current_transition_level)
 
         return beta
 
-    def evaluate_bekleding(self):
+    def evaluate_assessment(self):
 
         betaZST = []
         betaGEBU = np.nan
 
         for i in range(len(self.r.slope_parts)):
 
-            if self.r.slope_parts[i].is_block:  # for steen
+            if self.r.slope_parts[i].is_block:  # for block
 
                 betaZST.append(
-                    self.evaluate_steen(self.r.slope_parts[i].top_layer_thickness, i)
+                    self.evaluate_block(self.r.slope_parts[i].top_layer_thickness, i)
                 )
 
-            elif self.r.slope_parts[i].is_grass and np.isnan(betaGEBU):  # for gras
+            elif self.r.slope_parts[i].is_grass and np.isnan(betaGEBU):  # for grass
 
                 betaZST.append(np.nan)
 
-                betaGEBU = self.evaluate_gras()
+                betaGEBU = self.evaluate_grass()
 
             else:
 
