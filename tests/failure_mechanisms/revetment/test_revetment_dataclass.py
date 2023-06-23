@@ -15,11 +15,11 @@ class TestRevetmentDataClass:
         revetments = RevetmentDataClass()
         revetments.slope_parts.append(SlopePart(1, 2, 0.31, 5, 0.1))
         revetments.grass_relations.append(RelationGrassRevetment(2030, 2.4, 4.5))
-        revetments.stone_relations.append(RelationStoneRevetment(0, 2050, 1.2, 3.1))
+        revetments.block_relations.append(RelationStoneRevetment(0, 2050, 1.2, 3.1))
 
         assert len(revetments.slope_parts) == 1
         assert len(revetments.grass_relations) == 1
-        assert len(revetments.stone_relations) == 1
+        assert len(revetments.block_relations) == 1
 
     def test_current_transition_level(self):
         revetments = RevetmentDataClass()

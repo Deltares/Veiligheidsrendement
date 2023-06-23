@@ -45,7 +45,7 @@ class TestRevetmentAssessmentCalculator:
                         dataZST[key]["D_opt"][m],
                         dataZST[key]["betaFalen"][m],
                     )
-                    revetment.stone_relations.append(rel)
+                    revetment.block_relations.append(rel)
 
         nGrass = len(dataGEBU["grasbekleding_begin"])
         for n in range(nGrass):
@@ -70,7 +70,7 @@ class TestRevetmentAssessmentCalculator:
         revetment = self.getRevetmentInput(2025, 0)
 
         calc = revetmentCalculation(revetment)
-        betaZST_ini, betaGEBU_ini = calc.evaluate_bekleding()
+        betaZST_ini, betaGEBU_ini = calc.evaluate_assessment()
         betaZST = np.nanmin(betaZST_ini)
         beta_ini = calc.beta_comb(betaZST_ini, betaGEBU_ini)
 
