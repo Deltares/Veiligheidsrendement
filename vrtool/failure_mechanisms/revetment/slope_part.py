@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 GRASS_TYPE = 20.0
+MIN_ASPHALT = 26.0
+MAX_ASPHALT = 27.9
 
 
 @dataclass
@@ -18,3 +20,7 @@ class SlopePart:
     @property
     def is_grass(self) -> bool:
         return self.top_layer_type == GRASS_TYPE
+
+    @property
+    def is_asphalt(self) -> bool:
+        return self.top_layer_type >= MIN_ASPHALT and self.top_layer_type <= MAX_ASPHALT

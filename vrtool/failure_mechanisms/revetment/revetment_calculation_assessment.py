@@ -3,9 +3,11 @@ from scipy.stats import norm
 from scipy.special import ndtri
 from scipy.interpolate import interp1d
 
+from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+
 
 class revetmentCalculation:
-    def beta_comb(self, betaZST: float, betaGEBU: float):
+    def beta_comb(self, betaZST, betaGEBU):
 
         if np.all(np.isnan(betaZST)):
             probZST = 0.0
@@ -21,24 +23,6 @@ class revetmentCalculation:
         betaComb = -ndtri(probComb)
         return betaComb
 
-    def issteen(self, toplaagtype):
-
-        res = False
-
-        if toplaagtype >= 26.0 and toplaagtype <= 27.9:
-            res = True
-
-        return res
-
-    def isgras(self, toplaagtype):
-
-        res = False
-
-        if toplaagtype == 20.0:
-            res = True
-
-        return res
-
     def evaluate_steen(self, D, D_opt, betaFalen):
 
         fsteen = interp1d(D_opt, betaFalen, fill_value=("extrapolate"))
@@ -53,32 +37,43 @@ class revetmentCalculation:
 
         return beta
 
-    def evaluate_bekleding(self, dataZST, dataGEBU):
+    def evaluate_bekleding(self, revetment: RevetmentDataClass):
 
         betaZST = []
         betaGEBU = []
 
-        for i in range(0, dataZST["aantal deelvakken"]):
+        for i in range(len(revetment.slope_parts)):
 
-            if self.issteen(dataZST["toplaagtype"][i]):  # for steen
+            if revetment.slope_parts[i].is_asphalt:  # for steen
 
+                D_opt = []
+                betaFalen = []
+                for rel in revetment.stone_relations:
+                    if rel.slope_part == i:
+                        D_opt.append(rel.top_layer_thickness)
+                        betaFalen.append(rel.beta)
                 betaZST.append(
                     self.evaluate_steen(
-                        dataZST["D huidig"][i],
-                        dataZST[f"deelvak {i}"]["D_opt"],
-                        dataZST[f"deelvak {i}"]["betaFalen"],
+                        revetment.slope_parts[i].top_layer_thickness,
+                        D_opt,
+                        betaFalen,
                     )
                 )
                 betaGEBU.append(np.nan)
 
-            elif self.isgras(dataZST["toplaagtype"][i]):  # for gras
+            elif revetment.slope_parts[i].is_grass:  # for gras
 
                 betaZST.append(np.nan)
+                transitions = []
+                betaFalen = []
+                for rel in revetment.grass_relations:
+                    transitions.append(rel.transition_level)
+                    betaFalen.append(rel.beta)
                 betaGEBU.append(
                     self.evaluate_gras(
-                        dataZST["overgang huidig"],
-                        dataGEBU["grasbekleding_begin"],
-                        dataGEBU["betaFalen"],
+                        revetment.current_transition_level,
+                        transitions,
+                        betaFalen,
                     )
                 )
 
