@@ -1,10 +1,11 @@
+from peewee import SqliteDatabase
+
+from tests.orm import empty_db_fixture
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.standard_measure import StandardMeasure
-from peewee import SqliteDatabase
-from tests.orm import empty_db_fixture
 
 
 class TestStandardMeasure:
