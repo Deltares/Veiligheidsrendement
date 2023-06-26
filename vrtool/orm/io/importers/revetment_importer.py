@@ -51,6 +51,18 @@ class RevetmentImporter(OrmImporterProtocol):
             for part in slope_parts
         ]
 
+    def _is_revetment_data_valid(self, input: RevetmentDataClass):
+        actual_transition_level = input.current_transition_level
+
+        maximum_transition_level_relation = max(
+            [
+                grass_relation.transition_level
+                for grass_relation in input.grass_relations
+            ]
+        )
+
+        return actual_transition_level < maximum_transition_level_relation
+
     def import_orm(self, orm_model: ComputationScenario) -> MechanismInput:
         if not orm_model:
             raise ValueError(
@@ -78,6 +90,11 @@ class RevetmentImporter(OrmImporterProtocol):
         revetment_input = RevetmentDataClass(
             slope_parts, grass_relations, stone_relations
         )
+
+        if not self._is_revetment_data_valid(revetment_input):
+            raise ValueError(
+                f"Actual transition level higher than maximum transition level of grass revetment relations for scenario {orm_model.scenario_name}."
+            )
 
         mechanism_input = MechanismInput("Revetment")
         mechanism_input.input["revetment_input"] = revetment_input

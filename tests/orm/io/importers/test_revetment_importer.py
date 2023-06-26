@@ -1,4 +1,5 @@
 from peewee import SqliteDatabase
+import pytest
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
@@ -207,6 +208,63 @@ class TestRevetmentImporter:
         self._assert_grass_revetment_relations(
             revetment_input.grass_relations, grass_relations
         )
+
+    def test_import_revetment_with_transition_level_larger_than_grass_transition_level_raises_value_error(
+        self, empty_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        grass_relations = [
+            {"year": 2025, "transition_level": 2, "beta": 4.90},
+        ]
+
+        slope_parts = [
+            {
+                "begin_part": -0.27,
+                "end_part": 1.89,
+                "top_layer_type": 26.1,
+                "top_layer_thickness": 0.2,
+                "tan_alpha": 0.25064,
+            },
+            {
+                "begin_part": 1.89,
+                "end_part": 3.86,
+                "top_layer_type": 5,
+                "top_layer_thickness": 0.275,
+                "tan_alpha": 0.34377,
+            },
+            {
+                "begin_part": 3.86,
+                "end_part": 3.98,
+                "top_layer_type": 20,
+                "top_layer_thickness": None,
+                "tan_alpha": 0.3709,
+            },
+        ]
+
+        with empty_db_fixture.atomic() as transaction:
+            computation_scenario = get_basic_computation_scenario()
+
+            self._add_computation_scenario_id(
+                grass_relations, computation_scenario.get_id()
+            )
+            GrassRevetmentRelation.insert_many(grass_relations).execute()
+
+            self._add_computation_scenario_id(
+                slope_parts, computation_scenario.get_id()
+            )
+            ORMSlopePart.insert_many(slope_parts).execute()
+
+            transaction.commit
+
+        importer = RevetmentImporter()
+
+        # Call
+        with pytest.raises(ValueError) as value_error:
+            importer.import_orm(computation_scenario)
+
+        # Assert
+        _expected_mssg = f"Actual transition level higher than maximum transition level of grass revetment relations for scenario {computation_scenario.scenario_name}."
+        assert str(value_error.value) == _expected_mssg
 
     def _assert_slope_parts(
         self,
