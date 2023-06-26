@@ -8,10 +8,9 @@ from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDa
 
 class revetmentCalculation:
     def __init__(self, revetment: RevetmentDataClass) -> None:
-        self.r = revetment
+        self._r = revetment
 
-    def beta_comb(self, betaZST: list[float], betaGEBU: float):
-
+    def beta_comb(self, betaZST: list[float], betaGEBU: float) -> float:
         if np.all(np.isnan(betaZST)):
             probZST = 0.0
         else:
@@ -26,11 +25,34 @@ class revetmentCalculation:
         betaComb = -ndtri(probComb)
         return betaComb
 
-    def evaluate_block(self, D: float, slopePartIndex: int):
+    def evaluate_assessment(self):
+        betaZST = []
+        betaGEBU = np.nan
 
+        for i in range(len(self._r.slope_parts)):
+
+            if self._r.slope_parts[i].is_block:  # for block
+
+                betaZST.append(
+                    self._evaluate_block(self._r.slope_parts[i].top_layer_thickness, i)
+                )
+
+            elif self._r.slope_parts[i].is_grass and np.isnan(betaGEBU):  # for grass
+
+                betaZST.append(np.nan)
+
+                betaGEBU = self._evaluate_grass()
+
+            else:
+
+                betaZST.append(np.nan)
+
+        return betaZST, betaGEBU
+
+    def _evaluate_block(self, D: float, slopePartIndex: int):
         D_opt = []
         betaFailure = []
-        for rel in self.r.block_relations:
+        for rel in self._r.block_relations:
             if rel.slope_part == slopePartIndex:
                 D_opt.append(rel.top_layer_thickness)
                 betaFailure.append(rel.beta)
@@ -40,39 +62,14 @@ class revetmentCalculation:
 
         return beta
 
-    def evaluate_grass(self):
+    def _evaluate_grass(self):
         transitions = []
         betaFailure = []
-        for rel in self.r.grass_relations:
+        for rel in self._r.grass_relations:
             transitions.append(rel.transition_level)
             betaFailure.append(rel.beta)
 
         fgrass = interp1d(transitions, betaFailure, fill_value=("extrapolate"))
-        beta = fgrass(self.r.current_transition_level)
+        beta = fgrass(self._r.current_transition_level)
 
         return beta
-
-    def evaluate_assessment(self):
-
-        betaZST = []
-        betaGEBU = np.nan
-
-        for i in range(len(self.r.slope_parts)):
-
-            if self.r.slope_parts[i].is_block:  # for block
-
-                betaZST.append(
-                    self.evaluate_block(self.r.slope_parts[i].top_layer_thickness, i)
-                )
-
-            elif self.r.slope_parts[i].is_grass and np.isnan(betaGEBU):  # for grass
-
-                betaZST.append(np.nan)
-
-                betaGEBU = self.evaluate_grass()
-
-            else:
-
-                betaZST.append(np.nan)
-
-        return betaZST, betaGEBU
