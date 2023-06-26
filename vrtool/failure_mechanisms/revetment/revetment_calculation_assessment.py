@@ -38,7 +38,7 @@ class RevetmentCalculation(FailureMechanismCalculatorProtocol):
 
         for _slope_part in self._r.slope_parts:
             if isinstance(_slope_part, StoneSlopePart):
-                beta_zst.append(self._evaluate_block(_slope_part.top_layer_thickness))
+                beta_zst.append(self._evaluate_block(_slope_part))
             elif isinstance(_slope_part, GrassSlopePart) and np.isnan(beta_gebu):
                 beta_zst.append(np.nan)
                 beta_gebu = self._evaluate_grass()
