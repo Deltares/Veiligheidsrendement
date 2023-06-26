@@ -27,4 +27,4 @@ class TestRevetmentDataClass:
             revetments.current_transition_level
 
         # Assert
-        assert str(exception_error.value) == "No slope part with grass found"
+        assert str(exception_error.value) == "No slope part with grass found."

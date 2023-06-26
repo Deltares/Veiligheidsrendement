@@ -17,12 +17,12 @@ class RevetmentDataClass:
 
     @property
     def current_transition_level(self) -> float:
-        _grass_parts = [
-            _slope_part
+        _grass_begin_parts = [
+            _slope_part.begin_part
             for _slope_part in self.slope_parts
             if isinstance(_slope_part, GrassSlopePart)
         ]
-        if not _grass_parts:
-            raise ValueError("No slope part with grass found")
+        if not _grass_begin_parts:
+            raise ValueError("No slope part with grass found.")
 
-        return min(_grass_parts)
+        return min(_grass_begin_parts)
