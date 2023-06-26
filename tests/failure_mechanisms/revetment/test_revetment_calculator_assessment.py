@@ -65,14 +65,22 @@ class TestRevetmentAssessmentCalculator:
         revetment = self._convertJsonObjects(dataZST, dataGEBU)
         return revetment
 
-    def test_revetment_calculation(self):
-        revetment = self._getRevetmentInput(2025, 0)
+    @pytest.mark.parametrize(
+        "year, sectionId, refValues",
+        [
+            pytest.param(
+                2025, 0, [3.6112402089287357, 4.90234375, 3.61204720537867], id="2025_0"
+            )
+        ],
+    )
+    def test_revetment_calculation(self, year, sectionId, refValues):
+        revetment = self._getRevetmentInput(year, sectionId)
 
         calc = revetmentCalculation(revetment)
         betaZST_ini, betaGEBU_ini = calc.evaluate_assessment()
         betaZST = np.nanmin(betaZST_ini)
         beta_ini = calc.beta_comb(betaZST_ini, betaGEBU_ini)
 
-        assert beta_ini == pytest.approx(3.6112402089287357, rel=1e-8)
-        assert betaGEBU_ini == pytest.approx(4.90234375, rel=1e-8)
-        assert betaZST == pytest.approx(3.61204720537867, rel=1e-8)
+        assert beta_ini == pytest.approx(refValues[0], rel=1e-8)
+        assert betaGEBU_ini == pytest.approx(refValues[1], rel=1e-8)
+        assert betaZST == pytest.approx(refValues[2], rel=1e-8)
