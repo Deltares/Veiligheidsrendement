@@ -2,7 +2,6 @@ import json
 import pytest
 import numpy as np
 
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePart
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
@@ -11,9 +10,10 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.revetment_calculation_assessment import (
-    revetmentCalculation,
+    RevetmentCalculation,
 )
 from tests import test_data
+from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
 
 
 class TestRevetmentAssessmentCalculator:
@@ -24,22 +24,22 @@ class TestRevetmentAssessmentCalculator:
 
     def _convertJsonObjects(self, dataZST, dataGEBU) -> RevetmentDataClass:
         revetment = RevetmentDataClass()
-        nVakken = dataZST["aantal deelvakken"]
-        for n in range(nVakken):
-            slopepart = SlopePart(
-                dataZST["Zo"][n],
-                dataZST["Zb"][n],
-                dataZST["tana"][n],
-                dataZST["toplaagtype"][n],
-                dataZST["D huidig"][n],
+        n_sections = dataZST["aantal deelvakken"]
+        for _n_section in range(n_sections):
+            _stone_slope_part = StoneSlopePart(
+                dataZST["Zo"][_n_section],
+                dataZST["Zb"][_n_section],
+                dataZST["tana"][_n_section],
+                dataZST["toplaagtype"][_n_section],
+                dataZST["D huidig"][_n_section],
             )
-            revetment.slope_parts.append(slopepart)
-            if slopepart.is_block:
-                key = f"deelvak {n}"
+            revetment.slope_parts.append(_stone_slope_part)
+            if _stone_slope_part.is_valid():
+                key = f"deelvak {_n_section}"
                 nBeta = len(dataZST[key]["betaFalen"])
                 for m in range(nBeta):
                     rel = RelationStoneRevetment(
-                        n,
+                        _n_section,
                         dataZST["zichtjaar"],
                         dataZST[key]["D_opt"][m],
                         dataZST[key]["betaFalen"][m],
@@ -47,17 +47,17 @@ class TestRevetmentAssessmentCalculator:
                     revetment.block_relations.append(rel)
 
         nGrass = len(dataGEBU["grasbekleding_begin"])
-        for n in range(nGrass):
+        for _n_section in range(nGrass):
             rel = RelationGrassRevetment(
                 dataGEBU["zichtjaar"],
-                dataGEBU["grasbekleding_begin"][n],
-                dataGEBU["betaFalen"][n],
+                dataGEBU["grasbekleding_begin"][_n_section],
+                dataGEBU["betaFalen"][_n_section],
             )
             revetment.grass_relations.append(rel)
 
         return revetment
 
-    def _getRevetmentInput(self, year: int, section: int) -> RevetmentDataClass:
+    def _get_revetment_input(self, year: int, section: int) -> RevetmentDataClass:
         gebuFile = f"revetment/GEBU_{section}_{year}.json"
         dataGEBU = self._read_JSON(test_data / gebuFile)
         zstFile = f"revetment/ZST_{section}_{year}.json"
@@ -66,21 +66,23 @@ class TestRevetmentAssessmentCalculator:
         return revetment
 
     @pytest.mark.parametrize(
-        "year, sectionId, refValues",
+        "year, section_id, ref_values",
         [
             pytest.param(
                 2025, 0, [3.6112402089287357, 4.90234375, 3.61204720537867], id="2025_0"
             )
         ],
     )
-    def test_revetment_calculation(self, year, sectionId, refValues):
-        revetment = self._getRevetmentInput(year, sectionId)
+    def test_revetment_calculation(
+        self, year: int, section_id: int, ref_values: list[float]
+    ):
+        revetment = self._get_revetment_input(year, section_id)
 
-        calc = revetmentCalculation(revetment)
-        betaZST_ini, betaGEBU_ini = calc.evaluate_assessment()
+        calc = RevetmentCalculation(revetment)
+        betaZST_ini, betaGEBU_ini = calc.calculate(None)
         betaZST = np.nanmin(betaZST_ini)
         beta_ini = calc.beta_comb(betaZST_ini, betaGEBU_ini)
 
-        assert beta_ini == pytest.approx(refValues[0], rel=1e-8)
-        assert betaGEBU_ini == pytest.approx(refValues[1], rel=1e-8)
-        assert betaZST == pytest.approx(refValues[2], rel=1e-8)
+        assert beta_ini == pytest.approx(ref_values[0], rel=1e-8)
+        assert betaGEBU_ini == pytest.approx(ref_values[1], rel=1e-8)
+        assert betaZST == pytest.approx(ref_values[2], rel=1e-8)
