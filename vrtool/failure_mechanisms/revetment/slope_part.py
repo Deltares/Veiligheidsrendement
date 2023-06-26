@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
     RelationRevetmentProtocol,
 )
 
 
+@runtime_checkable
 @dataclass
 class SlopePartProtocol(Protocol):
     """stores data for slope part"""
