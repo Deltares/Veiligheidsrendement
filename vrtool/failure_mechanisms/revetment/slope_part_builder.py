@@ -26,5 +26,5 @@ class SlopePartBuilder:
             return AsphaltSlopePart
 
         raise ValueError(
-            "No SlopePart type found for top layer type: {}".format(top_layer_type)
+            "No SlopePart type found for top layer type: {}.".format(top_layer_type)
         )
