@@ -16,14 +16,13 @@ from vrtool.failure_mechanisms.revetment.revetment_calculation_assessment import
 from tests import test_data
 
 
-def read_JSON(file_name):
-    with open(file_name, "r") as openfile:
-        json_object = json.load(openfile)
-    return json_object
-
-
 class TestRevetmentAssessmentCalculator:
-    def convertJsonObjects(self, dataZST, dataGEBU) -> RevetmentDataClass:
+    def _read_JSON(self, file_name):
+        with open(file_name, "r") as openfile:
+            json_object = json.load(openfile)
+        return json_object
+
+    def _convertJsonObjects(self, dataZST, dataGEBU) -> RevetmentDataClass:
         revetment = RevetmentDataClass()
         nVakken = dataZST["aantal deelvakken"]
         for n in range(nVakken):
@@ -58,16 +57,16 @@ class TestRevetmentAssessmentCalculator:
 
         return revetment
 
-    def getRevetmentInput(self, year: int, section: int) -> RevetmentDataClass:
+    def _getRevetmentInput(self, year: int, section: int) -> RevetmentDataClass:
         gebuFile = f"revetment/GEBU_{section}_{year}.json"
-        dataGEBU = read_JSON(test_data / gebuFile)
+        dataGEBU = self._read_JSON(test_data / gebuFile)
         zstFile = f"revetment/ZST_{section}_{year}.json"
-        dataZST = read_JSON(test_data / zstFile)
-        revetment = self.convertJsonObjects(dataZST, dataGEBU)
+        dataZST = self._read_JSON(test_data / zstFile)
+        revetment = self._convertJsonObjects(dataZST, dataGEBU)
         return revetment
 
     def test_revetment_calculation(self):
-        revetment = self.getRevetmentInput(2025, 0)
+        revetment = self._getRevetmentInput(2025, 0)
 
         calc = revetmentCalculation(revetment)
         betaZST_ini, betaGEBU_ini = calc.evaluate_assessment()
