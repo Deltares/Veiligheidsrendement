@@ -2,14 +2,16 @@ import numpy as np
 from scipy.stats import norm
 from scipy.special import ndtri
 from scipy.interpolate import interp1d
+from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
+    FailureMechanismCalculatorProtocol,
+)
 
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePart
 from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
 from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
 
 
-class revetmentCalculation:
+class RevetmentCalculation(FailureMechanismCalculatorProtocol):
     def __init__(self, revetment: RevetmentDataClass) -> None:
         self._r = revetment
 
@@ -28,7 +30,9 @@ class revetmentCalculation:
         betaComb = -ndtri(probComb)
         return betaComb
 
-    def evaluate_assessment(self):
+    def calculate(self, year: int) -> tuple[float, float]:
+        # TODO: we don't actually use the year, whilst in other calculators we do.
+        # We need clarification on this.
         beta_zst = []
         beta_gebu = np.nan
 
@@ -43,7 +47,7 @@ class revetmentCalculation:
 
         return beta_zst, beta_gebu
 
-    def _evaluate_block(self, slope_part: SlopePart):
+    def _evaluate_block(self, slope_part: StoneSlopePart):
         D_opt = []
         betaFailure = []
         for _slope_part_relation in slope_part.slope_part_relations:
