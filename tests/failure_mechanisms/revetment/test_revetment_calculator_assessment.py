@@ -13,6 +13,7 @@ from vrtool.failure_mechanisms.revetment.revetment_calculation_assessment import
     RevetmentCalculation,
 )
 from tests import test_data
+from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuilder
 from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
 
 
@@ -26,7 +27,10 @@ class TestRevetmentAssessmentCalculator:
         revetment = RevetmentDataClass()
         n_sections = dataZST["aantal deelvakken"]
         for _n_section in range(n_sections):
-            _stone_slope_part = StoneSlopePart(
+            _slope_type = SlopePartBuilder.get_slope_part_type(
+                dataZST["toplaagtype"][_n_section]
+            )
+            _stone_slope_part = _slope_type(
                 dataZST["Zo"][_n_section],
                 dataZST["Zb"][_n_section],
                 dataZST["tana"][_n_section],
@@ -34,17 +38,16 @@ class TestRevetmentAssessmentCalculator:
                 dataZST["D huidig"][_n_section],
             )
             revetment.slope_parts.append(_stone_slope_part)
-            if _stone_slope_part.is_valid():
+            if isinstance(_stone_slope_part, StoneSlopePart):
                 key = f"deelvak {_n_section}"
                 nBeta = len(dataZST[key]["betaFalen"])
                 for m in range(nBeta):
                     rel = RelationStoneRevetment(
-                        _n_section,
                         dataZST["zichtjaar"],
                         dataZST[key]["D_opt"][m],
                         dataZST[key]["betaFalen"][m],
                     )
-                    revetment.block_relations.append(rel)
+                    _stone_slope_part.slope_part_relations.append(rel)
 
         nGrass = len(dataGEBU["grasbekleding_begin"])
         for _n_section in range(nGrass):
