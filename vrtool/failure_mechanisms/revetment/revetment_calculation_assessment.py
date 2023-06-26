@@ -4,6 +4,9 @@ from scipy.special import ndtri
 from scipy.interpolate import interp1d
 
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.slope_part import SlopePart
+from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
+from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
 
 
 class revetmentCalculation:
@@ -26,39 +29,29 @@ class revetmentCalculation:
         return betaComb
 
     def evaluate_assessment(self):
-        betaZST = []
-        betaGEBU = np.nan
+        beta_zst = []
+        beta_gebu = np.nan
 
-        for i in range(len(self._r.slope_parts)):
-
-            if self._r.slope_parts[i].is_block:  # for block
-
-                betaZST.append(
-                    self._evaluate_block(self._r.slope_parts[i].top_layer_thickness, i)
-                )
-
-            elif self._r.slope_parts[i].is_grass and np.isnan(betaGEBU):  # for grass
-
-                betaZST.append(np.nan)
-
-                betaGEBU = self._evaluate_grass()
-
+        for _slope_part in self._r.slope_parts:
+            if isinstance(_slope_part, StoneSlopePart):
+                beta_zst.append(self._evaluate_block(_slope_part.top_layer_thickness))
+            elif isinstance(_slope_part, GrassSlopePart) and np.isnan(beta_gebu):
+                beta_zst.append(np.nan)
+                beta_gebu = self._evaluate_grass()
             else:
+                beta_zst.append(np.nan)
 
-                betaZST.append(np.nan)
+        return beta_zst, beta_gebu
 
-        return betaZST, betaGEBU
-
-    def _evaluate_block(self, D: float, slopePartIndex: int):
+    def _evaluate_block(self, slope_part: SlopePart):
         D_opt = []
         betaFailure = []
-        for rel in self._r.block_relations:
-            if rel.slope_part == slopePartIndex:
-                D_opt.append(rel.top_layer_thickness)
-                betaFailure.append(rel.beta)
+        for _slope_part_relation in slope_part.slope_part_relations:
+            D_opt.append(_slope_part_relation.top_layer_thickness)
+            betaFailure.append(_slope_part_relation.beta)
 
         fBlock = interp1d(D_opt, betaFailure, fill_value=("extrapolate"))
-        beta = fBlock(D)
+        beta = fBlock(slope_part.top_layer_thickness)
 
         return beta
 
