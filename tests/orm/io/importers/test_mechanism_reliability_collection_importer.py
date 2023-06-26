@@ -164,6 +164,12 @@ class TestMechanismReliabilityCollectionImporter:
                 TestDataHelper.get_overflow_hydraring_mechanism_per_section,
                 id="Overflow HRING",
             ),
+            pytest.param(
+                "Revetment",
+                "",
+                TestDataHelper.get_valid_mechanism_per_section,
+                id="Revetment",
+            ),
         ],
     )
     def test_import_orm_with_simple_mechanism_per_section(
