@@ -6,7 +6,7 @@ Any new measure should implement the `MeasureProtocol` located in `measure_proto
 
 We differenciate between two types of measures:
 
-- Standard measures, predefined set of measures which we support and have explicit logic for. They consist of:
+- Standard measures, predefined set of measures which we support and have explicit logic for. They are contained within the submodule `standard_measures` and consist of:
     - Diaphragm wall (`DiaphragmWallMeasure`),
     - Soil reinforcement (`SoilReinforcementMeasure`),
     - Stability screen (`StabilityScreenMeasure`),
