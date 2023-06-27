@@ -116,9 +116,9 @@ class TargetReliabilityStrategy(StrategyBase):
             }
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
             if isinstance(self.OI_year, int):
-                targetyear = 50  # OI_year + 50
-            else:
+                # TODO: should this not be OI_year + 50?
                 targetyear = 50
+
             # make PossibleMeasures dataframe
             PossibleMeasures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
