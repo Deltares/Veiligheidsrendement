@@ -56,3 +56,9 @@ class TestSlopePartBuilder:
         assert _slope.tan_alpha == 42
         assert _slope.top_layer_type == top_layer_type
         assert math.isnan(_slope.top_layer_thickness)
+
+    def test_build_with_missing_top_layer_type_raises_error(self):
+        with pytest.raises(ValueError) as exc_err:
+            SlopePartBuilder.build(top_layer_type=-1)
+
+        assert str(exc_err.value) == "No SlopePart type found for top layer type: -1."
