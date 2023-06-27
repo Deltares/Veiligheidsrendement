@@ -53,6 +53,7 @@ class ResultsMeasures(VrToolRunResultProtocol):
                     plt.close(1001)
         logging.info("Finished making beta plots")
 
+
     @property
     def _step_output_filepath(self) -> Path:
         """
@@ -61,14 +62,23 @@ class ResultsMeasures(VrToolRunResultProtocol):
         Returns:
             Path: Instance representing the file location.
         """
-        return self.vr_config.output_directory / "AfterStep2.out"
+        return self.vr_config.output_directory / "AfterStep1.out"
 
-    def load_results(self):
-        if self._step_output_filepath.exists():
-            _shelf = shelve.open(str(self._step_output_filepath))
-            self.solutions_dict = _shelf["AllSolutions"]
-            _shelf.close()
-            logging.info("Loaded AllSolutions from file")
+    def load_results(self,alternative_path = None):
+        try:
+            if self._step_output_filepath.exists():
+                _shelf = shelve.open(str(self._step_output_filepath))
+                self.solutions_dict = _shelf["AllSolutions"]
+                _shelf.close()
+                logging.info("Loaded AllSolutions from file")
+        except:
+            if alternative_path != None:
+                try:
+                    _shelf = shelve.open(str(alternative_path))
+                    self.solutions_dict = _shelf["AllSolutions"]
+                    logging.info("Loaded AllSolutions from file")
+                except:
+                    pass
 
     def save_results(self):
         _shelf = shelve.open(str(self._step_output_filepath), "n")
