@@ -3,6 +3,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_mechanism_per_section
+from tests.orm.io import add_computation_scenario_id
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.piping_importer import PipingImporter
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -24,12 +25,6 @@ class TestPipingImporter:
             scenario_probability=1 - 0.1 * id,
             probability_of_failure=1 - 0.123 * id,
         )
-
-    def _add_computation_scenario_id(
-        self, source: list[dict], computation_scenario_id: int
-    ) -> None:
-        for item in source:
-            item["computation_scenario_id"] = computation_scenario_id
 
     def test_initialize_piping_importer(self):
         _importer = PipingImporter()
@@ -76,8 +71,8 @@ class TestPipingImporter:
                 },
             ]
 
-            self._add_computation_scenario_id(parameters1, _computation_scenario1.id)
-            self._add_computation_scenario_id(parameters2, _computation_scenario2.id)
+            add_computation_scenario_id(parameters1, _computation_scenario1.id)
+            add_computation_scenario_id(parameters2, _computation_scenario2.id)
 
             Parameter.insert_many(parameters1 + parameters2).execute()
             transaction.commit()
@@ -136,8 +131,8 @@ class TestPipingImporter:
                 },
             ]
 
-            self._add_computation_scenario_id(parameters1, _computation_scenario1.id)
-            self._add_computation_scenario_id(parameters2, _computation_scenario2.id)
+            add_computation_scenario_id(parameters1, _computation_scenario1.id)
+            add_computation_scenario_id(parameters2, _computation_scenario2.id)
             Parameter.insert_many(parameters1 + parameters2).execute()
             transaction.commit()
 

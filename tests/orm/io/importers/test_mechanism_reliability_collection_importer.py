@@ -17,10 +17,12 @@ from vrtool.orm.io.importers.mechanism_reliability_collection_importer import (
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.models.slope_part import SlopePart
 from vrtool.orm.models.supporting_file import SupportingFile
 
 
@@ -110,6 +112,35 @@ class TestDataHelper:
         )
         return mechanism_per_section
 
+    @staticmethod
+    def get_revetment_mechanism_per_section(
+        mechanism: str, computation_type: str
+    ) -> MechanismPerSection:
+        mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
+            mechanism
+        )
+        computation_scenario = TestDataHelper._create_valid_scenario(
+            mechanism_per_section, computation_type
+        )
+
+        GrassRevetmentRelation.create(
+            year=2023,
+            transition_level=1.0,
+            beta=3.053,
+            computation_scenario=computation_scenario,
+        )
+
+        SlopePart.create(
+            begin_part=-0.27,
+            end_part=1.89,
+            top_layer_type=20,
+            top_layer_thickness=0.2,
+            tan_alpha=0.25064,
+            computation_scenario=computation_scenario,
+        )
+
+        return mechanism_per_section
+
 
 class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_for_dstability(self, empty_db_fixture: SqliteDatabase):
@@ -167,7 +198,7 @@ class TestMechanismReliabilityCollectionImporter:
             pytest.param(
                 "Revetment",
                 "",
-                TestDataHelper.get_valid_mechanism_per_section,
+                TestDataHelper.get_revetment_mechanism_per_section,
                 id="Revetment",
             ),
         ],

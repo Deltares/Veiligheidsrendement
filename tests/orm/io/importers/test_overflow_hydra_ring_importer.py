@@ -3,6 +3,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
+from tests.orm.io import add_computation_scenario_id
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
@@ -45,12 +46,6 @@ class TestOverflowHydraRingImporter:
             scenario_probability=1,
             probability_of_failure=1,
         )
-
-    def _add_computation_scenario_id(
-        self, source: list[dict], computation_scenario_id: int
-    ) -> None:
-        for item in source:
-            item["computation_scenario_id"] = computation_scenario_id
 
     def test_initialize(self):
         _importer = OverFlowHydraRingImporter()
@@ -108,9 +103,7 @@ class TestOverflowHydraRingImporter:
             _computation_scenario = get_basic_computation_scenario()
 
             _mechanism_tables = mechanism_table_year_one + mechanism_table_year_two
-            self._add_computation_scenario_id(
-                _mechanism_tables, _computation_scenario.id
-            )
+            add_computation_scenario_id(_mechanism_tables, _computation_scenario.id)
             MechanismTable.insert_many(_mechanism_tables).execute()
 
             transaction.commit()
@@ -178,7 +171,7 @@ class TestOverflowHydraRingImporter:
         ]
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
-            self._add_computation_scenario_id(
+            add_computation_scenario_id(
                 _mechanism_table_source, _computation_scenario.id
             )
 
