@@ -9,44 +9,11 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
 )
-from vrtool.orm.models import Mechanism
-from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.section_data import SectionData
 
 
 class TestOverflowHydraRingImporter:
-    def _get_valid_computation_scenario(self) -> ComputationScenario:
-        _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
-        _test_section = SectionData.create(
-            dike_traject=_test_dike_traject,
-            section_name="TestSection",
-            meas_start=2.4,
-            meas_end=4.2,
-            section_length=123,
-            in_analysis=True,
-            crest_height=24,
-            annual_crest_decline=42,
-        )
-
-        _mechanism = Mechanism.create(name="mechanism")
-        _mechanism_per_section = MechanismPerSection.create(
-            section=_test_section, mechanism=_mechanism
-        )
-
-        _computation_type = ComputationType.create(name="irrelevant")
-        return ComputationScenario.create(
-            mechanism_per_section=_mechanism_per_section,
-            computation_type=_computation_type,
-            computation_name="Computation Name",
-            scenario_name="Scenario Name",
-            scenario_probability=1,
-            probability_of_failure=1,
-        )
-
     def test_initialize(self):
         _importer = OverFlowHydraRingImporter()
         assert isinstance(_importer, OverFlowHydraRingImporter)
