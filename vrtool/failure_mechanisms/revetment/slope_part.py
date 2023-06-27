@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Protocol, runtime_checkable
 
-GRASS_TYPE = 20.0
-MIN_BLOCK = 26.0
-MAX_BLOCK = 27.9
+from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
+    RelationRevetmentProtocol,
+)
 
 
+@runtime_checkable
 @dataclass
-class SlopePart:
+class SlopePartProtocol(Protocol):
     """stores data for slope part"""
 
     begin_part: float
@@ -17,10 +19,15 @@ class SlopePart:
     top_layer_type: float  # note that e.g. 26.1 is a valid type
     top_layer_thickness: float = float("nan")
 
-    @property
-    def is_grass(self) -> bool:
-        return self.top_layer_type == GRASS_TYPE
+    slope_part_relations: list[RelationRevetmentProtocol] = field(
+        default_factory=lambda: []
+    )
 
-    @property
-    def is_block(self) -> bool:
-        return self.top_layer_type >= MIN_BLOCK and self.top_layer_type <= MAX_BLOCK
+    def is_valid(self) -> bool:
+        """
+        Validates whether this `SlopePartProtocol` instance fulfill its predefined requirements.
+
+        Returns:
+            bool: Wheter it is valid or not.
+        """
+        pass
