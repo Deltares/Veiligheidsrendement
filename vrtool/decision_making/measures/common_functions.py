@@ -236,7 +236,6 @@ def determine_new_geometry(
     geometry_plot: bool,
     plot_dir: Union[Path, None] = None,
     berm_height: float = 2,
-    slope_in: bool = False,
     crest_extra: float = np.nan,
 ):
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
