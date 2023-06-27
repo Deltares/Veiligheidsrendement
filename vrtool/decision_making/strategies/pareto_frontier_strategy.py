@@ -29,7 +29,7 @@ class ParetoFrontierStrategy(StrategyBase):
     ):
         _mip_object = MixedIntegerStrategy("MIPObject")
         _mip_object.combine(traject, solutions_dict, splitparams=True)
-        _mip_object.make_optimization_input(traject, solutions_dict)
+        _mip_object.make_optimization_input(traject)
 
         MIPObjects = []
         MIPModels = []
