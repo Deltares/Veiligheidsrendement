@@ -27,18 +27,15 @@ class TestRevetmentAssessmentCalculator:
         revetment = RevetmentDataClass()
         n_sections = dataZST["aantal deelvakken"]
         for _n_section in range(n_sections):
-            _slope_type = SlopePartBuilder.get_slope_part_type(
-                dataZST["toplaagtype"][_n_section]
+            _slope_part = SlopePartBuilder.build(
+                top_layer_type=dataZST["toplaagtype"][_n_section],
+                begin_part=dataZST["Zo"][_n_section],
+                end_part=dataZST["Zb"][_n_section],
+                tan_alpha=dataZST["tana"][_n_section],
+                top_layer_thickness=dataZST["D huidig"][_n_section],
             )
-            _stone_slope_part = _slope_type(
-                dataZST["Zo"][_n_section],
-                dataZST["Zb"][_n_section],
-                dataZST["tana"][_n_section],
-                dataZST["toplaagtype"][_n_section],
-                dataZST["D huidig"][_n_section],
-            )
-            revetment.slope_parts.append(_stone_slope_part)
-            if isinstance(_stone_slope_part, StoneSlopePart):
+            revetment.slope_parts.append(_slope_part)
+            if isinstance(_slope_part, StoneSlopePart):
                 key = f"deelvak {_n_section}"
                 nBeta = len(dataZST[key]["betaFalen"])
                 for m in range(nBeta):
@@ -47,7 +44,7 @@ class TestRevetmentAssessmentCalculator:
                         dataZST[key]["D_opt"][m],
                         dataZST[key]["betaFalen"][m],
                     )
-                    _stone_slope_part.slope_part_relations.append(rel)
+                    _slope_part.slope_part_relations.append(rel)
 
         nGrass = len(dataGEBU["grasbekleding_begin"])
         for _n_section in range(nGrass):
