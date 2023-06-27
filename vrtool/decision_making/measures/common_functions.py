@@ -236,7 +236,6 @@ def determine_new_geometry(
     geometry_plot: bool,
     plot_dir: Union[Path, None] = None,
     berm_height: float = 2,
-    slope_in: bool = False,
     crest_extra: float = np.nan,
 ):
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
@@ -248,8 +247,8 @@ def determine_new_geometry(
     initial = modify_geometry_input(initial, berm_height)
 
     # Geometry is always from inner to outer toe
-    dcrest = geometry_change[0]
-    dberm = geometry_change[1]
+    _d_crest = geometry_change[0]
+    _d_berm = geometry_change[1]
     if (~np.isnan(crest_extra)) and crest_extra < initial["z"].max():
         # case where cross section for overflow has a lower spot, but majority of section is higher.
         # in that case the crest height is modified to the level of the overflow computation which is a conservative estimate.
@@ -257,61 +256,61 @@ def determine_new_geometry(
         initial.loc["BUK", "z"] = crest_extra
 
     # crest heightening
-    if dcrest > 0:
+    if _d_crest > 0:
         # determine widening at toes.
         slope_out = np.abs(initial.loc["BUK"].x - initial.loc["BUT"].x) / np.abs(
             initial.loc["BUK"].z - initial.loc["BUT"].z
         )
-        BUT_dx = slope_out * dcrest
+        _but_dx = slope_out * _d_crest
 
         # TODO discuss with WSRL: if crest is heightened, should slope be determined based on BIK and BIT or BIK and BBL?
         # Now it has been implemented that the slope is based on BIK and BBL
         slope_in = np.abs(initial.loc["BBL"].x - initial.loc["BIK"].x) / np.abs(
             initial.loc["BBL"].z - initial.loc["BIK"].z
         )
-        BIT_dx = slope_in * dcrest
+        _bit_dx = slope_in * _d_crest
     else:
-        BUT_dx = 0.0
-        BIT_dx = 0.0
+        _but_dx = 0.0
+        _bit_dx = 0.0
 
-    new_geometry = copy.deepcopy(initial)
+    _new_geometry = copy.deepcopy(initial)
 
     # get effects of inward/outward:
-    dhouse = 0.0
+    _d_house = 0.0
     if direction == "outward":
-        dout = BUT_dx
-        din = BIT_dx
-        if dberm <= max_berm_out:
-            dhouse = max(0, -(dberm + dout - din))
-            shift = dberm
+        _d_out = _but_dx
+        _d_in = _bit_dx
+        if _d_berm <= max_berm_out:
+            _d_house = max(0, -(_d_berm + _d_out - _d_in))
+            shift = _d_berm
         else:
-            berm_in = dberm - max_berm_out
-            dhouse = max(0, -(-berm_in + dout - din))
+            berm_in = _d_berm - max_berm_out
+            _d_house = max(0, -(-berm_in + _d_out - _d_in))
             shift = max_berm_out
     else:
         # all changes inward.
-        dhouse = max(0, dberm + BUT_dx + BIT_dx)
+        _d_house = max(0, _d_berm + _but_dx + _bit_dx)
         shift = 0.0
 
     # apply dcrest, dberm and shift due to inward/outward:
-    max_to_right = BUT_dx + BIT_dx + dberm - shift
-    new_geometry.loc["BUT", "x"] -= shift
-    new_geometry.loc["BUK", "x"] += BUT_dx - shift
-    new_geometry.loc["BIK", "x"] += BUT_dx - shift
-    new_geometry.loc["BBL", "x"] += BUT_dx + BIT_dx - shift
-    new_geometry.loc["EBL", "x"] += max_to_right
-    new_geometry.loc["BIT", "x"] += max_to_right
-    new_geometry.loc["BUK", "z"] += dcrest
-    new_geometry.loc["BIK", "z"] += dcrest
+    max_to_right = _but_dx + _bit_dx + _d_berm - shift
+    _new_geometry.loc["BUT", "x"] -= shift
+    _new_geometry.loc["BUK", "x"] += _but_dx - shift
+    _new_geometry.loc["BIK", "x"] += _but_dx - shift
+    _new_geometry.loc["BBL", "x"] += _but_dx + _bit_dx - shift
+    _new_geometry.loc["EBL", "x"] += max_to_right
+    _new_geometry.loc["BIT", "x"] += max_to_right
+    _new_geometry.loc["BUK", "z"] += _d_crest
+    _new_geometry.loc["BIK", "z"] += _d_crest
 
     # add extra points:
     base = copy.deepcopy(initial)
     initial = add_extra_points(initial, base, (shift, max_to_right))
-    new_geometry = add_extra_points(new_geometry, base, (shift, max_to_right))
+    _new_geometry = add_extra_points(_new_geometry, base, (shift, max_to_right))
 
     # calculate the area difference
     area_old, polygon_old = calculate_area(initial)
-    area_new, polygon_new = calculate_area(new_geometry)
+    area_new, polygon_new = calculate_area(_new_geometry)
 
     if polygon_old.intersects(polygon_new):  # True
         try:
@@ -344,7 +343,7 @@ def determine_new_geometry(
                 # plot_dir.joinpath.mkdir(parents=True, exist_ok=True)
                 plot_dir.joinpath("Geometry").mkdir(parents=True, exist_ok=True)
             plt.plot(initial.loc[:, "x"], initial.loc[:, "z"], "k")
-            plt.plot(new_geometry.loc[:, "x"], new_geometry.loc[:, "z"], "--r")
+            plt.plot(_new_geometry.loc[:, "x"], _new_geometry.loc[:, "z"], "--r")
             if poly_diff.area > 0:
                 if hasattr(poly_diff, "geoms"):
                     for i in range(len(poly_diff.geoms)):
@@ -371,8 +370,8 @@ def determine_new_geometry(
             # plt.show()
 
             plt.text(
-                np.mean(new_geometry.loc[:, "x"]),
-                np.max(new_geometry.loc[:, "z"]),
+                np.mean(_new_geometry.loc[:, "x"]),
+                np.max(_new_geometry.loc[:, "z"]),
                 "Area extra = {:.4} $m^2$\nArea excavated = {:.4} $m^2$".format(
                     str(area_extra), str(area_excavate)
                 ),
@@ -380,12 +379,17 @@ def determine_new_geometry(
 
             plt.savefig(
                 plot_dir.joinpath(
-                    "Geometry_" + str(dberm) + "_" + str(dcrest) + direction + ".png"
+                    "Geometry_"
+                    + str(_d_berm)
+                    + "_"
+                    + str(_d_crest)
+                    + direction
+                    + ".png"
                 )
             )
             plt.close()
 
-    return new_geometry, area_extra, area_excavate, dhouse
+    return _new_geometry, area_extra, area_excavate, _d_house
 
 
 # Script to determine the costs of a reinforcement:

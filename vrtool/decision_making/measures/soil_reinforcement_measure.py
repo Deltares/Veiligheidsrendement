@@ -67,7 +67,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             return _modified_measure
 
         modified_dike_geometry_measures = self._get_modified_dike_geometry_measures(
-            dike_section, preserve_slope, plot_dir
+            dike_section, plot_dir
         )
         self.measures = list(map(get_measure_data, modified_dike_geometry_measures))
 
@@ -157,7 +157,6 @@ class SoilReinforcementMeasure(MeasureProtocol):
     def _get_modified_dike_geometry_measures(
         self,
         dike_section: DikeSection,
-        preserve_slope: bool,
         plot_dir: bool = False,
     ) -> list[ModifiedDikeGeometryMeasureInput]:
         crest_range = self._get_crest_range()
@@ -172,7 +171,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         inputs = []
         for dike_modification in dike_modifications:
             modified_geometry_properties = self._determine_new_geometry(
-                dike_section, dike_modification, preserve_slope, plot_dir
+                dike_section, dike_modification, plot_dir
             )
             measure_input_dictionary = {
                 "d_crest": dike_modification[0],
@@ -192,16 +191,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
         self,
         dike_section: DikeSection,
         dike_modification: tuple[float],
-        preserve_slope: bool,
         plot_dir: bool,
     ) -> list:
-        if not preserve_slope:
-            slope_in = 4
-            slope_out = 3  # inner and outer slope
-        else:
-            slope_in = False
-            slope_out = False
-
         if hasattr(dike_section, "Kruinhoogte"):
             if dike_section.Kruinhoogte != np.max(dike_section.InitialGeometry.z):
                 # In case the crest is unequal to the Kruinhoogte, that value should be given as input as well
@@ -211,11 +202,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     self.parameters["max_outward"],
                     copy.deepcopy(dike_section.InitialGeometry),
                     self.geometry_plot,
-                    **{
-                        "plot_dir": plot_dir,
-                        "slope_in": slope_in,
-                        "crest_extra": dike_section.Kruinhoogte,
-                    },
+                    plot_dir=plot_dir,
+                    crest_extra=dike_section.Kruinhoogte,
                 )
             else:
                 return determine_new_geometry(
@@ -224,7 +212,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     self.parameters["max_outward"],
                     copy.deepcopy(dike_section.InitialGeometry),
                     self.geometry_plot,
-                    **{"plot_dir": plot_dir, "slope_in": slope_in},
+                    plot_dir=plot_dir,
                 )
 
         return determine_new_geometry(
@@ -233,7 +221,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             self.parameters["max_outward"],
             copy.deepcopy(dike_section.InitialGeometry),
             self.geometry_plot,
-            **{"plot_dir": plot_dir, "slope_in": slope_in},
+            plot_dir=plot_dir,
         )
 
     def _get_configured_section_reliability(
