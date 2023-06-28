@@ -1,8 +1,10 @@
 import pytest
 
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
-from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    GrassSlopePart,
+    StoneSlopePart,
+)
 
 
 class TestRevetmentDataClass:

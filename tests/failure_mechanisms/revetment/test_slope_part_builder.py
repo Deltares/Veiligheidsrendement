@@ -1,12 +1,14 @@
 import math
 from typing import Type
-from vrtool.failure_mechanisms.revetment.asphalt_slope_part import AsphaltSlopePart
-from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
-from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuilder
 import pytest
 
-from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    AsphaltSlopePart,
+    GrassSlopePart,
+    SlopePartProtocol,
+    SlopePartBuilder,
+    StoneSlopePart,
+)
 
 _slope_part_cases = [
     pytest.param(20.0, GrassSlopePart, id="Grass slope part type"),
