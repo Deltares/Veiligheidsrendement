@@ -12,7 +12,7 @@ from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
-class RevetmentCalculation(FailureMechanismCalculatorProtocol):
+class RevetmentCalculator(FailureMechanismCalculatorProtocol):
     def __init__(self, revetment: RevetmentDataClass) -> None:
         self._revetment = revetment
         self._given_years = self._FindGivenYears(revetment)

@@ -9,8 +9,8 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.revetment_calculation_assessment import (
-    RevetmentCalculation,
+from vrtool.failure_mechanisms.revetment.revetment_calculator import (
+    RevetmentCalculator,
 )
 from tests import test_data
 from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuilder
@@ -111,7 +111,7 @@ class TestRevetmentCalculatorAssessment:
     ):
         revetment = self._get_revetment_input(years[1:], section_id)
 
-        calc = RevetmentCalculation(revetment)
+        calc = RevetmentCalculator(revetment)
         [beta, pf] = calc.calculate(years[0])
 
         assert beta == pytest.approx(ref_values[0], rel=1e-8)
