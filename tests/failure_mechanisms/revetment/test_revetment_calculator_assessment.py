@@ -15,7 +15,7 @@ from vrtool.failure_mechanisms.revetment.revetment_calculator import (
 from tests import test_data
 from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuilder
 from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
+from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
 
 
 class TestRevetmentCalculatorAssessment:

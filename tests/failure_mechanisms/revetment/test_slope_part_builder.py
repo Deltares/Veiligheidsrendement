@@ -2,7 +2,7 @@ import math
 from typing import Type
 from vrtool.failure_mechanisms.revetment.asphalt_slope_part import AsphaltSlopePart
 from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
+from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
 from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuilder
 import pytest
 
