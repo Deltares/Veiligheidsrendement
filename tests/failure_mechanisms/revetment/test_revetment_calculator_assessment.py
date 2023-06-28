@@ -17,7 +17,7 @@ from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuil
 from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
 
 
-class TestRevetmentAssessmentCalculator:
+class TestRevetmentCalculatorAssessment:
     def _read_JSON(self, file_name):
         with open(file_name, "r") as openfile:
             json_object = json.load(openfile)
@@ -70,7 +70,13 @@ class TestRevetmentAssessmentCalculator:
         [
             pytest.param(
                 2025, 0, [3.6112402089287357, 4.90234375, 3.61204720537867], id="2025_0"
-            )
+            ),
+            pytest.param(
+                2100,
+                0,
+                [3.617047156851664, 4.74609375, 3.6188551455386135],
+                id="2100_0",
+            ),
         ],
     )
     def test_revetment_calculation(
