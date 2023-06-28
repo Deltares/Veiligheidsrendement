@@ -1,4 +1,10 @@
 import pytest
+from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
+    RelationGrassRevetment,
+)
+from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
+    RelationStoneRevetment,
+)
 
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
@@ -28,3 +34,21 @@ class TestRevetmentDataClass:
 
         # Assert
         assert str(exception_error.value) == "No slope part with grass found."
+
+    def test_available_years(self):
+        # 1. Define test data.
+        revetments = RevetmentDataClass()
+        revetments.slope_parts.append(StoneSlopePart(1, 2, 0.31, 5, 0.1))
+        revetments.slope_parts.append(StoneSlopePart(2, 3, 0.32, 26.1, 0.15))
+        revetments.slope_parts.append(GrassSlopePart(3, 4, 0.33, 20))
+        revetments.slope_parts.append(GrassSlopePart(4, 5, 0.34, 20))
+        revetments.grass_relations.append(RelationGrassRevetment(2020, 1.0, 2.0))
+        for i in range(2):
+            revetments.slope_parts[i].slope_part_relations.append(
+                RelationStoneRevetment(2020, 2.0, 3.0)
+            )
+
+        given_years = revetments.find_given_years()
+
+        assert len(given_years) == 1
+        assert given_years[0] == 2020

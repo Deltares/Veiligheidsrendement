@@ -49,7 +49,7 @@ class TestRevetmentCalculatorAssessment:
             if not exists:
                 revetment.slope_parts.append(_slope_part)
 
-            if isinstance(_slope_part, StoneSlopePart):
+            if isinstance(slope, StoneSlopePart):
                 key = f"deelvak {_n_section}"
                 nBeta = len(dataZST[key]["betaFalen"])
                 for m in range(nBeta):
@@ -84,22 +84,25 @@ class TestRevetmentCalculatorAssessment:
         return revetment
 
     @pytest.mark.parametrize(
-        "years, section_id, ref_values",
+        "assessment_year, given_years, section_id, ref_values",
         [
             pytest.param(
-                [2025, 2025],
+                2025,
+                [2025],
                 0,
                 [3.6112402089287357, 0.00015236812335053454],
                 id="2025_0",
             ),
             pytest.param(
-                [2100, 2100],
+                2100,
+                [2100],
                 0,
                 [3.617047156851664, 0.00014899151576941146],
                 id="2100_0",
             ),
             pytest.param(
-                [2050, 2025, 2100],
+                2050,
+                [2025, 2100],
                 0,
                 [3.6131758582363784, 0.0001512347051563111],
                 id="2050_0",
@@ -107,12 +110,16 @@ class TestRevetmentCalculatorAssessment:
         ],
     )
     def test_revetment_calculation(
-        self, years: list[int], section_id: int, ref_values: list[float]
+        self,
+        assessment_year: int,
+        given_years: list[int],
+        section_id: int,
+        ref_values: list[float],
     ):
-        revetment = self._get_revetment_input(years[1:], section_id)
+        revetment = self._get_revetment_input(given_years, section_id)
 
         calc = RevetmentCalculator(revetment)
-        [beta, pf] = calc.calculate(years[0])
+        [beta, pf] = calc.calculate(assessment_year)
 
         assert beta == pytest.approx(ref_values[0], rel=1e-8)
         assert pf == pytest.approx(ref_values[1], 1e-8)

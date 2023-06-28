@@ -15,12 +15,12 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 class RevetmentCalculator(FailureMechanismCalculatorProtocol):
     def __init__(self, revetment: RevetmentDataClass) -> None:
         self._revetment = revetment
-        self._given_years = self._FindGivenYears(revetment)
 
     def calculate(self, year: int) -> tuple[float, float]:
 
+        given_years = self._revetment.find_given_years()
         betaPerYear = []
-        for given_year in self._given_years:
+        for given_year in given_years:
             beta_zst = []
             beta_gebu = np.nan
             for _slope_part in self._revetment.slope_parts:
@@ -33,12 +33,10 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
                     beta_zst.append(np.nan)
             betaPerYear.append(self._beta_comb(beta_zst, beta_gebu))
 
-        if len(self._given_years) == 1:
+        if len(given_years) == 1:
             return betaPerYear[0], beta_to_pf(betaPerYear[0])
         else:
-            intBeta = interp1d(
-                self._given_years, betaPerYear, fill_value=("extrapolate")
-            )
+            intBeta = interp1d(given_years, betaPerYear, fill_value=("extrapolate"))
             finalBeta = intBeta(year)
             return finalBeta, beta_to_pf(finalBeta)
 
@@ -57,11 +55,11 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         betaComb = -ndtri(probComb)
         return betaComb
 
-    def _evaluate_block(self, slope_part: StoneSlopePart, year: int):
+    def _evaluate_block(self, slope_part: StoneSlopePart, given_year: int):
         D_opt = []
         betaFailure = []
         for _slope_part_relation in slope_part.slope_part_relations:
-            if _slope_part_relation.year == year:
+            if _slope_part_relation.year == given_year:
                 D_opt.append(_slope_part_relation.top_layer_thickness)
                 betaFailure.append(_slope_part_relation.beta)
 
@@ -70,11 +68,11 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
 
         return beta
 
-    def _evaluate_grass(self, year: int):
+    def _evaluate_grass(self, given_year: int):
         transitions = []
         betaFailure = []
         for rel in self._revetment.grass_relations:
-            if rel.year == year:
+            if rel.year == given_year:
                 transitions.append(rel.transition_level)
                 betaFailure.append(rel.beta)
 
@@ -82,12 +80,3 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         beta = fgrass(self._revetment.current_transition_level)
 
         return beta
-
-    def _FindGivenYears(self, revetment: RevetmentDataClass) -> set[int]:
-        given_years = set()
-        for _slope_part in revetment.slope_parts:
-            if isinstance(_slope_part, StoneSlopePart):
-                for rel in _slope_part.slope_part_relations:
-                    given_years.add(rel.year)
-                break
-        return list(given_years)
