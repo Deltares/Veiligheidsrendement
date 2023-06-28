@@ -29,6 +29,10 @@ _acceptance_test_cases = [
         ("TestCase2_38-1_overflow_no_housing", "38-1"),
         id="Traject 38-1, no-housing, with overflow",
     ),
+    pytest.param(
+	("TestCase1_38-1_revetment", "38-1"),
+        id="Traject 38-1, full, with revetment",
+    ),
 ]
 
 
