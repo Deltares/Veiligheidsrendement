@@ -10,6 +10,7 @@ from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
 @dataclass
 class RelationStoneRevetment(RelationRevetmentProtocol):
     """Stores data for relation stone revetment"""
+
     year: int
     top_layer_thickness: float
     beta: float

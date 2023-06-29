@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
+
 from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
     RelationRevetmentProtocol,
 )
 from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
-
 
 MIN_BLOCK = 26.0
 MAX_BLOCK = 27.9

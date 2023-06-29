@@ -1,13 +1,13 @@
 import numpy as np
-from scipy.special import ndtri
 from scipy.interpolate import interp1d
+from scipy.special import ndtri
+
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
-
+from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
-from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
