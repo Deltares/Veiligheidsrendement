@@ -25,4 +25,8 @@ class StoneSlopePart(SlopePartProtocol):
     )
 
     def is_valid(self) -> bool:
-        return self.top_layer_type >= MIN_BLOCK and self.top_layer_type <= MAX_BLOCK
+        return self.is_stone_slope_part(self.top_layer_type)
+
+    @staticmethod
+    def is_stone_slope_part(top_layer_type: float) -> bool:
+        return top_layer_type >= MIN_BLOCK and top_layer_type <= MAX_BLOCK
