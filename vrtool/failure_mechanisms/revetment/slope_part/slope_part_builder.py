@@ -9,11 +9,13 @@ from vrtool.failure_mechanisms.revetment.slope_part.slope_part_protocol import (
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import (
     GrassSlopePart,
     GRASS_TYPE,
+    GrassSlopePart,
 )
 from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
     StoneSlopePart,
     MAX_BLOCK,
     MIN_BLOCK,
+    StoneSlopePart,
 )
 
 

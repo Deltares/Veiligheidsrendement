@@ -28,3 +28,19 @@ class RevetmentDataClass:
             raise ValueError("No slope part with grass found.")
 
         return min(_grass_begin_parts)
+
+    def find_given_years(self) -> list[int]:
+        given_years_stone = set()
+        for _slope_part in self.slope_parts:
+            if isinstance(_slope_part, StoneSlopePart):
+                for rel in _slope_part.slope_part_relations:
+                    given_years_stone.add(rel.year)
+                break
+        given_years_grass = set()
+        for rel in self.grass_relations:
+            given_years_grass.add(rel.year)
+
+        if given_years_grass == given_years_stone:
+            return list(given_years_stone)
+
+        raise ValueError("Years for grass and stone differ.")

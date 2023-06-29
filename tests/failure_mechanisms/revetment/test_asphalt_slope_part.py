@@ -4,7 +4,7 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 )
 
 
-class TestGrassSlopePart:
+class TestAsphaltSlopePart:
     def test_initialize(self):
         slope = AsphaltSlopePart(1, 2, 0.333, 20)
 
