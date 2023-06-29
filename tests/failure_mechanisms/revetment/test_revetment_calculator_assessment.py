@@ -11,9 +11,6 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
 )
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.revetment_calculation_assessment import (
-    RevetmentCalculation,
-)
 from tests import test_data
 from vrtool.failure_mechanisms.revetment.slope_part import (
     StoneSlopePart,

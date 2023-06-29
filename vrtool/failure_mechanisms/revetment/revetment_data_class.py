@@ -9,6 +9,7 @@ from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
 from vrtool.failure_mechanisms.revetment.slope_part import (
     SlopePartProtocol,
     GrassSlopePart,
+    StoneSlopePart,
 )
 
 
