@@ -52,3 +52,17 @@ class TestRevetmentDataClass:
 
         assert len(given_years) == 1
         assert given_years[0] == 2020
+
+    def test_available_years_when_relations_are_not_same_years_raises_value_error(self):
+        # 1. Define test data.
+        revetments = RevetmentDataClass()
+        revetments.slope_parts.append(StoneSlopePart(1, 2, 0.31, 5, 0.1))
+        revetments.slope_parts.append(StoneSlopePart(2, 3, 0.32, 26.1, 0.15))
+        revetments.slope_parts.append(GrassSlopePart(3, 4, 0.33, 20))
+        revetments.slope_parts.append(GrassSlopePart(4, 5, 0.34, 20))
+        revetments.grass_relations.append(RelationGrassRevetment(2020, 1.0, 2.0))
+
+        with pytest.raises(ValueError) as value_error:
+            revetments.find_given_years()
+
+        assert str(value_error.value) == "Years for grass and stone differ."
