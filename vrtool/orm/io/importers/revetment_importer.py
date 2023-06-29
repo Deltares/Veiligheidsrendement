@@ -14,9 +14,6 @@ from vrtool.orm.models.slope_part import SlopePart
 class RevetmentImporter(OrmImporterProtocol):
     _slope_part_importer: SlopePartImporter
 
-    def __init__(self) -> None:
-        self._slope_part_importer = SlopePartImporter()
-
     def _get_grass_revetment_relations(
         self, relations: list[GrassRevetmentRelation]
     ) -> list[RelationGrassRevetment]:
@@ -28,16 +25,14 @@ class RevetmentImporter(OrmImporterProtocol):
         ]
 
     def _get_slope_parts(self, slope_parts: list[SlopePart]) -> list[SlopePartProtocol]:
-        return [self._slope_part_importer.import_orm(part) for part in slope_parts]
+        _slope_part_importer = SlopePartImporter()
+        return [_slope_part_importer.import_orm(part) for part in slope_parts]
 
-    def _is_revetment_data_valid(self, input: RevetmentDataClass):
+    def _is_revetment_data_valid(self, input: RevetmentDataClass) -> bool:
         actual_transition_level = input.current_transition_level
 
         maximum_transition_level_relation = max(
-            [
-                grass_relation.transition_level
-                for grass_relation in input.grass_relations
-            ]
+            map(lambda relation: relation.transition_level, input.grass_relations)
         )
 
         return actual_transition_level < maximum_transition_level_relation
