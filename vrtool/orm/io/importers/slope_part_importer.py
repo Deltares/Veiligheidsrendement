@@ -4,7 +4,7 @@ from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
+from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
 from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuilder
 from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol

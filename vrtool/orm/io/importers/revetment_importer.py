@@ -3,7 +3,7 @@ from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
+from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.slope_part_importer import SlopePartImporter
 from vrtool.orm.models.computation_scenario import ComputationScenario

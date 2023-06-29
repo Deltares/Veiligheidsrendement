@@ -1,4 +1,4 @@
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
+from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
 from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
 
 

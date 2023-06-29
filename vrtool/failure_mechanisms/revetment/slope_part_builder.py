@@ -1,17 +1,18 @@
 from typing import Type
+
 from vrtool.failure_mechanisms.revetment.asphalt_slope_part import (
     ASPHALT_TYPE,
     AsphaltSlopePart,
 )
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
 from vrtool.failure_mechanisms.revetment.grass_slope_part import (
-    GrassSlopePart,
     GRASS_TYPE,
+    GrassSlopePart,
 )
+from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
 from vrtool.failure_mechanisms.revetment.stone_slope_part import (
-    StoneSlopePart,
     MAX_BLOCK,
     MIN_BLOCK,
+    StoneSlopePart,
 )
 
 
