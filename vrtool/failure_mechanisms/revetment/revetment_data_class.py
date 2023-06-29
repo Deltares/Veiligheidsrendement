@@ -42,4 +42,4 @@ class RevetmentDataClass:
         if given_years_grass == given_years_stone:
             return list(given_years_stone)
 
-        raise ValueError("years for grass and stone differ")
+        raise ValueError("Years for grass and stone differ.")

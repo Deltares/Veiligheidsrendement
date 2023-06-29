@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.stats import norm
 from scipy.special import ndtri
 from scipy.interpolate import interp1d
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
@@ -17,7 +16,6 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         self._revetment = revetment
 
     def calculate(self, year: int) -> tuple[float, float]:
-
         given_years = self._revetment.find_given_years()
         betaPerYear = []
         for given_year in given_years:
@@ -44,12 +42,12 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         if np.all(np.isnan(betaZST)):
             probZST = 0.0
         else:
-            probZST = norm.cdf(-np.nanmin(betaZST))
+            probZST = beta_to_pf(np.nanmin(betaZST))
 
         if np.isnan(betaGEBU):
             probGEBU = 0.0
         else:
-            probGEBU = norm.cdf(-betaGEBU)
+            probGEBU = beta_to_pf(betaGEBU)
 
         probComb = probZST + probGEBU
         betaComb = -ndtri(probComb)
