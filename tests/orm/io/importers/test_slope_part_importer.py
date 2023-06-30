@@ -155,9 +155,26 @@ class TestSlopePartImporter:
                 for relation in imported_slope_part_relations
             ]
         )
-        self._assert_stone_revetment_relations(
-            imported_slope_part_relations, stone_relations
+
+        expected_stone_revetment_relation = (
+            slope_part.block_revetment_relations.select().order_by(
+                BlockRevetmentRelation.year,
+                BlockRevetmentRelation.top_layer_thickness,
+            )
         )
+
+        assert len(imported_slope_part_relations) == len(
+            expected_stone_revetment_relation
+        )
+
+        for index, expected_relation in enumerate(expected_stone_revetment_relation):
+            actual_stone_revetment_relation = imported_slope_part_relations[index]
+            assert actual_stone_revetment_relation.year == expected_relation.year
+            assert (
+                actual_stone_revetment_relation.top_layer_thickness
+                == expected_relation.top_layer_thickness
+            )
+            assert actual_stone_revetment_relation.beta == expected_relation.beta
 
     def _assert_slope_parts(
         self,
@@ -172,26 +189,3 @@ class TestSlopePartImporter:
             actual_slope_part.top_layer_thickness
             == expected_slope_part.top_layer_thickness
         )
-
-    def _assert_stone_revetment_relations(
-        self,
-        actual_stone_revetment_relations: list[RelationStoneRevetment],
-        expected_stone_revetment_relation: dict[str, float],
-    ):
-        assert len(actual_stone_revetment_relations) == len(
-            expected_stone_revetment_relation
-        )
-
-        sorted_expected_relations = sorted(
-            expected_stone_revetment_relation,
-            key=lambda relation: (relation["year"], relation["top_layer_thickness"]),
-        )
-
-        for index, expected_relation in enumerate(sorted_expected_relations):
-            actual_stone_revetment_relation = actual_stone_revetment_relations[index]
-            assert actual_stone_revetment_relation.year == expected_relation["year"]
-            assert (
-                actual_stone_revetment_relation.top_layer_thickness
-                == expected_relation["top_layer_thickness"]
-            )
-            assert actual_stone_revetment_relation.beta == expected_relation["beta"]
