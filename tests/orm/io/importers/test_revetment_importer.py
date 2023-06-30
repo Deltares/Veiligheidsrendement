@@ -1,4 +1,4 @@
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, _savepoint
 import pytest
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
@@ -11,6 +11,7 @@ from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartPro
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.revetment_importer import RevetmentImporter
 from vrtool.orm.models.block_revetment_relation import BlockRevetmentRelation
+from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.slope_part import SlopePart
 
@@ -40,12 +41,21 @@ general_slope_parts = [
 
 
 class TestRevetmentImporter:
+    @pytest.fixture
+    def get_basic_scenario_fixture(self, empty_db_fixture: SqliteDatabase):
+        with empty_db_fixture.atomic() as transaction:
+            computation_scenario = get_basic_computation_scenario()
+
+            yield (computation_scenario, transaction)
+
     def test_initialize_revetment_importer(self):
         _importer = RevetmentImporter()
         assert isinstance(_importer, RevetmentImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_revetment_basic_scenario(self, empty_db_fixture: SqliteDatabase):
+    def test_import_revetment_basic_scenario(
+        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
+    ):
         # Setup
         grass_relations = [
             {"year": 2025, "transition_level": 4, "beta": 4.90},
@@ -100,34 +110,31 @@ class TestRevetmentImporter:
             },
         ]
 
-        with empty_db_fixture.atomic() as transaction:
-            computation_scenario = get_basic_computation_scenario()
+        (computation_scenario, transaction) = get_basic_scenario_fixture
+        database_grass_relations = [
+            dict(computation_scenario=computation_scenario) | relation
+            for relation in grass_relations
+        ]
+        GrassRevetmentRelation.insert_many(database_grass_relations).execute()
 
-            database_grass_relations = [
-                dict(computation_scenario=computation_scenario) | relation
-                for relation in grass_relations
-            ]
-            GrassRevetmentRelation.insert_many(database_grass_relations).execute()
+        database_slope_parts = [
+            dict(computation_scenario=computation_scenario) | slope_part
+            for slope_part in slope_parts
+        ]
+        created_slope_parts = []
+        for database_slope_part in database_slope_parts:
+            created_slope_parts.append(SlopePart.create(**database_slope_part))
 
-            database_slope_parts = [
-                dict(computation_scenario=computation_scenario) | slope_part
-                for slope_part in slope_parts
-            ]
-            created_slope_parts = []
-            for database_slope_part in database_slope_parts:
-                created_slope_parts.append(SlopePart.create(**database_slope_part))
-
-            database_slope_part_relations = [
-                dict(slope_part=created_slope_parts[0]) | stone_relation
-                for stone_relation in stone_relations[:2]
-            ]
-            database_slope_part_relations += [
-                dict(slope_part=created_slope_parts[1]) | stone_relation
-                for stone_relation in stone_relations[2:]
-            ]
-            BlockRevetmentRelation.insert_many(database_slope_part_relations).execute()
-
-            transaction.commit
+        database_slope_part_relations = [
+            dict(slope_part=created_slope_parts[0]) | stone_relation
+            for stone_relation in stone_relations[:2]
+        ]
+        database_slope_part_relations += [
+            dict(slope_part=created_slope_parts[1]) | stone_relation
+            for stone_relation in stone_relations[2:]
+        ]
+        BlockRevetmentRelation.insert_many(database_slope_part_relations).execute()
+        transaction.commit
 
         importer = RevetmentImporter()
 
@@ -146,7 +153,7 @@ class TestRevetmentImporter:
         )
 
     def test_import_revetment_with_unsorted_slope_parts_returns_input_with_sorted_parts(
-        self, empty_db_fixture: SqliteDatabase
+        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
     ):
         # Setup
         slope_parts = [
@@ -173,23 +180,21 @@ class TestRevetmentImporter:
             },
         ]
 
-        with empty_db_fixture.atomic() as transaction:
-            computation_scenario = get_basic_computation_scenario()
+        (computation_scenario, transaction) = get_basic_scenario_fixture
+        database_slope_parts = [
+            dict(computation_scenario=computation_scenario) | slope_part
+            for slope_part in slope_parts
+        ]
+        SlopePart.insert_many(database_slope_parts).execute()
 
-            database_slope_parts = [
-                dict(computation_scenario=computation_scenario) | slope_part
-                for slope_part in slope_parts
-            ]
-            SlopePart.insert_many(database_slope_parts).execute()
+        GrassRevetmentRelation.insert(
+            computation_scenario=computation_scenario,
+            year=2025,
+            transition_level=4,
+            beta=4.90,
+        ).execute()
 
-            GrassRevetmentRelation.insert(
-                computation_scenario=computation_scenario,
-                year=2025,
-                transition_level=4,
-                beta=4.90,
-            ).execute()
-
-            transaction.commit
+        transaction.commit
 
         importer = RevetmentImporter()
 
@@ -201,7 +206,7 @@ class TestRevetmentImporter:
         self._assert_slope_parts(revetment_input.slope_parts, slope_parts)
 
     def test_import_revetment_with_unsorted_grass_relations_returns_input_with_sorted_relations(
-        self, empty_db_fixture: SqliteDatabase
+        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
     ):
         # Setup
         grass_relations = [
@@ -213,22 +218,20 @@ class TestRevetmentImporter:
             {"year": 2100, "transition_level": 4.25, "beta": 4.77},
         ]
 
-        with empty_db_fixture.atomic() as transaction:
-            computation_scenario = get_basic_computation_scenario()
+        (computation_scenario, transaction) = get_basic_scenario_fixture
+        database_grass_relations = [
+            dict(computation_scenario=computation_scenario) | relation
+            for relation in grass_relations
+        ]
+        GrassRevetmentRelation.insert_many(database_grass_relations).execute()
 
-            database_grass_relations = [
-                dict(computation_scenario=computation_scenario) | relation
-                for relation in grass_relations
-            ]
-            GrassRevetmentRelation.insert_many(database_grass_relations).execute()
+        database_slope_parts = [
+            dict(computation_scenario=computation_scenario) | slope_part
+            for slope_part in general_slope_parts
+        ]
+        SlopePart.insert_many(database_slope_parts).execute()
 
-            database_slope_parts = [
-                dict(computation_scenario=computation_scenario) | slope_part
-                for slope_part in general_slope_parts
-            ]
-            SlopePart.insert_many(database_slope_parts).execute()
-
-            transaction.commit
+        transaction.commit
 
         importer = RevetmentImporter()
 
@@ -242,19 +245,17 @@ class TestRevetmentImporter:
         )
 
     def test_import_revetment_without_grass_transition_levels_raises_value_error(
-        self, empty_db_fixture: SqliteDatabase
+        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
     ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
-            computation_scenario = get_basic_computation_scenario()
+        (computation_scenario, transaction) = get_basic_scenario_fixture
+        database_slope_parts = [
+            dict(computation_scenario=computation_scenario) | slope_part
+            for slope_part in general_slope_parts
+        ]
+        SlopePart.insert_many(database_slope_parts).execute()
 
-            database_slope_parts = [
-                dict(computation_scenario=computation_scenario) | slope_part
-                for slope_part in general_slope_parts
-            ]
-            SlopePart.insert_many(database_slope_parts).execute()
-
-            transaction.commit
+        transaction.commit
 
         importer = RevetmentImporter()
 
@@ -267,29 +268,27 @@ class TestRevetmentImporter:
         assert str(value_error.value) == _expected_mssg
 
     def test_import_revetment_with_transition_level_larger_than_grass_transition_level_raises_value_error(
-        self, empty_db_fixture: SqliteDatabase
+        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
     ):
         # Setup
         grass_relations = [
             {"year": 2025, "transition_level": 2, "beta": 4.90},
         ]
 
-        with empty_db_fixture.atomic() as transaction:
-            computation_scenario = get_basic_computation_scenario()
+        (computation_scenario, transaction) = get_basic_scenario_fixture
+        database_grass_relations = [
+            dict(computation_scenario=computation_scenario) | relation
+            for relation in grass_relations
+        ]
+        GrassRevetmentRelation.insert_many(database_grass_relations).execute()
 
-            database_grass_relations = [
-                dict(computation_scenario=computation_scenario) | relation
-                for relation in grass_relations
-            ]
-            GrassRevetmentRelation.insert_many(database_grass_relations).execute()
+        database_slope_parts = [
+            dict(computation_scenario=computation_scenario) | slope_part
+            for slope_part in general_slope_parts
+        ]
+        SlopePart.insert_many(database_slope_parts).execute()
 
-            database_slope_parts = [
-                dict(computation_scenario=computation_scenario) | slope_part
-                for slope_part in general_slope_parts
-            ]
-            SlopePart.insert_many(database_slope_parts).execute()
-
-            transaction.commit
+        transaction.commit
 
         importer = RevetmentImporter()
 

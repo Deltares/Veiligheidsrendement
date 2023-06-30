@@ -19,25 +19,21 @@ from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
 
 stone_relations = [
     {
-        "slope_part_id": 1,
         "year": 2025,
         "top_layer_thickness": 0.202,
         "beta": 3.662,
     },
     {
-        "slope_part_id": 1,
         "year": 2100,
         "top_layer_thickness": 0.202,
         "beta": 4.71,
     },
     {
-        "slope_part_id": 1,
         "year": 2025,
         "top_layer_thickness": 0.25,
         "beta": 3.562,
     },
     {
-        "slope_part_id": 1,
         "year": 2100,
         "top_layer_thickness": 0.25,
         "beta": 5.71,
@@ -46,11 +42,32 @@ stone_relations = [
 
 
 class TestSlopePartImporter:
-    def _add_slope_part_id(self, source: list[dict], slope_part_id: int) -> None:
-        for item in source:
-            item["slope_part_id"] = slope_part_id
+    @pytest.fixture
+    def get_slope_part_fixture(
+        self, request: pytest.FixtureRequest, empty_db_fixture: SqliteDatabase
+    ):
+        with empty_db_fixture.atomic() as transaction:
+            computation_scenario = get_basic_computation_scenario()
 
-    def test_initialize_revetment_importer(self):
+            slope_part = SlopePart.create(
+                computation_scenario=computation_scenario,
+                begin_part=-0.27,
+                end_part=1.89,
+                top_layer_type=request.param,
+                top_layer_thickness=0.2,
+                tan_alpha=0.25064,
+            )
+
+            for relation in stone_relations:
+                BlockRevetmentRelation.create(
+                    **(relation | dict(slope_part=slope_part))
+                )
+
+            transaction.commit
+
+            yield slope_part
+
+    def test_initialize_slope_part_importer(self):
         _importer = SlopePartImporter()
         assert isinstance(_importer, SlopePartImporter)
         assert isinstance(_importer, OrmImporterProtocol)
@@ -68,36 +85,18 @@ class TestSlopePartImporter:
         assert str(value_error.value) == _expected_message
 
     @pytest.mark.parametrize(
-        "top_layer_type, revetment_type",
+        "get_slope_part_fixture, revetment_type",
         [
             pytest.param(5.0, AsphaltSlopePart, id="Asphalt"),
             pytest.param(20.0, GrassSlopePart, id="Grass"),
         ],
+        indirect=["get_slope_part_fixture"],
     )
     def test_non_stone_slope_part_returns_expected_slope_part(
-        self,
-        top_layer_type: float,
-        revetment_type: Type[SlopePartProtocol],
-        empty_db_fixture: SqliteDatabase,
+        self, get_slope_part_fixture: SlopePart, revetment_type: Type
     ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
-            computation_scenario = get_basic_computation_scenario()
-
-            slope_part = SlopePart.create(
-                computation_scenario=computation_scenario,
-                begin_part=-0.27,
-                end_part=1.89,
-                top_layer_type=top_layer_type,
-                top_layer_thickness=0.2,
-                tan_alpha=0.25064,
-            )
-
-            self._add_slope_part_id(stone_relations, slope_part.id)
-            BlockRevetmentRelation.insert_many(stone_relations).execute()
-
-            transaction.commit
-
+        slope_part = get_slope_part_fixture
         importer = SlopePartImporter()
 
         # Call
@@ -110,34 +109,19 @@ class TestSlopePartImporter:
         assert not any(imported_part.slope_part_relations)
 
     @pytest.mark.parametrize(
-        "top_layer_type",
+        "get_slope_part_fixture",
         [
             pytest.param(26.0, id="Stone slope part type (lower)"),
             pytest.param(27.0, id="Stone slope part type"),
             pytest.param(27.9, id="Stone slope part type (upper)"),
         ],
+        indirect=["get_slope_part_fixture"],
     )
     def test_stone_slope_part_returns_expected_slope_part(
-        self, top_layer_type: float, empty_db_fixture: SqliteDatabase
+        self, get_slope_part_fixture: SlopePart
     ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
-            computation_scenario = get_basic_computation_scenario()
-
-            slope_part = SlopePart.create(
-                computation_scenario=computation_scenario,
-                begin_part=-0.27,
-                end_part=1.89,
-                top_layer_type=top_layer_type,
-                top_layer_thickness=0.2,
-                tan_alpha=0.25064,
-            )
-
-            self._add_slope_part_id(stone_relations, slope_part.id)
-            BlockRevetmentRelation.insert_many(stone_relations).execute()
-
-            transaction.commit
-
+        slope_part = get_slope_part_fixture
         importer = SlopePartImporter()
 
         # Call
