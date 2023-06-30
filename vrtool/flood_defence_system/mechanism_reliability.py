@@ -18,6 +18,7 @@ from vrtool.failure_mechanisms.overflow import (
     OverflowSimpleInput,
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
+from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 from vrtool.failure_mechanisms.stability_inner import (
     StabilityInnerSimpleCalculator,
     StabilityInnerSimpleInput,
@@ -104,6 +105,10 @@ class MechanismReliability:
             )
         if _normalized_type == "dstability":
             return self._get_d_stability_calculator(mechanism, strength)
+
+        # Note: revetment is independent of computation types
+        if mechanism == "Revetment":
+            return RevetmentCalculator(strength.input.get("revetment_input"))
 
         raise Exception("Unknown computation type {}".format(self.mechanism_type))
 
