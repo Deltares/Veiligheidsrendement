@@ -3,6 +3,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
+from tests.orm.io import add_computation_scenario_id
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.stability_inner_simple_importer import (
@@ -12,12 +13,6 @@ from vrtool.orm.models.parameter import Parameter
 
 
 class TestStabilityInnerSimpleImporter:
-    def _add_computation_scenario_id(
-        self, source: list[dict], computation_scenario_id: int
-    ) -> None:
-        for item in source:
-            item["computation_scenario_id"] = computation_scenario_id
-
     def test_initialize(self):
         # Call
         _importer = StabilityInnerSimpleImporter()
@@ -62,7 +57,7 @@ class TestStabilityInnerSimpleImporter:
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
 
-            self._add_computation_scenario_id(parameters, _computation_scenario.id)
+            add_computation_scenario_id(parameters, _computation_scenario.id)
             Parameter.insert_many(parameters).execute()
 
             transaction.commit()
