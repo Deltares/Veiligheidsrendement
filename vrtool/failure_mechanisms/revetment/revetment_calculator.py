@@ -5,11 +5,11 @@ from scipy.special import ndtri
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
+from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
     StoneSlopePart,
 )
-from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 

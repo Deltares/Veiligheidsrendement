@@ -1,12 +1,13 @@
 import math
 from typing import Type
+
 import pytest
 
 from vrtool.failure_mechanisms.revetment.slope_part import (
     AsphaltSlopePart,
     GrassSlopePart,
-    SlopePartProtocol,
     SlopePartBuilder,
+    SlopePartProtocol,
     StoneSlopePart,
 )
 
