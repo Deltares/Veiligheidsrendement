@@ -73,6 +73,7 @@ class RevetmentMeasure(MeasureProtocol):
     transition_level_increase_step: float
     max_pf_factor_block: float
     n_steps_block: int
+    _revetment_measure_data_list: list[RevetmentMeasureData]
 
     def __init__(self, revetment_calculation: RevetmentCalculator) -> None:
         self.revetment_mechanism_calculator = revetment_calculation
@@ -81,7 +82,6 @@ class RevetmentMeasure(MeasureProtocol):
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        safety_factor_increase,
     ) -> SectionReliability:
         # TODO: Same as in stability_screen_measure.
         # Technically there we are already retrieving these mechanism_reliability_collections.
@@ -103,7 +103,6 @@ class RevetmentMeasure(MeasureProtocol):
                 calc_type,
                 dike_section,
                 traject_info,
-                safety_factor_increase,
             )
         )
         section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -118,7 +117,6 @@ class RevetmentMeasure(MeasureProtocol):
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        safety_factor_increase: float,
     ) -> MechanismReliabilityCollection:
         # TODO: Almost duplicated code from other measures.
         mechanism_reliability_collection = MechanismReliabilityCollection(
@@ -135,22 +133,17 @@ class RevetmentMeasure(MeasureProtocol):
                 .Input
             )
 
-        mechanism_reliability_collection.generate_LCR_profile(
-            dike_section.section_reliability.load,
-            traject_info=traject_info,
-        )
+            mechanism_reliability_collection.generate_LCR_profile(
+                dike_section.section_reliability.load,
+                traject_info=traject_info,
+            )
 
-        mechanism_reliability = mechanism_reliability_collection.Reliability[
-            year_to_calculate
-        ]
-        dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            mechanism_name
-        ).Reliability[
-            year_to_calculate
-        ]
-        self._configure_revetment(
-            mechanism_reliability, year_to_calculate, dike_section
-        )
+            mechanism_reliability = mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ]
+            self._configure_revetment(
+                mechanism_reliability, year_to_calculate, dike_section
+            )
 
         return mechanism_reliability_collection
 
@@ -160,13 +153,13 @@ class RevetmentMeasure(MeasureProtocol):
         year_to_calculate: str,
         dike_section: DikeSection,
     ) -> None:
-        _current_transition_level = float("nan")
+
         _calculated_beta = self._get_calculated_beta()
         _revetment_measures_collection = self._evaluate_revetment_measure(
             dike_section,
             self.revetment_mechanism_calculator._revetment,
             _calculated_beta,
-            _current_transition_level,
+            self.transition_level_increase_step,
             int(year_to_calculate),
         )
         _stone_beta_list, _grass_beta_list = zip(
@@ -178,6 +171,7 @@ class RevetmentMeasure(MeasureProtocol):
         mechanism_reliability["BETA"] = self._calculate_combined_beta(
             _stone_beta_list, _grass_beta_list
         )
+        self._revetment_measure_data_list = _revetment_measures_collection
 
     def _calculate_combined_beta(
         self, stone_revetment_beta: list[float], grass_revetment_beta: list[float]
@@ -199,7 +193,37 @@ class RevetmentMeasure(MeasureProtocol):
     def _get_calculated_beta(self):
         return self.max_pf_factor_block * self.n_steps_block
 
-    def _get_design_steen(
+    def _correct_revetment_measure_data(
+        self,
+        revetment_measures: list[RevetmentMeasureData],
+        current_transition_level: float,
+    ) -> RevetmentMeasureData:
+        _last_stone_revetment = next(
+            (
+                rm
+                for rm in revetment_measures
+                if StoneSlopePart.is_stone_slope_part(rm.top_layer_type)
+            ),
+            None,
+        )
+        if not _last_stone_revetment:
+            raise ValueError("No stone revetment measure was found.")
+
+        for _grass_revetment in revetment_measures:
+            if (
+                GrassSlopePart.is_grass_part(_grass_revetment.top_layer_type)
+                and _grass_revetment.begin_part < current_transition_level
+            ):
+                _grass_revetment.top_layer_thickness = (
+                    _last_stone_revetment.top_layer_thickness
+                )
+                _grass_revetment.top_layer_type = 2026.0
+                _grass_revetment.beta_block_revetment = (
+                    _last_stone_revetment.beta_block_revetment
+                )
+                _grass_revetment.reinforce = True
+
+    def _get_design_stone(
         self,
         calculated_beta: float,
         top_layer_thickness: list[float],
@@ -243,7 +267,7 @@ class RevetmentMeasure(MeasureProtocol):
             _new_top_layer_thickness,
             _new_beta_block_revetment,
             _is_reinforced,
-        ) = self._get_design_steen(
+        ) = self._get_design_stone(
             self._get_calculated_beta(),
             stone_revetment.top_layer_thickness,
             stone_revetment.beta,
@@ -273,7 +297,7 @@ class RevetmentMeasure(MeasureProtocol):
             _new_top_layer_thickness,
             _new_beta_block_revetment,
             _is_reinforced,
-        ) = self._get_design_steen(
+        ) = self._get_design_stone(
             self._get_calculated_beta(),
             stone_revetment.top_layer_thickness,
             stone_revetment.beta,
@@ -326,7 +350,7 @@ class RevetmentMeasure(MeasureProtocol):
         dike_section: DikeSection,
         revetment_data_class: RevetmentDataClass,
         beta,
-        transition_level,
+        transition_level: float,
         evaluation_year: int,
     ) -> list[RevetmentMeasureData]:
         _evaluated_measures = []
@@ -348,27 +372,35 @@ class RevetmentMeasure(MeasureProtocol):
                 _evaluated_measures.append(
                     self._get_grass_revetment_data(_slope_part, evaluation_year)
                 )
-            # TODO: Check, raise an error or just log? Original script raises nothing.
-            raise ValueError("Can't evaluate revetment measure.")
+            else:
+                raise ValueError(
+                    "Can't evaluate revetment measure. Transition level: {}, begin part: {}, end_part: {}".format(
+                        transition_level, _slope_part.begin_part, _slope_part.end_part
+                    )
+                )
 
         if transition_level >= max(
             lambda x: x.end_part, revetment_data_class.slope_parts
         ):
-            # TODO: Verify if `crest_height` is current DikeSection.crest_height.
             if transition_level >= dike_section.crest_height:
                 raise ValueError("Overgang >= kruinhoogte")
-            _extra_measure = RevetmentMeasureData()
-            _extra_measure.begin_part = transition_level
-            _extra_measure.end_part = dike_section.crest_height
-            _extra_measure.top_layer_type = 20.0
-            _extra_measure.previous_top_layer_type = float("nan")
-            _extra_measure.top_layer_thickness = float("nan")
-            _extra_measure.beta_block_revetment = float("nan")
-            _extra_measure.beta_grass_revetment = self._evaluate_grass_revetment_data(
-                evaluation_year
+            _extra_measure = RevetmentMeasureData(
+                begin_part=transition_level,
+                end_part=dike_section.crest_height,
+                top_layer_type=20.0,
+                previous_top_layer_type=float("nan"),
+                top_layer_thickness=float("nan"),
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=self._evaluate_grass_revetment_data(
+                    evaluation_year
+                ),
+                reinforce=True,
+                tan_alpha=revetment_data_class.slope_parts[-1].end_part,
             )
-            _extra_measure.reinforce = True
-            _extra_measure.tan_alpha = revetment_data_class.slope_parts[-1].end_part
+            _evaluated_measures.append(_extra_measure)
+
+        if transition_level > revetment_data_class.current_transition_level:
+            self._correct_revetment_measure_data(_evaluated_measures, transition_level)
 
         return _evaluated_measures
 
@@ -444,10 +476,11 @@ class RevetmentMeasure(MeasureProtocol):
         self.measures = {}
 
         # Set reliability and cost
-        _reliability = self._get_configured_section_reliability()
+        _reliability = self._get_configured_section_reliability(
+            dike_section, traject_info
+        )
         _reliability.calculate_section_reliability()
         self.measures["Reliability"] = _reliability
-        self.measures["Cost"] = self._calculate_all_costs()
 
     def _evaluate_grass_revetment_data(self, evaluation_year: int) -> float:
         return self.revetment_mechanism_calculator._evaluate_grass(evaluation_year)
