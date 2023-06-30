@@ -4,6 +4,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_mechanism_per_section
+from tests.orm.io import add_computation_scenario_id
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -26,12 +27,6 @@ class TestDStabilityImporter:
             scenario_probability=1,
             probability_of_failure=1,
         )
-
-    def _add_computation_scenario_id(
-        self, source: list[dict], computation_scenario_id: int
-    ) -> None:
-        for item in source:
-            item["computation_scenario_id"] = computation_scenario_id
 
     def test_initialize(self):
         # Setup
@@ -62,14 +57,12 @@ class TestDStabilityImporter:
 
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = self._get_valid_computation_scenario()
-            self._add_computation_scenario_id(
+            add_computation_scenario_id(
                 _supporting_files, _computation_scenario.get_id()
             )
             SupportingFile.insert_many(_supporting_files).execute()
 
-            self._add_computation_scenario_id(
-                parameters, _computation_scenario.get_id()
-            )
+            add_computation_scenario_id(parameters, _computation_scenario.get_id())
             Parameter.insert_many(parameters).execute()
 
             transaction.commit()
@@ -117,9 +110,7 @@ class TestDStabilityImporter:
                 scenario_probability=1,
                 probability_of_failure=1,
             )
-            self._add_computation_scenario_id(
-                _supporting_files, _computation_scenario.id
-            )
+            add_computation_scenario_id(_supporting_files, _computation_scenario.id)
             SupportingFile.insert_many(_supporting_files).execute()
 
             transaction.commit()
@@ -144,9 +135,7 @@ class TestDStabilityImporter:
 
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = self._get_valid_computation_scenario()
-            self._add_computation_scenario_id(
-                _supporting_files, _computation_scenario.id
-            )
+            add_computation_scenario_id(_supporting_files, _computation_scenario.id)
             SupportingFile.insert_many(_supporting_files).execute()
 
             transaction.commit()
