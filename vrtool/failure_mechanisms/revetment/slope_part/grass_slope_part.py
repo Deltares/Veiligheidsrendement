@@ -23,4 +23,8 @@ class GrassSlopePart(SlopePartProtocol):
     )
 
     def is_valid(self) -> bool:
-        return self.top_layer_type == GRASS_TYPE
+        return self.is_grass_part(self.top_layer_type)
+
+    @staticmethod
+    def is_grass_part(top_layer_type: float) -> bool:
+        return top_layer_type == GRASS_TYPE
