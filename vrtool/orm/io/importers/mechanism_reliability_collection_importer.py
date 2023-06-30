@@ -11,6 +11,7 @@ from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
 )
 from vrtool.orm.io.importers.piping_importer import PipingImporter
+from vrtool.orm.io.importers.revetment_importer import RevetmentImporter
 from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
@@ -18,7 +19,6 @@ from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
 class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
-
     computation_years: list[int]
     t_0: int
     externals_path: Path
@@ -96,5 +96,10 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
 
         if _mechanism_name == "piping":
             return PipingImporter().import_orm(mechanism_per_section)
+
+        if _mechanism_name == "revetment":
+            return RevetmentImporter().import_orm(
+                mechanism_per_section.computation_scenarios.select().get()
+            )
 
         raise ValueError(f"Mechanism {mechanism} not supported.")

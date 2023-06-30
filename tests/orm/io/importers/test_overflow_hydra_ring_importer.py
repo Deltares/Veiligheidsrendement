@@ -3,55 +3,17 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
+from tests.orm.io import add_computation_scenario_id
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
 )
-from vrtool.orm.models import Mechanism
-from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.section_data import SectionData
 
 
 class TestOverflowHydraRingImporter:
-    def _get_valid_computation_scenario(self) -> ComputationScenario:
-        _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
-        _test_section = SectionData.create(
-            dike_traject=_test_dike_traject,
-            section_name="TestSection",
-            meas_start=2.4,
-            meas_end=4.2,
-            section_length=123,
-            in_analysis=True,
-            crest_height=24,
-            annual_crest_decline=42,
-        )
-
-        _mechanism = Mechanism.create(name="mechanism")
-        _mechanism_per_section = MechanismPerSection.create(
-            section=_test_section, mechanism=_mechanism
-        )
-
-        _computation_type = ComputationType.create(name="irrelevant")
-        return ComputationScenario.create(
-            mechanism_per_section=_mechanism_per_section,
-            computation_type=_computation_type,
-            computation_name="Computation Name",
-            scenario_name="Scenario Name",
-            scenario_probability=1,
-            probability_of_failure=1,
-        )
-
-    def _add_computation_scenario_id(
-        self, source: list[dict], computation_scenario_id: int
-    ) -> None:
-        for item in source:
-            item["computation_scenario_id"] = computation_scenario_id
-
     def test_initialize(self):
         _importer = OverFlowHydraRingImporter()
         assert isinstance(_importer, OverFlowHydraRingImporter)
@@ -108,9 +70,7 @@ class TestOverflowHydraRingImporter:
             _computation_scenario = get_basic_computation_scenario()
 
             _mechanism_tables = mechanism_table_year_one + mechanism_table_year_two
-            self._add_computation_scenario_id(
-                _mechanism_tables, _computation_scenario.id
-            )
+            add_computation_scenario_id(_mechanism_tables, _computation_scenario.id)
             MechanismTable.insert_many(_mechanism_tables).execute()
 
             transaction.commit()
@@ -178,7 +138,7 @@ class TestOverflowHydraRingImporter:
         ]
         with empty_db_fixture.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
-            self._add_computation_scenario_id(
+            add_computation_scenario_id(
                 _mechanism_table_source, _computation_scenario.id
             )
 
