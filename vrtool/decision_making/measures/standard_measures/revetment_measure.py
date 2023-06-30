@@ -69,14 +69,11 @@ class RevetmentMeasureData:
 
 
 class RevetmentMeasure(MeasureProtocol):
-
-    transition_level_increase_step: float
-    max_pf_factor_block: float
-    n_steps_block: int
+    revetment: RevetmentDataClass
+    # transition_level_increase_step: float
+    # max_pf_factor_block: float
+    # n_steps_block: int
     _revetment_measure_data_list: list[RevetmentMeasureData]
-
-    def __init__(self, revetment_calculation: RevetmentCalculator) -> None:
-        self.revetment_mechanism_calculator = revetment_calculation
 
     def _get_configured_section_reliability(
         self,
@@ -157,7 +154,7 @@ class RevetmentMeasure(MeasureProtocol):
         _calculated_beta = self._get_calculated_beta()
         _revetment_measures_collection = self._evaluate_revetment_measure(
             dike_section,
-            self.revetment_mechanism_calculator._revetment,
+            self.revetment,
             _calculated_beta,
             self.transition_level_increase_step,
             int(year_to_calculate),
@@ -483,11 +480,11 @@ class RevetmentMeasure(MeasureProtocol):
         self.measures["Reliability"] = _reliability
 
     def _evaluate_grass_revetment_data(self, evaluation_year: int) -> float:
-        return self.revetment_mechanism_calculator._evaluate_grass(evaluation_year)
+        return RevetmentCalculator(self.revetment)._evaluate_grass(evaluation_year)
 
     def _evaluate_stone_revetment_data(
         self, slope_part: SlopePartProtocol, evaluation_year: int
     ) -> float:
-        return self.revetment_mechanism_calculator._evaluate_block(
+        return RevetmentCalculator(self.revetment)._evaluate_block(
             slope_part, evaluation_year
         )

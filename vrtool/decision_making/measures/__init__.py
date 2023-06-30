@@ -4,5 +4,6 @@ from vrtool.decision_making.measures.standard_measures import (
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
     VerticalGeotextileMeasure,
+    RevetmentMeasure,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol

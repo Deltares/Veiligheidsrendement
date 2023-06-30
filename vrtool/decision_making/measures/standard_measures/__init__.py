@@ -10,3 +10,6 @@ from vrtool.decision_making.measures.standard_measures.stability_screen_measure 
 from vrtool.decision_making.measures.standard_measures.vertical_geotextile_measure import (
     VerticalGeotextileMeasure,
 )
+from vrtool.decision_making.measures.standard_measures.revetment_measure import (
+    RevetmentMeasure,
+)
