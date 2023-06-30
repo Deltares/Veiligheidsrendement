@@ -80,12 +80,12 @@ class Solutions:
         for i, measure in enumerate(self.measures):
             if isinstance(measure.measures, list):
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
-                _measure_type = measure.parameters["Type"]
+                type = measure.parameters["Type"]
 
                 for j in range(len(measure.measures)):
                     measure_in = []
                     reliability_in = []
-                    if _measure_type in [
+                    if type in [
                         "Soil reinforcement",
                         "Soil reinforcement with stability screen",
                     ]:
@@ -96,7 +96,7 @@ class Solutions:
 
                     cost = measure.measures[j]["Cost"]
                     measure_in.append(str(measure.parameters["ID"]))
-                    measure_in.append(_measure_type)
+                    measure_in.append(type)
                     measure_in.append(measure.parameters["Class"])
                     measure_in.append(measure.parameters["year"])
                     if splitparams:
@@ -118,17 +118,14 @@ class Solutions:
 
             elif isinstance(measure.measures, dict):
                 ID = str(measure.parameters["ID"])
-                _measure_type = measure.parameters["Type"].lower().strip()
-                if _measure_type == "vertical geotextile":
+                type = measure.parameters["Type"]
+                if type == "Vertical Geotextile":
                     designvars = measure.measures["VZG"]
 
-                if _measure_type == "diaphragm wall":
+                if type == "Diaphragm Wall":
                     designvars = measure.measures["DiaphragmWall"]
 
-                if _measure_type == "revetment":
-                    designvars = measure.measures["Revetment"]
-
-                if _measure_type == "custom":
+                if type == "Custom":
                     designvars = 1.0  ##TODO check
 
                 measure_class = measure.parameters["Class"]
@@ -136,21 +133,10 @@ class Solutions:
                 cost = measure.measures["Cost"]
                 if splitparams:
                     inputs_m.append(
-                        [
-                            ID,
-                            _measure_type,
-                            measure_class,
-                            year,
-                            designvars,
-                            -999,
-                            -999,
-                            cost,
-                        ]
+                        [ID, type, measure_class, year, designvars, -999, -999, cost]
                     )
                 else:
-                    inputs_m.append(
-                        [ID, _measure_type, measure_class, year, designvars, cost]
-                    )
+                    inputs_m.append([ID, type, measure_class, year, designvars, cost])
                 betas = measure.measures["Reliability"].SectionReliability
                 beta = []
                 for ij in self.mechanisms + ["Section"]:
