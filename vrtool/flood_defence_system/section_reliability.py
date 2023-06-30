@@ -34,7 +34,7 @@ class SectionReliability:
                     )
                 )
 
-                if mechanism_name == "Overflow":
+                if mechanism_name == ["Overflow", "Revetment"]:
                     pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
                         str(trange[j])
                     ].Pf
