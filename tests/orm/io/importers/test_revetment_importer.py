@@ -1,5 +1,5 @@
-from peewee import SqliteDatabase, _savepoint
 import pytest
+from peewee import SqliteDatabase, _savepoint
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
