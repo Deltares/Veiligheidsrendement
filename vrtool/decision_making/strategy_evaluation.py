@@ -282,11 +282,13 @@ def split_options(
         available_mechanism_names (list[str]): The collection of the names of the available mechanisms for the evaluation.
 
     Returns:
-        list[dict[str, pd.DataFrame]]: The collection of options_height to split
-        list[dict[str, pd.DataFrame]]: The collection of options_geotechnical to split
+        list[dict[str, pd.DataFrame]]: The collection of splitted options_dependent
+        list[dict[str, pd.DataFrame]]: The collection of splitted options_independent
     """
 
-    def get_dropped_height_options(available_mechanism_names: list[str]) -> list[str]:
+    def get_dropped_dependent_options(
+        available_mechanism_names: list[str],
+    ) -> list[str]:
         options = []
         for available_mechanism_name in available_mechanism_names:
             if available_mechanism_name in ["StabilityInner", "Piping"]:
@@ -295,7 +297,7 @@ def split_options(
         options.append("Section")
         return options
 
-    def get_dropped_geotechnical_options(
+    def get_dropped_independent_options(
         available_mechanism_names: list[str],
     ) -> list[str]:
         options = []
@@ -306,91 +308,95 @@ def split_options(
         options.append("Section")
         return options
 
-    options_height = copy.deepcopy(options)
-    options_geotechnical = copy.deepcopy(options)
+    options_dependent = copy.deepcopy(options)
+    options_independent = copy.deepcopy(options)
     for i in options:
-        # filter all different measures for height
-        options_height[i] = options_height[i].loc[options[i]["class"] != "combined"]
-        options_height[i] = options_height[i].loc[
+        # filter all different measures for dependent
+        options_dependent[i] = options_dependent[i].loc[
+            options[i]["class"] != "combined"
+        ]
+        options_dependent[i] = options_dependent[i].loc[
             (options[i]["type"] == "Diaphragm Wall")
             | (options[i]["type"] == "Custom")
             | (options[i]["dberm"] == 0)
         ]
 
-        # now we filter all geotechnical measures
+        # now we filter all independent measures
         # first all crest heights are thrown out
-        options_geotechnical[i] = options_geotechnical[i].loc[
-            (options_geotechnical[i]["dcrest"] == 0.0)
-            | (options_geotechnical[i]["dcrest"] == -999)
+        options_independent[i] = options_independent[i].loc[
+            (options_independent[i]["dcrest"] == 0.0)
+            | (options_independent[i]["dcrest"] == -999)
             | (
-                (options_geotechnical[i]["class"] == "combined")
-                & (options_geotechnical[i]["dberm"] == 0)
+                (options_independent[i]["class"] == "combined")
+                & (options_independent[i]["dberm"] == 0)
             )
         ]
-        # filter out revetments from all geotechnical measures
+        # filter out revetments from all independent measures
         if "Revetment" in available_mechanism_names:
             for key in ["transition_level", "n_pf_stone"]:  # TODO check keys
-                options_geotechnical[i] = options_geotechnical[i].loc[
-                    (options_geotechnical[i][key] == 0.0)
-                    | (options_geotechnical[i][key] == -999)
+                options_independent[i] = options_independent[i].loc[
+                    (options_independent[i][key] == 0.0)
+                    | (options_independent[i][key] == -999)
                     | (
-                        (options_geotechnical[i]["class"] == "combined")
-                        & (options_geotechnical[i][key] == 0)
+                        (options_independent[i]["class"] == "combined")
+                        & (options_independent[i][key] == 0)
                     )
                 ]
 
-        # subtract startcosts, only for height.
+        # subtract startcosts, only for dependent.
         startcosts = np.min(
-            options_height[i][(options_height[i]["type"] == "Soil reinforcement")][
-                "cost"
-            ]
+            options_dependent[i][
+                (options_dependent[i]["type"] == "Soil reinforcement")
+            ]["cost"]
         )
-        options_height[i]["cost"] = np.where(
-            options_height[i]["type"] == "Soil reinforcement",
-            np.subtract(options_height[i]["cost"], startcosts),
-            options_height[i]["cost"],
+        options_dependent[i]["cost"] = np.where(
+            options_dependent[i]["type"] == "Soil reinforcement",
+            np.subtract(options_dependent[i]["cost"], startcosts),
+            options_dependent[i]["cost"],
         )
 
         # if an option has a stability screen, the costs for height are too high. This has to be adjusted. We do this
         # for all soil reinforcements. costs are not discounted yet, so we can disregard the year of the investment:
         for ij in np.unique(
-            options_height[i].loc[options_height[i]["type"] == "Soil reinforcement"][
-                "dcrest"
-            ]
+            options_dependent[i].loc[
+                options_dependent[i]["type"] == "Soil reinforcement"
+            ]["dcrest"]
         ):
-            options_height[i].loc[options_height[i]["dcrest"] == ij, "cost"] = np.min(
-                options_height[i].loc[options_height[i]["dcrest"] == ij]["cost"]
+            options_dependent[i].loc[
+                options_dependent[i]["dcrest"] == ij, "cost"
+            ] = np.min(
+                options_dependent[i].loc[options_dependent[i]["dcrest"] == ij]["cost"]
             )
 
-        options_geotechnical[i] = options_geotechnical[i].reset_index(drop=True)
-        options_height[i] = options_height[i].reset_index(drop=True)
+        options_independent[i] = options_independent[i].reset_index(drop=True)
+        options_dependent[i] = options_dependent[i].reset_index(drop=True)
 
-        # loop for the geotechnical stuff:
+        # loop for the independent stuff:
         newcosts = []
-        for ij in options_geotechnical[i].index:
+        for ij in options_independent[i].index:
             if (
-                options_geotechnical[i].iloc[ij]["type"].values[0]
+                options_independent[i].iloc[ij]["type"].values[0]
                 == "Soil reinforcement"
             ):
-                newcosts.append(options_geotechnical[i].iloc[ij]["cost"].values[0])
-            elif options_geotechnical[i].iloc[ij]["class"].values[0] == "combined":
+                newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
+            elif options_independent[i].iloc[ij]["class"].values[0] == "combined":
                 newcosts.append(
                     [
-                        options_geotechnical[i].iloc[ij]["cost"].values[0][0],
-                        options_geotechnical[i].iloc[ij]["cost"].values[0][1],
+                        options_independent[i].iloc[ij]["cost"].values[0][0],
+                        options_independent[i].iloc[ij]["cost"].values[0][1],
                     ]
                 )
             else:
-                newcosts.append(options_geotechnical[i].iloc[ij]["cost"].values[0])
-        options_geotechnical[i]["cost"] = newcosts
+                newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
+        options_independent[i]["cost"] = newcosts
         # only keep reliability of relevant mechanisms in dictionary
-        options_height[i].drop(
-            get_dropped_height_options(available_mechanism_names), axis=1, level=0
+        options_dependent[i].drop(
+            get_dropped_dependent_options(available_mechanism_names), axis=1, level=0
         )
-        options_geotechnical[i].drop(
-            get_dropped_geotechnical_options(available_mechanism_names), axis=1, level=0
+        options_independent[i].drop(
+            get_dropped_independent_options(available_mechanism_names), axis=1, level=0
         )
-    return options_height, options_geotechnical
+    return options_dependent, options_independent
 
 
 def solve_mip(mip_model):
