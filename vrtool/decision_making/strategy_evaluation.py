@@ -527,7 +527,7 @@ def overflow_bundling(
             # no further action needed.
 
         # Soil reinforcement can only remain of same class. For t=20 it can be moved forward in time:
-        elif (current_type == "Soil reinforcement") and (
+        elif (current_type in ["Soil reinforcement", "Soil reinforcement with stability screen"]) and (
             extra_type == None
         ):  # soil reinforcement with stability screen
             # if in t=0, only t=0. Otherwise also options for moving to t=0
