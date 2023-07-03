@@ -62,7 +62,7 @@ class ResultsMeasures(VrToolRunResultProtocol):
         Returns:
             Path: Instance representing the file location.
         """
-        return self.vr_config.output_directory / "AfterStep1.out"
+        return self.vr_config.output_directory / "AfterStep2.out"
 
     def load_results(self,alternative_path = None):
         try:
@@ -71,6 +71,8 @@ class ResultsMeasures(VrToolRunResultProtocol):
                 self.solutions_dict = _shelf["AllSolutions"]
                 _shelf.close()
                 logging.info("Loaded AllSolutions from file")
+            else:
+                raise Exception("No file found")
         except:
             if alternative_path != None:
                 try:
