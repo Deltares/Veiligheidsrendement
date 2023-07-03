@@ -34,10 +34,7 @@ _acceptance_all_steps_test_cases = [
 ]
 
 _acceptance_optimization_test_cases = [
-    pytest.param(
-        ("TestCase2_38-1_overflow_no_housing", "38-1"),
-        id="Traject 38-1, no-housing, with overflow",
-    ),
+    pytest.param(("TestCase1_38-1_no_housing", "38-1"), id="Traject 38-1, no housing"),
     pytest.param(("TestCase3_38-1_small", "38-1"), id="Traject 38-1, two sections"),
 ]
 
