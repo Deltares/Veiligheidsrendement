@@ -274,7 +274,7 @@ def implement_option(section, traject_probability, new_probability):
 
 def split_options(
     options: dict[str, pd.DataFrame], available_mechanism_names: list[str]
-) -> list[dict[str, pd.DataFrame]]:
+) -> tuple[list[dict[str, pd.DataFrame]], list[dict[str, pd.DataFrame]]]:
     """Splits the options for the measures.
 
     Args:
@@ -282,10 +282,11 @@ def split_options(
         available_mechanism_names (list[str]): The collection of the names of the available mechanisms for the evaluation.
 
     Returns:
-        list[dict[str, pd.DataFrame]]: The collection of options to split
+        list[dict[str, pd.DataFrame]]: The collection of options_height to split
+        list[dict[str, pd.DataFrame]]: The collection of options_geotechnical to split
     """
 
-    def get_height_options(available_mechanism_names: list[str]) -> list[str]:
+    def get_dropped_height_options(available_mechanism_names: list[str]) -> list[str]:
         options = []
         for available_mechanism_name in available_mechanism_names:
             if available_mechanism_name in ["StabilityInner", "Piping"]:
@@ -294,10 +295,12 @@ def split_options(
         options.append("Section")
         return options
 
-    def get_geotechnical_options(available_mechanism_names: list[str]) -> list[str]:
+    def get_dropped_geotechnical_options(
+        available_mechanism_names: list[str],
+    ) -> list[str]:
         options = []
         for available_mechanism_name in available_mechanism_names:
-            if available_mechanism_name in ["Overflow"]:
+            if available_mechanism_name in ["Overflow", "Revetment"]:
                 options.append(available_mechanism_name)
 
         options.append("Section")
@@ -324,6 +327,17 @@ def split_options(
                 & (options_geotechnical[i]["dberm"] == 0)
             )
         ]
+        # filter out revetments from all geotechnical measures
+        if "Revetment" in available_mechanism_names:
+            for key in ["transition_level", "n_pf_stone"]:  # TODO check keys
+                options_geotechnical[i] = options_geotechnical[i].loc[
+                    (options_geotechnical[i][key] == 0.0)
+                    | (options_geotechnical[i][key] == -999)
+                    | (
+                        (options_geotechnical[i]["class"] == "combined")
+                        & (options_geotechnical[i][key] == 0)
+                    )
+                ]
 
         # subtract startcosts, only for height.
         startcosts = np.min(
@@ -371,10 +385,10 @@ def split_options(
         options_geotechnical[i]["cost"] = newcosts
         # only keep reliability of relevant mechanisms in dictionary
         options_height[i].drop(
-            get_height_options(available_mechanism_names), axis=1, level=0
+            get_dropped_height_options(available_mechanism_names), axis=1, level=0
         )
         options_geotechnical[i].drop(
-            get_geotechnical_options(available_mechanism_names), axis=1, level=0
+            get_dropped_geotechnical_options(available_mechanism_names), axis=1, level=0
         )
     return options_height, options_geotechnical
 
@@ -699,7 +713,10 @@ def old_overflow_bundling(
             # no further action needed.
 
         # Soil reinforcement can only remain of same class. For t=20 it can be moved forward in time:
-        elif (current_type in ["Soil reinforcement", "Soil reinforcement with stability screen"]) and (
+        elif (
+            current_type
+            in ["Soil reinforcement", "Soil reinforcement with stability screen"]
+        ) and (
             extra_type == None
         ):  # soil reinforcement with stability screen
             # if in t=0, only t=0. Otherwise also options for moving to t=0
