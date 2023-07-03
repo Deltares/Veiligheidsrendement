@@ -23,14 +23,15 @@ from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptim
 
 _acceptance_test_cases = [
     pytest.param(("TestCase1_38-1_no_housing", "38-1"), id="Traject 38-1, no housing"),
-    # pytest.param(
-    #     ("TestCase1_38-1_no_housing_stix", "38-1"),
-    #     id="Traject 38-1, no housing, with dstability",
-    # ),
-    # pytest.param(
-    #     ("TestCase2_38-1_overflow_no_housing", "38-1"),
-    #     id="Traject 38-1, no-housing, with overflow",
-    # ),
+    pytest.param(
+        ("TestCase1_38-1_no_housing_stix", "38-1"),
+        id="Traject 38-1, no housing, with dstability",
+    ),
+    pytest.param(
+        ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        id="Traject 38-1, no-housing, with overflow",
+    ),
+pytest.param(("TestCase3_38-1_small", "38-1"), id="Traject 38-1, two sections"),
 ]
 
 
