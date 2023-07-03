@@ -91,6 +91,14 @@ class DikeTraject:
             ["name", "mechanism"]
         )
 
+    def write_initial_assessment_results(
+        self,
+        case_settings={"directory": Path(""), "language": "NL", "beta_or_prob": "beta"},
+    ):
+        self.probabilities.to_csv(
+            case_settings["directory"].joinpath("InitialAssessment_Betas.csv")
+        )
+
     def plot_assessment(
         self,
         fig_size=(6, 4),
@@ -135,9 +143,6 @@ class DikeTraject:
         ProbabilityFrame.columns = ProbabilityFrame.columns.values.astype(np.int64)
         plot_settings()
 
-        self.probabilities.to_csv(
-            case_settings["directory"].joinpath("InitialAssessment_Betas.csv")
-        )
         # English or Dutch labels and titles
         if case_settings["language"] == "NL":
             label_xlabel = "Dijkvakken"
