@@ -1,27 +1,27 @@
 import copy
+from dataclasses import dataclass
 import logging
 import math
 
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.special import ndtri
-from scipy.stats import norm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.standard_measures.revetment_measure_data import (
+    RevetmentMeasureData,
+)
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
-from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import (
-    GRASS_TYPE,
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    SlopePartProtocol,
     GrassSlopePart,
-)
-from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
     StoneSlopePart,
 )
+from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRASS_TYPE
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -56,25 +56,14 @@ def bisection(f, a, b, tol):
         return bisection(f, a, m, tol)
 
 
-class RevetmentMeasureData:
-    begin_part: float
-    end_part: float
-    top_layer_type: float
-    previous_top_layer_type: float
-    top_layer_thickness: float
-    beta_block_revetment: list[float]
-    beta_grass_revetment: list[float]
-    reinforce: bool
-    tan_alpha: float
-
-
+@dataclass
 class RevetmentReliability:
     measure_data: list[RevetmentMeasureData]
-    reliability: MechanismReliability
-    cost: float
+    reliability: float
 
 
 class RevetmentMeasure(MeasureProtocol):
+    # TODO: Dennis will provide the connection to RevetmentDataClass
     revetment: RevetmentDataClass
     _revetment_reliability_collection: list[RevetmentReliability]
 
@@ -170,7 +159,7 @@ class RevetmentMeasure(MeasureProtocol):
         dike_section: DikeSection,
     ) -> None:
 
-        _calculated_beta = self._get_calculated_beta()
+        _calculated_beta = self._get_stone_target_beta()
         _revetment_measures_collection = self._get_revetment_measure_data_collection(
             dike_section,
             self.revetment,
@@ -179,26 +168,27 @@ class RevetmentMeasure(MeasureProtocol):
             int(year_to_calculate),
         )
         # TODO this is meant to be set through the calculator.
-        # _stone_beta_list, _grass_beta_list = zip(
-        #     *(
-        #         (rm.beta_block_revetment, rm.beta_grass_revetment)
-        #         for rm in _revetment_measures_collection
-        #     )
-        # )
-        # mechanism_reliability["BETA"] = self._calculate_combined_beta(
-        #     _stone_beta_list, _grass_beta_list
-        # )
-        # This should be simplified so we call directly the revetment calculation.
-        mechanism_reliability.calculate_reliability()
-        _revetment_reliability = RevetmentReliability()
-        _revetment_reliability.measure_data = _revetment_measures_collection
-        _revetment_reliability.reliability = mechanism_reliability.Beta
-        _revetment_reliability.cost = self._calculate_year_costs(
-            _revetment_measures_collection, dike_section.Length, int(year_to_calculate)
+        _stone_beta_list, _grass_beta_list = zip(
+            *(
+                (rm.beta_block_revetment, rm.beta_grass_revetment)
+                for rm in _revetment_measures_collection
+            )
         )
+        _combined_beta = RevetmentCalculator(self.revetment)._calculate_combined_beta(
+            _stone_beta_list, _grass_beta_list[0]
+        )
+        # This should be simplified so we call directly the revetment calculation.
+        _revetment_reliability = RevetmentReliability(
+            measure_data=_revetment_measures_collection, reliability=_combined_beta
+        )
+
         self._revetment_reliability_collection.append(_revetment_reliability)
 
-    def _get_calculated_beta(self):
+        # TODO: Is this already triggered twice? Is calculate_reliability using valid data?
+        # mechanism_reliability.calculate_reliability()
+
+    def _get_stone_target_beta(self):
+        # TODO: This is not well calculated.
         return self.max_pf_factor_block * self.n_steps_block
 
     def _correct_revetment_measure_data(
@@ -206,30 +196,30 @@ class RevetmentMeasure(MeasureProtocol):
         revetment_measures: list[RevetmentMeasureData],
         current_transition_level: float,
     ) -> RevetmentMeasureData:
-        _last_stone_revetment = next(
-            (
-                rm
-                for rm in revetment_measures
-                if StoneSlopePart.is_stone_slope_part(rm.top_layer_type)
-            ),
-            None,
-        )
-        if not _last_stone_revetment:
+        _stone_revetments = [
+            rm
+            for rm in revetment_measures
+            if StoneSlopePart.is_stone_slope_part(rm.top_layer_type)
+        ]
+        if not _stone_revetments:
             raise ValueError("No stone revetment measure was found.")
 
-        for _grass_revetment in revetment_measures:
+        # TODO: Check whether I'm getting the last one or the first one.
+        _last_stone_revetment = _stone_revetments[-1]
+
+        for _revetment_measure in revetment_measures:
             if (
-                GrassSlopePart.is_grass_part(_grass_revetment.top_layer_type)
-                and _grass_revetment.begin_part < current_transition_level
+                GrassSlopePart.is_grass_part(_revetment_measure.top_layer_type)
+                and _revetment_measure.begin_part < current_transition_level
             ):
-                _grass_revetment.top_layer_thickness = (
-                    _last_stone_revetment.top_layer_thickness
+                _revetment_measure.top_layer_thickness = (
+                    _stone_revetments.top_layer_thickness
                 )
-                _grass_revetment.top_layer_type = 2026.0
-                _grass_revetment.beta_block_revetment = (
+                _revetment_measure.top_layer_type = 2026.0
+                _revetment_measure.beta_block_revetment = (
                     _last_stone_revetment.beta_block_revetment
                 )
-                _grass_revetment.reinforce = True
+                _revetment_measure.reinforce = True
 
     def _get_design_stone(
         self,
@@ -276,7 +266,7 @@ class RevetmentMeasure(MeasureProtocol):
             _new_beta_block_revetment,
             _is_reinforced,
         ) = self._get_design_stone(
-            self._get_calculated_beta(),
+            self._get_stone_target_beta(),
             stone_revetment.top_layer_thickness,
             stone_revetment.beta,
             slope_part.top_layer_type,
@@ -306,7 +296,7 @@ class RevetmentMeasure(MeasureProtocol):
             _new_beta_block_revetment,
             _is_reinforced,
         ) = self._get_design_stone(
-            self._get_calculated_beta(),
+            self._get_stone_target_beta(),
             stone_revetment.top_layer_thickness,
             stone_revetment.beta,
             slope_part.top_layer_type,
@@ -412,67 +402,6 @@ class RevetmentMeasure(MeasureProtocol):
 
         return _evaluated_measures
 
-    def _calculate_revetment_measure_cost(
-        self, revetment_measure: RevetmentMeasureData, section_length: float, year: int
-    ):
-        opslagfactor = 2.509
-        discontovoet = 1.02
-
-        # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
-        _cost_remove_steen = 5.49
-
-        # Opnemen en afvoeren teerhoudende oude asfaltbekleding (D=15cm) (incl. stort-/recyclingskosten)
-        _cost_remove_asfalt = 13.52
-
-        # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
-        D = np.array([0.3, 0.35, 0.4, 0.45, 0.5])
-        cost = np.array([72.52, 82.70, 92.56, 102.06, 111.56])
-        f = interp1d(D, cost, fill_value=("extrapolate"))
-        cost_new_steen = f(revetment_measure.top_layer_thickness)
-
-        _slope_part_difference = (
-            revetment_measure.end_part - revetment_measure.begin_part
-        )
-        x = _slope_part_difference / revetment_measure.tan_alpha
-
-        if x < 0.0 or revetment_measure.end_part < revetment_measure.begin_part:
-            raise ValueError("Calculation of design area not possible!")
-
-        # calculate area of new design
-        z = np.sqrt(x**2 + _slope_part_difference**2)
-        area = z * section_length
-
-        if isinstance(revetment_measure, StoneSlopePart):  # cost of new steen
-            cost_vlak = _cost_remove_steen + cost_new_steen
-        elif revetment_measure.top_layer_type == 2026.0:
-            # cost of new steen, when previous was gras
-            cost_vlak = cost_new_steen
-        elif GrassSlopePart.is_grass_part(revetment_measure.top_layer_type):
-            # cost of removing old revetment when new revetment is gras
-            if revetment_measure.previous_top_layer_type == 5.0:
-                cost_vlak = _cost_remove_asfalt
-            elif revetment_measure.previous_top_layer_type == 20.0:
-                cost_vlak = 0.0
-            else:
-                cost_vlak = _cost_remove_steen
-        else:
-            cost_vlak = 0.0
-
-        return area * cost_vlak * opslagfactor / discontovoet ** (year - 2025)
-
-    def _calculate_year_costs(
-        self,
-        revetment_measures: list[RevetmentMeasureData],
-        section_length: float,
-        year: int,
-    ) -> list[float]:
-        _costs = []
-        for _measure in revetment_measures:
-            _costs.append(
-                self._calculate_revetment_measure_cost(_measure, section_length, year)
-            )
-        return _costs
-
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -482,24 +411,36 @@ class RevetmentMeasure(MeasureProtocol):
         # We are missing the following properties:
         # Then we evaluate
         self.measures = {}
+        self.measures["Revetment"] = "yes"
 
         # Set reliability and cost
         _reliability = self._get_configured_section_reliability(
             dike_section, traject_info
         )
         _reliability.calculate_section_reliability()
-        self.measures["Reliability"] = _reliability
-        self.measures["Cost"] = [
-            _src.cost for _src in self._revetment_reliability_collection
+        self.measures["Reliability"]: list[float] = [
+            _src.reliability for _src in self._revetment_reliability_collection
         ]
-        self.measures["Revetment"] = "yes"
+        # Costs do not need to be per year.
+        self.measures["Cost"]: float = sum(
+            map(
+                lambda x: x.get_total_cost(dike_section.Length),
+                self._revetment_reliability_collection[-1],
+            )
+        )
 
     def _evaluate_grass_revetment_data(self, evaluation_year: int) -> float:
-        return RevetmentCalculator(self.revetment)._evaluate_grass(evaluation_year)
+        return RevetmentCalculator.evaluate_grass_relations(
+            evaluation_year,
+            self.revetment.grass_relations,
+            self.revetment.current_transition_level,
+        )
 
     def _evaluate_stone_revetment_data(
         self, slope_part: SlopePartProtocol, evaluation_year: int
     ) -> float:
-        return RevetmentCalculator(self.revetment)._evaluate_block(
-            slope_part, evaluation_year
+        return RevetmentCalculator.evaluate_block_relations(
+            evaluation_year,
+            slope_part.slope_part_relations,
+            slope_part.top_layer_thickness,
         )
