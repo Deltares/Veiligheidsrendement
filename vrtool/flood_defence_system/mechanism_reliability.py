@@ -108,10 +108,6 @@ class MechanismReliability:
         if _normalized_type == "dstability":
             return self._get_d_stability_calculator(_normalized_mechanism, strength)
 
-        # Note: revetment is independent of computation types
-        if _normalized_mechanism == "revetment":
-            return RevetmentCalculator(strength.input["revetment_input"])
-
         raise Exception("Unknown computation type {}".format(self.mechanism_type))
 
     def _get_direct_input_calculator(
@@ -159,6 +155,9 @@ class MechanismReliability:
             return PipingSemiProbabilisticCalculator(
                 mechanism_input, load, self.t_0, traject_info
             )
+
+        if mechanism == "revetment":
+            return RevetmentCalculator(mechanism_input.input["revetment_input"])
 
         raise Exception("Unknown computation type SemiProb for {}".format(mechanism))
 
