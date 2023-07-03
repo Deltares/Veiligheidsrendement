@@ -25,5 +25,6 @@ class AsphaltSlopePart(SlopePartProtocol):
     def is_valid(self) -> bool:
         return self.is_asphalt_slope_part(self.top_layer_type)
 
+    @staticmethod
     def is_asphalt_slope_part(top_layer_type: float) -> bool:
         return top_layer_type == ASPHALT_TYPE
