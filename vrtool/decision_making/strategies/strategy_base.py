@@ -296,7 +296,7 @@ class StrategyBase:
     def make_optimization_input(self, traject: DikeTraject):
         """This subroutine organizes the input into an optimization problem such that it can be accessed by the evaluation algorithm"""
 
-        def combine_probabilities(a: float, b: float) -> float:
+        def combine_probabilities(a: np.array, b: np.array) -> np.array:
             return 1 - np.multiply(1 - a, 1 - b)
 
         def get_independent_probability_of_failure(
@@ -316,9 +316,15 @@ class StrategyBase:
         ) -> float:
             probability_overflow = probability_of_failure_lookup.get("Overflow", 0)
 
-            probability_revetment = probability_of_failure_lookup.get("Revetment", 0)
-
-            return combine_probabilities(probability_overflow, probability_revetment)
+            if "Revetment" in probability_of_failure_lookup:
+                probability_revetment = probability_of_failure_lookup.get(
+                    "Revetment", 0
+                )
+                return combine_probabilities(
+                    probability_overflow, probability_revetment
+                )
+            else:
+                return probability_overflow
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
         #  do have costs higher than the correct option (sh=0m, sg=0.5+VZG) so they will never be selected. This
