@@ -489,6 +489,9 @@ class RevetmentMeasure(MeasureProtocol):
         )
         _reliability.calculate_section_reliability()
         self.measures["Reliability"] = _reliability
+        self.measures["Cost"] = [
+            _src.cost for _src in self._revetment_reliability_collection
+        ]
         self.measures["Revetment"] = "yes"
 
     def _evaluate_grass_revetment_data(self, evaluation_year: int) -> float:
