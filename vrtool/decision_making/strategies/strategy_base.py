@@ -296,7 +296,10 @@ class StrategyBase:
     def make_optimization_input(self, traject: DikeTraject):
         """This subroutine organizes the input into an optimization problem such that it can be accessed by the evaluation algorithm"""
 
-        def get_geotechnical_probability_of_failure(
+        def combine_probabilities(a: float, b: float) -> float:
+            return 1 - np.multiply(1 - a, 1 - b)
+
+        def get_independent_probability_of_failure(
             probability_of_failure_lookup: dict[str, float]
         ) -> float:
             probability_failure_stability_inner = probability_of_failure_lookup.get(
@@ -304,14 +307,18 @@ class StrategyBase:
             )
             probability_failure_piping = probability_of_failure_lookup.get("Piping", 0)
 
-            return 1 - np.multiply(
-                1 - probability_failure_stability_inner, 1 - probability_failure_piping
+            return combine_probabilities(
+                probability_failure_stability_inner, probability_failure_piping
             )
 
-        def get_overflow_probability_of_failure(
+        def get_dependent_probability_of_failure(
             probability_of_failure_lookup: dict[str, float]
         ) -> float:
-            return probability_of_failure_lookup.get("Overflow", 0)
+            probability_overflow = probability_of_failure_lookup.get("Overflow", 0)
+
+            probability_revetment = probability_of_failure_lookup.get("Revetment", 0)
+
+            return combine_probabilities(probability_overflow, probability_revetment)
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
         #  do have costs higher than the correct option (sh=0m, sg=0.5+VZG) so they will never be selected. This
@@ -342,7 +349,7 @@ class StrategyBase:
         # probabilities [N,S,T]
         self.Pf = {}
         for i in self.mechanisms:
-            if i == "Overflow":
+            if i == "Overflow" or i == "Revetment":
                 self.Pf[i] = np.full((N, Sh + 1, T), 1.0)
             else:
                 self.Pf[i] = np.full((N, Sg + 1, T), 1.0)
@@ -366,7 +373,7 @@ class StrategyBase:
                     .T
                 )  # Initial
                 # condition with no measure
-                if i == "Overflow":
+                if i == "Overflow" or i == "Revetment":
                     beta2 = self.options_height[keys[n]][i]
                     # All solutions
                 else:
@@ -548,11 +555,11 @@ class StrategyBase:
 
         # expected damage for overflow and for piping & slope stability
         # self.RiskGeotechnical = np.zeros((N,Sg+1,T))
-        self.RiskGeotechnical = get_geotechnical_probability_of_failure(
+        self.RiskGeotechnical = get_independent_probability_of_failure(
             self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = get_overflow_probability_of_failure(self.Pf) * np.tile(
+        self.RiskOverflow = get_dependent_probability_of_failure(self.Pf) * np.tile(
             self.D.T, (N, Sh + 1, 1)
         )  # np.zeros((N,Sh+1,T))
         # add a few general parameters
