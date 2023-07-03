@@ -441,7 +441,8 @@ def overflow_bundling(
     """"""
     """ Alternative routine that only uses the reliability to determine what measures are allowed.
      The logic of this version is that measures are not restricted by type, but that geotechnical reliability may not decrease compared to the already chosen option"""
-
+    # ensure that life_cycle_cost is not modified
+    life_cycle_cost = copy.deepcopy(life_cycle_cost)
     # Step 1: fill an array of size (n,2) with sh and sg of existing investments per section in order to properly filter
     # the viable options per section
     existing_investments = np.zeros(
@@ -550,11 +551,11 @@ def overflow_bundling(
             # take next step, exception if there is no valid measure. In that case exit the routine.
             if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
                 logging.error(
-                    "Bundle quit, weakest section has no more available measures"
+                    "Bundle quit after {} steps, weakest section has no more available measures".format(run_number)
                 )
                 break
         else:
-            logging.error("Bundle quit, weakest section has no more available measures")
+            logging.error("Bundle quit after {} steps, weakest section has no more available measures".format(run_number))
             break
 
         # insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
@@ -613,7 +614,6 @@ def overflow_bundling(
         BC_out = 0
         measure_index = []
         logging.warn("No more measures for weakest overflow section")
-
     return measure_index, BC_out
 
 def old_overflow_bundling(
