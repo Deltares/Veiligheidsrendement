@@ -18,52 +18,64 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         self._revetment = revetment
 
     def calculate(self, year: int) -> tuple[float, float]:
-        given_years = self._revetment.find_given_years()
-        betaPerYear = []
-        for given_year in given_years:
-            beta_zst = []
-            beta_gebu = np.nan
+        _given_years = self._revetment.find_given_years()
+        _beta_per_year = []
+        for given_year in _given_years:
+            _stone_revetment_beta = []
+            _grass_revetment_beta = np.nan
             for _slope_part in self._revetment.slope_parts:
                 if isinstance(_slope_part, StoneSlopePart):
-                    beta_zst.append(self._evaluate_block(_slope_part, given_year))
-                elif isinstance(_slope_part, GrassSlopePart) and np.isnan(beta_gebu):
-                    beta_zst.append(np.nan)
-                    beta_gebu = self._evaluate_grass(given_year)
+                    _stone_revetment_beta.append(
+                        self._evaluate_block(_slope_part, given_year)
+                    )
+                elif isinstance(_slope_part, GrassSlopePart) and np.isnan(
+                    _grass_revetment_beta
+                ):
+                    _stone_revetment_beta.append(np.nan)
+                    _grass_revetment_beta = self._evaluate_grass(given_year)
                 else:
-                    beta_zst.append(np.nan)
-            betaPerYear.append(self._beta_comb(beta_zst, beta_gebu))
+                    _stone_revetment_beta.append(np.nan)
+            _beta_per_year.append(
+                self._calculate_combined_beta(
+                    _stone_revetment_beta, _grass_revetment_beta
+                )
+            )
 
-        if len(given_years) == 1:
-            return betaPerYear[0], beta_to_pf(betaPerYear[0])
+        if len(_given_years) == 1:
+            return _beta_per_year[0], beta_to_pf(_beta_per_year[0])
+
+        _interpolate_beta = interp1d(
+            _given_years, _beta_per_year, fill_value=("extrapolate")
+        )
+        _calculated_beta = _interpolate_beta(year)
+        return _calculated_beta, beta_to_pf(_calculated_beta)
+
+    def _calculate_combined_beta(
+        self, stone_revetment_beta: list[float], grass_revetment_beta: float
+    ) -> float:
+        if np.all(np.isnan(stone_revetment_beta)):
+            _prob_stone_revetment = 0.0
         else:
-            intBeta = interp1d(given_years, betaPerYear, fill_value=("extrapolate"))
-            finalBeta = intBeta(year)
-            return finalBeta, beta_to_pf(finalBeta)
+            _prob_stone_revetment = beta_to_pf(np.nanmin(stone_revetment_beta))
 
-    def _beta_comb(self, betaZST: list[float], betaGEBU: float) -> float:
-        if np.all(np.isnan(betaZST)):
-            probZST = 0.0
+        if np.isnan(grass_revetment_beta):
+            _prob_grass_revetment = 0.0
         else:
-            probZST = beta_to_pf(np.nanmin(betaZST))
+            _prob_grass_revetment = beta_to_pf(grass_revetment_beta)
 
-        if np.isnan(betaGEBU):
-            probGEBU = 0.0
-        else:
-            probGEBU = beta_to_pf(betaGEBU)
-
-        probComb = probZST + probGEBU
-        betaComb = -ndtri(probComb)
-        return betaComb
+        _prob_combined = _prob_stone_revetment + _prob_grass_revetment
+        _beta_combined = -ndtri(_prob_combined)
+        return _beta_combined
 
     def _evaluate_block(self, slope_part: StoneSlopePart, given_year: int):
         D_opt = []
-        betaFailure = []
+        beta_failure = []
         for _slope_part_relation in slope_part.slope_part_relations:
             if _slope_part_relation.year == given_year:
                 D_opt.append(_slope_part_relation.top_layer_thickness)
-                betaFailure.append(_slope_part_relation.beta)
+                beta_failure.append(_slope_part_relation.beta)
 
-        fBlock = interp1d(D_opt, betaFailure, fill_value=("extrapolate"))
+        fBlock = interp1d(D_opt, beta_failure, fill_value=("extrapolate"))
         beta = fBlock(slope_part.top_layer_thickness)
 
         return beta
