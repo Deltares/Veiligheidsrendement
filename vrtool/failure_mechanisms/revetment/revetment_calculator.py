@@ -5,6 +5,12 @@ from scipy.special import ndtri
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
 )
+from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
+    RelationGrassRevetment,
+)
+from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
+    RelationRevetmentProtocol,
+)
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
@@ -68,27 +74,51 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         return _beta_combined
 
     def _evaluate_block(self, slope_part: StoneSlopePart, given_year: int):
-        D_opt = []
-        beta_failure = []
-        for _slope_part_relation in slope_part.slope_part_relations:
-            if _slope_part_relation.year == given_year:
-                D_opt.append(_slope_part_relation.top_layer_thickness)
-                beta_failure.append(_slope_part_relation.beta)
-
-        fBlock = interp1d(D_opt, beta_failure, fill_value=("extrapolate"))
-        beta = fBlock(slope_part.top_layer_thickness)
-
-        return beta
+        return self.evaluate_block_relations(
+            given_year, slope_part.slope_part_relations, slope_part.top_layer_thickness
+        )
 
     def _evaluate_grass(self, given_year: int):
-        transitions = []
-        betaFailure = []
-        for rel in self._revetment.grass_relations:
-            if rel.year == given_year:
-                transitions.append(rel.transition_level)
-                betaFailure.append(rel.beta)
+        return self.evaluate_grass_relations(
+            given_year,
+            self._revetment.grass_relations,
+            self._revetment.current_transition_level,
+        )
 
-        fgrass = interp1d(transitions, betaFailure, fill_value=("extrapolate"))
-        beta = fgrass(self._revetment.current_transition_level)
+    @staticmethod
+    def evaluate_grass_relations(
+        evaluation_year: int,
+        grass_relations: list[RelationGrassRevetment],
+        current_transition_level: float,
+    ) -> float:
+        _transitions, _beta_failure = zip(
+            *(
+                (grass_relation.transition_level, grass_relation.beta)
+                for grass_relation in grass_relations
+                if grass_relation.year == evaluation_year
+            )
+        )
 
-        return beta
+        _interpolate_grass = interp1d(
+            _transitions, _beta_failure, fill_value=("extrapolate")
+        )
+        return _interpolate_grass(current_transition_level)
+
+    @staticmethod
+    def evaluate_block_relations(
+        evaluation_year: int,
+        slope_part_relations: list[RelationRevetmentProtocol],
+        top_layer_thickness: float,
+    ) -> float:
+        _top_layer_thickness, _beta_failure = zip(
+            *(
+                (slope_relation.top_layer_thickness, slope_relation.beta)
+                for slope_relation in slope_part_relations
+                if slope_relation.year == evaluation_year
+            )
+        )
+
+        _interpolate_block = interp1d(
+            _top_layer_thickness, _beta_failure, fill_value=("extrapolate")
+        )
+        return _interpolate_block(top_layer_thickness)
