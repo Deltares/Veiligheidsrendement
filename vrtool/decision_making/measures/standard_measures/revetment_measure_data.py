@@ -23,6 +23,18 @@ class RevetmentMeasureData:
     tan_alpha: float
 
     def get_total_cost(self, section_length: float) -> float:
+        """
+        Calculates the associated costs of this `RevetmentMeasureData` for a given dike section length (`section_length`).
+
+        Args:
+            section_length (float): Length of the Dike section whose costs will be calculated.
+
+        Raises:
+            ValueError: When the design are cannot be calculated (`end_part` < `begin_part` or negative slope).
+
+        Returns:
+            float: Total of related costs (without a specified unit, assume Euros).
+        """
         _storage_factor = 2.509
         discontovoet = 1.02
 
