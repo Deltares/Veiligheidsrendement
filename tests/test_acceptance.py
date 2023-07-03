@@ -21,7 +21,7 @@ from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 
-_acceptance_test_cases = [
+_acceptance_all_steps_test_cases = [
     pytest.param(("TestCase1_38-1_no_housing", "38-1"), id="Traject 38-1, no housing"),
     pytest.param(
         ("TestCase1_38-1_no_housing_stix", "38-1"),
@@ -31,7 +31,14 @@ _acceptance_test_cases = [
         ("TestCase2_38-1_overflow_no_housing", "38-1"),
         id="Traject 38-1, no-housing, with overflow",
     ),
-pytest.param(("TestCase3_38-1_small", "38-1"), id="Traject 38-1, two sections"),
+]
+
+_acceptance_optimization_test_cases = [
+    pytest.param(
+        ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        id="Traject 38-1, no-housing, with overflow",
+    ),
+    pytest.param(("TestCase3_38-1_small", "38-1"), id="Traject 38-1, two sections"),
 ]
 
 
@@ -60,8 +67,10 @@ class TestAcceptance:
             "\n".join(comparison_errors)
         )
 
-    @pytest.fixture(params=_acceptance_test_cases)
-    def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
+    @pytest.fixture(params=_acceptance_all_steps_test_cases)
+    def valid_all_steps_vrtool_config(
+        self, request: pytest.FixtureRequest
+    ) -> VrtoolConfig:
         _casename, _traject = request.param
         _test_input_directory = Path.joinpath(test_data, _casename)
         assert _test_input_directory.exists()
@@ -85,53 +94,91 @@ class TestAcceptance:
 
         yield _test_config
 
-    def test_run_full_model(self, valid_vrtool_config: VrtoolConfig):
+    @pytest.fixture(params=_acceptance_optimization_test_cases)
+    def valid_optimization_vrtool_config(
+        self, request: pytest.FixtureRequest
+    ) -> VrtoolConfig:
+        _casename, _traject = request.param
+        _test_input_directory = Path.joinpath(test_data, _casename)
+        assert _test_input_directory.exists()
+
+        _test_results_directory = get_test_results_dir(request) / _casename
+        if _test_results_directory.exists():
+            shutil.rmtree(_test_results_directory)
+
+        _test_config = VrtoolConfig()
+        _test_config.input_directory = _test_input_directory
+        _test_config.output_directory = _test_results_directory
+        _test_config.traject = _traject
+        _test_config.externals = test_externals
+        _test_config.input_database_path = _test_input_directory.joinpath(
+            "vrtool_input.db"
+        )
+
+        assert (
+            _test_config.input_database_path.exists()
+        ), "No database found at {}.".format(_test_config.input_database_path)
+
+        yield _test_config
+
+    def test_run_full_model(self, valid_all_steps_vrtool_config: VrtoolConfig):
         """
         This test so far only checks the output values after optimization.
         """
         # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        _test_reference_path = (
+            valid_all_steps_vrtool_config.input_directory / "reference"
+        )
         assert _test_reference_path.exists()
 
-        _test_traject = get_dike_traject(valid_vrtool_config)
+        _test_traject = get_dike_traject(valid_all_steps_vrtool_config)
 
         # 2. Run test.
-        RunFullModel(valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD).run()
+        RunFullModel(
+            valid_all_steps_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
+        ).run()
 
         # 3. Verify final expectations.
         self._validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
+            valid_all_steps_vrtool_config.output_directory, _test_reference_path
         )
 
-    def test_run_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
+    def test_run_safety_assessment(self, valid_all_steps_vrtool_config: VrtoolConfig):
         # 1. Define test data.
-        _test_traject = get_dike_traject(valid_vrtool_config)
+        _test_traject = get_dike_traject(valid_all_steps_vrtool_config)
 
         # 2. Run test.
         _results = RunSafetyAssessment(
-            valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
+            valid_all_steps_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
         ).run()
 
         # 3. Verify expectations.
         assert isinstance(_results, ResultsSafetyAssessment)
-        assert valid_vrtool_config.output_directory.exists()
-        assert any(valid_vrtool_config.output_directory.glob("*"))
-    def test_run_optimization(self, valid_vrtool_config: VrtoolConfig):
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        assert valid_all_steps_vrtool_config.output_directory.exists()
+        assert any(valid_all_steps_vrtool_config.output_directory.glob("*"))
 
-        _shelve_path = valid_vrtool_config.input_directory / "shelves"
+    def test_run_optimization(self, valid_optimization_vrtool_config: VrtoolConfig):
+        _test_reference_path = (
+            valid_optimization_vrtool_config.input_directory / "reference"
+        )
+
+        _shelve_path = valid_optimization_vrtool_config.input_directory / "shelves"
         _results_assessment = ResultsSafetyAssessment()
-        _results_assessment.load_results(alternative_path=_shelve_path / "AfterStep1.out")
+        _results_assessment.load_results(
+            alternative_path=_shelve_path / "AfterStep1.out"
+        )
         _results_measures = ResultsMeasures()
 
-        _results_measures.vr_config = valid_vrtool_config
+        _results_measures.vr_config = valid_optimization_vrtool_config
         _results_measures.selected_traject = _results_assessment.selected_traject
 
         _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
-        _results_optimization = RunOptimization(_results_measures, valid_vrtool_config).run()
+        _results_optimization = RunOptimization(
+            _results_measures, valid_optimization_vrtool_config
+        ).run()
 
         self._validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
+            valid_optimization_vrtool_config.output_directory, _test_reference_path
         )
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
