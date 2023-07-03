@@ -67,6 +67,50 @@ class RevetmentMeasureData:
     reinforce: bool
     tan_alpha: float
 
+    def get_total_cost(self, section_length: float) -> float:
+        _storage_factor = 2.509
+        discontovoet = 1.02
+
+        # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
+        _cost_remove_steen = 5.49
+
+        # Opnemen en afvoeren teerhoudende oude asfaltbekleding (D=15cm) (incl. stort-/recyclingskosten)
+        _cost_remove_asfalt = 13.52
+
+        # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
+        D = np.array([0.3, 0.35, 0.4, 0.45, 0.5])
+        cost = np.array([72.52, 82.70, 92.56, 102.06, 111.56])
+        f = interp1d(D, cost, fill_value=("extrapolate"))
+        cost_new_steen = f(self.top_layer_thickness)
+
+        _slope_part_difference = self.end_part - self.begin_part
+        x = _slope_part_difference / self.tan_alpha
+
+        if x < 0.0 or self.end_part < self.begin_part:
+            raise ValueError("Calculation of design area not possible!")
+
+        # calculate area of new design
+        z = np.sqrt(x**2 + _slope_part_difference**2)
+        area = z * section_length
+
+        if StoneSlopePart.is_stone_slope_part(self.top_layer_type):  # cost of new steen
+            cost_vlak = _cost_remove_steen + cost_new_steen
+        elif self.top_layer_type == 2026.0:
+            # cost of new steen, when previous was gras
+            cost_vlak = cost_new_steen
+        elif GrassSlopePart.is_grass_part(self.top_layer_type):
+            # cost of removing old revetment when new revetment is gras
+            if self.previous_top_layer_type == 5.0:
+                cost_vlak = _cost_remove_asfalt
+            elif self.previous_top_layer_type == 20.0:
+                cost_vlak = 0.0
+            else:
+                cost_vlak = _cost_remove_steen
+        else:
+            cost_vlak = 0.0
+
+        return area * cost_vlak * _storage_factor
+
 
 @dataclass
 class RevetmentReliability:
@@ -414,54 +458,6 @@ class RevetmentMeasure(MeasureProtocol):
 
         return _evaluated_measures
 
-    def _calculate_revetment_measure_cost(
-        self, revetment_measure: RevetmentMeasureData, section_length: float
-    ):
-        _storage_factor = 2.509
-        discontovoet = 1.02
-
-        # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
-        _cost_remove_steen = 5.49
-
-        # Opnemen en afvoeren teerhoudende oude asfaltbekleding (D=15cm) (incl. stort-/recyclingskosten)
-        _cost_remove_asfalt = 13.52
-
-        # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
-        D = np.array([0.3, 0.35, 0.4, 0.45, 0.5])
-        cost = np.array([72.52, 82.70, 92.56, 102.06, 111.56])
-        f = interp1d(D, cost, fill_value=("extrapolate"))
-        cost_new_steen = f(revetment_measure.top_layer_thickness)
-
-        _slope_part_difference = (
-            revetment_measure.end_part - revetment_measure.begin_part
-        )
-        x = _slope_part_difference / revetment_measure.tan_alpha
-
-        if x < 0.0 or revetment_measure.end_part < revetment_measure.begin_part:
-            raise ValueError("Calculation of design area not possible!")
-
-        # calculate area of new design
-        z = np.sqrt(x**2 + _slope_part_difference**2)
-        area = z * section_length
-
-        if isinstance(revetment_measure, StoneSlopePart):  # cost of new steen
-            cost_vlak = _cost_remove_steen + cost_new_steen
-        elif revetment_measure.top_layer_type == 2026.0:
-            # cost of new steen, when previous was gras
-            cost_vlak = cost_new_steen
-        elif GrassSlopePart.is_grass_part(revetment_measure.top_layer_type):
-            # cost of removing old revetment when new revetment is gras
-            if revetment_measure.previous_top_layer_type == 5.0:
-                cost_vlak = _cost_remove_asfalt
-            elif revetment_measure.previous_top_layer_type == 20.0:
-                cost_vlak = 0.0
-            else:
-                cost_vlak = _cost_remove_steen
-        else:
-            cost_vlak = 0.0
-
-        return area * cost_vlak * _storage_factor
-
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -482,13 +478,11 @@ class RevetmentMeasure(MeasureProtocol):
             _src.reliability for _src in self._revetment_reliability_collection
         ]
         # Costs do not need to be per year.
-        def revetment_measure_cost(revetment_measure: RevetmentMeasureData) -> float:
-            return self._calculate_revetment_measure_cost(
-                revetment_measure, dike_section.Length
-            )
-
         self.measures["Cost"]: float = sum(
-            map(revetment_measure_cost, self._revetment_reliability_collection[-1])
+            map(
+                lambda x: x.get_total_cost(dike_section.Length),
+                self._revetment_reliability_collection[-1],
+            )
         )
 
     def _evaluate_grass_revetment_data(self, evaluation_year: int) -> float:
