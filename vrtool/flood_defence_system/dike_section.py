@@ -17,6 +17,7 @@ class DikeSection:
     """
     Initialize the DikeSection class, as a general class for a dike section that contains all basic information
     """
+
     crest_height: float
     mechanism_data: dict[str, tuple[str, str]]
     section_reliability: SectionReliability

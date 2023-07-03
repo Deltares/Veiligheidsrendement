@@ -7,7 +7,6 @@ from vrtool.failure_mechanisms.revetment.slope_part.slope_part_protocol import (
     SlopePartProtocol,
 )
 
-
 MIN_BLOCK = 26.0
 MAX_BLOCK = 27.9
 

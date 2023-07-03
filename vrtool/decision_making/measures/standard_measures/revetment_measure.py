@@ -1,15 +1,18 @@
 import copy
 import logging
 import math
+
 import numpy as np
+from scipy.interpolate import interp1d
+from scipy.special import ndtri
+from scipy.stats import norm
+
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
-from vrtool.failure_mechanisms.revetment.revetment_calculator import (
-    RevetmentCalculator,
-)
+from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import (
@@ -25,9 +28,6 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from scipy.stats import norm
-from scipy.special import ndtri
-from scipy.interpolate import interp1d
 
 
 def bisection(f, a, b, tol):
@@ -74,6 +74,21 @@ class RevetmentMeasure(MeasureProtocol):
     # max_pf_factor_block: float
     # n_steps_block: int
     _revetment_measure_data_list: list[RevetmentMeasureData]
+
+    def __init__(self, revetment_calculation: RevetmentCalculator) -> None:
+        self.revetment_mechanism_calculator = revetment_calculation
+
+    @property
+    def transition_level_increase_step(self) -> float:
+        return self.parameters["transition_level_increase_step"]
+
+    @property
+    def max_pf_factor_block(self) -> float:
+        return self.parameters["max_pf_factor_block"]
+
+    @property
+    def n_steps_block(self) -> int:
+        return self.parameters["n_steps_block"]
 
     def _get_configured_section_reliability(
         self,

@@ -1,6 +1,6 @@
 from vrtool.failure_mechanisms.revetment.slope_part import (
-    SlopePartProtocol,
     GrassSlopePart,
+    SlopePartProtocol,
 )
 
 
