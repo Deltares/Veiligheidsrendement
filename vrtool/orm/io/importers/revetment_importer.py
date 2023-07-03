@@ -9,6 +9,7 @@ from vrtool.orm.io.importers.slope_part_importer import SlopePartImporter
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.slope_part import SlopePart
+import logging
 
 
 class RevetmentImporter(OrmImporterProtocol):
@@ -26,7 +27,19 @@ class RevetmentImporter(OrmImporterProtocol):
 
     def _get_slope_parts(self, slope_parts: list[SlopePart]) -> list[SlopePartProtocol]:
         _slope_part_importer = SlopePartImporter()
-        return [_slope_part_importer.import_orm(part) for part in slope_parts]
+        _imported_parts = []
+        for part in slope_parts:
+            try:
+                _imported_part = _slope_part_importer.import_orm(part)
+                _imported_parts.append(_imported_part)
+            except ValueError as import_error:
+                logging.warn(
+                    "Part {} won't be imported due to error: {}".format(
+                        part.get_id(), import_error
+                    )
+                )
+
+        return _imported_parts
 
     def _is_revetment_data_valid(self, input: RevetmentDataClass) -> bool:
         actual_transition_level = input.current_transition_level
