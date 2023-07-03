@@ -411,7 +411,6 @@ def update_probability(init_probability, strategy, index):
         # plt.close()
     return init_probability
 
-
 def overflow_bundling(
     strategy,
     init_overflow_risk,
@@ -419,22 +418,9 @@ def overflow_bundling(
     life_cycle_cost,
     traject: DikeTraject,
 ):
-    """Routine for bundling several measures for overflow to prevent getting stuck if many overflow-dominated
-    sections have about equal reliability. A bundle is a set of measures (typically crest heightenings) at different sections.
-    This routine is needed for mechanisms where the system reliability is computed as a series system with fully correlated components."""
-
-    # import shelve
-    #
-    # filename = config.directory.joinpath('TestOverflowBundling.out')
-    # # make shelf
-    # my_shelf = shelve.open(str(filename), 'n')
-    # my_shelf['Strategy'] = locals()['Strategy']
-    # my_shelf['init_overflow_risk'] = locals()['init_overflow_risk']
-    # my_shelf['existing_investment'] = locals()['existing_investment']
-    # my_shelf['LifeCycleCost'] = locals()['LifeCycleCost']
-    # my_shelf['traject'] = locals()['traject']
-    #
-    # my_shelf.close()
+    """"""
+    """ Alternative routine that only uses the reliability to determine what measures are allowed.
+     The logic of this version is that measures are not restricted by type, but that geotechnical reliability may not decrease compared to the already chosen option"""
 
     # Step 1: fill an array of size (n,2) with sh and sg of existing investments per section in order to properly filter
     # the viable options per section
@@ -474,11 +460,197 @@ def overflow_bundling(
         # get all geotechnical options for this section:
         GeotechnicalOptions = strategy.options_geotechnical[traject.sections[i].name]
         HeightOptions = strategy.options_height[traject.sections[i].name]
+        #if there is already an investment
+        if any(existing_investments[i, :] > 0):
+            investment_id = existing_investments[i, 1] - 1
+            current_investment_geotechnical = GeotechnicalOptions.iloc[investment_id]
+            current_investment_stability = current_investment_geotechnical["StabilityInner"]
+            current_investment_piping = current_investment_geotechnical["Piping"]
+            # check if all rows in comparison only contain True values
+            comparison_geotechnical = (GeotechnicalOptions.StabilityInner >= current_investment_stability) & (
+                    GeotechnicalOptions.Piping >= current_investment_piping)
+            available_measures_geotechnical = comparison_geotechnical.all(
+                axis=1)  # df indexing, so a False should be added before
+
+            # exclude rows for height options that are not safer than current
+            current_investment_height = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
+            # check if all rows in comparison only contain True values #TODO extend with revetment
+            comparison_height = HeightOptions.Overflow > current_investment_height
+            available_measures_height = comparison_height.all(axis=1)
+
+            # now replace the life_cycle_cost where available_measures_height is False with a very high value: the reliability for overflow has to increase.
+            life_cycle_cost[i, available_measures_height[~available_measures_height].index + 1, :] = 1e99
+
+            #next we get the ids for the possible geotechnical measures
+            ids = available_measures_geotechnical[available_measures_geotechnical].index.values + 1
+
+            #we get a matrix with the LCC values, and get the order of sh measures:
+            lcc_subset = life_cycle_cost[i, :, ids].T
+            sh_order = np.argsort(np.min(lcc_subset, axis=1))
+            sg_indices[i, :] = np.array(ids)[np.argmin(lcc_subset, axis=1)][sh_order]
+            sorted_sh[i, :] = sh_order
+            sorted_sh[i, :] = np.where(
+                np.sort(np.min(lcc_subset, axis=1)) > 1e60, 999, sorted_sh[i, :]
+            )
+        elif np.max(existing_investments[i, :]) == 0: # nothing has been invested yet
+            sg_indices[i, :] = np.argmin(life_cycle_cost[i, :, :], axis=1)
+            LCCs = np.min(life_cycle_cost[i, :, :], axis=1)
+            sorted_sh[i, :] = np.argsort(LCCs)
+            sorted_sh[i, :] = np.where(
+                np.sort(LCCs) > 1e60, 999, sorted_sh[i, 0: len(LCCs)]
+            )
+            sg_indices[i, 0: len(LCCs)] = sg_indices[i, 0: len(LCCs)][
+                np.argsort(LCCs)
+            ]
+        else:
+            logging.error("Unknown measure type in overflow bundling (error can be removed?)")
+    new_overflow_risk = copy.deepcopy(init_overflow_risk)
+    # print('New:')
+    # print(sg_indices)
+    # print(sorted_sh)
+    # Step 3: determine various bundles for overflow:
+
+    # first initialize som values
+    index_counter = np.zeros(
+        (len(traject.sections),), dtype=np.int32
+    )  # counter that keeps track of the next cheapest option for each section
+    run_number = 0  # used for counting the loop
+    counter_list = []  # used to store the bundle indices
+    BC_list = []  # used to store BC for each bundle
+    weak_list = []  # used to store index of weakest section
+
+    # here we start the loop. Note that we rarely make it to run 100, for larger problems this limit might need to be increased
+    while run_number < 100:
+        # get weakest section
+        ind_weakest = np.argmax(np.sum(new_overflow_risk, axis=1))
+
+        # We should increase the measure at the weakest section, but only if we have not reached the end of the array yet:
+        if sorted_sh.shape[1] - 1 > index_counter[ind_weakest]:
+            index_counter[ind_weakest] += 1
+            # take next step, exception if there is no valid measure. In that case exit the routine.
+            if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
+                logging.error(
+                    "Bundle quit, weakest section has no more available measures"
+                )
+                break
+        else:
+            logging.error("Bundle quit, weakest section has no more available measures")
+            break
+
+        # insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
+        new_overflow_risk[ind_weakest, :] = strategy.RiskOverflow[
+                                            ind_weakest, sorted_sh[ind_weakest, index_counter[ind_weakest]], :
+                                            ]
+        LCC_values[ind_weakest] = np.min(
+            life_cycle_cost[
+                ind_weakest,
+                sorted_sh[ind_weakest, index_counter[ind_weakest]],
+                sg_indices[ind_weakest, index_counter[ind_weakest]],
+            ]
+        )
+        BC = (
+                     np.sum(np.max(init_overflow_risk, axis=0))
+                     - np.sum(np.max(new_overflow_risk, axis=0))
+             ) / np.sum(LCC_values)
+        # store results of step:
+        if np.isnan(BC):
+            BC_list.append(0.0)
+        else:
+            BC_list.append(BC)
+        weak_list.append(ind_weakest)
+
+        # store the bundle indices, do -1 as index_counter contains the NEXT step
+        counter_list.append(copy.deepcopy(index_counter))
+
+        # Strategy.get_measure_from_index((ind_weakest, sorted_sh[ind_weakest, index_counter[ind_weakest]],
+        #                                  sg_indices[ind_weakest, index_counter[ind_weakest]]), print_measure=True)
+
+        # in the next step, the next measure should be taken for this section
+        run_number += 1
+
+    # take the final index from the list, where BC is max
+    if len(BC_list) > 0:
+        ind = np.argwhere(BC_list == np.max(BC_list))[0][0]
+        final_index = counter_list[ind]
+        # convert measure_index to sh based on sorted_indices
+        sg_index = np.zeros((len(traject.sections),))
+        measure_index = np.zeros((np.size(life_cycle_cost, axis=0),), dtype=np.int32)
+        for i in range(0, len(measure_index)):
+            if final_index[i] != 0:  # a measure was taken
+                measure_index[i] = sorted_sh[i, final_index[i]]
+                sg_index[i] = sg_indices[i, final_index[i]]
+            else:  # no measure was taken
+                measure_index[i] = existing_investments[i, 0]
+                sg_index[i] = existing_investments[i, 1]
+
+        measure_index = (
+            np.append(measure_index, sg_index)
+            .reshape((2, len(traject.sections)))
+            .T.astype(np.int32)
+        )
+        BC_out = np.max(BC_list)
+    else:
+        BC_out = 0
+        measure_index = []
+        logging.warn("No more measures for weakest overflow section")
+
+    return measure_index, BC_out
+
+def old_overflow_bundling(
+    strategy,
+    init_overflow_risk,
+    existing_investment,
+    life_cycle_cost,
+    traject: DikeTraject,
+):
+    """Routine for bundling several measures for overflow to prevent getting stuck if many overflow-dominated
+    sections have about equal reliability. A bundle is a set of measures (typically crest heightenings) at different sections.
+    This routine is needed for mechanisms where the system reliability is computed as a series system with fully correlated components."""
+
+    """Step 1: fill an array of size (n,2) with sh and sg of existing investments per section in order to properly filter
+     the viable options per section"""
+    existing_investments = np.zeros(
+        (np.size(life_cycle_cost, axis=0), 2), dtype=np.int32
+    )
+    if len(existing_investment) > 0:
+        for i in range(0, len(existing_investment)):
+            existing_investments[existing_investment[i][0], 0] = existing_investment[i][
+                1
+            ]  # sh
+            existing_investments[existing_investment[i][0], 1] = existing_investment[i][
+                2
+            ]  # sg
+
+    """Step 2: for each section, determine the sorted_indices of the min to max LCC. Note that this could also be based on TC but the performance is good as is.
+    # first make the proper arrays for sorted_indices (sh), corresponding sg indices and the LCC for each section."""
+    sorted_sh = np.empty(
+        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)),
+        dtype=np.int32,
+    )
+    sorted_sh.fill(999)
+    LCC_values = np.zeros((np.size(life_cycle_cost, axis=0),))
+    sg_indices = np.empty(
+        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)),
+        dtype=np.int32,
+    )
+    sg_indices.fill(999)
+
+    # loop over the sections
+    for i in range(0, len(traject.sections)):
+        extra_type = None
+        index_existing = 0  # value is only used in 1 of the branches of the if statement, otherwise should be 0.
+        # get the indices where safety is equal to no measure for stabilityinner & piping
+        # if there are investments this loop is needed to deal with the fact that it can be an integer or list.
+
+        # get all geotechnical options for this section:
+        GeotechnicalOptions = strategy.options_geotechnical[traject.sections[i].name]
+        HeightOptions = strategy.options_height[traject.sections[i].name]
         if any(existing_investments[i, :] > 0):
             investment_id = existing_investments[i, 1] - 1
             if isinstance(
                 GeotechnicalOptions.iloc[investment_id]["year"].values[0], list
             ):
+                #if it is a combined measure (list of years).
                 # take last: this should be the soil reinforcement.
                 if (
                     GeotechnicalOptions.iloc[investment_id]["type"].values[0][0]
@@ -664,6 +836,7 @@ def overflow_bundling(
                     pass
             # matrix indices:
             ids = subset.index.values + 1
+            #alternative
             # get LCC with correct geotechnical measure:
             LCC_1 = life_cycle_cost[i, :, ids].T
 
