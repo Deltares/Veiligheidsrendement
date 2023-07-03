@@ -192,7 +192,7 @@ class RevetmentMeasure(MeasureProtocol):
         mechanism_reliability.calculate_reliability()
         _revetment_reliability = RevetmentReliability()
         _revetment_reliability.measure_data = _revetment_measures_collection
-        _revetment_reliability.reliability = mechanism_reliability
+        _revetment_reliability.reliability = mechanism_reliability.Beta
         _revetment_reliability.cost = self._calculate_year_costs(
             _revetment_measures_collection, dike_section.Length, int(year_to_calculate)
         )
