@@ -1,19 +1,15 @@
 from typing import Type
 
 from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
-    ASPHALT_TYPE,
     AsphaltSlopePart,
 )
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import (
-    GRASS_TYPE,
     GrassSlopePart,
 )
 from vrtool.failure_mechanisms.revetment.slope_part.slope_part_protocol import (
     SlopePartProtocol,
 )
 from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
-    MAX_BLOCK,
-    MIN_BLOCK,
     StoneSlopePart,
 )
 
@@ -33,11 +29,11 @@ class SlopePartBuilder:
         Returns:
             Type[SlopePartProtocol]: Type to use to build a valid instance of a `SlopePartProtocol`.
         """
-        if top_layer_type == GRASS_TYPE:
+        if GrassSlopePart.is_grass_part(top_layer_type):
             return GrassSlopePart
-        elif top_layer_type >= MIN_BLOCK and top_layer_type <= MAX_BLOCK:
+        elif StoneSlopePart.is_stone_slope_part(top_layer_type):
             return StoneSlopePart
-        elif top_layer_type == ASPHALT_TYPE:
+        elif AsphaltSlopePart.is_asphalt_slope_part(top_layer_type):
             return AsphaltSlopePart
 
         raise ValueError(
