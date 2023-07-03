@@ -36,7 +36,6 @@ class RevetmentMeasureData:
             float: Total of related costs (without a specified unit, assume Euros).
         """
         _storage_factor = 2.509
-        discontovoet = 1.02
 
         # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
         _cost_remove_steen = 5.49
