@@ -1194,7 +1194,7 @@ class StrategyBase:
             beta_t, p_t = calc_traject_prob(self.Probabilities[i],ts=time_stamps)
             total_reliability[i,:] = beta_t
         reliability_df = pd.DataFrame(total_reliability, columns=time_stamps)
-        reliability_df.to_csv(path_or_buf=input_path.parent.joinpath("TrajectReliabilityInTime.csv"), header=True)
+        reliability_df.to_csv(path_or_buf=input_path.joinpath("TrajectReliabilityInTime.csv"), header=True)
 
     @abstractmethod
     def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
