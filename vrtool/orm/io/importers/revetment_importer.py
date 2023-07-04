@@ -1,3 +1,5 @@
+import logging
+
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
@@ -9,7 +11,6 @@ from vrtool.orm.io.importers.slope_part_importer import SlopePartImporter
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.slope_part import SlopePart
-import logging
 
 
 class RevetmentImporter(OrmImporterProtocol):

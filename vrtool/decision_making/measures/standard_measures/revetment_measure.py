@@ -1,7 +1,7 @@
 import copy
-from dataclasses import dataclass
 import logging
 import math
+from dataclasses import dataclass
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -17,8 +17,8 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.slope_part import (
-    SlopePartProtocol,
     GrassSlopePart,
+    SlopePartProtocol,
     StoneSlopePart,
 )
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRASS_TYPE
