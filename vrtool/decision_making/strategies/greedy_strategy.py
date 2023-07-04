@@ -121,7 +121,7 @@ class GreedyStrategy(StrategyBase):
             BC = np.divide(dR, LifeCycleCost)  # risk reduction/cost [n,sh,sg]
             TC = np.add(LifeCycleCost, TotalRisk)
             # determine the BC of the most favourable option for height
-            overflow_bundle_index, BC_bundle, BC_list = overflow_bundling(
+            overflow_bundle_index, BC_bundle, BC_bundle_list = overflow_bundling(
                 copy.deepcopy(self), copy.deepcopy(init_overflow_risk), copy.deepcopy(measure_list), copy.deepcopy(LifeCycleCost), copy.deepcopy(traject)
             )
 
