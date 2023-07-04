@@ -497,7 +497,7 @@ def overflow_bundling(
                 # exclude rows for height options that are not safer than current
                 current_investment_height = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
                 # check if all rows in comparison only contain True values #TODO extend with revetment
-                comparison_height = HeightOptions.Overflow > current_investment_height
+                comparison_height = HeightOptions.Overflow >= current_investment_height
                 available_measures_height = comparison_height.all(axis=1)
             else: # if there is no investment in height, all options are available
                 available_measures_height = pd.Series(np.ones(len(HeightOptions), dtype=bool))
@@ -617,7 +617,7 @@ def overflow_bundling(
         BC_out = 0
         measure_index = []
         logging.warn("No more measures for weakest overflow section")
-    return measure_index, BC_out
+    return measure_index, BC_out, BC_list
 
 def old_overflow_bundling(
     strategy,
@@ -977,4 +977,4 @@ def old_overflow_bundling(
         measure_index = []
         logging.warn("No more measures for weakest overflow section")
 
-    return measure_index, BC_out
+    return measure_index, BC_out, BC_list
