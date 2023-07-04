@@ -20,8 +20,9 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class RevetmentCalculator(FailureMechanismCalculatorProtocol):
-    def __init__(self, revetment: RevetmentDataClass) -> None:
+    def __init__(self, revetment: RevetmentDataClass, initial_year: int) -> None:
         self._revetment = revetment
+        self._initial_year = initial_year
 
     def calculate(self, year: int) -> tuple[float, float]:
         _given_years = self._revetment.find_given_years()
@@ -53,7 +54,7 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         _interpolate_beta = interp1d(
             _given_years, _beta_per_year, fill_value=("extrapolate")
         )
-        _calculated_beta = _interpolate_beta(year)
+        _calculated_beta = _interpolate_beta(self._initial_year + year)
         return _calculated_beta, beta_to_pf(_calculated_beta)
 
     def _calculate_combined_beta(

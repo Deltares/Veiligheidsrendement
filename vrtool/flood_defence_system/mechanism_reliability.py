@@ -157,7 +157,9 @@ class MechanismReliability:
             )
 
         if mechanism == "revetment":
-            return RevetmentCalculator(mechanism_input.input["revetment_input"])
+            return RevetmentCalculator(
+                mechanism_input.input["revetment_input"], self.t_0
+            )
 
         raise Exception("Unknown computation type SemiProb for {}".format(mechanism))
 
