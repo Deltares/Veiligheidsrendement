@@ -35,7 +35,7 @@ class RunOptimization(VrToolRunProtocol):
     def _get_output_dir(self) -> Path:
         _results_dir = self.vr_config.output_directory
         if not _results_dir.exists():
-            _results_dir.mkdir(parents=True)
+            _results_dir.joinpath('OptimizationSteps').mkdir(parents=True)
         return _results_dir
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
@@ -77,6 +77,7 @@ class RunOptimization(VrToolRunProtocol):
             self.selected_traject.general_info.FloodDamage, None
         )
 
+        _greedy_optimization.write_reliability_to_csv(_results_dir.joinpath('OptimizationSteps'), "Greedy")
         # write to csv's
         _greedy_optimization.TakenMeasures.to_csv(
             _results_dir.joinpath("TakenMeasures_" + _greedy_optimization.type + ".csv")
