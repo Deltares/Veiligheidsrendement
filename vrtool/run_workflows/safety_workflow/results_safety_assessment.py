@@ -6,6 +6,20 @@ from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProto
 
 
 class ResultsSafetyAssessment(VrToolRunResultProtocol):
+    def _write_results_to_file(self):
+        _case_settings = {
+            "directory": self.vr_config.output_directory,
+            "language": self.vr_config.language,
+            "beta_or_prob": self.vr_config.beta_or_prob,
+        }
+
+        if not self.vr_config.output_directory.exists():
+            self.vr_config.output_directory.mkdir(parents=True)
+
+        self.selected_traject.write_initial_assessment_results(
+            case_settings=_case_settings,
+        )
+
     def plot_results(self):
         """
         Plot initial reliability for `selected_traject`.

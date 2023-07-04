@@ -3,13 +3,16 @@ from dataclasses import dataclass, field
 from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
     RelationRevetmentProtocol,
 )
-from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
+from vrtool.failure_mechanisms.revetment.slope_part.slope_part_protocol import (
+    SlopePartProtocol,
+)
 
-ASPHALT_TYPE = 5.0
+MIN_BLOCK = 26.0
+MAX_BLOCK = 27.9
 
 
 @dataclass
-class AsphaltSlopePart(SlopePartProtocol):
+class StoneSlopePart(SlopePartProtocol):
     begin_part: float
     end_part: float
     tan_alpha: float
@@ -21,4 +24,8 @@ class AsphaltSlopePart(SlopePartProtocol):
     )
 
     def is_valid(self) -> bool:
-        return self.top_layer_type == ASPHALT_TYPE
+        return self.is_stone_slope_part(self.top_layer_type)
+
+    @staticmethod
+    def is_stone_slope_part(top_layer_type: float) -> bool:
+        return top_layer_type >= MIN_BLOCK and top_layer_type <= MAX_BLOCK

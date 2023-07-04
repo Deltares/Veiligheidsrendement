@@ -1,6 +1,5 @@
 import json
 
-import numpy as np
 import pytest
 
 from tests import test_data
@@ -12,9 +11,11 @@ from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
 )
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.slope_part_builder import SlopePartBuilder
-from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
-from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    SlopePartBuilder,
+    SlopePartProtocol,
+    StoneSlopePart,
+)
 
 
 class TestRevetmentCalculatorAssessment:
@@ -117,7 +118,7 @@ class TestRevetmentCalculatorAssessment:
     ):
         revetment = self._get_revetment_input(given_years, section_id)
 
-        calc = RevetmentCalculator(revetment)
+        calc = RevetmentCalculator(revetment, 0)
         [beta, pf] = calc.calculate(assessment_year)
 
         assert beta == pytest.approx(ref_values[0], rel=1e-8)
