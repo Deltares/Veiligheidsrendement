@@ -174,7 +174,7 @@ class RevetmentMeasure(MeasureProtocol):
                 for rm in _revetment_measures_collection
             )
         )
-        _combined_beta = RevetmentCalculator(_revetment)._calculate_combined_beta(
+        _combined_beta = RevetmentCalculator.calculate_combined_beta(
             _stone_beta_list, _grass_beta_list[0]
         )
         # This should be simplified so we call directly the revetment calculation.
