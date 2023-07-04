@@ -13,6 +13,7 @@ from vrtool.decision_making.strategy_evaluation import (
     calc_life_cycle_risks,
     evaluate_risk,
     overflow_bundling,
+    old_overflow_bundling,
     update_probability,
 )
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -119,7 +120,7 @@ class GreedyStrategy(StrategyBase):
             BC = np.divide(dR, LifeCycleCost)  # risk reduction/cost [n,sh,sg]
             TC = np.add(LifeCycleCost, TotalRisk)
             # determine the BC of the most favourable option for height
-            overflow_bundle_index, BC_bundle = overflow_bundling(
+            overflow_bundle_index, BC_bundle = old_overflow_bundling(
                 self, init_overflow_risk, measure_list, LifeCycleCost, traject
             )
             # compute additional measures where we combine overflow measures, here we optimize a package, purely based
