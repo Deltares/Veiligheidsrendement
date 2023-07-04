@@ -58,6 +58,7 @@ class VrtoolConfig:
             "Overflow",
             "StabilityInner",
             "Piping",
+            "Revetment",
         ]
     )
     # whether to consider length-effects within a dike section
