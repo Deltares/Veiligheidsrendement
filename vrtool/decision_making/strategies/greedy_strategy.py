@@ -74,6 +74,7 @@ class GreedyStrategy(StrategyBase):
                 init_geotechnical_risk
             )
             risk_per_step.append(init_risk)
+            cost_per_step.append(np.sum(SpentMoney))
             # first we compute the BC-ratio for each combination of Sh, Sg, for each section
             LifeCycleCost = np.full(
                 [
@@ -120,9 +121,10 @@ class GreedyStrategy(StrategyBase):
             BC = np.divide(dR, LifeCycleCost)  # risk reduction/cost [n,sh,sg]
             TC = np.add(LifeCycleCost, TotalRisk)
             # determine the BC of the most favourable option for height
-            overflow_bundle_index, BC_bundle = old_overflow_bundling(
-                self, init_overflow_risk, measure_list, LifeCycleCost, traject
+            overflow_bundle_index, BC_bundle = overflow_bundling(
+                copy.deepcopy(self), copy.deepcopy(init_overflow_risk), copy.deepcopy(measure_list), copy.deepcopy(LifeCycleCost), copy.deepcopy(traject)
             )
+
             # compute additional measures where we combine overflow measures, here we optimize a package, purely based
             # on overflow, and compute a general BC ratio that is a factor (factor cautious) higher than the max BC.
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
@@ -238,7 +240,7 @@ class GreedyStrategy(StrategyBase):
             if count == max_count:
                 pass
                 # Probabilities.append(copy.deepcopy(init_probability))
-
+        # pd.DataFrame([risk_per_step,cost_per_step]).to_csv('GreedyResults_per_step.csv') #useful for debugging
         logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
         # #make dump
@@ -254,6 +256,8 @@ class GreedyStrategy(StrategyBase):
         # my_shelf['Probabilities'] = locals()['Probabilities']
         #
         # my_shelf.close()
+
+
 
         self.write_greedy_results(
             traject, solutions_dict, measure_list, BC_list, Probabilities

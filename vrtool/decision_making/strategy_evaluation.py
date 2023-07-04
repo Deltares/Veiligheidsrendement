@@ -493,11 +493,14 @@ def overflow_bundling(
             available_measures_geotechnical = comparison_geotechnical.all(
                 axis=1)  # df indexing, so a False should be added before
 
-            # exclude rows for height options that are not safer than current
-            current_investment_height = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
-            # check if all rows in comparison only contain True values #TODO extend with revetment
-            comparison_height = HeightOptions.Overflow > current_investment_height
-            available_measures_height = comparison_height.all(axis=1)
+            if existing_investments[i, 0] > 0:
+                # exclude rows for height options that are not safer than current
+                current_investment_height = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
+                # check if all rows in comparison only contain True values #TODO extend with revetment
+                comparison_height = HeightOptions.Overflow > current_investment_height
+                available_measures_height = comparison_height.all(axis=1)
+            else: # if there is no investment in height, all options are available
+                available_measures_height = pd.Series(np.ones(len(HeightOptions), dtype=bool))
 
             # now replace the life_cycle_cost where available_measures_height is False with a very high value: the reliability for overflow has to increase.
             life_cycle_cost[i, available_measures_height[~available_measures_height].index + 1, :] = 1e99
