@@ -7,6 +7,7 @@ import pandas as pd
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
@@ -36,6 +37,13 @@ class DikeSection:
         self.crest_height = float("nan")
         self.InitialGeometry = None
         self.houses = None
+
+    def get_revetment(self, year: int) -> RevetmentDataClass:
+        return (
+            self.section_reliability.failure_mechanisms.get_failure_mechanism_year_data(
+                "Revetment", year
+            ).input["revetment_input"]
+        )
 
     @classmethod
     def get_dike_sections_from_vr_config(
