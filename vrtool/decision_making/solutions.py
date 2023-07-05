@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -110,6 +111,12 @@ class Solutions:
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
                     for ij in self.mechanisms + ["Section"]:
+                        if ij not in betas.index:
+                            raise ValueError(
+                                "Measure '{}' does not contain data for mechanism '{}'".format(
+                                    measure.parameters["Name"], ij
+                                )
+                            )
                         for ijk in betas.loc[ij].values:
                             reliability_in.append(ijk)
 
