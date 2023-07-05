@@ -445,10 +445,10 @@ class StrategyBase:
                     # would be a combined measure
                     elif (
                         self.options_geotechnical[keys[n]].iloc[sg]["type"].values[0]
-                        == "vertical geotextile"
+                        == "Vertical Geotextile"
                     ) or (
                         self.options_geotechnical[keys[n]].iloc[sg]["type"].values[0]
-                        == "stability screen"
+                        == "Stability Screen"
                     ):
                         # can only be combined with no measure for height
                         self.LCCOption[n, 0, sg + 1] = LCC_sg[sg]
@@ -465,7 +465,7 @@ class StrategyBase:
                                 .iloc[sg]["type"]
                                 .values[0]
                             )
-                            == "soil reinforcement"
+                            == "Soil reinforcement"
                         )[0][0]
                         if (
                             self.options_geotechnical[keys[n]]
@@ -525,7 +525,7 @@ class StrategyBase:
                             self.options_geotechnical[keys[n]]
                             .iloc[sg]["type"]
                             .values[0]
-                            != "diaphragm wall"
+                            != "Diaphragm Wall"
                         ):
                             self.LCCOption[n, sh + 1, sg + 1] = (
                                 LCC_sh[sh] + LCC_sg[sg]

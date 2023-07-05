@@ -66,7 +66,6 @@ class MechanismReliabilityCollection:
             raise ValueError("A {} is required.".format(LoadInput.__name__))
 
         for i in self.Reliability.keys():
-            # TODO: This will iterate over all available years despite not having all the data available (revetment only has 2025 and 2050?)
             self.Reliability[i].calculate_reliability(
                 self.Reliability[i].Input,
                 load,

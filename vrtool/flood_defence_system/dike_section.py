@@ -38,13 +38,6 @@ class DikeSection:
         self.InitialGeometry = None
         self.houses = None
 
-    def get_revetment(self, year: int) -> RevetmentDataClass:
-        return (
-            self.section_reliability.failure_mechanisms.get_failure_mechanism_year_data(
-                "Revetment", year
-            ).input["revetment_input"]
-        )
-
     @classmethod
     def get_dike_sections_from_vr_config(
         cls, vrtool_config: VrtoolConfig

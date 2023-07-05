@@ -78,15 +78,15 @@ class Solutions:
         inputs_m = []
         inputs_r = []
 
-        for i, measure in enumerate(self.measures):
+        for measure in self.measures:
+            _measure_type = measure.parameters["Type"]
+            _normalized_measure_type = _measure_type.lower().strip()
             if isinstance(measure.measures, list):
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
-                _measure_type = measure.parameters["Type"].lower().strip()
-
                 for j in range(len(measure.measures)):
                     measure_in = []
                     reliability_in = []
-                    if _measure_type in [
+                    if _normalized_measure_type in [
                         "soil reinforcement",
                         "soil reinforcement with stability screen",
                     ]:
@@ -125,17 +125,17 @@ class Solutions:
 
             elif isinstance(measure.measures, dict):
                 ID = str(measure.parameters["ID"])
-                _measure_type = measure.parameters["Type"]
-                if _measure_type == "vertical geotextile":
+                # _measure_type = measure.parameters["Type"]
+                if _normalized_measure_type == "vertical geotextile":
                     designvars = measure.measures["VZG"]
 
-                if _measure_type == "diaphragm wall":
+                if _normalized_measure_type == "diaphragm wall":
                     designvars = measure.measures["DiaphragmWall"]
 
-                if _measure_type == "revetment":
+                if _normalized_measure_type == "revetment":
                     designvars = measure.measures["Revetment"]
 
-                if _measure_type == "custom":
+                if _normalized_measure_type == "custom":
                     designvars = 1.0  ##TODO check
 
                 measure_class = measure.parameters["Class"]
@@ -156,7 +156,14 @@ class Solutions:
                     )
                 else:
                     inputs_m.append(
-                        [ID, _measure_type, measure_class, year, designvars, cost]
+                        [
+                            ID,
+                            _measure_type,
+                            measure_class,
+                            year,
+                            designvars,
+                            cost,
+                        ]
                     )
                 betas = measure.measures["Reliability"].SectionReliability
                 beta = []
