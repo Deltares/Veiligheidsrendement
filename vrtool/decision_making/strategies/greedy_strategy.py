@@ -350,7 +350,7 @@ class GreedyStrategy(StrategyBase):
                     logging.info(
                         self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
                     )
-                    raise ValueError("warning, conflicting IDs found for measures")
+                    raise ValueError("warning, conflicting IDs found for measures, ID_relevant: '{}' ID2: '{}'".format(ID_relevant, ID2))
             else:
                 ID2 = ""
                 ID.append(ID1)
