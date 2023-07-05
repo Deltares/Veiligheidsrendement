@@ -8,8 +8,8 @@ from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
-from vrtool.failure_mechanisms.revetment.relation_revetment_protocol import (
-    RelationRevetmentProtocol,
+from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
+    RelationStoneRevetment,
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.failure_mechanisms.revetment.slope_part import (
@@ -108,7 +108,7 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
     @staticmethod
     def evaluate_block_relations(
         evaluation_year: int,
-        slope_part_relations: list[RelationRevetmentProtocol],
+        slope_part_relations: list[RelationStoneRevetment],
         top_layer_thickness: float,
     ) -> float:
         _top_layer_thickness, _beta_failure = zip(
