@@ -94,7 +94,8 @@ class RevetmentMeasure(MeasureProtocol):
         mechanism_names = (
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
-        _revetment_mechanism_name = "revetment"
+        # TODO: mechanism_names should have been normalized.
+        _revetment_mechanism_name = "Revetment"
         if _revetment_mechanism_name not in mechanism_names:
             # TODO: Technically there's only one mechanism possible for this.
             return section_reliability
