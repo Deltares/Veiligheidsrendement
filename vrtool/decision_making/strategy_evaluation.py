@@ -972,6 +972,6 @@ def old_overflow_bundling(
     else:
         BC_out = 0
         measure_index = []
-        logging.warn("No more measures for weakest overflow section")
+        logging.warning("No more measures for weakest overflow section")
 
     return measure_index, BC_out
