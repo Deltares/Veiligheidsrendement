@@ -25,7 +25,7 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         self._initial_year = initial_year
 
     def calculate(self, year: int) -> tuple[float, float]:
-        _given_years = self._revetment.find_given_years()
+        _given_years = self._revetment.get_available_years()
         _beta_per_year = []
         for given_year in _given_years:
             _stone_revetment_beta = []
@@ -60,6 +60,24 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
     def _calculate_combined_beta(
         self, stone_revetment_beta: list[float], grass_revetment_beta: float
     ) -> float:
+        return self.calculate_combined_beta(stone_revetment_beta, grass_revetment_beta)
+
+    def _evaluate_block(self, slope_part: StoneSlopePart, given_year: int):
+        return self.evaluate_block_relations(
+            given_year, slope_part.slope_part_relations, slope_part.top_layer_thickness
+        )
+
+    def _evaluate_grass(self, given_year: int):
+        return self.evaluate_grass_relations(
+            given_year,
+            self._revetment.grass_relations,
+            self._revetment.current_transition_level,
+        )
+
+    @staticmethod
+    def calculate_combined_beta(
+        stone_revetment_beta: list[float], grass_revetment_beta: float
+    ) -> float:
         if np.all(np.isnan(stone_revetment_beta)):
             _prob_stone_revetment = 0.0
         else:
@@ -73,18 +91,6 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         _prob_combined = _prob_stone_revetment + _prob_grass_revetment
         _beta_combined = -ndtri(_prob_combined)
         return _beta_combined
-
-    def _evaluate_block(self, slope_part: StoneSlopePart, given_year: int):
-        return self.evaluate_block_relations(
-            given_year, slope_part.slope_part_relations, slope_part.top_layer_thickness
-        )
-
-    def _evaluate_grass(self, given_year: int):
-        return self.evaluate_grass_relations(
-            given_year,
-            self._revetment.grass_relations,
-            self._revetment.current_transition_level,
-        )
 
     @staticmethod
     def evaluate_grass_relations(

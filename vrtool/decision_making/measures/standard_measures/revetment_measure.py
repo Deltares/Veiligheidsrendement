@@ -58,17 +58,15 @@ def bisection(f, a, b, tol):
 
 
 @dataclass
-class RevetmentReliability:
-    measure_data: list[RevetmentMeasureData]
-    reliability: float
+class RevetmentMeasureBetaCost:
+    year: int
+    beta_target: float
+    beta_combined: float
+    transition_level: float
+    cost: float
 
 
 class RevetmentMeasure(MeasureProtocol):
-    _revetment_reliability_collection: list[RevetmentReliability]
-
-    def __init__(self) -> None:
-        self._revetment_reliability_collection = []
-
     @property
     def transition_level_increase_step(self) -> float:
         return self.parameters["transition_level_increase_step"]
@@ -81,118 +79,12 @@ class RevetmentMeasure(MeasureProtocol):
     def n_steps_block(self) -> int:
         return self.parameters["n_steps_block"]
 
-    def _get_configured_section_reliability(
-        self,
-        dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-    ) -> SectionReliability:
-        # TODO: Same as in stability_screen_measure.
-        # Technically there we are already retrieving these mechanism_reliability_collections.
-        # We should either generate them once or leave the creation responsibility to each measure.
-
-        section_reliability = SectionReliability()
-        mechanism_names = (
-            dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
-        )
-        # TODO: mechanism_names should have been normalized.
-        _revetment_mechanism_name = "Revetment"
-        if _revetment_mechanism_name not in mechanism_names:
-            # TODO: Technically there's only one mechanism possible for this.
-            return section_reliability
-
-        calc_type = dike_section.mechanism_data[_revetment_mechanism_name][0][1]
-        mechanism_reliability_collection = (
-            self._get_configured_mechanism_reliability_collection(
-                _revetment_mechanism_name,
-                calc_type,
-                dike_section,
-                traject_info,
-            )
-        )
-        section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
-            mechanism_reliability_collection
-        )
-
-        return section_reliability
-
-    def _get_configured_mechanism_reliability_collection(
-        self,
-        mechanism_name: str,
-        calc_type: str,
-        dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-    ) -> MechanismReliabilityCollection:
-        # TODO: Almost duplicated code from other measures.
-        mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism_name, calc_type, self.config.T, self.config.t_0, 0
-        )
-        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
-                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism_name
-                )
-                .Reliability[year_to_calculate]
-                .Input
-            )
-
-            # This call calculates the Reliability of the dike section.
-            mechanism_reliability_collection.generate_LCR_profile(
-                dike_section.section_reliability.load,
-                traject_info=traject_info,
-            )
-
-            mechanism_reliability = mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ]
-            self._configure_revetment(
-                mechanism_reliability, year_to_calculate, dike_section, traject_info
-            )
-
-        return mechanism_reliability_collection
-
-    def _configure_revetment(
-        self,
-        mechanism_reliability: MechanismReliability,
-        year_to_calculate: str,
-        dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-    ) -> None:
-        _revetment = mechanism_reliability.Input.input["revetment_input"]
-        _calculated_beta = self._get_beta_target_vector(traject_info.Pmax)
-        _revetment_measures_collection = self._get_revetment_measure_data_collection(
-            dike_section,
-            _revetment,
-            _calculated_beta,
-            self.transition_level_increase_step,
-            int(year_to_calculate),
-        )
-        # TODO this is meant to be set through the calculator.
-        _stone_beta_list, _grass_beta_list = zip(
-            *(
-                (rm.beta_block_revetment, rm.beta_grass_revetment)
-                for rm in _revetment_measures_collection
-            )
-        )
-        _combined_beta = RevetmentCalculator.calculate_combined_beta(
-            _stone_beta_list, _grass_beta_list[0]
-        )
-        # This should be simplified so we call directly the revetment calculation.
-        _revetment_reliability = RevetmentReliability(
-            measure_data=_revetment_measures_collection, reliability=_combined_beta
-        )
-
-        self._revetment_reliability_collection.append(_revetment_reliability)
-
-        # TODO: Is this already triggered twice? Is calculate_reliability using valid data?
-        # mechanism_reliability.calculate_reliability()
-
     def _correct_revetment_measure_data(
         self,
         revetment_measures: list[RevetmentMeasureData],
         current_transition_level: float,
     ) -> RevetmentMeasureData:
+
         _stone_revetments = [
             rm
             for rm in revetment_measures
@@ -210,7 +102,7 @@ class RevetmentMeasure(MeasureProtocol):
                 and _revetment_measure.begin_part < current_transition_level
             ):
                 _revetment_measure.top_layer_thickness = (
-                    _stone_revetments.top_layer_thickness
+                    _last_stone_revetment.top_layer_thickness
                 )
                 _revetment_measure.top_layer_type = 2026.0
                 _revetment_measure.beta_block_revetment = (
@@ -221,23 +113,29 @@ class RevetmentMeasure(MeasureProtocol):
     def _get_design_stone(
         self,
         calculated_beta: float,
-        top_layer_thickness: list[float],
-        revetment_beta: list[float],
-        top_layer_type: float,
-        slope_top_thickness: float,
+        slope_part: SlopePartProtocol,
+        stone_revetment: RelationStoneRevetment,
+        evaluation_year: int,
     ):
         _recalculated_beta = float("nan")
         _is_reinforced = False
-        _top_layer_thickness = slope_top_thickness
 
-        if not StoneSlopePart.is_stone_slope_part(top_layer_type):
-            return _top_layer_thickness, _recalculated_beta, _is_reinforced
+        if not StoneSlopePart.is_stone_slope_part(slope_part.top_layer_type):
+            return slope_part.top_layer_thickness, _recalculated_beta, _is_reinforced
 
+        _top_layer_thickness_collection, _revetment_betas_collection = zip(
+            *(
+                (spr.top_layer_thickness, spr.beta)
+                for spr in slope_part.slope_part_relations
+                if spr.year == stone_revetment.year
+            )
+        )
         stone_interpolation = interp1d(
-            top_layer_thickness,
-            np.array(revetment_beta) - calculated_beta,
+            _top_layer_thickness_collection,
+            np.array(_revetment_betas_collection) - calculated_beta,
             fill_value=("extrapolate"),
         )
+
         try:
             _top_layer_thickness = bisection(stone_interpolation, 0.0, 1.0, 0.01)
             _top_layer_thickness = math.ceil(_top_layer_thickness / 0.05) * 0.05
@@ -246,11 +144,11 @@ class RevetmentMeasure(MeasureProtocol):
         except:
             _top_layer_thickness = float("nan")
 
-        if _top_layer_thickness <= slope_top_thickness:
+        if _top_layer_thickness <= slope_part.top_layer_thickness:
             logging.warn("Design D is <= than the current D")
-            _top_layer_thickness = slope_top_thickness
-            _recalculated_beta = self._evaluate_stone_revetment_data(
-                # slope_part, evaluation_year # TODO, not clear how to set these values
+            _top_layer_thickness = slope_part.top_layer_thickness
+            _recalculated_beta = float(
+                self._evaluate_stone_revetment_data(slope_part, evaluation_year)
             )
 
         return _top_layer_thickness, _recalculated_beta, _is_reinforced
@@ -260,17 +158,14 @@ class RevetmentMeasure(MeasureProtocol):
         slope_part: SlopePartProtocol,
         stone_revetment: RelationStoneRevetment,
         target_beta: float,
+        evaluation_year: int,
     ) -> RevetmentMeasureData:
         (
             _new_top_layer_thickness,
             _new_beta_block_revetment,
             _is_reinforced,
         ) = self._get_design_stone(
-            target_beta,
-            stone_revetment.top_layer_thickness,
-            stone_revetment.beta,
-            slope_part.top_layer_type,
-            slope_part.top_layer_thickness,
+            target_beta, slope_part, stone_revetment, evaluation_year
         )
         return RevetmentMeasureData(
             begin_part=slope_part.begin_part,
@@ -298,11 +193,7 @@ class RevetmentMeasure(MeasureProtocol):
             _new_beta_block_revetment,
             _is_reinforced,
         ) = self._get_design_stone(
-            target_beta,
-            stone_revetment.top_layer_thickness,
-            stone_revetment.beta,
-            slope_part.top_layer_type,
-            slope_part.top_layer_thickness,
+            target_beta, slope_part, stone_revetment, evaluation_year
         )
         _stone_rmd = RevetmentMeasureData(
             begin_part=slope_part.begin_part,
@@ -356,7 +247,7 @@ class RevetmentMeasure(MeasureProtocol):
         self,
         dike_section: DikeSection,
         revetment_data: RevetmentDataClass,
-        beta,
+        target_beta: float,
         transition_level: float,
         evaluation_year: int,
     ) -> list[RevetmentMeasureData]:
@@ -373,8 +264,7 @@ class RevetmentMeasure(MeasureProtocol):
             if _slope_part.end_part <= transition_level:
                 _evaluated_measures.append(
                     self._get_stone_revetment_measure_data(
-                        _slope_part,
-                        _slope_relation,
+                        _slope_part, _slope_relation, target_beta, evaluation_year
                     )
                 )
             elif (
@@ -390,6 +280,7 @@ class RevetmentMeasure(MeasureProtocol):
                             _slope_relation,
                             transition_level,
                             evaluation_year,
+                            target_beta,
                         )
                     )
                 )
@@ -406,9 +297,11 @@ class RevetmentMeasure(MeasureProtocol):
                     )
                 )
 
-        if transition_level >= max(lambda x: x.end_part, revetment_data.slope_parts):
+        if transition_level >= max(
+            map(lambda x: x.end_part, revetment_data.slope_parts)
+        ):
             if transition_level >= dike_section.crest_height:
-                raise ValueError("Overgang >= kruinhoogte")
+                raise ValueError("Overgang >= crest height")
             _extra_measure = RevetmentMeasureData(
                 begin_part=transition_level,
                 end_part=dike_section.crest_height,
@@ -429,8 +322,41 @@ class RevetmentMeasure(MeasureProtocol):
 
         return _evaluated_measures
 
-    def _get_beta_target_vector(self, p_max: float) -> float:
-        return pf_to_beta(p_max / self.max_pf_factor_block)
+    def _get_min_beta_target(self, dike_section: DikeSection) -> float:
+        return float(
+            min(
+                map(
+                    lambda x: x.Beta,
+                    dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                        "Revetment"
+                    ).Reliability.values(),
+                )
+            )
+        )
+
+    def _get_beta_target_vector(self, min_beta: float, p_max: float):
+        _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
+        return list(np.arange(min_beta, _max_beta, self.n_steps_block))
+
+    def _get_transition_level_vector(
+        self, current_transition_level: float, crest_height: float
+    ) -> list[float]:
+        return list(
+            np.arange(
+                current_transition_level,
+                crest_height,
+                self.transition_level_increase_step,
+            )
+        )
+
+    def _get_revetment(self, dike_section: DikeSection) -> RevetmentDataClass:
+        _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+            "Revetment"
+        )
+        _first_year = list(_reliability_collection.Reliability.keys())[0]
+        return _reliability_collection.Reliability[_first_year].Input.input[
+            "revetment_input"
+        ]
 
     def evaluate_measure(
         self,
@@ -438,26 +364,66 @@ class RevetmentMeasure(MeasureProtocol):
         traject_info: DikeTrajectInfo,
         preserve_slope: bool,
     ):
-        # We are missing the following properties:
-        # Then we evaluate
+        _revetment = self._get_revetment(dike_section)
+
         self.measures = {}
         self.measures["Revetment"] = "yes"
 
-        # Set reliability and cost
-        _reliability = self._get_configured_section_reliability(
-            dike_section, traject_info
+        # 1. Get beta targets.
+        # TODO. Currently only one beta target available due to the step = 4.
+        _beta_targets = self._get_beta_target_vector(
+            self._get_min_beta_target(dike_section), traject_info.Pmax
         )
-        _reliability.calculate_section_reliability()
-        self.measures["Reliability"]: list[float] = [
-            _src.reliability for _src in self._revetment_reliability_collection
-        ]
-        # Costs do not need to be per year.
-        self.measures["Cost"]: float = sum(
-            map(
-                lambda x: x.get_total_cost(dike_section.Length),
-                self._revetment_reliability_collection[-1],
-            )
+
+        # 2. Get transition levels.
+        _transition_levels = self._get_transition_level_vector(
+            _revetment.current_transition_level, dike_section.crest_height
         )
+
+        # 3. Iterate over beta_targets - transition level - year.
+        _intermediate_measures = []
+        for _beta_target in _beta_targets:
+            for _transition_level in _transition_levels:
+                for _year in _revetment.get_available_years():
+                    # 3.1. Get measure Beta and cost per year.
+                    _revetment_measures_collection = (
+                        self._get_revetment_measure_data_collection(
+                            dike_section,
+                            _revetment,
+                            _beta_target,
+                            _transition_level,
+                            _year,
+                        )
+                    )
+                    _stone_beta_list, _grass_beta_list = zip(
+                        *(
+                            (rm.beta_block_revetment, rm.beta_grass_revetment)
+                            for rm in _revetment_measures_collection
+                        )
+                    )
+                    _combined_beta = RevetmentCalculator.calculate_combined_beta(
+                        _stone_beta_list, _grass_beta_list[0]
+                    )
+                    _cost = sum(
+                        map(
+                            lambda x: x.get_total_cost(dike_section.Length),
+                            _revetment_measures_collection,
+                        )
+                    )
+                    _intermediate_measures.append(
+                        RevetmentMeasureBetaCost(
+                            year=_year,
+                            beta_target=_beta_target,
+                            beta_combined=_combined_beta,
+                            transition_level=_transition_level,
+                            cost=_cost,
+                        )
+                    )
+
+        # 4. Interpolate with years to calculate.
+
+        # 5. Return Beta and Cost matrices
+        return
 
     def _evaluate_grass_revetment_data(
         self, evaluation_year: int, revetment: RevetmentDataClass
