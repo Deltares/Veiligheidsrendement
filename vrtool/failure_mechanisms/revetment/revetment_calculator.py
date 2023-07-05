@@ -33,17 +33,25 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
             for _slope_part in self._revetment.slope_parts:
                 if isinstance(_slope_part, StoneSlopePart):
                     _stone_revetment_beta.append(
-                        self._evaluate_block(_slope_part, given_year)
+                        self.evaluate_block_relations(
+                            given_year,
+                            _slope_part.slope_part_relations,
+                            _slope_part.top_layer_thickness,
+                        )
                     )
                 elif isinstance(_slope_part, GrassSlopePart) and np.isnan(
                     _grass_revetment_beta
                 ):
                     _stone_revetment_beta.append(np.nan)
-                    _grass_revetment_beta = self._evaluate_grass(given_year)
+                    _grass_revetment_beta = self.evaluate_grass_relations(
+                        given_year,
+                        self._revetment.grass_relations,
+                        self._revetment.current_transition_level,
+                    )
                 else:
                     _stone_revetment_beta.append(np.nan)
             _beta_per_year.append(
-                self._calculate_combined_beta(
+                self.calculate_combined_beta(
                     _stone_revetment_beta, _grass_revetment_beta
                 )
             )
@@ -56,23 +64,6 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         )
         _calculated_beta = _interpolate_beta(self._initial_year + year)
         return _calculated_beta, beta_to_pf(_calculated_beta)
-
-    def _calculate_combined_beta(
-        self, stone_revetment_beta: list[float], grass_revetment_beta: float
-    ) -> float:
-        return self.calculate_combined_beta(stone_revetment_beta, grass_revetment_beta)
-
-    def _evaluate_block(self, slope_part: StoneSlopePart, given_year: int):
-        return self.evaluate_block_relations(
-            given_year, slope_part.slope_part_relations, slope_part.top_layer_thickness
-        )
-
-    def _evaluate_grass(self, given_year: int):
-        return self.evaluate_grass_relations(
-            given_year,
-            self._revetment.grass_relations,
-            self._revetment.current_transition_level,
-        )
 
     @staticmethod
     def calculate_combined_beta(
