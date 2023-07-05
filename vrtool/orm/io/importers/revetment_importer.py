@@ -1,4 +1,6 @@
 import logging
+
+import logging
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
@@ -38,6 +40,7 @@ class RevetmentImporter(OrmImporterProtocol):
                         part.get_id(), import_error
                     )
                 )
+
         return _imported_parts
 
     def _is_revetment_data_valid(self, revetment_input: RevetmentDataClass) -> bool:

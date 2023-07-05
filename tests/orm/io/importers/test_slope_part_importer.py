@@ -4,14 +4,14 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
+from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
+    RelationStoneRevetment,
+)
 from vrtool.failure_mechanisms.revetment.slope_part import (
     AsphaltSlopePart,
     GrassSlopePart,
     SlopePartProtocol,
     StoneSlopePart,
-)
-from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
-    RelationStoneRevetment,
 )
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.slope_part_importer import SlopePartImporter

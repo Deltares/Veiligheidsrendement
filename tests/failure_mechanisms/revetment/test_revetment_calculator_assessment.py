@@ -118,7 +118,7 @@ class TestRevetmentCalculatorAssessment:
     ):
         revetment = self._get_revetment_input(given_years, section_id)
 
-        calc = RevetmentCalculator(revetment)
+        calc = RevetmentCalculator(revetment, 0)
         [beta, pf] = calc.calculate(assessment_year)
 
         assert beta == pytest.approx(ref_values[0], rel=1e-8)

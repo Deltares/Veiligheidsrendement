@@ -1,10 +1,11 @@
 from dataclasses import dataclass
+
 import numpy as np
 from scipy.interpolate import interp1d
+
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import (
     GrassSlopePart,
 )
-
 from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
     StoneSlopePart,
 )
