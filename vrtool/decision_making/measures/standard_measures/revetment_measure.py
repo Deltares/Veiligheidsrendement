@@ -2,6 +2,7 @@ import copy
 import logging
 import math
 from dataclasses import dataclass
+from typing import Union
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -64,6 +65,9 @@ class RevetmentMeasureBetaCost:
     beta_combined: float
     transition_level: float
     cost: float
+    revetment_measures: Union[
+        list[RevetmentMeasureData], list[list[RevetmentMeasureData]]
+    ]
 
 
 class RevetmentMeasure(MeasureProtocol):
@@ -399,66 +403,70 @@ class RevetmentMeasure(MeasureProtocol):
         config_years: list[int],
     ) -> list[RevetmentMeasureBetaCost]:
         _intermediate_measures = []
+        revetment_years = revetment.get_available_years()
         for _beta_target in beta_targets:
             for _transition_level in transition_levels:
-                _measures_per_year = self._get_measures_per_year(
-                    dike_section, revetment, _beta_target, _transition_level
-                )
+                _measures_per_year = []
+                for _measure_year in revetment_years:
+                    _measures_per_year.append(
+                        self._get_measure_per_year(
+                            dike_section,
+                            revetment,
+                            _beta_target,
+                            _transition_level,
+                            _measure_year,
+                        )
+                    )
                 # TODO: Should we include measures per year? Or just interpolate base on the vrtool.config years?
                 _intermediate_measures.extend(
                     self._get_interpolated_measures(
                         _measures_per_year,
                         config_years,
-                        revetment.get_available_years(),
+                        revetment_years,
                     )
                 )
 
         return _intermediate_measures
 
-    def _get_measures_per_year(
+    def _get_measure_per_year(
         self,
         dike_section: DikeSection,
         revetment: RevetmentDataClass,
         beta_target: float,
         transition_level: float,
+        measure_year: int,
     ):
-        _measures = []
-        for _year in revetment.get_available_years():
-            # 3.1. Get measure Beta and cost per year.
-            _revetment_measures_collection = (
-                self._get_revetment_measure_data_collection(
-                    dike_section,
-                    revetment,
-                    beta_target,
-                    transition_level,
-                    _year,
-                )
+        # 3.1. Get measure Beta and cost per year.
+        _revetment_measures_collection = self._get_revetment_measure_data_collection(
+            dike_section,
+            revetment,
+            beta_target,
+            transition_level,
+            measure_year,
+        )
+        _stone_beta_list, _grass_beta_list = zip(
+            *(
+                (rm.beta_block_revetment, rm.beta_grass_revetment)
+                for rm in _revetment_measures_collection
             )
-            _stone_beta_list, _grass_beta_list = zip(
-                *(
-                    (rm.beta_block_revetment, rm.beta_grass_revetment)
-                    for rm in _revetment_measures_collection
-                )
+        )
+        _combined_beta = RevetmentCalculator.calculate_combined_beta(
+            _stone_beta_list, _grass_beta_list[0]
+        )
+        _cost = sum(
+            map(
+                lambda x: x.get_total_cost(dike_section.Length),
+                _revetment_measures_collection,
             )
-            _combined_beta = RevetmentCalculator.calculate_combined_beta(
-                _stone_beta_list, _grass_beta_list[0]
-            )
-            _cost = sum(
-                map(
-                    lambda x: x.get_total_cost(dike_section.Length),
-                    _revetment_measures_collection,
-                )
-            )
-            _measures.append(
-                RevetmentMeasureBetaCost(
-                    year=_year,
-                    beta_target=beta_target,
-                    beta_combined=_combined_beta,
-                    transition_level=transition_level,
-                    cost=_cost,
-                )
-            )
-        return _measures
+        )
+        return RevetmentMeasureBetaCost(
+            year=measure_year,
+            beta_target=beta_target,
+            beta_combined=_combined_beta,
+            transition_level=transition_level,
+            cost=_cost,
+            revetment_measures=_revetment_measures_collection,
+        )
 
     def _get_interpolated_measures(
         self,
@@ -488,6 +496,9 @@ class RevetmentMeasure(MeasureProtocol):
                 transition_level=_sample.transition_level,
                 beta_combined=_interpolated_beta,
                 cost=_interpolated_year,
+                revetment_measures=[
+                    rm.revetment_measures for rm in available_measures
+                ],  # TODO: Not very happy about this type.
             )
             _interpolated_measures.append(_interpolated_measure)
         return _interpolated_measures
