@@ -1,3 +1,4 @@
+import copy
 import logging
 import math
 
@@ -28,6 +29,11 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 )
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRASS_TYPE
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+from vrtool.flood_defence_system.mechanism_reliability_collection import (
+    MechanismReliabilityCollection,
+)
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
@@ -136,7 +142,6 @@ class RevetmentMeasure(MeasureProtocol):
             _top_layer_thickness = float("nan")
 
         if _top_layer_thickness <= slope_part.top_layer_thickness:
-            logging.warning("Design D is <= than the current D")
             _top_layer_thickness = slope_part.top_layer_thickness
             _recalculated_beta = float(
                 self._evaluate_stone_revetment_data(slope_part, evaluation_year)
@@ -379,10 +384,11 @@ class RevetmentMeasure(MeasureProtocol):
             dike_section, _revetment, _beta_targets, _transition_levels, self.config.T
         )
 
-        # 4. Interpolate with years to calculate.
-
         # 5. Return Beta and Cost matrices
         self.measures = _results_collection
+        # self._get_configured_section_reliability(
+        #     dike_section, traject_info, _results_collection
+        # )
 
     def _get_intermediate_measures(
         self,
@@ -408,8 +414,7 @@ class RevetmentMeasure(MeasureProtocol):
                             _measure_year,
                         )
                     )
-
-                # TODO: Should we include measures per year? Or just interpolate base on the vrtool.config years?
+                # 4. Interpolate with years to calculate.
                 _intermediate_measures.extend(
                     self._get_interpolated_measures(
                         _measures_per_year,
@@ -519,3 +524,66 @@ class RevetmentMeasure(MeasureProtocol):
             slope_part.slope_part_relations,
             slope_part.top_layer_thickness,
         )
+
+    def _get_configured_section_reliability(
+        self,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+        results_collection: RevetmentMeasureResultCollection,
+    ) -> SectionReliability:
+        section_reliability = SectionReliability()
+
+        mechanism_names = (
+            dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
+        )
+        for mechanism_name in mechanism_names:
+            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
+            mechanism_reliability_collection = (
+                self._get_configured_mechanism_reliability_collection(
+                    mechanism_name,
+                    calc_type,
+                    dike_section,
+                    traject_info,
+                    results_collection,
+                )
+            )
+            section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
+                mechanism_reliability_collection
+            )
+
+        return section_reliability
+
+    def _get_configured_mechanism_reliability_collection(
+        self,
+        mechanism_name: str,
+        calc_type: str,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+        results_collection: RevetmentMeasureResultCollection,
+    ) -> MechanismReliabilityCollection:
+        mechanism_reliability_collection = MechanismReliabilityCollection(
+            mechanism_name, calc_type, self.config.T, self.config.t_0, 0
+        )
+
+        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
+            mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ].Input = copy.deepcopy(
+                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                    mechanism_name
+                )
+                .Reliability[year_to_calculate]
+                .Input
+            )
+
+            mechanism_reliability = mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ]
+            # mechanism_reliability["revetment_input"] =
+
+        mechanism_reliability_collection.generate_LCR_profile(
+            dike_section.section_reliability.load,
+            traject_info=traject_info,
+        )
+
+        return mechanism_reliability_collection

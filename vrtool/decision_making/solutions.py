@@ -234,7 +234,10 @@ class Solutions:
             np.array([measure_df.columns, [""] * len(measure_df.columns)])
         )
         measure_df.columns = cols
-        self.MeasureData = measure_df.join(reliability, how="inner")
+        # TODO (VRTOOL-187).
+        # Verify if this is correct instead of measure_df.join(reliability, how="inner").
+        # With the former we would not get all possible results based on beta target and transition levels!
+        self.MeasureData = measure_df.join(reliability)
         if (
             filtering
         ):  # here we could add some filtering on the measures, but it is not used right now.
