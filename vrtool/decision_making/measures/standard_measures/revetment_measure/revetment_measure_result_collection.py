@@ -56,8 +56,8 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
                         _input_vector.insert(5, float("nan"))
                         # dberm column
                         _input_vector.insert(5, float("nan"))
-                        _input_vector.insert(5, _revetment_result.beta_target)
-                        _input_vector.insert(5, _revetment_result.transition_level)
+                        _input_vector.insert(7, _revetment_result.beta_target)
+                        _input_vector.insert(8, _revetment_result.transition_level)
                     _output_vector.append(_input_vector)
         return _output_vector
 
