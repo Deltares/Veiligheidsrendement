@@ -17,16 +17,25 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
 
     revetment_measure_results: list[RevetmentMeasureResult]
 
-    def get_measure_input_values(self) -> list[list[Any]]:
-        # We want to output the BETA TARGET and TRANSITION LEVEL
+    def get_measure_input_values(self, split_params: bool) -> list[list[Any]]:
+        # We want to output the BETA TARGET, TRANSITION LEVEL and TOTAL COST
         _output_vector = []
         for _revetment_result in self.revetment_measure_results:
-            _output_vector.append([_revetment_result.beta_target, _revetment_result.transition_level])
+            _input_vector = [
+                self.measure_id,
+                self.reinforcement_type,
+                self.combinable_type,
+                _revetment_result.year,
+                _revetment_result.beta_target,
+                _revetment_result.transition_level,
+                _revetment_result.cost,
+            ]
+            _output_vector.append(_input_vector)
         return _output_vector
 
-    def get_reliability_values(self) -> list[Any]:
-        # We want to output the BETA COMBINED and TOTAL COST
+    def get_reliability_values(self, split_params: bool) -> list[Any]:
+        # We want to output ONLY the BETA COMBINED
         _output_vector = []
         for _revetment_result in self.revetment_measure_results:
-            _output_vector.append([_revetment_result.beta_combined, _revetment_result.cost])
+            _output_vector.append([_revetment_result.beta_combined])
         return _output_vector

@@ -370,10 +370,10 @@ class RevetmentMeasure(MeasureProtocol):
 
         # 3. Iterate over beta_targets - transition level - year.
         _results_collection = RevetmentMeasureResultCollection()
-        _results_collection.measure_id = None
-        _results_collection.measure_name = None
-        _results_collection.reinforcement_type = "Revetment"
-        _results_collection.combinable_type = None
+        _results_collection.measure_id = self.parameters["ID"]
+        _results_collection.measure_name = self.parameters["Name"]
+        _results_collection.reinforcement_type = self.parameters["Type"]
+        _results_collection.combinable_type = self.parameters["Class"]
         _results_collection.revetment_measure_results = self._get_intermediate_measures(
             dike_section, _revetment, _beta_targets, _transition_levels, self.config.T
         )

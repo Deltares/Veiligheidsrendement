@@ -116,6 +116,9 @@ class Solutions:
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
                     for ij in self.mechanisms + ["Section"]:
+                        if ij.lower().strip() == "revetment":
+                            # Revetment uses the new approach with `MeasureResultCollectionProtocol`
+                            continue
                         if ij not in betas.index:
                             raise ValueError(
                                 "Measure '{}' does not contain data for mechanism '{}'".format(
@@ -174,13 +177,22 @@ class Solutions:
                 betas = measure.measures["Reliability"].SectionReliability
                 beta = []
                 for ij in self.mechanisms + ["Section"]:
+                    if ij.lower().strip() == "revetment":
+                        # Revetment uses the new approach with `MeasureResultCollectionProtocol`
+                        continue
+                    if ij not in betas.index:
+                        raise ValueError(
+                            "Measure '{}' does not contain data for mechanism '{}'".format(
+                                measure.parameters["Name"], ij
+                            )
+                        )
                     for ijk in betas.loc[ij].values:
                         beta.append(ijk)
                 inputs_r.append(beta)
 
             elif isinstance(measure.measures, MeasureResultCollectionProtocol):
-                inputs_m.extend(measure.measures.get_measure_input_values())
-                inputs_r.extend(measure.measures.get_reliability_values())
+                inputs_m.extend(measure.measures.get_measure_input_values(splitparams))
+                inputs_r.extend(measure.measures.get_reliability_values(splitparams))
 
         # reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
         reliability = pd.concat((reliability, pd.DataFrame(inputs_r, columns=cols_r)))
