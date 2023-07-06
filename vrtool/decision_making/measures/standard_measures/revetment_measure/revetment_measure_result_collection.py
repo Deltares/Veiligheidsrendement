@@ -59,8 +59,8 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
             self.combinable_type,
             year,
             "yes",
-            float("nan"),  # dcrest column
-            float("nan"),  # dberm column
+            -999,  # dcrest column
+            -999,  # dberm column
             beta_target,
             transition_level,
             cost,

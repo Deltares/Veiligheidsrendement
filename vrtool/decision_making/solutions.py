@@ -133,7 +133,7 @@ class Solutions:
                             # TODO (VRTOOL-187).
                             # This could become obsolete once SectionReliability contains the data related to revetment.
                             # Consider removing if that's the case.
-                            reliability_in.extend([float("nan")] * len(self.config.T))
+                            reliability_in.extend([-999] * len(self.config.T))
                             logging.warning(
                                 "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
                                     measure.parameters["Name"], ij
