@@ -123,6 +123,11 @@ class TargetReliabilityStrategy(StrategyBase):
             _possible_measures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
             for mechanism in traject.mechanism_names:
+                if mechanism.lower().strip() == "revetment":
+                    logging.warning(
+                        "Target strategy not available for '{}'.".format(mechanism)
+                    )
+                    continue
                 _possible_measures = _possible_measures.loc[
                     self.options[i.name][(mechanism, _target_year)] > _beta_t[mechanism]
                 ]

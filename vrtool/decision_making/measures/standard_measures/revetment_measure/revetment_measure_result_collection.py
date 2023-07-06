@@ -22,26 +22,16 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
         def get_sorted(
             measures: list[RevetmentMeasureResult], lambda_expression
         ) -> dict:
-            _sorted_list = sorted(measures, lambda_expression)
-            return groupby(_sorted_list, lambda_expression)
-
-        def get_sorted_by_beta_target(measures: list[RevetmentMeasureResult]) -> dict:
-            _sorted_list = sorted(measures, key=lambda x: x.beta_target)
-            return groupby(_sorted_list, key=lambda x: x.beta_target)
-
-        def get_sorted_by_transition_level(
-            measures: list[RevetmentMeasureResult],
-        ) -> list:
-            _sorted_list = sorted(measures, key=lambda x: x.transition_level)
-            return groupby(_sorted_list, key=lambda x: x.transition_level)
+            _sorted_list = sorted(measures, key=lambda_expression)
+            return groupby(_sorted_list, key=lambda_expression)
 
         _results_dict = {}
-        for _beta_key, _beta_group in get_sorted_by_beta_target(
-            self.revetment_measure_results
+        for _beta_key, _beta_group in get_sorted(
+            self.revetment_measure_results, lambda x: x.beta_target
         ):
             _results_dict[_beta_key] = {}
-            for _transition_key, _transition_group in get_sorted_by_transition_level(
-                _beta_group
+            for _transition_key, _transition_group in get_sorted(
+                _beta_group, lambda x: x.transition_level
             ):
                 _results_dict[_beta_key][_transition_key] = list(_transition_group)
         return _results_dict
@@ -71,8 +61,8 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
                     _output_vector.append(_input_vector)
         return _output_vector
 
-    def get_reliability_values(self, split_params: bool) -> list[Any]:
-        # We want to output ONLY the BETA COMBINED in correct order.
+    def get_reliability_values(self) -> list[Any]:
+        # We want to output ONLY the BETA COMBINED (in correct order) for all the available years (from `VrtoolConfig.T`).
         _output_vector = []
         _results_dict = self._get_results_as_dict()
         for _group_by_beta_target in _results_dict.values():

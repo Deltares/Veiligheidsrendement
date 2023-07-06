@@ -209,9 +209,23 @@ class Solutions:
 
             elif isinstance(measure.measures, MeasureResultCollectionProtocol):
                 inputs_m.extend(measure.measures.get_measure_input_values(splitparams))
-                inputs_r.extend(measure.measures.get_reliability_values(splitparams))
+                _beta_values = measure.measures.get_reliability_values()
+                _idx_mechanism = self.mechanisms.index(
+                    measure.measures.reinforcement_type
+                )
 
-        # reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
+                def get_vector_with_nans(beta_vector: list) -> list:
+                    _pre_vector = [float("nan")] * _idx_mechanism * len(years)
+                    # From the mechanism position, until the end (length != last index) and include one extra for ["Section"]
+                    _post_vector = (
+                        [float("nan")]
+                        * (len(self.mechanisms) - (_idx_mechanism + 1) + 1)
+                        * len(years)
+                    )
+                    return _pre_vector + beta_vector + _post_vector
+
+                inputs_r.extend(list(map(get_vector_with_nans, _beta_values)))
+
         reliability = pd.concat((reliability, pd.DataFrame(inputs_r, columns=cols_r)))
         measure_df = pd.concat((measure_df, pd.DataFrame(inputs_m, columns=cols_m)))
         cols = pd.MultiIndex.from_arrays(

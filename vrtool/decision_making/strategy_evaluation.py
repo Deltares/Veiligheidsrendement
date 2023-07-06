@@ -29,6 +29,8 @@ def measure_combinations(
                     row1["yes/no"].values[0],
                     row2["dcrest"].values[0],
                     row2["dberm"].values[0],
+                    row2["beta_target"].values[0],
+                    row2["transition_level"].values[0],
                 ]
             else:
                 params = [row1["params"].values[0], row2["params"].values[0]]
@@ -77,6 +79,8 @@ def measure_combinations(
                     params[0],
                     params[1],
                     params[2],
+                    params[3],
+                    params[4],
                     Cost,
                 ]
             else:
