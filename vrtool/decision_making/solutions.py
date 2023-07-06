@@ -179,7 +179,9 @@ class Solutions:
                 inputs_r.append(beta)
 
             elif isinstance(measure.measures, MeasureResultCollectionProtocol):
-                pass
+                inputs_m.extend(measure.measures.get_measure_input_values())
+                inputs_r.extend(measure.measures.get_reliability_values())
+
         # reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
         reliability = pd.concat((reliability, pd.DataFrame(inputs_r, columns=cols_r)))
         measure_df = pd.concat((measure_df, pd.DataFrame(inputs_m, columns=cols_m)))
