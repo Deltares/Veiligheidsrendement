@@ -210,8 +210,11 @@ class Solutions:
                 inputs_r.append(beta)
 
             elif isinstance(measure.measures, MeasureResultCollectionProtocol):
-                inputs_m.extend(measure.measures.get_measure_input_values(splitparams))
-                _beta_values = measure.measures.get_reliability_values()
+                (
+                    _input_values,
+                    _beta_values,
+                ) = measure.measures.get_measure_output_values(splitparams)
+                inputs_m.extend(_input_values)
                 _idx_mechanism = self.mechanisms.index(
                     measure.measures.reinforcement_type
                 )
@@ -237,7 +240,7 @@ class Solutions:
         # TODO (VRTOOL-187).
         # Verify if this is correct instead of measure_df.join(reliability, how="inner").
         # With the former we would not get all possible results based on beta target and transition levels!
-        self.MeasureData = measure_df.join(reliability)
+        self.MeasureData = measure_df.join(reliability, how="inner")
         if (
             filtering
         ):  # here we could add some filtering on the measures, but it is not used right now.

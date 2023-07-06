@@ -36,38 +36,55 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
                 _results_dict[_beta_key][_transition_key] = list(_transition_group)
         return _results_dict
 
-    def get_measure_input_values(self, split_params: bool) -> list[list[Any]]:
-        # We want to output the BETA TARGET, TRANSITION LEVEL and TOTAL COST
-        _output_vector = []
-        _results_dict = self._get_results_as_dict()
-        for _beta_group in _results_dict.values():
-            for _transition_group in _beta_group.values():
-                for _revetment_result in _transition_group:
-                    _input_vector = [
-                        self.measure_id,
-                        self.reinforcement_type,
-                        self.combinable_type,
-                        _revetment_result.year,
-                        "yes",
-                        _revetment_result.cost,
-                    ]
-                    if split_params:
-                        # dcrest column
-                        _input_vector.insert(5, float("nan"))
-                        # dberm column
-                        _input_vector.insert(5, float("nan"))
-                        _input_vector.insert(7, _revetment_result.beta_target)
-                        _input_vector.insert(8, _revetment_result.transition_level)
-                    _output_vector.append(_input_vector)
-        return _output_vector
+    def _get_input_vector(
+        self,
+        split_params: bool,
+        year: int,
+        cost: float,
+        beta_target: float,
+        transition_level: float,
+    ) -> list:
+        if not split_params:
+            return [
+                self.measure_id,
+                self.reinforcement_type,
+                self.combinable_type,
+                year,
+                "yes",
+                cost,
+            ]
+        return [
+            self.measure_id,
+            self.reinforcement_type,
+            self.combinable_type,
+            year,
+            "yes",
+            float("nan"),  # dcrest column
+            float("nan"),  # dberm column
+            beta_target,
+            transition_level,
+            cost,
+        ]
 
-    def get_reliability_values(self) -> list[Any]:
-        # We want to output ONLY the BETA COMBINED (in correct order) for all the available years (from `VrtoolConfig.T`).
-        _output_vector = []
+    def get_measure_output_values(self, split_params: bool) -> tuple[list, list]:
+        _input_measure = []
+        _output_betas = []
         _results_dict = self._get_results_as_dict()
-        for _group_by_beta_target in _results_dict.values():
-            for _group_by_transition_level in _group_by_beta_target.values():
-                _output_vector.append(
-                    [_gtl.beta_combined for _gtl in _group_by_transition_level]
+        for _beta_target, _beta_group in _results_dict.items():
+            for _transition_level, _transition_group in _beta_group.items():
+                _input_measure.append(
+                    self._get_input_vector(
+                        split_params,
+                        _transition_group[0].year,
+                        _transition_group[0].cost,
+                        _beta_target,
+                        _transition_level,
+                    )
                 )
-        return _output_vector
+                _output_betas.append(
+                    [
+                        _gtl.beta_combined
+                        for _gtl in sorted(_transition_group, key=lambda x: x.year)
+                    ]
+                )
+        return _input_measure, _output_betas
