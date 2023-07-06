@@ -120,8 +120,8 @@ class Solutions:
                         measure_in.append(-999)
                         measure_in.append(designvars[0])
                         measure_in.append(designvars[1])
-                        measure_in.append(float("nan"))
-                        measure_in.append(float("nan"))
+                        measure_in.append(-999)
+                        measure_in.append(-999)
                     else:
                         measure_in.append(designvars)
                     measure_in.append(cost)
@@ -175,8 +175,8 @@ class Solutions:
                             designvars,
                             -999,
                             -999,
-                            float("nan"),
-                            float("nan"),
+                            -999,
+                            -999,
                             cost,
                         ]
                     )
@@ -198,7 +198,7 @@ class Solutions:
                         # TODO (VRTOOL-187).
                         # This could become obsolete once SectionReliability contains the data related to revetment.
                         # Consider removing if that's the case.
-                        beta.extend([float("nan")] * len(self.config.T))
+                        beta.extend([-999] * len(self.config.T))
                         logging.warning(
                             "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
                                 measure.parameters["Name"], ij
@@ -220,10 +220,10 @@ class Solutions:
                 )
 
                 def get_vector_with_nans(beta_vector: list) -> list:
-                    _pre_vector = [float("nan")] * _idx_mechanism * len(years)
+                    _pre_vector = [-999] * _idx_mechanism * len(years)
                     # From the mechanism position, until the end (length != last index) and include one extra for ["Section"]
                     _post_vector = (
-                        [float("nan")]
+                        [-999]
                         * (len(self.mechanisms) - (_idx_mechanism + 1) + 1)
                         * len(years)
                     )
