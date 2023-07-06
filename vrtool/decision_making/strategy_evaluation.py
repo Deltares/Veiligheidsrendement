@@ -406,14 +406,16 @@ def solve_mip(mip_model):
 
 
 def evaluate_risk(
-    init_overflow_risk, init_geo_risk, strategy, n, sh, sg, config: VrtoolConfig
+    init_overflow_risk, init_revetment_risk, init_geo_risk, strategy, n, sh, sg, config: VrtoolConfig
 ):
     for i in config.mechanisms:
         if i == "Overflow":
             init_overflow_risk[n, :] = strategy.RiskOverflow[n, sh, :]
+        elif i == "Revetment":
+            init_revetment_risk[n, :] = strategy.RiskRevetment[n, sh, :]
         else:
             init_geo_risk[n, :] = strategy.RiskGeotechnical[n, sg, :]
-    return init_overflow_risk, init_geo_risk
+    return init_overflow_risk, init_revetment_risk, init_geo_risk
 
 
 def update_probability(init_probability, strategy, index):
@@ -432,7 +434,7 @@ def update_probability(init_probability, strategy, index):
     return init_probability
 
 def overflow_bundling(
-    strategy,
+    self,
     init_overflow_risk,
     existing_investment,
     life_cycle_cost,
@@ -459,50 +461,45 @@ def overflow_bundling(
 
     # Step 2: for each section, determine the sorted_indices of the min to max LCC. Note that this could also be based on TC but the performance is good as is.
     # first make the proper arrays for sorted_indices (sh), corresponding sg indices and the LCC for each section.
-    sorted_sh = np.empty(
-        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)),
-        dtype=np.int32,
-    )
-    sorted_sh.fill(999)
-    LCC_values = np.zeros((np.size(life_cycle_cost, axis=0),))
-    sg_indices = np.empty(
-        (np.size(life_cycle_cost, axis=0), np.size(life_cycle_cost, axis=1)),
-        dtype=np.int32,
-    )
-    sg_indices.fill(999)
+    sorted_sh = np.full(tuple(life_cycle_cost.shape[0:2]),999, dtype=int)
+    LCC_values = np.zeros((life_cycle_cost.shape[0],))
+    sg_indices = np.full(tuple(life_cycle_cost.shape[0:2]),999, dtype=int)
 
     # loop over the sections
     for i in range(0, len(traject.sections)):
-        extra_type = None
-        index_existing = 0  # value is only used in 1 of the branches of the if statement, otherwise should be 0.
-        # get the indices where safety is equal to no measure for stabilityinner & piping
-        # if there are investments this loop is needed to deal with the fact that it can be an integer or list.
-
         # get all geotechnical options for this section:
-        GeotechnicalOptions = strategy.options_geotechnical[traject.sections[i].name]
-        HeightOptions = strategy.options_height[traject.sections[i].name]
-        #if there is already an investment
+        GeotechnicalOptions = self.options_geotechnical[traject.sections[i].name]
+        HeightOptions = self.options_height[traject.sections[i].name]
+        #if there is already an investment we ensure that the reliability for none of the mechanisms is lower than the current investment
         if any(existing_investments[i, :] > 0):
-            investment_id = existing_investments[i, 1] - 1
-            current_investment_geotechnical = GeotechnicalOptions.iloc[investment_id]
-            current_investment_stability = current_investment_geotechnical["StabilityInner"]
-            current_investment_piping = current_investment_geotechnical["Piping"]
-            # check if all rows in comparison only contain True values
-            comparison_geotechnical = (GeotechnicalOptions.StabilityInner >= current_investment_stability) & (
-                    GeotechnicalOptions.Piping >= current_investment_piping)
-            available_measures_geotechnical = comparison_geotechnical.all(
-                axis=1)  # df indexing, so a False should be added before
+            #if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
+            if existing_investments[i, 1] > 0:
+                investment_id = existing_investments[i, 1] - 1      #note that matrix indices in existing_investments are always 1 higher than the investment id
+                current_investment_geotechnical = GeotechnicalOptions.iloc[investment_id]
+                current_investment_stability = current_investment_geotechnical["StabilityInner"]
+                current_investment_piping = current_investment_geotechnical["Piping"]
+                # check if all rows in comparison only contain True values
+                comparison_geotechnical = (GeotechnicalOptions.StabilityInner >= current_investment_stability) & (
+                        GeotechnicalOptions.Piping >= current_investment_piping)
+                available_measures_geotechnical = comparison_geotechnical.all(
+                    axis=1)  # df indexing, so a False should be added before
+            else:
+                available_measures_geotechnical = pd.Series(np.ones(len(GeotechnicalOptions), dtype=bool))
 
+            #same for HeightOptions
             if existing_investments[i, 0] > 0:
                 # exclude rows for height options that are not safer than current
-                current_investment_height = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
-                # check if all rows in comparison only contain True values #TODO extend with revetment
-                comparison_height = HeightOptions.Overflow > current_investment_height
+                current_investment_overflow = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
+                #TODO turn on revetment once the proper data is available.
+                # current_investment_revetment = HeightOptions.iloc[existing_investments[i, 0] - 1]['Revetment']
+                current_investment_revetment = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
+                # check if all rows in comparison only contain True values
+                comparison_height = (HeightOptions.Overflow > current_investment_overflow) #& (HeightOptions.Revetment >= current_investment_revetment)
                 available_measures_height = comparison_height.any(axis=1)
             else: # if there is no investment in height, all options are available
                 available_measures_height = pd.Series(np.ones(len(HeightOptions), dtype=bool))
 
-            # now replace the life_cycle_cost where available_measures_height is False with a very high value: the reliability for overflow has to increase.
+            # now replace the life_cycle_cost where available_measures_height is False with a very high value: the reliability for overflow has to increase so we do not want to pick these measures.
             life_cycle_cost[i, available_measures_height[~available_measures_height].index + 1, :] = 1e99
 
             #next we get the ids for the possible geotechnical measures
@@ -562,7 +559,7 @@ def overflow_bundling(
             break
 
         # insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
-        new_overflow_risk[ind_weakest, :] = strategy.RiskOverflow[
+        new_overflow_risk[ind_weakest, :] = self.RiskOverflow[
                                             ind_weakest, sorted_sh[ind_weakest, index_counter[ind_weakest]], :
                                             ]
         LCC_values[ind_weakest] = np.min(
