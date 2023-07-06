@@ -136,7 +136,7 @@ class RevetmentMeasure(MeasureProtocol):
             _top_layer_thickness = float("nan")
 
         if _top_layer_thickness <= slope_part.top_layer_thickness:
-            logging.warn("Design D is <= than the current D")
+            logging.warning("Design D is <= than the current D")
             _top_layer_thickness = slope_part.top_layer_thickness
             _recalculated_beta = float(
                 self._evaluate_stone_revetment_data(slope_part, evaluation_year)

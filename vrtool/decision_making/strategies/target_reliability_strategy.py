@@ -94,7 +94,7 @@ class TargetReliabilityStrategy(StrategyBase):
             # convert beta_cs to beta_section in order to correctly search self.options[section]
             # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
             if self.LE_in_section:
-                logging.warn(
+                logging.warning(
                     "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
                 )
                 _beta_t_piping = pf_to_beta(
@@ -129,7 +129,7 @@ class TargetReliabilityStrategy(StrategyBase):
 
             if len(_possible_measures) == 0:
                 # continue to next section if weakest has no more measures
-                logging.warn(
+                logging.warning(
                     "Warning: for Target reliability strategy no suitable measures were found for section {}".format(
                         i.name
                     )

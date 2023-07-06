@@ -138,7 +138,7 @@ def calc_tr(
     # takenmeasures: object with all measures taken
     # original section: series of probabilities of section, before taking a measure.
     if damage == 1e9:
-        logging.warn("No damage defined.")
+        logging.warning("No damage defined.")
 
     TotalRisk = []
     dR = []
@@ -489,7 +489,7 @@ def overflow_bundling(
                     GeotechnicalOptions.iloc[investment_id]["type"].values[0][0]
                     == "Soil reinforcement"
                 ):
-                    logging.warn(
+                    logging.warning(
                         "First combined measure is a soil reinforcement. This might not result in the intended behaviour"
                     )
                 current_type = GeotechnicalOptions.iloc[investment_id]["type"].values[
@@ -781,6 +781,6 @@ def overflow_bundling(
     else:
         BC_out = 0
         measure_index = []
-        logging.warn("No more measures for weakest overflow section")
+        logging.warning("No more measures for weakest overflow section")
 
     return measure_index, BC_out

@@ -98,7 +98,7 @@ class StrategyBase:
     def get_measure_from_index(self, index, section_order=False, print_measure=False):
         """ "Converts an index (n,sh,sg) to a printout of the measure data"""
         if not section_order:
-            logging.warn(
+            logging.warning(
                 "Deriving section order from unordered dictionary. Might be wrong"
             )
             section_order = list(self.options_height.keys())
@@ -1209,7 +1209,9 @@ class StrategyBase:
 
             if i == len(self.Probabilities) - 1:
                 self.SafetyStandardStep = i
-                logging.warn("safety standard not met. Using final step for plotting")
+                logging.warning(
+                    "safety standard not met. Using final step for plotting"
+                )
 
     def plot_measures(
         self,

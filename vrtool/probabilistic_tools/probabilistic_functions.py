@@ -185,7 +185,7 @@ def run_prob_calc(model, dist, method="FORM", startpoint=False):
         Pf = result.getProbabilityEstimate()
     elif method == "MCS":
         ot.RandomGenerator.SetSeed(5000)
-        logging.warn("Random Generator state is currently fixed!")
+        logging.warning("Random Generator state is currently fixed!")
         experiment = ot.MonteCarloExperiment()
         algo = ot.ProbabilitySimulationAlgorithm(event, experiment)
         algo.setMaximumCoefficientOfVariation(0.05)
