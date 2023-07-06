@@ -98,15 +98,20 @@ def make_traject_df(traject: DikeTraject, cols):
     df_index = pd.MultiIndex.from_product(
         [sections, mechanisms], names=["name", "mechanism"]
     )
-    TrajectProbability = pd.DataFrame(columns=cols, index=df_index)
+    _traject_probaility = pd.DataFrame(columns=cols, index=df_index)
 
     for i in traject.sections:
-        for j in mechanisms:
-            TrajectProbability.loc[(i.name, j)] = list(
-                i.section_reliability.SectionReliability.loc[j]
+        for _mechanism_name in mechanisms:
+            if _mechanism_name not in _traject_probaility.index:
+                logging.error(
+                    "No evaluation could be done for '{}'".format(_mechanism_name)
+                )
+                continue
+            _traject_probaility.loc[(i.name, _mechanism_name)] = list(
+                i.section_reliability.SectionReliability.loc[_mechanism_name]
             )
 
-    return TrajectProbability
+    return _traject_probaility
 
 
 # hereafter a bunch of functions to compute costs, risks and probabilities over time are defined:

@@ -70,7 +70,18 @@ class Solutions:
         reliability = pd.DataFrame(columns=cols_r)
         if splitparams:
             cols_m = pd.Index(
-                ["ID", "type", "class", "year", "yes/no", "dcrest", "dberm", "cost"],
+                [
+                    "ID",
+                    "type",
+                    "class",
+                    "year",
+                    "yes/no",
+                    "dcrest",
+                    "dberm",
+                    "beta_target",
+                    "transition_level",
+                    "cost",
+                ],
                 name="base",
             )
         else:
@@ -109,6 +120,8 @@ class Solutions:
                         measure_in.append(-999)
                         measure_in.append(designvars[0])
                         measure_in.append(designvars[1])
+                        measure_in.append(float("nan"))
+                        measure_in.append(float("nan"))
                     else:
                         measure_in.append(designvars)
                     measure_in.append(cost)
@@ -118,6 +131,7 @@ class Solutions:
                     for ij in self.mechanisms + ["Section"]:
                         if ij.lower().strip() == "revetment":
                             # Revetment uses the new approach with `MeasureResultCollectionProtocol`
+                            reliability_in.extend([float("nan")] * len(self.config.T))
                             continue
                         if ij not in betas.index:
                             raise ValueError(
@@ -160,6 +174,8 @@ class Solutions:
                             designvars,
                             -999,
                             -999,
+                            float("nan"),
+                            float("nan"),
                             cost,
                         ]
                     )
@@ -179,6 +195,7 @@ class Solutions:
                 for ij in self.mechanisms + ["Section"]:
                     if ij.lower().strip() == "revetment":
                         # Revetment uses the new approach with `MeasureResultCollectionProtocol`
+                        beta.extend([float("nan")] * len(self.config.T))
                         continue
                     if ij not in betas.index:
                         raise ValueError(
