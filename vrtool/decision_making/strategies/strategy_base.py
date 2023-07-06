@@ -365,6 +365,9 @@ class StrategyBase:
                         n
                     ].section_reliability.SectionReliability.index
                 ):
+                    # TODO (VRTOOL-187).
+                    # This could become obsolete once SectionReliability contains the data related to revetment.
+                    # Consider removing if that's the case.
                     logging.error(
                         "No optimalization available for '{}'.".format(_mechanism_name)
                     )

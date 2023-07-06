@@ -107,6 +107,9 @@ def make_traject_df(traject: DikeTraject, cols):
     for i in traject.sections:
         for _mechanism_name in mechanisms:
             if _mechanism_name not in _traject_probaility.index:
+                # TODO (VRTOOL-187).
+                # This could become obsolete once SectionReliability contains the data related to revetment.
+                # Consider removing if that's the case.
                 logging.error(
                     "No evaluation could be done for '{}'".format(_mechanism_name)
                 )

@@ -124,6 +124,10 @@ class TargetReliabilityStrategy(StrategyBase):
             # filter for mechanisms that are considered
             for mechanism in traject.mechanism_names:
                 if mechanism.lower().strip() == "revetment":
+                    # TODO (VRTOOL-187).
+                    # This could become obsolete once SectionReliability contains the data related to revetment.
+                    # Consider removing if that's the case.
+
                     logging.warning(
                         "Target strategy not available for '{}'.".format(mechanism)
                     )

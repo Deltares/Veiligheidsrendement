@@ -129,16 +129,17 @@ class Solutions:
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
                     for ij in self.mechanisms + ["Section"]:
-                        if ij.lower().strip() == "revetment":
-                            # Revetment uses the new approach with `MeasureResultCollectionProtocol`
-                            reliability_in.extend([float("nan")] * len(self.config.T))
-                            continue
                         if ij not in betas.index:
-                            raise ValueError(
-                                "Measure '{}' does not contain data for mechanism '{}'".format(
+                            # TODO (VRTOOL-187).
+                            # This could become obsolete once SectionReliability contains the data related to revetment.
+                            # Consider removing if that's the case.
+                            reliability_in.extend([float("nan")] * len(self.config.T))
+                            logging.warning(
+                                "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
                                     measure.parameters["Name"], ij
                                 )
                             )
+                            continue
                         for ijk in betas.loc[ij].values:
                             reliability_in.append(ijk)
 
@@ -193,16 +194,17 @@ class Solutions:
                 betas = measure.measures["Reliability"].SectionReliability
                 beta = []
                 for ij in self.mechanisms + ["Section"]:
-                    if ij.lower().strip() == "revetment":
-                        # Revetment uses the new approach with `MeasureResultCollectionProtocol`
-                        beta.extend([float("nan")] * len(self.config.T))
-                        continue
                     if ij not in betas.index:
-                        raise ValueError(
-                            "Measure '{}' does not contain data for mechanism '{}'".format(
+                        # TODO (VRTOOL-187).
+                        # This could become obsolete once SectionReliability contains the data related to revetment.
+                        # Consider removing if that's the case.
+                        beta.extend([float("nan")] * len(self.config.T))
+                        logging.warning(
+                            "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
                                 measure.parameters["Name"], ij
                             )
                         )
+                        continue
                     for ijk in betas.loc[ij].values:
                         beta.append(ijk)
                 inputs_r.append(beta)
