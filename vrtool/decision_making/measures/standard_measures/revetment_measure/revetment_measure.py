@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.revetment_measure_data import (
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
@@ -24,11 +24,6 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 )
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRASS_TYPE
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
-from vrtool.flood_defence_system.mechanism_reliability_collection import (
-    MechanismReliabilityCollection,
-)
-from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
