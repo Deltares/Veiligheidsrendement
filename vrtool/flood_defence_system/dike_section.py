@@ -18,6 +18,7 @@ class DikeSection:
     Initialize the DikeSection class, as a general class for a dike section that contains all basic information
     """
 
+    crest_height: float
     mechanism_data: dict[str, tuple[str, str]]
     section_reliability: SectionReliability
     TrajectInfo: DikeTrajectInfo
@@ -32,6 +33,7 @@ class DikeSection:
         self.TrajectInfo = None
         self.name = ""
         self.Length = float("nan")
+        self.crest_height = float("nan")
         self.InitialGeometry = None
         self.houses = None
 

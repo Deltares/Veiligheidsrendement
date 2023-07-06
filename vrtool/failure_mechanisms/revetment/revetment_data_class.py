@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
-from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
-from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    GrassSlopePart,
+    SlopePartProtocol,
+    StoneSlopePart,
+)
 
 
 @dataclass

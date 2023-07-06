@@ -39,27 +39,27 @@ class TargetReliabilityStrategy(StrategyBase):
             .columns.values
         )
         # compute cross sectional requirements
-        N_piping = 1 + (
+        n_piping = 1 + (
             traject.general_info.aPiping
             * traject.general_info.TrajectLength
             / traject.general_info.bPiping
         )
-        N_stab = 1 + (
+        n_stab = 1 + (
             traject.general_info.aStabilityInner
             * traject.general_info.TrajectLength
             / traject.general_info.bStabilityInner
         )
-        N_overflow = 1
+        n_overflow = 1
         beta_cs_piping = pf_to_beta(
-            traject.general_info.Pmax * traject.general_info.omegaPiping / N_piping
+            traject.general_info.Pmax * traject.general_info.omegaPiping / n_piping
         )
         beta_cs_stabinner = pf_to_beta(
             traject.general_info.Pmax
             * traject.general_info.omegaStabilityInner
-            / N_stab
+            / n_stab
         )
         beta_cs_overflow = pf_to_beta(
-            traject.general_info.Pmax * traject.general_info.omegaOverflow / N_overflow
+            traject.general_info.Pmax * traject.general_info.omegaOverflow / n_overflow
         )
 
         # Rank sections based on 2075 Section probability
@@ -75,19 +75,19 @@ class TargetReliabilityStrategy(StrategyBase):
         measure_cols = ["Section", "option_index", "LCC", "BC"]
 
         if splitparams:
-            TakenMeasures = pd.DataFrame(
+            _taken_measures = pd.DataFrame(
                 data=[[None, None, 0, None, None, None, None, None, None]],
                 columns=measure_cols + ["ID", "name", "yes/no", "dcrest", "dberm"],
             )
         else:
-            TakenMeasures = pd.DataFrame(
+            _taken_measures = pd.DataFrame(
                 data=[[None, None, None, 0, None, None, None]],
                 columns=measure_cols + ["ID", "name", "params"],
             )
         # columns (section name and index in self.options[section])
-        BaseTrajectProbability = make_traject_df(traject, cols)
-        Probability_steps = [copy.deepcopy(BaseTrajectProbability)]
-        TrajectProbability = copy.deepcopy(BaseTrajectProbability)
+        _base_traject_probability = make_traject_df(traject, cols)
+        _probability_steps = [copy.deepcopy(_base_traject_probability)]
+        _traject_probability = copy.deepcopy(_base_traject_probability)
 
         for j in section_indices:
             i = traject.sections[j]
@@ -97,37 +97,37 @@ class TargetReliabilityStrategy(StrategyBase):
                 logging.warn(
                     "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
                 )
-                beta_T_piping = pf_to_beta(
+                _beta_t_piping = pf_to_beta(
                     beta_to_pf(beta_cs_piping)
                     * (i.Length / traject.general_info.bPiping)
                 )
-                beta_T_stabinner = pf_to_beta(
+                _beta_t_sabinner = pf_to_beta(
                     beta_to_pf(beta_cs_stabinner)
                     * (i.Length / traject.general_info.bStabilityInner)
                 )
             else:
-                beta_T_piping = beta_cs_piping
-                beta_T_stabinner = beta_cs_stabinner
-            beta_T_overflow = beta_cs_overflow
-            beta_T = {
-                "Piping": beta_T_piping,
-                "StabilityInner": beta_T_stabinner,
-                "Overflow": beta_T_overflow,
+                _beta_t_piping = beta_cs_piping
+                _beta_t_sabinner = beta_cs_stabinner
+            _beta_t_overflow = beta_cs_overflow
+            _beta_t = {
+                "Piping": _beta_t_piping,
+                "StabilityInner": _beta_t_sabinner,
+                "Overflow": _beta_t_overflow,
             }
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
             if isinstance(self.OI_year, int):
-                targetyear = 50  # OI_year + 50
-            else:
-                targetyear = 50
+                # TODO: should this not be OI_year + 50?
+                _target_year = 50
+
             # make PossibleMeasures dataframe
-            PossibleMeasures = copy.deepcopy(self.options[i.name])
+            _possible_measures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
             for mechanism in traject.mechanism_names:
-                PossibleMeasures = PossibleMeasures.loc[
-                    self.options[i.name][(mechanism, targetyear)] > beta_T[mechanism]
+                _possible_measures = _possible_measures.loc[
+                    self.options[i.name][(mechanism, _target_year)] > _beta_t[mechanism]
                 ]
 
-            if len(PossibleMeasures) == 0:
+            if len(_possible_measures) == 0:
                 # continue to next section if weakest has no more measures
                 logging.warn(
                     "Warning: for Target reliability strategy no suitable measures were found for section {}".format(
@@ -136,28 +136,28 @@ class TargetReliabilityStrategy(StrategyBase):
                 )
                 continue
             # calculate LCC
-            LCC = calc_tc(
-                PossibleMeasures,
+            _lcc = calc_tc(
+                _possible_measures,
                 self.discount_rate,
                 horizon=self.options[i.name]["Overflow"].columns[-1],
             )
 
             # select measure with lowest cost
-            idx = np.argmin(LCC)
+            idx = np.argmin(_lcc)
 
-            measure = PossibleMeasures.iloc[idx]
-            option_index = PossibleMeasures.index[idx]
+            measure = _possible_measures.iloc[idx]
+            option_index = _possible_measures.index[idx]
             # calculate achieved risk reduction & BC ratio compared to base situation
-            R_base, dR, TR = calc_tr(
+            _r_base, _dr, _t_r = calc_tr(
                 i.name,
                 measure,
-                TrajectProbability,
-                original_section=TrajectProbability.loc[i.name],
+                _traject_probability,
+                original_section=_traject_probability.loc[i.name],
                 discount_rate=self.discount_rate,
                 horizon=cols[-1],
                 damage=traject.general_info.FloodDamage,
             )
-            BC = dR / LCC[idx]
+            _bc = _dr / _lcc[idx]
 
             if splitparams:
                 name = id_to_name(
@@ -168,8 +168,8 @@ class TargetReliabilityStrategy(StrategyBase):
                         [
                             i.name,
                             option_index,
-                            LCC[idx],
-                            BC,
+                            _lcc[idx],
+                            _bc,
                             measure["ID"].values[0],
                             name,
                             measure["yes/no"].values[0],
@@ -177,7 +177,7 @@ class TargetReliabilityStrategy(StrategyBase):
                             measure["dberm"].values[0],
                         ]
                     ],
-                    columns=TakenMeasures.columns,
+                    columns=_taken_measures.columns,
                 )
             else:
                 data_opt = pd.DataFrame(
@@ -185,21 +185,23 @@ class TargetReliabilityStrategy(StrategyBase):
                         [
                             i.name,
                             option_index,
-                            LCC[idx],
-                            BC,
+                            _lcc[idx],
+                            _bc,
                             measure["ID"].values[0],
                             measure["name"].values[0],
                             measure["params"].values[0],
                         ]
                     ],
-                    columns=TakenMeasures.columns,
+                    columns=_taken_measures.columns,
                 )  # here we evaluate and pick the option that has the
                 # lowest total cost and a BC ratio that is lower than any measure at any other section
 
             # Add to TakenMeasures
-            TakenMeasures = pd.concat((TakenMeasures, data_opt))
+            _taken_measures = pd.concat((_taken_measures, data_opt))
             # Calculate new probabilities
-            TrajectProbability = implement_option(i.name, TrajectProbability, measure)
-            Probability_steps.append(copy.deepcopy(TrajectProbability))
-        self.TakenMeasures = TakenMeasures
-        self.Probabilities = Probability_steps
+            _traject_probability = implement_option(
+                i.name, _traject_probability, measure
+            )
+            _probability_steps.append(copy.deepcopy(_traject_probability))
+        self.TakenMeasures = _taken_measures
+        self.Probabilities = _probability_steps
