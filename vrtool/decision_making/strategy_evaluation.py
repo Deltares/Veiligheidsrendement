@@ -498,7 +498,7 @@ def overflow_bundling(
                 current_investment_height = HeightOptions.iloc[existing_investments[i, 0] - 1]['Overflow']
                 # check if all rows in comparison only contain True values #TODO extend with revetment
                 comparison_height = HeightOptions.Overflow > current_investment_height
-                available_measures_height = comparison_height.all(axis=1)
+                available_measures_height = comparison_height.any(axis=1)
             else: # if there is no investment in height, all options are available
                 available_measures_height = pd.Series(np.ones(len(HeightOptions), dtype=bool))
 
