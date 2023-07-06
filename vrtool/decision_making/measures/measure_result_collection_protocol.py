@@ -4,9 +4,11 @@ from typing import Any, Protocol, runtime_checkable
 @runtime_checkable
 class MeasureResultCollectionProtocol(Protocol):
     measure_id: str
-    measure_type: str  # TODO: This should be an ENUM
-    measure_class: str
-    measure_year: int
+    measure_name: str
+    # TODO: This should be an ENUM
+    reinforcement_type: str
+    # TODO: This should be an ENUM
+    combinable_type: str
 
     def get_measure_input_values(self) -> list[list[Any]]:
         """

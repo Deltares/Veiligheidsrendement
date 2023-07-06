@@ -1,8 +1,6 @@
-import copy
 import logging
 import math
-from dataclasses import dataclass
-from typing import Union
+
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -11,6 +9,12 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
+)
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
+    RevetmentMeasureResult,
+)
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
+    RevetmentMeasureResultCollection,
 )
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
@@ -51,18 +55,6 @@ def bisection(f, a, b, tol):
         # case where m is an improvement on b.
         # Make recursive call with b = m
         return bisection(f, a, m, tol)
-
-
-@dataclass
-class RevetmentMeasureBetaCost:
-    year: int
-    beta_target: float
-    beta_combined: float
-    transition_level: float
-    cost: float
-    revetment_measures: Union[
-        list[RevetmentMeasureData], list[list[RevetmentMeasureData]]
-    ]
 
 
 class RevetmentMeasure(MeasureProtocol):
@@ -365,9 +357,6 @@ class RevetmentMeasure(MeasureProtocol):
     ):
         _revetment = self._get_revetment(dike_section)
 
-        self.measures = {}
-        self.measures["Revetment"] = "yes"
-
         # 1. Get beta targets.
         # TODO. Currently only one beta target available due to the step = 4.
         _beta_targets = self._get_beta_target_vector(
@@ -380,14 +369,19 @@ class RevetmentMeasure(MeasureProtocol):
         )
 
         # 3. Iterate over beta_targets - transition level - year.
-        _intermediate_measures = self._get_intermediate_measures(
+        _results_collection = RevetmentMeasureResultCollection()
+        _results_collection.measure_id = None
+        _results_collection.measure_name = None
+        _results_collection.reinforcement_type = "Revetment"
+        _results_collection.combinable_type = None
+        _results_collection.revetment_measure_results = self._get_intermediate_measures(
             dike_section, _revetment, _beta_targets, _transition_levels, self.config.T
         )
 
         # 4. Interpolate with years to calculate.
 
         # 5. Return Beta and Cost matrices
-        return
+        self.measures = _results_collection
 
     def _get_intermediate_measures(
         self,
@@ -396,7 +390,7 @@ class RevetmentMeasure(MeasureProtocol):
         beta_targets: list[float],
         transition_levels: list[float],
         config_years: list[int],
-    ) -> list[RevetmentMeasureBetaCost]:
+    ) -> list[RevetmentMeasureResult]:
         _intermediate_measures = []
         revetment_years = revetment.get_available_years()
         for _beta_target in beta_targets:
@@ -454,7 +448,7 @@ class RevetmentMeasure(MeasureProtocol):
                 _revetment_measures_collection,
             )
         )
-        return RevetmentMeasureBetaCost(
+        return RevetmentMeasureResult(
             year=measure_year,
             beta_target=beta_target,
             beta_combined=_combined_beta,
@@ -465,10 +459,10 @@ class RevetmentMeasure(MeasureProtocol):
 
     def _get_interpolated_measures(
         self,
-        available_measures: list[RevetmentMeasureBetaCost],
+        available_measures: list[RevetmentMeasureResult],
         config_years: list[int],
         revetment_years: list[int],
-    ) -> list[RevetmentMeasureBetaCost]:
+    ) -> list[RevetmentMeasureResult]:
         def _interpolate(values_to_interpolate: list[float], year: int) -> float:
             return float(
                 interp1d(
@@ -485,7 +479,7 @@ class RevetmentMeasure(MeasureProtocol):
             _interpolated_year = _interpolate(
                 [am.cost for am in available_measures], _year
             )
-            _interpolated_measure = RevetmentMeasureBetaCost(
+            _interpolated_measure = RevetmentMeasureResult(
                 year=_year,
                 beta_target=_sample.beta_target,
                 transition_level=_sample.transition_level,
