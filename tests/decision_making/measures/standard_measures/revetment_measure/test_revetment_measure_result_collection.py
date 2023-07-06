@@ -45,14 +45,18 @@ class TestRevetmentMeasureResultCollection:
             _result_collection.measure_id,
             _result_collection.reinforcement_type,
             _result_collection.combinable_type,
+            1984,
+            "yes",
+            -999,
+            -999,
         ]
         _expected_measure_input_vector = [
-            _expected_measure_input + [1984, "yes", -999, -999, 0.24, 2.4, 24],
-            _expected_measure_input + [1984, "yes", -999, -999, 0.24, 4.2, 24],
-            _expected_measure_input + [1984, "yes", -999, -999, 0.42, 2.4, 24],
-            _expected_measure_input + [1984, "yes", -999, -999, 0.42, 4.2, 24],
-            _expected_measure_input + [1984, "yes", -999, -999, 0.89, 2.4, 24],
-            _expected_measure_input + [1984, "yes", -999, -999, 0.89, 4.2, 24],
+            _expected_measure_input + [0.24, 2.4, 24],
+            _expected_measure_input + [0.24, 4.2, 24],
+            _expected_measure_input + [0.42, 2.4, 24],
+            _expected_measure_input + [0.42, 4.2, 24],
+            _expected_measure_input + [0.89, 2.4, 24],
+            _expected_measure_input + [0.89, 4.2, 24],
         ]
         _expected_betas_vector = [[0, 10, 20]] * (
             len(_beta_targets) * len(_transition_levels)
