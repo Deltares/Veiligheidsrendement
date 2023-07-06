@@ -315,7 +315,7 @@ class RevetmentMeasure(MeasureProtocol):
 
     def _get_min_beta_target(self, dike_section: DikeSection) -> float:
         return float(
-            min(
+            max(
                 map(
                     lambda x: x.Beta,
                     dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
@@ -393,6 +393,7 @@ class RevetmentMeasure(MeasureProtocol):
     ) -> list[RevetmentMeasureResult]:
         _intermediate_measures = []
         revetment_years = revetment.get_available_years()
+
         for _beta_target in beta_targets:
             for _transition_level in transition_levels:
                 _measures_per_year = []
@@ -406,6 +407,7 @@ class RevetmentMeasure(MeasureProtocol):
                             _measure_year,
                         )
                     )
+
                 # TODO: Should we include measures per year? Or just interpolate base on the vrtool.config years?
                 _intermediate_measures.extend(
                     self._get_interpolated_measures(
@@ -463,10 +465,17 @@ class RevetmentMeasure(MeasureProtocol):
         config_years: list[int],
         revetment_years: list[int],
     ) -> list[RevetmentMeasureResult]:
+        _diff_revetment_years = revetment_years[0] - config_years[0]
+        _corrected_revetment_years = [
+            ry - _diff_revetment_years for ry in revetment_years
+        ]
+
         def _interpolate(values_to_interpolate: list[float], year: int) -> float:
             return float(
                 interp1d(
-                    revetment_years, values_to_interpolate, fill_value=("extrapolate")
+                    _corrected_revetment_years,
+                    values_to_interpolate,
+                    fill_value=("extrapolate"),
                 )(year)
             )
 
@@ -476,7 +485,7 @@ class RevetmentMeasure(MeasureProtocol):
             _interpolated_beta = _interpolate(
                 [am.beta_combined for am in available_measures], _year
             )
-            _interpolated_year = _interpolate(
+            _interpolated_cost = _interpolate(
                 [am.cost for am in available_measures], _year
             )
             _interpolated_measure = RevetmentMeasureResult(
@@ -484,7 +493,7 @@ class RevetmentMeasure(MeasureProtocol):
                 beta_target=_sample.beta_target,
                 transition_level=_sample.transition_level,
                 beta_combined=_interpolated_beta,
-                cost=_interpolated_year,
+                cost=_interpolated_cost,
                 revetment_measures=[
                     rm.revetment_measures for rm in available_measures
                 ],  # TODO: Not very happy about this type.
