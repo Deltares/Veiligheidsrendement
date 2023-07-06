@@ -72,19 +72,15 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
         _results_dict = self._get_results_as_dict()
         for _beta_target, _beta_group in _results_dict.items():
             for _transition_level, _transition_group in _beta_group.items():
+                _ordered_by_year = sorted(_transition_group, key=lambda x: x.year)
                 _input_measure.append(
                     self._get_input_vector(
                         split_params,
-                        _transition_group[0].year,
-                        _transition_group[0].cost,
+                        _ordered_by_year[0].year,
+                        _ordered_by_year[0].cost,
                         _beta_target,
                         _transition_level,
                     )
                 )
-                _output_betas.append(
-                    [
-                        _gtl.beta_combined
-                        for _gtl in sorted(_transition_group, key=lambda x: x.year)
-                    ]
-                )
+                _output_betas.append([_gtl.beta_combined for _gtl in _ordered_by_year])
         return _input_measure, _output_betas
