@@ -192,64 +192,9 @@ class StrategyBase:
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
-
-            # Step 1: combine measures with partial measures
-            combinables = solutions_dict[section.name].MeasureData.loc[
-                solutions_dict[section.name].MeasureData["class"] == "combinable"
-            ]
-            partials = solutions_dict[section.name].MeasureData.loc[
-                solutions_dict[section.name].MeasureData["class"] == "partial"
-            ]
-            if self.__class__.__name__ == "TargetReliabilityStrategy":
-                combinables = combinables.loc[
-                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
-                ]
-                partials = partials.loc[
-                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
-                ]
-
-            combinedmeasures = measure_combinations(
-                combinables,
-                partials,
-                solutions_dict[section.name],
-                splitparams=splitparams,
+            combinedmeasures = self._step1combine(
+                solutions_dict, i, section, traject, splitparams
             )
-            # make sure combinable, mechanism and year are in the MeasureData dataframe
-            # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
-            # if there is a measureid that is not known yet, add it to the measure table
-
-            existingIDs = solutions_dict[section.name].measure_table["ID"].values
-            IDs = np.unique(combinedmeasures["ID"].values)
-            if len(IDs) > 0:
-                for ij in IDs:
-                    if ij not in existingIDs:
-                        indexes = ij.split("+")
-                        name = (
-                            solutions_dict[section.name]
-                            .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table[
-                                    "ID"
-                                ]
-                                == indexes[0]
-                            ]["Name"]
-                            .values[0]
-                            + "+"
-                            + solutions_dict[section.name]
-                            .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table[
-                                    "ID"
-                                ]
-                                == indexes[1]
-                            ]["Name"]
-                            .values[0]
-                        )
-                        solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.sections[i].name].measure_table)
-                            + 1
-                        ] = name
-                        solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.sections[i].name].measure_table)
-                        ]["ID"] = ij
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
@@ -281,6 +226,63 @@ class StrategyBase:
                 StrategyData = StrategyData.sort_index()
 
             self.options[section.name] = StrategyData.reset_index(drop=True)
+
+    def _step1combine(
+        self, solutions_dict, i: int, section, traject, splitparams: bool
+    ) -> pd.DataFrame:
+        # Step 1: combine measures with partial measures
+        combinables = solutions_dict[section.name].MeasureData.loc[
+            solutions_dict[section.name].MeasureData["class"] == "combinable"
+        ]
+        partials = solutions_dict[section.name].MeasureData.loc[
+            solutions_dict[section.name].MeasureData["class"] == "partial"
+        ]
+        if self.__class__.__name__ == "TargetReliabilityStrategy":
+            combinables = combinables.loc[
+                solutions_dict[section.name].MeasureData["year"] == self.OI_year
+            ]
+            partials = partials.loc[
+                solutions_dict[section.name].MeasureData["year"] == self.OI_year
+            ]
+
+        combinedmeasures = measure_combinations(
+            combinables,
+            partials,
+            solutions_dict[section.name],
+            splitparams=splitparams,
+        )
+        # make sure combinable, mechanism and year are in the MeasureData dataframe
+        # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
+        # if there is a measureid that is not known yet, add it to the measure table
+
+        existingIDs = solutions_dict[section.name].measure_table["ID"].values
+        IDs = np.unique(combinedmeasures["ID"].values)
+        if len(IDs) > 0:
+            for ij in IDs:
+                if ij not in existingIDs:
+                    indexes = ij.split("+")
+                    name = (
+                        solutions_dict[section.name]
+                        .measure_table.loc[
+                            solutions_dict[traject.sections[i].name].measure_table["ID"]
+                            == indexes[0]
+                        ]["Name"]
+                        .values[0]
+                        + "+"
+                        + solutions_dict[section.name]
+                        .measure_table.loc[
+                            solutions_dict[traject.sections[i].name].measure_table["ID"]
+                            == indexes[1]
+                        ]["Name"]
+                        .values[0]
+                    )
+                    solutions_dict[section.name].measure_table.loc[
+                        len(solutions_dict[traject.sections[i].name].measure_table) + 1
+                    ] = name
+                    solutions_dict[section.name].measure_table.loc[
+                        len(solutions_dict[traject.sections[i].name].measure_table)
+                    ]["ID"] = ij
+        return combinedmeasures
 
     def evaluate(
         self,
