@@ -87,6 +87,47 @@ def measure_combinations(
     return _combined_measures
 
 
+def revetment_combinations(partials, combinables):
+    _combined_measures = pd.DataFrame(columns=combinables.columns)
+
+    # loop over partials
+    for i, row1 in partials.iterrows():
+        # combine with all combinables
+        for j, row2 in combinables.iterrows():
+
+            ID = "+".join((row1["ID"].values[0], row2["ID"].values[0]))
+            types = [row1["type"].values[0], row2["type"].values[0]]
+            year = [row1["year"].values[0], row2["year"].values[0]]
+            params = [row1["params"].values[0], row2["params"].values[0]]
+            Cost = [row1["cost"].values[0], row2["cost"].values[0]]
+            # combine betas
+            # take maximums of mechanisms except if it is about StabilityInner for partial Stability Screen
+            betas = []
+            years = []
+
+            for ij in partials.columns:
+                if ij[0] != "Section" and ij[1] != "":  # It is a beta value
+                    # TODO make clean. Quick fix to fix incorrect treatment of vertical geotextile.
+                    # VSG is idx in MeasureTable
+                    beta = np.maximum(row1[ij], row2[ij])
+                    years.append(ij[1])
+                    betas.append(beta)
+
+            # next update section probabilities
+            for ij in partials.columns:
+                if ij[0] == "Section":  # It is a beta value
+                    # where year in years is the same as ij[1]
+                    indices = [indices for indices, x in enumerate(years) if x == ij[1]]
+                    ps = beta_to_pf(np.array(betas)[indices])
+                    p = np.sum(ps)  # TODO replace with correct formula
+                    betas.append(pf_to_beta(p))
+            in1 = [ID, types, "combined", year, params, Cost]
+
+            allin = pd.DataFrame([in1 + betas], columns=combinables.columns)
+            _combined_measures = pd.concat((_combined_measures, allin))
+    return _combined_measures
+
+
 def make_traject_df(traject: DikeTraject, cols):
     # cols = cols[1:]
     sections = []

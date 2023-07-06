@@ -15,6 +15,7 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
     measure_combinations,
+    revetment_combinations,
     split_options,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -183,12 +184,6 @@ class StrategyBase:
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
-        cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]]
-            .MeasureData["Section"]
-            .columns.values
-        )
-
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
@@ -206,7 +201,6 @@ class StrategyBase:
                 StrategyData = StrategyData.reset_index(drop=True)
                 LCC = calc_tc(StrategyData, self.discount_rate)
                 ind = np.argsort(LCC)
-                LCC_sort = LCC[ind]
                 StrategyData = StrategyData.iloc[ind]
                 beta_max = StrategyData["Section"].ix[0].values
                 indexes = []
@@ -237,11 +231,18 @@ class StrategyBase:
         partials = solutions_dict[section.name].MeasureData.loc[
             solutions_dict[section.name].MeasureData["class"] == "partial"
         ]
+        revetments = solutions_dict[section.name].MeasureData.loc[
+            solutions_dict[section.name].MeasureData["class"] == "combinableRevetment"
+        ]
+
         if self.__class__.__name__ == "TargetReliabilityStrategy":
             combinables = combinables.loc[
                 solutions_dict[section.name].MeasureData["year"] == self.OI_year
             ]
             partials = partials.loc[
+                solutions_dict[section.name].MeasureData["year"] == self.OI_year
+            ]
+            revetments = revetments.loc[
                 solutions_dict[section.name].MeasureData["year"] == self.OI_year
             ]
 
@@ -251,6 +252,10 @@ class StrategyBase:
             solutions_dict[section.name],
             splitparams=splitparams,
         )
+
+        if len(revetments) > 0:
+            combinedmeasures = revetment_combinations(combinedmeasures, revetments)
+
         # make sure combinable, mechanism and year are in the MeasureData dataframe
         # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
         # if there is a measureid that is not known yet, add it to the measure table
