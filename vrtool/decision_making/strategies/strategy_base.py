@@ -25,7 +25,7 @@ from vrtool.flood_defence_system.dike_traject import (
     plot_settings,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.probabilistic_tools.combin_functions import combinFunctions
+from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 class StrategyBase:
@@ -299,19 +299,17 @@ class StrategyBase:
     def make_optimization_input(self, traject: DikeTraject):
         """This subroutine organizes the input into an optimization problem such that it can be accessed by the evaluation algorithm"""
 
-        combin = combinFunctions()
-
         def get_independent_probability_of_failure(
             probability_of_failure_lookup: dict[str, np.array]
         ) -> np.array:
-            return combin.combine_probabilities(
+            return CombinFunctions.combine_probabilities(
                 probability_of_failure_lookup, ("StabilityInner", "Piping")
             )
 
         def get_dependent_probability_of_failure(
             probability_of_failure_lookup: dict[str, np.array]
         ) -> np.array:
-            return combin.combine_probabilities(
+            return CombinFunctions.combine_probabilities(
                 probability_of_failure_lookup, ("Overflow", "Revetment")
             )
 

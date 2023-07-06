@@ -1,16 +1,17 @@
 import numpy as np
 
 
-class combinFunctions:
+class CombinFunctions:
+    @staticmethod
     def combine_probabilities(
-        self, prob_of_failure: dict[str, np.array], selection
+        prob_of_failure: dict[str, np.array], selection
     ) -> np.array:
 
         cnt = 0
         for mechanism in selection:
             if mechanism in prob_of_failure:
                 cnt += 1
-                p = prob_of_failure.get(mechanism, 0)
+                p = prob_of_failure[mechanism]
                 if cnt == 1:
                     product = 1 - p
                 else:
