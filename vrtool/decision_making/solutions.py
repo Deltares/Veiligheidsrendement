@@ -8,6 +8,9 @@ import seaborn as sns
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.measure_result_collection_protocol import (
+    MeasureResultCollectionProtocol,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
@@ -56,9 +59,10 @@ class Solutions:
                 dike_section, traject_info, preserve_slope=preserve_slope
             )
 
-    def solutions_to_dataframe(self, filtering=False, splitparams=False):
+    def solutions_to_dataframe(
+        self, filtering: bool = False, splitparams: bool = False
+    ):
         # write all solutions to one single dataframe:
-
         years = self.T
         cols_r = pd.MultiIndex.from_product(
             [self.mechanisms + ["Section"], years], names=["base", "year"]
@@ -82,6 +86,7 @@ class Solutions:
             _measure_type = measure.parameters["Type"]
             _normalized_measure_type = _measure_type.lower().strip()
             if isinstance(measure.measures, list):
+                # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
                 for j in range(len(measure.measures)):
                     measure_in = []
@@ -124,6 +129,7 @@ class Solutions:
                     inputs_r.append(reliability_in)
 
             elif isinstance(measure.measures, dict):
+                # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 ID = str(measure.parameters["ID"])
                 # _measure_type = measure.parameters["Type"]
                 if _normalized_measure_type == "vertical geotextile":
@@ -171,6 +177,9 @@ class Solutions:
                     for ijk in betas.loc[ij].values:
                         beta.append(ijk)
                 inputs_r.append(beta)
+
+            elif isinstance(measure.measures, MeasureResultCollectionProtocol):
+                pass
         # reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
         reliability = pd.concat((reliability, pd.DataFrame(inputs_r, columns=cols_r)))
         measure_df = pd.concat((measure_df, pd.DataFrame(inputs_m, columns=cols_m)))
