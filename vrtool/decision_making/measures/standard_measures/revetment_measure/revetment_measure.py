@@ -63,6 +63,10 @@ def bisection(f, a, b, tol):
 
 
 class RevetmentMeasure(MeasureProtocol):
+    def __init__(self):
+        self.parameters = {}
+        self.measures = None
+
     @property
     def transition_level_increase_step(self) -> float:
         return self.parameters["transition_level_increase_step"]
@@ -330,7 +334,7 @@ class RevetmentMeasure(MeasureProtocol):
             )
         )
 
-    def _get_beta_target_vector(self, min_beta: float, p_max: float):
+    def _get_beta_target_vector(self, min_beta: float, p_max: float) -> list[float]:
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
         _step = (_max_beta - min_beta) / self.n_steps_block
         return list(np.arange(min_beta, _max_beta, _step))
