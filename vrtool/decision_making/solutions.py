@@ -213,7 +213,9 @@ class Solutions:
                 (
                     _input_values,
                     _beta_values,
-                ) = measure.measures.get_measure_output_values(splitparams)
+                ) = measure.measures.get_measure_output_values(
+                    splitparams, self.mechanisms + ["Section"]
+                )
                 inputs_m.extend(_input_values)
                 inputs_r.extend(_beta_values)
 

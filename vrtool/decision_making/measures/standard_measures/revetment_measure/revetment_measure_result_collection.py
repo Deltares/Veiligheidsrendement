@@ -1,36 +1,37 @@
-from typing import Any
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
     RevetmentMeasureResult,
 )
-from itertools import groupby
-
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from numpy import concatenate
 
 
-class RevetmentMeasureBetaTargetResults(MeasureResultCollectionProtocol):
+class RevetmentMeasureSectionReliability(MeasureResultCollectionProtocol):
     beta_target: float
     transition_level: float
     section_reliability: SectionReliability
     cost: float
     revetment_measure_results: list[RevetmentMeasureResult]
     measure_id: str
+    measure_name: str
+    measure_year: int
+    # TODO: This should be an ENUM
     reinforcement_type: str
+    # TODO: This should be an ENUM
     combinable_type: str
 
     def _get_input_vector(
         self,
         split_params: bool,
-        year: int,
     ) -> list:
         if not split_params:
             return [
                 self.measure_id,
                 self.reinforcement_type,
                 self.combinable_type,
-                year,
+                self.measure_year,
                 "yes",
                 self.cost,
             ]
@@ -38,7 +39,7 @@ class RevetmentMeasureBetaTargetResults(MeasureResultCollectionProtocol):
             self.measure_id,
             self.reinforcement_type,
             self.combinable_type,
-            year,
+            self.measure_year,
             "yes",
             -999,  # dcrest column
             -999,  # dberm column
@@ -47,34 +48,42 @@ class RevetmentMeasureBetaTargetResults(MeasureResultCollectionProtocol):
             self.cost,
         ]
 
-    def get_measure_output_values(self, split_params: bool) -> tuple[list, list]:
-        _input_measure = self._get_input_vector(
-            split_params,
-            float("nan"),
+    def get_measure_output_values(
+        self, split_params: bool, beta_columns: list[str]
+    ) -> tuple[list, list]:
+        _input_measure = self._get_input_vector(split_params)
+        _output_betas = (
+            concatenate(self.section_reliability.SectionReliability.values)
+            .ravel()
+            .tolist()
         )
-        _output_betas = self.section_reliability.SectionReliability
+        _output_betas = (
+            concatenate(
+                [
+                    self.section_reliability.SectionReliability.loc[beta_column].values
+                    for beta_column in beta_columns
+                ]
+            )
+            .ravel()
+            .tolist()
+        )
         return _input_measure, _output_betas
 
 
 class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
-    measure_id: str
-    measure_name: str
-    # TODO: This should be an ENUM
-    reinforcement_type: str
-    # TODO: This should be an ENUM
-    combinable_type: str
-
     revetment_measure_results: list[RevetmentMeasureResult]
-    beta_target_results: list[RevetmentMeasureBetaTargetResults]
+    beta_target_results: list[RevetmentMeasureSectionReliability]
 
     def __init__(self) -> None:
         self.revetment_measure_results = []
         self.beta_target_results = []
 
-    def get_measure_output_values(self, split_params: bool) -> tuple[list, list]:
+    def get_measure_output_values(
+        self, split_params: bool, beta_columns: list[str]
+    ) -> tuple[list, list]:
         return zip(
             *(
-                _bt.get_measure_output_values(split_params)
+                _bt.get_measure_output_values(split_params, beta_columns)
                 for _bt in self.beta_target_results
             )
         )

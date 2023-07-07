@@ -1,6 +1,5 @@
 import copy
 from itertools import groupby
-import math
 
 from math import isnan
 import numpy as np
@@ -17,7 +16,7 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
     RevetmentMeasureResult,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
-    RevetmentMeasureBetaTargetResults,
+    RevetmentMeasureSectionReliability,
     RevetmentMeasureResultCollection,
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
@@ -26,9 +25,6 @@ from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDa
 
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
-from vrtool.flood_defence_system.mechanism_reliability_collection import (
-    MechanismReliabilityCollection,
-)
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
@@ -107,41 +103,35 @@ class RevetmentMeasure(MeasureProtocol):
         )
 
         # 3. Iterate over beta_targets - transition level - year.
-        # TODO (VRTOOL-187).
-        # This class has been introduced to deal with the output to solutions.to_dataframe.
-        # Consider removing it (or integrating it) in case SectionReliability can host these matrices.
-        _results_collection = RevetmentMeasureResultCollection()
-        _results_collection.measure_id = self.parameters["ID"]
-        _results_collection.measure_name = self.parameters["Name"]
-        _results_collection.reinforcement_type = self.parameters["Type"]
-        _results_collection.combinable_type = self.parameters["Class"]
         _intermediate_measures = self._get_intermediate_measures(
             dike_section, _revetment, _beta_targets, _transition_levels, self.config.T
         )
 
         # 5. Return Beta and Cost matrices
-        self.measures = _results_collection
+        self.measures = RevetmentMeasureResultCollection()
         for beta_target, beta_grouping in self._get_grouped_intermediate_results(
             _intermediate_measures
         ).items():
             for transition_level, transition_grouping in beta_grouping.items():
-                _beta_target_results = RevetmentMeasureBetaTargetResults()
+                _beta_target_results = RevetmentMeasureSectionReliability()
                 _beta_target_results.measure_id = self.parameters["ID"]
                 _beta_target_results.measure_name = self.parameters["Name"]
                 _beta_target_results.reinforcement_type = self.parameters["Type"]
                 _beta_target_results.combinable_type = self.parameters["Class"]
+                _beta_target_results.measure_year = self.parameters["year"]
                 _beta_target_results.beta_target = beta_target
                 _beta_target_results.transition_level = transition_level
                 _beta_target_results.revetment_measure_results = transition_grouping
-                _beta_target_results.section_reliability, _beta_target_results.cost = (
-                    self._get_configured_section_reliability_and_cost(
-                        self.parameters["Type"],
-                        self.parameters["Type"],
-                        dike_section,
-                        transition_grouping,
-                    )
+                (
+                    _beta_target_results.section_reliability,
+                    _beta_target_results.cost,
+                ) = self._get_configured_section_reliability_and_cost(
+                    self.parameters["Type"],
+                    self.parameters["Type"],
+                    dike_section,
+                    transition_grouping,
                 )
-                _results_collection.beta_target_results.append(_beta_target_results)
+                self.measures.beta_target_results.append(_beta_target_results)
 
     def _get_grouped_intermediate_results(
         self, ungrouped_measures: list[RevetmentMeasureResult]
@@ -314,6 +304,8 @@ class RevetmentMeasure(MeasureProtocol):
             )
         )
         section_reliability.failure_mechanisms = _failure_mechanism_collection
+        # TODO VRTOOL-187
+        # For now  it does not seem this is not really required
         section_reliability.calculate_section_reliability()
         return section_reliability, sum([r.cost for r in revetment_measure_results])
 
@@ -340,6 +332,6 @@ class RevetmentMeasure(MeasureProtocol):
                 mechanism_name, calc_type, self.config.t_0
             )
             mechanism_reliability.Beta = result.beta_combined
-            mechanism_reliability.Pf == beta_to_pf(result.beta_combined)
+            mechanism_reliability.Pf = beta_to_pf(result.beta_combined)
             _reliability_dict[str(result.year)] = mechanism_reliability
         return _reliability_dict
