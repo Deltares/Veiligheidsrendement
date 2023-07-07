@@ -123,7 +123,7 @@ class TargetReliabilityStrategy(StrategyBase):
             _possible_measures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
             for mechanism in traject.mechanism_names:
-                if mechanism not in _possible_measures.index:
+                if mechanism.lower().strip() == "revetment":
                     # TODO (VRTOOL-187).
                     # This could become obsolete once SectionReliability contains the data related to revetment.
                     # Consider removing if that's the case.

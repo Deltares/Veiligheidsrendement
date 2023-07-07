@@ -39,6 +39,10 @@ class JsonFileCase:
     section_length: float
 
 
+_evaluation_years = [_ev_year + 2025 for _ev_year in [0, 19, 20, 25, 50, 75, 100]]
+_transition_levels = []
+_target_betas = []
+
 _json_file_cases = [
     pytest.param(
         JsonFileCase(
@@ -50,7 +54,7 @@ _json_file_cases = [
             transition_level=3.99,
             section_length=50,
         ),
-    )
+    ),
 ]
 
 
