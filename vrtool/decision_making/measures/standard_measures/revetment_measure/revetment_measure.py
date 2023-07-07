@@ -215,10 +215,7 @@ class RevetmentMeasure(MeasureProtocol):
         config_years: list[int],
         revetment_years: list[int],
     ) -> list[RevetmentMeasureResult]:
-        _diff_revetment_years = revetment_years[0] - config_years[0]
-        _corrected_revetment_years = [
-            ry - _diff_revetment_years for ry in revetment_years
-        ]
+        _corrected_revetment_years = [ry - self.t_0 for ry in revetment_years]
 
         def _interpolate(values_to_interpolate: list[float], year: int) -> float:
             return float(
