@@ -72,37 +72,3 @@ class TestRevetmentMeasure:
         assert_array_almost_equal(
             _transition_level_vector, _expected_transition_level_vector
         )
-
-    @pytest.mark.skip(reason="Work in progress.")
-    def test_evaluate_measure(self):
-        # 1. Define test data.
-        _revetment_measure = RevetmentMeasure()
-        _revetment_measure.parameters["max_pf_factor_block"] = 1000
-        _revetment_measure.parameters["n_steps_block"] = 4
-        _revetment_measure.parameters["transition_level_increase_step"] = 0.25
-        _dike_section = DikeSection()
-        _mech_rel_coll = MechanismReliabilityCollection(
-            mechanism="Revetment",
-            computation_type="DummyComputationType",
-            computation_years=[0, 2, 4],
-            t_0=0,
-            measure_year=0,
-        )
-        _dike_section.section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
-            _mech_rel_coll
-        )
-        _mech_rel_coll.Reliability["0"].Input.input[
-            "revetment_input"
-        ] = RevetmentDataClass()
-        _mech_rel_coll.Reliability["0"].Beta = 0
-        _mech_rel_coll.Reliability["2"].Beta = 2
-        _mech_rel_coll.Reliability["4"].Beta = 4
-        _traject = DikeTrajectInfo(traject_name="DummyTraject")
-        _traject.Pmax = 3.33e-05
-        assert not _revetment_measure.measures
-
-        # 2. Run test.
-        _revetment_measure.evaluate_measure(_dike_section, _traject, None)
-
-        # 3. Verify expectations.
-        assert isinstance(_revetment_measure.measures, RevetmentMeasureResultCollection)

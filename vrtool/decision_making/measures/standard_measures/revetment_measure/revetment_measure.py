@@ -175,7 +175,7 @@ class RevetmentMeasure(MeasureProtocol):
     ):
         # 3.1. Get measure Beta and cost per year.
         _revetment_measures_collection = (
-            RevetmentMeasureDataBuilder.build_revetment_measure_data_collection(
+            RevetmentMeasureDataBuilder().build_revetment_measure_data_collection(
                 dike_section.crest_height,
                 revetment,
                 beta_target,

@@ -114,7 +114,7 @@ class RevetmentMeasureDataBuilder:
         if _top_layer_thickness <= slope_part.top_layer_thickness:
             _top_layer_thickness = slope_part.top_layer_thickness
             _recalculated_beta = float(
-                self.evaluate_stone_revetment_data(slope_part, evaluation_year)
+                self._evaluate_stone_revetment_data(slope_part, evaluation_year)
             )
             _is_reinforced = False
 
@@ -181,7 +181,7 @@ class RevetmentMeasureDataBuilder:
             previous_top_layer_type=slope_part.top_layer_type,
             top_layer_thickness=float("nan"),
             beta_block_revetment=float("nan"),
-            beta_grass_revetment=self.evaluate_grass_revetment_data(
+            beta_grass_revetment=self._evaluate_grass_revetment_data(
                 evaluation_year, revetment_data
             ),
             reinforce=True,
@@ -203,7 +203,7 @@ class RevetmentMeasureDataBuilder:
             previous_top_layer_type=slope_part.top_layer_type,
             top_layer_thickness=float("nan"),
             beta_block_revetment=float("nan"),
-            beta_grass_revetment=self.evaluate_grass_revetment_data(
+            beta_grass_revetment=self._evaluate_grass_revetment_data(
                 evaluation_year, revetment_data
             ),
             reinforce=True,
@@ -219,6 +219,9 @@ class RevetmentMeasureDataBuilder:
         evaluation_year: int,
     ) -> list[RevetmentMeasureData]:
         _evaluated_measures = []
+        if not revetment_data or not any(revetment_data.slope_parts):
+            return _evaluated_measures
+
         for _slope_part in revetment_data.slope_parts:
             _slope_relation = next(
                 (
@@ -276,7 +279,7 @@ class RevetmentMeasureDataBuilder:
                 previous_top_layer_type=float("nan"),
                 top_layer_thickness=float("nan"),
                 beta_block_revetment=float("nan"),
-                beta_grass_revetment=self.evaluate_grass_revetment_data(
+                beta_grass_revetment=self._evaluate_grass_revetment_data(
                     evaluation_year, revetment_data
                 ),
                 reinforce=True,
