@@ -218,6 +218,7 @@ class RevetmentMeasureDataBuilder:
         transition_level: float,
         evaluation_year: int,
     ) -> list[RevetmentMeasureData]:
+        self._transition_level = transition_level
         _evaluated_measures = []
         if not revetment_data or not any(revetment_data.slope_parts):
             return _evaluated_measures
@@ -268,7 +269,12 @@ class RevetmentMeasureDataBuilder:
                 )
 
         if transition_level >= max(
-            map(lambda x: x.end_part, revetment_data.slope_parts)
+            map(
+                lambda x: x.end_part,
+                filter(
+                    lambda y: isinstance(y, StoneSlopePart), revetment_data.slope_parts
+                ),
+            )
         ):
             if transition_level >= crest_height:
                 raise ValueError("Overgang >= crest height")
@@ -299,7 +305,7 @@ class RevetmentMeasureDataBuilder:
             RevetmentCalculator.evaluate_grass_relations(
                 evaluation_year,
                 revetment.grass_relations,
-                revetment.current_transition_level,
+                self._transition_level,
             )
         )
 
