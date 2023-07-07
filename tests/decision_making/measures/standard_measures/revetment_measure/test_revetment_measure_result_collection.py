@@ -66,5 +66,7 @@ class TestRevetmentMeasureResultCollection:
 
         # 3. Verify expectations.
         assert isinstance(_results, tuple)
+        assert all(isinstance(_result, list) for _result in _results)
+        assert len(_results[0]) == len(_results[1])
         assert _results[0] == _expected_measure_input_vector
         assert _results[1] == _expected_betas_vector
