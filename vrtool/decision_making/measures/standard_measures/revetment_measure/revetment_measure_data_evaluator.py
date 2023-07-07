@@ -45,12 +45,12 @@ def bisection(f, a, b, tol):
         return bisection(f, a, m, tol)
 
 
-class RevetmentMeasureDataEvaluator:
-    @staticmethod
-    def correct_revetment_measure_data(
+class RevetmentMeasureDataBuilder:
+    def _correct_revetment_measure_data(
+        self,
         revetment_measures: list[RevetmentMeasureData],
         current_transition_level: float,
-    ) -> RevetmentMeasureData:
+    ) -> None:
 
         _stone_revetments = [
             rm
@@ -77,8 +77,8 @@ class RevetmentMeasureDataEvaluator:
                 )
                 _revetment_measure.reinforce = True
 
-    @staticmethod
-    def get_design_stone(
+    def _get_design_stone(
+        self,
         calculated_beta: float,
         slope_part: SlopePartProtocol,
         stone_revetment: RelationStoneRevetment,
@@ -114,16 +114,14 @@ class RevetmentMeasureDataEvaluator:
         if _top_layer_thickness <= slope_part.top_layer_thickness:
             _top_layer_thickness = slope_part.top_layer_thickness
             _recalculated_beta = float(
-                RevetmentMeasureDataEvaluator.evaluate_stone_revetment_data(
-                    slope_part, evaluation_year
-                )
+                self.evaluate_stone_revetment_data(slope_part, evaluation_year)
             )
             _is_reinforced = False
 
         return _top_layer_thickness, _recalculated_beta, _is_reinforced
 
-    @staticmethod
-    def get_stone_revetment_measure_data(
+    def _get_stone_revetment_measure_data(
+        self,
         slope_part: SlopePartProtocol,
         stone_revetment: RelationStoneRevetment,
         target_beta: float,
@@ -133,7 +131,7 @@ class RevetmentMeasureDataEvaluator:
             _new_top_layer_thickness,
             _new_beta_block_revetment,
             _is_reinforced,
-        ) = RevetmentMeasureDataEvaluator.get_design_stone(
+        ) = self._get_design_stone(
             target_beta, slope_part, stone_revetment, evaluation_year
         )
         return RevetmentMeasureData(
@@ -148,8 +146,8 @@ class RevetmentMeasureDataEvaluator:
             tan_alpha=slope_part.tan_alpha,
         )
 
-    @staticmethod
-    def get_combined_revetment_data(
+    def _get_combined_revetment_data(
+        self,
         slope_part: SlopePartProtocol,
         revetment_data: RevetmentDataClass,
         stone_revetment: RelationStoneRevetment,
@@ -161,7 +159,7 @@ class RevetmentMeasureDataEvaluator:
             _new_top_layer_thickness,
             _new_beta_block_revetment,
             _is_reinforced,
-        ) = RevetmentMeasureDataEvaluator.get_design_stone(
+        ) = self._get_design_stone(
             target_beta, slope_part, stone_revetment, evaluation_year
         )
         _stone_rmd = RevetmentMeasureData(
@@ -183,7 +181,7 @@ class RevetmentMeasureDataEvaluator:
             previous_top_layer_type=slope_part.top_layer_type,
             top_layer_thickness=float("nan"),
             beta_block_revetment=float("nan"),
-            beta_grass_revetment=RevetmentMeasureDataEvaluator.evaluate_grass_revetment_data(
+            beta_grass_revetment=self.evaluate_grass_revetment_data(
                 evaluation_year, revetment_data
             ),
             reinforce=True,
@@ -192,8 +190,8 @@ class RevetmentMeasureDataEvaluator:
 
         return _stone_rmd, _grass_rmd
 
-    @staticmethod
-    def get_grass_revetment_data(
+    def _get_grass_revetment_data(
+        self,
         slope_part: SlopePartProtocol,
         revetment_data: RevetmentDataClass,
         evaluation_year: int,
@@ -205,15 +203,15 @@ class RevetmentMeasureDataEvaluator:
             previous_top_layer_type=slope_part.top_layer_type,
             top_layer_thickness=float("nan"),
             beta_block_revetment=float("nan"),
-            beta_grass_revetment=RevetmentMeasureDataEvaluator.evaluate_grass_revetment_data(
+            beta_grass_revetment=self.evaluate_grass_revetment_data(
                 evaluation_year, revetment_data
             ),
             reinforce=True,
             tan_alpha=slope_part.tan_alpha,
         )
 
-    @staticmethod
-    def get_revetment_measure_data_collection(
+    def build_revetment_measure_data_collection(
+        self,
         crest_height: float,
         revetment_data: RevetmentDataClass,
         target_beta: float,
@@ -232,7 +230,7 @@ class RevetmentMeasureDataEvaluator:
             )
             if _slope_part.end_part <= transition_level:
                 _evaluated_measures.append(
-                    RevetmentMeasureDataEvaluator.get_stone_revetment_measure_data(
+                    self._get_stone_revetment_measure_data(
                         _slope_part, _slope_relation, target_beta, evaluation_year
                     )
                 )
@@ -243,7 +241,7 @@ class RevetmentMeasureDataEvaluator:
                 # TODO: this is not correct.
                 _evaluated_measures.extend(
                     list(
-                        RevetmentMeasureDataEvaluator.get_combined_revetment_data(
+                        self._get_combined_revetment_data(
                             _slope_part,
                             revetment_data,
                             _slope_relation,
@@ -255,7 +253,7 @@ class RevetmentMeasureDataEvaluator:
                 )
             elif _slope_part.begin_part >= transition_level:
                 _evaluated_measures.append(
-                    RevetmentMeasureDataEvaluator.get_grass_revetment_data(
+                    self._get_grass_revetment_data(
                         _slope_part, revetment_data, evaluation_year
                     )
                 )
@@ -278,7 +276,7 @@ class RevetmentMeasureDataEvaluator:
                 previous_top_layer_type=float("nan"),
                 top_layer_thickness=float("nan"),
                 beta_block_revetment=float("nan"),
-                beta_grass_revetment=RevetmentMeasureDataEvaluator.evaluate_grass_revetment_data(
+                beta_grass_revetment=self.evaluate_grass_revetment_data(
                     evaluation_year, revetment_data
                 ),
                 reinforce=True,
@@ -287,15 +285,12 @@ class RevetmentMeasureDataEvaluator:
             _evaluated_measures.append(_extra_measure)
 
         if transition_level > revetment_data.current_transition_level:
-            RevetmentMeasureDataEvaluator.correct_revetment_measure_data(
-                _evaluated_measures, transition_level
-            )
+            self._correct_revetment_measure_data(_evaluated_measures, transition_level)
 
         return _evaluated_measures
 
-    @staticmethod
     def _evaluate_grass_revetment_data(
-        evaluation_year: int, revetment: RevetmentDataClass
+        self, evaluation_year: int, revetment: RevetmentDataClass
     ) -> float:
         return RevetmentCalculator.evaluate_grass_relations(
             evaluation_year,
@@ -303,9 +298,8 @@ class RevetmentMeasureDataEvaluator:
             revetment.current_transition_level,
         )
 
-    @staticmethod
     def _evaluate_stone_revetment_data(
-        slope_part: SlopePartProtocol, evaluation_year: int
+        self, slope_part: SlopePartProtocol, evaluation_year: int
     ) -> float:
         return RevetmentCalculator.evaluate_block_relations(
             evaluation_year,

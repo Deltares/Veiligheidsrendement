@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data_evaluator import (
-    RevetmentMeasureDataEvaluator,
+    RevetmentMeasureDataBuilder,
 )
 
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
@@ -175,7 +175,7 @@ class RevetmentMeasure(MeasureProtocol):
     ):
         # 3.1. Get measure Beta and cost per year.
         _revetment_measures_collection = (
-            RevetmentMeasureDataEvaluator.get_revetment_measure_data_collection(
+            RevetmentMeasureDataBuilder.build_revetment_measure_data_collection(
                 dike_section.crest_height,
                 revetment,
                 beta_target,
