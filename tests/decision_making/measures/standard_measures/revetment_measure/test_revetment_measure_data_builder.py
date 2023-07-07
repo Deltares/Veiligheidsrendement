@@ -4,8 +4,22 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data_evaluator import (
     RevetmentMeasureDataBuilder,
 )
+from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
+    RelationStoneRevetment,
+)
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 import pytest
+
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    GrassSlopePart,
+    StoneSlopePart,
+)
+from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
+    RelationGrassRevetment,
+)
+from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
+    AsphaltSlopePart,
+)
 
 
 class TestRevetmentMeasureDataBuilder:
@@ -38,10 +52,111 @@ class TestRevetmentMeasureDataBuilder:
     def test_build_revetment_measure_data_collection(self):
         # 1. Define test data.
         _revetment_data = RevetmentDataClass()
+        _revetment_data.slope_parts = [
+            StoneSlopePart(
+                begin_part=-0.27,
+                end_part=1.89,
+                tan_alpha=0.25064,
+                top_layer_thickness=0.2,
+                top_layer_type=26.0,
+                slope_part_relations=[
+                    RelationStoneRevetment(
+                        beta=3.6623, top_layer_thickness=0.2021, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=4.7081, top_layer_thickness=0.2469, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.3597, top_layer_thickness=0.2538, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.5732, top_layer_thickness=0.2640, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=3.6622, top_layer_thickness=0.2021, year=2100
+                    ),
+                    RelationStoneRevetment(
+                        beta=4.7081, top_layer_thickness=0.2539, year=2100
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.3597, top_layer_thickness=0.2600, year=2100
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.5732, top_layer_thickness=0.2699, year=2100
+                    ),
+                ],
+            ),
+            StoneSlopePart(
+                begin_part=1.89,
+                end_part=3.86,
+                tan_alpha=0.34377,
+                top_layer_thickness=0.275,
+                top_layer_type=26.1,
+                slope_part_relations=[
+                    RelationStoneRevetment(
+                        beta=3.6623, top_layer_thickness=0.2195, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=4.7081, top_layer_thickness=0.2976, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.3597, top_layer_thickness=0.3386, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.5732, top_layer_thickness=0.3514, year=2025
+                    ),
+                    RelationStoneRevetment(
+                        beta=3.6622, top_layer_thickness=0.2195, year=2100
+                    ),
+                    RelationStoneRevetment(
+                        beta=4.7081, top_layer_thickness=0.2976, year=2100
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.3597, top_layer_thickness=0.3526, year=2100
+                    ),
+                    RelationStoneRevetment(
+                        beta=5.5732, top_layer_thickness=0.3667, year=2100
+                    ),
+                ],
+            ),
+            AsphaltSlopePart(
+                begin_part=3.86,
+                end_part=3.98,
+                tan_alpha=0.03709,
+                top_layer_thickness=20.0,
+                top_layer_type=5.01,
+            ),
+            GrassSlopePart(
+                begin_part=3.98,
+                end_part=3.99,
+                tan_alpha=0.01138,
+                top_layer_thickness=None,
+                top_layer_type=20.0,
+            ),
+            GrassSlopePart(
+                begin_part=3.99,
+                end_part=5.87,
+                tan_alpha=0.36573,
+                top_layer_thickness=None,
+                top_layer_type=20.0,
+            ),
+        ]
+        _revetment_data.grass_relations = [
+            RelationGrassRevetment(beta=4.90, transition_level=4.0, year=2025),
+            RelationGrassRevetment(beta=4.90, transition_level=4.25, year=2025),
+            RelationGrassRevetment(beta=4.90, transition_level=4.5, year=2025),
+            RelationGrassRevetment(beta=4.94, transition_level=5.0, year=2025),
+            RelationGrassRevetment(beta=5.03, transition_level=5.5, year=2025),
+            RelationGrassRevetment(beta=4.74, transition_level=4.0, year=2100),
+            RelationGrassRevetment(beta=4.74, transition_level=4.25, year=2100),
+            RelationGrassRevetment(beta=4.75, transition_level=4.5, year=2100),
+            RelationGrassRevetment(beta=4.76, transition_level=5.0, year=2100),
+            RelationGrassRevetment(beta=4.80, transition_level=5.5, year=2100),
+        ]
         _crest_height = 4.2
         _target_beta = 0.4
         _transition_level = 2.4
-        _evaluation_year = 2023
+        _evaluation_year = 2025
         _builder = RevetmentMeasureDataBuilder()
 
         # 2. Run test.
@@ -54,7 +169,80 @@ class TestRevetmentMeasureDataBuilder:
         )
 
         # 3. Verify expectations.
+        _expected_matrix = [
+            RevetmentMeasureData(
+                begin_part=-0.27,
+                beta_block_revetment=3.6132781250000003,
+                beta_grass_revetment=float("nan"),
+                end_part=1.89,
+                previous_top_layer_type=26.0,
+                reinforce=False,
+                tan_alpha=0.25064,
+                top_layer_thickness=0.2,
+                top_layer_type=26.0,
+            ),
+            RevetmentMeasureData(
+                begin_part=1.89,
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=float("nan"),
+                end_part=2.4,
+                previous_top_layer_type=26.1,
+                reinforce=False,
+                tan_alpha=0.34377,
+                top_layer_thickness=float("nan"),
+                top_layer_type=26.1,
+            ),
+            RevetmentMeasureData(
+                begin_part=2.4,
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=4.9,
+                end_part=3.86,
+                previous_top_layer_type=26.1,
+                reinforce=True,
+                tan_alpha=0.34377,
+                top_layer_thickness=float("nan"),
+                top_layer_type=20.0,
+            ),
+            RevetmentMeasureData(
+                begin_part=3.86,
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=4.9,
+                end_part=3.98,
+                previous_top_layer_type=5.01,
+                reinforce=True,
+                tan_alpha=0.3709,
+                top_layer_thickness=float("nan"),
+                top_layer_type=20.0,
+            ),
+            RevetmentMeasureData(
+                begin_part=3.98,
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=float("nan"),
+                end_part=3.99,
+                previous_top_layer_type=20,
+                reinforce=True,
+                tan_alpha=0.01138,
+                top_layer_thickness=float("nan"),
+                top_layer_type=20.0,
+            ),
+            RevetmentMeasureData(
+                begin_part=3.99,
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=4.9,
+                end_part=5.87,
+                previous_top_layer_type=20.0,
+                reinforce=True,
+                tan_alpha=0.36573,
+                top_layer_thickness=float("nan"),
+                top_layer_type=20.0,
+            ),
+        ]
         assert isinstance(_data_collection, list)
+        assert len(_data_collection) == 6
         assert all(
-            isinstance(RevetmentMeasureData, _data) for _data in _data_collection
+            isinstance(_data, RevetmentMeasureData) for _data in _data_collection
+        )
+        assert all(
+            sorted(_expected_matrix[i].__dict__) == sorted(_data_collection[i].__dict__)
+            for i in range(0, 6)
         )

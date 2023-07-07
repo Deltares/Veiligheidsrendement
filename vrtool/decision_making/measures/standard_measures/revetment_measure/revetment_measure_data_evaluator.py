@@ -295,10 +295,12 @@ class RevetmentMeasureDataBuilder:
     def _evaluate_grass_revetment_data(
         self, evaluation_year: int, revetment: RevetmentDataClass
     ) -> float:
-        return RevetmentCalculator.evaluate_grass_relations(
-            evaluation_year,
-            revetment.grass_relations,
-            revetment.current_transition_level,
+        return float(
+            RevetmentCalculator.evaluate_grass_relations(
+                evaluation_year,
+                revetment.grass_relations,
+                revetment.current_transition_level,
+            )
         )
 
     def _evaluate_stone_revetment_data(
