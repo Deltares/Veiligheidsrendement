@@ -53,11 +53,6 @@ class RevetmentMeasureSectionReliability(MeasureResultCollectionProtocol):
     ) -> tuple[list, list]:
         _input_measure = self._get_input_vector(split_params)
         _output_betas = (
-            concatenate(self.section_reliability.SectionReliability.values)
-            .ravel()
-            .tolist()
-        )
-        _output_betas = (
             concatenate(
                 [
                     self.section_reliability.SectionReliability.loc[beta_column].values
