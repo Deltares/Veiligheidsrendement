@@ -1,8 +1,7 @@
 import copy
-import logging
 import math
 
-
+from math import isnan
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -146,6 +145,7 @@ class RevetmentMeasure(MeasureProtocol):
             _recalculated_beta = float(
                 self._evaluate_stone_revetment_data(slope_part, evaluation_year)
             )
+            _is_reinforced = False
 
         return _top_layer_thickness, _recalculated_beta, _is_reinforced
 
@@ -375,6 +375,9 @@ class RevetmentMeasure(MeasureProtocol):
         )
 
         # 3. Iterate over beta_targets - transition level - year.
+        # TODO (VRTOOL-187).
+        # This class has been introduced to deal with the output to solutions.to_dataframe.
+        # Consider removing it (or integrating it) in case SectionReliability can host these matrices.
         _results_collection = RevetmentMeasureResultCollection()
         _results_collection.measure_id = self.parameters["ID"]
         _results_collection.measure_name = self.parameters["Name"]
@@ -425,6 +428,16 @@ class RevetmentMeasure(MeasureProtocol):
 
         return _intermediate_measures
 
+    def _get_grass_revetment_beta_from_vector(
+        self, grass_revetment_betas: list[float]
+    ) -> float:
+        # The `grass_revetment_betas` contain a list where only the last values are valid.
+        # At the same time, these last values are always the same.
+        def filter_valid_revetment(revetment_beta: float) -> bool:
+            return not isnan(revetment_beta)
+
+        return float(list(filter(filter_valid_revetment, grass_revetment_betas))[0])
+
     def _get_measure_per_year(
         self,
         dike_section: DikeSection,
@@ -447,8 +460,10 @@ class RevetmentMeasure(MeasureProtocol):
                 for rm in _revetment_measures_collection
             )
         )
+        # Get the simple grass beta.
+        _grass_beta = self._get_grass_revetment_beta_from_vector(_grass_beta_list)
         _combined_beta = RevetmentCalculator.calculate_combined_beta(
-            _stone_beta_list, _grass_beta_list[0]
+            _stone_beta_list, _grass_beta
         )
         _cost = sum(
             map(

@@ -13,6 +13,7 @@ class RevetmentMeasureResult:
     beta_combined: float
     transition_level: float
     cost: float
+    # TODO (VRTOOL-187): This field might not be required and can be removed if so.
     revetment_measures: Union[
         list[RevetmentMeasureData], list[list[RevetmentMeasureData]]
     ]

@@ -34,6 +34,8 @@ class RevetmentMeasureData:
         Returns:
             float: Total of related costs (without a specified unit, assume Euros).
         """
+        if not self.reinforce:
+            return 0.0
         _storage_factor = 2.509
 
         # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
