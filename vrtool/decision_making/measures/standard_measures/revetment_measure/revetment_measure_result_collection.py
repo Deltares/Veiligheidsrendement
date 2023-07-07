@@ -7,6 +7,54 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 )
 from itertools import groupby
 
+from vrtool.flood_defence_system.section_reliability import SectionReliability
+
+
+class RevetmentMeasureBetaTargetResults(MeasureResultCollectionProtocol):
+    beta_target: float
+    transition_level: float
+    section_reliability: SectionReliability
+    cost: float
+    revetment_measure_results: list[RevetmentMeasureResult]
+    measure_id: str
+    reinforcement_type: str
+    combinable_type: str
+
+    def _get_input_vector(
+        self,
+        split_params: bool,
+        year: int,
+    ) -> list:
+        if not split_params:
+            return [
+                self.measure_id,
+                self.reinforcement_type,
+                self.combinable_type,
+                year,
+                "yes",
+                self.cost,
+            ]
+        return [
+            self.measure_id,
+            self.reinforcement_type,
+            self.combinable_type,
+            year,
+            "yes",
+            -999,  # dcrest column
+            -999,  # dberm column
+            self.beta_target,
+            self.transition_level,
+            self.cost,
+        ]
+
+    def get_measure_output_values(self, split_params: bool) -> tuple[list, list]:
+        _input_measure = self._get_input_vector(
+            split_params,
+            float("nan"),
+        )
+        _output_betas = self.section_reliability.SectionReliability
+        return _input_measure, _output_betas
+
 
 class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
     measure_id: str
@@ -17,70 +65,16 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
     combinable_type: str
 
     revetment_measure_results: list[RevetmentMeasureResult]
+    beta_target_results: list[RevetmentMeasureBetaTargetResults]
 
-    def _get_results_as_dict(self) -> dict:
-        def get_sorted(
-            measures: list[RevetmentMeasureResult], lambda_expression
-        ) -> dict:
-            _sorted_list = sorted(measures, key=lambda_expression)
-            return groupby(_sorted_list, key=lambda_expression)
-
-        _results_dict = {}
-        for _beta_key, _beta_group in get_sorted(
-            self.revetment_measure_results, lambda x: x.beta_target
-        ):
-            _results_dict[_beta_key] = {}
-            for _transition_key, _transition_group in get_sorted(
-                _beta_group, lambda x: x.transition_level
-            ):
-                _results_dict[_beta_key][_transition_key] = list(_transition_group)
-        return _results_dict
-
-    def _get_input_vector(
-        self,
-        split_params: bool,
-        year: int,
-        cost: float,
-        beta_target: float,
-        transition_level: float,
-    ) -> list:
-        if not split_params:
-            return [
-                self.measure_id,
-                self.reinforcement_type,
-                self.combinable_type,
-                year,
-                "yes",
-                cost,
-            ]
-        return [
-            self.measure_id,
-            self.reinforcement_type,
-            self.combinable_type,
-            year,
-            "yes",
-            -999,  # dcrest column
-            -999,  # dberm column
-            beta_target,
-            transition_level,
-            cost,
-        ]
+    def __init__(self) -> None:
+        self.revetment_measure_results = []
+        self.beta_target_results = []
 
     def get_measure_output_values(self, split_params: bool) -> tuple[list, list]:
-        _input_measure = []
-        _output_betas = []
-        _results_dict = self._get_results_as_dict()
-        for _beta_target, _beta_group in _results_dict.items():
-            for _transition_level, _transition_group in _beta_group.items():
-                _ordered_by_year = sorted(_transition_group, key=lambda x: x.year)
-                _input_measure.append(
-                    self._get_input_vector(
-                        split_params,
-                        _ordered_by_year[0].year,
-                        _ordered_by_year[0].cost,
-                        _beta_target,
-                        _transition_level,
-                    )
-                )
-                _output_betas.append([_gtl.beta_combined for _gtl in _ordered_by_year])
-        return _input_measure, _output_betas
+        return zip(
+            *(
+                _bt.get_measure_output_values(split_params)
+                for _bt in self.beta_target_results
+            )
+        )

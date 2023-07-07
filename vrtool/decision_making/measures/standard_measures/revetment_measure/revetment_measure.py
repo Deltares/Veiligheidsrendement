@@ -1,4 +1,5 @@
 import copy
+from itertools import groupby
 import math
 
 from math import isnan
@@ -6,6 +7,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data_evaluator import (
     RevetmentMeasureDataBuilder,
@@ -15,17 +17,20 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
     RevetmentMeasureResult,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
+    RevetmentMeasureBetaTargetResults,
     RevetmentMeasureResultCollection,
 )
+from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class RevetmentMeasure(MeasureProtocol):
@@ -110,15 +115,53 @@ class RevetmentMeasure(MeasureProtocol):
         _results_collection.measure_name = self.parameters["Name"]
         _results_collection.reinforcement_type = self.parameters["Type"]
         _results_collection.combinable_type = self.parameters["Class"]
-        _results_collection.revetment_measure_results = self._get_intermediate_measures(
+        _intermediate_measures = self._get_intermediate_measures(
             dike_section, _revetment, _beta_targets, _transition_levels, self.config.T
         )
 
         # 5. Return Beta and Cost matrices
         self.measures = _results_collection
-        # self._get_configured_section_reliability(
-        #     dike_section, traject_info, _results_collection
-        # )
+        for beta_target, beta_grouping in self._get_grouped_intermediate_results(
+            _intermediate_measures
+        ).items():
+            for transition_level, transition_grouping in beta_grouping.items():
+                _beta_target_results = RevetmentMeasureBetaTargetResults()
+                _beta_target_results.measure_id = self.parameters["ID"]
+                _beta_target_results.measure_name = self.parameters["Name"]
+                _beta_target_results.reinforcement_type = self.parameters["Type"]
+                _beta_target_results.combinable_type = self.parameters["Class"]
+                _beta_target_results.beta_target = beta_target
+                _beta_target_results.transition_level = transition_level
+                _beta_target_results.revetment_measure_results = transition_grouping
+                _beta_target_results.section_reliability, _beta_target_results.cost = (
+                    self._get_configured_section_reliability_and_cost(
+                        self.parameters["Type"],
+                        self.parameters["Type"],
+                        dike_section,
+                        transition_grouping,
+                    )
+                )
+                _results_collection.beta_target_results.append(_beta_target_results)
+
+    def _get_grouped_intermediate_results(
+        self, ungrouped_measures: list[RevetmentMeasureResult]
+    ) -> dict:
+        def get_sorted(
+            measures: list[RevetmentMeasureResult], lambda_expression
+        ) -> dict:
+            _sorted_list = sorted(measures, key=lambda_expression)
+            return groupby(_sorted_list, key=lambda_expression)
+
+        _results_dict = {}
+        for _beta_key, _beta_group in get_sorted(
+            ungrouped_measures, lambda x: x.beta_target
+        ):
+            _results_dict[_beta_key] = {}
+            for _transition_key, _transition_group in get_sorted(
+                _beta_group, lambda x: x.transition_level
+            ):
+                _results_dict[_beta_key][_transition_key] = list(_transition_group)
+        return _results_dict
 
     def _get_intermediate_measures(
         self,
@@ -248,65 +291,55 @@ class RevetmentMeasure(MeasureProtocol):
             _interpolated_measures.append(_interpolated_measure)
         return _interpolated_measures
 
-    def _get_configured_section_reliability(
-        self,
-        dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-        results_collection: RevetmentMeasureResultCollection,
-    ) -> SectionReliability:
-        section_reliability = SectionReliability()
-
-        mechanism_names = (
-            dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
-        )
-        for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
-            mechanism_reliability_collection = (
-                self._get_configured_mechanism_reliability_collection(
-                    mechanism_name,
-                    calc_type,
-                    dike_section,
-                    traject_info,
-                    results_collection,
-                )
-            )
-            section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
-                mechanism_reliability_collection
-            )
-
-        return section_reliability
-
-    def _get_configured_mechanism_reliability_collection(
+    def _get_configured_section_reliability_and_cost(
         self,
         mechanism_name: str,
         calc_type: str,
         dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-        results_collection: RevetmentMeasureResultCollection,
-    ) -> MechanismReliabilityCollection:
-        mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism_name, calc_type, self.config.T, self.config.t_0, 0
-        )
+        revetment_measure_results: list[RevetmentMeasureResult],
+    ) -> tuple[SectionReliability, float]:
 
-        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
-                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism_name
-                )
-                .Reliability[year_to_calculate]
-                .Input
+        section_reliability = SectionReliability()
+        _failure_mechanism_collection = copy.deepcopy(
+            dike_section.section_reliability.failure_mechanisms
+        )
+        _assessment_revetment = (
+            _failure_mechanism_collection.get_mechanism_reliability_collection(
+                mechanism_name
             )
-
-            mechanism_reliability = mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ]
-            # mechanism_reliability["revetment_input"] =
-
-        mechanism_reliability_collection.generate_LCR_profile(
-            dike_section.section_reliability.load,
-            traject_info=traject_info,
         )
+        _assessment_revetment.Reliability = (
+            self._get_mechanism_reliabilty_for_beta_transition(
+                mechanism_name, calc_type, revetment_measure_results
+            )
+        )
+        section_reliability.failure_mechanisms = _failure_mechanism_collection
+        section_reliability.calculate_section_reliability()
+        return section_reliability, sum([r.cost for r in revetment_measure_results])
 
-        return mechanism_reliability_collection
+    def _get_mechanism_reliabilty_for_beta_transition(
+        self,
+        mechanism_name: str,
+        calc_type: str,
+        revetment_measure_results: list[RevetmentMeasureResult],
+    ) -> dict[str, MechanismReliability]:
+        class RevetmentMeasureMechanismReliability(MechanismReliability):
+            def calculate_reliability(
+                self,
+                strength: MechanismInput,
+                load: LoadInput,
+                mechanism: str,
+                year: float,
+                traject_info: DikeTrajectInfo,
+            ):
+                pass
+
+        _reliability_dict = {}
+        for result in revetment_measure_results:
+            mechanism_reliability = RevetmentMeasureMechanismReliability(
+                mechanism_name, calc_type, self.config.t_0
+            )
+            mechanism_reliability.Beta = result.beta_combined
+            mechanism_reliability.Pf == beta_to_pf(result.beta_combined)
+            _reliability_dict[str(result.year)] = mechanism_reliability
+        return _reliability_dict
