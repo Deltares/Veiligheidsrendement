@@ -207,14 +207,12 @@ class RevetmentMeasure(MeasureProtocol):
         measure_year: int,
     ):
         # 3.1. Get measure Beta and cost per year.
-        _revetment_measures_collection = (
-            RevetmentMeasureDataBuilder().build_revetment_measure_data_collection(
-                dike_section.crest_height,
-                revetment,
-                beta_target,
-                transition_level,
-                measure_year,
-            )
+        _revetment_measures_collection = RevetmentMeasureDataBuilder().build(
+            dike_section.crest_height,
+            revetment,
+            beta_target,
+            transition_level,
+            measure_year,
         )
         _stone_beta_list, _grass_beta_list = zip(
             *(
@@ -305,7 +303,7 @@ class RevetmentMeasure(MeasureProtocol):
         )
         section_reliability.failure_mechanisms = _failure_mechanism_collection
         # TODO (VRTOOL-187)
-        # For now  it does not seem this is not really required
+        # Is this really required for revetments? Should we not better have our own RevetmentSectionReliability?
         section_reliability.calculate_section_reliability()
         return section_reliability, sum([r.cost for r in revetment_measure_results])
 

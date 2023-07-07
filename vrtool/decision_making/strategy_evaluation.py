@@ -104,18 +104,23 @@ def make_traject_df(traject: DikeTraject, cols):
     )
     _traject_probaility = pd.DataFrame(columns=cols, index=df_index)
 
-    for i in traject.sections:
+    for _section in traject.sections:
         for _mechanism_name in mechanisms:
-            if _mechanism_name not in _traject_probaility.index:
+            if (
+                _mechanism_name
+                not in _section.section_reliability.SectionReliability.index
+            ):
                 # TODO (VRTOOL-187).
-                # This could become obsolete once SectionReliability contains the data related to revetment.
-                # Consider removing if that's the case.
-                logging.error(
-                    "No evaluation could be done for '{}'".format(_mechanism_name)
+                # Should we inject nans?
+                # Not all sections include revetment(s), therefore it's skipped.
+                logging.warning(
+                    "Section '{}' does not include data for mechanism '{}'.".format(
+                        _section.name, _mechanism_name
+                    )
                 )
                 continue
-            _traject_probaility.loc[(i.name, _mechanism_name)] = list(
-                i.section_reliability.SectionReliability.loc[_mechanism_name]
+            _traject_probaility.loc[(_section.name, _mechanism_name)] = list(
+                _section.section_reliability.SectionReliability.loc[_mechanism_name]
             )
 
     return _traject_probaility

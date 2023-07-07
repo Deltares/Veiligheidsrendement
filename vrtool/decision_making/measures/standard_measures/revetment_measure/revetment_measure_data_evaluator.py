@@ -46,6 +46,94 @@ def bisection(f, a, b, tol):
 
 
 class RevetmentMeasureDataBuilder:
+    def build(
+        self,
+        crest_height: float,
+        revetment_data: RevetmentDataClass,
+        target_beta: float,
+        transition_level: float,
+        evaluation_year: int,
+    ) -> list[RevetmentMeasureData]:
+        self._transition_level = transition_level
+        _evaluated_measures = []
+        if not revetment_data or not any(revetment_data.slope_parts):
+            return _evaluated_measures
+
+        for _slope_part in revetment_data.slope_parts:
+            _slope_relation = next(
+                (
+                    sr
+                    for sr in _slope_part.slope_part_relations
+                    if sr.year == evaluation_year
+                ),
+                None,
+            )
+            if _slope_part.end_part <= transition_level:
+                _evaluated_measures.append(
+                    self._get_stone_revetment_measure_data(
+                        _slope_part, _slope_relation, target_beta, evaluation_year
+                    )
+                )
+            elif (
+                _slope_part.begin_part < transition_level
+                and _slope_part.end_part > transition_level
+            ):
+                # TODO: this is not correct.
+                _evaluated_measures.extend(
+                    list(
+                        self._get_combined_revetment_data(
+                            _slope_part,
+                            revetment_data,
+                            _slope_relation,
+                            transition_level,
+                            evaluation_year,
+                            target_beta,
+                        )
+                    )
+                )
+            elif _slope_part.begin_part >= transition_level:
+                _evaluated_measures.append(
+                    self._get_grass_revetment_data(
+                        _slope_part, revetment_data, evaluation_year
+                    )
+                )
+            else:
+                raise ValueError(
+                    "Can't evaluate revetment measure. Transition level: {}, begin part: {}, end_part: {}".format(
+                        transition_level, _slope_part.begin_part, _slope_part.end_part
+                    )
+                )
+
+        if transition_level >= max(
+            map(
+                lambda x: x.end_part,
+                filter(
+                    lambda y: isinstance(y, StoneSlopePart), revetment_data.slope_parts
+                ),
+            )
+        ):
+            if transition_level >= crest_height:
+                raise ValueError("Overgang >= crest height")
+            _extra_measure = RevetmentMeasureData(
+                begin_part=transition_level,
+                end_part=crest_height,
+                top_layer_type=20.0,
+                previous_top_layer_type=float("nan"),
+                top_layer_thickness=float("nan"),
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=self._evaluate_grass_revetment_data(
+                    evaluation_year, revetment_data
+                ),
+                reinforce=True,
+                tan_alpha=revetment_data.slope_parts[-1].end_part,
+            )
+            _evaluated_measures.append(_extra_measure)
+
+        if transition_level > revetment_data.current_transition_level:
+            self._correct_revetment_measure_data(_evaluated_measures, transition_level)
+
+        return _evaluated_measures
+
     def _correct_revetment_measure_data(
         self,
         revetment_measures: list[RevetmentMeasureData],
@@ -209,94 +297,6 @@ class RevetmentMeasureDataBuilder:
             reinforce=True,
             tan_alpha=slope_part.tan_alpha,
         )
-
-    def build_revetment_measure_data_collection(
-        self,
-        crest_height: float,
-        revetment_data: RevetmentDataClass,
-        target_beta: float,
-        transition_level: float,
-        evaluation_year: int,
-    ) -> list[RevetmentMeasureData]:
-        self._transition_level = transition_level
-        _evaluated_measures = []
-        if not revetment_data or not any(revetment_data.slope_parts):
-            return _evaluated_measures
-
-        for _slope_part in revetment_data.slope_parts:
-            _slope_relation = next(
-                (
-                    sr
-                    for sr in _slope_part.slope_part_relations
-                    if sr.year == evaluation_year
-                ),
-                None,
-            )
-            if _slope_part.end_part <= transition_level:
-                _evaluated_measures.append(
-                    self._get_stone_revetment_measure_data(
-                        _slope_part, _slope_relation, target_beta, evaluation_year
-                    )
-                )
-            elif (
-                _slope_part.begin_part < transition_level
-                and _slope_part.end_part > transition_level
-            ):
-                # TODO: this is not correct.
-                _evaluated_measures.extend(
-                    list(
-                        self._get_combined_revetment_data(
-                            _slope_part,
-                            revetment_data,
-                            _slope_relation,
-                            transition_level,
-                            evaluation_year,
-                            target_beta,
-                        )
-                    )
-                )
-            elif _slope_part.begin_part >= transition_level:
-                _evaluated_measures.append(
-                    self._get_grass_revetment_data(
-                        _slope_part, revetment_data, evaluation_year
-                    )
-                )
-            else:
-                raise ValueError(
-                    "Can't evaluate revetment measure. Transition level: {}, begin part: {}, end_part: {}".format(
-                        transition_level, _slope_part.begin_part, _slope_part.end_part
-                    )
-                )
-
-        if transition_level >= max(
-            map(
-                lambda x: x.end_part,
-                filter(
-                    lambda y: isinstance(y, StoneSlopePart), revetment_data.slope_parts
-                ),
-            )
-        ):
-            if transition_level >= crest_height:
-                raise ValueError("Overgang >= crest height")
-            _extra_measure = RevetmentMeasureData(
-                begin_part=transition_level,
-                end_part=crest_height,
-                top_layer_type=20.0,
-                previous_top_layer_type=float("nan"),
-                top_layer_thickness=float("nan"),
-                beta_block_revetment=float("nan"),
-                beta_grass_revetment=self._evaluate_grass_revetment_data(
-                    evaluation_year, revetment_data
-                ),
-                reinforce=True,
-                tan_alpha=revetment_data.slope_parts[-1].end_part,
-            )
-            _evaluated_measures.append(_extra_measure)
-
-        if transition_level > revetment_data.current_transition_level:
-            self._correct_revetment_measure_data(_evaluated_measures, transition_level)
-
-        return _evaluated_measures
 
     def _evaluate_grass_revetment_data(
         self, evaluation_year: int, revetment: RevetmentDataClass

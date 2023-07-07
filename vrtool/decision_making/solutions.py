@@ -131,8 +131,8 @@ class Solutions:
                     for ij in self.mechanisms + ["Section"]:
                         if ij not in betas.index:
                             # TODO (VRTOOL-187).
-                            # This could become obsolete once SectionReliability contains the data related to revetment.
-                            # Consider removing if that's the case.
+                            # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
+                            # This could happen in the future for other 'new' mechanisms.
                             reliability_in.extend([-999] * len(self.config.T))
                             logging.warning(
                                 "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
@@ -196,8 +196,8 @@ class Solutions:
                 for ij in self.mechanisms + ["Section"]:
                     if ij not in betas.index:
                         # TODO (VRTOOL-187).
-                        # This could become obsolete once SectionReliability contains the data related to revetment.
-                        # Consider removing if that's the case.
+                        # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
+                        # This could happen in the future for other 'new' mechanisms.
                         beta.extend([-999] * len(self.config.T))
                         logging.warning(
                             "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(

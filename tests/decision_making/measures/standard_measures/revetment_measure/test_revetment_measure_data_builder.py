@@ -1,3 +1,8 @@
+from dataclasses import dataclass
+import csv
+from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
+    JsonFilesToRevetmentDataClassReader,
+)
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
@@ -20,6 +25,33 @@ from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
 from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
     AsphaltSlopePart,
 )
+from tests import test_results
+
+
+@dataclass
+class JsonFileCase:
+    evaluation_year: int
+    given_years: list[int]  # Options are 2025, 2100 (or both)
+    section_id: int
+    crest_height: float
+    target_beta: float
+    transition_level: float
+    section_length: float
+
+
+_json_file_cases = [
+    pytest.param(
+        JsonFileCase(
+            evaluation_year=2100,
+            given_years=[2025, 2100],
+            section_id=0,
+            crest_height=5.87,
+            target_beta=3.4029328353853043,
+            transition_level=3.99,
+            section_length=50,
+        ),
+    )
+]
 
 
 class TestRevetmentMeasureDataBuilder:
@@ -37,7 +69,7 @@ class TestRevetmentMeasureDataBuilder:
         _builder = RevetmentMeasureDataBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.build_revetment_measure_data_collection(
+        _data_collection = _builder.build(
             _crest_height,
             revetment_data,
             _target_beta,
@@ -160,7 +192,7 @@ class TestRevetmentMeasureDataBuilder:
         _builder = RevetmentMeasureDataBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.build_revetment_measure_data_collection(
+        _data_collection = _builder.build(
             _crest_height,
             _revetment_data,
             _target_beta,
@@ -246,3 +278,62 @@ class TestRevetmentMeasureDataBuilder:
             sorted(_expected_matrix[i].__dict__) == sorted(_data_collection[i].__dict__)
             for i in range(0, 6)
         )
+
+    @pytest.mark.parametrize(
+        "json_file_case",
+        _json_file_cases,
+    )
+    def test_build_revetment_measure_data_collection_from_json_files(
+        self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
+    ):
+        # Note: This test is meant so that results can be verified in TC.
+        # 1. Define test data.
+        _builder = RevetmentMeasureDataBuilder()
+        _revetment_data = JsonFilesToRevetmentDataClassReader().get_revetment_input(
+            json_file_case.given_years, json_file_case.section_id
+        )
+
+        # 2. Run test.
+        _results = _builder.build(
+            json_file_case.crest_height,
+            _revetment_data,
+            json_file_case.target_beta,
+            json_file_case.transition_level,
+            json_file_case.evaluation_year,
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_results, list)
+        assert all(isinstance(r, RevetmentMeasureData) for r in _results)
+
+        # 4. Output results.
+        _output_file_dir = request.node.name.split("[")[0].strip().lower()
+        _output_file_name = (
+            request.node.name.split("[")[-1]
+            .split("]")[0]
+            .strip()
+            .lower()
+            .replace(" ", "_")
+        )
+
+        _output_file = test_results.joinpath(_output_file_dir).joinpath(
+            _output_file_name + ".csv"
+        )
+        _output_file.parent.mkdir(parents=True, exist_ok=True)
+        _output_file.unlink(missing_ok=True)
+
+        def measure_to_dict(measure: RevetmentMeasureData) -> dict:
+            measure.cost = measure.get_total_cost(json_file_case.section_length)
+            return measure.__dict__
+
+        _measures_as_dicts = list(map(measure_to_dict, _results))
+        _header = list(_measures_as_dicts[0].keys())
+        with open(
+            _output_file, "w", newline=""
+        ) as f:  # You will need 'wb' mode in Python 2.x
+            w = csv.DictWriter(f, _header)
+            w.writeheader()
+            w.writerows(_measures_as_dicts)
+        assert _output_file.exists()
+        # Check all results were written + 1 for the header.
+        assert len(_output_file.read_text().splitlines()) == len(_results) + 1

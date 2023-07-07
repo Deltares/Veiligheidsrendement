@@ -18,13 +18,13 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 )
 
 
-class TestRevetmentCalculatorAssessment:
+class JsonFilesToRevetmentDataClassReader:
     def _read_JSON(self, file_name):
         with open(file_name, "r") as openfile:
             json_object = json.load(openfile)
         return json_object
 
-    def searchSlopePart(
+    def _search_slope_part(
         self, slope_parts: list[SlopePartProtocol], slope_part: SlopePartProtocol
     ) -> tuple[bool, SlopePartProtocol]:
         for part in slope_parts:
@@ -32,57 +32,62 @@ class TestRevetmentCalculatorAssessment:
                 return [True, part]
         return [False, slope_part]
 
-    def _convertJsonObjects(
-        self, dataZST, dataGEBU, revetment: RevetmentDataClass
+    def _convert_json_objects(
+        self,
+        stone_revetment_data: dict,
+        grass_revetment_data: dict,
+        revetment: RevetmentDataClass,
     ) -> RevetmentDataClass:
-        n_sections = dataZST["aantal deelvakken"]
+        n_sections = stone_revetment_data["aantal deelvakken"]
         for _n_section in range(n_sections):
             _slope_part = SlopePartBuilder.build(
-                top_layer_type=dataZST["toplaagtype"][_n_section],
-                begin_part=dataZST["Zo"][_n_section],
-                end_part=dataZST["Zb"][_n_section],
-                tan_alpha=dataZST["tana"][_n_section],
-                top_layer_thickness=dataZST["D huidig"][_n_section],
+                top_layer_type=stone_revetment_data["toplaagtype"][_n_section],
+                begin_part=stone_revetment_data["Zo"][_n_section],
+                end_part=stone_revetment_data["Zb"][_n_section],
+                tan_alpha=stone_revetment_data["tana"][_n_section],
+                top_layer_thickness=stone_revetment_data["D huidig"][_n_section],
             )
 
-            [exists, slope] = self.searchSlopePart(revetment.slope_parts, _slope_part)
+            [exists, slope] = self._search_slope_part(
+                revetment.slope_parts, _slope_part
+            )
             if not exists:
                 revetment.slope_parts.append(_slope_part)
 
             if isinstance(slope, StoneSlopePart):
                 key = f"deelvak {_n_section}"
-                nBeta = len(dataZST[key]["betaFalen"])
+                nBeta = len(stone_revetment_data[key]["betaFalen"])
                 for m in range(nBeta):
                     rel = RelationStoneRevetment(
-                        dataZST["zichtjaar"],
-                        dataZST[key]["D_opt"][m],
-                        dataZST[key]["betaFalen"][m],
+                        stone_revetment_data["zichtjaar"],
+                        stone_revetment_data[key]["D_opt"][m],
+                        stone_revetment_data[key]["betaFalen"][m],
                     )
                     slope.slope_part_relations.append(rel)
 
-        nGrass = len(dataGEBU["grasbekleding_begin"])
+        nGrass = len(grass_revetment_data["grasbekleding_begin"])
         for _n_section in range(nGrass):
             rel = RelationGrassRevetment(
-                dataGEBU["zichtjaar"],
-                dataGEBU["grasbekleding_begin"][_n_section],
-                dataGEBU["betaFalen"][_n_section],
+                grass_revetment_data["zichtjaar"],
+                grass_revetment_data["grasbekleding_begin"][_n_section],
+                grass_revetment_data["betaFalen"][_n_section],
             )
             revetment.grass_relations.append(rel)
 
         return revetment
 
-    def _get_revetment_input(
-        self, years: list[int], section: int
-    ) -> RevetmentDataClass:
+    def get_revetment_input(self, years: list[int], section: int) -> RevetmentDataClass:
         revetment = RevetmentDataClass()
         for year in years:
             gebuFile = f"revetment/GEBU_{section}_{year}.json"
             dataGEBU = self._read_JSON(test_data / gebuFile)
             zstFile = f"revetment/ZST_{section}_{year}.json"
             dataZST = self._read_JSON(test_data / zstFile)
-            revetment = self._convertJsonObjects(dataZST, dataGEBU, revetment)
+            revetment = self._convert_json_objects(dataZST, dataGEBU, revetment)
         return revetment
 
+
+class TestRevetmentCalculatorAssessment:
     @pytest.mark.parametrize(
         "assessment_year, given_years, section_id, ref_values",
         [
@@ -116,7 +121,9 @@ class TestRevetmentCalculatorAssessment:
         section_id: int,
         ref_values: list[float],
     ):
-        revetment = self._get_revetment_input(given_years, section_id)
+        revetment = JsonFilesToRevetmentDataClassReader().get_revetment_input(
+            given_years, section_id
+        )
 
         calc = RevetmentCalculator(revetment, 0)
         [beta, pf] = calc.calculate(assessment_year)
