@@ -304,7 +304,7 @@ class RevetmentMeasure(MeasureProtocol):
             )
         )
         section_reliability.failure_mechanisms = _failure_mechanism_collection
-        # TODO VRTOOL-187
+        # TODO (VRTOOL-187)
         # For now  it does not seem this is not really required
         section_reliability.calculate_section_reliability()
         return section_reliability, sum([r.cost for r in revetment_measure_results])
@@ -324,6 +324,8 @@ class RevetmentMeasure(MeasureProtocol):
                 year: float,
                 traject_info: DikeTrajectInfo,
             ):
+                # TODO (VRTOOL-187).
+                # This is done to prevent a Revetment mechanism to be calculated because we already know its beta combined.
                 pass
 
         _reliability_dict = {}
