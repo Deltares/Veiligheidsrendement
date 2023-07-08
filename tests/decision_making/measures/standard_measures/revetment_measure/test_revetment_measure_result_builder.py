@@ -1,10 +1,14 @@
 from dataclasses import dataclass
 import csv
+from typing import Callable
 from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
     JsonFilesToRevetmentDataClassReader,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
+)
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
+    RevetmentMeasureResult,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
     RevetmentMeasureResultBuilder,
@@ -58,7 +62,7 @@ _json_file_cases = [
 ]
 
 
-class TestRevetmentMeasureDataBuilder:
+class TestRevetmentMeasureResultBuilder:
     @pytest.mark.parametrize(
         "revetment_data", [pytest.param(None), pytest.param(RevetmentDataClass())]
     )
@@ -283,12 +287,42 @@ class TestRevetmentMeasureDataBuilder:
             for i in range(0, 6)
         )
 
+    @pytest.fixture
+    def output_results_to_csv(self, request: pytest.FixtureRequest):
+        _output_file_dir = request.node.name.split("[")[0].strip().lower()
+        _output_file_name = (
+            request.node.name.split("[")[-1]
+            .split("]")[0]
+            .strip()
+            .lower()
+            .replace(" ", "_")
+        )
+        _output_file = test_results.joinpath(_output_file_dir).joinpath(
+            _output_file_name + ".csv"
+        )
+        _output_file.parent.mkdir(parents=True, exist_ok=True)
+        _output_file.unlink(missing_ok=True)
+
+        def output_results(results_dict: list[dict]):
+            _header = list(results_dict[0].keys())
+            with open(
+                _output_file, "w", newline=""
+            ) as f:  # You will need 'wb' mode in Python 2.x
+                w = csv.DictWriter(f, _header)
+                w.writeheader()
+                w.writerows(results_dict)
+            assert _output_file.exists()
+            # Check all results were written + 1 for the header.
+            assert len(_output_file.read_text().splitlines()) == len(results_dict) + 1
+
+        yield output_results
+
     @pytest.mark.parametrize(
         "json_file_case",
         _json_file_cases,
     )
     def test_get_revetment_measures_collection_from_json_files(
-        self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
+        self, json_file_case: JsonFileCase, output_results_to_csv: Callable
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
@@ -311,43 +345,21 @@ class TestRevetmentMeasureDataBuilder:
         assert all(isinstance(r, RevetmentMeasureData) for r in _results)
 
         # 4. Output results.
-        _output_file_dir = request.node.name.split("[")[0].strip().lower()
-        _output_file_name = (
-            request.node.name.split("[")[-1]
-            .split("]")[0]
-            .strip()
-            .lower()
-            .replace(" ", "_")
-        )
-
-        _output_file = test_results.joinpath(_output_file_dir).joinpath(
-            _output_file_name + ".csv"
-        )
-        _output_file.parent.mkdir(parents=True, exist_ok=True)
-        _output_file.unlink(missing_ok=True)
 
         def measure_to_dict(measure: RevetmentMeasureData) -> dict:
             measure.cost = measure.get_total_cost(json_file_case.section_length)
             return measure.__dict__
 
-        _measures_as_dicts = list(map(measure_to_dict, _results))
-        _header = list(_measures_as_dicts[0].keys())
-        with open(
-            _output_file, "w", newline=""
-        ) as f:  # You will need 'wb' mode in Python 2.x
-            w = csv.DictWriter(f, _header)
-            w.writeheader()
-            w.writerows(_measures_as_dicts)
-        assert _output_file.exists()
-        # Check all results were written + 1 for the header.
-        assert len(_output_file.read_text().splitlines()) == len(_results) + 1
+        output_results_to_csv(list(map(measure_to_dict, _results)))
 
     @pytest.mark.parametrize(
         "json_file_case",
         _json_file_cases,
     )
     def test_build_from_json_files(
-        self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
+        self,
+        json_file_case: JsonFileCase,
+        output_results_to_csv: Callable,
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
@@ -357,8 +369,9 @@ class TestRevetmentMeasureDataBuilder:
         )
 
         # 2. Run test.
-        _results = _builder.get_revetment_measures_collection(
+        _result = _builder.build(
             json_file_case.crest_height,
+            json_file_case.section_length,
             _revetment_data,
             json_file_case.target_beta,
             json_file_case.transition_level,
@@ -366,37 +379,7 @@ class TestRevetmentMeasureDataBuilder:
         )
 
         # 3. Verify expectations.
-        assert isinstance(_results, list)
-        assert all(isinstance(r, RevetmentMeasureData) for r in _results)
+        assert isinstance(_result, RevetmentMeasureResult)
 
         # 4. Output results.
-        _output_file_dir = request.node.name.split("[")[0].strip().lower()
-        _output_file_name = (
-            request.node.name.split("[")[-1]
-            .split("]")[0]
-            .strip()
-            .lower()
-            .replace(" ", "_")
-        )
-
-        _output_file = test_results.joinpath(_output_file_dir).joinpath(
-            _output_file_name + ".csv"
-        )
-        _output_file.parent.mkdir(parents=True, exist_ok=True)
-        _output_file.unlink(missing_ok=True)
-
-        def measure_to_dict(measure: RevetmentMeasureData) -> dict:
-            measure.cost = measure.get_total_cost(json_file_case.section_length)
-            return measure.__dict__
-
-        _measures_as_dicts = list(map(measure_to_dict, _results))
-        _header = list(_measures_as_dicts[0].keys())
-        with open(
-            _output_file, "w", newline=""
-        ) as f:  # You will need 'wb' mode in Python 2.x
-            w = csv.DictWriter(f, _header)
-            w.writeheader()
-            w.writerows(_measures_as_dicts)
-        assert _output_file.exists()
-        # Check all results were written + 1 for the header.
-        assert len(_output_file.read_text().splitlines()) == len(_results) + 1
+        output_results_to_csv([_result.__dict__])

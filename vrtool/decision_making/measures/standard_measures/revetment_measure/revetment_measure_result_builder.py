@@ -363,3 +363,19 @@ class RevetmentMeasureResultBuilder:
             slope_part.slope_part_relations,
             slope_part.top_layer_thickness,
         )
+
+    def _get_grass_revetment_beta_from_vector(
+        self, grass_revetment_betas: list[float]
+    ) -> float:
+        # The `grass_revetment_betas` contain a list where only the last values are valid.
+        # At the same time, these last values are always the same.
+        return float(
+            next(
+                (
+                    grass_beta
+                    for grass_beta in grass_revetment_betas
+                    if not isnan(grass_beta)
+                ),
+                "nan",
+            )
+        )

@@ -189,16 +189,6 @@ class RevetmentMeasure(MeasureProtocol):
 
         return _intermediate_measures
 
-    def _get_grass_revetment_beta_from_vector(
-        self, grass_revetment_betas: list[float]
-    ) -> float:
-        # The `grass_revetment_betas` contain a list where only the last values are valid.
-        # At the same time, these last values are always the same.
-        def filter_valid_revetment(revetment_beta: float) -> bool:
-            return not isnan(revetment_beta)
-
-        return float(list(filter(filter_valid_revetment, grass_revetment_betas))[0])
-
     def _get_interpolated_measures(
         self,
         available_measures: list[RevetmentMeasureResult],
