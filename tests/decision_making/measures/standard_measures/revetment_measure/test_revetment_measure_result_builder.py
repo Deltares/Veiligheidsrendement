@@ -6,7 +6,7 @@ from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment imp
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data_evaluator import (
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
     RevetmentMeasureResultBuilder,
 )
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (

@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data_evaluator import (
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
     RevetmentMeasureResultBuilder,
 )
 
