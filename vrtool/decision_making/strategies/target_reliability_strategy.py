@@ -127,7 +127,6 @@ class TargetReliabilityStrategy(StrategyBase):
                     # TODO (VRTOOL-187).
                     # This could become obsolete once SectionReliability contains the data related to revetment.
                     # Consider removing if that's the case.
-
                     logging.warning(
                         "Target strategy not available for '{}'.".format(mechanism)
                     )

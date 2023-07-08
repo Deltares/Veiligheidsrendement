@@ -131,8 +131,8 @@ class Solutions:
                     for ij in self.mechanisms + ["Section"]:
                         if ij not in betas.index:
                             # TODO (VRTOOL-187).
-                            # This could become obsolete once SectionReliability contains the data related to revetment.
-                            # Consider removing if that's the case.
+                            # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
+                            # This could happen in the future for other 'new' mechanisms.
                             reliability_in.extend([-999] * len(self.config.T))
                             logging.warning(
                                 "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
@@ -196,8 +196,8 @@ class Solutions:
                 for ij in self.mechanisms + ["Section"]:
                     if ij not in betas.index:
                         # TODO (VRTOOL-187).
-                        # This could become obsolete once SectionReliability contains the data related to revetment.
-                        # Consider removing if that's the case.
+                        # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
+                        # This could happen in the future for other 'new' mechanisms.
                         beta.extend([-999] * len(self.config.T))
                         logging.warning(
                             "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
@@ -213,23 +213,11 @@ class Solutions:
                 (
                     _input_values,
                     _beta_values,
-                ) = measure.measures.get_measure_output_values(splitparams)
-                inputs_m.extend(_input_values)
-                _idx_mechanism = self.mechanisms.index(
-                    measure.measures.reinforcement_type
+                ) = measure.measures.get_measure_output_values(
+                    splitparams, self.mechanisms + ["Section"]
                 )
-
-                def get_vector_with_nans(beta_vector: list) -> list:
-                    _pre_vector = [-999] * _idx_mechanism * len(years)
-                    # From the mechanism position, until the end (length != last index) and include one extra for ["Section"]
-                    _post_vector = (
-                        [-999]
-                        * (len(self.mechanisms) - (_idx_mechanism + 1) + 1)
-                        * len(years)
-                    )
-                    return _pre_vector + beta_vector + _post_vector
-
-                inputs_r.extend(list(map(get_vector_with_nans, _beta_values)))
+                inputs_m.extend(_input_values)
+                inputs_r.extend(_beta_values)
 
         reliability = pd.concat((reliability, pd.DataFrame(inputs_r, columns=cols_r)))
         measure_df = pd.concat((measure_df, pd.DataFrame(inputs_m, columns=cols_m)))
