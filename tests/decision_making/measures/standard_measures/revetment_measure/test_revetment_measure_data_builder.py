@@ -7,7 +7,7 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
     RevetmentMeasureData,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data_evaluator import (
-    RevetmentMeasureDataBuilder,
+    RevetmentMeasureResultBuilder,
 )
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
@@ -62,7 +62,7 @@ class TestRevetmentMeasureDataBuilder:
     @pytest.mark.parametrize(
         "revetment_data", [pytest.param(None), pytest.param(RevetmentDataClass())]
     )
-    def test_build_revetment_measure_data_collection_no_slope_parts(
+    def test_get_revetment_measures_collection_no_slope_parts(
         self, revetment_data: RevetmentDataClass
     ):
         # 1. Define test data.
@@ -70,10 +70,10 @@ class TestRevetmentMeasureDataBuilder:
         _target_beta = 0.4
         _transition_level = 2.4
         _evaluation_year = 2023
-        _builder = RevetmentMeasureDataBuilder()
+        _builder = RevetmentMeasureResultBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.build(
+        _data_collection = _builder.get_revetment_measures_collection(
             _crest_height,
             revetment_data,
             _target_beta,
@@ -85,7 +85,7 @@ class TestRevetmentMeasureDataBuilder:
         assert isinstance(_data_collection, list)
         assert not any(_data_collection)
 
-    def test_build_revetment_measure_data_collection(self):
+    def test_get_revetment_measures_collection(self):
         # 1. Define test data.
         _revetment_data = RevetmentDataClass()
         _revetment_data.slope_parts = [
@@ -193,10 +193,10 @@ class TestRevetmentMeasureDataBuilder:
         _target_beta = 0.4
         _transition_level = 2.4
         _evaluation_year = 2025
-        _builder = RevetmentMeasureDataBuilder()
+        _builder = RevetmentMeasureResultBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.build(
+        _data_collection = _builder.get_revetment_measures_collection(
             _crest_height,
             _revetment_data,
             _target_beta,
@@ -287,18 +287,77 @@ class TestRevetmentMeasureDataBuilder:
         "json_file_case",
         _json_file_cases,
     )
-    def test_build_revetment_measure_data_collection_from_json_files(
+    def test_get_revetment_measures_collection_from_json_files(
         self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
-        _builder = RevetmentMeasureDataBuilder()
+        _builder = RevetmentMeasureResultBuilder()
         _revetment_data = JsonFilesToRevetmentDataClassReader().get_revetment_input(
             json_file_case.given_years, json_file_case.section_id
         )
 
         # 2. Run test.
-        _results = _builder.build(
+        _results = _builder.get_revetment_measures_collection(
+            json_file_case.crest_height,
+            _revetment_data,
+            json_file_case.target_beta,
+            json_file_case.transition_level,
+            json_file_case.evaluation_year,
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_results, list)
+        assert all(isinstance(r, RevetmentMeasureData) for r in _results)
+
+        # 4. Output results.
+        _output_file_dir = request.node.name.split("[")[0].strip().lower()
+        _output_file_name = (
+            request.node.name.split("[")[-1]
+            .split("]")[0]
+            .strip()
+            .lower()
+            .replace(" ", "_")
+        )
+
+        _output_file = test_results.joinpath(_output_file_dir).joinpath(
+            _output_file_name + ".csv"
+        )
+        _output_file.parent.mkdir(parents=True, exist_ok=True)
+        _output_file.unlink(missing_ok=True)
+
+        def measure_to_dict(measure: RevetmentMeasureData) -> dict:
+            measure.cost = measure.get_total_cost(json_file_case.section_length)
+            return measure.__dict__
+
+        _measures_as_dicts = list(map(measure_to_dict, _results))
+        _header = list(_measures_as_dicts[0].keys())
+        with open(
+            _output_file, "w", newline=""
+        ) as f:  # You will need 'wb' mode in Python 2.x
+            w = csv.DictWriter(f, _header)
+            w.writeheader()
+            w.writerows(_measures_as_dicts)
+        assert _output_file.exists()
+        # Check all results were written + 1 for the header.
+        assert len(_output_file.read_text().splitlines()) == len(_results) + 1
+
+    @pytest.mark.parametrize(
+        "json_file_case",
+        _json_file_cases,
+    )
+    def test_build_from_json_files(
+        self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
+    ):
+        # Note: This test is meant so that results can be verified in TC.
+        # 1. Define test data.
+        _builder = RevetmentMeasureResultBuilder()
+        _revetment_data = JsonFilesToRevetmentDataClassReader().get_revetment_input(
+            json_file_case.given_years, json_file_case.section_id
+        )
+
+        # 2. Run test.
+        _results = _builder.get_revetment_measures_collection(
             json_file_case.crest_height,
             _revetment_data,
             json_file_case.target_beta,

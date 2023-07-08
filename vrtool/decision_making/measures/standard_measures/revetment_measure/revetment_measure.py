@@ -9,7 +9,7 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data_evaluator import (
-    RevetmentMeasureDataBuilder,
+    RevetmentMeasureResultBuilder,
 )
 
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
@@ -163,14 +163,15 @@ class RevetmentMeasure(MeasureProtocol):
     ) -> list[RevetmentMeasureResult]:
         _intermediate_measures = []
         revetment_years = revetment.get_available_years()
-
+        _result_builder = RevetmentMeasureResultBuilder()
         for _beta_target in beta_targets:
             for _transition_level in transition_levels:
                 _measures_per_year = []
                 for _measure_year in revetment_years:
                     _measures_per_year.append(
-                        self._get_measure_per_year(
-                            dike_section,
+                        _result_builder.build(
+                            dike_section.crest_height,
+                            dike_section.Length,
                             revetment,
                             _beta_target,
                             _transition_level,
@@ -197,48 +198,6 @@ class RevetmentMeasure(MeasureProtocol):
             return not isnan(revetment_beta)
 
         return float(list(filter(filter_valid_revetment, grass_revetment_betas))[0])
-
-    def _get_measure_per_year(
-        self,
-        dike_section: DikeSection,
-        revetment: RevetmentDataClass,
-        beta_target: float,
-        transition_level: float,
-        measure_year: int,
-    ):
-        # 3.1. Get measure Beta and cost per year.
-        _revetment_measures_collection = RevetmentMeasureDataBuilder().build(
-            dike_section.crest_height,
-            revetment,
-            beta_target,
-            transition_level,
-            measure_year,
-        )
-        _stone_beta_list, _grass_beta_list = zip(
-            *(
-                (rm.beta_block_revetment, rm.beta_grass_revetment)
-                for rm in _revetment_measures_collection
-            )
-        )
-        # Get the simple grass beta.
-        _grass_beta = self._get_grass_revetment_beta_from_vector(_grass_beta_list)
-        _combined_beta = RevetmentCalculator.calculate_combined_beta(
-            _stone_beta_list, _grass_beta
-        )
-        _cost = sum(
-            map(
-                lambda x: x.get_total_cost(dike_section.Length),
-                _revetment_measures_collection,
-            )
-        )
-        return RevetmentMeasureResult(
-            year=measure_year,
-            beta_target=beta_target,
-            beta_combined=_combined_beta,
-            transition_level=transition_level,
-            cost=_cost,
-            revetment_measures=_revetment_measures_collection,
-        )
 
     def _get_interpolated_measures(
         self,

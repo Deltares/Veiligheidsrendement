@@ -1,6 +1,9 @@
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
+    RevetmentMeasureResult,
+)
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
@@ -45,8 +48,51 @@ def bisection(f, a, b, tol):
         return bisection(f, a, m, tol)
 
 
-class RevetmentMeasureDataBuilder:
+class RevetmentMeasureResultBuilder:
     def build(
+        self,
+        crest_height: float,
+        dike_length: float,
+        revetment: RevetmentDataClass,
+        beta_target: float,
+        transition_level: float,
+        measure_year: int,
+    ) -> RevetmentMeasureResult:
+        # 3.1. Get measure Beta and cost per year.
+        _revetment_measures_collection = self.get_revetment_measures_collection(
+            crest_height,
+            revetment,
+            beta_target,
+            transition_level,
+            measure_year,
+        )
+        _stone_beta_list, _grass_beta_list = zip(
+            *(
+                (rm.beta_block_revetment, rm.beta_grass_revetment)
+                for rm in _revetment_measures_collection
+            )
+        )
+        # Get the simple grass beta.
+        _grass_beta = self._get_grass_revetment_beta_from_vector(_grass_beta_list)
+        _combined_beta = RevetmentCalculator.calculate_combined_beta(
+            _stone_beta_list, _grass_beta
+        )
+        _cost = sum(
+            map(
+                lambda x: x.get_total_cost(dike_length),
+                _revetment_measures_collection,
+            )
+        )
+        return RevetmentMeasureResult(
+            year=measure_year,
+            beta_target=beta_target,
+            beta_combined=_combined_beta,
+            transition_level=transition_level,
+            cost=_cost,
+            revetment_measures=_revetment_measures_collection,
+        )
+
+    def get_revetment_measures_collection(
         self,
         crest_height: float,
         revetment_data: RevetmentDataClass,
