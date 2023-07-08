@@ -1,5 +1,7 @@
+from collections import OrderedDict
 from dataclasses import dataclass
 import csv
+from pathlib import Path
 from typing import Callable
 from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
     JsonFilesToRevetmentDataClassReader,
@@ -29,7 +31,7 @@ from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
 from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
     AsphaltSlopePart,
 )
-from tests import test_results
+from tests import test_results, get_test_results_dir
 
 
 @dataclass
@@ -43,22 +45,18 @@ class JsonFileCase:
     section_length: float
 
 
-_evaluation_years = [_ev_year + 2025 for _ev_year in [0, 19, 20, 25, 50, 75, 100]]
-_transition_levels = []
-_target_betas = []
-
+_available_years = [2025, 2100]
 _json_file_cases = [
-    pytest.param(
-        JsonFileCase(
-            evaluation_year=2100,
-            given_years=[2025, 2100],
-            section_id=0,
-            crest_height=5.87,
-            target_beta=3.4029328353853043,
-            transition_level=3.99,
-            section_length=50,
-        ),
-    ),
+    JsonFileCase(
+        evaluation_year=_evaluation_year,
+        given_years=_available_years,
+        section_id=0,
+        crest_height=5.87,
+        target_beta=3.4029328353853043,
+        transition_level=3.99,
+        section_length=50,
+    )
+    for _evaluation_year in _available_years
 ]
 
 
@@ -287,8 +285,16 @@ class TestRevetmentMeasureResultBuilder:
             for i in range(0, 6)
         )
 
-    @pytest.fixture
-    def output_results_to_csv(self, request: pytest.FixtureRequest):
+    def _output_to_csv(self, output_file: Path, csv_dicts: list[dict]):
+        _header = list(csv_dicts[0].keys())
+        with open(
+            output_file, "w", newline=""
+        ) as f:  # You will need 'wb' mode in Python 2.x
+            w = csv.DictWriter(f, _header)
+            w.writeheader()
+            w.writerows(csv_dicts)
+
+    def _get_testcase_output_filepath(self, request: pytest.FixtureRequest) -> Path:
         _output_file_dir = request.node.name.split("[")[0].strip().lower()
         _output_file_name = (
             request.node.name.split("[")[-1]
@@ -303,26 +309,14 @@ class TestRevetmentMeasureResultBuilder:
         _output_file.parent.mkdir(parents=True, exist_ok=True)
         _output_file.unlink(missing_ok=True)
 
-        def output_results(results_dict: list[dict]):
-            _header = list(results_dict[0].keys())
-            with open(
-                _output_file, "w", newline=""
-            ) as f:  # You will need 'wb' mode in Python 2.x
-                w = csv.DictWriter(f, _header)
-                w.writeheader()
-                w.writerows(results_dict)
-            assert _output_file.exists()
-            # Check all results were written + 1 for the header.
-            assert len(_output_file.read_text().splitlines()) == len(results_dict) + 1
-
-        yield output_results
+        return _output_file
 
     @pytest.mark.parametrize(
         "json_file_case",
         _json_file_cases,
     )
     def test_get_revetment_measures_collection_from_json_files(
-        self, json_file_case: JsonFileCase, output_results_to_csv: Callable
+        self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
@@ -345,41 +339,43 @@ class TestRevetmentMeasureResultBuilder:
         assert all(isinstance(r, RevetmentMeasureData) for r in _results)
 
         # 4. Output results.
-
         def measure_to_dict(measure: RevetmentMeasureData) -> dict:
             measure.cost = measure.get_total_cost(json_file_case.section_length)
             return measure.__dict__
 
-        output_results_to_csv(list(map(measure_to_dict, _results)))
+        self._output_to_csv(
+            self._get_testcase_output_filepath(request),
+            (list(map(measure_to_dict, _results))),
+        )
 
-    @pytest.mark.parametrize(
-        "json_file_case",
-        _json_file_cases,
-    )
-    def test_build_from_json_files(
-        self,
-        json_file_case: JsonFileCase,
-        output_results_to_csv: Callable,
+    def test_build_and_output_collection_from_json_files(
+        self, request: pytest.FixtureRequest
     ):
         # Note: This test is meant so that results can be verified in TC.
         # 1. Define test data.
         _builder = RevetmentMeasureResultBuilder()
-        _revetment_data = JsonFilesToRevetmentDataClassReader().get_revetment_input(
-            json_file_case.given_years, json_file_case.section_id
-        )
+        _json_reader = JsonFilesToRevetmentDataClassReader()
 
         # 2. Run test.
-        _result = _builder.build(
-            json_file_case.crest_height,
-            json_file_case.section_length,
-            _revetment_data,
-            json_file_case.target_beta,
-            json_file_case.transition_level,
-            json_file_case.evaluation_year,
-        )
+        _results = []
+        for _case in _json_file_cases:
+            _result = _builder.build(
+                _case.crest_height,
+                _case.section_length,
+                _json_reader.get_revetment_input(_case.given_years, _case.section_id),
+                _case.target_beta,
+                _case.transition_level,
+                _case.evaluation_year,
+            )
+            assert isinstance(_result, RevetmentMeasureResult)
+            _results.append({"section_id": _case.section_id} | _result.__dict__)
 
         # 3. Verify expectations.
-        assert isinstance(_result, RevetmentMeasureResult)
+        assert any(_results)
 
         # 4. Output results.
-        output_results_to_csv([_result.__dict__])
+        _output_file = get_test_results_dir(request).joinpath("measures_matrix.csv")
+        _output_file.unlink(missing_ok=True)
+        self._output_to_csv(_output_file, _results)
+        assert _output_file.exists()
+        assert len(_output_file.read_text().splitlines()) == len(_results) + 1
