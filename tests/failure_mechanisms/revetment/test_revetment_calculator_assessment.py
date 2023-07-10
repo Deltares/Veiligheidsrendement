@@ -40,13 +40,16 @@ class JsonFilesToRevetmentDataClassReader:
     ) -> RevetmentDataClass:
         n_sections = stone_revetment_data["aantal deelvakken"]
         for _n_section in range(n_sections):
-            _slope_part = SlopePartBuilder.build(
-                top_layer_type=stone_revetment_data["toplaagtype"][_n_section],
-                begin_part=stone_revetment_data["Zo"][_n_section],
-                end_part=stone_revetment_data["Zb"][_n_section],
-                tan_alpha=stone_revetment_data["tana"][_n_section],
-                top_layer_thickness=stone_revetment_data["D huidig"][_n_section],
-            )
+            try:
+                _slope_part = SlopePartBuilder.build(
+                    top_layer_type=stone_revetment_data["toplaagtype"][_n_section],
+                    begin_part=stone_revetment_data["Zo"][_n_section],
+                    end_part=stone_revetment_data["Zb"][_n_section],
+                    tan_alpha=stone_revetment_data["tana"][_n_section],
+                    top_layer_thickness=stone_revetment_data["D huidig"][_n_section],
+                )
+            except ValueError as exc_err:
+                continue
 
             [exists, slope] = self._search_slope_part(
                 revetment.slope_parts, _slope_part

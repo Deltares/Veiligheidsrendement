@@ -151,12 +151,7 @@ class RevetmentMeasureResultBuilder:
                 )
 
         if transition_level >= max(
-            map(
-                lambda x: x.end_part,
-                filter(
-                    lambda y: isinstance(y, StoneSlopePart), revetment_data.slope_parts
-                ),
-            )
+            map(lambda x: x.end_part, revetment_data.slope_parts)
         ):
             if transition_level >= crest_height:
                 raise ValueError("Overgang >= crest height")

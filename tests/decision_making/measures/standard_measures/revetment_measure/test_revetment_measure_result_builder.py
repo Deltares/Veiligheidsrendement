@@ -1,8 +1,11 @@
 from collections import OrderedDict
 from dataclasses import dataclass
 import csv
+import itertools
 from pathlib import Path
 from typing import Callable
+
+import numpy as np
 from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
     JsonFilesToRevetmentDataClassReader,
 )
@@ -45,19 +48,53 @@ class JsonFileCase:
     section_length: float
 
 
-_available_years = [2025, 2100]
-_json_file_cases = [
-    JsonFileCase(
-        evaluation_year=_evaluation_year,
-        given_years=_available_years,
-        section_id=0,
-        crest_height=5.87,
-        target_beta=3.4029328353853043,
-        transition_level=3.99,
-        section_length=50,
-    )
-    for _evaluation_year in _available_years
-]
+def get_json_file_cases(
+    section_id: int,
+    crest_height: float,
+    target_beta: float,
+    section_length: float,
+    transition_level_vector: list[float],
+) -> list[JsonFileCase]:
+    _available_years = [2025, 2100]
+    return [
+        JsonFileCase(
+            evaluation_year=_evaluation_year,
+            given_years=_available_years,
+            section_id=section_id,
+            crest_height=crest_height,
+            target_beta=target_beta,
+            transition_level=_transition_level,
+            section_length=section_length,
+        )
+        for _transition_level, _evaluation_year in itertools.product(
+            transition_level_vector, _available_years
+        )
+    ]
+
+
+def get_pytest_json_file_cases(
+    json_file_case_list: list[JsonFileCase],
+) -> list[pytest.param]:
+    def _wrap_in_pytest_param(json_file_case: JsonFileCase) -> pytest.param:
+        return pytest.param(
+            json_file_case,
+            id="Section {} year {} target_beta {} transition_level {}".format(
+                json_file_case.section_id,
+                json_file_case.evaluation_year,
+                json_file_case.target_beta,
+                json_file_case.transition_level,
+            ),
+        )
+
+    return list(map(_wrap_in_pytest_param, json_file_case_list))
+
+
+_section_1_cases = get_json_file_cases(0, 5.87, 3.4029328353853043, 50, [3.99])
+_section_2_cases = get_json_file_cases(
+    2, 10.27, 5.3342534521987, 766, np.arange(3.76, 10.27, 0.25)
+)
+_json_file_cases = _section_1_cases + _section_2_cases
+_pytest_json_file_cases = get_pytest_json_file_cases(_json_file_cases)
 
 
 class TestRevetmentMeasureResultBuilder:
@@ -313,7 +350,7 @@ class TestRevetmentMeasureResultBuilder:
 
     @pytest.mark.parametrize(
         "json_file_case",
-        _json_file_cases,
+        _pytest_json_file_cases,
     )
     def test_get_revetment_measures_collection_from_json_files(
         self, json_file_case: JsonFileCase, request: pytest.FixtureRequest
