@@ -166,7 +166,7 @@ class RevetmentMeasureResultBuilder:
                     evaluation_year, revetment_data
                 ),
                 reinforce=True,
-                tan_alpha=revetment_data.slope_parts[-1].end_part,
+                tan_alpha=revetment_data.slope_parts[-1].tan_alpha,
             )
             _evaluated_measures.append(_extra_measure)
 
