@@ -253,7 +253,7 @@ class RevetmentMeasure(MeasureProtocol):
         # TODO (VRTOOL-187)
         # Is this really required for revetments? Should we not better have our own RevetmentSectionReliability?
         section_reliability.calculate_section_reliability()
-        return section_reliability, revetment_measure_results[0]
+        return section_reliability, revetment_measure_results[0].cost
 
     def _get_mechanism_reliabilty_for_beta_transition(
         self,
