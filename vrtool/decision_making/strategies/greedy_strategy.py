@@ -23,15 +23,15 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 class GreedyStrategy(StrategyBase):
     def bundling_output(self, BC_list, counter_list, sh_array, sg_array,existing_investments):
         no_of_sections = sh_array.shape[0]
-        ind = np.argwhere(BC_list == np.max(BC_list))[0][0]
-        final_index = counter_list[ind]
+        maximum_BC_index = np.array(BC_list).argmax()
+        optimal_counter_combination = counter_list[maximum_BC_index]
         # convert measure_index to sh based on sorted_indices
         sg_index = np.zeros((no_of_sections,))
         measure_index = np.zeros((no_of_sections,), dtype=np.int32)
-        for i in range(0, len(measure_index)):
-            if final_index[i] != 0:  # a measure was taken
-                measure_index[i] = sh_array[i, final_index[i]]
-                sg_index[i] = sg_array[i, final_index[i]]
+        for i in range(0, no_of_sections):
+            if optimal_counter_combination[i] != 0:  # a measure was taken
+                measure_index[i] = sh_array[i, optimal_counter_combination[i]]
+                sg_index[i] = sg_array[i, optimal_counter_combination[i]]
             else:  # no measure was taken
                 measure_index[i] = existing_investments[i, 0]
                 sg_index[i] = existing_investments[i, 1]
@@ -48,24 +48,26 @@ class GreedyStrategy(StrategyBase):
     def bundling_loop(self, initial_mechanism_risk, life_cycle_cost, sh_array, sg_array, mechanism, n_runs = 100):
         # first initialize some relevant arrays and values for the loop for bundling measures
         number_of_sections = sh_array.shape[0]
+        number_of_available_height_measures = sh_array.shape[1] -1
         LCC_values = np.zeros((number_of_sections,))                     #total LCC spent for each section
         index_counter = np.zeros((number_of_sections,), dtype=np.int32)  # counter that keeps track of the next cheapest option for each section
 
         run_number = 0  # used for counting the loop
         counter_list = []  # used to store the bundle indices
         BC_list = []  # used to store BC for each bundle
-        weak_list = []  # used to store index of weakest section
+        highest_risk_section_indices = []  # used to store index of weakest section
         new_mechanism_risk = copy.deepcopy(initial_mechanism_risk)  # initialize overflow risk
         # here we start the loop. Note that we rarely make it to run 100, for larger problems this limit might need to be increased
         while run_number < n_runs:
             # get weakest section
-            ind_weakest = np.argmax(np.sum(new_mechanism_risk, axis=1))
+
+            ind_highest_risk = np.argmax(np.sum(new_mechanism_risk, axis=1))
 
             # We should increase the measure at the weakest section, but only if we have not reached the end of the array yet:
-            if sh_array.shape[1] - 1 > index_counter[ind_weakest]:
-                index_counter[ind_weakest] += 1
+            if number_of_available_height_measures > index_counter[ind_highest_risk]:
+                index_counter[ind_highest_risk] += 1
                 # take next step, exception if there is no valid measure. In that case exit the routine.
-                if sh_array[ind_weakest, index_counter[ind_weakest]] == 999:
+                if sh_array[ind_highest_risk, index_counter[ind_highest_risk]] == 999:
                     logging.error(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(run_number)
                     )
@@ -77,21 +79,21 @@ class GreedyStrategy(StrategyBase):
 
             # insert next cheapest measure from sorted list into mechanism_risk, then compute the LCC value and BC
             if mechanism== "Overflow":
-                new_mechanism_risk[ind_weakest, :] = self.RiskOverflow[
-                                                ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
+                new_mechanism_risk[ind_highest_risk, :] = self.RiskOverflow[
+                                                ind_highest_risk, sh_array[ind_highest_risk, index_counter[ind_highest_risk]], :
                                                 ]
             elif mechanism == "Revetment":
-                new_mechanism_risk[ind_weakest, :] = self.RiskRevetment[
-                                                ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
+                new_mechanism_risk[ind_highest_risk, :] = self.RiskRevetment[
+                                                ind_highest_risk, sh_array[ind_highest_risk, index_counter[ind_highest_risk]], :
                                                 ]
             else:
                 raise   ValueError("Mechanism {} not recognized".format(mechanism))
 
-            LCC_values[ind_weakest] = np.min(
+            LCC_values[ind_highest_risk] = np.min(
                 life_cycle_cost[
-                    ind_weakest,
-                    sh_array[ind_weakest, index_counter[ind_weakest]],
-                    sg_array[ind_weakest, index_counter[ind_weakest]],
+                    ind_highest_risk,
+                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
+                    sg_array[ind_highest_risk, index_counter[ind_highest_risk]],
                 ]
             )
             BC = (
@@ -103,14 +105,14 @@ class GreedyStrategy(StrategyBase):
                 BC_list.append(0.0)
             else:
                 BC_list.append(BC)
-            weak_list.append(ind_weakest)
+            highest_risk_section_indices.append(ind_highest_risk)
 
-            # store the bundle indices, do -1 as index_counter contains the NEXT step
             counter_list.append(copy.deepcopy(index_counter))
 
             # in the next step, the next measure should be taken for this section
             run_number += 1
-        return BC_list, counter_list, weak_list
+
+        return BC_list, counter_list, highest_risk_section_indices
     def get_sg_sh_indices(self, section_no: int, life_cycle_cost: np.array, existing_investments:np.array, mechanism: str, dim_sh:int, traject: DikeTraject):
         """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no
         """
