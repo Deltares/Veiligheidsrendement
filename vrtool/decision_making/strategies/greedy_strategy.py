@@ -271,6 +271,8 @@ class GreedyStrategy(StrategyBase):
         # set start values:
         self.Cint_g[:, 0] = 1
         self.Cint_h[:, 0] = 1
+
+        #TODO put actual RiskRevetment here:
         self.RiskRevetment = copy.deepcopy(self.RiskOverflow)
         init_probability = {}
         init_overflow_risk = np.empty(
