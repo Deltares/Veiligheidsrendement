@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from typing import Dict
 
+import numpy
 import numpy as np
 import pandas as pd
 
@@ -45,7 +46,27 @@ class GreedyStrategy(StrategyBase):
 
         return BC_out, measure_index
 
-    def bundling_loop(self, initial_mechanism_risk, life_cycle_cost, sh_array, sg_array, mechanism, n_runs = 100):
+    def bundling_loop(self,
+                      initial_mechanism_risk : numpy.ndarray,
+                      life_cycle_cost : numpy.ndarray,
+                      sh_array : numpy.ndarray,
+                      sg_array : numpy.ndarray,
+                      mechanism : str,
+                      n_runs = 100 : int):
+        """
+        Bundles measures for dependent mechanisms (overflow or revetment) and returns the optimal bundling combination.
+        It only looks at risk reduction for dependent mechanism considered, not for the other mechanisms.
+
+        Args:
+            initial_mechanism_risk: Initial risk of the dependent mechanism.
+            life_cycle_cost: Life cycle cost of the possible measures for each section.
+            sh_array: Array containing the indices of the possible measures for dependent mechanisms for each section. These indices are sorted from cheapest to most expensive.
+            sg_array: Array containing the indices of the possible measures for independent mechanisms for each section. These indices correspond to the cheapest available sg combination for the corresponding sh.
+                        Note that sh_array and sg_array have the same dimensions.
+            mechanism: Array containing the mechanism type for each section (Overflow or Revetment).
+            n_runs: Number of runs for the bundling loop. Default = 100, but typically less is sufficient.
+        """
+
         # first initialize some relevant arrays and values for the loop for bundling measures
         number_of_sections = sh_array.shape[0]
         number_of_available_height_measures = sh_array.shape[1] -1
