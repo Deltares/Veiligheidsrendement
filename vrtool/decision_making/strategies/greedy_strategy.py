@@ -52,7 +52,8 @@ class GreedyStrategy(StrategyBase):
                       sh_array : numpy.ndarray,
                       sg_array : numpy.ndarray,
                       mechanism : str,
-                      n_runs = 100 : int):
+                      n_runs : int = 100,
+    ):
         """
         Bundles measures for dependent mechanisms (overflow or revetment) and returns the optimal bundling combination.
         It only looks at risk reduction for dependent mechanism considered, not for the other mechanisms.
