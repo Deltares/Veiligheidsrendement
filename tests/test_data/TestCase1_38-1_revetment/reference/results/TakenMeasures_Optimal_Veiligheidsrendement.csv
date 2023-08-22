@@ -1,11 +1,6 @@
 ,ID,Section,LCC,name,yes/no,dcrest,dberm
-32,6,01A,6713300.0,Zelfkerende constructie,yes,-999.0,-999
-50,5+2,01B,1313455.4248809188,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,12
-44,5+2,4,3404682.12547924,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0
-34,5+2,12,4242093.7837210875,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,10
-35,5+2,15,3487349.7412345987,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,10
-46,5+2,33A,1614059.1882793102,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,12
-37,2,34,2201796.297332225,Grondversterking binnenwaarts 2025,-999,1.0,15
-48,5+2,37B,1139231.4489529096,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,0
-38,2,40,1263120.9459480813,Grondversterking binnenwaarts 2025,-999,1.0,8
-45,2,50,1006038.7786281833,Grondversterking binnenwaarts 2025,-999,1.0,0
+0,0,01A,0,No measure,no,0.0,0.0
+0,0,01B,0,No measure,no,0.0,0.0
+0,0,4,0,No measure,no,0.0,0.0
+0,0,12,0,No measure,no,0.0,0.0
+0,0,15,0,No measure,no,0.0,0.0
