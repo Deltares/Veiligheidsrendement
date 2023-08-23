@@ -51,7 +51,7 @@ class TestComputationScenarioParameter:
         assert _parameter.parameter == "TestParameter"
         assert _parameter.value == 4.2
 
-        assert _parameter in _scenario.parameters
+        assert _parameter in _scenario.computation_scenario_parameters
 
     def test_initialize_two_parameters_with_same_name_with_database_fixture(
         self, empty_db_fixture
@@ -99,5 +99,5 @@ class TestComputationScenarioParameter:
         )
 
         # 3. Verify expectations
-        assert _parameter_a in _scenario_a.parameters
-        assert _parameter_b in _scenario_b.parameters
+        assert _parameter_a in _scenario_a.computation_scenario_parameters
+        assert _parameter_b in _scenario_b.computation_scenario_parameters
