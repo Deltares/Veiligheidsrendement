@@ -1,4 +1,4 @@
-from tests.orm import empty_db_fixture, get_basic_computation_scenario, get_basic_section_data
+from tests.orm import empty_db_fixture, get_basic_section_data
 from vrtool.orm.models import AssessmentSectionResults
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
