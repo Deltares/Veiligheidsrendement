@@ -4,14 +4,16 @@ from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 
 
 class PipingImporter(OrmImporterProtocol):
     def _set_parameters(
         self,
         mechanism_input: MechanismInput,
-        parameters: list[Parameter],
+        parameters: list[ComputationScenarioParameter],
         index: int,
         scenarios_length: int,
     ) -> None:
@@ -51,7 +53,10 @@ class PipingImporter(OrmImporterProtocol):
         mechanism_input.input[_scenario_key] = []
         for _c_scenario in computation_scenarios:
             self._set_parameters(
-                mechanism_input, _c_scenario.parameters.select(), index, nr_of_scenarios
+                mechanism_input,
+                _c_scenario.computation_scenario_parameters.select(),
+                index,
+                nr_of_scenarios,
             )
             mechanism_input.input[_scenario_key].append(_c_scenario.scenario_name)
             mechanism_input.input[scenario_probablity_key][

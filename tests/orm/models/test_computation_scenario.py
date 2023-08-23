@@ -41,5 +41,5 @@ class TestComputationScenario:
         # 3. Verify expectations.
         assert isinstance(_scenario, ComputationScenario)
         assert isinstance(_scenario, OrmBaseModel)
-        assert not any(_scenario.parameters)
+        assert not any(_scenario.computation_scenario_parameters)
         assert not any(_scenario.supporting_files)

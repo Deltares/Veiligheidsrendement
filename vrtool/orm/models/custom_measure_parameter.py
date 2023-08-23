@@ -1,6 +1,6 @@
 from peewee import CharField, FloatField, ForeignKeyField
 
-from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.custom_measure import CustomMeasure
 from vrtool.orm.models.orm_base_model import (
     OrmBaseModel,
     _get_table_name,
@@ -8,8 +8,8 @@ from vrtool.orm.models.orm_base_model import (
 )
 
 
-class Parameter(OrmBaseModel):
-    computation_scenario = ForeignKeyField(ComputationScenario, backref="parameters")
+class CustomMeasureParameter(OrmBaseModel):
+    custom_measure = ForeignKeyField(CustomMeasure, backref="custom_parameters")
     parameter = CharField(max_length=_max_char_length)
     value = FloatField()
 
