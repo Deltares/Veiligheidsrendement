@@ -39,7 +39,9 @@ class DStabilityImporter(OrmImporterProtocol):
 
         mechanism_input = MechanismInput("StabilityInner")
 
-        self._set_parameters(mechanism_input, orm_model.parameters.select())
+        self._set_parameters(
+            mechanism_input, orm_model.computation_scenario_parameters.select()
+        )
 
         supporting_files = orm_model.supporting_files.select()
 

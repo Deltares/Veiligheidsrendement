@@ -53,7 +53,10 @@ class PipingImporter(OrmImporterProtocol):
         mechanism_input.input[_scenario_key] = []
         for _c_scenario in computation_scenarios:
             self._set_parameters(
-                mechanism_input, _c_scenario.parameters.select(), index, nr_of_scenarios
+                mechanism_input,
+                _c_scenario.computation_scenario_parameters.select(),
+                index,
+                nr_of_scenarios,
             )
             mechanism_input.input[_scenario_key].append(_c_scenario.scenario_name)
             mechanism_input.input[scenario_probablity_key][

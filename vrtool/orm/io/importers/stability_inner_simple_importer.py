@@ -25,6 +25,8 @@ class StabilityInnerSimpleImporter(OrmImporterProtocol):
             )
 
         mechanism_input = MechanismInput("StabilityInner")
-        self._set_parameters(mechanism_input, orm_model.parameters.select())
+        self._set_parameters(
+            mechanism_input, orm_model.computation_scenario_parameters.select()
+        )
 
         return mechanism_input
