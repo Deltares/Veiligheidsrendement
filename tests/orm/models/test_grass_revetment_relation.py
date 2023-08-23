@@ -8,6 +8,8 @@ class TestGrassRevetmentRelation:
         # 1. Define test data.
         _scenario = get_basic_computation_scenario()
 
+        print(_scenario.grass_revetment_relations)
+
         # 2. Run test
         _grass_relation = GrassRevetmentRelation.create(
             computation_scenario=_scenario,
