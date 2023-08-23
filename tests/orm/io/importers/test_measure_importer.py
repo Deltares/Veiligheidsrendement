@@ -19,7 +19,7 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.custom_measure import CustomMeasure as OrmCustomMeasure
 from vrtool.orm.models.measure import Measure
-from vrtool.orm.models.measure_parameter import CustomMeasureParameter
+from vrtool.orm.models.custom_measure_parameter import CustomMeasureParameter
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.standard_measure import StandardMeasure
