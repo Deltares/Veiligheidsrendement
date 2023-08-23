@@ -9,7 +9,9 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
-from vrtool.orm.models.parameter import ComputationScenarioParameter
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 
 
 class TestStabilityInnerSimpleImporter:

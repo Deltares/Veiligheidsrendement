@@ -5,11 +5,13 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel
-from vrtool.orm.models.parameter import ComputationScenarioParameter
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 from vrtool.orm.models.section_data import SectionData
 
 
-class TestParameter:
+class TestComputationScenarioParameter:
     def test_initialize_with_database_fixture(self, empty_db_fixture):
         # 1. Define test data.
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")

@@ -4,7 +4,9 @@ from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.parameter import ComputationScenarioParameter
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 
 
 class PipingImporter(OrmImporterProtocol):
