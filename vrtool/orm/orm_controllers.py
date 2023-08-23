@@ -53,7 +53,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.SlopePart,
             orm.BlockRevetmentRelation,
             orm.GrassRevetmentRelation,
-            orm.assessment_section_results,
+            orm.AssessmentSectionResults,
         ]
     )
     return vrtool_db
