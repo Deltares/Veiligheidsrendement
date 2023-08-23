@@ -4,12 +4,12 @@ import pandas as pd
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.parameter import ComputationScenarioParameter
 
 
 class StabilityInnerSimpleImporter(OrmImporterProtocol):
     def _set_parameters(
-        self, input: MechanismInput, parameters: list[Parameter]
+        self, input: MechanismInput, parameters: list[ComputationScenarioParameter]
     ) -> None:
         for parameter in parameters:
             input.input[parameter.parameter.lower().strip()] = np.array(

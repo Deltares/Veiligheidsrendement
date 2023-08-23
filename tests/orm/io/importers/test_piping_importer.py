@@ -9,7 +9,7 @@ from vrtool.orm.io.importers.piping_importer import PipingImporter
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.parameter import ComputationScenarioParameter
 
 
 class TestPipingImporter:
@@ -74,7 +74,9 @@ class TestPipingImporter:
             add_computation_scenario_id(parameters1, _computation_scenario1.id)
             add_computation_scenario_id(parameters2, _computation_scenario2.id)
 
-            Parameter.insert_many(parameters1 + parameters2).execute()
+            ComputationScenarioParameter.insert_many(
+                parameters1 + parameters2
+            ).execute()
             transaction.commit()
 
         # 1. Define test data.
@@ -133,7 +135,9 @@ class TestPipingImporter:
 
             add_computation_scenario_id(parameters1, _computation_scenario1.id)
             add_computation_scenario_id(parameters2, _computation_scenario2.id)
-            Parameter.insert_many(parameters1 + parameters2).execute()
+            ComputationScenarioParameter.insert_many(
+                parameters1 + parameters2
+            ).execute()
             transaction.commit()
 
         # 1. Define test data.

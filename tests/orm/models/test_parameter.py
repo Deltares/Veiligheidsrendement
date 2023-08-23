@@ -5,7 +5,7 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel
-from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.parameter import ComputationScenarioParameter
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -38,12 +38,12 @@ class TestParameter:
         )
 
         # 2. Run test.
-        _parameter = Parameter.create(
+        _parameter = ComputationScenarioParameter.create(
             computation_scenario=_scenario, parameter="TestParameter", value=4.2
         )
 
         # 3. Verify expectations
-        assert isinstance(_parameter, Parameter)
+        assert isinstance(_parameter, ComputationScenarioParameter)
         assert isinstance(_parameter, OrmBaseModel)
         assert _parameter.computation_scenario == _scenario
         assert _parameter.parameter == "TestParameter"
@@ -89,10 +89,10 @@ class TestParameter:
         )
 
         # 2. Run test.
-        _parameter_a = Parameter.create(
+        _parameter_a = ComputationScenarioParameter.create(
             computation_scenario=_scenario_a, parameter="TestParameter", value=4.2
         )
-        _parameter_b = Parameter.create(
+        _parameter_b = ComputationScenarioParameter.create(
             computation_scenario=_scenario_b, parameter="TestParameter", value=2.4
         )
 
