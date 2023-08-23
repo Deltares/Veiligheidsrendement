@@ -1,7 +1,7 @@
-from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
 
 class FailureMechanismCollection:
@@ -64,16 +64,6 @@ class FailureMechanismCollection:
             MechanismReliabilityCollection: A collection of reliabilities. None if the mechanism was not present.
         """
         return self._failure_mechanisms.get(mechanism_name)
-
-    def get_failure_mechanism_year_data(
-        self, mechanism_name: str, year: int
-    ) -> MechanismInput:
-        _reliability_collection = self.get_mechanism_reliability_collection(
-            mechanism_name
-        )
-        if not _reliability_collection:
-            return None
-        return _reliability_collection.Reliability[str(year)]
 
     def get_all_mechanism_reliability_collections(
         self,

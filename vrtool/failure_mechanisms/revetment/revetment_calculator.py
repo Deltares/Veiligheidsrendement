@@ -69,6 +69,16 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
     def calculate_combined_beta(
         stone_revetment_beta: list[float], grass_revetment_beta: float
     ) -> float:
+        """
+        Calculates the combined beta for all the available Stone Revetments and a related Grass Revetment.
+
+        Args:
+            stone_revetment_beta (list[float]): List of Stone Revetment beta values.
+            grass_revetment_beta (float): Grass revetment beta value.
+
+        Returns:
+            float: Combined beta values.
+        """
         if np.all(np.isnan(stone_revetment_beta)):
             _prob_stone_revetment = 0.0
         else:
@@ -89,6 +99,17 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         grass_relations: list[RelationGrassRevetment],
         current_transition_level: float,
     ) -> float:
+        """
+        Evaluates all given grass relations for a given `evaluation_year` and a concrete `current_transition_level`.
+
+        Args:
+            evaluation_year (int): Evaluation year to apply to the `grass_relations`.
+            grass_relations (list[RelationGrassRevetment]): List of grass revetment relations.
+            current_transition_level (float): transition level required to interpolate the grass relations.
+
+        Returns:
+            float: Interpolated betas for the grass relations, evaluation year and current transition level.
+        """
         _transitions, _beta_failure = zip(
             *(
                 (grass_relation.transition_level, grass_relation.beta)
@@ -108,6 +129,17 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         slope_part_relations: list[RelationStoneRevetment],
         top_layer_thickness: float,
     ) -> float:
+        """
+        _summary_
+
+        Args:
+            evaluation_year (int): Evaluation year to apply to the `slope_part_relations`.
+            slope_part_relations (list[RelationStoneRevetment]): List of slope part relations.
+            top_layer_thickness (float): Thickness value for the top most layer to interpolate the slope part relations.
+
+        Returns:
+            float:  Interpolated betas for the slope part relations, evaluation year and top layer thickness.
+        """
         _top_layer_thickness, _beta_failure = zip(
             *(
                 (slope_relation.top_layer_thickness, slope_relation.beta)

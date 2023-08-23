@@ -220,9 +220,9 @@ class RevetmentMeasure(MeasureProtocol):
                 transition_level=_sample.transition_level,
                 beta_combined=_interpolated_beta,
                 cost=_interpolated_cost,
-                revetment_measures=[
-                    rm.revetment_measures for rm in available_measures
-                ],  # TODO: Not very happy about this type.
+                # revetment_measures=[
+                #     rm.revetment_measures for rm in available_measures
+                # ],  # TODO: Not very happy about this type.
             )
             _interpolated_measures.append(_interpolated_measure)
         return _interpolated_measures

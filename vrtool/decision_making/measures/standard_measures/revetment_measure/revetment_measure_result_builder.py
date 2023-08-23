@@ -89,7 +89,6 @@ class RevetmentMeasureResultBuilder:
             beta_combined=_combined_beta,
             transition_level=transition_level,
             cost=_cost,
-            revetment_measures=_revetment_measures_collection,
         )
 
     def get_revetment_measures_collection(
@@ -124,7 +123,6 @@ class RevetmentMeasureResultBuilder:
                 _slope_part.begin_part < transition_level
                 and _slope_part.end_part > transition_level
             ):
-                # TODO: this is not correct.
                 _evaluated_measures.extend(
                     list(
                         self._get_combined_revetment_data(
@@ -189,7 +187,6 @@ class RevetmentMeasureResultBuilder:
         if not _stone_revetments:
             raise ValueError("No stone revetment measure was found.")
 
-        # TODO: Check whether I'm getting the last one or the first one.
         _last_stone_revetment = _stone_revetments[-1]
 
         for _revetment_measure in revetment_measures:
