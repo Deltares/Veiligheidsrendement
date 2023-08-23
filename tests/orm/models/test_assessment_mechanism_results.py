@@ -19,4 +19,4 @@ class TestAssessmentMechanismResults:
         assert isinstance(_assessment_mechanism_results, AssessmentMechanismResults)
         assert isinstance(_assessment_mechanism_results, OrmBaseModel)
         assert _assessment_mechanism_results.mechanism_per_section_id == _mechanism_per_section
-        assert _assessment_mechanism_results in _mechanism_per_section.assessment_results
+        assert _assessment_mechanism_results in _mechanism_per_section.assessment_mechanism_results

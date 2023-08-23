@@ -19,4 +19,4 @@ class TestAssessmentSectionResults:
         assert isinstance(_assessment_section_results, AssessmentSectionResults)
         assert isinstance(_assessment_section_results, OrmBaseModel)
         assert _assessment_section_results.section_id == _section
-        assert _assessment_section_results in _section.assessment_results
+        assert _assessment_section_results in _section.assessment_section_results
