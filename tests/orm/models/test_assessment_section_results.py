@@ -12,11 +12,11 @@ class TestAssessmentSectionResults:
         _assessment_section_results = AssessmentSectionResults.create(
             beta=3.1234,
             time=0.0,
-            section=_section,
+            section_data=_section,
         )
 
         # 3. Verify expectations.
         assert isinstance(_assessment_section_results, AssessmentSectionResults)
         assert isinstance(_assessment_section_results, OrmBaseModel)
-        assert _assessment_section_results.section == _section
+        assert _assessment_section_results.section_data == _section
         assert _assessment_section_results in _section.assessment_section_results
