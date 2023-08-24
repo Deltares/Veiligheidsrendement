@@ -3,12 +3,11 @@ from typing import Type
 from vrtool.decision_making.measures import (
     CustomMeasure,
     DiaphragmWallMeasure,
+    RevetmentMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
     VerticalGeotextileMeasure,
-    RevetmentMeasure,
 )
-from vrtool.decision_making.measures.custom_measure import CustomMeasure
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol

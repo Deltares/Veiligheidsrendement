@@ -1,3 +1,9 @@
+import math
+from math import isnan
+
+import numpy as np
+from scipy.interpolate import interp1d
+
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
@@ -14,11 +20,6 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
     SlopePartProtocol,
     StoneSlopePart,
 )
-import math
-
-from math import isnan
-import numpy as np
-from scipy.interpolate import interp1d
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRASS_TYPE
 
 
@@ -58,8 +59,22 @@ class RevetmentMeasureResultBuilder:
         transition_level: float,
         measure_year: int,
     ) -> RevetmentMeasureResult:
+        """
+        Creates a valid instance of a `RevetmentMeasureResult` based on all the given arguments.
+
+        Args:
+            crest_height (float): Dike section crest height.
+            dike_length (float): Dike length.
+            revetment (RevetmentDataClass): Revetment data describing all properties for all the possible slope and grass parts (`SlopePartProtocol` and `RelationGrassRevetment`).
+            beta_target (float): Desired beta set as a limit.
+            transition_level (float): Current transition level.
+            measure_year (int): Year for which calculation is being done.
+
+        Returns:
+            RevetmentMeasureResult: Simple dataclass containing the result data of a (re)calculated revetment measure.
+        """
         # 3.1. Get measure Beta and cost per year.
-        _revetment_measures_collection = self.get_revetment_measures_collection(
+        _revetment_measures_collection = self._get_revetment_measures_collection(
             crest_height,
             revetment,
             beta_target,
@@ -89,10 +104,9 @@ class RevetmentMeasureResultBuilder:
             beta_combined=_combined_beta,
             transition_level=transition_level,
             cost=_cost,
-            revetment_measures=_revetment_measures_collection,
         )
 
-    def get_revetment_measures_collection(
+    def _get_revetment_measures_collection(
         self,
         crest_height: float,
         revetment_data: RevetmentDataClass,
@@ -124,7 +138,6 @@ class RevetmentMeasureResultBuilder:
                 _slope_part.begin_part < transition_level
                 and _slope_part.end_part > transition_level
             ):
-                # TODO: this is not correct.
                 _evaluated_measures.extend(
                     list(
                         self._get_combined_revetment_data(
@@ -203,7 +216,6 @@ class RevetmentMeasureResultBuilder:
         if not _stone_revetments:
             raise ValueError("No stone revetment measure was found.")
 
-        # TODO: Check whether I'm getting the last one or the first one.
         _last_stone_revetment = _stone_revetments[-1]
 
         for _revetment_measure in revetment_measures:

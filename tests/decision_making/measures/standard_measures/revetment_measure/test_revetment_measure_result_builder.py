@@ -1,11 +1,12 @@
-from collections import OrderedDict
-from dataclasses import dataclass
 import csv
 import itertools
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
+import pytest
+
+from tests import get_test_results_dir, test_results
 from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
     JsonFilesToRevetmentDataClassReader,
 )
@@ -18,23 +19,20 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
     RevetmentMeasureResultBuilder,
 )
+from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
+    RelationGrassRevetment,
+)
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-import pytest
-
 from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
     StoneSlopePart,
 )
-from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
-    RelationGrassRevetment,
-)
 from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
     AsphaltSlopePart,
 )
-from tests import test_results, get_test_results_dir
 
 
 @dataclass
@@ -112,7 +110,7 @@ class TestRevetmentMeasureResultBuilder:
         _builder = RevetmentMeasureResultBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.get_revetment_measures_collection(
+        _data_collection = _builder._get_revetment_measures_collection(
             _crest_height,
             revetment_data,
             _target_beta,
@@ -235,7 +233,7 @@ class TestRevetmentMeasureResultBuilder:
         _builder = RevetmentMeasureResultBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.get_revetment_measures_collection(
+        _data_collection = _builder._get_revetment_measures_collection(
             _crest_height,
             _revetment_data,
             _target_beta,
@@ -322,32 +320,6 @@ class TestRevetmentMeasureResultBuilder:
             for i in range(0, 6)
         )
 
-    def _output_to_csv(self, output_file: Path, csv_dicts: list[dict]):
-        _header = list(csv_dicts[0].keys())
-        with open(
-            output_file, "w", newline=""
-        ) as f:  # You will need 'wb' mode in Python 2.x
-            w = csv.DictWriter(f, _header)
-            w.writeheader()
-            w.writerows(csv_dicts)
-
-    def _get_testcase_output_filepath(self, request: pytest.FixtureRequest) -> Path:
-        _output_file_dir = request.node.name.split("[")[0].strip().lower()
-        _output_file_name = (
-            request.node.name.split("[")[-1]
-            .split("]")[0]
-            .strip()
-            .lower()
-            .replace(" ", "_")
-        )
-        _output_file = test_results.joinpath(_output_file_dir).joinpath(
-            _output_file_name + ".csv"
-        )
-        _output_file.parent.mkdir(parents=True, exist_ok=True)
-        _output_file.unlink(missing_ok=True)
-
-        return _output_file
-
     @pytest.mark.parametrize(
         "json_file_case",
         _pytest_json_file_cases,
@@ -363,7 +335,7 @@ class TestRevetmentMeasureResultBuilder:
         )
 
         # 2. Run test.
-        _results = _builder.get_revetment_measures_collection(
+        _results = _builder._get_revetment_measures_collection(
             json_file_case.crest_height,
             _revetment_data,
             json_file_case.target_beta,
@@ -416,3 +388,29 @@ class TestRevetmentMeasureResultBuilder:
         self._output_to_csv(_output_file, _results)
         assert _output_file.exists()
         assert len(_output_file.read_text().splitlines()) == len(_results) + 1
+
+    def _output_to_csv(self, output_file: Path, csv_dicts: list[dict]):
+        _header = list(csv_dicts[0].keys())
+        with open(
+            output_file, "w", newline=""
+        ) as f:  # You will need 'wb' mode in Python 2.x
+            w = csv.DictWriter(f, _header)
+            w.writeheader()
+            w.writerows(csv_dicts)
+
+    def _get_testcase_output_filepath(self, request: pytest.FixtureRequest) -> Path:
+        _output_file_dir = request.node.name.split("[")[0].strip().lower()
+        _output_file_name = (
+            request.node.name.split("[")[-1]
+            .split("]")[0]
+            .strip()
+            .lower()
+            .replace(" ", "_")
+        )
+        _output_file = test_results.joinpath(_output_file_dir).joinpath(
+            _output_file_name + ".csv"
+        )
+        _output_file.parent.mkdir(parents=True, exist_ok=True)
+        _output_file.unlink(missing_ok=True)
+
+        return _output_file

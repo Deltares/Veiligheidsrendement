@@ -1,11 +1,12 @@
-from vrtool.flood_defence_system.section_reliability import SectionReliability
 from numpy import concatenate
+
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
     RevetmentMeasureResult,
 )
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class RevetmentMeasureSectionReliability(MeasureResultCollectionProtocol):

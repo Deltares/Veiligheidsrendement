@@ -102,7 +102,7 @@ def make_traject_df(traject: DikeTraject, cols):
     df_index = pd.MultiIndex.from_product(
         [sections, mechanisms], names=["name", "mechanism"]
     )
-    _traject_probaility = pd.DataFrame(columns=cols, index=df_index)
+    _traject_probability = pd.DataFrame(columns=cols, index=df_index)
 
     for _section in traject.sections:
         for _mechanism_name in mechanisms:
@@ -119,11 +119,11 @@ def make_traject_df(traject: DikeTraject, cols):
                     )
                 )
                 continue
-            _traject_probaility.loc[(_section.name, _mechanism_name)] = list(
+            _traject_probability.loc[(_section.name, _mechanism_name)] = list(
                 _section.section_reliability.SectionReliability.loc[_mechanism_name]
             )
 
-    return _traject_probaility
+    return _traject_probability
 
 
 # hereafter a bunch of functions to compute costs, risks and probabilities over time are defined:

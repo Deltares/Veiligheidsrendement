@@ -1,18 +1,9 @@
-import pytest
-from vrtool.common.dike_traject_info import DikeTrajectInfo
+from numpy.testing import assert_array_almost_equal
+
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure import (
     RevetmentMeasure,
 )
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
-    RevetmentMeasureResultCollection,
-)
-from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.mechanism_reliability_collection import (
-    MechanismReliabilityCollection,
-)
-from numpy.testing import assert_array_almost_equal
 
 
 class TestRevetmentMeasure:
@@ -31,7 +22,7 @@ class TestRevetmentMeasure:
         _revetment_measure.parameters["n_steps_block"] = _vector_size
         _revetment_measure.parameters["transition_level_increase_step"] = 0.25
         _expected_beta_target_vector = [
-            0.42,
+            _min_beta,
             0.9738885595475857,
             1.5277771190951714,
             2.081665678642757,
@@ -55,7 +46,7 @@ class TestRevetmentMeasure:
             "transition_level_increase_step"
         ] = _transition_level_step
         _expected_transition_level_vector = [
-            0,
+            _current_transition_level,
             0.25,
             0.5,
             0.75,

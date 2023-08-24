@@ -1,27 +1,25 @@
 import copy
 from itertools import groupby
-
 from math import isnan
+
 import numpy as np
 from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
-    RevetmentMeasureResultBuilder,
-)
-
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
     RevetmentMeasureResult,
 )
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
+    RevetmentMeasureResultBuilder,
+)
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
-    RevetmentMeasureSectionReliability,
     RevetmentMeasureResultCollection,
+    RevetmentMeasureSectionReliability,
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
@@ -91,7 +89,6 @@ class RevetmentMeasure(MeasureProtocol):
         _revetment = self._get_revetment(dike_section)
 
         # 1. Get beta targets.
-        # TODO. Currently only one beta target available due to the step = 4.
         _beta_targets = self._get_beta_target_vector(
             self._get_min_beta_target(dike_section), traject_info.Pmax
         )
@@ -101,7 +98,7 @@ class RevetmentMeasure(MeasureProtocol):
             _revetment.current_transition_level, dike_section.crest_height
         )
 
-        # 3. Iterate over beta_targets - transition level - year.
+        # 3 & 4. Iterate over beta_targets - transition level - year.
         _intermediate_measures = self._get_intermediate_measures(
             dike_section, _revetment, _beta_targets, _transition_levels, self.config.T
         )
@@ -220,9 +217,6 @@ class RevetmentMeasure(MeasureProtocol):
                 transition_level=_sample.transition_level,
                 beta_combined=_interpolated_beta,
                 cost=_interpolated_cost,
-                revetment_measures=[
-                    rm.revetment_measures for rm in available_measures
-                ],  # TODO: Not very happy about this type.
             )
             _interpolated_measures.append(_interpolated_measure)
         return _interpolated_measures
