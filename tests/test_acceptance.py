@@ -36,7 +36,11 @@ _acceptance_test_cases = [
     ),
     pytest.param(
         ("TestCase1_38-1_revetment", "38-1", _available_mechanisms),
-        id="Traject 38-1, full, with revetment",
+        id="Traject 38-1, with revetment, case 1",
+    ),
+    pytest.param(
+        ("TestCase3_38-1_revetment", "38-1", _available_mechanisms),
+        id="Traject 38-1, with revetment, including bundling",
     ),
 ]
 
