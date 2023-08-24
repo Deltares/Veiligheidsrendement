@@ -2,7 +2,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
-from vrtool.orm.models import MeasurePerSection, Measure, MeasureType, CombinableType
+from vrtool.orm.models import MeasurePerSection, Measure, MeasureType, CombinableType, MeasureResult
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
@@ -135,4 +135,19 @@ def get_basic_measure_per_section() -> MeasurePerSection:
     return MeasurePerSection.create(
         section=_test_section,
         measure=_test_measure,
+    )
+
+def get_basic_measure_result() -> MeasureResult:
+    """
+    Gets a basic measure result entity.
+
+    Returns:
+        MeasureResult: The created measure result entity in the database.
+    """
+    _test_measure_per_section = get_basic_measure_per_section()
+    return MeasureResult.create(
+        beta=3.1234,
+        time=0.0,
+        cost=100,
+        measure_per_section=_test_measure_per_section,
     )

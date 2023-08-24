@@ -8,7 +8,7 @@ class MeasureResult(OrmBaseModel):
     beta = FloatField()
     time = FloatField()
     cost = FloatField()
-    measure_per_section_id = ForeignKeyField(MeasurePerSection, backref="measure_results")
+    measure_per_section = ForeignKeyField(MeasurePerSection, backref="measure_results")
 
     class Meta:
         table_name = _get_table_name(__qualname__)
