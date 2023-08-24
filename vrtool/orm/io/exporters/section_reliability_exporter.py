@@ -38,8 +38,15 @@ class SectionReliabilityExporter(OrmExporterProtocol):
     def export_dom(
         self, dom_model: SectionReliability
     ) -> list[AssessmentSectionResults]:
-        for reliability_df in dom_model.SectionReliability:
-            AssessmentSectionResults.create(
-                beta=...,
-                time=...,
+        _added_assessments = []
+        for col_idx, beta_value in enumerate(
+            dom_model.SectionReliability.loc["Section"]
+        ):
+            _added_assessments.append(
+                AssessmentSectionResults.create(
+                    beta=beta_value,
+                    time=dom_model.SectionReliability.columns[col_idx],
+                    section_data=self._section_data,
+                )
             )
+        return _added_assessments
