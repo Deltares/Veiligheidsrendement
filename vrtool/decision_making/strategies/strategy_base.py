@@ -100,7 +100,7 @@ class StrategyBase:
     def get_measure_from_index(self, index, section_order=False, print_measure=False):
         """ "Converts an index (n,sh,sg) to a printout of the measure data"""
         if not section_order:
-            logging.warn(
+            logging.warning(
                 "Deriving section order from unordered dictionary. Might be wrong"
             )
             section_order = list(self.options_height.keys())
@@ -346,11 +346,11 @@ class StrategyBase:
 
         # probabilities [N,S,T]
         self.Pf = {}
-        for i in self.mechanisms:
-            if i == "Overflow" or i == "Revetment":
-                self.Pf[i] = np.full((N, Sh + 1, T), 1.0)
+        for _mechanism_name in self.mechanisms:
+            if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
+                self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0)
             else:
-                self.Pf[i] = np.full((N, Sg + 1, T), 1.0)
+                self.Pf[_mechanism_name] = np.full((N, Sg + 1, T), 1.0)
 
         # fill values
         # TODO Think about the initial condition and whether this should be added separately or teh 0,
@@ -360,26 +360,45 @@ class StrategyBase:
         # get all probabilities. Interpolate on beta per section, then combine p_f
         betas = {}
         for n in range(0, N):
-            for i in self.mechanisms:
+            for _mechanism_name in self.mechanisms:
                 len_beta1 = traject.sections[
                     n
                 ].section_reliability.SectionReliability.shape[1]
+                if (
+                    _mechanism_name
+                    not in traject.sections[
+                        n
+                    ].section_reliability.SectionReliability.index
+                ):
+                    # TODO (VRTOOL-187).
+                    # This could become obsolete once SectionReliability contains the data related to revetment.
+                    # Consider removing if that's the case.
+                    logging.error(
+                        "No optimalization available for '{}'.".format(_mechanism_name)
+                    )
+                    continue
                 beta1 = (
                     traject.sections[n]
-                    .section_reliability.SectionReliability.loc[i]
+                    .section_reliability.SectionReliability.loc[_mechanism_name]
                     .values.reshape((len_beta1, 1))
                     .T
                 )  # Initial
                 # condition with no measure
-                if i == "Overflow" or i == "Revetment":
-                    beta2 = self.options_height[keys[n]][i]
+                if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
+                    beta2 = self.options_height[keys[n]][_mechanism_name]
                     # All solutions
                 else:
-                    beta2 = self.options_geotechnical[keys[n]][i]  # All solutions
-                betas[i] = np.concatenate((beta1, beta2), axis=0)
-                if np.shape(betas[i])[1] != T:
-                    betas[i] = interp1d(self.T, betas[i])(np.arange(0, T, 1))
-                self.Pf[i][n, 0 : np.size(betas[i], 0), :] = beta_to_pf(betas[i])
+                    beta2 = self.options_geotechnical[keys[n]][
+                        _mechanism_name
+                    ]  # All solutions
+                betas[_mechanism_name] = np.concatenate((beta1, beta2), axis=0)
+                if np.shape(betas[_mechanism_name])[1] != T:
+                    betas[_mechanism_name] = interp1d(self.T, betas[_mechanism_name])(
+                        np.arange(0, T, 1)
+                    )
+                self.Pf[_mechanism_name][
+                    n, 0 : np.size(betas[_mechanism_name], 0), :
+                ] = beta_to_pf(betas[_mechanism_name])
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
@@ -1198,7 +1217,9 @@ class StrategyBase:
 
             if i == len(self.Probabilities) - 1:
                 self.SafetyStandardStep = i
-                logging.warn("safety standard not met. Using final step for plotting")
+                logging.warning(
+                    "safety standard not met. Using final step for plotting"
+                )
 
     def plot_measures(
         self,

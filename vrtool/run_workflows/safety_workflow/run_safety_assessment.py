@@ -45,12 +45,15 @@ class RunSafetyAssessment(VrToolRunProtocol):
             # compute reliability in time for each mechanism:
             # logging.info(section.End)
             for mechanism_name in self.selected_traject.mechanism_names:
-                _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                _mechanism_reliability_collection = _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism_name
-                ).generate_LCR_profile(
-                    _section.section_reliability.load,
-                    self.selected_traject.general_info,
                 )
+
+                if _mechanism_reliability_collection:
+                    _mechanism_reliability_collection.generate_LCR_profile(
+                        _section.section_reliability.load,
+                        self.selected_traject.general_info,
+                    )
 
             # aggregate to section reliability:
             _section.section_reliability.calculate_section_reliability()
@@ -65,7 +68,11 @@ class RunSafetyAssessment(VrToolRunProtocol):
         _results = ResultsSafetyAssessment()
         _results.selected_traject = self.selected_traject
         _results.vr_config = self.vr_config
-        _results.plot_results()
+        _results._write_results_to_file()
+
+        # TODO: Disable plots for the time being: plot raises error when not all sections have all
+        # failure mechanism data defined
+        # _results.plot_results()
 
         logging.info("Finished step 1: assessment of current situation")
         if self.vr_config.shelves:

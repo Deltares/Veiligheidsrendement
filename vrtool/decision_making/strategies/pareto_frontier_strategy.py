@@ -29,7 +29,7 @@ class ParetoFrontierStrategy(StrategyBase):
     ):
         _mip_object = MixedIntegerStrategy("MIPObject")
         _mip_object.combine(traject, solutions_dict, splitparams=True)
-        _mip_object.make_optimization_input(traject, solutions_dict)
+        _mip_object.make_optimization_input(traject)
 
         MIPObjects = []
         MIPModels = []
@@ -74,10 +74,12 @@ class ParetoFrontierStrategy(StrategyBase):
             np.array([LCC, TR, TC]).T, columns=["LCC", "TR", "TC"]
         )
 
-    def filter(self, traject: DikeTraject, type="ParetoPerSection"):
+    def filter(self, traject: DikeTraject, type: str = "ParetoPerSection"):
         """This is an optional routine that can be used to filter measures per section.
         It is based on defining a Pareto front, its main idea is that you throw out measures that have a certain reliability but are more costly than other measures that provide the same reliability."""
-        self.options_height, self.options_geotechnical = split_options(self.options)
+        self.options_height, self.options_geotechnical = split_options(
+            self.options, traject.mechanism_names
+        )
         if type == "ParetoPerSection":
             damage = traject.general_info.FloodDamage
             r = self.r

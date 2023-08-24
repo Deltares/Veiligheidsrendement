@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from vrtool.failure_mechanisms.revetment.grass_slope_part import GrassSlopePart
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
-from vrtool.failure_mechanisms.revetment.slope_part_protocol import SlopePartProtocol
-from vrtool.failure_mechanisms.revetment.stone_slope_part import StoneSlopePart
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    GrassSlopePart,
+    SlopePartProtocol,
+    StoneSlopePart,
+)
 
 
 @dataclass
@@ -27,7 +29,16 @@ class RevetmentDataClass:
 
         return min(_grass_begin_parts)
 
-    def find_given_years(self) -> list[int]:
+    def get_available_years(self) -> list[int]:
+        """
+        Returns a list of the years whose data is available within its revetments (`RelationRevetmentProtocol`) for this `RevetmentDataClass` instance.
+
+        Raises:
+            ValueError: When the available years differ between revetments.
+
+        Returns:
+            list[int]: Available years with revetment data.
+        """
         given_years_stone = set()
         for _slope_part in self.slope_parts:
             if isinstance(_slope_part, StoneSlopePart):
