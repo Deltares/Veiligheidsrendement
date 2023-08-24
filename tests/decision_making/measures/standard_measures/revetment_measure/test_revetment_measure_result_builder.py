@@ -1,9 +1,12 @@
-from dataclasses import dataclass
 import csv
 import itertools
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+import pytest
+
+from tests import get_test_results_dir, test_results
 from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
     JsonFilesToRevetmentDataClassReader,
 )
@@ -16,23 +19,20 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
     RevetmentMeasureResultBuilder,
 )
+from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
+    RelationGrassRevetment,
+)
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-import pytest
-
 from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
     StoneSlopePart,
 )
-from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
-    RelationGrassRevetment,
-)
 from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
     AsphaltSlopePart,
 )
-from tests import test_results, get_test_results_dir
 
 
 @dataclass
@@ -110,7 +110,7 @@ class TestRevetmentMeasureResultBuilder:
         _builder = RevetmentMeasureResultBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.get_revetment_measures_collection(
+        _data_collection = _builder._get_revetment_measures_collection(
             _crest_height,
             revetment_data,
             _target_beta,
@@ -233,7 +233,7 @@ class TestRevetmentMeasureResultBuilder:
         _builder = RevetmentMeasureResultBuilder()
 
         # 2. Run test.
-        _data_collection = _builder.get_revetment_measures_collection(
+        _data_collection = _builder._get_revetment_measures_collection(
             _crest_height,
             _revetment_data,
             _target_beta,
@@ -335,7 +335,7 @@ class TestRevetmentMeasureResultBuilder:
         )
 
         # 2. Run test.
-        _results = _builder.get_revetment_measures_collection(
+        _results = _builder._get_revetment_measures_collection(
             json_file_case.crest_height,
             _revetment_data,
             json_file_case.target_beta,

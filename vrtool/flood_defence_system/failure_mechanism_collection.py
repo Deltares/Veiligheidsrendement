@@ -1,7 +1,7 @@
+from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
 
 class FailureMechanismCollection:

@@ -1,3 +1,9 @@
+import math
+from math import isnan
+
+import numpy as np
+from scipy.interpolate import interp1d
+
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
     RevetmentMeasureData,
 )
@@ -14,11 +20,6 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
     SlopePartProtocol,
     StoneSlopePart,
 )
-import math
-
-from math import isnan
-import numpy as np
-from scipy.interpolate import interp1d
 from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GRASS_TYPE
 
 
@@ -59,7 +60,7 @@ class RevetmentMeasureResultBuilder:
         measure_year: int,
     ) -> RevetmentMeasureResult:
         # 3.1. Get measure Beta and cost per year.
-        _revetment_measures_collection = self.get_revetment_measures_collection(
+        _revetment_measures_collection = self._get_revetment_measures_collection(
             crest_height,
             revetment,
             beta_target,
@@ -91,7 +92,7 @@ class RevetmentMeasureResultBuilder:
             cost=_cost,
         )
 
-    def get_revetment_measures_collection(
+    def _get_revetment_measures_collection(
         self,
         crest_height: float,
         revetment_data: RevetmentDataClass,

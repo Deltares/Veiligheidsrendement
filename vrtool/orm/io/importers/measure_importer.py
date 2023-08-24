@@ -3,10 +3,10 @@ from typing import Type
 from vrtool.decision_making.measures import (
     CustomMeasure,
     DiaphragmWallMeasure,
+    RevetmentMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
     VerticalGeotextileMeasure,
-    RevetmentMeasure,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig

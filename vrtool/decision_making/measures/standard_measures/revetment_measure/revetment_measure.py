@@ -1,27 +1,25 @@
 import copy
 from itertools import groupby
-
 from math import isnan
+
 import numpy as np
 from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
-    RevetmentMeasureResultBuilder,
-)
-
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
     RevetmentMeasureResult,
 )
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_builder import (
+    RevetmentMeasureResultBuilder,
+)
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
-    RevetmentMeasureSectionReliability,
     RevetmentMeasureResultCollection,
+    RevetmentMeasureSectionReliability,
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability

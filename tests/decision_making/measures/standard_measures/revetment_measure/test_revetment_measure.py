@@ -1,8 +1,9 @@
+from numpy.testing import assert_array_almost_equal
+
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure import (
     RevetmentMeasure,
 )
-from numpy.testing import assert_array_almost_equal
 
 
 class TestRevetmentMeasure:
