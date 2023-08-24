@@ -1,4 +1,4 @@
-from vrtool.orm.models.assessment_mechanism_results import AssessmentMechanismResult
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.block_revetment_relation import BlockRevetmentRelation
 from vrtool.orm.models.buildings import Buildings
