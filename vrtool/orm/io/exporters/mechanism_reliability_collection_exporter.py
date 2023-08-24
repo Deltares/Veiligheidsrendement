@@ -33,7 +33,7 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
                 _added_assessments.append(
                     AssessmentMechanismResults.create(
                         beta=beta_value,
-                        time=float(mechanism_row.index[time_idx]),
+                        time=int(mechanism_row.index[time_idx]),
                         mechanism_per_section=self._get_mechanism_per_section(row_idx),
                     )
                 )

@@ -57,3 +57,25 @@ class TestMechanismReliabilityCollectionExporter:
         assert len(_orm_assessments) == _expected_time_entries * len(
             _expected_mechanisms
         )
+        assert all(
+            isinstance(_orm_assessment, AssessmentMechanismResults)
+            for _orm_assessment in _orm_assessments
+        )
+        for row_idx, mechanism_row in _expected_mechanisms_reliability.iterrows():
+            _mechanism_name = row_idx.upper().strip()
+            _orm_mechanisms = list(
+                filter(
+                    lambda x: x.mechanism_per_section.mechanism.name == _mechanism_name,
+                    _orm_assessments,
+                )
+            )
+            for time_idx, beta_value in enumerate(mechanism_row):
+                time_value = int(mechanism_row.index[time_idx])
+                _orm_assessment = next(
+                    (_oa for _oa in _orm_mechanisms if _oa.time == time_value),
+                    None
+                )
+                assert isinstance(
+                    _orm_assessment, AssessmentMechanismResults
+                ), f"No assessment created for mechanism {_mechanism_name}, time {time_value}."
+                assert _orm_assessment.beta == beta_value
