@@ -220,7 +220,7 @@ class RevetmentMeasureResultBuilder:
 
         for _revetment_measure in revetment_measures:
             if (
-                GrassSlopePart.is_grass_part(_revetment_measure.top_layer_type)
+                GrassSlopePart.is_grass_part(_revetment_measure.previous_top_layer_type)
                 and _revetment_measure.begin_part < current_transition_level
             ):
                 _revetment_measure.top_layer_thickness = (
