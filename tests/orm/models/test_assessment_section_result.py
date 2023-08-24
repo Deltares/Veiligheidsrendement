@@ -1,5 +1,5 @@
 from tests.orm import empty_db_fixture, get_basic_section_data
-from vrtool.orm.models import AssessmentSectionResults
+from vrtool.orm.models import AssessmentSectionResult
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
@@ -9,14 +9,14 @@ class TestAssessmentSectionResults:
         _section = get_basic_section_data()
 
         # 2. Run test
-        _assessment_section_results = AssessmentSectionResults.create(
+        _assessment_section_result = AssessmentSectionResult.create(
             beta=3.1234,
             time=0.0,
             section_data=_section,
         )
 
         # 3. Verify expectations.
-        assert isinstance(_assessment_section_results, AssessmentSectionResults)
-        assert isinstance(_assessment_section_results, OrmBaseModel)
-        assert _assessment_section_results.section_data == _section
-        assert _assessment_section_results in _section.assessment_section_results
+        assert isinstance(_assessment_section_result, AssessmentSectionResult)
+        assert isinstance(_assessment_section_result, OrmBaseModel)
+        assert _assessment_section_result.section_data == _section
+        assert _assessment_section_result in _section.assessment_section_result
