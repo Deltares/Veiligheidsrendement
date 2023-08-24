@@ -12,11 +12,17 @@ class TestAssessmentMechanismResults:
         _assessment_mechanism_results = AssessmentMechanismResults.create(
             beta=3.1234,
             time=0.0,
-            mechanism_per_section_id=_mechanism_per_section,
+            mechanism_per_section=_mechanism_per_section,
         )
 
         # 3. Verify expectations.
         assert isinstance(_assessment_mechanism_results, AssessmentMechanismResults)
         assert isinstance(_assessment_mechanism_results, OrmBaseModel)
-        assert _assessment_mechanism_results.mechanism_per_section_id == _mechanism_per_section
-        assert _assessment_mechanism_results in _mechanism_per_section.assessment_mechanism_results
+        assert (
+            _assessment_mechanism_results.mechanism_per_section
+            == _mechanism_per_section
+        )
+        assert (
+            _assessment_mechanism_results
+            in _mechanism_per_section.assessment_mechanism_results
+        )
