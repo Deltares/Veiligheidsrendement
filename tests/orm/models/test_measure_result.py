@@ -20,4 +20,4 @@ class TestMeasureResult:
         assert isinstance(_measure_result, MeasureResult)
         assert isinstance(_measure_result, OrmBaseModel)
         assert _measure_result.measure_per_section == _measure_per_section
-        assert _measure_result in _measure_per_section.measure_results
+        assert _measure_result in _measure_per_section.measure_per_section_results
