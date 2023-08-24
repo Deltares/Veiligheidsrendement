@@ -95,7 +95,6 @@ class TestSectionReliabilityExporter:
         _orm_assessments = _exporter.export_dom(section_reliability_with_values)
 
         # 3. Verify expectations.
-
         assert len(_orm_assessments) == _expected_entries
         assert len(_test_section_data.assessment_section_results) == _expected_entries
         assert all(
