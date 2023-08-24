@@ -59,6 +59,20 @@ class RevetmentMeasureResultBuilder:
         transition_level: float,
         measure_year: int,
     ) -> RevetmentMeasureResult:
+        """
+        Creates a valid instance of a `RevetmentMeasureResult` based on all the given arguments.
+
+        Args:
+            crest_height (float): Dike section crest height.
+            dike_length (float): Dike length.
+            revetment (RevetmentDataClass): Revetment data describing all properties for all the possible slope and grass parts (`SlopePartProtocol` and `RelationGrassRevetment`).
+            beta_target (float): Desired beta set as a limit.
+            transition_level (float): Current transition level.
+            measure_year (int): Year for which calculation is being done.
+
+        Returns:
+            RevetmentMeasureResult: Simple dataclass containing the result data of a (re)calculated revetment measure.
+        """
         # 3.1. Get measure Beta and cost per year.
         _revetment_measures_collection = self._get_revetment_measures_collection(
             crest_height,
