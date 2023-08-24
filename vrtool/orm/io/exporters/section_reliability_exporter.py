@@ -1,11 +1,8 @@
-from typing import Any
-
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_section_results import AssessmentSectionResults
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.section_data import SectionData
 
 
