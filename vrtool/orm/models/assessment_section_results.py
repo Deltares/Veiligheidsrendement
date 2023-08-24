@@ -1,4 +1,4 @@
-from peewee import ForeignKeyField, FloatField
+from peewee import FloatField, ForeignKeyField
 
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 from vrtool.orm.models.section_data import SectionData

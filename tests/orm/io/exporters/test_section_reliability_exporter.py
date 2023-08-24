@@ -1,3 +1,7 @@
+import pandas as pd
+import pytest
+
+from tests import test_data
 from tests.orm import empty_db_fixture, get_basic_section_data
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -8,9 +12,6 @@ from vrtool.orm.io.exporters.section_reliability_exporter import (
 )
 from vrtool.orm.models.assessment_section_results import AssessmentSectionResults
 from vrtool.orm.models.section_data import SectionData
-import pytest
-from tests import test_data
-import pandas as pd
 
 
 class TestSectionReliabilityExporter:

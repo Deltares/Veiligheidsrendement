@@ -9,10 +9,10 @@ from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
+from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.supporting_file import SupportingFile
 
 
