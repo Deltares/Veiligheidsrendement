@@ -3,14 +3,13 @@ from typing import Type
 from vrtool.decision_making.measures import (
     CustomMeasure,
     DiaphragmWallMeasure,
+    RevetmentMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
     VerticalGeotextileMeasure,
 )
-from vrtool.decision_making.measures.custom_measure import CustomMeasure
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.custom_measure import CustomMeasure as OrmCustomMeasure
 from vrtool.orm.models.measure import Measure as OrmMeasure
@@ -67,6 +66,11 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.parameters[
             "Pf_solution"
         ] = orm_measure.failure_probability_with_solution
+        _measure.parameters[
+            "transition_level_increase_step"
+        ] = orm_measure.transition_level_increase_step
+        _measure.parameters["max_pf_factor_block"] = orm_measure.max_pf_factor_block
+        _measure.parameters["n_steps_block"] = orm_measure.n_steps_block
         _measure.parameters["ID"] = orm_measure.get_id()
 
         return _measure
@@ -95,6 +99,7 @@ class MeasureImporter(OrmImporterProtocol):
             "diaphragm wall": DiaphragmWallMeasure,
             "stability screen": StabilityScreenMeasure,
             "vertical geotextile": VerticalGeotextileMeasure,
+            "revetment": RevetmentMeasure,
         }
 
         _found_type = _mapping_types.get(

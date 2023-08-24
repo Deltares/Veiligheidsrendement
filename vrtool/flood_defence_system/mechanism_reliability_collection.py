@@ -3,7 +3,6 @@ import openturns as ot
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
-from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
 
@@ -52,7 +51,7 @@ class MechanismReliabilityCollection:
                 )
 
     def generate_LCR_profile(self, load: LoadInput, traject_info: DikeTrajectInfo):
-        """Generates the LCR profile.
+        """Generates the LifeCycleReliability profile.
 
         Args:
             load (LoadInput): The load input.
