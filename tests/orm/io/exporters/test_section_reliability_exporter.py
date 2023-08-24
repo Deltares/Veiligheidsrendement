@@ -94,6 +94,6 @@ class TestSectionReliabilityExporter:
                     col_idx
                 ]
             )
-            assert _orm_assessment.time == float(
+            assert _orm_assessment.time == int(
                 section_reliability_with_values.SectionReliability.columns[col_idx]
             )
