@@ -130,7 +130,7 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
         top_layer_thickness: float,
     ) -> float:
         """
-        _summary_
+        Evaluates all given slope part relations for a given `evaluation_year` and a concrete `top_layer_thickness`.
 
         Args:
             evaluation_year (int): Evaluation year to apply to the `slope_part_relations`.
