@@ -5,7 +5,7 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name, _max
 
 
 class MeasureResultParameter(OrmBaseModel):
-    name = CharField(unique=True, max_length=_max_char_length)
+    name = CharField(max_length=_max_char_length)
     value = FloatField()
     measure_result = ForeignKeyField(MeasureResult, backref="measure_result_parameters")
 
