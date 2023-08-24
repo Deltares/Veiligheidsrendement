@@ -15,6 +15,15 @@ class SectionReliabilityExporter(OrmExporterProtocol):
 
     @staticmethod
     def get_related_section_data(dike_section: DikeSection) -> SectionData:
+        """
+        Retrieves the database's mapped dike section as an ORM object.
+
+        Args:
+            dike_section (DikeSection): DOM dike section saved in the database.
+
+        Returns:
+            SectionData: ORM instance representing the given `DikeSection`.
+        """
         pass
 
     def export_dom(
