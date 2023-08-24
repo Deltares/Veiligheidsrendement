@@ -102,3 +102,14 @@ class TestSectionReliabilityExporter:
             isinstance(_orm_assessment, AssessmentSectionResults)
             for _orm_assessment in _orm_assessments
         )
+        for col_idx, _orm_assessment in enumerate(_orm_assessments):
+            assert _orm_assessment.section_data == _test_section_data
+            assert (
+                _orm_assessment.beta
+                == section_reliability_with_values.SectionReliability.loc["Section"][
+                    col_idx
+                ]
+            )
+            assert _orm_assessment.time == float(
+                section_reliability_with_values.SectionReliability.columns[col_idx]
+            )

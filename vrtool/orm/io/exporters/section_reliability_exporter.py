@@ -43,7 +43,7 @@ class SectionReliabilityExporter(OrmExporterProtocol):
             _added_assessments.append(
                 AssessmentSectionResults.create(
                     beta=beta_value,
-                    time=dom_model.SectionReliability.columns[col_idx],
+                    time=float(dom_model.SectionReliability.columns[col_idx]),
                     section_data=self._section_data,
                 )
             )
