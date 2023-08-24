@@ -7,7 +7,7 @@ from vrtool.orm.models.section_data import SectionData
 class AssessmentSectionResult(OrmBaseModel):
     beta = FloatField()
     time = IntegerField()
-    section_data = ForeignKeyField(SectionData, backref="assessment_section_result")
+    section_data = ForeignKeyField(SectionData, backref="assessment_section_results")
 
     class Meta:
         table_name = _get_table_name(__qualname__)

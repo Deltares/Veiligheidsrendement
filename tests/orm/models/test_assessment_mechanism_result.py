@@ -19,10 +19,9 @@ class TestAssessmentMechanismResult:
         assert isinstance(_assessment_mechanism_result, AssessmentMechanismResult)
         assert isinstance(_assessment_mechanism_result, OrmBaseModel)
         assert (
-            _assessment_mechanism_result.mechanism_per_section
-            == _mechanism_per_section
+            _assessment_mechanism_result.mechanism_per_section == _mechanism_per_section
         )
         assert (
             _assessment_mechanism_result
-            in _mechanism_per_section.assessment_mechanism_result
+            in _mechanism_per_section.assessment_mechanism_results
         )

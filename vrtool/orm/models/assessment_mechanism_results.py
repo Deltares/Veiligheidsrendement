@@ -8,7 +8,7 @@ class AssessmentMechanismResult(OrmBaseModel):
     beta = FloatField()
     time = IntegerField()
     mechanism_per_section = ForeignKeyField(
-        MechanismPerSection, backref="assessment_mechanism_result"
+        MechanismPerSection, backref="assessment_mechanism_results"
     )
 
     class Meta:
