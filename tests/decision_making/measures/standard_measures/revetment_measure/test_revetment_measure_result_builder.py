@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from tests import get_test_results_dir, test_results, test_data
-from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
+from tests.failure_mechanisms.revetment.json_files_to_revetment_dataclass_reader import (
     JsonFilesToRevetmentDataClassReader,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
