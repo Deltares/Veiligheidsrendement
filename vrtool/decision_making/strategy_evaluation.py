@@ -8,7 +8,8 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+
+# from vrtool.decision_making.strategies.strategy_base import StrategyBase
 
 
 # This script combines two sets of measures to a single option
@@ -460,7 +461,7 @@ def update_probability(init_probability, strategy, index):
 
 
 def overflow_bundling(
-    strategy: StrategyBase,
+    strategy,  #: StrategyBase,
     init_overflow_risk,
     existing_investment,
     life_cycle_cost,
