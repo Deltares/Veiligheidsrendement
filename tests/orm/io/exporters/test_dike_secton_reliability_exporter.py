@@ -1,6 +1,7 @@
 from tests.orm import get_basic_section_data, empty_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
@@ -11,6 +12,10 @@ from vrtool.orm.io.exporters.section_reliability_exporter import (
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.section_data import SectionData
+from tests.orm.io.exporters import (
+    create_required_mechanism_per_section,
+    section_reliability_with_values,
+)
 
 
 class TestDikeSectionReliabilityExporter:
@@ -65,7 +70,9 @@ class TestDikeSectionReliabilityExporter:
         # 3. Verify expectations.
         assert _related_section_data is None
 
-    def test_export_dom_with_valid_data(self):
+    def test_export_dom_with_valid_data(
+        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+    ):
         # 1. Define test data.
         _exporter = DikeSectionReliabilityExporter()
         _test_section_data = get_basic_section_data()
@@ -73,9 +80,18 @@ class TestDikeSectionReliabilityExporter:
             _test_section_data.section_name,
             _test_section_data.dike_traject.traject_name,
         )
-        _expected_assessments = len(
-            _test_dike_section.section_reliability.SectionReliability.values
+        _test_dike_section.section_reliability = section_reliability_with_values
+        _expected_mechanisms_reliability = (
+            section_reliability_with_values.SectionReliability.loc[
+                section_reliability_with_values.SectionReliability.index != "Section"
+            ]
         )
+        create_required_mechanism_per_section(
+            _test_section_data, _expected_mechanisms_reliability.index
+        )
+
+        _expected_assessments = section_reliability_with_values.SectionReliability.size
+        _time_entries = len(section_reliability_with_values.SectionReliability.columns)
 
         # 2. Run test.
         _created_assessments = _exporter.export_dom(_test_dike_section)
@@ -87,5 +103,8 @@ class TestDikeSectionReliabilityExporter:
             )
 
         assert len(_created_assessments) == _expected_assessments
-        assert len(filtered(AssessmentMechanismResult)) == ...
-        assert len(filtered(AssessmentSectionResult)) == ...
+        assert (
+            len(filtered(AssessmentMechanismResult))
+            == len(_expected_mechanisms_reliability.index) * _time_entries
+        )
+        assert len(filtered(AssessmentSectionResult)) == _time_entries
