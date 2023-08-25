@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from tests import get_test_results_dir, test_results, test_data
+from tests import get_test_results_dir, test_data, test_results
 from tests.failure_mechanisms.revetment.json_files_to_revetment_dataclass_reader import (
     JsonFilesToRevetmentDataClassReader,
 )

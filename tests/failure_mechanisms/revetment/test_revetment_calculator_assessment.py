@@ -1,9 +1,8 @@
 import pytest
+
 from tests.failure_mechanisms.revetment.json_files_to_revetment_dataclass_reader import (
     JsonFilesToRevetmentDataClassReader,
 )
-
-
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
 
 

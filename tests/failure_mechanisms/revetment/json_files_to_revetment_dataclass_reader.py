@@ -1,9 +1,5 @@
-from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.slope_part import (
-    SlopePartBuilder,
-    SlopePartProtocol,
-    StoneSlopePart,
-)
+import json
+
 from tests import test_data
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
@@ -11,7 +7,12 @@ from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
-import json
+from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.slope_part import (
+    SlopePartBuilder,
+    SlopePartProtocol,
+    StoneSlopePart,
+)
 
 
 class JsonFilesToRevetmentDataClassReader:
