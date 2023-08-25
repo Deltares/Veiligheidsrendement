@@ -23,7 +23,7 @@ from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptim
 
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
 
-_acceptance_test_cases = [
+_acceptance_all_steps_test_cases = [
     pytest.param(
         ("TestCase1_38-1_no_housing", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, no housing",

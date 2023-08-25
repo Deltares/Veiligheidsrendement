@@ -342,7 +342,7 @@ class StrategyBase:
         # probabilities [N,S,T]
         self.Pf = {}
         for _mechanism_name in self.mechanisms:
-            if _mechanism_name == "Overflow" or i == "Revetment":
+            if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
                 self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0)
             else:
                 self.Pf[_mechanism_name] = np.full((N, Sg + 1, T), 1.0)
