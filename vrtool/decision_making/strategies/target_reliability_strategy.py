@@ -94,7 +94,7 @@ class TargetReliabilityStrategy(StrategyBase):
             # convert beta_cs to beta_section in order to correctly search self.options[section]
             # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
             if self.LE_in_section:
-                logging.warn(
+                logging.warning(
                     "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
                 )
                 _beta_t_piping = pf_to_beta(
@@ -123,13 +123,21 @@ class TargetReliabilityStrategy(StrategyBase):
             _possible_measures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
             for mechanism in traject.mechanism_names:
+                if mechanism.lower().strip() == "revetment":
+                    # TODO (VRTOOL-187).
+                    # This could become obsolete once SectionReliability contains the data related to revetment.
+                    # Consider removing if that's the case.
+                    logging.warning(
+                        "Target strategy not available for '{}'.".format(mechanism)
+                    )
+                    continue
                 _possible_measures = _possible_measures.loc[
                     self.options[i.name][(mechanism, _target_year)] > _beta_t[mechanism]
                 ]
 
             if len(_possible_measures) == 0:
                 # continue to next section if weakest has no more measures
-                logging.warn(
+                logging.warning(
                     "Warning: for Target reliability strategy no suitable measures were found for section {}".format(
                         i.name
                     )

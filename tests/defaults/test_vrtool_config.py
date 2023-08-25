@@ -96,6 +96,7 @@ class TestVrtoolConfig:
             "Overflow",
             "StabilityInner",
             "Piping",
+            "Revetment",
         ]
         assert not _config.LE_in_section
         assert _config.crest_step == pytest.approx(0.5)

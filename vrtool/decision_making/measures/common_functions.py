@@ -414,7 +414,7 @@ def determine_costs(
         and (dberm_in > 0.0)
     ):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
-        logging.warn(
+        logging.warning(
             "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
         )
     if "soil reinforcement" in _measure_type_name:
@@ -452,7 +452,7 @@ def determine_costs(
         # add costs for housing
         if isinstance(housing, pd.DataFrame) and dberm_in > 0.0:
             if dberm_in > housing.size:
-                logging.warn(
+                logging.warning(
                     "Inwards reinforcement distance exceeds data for housing database at section {}".format(
                         section
                     )

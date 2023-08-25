@@ -131,7 +131,7 @@ class DikeTraject:
                             ProbabilityFrame = i
                         else:
                             if not "ProbabilityFrame" in locals():
-                                logging.warn(
+                                logging.warning(
                                     "No satisfactory solution found, skipping plot"
                                 )
                             return
