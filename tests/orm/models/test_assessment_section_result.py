@@ -3,7 +3,7 @@ from vrtool.orm.models import AssessmentSectionResult
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
-class TestAssessmentSectionResults:
+class TestAssessmentSectionResult:
     def test_initialize_with_database_fixture(self, empty_db_fixture):
         # 1. Define test data.
         _section = get_basic_section_data()

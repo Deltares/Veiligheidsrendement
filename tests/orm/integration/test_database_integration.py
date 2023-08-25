@@ -22,12 +22,12 @@ from vrtool.orm.io.importers.stability_inner_simple_importer import (
 )
 from vrtool.orm.models import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models.mechanism import Mechanism
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.section_data import SectionData
 
 
