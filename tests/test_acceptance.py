@@ -21,18 +21,23 @@ from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 
-_acceptance_all_steps_test_cases = [
-    pytest.param(("TestCase1_38-1_no_housing", "38-1"), id="Traject 38-1, no housing"),
+_available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
+
+_acceptance_test_cases = [
     pytest.param(
-        ("TestCase1_38-1_no_housing_stix", "38-1"),
+        ("TestCase1_38-1_no_housing", "38-1", _available_mechanisms[:3]),
+        id="Traject 38-1, no housing",
+    ),
+    pytest.param(
+        ("TestCase1_38-1_no_housing_stix", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, no housing, with dstability",
     ),
     pytest.param(
-        ("TestCase2_38-1_overflow_no_housing", "38-1"),
+        ("TestCase2_38-1_overflow_no_housing", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, no-housing, with overflow",
     ),
     pytest.param(
-        ("TestCase1_38-1_revetment", "38-1"),
+        ("TestCase1_38-1_revetment", "38-1", _available_mechanisms),
         id="Traject 38-1, full, with revetment",
     ),
 ]
@@ -63,7 +68,7 @@ class TestAcceptance:
 
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
-        _casename, _traject = request.param
+        _casename, _traject, _mechanisms = request.param
         _test_input_directory = Path.joinpath(test_data, _casename)
         assert _test_input_directory.exists()
 
@@ -75,6 +80,7 @@ class TestAcceptance:
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
         _test_config.traject = _traject
+        _test_config.mechanisms = _mechanisms
         _test_config.externals = test_externals
         _test_config.input_database_path = _test_input_directory.joinpath(
             "vrtool_input.db"

@@ -34,7 +34,7 @@ class RevetmentImporter(OrmImporterProtocol):
                 _imported_part = _slope_part_importer.import_orm(part)
                 _imported_parts.append(_imported_part)
             except ValueError as import_error:
-                logging.warn(
+                logging.warning(
                     "Part {} won't be imported due to error: {}".format(
                         part.get_id(), import_error
                     )
@@ -42,11 +42,14 @@ class RevetmentImporter(OrmImporterProtocol):
 
         return _imported_parts
 
-    def _is_revetment_data_valid(self, input: RevetmentDataClass) -> bool:
-        actual_transition_level = input.current_transition_level
+    def _is_revetment_data_valid(self, revetment_input: RevetmentDataClass) -> bool:
+        actual_transition_level = revetment_input.current_transition_level
 
         maximum_transition_level_relation = max(
-            map(lambda relation: relation.transition_level, input.grass_relations)
+            map(
+                lambda relation: relation.transition_level,
+                revetment_input.grass_relations,
+            )
         )
 
         return actual_transition_level < maximum_transition_level_relation

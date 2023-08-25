@@ -3,10 +3,8 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.interpolate import interp1d
 
-from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import (
+from vrtool.failure_mechanisms.revetment.slope_part import (
     GrassSlopePart,
-)
-from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
     StoneSlopePart,
 )
 
@@ -18,8 +16,8 @@ class RevetmentMeasureData:
     top_layer_type: float
     previous_top_layer_type: float
     top_layer_thickness: float
-    beta_block_revetment: list[float]
-    beta_grass_revetment: list[float]
+    beta_block_revetment: float
+    beta_grass_revetment: float
     reinforce: bool
     tan_alpha: float
 
@@ -36,6 +34,8 @@ class RevetmentMeasureData:
         Returns:
             float: Total of related costs (without a specified unit, assume Euros).
         """
+        if not self.reinforce:
+            return 0.0
         _storage_factor = 2.509
 
         # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)

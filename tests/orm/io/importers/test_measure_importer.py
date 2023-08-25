@@ -13,6 +13,9 @@ from vrtool.decision_making.measures import (
 )
 from vrtool.decision_making.measures.custom_measure import CustomMeasure
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.standard_measures.revetment_measure import (
+    RevetmentMeasure,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -124,6 +127,7 @@ class TestMeasureImporter:
                 VerticalGeotextileMeasure,
                 id="Vertical Geotextile measure.",
             ),
+            pytest.param("Revetment", RevetmentMeasure, id="Revetment measure"),
         ],
     )
     @pytest.mark.parametrize(

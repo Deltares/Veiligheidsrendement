@@ -30,6 +30,8 @@ def measure_combinations(
                     row1["yes/no"].values[0],
                     row2["dcrest"].values[0],
                     row2["dberm"].values[0],
+                    row2["beta_target"].values[0],
+                    row2["transition_level"].values[0],
                 ]
             else:
                 params = [row1["params"].values[0], row2["params"].values[0]]
@@ -78,6 +80,8 @@ def measure_combinations(
                     params[0],
                     params[1],
                     params[2],
+                    params[3],
+                    params[4],
                     Cost,
                 ]
             else:
@@ -99,15 +103,28 @@ def make_traject_df(traject: DikeTraject, cols):
     df_index = pd.MultiIndex.from_product(
         [sections, mechanisms], names=["name", "mechanism"]
     )
-    TrajectProbability = pd.DataFrame(columns=cols, index=df_index)
+    _traject_probability = pd.DataFrame(columns=cols, index=df_index)
 
-    for i in traject.sections:
-        for j in mechanisms:
-            TrajectProbability.loc[(i.name, j)] = list(
-                i.section_reliability.SectionReliability.loc[j]
+    for _section in traject.sections:
+        for _mechanism_name in mechanisms:
+            if (
+                _mechanism_name
+                not in _section.section_reliability.SectionReliability.index
+            ):
+                # TODO (VRTOOL-187).
+                # Should we inject nans?
+                # Not all sections include revetment(s), therefore it's skipped.
+                logging.warning(
+                    "Section '{}' does not include data for mechanism '{}'.".format(
+                        _section.name, _mechanism_name
+                    )
+                )
+                continue
+            _traject_probability.loc[(_section.name, _mechanism_name)] = list(
+                _section.section_reliability.SectionReliability.loc[_mechanism_name]
             )
 
-    return TrajectProbability
+    return _traject_probability
 
 
 # hereafter a bunch of functions to compute costs, risks and probabilities over time are defined:
@@ -134,7 +151,7 @@ def calc_tr(
     # takenmeasures: object with all measures taken
     # original section: series of probabilities of section, before taking a measure.
     if damage == 1e9:
-        logging.warn("No damage defined.")
+        logging.warning("No damage defined.")
 
     TotalRisk = []
     dR = []
@@ -658,4 +675,5 @@ def overflow_bundling(
         BC_out = 0
         measure_index = []
         logging.warning("No more measures for weakest overflow section")
+
     return measure_index, BC_out, BC_list
