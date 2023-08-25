@@ -6,9 +6,6 @@ from vrtool.orm.io.exporters.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.io.exporters.section_reliability_exporter import (
-    SectionReliabilityExporter,
-)
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.section_data import SectionData
@@ -63,7 +60,7 @@ class TestDikeSectionReliabilityExporter:
         _dike_section.TrajectInfo = DikeTrajectInfo("not_the_traject_in_the_orm")
 
         # 2. Run test.
-        _related_section_data = SectionReliabilityExporter.get_related_section_data(
+        _related_section_data = DikeSectionReliabilityExporter.get_related_section_data(
             _dike_section
         )
 
