@@ -16,13 +16,13 @@ class SectionReliabilityExporter(OrmExporterProtocol):
     ) -> list[AssessmentSectionResult]:
         logging.info("STARTED exporting Dike Section's reliability (Beta) over time.")
         _added_assessments = []
-        for col_idx, beta_value in enumerate(
-            dom_model.SectionReliability.loc["Section"]
-        ):
+        for col_name, beta_value in dom_model.SectionReliability.loc[
+            "Section"
+        ].iteritems():
             _added_assessments.append(
                 AssessmentSectionResult.create(
                     beta=beta_value,
-                    time=int(dom_model.SectionReliability.columns[col_idx]),
+                    time=int(col_name),
                     section_data=self._section_data,
                 )
             )
