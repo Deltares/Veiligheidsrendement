@@ -1169,19 +1169,29 @@ class StrategyBase:
                     )
                 plt.close()
 
-    def write_reliability_to_csv(self, input_path: Path, type: str, time_stamps=[0,25,50]):
-        """Routine to write all the reliability indices in a step of the algorithm to a csv file"""
+    def write_reliability_to_csv(
+        self, input_path: Path, type: str, time_stamps=[0, 25, 50]
+    ) -> None:
+        """Routine to write all the reliability indices in a step of the algorithm to a csv file
+
+        Args:
+            input_path (Path)        : path to input folder
+            type (str)               : strategy type
+            time_stamps (list float) : list of years
+        """
         # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
-        total_reliability = np.zeros((len(self.Probabilities),len(time_stamps)))
+        total_reliability = np.zeros((len(self.Probabilities), len(time_stamps)))
         for i in range(len(self.Probabilities)):
             name = input_path.joinpath(
                 "ReliabilityLog_" + type + "_Step" + str(i) + ".csv"
             )
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
-            beta_t, p_t = calc_traject_prob(self.Probabilities[i],ts=time_stamps)
-            total_reliability[i,:] = beta_t
+            beta_t, p_t = calc_traject_prob(self.Probabilities[i], ts=time_stamps)
+            total_reliability[i, :] = beta_t
         reliability_df = pd.DataFrame(total_reliability, columns=time_stamps)
-        reliability_df.to_csv(path_or_buf=input_path.joinpath("TrajectReliabilityInTime.csv"), header=True)
+        reliability_df.to_csv(
+            path_or_buf=input_path.joinpath("TrajectReliabilityInTime.csv"), header=True
+        )
 
     @abstractmethod
     def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):

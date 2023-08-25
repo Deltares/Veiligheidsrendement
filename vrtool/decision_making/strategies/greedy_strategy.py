@@ -12,8 +12,6 @@ from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategy_evaluation import (
     calc_life_cycle_risks,
     evaluate_risk,
-    overflow_bundling,
-    old_overflow_bundling,
     update_probability,
 )
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -21,7 +19,9 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class GreedyStrategy(StrategyBase):
-    def bundling_output(self, BC_list, counter_list, sh_array, sg_array,existing_investments):
+    def bundling_output(
+        self, BC_list, counter_list, sh_array, sg_array, existing_investments
+    ):
         no_of_sections = sh_array.shape[0]
         ind = np.argwhere(BC_list == np.max(BC_list))[0][0]
         final_index = counter_list[ind]
@@ -45,17 +45,29 @@ class GreedyStrategy(StrategyBase):
 
         return BC_out, measure_index
 
-    def bundling_loop(self, initial_mechanism_risk, life_cycle_cost, sh_array, sg_array, mechanism, n_runs = 100):
+    def bundling_loop(
+        self,
+        initial_mechanism_risk,
+        life_cycle_cost,
+        sh_array,
+        sg_array,
+        mechanism,
+        n_runs=100,
+    ):
         # first initialize some relevant arrays and values for the loop for bundling measures
         number_of_sections = sh_array.shape[0]
-        LCC_values = np.zeros((number_of_sections,))                     #total LCC spent for each section
-        index_counter = np.zeros((number_of_sections,), dtype=np.int32)  # counter that keeps track of the next cheapest option for each section
+        LCC_values = np.zeros((number_of_sections,))  # total LCC spent for each section
+        index_counter = np.zeros(
+            (number_of_sections,), dtype=np.int32
+        )  # counter that keeps track of the next cheapest option for each section
 
         run_number = 0  # used for counting the loop
         counter_list = []  # used to store the bundle indices
         BC_list = []  # used to store BC for each bundle
         weak_list = []  # used to store index of weakest section
-        new_mechanism_risk = copy.deepcopy(initial_mechanism_risk)  # initialize overflow risk
+        new_mechanism_risk = copy.deepcopy(
+            initial_mechanism_risk
+        )  # initialize overflow risk
         # here we start the loop. Note that we rarely make it to run 100, for larger problems this limit might need to be increased
         while run_number < n_runs:
             # get weakest section
@@ -67,25 +79,30 @@ class GreedyStrategy(StrategyBase):
                 # take next step, exception if there is no valid measure. In that case exit the routine.
                 if sh_array[ind_weakest, index_counter[ind_weakest]] == 999:
                     logging.error(
-                        "Bundle quit after {} steps, weakest section has no more available measures".format(run_number)
+                        "Bundle quit after {} steps, weakest section has no more available measures".format(
+                            run_number
+                        )
                     )
                     break
             else:
                 logging.error(
-                    "Bundle quit after {} steps, weakest section has no more available measures".format(run_number))
+                    "Bundle quit after {} steps, weakest section has no more available measures".format(
+                        run_number
+                    )
+                )
                 break
 
             # insert next cheapest measure from sorted list into mechanism_risk, then compute the LCC value and BC
-            if mechanism== "Overflow":
+            if mechanism == "Overflow":
                 new_mechanism_risk[ind_weakest, :] = self.RiskOverflow[
-                                                ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
-                                                ]
+                    ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
+                ]
             elif mechanism == "Revetment":
                 new_mechanism_risk[ind_weakest, :] = self.RiskRevetment[
-                                                ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
-                                                ]
+                    ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
+                ]
             else:
-                raise   ValueError("Mechanism {} not recognized".format(mechanism))
+                raise ValueError("Mechanism {} not recognized".format(mechanism))
 
             LCC_values[ind_weakest] = np.min(
                 life_cycle_cost[
@@ -95,9 +112,9 @@ class GreedyStrategy(StrategyBase):
                 ]
             )
             BC = (
-                         np.sum(np.max(initial_mechanism_risk, axis=0))
-                         - np.sum(np.max(new_mechanism_risk, axis=0))
-                 ) / np.sum(LCC_values)
+                np.sum(np.max(initial_mechanism_risk, axis=0))
+                - np.sum(np.max(new_mechanism_risk, axis=0))
+            ) / np.sum(LCC_values)
             # store results of step:
             if np.isnan(BC):
                 BC_list.append(0.0)
@@ -111,60 +128,99 @@ class GreedyStrategy(StrategyBase):
             # in the next step, the next measure should be taken for this section
             run_number += 1
         return BC_list, counter_list, weak_list
-    def get_sg_sh_indices(self, section_no: int, life_cycle_cost: np.array, existing_investments:np.array, mechanism: str, dim_sh:int, traject: DikeTraject):
-        """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no
-        """
-        #make arrays for section
-        sh_section_sorted = np.full((1,dim_sh), 999, dtype=int)
-        sg_section = np.full((1,dim_sh), 999, dtype=int)
 
-        GeotechnicalOptions = self.options_geotechnical[traject.sections[section_no].name]
+    def get_sg_sh_indices(
+        self,
+        section_no: int,
+        life_cycle_cost: np.array,
+        existing_investments: np.array,
+        mechanism: str,
+        dim_sh: int,
+        traject: DikeTraject,
+    ):
+        """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no"""
+        # make arrays for section
+        sh_section_sorted = np.full((1, dim_sh), 999, dtype=int)
+        sg_section = np.full((1, dim_sh), 999, dtype=int)
+
+        GeotechnicalOptions = self.options_geotechnical[
+            traject.sections[section_no].name
+        ]
         HeightOptions = self.options_height[traject.sections[section_no].name]
-        #if there is already an investment we ensure that the reliability for none of the mechanisms is lower than the current investment
+        # if there is already an investment we ensure that the reliability for none of the mechanisms is lower than the current investment
         if any(existing_investments[section_no, :] > 0):
-            #if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
+            # if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
             if existing_investments[section_no, 1] > 0:
-                investment_id = existing_investments[section_no, 1] - 1      #note that matrix indices in existing_investments are always 1 higher than the investment id
-                current_investment_geotechnical = GeotechnicalOptions.iloc[investment_id]
-                current_investment_stability = current_investment_geotechnical["StabilityInner"]
+                investment_id = (
+                    existing_investments[section_no, 1] - 1
+                )  # note that matrix indices in existing_investments are always 1 higher than the investment id
+                current_investment_geotechnical = GeotechnicalOptions.iloc[
+                    investment_id
+                ]
+                current_investment_stability = current_investment_geotechnical[
+                    "StabilityInner"
+                ]
                 current_investment_piping = current_investment_geotechnical["Piping"]
                 # check if all rows in comparison only contain True values
-                comparison_geotechnical = (GeotechnicalOptions.StabilityInner >= current_investment_stability) & (
-                        GeotechnicalOptions.Piping >= current_investment_piping)
+                comparison_geotechnical = (
+                    GeotechnicalOptions.StabilityInner >= current_investment_stability
+                ) & (GeotechnicalOptions.Piping >= current_investment_piping)
                 available_measures_geotechnical = comparison_geotechnical.all(
-                    axis=1)  # df indexing, so a False should be added before
+                    axis=1
+                )  # df indexing, so a False should be added before
             else:
-                available_measures_geotechnical = pd.Series(np.ones(len(GeotechnicalOptions), dtype=bool))
+                available_measures_geotechnical = pd.Series(
+                    np.ones(len(GeotechnicalOptions), dtype=bool)
+                )
 
-            #same for HeightOptions
+            # same for HeightOptions
             if existing_investments[section_no, 0] > 0:
                 # exclude rows for height options that are not safer than current
-                current_investment_overflow = HeightOptions.iloc[existing_investments[section_no, 0] - 1]['Overflow']
-                #TODO turn on revetment once the proper data is available.
+                current_investment_overflow = HeightOptions.iloc[
+                    existing_investments[section_no, 0] - 1
+                ]["Overflow"]
+                # TODO turn on revetment once the proper data is available.
                 # current_investment_revetment = HeightOptions.iloc[existing_investments[i, 0] - 1]['Revetment']
-                current_investment_revetment = HeightOptions.iloc[existing_investments[section_no, 0] - 1]['Overflow']
+                current_investment_revetment = HeightOptions.iloc[
+                    existing_investments[section_no, 0] - 1
+                ]["Overflow"]
                 # check if all rows in comparison only contain True values
-                if mechanism == 'Overflow':
-                    comparison_height = (HeightOptions.Overflow >= current_investment_overflow) #& (HeightOptions.Revetment >= current_investment_revetment)
+                if mechanism == "Overflow":
+                    comparison_height = (
+                        HeightOptions.Overflow >= current_investment_overflow
+                    )  # & (HeightOptions.Revetment >= current_investment_revetment)
                     # comparison_height = (HeightOptions.Overflow > current_investment_overflow) #& (HeightOptions.Revetment >= current_investment_revetment)
-                elif mechanism == 'Revetment':
-                    comparison_height = (HeightOptions.Overflow >= current_investment_overflow) #& (HeightOptions.Revetment > current_investment_revetment)
+                elif mechanism == "Revetment":
+                    comparison_height = (
+                        HeightOptions.Overflow >= current_investment_overflow
+                    )  # & (HeightOptions.Revetment > current_investment_revetment)
                 else:
-                    raise Exception('Unknown mechanism in overflow bundling')
+                    raise Exception("Unknown mechanism in overflow bundling")
 
                 # available_measures_height = comparison_height.any(axis=1)
                 available_measures_height = comparison_height.all(axis=1)
-            else: # if there is no investment in height, all options are available
-                available_measures_height = pd.Series(np.ones(len(HeightOptions), dtype=bool))
+            else:  # if there is no investment in height, all options are available
+                available_measures_height = pd.Series(
+                    np.ones(len(HeightOptions), dtype=bool)
+                )
 
             # now replace the life_cycle_cost where available_measures_height is False with a very high value:
             # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
-            life_cycle_cost[section_no, available_measures_height[~available_measures_height].index + 1, :] = 1e99
+            life_cycle_cost[
+                section_no,
+                available_measures_height[~available_measures_height].index + 1,
+                :,
+            ] = 1e99
 
-            #next we get the ids for the possible geotechnical measures
-            ids = available_measures_geotechnical[available_measures_geotechnical].index.values + 1
+            # next we get the ids for the possible geotechnical measures
+            ids = (
+                available_measures_geotechnical[
+                    available_measures_geotechnical
+                ].index.values
+                + 1
+            )
 
-            #we get a matrix with the LCC values, and get the order of sh measures:
+            # we get a matrix with the LCC values, and get the order of sh measures:
             lcc_subset = life_cycle_cost[section_no, :, ids].T
             sh_order = np.argsort(np.min(lcc_subset, axis=1))
             sg_section[0, :] = np.array(ids)[np.argmin(lcc_subset, axis=1)][sh_order]
@@ -172,63 +228,89 @@ class GreedyStrategy(StrategyBase):
             sh_section_sorted[0, :] = np.where(
                 np.sort(np.min(lcc_subset, axis=1)) > 1e60, 999, sh_section_sorted[0, :]
             )
-        elif np.max(existing_investments[section_no, :]) == 0: # nothing has been invested yet
+        elif (
+            np.max(existing_investments[section_no, :]) == 0
+        ):  # nothing has been invested yet
             sg_section[0, :] = np.argmin(life_cycle_cost[section_no, :, :], axis=1)
             LCCs = np.min(life_cycle_cost[section_no, :, :], axis=1)
             sh_section_sorted[0, :] = np.argsort(LCCs)
             sh_section_sorted[0, :] = np.where(
-                np.sort(LCCs) > 1e60, 999, sh_section_sorted[0, 0: len(LCCs)]
+                np.sort(LCCs) > 1e60, 999, sh_section_sorted[0, 0 : len(LCCs)]
             )
-            sg_section[0, 0: len(LCCs)] = sg_section[0, 0: len(LCCs)][
+            sg_section[0, 0 : len(LCCs)] = sg_section[0, 0 : len(LCCs)][
                 np.argsort(LCCs)
             ]
         else:
-            logging.error("Unknown measure type in overflow bundling (error can be removed?)")
+            logging.error(
+                "Unknown measure type in overflow bundling (error can be removed?)"
+            )
 
         return sh_section_sorted, sg_section
-    def bundling_of_measures(self,
-                             mechanism: str,
-                             init_mechanism_risk: np.array,
-                             existing_investment: list,
-                             life_cycle_cost: np.array,
-                             traject: DikeTraject,):
-        '''This function bundles the measures for which sections are dependent. It can be used for overflow and revetment'''
+
+    def bundling_of_measures(
+        self,
+        mechanism: str,
+        init_mechanism_risk: np.array,
+        existing_investment: list,
+        life_cycle_cost: np.array,
+        traject: DikeTraject,
+    ):
+        """This function bundles the measures for which sections are dependent. It can be used for overflow and revetment"""
         life_cycle_cost = copy.deepcopy(life_cycle_cost)
 
         number_of_sections = np.size(life_cycle_cost, axis=0)
-        #first we determine the existing investments and make a n,2 array for options for dependent and independent mechanisms
+        # first we determine the existing investments and make a n,2 array for options for dependent and independent mechanisms
         existing_investments = np.zeros(
             (np.size(life_cycle_cost, axis=0), 2), dtype=np.int32
         )
 
         if len(existing_investment) > 0:
             for i in range(0, len(existing_investment)):
-                existing_investments[existing_investment[i][0], 0] = existing_investment[i][
+                existing_investments[
+                    existing_investment[i][0], 0
+                ] = existing_investment[i][
                     1
                 ]  # sh
-                existing_investments[existing_investment[i][0], 1] = existing_investment[i][
+                existing_investments[
+                    existing_investment[i][0], 1
+                ] = existing_investment[i][
                     2
                 ]  # sg
 
-        #prepare arrays
+        # prepare arrays
         sorted_sh = np.full(tuple(life_cycle_cost.shape[0:2]), 999, dtype=int)
         LCC_values = np.zeros((life_cycle_cost.shape[0],))
         sg_indices = np.full(tuple(life_cycle_cost.shape[0:2]), 999, dtype=int)
 
-        #then we loop over sections to get indices of those measures that are available
+        # then we loop over sections to get indices of those measures that are available
         for i in range(0, number_of_sections):
-            sorted_sh[i,:], sg_indices[i,:] = self.get_sg_sh_indices(i, life_cycle_cost, existing_investments, mechanism, life_cycle_cost.shape[1], traject)
+            sorted_sh[i, :], sg_indices[i, :] = self.get_sg_sh_indices(
+                i,
+                life_cycle_cost,
+                existing_investments,
+                mechanism,
+                life_cycle_cost.shape[1],
+                traject,
+            )
 
-        #then we bundle the measures by getting the BC for the mechanism under consideration
-        BC_list, counter_list, weak_list = self.bundling_loop(init_mechanism_risk, life_cycle_cost, sorted_sh, sg_indices, mechanism, n_runs=100)
+        # then we bundle the measures by getting the BC for the mechanism under consideration
+        BC_list, counter_list, weak_list = self.bundling_loop(
+            init_mechanism_risk,
+            life_cycle_cost,
+            sorted_sh,
+            sg_indices,
+            mechanism,
+            n_runs=100,
+        )
 
-        #and we generate the required output
+        # and we generate the required output
         if len(BC_list) > 0:
-            BC_out, measure_index = self.bundling_output(BC_list,counter_list, sorted_sh, sg_indices, existing_investments)
+            BC_out, measure_index = self.bundling_output(
+                BC_list, counter_list, sorted_sh, sg_indices, existing_investments
+            )
             return measure_index, BC_out, BC_list
         else:
             return [], 0, [0.0]
-
 
     def evaluate(
         self,
@@ -284,8 +366,10 @@ class GreedyStrategy(StrategyBase):
         BC_list = []
         Measures_per_section = np.zeros((self.opt_parameters["N"], 2), dtype=np.int32)
         while count < max_count:
-            init_risk = np.sum(np.max(init_overflow_risk, axis=0)) + np.sum(np.max(init_revetment_risk, axis=0)) + np.sum(
-                init_independent_risk
+            init_risk = (
+                np.sum(np.max(init_overflow_risk, axis=0))
+                + np.sum(np.max(init_revetment_risk, axis=0))
+                + np.sum(init_independent_risk)
             )
             risk_per_step.append(init_risk)
             cost_per_step.append(np.sum(SpentMoney))
@@ -314,7 +398,11 @@ class GreedyStrategy(StrategyBase):
                             LifeCycleCost[n, sh, sg] = copy.deepcopy(
                                 np.subtract(self.LCCOption[n, sh, sg], SpentMoney[n])
                             )
-                            new_overflow_risk, new_revetment_risk, new_geotechnical_risk = evaluate_risk(
+                            (
+                                new_overflow_risk,
+                                new_revetment_risk,
+                                new_geotechnical_risk,
+                            ) = evaluate_risk(
                                 copy.deepcopy(init_overflow_risk),
                                 copy.deepcopy(init_revetment_risk),
                                 copy.deepcopy(init_independent_risk),
@@ -325,7 +413,8 @@ class GreedyStrategy(StrategyBase):
                                 self.config,
                             )
                             TotalRisk[n, sh, sg] = copy.deepcopy(
-                                np.sum(np.max(new_overflow_risk, axis=0)) + np.sum(np.max(new_revetment_risk, axis=0))
+                                np.sum(np.max(new_overflow_risk, axis=0))
+                                + np.sum(np.max(new_revetment_risk, axis=0))
                                 + np.sum(new_geotechnical_risk)
                             )
                         else:
@@ -339,12 +428,21 @@ class GreedyStrategy(StrategyBase):
             # compute additional measures where we combine overflow/revetment measures, here we optimize a package, purely based
             # on overflow/revetment, and compute a BC ratio for a combination of measures at different sections.
 
-            #for overflow:
-            overflow_bundle_index, BC_bundle, BC_bundle_list = self.bundling_of_measures('Overflow', copy.deepcopy(init_overflow_risk), copy.deepcopy(measure_list), copy.deepcopy(LifeCycleCost), copy.deepcopy(traject))
-            #for revetment:
+            # for overflow:
+            (
+                overflow_bundle_index,
+                BC_bundle,
+                BC_bundle_list,
+            ) = self.bundling_of_measures(
+                "Overflow",
+                copy.deepcopy(init_overflow_risk),
+                copy.deepcopy(measure_list),
+                copy.deepcopy(LifeCycleCost),
+                copy.deepcopy(traject),
+            )
+            # for revetment:
             # revetment_bundle_index, BC_bundle, BC_bundle_list = self.bundling_of_measures('Revetment', copy.deepcopy(init_revetment_risk), copy.deepcopy(measure_list), copy.deepcopy(LifeCycleCost), copy.deepcopy(traject))
             #     overflow_bundling(
-
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
             # 'overflow bundle'
@@ -475,8 +573,6 @@ class GreedyStrategy(StrategyBase):
         # my_shelf['Probabilities'] = locals()['Probabilities']
         #
         # my_shelf.close()
-
-
 
         self.write_greedy_results(
             traject, solutions_dict, measure_list, BC_list, Probabilities
