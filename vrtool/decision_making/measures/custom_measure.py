@@ -64,7 +64,7 @@ class CustomMeasure(MeasureProtocol):
             "Overflow"
         )
         if not overflow_reliability_collection:
-            logging.warn(f'Overflow data is not present in section "{section.name}"')
+            logging.warning(f'Overflow data is not present in section "{section.name}"')
 
         else:
             if base_data["kruinhoogte_2075"].values > 0:
@@ -73,7 +73,7 @@ class CustomMeasure(MeasureProtocol):
                 ].Input.input["dhc(t)"]
                 return base_data["kruinhoogte_2075"].values + 50 * annual_dhc
             else:
-                logging.warn("kruinhoogte 2075 is not found.")
+                logging.warning("kruinhoogte 2075 is not found.")
 
         return None
 

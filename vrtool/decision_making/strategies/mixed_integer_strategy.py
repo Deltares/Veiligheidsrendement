@@ -441,7 +441,7 @@ class MixedIntegerStrategy(StrategyBase):
         if (GG == 1).all():
             logging.info("constraint 1 satisfied")
         else:
-            logging.warn("constraint 1 not satisfied")
+            logging.warning("constraint 1 not satisfied")
             AllConstraintsSatisfied = False
         # C2
         GG = np.tile(1.0, T)
@@ -451,7 +451,7 @@ class MixedIntegerStrategy(StrategyBase):
         if (GG == 1).all():
             logging.info("constraint C2 satisfied")
         else:
-            logging.warn("constraint C2 not satisfied")
+            logging.warning("constraint C2 not satisfied")
             AllConstraintsSatisfied = False
 
             # C3

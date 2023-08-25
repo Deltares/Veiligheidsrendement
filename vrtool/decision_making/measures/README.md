@@ -2,7 +2,7 @@
 
 This module contains all the available measures to evaluate the effect of a failure mechanism in a given `DikeSection`.
 
-Any new measure should implement the `MeasureProtocol` located in `measure_protocol.py`. The evaluation of a measure will be done within the protocol's method `evaluate_measure`.
+Any new measure should implement the `MeasureProtocol` located in `measure_protocol.py`. The evaluation of a measure will be done within the protocol's method `evaluate_measure`. A new measure's result should be written to a specialization of the `MeasureResultCollectionProtocol` to delegate there, and not elsewhere, its reliability output representation.
 
 We differenciate between two types of measures:
 
