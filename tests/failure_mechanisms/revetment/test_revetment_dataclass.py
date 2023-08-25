@@ -50,7 +50,7 @@ class TestRevetmentDataClass:
                 RelationStoneRevetment(2020, 2.0, 3.0)
             )
 
-        given_years = revetments.find_given_years()
+        given_years = revetments.get_available_years()
 
         assert len(given_years) == 1
         assert given_years[0] == 2020
@@ -65,6 +65,6 @@ class TestRevetmentDataClass:
         revetments.grass_relations.append(RelationGrassRevetment(2020, 1.0, 2.0))
 
         with pytest.raises(ValueError) as value_error:
-            revetments.find_given_years()
+            revetments.get_available_years()
 
         assert str(value_error.value) == "Years for grass and stone differ."
