@@ -8,6 +8,9 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import models as orm
+from vrtool.orm.io.exporters.dike_section_reliability_exporter import (
+    DikeSectionReliabilityExporter,
+)
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
 from vrtool.orm.orm_db import vrtool_db
@@ -80,6 +83,9 @@ def open_database(database_path: Path) -> SqliteDatabase:
 def get_dike_traject(config: VrtoolConfig) -> DikeTraject:
     """
     Returns a dike traject with all the required section data.
+
+    Args:
+        config (VrtoolConfig): Configuration object model containing the traject's information as well as the database's location path.
     """
     open_database(config.input_database_path)
     _dike_traject = DikeTrajectImporter(config).import_orm(
@@ -111,3 +117,18 @@ def get_dike_section_solutions(
     vrtool_db.close()
     _solutions.evaluate_solutions(dike_section, general_info, preserve_slope=False)
     return _solutions
+
+
+def export_dike_section_assessments(
+    config: VrtoolConfig, dike_section: DikeSection
+) -> None:
+    """
+    Exports all the initial assessments for both the `DikeSection` and the `MechanismReliabilityCollection` to their corresponding ORM entries.
+
+    Args:
+        config (VrtoolConfig): Configuration object model containing the database's location path.
+        dike_section (DikeSection): Dike section whose initial assessments will be exported to the database.
+    """
+    _connected_db = open_database(config.input_database_path)
+    DikeSectionReliabilityExporter().export_dom(dike_section)
+    _connected_db.close()
