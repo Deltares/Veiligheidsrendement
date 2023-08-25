@@ -14,7 +14,6 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )

@@ -66,6 +66,7 @@ def run_step_assessment(**kwargs):
         _vr_config, _selected_traject, plot_mode=VrToolPlotMode.STANDARD
     )
     _safety_assessment.run()
+    _safety_assessment.save_initial_assessment()
 
 
 @cli.command(

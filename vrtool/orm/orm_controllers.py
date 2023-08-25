@@ -122,15 +122,15 @@ def get_dike_section_solutions(
 
 
 def export_dike_section_assessments(
-    config: VrtoolConfig, dike_section: DikeSection
+    database_path: Path, dike_section: DikeSection
 ) -> None:
     """
     Exports all the initial assessments for both the `DikeSection` and the `MechanismReliabilityCollection` to their corresponding ORM entries.
 
     Args:
-        config (VrtoolConfig): Configuration object model containing the database's location path.
+        database_path (Path): Database's location path.
         dike_section (DikeSection): Dike section whose initial assessments will be exported to the database.
     """
-    _connected_db = open_database(config.input_database_path)
+    _connected_db = open_database(database_path)
     DikeSectionReliabilityExporter().export_dom(dike_section)
     _connected_db.close()

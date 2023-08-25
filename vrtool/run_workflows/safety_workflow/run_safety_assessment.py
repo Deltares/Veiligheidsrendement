@@ -7,6 +7,7 @@ import numpy as np
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.orm.orm_controllers import export_dike_section_assessments
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -79,6 +80,16 @@ class RunSafetyAssessment(VrToolRunProtocol):
             # TODO: Deprected, needs to be removed as we will be exporting to the database.
             _results.save_results()
         return _results
+
+    def save_initial_assessment(self) -> None:
+        """
+        Saves the initial assessment results (`SectionReliability`) into the provided database in the config (`VrtoolConfig`).
+        """
+        # Export results to database
+        for _section in self.selected_traject.sections:
+            export_dike_section_assessments(
+                self.vr_config.input_database_path, _section
+            )
 
     def _get_valid_output_dir(self, path_args: list[str]) -> Path:
         _section_figures_dir = self.vr_config.output_directory.joinpath(*path_args)
