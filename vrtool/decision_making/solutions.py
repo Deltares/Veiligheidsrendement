@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +8,9 @@ import seaborn as sns
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.measure_result_collection_protocol import (
+    MeasureResultCollectionProtocol,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
@@ -55,9 +59,10 @@ class Solutions:
                 dike_section, traject_info, preserve_slope=preserve_slope
             )
 
-    def solutions_to_dataframe(self, filtering=False, splitparams=False):
+    def solutions_to_dataframe(
+        self, filtering: bool = False, splitparams: bool = False
+    ):
         # write all solutions to one single dataframe:
-
         years = self.T
         cols_r = pd.MultiIndex.from_product(
             [self.mechanisms + ["Section"], years], names=["base", "year"]
@@ -65,7 +70,18 @@ class Solutions:
         reliability = pd.DataFrame(columns=cols_r)
         if splitparams:
             cols_m = pd.Index(
-                ["ID", "type", "class", "year", "yes/no", "dcrest", "dberm", "cost"],
+                [
+                    "ID",
+                    "type",
+                    "class",
+                    "year",
+                    "yes/no",
+                    "dcrest",
+                    "dberm",
+                    "beta_target",
+                    "transition_level",
+                    "cost",
+                ],
                 name="base",
             )
         else:
@@ -77,17 +93,18 @@ class Solutions:
         inputs_m = []
         inputs_r = []
 
-        for i, measure in enumerate(self.measures):
+        for measure in self.measures:
+            _measure_type = measure.parameters["Type"]
+            _normalized_measure_type = _measure_type.lower().strip()
             if isinstance(measure.measures, list):
+                # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
-                type = measure.parameters["Type"]
-
                 for j in range(len(measure.measures)):
                     measure_in = []
                     reliability_in = []
-                    if type in [
-                        "Soil reinforcement",
-                        "Soil reinforcement with stability screen",
+                    if _normalized_measure_type in [
+                        "soil reinforcement",
+                        "soil reinforcement with stability screen",
                     ]:
                         designvars = (
                             measure.measures[j]["dcrest"],
@@ -96,13 +113,15 @@ class Solutions:
 
                     cost = measure.measures[j]["Cost"]
                     measure_in.append(str(measure.parameters["ID"]))
-                    measure_in.append(type)
+                    measure_in.append(_measure_type)
                     measure_in.append(measure.parameters["Class"])
                     measure_in.append(measure.parameters["year"])
                     if splitparams:
                         measure_in.append(-999)
                         measure_in.append(designvars[0])
                         measure_in.append(designvars[1])
+                        measure_in.append(-999)
+                        measure_in.append(-999)
                     else:
                         measure_in.append(designvars)
                     measure_in.append(cost)
@@ -110,6 +129,17 @@ class Solutions:
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
                     for ij in self.mechanisms + ["Section"]:
+                        if ij not in betas.index:
+                            # TODO (VRTOOL-187).
+                            # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
+                            # This could happen in the future for other 'new' mechanisms.
+                            reliability_in.extend([-999] * len(self.config.T))
+                            logging.warning(
+                                "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
+                                    measure.parameters["Name"], ij
+                                )
+                            )
+                            continue
                         for ijk in betas.loc[ij].values:
                             reliability_in.append(ijk)
 
@@ -117,15 +147,18 @@ class Solutions:
                     inputs_r.append(reliability_in)
 
             elif isinstance(measure.measures, dict):
+                # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 ID = str(measure.parameters["ID"])
-                type = measure.parameters["Type"]
-                if type == "Vertical Geotextile":
+                if _normalized_measure_type == "vertical geotextile":
                     designvars = measure.measures["VZG"]
 
-                if type == "Diaphragm Wall":
+                if _normalized_measure_type == "diaphragm wall":
                     designvars = measure.measures["DiaphragmWall"]
 
-                if type == "Custom":
+                if _normalized_measure_type == "revetment":
+                    designvars = measure.measures["Revetment"]
+
+                if _normalized_measure_type == "custom":
                     designvars = 1.0  ##TODO check
 
                 measure_class = measure.parameters["Class"]
@@ -133,17 +166,58 @@ class Solutions:
                 cost = measure.measures["Cost"]
                 if splitparams:
                     inputs_m.append(
-                        [ID, type, measure_class, year, designvars, -999, -999, cost]
+                        [
+                            ID,
+                            _measure_type,
+                            measure_class,
+                            year,
+                            designvars,
+                            -999,
+                            -999,
+                            -999,
+                            -999,
+                            cost,
+                        ]
                     )
                 else:
-                    inputs_m.append([ID, type, measure_class, year, designvars, cost])
+                    inputs_m.append(
+                        [
+                            ID,
+                            _measure_type,
+                            measure_class,
+                            year,
+                            designvars,
+                            cost,
+                        ]
+                    )
                 betas = measure.measures["Reliability"].SectionReliability
                 beta = []
                 for ij in self.mechanisms + ["Section"]:
+                    if ij not in betas.index:
+                        # TODO (VRTOOL-187).
+                        # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
+                        # This could happen in the future for other 'new' mechanisms.
+                        beta.extend([-999] * len(self.config.T))
+                        logging.warning(
+                            "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
+                                measure.parameters["Name"], ij
+                            )
+                        )
+                        continue
                     for ijk in betas.loc[ij].values:
                         beta.append(ijk)
                 inputs_r.append(beta)
-        # reliability = reliability.append(pd.DataFrame(inputs_r, columns=cols_r))
+
+            elif isinstance(measure.measures, MeasureResultCollectionProtocol):
+                (
+                    _input_values,
+                    _beta_values,
+                ) = measure.measures.get_measure_output_values(
+                    splitparams, self.mechanisms + ["Section"]
+                )
+                inputs_m.extend(_input_values)
+                inputs_r.extend(_beta_values)
+
         reliability = pd.concat((reliability, pd.DataFrame(inputs_r, columns=cols_r)))
         measure_df = pd.concat((measure_df, pd.DataFrame(inputs_m, columns=cols_m)))
         cols = pd.MultiIndex.from_arrays(

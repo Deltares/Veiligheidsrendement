@@ -53,8 +53,8 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.SlopePart,
             orm.BlockRevetmentRelation,
             orm.GrassRevetmentRelation,
-            orm.AssessmentSectionResults,
-            orm.AssessmentMechanismResults,
+            orm.AssessmentSectionResult,
+            orm.AssessmentMechanismResult,
             orm.MeasureResult,
             orm.MeasureResultParameter,
         ]
