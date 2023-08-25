@@ -58,6 +58,7 @@ class TestDikeSectionReliabilityExporter:
             _test_section_data.dike_traject.traject_name,
         )
         _dike_section.TrajectInfo = DikeTrajectInfo("not_the_traject_in_the_orm")
+        assert _dike_section.name == _test_section_data.section_name
 
         # 2. Run test.
         _related_section_data = DikeSectionReliabilityExporter.get_related_section_data(
@@ -76,6 +77,11 @@ class TestDikeSectionReliabilityExporter:
             "not_the_section_in_the_orm",
             _test_section_data.dike_traject.traject_name,
         )
+        assert (
+            _dike_section.TrajectInfo.traject_name
+            == _test_section_data.dike_traject.traject_name
+        )
+
         # 2. Run test.
         _related_section_data = DikeSectionReliabilityExporter.get_related_section_data(
             _dike_section
