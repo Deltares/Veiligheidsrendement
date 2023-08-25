@@ -8,8 +8,8 @@ from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.section_reliability_exporter import (
     SectionReliabilityExporter,
 )
-from vrtool.orm.models.assessment_mechanism_results import AssessmentMechanismResults
-from vrtool.orm.models.assessment_section_results import AssessmentSectionResults
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -87,5 +87,5 @@ class TestDikeSectionReliabilityExporter:
             )
 
         assert len(_created_assessments) == _expected_assessments
-        assert len(filtered(AssessmentMechanismResults)) == ...
-        assert len(filtered(AssessmentSectionResults)) == ...
+        assert len(filtered(AssessmentMechanismResult)) == ...
+        assert len(filtered(AssessmentSectionResult)) == ...

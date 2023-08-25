@@ -5,7 +5,8 @@ from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.section_reliability_exporter import (
     SectionReliabilityExporter,
 )
-from vrtool.orm.models.assessment_section_results import AssessmentSectionResults
+from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+from vrtool.orm.models.section_data import SectionData
 
 
 class TestSectionReliabilityExporter:
@@ -36,7 +37,7 @@ class TestSectionReliabilityExporter:
         assert len(_orm_assessments) == _expected_entries
         assert len(_test_section_data.assessment_section_results) == _expected_entries
         assert all(
-            isinstance(_orm_assessment, AssessmentSectionResults)
+            isinstance(_orm_assessment, AssessmentSectionResult)
             for _orm_assessment in _orm_assessments
         )
         for col_idx, _orm_assessment in enumerate(_orm_assessments):

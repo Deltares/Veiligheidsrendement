@@ -5,7 +5,7 @@ from vrtool.orm.io.exporters.mechanism_reliability_collection_exporter import (
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from tests.orm.io.exporters import section_reliability_with_values
-from vrtool.orm.models.assessment_mechanism_results import AssessmentMechanismResults
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
@@ -58,7 +58,7 @@ class TestMechanismReliabilityCollectionExporter:
             _expected_mechanisms
         )
         assert all(
-            isinstance(_orm_assessment, AssessmentMechanismResults)
+            isinstance(_orm_assessment, AssessmentMechanismResult)
             for _orm_assessment in _orm_assessments
         )
         for row_idx, mechanism_row in _expected_mechanisms_reliability.iterrows():
@@ -72,10 +72,9 @@ class TestMechanismReliabilityCollectionExporter:
             for time_idx, beta_value in enumerate(mechanism_row):
                 time_value = int(mechanism_row.index[time_idx])
                 _orm_assessment = next(
-                    (_oa for _oa in _orm_mechanisms if _oa.time == time_value),
-                    None
+                    (_oa for _oa in _orm_mechanisms if _oa.time == time_value), None
                 )
                 assert isinstance(
-                    _orm_assessment, AssessmentMechanismResults
+                    _orm_assessment, AssessmentMechanismResult
                 ), f"No assessment created for mechanism {_mechanism_name}, time {time_value}."
                 assert _orm_assessment.beta == beta_value

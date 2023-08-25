@@ -2,6 +2,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
+from vrtool.orm.models import MeasurePerSection, Measure, MeasureType, CombinableType, MeasureResult
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
@@ -83,4 +84,70 @@ def get_basic_computation_scenario() -> ComputationScenario:
         scenario_name="test_name",
         scenario_probability=0.42,
         probability_of_failure=0.24,
+    )
+
+
+def get_basic_measure_type() -> MeasureType:
+    """
+    Gets a basic measure type entity.
+
+    Returns:
+        MeasureType: The created measure type entity in the database.
+    """
+    return MeasureType.create(name="TestMeasureType")
+
+
+def get_basic_combinable_type() -> CombinableType:
+    """
+    Gets a basic combinable type entity.
+
+    Returns:
+        CombinableType: The created combinable type entity in the database.
+    """
+    return CombinableType.create(name="TestCombinableType")
+
+
+def get_basic_measure() -> Measure:
+    """
+    Gets a basic measure entity.
+
+    Returns:
+        Measure: The created measure entity in the database.
+    """
+    _test_measure_type = get_basic_measure_type()
+    _test_combinable_type = get_basic_combinable_type()
+    return Measure.create(
+        measure_type=_test_measure_type,
+        combinable_type=_test_combinable_type,
+        name="TestMeasure",
+        year=20)
+
+
+def get_basic_measure_per_section() -> MeasurePerSection:
+    """
+    Gets a basic measure per section entity.
+
+    Returns:
+        MeasurePerSection: The created measure per section entity in the database.
+    """
+    _test_section = get_basic_section_data()
+    _test_measure = get_basic_measure()
+    return MeasurePerSection.create(
+        section=_test_section,
+        measure=_test_measure,
+    )
+
+def get_basic_measure_result() -> MeasureResult:
+    """
+    Gets a basic measure result entity.
+
+    Returns:
+        MeasureResult: The created measure result entity in the database.
+    """
+    _test_measure_per_section = get_basic_measure_per_section()
+    return MeasureResult.create(
+        beta=3.1234,
+        time=0.0,
+        cost=100,
+        measure_per_section=_test_measure_per_section,
     )
