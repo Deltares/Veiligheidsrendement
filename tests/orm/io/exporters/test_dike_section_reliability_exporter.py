@@ -67,6 +67,23 @@ class TestDikeSectionReliabilityExporter:
         # 3. Verify expectations.
         assert _related_section_data is None
 
+    def test_get_related_section_data_returns_none_for_different_section(
+        self, empty_db_fixture
+    ):
+        # 1. Define test data.
+        _test_section_data = get_basic_section_data()
+        _dike_section = self._get_valid_dike_section(
+            "not_the_section_in_the_orm",
+            _test_section_data.dike_traject.traject_name,
+        )
+        # 2. Run test.
+        _related_section_data = DikeSectionReliabilityExporter.get_related_section_data(
+            _dike_section
+        )
+
+        # 3. Verify expectations.
+        assert _related_section_data is None
+
     def test_export_dom_with_valid_data(
         self, section_reliability_with_values: SectionReliability, empty_db_fixture
     ):

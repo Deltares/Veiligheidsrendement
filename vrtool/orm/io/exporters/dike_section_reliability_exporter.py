@@ -31,6 +31,7 @@ class DikeSectionReliabilityExporter(OrmExporterProtocol):
             .where(
                 SectionData.dike_traject.traject_name
                 == dike_section.TrajectInfo.traject_name
+                and SectionData.section_name == dike_section.name
             )
             .get_or_none()
         )
