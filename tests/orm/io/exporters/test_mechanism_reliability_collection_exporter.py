@@ -28,7 +28,7 @@ class TestMechanismReliabilityCollectionExporter:
     ):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()
-        assert not any(_test_section_data.assessment_section_results)
+        assert not any(AssessmentMechanismResult.select())
 
         _expected_mechanisms_reliability = (
             section_reliability_with_values.SectionReliability.loc[
