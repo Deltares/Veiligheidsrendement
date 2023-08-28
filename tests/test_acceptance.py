@@ -132,8 +132,18 @@ class TestAcceptance:
         assert valid_vrtool_config.output_directory.exists()
         assert any(valid_vrtool_config.output_directory.glob("*"))
 
-        # 4. Validate 'export'.
-        # _safety_assessment.export()
+        # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
+        # However, this is not possible as the connection will be closed during the save_initial_assessment.
+        # Causing an error as the transaction requires said connection to be open.
+        # Therefore the following has been found as the only possible way to assess whether the results are
+        # written in the database without affecting other tests from using this db.
+        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
+        shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
+        valid_vrtool_config.input_database_path = _bck_db_filepath
+
+        # 4. Validate exporting results is possible
+        _safety_assessment.save_initial_assessment()
+        assert any(AssessmentSectionResult.select())
         self.validate_safety_assessment(valid_vrtool_config)
 
     def validate_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
@@ -170,20 +180,6 @@ class TestAcceptance:
                 assert _assessment_result.beta == pytest.approx(
                     row[str(_t_column)], 0.00000001
                 )
-
-        # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
-        # However, this is not possible as the connection will be closed during the save_initial_assessment.
-        # Causing an error as the transaction requires said connection to be open.
-        # Therefore the following has been found as the only possible way to assess whether the results are
-        # written in the database without affecting other tests from using this db.
-        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
-        shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        valid_vrtool_config.input_database_path = _bck_db_filepath
-
-        # 4. Validate exporting results is possible
-        _runner.save_initial_assessment()
-        assert any(AssessmentMechanismResult.select())
-        assert any(AssessmentSectionResult.select())
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
