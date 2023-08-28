@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+
 from tests import test_data
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models.mechanism import Mechanism
@@ -26,7 +27,7 @@ def create_required_mechanism_per_section(
 ) -> list[MechanismPerSection]:
     _added_mechanisms = []
     for mechanism_name in mechanism_available_list:
-        _mechanism = Mechanism.create(name=mechanism_name.strip().upper())
+        _mechanism, _ = Mechanism.get_or_create(name=mechanism_name.strip().upper())
         _added_mechanisms.append(
             MechanismPerSection.create(section=section_data, mechanism=_mechanism)
         )

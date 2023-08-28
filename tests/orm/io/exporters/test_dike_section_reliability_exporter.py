@@ -1,4 +1,8 @@
-from tests.orm import get_basic_section_data, empty_db_fixture
+from tests.orm import empty_db_fixture, get_basic_section_data
+from tests.orm.io.exporters import (
+    create_required_mechanism_per_section,
+    section_reliability_with_values,
+)
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.section_reliability import SectionReliability
@@ -9,10 +13,6 @@ from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.section_data import SectionData
-from tests.orm.io.exporters import (
-    create_required_mechanism_per_section,
-    section_reliability_with_values,
-)
 
 
 class TestDikeSectionReliabilityExporter:
