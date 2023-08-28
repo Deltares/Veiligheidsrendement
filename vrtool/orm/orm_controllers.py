@@ -113,3 +113,20 @@ def get_dike_section_solutions(
     vrtool_db.close()
     _solutions.evaluate_solutions(dike_section, general_info, preserve_slope=False)
     return _solutions
+
+
+def clear_assessment_results(config: VrtoolConfig) -> None:
+    """
+    Clears all the assessment results from the database
+
+    Args:
+        config (VrtoolConfig): Vrtool configuration
+    """
+
+    open_database(config.input_database_path)
+
+    with vrtool_db.atomic():
+        vrtool_db.execute_sql("DELETE FROM AssessmentSectionResult;")
+        vrtool_db.execute_sql("DELETE FROM AssessmentMechanismResult;")
+
+    vrtool_db.close()
