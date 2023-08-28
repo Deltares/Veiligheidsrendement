@@ -57,10 +57,18 @@ class ResultsSafetyAssessment(VrToolRunResultProtocol):
         my_shelf = shelve.open(str(self._step_output_filepath), "n")
         my_shelf["SelectedTraject"] = self.selected_traject
         my_shelf.close()
-
-    def load_results(self):
-        if self._step_output_filepath.exists():
-            _shelf = shelve.open(str(self._step_output_filepath))
-            self.selected_traject = _shelf["SelectedTraject"]
-            _shelf.close()
-            logging.info("Loaded Selected Traject from file")
+    def load_results(self,alternative_path = None):
+        try:
+            if self._step_output_filepath.exists():
+                _shelf = shelve.open(str(self._step_output_filepath))
+                self.selected_traject = _shelf["SelectedTraject"]
+                _shelf.close()
+                logging.info("Loaded SelectedTraject from file")
+        except:
+            if alternative_path != None:
+                try:
+                    _shelf = shelve.open(str(alternative_path))
+                    self.selected_traject = _shelf["SelectedTraject"]
+                    logging.info("Loaded SelectedTraject from file")
+                except:
+                    pass
