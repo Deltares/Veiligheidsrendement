@@ -6,6 +6,7 @@ from peewee import SqliteDatabase
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
+from tests.orm import empty_db_fixture, get_basic_dike_traject_info
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -19,8 +20,14 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import (
+    clear_assessment_results,
     get_dike_section_solutions,
     get_dike_traject,
     initialize_database,
@@ -29,7 +36,6 @@ from vrtool.orm.orm_controllers import (
 
 
 class DummyModelsData:
-
     dike_traject_info = dict(
         traject_name="16-1",
         omega_piping=0.25,
@@ -236,7 +242,6 @@ class TestOrmControllers:
         all(map(check_section_reliability, _dike_traject.sections))
 
     def test_get_dike_section_solutions(self, database_vrtool_config: VrtoolConfig):
-
         # 1. Define test data.
         database_vrtool_config.T = [0]
         _general_info = DikeTrajectInfo()
@@ -286,3 +291,78 @@ class TestOrmControllers:
         # 3. Verify expectations.
         assert isinstance(_solutions, Solutions)
         assert any(_solutions.measures)
+
+    def test_clear_assessment_results_clears_all_results(
+        self, empty_db_fixture: SqliteDatabase
+    ):
+        # Setup
+        traject_info = get_basic_dike_traject_info()
+
+        _mechanism_one = self._create_mechanism("mechanism 1")
+        _mechanism_two = self._create_mechanism("mechanism 2")
+
+        _section_one = self._create_basic_section_data(traject_info, "section 1")
+        self._create_assessment_section_results(_section_one)
+        mechanism_one_per_section_one = self._create_basic_mechanism_per_section(
+            _section_one, _mechanism_one
+        )
+        self._create_assessment_mechanism_results(mechanism_one_per_section_one)
+        mechanism_two_per_section_one = self._create_basic_mechanism_per_section(
+            _section_one, _mechanism_two
+        )
+        self._create_assessment_mechanism_results(mechanism_two_per_section_one)
+
+        _section_two = self._create_basic_section_data(traject_info, "section 2")
+        self._create_assessment_section_results(_section_two)
+        mechanism_one_per_section_two = self._create_basic_mechanism_per_section(
+            _section_one, _mechanism_one
+        )
+        self._create_assessment_mechanism_results(mechanism_one_per_section_two)
+
+        mechanism_two_per_section_two = self._create_basic_mechanism_per_section(
+            _section_one, _mechanism_two
+        )
+        self._create_assessment_mechanism_results(mechanism_two_per_section_two)
+
+        _db_file = test_data / "test_db" / "empty_db.db"
+        _vrtool_config = VrtoolConfig(input_database_path=_db_file)
+
+        # Precondition
+        assert any(AssessmentSectionResult.select())
+        assert any(AssessmentMechanismResult.select())
+
+    def _create_basic_section_data(
+        self, traject_info: DikeTrajectInfo, section_name: str
+    ) -> SectionData:
+        return SectionData.create(
+            dike_traject=traject_info,
+            section_name=section_name,
+            meas_start=2.4,
+            meas_end=4.2,
+            section_length=123,
+            in_analysis=True,
+            crest_height=24,
+            annual_crest_decline=42,
+        )
+
+    def _create_assessment_section_results(self, section: SectionData) -> None:
+        for i in range(2000, 2100, 10):
+            AssessmentSectionResult.create(
+                beta=i / 1000.0, time=i, section_data=section
+            )
+
+    def _create_mechanism(self, mechanism_name: str) -> Mechanism:
+        return Mechanism.create(name=mechanism_name)
+
+    def _create_basic_mechanism_per_section(
+        self, section: SectionData, mechanism: Mechanism
+    ) -> MechanismPerSection:
+        return MechanismPerSection.create(section=section, mechanism=mechanism)
+
+    def _create_assessment_mechanism_results(
+        self, mechanism_per_section: MechanismPerSection
+    ) -> None:
+        for i in range(2000, 2100, 10):
+            AssessmentMechanismResult.create(
+                beta=i / 1000.0, time=i, mechanism_per_section=mechanism_per_section
+            )
