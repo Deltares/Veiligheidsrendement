@@ -4,29 +4,35 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
-from tests.test_acceptance import TestAcceptance
+
 from tests import get_test_results_dir, test_data, test_externals
+from tests.test_acceptance import TestAcceptance
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.orm.orm_controllers import get_dike_traject
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
-from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 
 _casename = "TestCase1_38-1_no_housing"
 _traject = "38-1"
 _test_input_directory = Path.joinpath(test_data, _casename)
 assert _test_input_directory.exists()
 
-_test_results_directory = Path(r'C:\Repositories\VRSuite\VRTool\master\tests\test_results\test_run_optimization') / _casename
+_test_results_directory = (
+    Path(
+        r"C:\Repositories\VRSuite\VRTool\master\tests\test_results\test_run_optimization"
+    )
+    / _casename
+)
 if _test_results_directory.exists():
     shutil.rmtree(_test_results_directory)
 

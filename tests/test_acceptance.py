@@ -10,16 +10,16 @@ from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.orm.orm_controllers import get_dike_traject
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
-from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
 
@@ -59,7 +59,6 @@ class TestAcceptance:
     def _validate_acceptance_result_cases(
         self, test_results_dir: Path, test_reference_dir: Path
     ):
-        comparison_errors = []
         files_to_compare = [
             "TakenMeasures_Doorsnede-eisen.csv",
             "TakenMeasures_Veiligheidsrendement.csv",
@@ -71,13 +70,7 @@ class TestAcceptance:
                 test_reference_dir.joinpath("results", file), index_col=0
             )
             result = pd.read_csv(test_results_dir / file, index_col=0)
-            if not reference.equals(result):
-                comparison_errors.append("{} is different.".format(file))
-
-        # assert no error message has been registered, else print messages
-        assert not comparison_errors, "errors occured:\n{}".format(
-            "\n".join(comparison_errors)
-        )
+            pd.testing.assert_frame_equal(reference, result, rtol=1e-6, atol=1e-6)
 
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:

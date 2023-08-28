@@ -1,5 +1,6 @@
-import pytest
 import numpy as np
+import pytest
+
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
