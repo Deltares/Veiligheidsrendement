@@ -391,15 +391,15 @@ def split_options(
         ]
         # filter out revetments from all independent measures
         if "Revetment" in available_mechanism_names:
-            for key in ["transition_level", "n_pf_stone"]:  # TODO check keys
-                options_independent[i] = options_independent[i].loc[
-                    (options_independent[i][key] == 0.0)
-                    | (options_independent[i][key] == -999)
-                    | (
-                        (options_independent[i]["class"] == "combined")
-                        & (options_independent[i][key] == 0)
-                    )
-                ]
+            key = "transition_level"  # TODO : removed loop with this key and n_pf_stone
+            options_independent[i] = options_independent[i].loc[
+                (options_independent[i][key] == 0.0)
+                | (options_independent[i][key] == -999)
+                | (
+                    (options_independent[i]["class"] == "combined")
+                    & (options_independent[i][key] == 0)
+                )
+            ]
 
         # subtract startcosts, only for dependent.
         startcosts = np.min(
