@@ -117,16 +117,21 @@ class TestAcceptance:
         _test_traject = get_dike_traject(valid_vrtool_config)
 
         # 2. Run test.
-        _results = RunSafetyAssessment(
+        _safety_assessment = RunSafetyAssessment(
             valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
-        ).run()
+        )
+        _results = _safety_assessment.run()
 
         # 3. Verify expectations.
         assert isinstance(_results, ResultsSafetyAssessment)
         assert valid_vrtool_config.output_directory.exists()
         assert any(valid_vrtool_config.output_directory.glob("*"))
 
-    def test_validate_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
+        # 4. Validate 'export'.
+        # _safety_assessment.export()
+        self.validate_safety_assessment(valid_vrtool_config)
+
+    def validate_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
         assert _test_reference_path.exists()
@@ -138,8 +143,9 @@ class TestAcceptance:
         )
 
         assert isinstance(_reference_df, pd.DataFrame)
-        assert _reference_df.size > 0
+        assert len(_reference_df.index) > len(AssessmentMechanismResult.select())
 
+        # 3. Validate each of the rows.
         for _, row in _reference_df.iterrows():
             for _t_column in valid_vrtool_config.T:
                 _assessment_result = AssessmentMechanismResult.get_or_none(
