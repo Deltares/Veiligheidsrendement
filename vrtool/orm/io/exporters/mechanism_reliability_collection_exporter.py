@@ -22,8 +22,8 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         if not _mechanism:
             raise ValueError("No mechanism found for {}.".format(mechanism_name))
         return MechanismPerSection.get_or_none(
-            MechanismPerSection.section == self._section_data
-            and MechanismPerSection.mechanism == _mechanism
+            (MechanismPerSection.section == self._section_data)
+            & (MechanismPerSection.mechanism == _mechanism)
         )
 
     def export_dom(
