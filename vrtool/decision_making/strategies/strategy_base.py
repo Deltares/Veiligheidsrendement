@@ -24,8 +24,8 @@ from vrtool.flood_defence_system.dike_traject import (
     get_section_length_in_traject,
     plot_settings,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class StrategyBase:
