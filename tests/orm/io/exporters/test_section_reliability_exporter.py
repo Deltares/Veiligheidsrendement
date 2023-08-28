@@ -1,8 +1,5 @@
-import pandas as pd
-import pytest
-
-from tests import test_data
 from tests.orm import empty_db_fixture, get_basic_section_data
+from tests.orm.io.exporters import section_reliability_with_values
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.section_reliability import SectionReliability
@@ -67,19 +64,6 @@ class TestSectionReliabilityExporter:
         # 3. Verify expectations.
         assert _related_section_data is None
 
-    @pytest.fixture
-    def section_reliability_with_values(self) -> SectionReliability:
-        _section_reliability = SectionReliability()
-        _reliability_file = test_data.joinpath(
-            "section_reliability_export", "reliability_results.csv"
-        )
-        assert _reliability_file.exists()
-
-        _reliability_df = pd.read_csv(_reliability_file, index_col=0)
-        _section_reliability.SectionReliability = _reliability_df
-
-        yield _section_reliability
-
     def test_export_dom_with_valid_arguments(
         self, section_reliability_with_values: SectionReliability, empty_db_fixture
     ):
@@ -110,6 +94,6 @@ class TestSectionReliabilityExporter:
                     col_idx
                 ]
             )
-            assert _orm_assessment.time == float(
+            assert _orm_assessment.time == int(
                 section_reliability_with_values.SectionReliability.columns[col_idx]
             )
