@@ -9,7 +9,9 @@ from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
-from vrtool.orm.orm_controllers import get_dike_traject
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from peewee import fn
+from vrtool.orm.orm_controllers import get_dike_traject, open_database
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -123,6 +125,40 @@ class TestAcceptance:
         assert isinstance(_results, ResultsSafetyAssessment)
         assert valid_vrtool_config.output_directory.exists()
         assert any(valid_vrtool_config.output_directory.glob("*"))
+
+    def test_validate_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
+        # 1. Define test data.
+        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        assert _test_reference_path.exists()
+        open_database(valid_vrtool_config.input_database_path)
+
+        # 2. Load reference as pandas dataframe.
+        _reference_df = pd.read_csv(
+            _test_reference_path.joinpath("InitialAssessment_Betas.csv"), header=0
+        )
+
+        assert isinstance(_reference_df, pd.DataFrame)
+        assert _reference_df.size > 0
+
+        for _, row in _reference_df.iterrows():
+            for _t_column in valid_vrtool_config.T:
+                _assessment_result = AssessmentMechanismResult.get_or_none(
+                    AssessmentMechanismResult.mechanism_per_section.section.name
+                    == row["name"]
+                    and fn.Upper(
+                        AssessmentMechanismResult.mechanism_per_section.mechanism.name
+                    )
+                    == row["mechanism"].upper()
+                    and AssessmentMechanismResult.time == str(_t_column)
+                )
+                assert isinstance(
+                    _assessment_result, AssessmentMechanismResult
+                ), "No entry found for section {} and mechanism {}".format(
+                    row["name"], row["mechanism"]
+                )
+                assert _assessment_result.beta == pytest.approx(
+                    row[str(_t_column)], 0.00000001
+                )
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
