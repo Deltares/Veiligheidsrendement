@@ -4,6 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+from vrtool.orm.orm_db import vrtool_db
 
 from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -92,7 +93,9 @@ class TestAcceptance:
             _test_config.input_database_path.exists()
         ), "No database found at {}.".format(_test_config.input_database_path)
 
-        yield _test_config
+        with vrtool_db.atomic() as transaction:
+            yield _test_config
+            transaction.rollback()
 
     def test_run_full_model(self, valid_vrtool_config: VrtoolConfig):
         """
