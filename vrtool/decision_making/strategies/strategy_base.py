@@ -183,12 +183,6 @@ class StrategyBase:
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
-        cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]]
-            .MeasureData["Section"]
-            .columns.values
-        )
-
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
