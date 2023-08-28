@@ -12,6 +12,7 @@ from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismRes
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+import pytest
 
 
 class TestMechanismReliabilityCollectionExporter:
@@ -38,6 +39,8 @@ class TestMechanismReliabilityCollectionExporter:
         _expected_time_entries = len(_expected_mechanisms_reliability.columns)
         _expected_mechanisms = _expected_mechanisms_reliability.index
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
+        assert any(Mechanism.select())
+        assert any(MechanismPerSection.select())
 
         # 2. Run test.
         _exporter = MechanismReliabilityCollectionExporter(_test_section_data)
@@ -68,3 +71,26 @@ class TestMechanismReliabilityCollectionExporter:
                     _orm_assessment, AssessmentMechanismResult
                 ), f"No assessment created for mechanism {_mechanism_name}, time {time_value}."
                 assert _orm_assessment.beta == beta_value
+
+    def test_export_dom_with_unknown_mechanism_raises_error(
+        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+    ):
+        # 1. Define test data.
+        _test_section_data = get_basic_section_data()
+        assert not any(AssessmentMechanismResult.select())
+        assert not any(Mechanism.select())
+
+        _expected_mechanism_not_found = (
+            section_reliability_with_values.SectionReliability.index[0]
+        )
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            _exporter = MechanismReliabilityCollectionExporter(_test_section_data)
+            _exporter.export_dom(section_reliability_with_values)
+
+        # 3. Verify final expectations.
+        assert (
+            str(exc_err.value)
+            == f"No mechanism found for {_expected_mechanism_not_found}."
+        )
