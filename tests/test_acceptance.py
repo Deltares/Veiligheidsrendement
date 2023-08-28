@@ -12,7 +12,9 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_p
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from peewee import fn
+from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import get_dike_traject, open_database
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -144,9 +146,9 @@ class TestAcceptance:
 
         # 4. Validate exporting results is possible
         _safety_assessment.save_initial_assessment()
-        self.validate_safety_assessment(valid_vrtool_config)
+        self.validate_safety_assessment_results(valid_vrtool_config)
 
-    def validate_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
+    def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
         assert _test_reference_path.exists()
@@ -159,35 +161,74 @@ class TestAcceptance:
 
         assert isinstance(_reference_df, pd.DataFrame)
         assert any(AssessmentSectionResult.select())
-        assert any(AssessmentMechanismResult.select())
-
-        # assert len(_reference_df.index) > len(AssessmentMechanismResult.select())
 
         # 3. Validate each of the rows.
-        for _, row in _reference_df.iterrows():
-            for _t_column in valid_vrtool_config.T:
+        self.validate_mechanism_per_section_initial_assessment(
+            _reference_df[_reference_df["mechanism"] != "Section"], valid_vrtool_config
+        )
+        self.validate_section_data_initial_assessment(
+            _reference_df[_reference_df["mechanism"] == "Section"], valid_vrtool_config
+        )
+
+    def validate_section_data_initial_assessment(
+        self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
+    ):
+        assert len(AssessmentSectionResult.select()) == (
+            len(reference_df.index) * len(vrtool_config.T)
+        )
+        for _, row in reference_df.iterrows():
+            _section_data = SectionData.get(SectionData.section_name == row["name"])
+            for _t_column in vrtool_config.T:
+                _assessment_result = AssessmentSectionResult.get_or_none(
+                    AssessmentSectionResult.section_data
+                    == _section_data & AssessmentSectionResult.time
+                    == int(_t_column)
+                )
+                assert isinstance(
+                    _assessment_result, AssessmentSectionResult
+                ), "Initial assessment not found for dike section {}, t {}.".format(
+                    row["name"], _t_column
+                )
+                assert _assessment_result.beta == pytest.approx(
+                    row[str(_t_column)], 0.00000001
+                ), "Missmatched values for section {}, t {}".format(
+                    row["name"], _t_column
+                )
+
+    def validate_mechanism_per_section_initial_assessment(
+        self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
+    ):
+        assert len(AssessmentMechanismResult.select()) == (
+            len(reference_df.index) * len(vrtool_config.T)
+        )
+        for _, row in reference_df.iterrows():
+            _mechanism_name = row["mechanism"]
+            _section_data = SectionData.get(SectionData.section_name == row["name"])
+            _mechanism = Mechanism.get(
+                fn.Upper(Mechanism.name) == _mechanism_name.upper()
+            )
+            _mechanism_x_section = MechanismPerSection.get_or_none(
+                (MechanismPerSection.section == _section_data)
+                & (MechanismPerSection.mechanism == _mechanism)
+            )
+            assert isinstance(_mechanism_x_section, MechanismPerSection)
+            for _t_column in vrtool_config.T:
                 _assessment_result = AssessmentMechanismResult.get_or_none(
                     (
-                        AssessmentMechanismResult.mechanism_per_section.section.section_name
-                        == row["name"]
+                        AssessmentMechanismResult.mechanism_per_section
+                        == _mechanism_x_section
                     )
-                    and (
-                        fn.Upper(
-                            AssessmentMechanismResult.mechanism_per_section.mechanism.name
-                        )
-                        == row["mechanism"].upper()
-                    )
-                    and (AssessmentMechanismResult.time == str(_t_column))
+                    & (AssessmentMechanismResult.time == int(_t_column))
                 )
                 assert isinstance(
                     _assessment_result, AssessmentMechanismResult
                 ), "No entry found for section {} and mechanism {}".format(
-                    row["name"], row["mechanism"]
+                    row["name"], _mechanism_name
                 )
                 assert _assessment_result.beta == pytest.approx(
                     row[str(_t_column)], 0.00000001
                 ), "Missmatched values for section {}, mechanism {}, t {}".format(
-                    row["name"], row["mechanism"], _t_column
+                    row["name"], _mechanism_name, _t_column
                 )
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")

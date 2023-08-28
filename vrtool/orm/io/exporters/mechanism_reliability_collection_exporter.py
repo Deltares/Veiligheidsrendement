@@ -22,8 +22,8 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         if not _mechanism:
             raise ValueError("No mechanism found for {}.".format(mechanism_name))
         return MechanismPerSection.get_or_none(
-            MechanismPerSection.section == self._section_data
-            and MechanismPerSection.mechanism == _mechanism
+            (MechanismPerSection.section == self._section_data)
+            & (MechanismPerSection.mechanism == _mechanism)
         )
 
     def export_dom(
@@ -36,12 +36,13 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
             _section_reliability.loc[_section_reliability.index != "Section"]
         ).iterrows():
             logging.info(f"Exporting reliability for mechanism: '{row_idx}'.")
+            _mechanism_per_section = self._get_mechanism_per_section(row_idx)
             for time_idx, beta_value in enumerate(mechanism_row):
                 _added_assessments.append(
                     AssessmentMechanismResult.create(
                         beta=beta_value,
                         time=int(mechanism_row.index[time_idx]),
-                        mechanism_per_section=self._get_mechanism_per_section(row_idx),
+                        mechanism_per_section=_mechanism_per_section,
                     )
                 )
 
