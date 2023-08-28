@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+
 from tests import test_data
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models.mechanism import Mechanism

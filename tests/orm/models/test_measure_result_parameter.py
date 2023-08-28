@@ -10,7 +10,7 @@ class TestMeasureResultParameter:
 
         # 2. Run test
         _measure_result_parameter = MeasureResultParameter.create(
-            name='dberm',
+            name="dberm",
             value=5,
             measure_result=_measure_result,
         )

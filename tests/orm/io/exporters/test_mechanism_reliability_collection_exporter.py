@@ -1,18 +1,19 @@
-from tests.orm import get_basic_section_data, empty_db_fixture
+import pytest
+
+from tests.orm import empty_db_fixture, get_basic_section_data
+from tests.orm.io.exporters import (
+    create_required_mechanism_per_section,
+    section_reliability_with_values,
+)
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.mechanism_reliability_collection_exporter import (
     MechanismReliabilityCollectionExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from tests.orm.io.exporters import (
-    section_reliability_with_values,
-    create_required_mechanism_per_section,
-)
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
-import pytest
 
 
 class TestMechanismReliabilityCollectionExporter:
