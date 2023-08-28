@@ -4,11 +4,15 @@ from vrtool.orm.io.exporters.mechanism_reliability_collection_exporter import (
     MechanismReliabilityCollectionExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from tests.orm.io.exporters import section_reliability_with_values
+from tests.orm.io.exporters import (
+    section_reliability_with_values,
+    create_required_mechanism_per_section,
+)
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+import pytest
 
 
 class TestMechanismReliabilityCollectionExporter:
@@ -20,23 +24,12 @@ class TestMechanismReliabilityCollectionExporter:
         assert isinstance(_exporter, MechanismReliabilityCollectionExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
-    def create_required_mechanism_per_section(
-        self, section_data: SectionData, mechanism_available_list: list[str]
-    ) -> list[MechanismPerSection]:
-        _added_mechanisms = []
-        for mechanism_name in mechanism_available_list:
-            _mechanism = Mechanism.create(name=mechanism_name.strip().upper())
-            _added_mechanisms.append(
-                MechanismPerSection.create(section=section_data, mechanism=_mechanism)
-            )
-        return _added_mechanisms
-
     def test_export_dom_with_valid_arguments(
         self, section_reliability_with_values: SectionReliability, empty_db_fixture
     ):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()
-        assert not any(_test_section_data.assessment_section_results)
+        assert not any(AssessmentMechanismResult.select())
 
         _expected_mechanisms_reliability = (
             section_reliability_with_values.SectionReliability.loc[
@@ -45,9 +38,9 @@ class TestMechanismReliabilityCollectionExporter:
         )
         _expected_time_entries = len(_expected_mechanisms_reliability.columns)
         _expected_mechanisms = _expected_mechanisms_reliability.index
-        _added_mechanisms = self.create_required_mechanism_per_section(
-            _test_section_data, _expected_mechanisms
-        )
+        create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
+        assert any(Mechanism.select())
+        assert any(MechanismPerSection.select())
 
         # 2. Run test.
         _exporter = MechanismReliabilityCollectionExporter(_test_section_data)
@@ -78,3 +71,26 @@ class TestMechanismReliabilityCollectionExporter:
                     _orm_assessment, AssessmentMechanismResult
                 ), f"No assessment created for mechanism {_mechanism_name}, time {time_value}."
                 assert _orm_assessment.beta == beta_value
+
+    def test_export_dom_with_unknown_mechanism_raises_error(
+        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+    ):
+        # 1. Define test data.
+        _test_section_data = get_basic_section_data()
+        assert not any(AssessmentMechanismResult.select())
+        assert not any(Mechanism.select())
+
+        _expected_mechanism_not_found = (
+            section_reliability_with_values.SectionReliability.index[0]
+        )
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            _exporter = MechanismReliabilityCollectionExporter(_test_section_data)
+            _exporter.export_dom(section_reliability_with_values)
+
+        # 3. Verify final expectations.
+        assert (
+            str(exc_err.value)
+            == f"No mechanism found for {_expected_mechanism_not_found}."
+        )
