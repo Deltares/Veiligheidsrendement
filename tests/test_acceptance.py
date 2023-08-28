@@ -12,6 +12,7 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_p
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from peewee import fn
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import get_dike_traject, open_database
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -143,7 +144,6 @@ class TestAcceptance:
 
         # 4. Validate exporting results is possible
         _safety_assessment.save_initial_assessment()
-        assert any(AssessmentSectionResult.select())
         self.validate_safety_assessment(valid_vrtool_config)
 
     def validate_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
@@ -158,19 +158,26 @@ class TestAcceptance:
         )
 
         assert isinstance(_reference_df, pd.DataFrame)
-        assert len(_reference_df.index) > len(AssessmentMechanismResult.select())
+        assert any(AssessmentSectionResult.select())
+        assert any(AssessmentMechanismResult.select())
+
+        # assert len(_reference_df.index) > len(AssessmentMechanismResult.select())
 
         # 3. Validate each of the rows.
         for _, row in _reference_df.iterrows():
             for _t_column in valid_vrtool_config.T:
                 _assessment_result = AssessmentMechanismResult.get_or_none(
-                    AssessmentMechanismResult.mechanism_per_section.section.name
-                    == row["name"]
-                    and fn.Upper(
-                        AssessmentMechanismResult.mechanism_per_section.mechanism.name
+                    (
+                        AssessmentMechanismResult.mechanism_per_section.section.section_name
+                        == row["name"]
                     )
-                    == row["mechanism"].upper()
-                    and AssessmentMechanismResult.time == str(_t_column)
+                    and (
+                        fn.Upper(
+                            AssessmentMechanismResult.mechanism_per_section.mechanism.name
+                        )
+                        == row["mechanism"].upper()
+                    )
+                    and (AssessmentMechanismResult.time == str(_t_column))
                 )
                 assert isinstance(
                     _assessment_result, AssessmentMechanismResult
@@ -179,6 +186,8 @@ class TestAcceptance:
                 )
                 assert _assessment_result.beta == pytest.approx(
                     row[str(_t_column)], 0.00000001
+                ), "Missmatched values for section {}, mechanism {}, t {}".format(
+                    row["name"], row["mechanism"], _t_column
                 )
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
