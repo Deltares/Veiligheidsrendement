@@ -180,9 +180,8 @@ class TestAcceptance:
             _section_data = SectionData.get(SectionData.section_name == row["name"])
             for _t_column in vrtool_config.T:
                 _assessment_result = AssessmentSectionResult.get_or_none(
-                    AssessmentSectionResult.section_data
-                    == _section_data & AssessmentSectionResult.time
-                    == int(_t_column)
+                    (AssessmentSectionResult.section_data == _section_data)
+                    & (AssessmentSectionResult.time == int(_t_column))
                 )
                 assert isinstance(
                     _assessment_result, AssessmentSectionResult
