@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import itertools
 
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -90,45 +91,56 @@ def measure_combinations(
             _combined_measures = pd.concat((_combined_measures, allin))
     return _combined_measures
 
-
 def revetment_combinations(partials, combinables):
     _combined_measures = pd.DataFrame(columns=combinables.columns)
+    #all columns without a second index are attributes of the measure
+    attribute_col_names = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)==''].tolist()
+    #years are those columns of level 2 with a second index that is not ''
+    years = combinables.columns.get_level_values(1)[combinables.columns.get_level_values(1)!=''].unique().tolist()
+    #mechanisms are those columns of level 1 with a second index that is not ''
+    mechanisms = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)!=''].unique().tolist()
 
+    #make dict with attribute_col_names as keys and empty lists as values
+    attribute_col_dict = {col:[] for col in attribute_col_names}
+
+    #make dict with mechanisms as keys, sub dicts of years and then empty lists as values
+    mechanism_beta_dict = {mechanism:{year:[] for year in years} for mechanism in mechanisms}
+    count = 0
     # loop over partials
     for i, row1 in partials.iterrows():
-        # combine with all combinables
+        # combine with all combinables (in this case revetment measures)
         for j, row2 in combinables.iterrows():
 
-            ID = "+".join((row1["ID"].values[0], row2["ID"].values[0]))
-            types = [row1["type"].values[0], row2["type"].values[0]]
-            year = [row1["year"].values[0], row2["year"].values[0]]
-            params = [row1["params"].values[0], row2["params"].values[0]]
-            Cost = [row1["cost"].values[0], row2["cost"].values[0]]
-            # combine betas
-            # take maximums of mechanisms except if it is about StabilityInner for partial Stability Screen
-            betas = []
-            years = []
+            for col in attribute_col_names:
+                if col == 'ID': #TODO maybe add type here as well and just concatenate the types as a string
+                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
+                elif col == 'class':
+                    attribute_value = "combined"
+                else:
+                    #for all other columns we combine the lists and make sure that it is not nested
+                    combined_data = row1[col].tolist() + row2[col].tolist()
+                    attribute_value = list(itertools.chain.from_iterable(
+                        itertools.repeat(x, 1) if (isinstance(x, str)) or (isinstance(x, int)) or (isinstance(x, float)) else x for x in
+                        combined_data))
+                    #TODO potentially ignore all -999 values which would improve the readability of the dataframe
+                attribute_col_dict[col].append(attribute_value)
 
-            for ij in partials.columns:
-                if ij[0] != "Section" and ij[1] != "":  # It is a beta value
-                    # TODO make clean. Quick fix to fix incorrect treatment of vertical geotextile.
-                    # VSG is idx in MeasureTable
-                    beta = np.maximum(row1[ij], row2[ij])
-                    years.append(ij[1])
-                    betas.append(beta)
+            #then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+            for mechanism in mechanism_beta_dict.keys():
+                if mechanism == "Section":
+                    continue
+                else:
+                    for year in mechanism_beta_dict[mechanism].keys():
+                        mechanism_beta_dict[mechanism][year].append(np.maximum(row1[mechanism,year],row2[mechanism,year]))
 
-            # next update section probabilities
-            for ij in partials.columns:
-                if ij[0] == "Section":  # It is a beta value
-                    # where year in years is the same as ij[1]
-                    indices = [indices for indices, x in enumerate(years) if x == ij[1]]
-                    ps = beta_to_pf(np.array(betas)[indices])
-                    p = np.sum(ps)  # TODO replace with correct formula
-                    betas.append(pf_to_beta(p))
-            in1 = [ID, types, "combined", year, params, Cost]
 
-            allin = pd.DataFrame([in1 + betas], columns=combinables.columns)
-            _combined_measures = pd.concat((_combined_measures, allin))
+
+            count+=1
+            attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
+            mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
+            mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
+            _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),ignore_index=True,axis=1)
+
     return _combined_measures
 
 
@@ -489,7 +501,7 @@ def update_probability(init_probability, strategy, index):
         from scipy.stats import norm
 
         # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
-        if i == "Overflow" or i == "Revetment":
+        if i in ["Overflow","Revetment"]:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]
