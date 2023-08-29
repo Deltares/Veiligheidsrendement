@@ -136,9 +136,18 @@ def revetment_combinations(partials, combinables):
             count+=1
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
+    attribute_col_df.columns = pd.MultiIndex.from_tuples([(col,"") for col in attribute_col_df.columns])
     mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
     mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
-    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),ignore_index=True,axis=1)
+    mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
+    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),axis=1)
+    for year in years:
+        #compute the section beta
+        betas_in_year = _combined_measures.loc[:,(_combined_measures.columns.get_level_values(0) != 'Section', _combined_measures.columns.get_level_values(1)==25)]
+        pf_in_year = beta_to_pf(betas_in_year)
+        section_beta = pf_to_beta(1 - np.prod(1-pf_in_year, axis=1))
+        #add the section beta to the dataframe
+        _combined_measures.loc[:,("Section",year)] = section_beta
 
     return _combined_measures
 
