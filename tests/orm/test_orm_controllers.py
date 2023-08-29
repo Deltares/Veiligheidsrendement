@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -291,44 +292,50 @@ class TestOrmControllers:
         assert isinstance(_solutions, Solutions)
         assert any(_solutions.measures)
 
-    def test_clear_assessment_results_clears_all_results(
+    @pytest.fixture
+    def export_database(
         self, request: pytest.FixtureRequest
+    ) -> tuple[Path, SqliteDatabase]:
+        _db_file = test_data / "test_db" / f"empty_db.db"
+        _output_dir = test_results.joinpath(request.node.name)
+        if _output_dir.exists():
+            shutil.rmtree(_output_dir)
+        _output_dir.mkdir(parents=True)
+        _test_db_file = _output_dir.joinpath("test_db.db")
+        shutil.copyfile(_db_file, _test_db_file)
+
+        _connected_db = open_database(_test_db_file)
+        _connected_db.close()
+        yield _test_db_file, _connected_db
+
+        # Make sure it's closed.
+        # Perhaps during test something fails and does not get to close)
+        if not _connected_db.is_closed():
+            _connected_db.close()
+
+    def test_clear_assessment_results_clears_all_results(
+        self, export_database: tuple[Path, SqliteDatabase]
     ):
         # Setup
-        _db_file = test_results / request.node.name / "vrtool_db.db"
-        if _db_file.parent.exists():
-            shutil.rmtree(_db_file.parent)
+        _db_file, _db_connection = export_database
+        _db_connection.connect()
 
-        initialize_database(_db_file)
-        test_db = open_database(_db_file)
+        assert not any(AssessmentSectionResult.select())
+        assert not any(AssessmentMechanismResult.select())
 
         traject_info = get_basic_dike_traject_info()
 
-        _mechanism_one = self._create_mechanism("mechanism 1")
-        _mechanism_two = self._create_mechanism("mechanism 2")
+        _mechanisms = [
+            self._create_mechanism("mechanism 1"),
+            self._create_mechanism("mechanism 2"),
+        ]
 
-        _section_one = self._create_basic_section_data(traject_info, "section 1")
-        self._create_assessment_section_results(_section_one)
-        mechanism_one_per_section_one = self._create_basic_mechanism_per_section(
-            _section_one, _mechanism_one
+        self._create_section_with_fully_configured_assessment_results(
+            traject_info, "section 1", _mechanisms
         )
-        self._create_assessment_mechanism_results(mechanism_one_per_section_one)
-        mechanism_two_per_section_one = self._create_basic_mechanism_per_section(
-            _section_one, _mechanism_two
+        self._create_section_with_fully_configured_assessment_results(
+            traject_info, "section 2", _mechanisms
         )
-        self._create_assessment_mechanism_results(mechanism_two_per_section_one)
-
-        _section_two = self._create_basic_section_data(traject_info, "section 2")
-        self._create_assessment_section_results(_section_two)
-        mechanism_one_per_section_two = self._create_basic_mechanism_per_section(
-            _section_two, _mechanism_one
-        )
-        self._create_assessment_mechanism_results(mechanism_one_per_section_two)
-
-        mechanism_two_per_section_two = self._create_basic_mechanism_per_section(
-            _section_two, _mechanism_two
-        )
-        self._create_assessment_mechanism_results(mechanism_two_per_section_two)
 
         _vrtool_config = VrtoolConfig(input_database_path=_db_file)
 
@@ -336,18 +343,33 @@ class TestOrmControllers:
         assert any(AssessmentSectionResult.select())
         assert any(AssessmentMechanismResult.select())
 
-        test_db.close()
+        _db_connection.close()
 
         # Call
         clear_assessment_results(_vrtool_config)
 
         # Assert
-        test_db = open_database(_db_file)
+        _db_connection.connect()
 
         assert not any(AssessmentSectionResult.select())
         assert not any(AssessmentMechanismResult.select())
 
-        test_db.close()
+        _db_connection.close()
+
+    def _create_section_with_fully_configured_assessment_results(
+        self,
+        traject_info: DikeTrajectInfo,
+        section_name: str,
+        mechanisms: list[Mechanism],
+    ):
+        section = self._create_basic_section_data(traject_info, section_name)
+        self._create_assessment_section_results(section)
+
+        for mechanism in mechanisms:
+            mechanism_per_section = self._create_basic_mechanism_per_section(
+                section, mechanism
+            )
+            self._create_assessment_mechanism_results(mechanism_per_section)
 
     def _create_basic_section_data(
         self, traject_info: DikeTrajectInfo, section_name: str
