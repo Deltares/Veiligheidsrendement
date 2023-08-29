@@ -1,11 +1,14 @@
+from pathlib import Path
 import shutil
 
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
+from tests.orm import get_basic_mechanism_per_section
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -18,12 +21,15 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.orm_controllers import (
+    export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
     initialize_database,
     open_database,
+)
+from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
+    ResultsSafetyAssessment,
 )
 
 
@@ -238,7 +244,7 @@ class TestOrmControllers:
 
         # 1. Define test data.
         database_vrtool_config.T = [0]
-        _general_info = DikeTrajectInfo()
+        _general_info = DikeTrajectInfo(traject_name="Dummy")
         _dike_section = DikeSection()
         _dike_section.name = "01A"
         _dike_section.Length = 359.0
@@ -285,3 +291,74 @@ class TestOrmControllers:
         # 3. Verify expectations.
         assert isinstance(_solutions, Solutions)
         assert any(_solutions.measures)
+
+    @pytest.fixture
+    def export_database(self, request: pytest.FixtureRequest) -> Path:
+        _db_file = test_data / "test_db" / f"empty_db.db"
+        _output_dir = test_results.joinpath(request.node.name)
+        if _output_dir.exists():
+            shutil.rmtree(_output_dir)
+        _output_dir.mkdir(parents=True)
+        _test_db_file = _output_dir.joinpath("test_db.db")
+        shutil.copyfile(_db_file, _test_db_file)
+
+        _connected_db = open_database(_test_db_file)
+        _connected_db.close()
+        yield _test_db_file
+        # Make sure it's closed.
+        # Perhaps during test something fails and does not get to close)
+        _connected_db.close()
+
+    def test_export_results_safety_assessment_given_valid_data(
+        self, export_database: Path
+    ):
+        # 1. Define test data.
+        _connected_db = open_database(export_database)
+        _test_mechanism_per_section = get_basic_mechanism_per_section()
+        _connected_db.close()
+        _test_section_data = _test_mechanism_per_section.section
+
+        # Dike Section and Dike Traject.
+        _reliability_df = pd.DataFrame(
+            [4.2, 2.4],
+            columns=["42"],
+            index=[_test_mechanism_per_section.mechanism.name, "Section"],
+        )
+        _dummy_section = DikeSection()
+        _dummy_section.name = _test_section_data.section_name
+        _dummy_section.TrajectInfo = DikeTrajectInfo(
+            traject_name=_test_section_data.dike_traject.traject_name
+        )
+        _dummy_section.section_reliability.SectionReliability = _reliability_df
+        _test_traject = DikeTraject()
+        _test_traject.sections = [_dummy_section]
+
+        # Safety assessment.
+        _safety_assessment = ResultsSafetyAssessment()
+        _safety_assessment.vr_config = VrtoolConfig(input_database_path=export_database)
+        _safety_assessment.selected_traject = _test_traject
+
+        assert not any(orm_models.AssessmentSectionResult.select())
+        assert not any(orm_models.AssessmentMechanismResult.select())
+
+        # 2. Run test.
+        export_results_safety_assessment(_safety_assessment)
+
+        # 3. Verify final expectations.
+        assert any(
+            orm_models.AssessmentSectionResult.select().where(
+                (orm_models.AssessmentSectionResult.section_data == _test_section_data)
+                & (orm_models.AssessmentSectionResult.beta == 2.4)
+                & (orm_models.AssessmentSectionResult.time == 42)
+            )
+        )
+        assert any(
+            orm_models.AssessmentMechanismResult.select().where(
+                (
+                    orm_models.AssessmentMechanismResult.mechanism_per_section
+                    == _test_mechanism_per_section
+                )
+                & (orm_models.AssessmentMechanismResult.beta == 4.2)
+                & (orm_models.AssessmentMechanismResult.time == 42)
+            )
+        )
