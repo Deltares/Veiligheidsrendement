@@ -348,8 +348,10 @@ class StrategyBase:
         # probabilities [N,S,T]
         self.Pf = {}
         for _mechanism_name in self.mechanisms:
-            if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
+            if _mechanism_name == "Overflow":
                 self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0)
+            elif _mechanism_name == "Revetment":
+                self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0e-18)
             else:
                 self.Pf[_mechanism_name] = np.full((N, Sg + 1, T), 1.0)
 
@@ -374,7 +376,7 @@ class StrategyBase:
                     # TODO (VRTOOL-187).
                     # This could become obsolete once SectionReliability contains the data related to revetment.
                     # Consider removing if that's the case.
-                    logging.error(
+                    logging.warning(
                         "No optimalization available for '{}'.".format(_mechanism_name)
                     )
                     continue
