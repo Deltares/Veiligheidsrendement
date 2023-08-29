@@ -141,6 +141,8 @@ def export_results_safety_assessment(result: ResultsSafetyAssessment) -> None:
         _exporter.export_dom(_section)
     _connected_db.close()
     logging.info("Closed connection after export for Dike's section reliability.")
+
+
 def clear_assessment_results(config: VrtoolConfig) -> None:
     """
     Clears all the assessment results from the database

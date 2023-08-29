@@ -5,6 +5,7 @@ import click
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_controllers import (
+    clear_assessment_results,
     export_results_safety_assessment,
     get_dike_traject,
 )
@@ -71,6 +72,7 @@ def run_step_assessment(**kwargs):
     _result = _safety_assessment.run()
 
     # Export the results.
+    clear_assessment_results(_vr_config)
     export_results_safety_assessment(_result)
 
 
