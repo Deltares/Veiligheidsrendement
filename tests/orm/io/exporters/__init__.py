@@ -24,11 +24,10 @@ def section_reliability_with_values() -> SectionReliability:
 
 def create_required_mechanism_per_section(
     section_data: SectionData, mechanism_available_list: list[str]
-) -> list[MechanismPerSection]:
+) -> None:
     _added_mechanisms = []
     for mechanism_name in mechanism_available_list:
         _mechanism, _ = Mechanism.get_or_create(name=mechanism_name.strip().upper())
         _added_mechanisms.append(
             MechanismPerSection.create(section=section_data, mechanism=_mechanism)
         )
-    return _added_mechanisms
