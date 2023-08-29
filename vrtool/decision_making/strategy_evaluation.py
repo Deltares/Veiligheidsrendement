@@ -133,13 +133,12 @@ def revetment_combinations(partials, combinables):
                     for year in mechanism_beta_dict[mechanism].keys():
                         mechanism_beta_dict[mechanism][year].append(np.maximum(row1[mechanism,year],row2[mechanism,year]))
 
-
-
             count+=1
-            attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
-            mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
-            mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
-            _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),ignore_index=True,axis=1)
+
+    attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
+    mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
+    mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
+    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),ignore_index=True,axis=1)
 
     return _combined_measures
 
