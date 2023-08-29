@@ -267,27 +267,10 @@ class StrategyBase:
             for ij in IDs:
                 if ij not in existingIDs:
                     indexes = ij.split("+")
-                    name = (
-                        solutions_dict[section.name]
-                        .measure_table.loc[
-                            solutions_dict[traject.sections[i].name].measure_table["ID"]
-                            == indexes[0]
-                        ]["Name"]
-                        .values[0]
-                        + "+"
-                        + solutions_dict[section.name]
-                        .measure_table.loc[
-                            solutions_dict[traject.sections[i].name].measure_table["ID"]
-                            == indexes[1]
-                        ]["Name"]
-                        .values[0]
-                    )
-                    solutions_dict[section.name].measure_table.loc[
-                        len(solutions_dict[traject.sections[i].name].measure_table) + 1
-                    ] = name
-                    solutions_dict[section.name].measure_table.loc[
-                        len(solutions_dict[traject.sections[i].name].measure_table)
-                    ]["ID"] = ij
+                    #concatenate names with + sign based on solutions_dict using list comprehension
+                    name = '+'.join(solutions_dict[section.name].measure_table.loc[solutions_dict[traject.sections[i].name].measure_table["ID"].isin(indexes)]['Name'].tolist())
+                    solutions_dict[section.name].measure_table = solutions_dict[section.name].measure_table.append(pd.DataFrame([[ij, name]], columns=['ID', 'Name']))
+
         return combinedmeasures
 
     def evaluate(
