@@ -30,9 +30,7 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
             & (MechanismPerSection.mechanism == _mechanism)
         )
 
-    def export_dom(
-        self, section_reliability: SectionReliability
-    ) -> list[AssessmentMechanismResult]:
+    def export_dom(self, section_reliability: SectionReliability) -> None:
         logging.info("STARTED exporting Mechanism's reliability (Beta) over time.")
         _added_assessments = []
         _section_reliability = section_reliability.SectionReliability
@@ -53,5 +51,3 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
                 )
 
         logging.info("FINISHED exporting Mechanism's reliability (Beta) over time.")
-
-        return _added_assessments

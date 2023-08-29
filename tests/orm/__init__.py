@@ -2,19 +2,18 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
-from vrtool.orm.models import (
-    CombinableType,
-    Measure,
-    MeasurePerSection,
-    MeasureResult,
-    MeasureType,
-)
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_per_section import MeasurePerSection
+from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+
 from vrtool.orm.orm_controllers import open_database
 
 

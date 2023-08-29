@@ -15,7 +15,10 @@ from peewee import fn
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
-from vrtool.orm.orm_controllers import get_dike_traject, open_database
+from vrtool.orm.orm_controllers import (
+    export_results_safety_assessment,
+    get_dike_traject,
+)
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -25,6 +28,7 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 
+# Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
 
 _acceptance_test_cases = [
@@ -125,10 +129,9 @@ class TestAcceptance:
         assert not any(AssessmentSectionResult.select())
 
         # 2. Run test.
-        _safety_assessment = RunSafetyAssessment(
+        _results = RunSafetyAssessment(
             valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
-        )
-        _results = _safety_assessment.run()
+        ).run()
 
         # 3. Verify expectations.
         assert isinstance(_results, ResultsSafetyAssessment)
@@ -136,30 +139,17 @@ class TestAcceptance:
         assert any(valid_vrtool_config.output_directory.glob("*"))
 
         # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
-        # However, this is not possible as the connection will be closed during the save_initial_assessment.
+        # However, this is not possible as the connection will be closed during the export_initial_assessment.
         # Causing an error as the transaction requires said connection to be open.
         # Therefore the following has been found as the only possible way to assess whether the results are
         # written in the database without affecting other tests from using this db.
         _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
         shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        valid_vrtool_config.input_database_path = _bck_db_filepath
+        _results.vr_config.input_database_path = _bck_db_filepath
 
         # 4. Validate exporting results is possible
-        _safety_assessment.save_initial_assessment()
-        self.validate_safety_assessment_results(valid_vrtool_config)
-
-    def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
-        # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
-        assert _test_reference_path.exists()
-        open_database(valid_vrtool_config.input_database_path)
-
-        # 2. Load reference as pandas dataframe.
-        _reference_df = pd.read_csv(
-            _test_reference_path.joinpath("InitialAssessment_Betas.csv"), header=0
-        )
-
-        assert isinstance(_reference_df, pd.DataFrame)
+        export_results_safety_assessment(_results)
+        assert any(AssessmentMechanismResult.select())
         assert any(AssessmentSectionResult.select())
 
         # 3. Validate each of the rows.

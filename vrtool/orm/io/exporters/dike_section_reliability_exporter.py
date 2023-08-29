@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.exporters.mechanism_reliability_collection_exporter import (
@@ -10,7 +9,6 @@ from vrtool.orm.io.exporters.section_reliability_exporter import (
     SectionReliabilityExporter,
 )
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -39,16 +37,15 @@ class DikeSectionReliabilityExporter(OrmExporterProtocol):
             .get_or_none()
         )
 
-    def export_dom(self, dom_model: DikeSection) -> list[OrmBaseModel]:
+    def export_dom(self, dom_model: DikeSection) -> None:
         logging.info("STARTED exporting Dike Section's initial assessment reliability.")
         _section_data = self.get_related_section_data(dom_model)
-        _mechanism_assessments = MechanismReliabilityCollectionExporter(
-            _section_data
-        ).export_dom(dom_model.section_reliability)
-        _section_assessment = SectionReliabilityExporter(_section_data).export_dom(
+        MechanismReliabilityCollectionExporter(_section_data).export_dom(
+            dom_model.section_reliability
+        )
+        SectionReliabilityExporter(_section_data).export_dom(
             dom_model.section_reliability
         )
         logging.info(
             "FINISHED exporting Dike Section's initial assessment reliability."
         )
-        return _mechanism_assessments + _section_assessment

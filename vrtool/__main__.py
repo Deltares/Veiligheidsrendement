@@ -4,7 +4,10 @@ from pathlib import Path
 import click
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.orm_controllers import get_dike_traject
+from vrtool.orm.orm_controllers import (
+    export_results_safety_assessment,
+    get_dike_traject,
+)
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
@@ -57,7 +60,7 @@ def _get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
 def run_step_assessment(**kwargs):
     logging.info("Assess, {0}!".format(kwargs["model_directory"]))
 
-    # Get the selected Traject
+    # Get the selected Traject.
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
     _selected_traject = get_dike_traject(_vr_config)
 
@@ -65,8 +68,10 @@ def run_step_assessment(**kwargs):
     _safety_assessment = RunSafetyAssessment(
         _vr_config, _selected_traject, plot_mode=VrToolPlotMode.STANDARD
     )
-    _safety_assessment.run()
-    _safety_assessment.save_initial_assessment()
+    _result = _safety_assessment.run()
+
+    # Export the results.
+    export_results_safety_assessment(_result)
 
 
 @cli.command(
