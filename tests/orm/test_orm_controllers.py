@@ -321,12 +321,12 @@ class TestOrmControllers:
         _section_two = self._create_basic_section_data(traject_info, "section 2")
         self._create_assessment_section_results(_section_two)
         mechanism_one_per_section_two = self._create_basic_mechanism_per_section(
-            _section_one, _mechanism_one
+            _section_two, _mechanism_one
         )
         self._create_assessment_mechanism_results(mechanism_one_per_section_two)
 
         mechanism_two_per_section_two = self._create_basic_mechanism_per_section(
-            _section_one, _mechanism_two
+            _section_two, _mechanism_two
         )
         self._create_assessment_mechanism_results(mechanism_two_per_section_two)
 
