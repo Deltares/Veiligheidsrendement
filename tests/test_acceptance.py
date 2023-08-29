@@ -11,7 +11,10 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
-from vrtool.orm.orm_controllers import export_initial_assessment, get_dike_traject
+from vrtool.orm.orm_controllers import (
+    export_results_safety_assessment,
+    get_dike_traject,
+)
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -141,7 +144,7 @@ class TestAcceptance:
         _results.vr_config.input_database_path = _bck_db_filepath
 
         # 4. Validate exporting results is possible
-        export_initial_assessment(_results)
+        export_results_safety_assessment(_results)
         assert any(AssessmentMechanismResult.select())
         assert any(AssessmentSectionResult.select())
 

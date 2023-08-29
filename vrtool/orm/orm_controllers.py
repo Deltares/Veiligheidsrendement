@@ -111,6 +111,7 @@ def get_dike_section_solutions(
         config (VrtoolConfig): Vrtool configuration.
         dike_section (DikeSection): Selected DikeSection whose measures need to be loaded.
         general_info (DikeTrajectInfo): Required data structure to evaluate measures after import.
+
     Returns:
         Solutions: instance with all related measures (standard and / or custom).
     """
@@ -125,9 +126,9 @@ def get_dike_section_solutions(
     return _solutions
 
 
-def export_initial_assessment(result: ResultsSafetyAssessment) -> None:
+def export_results_safety_assessment(result: ResultsSafetyAssessment) -> None:
     """
-    Exports the initial assessments saved from a `ResultsSafetyAssessment` instance to the database defined in its `VrtoolConfig` field.
+    Exports the (initial) safety assessments results in a `ResultsSafetyAssessment` instance to the database defined in its `VrtoolConfig` field.
     The database connection will be opened and closed within the call to this method.
 
     Args:
