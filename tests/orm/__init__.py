@@ -2,13 +2,18 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
-from vrtool.orm.models import MeasurePerSection, Measure, MeasureType, CombinableType, MeasureResult
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_per_section import MeasurePerSection
+from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+
 from vrtool.orm.orm_controllers import open_database
 
 
@@ -120,7 +125,8 @@ def get_basic_measure() -> Measure:
         measure_type=_test_measure_type,
         combinable_type=_test_combinable_type,
         name="TestMeasure",
-        year=20)
+        year=20,
+    )
 
 
 def get_basic_measure_per_section() -> MeasurePerSection:
@@ -136,6 +142,7 @@ def get_basic_measure_per_section() -> MeasurePerSection:
         section=_test_section,
         measure=_test_measure,
     )
+
 
 def get_basic_measure_result() -> MeasureResult:
     """
