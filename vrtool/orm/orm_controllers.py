@@ -152,9 +152,12 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
     """
 
     open_database(config.input_database_path)
+    logging.info("Opened connection for clearing initial assessment results.")
 
     with vrtool_db.atomic():
         vrtool_db.execute_sql("DELETE FROM AssessmentSectionResult;")
         vrtool_db.execute_sql("DELETE FROM AssessmentMechanismResult;")
 
     vrtool_db.close()
+
+    logging.info("Closed connection after clearing initial assessment results.")

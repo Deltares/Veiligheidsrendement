@@ -65,6 +65,9 @@ def run_step_assessment(**kwargs):
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
     _selected_traject = get_dike_traject(_vr_config)
 
+    # Clear the results
+    clear_assessment_results(_vr_config)
+
     # Step 1. Safety assessment.
     _safety_assessment = RunSafetyAssessment(
         _vr_config, _selected_traject, plot_mode=VrToolPlotMode.STANDARD
@@ -72,7 +75,6 @@ def run_step_assessment(**kwargs):
     _result = _safety_assessment.run()
 
     # Export the results.
-    clear_assessment_results(_vr_config)
     export_results_safety_assessment(_result)
 
 
