@@ -24,7 +24,7 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-
+from vrtool.failure_mechanisms.revetment.revetment_measure_mechanism_reliability import RevetmentMeasureMechanismReliability
 
 class RevetmentMeasure(MeasureProtocol):
     def __init__(self):
@@ -255,18 +255,7 @@ class RevetmentMeasure(MeasureProtocol):
         calc_type: str,
         revetment_measure_results: list[RevetmentMeasureResult],
     ) -> dict[str, MechanismReliability]:
-        class RevetmentMeasureMechanismReliability(MechanismReliability):
-            def calculate_reliability(
-                self,
-                strength: MechanismInput,
-                load: LoadInput,
-                mechanism: str,
-                year: float,
-                traject_info: DikeTrajectInfo,
-            ):
-                # TODO (VRTOOL-187).
-                # This is done to prevent a Revetment mechanism to be calculated because we already know its beta combined.
-                pass
+
 
         _reliability_dict = {}
         for result in revetment_measure_results:
