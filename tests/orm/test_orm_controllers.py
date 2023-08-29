@@ -6,7 +6,7 @@ from peewee import SqliteDatabase
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
-from tests.orm import empty_db_fixture, get_basic_dike_traject_info
+from tests.orm import get_basic_dike_traject_info
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -293,9 +293,16 @@ class TestOrmControllers:
         assert any(_solutions.measures)
 
     def test_clear_assessment_results_clears_all_results(
-        self, empty_db_fixture: SqliteDatabase
+        self, request: pytest.FixtureRequest
     ):
         # Setup
+        _db_file = test_results / request.node.name / "vrtool_db.db"
+        if _db_file.parent.exists():
+            shutil.rmtree(_db_file.parent)
+
+        initialize_database(_db_file)
+        test_db = open_database(_db_file)
+
         traject_info = get_basic_dike_traject_info()
 
         _mechanism_one = self._create_mechanism("mechanism 1")
@@ -324,12 +331,24 @@ class TestOrmControllers:
         )
         self._create_assessment_mechanism_results(mechanism_two_per_section_two)
 
-        _db_file = test_data / "test_db" / "empty_db.db"
         _vrtool_config = VrtoolConfig(input_database_path=_db_file)
 
         # Precondition
         assert any(AssessmentSectionResult.select())
         assert any(AssessmentMechanismResult.select())
+
+        test_db.close()
+
+        # Call
+        clear_assessment_results(_vrtool_config)
+
+        # Assert
+        test_db = open_database(_db_file)
+
+        assert not any(AssessmentSectionResult.select())
+        assert not any(AssessmentMechanismResult.select())
+
+        test_db.close()
 
     def _create_basic_section_data(
         self, traject_info: DikeTrajectInfo, section_name: str
