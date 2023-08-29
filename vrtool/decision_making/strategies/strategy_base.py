@@ -233,7 +233,7 @@ class StrategyBase:
             solutions_dict[section.name].MeasureData["class"] == "partial"
         ]
         revetments = solutions_dict[section.name].MeasureData.loc[
-            solutions_dict[section.name].MeasureData["class"] == "combinableRevetment"
+            solutions_dict[section.name].MeasureData["class"] == "revetment"
         ]
 
         if self.__class__.__name__ == "TargetReliabilityStrategy":
