@@ -40,6 +40,10 @@ _acceptance_all_steps_test_cases = [
         ("TestCase1_38-1_revetment", "38-1", _available_mechanisms),
         id="Traject 38-1, full, with revetment",
     ),
+    pytest.param(
+        ("TestCase4_38-1_revetment_small", "38-1", _available_mechanisms),
+        id="Traject 38-1, two sections with revetment",
+    ),
 ]
 
 _acceptance_optimization_test_cases = [
@@ -50,6 +54,10 @@ _acceptance_optimization_test_cases = [
     pytest.param(
         ("TestCase3_38-1_small", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, two sections",
+    ),
+    pytest.param(
+        ("TestCase4_38-1_revetment_small", "38-1", _available_mechanisms),
+        id="Traject 38-1, two sections with revetment",
     ),
 ]
 
