@@ -11,7 +11,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
-from vrtool.orm.orm_controllers import get_dike_traject, open_database
+from vrtool.orm.orm_controllers import export_initial_assessment, get_dike_traject
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -21,6 +21,7 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 
+# Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
 
 _acceptance_test_cases = [
@@ -121,10 +122,9 @@ class TestAcceptance:
         assert not any(AssessmentSectionResult.select())
 
         # 2. Run test.
-        _runner = RunSafetyAssessment(
+        _results = RunSafetyAssessment(
             valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
-        )
-        _results = _runner.run()
+        ).run()
 
         # 3. Verify expectations.
         assert isinstance(_results, ResultsSafetyAssessment)
@@ -132,16 +132,16 @@ class TestAcceptance:
         assert any(valid_vrtool_config.output_directory.glob("*"))
 
         # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
-        # However, this is not possible as the connection will be closed during the save_initial_assessment.
+        # However, this is not possible as the connection will be closed during the export_initial_assessment.
         # Causing an error as the transaction requires said connection to be open.
         # Therefore the following has been found as the only possible way to assess whether the results are
         # written in the database without affecting other tests from using this db.
         _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
         shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        valid_vrtool_config.input_database_path = _bck_db_filepath
+        _results.vr_config.input_database_path = _bck_db_filepath
 
         # 4. Validate exporting results is possible
-        _runner.save_initial_assessment()
+        export_initial_assessment(_results)
         assert any(AssessmentMechanismResult.select())
         assert any(AssessmentSectionResult.select())
 

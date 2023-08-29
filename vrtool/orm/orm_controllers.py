@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from peewee import SqliteDatabase
@@ -14,6 +15,9 @@ from vrtool.orm.io.exporters.dike_section_reliability_exporter import (
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
 from vrtool.orm.orm_db import vrtool_db
+from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
+    ResultsSafetyAssessment,
+)
 
 
 def initialize_database(database_path: Path) -> SqliteDatabase:
@@ -121,16 +125,18 @@ def get_dike_section_solutions(
     return _solutions
 
 
-def export_dike_section_assessments(
-    database_path: Path, dike_section: DikeSection
-) -> None:
+def export_initial_assessment(result: ResultsSafetyAssessment) -> None:
     """
-    Exports all the initial assessments for both the `DikeSection` and the `MechanismReliabilityCollection` to their corresponding ORM entries.
+    Exports the initial assessments saved from a `ResultsSafetyAssessment` instance to the database defined in its `VrtoolConfig` field.
+    The database connection will be opened and closed within the call to this method.
 
     Args:
-        database_path (Path): Database's location path.
-        dike_section (DikeSection): Dike section whose initial assessments will be exported to the database.
+        result (ResultsSafetyAssessment): Instance containing dike sections' reliability and output database's location.
     """
-    _connected_db = open_database(database_path)
-    DikeSectionReliabilityExporter().export_dom(dike_section)
+    _connected_db = open_database(result.vr_config.input_database_path)
+    logging.info("Opened connection to export Dike's section reliability.")
+    _exporter = DikeSectionReliabilityExporter()
+    for _section in result.selected_traject.sections:
+        _exporter.export_dom(_section)
     _connected_db.close()
+    logging.info("Closed connection after export for Dike's section reliability.")

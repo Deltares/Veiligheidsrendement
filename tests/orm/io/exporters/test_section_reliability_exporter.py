@@ -6,7 +6,6 @@ from vrtool.orm.io.exporters.section_reliability_exporter import (
     SectionReliabilityExporter,
 )
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
-from vrtool.orm.models.section_data import SectionData
 
 
 class TestSectionReliabilityExporter:

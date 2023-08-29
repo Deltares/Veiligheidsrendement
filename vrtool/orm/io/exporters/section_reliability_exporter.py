@@ -12,9 +12,7 @@ class SectionReliabilityExporter(OrmExporterProtocol):
     def __init__(self, section_data: SectionData) -> None:
         self._section_data = section_data
 
-    def export_dom(
-        self, dom_model: SectionReliability
-    ) -> list[AssessmentSectionResult]:
+    def export_dom(self, dom_model: SectionReliability) -> None:
         logging.info("STARTED exporting Dike Section's reliability (Beta) over time.")
         _added_assessments = []
         for col_name, beta_value in dom_model.SectionReliability.loc[
@@ -28,5 +26,3 @@ class SectionReliabilityExporter(OrmExporterProtocol):
                 )
             )
         logging.info("FINISHED exporting Dike Section's reliability (Beta) over time.")
-
-        return _added_assessments
