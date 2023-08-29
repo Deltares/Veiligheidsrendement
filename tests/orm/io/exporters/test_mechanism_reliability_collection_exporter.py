@@ -55,28 +55,18 @@ class TestMechanismReliabilityCollectionExporter:
 
         for row_idx, mechanism_row in _expected_mechanisms_reliability.iterrows():
             _mechanism_name = row_idx.upper().strip()
-            _mechanism_x_section = next(
-                (
-                    _mps
-                    for _mps in MechanismPerSection.select()
-                    if _mps.mechanism.name.upper() == _mechanism_name
-                    and _mps.section == _test_section_data
-                ),
-                None,
-            )
-            assert isinstance(_mechanism_x_section, MechanismPerSection), f"No MechanismPerSection found for Section {_test_section_data.section_name}, Mechanism {_mechanism_name}."
             for time_idx, beta_value in enumerate(mechanism_row):
-                
                 time_value = int(mechanism_row.index[time_idx])
-                _orm_assessment = AssessmentMechanismResult.get(
-                    (
-                        AssessmentMechanismResult.time
-                        == int(mechanism_row.index[time_idx])
+                _orm_assessment = (
+                    AssessmentMechanismResult.select()
+                    .join(MechanismPerSection)
+                    .join(Mechanism)
+                    .where(
+                        (Mechanism.name == _mechanism_name)
+                        & (MechanismPerSection.section == _test_section_data)
+                        & (AssessmentMechanismResult.time == time_value)
                     )
-                    & (
-                        AssessmentMechanismResult.mechanism_per_section
-                        == _mechanism_x_section
-                    )
+                    .get()
                 )
                 assert isinstance(
                     _orm_assessment, AssessmentMechanismResult
