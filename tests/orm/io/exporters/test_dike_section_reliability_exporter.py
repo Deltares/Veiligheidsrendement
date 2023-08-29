@@ -110,21 +110,20 @@ class TestDikeSectionReliabilityExporter:
             _test_section_data, _expected_mechanisms_reliability.index
         )
 
-        _expected_assessments = section_reliability_with_values.SectionReliability.size
         _time_entries = len(section_reliability_with_values.SectionReliability.columns)
 
         # 2. Run test.
-        _created_assessments = _exporter.export_dom(_test_dike_section)
+        _exporter.export_dom(_test_dike_section)
 
         # 3. Verify final expectations.
-        def filtered(assessment_type) -> list:
-            return list(
-                filter(lambda x: isinstance(x, assessment_type), _created_assessments)
-            )
-
-        assert len(_created_assessments) == _expected_assessments
+        _assessment_mechanisms = len(AssessmentMechanismResult.select())
+        _assessment_section_data = len(AssessmentSectionResult.select())
         assert (
-            len(filtered(AssessmentMechanismResult))
+            _assessment_mechanisms + _assessment_section_data
+            == section_reliability_with_values.SectionReliability.size
+        )
+        assert (
+            _assessment_mechanisms
             == len(_expected_mechanisms_reliability.index) * _time_entries
         )
-        assert len(filtered(AssessmentSectionResult)) == _time_entries
+        assert _assessment_section_data == _time_entries

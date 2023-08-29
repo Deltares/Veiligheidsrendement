@@ -44,29 +44,39 @@ class TestMechanismReliabilityCollectionExporter:
         assert any(MechanismPerSection.select())
 
         # 2. Run test.
-        _exporter = MechanismReliabilityCollectionExporter(_test_section_data)
-        _orm_assessments = _exporter.export_dom(section_reliability_with_values)
+        MechanismReliabilityCollectionExporter(_test_section_data).export_dom(
+            section_reliability_with_values
+        )
 
         # 3. Verify expectations.
-        assert len(_orm_assessments) == _expected_time_entries * len(
+        assert len(AssessmentMechanismResult.select()) == _expected_time_entries * len(
             _expected_mechanisms
         )
-        assert all(
-            isinstance(_orm_assessment, AssessmentMechanismResult)
-            for _orm_assessment in _orm_assessments
-        )
+
         for row_idx, mechanism_row in _expected_mechanisms_reliability.iterrows():
             _mechanism_name = row_idx.upper().strip()
-            _orm_mechanisms = list(
-                filter(
-                    lambda x: x.mechanism_per_section.mechanism.name == _mechanism_name,
-                    _orm_assessments,
-                )
+            _mechanism_x_section = next(
+                (
+                    _mps
+                    for _mps in MechanismPerSection.select()
+                    if _mps.mechanism.name.upper() == _mechanism_name
+                    and _mps.section == _test_section_data
+                ),
+                None,
             )
+            assert isinstance(_mechanism_x_section, MechanismPerSection), f"No MechanismPerSection found for Section {_test_section_data.section_name}, Mechanism {_mechanism_name}."
             for time_idx, beta_value in enumerate(mechanism_row):
+                
                 time_value = int(mechanism_row.index[time_idx])
-                _orm_assessment = next(
-                    (_oa for _oa in _orm_mechanisms if _oa.time == time_value), None
+                _orm_assessment = AssessmentMechanismResult.get(
+                    (
+                        AssessmentMechanismResult.time
+                        == int(mechanism_row.index[time_idx])
+                    )
+                    & (
+                        AssessmentMechanismResult.mechanism_per_section
+                        == _mechanism_x_section
+                    )
                 )
                 assert isinstance(
                     _orm_assessment, AssessmentMechanismResult
@@ -105,16 +115,13 @@ class TestMechanismReliabilityCollectionExporter:
         assert any(MechanismPerSection.select())
 
         # 2. Run test.
-        _exporter = MechanismReliabilityCollectionExporter(_additional_section_data)
-        _orm_assessments = _exporter.export_dom(section_reliability_with_values)
+        MechanismReliabilityCollectionExporter(_additional_section_data).export_dom(
+            section_reliability_with_values
+        )
 
         # 3. Verify expectations.
-        assert len(_orm_assessments) == _expected_time_entries * len(
+        assert len(AssessmentMechanismResult.select()) == _expected_time_entries * len(
             _expected_mechanisms
-        )
-        assert all(
-            isinstance(_orm_assessment, AssessmentMechanismResult)
-            for _orm_assessment in _orm_assessments
         )
         assert all(
             _amr.mechanism_per_section.section == _additional_section_data
