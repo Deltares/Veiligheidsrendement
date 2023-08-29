@@ -2,7 +2,13 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
-from vrtool.orm.models import MeasurePerSection, Measure, MeasureType, CombinableType, MeasureResult
+from vrtool.orm.models import (
+    CombinableType,
+    Measure,
+    MeasurePerSection,
+    MeasureResult,
+    MeasureType,
+)
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
@@ -120,7 +126,8 @@ def get_basic_measure() -> Measure:
         measure_type=_test_measure_type,
         combinable_type=_test_combinable_type,
         name="TestMeasure",
-        year=20)
+        year=20,
+    )
 
 
 def get_basic_measure_per_section() -> MeasurePerSection:
@@ -136,6 +143,7 @@ def get_basic_measure_per_section() -> MeasurePerSection:
         section=_test_section,
         measure=_test_measure,
     )
+
 
 def get_basic_measure_result() -> MeasureResult:
     """
