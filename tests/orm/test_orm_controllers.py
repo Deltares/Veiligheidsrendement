@@ -1,14 +1,14 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
 from tests.orm import get_basic_mechanism_per_section
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig

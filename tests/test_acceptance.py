@@ -4,6 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+from peewee import fn
 
 from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -11,7 +12,6 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
-from peewee import fn
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
