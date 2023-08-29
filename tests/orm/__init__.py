@@ -2,7 +2,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
-from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
