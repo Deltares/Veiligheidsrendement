@@ -4,7 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
-from peewee import fn
+from peewee import SqliteDatabase, fn
 
 from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -20,6 +20,7 @@ from vrtool.orm.orm_controllers import (
     get_dike_traject,
     open_database,
 )
+from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -28,9 +29,6 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
-from vrtool.orm.orm_db import vrtool_db
-from peewee import SqliteDatabase
-
 
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
