@@ -293,9 +293,7 @@ class TestOrmControllers:
         assert any(_solutions.measures)
 
     @pytest.fixture
-    def export_database(
-        self, request: pytest.FixtureRequest
-    ) -> tuple[Path, SqliteDatabase]:
+    def export_database(self, request: pytest.FixtureRequest) -> SqliteDatabase:
         _db_file = test_data / "test_db" / f"empty_db.db"
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
@@ -306,7 +304,7 @@ class TestOrmControllers:
 
         _connected_db = open_database(_test_db_file)
         _connected_db.close()
-        yield _test_db_file, _connected_db
+        yield _connected_db
 
         # Make sure it's closed.
         # Perhaps during test something fails and does not get to close)
@@ -314,10 +312,10 @@ class TestOrmControllers:
             _connected_db.close()
 
     def test_clear_assessment_results_clears_all_results(
-        self, export_database: tuple[Path, SqliteDatabase]
+        self, export_database: SqliteDatabase
     ):
         # Setup
-        _db_file, _db_connection = export_database
+        _db_connection = export_database
         _db_connection.connect()
 
         assert not any(AssessmentSectionResult.select())
@@ -337,7 +335,7 @@ class TestOrmControllers:
             traject_info, "section 2", _mechanisms
         )
 
-        _vrtool_config = VrtoolConfig(input_database_path=_db_file)
+        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
 
         # Precondition
         assert any(AssessmentSectionResult.select())
