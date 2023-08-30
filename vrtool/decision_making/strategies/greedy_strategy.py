@@ -619,6 +619,8 @@ class GreedyStrategy(StrategyBase):
             "name",
             "yes/no",
             "dcrest",
+            "beta_target",
+            "transition_level",
             "dberm",
         ]
         sections = []
@@ -628,6 +630,8 @@ class GreedyStrategy(StrategyBase):
         ID = []
         dcrest = []
         dberm = []
+        beta_target = []
+        transition_level = []
         yes_no = []
         option_index = []
         names = []
@@ -636,6 +640,8 @@ class GreedyStrategy(StrategyBase):
         LCC.append(0)
         ID.append("")
         dcrest.append("")
+        beta_target.append("")
+        transition_level.append("")
         dberm.append("")
         yes_no.append("")
         option_index.append("")
@@ -668,16 +674,8 @@ class GreedyStrategy(StrategyBase):
                     .values[0]
                 )
                 if ID_relevant == ID2:
-                    if (
-                        self.options_height[traject.sections[i[0]].name]
-                        .iloc[i[1] - 1]["dcrest"]
-                        .values[0]
-                        == 0.0
-                    ) and (
-                        self.options_geotechnical[traject.sections[i[0]].name]
-                        .iloc[i[2] - 1]["dberm"]
-                        .values[0]
-                        == 0.0
+                    if (self._heightMeasureIsZero(traject, i)) and (
+                        self._geotechnicalMeasureIsZero(traject, i)
                     ):
                         ID.append(ID1[0])  # TODO Fixen
                     else:
@@ -707,6 +705,16 @@ class GreedyStrategy(StrategyBase):
                 .iloc[i[1] - 1]["dcrest"]
                 .values[0]
             )
+            beta_target.append(
+                self.options_height[traject.sections[i[0]].name]
+                .iloc[i[1] - 1]["beta_target"]
+                .values[0]
+            )
+            transition_level.append(
+                self.options_height[traject.sections[i[0]].name]
+                .iloc[i[1] - 1]["transition_level"]
+                .values[0]
+            )
             dberm.append(
                 self.options_geotechnical[traject.sections[i[0]].name]
                 .iloc[i[2] - 1]["dberm"]
@@ -729,6 +737,14 @@ class GreedyStrategy(StrategyBase):
                     .loc[
                         self.options[traject.sections[i[0]].name]["dcrest"]
                         == dcrest[-1]
+                    ]
+                    .loc[
+                        self.options[traject.sections[i[0]].name]["beta_target"]
+                        == beta_target[-1]
+                    ]
+                    .loc[
+                        self.options[traject.sections[i[0]].name]["transition_level"]
+                        == transition_level[-1]
                     ]
                     .loc[
                         self.options[traject.sections[i[0]].name]["dberm"] == dberm[-1]
@@ -756,7 +772,19 @@ class GreedyStrategy(StrategyBase):
             )
         self.TakenMeasures = pd.DataFrame(
             list(
-                zip(sections, option_index, LCC, BC, ID, names, yes_no, dcrest, dberm)
+                zip(
+                    sections,
+                    option_index,
+                    LCC,
+                    BC,
+                    ID,
+                    names,
+                    yes_no,
+                    dcrest,
+                    beta_target,
+                    transition_level,
+                    dberm,
+                )
             ),
             columns=TakenMeasuresHeaders,
         )
@@ -789,6 +817,24 @@ class GreedyStrategy(StrategyBase):
             combined = pd.concat((leftpart, rightpart), axis=1)
             combined = combined.set_index(["name", "mechanism"])
             self.Probabilities.append(combined)
+
+    def _heightMeasureIsZero(self, traject, i) -> bool:
+        """
+        Helper function for write_greedy_results
+        """
+        options = self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
+        dcrest = options["dcrest"].values[0]
+        transition_level = options["transition_level"].values[0]
+        beta_target = options["beta_target"].values[0]
+        return dcrest == 0.0 and transition_level == -999.0 and beta_target == -999.0
+
+    def _geotechnicalMeasureIsZero(self, traject, i) -> bool:
+        """
+        Helper function for write_greedy_results
+        """
+        options = self.options_geotechnical[traject.sections[i[0]].name].iloc[i[2] - 1]
+        dberm = options["dberm"].values[0]
+        return dberm == 0.0
 
     def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
         """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""
