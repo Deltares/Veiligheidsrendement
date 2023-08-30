@@ -167,8 +167,6 @@ class TestAcceptance:
             _test_reference_path.joinpath("InitialAssessment_Betas.csv"), header=0
         )
 
-        assert isinstance(_reference_df, pd.DataFrame)
-
         # 3. Validate each of the rows.
         # Open the database (whose path has been overwritten with the backup).
         # This will overwrite the global variable vrtool_db.
