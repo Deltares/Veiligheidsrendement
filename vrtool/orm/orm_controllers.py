@@ -141,3 +141,23 @@ def export_results_safety_assessment(result: ResultsSafetyAssessment) -> None:
         _exporter.export_dom(_section)
     _connected_db.close()
     logging.info("Closed connection after export for Dike's section reliability.")
+
+
+def clear_assessment_results(config: VrtoolConfig) -> None:
+    """
+    Clears all the assessment results from the database
+
+    Args:
+        config (VrtoolConfig): Vrtool configuration
+    """
+
+    open_database(config.input_database_path)
+    logging.info("Opened connection for clearing initial assessment results.")
+
+    with vrtool_db.atomic():
+        vrtool_db.execute_sql("DELETE FROM AssessmentSectionResult;")
+        vrtool_db.execute_sql("DELETE FROM AssessmentMechanismResult;")
+
+    vrtool_db.close()
+
+    logging.info("Closed connection after clearing initial assessment results.")
