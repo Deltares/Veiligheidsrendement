@@ -350,8 +350,6 @@ class GreedyStrategy(StrategyBase):
         self.Cint_g[:, 0] = 1
         self.Cint_h[:, 0] = 1
 
-        # TODO put actual RiskRevetment here:
-        self.RiskRevetment = copy.deepcopy(self.RiskOverflow)
         init_probability = {}
         init_overflow_risk = np.empty(
             (self.opt_parameters["N"], self.opt_parameters["T"])
@@ -453,7 +451,7 @@ class GreedyStrategy(StrategyBase):
             # for overflow:
             (
                 overflow_bundle_index,
-                BC_bundle,
+                BC_bundleOverflow,
                 BC_bundle_list,
             ) = self.bundling_of_measures(
                 "Overflow",
@@ -463,8 +461,17 @@ class GreedyStrategy(StrategyBase):
                 copy.deepcopy(traject),
             )
             # for revetment:
-            # revetment_bundle_index, BC_bundle, BC_bundle_list = self.bundling_of_measures('Revetment', copy.deepcopy(init_revetment_risk), copy.deepcopy(measure_list), copy.deepcopy(LifeCycleCost), copy.deepcopy(traject))
-            #     overflow_bundling(
+            (
+                revetment_bundle_index,
+                BC_bundleRevetment,
+                BC_bundle_list,
+            ) = self.bundling_of_measures(
+                "Revetment",
+                copy.deepcopy(init_revetment_risk),
+                copy.deepcopy(measure_list),
+                copy.deepcopy(LifeCycleCost),
+                copy.deepcopy(traject),
+            )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
             # 'overflow bundle'
@@ -475,8 +482,12 @@ class GreedyStrategy(StrategyBase):
                     logging.error(error_measure)
                     # TODO think about a more sophisticated error catch here, as currently tracking the error is extremely difficult.
                 raise ValueError("nan value encountered in BC-ratio")
-            if (np.max(BC) > BCstop) or (BC_bundle > BCstop):
-                if np.max(BC) >= BC_bundle:
+            if (
+                (np.max(BC) > BCstop)
+                or (BC_bundleOverflow > BCstop)
+                or (BC_bundleRevetment > BCstop)
+            ):
+                if np.max(BC) >= BC_bundleOverflow or np.max(BC) >= BC_bundleRevetment:
                     # find the best combination
                     Index_Best = np.unravel_index(np.argmax(BC), BC.shape)
 
@@ -544,7 +555,7 @@ class GreedyStrategy(StrategyBase):
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
                     logging.info("Single measure in step " + str(count))
-                elif BC_bundle > np.max(BC):
+                elif BC_bundleOverflow > np.max(BC):
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
                             IndexMeasure = (
@@ -554,12 +565,36 @@ class GreedyStrategy(StrategyBase):
                             )
 
                             measure_list.append(IndexMeasure)
-                            BC_list.append(BC_bundle)
+                            BC_list.append(BC_bundleOverflow)
                             init_probability = update_probability(
                                 init_probability, self, IndexMeasure
                             )
                             init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
                                 self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            )
+                            SpentMoney[IndexMeasure[0]] += copy.deepcopy(
+                                LifeCycleCost[IndexMeasure]
+                            )
+                            self.LCCOption[IndexMeasure] = 1e99
+                            Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
+                            # no update of geotechnical risk needed
+                            Probabilities.append(copy.deepcopy(init_probability))
+                elif BC_bundleRevetment > np.max(BC):
+                    for j in range(0, self.opt_parameters["N"]):
+                        if revetment_bundle_index[j, 0] != Measures_per_section[j, 0]:
+                            IndexMeasure = (
+                                j,
+                                revetment_bundle_index[j, 0],
+                                revetment_bundle_index[j, 1],
+                            )
+
+                            measure_list.append(IndexMeasure)
+                            BC_list.append(BC_bundleRevetment)
+                            init_probability = update_probability(
+                                init_probability, self, IndexMeasure
+                            )
+                            init_revetment_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
                             )
                             SpentMoney[IndexMeasure[0]] += copy.deepcopy(
                                 LifeCycleCost[IndexMeasure]

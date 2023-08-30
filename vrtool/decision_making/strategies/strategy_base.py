@@ -562,9 +562,10 @@ class StrategyBase:
             self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = get_dependent_probability_of_failure(self.Pf) * np.tile(
-            self.D.T, (N, Sh + 1, 1)
-        )  # np.zeros((N,Sh+1,T))
+        self.RiskOverflow = self.Pf["Overflow"] * np.tile(self.D.T, (N, Sh + 1, 1))
+
+        self.RiskRevetment = self.Pf["Revetment"] * np.tile(self.D.T, (N, Sh + 1, 1))
+
         # add a few general parameters
         self.opt_parameters = {"N": N, "T": T, "Sg": Sg + 1, "Sh": Sh + 1}
 
