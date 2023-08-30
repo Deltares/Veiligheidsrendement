@@ -28,6 +28,9 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 )
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
+from vrtool.orm.orm_db import vrtool_db
+from peewee import SqliteDatabase
+
 
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
@@ -103,6 +106,10 @@ class TestAcceptance:
 
         yield _test_config
 
+        # Make sure that the database connection will be closed even if the test fails.
+        if isinstance(vrtool_db, SqliteDatabase):
+            vrtool_db.close()
+
     def test_run_full_model(self, valid_vrtool_config: VrtoolConfig):
         """
         This test so far only checks the output values after optimization.
@@ -150,15 +157,12 @@ class TestAcceptance:
 
         # 4. Validate exporting results is possible
         export_results_safety_assessment(_results)
-        assert any(AssessmentMechanismResult.select())
-        assert any(AssessmentSectionResult.select())
         self.validate_safety_assessment_results(valid_vrtool_config)
 
     def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
         assert _test_reference_path.exists()
-        open_database(valid_vrtool_config.input_database_path)
 
         # 2. Load reference as pandas dataframe.
         _reference_df = pd.read_csv(
@@ -166,12 +170,19 @@ class TestAcceptance:
         )
 
         assert isinstance(_reference_df, pd.DataFrame)
+
         # 3. Validate each of the rows.
+        # Open the database (whose path has been overwritten with the backup).
+        # This will overwrite the global variable vrtool_db.
+        # In the test's teardown we can ensure closing its connection.
+        open_database(valid_vrtool_config.input_database_path)
         self.validate_mechanism_per_section_initial_assessment(
-            _reference_df[_reference_df["mechanism"] != "Section"], valid_vrtool_config
+            _reference_df[_reference_df["mechanism"] != "Section"],
+            valid_vrtool_config,
         )
         self.validate_section_data_initial_assessment(
-            _reference_df[_reference_df["mechanism"] == "Section"], valid_vrtool_config
+            _reference_df[_reference_df["mechanism"] == "Section"],
+            valid_vrtool_config,
         )
 
     def validate_section_data_initial_assessment(
