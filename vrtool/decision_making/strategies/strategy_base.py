@@ -24,6 +24,7 @@ from vrtool.flood_defence_system.dike_traject import (
     get_section_length_in_traject,
     plot_settings,
 )
+from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
@@ -182,73 +183,12 @@ class StrategyBase:
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
-        cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]]
-            .MeasureData["Section"]
-            .columns.values
-        )
-
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
-
-            # Step 1: combine measures with partial measures
-            combinables = solutions_dict[section.name].MeasureData.loc[
-                solutions_dict[section.name].MeasureData["class"] == "combinable"
-            ]
-            partials = solutions_dict[section.name].MeasureData.loc[
-                solutions_dict[section.name].MeasureData["class"] == "partial"
-            ]
-            if self.__class__.__name__ == "TargetReliabilityStrategy":
-                combinables = combinables.loc[
-                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
-                ]
-                partials = partials.loc[
-                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
-                ]
-
-            combinedmeasures = measure_combinations(
-                combinables,
-                partials,
-                solutions_dict[section.name],
-                splitparams=splitparams,
+            combinedmeasures = self._step1combine(
+                solutions_dict, i, section, traject, splitparams
             )
-            # make sure combinable, mechanism and year are in the MeasureData dataframe
-            # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
-            # if there is a measureid that is not known yet, add it to the measure table
-
-            existingIDs = solutions_dict[section.name].measure_table["ID"].values
-            IDs = np.unique(combinedmeasures["ID"].values)
-            if len(IDs) > 0:
-                for ij in IDs:
-                    if ij not in existingIDs:
-                        indexes = ij.split("+")
-                        name = (
-                            solutions_dict[section.name]
-                            .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table[
-                                    "ID"
-                                ]
-                                == indexes[0]
-                            ]["Name"]
-                            .values[0]
-                            + "+"
-                            + solutions_dict[section.name]
-                            .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table[
-                                    "ID"
-                                ]
-                                == indexes[1]
-                            ]["Name"]
-                            .values[0]
-                        )
-                        solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.sections[i].name].measure_table)
-                            + 1
-                        ] = name
-                        solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.sections[i].name].measure_table)
-                        ]["ID"] = ij
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
@@ -281,6 +221,63 @@ class StrategyBase:
 
             self.options[section.name] = StrategyData.reset_index(drop=True)
 
+    def _step1combine(
+        self, solutions_dict, i: int, section, traject, splitparams: bool
+    ) -> pd.DataFrame:
+        # Step 1: combine measures with partial measures
+        combinables = solutions_dict[section.name].MeasureData.loc[
+            solutions_dict[section.name].MeasureData["class"] == "combinable"
+        ]
+        partials = solutions_dict[section.name].MeasureData.loc[
+            solutions_dict[section.name].MeasureData["class"] == "partial"
+        ]
+        if self.__class__.__name__ == "TargetReliabilityStrategy":
+            combinables = combinables.loc[
+                solutions_dict[section.name].MeasureData["year"] == self.OI_year
+            ]
+            partials = partials.loc[
+                solutions_dict[section.name].MeasureData["year"] == self.OI_year
+            ]
+
+        combinedmeasures = measure_combinations(
+            combinables,
+            partials,
+            solutions_dict[section.name],
+            splitparams=splitparams,
+        )
+        # make sure combinable, mechanism and year are in the MeasureData dataframe
+        # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
+        # if there is a measureid that is not known yet, add it to the measure table
+
+        existingIDs = solutions_dict[section.name].measure_table["ID"].values
+        IDs = np.unique(combinedmeasures["ID"].values)
+        if len(IDs) > 0:
+            for ij in IDs:
+                if ij not in existingIDs:
+                    indexes = ij.split("+")
+                    name = (
+                        solutions_dict[section.name]
+                        .measure_table.loc[
+                            solutions_dict[traject.sections[i].name].measure_table["ID"]
+                            == indexes[0]
+                        ]["Name"]
+                        .values[0]
+                        + "+"
+                        + solutions_dict[section.name]
+                        .measure_table.loc[
+                            solutions_dict[traject.sections[i].name].measure_table["ID"]
+                            == indexes[1]
+                        ]["Name"]
+                        .values[0]
+                    )
+                    solutions_dict[section.name].measure_table.loc[
+                        len(solutions_dict[traject.sections[i].name].measure_table) + 1
+                    ] = name
+                    solutions_dict[section.name].measure_table.loc[
+                        len(solutions_dict[traject.sections[i].name].measure_table)
+                    ]["ID"] = ij
+        return combinedmeasures
+
     def evaluate(
         self,
         traject: DikeTraject,
@@ -296,22 +293,19 @@ class StrategyBase:
     def make_optimization_input(self, traject: DikeTraject):
         """This subroutine organizes the input into an optimization problem such that it can be accessed by the evaluation algorithm"""
 
-        def get_geotechnical_probability_of_failure(
-            probability_of_failure_lookup: dict[str, float]
-        ) -> float:
-            probability_failure_stability_inner = probability_of_failure_lookup.get(
-                "StabilityInner", 0
-            )
-            probability_failure_piping = probability_of_failure_lookup.get("Piping", 0)
-
-            return 1 - np.multiply(
-                1 - probability_failure_stability_inner, 1 - probability_failure_piping
+        def get_independent_probability_of_failure(
+            probability_of_failure_lookup: dict[str, np.array]
+        ) -> np.array:
+            return CombinFunctions.combine_probabilities(
+                probability_of_failure_lookup, ("StabilityInner", "Piping")
             )
 
-        def get_overflow_probability_of_failure(
-            probability_of_failure_lookup: dict[str, float]
-        ) -> float:
-            return probability_of_failure_lookup.get("Overflow", 0)
+        def get_dependent_probability_of_failure(
+            probability_of_failure_lookup: dict[str, np.array]
+        ) -> np.array:
+            return CombinFunctions.combine_probabilities(
+                probability_of_failure_lookup, ("Overflow", "Revetment")
+            )
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
         #  do have costs higher than the correct option (sh=0m, sg=0.5+VZG) so they will never be selected. This
@@ -342,7 +336,7 @@ class StrategyBase:
         # probabilities [N,S,T]
         self.Pf = {}
         for _mechanism_name in self.mechanisms:
-            if _mechanism_name == "Overflow":
+            if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
                 self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0)
             else:
                 self.Pf[_mechanism_name] = np.full((N, Sg + 1, T), 1.0)
@@ -379,7 +373,7 @@ class StrategyBase:
                     .T
                 )  # Initial
                 # condition with no measure
-                if _mechanism_name == "Overflow":
+                if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
                     beta2 = self.options_height[keys[n]][_mechanism_name]
                     # All solutions
                 else:
@@ -567,11 +561,11 @@ class StrategyBase:
 
         # expected damage for overflow and for piping & slope stability
         # self.RiskGeotechnical = np.zeros((N,Sg+1,T))
-        self.RiskGeotechnical = get_geotechnical_probability_of_failure(
+        self.RiskGeotechnical = get_independent_probability_of_failure(
             self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = get_overflow_probability_of_failure(self.Pf) * np.tile(
+        self.RiskOverflow = get_dependent_probability_of_failure(self.Pf) * np.tile(
             self.D.T, (N, Sh + 1, 1)
         )  # np.zeros((N,Sh+1,T))
         # add a few general parameters
@@ -1188,14 +1182,29 @@ class StrategyBase:
                     )
                 plt.close()
 
-    def write_reliability_to_csv(self, input_path: Path, type):
-        """Routine to write all the reliability indices in a step of the algorithm to a csv file"""
+    def write_reliability_to_csv(
+        self, input_path: Path, type: str, time_stamps=[0, 25, 50]
+    ) -> None:
+        """Routine to write all the reliability indices in a step of the algorithm to a csv file
+
+        Args:
+            input_path (Path)        : path to input folder
+            type (str)               : strategy type
+            time_stamps (list float) : list of years
+        """
         # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
+        total_reliability = np.zeros((len(self.Probabilities), len(time_stamps)))
         for i in range(len(self.Probabilities)):
             name = input_path.joinpath(
                 "ReliabilityLog_" + type + "_Step" + str(i) + ".csv"
             )
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
+            beta_t, p_t = calc_traject_prob(self.Probabilities[i], ts=time_stamps)
+            total_reliability[i, :] = beta_t
+        reliability_df = pd.DataFrame(total_reliability, columns=time_stamps)
+        reliability_df.to_csv(
+            path_or_buf=input_path.joinpath("TrajectReliabilityInTime.csv"), header=True
+        )
 
     @abstractmethod
     def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
