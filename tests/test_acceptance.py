@@ -105,7 +105,7 @@ class TestAcceptance:
         yield _test_config
 
         # Make sure that the database connection will be closed even if the test fails.
-        if isinstance(vrtool_db, SqliteDatabase):
+        if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
             vrtool_db.close()
 
     def test_run_full_model(self, valid_vrtool_config: VrtoolConfig):

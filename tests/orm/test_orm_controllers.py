@@ -306,7 +306,8 @@ class TestOrmControllers:
         yield _connected_db
         # Make sure it's closed.
         # Perhaps during test something fails and does not get to close
-        _connected_db.close()
+        if isinstance(_connected_db, SqliteDatabase) and not _connected_db.is_closed():
+            _connected_db.close()
 
     def test_export_results_safety_assessment_given_valid_data(
         self, export_database: SqliteDatabase
