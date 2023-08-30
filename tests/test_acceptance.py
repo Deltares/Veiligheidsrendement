@@ -10,7 +10,17 @@ from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
-from vrtool.orm.orm_controllers import get_dike_traject
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.orm_controllers import (
+    get_dike_traject,
+    open_database,
+    export_results_safety_assessment,
+    vrtool_db,
+)
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
