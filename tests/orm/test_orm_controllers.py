@@ -293,7 +293,7 @@ class TestOrmControllers:
         assert any(_solutions.measures)
 
     @pytest.fixture
-    def export_database(self, request: pytest.FixtureRequest) -> Path:
+    def export_database(self, request: pytest.FixtureRequest) -> SqliteDatabase:
         _db_file = test_data / "test_db" / f"empty_db.db"
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
@@ -304,18 +304,18 @@ class TestOrmControllers:
 
         _connected_db = open_database(_test_db_file)
         _connected_db.close()
-        yield _test_db_file
+        yield _connected_db
         # Make sure it's closed.
-        # Perhaps during test something fails and does not get to close)
+        # Perhaps during test something fails and does not get to close
         _connected_db.close()
 
     def test_export_results_safety_assessment_given_valid_data(
-        self, export_database: Path
+        self, export_database: SqliteDatabase
     ):
         # 1. Define test data.
-        _connected_db = open_database(export_database)
+        export_database.connect()
         _test_mechanism_per_section = get_basic_mechanism_per_section()
-        _connected_db.close()
+        export_database.close()
         _test_section_data = _test_mechanism_per_section.section
 
         # Dike Section and Dike Traject.
@@ -335,7 +335,9 @@ class TestOrmControllers:
 
         # Safety assessment.
         _safety_assessment = ResultsSafetyAssessment()
-        _safety_assessment.vr_config = VrtoolConfig(input_database_path=export_database)
+        _safety_assessment.vr_config = VrtoolConfig(
+            input_database_path=export_database.database
+        )
         _safety_assessment.selected_traject = _test_traject
 
         assert not any(orm_models.AssessmentSectionResult.select())
