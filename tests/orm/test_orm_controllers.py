@@ -6,7 +6,7 @@ from peewee import SqliteDatabase
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
-from tests.orm import get_basic_mechanism_per_section
+from tests.orm import get_basic_dike_traject_info, get_basic_mechanism_per_section
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
@@ -21,11 +21,12 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.orm_controllers import (
-    export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
     initialize_database,
     open_database,
+    export_results_safety_assessment,
+    clear_assessment_results,
 )
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -33,7 +34,6 @@ from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
 
 
 class DummyModelsData:
-
     dike_traject_info = dict(
         traject_name="16-1",
         omega_piping=0.25,
@@ -240,7 +240,6 @@ class TestOrmControllers:
         all(map(check_section_reliability, _dike_traject.sections))
 
     def test_get_dike_section_solutions(self, database_vrtool_config: VrtoolConfig):
-
         # 1. Define test data.
         database_vrtool_config.T = [0]
         _general_info = DikeTrajectInfo(traject_name="Dummy")
@@ -364,3 +363,101 @@ class TestOrmControllers:
                 & (orm_models.AssessmentMechanismResult.time == 42)
             )
         )
+
+    def test_clear_assessment_results_clears_all_results(
+        self, export_database: SqliteDatabase
+    ):
+        # Setup
+        _db_connection = export_database
+        _db_connection.connect()
+
+        assert not any(orm_models.AssessmentSectionResult.select())
+        assert not any(orm_models.AssessmentMechanismResult.select())
+
+        traject_info = get_basic_dike_traject_info()
+
+        _mechanisms = [
+            self._create_mechanism("mechanism 1"),
+            self._create_mechanism("mechanism 2"),
+        ]
+
+        self._create_section_with_fully_configured_assessment_results(
+            traject_info, "section 1", _mechanisms
+        )
+        self._create_section_with_fully_configured_assessment_results(
+            traject_info, "section 2", _mechanisms
+        )
+
+        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
+
+        # Precondition
+        assert any(orm_models.AssessmentSectionResult.select())
+        assert any(orm_models.AssessmentMechanismResult.select())
+
+        _db_connection.close()
+
+        # Call
+        clear_assessment_results(_vrtool_config)
+
+        # Assert
+        _db_connection.connect()
+
+        assert not any(orm_models.AssessmentSectionResult.select())
+        assert not any(orm_models.AssessmentMechanismResult.select())
+
+        _db_connection.close()
+
+    def _create_section_with_fully_configured_assessment_results(
+        self,
+        traject_info: DikeTrajectInfo,
+        section_name: str,
+        mechanisms: list[orm_models.Mechanism],
+    ):
+        section = self._create_basic_section_data(traject_info, section_name)
+        self._create_assessment_section_results(section)
+
+        for mechanism in mechanisms:
+            mechanism_per_section = self._create_basic_mechanism_per_section(
+                section, mechanism
+            )
+            self._create_assessment_mechanism_results(mechanism_per_section)
+
+    def _create_basic_section_data(
+        self, traject_info: DikeTrajectInfo, section_name: str
+    ) -> orm_models.SectionData:
+        return orm_models.SectionData.create(
+            dike_traject=traject_info,
+            section_name=section_name,
+            meas_start=2.4,
+            meas_end=4.2,
+            section_length=123,
+            in_analysis=True,
+            crest_height=24,
+            annual_crest_decline=42,
+        )
+
+    def _create_assessment_section_results(
+        self, section: orm_models.SectionData
+    ) -> None:
+        for i in range(2000, 2100, 10):
+            orm_models.AssessmentSectionResult.create(
+                beta=i / 1000.0, time=i, section_data=section
+            )
+
+    def _create_mechanism(self, mechanism_name: str) -> orm_models.Mechanism:
+        return orm_models.Mechanism.create(name=mechanism_name)
+
+    def _create_basic_mechanism_per_section(
+        self, section: orm_models.SectionData, mechanism: orm_models.Mechanism
+    ) -> orm_models.MechanismPerSection:
+        return orm_models.MechanismPerSection.create(
+            section=section, mechanism=mechanism
+        )
+
+    def _create_assessment_mechanism_results(
+        self, mechanism_per_section: orm_models.MechanismPerSection
+    ) -> None:
+        for i in range(2000, 2100, 10):
+            orm_models.AssessmentMechanismResult.create(
+                beta=i / 1000.0, time=i, mechanism_per_section=mechanism_per_section
+            )
