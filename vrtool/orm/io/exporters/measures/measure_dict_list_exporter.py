@@ -1,4 +1,3 @@
-from vrtool.decision_making.measures.measure_protocol import CompositeMeasureProtocol
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result import MeasureResult
@@ -28,7 +27,9 @@ class MeasureDictListExporter(OrmExporterProtocol):
     def export_dom(self, measure_dict_list: list) -> None:
         # TODO: Potentially this could be done in SimpleMeasureExporter and here only iterate over the measures.
         logging.info(
-            "STARTED exporting measure's results for {}".format(type(composite_measure))
+            "STARTED exporting measure's results for measure {}".format(
+                measure_dict_list["id"]
+            )
         )
         for _measure in measure_dict_list:
             _available_parameters = list(

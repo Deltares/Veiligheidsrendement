@@ -1,6 +1,5 @@
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
 from tests.orm.io.exporters.measures import create_section_reliability
-from vrtool.decision_making.measures.measure_protocol import CompositeMeasureProtocol
 from vrtool.orm.io.exporters.measures.measure_dict_list_exporter import (
     MeasureDictListExporter,
 )
@@ -26,9 +25,10 @@ class TestMeasureDictListExporter:
         _expected_cost = 24.42
         _section_reliability = create_section_reliability(_t_columns)
         _measure_with_params = {
-            "Cost": 24.42,
+            "id": 42,
             "dcrest": 4.2,
             "dberm": 2.4,
+            "Cost": 24.42,
             "Reliability": _section_reliability,
         }
         _measure_per_section = get_basic_measure_per_section()
