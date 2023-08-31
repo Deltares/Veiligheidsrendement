@@ -38,5 +38,6 @@ class MeasureProtocol(Protocol):
         pass
 
 
-class SimpleMeasureProtocol(MeasureProtocol):
+@runtime_checkable
+class SimpleMeasureProtocol(MeasureProtocol, Protocol):
     measures: dict
