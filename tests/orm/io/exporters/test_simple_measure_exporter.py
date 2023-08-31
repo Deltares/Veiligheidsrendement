@@ -9,8 +9,8 @@ from vrtool.orm.io.exporters.simple_measure_exporter import SimpleMeasureExporte
 from vrtool.orm.models.measure_result import MeasureResult
 
 
-class TestSectionReliabilityExporter:
-    class TestMeasure(MeasureProtocol):
+class TestSimpleMeasureExporter:
+    class MeasureTest(MeasureProtocol):
         def __init__(self) -> None:
             self.measures = {
                 "Cost": 13.37,
@@ -46,7 +46,7 @@ class TestSectionReliabilityExporter:
 
         assert not any(_measure_per_section.measure_per_section_result)
 
-        _measure_to_export = self.TestMeasure()
+        _measure_to_export = self.MeasureTest()
         _exporter = SimpleMeasureExporter(_measure_per_section)
 
         # Call
@@ -71,3 +71,4 @@ class TestSectionReliabilityExporter:
             assert isinstance(_retrieved_result, MeasureResult)
             assert _retrieved_result.beta == _row_to_export[year]
             assert _retrieved_result.cost == _expected_cost
+            assert not any(_retrieved_result.measure_result_parameters)
