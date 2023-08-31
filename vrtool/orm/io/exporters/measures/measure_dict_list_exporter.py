@@ -10,7 +10,7 @@ from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 _supported_parameters = ["dcrest", "dberm"]
 
 
-class CompositeMeasureResultExporter(OrmExporterProtocol):
+class MeasureDictListExporter(OrmExporterProtocol):
     _measure_per_section: MeasurePerSection
 
     def __init__(self, measure_per_section: MeasurePerSection) -> None:
@@ -25,11 +25,12 @@ class CompositeMeasureResultExporter(OrmExporterProtocol):
             measure_result=measure_result,
         )
 
-    def export_dom(self, composite_measure: CompositeMeasureProtocol) -> None:
+    def export_dom(self, measure_dict_list: list) -> None:
+        # TODO: Potentially this could be done in SimpleMeasureExporter and here only iterate over the measures.
         logging.info(
             "STARTED exporting measure's results for {}".format(type(composite_measure))
         )
-        for _measure in composite_measure.measures:
+        for _measure in measure_dict_list:
             _available_parameters = list(
                 filter(lambda x: x in _measure, _supported_parameters)
             )

@@ -1,6 +1,5 @@
 import copy
 from itertools import groupby
-from math import isnan
 
 import numpy as np
 from scipy.interpolate import interp1d

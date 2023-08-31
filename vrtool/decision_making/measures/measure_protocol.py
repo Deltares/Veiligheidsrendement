@@ -41,8 +41,3 @@ class MeasureProtocol(Protocol):
 @runtime_checkable
 class SimpleMeasureProtocol(MeasureProtocol, Protocol):
     measures: dict
-
-
-@runtime_checkable
-class CompositeMeasureProtocol(MeasureProtocol, Protocol):
-    measures: list[dict]

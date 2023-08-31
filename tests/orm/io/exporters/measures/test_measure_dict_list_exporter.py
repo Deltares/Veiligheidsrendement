@@ -1,8 +1,8 @@
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
 from tests.orm.io.exporters.measures import create_section_reliability
 from vrtool.decision_making.measures.measure_protocol import CompositeMeasureProtocol
-from vrtool.orm.io.exporters.measures.composite_measure_result_exporter import (
-    CompositeMeasureResultExporter,
+from vrtool.orm.io.exporters.measures.measure_dict_list_exporter import (
+    MeasureDictListExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result import MeasureResult
@@ -10,12 +10,12 @@ from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 from peewee import SqliteDatabase
 
 
-class TestCompositeMeasureResultExporter:
+class TestMeasureDictListExporter:
     def test_initialize(self):
-        _exporter = CompositeMeasureResultExporter(None)
+        _exporter = MeasureDictListExporter(None)
 
         # Verify expectations.
-        assert isinstance(_exporter, CompositeMeasureResultExporter)
+        assert isinstance(_exporter, MeasureDictListExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
     def test_export_dom_given_valid_composite_measure(
@@ -31,21 +31,13 @@ class TestCompositeMeasureResultExporter:
             "dberm": 2.4,
             "Reliability": _section_reliability,
         }
-
-        class DummyCompositeMeasure(CompositeMeasureProtocol):
-            def __init__(self) -> None:
-                self.measures = [_measure_with_params]
-
-        _test_composite_measure = DummyCompositeMeasure()
         _measure_per_section = get_basic_measure_per_section()
 
         assert not any(MeasureResult.select())
         assert not any(MeasureResultParameter.select())
 
         # 2. Run test.
-        CompositeMeasureResultExporter(_measure_per_section).export_dom(
-            _test_composite_measure
-        )
+        MeasureDictListExporter(_measure_per_section).export_dom([_measure_with_params])
 
         # 3. Verify final expectations.
         assert len(MeasureResult.select()) == len(_t_columns)

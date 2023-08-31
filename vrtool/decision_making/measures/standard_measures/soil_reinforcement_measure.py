@@ -10,7 +10,6 @@ from vrtool.decision_making.measures.common_functions import (
     implement_berm_widening,
 )
 from vrtool.decision_making.measures.measure_protocol import (
-    CompositeMeasureProtocol,
     MeasureProtocol,
 )
 from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
@@ -23,7 +22,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class SoilReinforcementMeasure(CompositeMeasureProtocol):
+class SoilReinforcementMeasure(MeasureProtocol):
     def evaluate_measure(
         self,
         dike_section: DikeSection,
