@@ -398,84 +398,93 @@ def split_options(
     options_dependent = copy.deepcopy(options)
     options_independent = copy.deepcopy(options)
     for i in options:
-        # filter all different measures for dependent
+        min_transition_level = options[i].transition_level[options[i].transition_level>0].min()
+        min_beta_target = options[i].beta_target[options[i].beta_target>0].min()
+        #for dependent sections we have all measures where there is a positive dcrest, or a transition_level larger than the minimum, or a beta_target larger than the minimum
+        #and the berm should be either non-existent -999 or 0
         options_dependent[i] = options_dependent[i].loc[
-            options[i]["class"] != "combined"
-        ]
-        options_dependent[i] = options_dependent[i].loc[
-            (options[i]["type"] == "Diaphragm Wall")
-            | (options[i]["type"] == "Custom")
-            | (options[i]["dberm"] == 0)
-        ]
+            (options_dependent[i].dcrest >= 0) & (options_dependent[i].transition_level >= min_transition_level) & (
+                    options_dependent[i].beta_target >= min_beta_target) & (options_dependent[i].dberm <= 0)]
 
-        # now we filter all independent measures
-        # first all crest heights are thrown out
+
+        #for independent measures dcrest should be 0 or -999, and transition_level and beta_target should be -999
         options_independent[i] = options_independent[i].loc[
-            (options_independent[i]["dcrest"] == 0.0)
-            | (options_independent[i]["dcrest"] == -999)
-            | (
-                (options_independent[i]["class"] == "combined")
-                & (options_independent[i]["dberm"] == 0)
-            )
-        ]
-        # filter out revetments from all independent measures
-        if "Revetment" in available_mechanism_names:
-            for key in ["transition_level", "beta_target"]:
-                options_independent[i] = options_independent[i].loc[
-                    (options_independent[i][key] == 0.0)
-                    | (options_independent[i][key] == -999)
-                    | (
-                        (options_independent[i]["class"] == "combined")
-                        & (options_independent[i][key] == 0)
-                    )
-                ]
+            (options_independent[i].dcrest<=0.0) & (
+                        options_independent[i].transition_level<=min_transition_level) & (
+                        options_independent[i].beta_target<=min_beta_target)]
 
-        # subtract startcosts, only for dependent.
-        startcosts = np.min(
-            options_dependent[i][
-                (options_dependent[i]["type"] == "Soil reinforcement")
+        # Now that we have split the measures we should avoid double counting of costs by correcting some of the cost values.
+
+
+        # This concerns the startcosts for soil reinforcement
+        #TODO do we also need to remove startcosts for revetment?
+
+        # We get the min cost which is equal to the minimum costs for a soil reinforcement (which we assume has dimensions 0 m crest and 0 m berm)
+        startcosts_soil = np.min(
+            options_independent[i][
+                (options_independent[i]["type"] == "Soil reinforcement")
             ]["cost"]
         )
-        options_dependent[i]["cost"] = np.where(
-            options_dependent[i]["type"] == "Soil reinforcement",
-            np.subtract(options_dependent[i]["cost"], startcosts),
-            options_dependent[i]["cost"],
-        )
 
-        # if an option has a stability screen, the costs for height are too high. This has to be adjusted. We do this
-        # for all soil reinforcements. costs are not discounted yet, so we can disregard the year of the investment:
-        for ij in np.unique(
-            options_dependent[i].loc[
-                options_dependent[i]["type"] == "Soil reinforcement"
-            ]["dcrest"]
-        ):
-            options_dependent[i].loc[
-                options_dependent[i]["dcrest"] == ij, "cost"
-            ] = np.min(
-                options_dependent[i].loc[options_dependent[i]["dcrest"] == ij]["cost"]
-            )
+        #we subtract the startcosts for all soil reinforcements (including those with stability screens)
+        #Note that this is not robust as it depends on the exact formulation of types in the options. We should ensure that these names do not change in the future
+        #we need to distinguish between measures where cost is a float and where it is a list
+        #TODO this can be a function
+        float_costs = options_independent[i]["cost"].map(type) == float
+        soil_reinforcements = options_independent[i]["type"].str.contains("Soil reinforcement")
+        for idx, row in options_independent[i].iterrows():
+            #subtract startcosts for all entries in options_independent where float_costs is true and the type contains soil reinforcement
+            if float_costs[idx] & soil_reinforcements[idx]:
+                options_independent[i].loc[idx,"cost"] = np.subtract(options_independent[i].loc[idx,"cost"],startcosts_soil)[0]
+            #if it is a soil reinforcement combined with others we need to modify the right value from the list of costs
+            if (not float_costs[idx]) & soil_reinforcements[idx]:
+                #break the type string at '+' and find the value that contains soil reinforcement
+                for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                    if "Soil reinforcement" in measure_type:
+                        # get list of costs and subtract startcosts from the cost that contains soil reinforcement
+                        cost_list = row["cost"].item()
+                        cost_list[cost_index] = np.subtract(cost_list[cost_index], startcosts_soil)
+                        options_independent[i].loc[:, "cost"].loc[idx] = cost_list
+
+        # Then we deal with the costs for a stability screen when combined with a berm, these are accounted for in the independent_measure costs so should be removed from the dependent measures
+        cost_stability_screen = np.min(options_independent[i].loc[
+                   options_independent[i]["type"].str.fullmatch("Soil reinforcement with stability screen")
+               ]["cost"])
+        # Find all dependent measures that contain a stability screen
+        stability_screens = options_dependent[i]["type"].str.contains("Soil reinforcement with stability screen")
+        for idx, row in options_dependent[i].iterrows():
+            #subtract cost_stability_screen from all entries in options_dependent where stability_screens is true
+            if stability_screens[idx]:
+                #break the type string at '+' and find the value that contains soil reinforcement
+                for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                    if "Soil reinforcement with stability screen" in measure_type:
+                        # get list of costs and subtract startcosts from the cost that contains soil reinforcement
+                        cost_list = row["cost"].item()
+                        cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
+                        options_dependent[i].loc[:, "cost"].loc[idx] = cost_list
 
         options_independent[i] = options_independent[i].reset_index(drop=True)
         options_dependent[i] = options_dependent[i].reset_index(drop=True)
 
-        # loop for the independent stuff:
-        newcosts = []
-        for ij in options_independent[i].index:
-            if (
-                options_independent[i].iloc[ij]["type"].values[0]
-                == "Soil reinforcement"
-            ):
-                newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
-            elif options_independent[i].iloc[ij]["class"].values[0] == "combined":
-                newcosts.append(
-                    [
-                        options_independent[i].iloc[ij]["cost"].values[0][0],
-                        options_independent[i].iloc[ij]["cost"].values[0][1],
-                    ]
-                )
-            else:
-                newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
-        options_independent[i]["cost"] = newcosts
+        # loop for the independent stuff: #I think this is not necessary anymore but for now I commented it and will see what TeamCity thinks tomorrow morning :)
+        # newcosts = []
+        # for ij in options_independent[i].index:
+        #     if (
+        #         options_independent[i].iloc[ij]["type"].values[0]
+        #         == "Soil reinforcement"
+        #     ):
+        #         newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
+        #     elif options_independent[i].iloc[ij]["class"].values[0] == "combined":
+        #         newcosts.append(
+        #             [
+        #                 options_independent[i].iloc[ij]["cost"].values[0][0],
+        #                 options_independent[i].iloc[ij]["cost"].values[0][1],
+        #             ]
+        #         )
+        #     else:
+        #         newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
+        # options_independent[i]["cost"] = newcosts
+
         # only keep reliability of relevant mechanisms in dictionary
         options_dependent[i].drop(
             get_dropped_dependent_options(available_mechanism_names), axis=1, level=0
