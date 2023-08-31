@@ -31,8 +31,10 @@ class MeasureResultExporter(OrmExporterProtocol):
             "STARTED exporting measure id: {}".format(measure_result.measure_id)
         )
         _parameters_dict_list = [
-            dict(name=m_parameter, value=m_value)
-            for m_parameter, m_value in self._get_parameters_dict(measure_result)
+            dict(name=m_parameter.upper(), value=m_value)
+            for m_parameter, m_value in self._get_parameters_dict(
+                measure_result
+            ).items()
         ]
         for (
             col_name,
