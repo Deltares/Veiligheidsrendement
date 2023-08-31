@@ -23,6 +23,7 @@ class TestCompositeMeasureResultExporter:
     ):
         # 1. Define test data.
         _t_columns = [0, 2, 4, 24, 42]
+        _expected_cost = 24.42
         _section_reliability = create_section_reliability(_t_columns)
         _measure_with_params = {
             "Cost": 24.42,
@@ -30,11 +31,10 @@ class TestCompositeMeasureResultExporter:
             "dberm": 2.4,
             "Reliability": _section_reliability,
         }
-        _measure_without_params = {"Cost": 24.42, "Reliability": _section_reliability}
 
         class DummyCompositeMeasure(CompositeMeasureProtocol):
             def __init__(self) -> None:
-                self.measures = [_measure_with_params, _measure_without_params]
+                self.measures = [_measure_with_params]
 
         _test_composite_measure = DummyCompositeMeasure()
         _measure_per_section = get_basic_measure_per_section()
@@ -48,6 +48,32 @@ class TestCompositeMeasureResultExporter:
         )
 
         # 3. Verify final expectations.
-        _expected_measures = len(_t_columns) * len(_test_composite_measure.measures)
-        assert len(MeasureResult.select()) == _expected_measures
+        assert len(MeasureResult.select()) == len(_t_columns)
         assert len(MeasureResultParameter.select()) == len(_t_columns) * 2
+        for year in _t_columns:
+            _retrieved_result = MeasureResult.get_or_none(
+                (MeasureResult.measure_per_section == _measure_per_section)
+                & (MeasureResult.time == year)
+            )
+
+            assert isinstance(_retrieved_result, MeasureResult)
+            assert (
+                _retrieved_result.beta
+                == _section_reliability.SectionReliability.loc["Section"][year]
+            )
+            assert _retrieved_result.cost == _expected_cost
+            assert len(_retrieved_result.measure_result_parameters) == 2
+
+            def measure_result_parameter_exists(name: str, value: float) -> bool:
+                return (
+                    MeasureResultParameter.select()
+                    .where(
+                        (MeasureResultParameter.name == name.upper())
+                        & (MeasureResultParameter.value == value)
+                        & (MeasureResultParameter.measure_result == _retrieved_result)
+                    )
+                    .exists()
+                )
+
+            assert measure_result_parameter_exists("dcrest", 4.2)
+            assert measure_result_parameter_exists("dberm", 2.4)
