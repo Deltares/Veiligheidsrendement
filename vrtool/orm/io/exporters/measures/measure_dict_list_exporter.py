@@ -26,15 +26,12 @@ class MeasureDictListExporter(OrmExporterProtocol):
 
     def export_dom(self, measure_dict_list: list) -> None:
         # TODO: Potentially this could be done in SimpleMeasureExporter and here only iterate over the measures.
-        logging.info(
-            "STARTED exporting measure's results for measure {}".format(
-                measure_dict_list["id"]
-            )
-        )
+        logging.info("STARTED exporting measure's results list.")
         for _measure in measure_dict_list:
             _available_parameters = list(
                 filter(lambda x: x in _measure, _supported_parameters)
             )
+            logging.info("STARTED exporting measure id: {}".format(_measure["id"]))
             for col_name, beta_value in (
                 _measure["Reliability"].SectionReliability.loc["Section"].iteritems()
             ):
@@ -51,4 +48,5 @@ class MeasureDictListExporter(OrmExporterProtocol):
                     _available_parameters,
                 )
                 MeasureResultParameter.insert_many(_mr_parameters).execute()
+            logging.info("FINISHED exporting measure id: {}".format(_measure["id"]))
         logging.info("FINISHED exporting measure's results.")
