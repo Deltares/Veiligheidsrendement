@@ -233,7 +233,7 @@ class StrategyBase:
 
         if self.__class__.__name__ == "TargetReliabilityStrategy":
             # only consider measures at the OI_year
-            measures_per_class = {measure_class: measure_class.loc[measure_class["year"] == self.OI_year] for measure_class in measures_per_class}
+            measures_per_class = {measure_class: measures_per_class[measure_class].loc[measures_per_class[measure_class]["year"] == self.OI_year] for measure_class in available_measure_classes}
 
         combinedmeasures = measure_combinations(
             measures_per_class['combinable'],
