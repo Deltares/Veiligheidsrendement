@@ -242,7 +242,7 @@ class StrategyBase:
             splitparams=splitparams,
         )
 
-        if len(measures_per_class['revetment']) > 0:
+        if "revetment" in measures_per_class:
             combinedmeasures_with_revetment = revetment_combinations(combinedmeasures, measures_per_class['revetment'])
             #combine solutions_dict[section.name].MeasureData with revetments
             base_measures_with_revetment = revetment_combinations(solutions_dict[section.name].MeasureData.loc[solutions_dict[section.name].MeasureData['class'] != 'revetment'], measures_per_class['revetment'])
