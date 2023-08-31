@@ -295,13 +295,6 @@ class StrategyBase:
                 probability_of_failure_lookup, ("StabilityInner", "Piping")
             )
 
-        def get_dependent_probability_of_failure(
-            probability_of_failure_lookup: dict[str, np.array]
-        ) -> np.array:
-            return CombinFunctions.combine_probabilities(
-                probability_of_failure_lookup, ("Overflow", "Revetment")
-            )
-
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
         #  do have costs higher than the correct option (sh=0m, sg=0.5+VZG) so they will never be selected. This
         #  should be fixed though
@@ -564,7 +557,11 @@ class StrategyBase:
 
         self.RiskOverflow = self.Pf["Overflow"] * np.tile(self.D.T, (N, Sh + 1, 1))
 
-        self.RiskRevetment = self.Pf["Revetment"] * np.tile(self.D.T, (N, Sh + 1, 1))
+        self.RiskRevetment = []
+        if "Revetment" in self.mechanisms:
+            self.RiskRevetment = self.Pf["Revetment"] * np.tile(
+                self.D.T, (N, Sh + 1, 1)
+            )
 
         # add a few general parameters
         self.opt_parameters = {"N": N, "T": T, "Sg": Sg + 1, "Sh": Sh + 1}

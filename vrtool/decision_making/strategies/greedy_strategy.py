@@ -461,17 +461,19 @@ class GreedyStrategy(StrategyBase):
                 copy.deepcopy(traject),
             )
             # for revetment:
-            (
-                revetment_bundle_index,
-                BC_bundleRevetment,
-                BC_bundle_list,
-            ) = self.bundling_of_measures(
-                "Revetment",
-                copy.deepcopy(init_revetment_risk),
-                copy.deepcopy(measure_list),
-                copy.deepcopy(LifeCycleCost),
-                copy.deepcopy(traject),
-            )
+            BC_bundleRevetment = 0.0
+            if "Revetment" in self.mechanisms:
+                (
+                    revetment_bundle_index,
+                    BC_bundleRevetment,
+                    BC_bundle_list,
+                ) = self.bundling_of_measures(
+                    "Revetment",
+                    copy.deepcopy(init_revetment_risk),
+                    copy.deepcopy(measure_list),
+                    copy.deepcopy(LifeCycleCost),
+                    copy.deepcopy(traject),
+                )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
             # 'overflow bundle'
