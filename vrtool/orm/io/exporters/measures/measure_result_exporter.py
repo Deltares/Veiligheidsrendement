@@ -24,7 +24,7 @@ class MeasureResultExporter(OrmExporterProtocol):
                 beta_target=measure_result.beta_target,
                 transition_level=measure_result.transition_level,
             )
-        return {}
+        return dict()
 
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
         logging.info("STARTED exporting measure id: {}".format(measure_result["id"]))
