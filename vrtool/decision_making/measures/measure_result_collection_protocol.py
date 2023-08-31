@@ -13,15 +13,6 @@ class MeasureResultProtocol(Protocol):
     # TODO: This should be an ENUM
     combinable_type: str
 
-    def get_custom_parameters_dict(self) -> dict:
-        """
-        Gets a dictionary with all custom parameters a measure may have. For instance `beta_target` and `transition_level` for a `RevetmentMeasure` or `dcrest` and `dberm` for `SoilReinforcementMeasure`.
-
-        Returns:
-            dict: Dictionary with name of parameter and its value (of any type).
-        """
-        pass
-
     def get_measure_output_values(
         self, split_params: bool, beta_columns: list[str]
     ) -> tuple[list, list]:

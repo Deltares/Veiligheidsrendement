@@ -1,6 +1,9 @@
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_section_reliability import (
+    RevetmentMeasureSectionReliability,
+)
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 import logging
 
@@ -15,11 +18,19 @@ class MeasureResultExporter(OrmExporterProtocol):
     def __init__(self, measure_per_section: MeasurePerSection) -> None:
         self._measure_per_section = measure_per_section
 
+    def _get_parameters_dict(self, measure_result: MeasureResultProtocol) -> dict:
+        if isinstance(measure_result, RevetmentMeasureSectionReliability):
+            return dict(
+                beta_target=measure_result.beta_target,
+                transition_level=measure_result.transition_level,
+            )
+        return {}
+
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
         logging.info("STARTED exporting measure id: {}".format(measure_result["id"]))
         _parameters_dict_list = [
             dict(name=m_parameter, value=m_value)
-            for m_parameter, m_value in measure_result.get_custom_parameters_dict()
+            for m_parameter, m_value in self._get_parameters_dict(measure_result)
         ]
         for (
             col_name,

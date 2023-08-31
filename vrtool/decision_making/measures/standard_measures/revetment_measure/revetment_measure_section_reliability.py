@@ -64,8 +64,3 @@ class RevetmentMeasureSectionReliability(MeasureResultProtocol):
             .tolist()
         )
         return _input_measure, _output_betas
-
-    def get_custom_parameters_dict(self) -> dict:
-        return dict(
-            beta_target=self.beta_target, transition_level=self.transition_level
-        )
