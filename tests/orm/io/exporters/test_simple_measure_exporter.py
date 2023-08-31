@@ -7,6 +7,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.simple_measure_exporter import SimpleMeasureExporter
 from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 
 
 class TestSimpleMeasureExporter:
@@ -53,13 +54,19 @@ class TestSimpleMeasureExporter:
         _exporter.export_dom(_measure_to_export)
 
         # Assert
+
         _reliability_to_export: SectionReliability = _measure_to_export.measures[
             "Reliability"
         ]
         _row_to_export = _reliability_to_export.SectionReliability.loc["Section"]
-        assert len(_measure_per_section.measure_per_section_result) == len(
-            _row_to_export
+        _expected_nr_measure_results = len(_row_to_export)
+        assert (
+            len(_measure_per_section.measure_per_section_result)
+            == _expected_nr_measure_results
         )
+
+        assert len(MeasureResult.select()) == _expected_nr_measure_results
+        assert not any(MeasureResultParameter.select())
 
         _expected_cost = _measure_to_export.measures["Cost"]
         for year in _row_to_export.index:
