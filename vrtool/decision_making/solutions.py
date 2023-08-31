@@ -9,6 +9,7 @@ import seaborn as sns
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
+    MeasureResultCollectionProtocol,
     MeasureResultProtocol,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -208,7 +209,7 @@ class Solutions:
                         beta.append(ijk)
                 inputs_r.append(beta)
 
-            elif isinstance(measure.measures, MeasureResultProtocol):
+            elif isinstance(measure.measures, MeasureResultCollectionProtocol):
                 (
                     _input_values,
                     _beta_values,
