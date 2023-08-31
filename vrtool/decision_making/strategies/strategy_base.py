@@ -225,38 +225,28 @@ class StrategyBase:
     def _step1combine(
         self, solutions_dict, i: int, section, traject, splitparams: bool
     ) -> pd.DataFrame:
-        # Step 1: combine measures with partial measures
-        combinables = solutions_dict[section.name].MeasureData.loc[
-            solutions_dict[section.name].MeasureData["class"] == "combinable"
-        ]
-        partials = solutions_dict[section.name].MeasureData.loc[
-            solutions_dict[section.name].MeasureData["class"] == "partial"
-        ]
-        revetments = solutions_dict[section.name].MeasureData.loc[
-            solutions_dict[section.name].MeasureData["class"] == "revetment"
-        ]
+        # split different measure types:
+        available_measure_classes = solutions_dict[section.name].MeasureData['class'].unique().tolist()
+        measures_per_class = {measure_class: solutions_dict[section.name].MeasureData.loc[
+            solutions_dict[section.name].MeasureData["class"] == measure_class] for measure_class in available_measure_classes}
+
 
         if self.__class__.__name__ == "TargetReliabilityStrategy":
-            combinables = combinables.loc[
-                solutions_dict[section.name].MeasureData["year"] == self.OI_year
-            ]
-            partials = partials.loc[
-                solutions_dict[section.name].MeasureData["year"] == self.OI_year
-            ]
-            revetments = revetments.loc[
-                solutions_dict[section.name].MeasureData["year"] == self.OI_year
-            ]
+            # only consider measures at the OI_year
+            measures_per_class = {measure_class: measure_class.loc[measure_class["year"] == self.OI_year] for measure_class in measures_per_class}
 
         combinedmeasures = measure_combinations(
-            combinables,
-            partials,
+            measures_per_class['combinable'],
+            measures_per_class['partial'],
             solutions_dict[section.name],
             splitparams=splitparams,
         )
 
-        if len(revetments) > 0:
-            combinedmeasures = revetment_combinations(combinedmeasures, revetments)
-
+        if len(measures_per_class['revetment']) > 0:
+            combinedmeasures_with_revetment = revetment_combinations(combinedmeasures, measures_per_class['revetment'])
+            #combine solutions_dict[section.name].MeasureData with revetments
+            base_measures_with_revetment = revetment_combinations(solutions_dict[section.name].MeasureData.loc[solutions_dict[section.name].MeasureData['class'] != 'revetment'], measures_per_class['revetment'])
+            combinedmeasures = pd.concat([base_measures_with_revetment,combinedmeasures_with_revetment])
         # make sure combinable, mechanism and year are in the MeasureData dataframe
         # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
         # if there is a measureid that is not known yet, add it to the measure table
