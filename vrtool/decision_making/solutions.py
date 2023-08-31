@@ -23,7 +23,7 @@ class Solutions:
     config: VrtoolConfig
     T: list[int]
     measures: list[MeasureProtocol]
-    measure_table = pd.DataFrame
+    measure_table: pd.DataFrame
 
     def __init__(self, dike_section: DikeSection, config: VrtoolConfig):
         self.section_name = dike_section.name
