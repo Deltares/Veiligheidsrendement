@@ -27,7 +27,9 @@ class MeasureResultExporter(OrmExporterProtocol):
         return dict()
 
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
-        logging.info("STARTED exporting measure id: {}".format(measure_result["id"]))
+        logging.info(
+            "STARTED exporting measure id: {}".format(measure_result.measure_id)
+        )
         _parameters_dict_list = [
             dict(name=m_parameter, value=m_value)
             for m_parameter, m_value in self._get_parameters_dict(measure_result)
@@ -49,4 +51,6 @@ class MeasureResultExporter(OrmExporterProtocol):
                 _parameters_dict_list,
             )
             MeasureResultParameter.insert_many(_mr_parameters).execute()
-        logging.info("FINISHED exporting measure id: {}".format(measure_result["id"]))
+        logging.info(
+            "FINISHED exporting measure id: {}".format(measure_result.measure_id)
+        )
