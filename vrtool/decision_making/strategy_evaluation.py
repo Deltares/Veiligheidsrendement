@@ -122,7 +122,10 @@ def revetment_combinations(partials, combinables):
                     attribute_value = list(itertools.chain.from_iterable(
                         itertools.repeat(x, 1) if (isinstance(x, str)) or (isinstance(x, int)) or (isinstance(x, float)) else x for x in
                         combined_data))
-                    #TODO potentially ignore all -999 values which would improve the readability of the dataframe
+                    #drop all -999 values from attribute_value
+                    attribute_value = [x for x in attribute_value if x != -999 and x != -999.0]
+                    if len(attribute_value) == 1: #if there is only one value we take that value
+                        attribute_value = attribute_value[0]
                 attribute_col_dict[col].append(attribute_value)
 
             #then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
