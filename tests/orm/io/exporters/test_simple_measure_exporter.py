@@ -2,7 +2,7 @@ import pandas as pd
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
-from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.measure_protocol import SimpleMeasureProtocol
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.simple_measure_exporter import SimpleMeasureExporter
@@ -10,7 +10,7 @@ from vrtool.orm.models.measure_result import MeasureResult
 
 
 class TestSimpleMeasureExporter:
-    class MeasureTest(MeasureProtocol):
+    class MeasureTest(SimpleMeasureProtocol):
         def __init__(self) -> None:
             self.measures = {
                 "Cost": 13.37,
