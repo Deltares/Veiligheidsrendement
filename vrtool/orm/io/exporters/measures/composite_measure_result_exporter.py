@@ -33,7 +33,9 @@ class CompositeMeasureResultExporter(OrmExporterProtocol):
             _available_parameters = list(
                 filter(lambda x: x in _measure, _supported_parameters)
             )
-            for col_name, beta_value in _measure["Reliability"]:
+            for col_name, beta_value in (
+                _measure["Reliability"].SectionReliability.loc["Section"].iteritems()
+            ):
                 _measure_result = MeasureResult.create(
                     beta=beta_value,
                     time=int(col_name),
