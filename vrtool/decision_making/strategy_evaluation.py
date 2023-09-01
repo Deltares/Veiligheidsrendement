@@ -399,7 +399,8 @@ def split_options(
 
     options_dependent = copy.deepcopy(options)
     options_independent = copy.deepcopy(options)
-    for i in options:
+    for i in options.keys():
+
         min_transition_level = (
             options[i].transition_level[options[i].transition_level > 0].min()
         )
@@ -441,6 +442,7 @@ def split_options(
         options_independent[i] = options_independent[i].loc[
             options_independent[i].ID.isin(options_dependent[i].ID.unique())
         ]
+
 
         # Now that we have split the measures we should avoid double counting of costs by correcting some of the cost values.
         # This concerns the startcosts for soil reinforcement
@@ -492,24 +494,25 @@ def split_options(
                             cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
                             #pass cost_list back to the idx, "cost" column in options_dependent[i]
                             options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
-        # Find all dependent measures that contain a Vertical Geotextile
+        # Find all dependent measures that contain a Vertical Geotextile or a Diaphragm wall
         vertical_geotextiles = options_dependent[i]["type"].str.contains("Vertical Geotextile")
         diaphragm_walls = options_dependent[i]["type"].str.contains("Diaphragm Wall")
-        def set_cost_to_zero(options, bools, measure_string):
-            for idx, row in options.iterrows():
-                if bools[idx]:
+        def set_cost_to_zero(options_set, bools, measure_string):
+            # options_copy = options_set.copy()
+            for row_idx, option_row in options_set.iterrows():
+                if bools[row_idx]:
                     # break the type string at '+' and find the value that is a vertical Geotextile
-                    for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                    for cost_index, measure_type in enumerate(option_row["type"].item().split('+')):
                         if measure_type == measure_string:
-                            if type(row["cost"].item()) == float:
-                                options.loc[idx, "cost"] = 0.
+                            if type(option_row["cost"].item()) == float:
+                                options_set.loc[row_idx, "cost"] = 0.
                             else:
                                 # get list of costs and set cost of geotextile to 0
-                                cost_list = row["cost"].item()
+                                cost_list = option_row["cost"].item().copy()
                                 cost_list[cost_index] = 0.
-                                # pass cost_list back to the idx, "cost" column in options_dependent[i]
-                                options.loc[idx, "cost"] = [[val] for val in cost_list]
-            return options
+                                # pass cost_list back to the row_idx, "cost" column in options_dependent[i]
+                                options_set.loc[row_idx, "cost"] = [[val] for val in cost_list]
+            return options_set #I think this is not necessary
         #set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
         if any(vertical_geotextiles):
             options_dependent[i] = set_cost_to_zero(options_dependent[i], vertical_geotextiles, "Vertical Geotextile")
