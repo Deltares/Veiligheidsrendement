@@ -485,12 +485,14 @@ def split_options(
                 #break the type string at '+' and find the value that contains soil reinforcement
                 for cost_index, measure_type in enumerate(row["type"].item().split('+')):
                     if "Soil reinforcement with stability screen" in measure_type:
-                        # get list of costs and subtract startcosts from the cost that contains soil reinforcement
-                        cost_list = row["cost"].item()
-                        cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
-                        #pass cost_list back to the idx, "cost" column in options_dependent[i]
-                        #TODO: this is wrong! it should be done using .at but that doesnt work either
-                        options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
+                        if type(row["cost"].item()) == float:
+                            options_dependent[i].loc[idx,"cost"] = np.subtract(options_dependent[i].loc[idx,"cost"],cost_stability_screen)[0]
+                        else:
+                            # get list of costs and subtract startcosts from the cost that contains soil reinforcement
+                            cost_list = row["cost"].item()
+                            cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
+                            #pass cost_list back to the idx, "cost" column in options_dependent[i]
+                            options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
 
         options_independent[i] = options_independent[i].reset_index(drop=True)
         options_dependent[i] = options_dependent[i].reset_index(drop=True)
