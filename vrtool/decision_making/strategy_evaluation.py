@@ -444,7 +444,7 @@ def split_options(
                         # get list of costs and subtract startcosts from the cost that contains soil reinforcement
                         cost_list = row["cost"].item()
                         cost_list[cost_index] = np.subtract(cost_list[cost_index], startcosts_soil)
-                        options_independent[i].loc[:, "cost"].loc[idx] = cost_list
+                        options_independent[i].loc[idx, "cost"] = [[val] for val in cost_list]
 
         # Then we deal with the costs for a stability screen when combined with a berm, these are accounted for in the independent_measure costs so should be removed from the dependent measures
         cost_stability_screen = np.min(options_independent[i].loc[
@@ -461,7 +461,9 @@ def split_options(
                         # get list of costs and subtract startcosts from the cost that contains soil reinforcement
                         cost_list = row["cost"].item()
                         cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
-                        options_dependent[i].loc[:, "cost"].loc[idx] = cost_list
+                        #pass cost_list back to the idx, "cost" column in options_dependent[i]
+                        #TODO: this is wrong! it should be done using .at but that doesnt work either
+                        options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
 
         options_independent[i] = options_independent[i].reset_index(drop=True)
         options_dependent[i] = options_dependent[i].reset_index(drop=True)
