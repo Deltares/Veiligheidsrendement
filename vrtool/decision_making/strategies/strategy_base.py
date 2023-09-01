@@ -324,7 +324,7 @@ class StrategyBase:
         # fill values
         # TODO Think about the initial condition and whether this should be added separately or teh 0,
         #  0 soil reinforcement also suffices.
-        keys = list(self.options.keys())
+        section_keys = list(self.options.keys())
 
         # get all probabilities. Interpolate on beta per section, then combine p_f
         betas = {}
@@ -343,10 +343,10 @@ class StrategyBase:
                 # Initial
                 # condition with no measure
                 if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
-                    beta2 = self.options_height[keys[n]][_mechanism_name]
+                    beta2 = self.options_height[section_keys[n]][_mechanism_name]
                     # All solutions
                 else:
-                    beta2 = self.options_geotechnical[keys[n]][
+                    beta2 = self.options_geotechnical[section_keys[n]][
                         _mechanism_name
                     ]  # All solutions
                 betas[_mechanism_name] = np.concatenate((beta1, beta2), axis=0)
@@ -360,160 +360,28 @@ class StrategyBase:
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
-        for n in range(0, len(keys)):
+        for n in range(0, len(section_keys)):
             self.LCCOption[n, 0, 0] = 0.0
-            LCC_sh = calc_tc(self.options_height[keys[n]], self.discount_rate)
-            LCC_sg = calc_tc(self.options_geotechnical[keys[n]], self.discount_rate)
+            LCC_sh = calc_tc(self.options_height[section_keys[n]], self.discount_rate)
+            LCC_sg = calc_tc(self.options_geotechnical[section_keys[n]], self.discount_rate)
             # LCC_tot = calcTC(self.options[keys[n]])
-            for sh in range(0, len(self.options_height[keys[n]])):
-                # if it is a full type, it should only be combined with another full of the same type
-                if self.options_height[keys[n]].iloc[sh]["class"].values[0] == "full":
-                    full = True
-                else:
-                    full = False
-                # if (self.options_height[keys[n]].iloc[sh]['type'].values[0] == 'Diaphragm Wall') | (
-                #         self.options_height[keys[n]].iloc[sh]['type'].values[0] == 'Stability Screen'):
-                #     full_structure = True
-                # else:
-                #     full_structure = False
-                for sg in range(0, len(self.options_geotechnical[keys[n]])):  # Sg):
-                    # if sh is a diaphragm wall, only a diaphragm wall can be taken for sg
-                    if full:
-                        # if the type is different it is not a possibility:
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["type"]
-                            .values[0]
-                            != self.options_height[keys[n]].iloc[sh]["type"].values[0]
-                        ) or (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["year"]
-                            .values[0]
-                            != self.options_height[keys[n]].iloc[sh]["year"].values[0]
-                        ):
-                            pass  # do not change value, impossible combination (keep at 1e99)
+            #we get the unique ids of the options in the height and geotechnical measures
+            section_sg_ids = self.options_geotechnical[section_keys[n]].ID.unique()
+            section_sh_ids = self.options_height[section_keys[n]].ID.unique()
+            for sh_id in section_sh_ids:
+                sh_indices = self.options_height[section_keys[n]].index[
+                    self.options_height[section_keys[n]].ID == sh_id].tolist()
 
-                        else:
-                            # if the type is a soil reinforcement, the year has to be the same
-                            if (
-                                self.options_geotechnical[keys[n]]
-                                .iloc[sg]["type"]
-                                .values[0]
-                                == "Soil reinforcement"
-                            ):
-                                if (
-                                    self.options_geotechnical[keys[n]]
-                                    .iloc[sg]["year"]
-                                    .values[0]
-                                    == self.options_height[keys[n]]
-                                    .iloc[sh]["year"]
-                                    .values[0]
-                                ) & (
-                                    self.options_geotechnical[keys[n]]
-                                    .iloc[sg]["class"]
-                                    .values[0]
-                                    == "full"
-                                ):
-                                    self.LCCOption[n, sh + 1, sg + 1] = (
-                                        LCC_sh[sh] + LCC_sg[sg]
-                                    )  # only use the costs once
-                                else:
-                                    pass  # not allowed
-                            else:  # Diaphragm wall
-                                self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[
-                                    sh
-                                ]  # only use the costs once
-                    # if sg is a plain geotextile or stability screen, it can only be combined with no measure for height, otherwise it
-                    # would be a combined measure
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["type"].values[0]
-                        == "Vertical Geotextile"
-                    ) or (
-                        self.options_geotechnical[keys[n]].iloc[sg]["type"].values[0]
-                        == "Stability Screen"
-                    ):
-                        # can only be combined with no measure for height
-                        self.LCCOption[n, 0, sg + 1] = LCC_sg[sg]
-                    # if sg is a combined measure the soil reinforcement timing should be aligned:
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["class"].values[0]
-                        == "combined"
-                    ):
-                        # check if the time of the soil reinforcement part is the same as for the height one
-                        # first extract the index of the soil reinforcement
-                        index = np.argwhere(
-                            np.array(
-                                self.options_geotechnical[keys[n]]
-                                .iloc[sg]["type"]
-                                .values[0]
-                            )
-                            == "Soil reinforcement"
-                        )[0][0]
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["year"]
-                            .values[0][index]
-                            == self.options_height[keys[n]].iloc[sh]["year"].values[0]
-                        ):
-                            if (
-                                self.options_geotechnical[keys[n]]
-                                .iloc[sg]["dcrest"]
-                                .values
-                                > 0.0
-                            ):
-                                if (
-                                    self.options_geotechnical[keys[n]]
-                                    .iloc[sg]["dcrest"]
-                                    .values
-                                    == self.options_height[keys[n]]
-                                    .iloc[sh]["dcrest"]
-                                    .values
-                                ):
-                                    self.LCCOption[n, sh + 1, sg + 1] = LCC_sg[
-                                        sg
-                                    ]  # only use the costs once
-                                else:
-                                    self.LCCOption[n, sh + 1, sg + 1] = 1e99
-                            else:
-                                self.LCCOption[n, sh + 1, sg + 1] = (
-                                    LCC_sh[sh] + LCC_sg[sg]
-                                )  # only use the costs once
-                        else:
-                            pass  # dont change, impossible combi
-                        # if sg is combinable, it should only be combined with sh that have the same year
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["class"].values[0]
-                        == "combinable"
-                    ):
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["year"]
-                            .values[0]
-                            == self.options_height[keys[n]].iloc[sh]["year"].values[0]
-                        ):
-                            self.LCCOption[n, sh + 1, sg + 1] = (
-                                LCC_sh[sh] + LCC_sg[sg]
-                            )  # only use the costs once
-                        else:
-                            pass
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["class"].values[0]
-                        == "full"
-                    ):
-                        pass  # not allowed as the sh is not 'full'
-                    else:
-                        # if sg is a diaphragm wall cost should be only accounted for once:
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["type"]
-                            .values[0]
-                            != "Diaphragm Wall"
-                        ):
-                            self.LCCOption[n, sh + 1, sg + 1] = (
-                                LCC_sh[sh] + LCC_sg[sg]
-                            )  # only use the costs once
-                        else:
-                            pass
+                #we get the indices of sg_id in the options_geotechnical df
+                sg_indices = self.options_geotechnical[section_keys[n]].index[self.options_geotechnical[section_keys[n]].ID == sh_id].tolist()
+                #combined LCC array for sh_indices and sg_indices
+                LCC_combined = np.add(np.tile(LCC_sh[sh_indices],(len(sg_indices),1)), np.tile(LCC_sg[sg_indices],(len(sh_indices),1)).T)
+                #fill self.LCCOption[n, sh_indices, sg_indices]
+                #we do it using a loop, as masking is not working properly
+                # Loop through the indices and update values
+                for i, sh_idx in enumerate(sh_indices):
+                    for j, sg_idx in enumerate(sg_indices):
+                        self.LCCOption[n, sh_idx+1, sg_idx+1] = LCC_combined[j,i]
 
         # Decision Variables for executed options [N,Sh] & [N,Sg]
         self.Cint_h = np.zeros((N, Sh))
