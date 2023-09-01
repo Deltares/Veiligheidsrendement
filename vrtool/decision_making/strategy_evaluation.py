@@ -517,6 +517,12 @@ def split_options(
         if any(diaphragm_walls):
             options_dependent[i] = set_cost_to_zero(options_dependent[i], diaphragm_walls, "Diaphragm Wall")
 
+        revetments = options_independent[i]["type"].str.contains("Revetment")
+        if any(revetments):
+            options_independent[i] = set_cost_to_zero(
+                options_independent[i], revetments, "Revetment"
+            )
+
         options_independent[i] = options_independent[i].reset_index(drop=True)
         options_dependent[i] = options_dependent[i].reset_index(drop=True)
 
