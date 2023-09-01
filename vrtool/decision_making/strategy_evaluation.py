@@ -404,16 +404,15 @@ def split_options(
             options[i].transition_level[options[i].transition_level > 0].min()
         )
         min_beta_target = options[i].beta_target[options[i].beta_target > 0].min()
-        # for dependent sections we have all measures where there is a positive dcrest, or a transition_level larger than the minimum, or a beta_target larger than the minimum
+        # for dependent sections we have all measures where there is a transition_level larger than the minimum, or a beta_target larger than the minimum
         # and the berm should be either non-existent -999 or 0
         def compareMeasureDependent(option):
             if math.isnan(min_transition_level) or math.isnan(min_beta_target):
-                # no revetment measures; just check dcrest and dberm:
-                return (option.dcrest <= 0.0) & (option.dberm <= 0)
+                # no revetment measures; just check dberm:
+                return option.dberm <= 0
             else:
                 return (
-                    option.dcrest.isin([0.0, -999.0])
-                    & (option.transition_level >= min_transition_level)
+                    (option.transition_level >= min_transition_level)
                     & (option.beta_target >= min_beta_target)
                     & (option.dberm <= 0)
                 )
