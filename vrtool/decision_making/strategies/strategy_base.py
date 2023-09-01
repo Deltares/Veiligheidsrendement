@@ -333,25 +333,14 @@ class StrategyBase:
                 len_beta1 = traject.sections[
                     n
                 ].section_reliability.SectionReliability.shape[1]
-                if (
-                    _mechanism_name
-                    not in traject.sections[
-                        n
-                    ].section_reliability.SectionReliability.index
-                ):
-                    # TODO (VRTOOL-187).
-                    # This could become obsolete once SectionReliability contains the data related to revetment.
-                    # Consider removing if that's the case.
-                    logging.warning(
-                        "No optimalization available for '{}'.".format(_mechanism_name)
-                    )
-                    continue
+
                 beta1 = (
                     traject.sections[n]
                     .section_reliability.SectionReliability.loc[_mechanism_name]
                     .values.reshape((len_beta1, 1))
                     .T
-                )  # Initial
+                )
+                # Initial
                 # condition with no measure
                 if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
                     beta2 = self.options_height[keys[n]][_mechanism_name]
