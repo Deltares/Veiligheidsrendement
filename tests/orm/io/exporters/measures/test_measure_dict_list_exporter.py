@@ -1,4 +1,4 @@
-from tests.orm import empty_db_fixture, get_basic_measure_per_section
+from tests.orm import empty_db_fixture
 from tests.orm.io.exporters.measures import (
     MeasureResultTestInputData,
 )
@@ -32,8 +32,6 @@ class TestMeasureDictListExporter:
             "Cost": _input_data.expected_cost,
             "Reliability": _input_data.section_reliability,
             _unsupported_param: 13,
-            "Cost": _expected_cost,
-            "Reliability": _section_reliability,
         }
 
         assert not any(MeasureResult.select())
