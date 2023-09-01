@@ -15,15 +15,6 @@ class MeasureDictListExporter(OrmExporterProtocol):
     def __init__(self, measure_per_section: MeasurePerSection) -> None:
         self._measure_per_section = measure_per_section
 
-    def _get_measure_result_parameter(
-        self, measure: dict, parameter: str, measure_result: MeasureResult
-    ):
-        return dict(
-            name=parameter.upper(),
-            value=measure[parameter],
-            measure_result=measure_result,
-        )
-
     def export_dom(self, measure_dict_list: list) -> None:
         # TODO: Potentially this could be done in SimpleMeasureExporter and here only iterate over the measures.
         logging.info("STARTED exporting measure's results list.")
@@ -42,8 +33,10 @@ class MeasureDictListExporter(OrmExporterProtocol):
                     measure_per_section=self._measure_per_section,
                 )
                 _mr_parameters = map(
-                    lambda x: self._get_measure_result_parameter(
-                        _measure, x, _measure_result
+                    lambda x: dict(
+                        name=x.upper(),
+                        value=_measure[x],
+                        measure_result=_measure_result,
                     ),
                     _available_parameters,
                 )

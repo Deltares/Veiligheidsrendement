@@ -17,15 +17,14 @@ class SimpleMeasureExporter(OrmExporterProtocol):
             "Section"
         ]
 
-        _measure_results = []
-        for year in _reliabilities_to_export.index:
-            _measure_results.append(
-                {
+        MeasureResult.insert_many(
+            map(
+                lambda year: {
                     "time": year,
                     "measure_per_section": self._measure_per_section,
                     "beta": _reliabilities_to_export[year],
                     "cost": _cost,
-                }
+                },
+                _reliabilities_to_export.index,
             )
-
-        MeasureResult.insert_many(_measure_results).execute()
+        ).execute()
