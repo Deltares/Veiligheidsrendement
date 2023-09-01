@@ -489,10 +489,10 @@ def split_options(
 
         # only keep reliability of relevant mechanisms in dictionary
         options_dependent[i].drop(
-            get_dropped_dependent_options(available_mechanism_names), axis=1, level=0
+            get_dropped_dependent_options(available_mechanism_names), axis=1, level=0, inplace=True,
         )
         options_independent[i].drop(
-            get_dropped_independent_options(available_mechanism_names), axis=1, level=0
+            get_dropped_independent_options(available_mechanism_names), axis=1, level=0, inplace=True,
         )
     return options_dependent, options_independent
 
