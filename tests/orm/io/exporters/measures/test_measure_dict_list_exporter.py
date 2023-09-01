@@ -8,7 +8,7 @@ from vrtool.orm.io.exporters.measures.measure_dict_list_exporter import (
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, fn
 
 
 class TestMeasureDictListExporter:
@@ -24,12 +24,16 @@ class TestMeasureDictListExporter:
     ):
         # 1. Define test data.
         _input_data = MeasureResultTestInputData()
+        _unsupported_param = "unsupported_param"
         _measure_with_params = {
             "id": 42,
             "dcrest": 4.2,
             "dberm": 2.4,
             "Cost": _input_data.expected_cost,
             "Reliability": _input_data.section_reliability,
+            _unsupported_param: 13,
+            "Cost": _expected_cost,
+            "Reliability": _section_reliability,
         }
 
         assert not any(MeasureResult.select())
@@ -72,3 +76,8 @@ class TestMeasureDictListExporter:
 
             assert measure_result_parameter_exists("dcrest", 4.2)
             assert measure_result_parameter_exists("dberm", 2.4)
+            assert not any(
+                MeasureResultParameter.select().where(
+                    fn.Upper(MeasureResultParameter.name) == _unsupported_param.upper()
+                )
+            )
