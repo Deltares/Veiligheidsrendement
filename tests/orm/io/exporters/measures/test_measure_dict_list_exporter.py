@@ -28,23 +28,24 @@ class TestMeasureDictListExporter:
             "id": 42,
             "dcrest": 4.2,
             "dberm": 2.4,
-            "Cost": 24.42,
+            "Cost": _input_data.expected_cost,
             "Reliability": _input_data.section_reliability,
         }
-        _measure_per_section = get_basic_measure_per_section()
 
         assert not any(MeasureResult.select())
         assert not any(MeasureResultParameter.select())
 
         # 2. Run test.
-        MeasureDictListExporter(_measure_per_section).export_dom([_measure_with_params])
+        MeasureDictListExporter(_input_data.measure_per_section).export_dom(
+            [_measure_with_params]
+        )
 
         # 3. Verify final expectations.
         assert len(MeasureResult.select()) == len(_input_data.t_columns)
         assert len(MeasureResultParameter.select()) == len(_input_data.t_columns) * 2
         for year in _input_data.t_columns:
             _retrieved_result = MeasureResult.get_or_none(
-                (MeasureResult.measure_per_section == _measure_per_section)
+                (MeasureResult.measure_per_section == _input_data.measure_per_section)
                 & (MeasureResult.time == year)
             )
 
