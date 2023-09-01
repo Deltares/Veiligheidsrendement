@@ -3,7 +3,6 @@ import logging
 import time
 from pathlib import Path
 from typing import Dict
-
 import numpy
 import numpy as np
 import pandas as pd
@@ -695,46 +694,14 @@ class GreedyStrategy(StrategyBase):
             LCC_invested[i[0]] += np.subtract(self.LCCOption[i], LCC_invested[i[0]])
 
             # get the ids
-            ID1 = (
-                self.options_geotechnical[traject.sections[i[0]].name]
-                .iloc[i[2] - 1]["ID"]
-                .values[0]
-            )
-            if "+" in ID1:
-                ID_relevant = ID1[-1]
-            else:
-                ID_relevant = ID1
-            if i[1] != 0:
-                ID2 = (
-                    self.options_height[traject.sections[i[0]].name]
-                    .iloc[i[1] - 1]["ID"]
-                    .values[0]
-                )
-                if ID_relevant == ID2:
-                    if (self._heightMeasureIsZero(traject, i)) and (
-                        self._geotechnicalMeasureIsZero(traject, i)
-                    ):
-                        ID.append(ID1[0])  # TODO Fixen
-                    else:
-                        ID.append(ID1)
-                else:
-                    logging.info(i)
-                    logging.info(
-                        self.options_geotechnical[traject.sections[i[0]].name].iloc[
-                            i[2] - 1
-                        ]
-                    )
-                    logging.info(
-                        self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
-                    )
-                    raise ValueError(
-                        "warning, conflicting IDs found for measures, ID_relevant: '{}' ID2: '{}'".format(
-                            ID_relevant, ID2
-                        )
-                    )
-            else:
-                ID2 = ""
+            ID1 = self.options_geotechnical[traject.sections[i[0]].name].iloc[i[2] - 1]["ID"].item()
+
+            ID2 = self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]["ID"].item()
+
+            if ID1 == ID2:
                 ID.append(ID1)
+            else:
+                raise Exception(f"ID1 {ID1} and ID2 {ID2} are not the same for the measure at section {traject.sections[i[0]].name}")
 
             # get the parameters
             dcrest.append(

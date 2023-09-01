@@ -454,6 +454,8 @@ class StrategyBase:
                             "no",
                             0.0,
                             0.0,
+                            -999.,
+                            -999.,
                         ]
                     ).reshape(1, len(Solution.columns)),
                     columns=Solution.columns,
