@@ -492,28 +492,33 @@ def split_options(
                             cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
                             #pass cost_list back to the idx, "cost" column in options_dependent[i]
                             options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
+        # Find all dependent measures that contain a Vertical Geotextile
+        vertical_geotextiles = options_dependent[i]["type"].str.contains("Vertical Geotextile")
+        diaphragm_walls = options_dependent[i]["type"].str.contains("Diaphragm Wall")
+        def set_cost_to_zero(options, bools, measure_string):
+            for idx, row in options.iterrows():
+                if bools[idx]:
+                    # break the type string at '+' and find the value that is a vertical Geotextile
+                    for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                        if measure_type == measure_string:
+                            if type(row["cost"].item()) == float:
+                                options.loc[idx, "cost"] = 0.
+                            else:
+                                # get list of costs and set cost of geotextile to 0
+                                cost_list = row["cost"].item()
+                                cost_list[cost_index] = 0.
+                                # pass cost_list back to the idx, "cost" column in options_dependent[i]
+                                options.loc[idx, "cost"] = [[val] for val in cost_list]
+            return options
+        #set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
+        if any(vertical_geotextiles):
+            options_dependent[i] = set_cost_to_zero(options_dependent[i], vertical_geotextiles, "Vertical Geotextile")
+
+        if any(diaphragm_walls):
+            options_dependent[i] = set_cost_to_zero(options_dependent[i], diaphragm_walls, "Diaphragm Wall")
 
         options_independent[i] = options_independent[i].reset_index(drop=True)
         options_dependent[i] = options_dependent[i].reset_index(drop=True)
-
-        # loop for the independent stuff: #I think this is not necessary anymore but for now I commented it and will see what TeamCity thinks tomorrow morning :)
-        # newcosts = []
-        # for ij in options_independent[i].index:
-        #     if (
-        #         options_independent[i].iloc[ij]["type"].values[0]
-        #         == "Soil reinforcement"
-        #     ):
-        #         newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
-        #     elif options_independent[i].iloc[ij]["class"].values[0] == "combined":
-        #         newcosts.append(
-        #             [
-        #                 options_independent[i].iloc[ij]["cost"].values[0][0],
-        #                 options_independent[i].iloc[ij]["cost"].values[0][1],
-        #             ]
-        #         )
-        #     else:
-        #         newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
-        # options_independent[i]["cost"] = newcosts
 
         # only keep reliability of relevant mechanisms in dictionary
         options_dependent[i].drop(
