@@ -403,7 +403,7 @@ def split_options(
         #for dependent sections we have all measures where there is a positive dcrest, or a transition_level larger than the minimum, or a beta_target larger than the minimum
         #and the berm should be either non-existent -999 or 0
         options_dependent[i] = options_dependent[i].loc[
-            (options_dependent[i].dcrest >= 0) & (options_dependent[i].transition_level >= min_transition_level) & (
+            (options_dependent[i].dcrest.isin([0., -999.])) & (options_dependent[i].transition_level >= min_transition_level) & (
                     options_dependent[i].beta_target >= min_beta_target) & (options_dependent[i].dberm <= 0)]
 
 
@@ -413,11 +413,11 @@ def split_options(
                         options_independent[i].transition_level<=min_transition_level) & (
                         options_independent[i].beta_target<=min_beta_target)]
 
+        #we only need the measures with ids that are also in options_dependent
+        options_independent[i] = options_independent[i].loc[options_independent[i].ID.isin(options_dependent[i].ID.unique())]
+
         # Now that we have split the measures we should avoid double counting of costs by correcting some of the cost values.
-
-
         # This concerns the startcosts for soil reinforcement
-        #TODO do we also need to remove startcosts for revetment?
 
         # We get the min cost which is equal to the minimum costs for a soil reinforcement (which we assume has dimensions 0 m crest and 0 m berm)
         startcosts_soil = np.min(
