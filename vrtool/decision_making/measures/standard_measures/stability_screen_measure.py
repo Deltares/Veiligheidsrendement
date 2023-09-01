@@ -6,7 +6,7 @@ import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
-from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.measure_protocol import SimpleMeasureProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
 )
@@ -22,7 +22,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class StabilityScreenMeasure(MeasureProtocol):
+class StabilityScreenMeasure(SimpleMeasureProtocol):
     # type == 'Stability Screen':
     def evaluate_measure(
         self,
@@ -169,12 +169,10 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         SFincrease: float = 0.2,
     ) -> None:
-
         _calc_type = dike_section.mechanism_data["StabilityInner"][0][1]
 
         mechanism_reliability_input = mechanism_reliability.Input.input
         if _calc_type == "DStability":
-
             # Add screen to model
             _dstability_wrapper = DStabilityWrapper(
                 Path(mechanism_reliability_input["STIXNAAM"]),
