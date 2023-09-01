@@ -23,7 +23,7 @@ class MeasureDictListExporter(OrmExporterProtocol):
                 filter(lambda x: x in _measure, _supported_parameters)
             )
             _measure_cost = _measure["Cost"]
-            logging.info("STARTED exporting measure id: {}".format(_measure["id"]))
+            logging.debug("STARTED exporting measure id: {}".format(_measure["id"]))
             for col_name, beta_value in (
                 _measure["Reliability"].SectionReliability.loc["Section"].iteritems()
             ):
@@ -42,5 +42,5 @@ class MeasureDictListExporter(OrmExporterProtocol):
                     _available_parameters,
                 )
                 MeasureResultParameter.insert_many(_mr_parameters).execute()
-            logging.info("FINISHED exporting measure id: {}".format(_measure["id"]))
+            logging.debug("FINISHED exporting measure id: {}".format(_measure["id"]))
         logging.info("FINISHED exporting measure's results.")
