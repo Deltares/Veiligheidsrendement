@@ -447,8 +447,8 @@ def split_options(
 
         # We get the min cost which is equal to the minimum costs for a soil reinforcement (which we assume has dimensions 0 m crest and 0 m berm)
         startcosts_soil = np.min(
-            options_independent[i][
-                (options_independent[i]["type"] == "Soil reinforcement")
+            options[i][
+                (options[i]["type"] == "Soil reinforcement")
             ]["cost"]
         )
 
@@ -473,9 +473,9 @@ def split_options(
                         options_independent[i].loc[idx, "cost"] = [[val] for val in cost_list]
 
         # Then we deal with the costs for a stability screen when combined with a berm, these are accounted for in the independent_measure costs so should be removed from the dependent measures
-        cost_stability_screen = np.min(options_independent[i].loc[
-                   options_independent[i]["type"].str.fullmatch("Soil reinforcement with stability screen")
-               ]["cost"])
+        cost_stability_screen = np.min(options[i].loc[
+                   options[i]["type"].str.fullmatch("Soil reinforcement with stability screen")
+               ]["cost"]) - startcosts_soil
         # Find all dependent measures that contain a stability screen
         stability_screens = options_dependent[i]["type"].str.contains("Soil reinforcement with stability screen")
         for idx, row in options_dependent[i].iterrows():
