@@ -406,15 +406,24 @@ def split_options(
         min_beta_target = options[i].beta_target[options[i].beta_target > 0].min()
         # for dependent sections we have all measures where there is a positive dcrest, or a transition_level larger than the minimum, or a beta_target larger than the minimum
         # and the berm should be either non-existent -999 or 0
+        def compareMeasureDependent(option):
+            if math.isnan(min_transition_level) or math.isnan(min_beta_target):
+                # no revetment measures; just check dcrest and dberm:
+                return option.dcrest <= 0.0 & (option.dberm <= 0)
+            else:
+                return (
+                    option.dcrest.isin([0.0, -999.0])
+                    & (option.transition_level >= min_transition_level)
+                    & (option.beta_target >= min_beta_target)
+                    & (option.dberm <= 0)
+                )
+
         options_dependent[i] = options_dependent[i].loc[
-            (options_dependent[i].dcrest.isin([0.0, -999.0]))
-            & (options_dependent[i].transition_level >= min_transition_level)
-            & (options_dependent[i].beta_target >= min_beta_target)
-            & (options_dependent[i].dberm <= 0)
+            compareMeasureDependent(options_dependent[i])
         ]
 
         # for independent measures dcrest should be 0 or -999, and transition_level and beta_target should be -999
-        def compareMeasure(option):
+        def compareMeasureIndependent(option):
             if math.isnan(min_transition_level) or math.isnan(min_beta_target):
                 # no revetment measures; just check dcrest:
                 return option.dcrest <= 0.0
@@ -426,7 +435,7 @@ def split_options(
                 )
 
         options_independent[i] = options_independent[i].loc[
-            compareMeasure(options_independent[i])
+            compareMeasureIndependent(options_independent[i])
         ]
 
         # we only need the measures with ids that are also in options_dependent
