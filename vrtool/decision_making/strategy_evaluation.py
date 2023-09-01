@@ -16,79 +16,80 @@ def measure_combinations(
     combinables, partials, solutions: Solutions, splitparams=False
 ):
     _combined_measures = pd.DataFrame(columns=combinables.columns)
+    #all columns without a second index are attributes of the measure
+    attribute_col_names = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)==''].tolist()
+    #years are those columns of level 2 with a second index that is not ''
+    years = combinables.columns.get_level_values(1)[combinables.columns.get_level_values(1)!=''].unique().tolist()
+    #mechanisms are those columns of level 1 with a second index that is not ''
+    mechanisms = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)!=''].unique().tolist()
 
+    #make dict with attribute_col_names as keys and empty lists as values
+    attribute_col_dict = {col:[] for col in attribute_col_names}
+
+    #make dict with mechanisms as keys, sub dicts of years and then empty lists as values
+    mechanism_beta_dict = {mechanism:{year:[] for year in years} for mechanism in mechanisms}
+    count = 0
     # loop over partials
     for i, row1 in partials.iterrows():
-        # combine with all combinables
+        # combine with all combinables (in this case revetment measures)
         for j, row2 in combinables.iterrows():
 
-            ID = "+".join((row1["ID"].values[0], row2["ID"].values[0]))
-            types = [row1["type"].values[0], row2["type"].values[0]]
-            year = [row1["year"].values[0], row2["year"].values[0]]
-            if splitparams:
-                params = [
-                    row1["yes/no"].values[0],
-                    row2["dcrest"].values[0],
-                    row2["dberm"].values[0],
-                    row2["beta_target"].values[0],
-                    row2["transition_level"].values[0],
-                ]
-            else:
-                params = [row1["params"].values[0], row2["params"].values[0]]
-            Cost = [row1["cost"].values[0], row2["cost"].values[0]]
-            # combine betas
-            # take maximums of mechanisms except if it is about StabilityInner for partial Stability Screen
-            betas = []
-            years = []
-
-            for ij in partials.columns:
-                if ij[0] != "Section" and ij[1] != "":  # It is a beta value
-                    # TODO make clean. Quick fix to fix incorrect treatment of vertical geotextile.
-                    # VSG is idx in MeasureTable
-                    if (row1["type"].values == "Vertical Geotextile") and (
-                        ij[0] == "Piping"
-                    ):
-                        idx = solutions.measure_table.loc[
-                            solutions.measure_table["Name"]
-                            == "Verticaal Zanddicht Geotextiel"
-                        ].index.values[0]
-                        Pf_VSG = solutions.measures[idx].parameters["Pf_solution"]
-                        P_VSG = solutions.measures[idx].parameters["P_solution"]
-                        pf = (1 - P_VSG) * Pf_VSG + P_VSG * beta_to_pf(row2[ij])
-                        beta = pf_to_beta(pf)
+            for col in attribute_col_names:
+                if col == 'ID': #TODO maybe add type here as well and just concatenate the types as a string
+                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
+                elif col == 'class':
+                    attribute_value = "combined"
+                else:
+                    #for all other columns we combine the lists and make sure that it is not nested
+                    combined_data = row1[col].tolist() + row2[col].tolist()
+                    attribute_value = list(itertools.chain.from_iterable(
+                        itertools.repeat(x, 1) if (isinstance(x, str)) or (isinstance(x, int)) or (isinstance(x, float)) else x for x in
+                        combined_data))
+                    if col == 'type': #if it is the type we make sure that it is a single string and store it as list of length 1
+                        attribute_value = ['+'.join(attribute_value)]
+                    #drop all -999 values from attribute_value
+                    attribute_value = [x for x in attribute_value if x != -999 and x != -999.0]
+                    if len(attribute_value) == 1: #if there is only one value we take that value
+                        attribute_value = attribute_value[0]
+                    elif len(attribute_value) == 0: #if there is no value we take -999
+                        attribute_value = -999
                     else:
-                        beta = np.maximum(row1[ij], row2[ij])
-                    years.append(ij[1])
-                    betas.append(beta)
+                        pass
+                attribute_col_dict[col].append(attribute_value)
 
-            # next update section probabilities
-            for ij in partials.columns:
-                if ij[0] == "Section":  # It is a beta value
-                    # where year in years is the same as ij[1]
-                    indices = [indices for indices, x in enumerate(years) if x == ij[1]]
-                    ps = beta_to_pf(np.array(betas)[indices])
-                    p = np.sum(ps)  # TODO replace with correct formula
-                    betas.append(pf_to_beta(p))
-                    # if ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]) > 1e-8:
-                    #     pass
-            if splitparams:
-                in1 = [
-                    ID,
-                    types,
-                    "combined",
-                    year,
-                    params[0],
-                    params[1],
-                    params[2],
-                    params[3],
-                    params[4],
-                    Cost,
-                ]
-            else:
-                in1 = [ID, types, "combined", year, params, Cost]
+            #then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+            for mechanism in mechanism_beta_dict.keys():
+                if mechanism == "Section":
+                    continue
+                else:
+                    for year in mechanism_beta_dict[mechanism].keys():
+                        if row1['type'].all() == 'Vertical Geotextile':
+                            vzg_idx = solutions.measure_table.loc[
+                                solutions.measure_table["Name"]
+                                == "Verticaal Zanddicht Geotextiel"
+                                ].index.values[0]
+                            Pf_VZG = solutions.measures[vzg_idx].parameters["Pf_solution"]
+                            P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
+                            pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(row2[(mechanism,year)])
+                            mechanism_beta_dict[mechanism][year].append(pf_to_beta(pf_vzg))
+                        else:
+                            mechanism_beta_dict[mechanism][year].append(np.maximum(row1[mechanism,year],row2[mechanism,year]))
 
-            allin = pd.DataFrame([in1 + betas], columns=combinables.columns)
-            _combined_measures = pd.concat((_combined_measures, allin))
+            count+=1
+
+    attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
+    attribute_col_df.columns = pd.MultiIndex.from_tuples([(col,"") for col in attribute_col_df.columns])
+    mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
+    mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
+    mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
+    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),axis=1)
+    for year in years:
+        #compute the section beta
+        betas_in_year = _combined_measures.loc[:,(_combined_measures.columns.get_level_values(0) != 'Section', _combined_measures.columns.get_level_values(1)==25)]
+        pf_in_year = beta_to_pf(betas_in_year)
+        section_beta = pf_to_beta(1 - np.prod(1-pf_in_year, axis=1))
+        #add the section beta to the dataframe
+        _combined_measures.loc[:,("Section",year)] = section_beta
     return _combined_measures
 
 def revetment_combinations(partials, combinables):
