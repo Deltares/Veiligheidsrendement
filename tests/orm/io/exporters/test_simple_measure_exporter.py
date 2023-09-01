@@ -45,7 +45,8 @@ class TestSimpleMeasureExporter:
         # Setup
         _measure_per_section = get_basic_measure_per_section()
 
-        assert not any(_measure_per_section.measure_per_section_result)
+        assert not any(MeasureResult.select())
+        assert not any(MeasureResultParameter.select())
 
         _measure_to_export = self.MeasureTest()
         _exporter = SimpleMeasureExporter(_measure_per_section)
