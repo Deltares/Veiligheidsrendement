@@ -409,7 +409,7 @@ def split_options(
         def compareMeasureDependent(option):
             if math.isnan(min_transition_level) or math.isnan(min_beta_target):
                 # no revetment measures; just check dcrest and dberm:
-                return option.dcrest <= 0.0 & (option.dberm <= 0)
+                return (option.dcrest <= 0.0) & (option.dberm <= 0)
             else:
                 return (
                     option.dcrest.isin([0.0, -999.0])
