@@ -258,7 +258,7 @@ class StrategyBase:
                 if ij not in existingIDs:
                     indexes = ij.split("+")
                     #concatenate names with + sign based on solutions_dict using list comprehension
-                    name = '+'.join(solutions_dict[section.name].measure_table.loc[solutions_dict[traject.sections[i].name].measure_table["ID"].isin(indexes)]['Name'].tolist())
+                    name = "+".join(solutions_dict[section.name].measure_table[(solutions_dict[section.name].measure_table["ID"].isin(indexes))]["Name"])
                     solutions_dict[section.name].measure_table = pd.concat([solutions_dict[section.name].measure_table,
                                       pd.DataFrame([[ij, name]], columns=['ID', 'Name'])])
         return combinedmeasures
