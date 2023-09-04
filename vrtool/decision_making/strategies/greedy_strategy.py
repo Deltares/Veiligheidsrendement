@@ -488,7 +488,7 @@ class GreedyStrategy(StrategyBase):
                 or (BC_bundleOverflow > BCstop)
                 or (BC_bundleRevetment > BCstop)
             ):
-                if np.max(BC) >= BC_bundleOverflow or np.max(BC) >= BC_bundleRevetment:
+                if np.max(BC) >= BC_bundleOverflow and np.max(BC) >= BC_bundleRevetment:
                     # find the best combination
                     Index_Best = np.unravel_index(np.argmax(BC), BC.shape)
 
