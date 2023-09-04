@@ -463,7 +463,7 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
             else:
                 Solution = pd.concat([Solution, lines])
-        colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
+        colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm", "transition_level", "beta_target"]
         Solution = Solution[colorder]
         for count, row in Solution.iterrows():
             if isinstance(row["name"], np.ndarray):  # clean output

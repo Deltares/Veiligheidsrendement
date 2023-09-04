@@ -655,9 +655,9 @@ class GreedyStrategy(StrategyBase):
             "name",
             "yes/no",
             "dcrest",
+            "dberm",
             "beta_target",
             "transition_level",
-            "dberm",
         ]
         sections = []
         LCC = []
@@ -785,9 +785,9 @@ class GreedyStrategy(StrategyBase):
                     names,
                     yes_no,
                     dcrest,
+                    dberm,
                     beta_target,
                     transition_level,
-                    dberm,
                 )
             ),
             columns=TakenMeasuresHeaders,
