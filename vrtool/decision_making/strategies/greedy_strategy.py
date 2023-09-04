@@ -205,19 +205,19 @@ class GreedyStrategy(StrategyBase):
 
                 # check if all rows in comparison only contain True values
                 if mechanism == "Overflow":
-                    comparison_height = (HeightOptions.Overflow > current_height_investments["Overflow"])
+                    comparison_height = (HeightOptions.Overflow > current_height_investments["Overflow"]).any(axis=1)
                     if "Revetment" in HeightOptions.columns:
-                        comparison_height = comparison_height & (HeightOptions.Revetment >= current_height_investments["Revetment"])
+                        comparison_height = comparison_height & (HeightOptions.Revetment >= current_height_investments["Revetment"]).all(axis=1)
                 elif mechanism == "Revetment":
-                    comparison_height = (HeightOptions.Revetment > current_height_investments["Revetment"])
+                    comparison_height = (HeightOptions.Revetment > current_height_investments["Revetment"]).any(axis=1)
                     if "Overflow" in HeightOptions.columns:
-                        comparison_height = comparison_height & (HeightOptions.Overflow >= current_height_investments["Overflow"])
+                        comparison_height = comparison_height & (HeightOptions.Overflow >= current_height_investments["Overflow"]).all(axis=1)
 
                 else:
                     raise Exception("Unknown mechanism in overflow bundling")
 
                 # available_measures_height = comparison_height.any(axis=1)
-                available_measures_height = comparison_height.all(axis=1)
+                available_measures_height = comparison_height
             else:  # if there is no investment in height, all options are available
                 available_measures_height = pd.Series(
                     np.ones(len(HeightOptions), dtype=bool)
@@ -438,6 +438,7 @@ class GreedyStrategy(StrategyBase):
                             )
                         else:
                             pass
+
             # do not go back:
             LifeCycleCost = np.where(LifeCycleCost <= 0, 1e99, LifeCycleCost)
             dR = np.subtract(init_risk, TotalRisk)
