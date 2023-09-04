@@ -194,25 +194,25 @@ class GreedyStrategy(StrategyBase):
 
             # same for HeightOptions
             if existing_investments[section_no, 0] > 0:
+                current_height_investments = {}
                 # exclude rows for height options that are not safer than current
-                current_investment_overflow = HeightOptions.iloc[
-                    existing_investments[section_no, 0] - 1
-                ]["Overflow"]
-                # TODO turn on revetment once the proper data is available.
-                # current_investment_revetment = HeightOptions.iloc[existing_investments[i, 0] - 1]['Revetment']
-                current_investment_revetment = HeightOptions.iloc[
-                    existing_investments[section_no, 0] - 1
-                ]["Overflow"]
+                if "Overflow" in HeightOptions.columns:
+                    current_height_investments["Overflow"] = HeightOptions.iloc[
+                        existing_investments[section_no, 0] - 1
+                    ]["Overflow"]
+                if "Revetment" in HeightOptions.columns:
+                    current_height_investments["Revetment"] = HeightOptions.iloc[existing_investments[section_no, 0] - 1]['Revetment']
+
                 # check if all rows in comparison only contain True values
                 if mechanism == "Overflow":
-                    comparison_height = (
-                        HeightOptions.Overflow >= current_investment_overflow
-                    )  # & (HeightOptions.Revetment >= current_investment_revetment)
-                    # comparison_height = (HeightOptions.Overflow > current_investment_overflow) #& (HeightOptions.Revetment >= current_investment_revetment)
+                    comparison_height = (HeightOptions.Overflow > current_height_investments["Overflow"])
+                    if "Revetment" in HeightOptions.columns:
+                        comparison_height = comparison_height & (HeightOptions.Revetment >= current_height_investments["Revetment"])
                 elif mechanism == "Revetment":
-                    comparison_height = (
-                        HeightOptions.Overflow >= current_investment_overflow
-                    )  # & (HeightOptions.Revetment > current_investment_revetment)
+                    comparison_height = (HeightOptions.Revetment > current_height_investments["Revetment"])
+                    if "Overflow" in HeightOptions.columns:
+                        comparison_height = comparison_height & (HeightOptions.Overflow >= current_height_investments["Overflow"])
+
                 else:
                     raise Exception("Unknown mechanism in overflow bundling")
 
@@ -547,6 +547,10 @@ class GreedyStrategy(StrategyBase):
                         self.RiskOverflow[Index_Best[0], Index_Best[1], :]
                     )
 
+                    init_revetment_risk[Index_Best[0], :] = copy.deepcopy(
+                        self.RiskRevetment[Index_Best[0], Index_Best[1], :]
+                    )
+
                     # TODO update risks
                     SpentMoney[Index_Best[0]] += copy.deepcopy(
                         LifeCycleCost[Index_Best]
@@ -556,7 +560,7 @@ class GreedyStrategy(StrategyBase):
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
                     logging.info("Single measure in step " + str(count))
-                elif BC_bundleOverflow > np.max(BC):
+                elif BC_bundleOverflow > BC_bundleRevetment:
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
                             IndexMeasure = (
@@ -570,8 +574,14 @@ class GreedyStrategy(StrategyBase):
                             init_probability = update_probability(
                                 init_probability, self, IndexMeasure
                             )
+                            init_independent_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskGeotechnical[IndexMeasure[0], IndexMeasure[2], :]
+                            )
                             init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
                                 self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            )
+                            init_revetment_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
                             )
                             SpentMoney[IndexMeasure[0]] += copy.deepcopy(
                                 LifeCycleCost[IndexMeasure]
@@ -593,6 +603,12 @@ class GreedyStrategy(StrategyBase):
                             BC_list.append(BC_bundleRevetment)
                             init_probability = update_probability(
                                 init_probability, self, IndexMeasure
+                            )
+                            init_independent_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskGeotechnical[IndexMeasure[0], IndexMeasure[2], :]
+                            )
+                            init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
                             )
                             init_revetment_risk[IndexMeasure[0], :] = copy.deepcopy(
                                 self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]

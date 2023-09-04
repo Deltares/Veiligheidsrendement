@@ -409,6 +409,8 @@ class StrategyBase:
             self.RiskRevetment = self.Pf["Revetment"] * np.tile(
                 self.D.T, (N, Sh + 1, 1)
             )
+        else:
+            self.RiskRevetment = np.zeros((N, Sh + 1, T))
 
         # add a few general parameters
         self.opt_parameters = {"N": N, "T": T, "Sg": Sg + 1, "Sh": Sh + 1}
