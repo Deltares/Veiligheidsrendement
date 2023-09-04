@@ -133,7 +133,7 @@ def revetment_combinations(
     mechanism_beta_dict = {
         mechanism: {year: [] for year in years} for mechanism in mechanisms
     }
-    count = 0
+
     # loop over partials
     for i, row1 in partials.iterrows():
         # combine with all combinables (in this case revetment measures)
@@ -185,8 +185,6 @@ def revetment_combinations(
                         mechanism_beta_dict[mechanism][year].append(
                             np.maximum(row1[mechanism, year], row2[mechanism, year])
                         )
-
-            count += 1
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
     attribute_col_df.columns = pd.MultiIndex.from_tuples(
