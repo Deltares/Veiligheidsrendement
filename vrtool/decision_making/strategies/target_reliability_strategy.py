@@ -53,11 +53,6 @@ class TargetReliabilityStrategy(StrategyBase):
         beta_cs_piping = pf_to_beta(
             traject.general_info.Pmax * traject.general_info.omegaPiping / n_piping
         )
-        n_revetment = 3
-        omegaRevetment = 0.1
-        beta_cs_revetment = pf_to_beta(
-            traject.general_info.Pmax * omegaRevetment / n_revetment
-        )
         beta_cs_stabinner = pf_to_beta(
             traject.general_info.Pmax
             * traject.general_info.omegaStabilityInner
@@ -81,17 +76,8 @@ class TargetReliabilityStrategy(StrategyBase):
 
         if splitparams:
             _taken_measures = pd.DataFrame(
-                data=[[None, None, 0, None, None, None, None, None, None, None, None]],
-                columns=measure_cols
-                + [
-                    "ID",
-                    "name",
-                    "yes/no",
-                    "dcrest",
-                    "dberm",
-                    "beta_target",
-                    "transition_level",
-                ],
+                data=[[None, None, 0, None, None, None, None, None, None]],
+                columns=measure_cols + ["ID", "name", "yes/no", "dcrest", "dberm"],
             )
         else:
             _taken_measures = pd.DataFrame(
@@ -123,12 +109,10 @@ class TargetReliabilityStrategy(StrategyBase):
                 _beta_t_piping = beta_cs_piping
                 _beta_t_sabinner = beta_cs_stabinner
             _beta_t_overflow = beta_cs_overflow
-            _beta_t_revetment = beta_cs_revetment
             _beta_t = {
                 "Piping": _beta_t_piping,
                 "StabilityInner": _beta_t_sabinner,
                 "Overflow": _beta_t_overflow,
-                "Revetment": _beta_t_revetment,
             }
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
             if isinstance(self.OI_year, int):
@@ -139,6 +123,14 @@ class TargetReliabilityStrategy(StrategyBase):
             _possible_measures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
             for mechanism in traject.mechanism_names:
+                if mechanism.lower().strip() == "revetment":
+                    # TODO (VRTOOL-187).
+                    # This could become obsolete once SectionReliability contains the data related to revetment.
+                    # Consider removing if that's the case.
+                    logging.warning(
+                        "Target strategy not available for '{}'.".format(mechanism)
+                    )
+                    continue
                 _possible_measures = _possible_measures.loc[
                     self.options[i.name][(mechanism, _target_year)] > _beta_t[mechanism]
                 ]
@@ -191,8 +183,6 @@ class TargetReliabilityStrategy(StrategyBase):
                             measure["yes/no"].values[0],
                             measure["dcrest"].values[0],
                             measure["dberm"].values[0],
-                            measure["beta_target"].values[0],
-                            measure["transition_level"].values[0],
                         ]
                     ],
                     columns=_taken_measures.columns,
