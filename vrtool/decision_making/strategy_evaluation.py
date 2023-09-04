@@ -91,24 +91,36 @@ def measure_combinations(
     return _combined_measures
 
 
-def revetment_combinations(partials, combinables):
-    _combined_measures = pd.DataFrame(columns=combinables.columns)
+def revetment_combinations(
+    partials: pd.DataFrame, revetment_measures: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Combines the revetment measures based on the input arguments.
+
+    Args:
+        partials (pd.Dataframe): An object containing the measures to combine the revetment measures with.
+        revetment_measures (pd.Dataframe): An object containing the revetment measures.
+
+    Returns:
+        pd.DataFrame: An object containing the combined revetment measures.
+    """
+    _combined_measures = pd.DataFrame(columns=revetment_measures.columns)
     # all columns without a second index are attributes of the measure
-    attribute_col_names = combinables.columns.get_level_values(0)[
-        combinables.columns.get_level_values(1) == ""
+    attribute_col_names = revetment_measures.columns.get_level_values(0)[
+        revetment_measures.columns.get_level_values(1) == ""
     ].tolist()
     # years are those columns of level 2 with a second index that is not ''
     years = (
-        combinables.columns.get_level_values(1)[
-            combinables.columns.get_level_values(1) != ""
+        revetment_measures.columns.get_level_values(1)[
+            revetment_measures.columns.get_level_values(1) != ""
         ]
         .unique()
         .tolist()
     )
     # mechanisms are those columns of level 1 with a second index that is not ''
     mechanisms = (
-        combinables.columns.get_level_values(0)[
-            combinables.columns.get_level_values(1) != ""
+        revetment_measures.columns.get_level_values(0)[
+            revetment_measures.columns.get_level_values(1) != ""
         ]
         .unique()
         .tolist()
@@ -125,7 +137,7 @@ def revetment_combinations(partials, combinables):
     # loop over partials
     for i, row1 in partials.iterrows():
         # combine with all combinables (in this case revetment measures)
-        for j, row2 in combinables.iterrows():
+        for j, row2 in revetment_measures.iterrows():
             for col in attribute_col_names:
                 if (
                     col == "ID"
