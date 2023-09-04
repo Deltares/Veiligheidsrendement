@@ -206,7 +206,7 @@ def revetment_combinations(
             :,
             (
                 _combined_measures.columns.get_level_values(0) != "Section",
-                _combined_measures.columns.get_level_values(1) == 25,
+                _combined_measures.columns.get_level_values(1) == year,
             ),
         ]
         pf_in_year = beta_to_pf(betas_in_year)
