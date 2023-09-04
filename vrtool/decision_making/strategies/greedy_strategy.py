@@ -328,9 +328,9 @@ class GreedyStrategy(StrategyBase):
             BC_out, measure_index = self.bundling_output(
                 BC_list, counter_list, sorted_sh, sg_indices, existing_investments
             )
-            return measure_index, BC_out, BC_list
+            return measure_index, BC_out
         else:
-            return [], 0, [0.0]
+            return [], 0
 
     def evaluate(
         self,
@@ -449,11 +449,8 @@ class GreedyStrategy(StrategyBase):
             # on overflow/revetment, and compute a BC ratio for a combination of measures at different sections.
 
             # for overflow:
-            (
-                overflow_bundle_index,
-                BC_bundleOverflow,
-                BC_bundle_list,
-            ) = self.bundling_of_measures(
+            BC_bundleOverflow = 0
+            (overflow_bundle_index, BC_bundleOverflow) = self.bundling_of_measures(
                 "Overflow",
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
@@ -466,7 +463,6 @@ class GreedyStrategy(StrategyBase):
                 (
                     revetment_bundle_index,
                     BC_bundleRevetment,
-                    BC_bundle_list,
                 ) = self.bundling_of_measures(
                     "Revetment",
                     copy.deepcopy(init_revetment_risk),
