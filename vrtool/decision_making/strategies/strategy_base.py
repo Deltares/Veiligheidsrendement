@@ -329,7 +329,7 @@ class StrategyBase:
         # get all probabilities. Interpolate on beta per section, then combine p_f
         betas = {}
         for n in range(0, N):
-            for _mechanism_name in self.mechanisms:
+            for _mechanism_name in traject.sections[n].mechanism_data:
                 len_beta1 = traject.sections[
                     n
                 ].section_reliability.SectionReliability.shape[1]
@@ -468,8 +468,11 @@ class StrategyBase:
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm", "transition_level", "beta_target"]
         Solution = Solution[colorder]
         for count, row in Solution.iterrows():
-            if isinstance(row["name"], np.ndarray):  # clean output
-                Solution.loc[count, "name"] = row["name"][0]
+            try:
+                if isinstance(row["name"], np.ndarray):  # clean output
+                    Solution.loc[count, "name"] = row["name"][0]
+            except:
+                pass
 
         if type == "Final":
             self.FinalSolution = Solution

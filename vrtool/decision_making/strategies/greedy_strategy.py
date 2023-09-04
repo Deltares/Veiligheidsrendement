@@ -782,14 +782,18 @@ class GreedyStrategy(StrategyBase):
                     .index.values[0]
                 )
             # get the name
-            names.append(
-                solutions_dict[traject.sections[i[0]].name]
-                .measure_table.loc[
-                    solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
-                    == ID[-1]
-                ]["Name"]
-                .values[0][0]
-            )
+            try:
+                names.append(
+                    solutions_dict[traject.sections[i[0]].name]
+                    .measure_table.loc[
+                        solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
+                        == ID[-1]
+                    ]["Name"]
+                    .values[0][0]
+                )
+            except:
+                names.append("missing")
+
         self.TakenMeasures = pd.DataFrame(
             list(
                 zip(
