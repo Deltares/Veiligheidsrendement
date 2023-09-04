@@ -19,6 +19,7 @@ from vrtool.decision_making.strategy_evaluation import (
     split_options,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import (
     DikeTraject,
     calc_traject_prob,
@@ -27,7 +28,6 @@ from vrtool.flood_defence_system.dike_traject import (
 )
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 class StrategyBase:
@@ -188,9 +188,7 @@ class StrategyBase:
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
-            combinedmeasures = self._step1combine(
-                solutions_dict, i, section, traject, splitparams
-            )
+            combinedmeasures = self._step1combine(solutions_dict, section, splitparams)
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
@@ -223,30 +221,63 @@ class StrategyBase:
             self.options[section.name] = StrategyData.reset_index(drop=True)
 
     def _step1combine(
-        self, solutions_dict, i: int, section, traject, splitparams: bool
+        self,
+        solutions_dict: dict[str, Solutions],
+        section: DikeSection,
+        splitparams: bool,
     ) -> pd.DataFrame:
-        # split different measure types:
-        available_measure_classes = solutions_dict[section.name].MeasureData['class'].unique().tolist()
-        measures_per_class = {measure_class: solutions_dict[section.name].MeasureData.loc[
-            solutions_dict[section.name].MeasureData["class"] == measure_class] for measure_class in available_measure_classes}
+        """
+        Combines the measures based on the input arguments.
 
+        Args:
+            solutions_dict (dict[str, Solutions]): The dictionary containing the solutions for each section.
+            section (DikeSection): The dike section to combine the measures for.
+            splitparams (bool): Indicator whether the parameters should be split.
+
+        Returns:
+            pd.DataFrame: An object that contains all information of the combined measures.
+        """
+        # split different measure types:
+        available_measure_classes = (
+            solutions_dict[section.name].MeasureData["class"].unique().tolist()
+        )
+        measures_per_class = {
+            measure_class: solutions_dict[section.name].MeasureData.loc[
+                solutions_dict[section.name].MeasureData["class"] == measure_class
+            ]
+            for measure_class in available_measure_classes
+        }
 
         if self.__class__.__name__ == "TargetReliabilityStrategy":
             # only consider measures at the OI_year
-            measures_per_class = {measure_class: measures_per_class[measure_class].loc[measures_per_class[measure_class]["year"] == self.OI_year] for measure_class in available_measure_classes}
+            measures_per_class = {
+                measure_class: measures_per_class[measure_class].loc[
+                    measures_per_class[measure_class]["year"] == self.OI_year
+                ]
+                for measure_class in available_measure_classes
+            }
 
         combinedmeasures = measure_combinations(
-            measures_per_class['combinable'],
-            measures_per_class['partial'],
+            measures_per_class["combinable"],
+            measures_per_class["partial"],
             solutions_dict[section.name],
             splitparams=splitparams,
         )
 
         if "revetment" in measures_per_class:
-            combinedmeasures_with_revetment = revetment_combinations(combinedmeasures, measures_per_class['revetment'])
-            #combine solutions_dict[section.name].MeasureData with revetments
-            base_measures_with_revetment = revetment_combinations(solutions_dict[section.name].MeasureData.loc[solutions_dict[section.name].MeasureData['class'] != 'revetment'], measures_per_class['revetment'])
-            combinedmeasures = pd.concat([base_measures_with_revetment,combinedmeasures_with_revetment])
+            combinedmeasures_with_revetment = revetment_combinations(
+                combinedmeasures, measures_per_class["revetment"]
+            )
+            # combine solutions_dict[section.name].MeasureData with revetments
+            base_measures_with_revetment = revetment_combinations(
+                solutions_dict[section.name].MeasureData.loc[
+                    solutions_dict[section.name].MeasureData["class"] != "revetment"
+                ],
+                measures_per_class["revetment"],
+            )
+            combinedmeasures = pd.concat(
+                [base_measures_with_revetment, combinedmeasures_with_revetment]
+            )
         # make sure combinable, mechanism and year are in the MeasureData dataframe
         # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
         # if there is a measureid that is not known yet, add it to the measure table
@@ -257,10 +288,22 @@ class StrategyBase:
             for ij in IDs:
                 if ij not in existingIDs:
                     indexes = ij.split("+")
-                    #concatenate names with + sign based on solutions_dict using list comprehension
-                    name = "+".join(solutions_dict[section.name].measure_table[(solutions_dict[section.name].measure_table["ID"].isin(indexes))]["Name"])
-                    solutions_dict[section.name].measure_table = pd.concat([solutions_dict[section.name].measure_table,
-                                      pd.DataFrame([[ij, name]], columns=['ID', 'Name'])])
+                    # concatenate names with + sign based on solutions_dict using list comprehension
+                    name = "+".join(
+                        solutions_dict[section.name].measure_table[
+                            (
+                                solutions_dict[section.name]
+                                .measure_table["ID"]
+                                .isin(indexes)
+                            )
+                        ]["Name"]
+                    )
+                    solutions_dict[section.name].measure_table = pd.concat(
+                        [
+                            solutions_dict[section.name].measure_table,
+                            pd.DataFrame([[ij, name]], columns=["ID", "Name"]),
+                        ]
+                    )
         return combinedmeasures
 
     def evaluate(
