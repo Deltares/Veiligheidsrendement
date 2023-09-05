@@ -44,16 +44,14 @@ class RevetmentMeasure(MeasureProtocol):
         return self.parameters["n_steps_block"]
 
     def _get_min_beta_target(self, dike_section: DikeSection) -> float:
-        return float(
-            max(
-                map(
-                    lambda x: x.Beta,
-                    dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                        "Revetment"
-                    ).Reliability.values(),
-                )
-            )
+        """
+        NOTE (VRTOOL-254): Retrieves the Beta value for the first computation year (lowest integer value).
+        """
+        _mech_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+            "Revetment"
         )
+        _years = map(int, _mech_reliability_collection.Reliability.keys())
+        return _mech_reliability_collection.Reliability[str(min(_years))].Beta
 
     def _get_beta_target_vector(self, min_beta: float, p_max: float) -> list[float]:
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
