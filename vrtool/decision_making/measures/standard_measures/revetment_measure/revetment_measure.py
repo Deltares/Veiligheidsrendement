@@ -126,7 +126,7 @@ class RevetmentMeasure(MeasureProtocol):
                     dike_section,
                     transition_grouping,
                 )
-                self.measures.beta_target_results.append(_beta_target_results)
+                self.measures.result_collection.append(_beta_target_results)
 
     def _get_grouped_intermediate_results(
         self, ungrouped_measures: list[RevetmentMeasureResult]
