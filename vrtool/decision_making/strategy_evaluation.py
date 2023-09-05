@@ -407,7 +407,7 @@ def split_options(
         min_beta_target = options[i].beta_target[options[i].beta_target > 0].min()
         # for dependent sections we have all measures where there is a transition_level larger than the minimum, or a beta_target larger than the minimum
         # and the berm should be either non-existent -999 or 0
-        def compareMeasureDependent(option):
+        def is_dependent_measure_present(option):
             if math.isnan(min_transition_level) or math.isnan(min_beta_target):
                 # no revetment measures; just check dberm:
                 return option.dberm <= 0
@@ -419,11 +419,11 @@ def split_options(
                 )
 
         options_dependent[i] = options_dependent[i].loc[
-            compareMeasureDependent(options_dependent[i])
+            is_dependent_measure_present(options_dependent[i])
         ]
 
         # for independent measures dcrest should be 0 or -999, and transition_level and beta_target should be -999
-        def compareMeasureIndependent(option):
+        def is_independent_measure_present(option):
             if math.isnan(min_transition_level) or math.isnan(min_beta_target):
                 # no revetment measures; just check dcrest:
                 return option.dcrest <= 0.0
@@ -435,7 +435,7 @@ def split_options(
                 )
 
         options_independent[i] = options_independent[i].loc[
-            compareMeasureIndependent(options_independent[i])
+            is_independent_measure_present(options_independent[i])
         ]
 
         # we only need the measures with ids that are also in options_dependent
@@ -486,7 +486,7 @@ def split_options(
                 #break the type string at '+' and find the value that contains soil reinforcement
                 for cost_index, measure_type in enumerate(row["type"].item().split('+')):
                     if "Soil reinforcement with stability screen" in measure_type:
-                        if type(row["cost"].item()) == float:
+                        if isinstance(row["cost"].item(), float):
                             options_dependent[i].loc[idx,"cost"] = np.subtract(options_dependent[i].loc[idx,"cost"],cost_stability_screen)[0]
                         else:
                             # get list of costs and subtract startcosts from the cost that contains soil reinforcement
