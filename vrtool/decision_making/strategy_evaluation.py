@@ -1,10 +1,10 @@
 import copy
+import itertools
 import logging
+import math
 
 import numpy as np
-import math
 import pandas as pd
-import itertools
 
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -494,17 +494,17 @@ def split_options(
                             cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
                             #pass cost_list back to the idx, "cost" column in options_dependent[i]
                             options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
+
         # Find all dependent measures that contain a Vertical Geotextile or a Diaphragm wall
         vertical_geotextiles = options_dependent[i]["type"].str.contains("Vertical Geotextile")
         diaphragm_walls = options_dependent[i]["type"].str.contains("Diaphragm Wall")
         def set_cost_to_zero(options_set, bools, measure_string):
-            # options_copy = options_set.copy()
             for row_idx, option_row in options_set.iterrows():
                 if bools[row_idx]:
                     # break the type string at '+' and find the value that is a vertical Geotextile
                     for cost_index, measure_type in enumerate(option_row["type"].item().split('+')):
                         if measure_type == measure_string:
-                            if type(option_row["cost"].item()) == float:
+                            if isinstance(option_row["cost"].item(), float):
                                 options_set.loc[row_idx, "cost"] = 0.
                             else:
                                 # get list of costs and set cost of geotextile to 0
@@ -512,7 +512,8 @@ def split_options(
                                 cost_list[cost_index] = 0.
                                 # pass cost_list back to the row_idx, "cost" column in options_dependent[i]
                                 options_set.loc[row_idx, "cost"] = [[val] for val in cost_list]
-            return options_set #I think this is not necessary
+            return options_set
+        
         #set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
         if any(vertical_geotextiles):
             options_dependent[i] = set_cost_to_zero(options_dependent[i], vertical_geotextiles, "Vertical Geotextile")
