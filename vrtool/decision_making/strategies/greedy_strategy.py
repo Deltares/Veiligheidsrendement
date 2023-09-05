@@ -3,6 +3,7 @@ import logging
 import time
 from pathlib import Path
 from typing import Dict
+
 import numpy
 import numpy as np
 import pandas as pd
@@ -216,7 +217,6 @@ class GreedyStrategy(StrategyBase):
                 else:
                     raise Exception("Unknown mechanism in overflow bundling")
 
-                # available_measures_height = comparison_height.any(axis=1)
                 available_measures_height = comparison_height
             else:  # if there is no investment in height, all options are available
                 available_measures_height = pd.Series(
