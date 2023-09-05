@@ -27,7 +27,6 @@ from vrtool.flood_defence_system.dike_traject import (
 )
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 class StrategyBase:
@@ -365,19 +364,19 @@ class StrategyBase:
             LCC_sh = calc_tc(self.options_height[section_keys[n]], self.discount_rate)
             LCC_sg = calc_tc(self.options_geotechnical[section_keys[n]], self.discount_rate)
             # LCC_tot = calcTC(self.options[keys[n]])
-            #we get the unique ids of the options in the height and geotechnical measures
+            # we get the unique ids of the options in the height and geotechnical measures
             section_sg_ids = self.options_geotechnical[section_keys[n]].ID.unique()
             section_sh_ids = self.options_height[section_keys[n]].ID.unique()
             for sh_id in section_sh_ids:
                 sh_indices = self.options_height[section_keys[n]].index[
                     self.options_height[section_keys[n]].ID == sh_id].tolist()
 
-                #we get the indices of sg_id in the options_geotechnical df
+                # we get the indices of sg_id in the options_geotechnical df
                 sg_indices = self.options_geotechnical[section_keys[n]].index[self.options_geotechnical[section_keys[n]].ID == sh_id].tolist()
-                #combined LCC array for sh_indices and sg_indices
+                # combined LCC array for sh_indices and sg_indices
                 LCC_combined = np.add(np.tile(LCC_sh[sh_indices],(len(sg_indices),1)), np.tile(LCC_sg[sg_indices],(len(sh_indices),1)).T)
-                #fill self.LCCOption[n, sh_indices, sg_indices]
-                #we do it using a loop, as masking is not working properly
+                # fill self.LCCOption[n, sh_indices, sg_indices]
+                # we do it using a loop, as masking is not working properly
                 # Loop through the indices and update values
                 for i, sh_idx in enumerate(sh_indices):
                     for j, sg_idx in enumerate(sg_indices):
@@ -468,12 +467,9 @@ class StrategyBase:
         colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm", "transition_level", "beta_target"]
         Solution = Solution[colorder]
         for count, row in Solution.iterrows():
-            try:
-                if isinstance(row["name"], np.ndarray):  # clean output
+            if isinstance(row["name"], np.ndarray) and any(row["name"]):  # clean output
                     Solution.loc[count, "name"] = row["name"][0]
-            except:
-                pass
-
+            
         if type == "Final":
             self.FinalSolution = Solution
             self.FinalSolution.to_csv(csv_path)
