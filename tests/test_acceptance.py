@@ -12,6 +12,8 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
@@ -21,6 +23,8 @@ from vrtool.orm.orm_controllers import (
     open_database,
 )
 from vrtool.orm.orm_db import vrtool_db
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -240,6 +244,37 @@ class TestAcceptance:
                 ), "Missmatched values for section {}, mechanism {}, t {}".format(
                     row["name"], _mechanism_name, _t_column
                 )
+
+    def test_run_measures_and_save_measure_results(
+        self, valid_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        _test_traject = get_dike_traject(valid_vrtool_config)
+        assert not any(MeasureResult.select())
+        assert not any(MeasureResultParameter.select())
+
+        # 2. Run test.
+        _results = RunMeasures(
+            valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
+        ).run()
+
+        # 3. Verify expectations.
+        assert isinstance(_results, ResultsMeasures)
+        assert valid_vrtool_config.output_directory.exists()
+        assert any(valid_vrtool_config.output_directory.glob("*"))
+
+        # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
+        # However, this is not possible as the connection will be closed during the export_initial_assessment.
+        # Causing an error as the transaction requires said connection to be open.
+        # Therefore the following has been found as the only possible way to assess whether the results are
+        # written in the database without affecting other tests from using this db.
+        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
+        shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
+        _results.vr_config.input_database_path = _bck_db_filepath
+
+        # 4. Validate exporting results is possible
+        # TODO: This needs to wait until the entire export is finished
+        # self.validate_safety_assessment_results(valid_vrtool_config)
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
