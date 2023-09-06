@@ -1,12 +1,13 @@
 from pathlib import Path
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.decision_making.measures.measure_result_collection_protocol import MeasureResultCollectionProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 
 """Important: a measure is a single type of reinforcement, so for instance a stability screen. A solution can be a COMBINATION of measures (e.g. a stability screen with a berm)"""
 
-from typing import Protocol, runtime_checkable
+from typing import Protocol, Union, runtime_checkable
 
 
 @runtime_checkable
@@ -20,6 +21,7 @@ class MeasureProtocol(Protocol):
     geometry_plot: bool
     unit_costs: dict
     input_directory: Path
+    measures: Union[list, dict, MeasureResultCollectionProtocol]
 
     def evaluate_measure(
         self,
