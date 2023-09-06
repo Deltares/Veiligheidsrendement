@@ -81,7 +81,7 @@ class TestMeasureExporter:
             _exporter.export_dom(_measure_to_export)
 
         # Assert
-        assert str(value_error.value).startswith("unknown measure type: <class ")
+        assert str(value_error.value) == "Unknown measure type: InvalidMeasureMocked"
 
     def test_export_dom_invalid_type(self, empty_db_fixture: SqliteDatabase):
         # Setup
