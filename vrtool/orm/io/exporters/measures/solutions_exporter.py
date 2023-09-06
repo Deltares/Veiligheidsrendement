@@ -10,6 +10,21 @@ class SolutionsExporter(OrmExporterProtocol):
     def get_measure_per_section(
         dike_section_name: str, traject_name: str, measure_id: int
     ) -> MeasurePerSection:
+        """
+        Gets an instance of a `MeasurePerSection` given the database contains an entry where its `SectionData.section_name` and `SectionData.dike_traject.traject_name` match the ones provided as argument; otherwise gets None.
+
+        Args:
+            dike_section_name (str): Value matching a `SectionData.section_name` entry.
+            traject_name (str): Value matching a `DikeTraject.traject_name` entry.
+            measure_id (int): Id of an existing `Measure` in the database.
+
+        Raises:
+            ValueError: When no `Measure` entry was found with the provided `measure_id` as `Measure.id`.
+            ValueError: When no `SectionData` entry was found with a matching `SectionData.section_name` or its `SectionData.dike_traject.traject_name` is not the same as the provided `traject_name`.
+
+        Returns:
+            MeasurePerSection: Found instance with matching values or None (`SectionData` and `Measure` exist but no combination in `MeasurePerSection` was found).
+        """
         _measure = Measure.get_or_none(Measure.id == measure_id)
         if not _measure:
             raise ValueError(f"No 'Measure' was found with id: {measure_id}.")
