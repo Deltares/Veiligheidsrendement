@@ -23,4 +23,4 @@ class MeasureExporter(OrmExporterProtocol):
             exporter = MeasureResultCollectionExporter(self._measure_per_section)
             exporter.export_dom(dom_model.measures)
         else:
-            raise ValueError("unknown measure type")
+            raise ValueError(f"unknown measure type: {type(dom_model)}")
