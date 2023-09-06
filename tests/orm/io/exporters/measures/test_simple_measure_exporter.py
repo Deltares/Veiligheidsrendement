@@ -6,7 +6,7 @@ from vrtool.decision_making.measures.measure_protocol import (
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.io.exporters.simple_measure_exporter import SimpleMeasureExporter
+from vrtool.orm.io.exporters.measures.simple_measure_exporter import SimpleMeasureExporter
 from vrtool.orm.models.measure_result import MeasureResult
 from tests.orm.io.exporters.measures import create_section_reliability
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
