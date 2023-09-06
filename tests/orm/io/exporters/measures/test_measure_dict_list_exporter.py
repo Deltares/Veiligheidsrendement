@@ -1,7 +1,9 @@
 from tests.orm import empty_db_fixture
 from tests.orm.io.exporters.measures import (
     MeasureResultTestInputData,
+    create_section_reliability,
 )
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.orm.io.exporters.measures.measure_dict_list_exporter import (
     MeasureDictListExporter,
 )
@@ -9,6 +11,19 @@ from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 from peewee import SqliteDatabase, fn
+
+
+class MeasureDictListTest(MeasureProtocol):
+    def __init__(self) -> None:
+        _year_range = list(range(1, 100, 15))
+
+        def _get_measure(measure_idx: int) -> dict:
+            return {
+                "Cost": 42 * (measure_idx + 1),
+                "Reliability": create_section_reliability(_year_range),
+            }
+
+        self.measures = list(map(_get_measure, range(0, 3)))
 
 
 class TestMeasureDictListExporter:

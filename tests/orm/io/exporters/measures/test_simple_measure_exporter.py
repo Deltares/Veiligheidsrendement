@@ -1,7 +1,9 @@
 from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
-from vrtool.decision_making.measures.measure_protocol import SimpleMeasureProtocol
+from vrtool.decision_making.measures.measure_protocol import (
+    MeasureProtocol,
+)
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.simple_measure_exporter import SimpleMeasureExporter
@@ -10,14 +12,15 @@ from tests.orm.io.exporters.measures import create_section_reliability
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 
 
-class TestSimpleMeasureExporter:
-    class MeasureTest(SimpleMeasureProtocol):
-        def __init__(self) -> None:
-            self.measures = {
-                "Cost": 13.37,
-                "Reliability": create_section_reliability(list(range(1, 100, 15))),
-            }
+class MeasureTest(MeasureProtocol):
+    def __init__(self) -> None:
+        self.measures = {
+            "Cost": 13.37,
+            "Reliability": create_section_reliability(list(range(1, 100, 15))),
+        }
 
+
+class TestSimpleMeasureExporter:
     def test_initialize(self):
         # Call
         _exporter = SimpleMeasureExporter(None)
@@ -33,7 +36,7 @@ class TestSimpleMeasureExporter:
         assert not any(MeasureResult.select())
         assert not any(MeasureResultParameter.select())
 
-        _measure_to_export = self.MeasureTest()
+        _measure_to_export = MeasureTest()
         _exporter = SimpleMeasureExporter(_measure_per_section)
 
         # Call

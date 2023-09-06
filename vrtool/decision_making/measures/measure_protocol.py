@@ -36,8 +36,3 @@ class MeasureProtocol(Protocol):
             preserve_slope (bool): Set to false if the slope can be modified during evaluation.
         """
         pass
-
-
-@runtime_checkable
-class SimpleMeasureProtocol(MeasureProtocol, Protocol):
-    measures: dict
