@@ -6,6 +6,7 @@ import click
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
+    clear_measure_results,
     export_results_safety_assessment,
     get_dike_traject,
 )
@@ -89,6 +90,12 @@ def run_step_measures(**kwargs):
     # Define VrToolConfig and Selected Traject
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
     _selected_traject = get_dike_traject(_vr_config)
+
+    # Clear the results
+    clear_assessment_results(
+        _vr_config
+    )  # Assessment results also cleared because it is part of the RunMeasures workflow
+    clear_measure_results(_vr_config)
 
     # Step 2. Measures.
     _measures = RunMeasures(

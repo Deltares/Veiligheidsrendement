@@ -6,7 +6,12 @@ from peewee import SqliteDatabase
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
-from tests.orm import get_basic_dike_traject_info, get_basic_mechanism_per_section
+from tests.orm import (
+    get_basic_combinable_type,
+    get_basic_dike_traject_info,
+    get_basic_measure_type,
+    get_basic_mechanism_per_section,
+)
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
@@ -21,12 +26,13 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.orm_controllers import (
+    clear_assessment_results,
+    clear_measure_results,
+    export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
     initialize_database,
     open_database,
-    export_results_safety_assessment,
-    clear_assessment_results,
 )
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -388,8 +394,6 @@ class TestOrmControllers:
             traject_info, "section 2", _mechanisms
         )
 
-        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
-
         # Precondition
         assert any(orm_models.AssessmentSectionResult.select())
         assert any(orm_models.AssessmentMechanismResult.select())
@@ -397,6 +401,7 @@ class TestOrmControllers:
         _db_connection.close()
 
         # Call
+        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
         clear_assessment_results(_vrtool_config)
 
         # Assert
@@ -407,12 +412,52 @@ class TestOrmControllers:
 
         _db_connection.close()
 
+    def test_clear_measure_result_clears_all_results(
+        self, export_database: SqliteDatabase
+    ):
+        # Setup
+        _db_connection = export_database
+        _db_connection.connect()
+
+        assert not any(orm_models.MeasureResult.select())
+        assert not any(orm_models.MeasureResultParameter.select())
+
+        traject_info = get_basic_dike_traject_info()
+
+        _measure_type = get_basic_measure_type()
+        _combinable_type = get_basic_combinable_type()
+        _measures = [
+            self._create_measure(_measure_type, _combinable_type, "measure 1"),
+            self._create_measure(_measure_type, _combinable_type, "measure 2"),
+        ]
+
+        self._create_section_with_fully_configured_measure_results(
+            traject_info, "Section 1", _measures
+        )
+        self._create_section_with_fully_configured_measure_results(
+            traject_info, "Section 2", _measures
+        )
+
+        # Precondition
+        assert any(orm_models.MeasureResult.select())
+        assert any(orm_models.MeasureResultParameter.select())
+
+        _db_connection.close()
+
+        # Call
+        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
+        clear_measure_results(_vrtool_config)
+
+        # Assert
+        assert not any(orm_models.MeasureResult.select())
+        assert not any(orm_models.MeasureResultParameter.select())
+
     def _create_section_with_fully_configured_assessment_results(
         self,
         traject_info: DikeTrajectInfo,
         section_name: str,
         mechanisms: list[orm_models.Mechanism],
-    ):
+    ) -> None:
         section = self._create_basic_section_data(traject_info, section_name)
         self._create_assessment_section_results(section)
 
@@ -460,4 +505,52 @@ class TestOrmControllers:
         for i in range(2000, 2100, 10):
             orm_models.AssessmentMechanismResult.create(
                 beta=i / 1000.0, time=i, mechanism_per_section=mechanism_per_section
+            )
+
+    def _create_section_with_fully_configured_measure_results(
+        self,
+        traject_info: DikeTrajectInfo,
+        section_name: str,
+        measures: list[orm_models.Measure],
+    ) -> None:
+        section = self._create_basic_section_data(traject_info, section_name)
+
+        for measure in measures:
+            measure_per_section = orm_models.MeasurePerSection.create(
+                section=section, measure=measure
+            )
+            self._create_measure_results(measure_per_section)
+
+    def _create_measure(
+        self,
+        measure_type: orm_models.MeasureType,
+        combinable_type: orm_models.CombinableType,
+        measure_name: str,
+    ) -> orm_models.Measure:
+        return orm_models.Measure.create(
+            measure_type=measure_type,
+            combinable_type=combinable_type,
+            name=measure_name,
+            year=20,
+        )
+
+    def _create_measure_results(
+        self, measure_per_section: orm_models.MeasurePerSection
+    ) -> None:
+        cost = 13.37
+        for i in range(2000, 2100, 10):
+            measure_result = orm_models.MeasureResult.create(
+                beta=i / 1000.0,
+                time=i,
+                cost=cost,
+                measure_per_section=measure_per_section,
+            )
+            self._create_measure_result_parameters(measure_result)
+
+    def _create_measure_result_parameters(
+        self, measure_result: orm_models.MeasureResult
+    ) -> None:
+        for i in range(1, 10):
+            orm_models.MeasureResultParameter.create(
+                name=f"Parameter {i}", value=i / 10.0, measure_result=measure_result
             )
