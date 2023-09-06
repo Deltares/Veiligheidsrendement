@@ -161,3 +161,23 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
     vrtool_db.close()
 
     logging.info("Closed connection after clearing initial assessment results.")
+
+
+def clear_measure_results(config: VrtoolConfig) -> None:
+    """
+    Clears all the measure results from the database
+
+    Args:
+        config (VrtoolConfig): Vrtool configuration
+    """
+
+    open_database(config.input_database_path)
+    logging.info("Opened connection for clearing measure results.")
+
+    with vrtool_db.atomic():
+        vrtool_db.execute_sql("DELETE FROM MeasureResult;")
+        vrtool_db.execute_sql("DELETE FROM MeasureResultParameter;")
+
+    vrtool_db.close()
+
+    logging.info("Closed connection after clearing measure results.")
