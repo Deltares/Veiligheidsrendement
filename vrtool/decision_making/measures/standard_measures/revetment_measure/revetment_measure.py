@@ -53,7 +53,9 @@ class RevetmentMeasure(MeasureProtocol):
         _mech_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
             "Revetment"
         )
-        _min_reliability_year = str(min(map(int, _mech_reliability_collection.Reliability.keys())))
+        _min_reliability_year = str(
+            min(map(int, _mech_reliability_collection.Reliability.keys()))
+        )
         return _mech_reliability_collection.Reliability[_min_reliability_year].Beta
 
     def _get_beta_target_vector(self, min_beta: float, p_max: float) -> list[float]:

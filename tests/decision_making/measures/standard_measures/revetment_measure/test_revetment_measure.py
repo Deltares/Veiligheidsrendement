@@ -1,3 +1,5 @@
+from random import shuffle
+
 from numpy.testing import assert_array_almost_equal
 
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -5,8 +7,6 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure import 
     RevetmentMeasure,
 )
 from vrtool.flood_defence_system.dike_section import DikeSection
-from random import shuffle
-
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
