@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from typing import Dict
 
+import numpy
 import numpy as np
 import pandas as pd
 
@@ -23,15 +24,15 @@ class GreedyStrategy(StrategyBase):
         self, BC_list, counter_list, sh_array, sg_array, existing_investments
     ):
         no_of_sections = sh_array.shape[0]
-        ind = np.argwhere(BC_list == np.max(BC_list))[0][0]
-        final_index = counter_list[ind]
+        maximum_BC_index = np.array(BC_list).argmax()
+        optimal_counter_combination = counter_list[maximum_BC_index]
         # convert measure_index to sh based on sorted_indices
         sg_index = np.zeros((no_of_sections,))
         measure_index = np.zeros((no_of_sections,), dtype=np.int32)
-        for i in range(0, len(measure_index)):
-            if final_index[i] != 0:  # a measure was taken
-                measure_index[i] = sh_array[i, final_index[i]]
-                sg_index[i] = sg_array[i, final_index[i]]
+        for i in range(0, no_of_sections):
+            if optimal_counter_combination[i] != 0:  # a measure was taken
+                measure_index[i] = sh_array[i, optimal_counter_combination[i]]
+                sg_index[i] = sg_array[i, optimal_counter_combination[i]]
             else:  # no measure was taken
                 measure_index[i] = existing_investments[i, 0]
                 sg_index[i] = existing_investments[i, 1]
@@ -47,15 +48,30 @@ class GreedyStrategy(StrategyBase):
 
     def bundling_loop(
         self,
-        initial_mechanism_risk,
-        life_cycle_cost,
-        sh_array,
-        sg_array,
-        mechanism,
-        n_runs=100,
+        initial_mechanism_risk: numpy.ndarray,
+        life_cycle_cost: numpy.ndarray,
+        sh_array: numpy.ndarray,
+        sg_array: numpy.ndarray,
+        mechanism: str,
+        n_runs: int = 100,
     ):
+        """
+        Bundles measures for dependent mechanisms (overflow or revetment) and returns the optimal bundling combination.
+        It only looks at risk reduction for dependent mechanism considered, not for the other mechanisms.
+
+        Args:
+            initial_mechanism_risk: Initial risk of the dependent mechanism.
+            life_cycle_cost: Life cycle cost of the possible measures for each section.
+            sh_array: Array containing the indices of the possible measures for dependent mechanisms for each section. These indices are sorted from cheapest to most expensive.
+            sg_array: Array containing the indices of the possible measures for independent mechanisms for each section. These indices correspond to the cheapest available sg combination for the corresponding sh.
+                        Note that sh_array and sg_array have the same dimensions.
+            mechanism: Array containing the mechanism type for each section (Overflow or Revetment).
+            n_runs: Number of runs for the bundling loop. Default = 100, but typically less is sufficient.
+        """
+
         # first initialize some relevant arrays and values for the loop for bundling measures
         number_of_sections = sh_array.shape[0]
+        number_of_available_height_measures = sh_array.shape[1] - 1
         LCC_values = np.zeros((number_of_sections,))  # total LCC spent for each section
         index_counter = np.zeros(
             (number_of_sections,), dtype=np.int32
@@ -64,20 +80,21 @@ class GreedyStrategy(StrategyBase):
         run_number = 0  # used for counting the loop
         counter_list = []  # used to store the bundle indices
         BC_list = []  # used to store BC for each bundle
-        weak_list = []  # used to store index of weakest section
+        highest_risk_section_indices = []  # used to store index of weakest section
         new_mechanism_risk = copy.deepcopy(
             initial_mechanism_risk
         )  # initialize overflow risk
         # here we start the loop. Note that we rarely make it to run 100, for larger problems this limit might need to be increased
         while run_number < n_runs:
             # get weakest section
-            ind_weakest = np.argmax(np.sum(new_mechanism_risk, axis=1))
+
+            ind_highest_risk = np.argmax(np.sum(new_mechanism_risk, axis=1))
 
             # We should increase the measure at the weakest section, but only if we have not reached the end of the array yet:
-            if sh_array.shape[1] - 1 > index_counter[ind_weakest]:
-                index_counter[ind_weakest] += 1
+            if number_of_available_height_measures > index_counter[ind_highest_risk]:
+                index_counter[ind_highest_risk] += 1
                 # take next step, exception if there is no valid measure. In that case exit the routine.
-                if sh_array[ind_weakest, index_counter[ind_weakest]] == 999:
+                if sh_array[ind_highest_risk, index_counter[ind_highest_risk]] == 999:
                     logging.error(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(
                             run_number
@@ -94,21 +111,25 @@ class GreedyStrategy(StrategyBase):
 
             # insert next cheapest measure from sorted list into mechanism_risk, then compute the LCC value and BC
             if mechanism == "Overflow":
-                new_mechanism_risk[ind_weakest, :] = self.RiskOverflow[
-                    ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
+                new_mechanism_risk[ind_highest_risk, :] = self.RiskOverflow[
+                    ind_highest_risk,
+                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
+                    :,
                 ]
             elif mechanism == "Revetment":
-                new_mechanism_risk[ind_weakest, :] = self.RiskRevetment[
-                    ind_weakest, sh_array[ind_weakest, index_counter[ind_weakest]], :
+                new_mechanism_risk[ind_highest_risk, :] = self.RiskRevetment[
+                    ind_highest_risk,
+                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
+                    :,
                 ]
             else:
                 raise ValueError("Mechanism {} not recognized".format(mechanism))
 
-            LCC_values[ind_weakest] = np.min(
+            LCC_values[ind_highest_risk] = np.min(
                 life_cycle_cost[
-                    ind_weakest,
-                    sh_array[ind_weakest, index_counter[ind_weakest]],
-                    sg_array[ind_weakest, index_counter[ind_weakest]],
+                    ind_highest_risk,
+                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
+                    sg_array[ind_highest_risk, index_counter[ind_highest_risk]],
                 ]
             )
             BC = (
@@ -120,14 +141,13 @@ class GreedyStrategy(StrategyBase):
                 BC_list.append(0.0)
             else:
                 BC_list.append(BC)
-            weak_list.append(ind_weakest)
+            highest_risk_section_indices.append(ind_highest_risk)
 
-            # store the bundle indices, do -1 as index_counter contains the NEXT step
             counter_list.append(copy.deepcopy(index_counter))
 
             # in the next step, the next measure should be taken for this section
             run_number += 1
-        return BC_list, counter_list, weak_list
+        return BC_list, counter_list, highest_risk_section_indices
 
     def get_sg_sh_indices(
         self,
@@ -175,30 +195,29 @@ class GreedyStrategy(StrategyBase):
 
             # same for HeightOptions
             if existing_investments[section_no, 0] > 0:
+                current_height_investments = {}
                 # exclude rows for height options that are not safer than current
-                current_investment_overflow = HeightOptions.iloc[
-                    existing_investments[section_no, 0] - 1
-                ]["Overflow"]
-                # TODO turn on revetment once the proper data is available.
-                # current_investment_revetment = HeightOptions.iloc[existing_investments[i, 0] - 1]['Revetment']
-                current_investment_revetment = HeightOptions.iloc[
-                    existing_investments[section_no, 0] - 1
-                ]["Overflow"]
+                if "Overflow" in HeightOptions.columns:
+                    current_height_investments["Overflow"] = HeightOptions.iloc[
+                        existing_investments[section_no, 0] - 1
+                    ]["Overflow"]
+                if "Revetment" in HeightOptions.columns:
+                    current_height_investments["Revetment"] = HeightOptions.iloc[existing_investments[section_no, 0] - 1]['Revetment']
+
                 # check if all rows in comparison only contain True values
                 if mechanism == "Overflow":
-                    comparison_height = (
-                        HeightOptions.Overflow >= current_investment_overflow
-                    )  # & (HeightOptions.Revetment >= current_investment_revetment)
-                    # comparison_height = (HeightOptions.Overflow > current_investment_overflow) #& (HeightOptions.Revetment >= current_investment_revetment)
+                    comparison_height = (HeightOptions.Overflow > current_height_investments["Overflow"]).any(axis=1)
+                    if "Revetment" in HeightOptions.columns:
+                        comparison_height = comparison_height & (HeightOptions.Revetment >= current_height_investments["Revetment"]).all(axis=1)
                 elif mechanism == "Revetment":
-                    comparison_height = (
-                        HeightOptions.Overflow >= current_investment_overflow
-                    )  # & (HeightOptions.Revetment > current_investment_revetment)
+                    comparison_height = (HeightOptions.Revetment > current_height_investments["Revetment"]).any(axis=1)
+                    if "Overflow" in HeightOptions.columns:
+                        comparison_height = comparison_height & (HeightOptions.Overflow >= current_height_investments["Overflow"]).all(axis=1)
+
                 else:
                     raise Exception("Unknown mechanism in overflow bundling")
 
-                # available_measures_height = comparison_height.any(axis=1)
-                available_measures_height = comparison_height.all(axis=1)
+                available_measures_height = comparison_height
             else:  # if there is no investment in height, all options are available
                 available_measures_height = pd.Series(
                     np.ones(len(HeightOptions), dtype=bool)
@@ -308,9 +327,9 @@ class GreedyStrategy(StrategyBase):
             BC_out, measure_index = self.bundling_output(
                 BC_list, counter_list, sorted_sh, sg_indices, existing_investments
             )
-            return measure_index, BC_out, BC_list
+            return measure_index, BC_out
         else:
-            return [], 0, [0.0]
+            return [], 0
 
     def evaluate(
         self,
@@ -329,7 +348,7 @@ class GreedyStrategy(StrategyBase):
         # set start values:
         self.Cint_g[:, 0] = 1
         self.Cint_h[:, 0] = 1
-        self.RiskRevetment = copy.deepcopy(self.RiskOverflow)
+
         init_probability = {}
         init_overflow_risk = np.empty(
             (self.opt_parameters["N"], self.opt_parameters["T"])
@@ -419,6 +438,7 @@ class GreedyStrategy(StrategyBase):
                             )
                         else:
                             pass
+
             # do not go back:
             LifeCycleCost = np.where(LifeCycleCost <= 0, 1e99, LifeCycleCost)
             dR = np.subtract(init_risk, TotalRisk)
@@ -429,11 +449,8 @@ class GreedyStrategy(StrategyBase):
             # on overflow/revetment, and compute a BC ratio for a combination of measures at different sections.
 
             # for overflow:
-            (
-                overflow_bundle_index,
-                BC_bundle,
-                BC_bundle_list,
-            ) = self.bundling_of_measures(
+            BC_bundleOverflow = 0
+            (overflow_bundle_index, BC_bundleOverflow) = self.bundling_of_measures(
                 "Overflow",
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
@@ -441,8 +458,18 @@ class GreedyStrategy(StrategyBase):
                 copy.deepcopy(traject),
             )
             # for revetment:
-            # revetment_bundle_index, BC_bundle, BC_bundle_list = self.bundling_of_measures('Revetment', copy.deepcopy(init_revetment_risk), copy.deepcopy(measure_list), copy.deepcopy(LifeCycleCost), copy.deepcopy(traject))
-            #     overflow_bundling(
+            BC_bundleRevetment = 0.0
+            if "Revetment" in self.mechanisms:
+                (
+                    revetment_bundle_index,
+                    BC_bundleRevetment,
+                ) = self.bundling_of_measures(
+                    "Revetment",
+                    copy.deepcopy(init_revetment_risk),
+                    copy.deepcopy(measure_list),
+                    copy.deepcopy(LifeCycleCost),
+                    copy.deepcopy(traject),
+                )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
             # 'overflow bundle'
@@ -453,8 +480,12 @@ class GreedyStrategy(StrategyBase):
                     logging.error(error_measure)
                     # TODO think about a more sophisticated error catch here, as currently tracking the error is extremely difficult.
                 raise ValueError("nan value encountered in BC-ratio")
-            if (np.max(BC) > BCstop) or (BC_bundle > BCstop):
-                if np.max(BC) >= BC_bundle:
+            if (
+                (np.max(BC) > BCstop)
+                or (BC_bundleOverflow > BCstop)
+                or (BC_bundleRevetment > BCstop)
+            ):
+                if np.max(BC) >= BC_bundleOverflow and np.max(BC) >= BC_bundleRevetment:
                     # find the best combination
                     Index_Best = np.unravel_index(np.argmax(BC), BC.shape)
 
@@ -513,6 +544,10 @@ class GreedyStrategy(StrategyBase):
                         self.RiskOverflow[Index_Best[0], Index_Best[1], :]
                     )
 
+                    init_revetment_risk[Index_Best[0], :] = copy.deepcopy(
+                        self.RiskRevetment[Index_Best[0], Index_Best[1], :]
+                    )
+
                     # TODO update risks
                     SpentMoney[Index_Best[0]] += copy.deepcopy(
                         LifeCycleCost[Index_Best]
@@ -522,7 +557,7 @@ class GreedyStrategy(StrategyBase):
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
                     logging.info("Single measure in step " + str(count))
-                elif BC_bundle > np.max(BC):
+                elif BC_bundleOverflow > BC_bundleRevetment:
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
                             IndexMeasure = (
@@ -532,12 +567,48 @@ class GreedyStrategy(StrategyBase):
                             )
 
                             measure_list.append(IndexMeasure)
-                            BC_list.append(BC_bundle)
+                            BC_list.append(BC_bundleOverflow)
                             init_probability = update_probability(
                                 init_probability, self, IndexMeasure
                             )
+                            init_independent_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskGeotechnical[IndexMeasure[0], IndexMeasure[2], :]
+                            )
                             init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
                                 self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            )
+                            init_revetment_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
+                            )
+                            SpentMoney[IndexMeasure[0]] += copy.deepcopy(
+                                LifeCycleCost[IndexMeasure]
+                            )
+                            self.LCCOption[IndexMeasure] = 1e99
+                            Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
+                            # no update of geotechnical risk needed
+                            Probabilities.append(copy.deepcopy(init_probability))
+                elif BC_bundleRevetment > np.max(BC):
+                    for j in range(0, self.opt_parameters["N"]):
+                        if revetment_bundle_index[j, 0] != Measures_per_section[j, 0]:
+                            IndexMeasure = (
+                                j,
+                                revetment_bundle_index[j, 0],
+                                revetment_bundle_index[j, 1],
+                            )
+
+                            measure_list.append(IndexMeasure)
+                            BC_list.append(BC_bundleRevetment)
+                            init_probability = update_probability(
+                                init_probability, self, IndexMeasure
+                            )
+                            init_independent_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskGeotechnical[IndexMeasure[0], IndexMeasure[2], :]
+                            )
+                            init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            )
+                            init_revetment_risk[IndexMeasure[0], :] = copy.deepcopy(
+                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
                             )
                             SpentMoney[IndexMeasure[0]] += copy.deepcopy(
                                 LifeCycleCost[IndexMeasure]
@@ -598,6 +669,8 @@ class GreedyStrategy(StrategyBase):
             "yes/no",
             "dcrest",
             "dberm",
+            "beta_target",
+            "transition_level",
         ]
         sections = []
         LCC = []
@@ -606,6 +679,8 @@ class GreedyStrategy(StrategyBase):
         ID = []
         dcrest = []
         dberm = []
+        beta_target = []
+        transition_level = []
         yes_no = []
         option_index = []
         names = []
@@ -614,6 +689,8 @@ class GreedyStrategy(StrategyBase):
         LCC.append(0)
         ID.append("")
         dcrest.append("")
+        beta_target.append("")
+        transition_level.append("")
         dberm.append("")
         yes_no.append("")
         option_index.append("")
@@ -630,59 +707,29 @@ class GreedyStrategy(StrategyBase):
             LCC_invested[i[0]] += np.subtract(self.LCCOption[i], LCC_invested[i[0]])
 
             # get the ids
-            ID1 = (
-                self.options_geotechnical[traject.sections[i[0]].name]
-                .iloc[i[2] - 1]["ID"]
-                .values[0]
-            )
-            if "+" in ID1:
-                ID_relevant = ID1[-1]
-            else:
-                ID_relevant = ID1
-            if i[1] != 0:
-                ID2 = (
-                    self.options_height[traject.sections[i[0]].name]
-                    .iloc[i[1] - 1]["ID"]
-                    .values[0]
-                )
-                if ID_relevant == ID2:
-                    if (
-                        self.options_height[traject.sections[i[0]].name]
-                        .iloc[i[1] - 1]["dcrest"]
-                        .values[0]
-                        == 0.0
-                    ) and (
-                        self.options_geotechnical[traject.sections[i[0]].name]
-                        .iloc[i[2] - 1]["dberm"]
-                        .values[0]
-                        == 0.0
-                    ):
-                        ID.append(ID1[0])  # TODO Fixen
-                    else:
-                        ID.append(ID1)
-                else:
-                    logging.info(i)
-                    logging.info(
-                        self.options_geotechnical[traject.sections[i[0]].name].iloc[
-                            i[2] - 1
-                        ]
-                    )
-                    logging.info(
-                        self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
-                    )
-                    raise ValueError(
-                        "warning, conflicting IDs found for measures, ID_relevant: '{}' ID2: '{}'".format(
-                            ID_relevant, ID2
-                        )
-                    )
-            else:
-                ID2 = ""
+            ID1 = self.options_geotechnical[traject.sections[i[0]].name].iloc[i[2] - 1]["ID"].item()
+
+            ID2 = self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]["ID"].item()
+
+            if ID1 == ID2:
                 ID.append(ID1)
+            else:
+                raise Exception(f"ID1 {ID1} and ID2 {ID2} are not the same for the measure at section {traject.sections[i[0]].name}")
 
             # get the parameters
             dcrest.append(
                 self.options_height[traject.sections[i[0]].name]
                 .iloc[i[1] - 1]["dcrest"]
+                .values[0]
+            )
+            beta_target.append(
+                self.options_height[traject.sections[i[0]].name]
+                .iloc[i[1] - 1]["beta_target"]
+                .values[0]
+            )
+            transition_level.append(
+                self.options_height[traject.sections[i[0]].name]
+                .iloc[i[1] - 1]["transition_level"]
                 .values[0]
             )
             dberm.append(
@@ -709,6 +756,14 @@ class GreedyStrategy(StrategyBase):
                         == dcrest[-1]
                     ]
                     .loc[
+                        self.options[traject.sections[i[0]].name]["beta_target"]
+                        == beta_target[-1]
+                    ]
+                    .loc[
+                        self.options[traject.sections[i[0]].name]["transition_level"]
+                        == transition_level[-1]
+                    ]
+                    .loc[
                         self.options[traject.sections[i[0]].name]["dberm"] == dberm[-1]
                     ]
                     .loc[
@@ -724,17 +779,33 @@ class GreedyStrategy(StrategyBase):
                     .index.values[0]
                 )
             # get the name
-            names.append(
-                solutions_dict[traject.sections[i[0]].name]
-                .measure_table.loc[
-                    solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
-                    == ID[-1]
-                ]["Name"]
-                .values[0][0]
-            )
+            try:
+                names.append(
+                    solutions_dict[traject.sections[i[0]].name]
+                    .measure_table.loc[
+                        solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
+                        == ID[-1]
+                    ]["Name"]
+                    .values[0][0]
+                )
+            except:
+                names.append("missing")
+
         self.TakenMeasures = pd.DataFrame(
             list(
-                zip(sections, option_index, LCC, BC, ID, names, yes_no, dcrest, dberm)
+                zip(
+                    sections,
+                    option_index,
+                    LCC,
+                    BC,
+                    ID,
+                    names,
+                    yes_no,
+                    dcrest,
+                    dberm,
+                    beta_target,
+                    transition_level,
+                )
             ),
             columns=TakenMeasuresHeaders,
         )
@@ -767,6 +838,24 @@ class GreedyStrategy(StrategyBase):
             combined = pd.concat((leftpart, rightpart), axis=1)
             combined = combined.set_index(["name", "mechanism"])
             self.Probabilities.append(combined)
+
+    def _heightMeasureIsZero(self, traject, i) -> bool:
+        """
+        Helper function for write_greedy_results
+        """
+        options = self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
+        dcrest = options["dcrest"].values[0]
+        transition_level = options["transition_level"].values[0]
+        beta_target = options["beta_target"].values[0]
+        return dcrest == 0.0 and transition_level == -999.0 and beta_target == -999.0
+
+    def _geotechnicalMeasureIsZero(self, traject, i) -> bool:
+        """
+        Helper function for write_greedy_results
+        """
+        options = self.options_geotechnical[traject.sections[i[0]].name].iloc[i[2] - 1]
+        dberm = options["dberm"].values[0]
+        return dberm == 0.0
 
     def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
         """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""

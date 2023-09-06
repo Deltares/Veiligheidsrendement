@@ -1,5 +1,7 @@
 import copy
+import itertools
 import logging
+import math
 
 import numpy as np
 import pandas as pd
@@ -15,79 +17,181 @@ def measure_combinations(
     combinables, partials, solutions: Solutions, splitparams=False
 ):
     _combined_measures = pd.DataFrame(columns=combinables.columns)
+    #all columns without a second index are attributes of the measure
+    attribute_col_names = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)==''].tolist()
+    #years are those columns of level 2 with a second index that is not ''
+    years = combinables.columns.get_level_values(1)[combinables.columns.get_level_values(1)!=''].unique().tolist()
+    #mechanisms are those columns of level 1 with a second index that is not ''
+    mechanisms = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)!=''].unique().tolist()
+
+    #make dict with attribute_col_names as keys and empty lists as values
+    attribute_col_dict = {col:[] for col in attribute_col_names}
+
+    #make dict with mechanisms as keys, sub dicts of years and then empty lists as values
+    mechanism_beta_dict = {mechanism:{year:[] for year in years} for mechanism in mechanisms}
+    count = 0
+    # loop over partials
+    for i, row1 in partials.iterrows():
+        # combine with all combinables (in this case revetment measures)
+        for j, row2 in combinables.iterrows():
+
+            for col in attribute_col_names:
+                if col == 'ID': #TODO maybe add type here as well and just concatenate the types as a string
+                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
+                elif col == 'class':
+                    attribute_value = "combined"
+                else:
+                    #for all other columns we combine the lists and make sure that it is not nested
+                    combined_data = row1[col].tolist() + row2[col].tolist()
+                    attribute_value = list(itertools.chain.from_iterable(
+                        itertools.repeat(x, 1) if (isinstance(x, str)) or (isinstance(x, int)) or (isinstance(x, float)) else x for x in
+                        combined_data))
+                    if col == 'type': #if it is the type we make sure that it is a single string and store it as list of length 1
+                        attribute_value = ['+'.join(attribute_value)]
+                    #drop all -999 values from attribute_value
+                    attribute_value = [x for x in attribute_value if x != -999 and x != -999.0]
+                    if len(attribute_value) == 1: #if there is only one value we take that value
+                        attribute_value = attribute_value[0]
+                    elif len(attribute_value) == 0: #if there is no value we take -999
+                        attribute_value = -999
+                    else:
+                        pass
+                attribute_col_dict[col].append(attribute_value)
+
+            #then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+            for mechanism in mechanism_beta_dict.keys():
+                if mechanism == "Section":
+                    continue
+                else:
+                    for year in mechanism_beta_dict[mechanism].keys():
+                        if row1['type'].all() == 'Vertical Geotextile':
+                            vzg_idx = solutions.measure_table.loc[
+                                solutions.measure_table["Name"]
+                                == "Verticaal Zanddicht Geotextiel"
+                                ].index.values[0]
+                            Pf_VZG = solutions.measures[vzg_idx].parameters["Pf_solution"]
+                            P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
+                            pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(row2[(mechanism,year)])
+                            mechanism_beta_dict[mechanism][year].append(pf_to_beta(pf_vzg))
+                        else:
+                            mechanism_beta_dict[mechanism][year].append(np.maximum(row1[mechanism,year],row2[mechanism,year]))
+
+            count+=1
+
+    attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
+    attribute_col_df.columns = pd.MultiIndex.from_tuples([(col,"") for col in attribute_col_df.columns])
+    mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
+    mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
+    mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
+    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),axis=1)
+    for year in years:
+        #compute the section beta
+        betas_in_year = _combined_measures.loc[:,(_combined_measures.columns.get_level_values(0) != 'Section', _combined_measures.columns.get_level_values(1)==25)]
+        pf_in_year = beta_to_pf(betas_in_year)
+        section_beta = pf_to_beta(1 - np.prod(1-pf_in_year, axis=1))
+        #add the section beta to the dataframe
+        _combined_measures.loc[:,("Section",year)] = section_beta
+    return _combined_measures
+
+
+def revetment_combinations(
+    partials: pd.DataFrame, revetment_measures: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Combines the revetment measures based on the input arguments.
+
+    Args:
+        partials (pd.Dataframe): An object containing the measures to combine the revetment measures with.
+        revetment_measures (pd.Dataframe): An object containing the revetment measures.
+
+    Returns:
+        pd.DataFrame: An object containing the combined revetment measures.
+    """
+    _combined_measures = pd.DataFrame(columns=revetment_measures.columns)
+    # all columns without a second index are attributes of the measure
+    attribute_col_names = revetment_measures.columns.get_level_values(0)[
+        revetment_measures.columns.get_level_values(1) == ""
+    ].tolist()
+    # years are those columns of level 2 with a second index that is not ''
+    years = (
+        revetment_measures.columns.get_level_values(1)[
+            revetment_measures.columns.get_level_values(1) != ""
+        ]
+        .unique()
+        .tolist()
+    )
+    # mechanisms are those columns of level 1 with a second index that is not ''
+    mechanisms = (
+        revetment_measures.columns.get_level_values(0)[
+            revetment_measures.columns.get_level_values(1) != ""
+        ]
+        .unique()
+        .tolist()
+    )
+
+    #make dict with attribute_col_names as keys and empty lists as values
+    attribute_col_dict = {col:[] for col in attribute_col_names}
+
+    # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
+    mechanism_beta_dict = {
+        mechanism: {year: [] for year in years} for mechanism in mechanisms
+    }
 
     # loop over partials
     for i, row1 in partials.iterrows():
-        # combine with all combinables
-        for j, row2 in combinables.iterrows():
-
-            ID = "+".join((row1["ID"].values[0], row2["ID"].values[0]))
-            types = [row1["type"].values[0], row2["type"].values[0]]
-            year = [row1["year"].values[0], row2["year"].values[0]]
-            if splitparams:
-                params = [
-                    row1["yes/no"].values[0],
-                    row2["dcrest"].values[0],
-                    row2["dberm"].values[0],
-                    row2["beta_target"].values[0],
-                    row2["transition_level"].values[0],
-                ]
-            else:
-                params = [row1["params"].values[0], row2["params"].values[0]]
-            Cost = [row1["cost"].values[0], row2["cost"].values[0]]
-            # combine betas
-            # take maximums of mechanisms except if it is about StabilityInner for partial Stability Screen
-            betas = []
-            years = []
-
-            for ij in partials.columns:
-                if ij[0] != "Section" and ij[1] != "":  # It is a beta value
-                    # TODO make clean. Quick fix to fix incorrect treatment of vertical geotextile.
-                    # VSG is idx in MeasureTable
-                    if (row1["type"].values == "Vertical Geotextile") and (
-                        ij[0] == "Piping"
-                    ):
-                        idx = solutions.measure_table.loc[
-                            solutions.measure_table["Name"]
-                            == "Verticaal Zanddicht Geotextiel"
-                        ].index.values[0]
-                        Pf_VSG = solutions.measures[idx].parameters["Pf_solution"]
-                        P_VSG = solutions.measures[idx].parameters["P_solution"]
-                        pf = (1 - P_VSG) * Pf_VSG + P_VSG * beta_to_pf(row2[ij])
-                        beta = pf_to_beta(pf)
+        # combine with all combinables (in this case revetment measures)
+        for j, row2 in revetment_measures.iterrows():
+            for col in attribute_col_names:
+                if col == 'ID': #TODO maybe add type here as well and just concatenate the types as a string
+                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
+                elif col == 'class':
+                    attribute_value = "combined"
+                else:
+                    #for all other columns we combine the lists and make sure that it is not nested
+                    combined_data = row1[col].tolist() + row2[col].tolist()
+                    attribute_value = list(itertools.chain.from_iterable(
+                        itertools.repeat(x, 1) if (isinstance(x, str)) or (isinstance(x, int)) or (isinstance(x, float)) else x for x in
+                        combined_data))
+                    if col == 'type': #if it is the type we make sure that it is a single string and store it as list of length 1
+                        attribute_value = ['+'.join(attribute_value)]
+                    #drop all -999 values from attribute_value
+                    attribute_value = [x for x in attribute_value if x != -999 and x != -999.0]
+                    if len(attribute_value) == 1: #if there is only one value we take that value
+                        attribute_value = attribute_value[0]
+                    elif len(attribute_value) == 0: #if there is no value we take -999
+                        attribute_value = -999
                     else:
-                        beta = np.maximum(row1[ij], row2[ij])
-                    years.append(ij[1])
-                    betas.append(beta)
+                        pass
+                attribute_col_dict[col].append(attribute_value)
 
-            # next update section probabilities
-            for ij in partials.columns:
-                if ij[0] == "Section":  # It is a beta value
-                    # where year in years is the same as ij[1]
-                    indices = [indices for indices, x in enumerate(years) if x == ij[1]]
-                    ps = beta_to_pf(np.array(betas)[indices])
-                    p = np.sum(ps)  # TODO replace with correct formula
-                    betas.append(pf_to_beta(p))
-                    # if ProbabilisticFunctions.pf_to_beta(p)-np.max([row1[ij],row2[ij]]) > 1e-8:
-                    #     pass
-            if splitparams:
-                in1 = [
-                    ID,
-                    types,
-                    "combined",
-                    year,
-                    params[0],
-                    params[1],
-                    params[2],
-                    params[3],
-                    params[4],
-                    Cost,
-                ]
-            else:
-                in1 = [ID, types, "combined", year, params, Cost]
+            #then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+            for mechanism in mechanism_beta_dict.keys():
+                if mechanism == "Section":
+                    continue
+                else:
+                    for year in mechanism_beta_dict[mechanism].keys():
+                        mechanism_beta_dict[mechanism][year].append(np.maximum(row1[mechanism,year],row2[mechanism,year]))
 
-            allin = pd.DataFrame([in1 + betas], columns=combinables.columns)
-            _combined_measures = pd.concat((_combined_measures, allin))
+    attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
+    attribute_col_df.columns = pd.MultiIndex.from_tuples([(col,"") for col in attribute_col_df.columns])
+    mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
+    mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
+    mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
+    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),axis=1)
+    for year in years:
+        # compute the section beta
+        betas_in_year = _combined_measures.loc[
+            :,
+            (
+                _combined_measures.columns.get_level_values(0) != "Section",
+                _combined_measures.columns.get_level_values(1) == year,
+            ),
+        ]
+        pf_in_year = beta_to_pf(betas_in_year)
+        section_beta = pf_to_beta(1 - np.prod(1-pf_in_year, axis=1))
+        #add the section beta to the dataframe
+        _combined_measures.loc[:,("Section",year)] = section_beta
+
     return _combined_measures
 
 
@@ -327,91 +431,143 @@ def split_options(
 
     options_dependent = copy.deepcopy(options)
     options_independent = copy.deepcopy(options)
-    for i in options:
-        # filter all different measures for dependent
+    for i in options.keys():
+
+        min_transition_level = (
+            options[i].transition_level[options[i].transition_level > 0].min()
+        )
+        min_beta_target = options[i].beta_target[options[i].beta_target > 0].min()
+        # for dependent sections we have all measures where there is a transition_level larger than the minimum, or a beta_target larger than the minimum
+        # and the berm should be either non-existent -999 or 0
+        def is_dependent_measure_present(option):
+            if math.isnan(min_transition_level) or math.isnan(min_beta_target):
+                # no revetment measures; just check dberm:
+                return option.dberm <= 0
+            else:
+                return (
+                    (option.transition_level >= min_transition_level)
+                    & (option.beta_target >= min_beta_target)
+                    & (option.dberm <= 0)
+                )
+
         options_dependent[i] = options_dependent[i].loc[
-            options[i]["class"] != "combined"
-        ]
-        options_dependent[i] = options_dependent[i].loc[
-            (options[i]["type"] == "Diaphragm Wall")
-            | (options[i]["type"] == "Custom")
-            | (options[i]["dberm"] == 0)
+            is_dependent_measure_present(options_dependent[i])
         ]
 
-        # now we filter all independent measures
-        # first all crest heights are thrown out
+        # for independent measures dcrest should be 0 or -999, and transition_level and beta_target should be -999
+        def is_independent_measure_present(option):
+            if math.isnan(min_transition_level) or math.isnan(min_beta_target):
+                # no revetment measures; just check dcrest:
+                return option.dcrest <= 0.0
+            else:
+                return (
+                    (option.dcrest <= 0.0)
+                    & (option.transition_level <= min_transition_level)
+                    & (option.beta_target <= min_beta_target)
+                )
+
         options_independent[i] = options_independent[i].loc[
-            (options_independent[i]["dcrest"] == 0.0)
-            | (options_independent[i]["dcrest"] == -999)
-            | (
-                (options_independent[i]["class"] == "combined")
-                & (options_independent[i]["dberm"] == 0)
-            )
+            is_independent_measure_present(options_independent[i])
         ]
-        # filter out revetments from all independent measures
-        if "Revetment" in available_mechanism_names:
-            for key in ["transition_level", "n_pf_stone"]:  # TODO check keys
-                options_independent[i] = options_independent[i].loc[
-                    (options_independent[i][key] == 0.0)
-                    | (options_independent[i][key] == -999)
-                    | (
-                        (options_independent[i]["class"] == "combined")
-                        & (options_independent[i][key] == 0)
-                    )
-                ]
 
-        # subtract startcosts, only for dependent.
-        startcosts = np.min(
-            options_dependent[i][
-                (options_dependent[i]["type"] == "Soil reinforcement")
+        # we only need the measures with ids that are also in options_dependent
+        options_independent[i] = options_independent[i].loc[
+            options_independent[i].ID.isin(options_dependent[i].ID.unique())
+        ]
+
+
+        # Now that we have split the measures we should avoid double counting of costs by correcting some of the cost values.
+        # This concerns the startcosts for soil reinforcement
+
+        # We get the min cost which is equal to the minimum costs for a soil reinforcement (which we assume has dimensions 0 m crest and 0 m berm)
+        startcosts_soil = np.min(
+            options[i][
+                (options[i]["type"] == "Soil reinforcement")
             ]["cost"]
         )
-        options_dependent[i]["cost"] = np.where(
-            options_dependent[i]["type"] == "Soil reinforcement",
-            np.subtract(options_dependent[i]["cost"], startcosts),
-            options_dependent[i]["cost"],
-        )
 
-        # if an option has a stability screen, the costs for height are too high. This has to be adjusted. We do this
-        # for all soil reinforcements. costs are not discounted yet, so we can disregard the year of the investment:
-        for ij in np.unique(
-            options_dependent[i].loc[
-                options_dependent[i]["type"] == "Soil reinforcement"
-            ]["dcrest"]
-        ):
-            options_dependent[i].loc[
-                options_dependent[i]["dcrest"] == ij, "cost"
-            ] = np.min(
-                options_dependent[i].loc[options_dependent[i]["dcrest"] == ij]["cost"]
+        #we subtract the startcosts for all soil reinforcements (including those with stability screens)
+        #Note that this is not robust as it depends on the exact formulation of types in the options. We should ensure that these names do not change in the future
+        #we need to distinguish between measures where cost is a float and where it is a list
+        #TODO this can be a function
+        float_costs = options_independent[i]["cost"].map(type) == float
+        soil_reinforcements = options_independent[i]["type"].str.contains("Soil reinforcement")
+        for idx, row in options_independent[i].iterrows():
+            #subtract startcosts for all entries in options_independent where float_costs is true and the type contains soil reinforcement
+            if float_costs[idx] & soil_reinforcements[idx]:
+                options_independent[i].loc[idx,"cost"] = np.subtract(options_independent[i].loc[idx,"cost"],startcosts_soil)[0]
+            #if it is a soil reinforcement combined with others we need to modify the right value from the list of costs
+            if (not float_costs[idx]) & soil_reinforcements[idx]:
+                #break the type string at '+' and find the value that contains soil reinforcement
+                for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                    if "Soil reinforcement" in measure_type:
+                        # get list of costs and subtract startcosts from the cost that contains soil reinforcement
+                        cost_list = row["cost"].item()
+                        cost_list[cost_index] = np.subtract(cost_list[cost_index], startcosts_soil)
+                        options_independent[i].loc[idx, "cost"] = [[val] for val in cost_list]
+
+        # Then we deal with the costs for a stability screen when combined with a berm, these are accounted for in the independent_measure costs so should be removed from the dependent measures
+        cost_stability_screen = np.min(options[i].loc[
+                   options[i]["type"].str.fullmatch("Soil reinforcement with stability screen")
+               ]["cost"]) - startcosts_soil
+        # Find all dependent measures that contain a stability screen
+        stability_screens = options_dependent[i]["type"].str.contains("Soil reinforcement with stability screen")
+        for idx, row in options_dependent[i].iterrows():
+            #subtract cost_stability_screen from all entries in options_dependent where stability_screens is true
+            if stability_screens[idx]:
+                #break the type string at '+' and find the value that contains soil reinforcement
+                for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                    if "Soil reinforcement with stability screen" in measure_type:
+                        if isinstance(row["cost"].item(), float):
+                            options_dependent[i].loc[idx,"cost"] = np.subtract(options_dependent[i].loc[idx,"cost"],cost_stability_screen)[0]
+                        else:
+                            # get list of costs and subtract startcosts from the cost that contains soil reinforcement
+                            cost_list = row["cost"].item()
+                            cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
+                            #pass cost_list back to the idx, "cost" column in options_dependent[i]
+                            options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
+
+        # Find all dependent measures that contain a Vertical Geotextile or a Diaphragm wall
+        vertical_geotextiles = options_dependent[i]["type"].str.contains("Vertical Geotextile")
+        diaphragm_walls = options_dependent[i]["type"].str.contains("Diaphragm Wall")
+        def set_cost_to_zero(options_set, bools, measure_string):
+            for row_idx, option_row in options_set.iterrows():
+                if bools[row_idx]:
+                    # break the type string at '+' and find the value that is a vertical Geotextile
+                    for cost_index, measure_type in enumerate(option_row["type"].item().split('+')):
+                        if measure_type == measure_string:
+                            if isinstance(option_row["cost"].item(), float):
+                                options_set.loc[row_idx, "cost"] = 0.
+                            else:
+                                # get list of costs and set cost of geotextile to 0
+                                cost_list = option_row["cost"].item().copy()
+                                cost_list[cost_index] = 0.
+                                # pass cost_list back to the row_idx, "cost" column in options_dependent[i]
+                                options_set.loc[row_idx, "cost"] = [[val] for val in cost_list]
+            return options_set
+        
+        #set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
+        if any(vertical_geotextiles):
+            options_dependent[i] = set_cost_to_zero(options_dependent[i], vertical_geotextiles, "Vertical Geotextile")
+
+        if any(diaphragm_walls):
+            options_dependent[i] = set_cost_to_zero(options_dependent[i], diaphragm_walls, "Diaphragm Wall")
+
+        revetments = options_independent[i]["type"].str.contains("Revetment")
+        if any(revetments):
+            options_independent[i] = set_cost_to_zero(
+                options_independent[i], revetments, "Revetment"
             )
 
         options_independent[i] = options_independent[i].reset_index(drop=True)
         options_dependent[i] = options_dependent[i].reset_index(drop=True)
 
-        # loop for the independent stuff:
-        newcosts = []
-        for ij in options_independent[i].index:
-            if (
-                options_independent[i].iloc[ij]["type"].values[0]
-                == "Soil reinforcement"
-            ):
-                newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
-            elif options_independent[i].iloc[ij]["class"].values[0] == "combined":
-                newcosts.append(
-                    [
-                        options_independent[i].iloc[ij]["cost"].values[0][0],
-                        options_independent[i].iloc[ij]["cost"].values[0][1],
-                    ]
-                )
-            else:
-                newcosts.append(options_independent[i].iloc[ij]["cost"].values[0])
-        options_independent[i]["cost"] = newcosts
         # only keep reliability of relevant mechanisms in dictionary
         options_dependent[i].drop(
-            get_dropped_dependent_options(available_mechanism_names), axis=1, level=0
+            get_dropped_dependent_options(available_mechanism_names), axis=1, level=0, inplace=True,
         )
         options_independent[i].drop(
-            get_dropped_independent_options(available_mechanism_names), axis=1, level=0
+            get_dropped_independent_options(available_mechanism_names), axis=1, level=0, inplace=True,
         )
     return options_dependent, options_independent
 
@@ -448,7 +604,7 @@ def update_probability(init_probability, strategy, index):
         from scipy.stats import norm
 
         # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
-        if i == "Overflow":
+        if i in ["Overflow","Revetment"]:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]
@@ -456,223 +612,3 @@ def update_probability(init_probability, strategy, index):
         # plt.savefig('Beta ' + i + str(index) + '.png')
         # plt.close()
     return init_probability
-
-
-def overflow_bundling(
-    strategy,  #: StrategyBase nb: activating this type hint gives a circular dependency
-    init_overflow_risk,
-    existing_investment,
-    life_cycle_cost,
-    traject: DikeTraject,
-):
-    """
-    Alternative routine that only uses the reliability to determine what measures are allowed.
-    The logic of this version is that measures are not restricted by type,
-    but that geotechnical reliability may not decrease compared to the already chosen option
-    """
-
-    # ensure that life_cycle_cost is not modified
-    life_cycle_cost = copy.deepcopy(life_cycle_cost)
-    # Step 1: fill an array of size (n,2) with sh and sg of existing investments per section in order to properly filter
-    # the viable options per section
-    existing_investments = np.zeros(
-        (np.size(life_cycle_cost, axis=0), 2), dtype=np.int32
-    )
-    if len(existing_investment) > 0:
-        for i in range(0, len(existing_investment)):
-            existing_investments[existing_investment[i][0], 0] = existing_investment[i][
-                1
-            ]  # sh
-            existing_investments[existing_investment[i][0], 1] = existing_investment[i][
-                2
-            ]  # sg
-
-    # Step 2: for each section, determine the sorted_indices of the min to max LCC. Note that this could also be based on TC but the performance is good as is.
-    # first make the proper arrays for sorted_indices (sh), corresponding sg indices and the LCC for each section.
-    sorted_sh = np.full(tuple(life_cycle_cost.shape[0:2]), 999, dtype=int)
-    LCC_values = np.zeros((life_cycle_cost.shape[0],))
-    sg_indices = np.full(tuple(life_cycle_cost.shape[0:2]), 999, dtype=int)
-
-    # loop over the sections
-    for i in range(0, len(traject.sections)):
-        # get all geotechnical options for this section:
-        GeotechnicalOptions = strategy.options_geotechnical[traject.sections[i].name]
-        HeightOptions = strategy.options_height[traject.sections[i].name]
-        # if there is already an investment we ensure that the reliability for none of the mechanisms is lower than the current investment
-        if any(existing_investments[i, :] > 0):
-            # if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
-            if existing_investments[i, 1] > 0:
-                investment_id = (
-                    existing_investments[i, 1] - 1
-                )  # note that matrix indices in existing_investments are always 1 higher than the investment id
-                current_investment_geotechnical = GeotechnicalOptions.iloc[
-                    investment_id
-                ]
-                current_investment_stability = current_investment_geotechnical[
-                    "StabilityInner"
-                ]
-                current_investment_piping = current_investment_geotechnical["Piping"]
-                # check if all rows in comparison only contain True values
-                comparison_geotechnical = (
-                    GeotechnicalOptions.StabilityInner >= current_investment_stability
-                ) & (GeotechnicalOptions.Piping >= current_investment_piping)
-                available_measures_geotechnical = comparison_geotechnical.all(
-                    axis=1
-                )  # df indexing, so a False should be added before
-            else:
-                available_measures_geotechnical = pd.Series(
-                    np.ones(len(GeotechnicalOptions), dtype=bool)
-                )
-
-            # same for HeightOptions
-            if existing_investments[i, 0] > 0:
-                # exclude rows for height options that are not safer than current
-                current_investment_overflow = HeightOptions.iloc[
-                    existing_investments[i, 0] - 1
-                ]["Overflow"]
-                # TODO turn on revetment once the proper data is available.
-                # current_investment_revetment = HeightOptions.iloc[existing_investments[i, 0] - 1]['Revetment']
-                current_investment_revetment = HeightOptions.iloc[
-                    existing_investments[i, 0] - 1
-                ]["Overflow"]
-                # check if all rows in comparison only contain True values
-                comparison_height = (
-                    HeightOptions.Overflow > current_investment_overflow
-                )  # & (HeightOptions.Revetment >= current_investment_revetment)
-                available_measures_height = comparison_height.any(axis=1)
-            else:  # if there is no investment in height, all options are available
-                available_measures_height = pd.Series(
-                    np.ones(len(HeightOptions), dtype=bool)
-                )
-
-            # now replace the life_cycle_cost where available_measures_height is False with a very high value:
-            # the reliability for overflow has to increase so we do not want to pick these measures.
-            life_cycle_cost[
-                i, available_measures_height[~available_measures_height].index + 1, :
-            ] = 1e99
-
-            # next we get the ids for the possible geotechnical measures
-            ids = (
-                available_measures_geotechnical[
-                    available_measures_geotechnical
-                ].index.values
-                + 1
-            )
-
-            # we get a matrix with the LCC values, and get the order of sh measures:
-            lcc_subset = life_cycle_cost[i, :, ids].T
-            sh_order = np.argsort(np.min(lcc_subset, axis=1))
-            sg_indices[i, :] = np.array(ids)[np.argmin(lcc_subset, axis=1)][sh_order]
-            sorted_sh[i, :] = sh_order
-            sorted_sh[i, :] = np.where(
-                np.sort(np.min(lcc_subset, axis=1)) > 1e60, 999, sorted_sh[i, :]
-            )
-        elif np.max(existing_investments[i, :]) == 0:  # nothing has been invested yet
-            sg_indices[i, :] = np.argmin(life_cycle_cost[i, :, :], axis=1)
-            LCCs = np.min(life_cycle_cost[i, :, :], axis=1)
-            sorted_sh[i, :] = np.argsort(LCCs)
-            sorted_sh[i, :] = np.where(
-                np.sort(LCCs) > 1e60, 999, sorted_sh[i, 0 : len(LCCs)]
-            )
-            sg_indices[i, 0 : len(LCCs)] = sg_indices[i, 0 : len(LCCs)][
-                np.argsort(LCCs)
-            ]
-        else:
-            logging.error(
-                "Unknown measure type in overflow bundling (error can be removed?)"
-            )
-    new_overflow_risk = copy.deepcopy(init_overflow_risk)
-
-    # Step 3: determine various bundles for overflow:
-
-    # first initialize som values
-    index_counter = np.zeros(
-        (len(traject.sections),), dtype=np.int32
-    )  # counter that keeps track of the next cheapest option for each section
-    run_number = 0  # used for counting the loop
-    counter_list = []  # used to store the bundle indices
-    BC_list = []  # used to store BC for each bundle
-    weak_list = []  # used to store index of weakest section
-
-    # here we start the loop. Note that we rarely make it to run 100, for larger problems this limit might need to be increased
-    while run_number < 100:
-        # get weakest section
-        ind_weakest = np.argmax(np.sum(new_overflow_risk, axis=1))
-
-        # We should increase the measure at the weakest section, but only if we have not reached the end of the array yet:
-        if sorted_sh.shape[1] - 1 > index_counter[ind_weakest]:
-            index_counter[ind_weakest] += 1
-            # take next step, exception if there is no valid measure. In that case exit the routine.
-            if sorted_sh[ind_weakest, index_counter[ind_weakest]] == 999:
-                logging.error(
-                    "Bundle quit after {} steps, weakest section has no more available measures".format(
-                        run_number
-                    )
-                )
-                break
-        else:
-            logging.error(
-                "Bundle quit after {} steps, weakest section has no more available measures".format(
-                    run_number
-                )
-            )
-            break
-
-        # insert next cheapest measure from sorted list into overflow risk, then compute the LCC value and BC
-        new_overflow_risk[ind_weakest, :] = strategy.RiskOverflow[
-            ind_weakest, sorted_sh[ind_weakest, index_counter[ind_weakest]], :
-        ]
-        LCC_values[ind_weakest] = np.min(
-            life_cycle_cost[
-                ind_weakest,
-                sorted_sh[ind_weakest, index_counter[ind_weakest]],
-                sg_indices[ind_weakest, index_counter[ind_weakest]],
-            ]
-        )
-        BC = (
-            np.sum(np.max(init_overflow_risk, axis=0))
-            - np.sum(np.max(new_overflow_risk, axis=0))
-        ) / np.sum(LCC_values)
-        # store results of step:
-        if np.isnan(BC):
-            BC_list.append(0.0)
-        else:
-            BC_list.append(BC)
-        weak_list.append(ind_weakest)
-
-        # store the bundle indices, do -1 as index_counter contains the NEXT step
-        counter_list.append(copy.deepcopy(index_counter))
-
-        # Strategy.get_measure_from_index((ind_weakest, sorted_sh[ind_weakest, index_counter[ind_weakest]],
-        #                                  sg_indices[ind_weakest, index_counter[ind_weakest]]), print_measure=True)
-
-        # in the next step, the next measure should be taken for this section
-        run_number += 1
-
-    # take the final index from the list, where BC is max
-    if len(BC_list) > 0:
-        ind = np.argwhere(BC_list == np.max(BC_list))[0][0]
-        final_index = counter_list[ind]
-        # convert measure_index to sh based on sorted_indices
-        sg_index = np.zeros((len(traject.sections),))
-        measure_index = np.zeros((np.size(life_cycle_cost, axis=0),), dtype=np.int32)
-        for i in range(0, len(measure_index)):
-            if final_index[i] != 0:  # a measure was taken
-                measure_index[i] = sorted_sh[i, final_index[i]]
-                sg_index[i] = sg_indices[i, final_index[i]]
-            else:  # no measure was taken
-                measure_index[i] = existing_investments[i, 0]
-                sg_index[i] = existing_investments[i, 1]
-
-        measure_index = (
-            np.append(measure_index, sg_index)
-            .reshape((2, len(traject.sections)))
-            .T.astype(np.int32)
-        )
-        BC_out = np.max(BC_list)
-    else:
-        BC_out = 0
-        measure_index = []
-        logging.warning("No more measures for weakest overflow section")
-
-    return measure_index, BC_out, BC_list
