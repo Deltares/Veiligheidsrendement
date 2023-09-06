@@ -1,11 +1,11 @@
-,ID,Section,LCC,name,yes/no,dcrest,dberm
-72,5+2,01A,2536362.789689962,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,30
-68,5+2,01B,1690054.5928809186,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
-80,5+2,4,6032468.924376771,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,20
-77,5+2,12,4554888.903721084,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15
-79,5+2,15,4829326.421234598,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
-70,5+2,33A,1642667.9442793091,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15
-44,4,34,1634139.0473322251,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
-56,5+2,37B,1139231.4489529096,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,0
-45,4,40,899708.2339480813,Grondversterking met stabiliteitsscherm 2025,-999,1.0,30
-49,4,50,1349697.8020944092,Grondversterking met stabiliteitsscherm 2025,-999,1.5,30
+,ID,Section,LCC,name,yes/no,dcrest,dberm,transition_level,beta_target
+56,5+2,01A,2067932.4096899622,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,0,-999,-999
+60,6,01B,4226200.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
+62,5+2,4,4354683.804376772,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,0,-999,-999
+53,5+2,12,4367211.831721086,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,12,-999,-999
+63,6,15,11949300.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
+55,5+2,33A,1642667.9442793091,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,15,-999,-999
+61,2,34,2355557.047332226,Grondversterking binnenwaarts 2025,-999,1.0,20,-999,-999
+48,5+2,37B,1139231.4489529096,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,0,-999,-999
+59,5+2,40,1786597.8739480812,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,10,-999,-999
+43,2,50,1006038.7786281833,Grondversterking binnenwaarts 2025,-999,1.0,0,-999,-999
