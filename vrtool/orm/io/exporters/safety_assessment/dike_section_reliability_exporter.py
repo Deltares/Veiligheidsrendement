@@ -1,11 +1,11 @@
 import logging
 
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.orm.io.exporters.mechanism_reliability_collection_exporter import (
+from vrtool.orm.io.exporters.safety_assessment.mechanism_reliability_collection_exporter import (
     MechanismReliabilityCollectionExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.io.exporters.section_reliability_exporter import (
+from vrtool.orm.io.exporters.safety_assessment.section_reliability_exporter import (
     SectionReliabilityExporter,
 )
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
