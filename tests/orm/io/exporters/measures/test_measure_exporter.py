@@ -40,6 +40,9 @@ class AbcMocked(MeasureProtocol):
     def __init__(self) -> None:
         self.measures = MeasureResultCollectionMocked()
 
+class InvalidMeasureMocked:
+    def __init__(self) -> None:
+        self.measures = "Cost: 13.37, Reliability: 4.56"
 
 class TestMeasureExporter:
 
@@ -74,3 +77,39 @@ class TestMeasureExporter:
         )
 
         assert len(MeasureResult.select()) == _expected_nr_measure_results
+
+    def test_export_dom_invalid_data(self, empty_db_fixture: SqliteDatabase):
+        # Setup
+        _measure_per_section = get_basic_measure_per_section()
+
+        assert not any(MeasureResult.select())
+        assert not any(MeasureResultParameter.select())
+
+        _exporter = MeasureExporter(_measure_per_section)
+
+        # Call
+        _measure_to_export = InvalidMeasureMocked()
+
+        with pytest.raises(ValueError) as value_error:
+            _exporter.export_dom(_measure_to_export)
+
+        # Assert
+        assert str(value_error.value).startswith("unknown measure type: <class ")
+
+    def test_export_dom_invalid_type(self, empty_db_fixture: SqliteDatabase):
+        # Setup
+        _measure_per_section = get_basic_measure_per_section()
+
+        assert not any(MeasureResult.select())
+        assert not any(MeasureResultParameter.select())
+
+        _exporter = MeasureExporter(_measure_per_section)
+
+        # Call
+        _measure_to_export = "Cost: 13.37, Reliability: 4.56"
+
+        with pytest.raises(AttributeError) as value_error:
+            _exporter.export_dom(_measure_to_export)
+
+        # Assert
+        assert str(value_error.value) == "'str' object has no attribute 'measures'"
