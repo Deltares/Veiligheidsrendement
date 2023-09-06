@@ -274,7 +274,26 @@ class TestAcceptance:
 
         # 4. Validate exporting results is possible
         # TODO: This needs to wait until the entire export is finished
-        # self.validate_safety_assessment_results(valid_vrtool_config)
+        self.validate_measure_results(valid_vrtool_config)
+
+    def validate_measure_results(self, valid_vrtool_config: VrtoolConfig):
+        # 1. Define test data.
+        _test_reference_path = (
+            valid_vrtool_config.input_directory / "reference" / "results"
+        )
+        assert _test_reference_path.exists()
+
+        # 2. Open the database to retrieve the section names to read the references from
+        open_database(valid_vrtool_config.input_database_path)
+
+        # 3. Load reference as pandas dataframe.
+        for section in SectionData.select():
+            _reference_df = pd.read_csv(
+                _test_reference_path.joinpath(
+                    f"{section.section_name}_Options_Veiligheidsrendement.csv"
+                ),
+                header=[0, 1],
+            )
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
