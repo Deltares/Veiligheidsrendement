@@ -1,4 +1,3 @@
-from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
 from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
@@ -11,7 +10,9 @@ class SolutionsExporter(OrmExporterProtocol):
     def get_measure_per_section(
         dike_section_name: str, traject_name: str, measure_id: int
     ) -> MeasurePerSection:
-        _measure = Measure.get_by_id(measure_id)
+        _measure = Measure.get_or_none(Measure.id == measure_id)
+        if not _measure:
+            raise ValueError(f"No 'Measure' was found with id: {measure_id}.")
         _section_data = (
             SectionData.select()
             .join(DikeTrajectInfo)
@@ -21,6 +22,10 @@ class SolutionsExporter(OrmExporterProtocol):
             )
             .get_or_none()
         )
+        if not _section_data:
+            raise ValueError(
+                f"No 'SectionData' was found with name: {dike_section_name}, for 'DikeTraject': {traject_name}."
+            )
         return (
             MeasurePerSection.select()
             .where(
