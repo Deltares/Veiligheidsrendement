@@ -259,19 +259,25 @@ class RevetmentMeasureResultBuilder:
         )
 
         try:
-            _top_layer_thickness = bisection(stone_interpolation, 0.0, 1.0, 0.01)
-            _top_layer_thickness = math.ceil(_top_layer_thickness / 0.05) * 0.05
+            _top_layer_thickness = bisection(stone_interpolation, 0.0, 1.0, 0.001)
             _recalculated_beta = calculated_beta
             _is_reinforced = True
         except:
             _top_layer_thickness = float("nan")
 
-        if _top_layer_thickness <= slope_part.top_layer_thickness:
+        if (
+            _top_layer_thickness <= slope_part.top_layer_thickness
+            or np.abs(_top_layer_thickness - slope_part.top_layer_thickness) <= 0.01
+        ):
+            # We compare whether the difference is less than 0.01 meter (1cm).
             _top_layer_thickness = slope_part.top_layer_thickness
             _recalculated_beta = float(
                 self._evaluate_stone_revetment_data(slope_part, evaluation_year)
             )
             _is_reinforced = False
+
+        if _top_layer_thickness <= 0.0:
+            raise ValueError("Negative top layer thickness found.")
 
         return _top_layer_thickness, _recalculated_beta, _is_reinforced
 

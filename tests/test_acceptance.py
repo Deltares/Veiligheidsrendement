@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase, fn
+from pandas.testing import assert_frame_equal
 
 from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -52,6 +53,10 @@ _acceptance_all_steps_test_cases = [
         ("TestCase1_38-1_revetment", "38-1", _available_mechanisms),
         id="Traject 38-1, full, with revetment",
     ),
+    pytest.param(
+        ("TestCase4_38-1_revetment_small", "38-1", _available_mechanisms),
+        id="Traject 38-1, two sections with revetment",
+    ),
 ]
 
 _acceptance_optimization_test_cases = [
@@ -62,6 +67,10 @@ _acceptance_optimization_test_cases = [
     pytest.param(
         ("TestCase3_38-1_small", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, two sections",
+    ),
+    pytest.param(
+        ("TestCase4_38-1_revetment_small", "38-1", _available_mechanisms),
+        id="Traject 38-1, two sections with revetment",
     ),
 ]
 
@@ -76,13 +85,20 @@ class TestAcceptance:
             "TakenMeasures_Veiligheidsrendement.csv",
             "TotalCostValues_Greedy.csv",
         ]
-
+        comparison_errors = []
         for file in files_to_compare:
             reference = pd.read_csv(
                 test_reference_dir.joinpath("results", file), index_col=0
             )
             result = pd.read_csv(test_results_dir / file, index_col=0)
-            pd.testing.assert_frame_equal(reference, result, rtol=1e-6, atol=1e-6)
+            try:
+                assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
+            except:
+                comparison_errors.append("{} is different.".format(file))
+        # assert no error message has been registered, else print messages
+        assert not comparison_errors, "errors occured:\n{}".format(
+            "\n".join(comparison_errors)
+        )
 
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
