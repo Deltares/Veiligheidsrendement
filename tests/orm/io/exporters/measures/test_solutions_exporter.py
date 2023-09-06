@@ -7,6 +7,7 @@ from tests.orm.io.exporters.measures import (
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
 )
+from tests.orm import empty_db_fixture
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -26,7 +27,7 @@ class TestSolutionsExporter:
         assert isinstance(_exporter, OrmExporterProtocol)
 
     @pytest.mark.parametrize(
-        "measure_type",
+        "type_measure",
         [
             pytest.param(MeasureWithDictMocked, id="With dictionary"),
             pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
@@ -38,15 +39,23 @@ class TestSolutionsExporter:
     )
     def test_given_solutions_with_supported_measures_raises_error(
         self,
-        measure_type: Type[MeasureProtocol],
-        empty_db_fixture,
+        type_measure: Type[MeasureProtocol],
+        empty_db_fixture: SqliteDatabase,
     ):
         # 1. Define test data.
         _measures_test_input_data = MeasureResultTestInputData.with_measures_type(
-            measure_type
+            type_measure
         )
         _exporter = SolutionsExporter()
-        _test_solution = Solutions(DikeSection(), VrtoolConfig())
+        _test_solution = Solutions(
+            DikeSection(),
+            VrtoolConfig(
+                traject=_measures_test_input_data.measure_per_section.section.dike_traject.traject_name
+            ),
+        )
+        _test_solution.section_name = (
+            _measures_test_input_data.measure_per_section.section.section_name
+        )
         _test_solution.measures = [_measures_test_input_data.measure]
         assert not any(MeasureResult.select())
         assert not any(MeasureResultParameter.select())

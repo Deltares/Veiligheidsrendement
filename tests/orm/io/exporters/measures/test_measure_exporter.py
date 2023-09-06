@@ -2,7 +2,7 @@ from typing import Type
 from peewee import SqliteDatabase
 import pytest
 
-from tests.orm import empty_db_fixture, get_basic_measure_per_section
+from tests.orm import empty_db_fixture
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter

@@ -78,4 +78,5 @@ class MeasureResultTestInputData:
     def with_measures_type(cls, type_measure: Type[MeasureProtocol]):
         _this = cls()
         _this.measure = type_measure(_this.expected_cost, _this.section_reliability)
+        _this.measure.parameters = {"ID": _this.measure_per_section.get_id()}
         return _this
