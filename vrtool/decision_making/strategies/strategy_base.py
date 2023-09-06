@@ -406,25 +406,37 @@ class StrategyBase:
         for n in range(0, len(section_keys)):
             self.LCCOption[n, 0, 0] = 0.0
             LCC_sh = calc_tc(self.options_height[section_keys[n]], self.discount_rate)
-            LCC_sg = calc_tc(self.options_geotechnical[section_keys[n]], self.discount_rate)
+            LCC_sg = calc_tc(
+                self.options_geotechnical[section_keys[n]], self.discount_rate
+            )
             # LCC_tot = calcTC(self.options[keys[n]])
             # we get the unique ids of the options in the height and geotechnical measures
             section_sg_ids = self.options_geotechnical[section_keys[n]].ID.unique()
             section_sh_ids = self.options_height[section_keys[n]].ID.unique()
             for sh_id in section_sh_ids:
-                sh_indices = self.options_height[section_keys[n]].index[
-                    self.options_height[section_keys[n]].ID == sh_id].tolist()
+                sh_indices = (
+                    self.options_height[section_keys[n]]
+                    .index[self.options_height[section_keys[n]].ID == sh_id]
+                    .tolist()
+                )
 
                 # we get the indices of sg_id in the options_geotechnical df
-                sg_indices = self.options_geotechnical[section_keys[n]].index[self.options_geotechnical[section_keys[n]].ID == sh_id].tolist()
+                sg_indices = (
+                    self.options_geotechnical[section_keys[n]]
+                    .index[self.options_geotechnical[section_keys[n]].ID == sh_id]
+                    .tolist()
+                )
                 # combined LCC array for sh_indices and sg_indices
-                LCC_combined = np.add(np.tile(LCC_sh[sh_indices],(len(sg_indices),1)), np.tile(LCC_sg[sg_indices],(len(sh_indices),1)).T)
+                LCC_combined = np.add(
+                    np.tile(LCC_sh[sh_indices], (len(sg_indices), 1)),
+                    np.tile(LCC_sg[sg_indices], (len(sh_indices), 1)).T,
+                )
                 # fill self.LCCOption[n, sh_indices, sg_indices]
                 # we do it using a loop, as masking is not working properly
                 # Loop through the indices and update values
                 for i, sh_idx in enumerate(sh_indices):
                     for j, sg_idx in enumerate(sg_indices):
-                        self.LCCOption[n, sh_idx+1, sg_idx+1] = LCC_combined[j,i]
+                        self.LCCOption[n, sh_idx + 1, sg_idx + 1] = LCC_combined[j, i]
 
         # Decision Variables for executed options [N,Sh] & [N,Sg]
         self.Cint_h = np.zeros((N, Sh))
@@ -499,8 +511,8 @@ class StrategyBase:
                             "no",
                             0.0,
                             0.0,
-                            -999.,
-                            -999.,
+                            -999.0,
+                            -999.0,
                         ]
                     ).reshape(1, len(Solution.columns)),
                     columns=Solution.columns,
@@ -508,12 +520,22 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
             else:
                 Solution = pd.concat([Solution, lines])
-        colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm", "transition_level", "beta_target"]
+        colorder = [
+            "ID",
+            "Section",
+            "LCC",
+            "name",
+            "yes/no",
+            "dcrest",
+            "dberm",
+            "transition_level",
+            "beta_target",
+        ]
         Solution = Solution[colorder]
         for count, row in Solution.iterrows():
             if isinstance(row["name"], np.ndarray) and any(row["name"]):  # clean output
-                    Solution.loc[count, "name"] = row["name"][0]
-            
+                Solution.loc[count, "name"] = row["name"][0]
+
         if type == "Final":
             self.FinalSolution = Solution
             self.FinalSolution.to_csv(csv_path)

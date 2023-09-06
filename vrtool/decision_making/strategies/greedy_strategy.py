@@ -202,17 +202,30 @@ class GreedyStrategy(StrategyBase):
                         existing_investments[section_no, 0] - 1
                     ]["Overflow"]
                 if "Revetment" in HeightOptions.columns:
-                    current_height_investments["Revetment"] = HeightOptions.iloc[existing_investments[section_no, 0] - 1]['Revetment']
+                    current_height_investments["Revetment"] = HeightOptions.iloc[
+                        existing_investments[section_no, 0] - 1
+                    ]["Revetment"]
 
                 # check if all rows in comparison only contain True values
                 if mechanism == "Overflow":
-                    comparison_height = (HeightOptions.Overflow > current_height_investments["Overflow"]).any(axis=1)
+                    comparison_height = (
+                        HeightOptions.Overflow > current_height_investments["Overflow"]
+                    ).any(axis=1)
                     if "Revetment" in HeightOptions.columns:
-                        comparison_height = comparison_height & (HeightOptions.Revetment >= current_height_investments["Revetment"]).all(axis=1)
+                        comparison_height = comparison_height & (
+                            HeightOptions.Revetment
+                            >= current_height_investments["Revetment"]
+                        ).all(axis=1)
                 elif mechanism == "Revetment":
-                    comparison_height = (HeightOptions.Revetment > current_height_investments["Revetment"]).any(axis=1)
+                    comparison_height = (
+                        HeightOptions.Revetment
+                        > current_height_investments["Revetment"]
+                    ).any(axis=1)
                     if "Overflow" in HeightOptions.columns:
-                        comparison_height = comparison_height & (HeightOptions.Overflow >= current_height_investments["Overflow"]).all(axis=1)
+                        comparison_height = comparison_height & (
+                            HeightOptions.Overflow
+                            >= current_height_investments["Overflow"]
+                        ).all(axis=1)
 
                 else:
                     raise Exception("Unknown mechanism in overflow bundling")
@@ -572,7 +585,9 @@ class GreedyStrategy(StrategyBase):
                                 init_probability, self, IndexMeasure
                             )
                             init_independent_risk[IndexMeasure[0], :] = copy.deepcopy(
-                                self.RiskGeotechnical[IndexMeasure[0], IndexMeasure[2], :]
+                                self.RiskGeotechnical[
+                                    IndexMeasure[0], IndexMeasure[2], :
+                                ]
                             )
                             init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
                                 self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
@@ -602,7 +617,9 @@ class GreedyStrategy(StrategyBase):
                                 init_probability, self, IndexMeasure
                             )
                             init_independent_risk[IndexMeasure[0], :] = copy.deepcopy(
-                                self.RiskGeotechnical[IndexMeasure[0], IndexMeasure[2], :]
+                                self.RiskGeotechnical[
+                                    IndexMeasure[0], IndexMeasure[2], :
+                                ]
                             )
                             init_overflow_risk[IndexMeasure[0], :] = copy.deepcopy(
                                 self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
@@ -707,14 +724,24 @@ class GreedyStrategy(StrategyBase):
             LCC_invested[i[0]] += np.subtract(self.LCCOption[i], LCC_invested[i[0]])
 
             # get the ids
-            ID1 = self.options_geotechnical[traject.sections[i[0]].name].iloc[i[2] - 1]["ID"].item()
+            ID1 = (
+                self.options_geotechnical[traject.sections[i[0]].name]
+                .iloc[i[2] - 1]["ID"]
+                .item()
+            )
 
-            ID2 = self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]["ID"].item()
+            ID2 = (
+                self.options_height[traject.sections[i[0]].name]
+                .iloc[i[1] - 1]["ID"]
+                .item()
+            )
 
             if ID1 == ID2:
                 ID.append(ID1)
             else:
-                raise Exception(f"ID1 {ID1} and ID2 {ID2} are not the same for the measure at section {traject.sections[i[0]].name}")
+                raise Exception(
+                    f"ID1 {ID1} and ID2 {ID2} are not the same for the measure at section {traject.sections[i[0]].name}"
+                )
 
             # get the parameters
             dcrest.append(

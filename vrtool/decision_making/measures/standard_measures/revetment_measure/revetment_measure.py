@@ -20,11 +20,14 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.revetment_measure_mechanism_reliability import (
+    RevetmentMeasureMechanismReliability,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.failure_mechanisms.revetment.revetment_measure_mechanism_reliability import RevetmentMeasureMechanismReliability
+
 
 class RevetmentMeasure(MeasureProtocol):
     def __init__(self):
@@ -255,7 +258,6 @@ class RevetmentMeasure(MeasureProtocol):
         calc_type: str,
         revetment_measure_results: list[RevetmentMeasureResult],
     ) -> dict[str, MechanismReliability]:
-
 
         _reliability_dict = {}
         for result in revetment_measure_results:

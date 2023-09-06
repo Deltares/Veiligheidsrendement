@@ -17,18 +17,34 @@ def measure_combinations(
     combinables, partials, solutions: Solutions, splitparams=False
 ):
     _combined_measures = pd.DataFrame(columns=combinables.columns)
-    #all columns without a second index are attributes of the measure
-    attribute_col_names = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)==''].tolist()
-    #years are those columns of level 2 with a second index that is not ''
-    years = combinables.columns.get_level_values(1)[combinables.columns.get_level_values(1)!=''].unique().tolist()
-    #mechanisms are those columns of level 1 with a second index that is not ''
-    mechanisms = combinables.columns.get_level_values(0)[combinables.columns.get_level_values(1)!=''].unique().tolist()
+    # all columns without a second index are attributes of the measure
+    attribute_col_names = combinables.columns.get_level_values(0)[
+        combinables.columns.get_level_values(1) == ""
+    ].tolist()
+    # years are those columns of level 2 with a second index that is not ''
+    years = (
+        combinables.columns.get_level_values(1)[
+            combinables.columns.get_level_values(1) != ""
+        ]
+        .unique()
+        .tolist()
+    )
+    # mechanisms are those columns of level 1 with a second index that is not ''
+    mechanisms = (
+        combinables.columns.get_level_values(0)[
+            combinables.columns.get_level_values(1) != ""
+        ]
+        .unique()
+        .tolist()
+    )
 
-    #make dict with attribute_col_names as keys and empty lists as values
-    attribute_col_dict = {col:[] for col in attribute_col_names}
+    # make dict with attribute_col_names as keys and empty lists as values
+    attribute_col_dict = {col: [] for col in attribute_col_names}
 
-    #make dict with mechanisms as keys, sub dicts of years and then empty lists as values
-    mechanism_beta_dict = {mechanism:{year:[] for year in years} for mechanism in mechanisms}
+    # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
+    mechanism_beta_dict = {
+        mechanism: {year: [] for year in years} for mechanism in mechanisms
+    }
     count = 0
     # loop over partials
     for i, row1 in partials.iterrows():
@@ -36,61 +52,98 @@ def measure_combinations(
         for j, row2 in combinables.iterrows():
 
             for col in attribute_col_names:
-                if col == 'ID': #TODO maybe add type here as well and just concatenate the types as a string
+                if (
+                    col == "ID"
+                ):  # TODO maybe add type here as well and just concatenate the types as a string
                     attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
-                elif col == 'class':
+                elif col == "class":
                     attribute_value = "combined"
                 else:
-                    #for all other columns we combine the lists and make sure that it is not nested
+                    # for all other columns we combine the lists and make sure that it is not nested
                     combined_data = row1[col].tolist() + row2[col].tolist()
-                    attribute_value = list(itertools.chain.from_iterable(
-                        itertools.repeat(x, 1) if (isinstance(x, str)) or (isinstance(x, int)) or (isinstance(x, float)) else x for x in
-                        combined_data))
-                    if col == 'type': #if it is the type we make sure that it is a single string and store it as list of length 1
-                        attribute_value = ['+'.join(attribute_value)]
-                    #drop all -999 values from attribute_value
-                    attribute_value = [x for x in attribute_value if x != -999 and x != -999.0]
-                    if len(attribute_value) == 1: #if there is only one value we take that value
+                    attribute_value = list(
+                        itertools.chain.from_iterable(
+                            itertools.repeat(x, 1)
+                            if (isinstance(x, str))
+                            or (isinstance(x, int))
+                            or (isinstance(x, float))
+                            else x
+                            for x in combined_data
+                        )
+                    )
+                    if (
+                        col == "type"
+                    ):  # if it is the type we make sure that it is a single string and store it as list of length 1
+                        attribute_value = ["+".join(attribute_value)]
+                    # drop all -999 values from attribute_value
+                    attribute_value = [
+                        x for x in attribute_value if x != -999 and x != -999.0
+                    ]
+                    if (
+                        len(attribute_value) == 1
+                    ):  # if there is only one value we take that value
                         attribute_value = attribute_value[0]
-                    elif len(attribute_value) == 0: #if there is no value we take -999
+                    elif len(attribute_value) == 0:  # if there is no value we take -999
                         attribute_value = -999
                     else:
                         pass
                 attribute_col_dict[col].append(attribute_value)
 
-            #then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+            # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
             for mechanism in mechanism_beta_dict.keys():
                 if mechanism == "Section":
                     continue
                 else:
                     for year in mechanism_beta_dict[mechanism].keys():
-                        if row1['type'].all() == 'Vertical Geotextile':
+                        if row1["type"].all() == "Vertical Geotextile":
                             vzg_idx = solutions.measure_table.loc[
                                 solutions.measure_table["Name"]
                                 == "Verticaal Zanddicht Geotextiel"
-                                ].index.values[0]
-                            Pf_VZG = solutions.measures[vzg_idx].parameters["Pf_solution"]
+                            ].index.values[0]
+                            Pf_VZG = solutions.measures[vzg_idx].parameters[
+                                "Pf_solution"
+                            ]
                             P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
-                            pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(row2[(mechanism,year)])
-                            mechanism_beta_dict[mechanism][year].append(pf_to_beta(pf_vzg))
+                            pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(
+                                row2[(mechanism, year)]
+                            )
+                            mechanism_beta_dict[mechanism][year].append(
+                                pf_to_beta(pf_vzg)
+                            )
                         else:
-                            mechanism_beta_dict[mechanism][year].append(np.maximum(row1[mechanism,year],row2[mechanism,year]))
+                            mechanism_beta_dict[mechanism][year].append(
+                                np.maximum(row1[mechanism, year], row2[mechanism, year])
+                            )
 
-            count+=1
+            count += 1
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
-    attribute_col_df.columns = pd.MultiIndex.from_tuples([(col,"") for col in attribute_col_df.columns])
-    mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
-    mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
+    attribute_col_df.columns = pd.MultiIndex.from_tuples(
+        [(col, "") for col in attribute_col_df.columns]
+    )
+    mechanism_beta_df = (
+        pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
+    )
+    mechanism_beta_df = pd.DataFrame(
+        mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index
+    )
     mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
-    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),axis=1)
+    _combined_measures = pd.concat(
+        (attribute_col_df, mechanism_beta_df.transpose()), axis=1
+    )
     for year in years:
-        #compute the section beta
-        betas_in_year = _combined_measures.loc[:,(_combined_measures.columns.get_level_values(0) != 'Section', _combined_measures.columns.get_level_values(1)==25)]
+        # compute the section beta
+        betas_in_year = _combined_measures.loc[
+            :,
+            (
+                _combined_measures.columns.get_level_values(0) != "Section",
+                _combined_measures.columns.get_level_values(1) == 25,
+            ),
+        ]
         pf_in_year = beta_to_pf(betas_in_year)
-        section_beta = pf_to_beta(1 - np.prod(1-pf_in_year, axis=1))
-        #add the section beta to the dataframe
-        _combined_measures.loc[:,("Section",year)] = section_beta
+        section_beta = pf_to_beta(1 - np.prod(1 - pf_in_year, axis=1))
+        # add the section beta to the dataframe
+        _combined_measures.loc[:, ("Section", year)] = section_beta
     return _combined_measures
 
 
@@ -129,8 +182,8 @@ def revetment_combinations(
         .tolist()
     )
 
-    #make dict with attribute_col_names as keys and empty lists as values
-    attribute_col_dict = {col:[] for col in attribute_col_names}
+    # make dict with attribute_col_names as keys and empty lists as values
+    attribute_col_dict = {col: [] for col in attribute_col_names}
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
@@ -142,42 +195,67 @@ def revetment_combinations(
         # combine with all combinables (in this case revetment measures)
         for j, row2 in revetment_measures.iterrows():
             for col in attribute_col_names:
-                if col == 'ID': #TODO maybe add type here as well and just concatenate the types as a string
+                if (
+                    col == "ID"
+                ):  # TODO maybe add type here as well and just concatenate the types as a string
                     attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
-                elif col == 'class':
+                elif col == "class":
                     attribute_value = "combined"
                 else:
-                    #for all other columns we combine the lists and make sure that it is not nested
+                    # for all other columns we combine the lists and make sure that it is not nested
                     combined_data = row1[col].tolist() + row2[col].tolist()
-                    attribute_value = list(itertools.chain.from_iterable(
-                        itertools.repeat(x, 1) if (isinstance(x, str)) or (isinstance(x, int)) or (isinstance(x, float)) else x for x in
-                        combined_data))
-                    if col == 'type': #if it is the type we make sure that it is a single string and store it as list of length 1
-                        attribute_value = ['+'.join(attribute_value)]
-                    #drop all -999 values from attribute_value
-                    attribute_value = [x for x in attribute_value if x != -999 and x != -999.0]
-                    if len(attribute_value) == 1: #if there is only one value we take that value
+                    attribute_value = list(
+                        itertools.chain.from_iterable(
+                            itertools.repeat(x, 1)
+                            if (isinstance(x, str))
+                            or (isinstance(x, int))
+                            or (isinstance(x, float))
+                            else x
+                            for x in combined_data
+                        )
+                    )
+                    if (
+                        col == "type"
+                    ):  # if it is the type we make sure that it is a single string and store it as list of length 1
+                        attribute_value = ["+".join(attribute_value)]
+                    # drop all -999 values from attribute_value
+                    attribute_value = [
+                        x for x in attribute_value if x != -999 and x != -999.0
+                    ]
+                    if (
+                        len(attribute_value) == 1
+                    ):  # if there is only one value we take that value
                         attribute_value = attribute_value[0]
-                    elif len(attribute_value) == 0: #if there is no value we take -999
+                    elif len(attribute_value) == 0:  # if there is no value we take -999
                         attribute_value = -999
                     else:
                         pass
                 attribute_col_dict[col].append(attribute_value)
 
-            #then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+            # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
             for mechanism in mechanism_beta_dict.keys():
                 if mechanism == "Section":
                     continue
                 else:
                     for year in mechanism_beta_dict[mechanism].keys():
-                        mechanism_beta_dict[mechanism][year].append(np.maximum(row1[mechanism,year],row2[mechanism,year]))
+                        mechanism_beta_dict[mechanism][year].append(
+                            np.maximum(row1[mechanism, year], row2[mechanism, year])
+                        )
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
-    attribute_col_df.columns = pd.MultiIndex.from_tuples([(col,"") for col in attribute_col_df.columns])
-    mechanism_beta_df = pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
-    mechanism_beta_df = pd.DataFrame(mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index)
+    attribute_col_df.columns = pd.MultiIndex.from_tuples(
+        [(col, "") for col in attribute_col_df.columns]
+    )
+    mechanism_beta_df = (
+        pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
+    )
+    mechanism_beta_df = pd.DataFrame(
+        mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index
+    )
     mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
-    _combined_measures = pd.concat((attribute_col_df,mechanism_beta_df.transpose()),axis=1)
+    _combined_measures = pd.concat(
+        (attribute_col_df, mechanism_beta_df.transpose()), axis=1
+    )
     for year in years:
         # compute the section beta
         betas_in_year = _combined_measures.loc[
@@ -188,9 +266,9 @@ def revetment_combinations(
             ),
         ]
         pf_in_year = beta_to_pf(betas_in_year)
-        section_beta = pf_to_beta(1 - np.prod(1-pf_in_year, axis=1))
-        #add the section beta to the dataframe
-        _combined_measures.loc[:,("Section",year)] = section_beta
+        section_beta = pf_to_beta(1 - np.prod(1 - pf_in_year, axis=1))
+        # add the section beta to the dataframe
+        _combined_measures.loc[:, ("Section", year)] = section_beta
 
     return _combined_measures
 
@@ -475,83 +553,119 @@ def split_options(
             options_independent[i].ID.isin(options_dependent[i].ID.unique())
         ]
 
-
         # Now that we have split the measures we should avoid double counting of costs by correcting some of the cost values.
         # This concerns the startcosts for soil reinforcement
 
         # We get the min cost which is equal to the minimum costs for a soil reinforcement (which we assume has dimensions 0 m crest and 0 m berm)
         startcosts_soil = np.min(
-            options[i][
-                (options[i]["type"] == "Soil reinforcement")
-            ]["cost"]
+            options[i][(options[i]["type"] == "Soil reinforcement")]["cost"]
         )
 
-        #we subtract the startcosts for all soil reinforcements (including those with stability screens)
-        #Note that this is not robust as it depends on the exact formulation of types in the options. We should ensure that these names do not change in the future
-        #we need to distinguish between measures where cost is a float and where it is a list
-        #TODO this can be a function
+        # we subtract the startcosts for all soil reinforcements (including those with stability screens)
+        # Note that this is not robust as it depends on the exact formulation of types in the options. We should ensure that these names do not change in the future
+        # we need to distinguish between measures where cost is a float and where it is a list
+        # TODO this can be a function
         float_costs = options_independent[i]["cost"].map(type) == float
-        soil_reinforcements = options_independent[i]["type"].str.contains("Soil reinforcement")
+        soil_reinforcements = options_independent[i]["type"].str.contains(
+            "Soil reinforcement"
+        )
         for idx, row in options_independent[i].iterrows():
-            #subtract startcosts for all entries in options_independent where float_costs is true and the type contains soil reinforcement
+            # subtract startcosts for all entries in options_independent where float_costs is true and the type contains soil reinforcement
             if float_costs[idx] & soil_reinforcements[idx]:
-                options_independent[i].loc[idx,"cost"] = np.subtract(options_independent[i].loc[idx,"cost"],startcosts_soil)[0]
-            #if it is a soil reinforcement combined with others we need to modify the right value from the list of costs
+                options_independent[i].loc[idx, "cost"] = np.subtract(
+                    options_independent[i].loc[idx, "cost"], startcosts_soil
+                )[0]
+            # if it is a soil reinforcement combined with others we need to modify the right value from the list of costs
             if (not float_costs[idx]) & soil_reinforcements[idx]:
-                #break the type string at '+' and find the value that contains soil reinforcement
-                for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                # break the type string at '+' and find the value that contains soil reinforcement
+                for cost_index, measure_type in enumerate(
+                    row["type"].item().split("+")
+                ):
                     if "Soil reinforcement" in measure_type:
                         # get list of costs and subtract startcosts from the cost that contains soil reinforcement
                         cost_list = row["cost"].item()
-                        cost_list[cost_index] = np.subtract(cost_list[cost_index], startcosts_soil)
-                        options_independent[i].loc[idx, "cost"] = [[val] for val in cost_list]
+                        cost_list[cost_index] = np.subtract(
+                            cost_list[cost_index], startcosts_soil
+                        )
+                        options_independent[i].loc[idx, "cost"] = [
+                            [val] for val in cost_list
+                        ]
 
         # Then we deal with the costs for a stability screen when combined with a berm, these are accounted for in the independent_measure costs so should be removed from the dependent measures
-        cost_stability_screen = np.min(options[i].loc[
-                   options[i]["type"].str.fullmatch("Soil reinforcement with stability screen")
-               ]["cost"]) - startcosts_soil
+        cost_stability_screen = (
+            np.min(
+                options[i].loc[
+                    options[i]["type"].str.fullmatch(
+                        "Soil reinforcement with stability screen"
+                    )
+                ]["cost"]
+            )
+            - startcosts_soil
+        )
         # Find all dependent measures that contain a stability screen
-        stability_screens = options_dependent[i]["type"].str.contains("Soil reinforcement with stability screen")
+        stability_screens = options_dependent[i]["type"].str.contains(
+            "Soil reinforcement with stability screen"
+        )
         for idx, row in options_dependent[i].iterrows():
-            #subtract cost_stability_screen from all entries in options_dependent where stability_screens is true
+            # subtract cost_stability_screen from all entries in options_dependent where stability_screens is true
             if stability_screens[idx]:
-                #break the type string at '+' and find the value that contains soil reinforcement
-                for cost_index, measure_type in enumerate(row["type"].item().split('+')):
+                # break the type string at '+' and find the value that contains soil reinforcement
+                for cost_index, measure_type in enumerate(
+                    row["type"].item().split("+")
+                ):
                     if "Soil reinforcement with stability screen" in measure_type:
                         if isinstance(row["cost"].item(), float):
-                            options_dependent[i].loc[idx,"cost"] = np.subtract(options_dependent[i].loc[idx,"cost"],cost_stability_screen)[0]
+                            options_dependent[i].loc[idx, "cost"] = np.subtract(
+                                options_dependent[i].loc[idx, "cost"],
+                                cost_stability_screen,
+                            )[0]
                         else:
                             # get list of costs and subtract startcosts from the cost that contains soil reinforcement
                             cost_list = row["cost"].item()
-                            cost_list[cost_index] = np.subtract(cost_list[cost_index], cost_stability_screen)
-                            #pass cost_list back to the idx, "cost" column in options_dependent[i]
-                            options_dependent[i].loc[idx, "cost"] = [[val] for val in cost_list]
+                            cost_list[cost_index] = np.subtract(
+                                cost_list[cost_index], cost_stability_screen
+                            )
+                            # pass cost_list back to the idx, "cost" column in options_dependent[i]
+                            options_dependent[i].loc[idx, "cost"] = [
+                                [val] for val in cost_list
+                            ]
 
         # Find all dependent measures that contain a Vertical Geotextile or a Diaphragm wall
-        vertical_geotextiles = options_dependent[i]["type"].str.contains("Vertical Geotextile")
+        vertical_geotextiles = options_dependent[i]["type"].str.contains(
+            "Vertical Geotextile"
+        )
         diaphragm_walls = options_dependent[i]["type"].str.contains("Diaphragm Wall")
+
         def set_cost_to_zero(options_set, bools, measure_string):
             for row_idx, option_row in options_set.iterrows():
                 if bools[row_idx]:
                     # break the type string at '+' and find the value that is a vertical Geotextile
-                    for cost_index, measure_type in enumerate(option_row["type"].item().split('+')):
+                    for cost_index, measure_type in enumerate(
+                        option_row["type"].item().split("+")
+                    ):
                         if measure_type == measure_string:
                             if isinstance(option_row["cost"].item(), float):
-                                options_set.loc[row_idx, "cost"] = 0.
+                                options_set.loc[row_idx, "cost"] = 0.0
                             else:
                                 # get list of costs and set cost of geotextile to 0
                                 cost_list = option_row["cost"].item().copy()
-                                cost_list[cost_index] = 0.
+                                cost_list[cost_index] = 0.0
                                 # pass cost_list back to the row_idx, "cost" column in options_dependent[i]
-                                options_set.loc[row_idx, "cost"] = [[val] for val in cost_list]
+                                options_set.loc[row_idx, "cost"] = [
+                                    [val] for val in cost_list
+                                ]
             return options_set
-        
-        #set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
+
+        # set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
         if any(vertical_geotextiles):
-            options_dependent[i] = set_cost_to_zero(options_dependent[i], vertical_geotextiles, "Vertical Geotextile")
+            options_dependent[i] = set_cost_to_zero(
+                options_dependent[i], vertical_geotextiles, "Vertical Geotextile"
+            )
 
         if any(diaphragm_walls):
-            options_dependent[i] = set_cost_to_zero(options_dependent[i], diaphragm_walls, "Diaphragm Wall")
+            options_dependent[i] = set_cost_to_zero(
+                options_dependent[i], diaphragm_walls, "Diaphragm Wall"
+            )
 
         revetments = options_independent[i]["type"].str.contains("Revetment")
         if any(revetments):
@@ -564,10 +678,16 @@ def split_options(
 
         # only keep reliability of relevant mechanisms in dictionary
         options_dependent[i].drop(
-            get_dropped_dependent_options(available_mechanism_names), axis=1, level=0, inplace=True,
+            get_dropped_dependent_options(available_mechanism_names),
+            axis=1,
+            level=0,
+            inplace=True,
         )
         options_independent[i].drop(
-            get_dropped_independent_options(available_mechanism_names), axis=1, level=0, inplace=True,
+            get_dropped_independent_options(available_mechanism_names),
+            axis=1,
+            level=0,
+            inplace=True,
         )
     return options_dependent, options_independent
 
@@ -604,7 +724,7 @@ def update_probability(init_probability, strategy, index):
         from scipy.stats import norm
 
         # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
-        if i in ["Overflow","Revetment"]:
+        if i in ["Overflow", "Revetment"]:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]

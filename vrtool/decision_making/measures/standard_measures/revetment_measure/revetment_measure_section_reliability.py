@@ -33,7 +33,7 @@ class RevetmentMeasureSectionReliability(MeasureResultCollectionProtocol):
                 self.reinforcement_type,
                 self.combinable_type,
                 self.measure_year,
-                -999, # yes/no column
+                -999,  # yes/no column
                 self.cost,
             ]
         return [
