@@ -39,8 +39,8 @@ class MeasureWithListOfDictMocked(MeasureProtocol):
     def __init__(self, cost: float, section_reliability: SectionReliability) -> None:
         self.measures = [
             {
-                "Cost": self.cost,
-                "Reliability": self.section_reliability,
+                "Cost": cost,
+                "Reliability": section_reliability,
                 "id": "Mocked Dict",
             }
         ]
