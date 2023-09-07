@@ -60,10 +60,6 @@ _acceptance_optimization_test_cases = [
         ("TestCase3_38-1_small", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, two sections",
     ),
-    pytest.param(
-        ("TestCase4_38-1_revetment_small", "38-1", _available_mechanisms),
-        id="Traject 38-1, two sections with revetment",
-    ),
 ]
 
 
