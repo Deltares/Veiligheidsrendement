@@ -1,6 +1,6 @@
-,ID,Section,LCC,name,yes/no,dcrest,dberm
-40,5+2,01A,2536362.789689962,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,30
-37,5+2,01B,1690054.5928809186,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
-44,5+2,4,6032468.924376771,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,20
-46,5+2,12,5482575.005952455,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.5,15
-47,5+2,15,4829326.421234598,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,30
+,ID,Section,LCC,name,yes/no,dcrest,dberm,transition_level,beta_target
+49,5+2+8,01A,3978316.5699919914,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,0,8.230000000000008,4.952892647472083
+48,6+8,01B,4764371.664388258,Zelfkerende constructie+Aanpassing bekleding,yes,-999.0,-999,6.84,4.64819310760074
+45,5+2+8,4,4354683.804376772,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,0,3.76,5.136683427835214
+32,5+2,12,4367211.831721086,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,12,-999,-999
+50,6,15,11949300.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999

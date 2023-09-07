@@ -1,7 +1,5 @@
-,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm
-0,,,0.0,,,,,,
-1,15,81,11949300.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-2,01B,81,4226200.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-3,4,81,14324200.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-4,01A,81,6713300.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-5,12,81,16306400.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
+,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm,beta_target,transition_level
+0,,,0.0,,,,,,,,
+1,01B,18883,4558504.125023905,[],6+8,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.64819310760074,5.84
+2,4,81,14324200.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999.0,-999.0
+3,01A,17664,7950254.217557988,[],6+8,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.952892647472083,4.980000000000002
