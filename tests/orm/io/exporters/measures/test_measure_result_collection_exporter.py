@@ -4,7 +4,7 @@ from vrtool.orm.io.exporters.measures.measure_result_collection_exporter import 
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 
 
-class TestMeasureResultCollectionProtocolExporter:
+class TestMeasureResultCollectionExporter:
     def test_initialize(self):
         _exporter = MeasureResultCollectionExporter(None)
 
