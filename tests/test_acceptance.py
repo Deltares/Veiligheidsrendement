@@ -18,6 +18,7 @@ from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import (
+    export_results_measures,
     export_results_safety_assessment,
     get_dike_traject,
     open_database,
@@ -274,6 +275,7 @@ class TestAcceptance:
 
         # 4. Validate exporting results is possible
         # TODO: This needs to wait until the entire export is finished
+        export_results_measures(_results)
         self.validate_measure_results(valid_vrtool_config)
 
     def validate_measure_results(self, valid_vrtool_config: VrtoolConfig):
@@ -287,13 +289,60 @@ class TestAcceptance:
         open_database(valid_vrtool_config.input_database_path)
 
         # 3. Load reference as pandas dataframe.
+        nr_of_measure_results_per_section = 0
         for section in SectionData.select():
-            _reference_df = pd.read_csv(
-                _test_reference_path.joinpath(
-                    f"{section.section_name}_Options_Veiligheidsrendement.csv"
-                ),
-                header=[0, 1],
+            reference_data = self.get_reference_measure_result_data(
+                _test_reference_path, section
             )
+
+            nr_of_measure_results_per_section += (
+                len(reference_data.index) * reference_data[("Section",)].shape[1]
+            )
+
+            self.validate_measure_result_per_section(reference_data, section)
+
+        # The total amount of results for a single section must be equal to the amount
+        #  of years * the amount of measures that are not of the "class" combined
+        assert len(MeasureResult.select()) == nr_of_measure_results_per_section
+
+    def get_reference_measure_result_data(
+        self, _test_reference_path: Path, section: SectionData
+    ) -> pd.DataFrame:
+        _read_reference_df = pd.read_csv(
+            _test_reference_path.joinpath(
+                f"{section.section_name}_Options_Veiligheidsrendement.csv"
+            ),
+            header=[0, 1],
+        )
+
+        # Filter reference values as we are not interested in the reliabilities for the individual failure mechanisms
+        _filtered_reference_df = _read_reference_df.loc[
+            :,
+            _read_reference_df.columns.get_level_values(0).isin(
+                ["type", "class", "year", "dcrest", "dberm", "cost", "Section"]
+            ),
+        ]
+
+        # Rename the "unnamed" columns or the reference data cannot be filtered
+        normalised_columns = [
+            (column[0], "") if column[0] != "Section" else (column[0], column[1])
+            for column in _filtered_reference_df.columns.tolist()
+        ]
+        new_columns = pd.MultiIndex.from_tuples(normalised_columns)
+        _filtered_reference_df.columns = new_columns
+
+        # We are also not interested in the combined measure results, because these are derived solutions and are not
+        # exported by the measure exporter
+        _filtered_reference_df = _filtered_reference_df[
+            _filtered_reference_df[("class",)] != "combined"
+        ]
+
+        return _filtered_reference_df
+
+    def validate_measure_result_per_section(
+        self, reference_df: pd.DataFrame, section: SectionData
+    ) -> None:
+        pass
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
