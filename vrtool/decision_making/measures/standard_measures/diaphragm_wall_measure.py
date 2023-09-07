@@ -7,7 +7,7 @@ from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     probabilistic_design,
 )
-from vrtool.decision_making.measures.measure_protocol import SimpleMeasureProtocol
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -16,7 +16,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class DiaphragmWallMeasure(SimpleMeasureProtocol):
+class DiaphragmWallMeasure(MeasureProtocol):
     # type == 'Diaphragm Wall':
     def evaluate_measure(
         self,

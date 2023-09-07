@@ -4,7 +4,7 @@ import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.common_functions import determine_costs
-from vrtool.decision_making.measures.measure_protocol import SimpleMeasureProtocol
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -13,7 +13,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class VerticalGeotextileMeasure(SimpleMeasureProtocol):
+class VerticalGeotextileMeasure(MeasureProtocol):
     def evaluate_measure(
         self,
         dike_section: DikeSection,
