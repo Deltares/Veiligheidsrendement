@@ -6,7 +6,7 @@ from tests.orm.io.exporters import (
     section_reliability_with_values,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
-from vrtool.orm.io.exporters.mechanism_reliability_collection_exporter import (
+from vrtool.orm.io.exporters.safety_assessment.mechanism_reliability_collection_exporter import (
     MechanismReliabilityCollectionExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
