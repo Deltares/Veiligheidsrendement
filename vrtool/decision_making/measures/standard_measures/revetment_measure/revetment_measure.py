@@ -20,6 +20,9 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.revetment_measure_mechanism_reliability import (
+    RevetmentMeasureMechanismReliability,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
@@ -44,16 +47,16 @@ class RevetmentMeasure(MeasureProtocol):
         return self.parameters["n_steps_block"]
 
     def _get_min_beta_target(self, dike_section: DikeSection) -> float:
-        return float(
-            max(
-                map(
-                    lambda x: x.Beta,
-                    dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                        "Revetment"
-                    ).Reliability.values(),
-                )
-            )
+        """
+        NOTE (VRTOOL-254): Retrieves the Beta value for the first computation year (lowest integer value).
+        """
+        _mech_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+            "Revetment"
         )
+        _min_reliability_year = str(
+            min(map(int, _mech_reliability_collection.Reliability.keys()))
+        )
+        return _mech_reliability_collection.Reliability[_min_reliability_year].Beta
 
     def _get_beta_target_vector(self, min_beta: float, p_max: float) -> list[float]:
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
@@ -255,18 +258,6 @@ class RevetmentMeasure(MeasureProtocol):
         calc_type: str,
         revetment_measure_results: list[RevetmentMeasureResult],
     ) -> dict[str, MechanismReliability]:
-        class RevetmentMeasureMechanismReliability(MechanismReliability):
-            def calculate_reliability(
-                self,
-                strength: MechanismInput,
-                load: LoadInput,
-                mechanism: str,
-                year: float,
-                traject_info: DikeTrajectInfo,
-            ):
-                # TODO (VRTOOL-187).
-                # This is done to prevent a Revetment mechanism to be calculated because we already know its beta combined.
-                pass
 
         _reliability_dict = {}
         for result in revetment_measure_results:
