@@ -9,6 +9,7 @@ from vrtool.orm.orm_controllers import (
     clear_measure_results,
     export_results_safety_assessment,
     get_dike_traject,
+    export_solutions,
 )
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
@@ -97,12 +98,14 @@ def run_step_measures(**kwargs):
     )  # Assessment results also cleared because it is part of the RunMeasures workflow
     clear_measure_results(_vr_config)
 
-    # Step 2. Measures.
+    # Step 2a. Measures.
     _measures = RunMeasures(
         _vr_config, _selected_traject, plot_mode=VrToolPlotMode.STANDARD
     )
-    _measures.run()
+    _measures_result = _measures.run()
 
+    # Step 2b. Export solutions to database
+    export_solutions(_measures_result.solutions_dict, _vr_config)
 
 @cli.command(
     name="optimization", help="Optimizes the model measures in the given directory."
@@ -120,9 +123,12 @@ def run_step_optimization(**kwargs):
     _measures = RunMeasures(_vr_config, _selected_traject, _plot_mode)
     _measures_result = _measures.run()
 
-    # Step 3. Optimization.
+    # Step 3a. Optimization.
     _optimization = RunOptimization(_measures_result, _plot_mode)
-    _optimization.run()
+    _optimization_result = _optimization.run()
+
+    # Step 3b. Export solutions to database
+    export_solutions(_optimization_result.solutions_dict, _vr_config)
 
 
 @cli.command(name="run_full", help="Full run of the model in the given directory.")
@@ -135,8 +141,11 @@ def run_full(**kwargs):
     _selected_traject = get_dike_traject(_vr_config)
 
     # Run all steps with one command.
-    _measures = RunFullModel(_vr_config, _selected_traject, VrToolPlotMode.STANDARD)
-    _measures.run()
+    _full_model = RunFullModel(_vr_config, _selected_traject, VrToolPlotMode.STANDARD)
+    _result_full = _full_model.run()
+
+    # Export solutions to database
+    export_solutions(_result_full.results_solutions, _vr_config)
 
 
 if __name__ == "__main__":

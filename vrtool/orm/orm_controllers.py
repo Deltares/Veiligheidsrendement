@@ -9,6 +9,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import models as orm
+from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
@@ -181,3 +182,23 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     vrtool_db.close()
 
     logging.info("Closed connection after clearing measure results.")
+
+def export_solutions(solutions_dict: dict, vr_config: VrtoolConfig) -> None:
+    """
+    Exports the solutions to a database
+
+    Args:
+        solutions_dict (dict): set of solutions to be exported
+        vr_config (VrtoolConfig): configuration of VR-Tool
+    """
+
+    _connected_db = open_database(vr_config.input_database_path)
+
+    logging.info("Opened connection to export solution.")
+
+    _exporter = SolutionsExporter()
+    for _solution in solutions_dict.values():
+        _exporter.export_dom(_solution)
+    _connected_db.close()
+
+    logging.info("Closed connection after export solution.")
