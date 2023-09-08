@@ -107,6 +107,8 @@ class TestAcceptance:
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
 
+        _test_results_directory.mkdir(parents=True)
+
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
@@ -115,11 +117,11 @@ class TestAcceptance:
         _test_config.externals = test_externals
 
         # Create a copy of the database to avoid parallelization runs locked databases.
-        _db_file = _test_results_directory.joinpath("test_db.db")
+        _db_file = _test_input_directory.joinpath("vrtool_input.db")
         assert _db_file.exists(), "No database found at {}.".format(_db_file)
 
-        _test_config.input_database_path = _test_input_directory.joinpath(
-            "vrtool_input.db"
+        _test_config.input_database_path = _test_results_directory.joinpath(
+            "test_db.db"
         )
         shutil.copy(_db_file, _test_config.input_database_path)
 
