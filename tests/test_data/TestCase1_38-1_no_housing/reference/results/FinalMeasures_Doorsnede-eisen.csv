@@ -1,11 +1,11 @@
 ,ID,Section,LCC,name,yes/no,dcrest,dberm,transition_level,beta_target
-0,6,01A,6713300.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
-0,6,01B,4226200.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
-0,6,4,14324200.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
-0,6,12,16306400.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
-0,6,15,11949300.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
-0,5+2,33A,1204939.007623813,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,12,-999,-999
-0,2,34,2201796.2973322254,Grondversterking binnenwaarts 2025,-999,1.0,15,-999,-999
-0,5+2,37B,910797.5553862012,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0,-999,-999
-0,5+2,40,1711330.9459480809,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,8,-999,-999
-0,2,50,1006038.7786281833,Grondversterking binnenwaarts 2025,-999,1.0,0,-999,-999
+0,6,01A,12274210.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
+0,6,01B,7726940.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
+0,6,4,26189540.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
+0,6,12,29813680.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
+0,6,15,21847410.0,Zelfkerende constructie,yes,-999.0,-999,-999,-999
+0,5+2,33A,1642885.6719994375,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,0.5,12,-999,-999
+0,2,34,3044259.032528218,Grondversterking binnenwaarts 2025,-999,1.0,15,-999,-999
+0,5+2,37B,1240043.8380566633,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,0,-999,-999
+0,5+2,40,2320611.6932706647,Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025,yes,1.0,8,-999,-999
+0,2,50,1404028.8916407283,Grondversterking binnenwaarts 2025,-999,1.0,0,-999,-999
