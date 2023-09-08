@@ -289,21 +289,34 @@ class TestAcceptance:
         open_database(valid_vrtool_config.input_database_path)
 
         # 3. Load reference as pandas dataframe.
-        nr_of_measure_results_per_section = 0
+        total_nr_of_measure_results = 0
+        total_nr_of_measure_result_parameters = 0
         for section in SectionData.select():
             reference_data = self.get_reference_measure_result_data(
                 _test_reference_path, section
             )
 
-            nr_of_measure_results_per_section += (
-                len(reference_data.index) * reference_data[("Section",)].shape[1]
-            )
+            # The total amount of results for a single section must be equal to the amount
+            #  of years * the amount of measures that are not of the "class" combined
+            nr_of_years = reference_data[("Section",)].shape[1]
+            total_nr_of_measure_results += len(reference_data.index) * nr_of_years
 
+            # The total amount of measure parameters are equal to the amount of rows in the reference
+            # data where the dcrest and dberm are unequal to -999 * the amount of years
+            total_nr_of_measure_result_parameters += (
+                reference_data[
+                    (reference_data[("dcrest",)] != -999)
+                    & (reference_data[("dberm",)] != -999)
+                ].shape[0]
+                * nr_of_years
+            )
             self.validate_measure_result_per_section(reference_data, section)
 
-        # The total amount of results for a single section must be equal to the amount
-        #  of years * the amount of measures that are not of the "class" combined
-        assert len(MeasureResult.select()) == nr_of_measure_results_per_section
+        assert len(MeasureResult.select()) == total_nr_of_measure_results
+        assert (
+            len(MeasureResultParameter.select())
+            == total_nr_of_measure_result_parameters
+        )
 
     def get_reference_measure_result_data(
         self, _test_reference_path: Path, section: SectionData
