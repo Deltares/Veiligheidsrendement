@@ -113,13 +113,15 @@ class TestAcceptance:
         _test_config.traject = _traject
         _test_config.mechanisms = _mechanisms
         _test_config.externals = test_externals
+
+        # Create a copy of the database to avoid parallelization runs locked databases.
+        _db_file = _test_results_directory.joinpath("test_db.db")
+        assert _db_file.exists(), "No database found at {}.".format(_db_file)
+
         _test_config.input_database_path = _test_input_directory.joinpath(
             "vrtool_input.db"
         )
-
-        assert (
-            _test_config.input_database_path.exists()
-        ), "No database found at {}.".format(_test_config.input_database_path)
+        shutil.copy(_db_file, _test_config.input_database_path)
 
         yield _test_config
 
