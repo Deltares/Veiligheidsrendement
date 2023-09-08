@@ -94,7 +94,6 @@ class TestBermWideningDStability:
         )
 
     @pytest.mark.externals
-    @pytest.mark.slow
     def test_when_create_new_dstability_model_then_rerun_with_valid_input(
         self, request: pytest.FixtureRequest
     ):
