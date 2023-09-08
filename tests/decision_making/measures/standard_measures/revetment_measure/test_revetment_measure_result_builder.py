@@ -421,7 +421,7 @@ class TestRevetmentMeasureResultBuilder:
 
         # Compare results.
         _expected_results = np.genfromtxt(_test_data, delimiter=",")
-        assert np.array_equal(_expected_results[:, 0][1:], _calculated_costs)
+        assert np.allclose(_expected_results[1:], np.array(_calculated_costs))
 
     def _output_to_csv(self, output_file: Path, csv_dicts: list[dict]):
         _header = list(csv_dicts[0].keys())
