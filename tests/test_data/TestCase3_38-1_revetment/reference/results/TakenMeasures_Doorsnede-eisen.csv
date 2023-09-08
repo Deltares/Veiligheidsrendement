@@ -1,0 +1,15 @@
+,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm,beta_target,transition_level
+0,,,0.0,,,,,,,,
+1,7,3081,3299798.448682586,[],3+1+6,['Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding'],yes,1.0,30,4.64819310760074,5.84
+2,01B,2401,8612354.23569035,[],4+6,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.952892647472083,4.98
+3,4,2401,29190545.772295613,[],4+6,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.952892647472083,4.98
+4,2,2401,30143239.82491623,[],4+6,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.952892647472083,4.98
+5,3,2401,13490147.785107894,[],4+6,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.952892647472083,4.98
+6,8,3053,2296883.2039229195,[],3+1+6,['Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding'],yes,1.0,20,4.64819310760074,5.84
+7,01A,2401,13680686.595632017,[],4+6,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.952892647472083,4.98
+8,11,81,23215010.0,[],4,['Zelfkerende constructie'],yes,-999.0,-999,-999.0,-999.0
+9,5,2381,5235834.930987993,[],4+6,['Zelfkerende constructie+Aanpassing bekleding'],yes,-999.0,-999,4.64819310760074,5.84
+10,9,3053,12984386.018311538,[],3+1+6,['Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding'],yes,1.0,20,4.64819310760074,5.84
+11,12,81,29813680.0,[],4,['Zelfkerende constructie'],yes,-999.0,-999,-999.0,-999.0
+12,6,561,791679.078737175,[],1+6,['Grondversterking binnenwaarts 2025+Aanpassing bekleding'],-999,1.0,0,4.64819310760074,5.84
+13,10,2939,5953480.4939247,[],3+1+6,['Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding'],yes,1.0,8,5.136683427835214,3.76

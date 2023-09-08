@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from tests import get_test_results_dir, test_results
-from tests.failure_mechanisms.revetment.test_revetment_calculator_assessment import (
+from tests import get_test_results_dir, test_data, test_results
+from tests.failure_mechanisms.revetment.json_files_to_revetment_dataclass_reader import (
     JsonFilesToRevetmentDataClassReader,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_data import (
@@ -388,6 +388,40 @@ class TestRevetmentMeasureResultBuilder:
         self._output_to_csv(_output_file, _results)
         assert _output_file.exists()
         assert len(_output_file.read_text().splitlines()) == len(_results) + 1
+
+    def test_compare_revetment_measure_results_cost(self):
+        # 1. Define test data.
+        _builder = RevetmentMeasureResultBuilder()
+        _json_reader = JsonFilesToRevetmentDataClassReader()
+        _test_data = test_data.joinpath(
+            "revetment_measure_results", "matrix_results.csv"
+        )
+        assert _test_data.exists()
+
+        # 2. Run test.
+        _calculated_costs = []
+        for _comparable_case in _section_2_cases:
+            if _comparable_case.evaluation_year != 2025:
+                # At the moment we only compare the costs for the first year, so no need to generate unrequired results.
+                continue
+            _result = _builder.build(
+                _comparable_case.crest_height,
+                _comparable_case.section_length,
+                _json_reader.get_revetment_input(
+                    _comparable_case.given_years, _comparable_case.section_id
+                ),
+                _comparable_case.target_beta,
+                _comparable_case.transition_level,
+                _comparable_case.evaluation_year,
+            )
+
+            # 3. Verify expectations.
+            assert isinstance(_result, RevetmentMeasureResult)
+            _calculated_costs.append(_result.cost)
+
+        # Compare results.
+        _expected_results = np.genfromtxt(_test_data, delimiter=",")
+        assert np.allclose(_expected_results[1:], np.array(_calculated_costs))
 
     def _output_to_csv(self, output_file: Path, csv_dicts: list[dict]):
         _header = list(csv_dicts[0].keys())

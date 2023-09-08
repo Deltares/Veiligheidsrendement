@@ -163,12 +163,26 @@ class RevetmentMeasureResultBuilder:
                     )
                 )
 
-        if transition_level >= max(
-            map(lambda x: x.end_part, revetment_data.slope_parts)
-        ):
+        _max_end_part = max(map(lambda x: x.end_part, revetment_data.slope_parts))
+        if transition_level >= _max_end_part:
             if transition_level >= crest_height:
                 raise ValueError("Overgang >= crest height")
-            _extra_measure = RevetmentMeasureData(
+            # Unknown
+            _extra_unknown_measure = RevetmentMeasureData(
+                begin_part=_max_end_part,
+                end_part=transition_level,
+                top_layer_type=float("nan"),
+                previous_top_layer_type=20.0,
+                top_layer_thickness=float("nan"),
+                beta_block_revetment=float("nan"),
+                beta_grass_revetment=float("nan"),
+                reinforce=True,
+                tan_alpha=revetment_data.slope_parts[-1].tan_alpha,
+            )
+            _evaluated_measures.append(_extra_unknown_measure)
+
+            # Grass
+            _extra_grass_measure = RevetmentMeasureData(
                 begin_part=transition_level,
                 end_part=crest_height,
                 top_layer_type=20.0,
@@ -181,7 +195,7 @@ class RevetmentMeasureResultBuilder:
                 reinforce=True,
                 tan_alpha=revetment_data.slope_parts[-1].tan_alpha,
             )
-            _evaluated_measures.append(_extra_measure)
+            _evaluated_measures.append(_extra_grass_measure)
 
         if transition_level > revetment_data.current_transition_level:
             self._correct_revetment_measure_data(_evaluated_measures, transition_level)
@@ -206,7 +220,7 @@ class RevetmentMeasureResultBuilder:
 
         for _revetment_measure in revetment_measures:
             if (
-                GrassSlopePart.is_grass_part(_revetment_measure.top_layer_type)
+                GrassSlopePart.is_grass_part(_revetment_measure.previous_top_layer_type)
                 and _revetment_measure.begin_part < current_transition_level
             ):
                 _revetment_measure.top_layer_thickness = (
@@ -245,19 +259,25 @@ class RevetmentMeasureResultBuilder:
         )
 
         try:
-            _top_layer_thickness = bisection(stone_interpolation, 0.0, 1.0, 0.01)
-            _top_layer_thickness = math.ceil(_top_layer_thickness / 0.05) * 0.05
+            _top_layer_thickness = bisection(stone_interpolation, 0.0, 1.0, 0.001)
             _recalculated_beta = calculated_beta
             _is_reinforced = True
         except:
             _top_layer_thickness = float("nan")
 
-        if _top_layer_thickness <= slope_part.top_layer_thickness:
+        if (
+            _top_layer_thickness <= slope_part.top_layer_thickness
+            or np.abs(_top_layer_thickness - slope_part.top_layer_thickness) <= 0.01
+        ):
+            # We compare whether the difference is less than 0.01 meter (1cm).
             _top_layer_thickness = slope_part.top_layer_thickness
             _recalculated_beta = float(
                 self._evaluate_stone_revetment_data(slope_part, evaluation_year)
             )
             _is_reinforced = False
+
+        if _top_layer_thickness <= 0.0:
+            raise ValueError("Negative top layer thickness found.")
 
         return _top_layer_thickness, _recalculated_beta, _is_reinforced
 

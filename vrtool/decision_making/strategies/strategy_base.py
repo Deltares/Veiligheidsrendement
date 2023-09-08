@@ -15,15 +15,18 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
     measure_combinations,
+    revetment_combinations,
     split_options,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import (
     DikeTraject,
     calc_traject_prob,
     get_section_length_in_traject,
     plot_settings,
 )
+from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
@@ -182,73 +185,10 @@ class StrategyBase:
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
 
-        cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]]
-            .MeasureData["Section"]
-            .columns.values
-        )
-
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
-
-            # Step 1: combine measures with partial measures
-            combinables = solutions_dict[section.name].MeasureData.loc[
-                solutions_dict[section.name].MeasureData["class"] == "combinable"
-            ]
-            partials = solutions_dict[section.name].MeasureData.loc[
-                solutions_dict[section.name].MeasureData["class"] == "partial"
-            ]
-            if self.__class__.__name__ == "TargetReliabilityStrategy":
-                combinables = combinables.loc[
-                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
-                ]
-                partials = partials.loc[
-                    solutions_dict[section.name].MeasureData["year"] == self.OI_year
-                ]
-
-            combinedmeasures = measure_combinations(
-                combinables,
-                partials,
-                solutions_dict[section.name],
-                splitparams=splitparams,
-            )
-            # make sure combinable, mechanism and year are in the MeasureData dataframe
-            # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
-            # if there is a measureid that is not known yet, add it to the measure table
-
-            existingIDs = solutions_dict[section.name].measure_table["ID"].values
-            IDs = np.unique(combinedmeasures["ID"].values)
-            if len(IDs) > 0:
-                for ij in IDs:
-                    if ij not in existingIDs:
-                        indexes = ij.split("+")
-                        name = (
-                            solutions_dict[section.name]
-                            .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table[
-                                    "ID"
-                                ]
-                                == indexes[0]
-                            ]["Name"]
-                            .values[0]
-                            + "+"
-                            + solutions_dict[section.name]
-                            .measure_table.loc[
-                                solutions_dict[traject.sections[i].name].measure_table[
-                                    "ID"
-                                ]
-                                == indexes[1]
-                            ]["Name"]
-                            .values[0]
-                        )
-                        solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.sections[i].name].measure_table)
-                            + 1
-                        ] = name
-                        solutions_dict[section.name].measure_table.loc[
-                            len(solutions_dict[traject.sections[i].name].measure_table)
-                        ]["ID"] = ij
+            combinedmeasures = self._step1combine(solutions_dict, section, splitparams)
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
@@ -260,7 +200,6 @@ class StrategyBase:
                 StrategyData = StrategyData.reset_index(drop=True)
                 LCC = calc_tc(StrategyData, self.discount_rate)
                 ind = np.argsort(LCC)
-                LCC_sort = LCC[ind]
                 StrategyData = StrategyData.iloc[ind]
                 beta_max = StrategyData["Section"].ix[0].values
                 indexes = []
@@ -281,6 +220,92 @@ class StrategyBase:
 
             self.options[section.name] = StrategyData.reset_index(drop=True)
 
+    def _step1combine(
+        self,
+        solutions_dict: dict[str, Solutions],
+        section: DikeSection,
+        splitparams: bool,
+    ) -> pd.DataFrame:
+        """
+        Combines the measures based on the input arguments.
+
+        Args:
+            solutions_dict (dict[str, Solutions]): The dictionary containing the solutions for each section.
+            section (DikeSection): The dike section to combine the measures for.
+            splitparams (bool): Indicator whether the parameters should be split.
+
+        Returns:
+            pd.DataFrame: An object that contains all information of the combined measures.
+        """
+        # split different measure types:
+        available_measure_classes = (
+            solutions_dict[section.name].MeasureData["class"].unique().tolist()
+        )
+        measures_per_class = {
+            measure_class: solutions_dict[section.name].MeasureData.loc[
+                solutions_dict[section.name].MeasureData["class"] == measure_class
+            ]
+            for measure_class in available_measure_classes
+        }
+
+        if self.__class__.__name__ == "TargetReliabilityStrategy":
+            # only consider measures at the OI_year
+            measures_per_class = {
+                measure_class: measures_per_class[measure_class].loc[
+                    measures_per_class[measure_class]["year"] == self.OI_year
+                ]
+                for measure_class in available_measure_classes
+            }
+
+        combinedmeasures = measure_combinations(
+            measures_per_class["combinable"],
+            measures_per_class["partial"],
+            solutions_dict[section.name],
+            splitparams=splitparams,
+        )
+
+        if "revetment" in measures_per_class:
+            combinedmeasures_with_revetment = revetment_combinations(
+                combinedmeasures, measures_per_class["revetment"]
+            )
+            # combine solutions_dict[section.name].MeasureData with revetments
+            base_measures_with_revetment = revetment_combinations(
+                solutions_dict[section.name].MeasureData.loc[
+                    solutions_dict[section.name].MeasureData["class"] != "revetment"
+                ],
+                measures_per_class["revetment"],
+            )
+            combinedmeasures = pd.concat(
+                [base_measures_with_revetment, combinedmeasures_with_revetment]
+            )
+        # make sure combinable, mechanism and year are in the MeasureData dataframe
+        # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
+        # if there is a measureid that is not known yet, add it to the measure table
+
+        existingIDs = solutions_dict[section.name].measure_table["ID"].values
+        IDs = np.unique(combinedmeasures["ID"].values)
+        if len(IDs) > 0:
+            for ij in IDs:
+                if ij not in existingIDs:
+                    indexes = ij.split("+")
+                    # concatenate names with + sign based on solutions_dict using list comprehension
+                    name = "+".join(
+                        solutions_dict[section.name].measure_table[
+                            (
+                                solutions_dict[section.name]
+                                .measure_table["ID"]
+                                .isin(indexes)
+                            )
+                        ]["Name"]
+                    )
+                    solutions_dict[section.name].measure_table = pd.concat(
+                        [
+                            solutions_dict[section.name].measure_table,
+                            pd.DataFrame([[ij, name]], columns=["ID", "Name"]),
+                        ]
+                    )
+        return combinedmeasures
+
     def evaluate(
         self,
         traject: DikeTraject,
@@ -296,22 +321,12 @@ class StrategyBase:
     def make_optimization_input(self, traject: DikeTraject):
         """This subroutine organizes the input into an optimization problem such that it can be accessed by the evaluation algorithm"""
 
-        def get_geotechnical_probability_of_failure(
-            probability_of_failure_lookup: dict[str, float]
-        ) -> float:
-            probability_failure_stability_inner = probability_of_failure_lookup.get(
-                "StabilityInner", 0
+        def get_independent_probability_of_failure(
+            probability_of_failure_lookup: dict[str, np.array]
+        ) -> np.array:
+            return CombinFunctions.combine_probabilities(
+                probability_of_failure_lookup, ("StabilityInner", "Piping")
             )
-            probability_failure_piping = probability_of_failure_lookup.get("Piping", 0)
-
-            return 1 - np.multiply(
-                1 - probability_failure_stability_inner, 1 - probability_failure_piping
-            )
-
-        def get_overflow_probability_of_failure(
-            probability_of_failure_lookup: dict[str, float]
-        ) -> float:
-            return probability_of_failure_lookup.get("Overflow", 0)
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
         #  do have costs higher than the correct option (sh=0m, sg=0.5+VZG) so they will never be selected. This
@@ -344,46 +359,37 @@ class StrategyBase:
         for _mechanism_name in self.mechanisms:
             if _mechanism_name == "Overflow":
                 self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0)
+            elif _mechanism_name == "Revetment":
+                self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0e-18)
             else:
                 self.Pf[_mechanism_name] = np.full((N, Sg + 1, T), 1.0)
 
         # fill values
         # TODO Think about the initial condition and whether this should be added separately or teh 0,
         #  0 soil reinforcement also suffices.
-        keys = list(self.options.keys())
+        section_keys = list(self.options.keys())
 
         # get all probabilities. Interpolate on beta per section, then combine p_f
         betas = {}
         for n in range(0, N):
-            for _mechanism_name in self.mechanisms:
+            for _mechanism_name in traject.sections[n].mechanism_data:
                 len_beta1 = traject.sections[
                     n
                 ].section_reliability.SectionReliability.shape[1]
-                if (
-                    _mechanism_name
-                    not in traject.sections[
-                        n
-                    ].section_reliability.SectionReliability.index
-                ):
-                    # TODO (VRTOOL-187).
-                    # This could become obsolete once SectionReliability contains the data related to revetment.
-                    # Consider removing if that's the case.
-                    logging.error(
-                        "No optimalization available for '{}'.".format(_mechanism_name)
-                    )
-                    continue
+
                 beta1 = (
                     traject.sections[n]
                     .section_reliability.SectionReliability.loc[_mechanism_name]
                     .values.reshape((len_beta1, 1))
                     .T
-                )  # Initial
+                )
+                # Initial
                 # condition with no measure
-                if _mechanism_name == "Overflow":
-                    beta2 = self.options_height[keys[n]][_mechanism_name]
+                if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
+                    beta2 = self.options_height[section_keys[n]][_mechanism_name]
                     # All solutions
                 else:
-                    beta2 = self.options_geotechnical[keys[n]][
+                    beta2 = self.options_geotechnical[section_keys[n]][
                         _mechanism_name
                     ]  # All solutions
                 betas[_mechanism_name] = np.concatenate((beta1, beta2), axis=0)
@@ -397,160 +403,40 @@ class StrategyBase:
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
-        for n in range(0, len(keys)):
+        for n in range(0, len(section_keys)):
             self.LCCOption[n, 0, 0] = 0.0
-            LCC_sh = calc_tc(self.options_height[keys[n]], self.discount_rate)
-            LCC_sg = calc_tc(self.options_geotechnical[keys[n]], self.discount_rate)
+            LCC_sh = calc_tc(self.options_height[section_keys[n]], self.discount_rate)
+            LCC_sg = calc_tc(
+                self.options_geotechnical[section_keys[n]], self.discount_rate
+            )
             # LCC_tot = calcTC(self.options[keys[n]])
-            for sh in range(0, len(self.options_height[keys[n]])):
-                # if it is a full type, it should only be combined with another full of the same type
-                if self.options_height[keys[n]].iloc[sh]["class"].values[0] == "full":
-                    full = True
-                else:
-                    full = False
-                # if (self.options_height[keys[n]].iloc[sh]['type'].values[0] == 'Diaphragm Wall') | (
-                #         self.options_height[keys[n]].iloc[sh]['type'].values[0] == 'Stability Screen'):
-                #     full_structure = True
-                # else:
-                #     full_structure = False
-                for sg in range(0, len(self.options_geotechnical[keys[n]])):  # Sg):
-                    # if sh is a diaphragm wall, only a diaphragm wall can be taken for sg
-                    if full:
-                        # if the type is different it is not a possibility:
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["type"]
-                            .values[0]
-                            != self.options_height[keys[n]].iloc[sh]["type"].values[0]
-                        ) or (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["year"]
-                            .values[0]
-                            != self.options_height[keys[n]].iloc[sh]["year"].values[0]
-                        ):
-                            pass  # do not change value, impossible combination (keep at 1e99)
+            # we get the unique ids of the options in the height and geotechnical measures
+            section_sg_ids = self.options_geotechnical[section_keys[n]].ID.unique()
+            section_sh_ids = self.options_height[section_keys[n]].ID.unique()
+            for sh_id in section_sh_ids:
+                sh_indices = (
+                    self.options_height[section_keys[n]]
+                    .index[self.options_height[section_keys[n]].ID == sh_id]
+                    .tolist()
+                )
 
-                        else:
-                            # if the type is a soil reinforcement, the year has to be the same
-                            if (
-                                self.options_geotechnical[keys[n]]
-                                .iloc[sg]["type"]
-                                .values[0]
-                                == "Soil reinforcement"
-                            ):
-                                if (
-                                    self.options_geotechnical[keys[n]]
-                                    .iloc[sg]["year"]
-                                    .values[0]
-                                    == self.options_height[keys[n]]
-                                    .iloc[sh]["year"]
-                                    .values[0]
-                                ) & (
-                                    self.options_geotechnical[keys[n]]
-                                    .iloc[sg]["class"]
-                                    .values[0]
-                                    == "full"
-                                ):
-                                    self.LCCOption[n, sh + 1, sg + 1] = (
-                                        LCC_sh[sh] + LCC_sg[sg]
-                                    )  # only use the costs once
-                                else:
-                                    pass  # not allowed
-                            else:  # Diaphragm wall
-                                self.LCCOption[n, sh + 1, sg + 1] = LCC_sh[
-                                    sh
-                                ]  # only use the costs once
-                    # if sg is a plain geotextile or stability screen, it can only be combined with no measure for height, otherwise it
-                    # would be a combined measure
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["type"].values[0]
-                        == "Vertical Geotextile"
-                    ) or (
-                        self.options_geotechnical[keys[n]].iloc[sg]["type"].values[0]
-                        == "Stability Screen"
-                    ):
-                        # can only be combined with no measure for height
-                        self.LCCOption[n, 0, sg + 1] = LCC_sg[sg]
-                    # if sg is a combined measure the soil reinforcement timing should be aligned:
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["class"].values[0]
-                        == "combined"
-                    ):
-                        # check if the time of the soil reinforcement part is the same as for the height one
-                        # first extract the index of the soil reinforcement
-                        index = np.argwhere(
-                            np.array(
-                                self.options_geotechnical[keys[n]]
-                                .iloc[sg]["type"]
-                                .values[0]
-                            )
-                            == "Soil reinforcement"
-                        )[0][0]
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["year"]
-                            .values[0][index]
-                            == self.options_height[keys[n]].iloc[sh]["year"].values[0]
-                        ):
-                            if (
-                                self.options_geotechnical[keys[n]]
-                                .iloc[sg]["dcrest"]
-                                .values
-                                > 0.0
-                            ):
-                                if (
-                                    self.options_geotechnical[keys[n]]
-                                    .iloc[sg]["dcrest"]
-                                    .values
-                                    == self.options_height[keys[n]]
-                                    .iloc[sh]["dcrest"]
-                                    .values
-                                ):
-                                    self.LCCOption[n, sh + 1, sg + 1] = LCC_sg[
-                                        sg
-                                    ]  # only use the costs once
-                                else:
-                                    self.LCCOption[n, sh + 1, sg + 1] = 1e99
-                            else:
-                                self.LCCOption[n, sh + 1, sg + 1] = (
-                                    LCC_sh[sh] + LCC_sg[sg]
-                                )  # only use the costs once
-                        else:
-                            pass  # dont change, impossible combi
-                        # if sg is combinable, it should only be combined with sh that have the same year
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["class"].values[0]
-                        == "combinable"
-                    ):
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["year"]
-                            .values[0]
-                            == self.options_height[keys[n]].iloc[sh]["year"].values[0]
-                        ):
-                            self.LCCOption[n, sh + 1, sg + 1] = (
-                                LCC_sh[sh] + LCC_sg[sg]
-                            )  # only use the costs once
-                        else:
-                            pass
-                    elif (
-                        self.options_geotechnical[keys[n]].iloc[sg]["class"].values[0]
-                        == "full"
-                    ):
-                        pass  # not allowed as the sh is not 'full'
-                    else:
-                        # if sg is a diaphragm wall cost should be only accounted for once:
-                        if (
-                            self.options_geotechnical[keys[n]]
-                            .iloc[sg]["type"]
-                            .values[0]
-                            != "Diaphragm Wall"
-                        ):
-                            self.LCCOption[n, sh + 1, sg + 1] = (
-                                LCC_sh[sh] + LCC_sg[sg]
-                            )  # only use the costs once
-                        else:
-                            pass
+                # we get the indices of sg_id in the options_geotechnical df
+                sg_indices = (
+                    self.options_geotechnical[section_keys[n]]
+                    .index[self.options_geotechnical[section_keys[n]].ID == sh_id]
+                    .tolist()
+                )
+                # combined LCC array for sh_indices and sg_indices
+                LCC_combined = np.add(
+                    np.tile(LCC_sh[sh_indices], (len(sg_indices), 1)),
+                    np.tile(LCC_sg[sg_indices], (len(sh_indices), 1)).T,
+                )
+                # fill self.LCCOption[n, sh_indices, sg_indices]
+                # we do it using a loop, as masking is not working properly
+                # Loop through the indices and update values
+                for i, sh_idx in enumerate(sh_indices):
+                    for j, sg_idx in enumerate(sg_indices):
+                        self.LCCOption[n, sh_idx + 1, sg_idx + 1] = LCC_combined[j, i]
 
         # Decision Variables for executed options [N,Sh] & [N,Sg]
         self.Cint_h = np.zeros((N, Sh))
@@ -567,13 +453,20 @@ class StrategyBase:
 
         # expected damage for overflow and for piping & slope stability
         # self.RiskGeotechnical = np.zeros((N,Sg+1,T))
-        self.RiskGeotechnical = get_geotechnical_probability_of_failure(
+        self.RiskGeotechnical = get_independent_probability_of_failure(
             self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = get_overflow_probability_of_failure(self.Pf) * np.tile(
-            self.D.T, (N, Sh + 1, 1)
-        )  # np.zeros((N,Sh+1,T))
+        self.RiskOverflow = self.Pf["Overflow"] * np.tile(self.D.T, (N, Sh + 1, 1))
+
+        self.RiskRevetment = []
+        if "Revetment" in self.mechanisms:
+            self.RiskRevetment = self.Pf["Revetment"] * np.tile(
+                self.D.T, (N, Sh + 1, 1)
+            )
+        else:
+            self.RiskRevetment = np.zeros((N, Sh + 1, T))
+
         # add a few general parameters
         self.opt_parameters = {"N": N, "T": T, "Sg": Sg + 1, "Sh": Sh + 1}
 
@@ -618,6 +511,8 @@ class StrategyBase:
                             "no",
                             0.0,
                             0.0,
+                            -999.0,
+                            -999.0,
                         ]
                     ).reshape(1, len(Solution.columns)),
                     columns=Solution.columns,
@@ -625,10 +520,20 @@ class StrategyBase:
                 Solution = pd.concat([Solution, lines])
             else:
                 Solution = pd.concat([Solution, lines])
-        colorder = ["ID", "Section", "LCC", "name", "yes/no", "dcrest", "dberm"]
+        colorder = [
+            "ID",
+            "Section",
+            "LCC",
+            "name",
+            "yes/no",
+            "dcrest",
+            "dberm",
+            "transition_level",
+            "beta_target",
+        ]
         Solution = Solution[colorder]
         for count, row in Solution.iterrows():
-            if isinstance(row["name"], np.ndarray):  # clean output
+            if isinstance(row["name"], np.ndarray) and any(row["name"]):  # clean output
                 Solution.loc[count, "name"] = row["name"][0]
 
         # TODO: writing to csv is obsolete; use results in the database
@@ -1189,14 +1094,29 @@ class StrategyBase:
                     )
                 plt.close()
 
-    def write_reliability_to_csv(self, input_path: Path, type):
-        """Routine to write all the reliability indices in a step of the algorithm to a csv file"""
+    def write_reliability_to_csv(
+        self, input_path: Path, type: str, time_stamps=[0, 25, 50]
+    ) -> None:
+        """Routine to write all the reliability indices in a step of the algorithm to a csv file
+
+        Args:
+            input_path (Path)        : path to input folder
+            type (str)               : strategy type
+            time_stamps (list float) : list of years
+        """
         # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
+        total_reliability = np.zeros((len(self.Probabilities), len(time_stamps)))
         for i in range(len(self.Probabilities)):
             name = input_path.joinpath(
                 "ReliabilityLog_" + type + "_Step" + str(i) + ".csv"
             )
             self.Probabilities[i].to_csv(path_or_buf=name, header=True)
+            beta_t, p_t = calc_traject_prob(self.Probabilities[i], ts=time_stamps)
+            total_reliability[i, :] = beta_t
+        reliability_df = pd.DataFrame(total_reliability, columns=time_stamps)
+        reliability_df.to_csv(
+            path_or_buf=input_path.joinpath("TrajectReliabilityInTime.csv"), header=True
+        )
 
     @abstractmethod
     def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):

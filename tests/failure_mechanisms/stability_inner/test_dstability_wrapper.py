@@ -115,7 +115,6 @@ class TestDStabilityWrapper:
         assert isinstance(_safety_factor, float)
         assert pytest.approx(1.3380575991293264) == _safety_factor
 
-    @pytest.mark.slow
     def test_get_safety_factor_with_rerun(self, request: pytest.FixtureRequest):
         """
         Test the get_safety_factor method of the DStabilityWrapper class for a valid stage id and raise and Exception

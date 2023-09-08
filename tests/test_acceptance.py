@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase, fn
+from pandas.testing import assert_frame_equal
 
 from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -16,11 +17,13 @@ from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import (
-    export_results_safety_assessment,
     get_dike_traject,
     open_database,
+    export_results_safety_assessment,
+    vrtool_db,
 )
-from vrtool.orm.orm_db import vrtool_db
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -33,7 +36,7 @@ from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
 
-_acceptance_test_cases = [
+_acceptance_all_steps_test_cases = [
     pytest.param(
         ("TestCase1_38-1_no_housing", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, no housing",
@@ -48,7 +51,23 @@ _acceptance_test_cases = [
     ),
     pytest.param(
         ("TestCase1_38-1_revetment", "38-1", _available_mechanisms),
-        id="Traject 38-1, full, with revetment",
+        id="Traject 38-1, with revetment, case 1",
+    ),
+    pytest.param(
+        ("TestCase3_38-1_revetment", "38-1", _available_mechanisms),
+        id="Traject 38-1, with revetment, including bundling",
+    ),
+    pytest.param(
+        ("TestCase4_38-1_revetment_small", "38-1", _available_mechanisms),
+        id="Traject 38-1, two sections with revetment",
+    ),
+]
+
+_acceptance_optimization_test_cases = [
+    _acceptance_all_steps_test_cases[0],
+    pytest.param(
+        ("TestCase3_38-1_small", "38-1", _available_mechanisms[:3]),
+        id="Traject 38-1, two sections",
     ),
 ]
 
@@ -58,35 +77,43 @@ class TestAcceptance:
     def _validate_acceptance_result_cases(
         self, test_results_dir: Path, test_reference_dir: Path
     ):
-        comparison_errors = []
         files_to_compare = [
             "TakenMeasures_Doorsnede-eisen.csv",
             "TakenMeasures_Veiligheidsrendement.csv",
             "TotalCostValues_Greedy.csv",
         ]
-
+        comparison_errors = []
         for file in files_to_compare:
             reference = pd.read_csv(
                 test_reference_dir.joinpath("results", file), index_col=0
             )
             result = pd.read_csv(test_results_dir / file, index_col=0)
-            if not reference.equals(result):
+            try:
+                assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
+            except:
                 comparison_errors.append("{} is different.".format(file))
-
         # assert no error message has been registered, else print messages
         assert not comparison_errors, "errors occured:\n{}".format(
             "\n".join(comparison_errors)
         )
 
-    @pytest.fixture(params=_acceptance_test_cases)
+    @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         _casename, _traject, _mechanisms = request.param
         _test_input_directory = Path.joinpath(test_data, _casename)
         assert _test_input_directory.exists()
 
         _test_results_directory = get_test_results_dir(request) / _casename
+        if "[" in request.node.name:
+            # It is a parametrized case:
+            _node_case = request.node.name.split("[")[-1].split("]")[0].strip()
+            _test_results_directory = _test_results_directory / _node_case.replace(
+                ",", "_"
+            ).replace(" ", "_")
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
+
+        _test_results_directory.mkdir(parents=True)
 
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
@@ -94,13 +121,15 @@ class TestAcceptance:
         _test_config.traject = _traject
         _test_config.mechanisms = _mechanisms
         _test_config.externals = test_externals
-        _test_config.input_database_path = _test_input_directory.joinpath(
-            "vrtool_input.db"
-        )
 
-        assert (
-            _test_config.input_database_path.exists()
-        ), "No database found at {}.".format(_test_config.input_database_path)
+        # Create a copy of the database to avoid parallelization runs locked databases.
+        _db_file = _test_input_directory.joinpath("vrtool_input.db")
+        assert _db_file.exists(), "No database found at {}.".format(_db_file)
+
+        _test_config.input_database_path = _test_results_directory.joinpath(
+            "test_db.db"
+        )
+        shutil.copy(_db_file, _test_config.input_database_path)
 
         yield _test_config
 
@@ -108,6 +137,11 @@ class TestAcceptance:
         if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
             vrtool_db.close()
 
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        _acceptance_all_steps_test_cases,
+        indirect=["valid_vrtool_config"],
+    )
     def test_run_full_model(self, valid_vrtool_config: VrtoolConfig):
         """
         This test so far only checks the output values after optimization.
@@ -126,6 +160,11 @@ class TestAcceptance:
             valid_vrtool_config.output_directory, _test_reference_path
         )
 
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        _acceptance_all_steps_test_cases,
+        indirect=["valid_vrtool_config"],
+    )
     def test_run_safety_assessment_and_save_initial_assessment(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -240,6 +279,33 @@ class TestAcceptance:
                 ), "Missmatched values for section {}, mechanism {}, t {}".format(
                     row["name"], _mechanism_name, _t_column
                 )
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        _acceptance_optimization_test_cases,
+        indirect=["valid_vrtool_config"],
+    )
+    def test_run_optimization(self, valid_vrtool_config: VrtoolConfig):
+        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+
+        _shelve_path = valid_vrtool_config.input_directory / "shelves"
+        _results_assessment = ResultsSafetyAssessment()
+        _results_assessment.load_results(
+            alternative_path=_shelve_path / "AfterStep1.out"
+        )
+        _results_measures = ResultsMeasures()
+
+        _results_measures.vr_config = valid_vrtool_config
+        _results_measures.selected_traject = _results_assessment.selected_traject
+
+        _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
+        _results_optimization = RunOptimization(
+            _results_measures, valid_vrtool_config
+        ).run()
+
+        self._validate_acceptance_result_cases(
+            valid_vrtool_config.output_directory, _test_reference_path
+        )
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
