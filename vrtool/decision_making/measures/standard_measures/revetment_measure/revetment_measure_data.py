@@ -42,7 +42,7 @@ class RevetmentMeasureData:
         _cost_remove_steen = 15.66
 
         # Opnemen en afvoeren teerhoudende oude asfaltbekleding (D=15cm) (incl. stort-/recyclingskosten)
-        _cost_remove_asfalt = 13.52 * 2.509  #TODO update!
+        _cost_remove_asfalt = 13.52 * 2.509  # TODO update!
 
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
         D = np.array([0.3, 0.35, 0.4, 0.45, 0.5])
