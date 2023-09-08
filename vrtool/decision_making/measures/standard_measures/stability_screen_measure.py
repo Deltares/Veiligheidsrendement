@@ -73,10 +73,10 @@ class StabilityScreenMeasure(MeasureProtocol):
             if d_cover_input.size > 1:
                 logging.info("d_cover has more values than 1.")
 
-            return max([d_cover_input[0] + 1.0, 8.0])
+            return max([d_cover_input[0] + 2.0, 9.0])
         else:
             # TODO remove shaky assumption on depth
-            return 6.0
+            return 9.0
 
     def _get_configured_section_reliability(
         self,

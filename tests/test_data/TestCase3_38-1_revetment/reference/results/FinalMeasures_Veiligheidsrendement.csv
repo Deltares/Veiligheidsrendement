@@ -1,14 +1,14 @@
 ,ID,Section,LCC,name,yes/no,dcrest,dberm,transition_level,beta_target
-114,3+1+6,01A,3050251.692715586,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,0,3.98,4.952892647472083
-109,4+6,01B,4844595.9831860475,Zelfkerende constructie+Aanpassing bekleding,yes,-999.0,-999,3.98,4.952892647472083
-110,3+1+6,2,7241422.978074536,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,15,4.98,4.952892647472083
-128,4+6,3,7588437.955963986,Zelfkerende constructie+Aanpassing bekleding,yes,-999.0,-999,3.98,4.952892647472083
-90,3+1+6,4,5500661.431322215,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,0,3.98,4.952892647472083
-122,3+1+6,5,1095231.199481388,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,20,5.84,4.64819310760074
-127,1+6,6,657145.8998318568,Grondversterking binnenwaarts 2025+Aanpassing bekleding,-999,1.0,20,5.84,4.64819310760074
-124,3+1+6,7,2526586.0450828443,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,30,5.84,5.212130872140085
-125,3+1+6,8,2082178.5435044833,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,20,5.84,4.64819310760074
-126,3+1+6,9,9914505.138989221,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,20,5.84,5.212130872140085
-106,3+1+6,10,4388863.272509985,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,8,3.76,5.136683427835214
-118,3+1+6,11,3764484.0189207946,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,20,3.76,5.136683427835214
-105,3+1+6,12,4367211.831721086,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,12,3.76,5.136683427835214
+109,3+1+6,01A,4503880.364065907,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,0,5.98,4.952892647472083
+127,4+6,01B,8430085.633373963,Zelfkerende constructie+Aanpassing bekleding,yes,-999.0,-999,3.98,4.952892647472083
+129,3+1+6,2,8993903.228152815,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,20,3.98,4.952892647472083
+112,3+1+6,3,4194176.517159869,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,30,4.98,4.952892647472083
+115,3+1+6,4,8278735.813496232,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,0,3.98,4.952892647472083
+122,3+1+6,5,1435291.4686156963,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,20,5.84,4.64819310760074
+128,1+6,6,842361.7822371749,Grondversterking binnenwaarts 2025+Aanpassing bekleding,-999,1.0,15,5.84,4.64819310760074
+124,3+1+6,7,3299798.4486825857,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,30,5.84,5.212130872140085
+125,3+1+6,8,2727098.3325228216,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.5,20,5.84,4.64819310760074
+126,3+1+6,9,12984386.018311542,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,20,5.84,5.212130872140085
+106,3+1+6,10,5953480.493924696,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,8,3.76,5.136683427835214
+119,3+1+6,11,5098233.658904225,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,20,3.76,5.136683427835214
+105,3+1+6,12,5923312.317089342,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,yes,1.0,12,3.76,5.136683427835214
