@@ -390,9 +390,15 @@ class TestAcceptance:
     def validate_measure_result_per_section(
         self, reference_df: pd.DataFrame, section: SectionData
     ) -> None:
+        measure_result_lookup: dict[tuple(int, float, float), MeasureResult] = {}
+        unique_measure_ids = set()
         for _, row in reference_df.iterrows():
-            measure_id = row[("ID",)]
-            _measure = Measure.get_by_id(measure_id)
+            casted_measure_id = int(row[("ID",)])
+            if not (casted_measure_id in unique_measure_ids):
+                unique_measure_ids.add(casted_measure_id)
+                measure_result_lookup.clear()  # Reset the lookup for each measure or the lookup maintains the  entries of the previous measure
+
+            _measure = Measure.get_by_id(casted_measure_id)
             _measure_per_section = MeasurePerSection.get_or_none(
                 (MeasurePerSection.section == section)
                 & (MeasurePerSection.measure == _measure)
@@ -403,8 +409,20 @@ class TestAcceptance:
 
             reference_section_reliabilities = row[("Section",)]
             for year in reference_section_reliabilities.index:
+                casted_year = int(year)
+                if self.is_soil_reinforcement_measure(dberm, dcrest):
+                    self.fill_measure_result_lookup_for_soil_reinforcement_measures(
+                        measure_result_lookup, _measure_per_section, casted_year
+                    )
+
                 _measure_result = self.get_measure_result(
-                    _measure_per_section, year, row["type"], row["ID"], dberm, dcrest
+                    measure_result_lookup,
+                    _measure_per_section,
+                    casted_year,
+                    row["type"],
+                    casted_measure_id,
+                    dberm,
+                    dcrest,
                 )
 
                 assert _measure_result.beta == pytest.approx(
@@ -412,10 +430,10 @@ class TestAcceptance:
                 ), "Mismatched beta for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
                     section.section_name,
                     row[("type",)],
-                    row[("ID",)],
-                    row[("dberm",)],
-                    row[("dcrest",)],
-                    year,
+                    casted_measure_id,
+                    dberm,
+                    dcrest,
+                    casted_year,
                 )
 
                 assert _measure_result.cost == float(
@@ -423,45 +441,60 @@ class TestAcceptance:
                 ), "Mismatched cost for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
                     section.section_name,
                     row[("type",)],
-                    row[("ID",)],
-                    row[("dberm",)],
-                    row[("dcrest",)],
-                    year,
+                    casted_measure_id,
+                    dberm,
+                    dcrest,
+                    casted_year,
                 )
+
+    def is_soil_reinforcement_measure(self, dberm: float, dcrest: float) -> bool:
+        return dberm != -999 and dcrest != -999
+
+    def fill_measure_result_lookup_for_soil_reinforcement_measures(
+        self,
+        lookup: dict[tuple[int, float, float], MeasureResult],
+        measure_per_section: MeasurePerSection,
+        year: int,
+    ) -> None:
+        _measure_results = MeasureResult.select().where(
+            (MeasureResult.measure_per_section == measure_per_section)
+            & (MeasureResult.time == year)
+        )
+
+        for _found_result in _measure_results:
+            _dberm_parameter = MeasureResultParameter.get(
+                (MeasureResultParameter.measure_result == _found_result)
+                & (MeasureResultParameter.name == "DBERM")
+            )
+
+            _dcrest_parameter = MeasureResultParameter.get(
+                (MeasureResultParameter.measure_result == _found_result)
+                & (MeasureResultParameter.name == "DCREST")
+            )
+
+            _dberm = _dberm_parameter.value
+            _dcrest = _dcrest_parameter.value
+            if not ((year, _dberm, _dcrest) in lookup):
+                lookup[(year, _dberm, _dcrest)] = _found_result
 
     def get_measure_result(
         self,
+        soil_reinforcement_measures_lookup: dict[
+            tuple[int, float, float], MeasureResult
+        ],
         measure_per_section: MeasurePerSection,
-        year: str,
+        year: int,
         measure_type: str,
         measure_id: str,
         dberm: float,
         dcrest: float,
     ) -> MeasureResult:
-        if (
-            dberm != -999 and dcrest != -999
+        if self.is_soil_reinforcement_measure(
+            dberm, dcrest
         ):  # Filter on parameter to get the right measure result
-            _measure_results = MeasureResult.select().where(
-                (MeasureResult.measure_per_section == measure_per_section)
-                & (MeasureResult.time == int(year))
+            _measure_result = soil_reinforcement_measures_lookup.get(
+                (year, dberm, dcrest), None
             )
-
-            for _found_result in _measure_results:
-                _dberm_parameter = MeasureResultParameter.get_or_none(
-                    (MeasureResultParameter.measure_result == _found_result)
-                    & (MeasureResultParameter.name == "DBERM")
-                    & (MeasureResultParameter.value == dberm)
-                )
-
-                _dcrest_parameter = MeasureResultParameter.get_or_none(
-                    (MeasureResultParameter.measure_result == _found_result)
-                    & (MeasureResultParameter.name == "DCREST")
-                    & (MeasureResultParameter.value == dcrest)
-                )
-
-                if _dberm_parameter and _dcrest_parameter:
-                    _measure_result = _found_result
-                    break
 
             # Assert that the associated parameters are only DCREST and DBERM
             assert isinstance(
