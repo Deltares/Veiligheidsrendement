@@ -536,6 +536,7 @@ class StrategyBase:
             if isinstance(row["name"], np.ndarray) and any(row["name"]):  # clean output
                 Solution.loc[count, "name"] = row["name"][0]
 
+        # TODO: writing to csv is obsolete; use results in the database
         if type == "Final":
             self.FinalSolution = Solution
             self.FinalSolution.to_csv(csv_path)
