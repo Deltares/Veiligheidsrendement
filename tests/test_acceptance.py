@@ -104,6 +104,12 @@ class TestAcceptance:
         assert _test_input_directory.exists()
 
         _test_results_directory = get_test_results_dir(request) / _casename
+        if "[" in request.node.name:
+            # It is a parametrized case:
+            _node_case = request.node.name.split("[")[-1].split("]")[0].strip()
+            _test_results_directory = _test_results_directory / _node_case.replace(
+                ",", "_"
+            ).replace(" ", "_")
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
 
