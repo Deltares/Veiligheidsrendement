@@ -12,6 +12,8 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 from vrtool.orm.models.mechanism import Mechanism
@@ -302,13 +304,15 @@ class TestAcceptance:
             total_nr_of_measure_results += len(reference_data.index) * nr_of_years
 
             # The total amount of measure parameters are equal to the amount of rows in the reference
-            # data where the dcrest and dberm are unequal to -999 * the amount of years
+            # data where the dcrest and dberm are unequal to -999 * the amount of years * nr of parameters
+            # (which is just dcrest and dberm) for the reference data
             total_nr_of_measure_result_parameters += (
                 reference_data[
                     (reference_data[("dcrest",)] != -999)
                     & (reference_data[("dberm",)] != -999)
                 ].shape[0]
                 * nr_of_years
+                * 2
             )
             self.validate_measure_result_per_section(reference_data, section)
 
@@ -332,7 +336,7 @@ class TestAcceptance:
         _filtered_reference_df = _read_reference_df.loc[
             :,
             _read_reference_df.columns.get_level_values(0).isin(
-                ["type", "class", "year", "dcrest", "dberm", "cost", "Section"]
+                ["ID", "type", "class", "year", "dcrest", "dberm", "cost", "Section"]
             ),
         ]
 
@@ -355,7 +359,82 @@ class TestAcceptance:
     def validate_measure_result_per_section(
         self, reference_df: pd.DataFrame, section: SectionData
     ) -> None:
-        pass
+        for _, row in reference_df.iterrows():
+            measure_id = row[("ID",)]
+            _measure = Measure.get_by_id(measure_id)
+            _measure_per_section = MeasurePerSection.get_or_none(
+                (MeasurePerSection.section == section)
+                & (MeasurePerSection.measure == _measure)
+            )
+
+            dberm = float(row[("dberm",)].item())
+            dcrest = float(row[("dcrest",)].item())
+
+            reference_section_reliabilities = row[("Section",)]
+            for year in reference_section_reliabilities.index:
+                if (
+                    dberm != -999 and dcrest != -999
+                ):  # Filter on parameter to get the right measure result
+                    _measure_results = MeasureResult.select().where(
+                        (MeasureResult.measure_per_section == _measure_per_section)
+                        & (MeasureResult.time == int(year))
+                    )
+
+                    for _found_result in _measure_results:
+                        _dberm_parameter = MeasureResultParameter.get_or_none(
+                            (MeasureResultParameter.measure_result == _found_result)
+                            & (MeasureResultParameter.name == "DBERM")
+                            & (MeasureResultParameter.value == dberm)
+                        )
+
+                        _dcrest_parameter = MeasureResultParameter.get_or_none(
+                            (MeasureResultParameter.measure_result == _found_result)
+                            & (MeasureResultParameter.name == "DCREST")
+                            & (MeasureResultParameter.value == dcrest)
+                        )
+
+                        if _dberm_parameter and _dcrest_parameter:
+                            _measure_result = _found_result
+                            break
+
+                    # Assert that the associated parameters are only DCREST and DBERM
+                    assert len(_measure_result.measure_result_parameters.select()) == 2
+
+                else:
+                    _measure_result = MeasureResult.get_or_none(
+                        (MeasureResult.measure_per_section == _measure_per_section)
+                        & (MeasureResult.time == int(year))
+                    )
+
+                    assert not any(_measure_result.measure_result_parameters.select())
+
+                assert isinstance(
+                    _measure_result, MeasureResult
+                ), "No entry found for section {} and measure result {} with id {} and year {}".format(
+                    section.section_name, row["type"], row["ID"], year
+                )
+
+                assert _measure_result.beta == pytest.approx(
+                    reference_section_reliabilities[year], 0.00000001
+                ), "Mismatched beta for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
+                    section.section_name,
+                    row[("type",)],
+                    row[("ID",)],
+                    row[("dberm",)],
+                    row[("dcrest",)],
+                    year,
+                )
+
+                assert _measure_result.cost == float(
+                    row[("cost",)]
+                ), "Mismatched cost for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
+                    section.section_name,
+                    row[("type",)],
+                    row[("ID",)],
+                    row[("dberm",)],
+                    row[("dcrest",)],
+                    year,
+                )
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
