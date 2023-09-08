@@ -372,46 +372,8 @@ class TestAcceptance:
 
             reference_section_reliabilities = row[("Section",)]
             for year in reference_section_reliabilities.index:
-                if (
-                    dberm != -999 and dcrest != -999
-                ):  # Filter on parameter to get the right measure result
-                    _measure_results = MeasureResult.select().where(
-                        (MeasureResult.measure_per_section == _measure_per_section)
-                        & (MeasureResult.time == int(year))
-                    )
-
-                    for _found_result in _measure_results:
-                        _dberm_parameter = MeasureResultParameter.get_or_none(
-                            (MeasureResultParameter.measure_result == _found_result)
-                            & (MeasureResultParameter.name == "DBERM")
-                            & (MeasureResultParameter.value == dberm)
-                        )
-
-                        _dcrest_parameter = MeasureResultParameter.get_or_none(
-                            (MeasureResultParameter.measure_result == _found_result)
-                            & (MeasureResultParameter.name == "DCREST")
-                            & (MeasureResultParameter.value == dcrest)
-                        )
-
-                        if _dberm_parameter and _dcrest_parameter:
-                            _measure_result = _found_result
-                            break
-
-                    # Assert that the associated parameters are only DCREST and DBERM
-                    assert len(_measure_result.measure_result_parameters.select()) == 2
-
-                else:
-                    _measure_result = MeasureResult.get_or_none(
-                        (MeasureResult.measure_per_section == _measure_per_section)
-                        & (MeasureResult.time == int(year))
-                    )
-
-                    assert not any(_measure_result.measure_result_parameters.select())
-
-                assert isinstance(
-                    _measure_result, MeasureResult
-                ), "No entry found for section {} and measure result {} with id {} and year {}".format(
-                    section.section_name, row["type"], row["ID"], year
+                _measure_result = self.get_measure_result(
+                    _measure_per_section, year, row["type"], row["ID"], dberm, dcrest
                 )
 
                 assert _measure_result.beta == pytest.approx(
@@ -435,6 +397,64 @@ class TestAcceptance:
                     row[("dcrest",)],
                     year,
                 )
+
+    def get_measure_result(
+        self,
+        measure_per_section: MeasurePerSection,
+        year: str,
+        measure_type: str,
+        measure_id: str,
+        dberm: float,
+        dcrest: float,
+    ) -> MeasureResult:
+        if (
+            dberm != -999 and dcrest != -999
+        ):  # Filter on parameter to get the right measure result
+            _measure_results = MeasureResult.select().where(
+                (MeasureResult.measure_per_section == measure_per_section)
+                & (MeasureResult.time == int(year))
+            )
+
+            for _found_result in _measure_results:
+                _dberm_parameter = MeasureResultParameter.get_or_none(
+                    (MeasureResultParameter.measure_result == _found_result)
+                    & (MeasureResultParameter.name == "DBERM")
+                    & (MeasureResultParameter.value == dberm)
+                )
+
+                _dcrest_parameter = MeasureResultParameter.get_or_none(
+                    (MeasureResultParameter.measure_result == _found_result)
+                    & (MeasureResultParameter.name == "DCREST")
+                    & (MeasureResultParameter.value == dcrest)
+                )
+
+                if _dberm_parameter and _dcrest_parameter:
+                    _measure_result = _found_result
+                    break
+
+            # Assert that the associated parameters are only DCREST and DBERM
+            assert isinstance(
+                _measure_result, MeasureResult
+            ), "No entry found for section {} and measure result {} with id {} and year {}".format(
+                measure_per_section.section.section_name, measure_type, measure_id, year
+            )
+            assert len(_measure_result.measure_result_parameters.select()) == 2
+
+            return _measure_result
+
+        _measure_result = MeasureResult.get_or_none(
+            (MeasureResult.measure_per_section == measure_per_section)
+            & (MeasureResult.time == int(year))
+        )
+
+        assert isinstance(
+            _measure_result, MeasureResult
+        ), "No entry found for section {} and measure result {} with id {} and year {}".format(
+            measure_per_section.section.section_name, measure_type, measure_id, year
+        )
+        assert not any(_measure_result.measure_result_parameters.select())
+
+        return _measure_result
 
     @pytest.mark.skip(reason="TODO. No (test) input data available.")
     def test_investments_safe(self):
