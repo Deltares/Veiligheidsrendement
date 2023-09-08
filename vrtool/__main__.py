@@ -105,7 +105,7 @@ def run_step_measures(**kwargs):
     _measures_result = _measures.run()
 
     # Step 2b. Export solutions to database
-    export_solutions(_measures_result.solutions_dict, _vr_config)
+    export_solutions(_measures_result)
 
 @cli.command(
     name="optimization", help="Optimizes the model measures in the given directory."
@@ -123,12 +123,9 @@ def run_step_optimization(**kwargs):
     _measures = RunMeasures(_vr_config, _selected_traject, _plot_mode)
     _measures_result = _measures.run()
 
-    # Step 3a. Optimization.
+    # Step 3. Optimization.
     _optimization = RunOptimization(_measures_result, _plot_mode)
-    _optimization_result = _optimization.run()
-
-    # Step 3b. Export solutions to database
-    export_solutions(_optimization_result.solutions_dict, _vr_config)
+    _optimization.run()
 
 
 @cli.command(name="run_full", help="Full run of the model in the given directory.")
@@ -142,10 +139,7 @@ def run_full(**kwargs):
 
     # Run all steps with one command.
     _full_model = RunFullModel(_vr_config, _selected_traject, VrToolPlotMode.STANDARD)
-    _result_full = _full_model.run()
-
-    # Export solutions to database
-    export_solutions(_result_full.results_solutions, _vr_config)
+    _full_model.run()
 
 
 if __name__ == "__main__":
