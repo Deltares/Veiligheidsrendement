@@ -398,11 +398,11 @@ class TestAcceptance:
                 unique_measure_ids.add(casted_measure_id)
                 measure_result_lookup.clear()  # Reset the lookup for each measure or the lookup maintains the  entries of the previous measure
 
-            _measure = Measure.get_by_id(casted_measure_id)
-            _measure_per_section = MeasurePerSection.get_or_none(
-                (MeasurePerSection.section == section)
-                & (MeasurePerSection.measure == _measure)
-            )
+                _measure = Measure.get_by_id(casted_measure_id)
+                _measure_per_section = MeasurePerSection.get_or_none(
+                    (MeasurePerSection.section == section)
+                    & (MeasurePerSection.measure == _measure)
+                )
 
             dberm = float(row[("dberm",)].item())
             dcrest = float(row[("dcrest",)].item())
