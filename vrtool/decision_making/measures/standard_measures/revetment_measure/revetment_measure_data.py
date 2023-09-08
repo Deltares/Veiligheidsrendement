@@ -36,17 +36,17 @@ class RevetmentMeasureData:
         """
         if not self.reinforce:
             return 0.0
-        _storage_factor = 2.509
+        _storage_factor = 1.000
 
         # Opnemen en afvoeren oude steenbekleding naar verwerker (incl. stort-/recyclingskosten)
-        _cost_remove_steen = 5.49
+        _cost_remove_steen = 15.66
 
         # Opnemen en afvoeren teerhoudende oude asfaltbekleding (D=15cm) (incl. stort-/recyclingskosten)
-        _cost_remove_asfalt = 13.52
+        _cost_remove_asfalt = 13.52 * 2.509  #TODO update!
 
         # Leveren en aanbrengen (verwerken) betonzuilen, incl. doek, vijlaag en inwassen
         D = np.array([0.3, 0.35, 0.4, 0.45, 0.5])
-        cost = np.array([72.52, 82.70, 92.56, 102.06, 111.56])
+        cost = np.array([206.89, 235.93, 264.06, 291.16, 318.26])
         f = interp1d(D, cost, fill_value=("extrapolate"))
         cost_new_steen = f(self.top_layer_thickness)
 
