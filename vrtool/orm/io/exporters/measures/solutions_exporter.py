@@ -1,8 +1,9 @@
+import logging
+
 from vrtool.decision_making.solutions import Solutions
 from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-import logging
-from vrtool.orm.models import Measure, DikeTrajectInfo, MeasurePerSection, SectionData
+from vrtool.orm.models import DikeTrajectInfo, Measure, MeasurePerSection, SectionData
 
 
 class SolutionsExporter(OrmExporterProtocol):

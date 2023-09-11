@@ -1,11 +1,6 @@
-from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
-)
-from vrtool.orm.io.exporters.measures.simple_measure_exporter import (
-    SimpleMeasureExporter,
 )
 from vrtool.orm.io.exporters.measures.measure_dict_list_exporter import (
     MeasureDictListExporter,
@@ -13,6 +8,11 @@ from vrtool.orm.io.exporters.measures.measure_dict_list_exporter import (
 from vrtool.orm.io.exporters.measures.measure_result_collection_exporter import (
     MeasureResultCollectionExporter,
 )
+from vrtool.orm.io.exporters.measures.simple_measure_exporter import (
+    SimpleMeasureExporter,
+)
+from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 
 
 class MeasureExporter(OrmExporterProtocol):

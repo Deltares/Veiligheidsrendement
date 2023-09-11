@@ -6,10 +6,10 @@ from tests.orm.io.exporters import (
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
-from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.section_data import SectionData

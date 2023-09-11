@@ -1,4 +1,5 @@
 from typing import Protocol, runtime_checkable
+
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 

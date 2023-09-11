@@ -1,4 +1,5 @@
 from typing import Type
+
 import pandas as pd
 import pytest
 
