@@ -296,16 +296,39 @@ class TestAcceptance:
         )
         assert _test_reference_path.exists()
 
+        _reference_file_paths = list(
+            _test_reference_path.glob("*_Options_Veiligheidsrendement.csv")
+        )
+        _reference_section_names = [
+            self.get_section_name(_file_path) for _file_path in _reference_file_paths
+        ]
+
         # 2. Open the database to retrieve the section names to read the references from
         open_database(valid_vrtool_config.input_database_path)
 
-        # 3. Load reference as pandas dataframe.
+        # 3. Verify there are no measures whose section's reference file does not exist.
+        _sections_with_measures = list(
+            set(
+                _measure_per_section.section.section_name
+                for _measure_per_section in MeasurePerSection.select(
+                    MeasurePerSection, SectionData
+                ).join(SectionData)
+            )
+        )
+        assert all(_rds in _sections_with_measures for _rds in _reference_section_names)
+
+        # 4. Load reference as pandas dataframe.
         total_nr_of_measure_results = 0
         total_nr_of_measure_result_parameters = 0
-        for section in SectionData.select():
-            reference_data = self.get_reference_measure_result_data(
-                _test_reference_path, section
+        for reference_file_path in _reference_file_paths:
+            reference_data = self.get_reference_measure_result_data(reference_file_path)
+
+            section_name = self.get_section_name(reference_file_path)
+            section = SectionData.get_or_none(SectionData.section_name == section_name)
+            assert section, "SectionData not found for dike section {}.".format(
+                section_name
             )
+            self.validate_measure_result_per_section(reference_data, section)
 
             # The total amount of results for a single section must be equal to the amount
             #  of years * the amount of measures that are not of the "class" combined
@@ -323,7 +346,6 @@ class TestAcceptance:
                 * nr_of_years
                 * 2
             )
-            self.validate_measure_result_per_section(reference_data, section)
 
         assert len(MeasureResult.select()) == total_nr_of_measure_results
         assert (
@@ -331,15 +353,13 @@ class TestAcceptance:
             == total_nr_of_measure_result_parameters
         )
 
+    def get_section_name(self, file_path: Path) -> str:
+        return file_path.name.split("_")[0]
+
     def get_reference_measure_result_data(
-        self, _test_reference_path: Path, section: SectionData
+        self, reference_file_path: Path
     ) -> pd.DataFrame:
-        _read_reference_df = pd.read_csv(
-            _test_reference_path.joinpath(
-                f"{section.section_name}_Options_Veiligheidsrendement.csv"
-            ),
-            header=[0, 1],
-        )
+        _read_reference_df = pd.read_csv(reference_file_path, header=[0, 1])
 
         # Filter reference values as we are not interested in the reliabilities for the individual failure mechanisms
         _filtered_reference_df = _read_reference_df.loc[
