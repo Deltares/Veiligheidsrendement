@@ -1,3 +1,61 @@
+## v0.0.4 (2023-09-11)
+
+### Feat
+
+- Added support to import Revetment Measures
+- Added revetment measure class
+- Extended slope part to include specializations for grass or stone revetment
+- Extended slope part to include specializations for grass or stone revetment
+- Extended standard measure to include required columns for reventment measures
+
+### Fix
+
+- unit test. Allowed for small numerical differences (tol=1e-8)
+- repair tests, references look good.
+- remove entries for revetment measure at section without revetments
+- update shelves for optimization tests
+- reduce test runtime with less measures for revetments
+- revert move of internal class. Removed revetment test from optimization tests as this is no longer supported
+- modified preprocessing which should now give a complete database.
+- Changed retrieval of minimum beta target; Added test to verify new behavior
+- improvement in selection of measures for bundling
+- improve treatment of sections with and without revetment
+- ensure that bundling routines are properly accessed, changed or into and
+- prevent cost values in different options dfs to be modified together
+- costs for VZG and diaphragm wall.
+- output of measures with revetment.
+- error when cost for soil+stability screen is not a list but a float
+- improve measure_combinations, logic now same as revetment_combinatiosn
+- prevent filtering of measures without crest height. Ensure that both lists only have measures with the same ID
+- solve deprecation warning + incorrect writing of costs
+- error in filtering measures for TargetReliabilityStrategy
+- improve writing of attribute values and ignore all -999. This means parameters of a measure (crest, berm etc) always have only 1 value when writing
+- small change to revetmentmeasure
+- update database so revetment is properly combined
+- add writing section reliability to dataframe
+- writing of names is now independent of the list length (could only handle 2 measures). And way less complicated
+- nesting was incorrect
+- ensure proper passing of different attributes of measures in revetment_combinations.
+- update database such that revetment measures are combined. Also changed key.
+- include revetment measures in db
+- Updated _get_design_stone when calculating revetment measures.
+- update shelves of TestCase1_38-1_no_housing
+- update shelves for TestCase3_38-1_small
+- We now 'correct' extra revetment measures without a known type
+- **revetment_measure_result_builder.py**: Added missing extra measure when Overgang >= crest height.
+- Fixed failing tests:
+- corrected year argument:
+- TeamCity does not swallow these paths, so reverted making of OptimizationSteps folder
+- wrong parameter name
+- height options can also have equal reliability, to ensure that measures can be shifted in time.. Added BC_list as output of overflow_bundling
+- improvement of overflow_bundling
+- ensure that life_cycle_cost is not modified.
+- improved test for the slope part
+
+### Refactor
+
+- Moved standard measures to their own module
+
 ## v0.0.3 (2023-06-22)
 
 ### Feat

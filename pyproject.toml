@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vrtool"
-version = "0.0.3"
+version = "0.0.4"
 description = ""
 authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
 maintainers = [
@@ -89,7 +89,7 @@ markers = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.3"
+version = "0.0.4"
 tag_format = "v$major.$minor.$patch"
 changelog_file = "docs/changelog.md"
 update_changelog_on_bump = true
