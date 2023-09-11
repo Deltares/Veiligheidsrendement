@@ -169,12 +169,10 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         SFincrease: float = 0.2,
     ) -> None:
-
         _calc_type = dike_section.mechanism_data["StabilityInner"][0][1]
 
         mechanism_reliability_input = mechanism_reliability.Input.input
         if _calc_type == "DStability":
-
             # Add screen to model
             _dstability_wrapper = DStabilityWrapper(
                 Path(mechanism_reliability_input["STIXNAAM"]),

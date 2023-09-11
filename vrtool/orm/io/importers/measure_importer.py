@@ -83,7 +83,7 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.measures["Reliability"] = orm_measure.beta
         _measure.parameters["year"] = orm_measure.year
 
-        for _measure_parameter in orm_measure.parameters:
+        for _measure_parameter in orm_measure.custom_parameters:
             _measure.parameters[_measure_parameter.parameter] = _measure_parameter.value
 
         _measure.parameters["Class"] = orm_measure.measure.combinable_type.name

@@ -11,11 +11,11 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 
 class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
     revetment_measure_results: list[RevetmentMeasureResult]
-    beta_target_results: list[RevetmentMeasureSectionReliability]
+    result_collection: list[RevetmentMeasureSectionReliability]
 
     def __init__(self) -> None:
         self.revetment_measure_results = []
-        self.beta_target_results = []
+        self.result_collection = []
 
     def get_measure_output_values(
         self, split_params: bool, beta_columns: list[str]
@@ -23,6 +23,6 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
         return zip(
             *(
                 _bt.get_measure_output_values(split_params, beta_columns)
-                for _bt in self.beta_target_results
+                for _bt in self.result_collection
             )
         )

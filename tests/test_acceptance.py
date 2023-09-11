@@ -4,13 +4,24 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+from peewee import SqliteDatabase, fn
 from pandas.testing import assert_frame_equal
 
 from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
-from vrtool.orm.orm_controllers import get_dike_traject
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.orm_controllers import (
+    get_dike_traject,
+    open_database,
+    export_results_safety_assessment,
+    vrtool_db,
+)
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
@@ -22,6 +33,7 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 
+# Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
 
 _acceptance_all_steps_test_cases = [
@@ -52,10 +64,7 @@ _acceptance_all_steps_test_cases = [
 ]
 
 _acceptance_optimization_test_cases = [
-    pytest.param(
-        ("TestCase1_38-1_no_housing", "38-1", _available_mechanisms[:3]),
-        id="Traject 38-1, no housing",
-    ),
+    _acceptance_all_steps_test_cases[0],
     pytest.param(
         ("TestCase3_38-1_small", "38-1", _available_mechanisms[:3]),
         id="Traject 38-1, two sections",
@@ -95,8 +104,16 @@ class TestAcceptance:
         assert _test_input_directory.exists()
 
         _test_results_directory = get_test_results_dir(request) / _casename
+        if "[" in request.node.name:
+            # It is a parametrized case:
+            _node_case = request.node.name.split("[")[-1].split("]")[0].strip()
+            _test_results_directory = _test_results_directory / _node_case.replace(
+                ",", "_"
+            ).replace(" ", "_")
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
+
+        _test_results_directory.mkdir(parents=True)
 
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
@@ -104,15 +121,21 @@ class TestAcceptance:
         _test_config.traject = _traject
         _test_config.mechanisms = _mechanisms
         _test_config.externals = test_externals
-        _test_config.input_database_path = _test_input_directory.joinpath(
-            "vrtool_input.db"
-        )
 
-        assert (
-            _test_config.input_database_path.exists()
-        ), "No database found at {}.".format(_test_config.input_database_path)
+        # Create a copy of the database to avoid parallelization runs locked databases.
+        _db_file = _test_input_directory.joinpath("vrtool_input.db")
+        assert _db_file.exists(), "No database found at {}.".format(_db_file)
+
+        _test_config.input_database_path = _test_results_directory.joinpath(
+            "test_db.db"
+        )
+        shutil.copy(_db_file, _test_config.input_database_path)
 
         yield _test_config
+
+        # Make sure that the database connection will be closed even if the test fails.
+        if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
+            vrtool_db.close()
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -142,9 +165,13 @@ class TestAcceptance:
         _acceptance_all_steps_test_cases,
         indirect=["valid_vrtool_config"],
     )
-    def test_run_safety_assessment(self, valid_vrtool_config: VrtoolConfig):
+    def test_run_safety_assessment_and_save_initial_assessment(
+        self, valid_vrtool_config: VrtoolConfig
+    ):
         # 1. Define test data.
         _test_traject = get_dike_traject(valid_vrtool_config)
+        assert not any(AssessmentMechanismResult.select())
+        assert not any(AssessmentSectionResult.select())
 
         # 2. Run test.
         _results = RunSafetyAssessment(
@@ -155,6 +182,103 @@ class TestAcceptance:
         assert isinstance(_results, ResultsSafetyAssessment)
         assert valid_vrtool_config.output_directory.exists()
         assert any(valid_vrtool_config.output_directory.glob("*"))
+
+        # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
+        # However, this is not possible as the connection will be closed during the export_initial_assessment.
+        # Causing an error as the transaction requires said connection to be open.
+        # Therefore the following has been found as the only possible way to assess whether the results are
+        # written in the database without affecting other tests from using this db.
+        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
+        shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
+        _results.vr_config.input_database_path = _bck_db_filepath
+
+        # 4. Validate exporting results is possible
+        export_results_safety_assessment(_results)
+        self.validate_safety_assessment_results(valid_vrtool_config)
+
+    def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
+        # 1. Define test data.
+        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        assert _test_reference_path.exists()
+
+        # 2. Load reference as pandas dataframe.
+        _reference_df = pd.read_csv(
+            _test_reference_path.joinpath("InitialAssessment_Betas.csv"), header=0
+        )
+
+        # 3. Validate each of the rows.
+        # Open the database (whose path has been overwritten with the backup).
+        # This will overwrite the global variable vrtool_db.
+        # In the test's teardown we can ensure closing its connection.
+        open_database(valid_vrtool_config.input_database_path)
+        self.validate_mechanism_per_section_initial_assessment(
+            _reference_df[_reference_df["mechanism"] != "Section"],
+            valid_vrtool_config,
+        )
+        self.validate_section_data_initial_assessment(
+            _reference_df[_reference_df["mechanism"] == "Section"],
+            valid_vrtool_config,
+        )
+
+    def validate_section_data_initial_assessment(
+        self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
+    ):
+        assert len(AssessmentSectionResult.select()) == (
+            len(reference_df.index) * len(vrtool_config.T)
+        )
+        for _, row in reference_df.iterrows():
+            _section_data = SectionData.get(SectionData.section_name == row["name"])
+            for _t_column in vrtool_config.T:
+                _assessment_result = AssessmentSectionResult.get_or_none(
+                    (AssessmentSectionResult.section_data == _section_data)
+                    & (AssessmentSectionResult.time == int(_t_column))
+                )
+                assert isinstance(
+                    _assessment_result, AssessmentSectionResult
+                ), "Initial assessment not found for dike section {}, t {}.".format(
+                    row["name"], _t_column
+                )
+                assert _assessment_result.beta == pytest.approx(
+                    row[str(_t_column)], 0.00000001
+                ), "Missmatched values for section {}, t {}".format(
+                    row["name"], _t_column
+                )
+
+    def validate_mechanism_per_section_initial_assessment(
+        self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
+    ):
+        assert len(AssessmentMechanismResult.select()) == (
+            len(reference_df.index) * len(vrtool_config.T)
+        )
+        for _, row in reference_df.iterrows():
+            _mechanism_name = row["mechanism"]
+            _section_data = SectionData.get(SectionData.section_name == row["name"])
+            _mechanism = Mechanism.get(
+                fn.Upper(Mechanism.name) == _mechanism_name.upper()
+            )
+            _mechanism_x_section = MechanismPerSection.get_or_none(
+                (MechanismPerSection.section == _section_data)
+                & (MechanismPerSection.mechanism == _mechanism)
+            )
+            assert isinstance(_mechanism_x_section, MechanismPerSection)
+            for _t_column in vrtool_config.T:
+                _assessment_result = AssessmentMechanismResult.get_or_none(
+                    (
+                        AssessmentMechanismResult.mechanism_per_section
+                        == _mechanism_x_section
+                    )
+                    & (AssessmentMechanismResult.time == int(_t_column))
+                )
+                assert isinstance(
+                    _assessment_result, AssessmentMechanismResult
+                ), "No entry found for section {} and mechanism {}".format(
+                    row["name"], _mechanism_name
+                )
+                assert _assessment_result.beta == pytest.approx(
+                    row[str(_t_column)], 0.00000001
+                ), "Missmatched values for section {}, mechanism {}, t {}".format(
+                    row["name"], _mechanism_name, _t_column
+                )
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",

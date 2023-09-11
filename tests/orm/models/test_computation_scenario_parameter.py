@@ -1,15 +1,17 @@
 from tests.orm import empty_db_fixture
 from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel
-from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
 
 
-class TestParameter:
+class TestComputationScenarioParameter:
     def test_initialize_with_database_fixture(self, empty_db_fixture):
         # 1. Define test data.
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
@@ -38,18 +40,18 @@ class TestParameter:
         )
 
         # 2. Run test.
-        _parameter = Parameter.create(
+        _parameter = ComputationScenarioParameter.create(
             computation_scenario=_scenario, parameter="TestParameter", value=4.2
         )
 
         # 3. Verify expectations
-        assert isinstance(_parameter, Parameter)
+        assert isinstance(_parameter, ComputationScenarioParameter)
         assert isinstance(_parameter, OrmBaseModel)
         assert _parameter.computation_scenario == _scenario
         assert _parameter.parameter == "TestParameter"
         assert _parameter.value == 4.2
 
-        assert _parameter in _scenario.parameters
+        assert _parameter in _scenario.computation_scenario_parameters
 
     def test_initialize_two_parameters_with_same_name_with_database_fixture(
         self, empty_db_fixture
@@ -89,13 +91,13 @@ class TestParameter:
         )
 
         # 2. Run test.
-        _parameter_a = Parameter.create(
+        _parameter_a = ComputationScenarioParameter.create(
             computation_scenario=_scenario_a, parameter="TestParameter", value=4.2
         )
-        _parameter_b = Parameter.create(
+        _parameter_b = ComputationScenarioParameter.create(
             computation_scenario=_scenario_b, parameter="TestParameter", value=2.4
         )
 
         # 3. Verify expectations
-        assert _parameter_a in _scenario_a.parameters
-        assert _parameter_b in _scenario_b.parameters
+        assert _parameter_a in _scenario_a.computation_scenario_parameters
+        assert _parameter_b in _scenario_b.computation_scenario_parameters

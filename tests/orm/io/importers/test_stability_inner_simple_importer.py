@@ -9,7 +9,9 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
-from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 
 
 class TestStabilityInnerSimpleImporter:
@@ -58,7 +60,7 @@ class TestStabilityInnerSimpleImporter:
             _computation_scenario = get_basic_computation_scenario()
 
             add_computation_scenario_id(parameters, _computation_scenario.id)
-            Parameter.insert_many(parameters).execute()
+            ComputationScenarioParameter.insert_many(parameters).execute()
 
             transaction.commit()
 

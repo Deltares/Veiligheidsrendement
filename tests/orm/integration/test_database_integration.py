@@ -22,10 +22,12 @@ from vrtool.orm.io.importers.stability_inner_simple_importer import (
 )
 from vrtool.orm.models import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
-from vrtool.orm.models.parameter import Parameter
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -346,13 +348,15 @@ class TestDatabaseIntegration:
         temporalCnt = (
             expected[0]
             .parameters.select()
-            .where(Parameter.parameter.endswith("(t)"))
+            .where(ComputationScenarioParameter.parameter.endswith("(t)"))
             .count()
         )
         assert temporalCnt == len(actual.temporals)
 
     def _assert_parameters(
-        self, actual: MechanismInput, expected_parameters: list[Parameter]
+        self,
+        actual: MechanismInput,
+        expected_parameters: list[ComputationScenarioParameter],
     ) -> None:
         for expected_parameter in expected_parameters:
             assert actual.input[expected_parameter.parameter] == pytest.approx(

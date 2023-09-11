@@ -1,7 +1,7 @@
 import pandas as pd
 
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
-    MeasureResultCollectionProtocol,
+    MeasureResultProtocol,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
     RevetmentMeasureResult,
@@ -16,7 +16,7 @@ class TestRevetmentMeasureSectionReliability:
     def test_init(self):
         _measure_reliability = RevetmentMeasureSectionReliability()
         assert isinstance(_measure_reliability, RevetmentMeasureSectionReliability)
-        assert isinstance(_measure_reliability, MeasureResultCollectionProtocol)
+        assert isinstance(_measure_reliability, MeasureResultProtocol)
 
     def test_get_measure_output_values_with_split_param(self):
         # 1. Define test data.

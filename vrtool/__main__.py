@@ -4,7 +4,13 @@ from pathlib import Path
 import click
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.orm_controllers import get_dike_traject
+from vrtool.orm.orm_controllers import (
+    clear_assessment_results,
+    clear_measure_results,
+    export_results_safety_assessment,
+    get_dike_traject,
+    export_solutions,
+)
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
@@ -57,15 +63,21 @@ def _get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
 def run_step_assessment(**kwargs):
     logging.info("Assess, {0}!".format(kwargs["model_directory"]))
 
-    # Get the selected Traject
+    # Get the selected Traject.
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
     _selected_traject = get_dike_traject(_vr_config)
+
+    # Clear the results
+    clear_assessment_results(_vr_config)
 
     # Step 1. Safety assessment.
     _safety_assessment = RunSafetyAssessment(
         _vr_config, _selected_traject, plot_mode=VrToolPlotMode.STANDARD
     )
-    _safety_assessment.run()
+    _result = _safety_assessment.run()
+
+    # Export the results.
+    export_results_safety_assessment(_result)
 
 
 @cli.command(
@@ -80,12 +92,20 @@ def run_step_measures(**kwargs):
     _vr_config = _get_valid_vrtool_config(Path(kwargs["model_directory"]))
     _selected_traject = get_dike_traject(_vr_config)
 
-    # Step 2. Measures.
+    # Clear the results
+    clear_assessment_results(
+        _vr_config
+    )  # Assessment results also cleared because it is part of the RunMeasures workflow
+    clear_measure_results(_vr_config)
+
+    # Step 2a. Measures.
     _measures = RunMeasures(
         _vr_config, _selected_traject, plot_mode=VrToolPlotMode.STANDARD
     )
-    _measures.run()
+    _measures_result = _measures.run()
 
+    # Step 2b. Export solutions to database
+    export_solutions(_measures_result)
 
 @cli.command(
     name="optimization", help="Optimizes the model measures in the given directory."
@@ -118,8 +138,8 @@ def run_full(**kwargs):
     _selected_traject = get_dike_traject(_vr_config)
 
     # Run all steps with one command.
-    _measures = RunFullModel(_vr_config, _selected_traject, VrToolPlotMode.STANDARD)
-    _measures.run()
+    _full_model = RunFullModel(_vr_config, _selected_traject, VrToolPlotMode.STANDARD)
+    _full_model.run()
 
 
 if __name__ == "__main__":

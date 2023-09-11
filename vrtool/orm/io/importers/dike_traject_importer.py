@@ -48,6 +48,8 @@ class DikeTrajectImporter(OrmImporterProtocol):
             SectionData.in_analysis == True
         )
         _dike_traject.sections = self._import_dike_section_list(_selected_sections)
+        for _section in _dike_traject.sections:
+            _section.TrajectInfo = _dike_traject.general_info
         _mechanisms = self._select_available_mechanisms(orm_model)
         _dike_traject.mechanism_names = list(set([_m.name for _m in _mechanisms]))
         _dike_traject.assessment_plot_years = self._vrtool_config.assessment_plot_years

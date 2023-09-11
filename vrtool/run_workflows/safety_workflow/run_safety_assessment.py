@@ -76,7 +76,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
         logging.info("Finished step 1: assessment of current situation")
         if self.vr_config.shelves:
-            # TODO: Deprected, needs to be removed as we will be exporting to the database.
+            # TODO: Deprecated, needs to be removed as we will be exporting to the database.
             _results.save_results()
         return _results
 

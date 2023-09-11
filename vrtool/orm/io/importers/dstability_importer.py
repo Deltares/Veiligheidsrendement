@@ -3,7 +3,9 @@ from pathlib import Path
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
-from vrtool.orm.models.parameter import Parameter
+from vrtool.orm.models.computation_scenario_parameter import (
+    ComputationScenarioParameter,
+)
 
 
 class DStabilityImporter(OrmImporterProtocol):
@@ -21,7 +23,7 @@ class DStabilityImporter(OrmImporterProtocol):
         self._computation_type = "DSTABILITY"
 
     def _set_parameters(
-        self, input: MechanismInput, parameters: list[Parameter]
+        self, input: MechanismInput, parameters: list[ComputationScenarioParameter]
     ) -> None:
         for parameter in parameters:
             input.input[parameter.parameter] = parameter.value
@@ -37,7 +39,9 @@ class DStabilityImporter(OrmImporterProtocol):
 
         mechanism_input = MechanismInput("StabilityInner")
 
-        self._set_parameters(mechanism_input, orm_model.parameters.select())
+        self._set_parameters(
+            mechanism_input, orm_model.computation_scenario_parameters.select()
+        )
 
         supporting_files = orm_model.supporting_files.select()
 
