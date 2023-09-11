@@ -184,6 +184,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
 
     logging.info("Closed connection after clearing measure results.")
 
+
 def export_solutions(result: ResultsMeasures) -> None:
     """
     Exports the solutions to a database

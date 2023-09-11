@@ -1,18 +1,19 @@
 from typing import Type
-from peewee import SqliteDatabase
+
 import pytest
+from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
-from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
-from vrtool.orm.models.measure_result import MeasureResult
 from tests.orm.io.exporters.measures import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
 )
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
+from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
+from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 
 

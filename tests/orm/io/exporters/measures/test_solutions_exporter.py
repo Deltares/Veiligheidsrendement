@@ -1,13 +1,15 @@
 from typing import Type
+
 import pytest
 from peewee import SqliteDatabase
+
+from tests.orm import empty_db_fixture, get_basic_measure_per_section
 from tests.orm.io.exporters.measures import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
 )
-from tests.orm import empty_db_fixture, get_basic_measure_per_section
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig

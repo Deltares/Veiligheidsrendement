@@ -1,3 +1,5 @@
+import logging
+
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
 )
@@ -5,8 +7,6 @@ from vrtool.orm.io.exporters.measures.measure_result_exporter import (
     MeasureResultExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-import logging
-
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 
 

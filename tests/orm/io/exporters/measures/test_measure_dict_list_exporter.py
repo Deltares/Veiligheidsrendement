@@ -1,14 +1,13 @@
+from peewee import SqliteDatabase, fn
+
 from tests.orm import empty_db_fixture
-from tests.orm.io.exporters.measures import (
-    MeasureResultTestInputData,
-)
+from tests.orm.io.exporters.measures import MeasureResultTestInputData
 from vrtool.orm.io.exporters.measures.measure_dict_list_exporter import (
     MeasureDictListExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
-from peewee import SqliteDatabase, fn
 
 
 class TestMeasureDictListExporter:

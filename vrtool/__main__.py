@@ -8,8 +8,8 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     export_results_safety_assessment,
-    get_dike_traject,
     export_solutions,
+    get_dike_traject,
 )
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
@@ -106,6 +106,7 @@ def run_step_measures(**kwargs):
 
     # Step 2b. Export solutions to database
     export_solutions(_measures_result)
+
 
 @cli.command(
     name="optimization", help="Optimizes the model measures in the given directory."

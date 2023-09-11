@@ -1,9 +1,8 @@
+import logging
+
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result import MeasureResult
-
-import logging
-
 from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
 
 _supported_parameters = ["dcrest", "dberm"]
