@@ -20,6 +20,8 @@ from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import (
+    clear_assessment_results,
+    clear_measure_results,
     export_results_safety_assessment,
     export_solutions,
     get_dike_traject,
@@ -58,6 +60,7 @@ _acceptance_test_cases = [
         id="Traject 38-1, full, with revetment",
     ),
 ]
+_acceptance_measure_test_cases = [_acceptance_test_cases[0], _acceptance_test_cases[2]]
 
 
 @pytest.mark.slow
@@ -161,6 +164,7 @@ class TestAcceptance:
         _results.vr_config.input_database_path = _bck_db_filepath
 
         # 4. Validate exporting results is possible
+        clear_assessment_results(valid_vrtool_config)
         export_results_safety_assessment(_results)
         self.validate_safety_assessment_results(valid_vrtool_config)
 
@@ -248,68 +252,42 @@ class TestAcceptance:
                     row["name"], _mechanism_name, _t_column
                 )
 
-    @pytest.fixture(params=[_acceptance_test_cases[0], _acceptance_test_cases[2]])
-    def valid_vrtool_config_for_measures(
-        self, request: pytest.FixtureRequest
-    ) -> VrtoolConfig:
-        _casename, _traject, _mechanisms = request.param
-        _test_input_directory = Path.joinpath(test_data, _casename)
-        assert _test_input_directory.exists()
-
-        _test_results_directory = get_test_results_dir(request) / _casename
-        if _test_results_directory.exists():
-            shutil.rmtree(_test_results_directory)
-
-        _test_config = VrtoolConfig()
-        _test_config.input_directory = _test_input_directory
-        _test_config.output_directory = _test_results_directory
-        _test_config.traject = _traject
-        _test_config.mechanisms = _mechanisms
-        _test_config.externals = test_externals
-        _test_config.input_database_path = _test_input_directory.joinpath(
-            "vrtool_input.db"
-        )
-
-        assert (
-            _test_config.input_database_path.exists()
-        ), "No database found at {}.".format(_test_config.input_database_path)
-
-        yield _test_config
-
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        _acceptance_measure_test_cases,
+        indirect=["valid_vrtool_config"],
+    )
     def test_run_measures_and_save_measure_results(
-        self, valid_vrtool_config_for_measures: VrtoolConfig
+        self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        _test_traject = get_dike_traject(valid_vrtool_config_for_measures)
+        _test_traject = get_dike_traject(valid_vrtool_config)
         assert not any(MeasureResult.select())
         assert not any(MeasureResultParameter.select())
 
         # 2. Run test.
         _results = RunMeasures(
-            valid_vrtool_config_for_measures, _test_traject, VrToolPlotMode.STANDARD
+            valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
         ).run()
 
         # 3. Verify expectations.
         assert isinstance(_results, ResultsMeasures)
-        assert valid_vrtool_config_for_measures.output_directory.exists()
-        assert any(valid_vrtool_config_for_measures.output_directory.glob("*"))
+        assert valid_vrtool_config.output_directory.exists()
+        assert any(valid_vrtool_config.output_directory.glob("*"))
 
         # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
         # However, this is not possible as the connection will be closed during the export_initial_assessment.
         # Causing an error as the transaction requires said connection to be open.
         # Therefore the following has been found as the only possible way to assess whether the results are
         # written in the database without affecting other tests from using this db.
-        _bck_db_filepath = valid_vrtool_config_for_measures.output_directory.joinpath(
-            "bck_db.db"
-        )
-        shutil.copyfile(
-            valid_vrtool_config_for_measures.input_database_path, _bck_db_filepath
-        )
+        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
+        shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
         _results.vr_config.input_database_path = _bck_db_filepath
 
         # 4. Validate exporting results is possible
+        clear_measure_results(valid_vrtool_config)
         export_solutions(_results)
-        self.validate_measure_results(valid_vrtool_config_for_measures)
+        self.validate_measure_results(valid_vrtool_config)
 
     def validate_measure_results(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
