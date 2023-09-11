@@ -33,7 +33,7 @@ class RevetmentMeasureSectionReliability(MeasureResultProtocol):
                 self.reinforcement_type,
                 self.combinable_type,
                 self.measure_year,
-                "yes",
+                -999,  # yes/no column
                 self.cost,
             ]
         return [
@@ -41,7 +41,7 @@ class RevetmentMeasureSectionReliability(MeasureResultProtocol):
             self.reinforcement_type,
             self.combinable_type,
             self.measure_year,
-            "yes",
+            -999,  # yes/no column
             -999,  # dcrest column
             -999,  # dberm column
             self.beta_target,

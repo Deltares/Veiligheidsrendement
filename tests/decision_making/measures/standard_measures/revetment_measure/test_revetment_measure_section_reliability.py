@@ -40,7 +40,7 @@ class TestRevetmentMeasureSectionReliability:
             _measure_reliability.reinforcement_type,
             _measure_reliability.combinable_type,
             _measure_reliability.measure_year,
-            "yes",
+            -999,
             -999,
             -999,
             _measure_reliability.beta_target,

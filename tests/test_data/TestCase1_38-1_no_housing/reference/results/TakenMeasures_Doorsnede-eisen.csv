@@ -1,12 +1,12 @@
-,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm
-0,,,0.0,,,,,,
-1,15,81,11949300.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-2,01B,81,4226200.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-3,4,81,14324200.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-4,01A,81,6713300.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-5,12,81,16306400.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999
-6,34,21,2201796.2973322254,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,15
-7,37B,99,910797.5553862012,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,0
-8,40,101,1711330.9459480809,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8
-9,33A,95,1204939.007623813,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,12
-10,50,16,1006038.7786281833,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,0
+,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm,beta_target,transition_level
+0,,,0.0,,,,,,,,
+1,15,81,21847410.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
+2,01B,81,7726940.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
+3,4,81,26189540.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
+4,01A,81,12274210.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
+5,12,81,29813680.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
+6,34,21,3044259.032528218,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,15,-999,-999
+7,37B,99,1240043.8380566633,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,0,-999,-999
+8,40,101,2320611.6932706647,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8,-999,-999
+9,33A,95,1642885.6719994375,[],5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,12,-999,-999
+10,50,16,1404028.8916407283,[],2,['Grondversterking binnenwaarts 2025'],-999,1.0,0,-999,-999
