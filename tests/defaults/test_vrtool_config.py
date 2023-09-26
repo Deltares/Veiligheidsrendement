@@ -67,6 +67,7 @@ class TestVrtoolConfig:
             "design_methods",
             "unit_costs",
             "externals",
+            "input_database_name",
             "input_database_path",
         ]
 
@@ -195,6 +196,20 @@ class TestVrtoolConfig:
         # 3. Verify expectations.
         assert _vrtool_config.input_directory == _test_path
         assert _vrtool_config.output_directory == _test_path
+
+    def test_construct_db_path(self):
+        # 1. Define test data
+        _test_file = test_data / "vrtool_config" / "custom_config.json"
+        _test_input_path = Path("C:\\")
+        _test_db_name = "MyDb.sqlite"
+
+        # 2. Run test
+        _vrtool_config = VrtoolConfig.from_json(_test_file)
+
+        # 3. Verify expectations
+        assert _vrtool_config.input_database_path == _test_input_path.joinpath(
+            _test_db_name
+        )
 
     @pytest.mark.parametrize(
         "path_value, expected_value",

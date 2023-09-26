@@ -39,8 +39,9 @@ class VrtoolConfig:
     """
 
     # Directory to write the results to
+    input_database_name: str = ""
     input_database_path: Path = None
-    input_directory: Optional[Path] = None
+    input_directory: Path = None
     output_directory: Optional[Path] = None
     externals: Optional[Path] = None
     language: str = "EN"
@@ -139,7 +140,10 @@ class VrtoolConfig:
 
         self.input_directory = _convert_to_path(self.input_directory)
         self.output_directory = _convert_to_path(self.output_directory)
-        self.input_database_path = _convert_to_path(self.input_database_path)
+        if isinstance(self.input_directory, Path):
+            self.input_database_path = self.input_directory.joinpath(
+                self.input_database_name
+            )
         self.externals = _convert_to_path(self.externals)
 
     def _relative_paths_to_absolute(self, parent_path: Path):

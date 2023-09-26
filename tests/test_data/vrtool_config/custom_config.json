@@ -1,3 +1,5 @@
 {
-    "traject": "MyCustomTraject"
+    "traject": "MyCustomTraject",
+    "input_directory": "C:\\",
+    "input_database_name": "MyDb.sqlite"
 }
