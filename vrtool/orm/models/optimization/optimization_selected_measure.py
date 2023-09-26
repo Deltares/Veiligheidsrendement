@@ -8,7 +8,7 @@ from vrtool.orm.models.orm_base_model import (
 )
 
 
-class OptimizationRunMeasureResult(OrmBaseModel):
+class OptimizationSelectedMeasure(OrmBaseModel):
     """
     Cross-reference table to represent the many-to-many relationship between
     `OptimizationRun` and `MeasureResult`.

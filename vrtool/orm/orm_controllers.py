@@ -69,7 +69,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.OptimizationType,
             orm.OptimizationRun,
             orm.OptimizationStep,
-            orm.OptimizationRunMeasureResult,
+            orm.OptimizationSelectedMeasure,
         ]
     )
     return vrtool_db

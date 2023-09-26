@@ -1,5 +1,7 @@
 from peewee import IntegerField, ForeignKeyField
-from vrtool.orm.models.optimization.optimization_run import OptimizationRun
+from vrtool.orm.models.optimization.optimization_selected_measure import (
+    OptimizationSelectedMeasure,
+)
 
 from vrtool.orm.models.orm_base_model import (
     OrmBaseModel,
@@ -8,7 +10,9 @@ from vrtool.orm.models.orm_base_model import (
 
 
 class OptimizationStep(OrmBaseModel):
-    optimization_run = ForeignKeyField(OptimizationRun, backref="optimization_steps")
+    optimization_selected_measure = ForeignKeyField(
+        OptimizationSelectedMeasure, backref="optimization_steps"
+    )
     step_number = IntegerField()
 
     class Meta:
