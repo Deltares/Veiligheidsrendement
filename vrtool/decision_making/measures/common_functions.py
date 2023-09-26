@@ -194,6 +194,7 @@ def modify_geometry_input(initial: pd.DataFrame, berm_height: float):
         inner_slope = np.abs(initial.loc["BIT"].z - initial.loc["BIK"].z) / np.abs(
             initial.loc["BIT"].x - initial.loc["BIK"].x
         )
+        berm_height = min(berm_height, initial.loc["BIK"].z - initial.loc["BIT"].z - 0.01)
         initial.loc["EBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "z"] = initial.loc["BIT"].z + berm_height

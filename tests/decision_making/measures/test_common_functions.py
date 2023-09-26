@@ -197,6 +197,49 @@ class TestCommonFunctions:
         assert _reinforced_geometry[1] == pytest.approx(_reinforcement_1, _tolerance)
         assert _reinforced_geometry[3] == pytest.approx(_reinforcement_3, _tolerance)
 
+    def test_geometry_berm_too_high(self):
+        # 1. Define test data.
+        _geometry_dictionary = pd.DataFrame.from_dict(
+        {
+            "x": {
+                "BUT": -5.14865,
+                "BUK": 0.0,
+                "BIK": 9,
+                "BIT": 33.86232,
+            },
+            "z": {
+                "BUT": 7.23,
+                "BUK": 8.5,
+                "BIK": 8.5,
+                "BIT": 7.04,
+            },
+        })
+
+        # 2. Run test.
+        # in this case: berm_height is cut off at 1.45;
+        # so berm_heights > 1.45 all give the same answer
+        _reinforced_geometry1 = determine_new_geometry(
+            (0,3),
+            direction="inward",
+            max_berm_out=20.0,
+            initial=_geometry_dictionary,
+            berm_height=2.0,
+            geometry_plot = False
+        )
+
+        _reinforced_geometry2 = determine_new_geometry(
+            (0,3),
+            direction="inward",
+            max_berm_out=20.0,
+            initial=_geometry_dictionary,
+            berm_height=3.0,
+            geometry_plot = False
+        )
+
+        assert (_reinforced_geometry1[1] == _reinforced_geometry2[1])
+        assert (_reinforced_geometry1[2] == _reinforced_geometry2[2])
+        assert (_reinforced_geometry1[3] == _reinforced_geometry2[3])
+
     def test_implement_berm_widening_dstability_with_screen_generates_intermediate_stix_file(
         self, request: pytest.FixtureRequest
     ):
