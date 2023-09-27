@@ -235,16 +235,18 @@ def determine_new_geometry(
     max_berm_out: float,
     initial: pd.DataFrame,
     geometry_plot: bool,
-    plot_dir: Union[Path, None] = None,
+    plot_dir: Path = None,
     berm_height: float = 2,
     crest_extra: float = np.nan,
 ):
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
-    If this is not the case and it is input of the old type, first it is transformed to obey that.
-    crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
-    In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
-    such that after reinforcement the height is crest_extra + increment.
-    It has to be ensured that the BUK has x = 0, and that x increases inward"""
+       If this is not the case and it is input of the old type, first it is transformed to obey that.
+       crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
+       In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
+       such that after reinforcement the height is crest_extra + increment.
+       It has to be ensured that the BUK has x = 0, and that x increases inward
+    """
+
     initial = modify_geometry_input(initial, berm_height)
 
     # Geometry is always from inner to outer toe
@@ -322,7 +324,8 @@ def determine_new_geometry(
             plt.plot(*polygon_new.exterior.xy, "r--")
             plt.savefig("testgeom.png")
             plt.close()
-        area_intersect = polygon_old.intersection(polygon_new).area  # 1.0
+            return
+        area_intersect = poly_intsects.area
         area_excavate = area_old - area_intersect
         area_extra = area_new - area_intersect
 
@@ -340,9 +343,6 @@ def determine_new_geometry(
             raise Exception("area calculation failed")
 
         if geometry_plot:
-            if not plot_dir.joinpath("Geometry").is_dir():
-                # plot_dir.joinpath.mkdir(parents=True, exist_ok=True)
-                plot_dir.joinpath("Geometry").mkdir(parents=True, exist_ok=True)
             plt.plot(initial.loc[:, "x"], initial.loc[:, "z"], "k")
             plt.plot(_new_geometry.loc[:, "x"], _new_geometry.loc[:, "z"], "--r")
             if poly_diff.area > 0:
@@ -361,14 +361,6 @@ def determine_new_geometry(
                 else:
                     x1, y1 = poly_diff2.exterior.xy
                     plt.fill(x1, y1, "b--", alpha=0.8)  #
-            # if hasattr(poly_intsects, 'geoms'):
-            #     for i in range(len(poly_intsects.geoms)):
-            #         x1, y1 = poly_intsects[i].exterior.xy
-            #         plt.fill(x1, y1, 'g--', alpha=.1)
-            # else:
-            #     x1, y1 = poly_intsects.exterior.xy
-            #     plt.fill(x1, y1, 'g--', alpha=.1)
-            # plt.show()
 
             plt.text(
                 np.mean(_new_geometry.loc[:, "x"]),
@@ -377,6 +369,9 @@ def determine_new_geometry(
                     str(area_extra), str(area_excavate)
                 ),
             )
+
+            if (plot_dir == None):
+                plot_dir = Path.cwd()
 
             plt.savefig(
                 plot_dir.joinpath(
