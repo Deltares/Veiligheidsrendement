@@ -14,7 +14,7 @@ class OptimizationStep(OrmBaseModel):
     """
 
     optimization_selected_measure = ForeignKeyField(
-        OptimizationSelectedMeasure, backref="optimization_steps"
+        OptimizationSelectedMeasure, backref="optimization_steps", on_delete="CASCADE"
     )
     step_number = IntegerField()
 

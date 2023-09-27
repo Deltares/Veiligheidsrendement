@@ -28,6 +28,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
+    clear_optimization_results,
     export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
@@ -298,7 +299,7 @@ class TestOrmControllers:
 
     @pytest.fixture
     def export_database(self, request: pytest.FixtureRequest) -> SqliteDatabase:
-        _db_file = test_data / "test_db" / f"empty_db.db"
+        _db_file = test_data.joinpath("test_db", "empty_db.db")
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
             shutil.rmtree(_output_dir)
@@ -416,12 +417,33 @@ class TestOrmControllers:
         self, export_database: SqliteDatabase
     ):
         # Setup
-        _db_connection = export_database
-        _db_connection.connect()
+        self._generate_measure_results(export_database)
 
+        # Call
+        _vrtool_config = VrtoolConfig(input_database_path=export_database.database)
+        clear_measure_results(_vrtool_config)
+
+        # Assert
         assert not any(orm_models.MeasureResult.select())
         assert not any(orm_models.MeasureResultParameter.select())
 
+    def test_clear_optimization_results_clears_all_results(
+        self, export_database: SqliteDatabase
+    ):
+        # 1. Define test data.
+        self._generate_optimization_results(export_database)
+
+        # 2. Run test.
+        _vrtool_config = VrtoolConfig(input_database_path=export_database.database)
+        clear_optimization_results(_vrtool_config)
+
+        # 3. Verify expectations.
+        assert not any(orm_models.OptimizationRun.select())
+        assert not any(orm_models.OptimizationSelectedMeasure.select())
+        assert not any(orm_models.OptimizationStep.select())
+
+    def _generate_measure_results(self, db_connection: SqliteDatabase):
+        db_connection.connect()
         traject_info = get_basic_dike_traject_info()
 
         _measure_type = get_basic_measure_type()
@@ -437,20 +459,36 @@ class TestOrmControllers:
         self._create_section_with_fully_configured_measure_results(
             traject_info, "Section 2", _measures
         )
+        db_connection.close()
 
-        # Precondition
         assert any(orm_models.MeasureResult.select())
         assert any(orm_models.MeasureResultParameter.select())
 
-        _db_connection.close()
+    def _generate_optimization_results(self, db_connection: SqliteDatabase):
+        self._generate_measure_results(db_connection)
+        if db_connection.is_closed():
+            # It could happen it has not been closed.
+            db_connection.connect()
+        _dummy_optimization_type = orm_models.OptimizationType.create(name="DummyType")
+        _optimization_run = orm_models.OptimizationRun.create(
+            name="DummyRun",
+            discount_rate=0.42,
+            optimization_type=_dummy_optimization_type,
+        )
+        _optimization_selected_measure = orm_models.OptimizationSelectedMeasure.create(
+            optimization_run=_optimization_run,
+            measure_result=orm_models.MeasureResult.select()[0],
+            investment_year=2021,
+        )
+        orm_models.OptimizationStep.create(
+            optimization_selected_measure=_optimization_selected_measure, step_number=42
+        )
 
-        # Call
-        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
-        clear_measure_results(_vrtool_config)
+        db_connection.close()
 
-        # Assert
-        assert not any(orm_models.MeasureResult.select())
-        assert not any(orm_models.MeasureResultParameter.select())
+        assert any(orm_models.OptimizationRun.select())
+        assert any(orm_models.OptimizationSelectedMeasure.select())
+        assert any(orm_models.OptimizationStep.select())
 
     def _create_section_with_fully_configured_assessment_results(
         self,

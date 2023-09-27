@@ -12,7 +12,7 @@ class OptimizationSelectedMeasure(OrmBaseModel):
     """
 
     optimization_run = ForeignKeyField(
-        OptimizationRun, backref="optimization_run_measure_results"
+        OptimizationRun, backref="optimization_run_measure_results", on_delete="CASCADE"
     )
     measure_result = ForeignKeyField(
         MeasureResult, backref="measure_result_optimization_runs"

@@ -11,7 +11,9 @@ from vrtool.orm.models.orm_base_model import (
 class MeasureResultParameter(OrmBaseModel):
     name = CharField(max_length=_max_char_length)
     value = FloatField()
-    measure_result = ForeignKeyField(MeasureResult, backref="measure_result_parameters")
+    measure_result = ForeignKeyField(
+        MeasureResult, backref="measure_result_parameters", on_delete="CASCADE"
+    )
 
     class Meta:
         table_name = _get_table_name(__qualname__)
