@@ -90,7 +90,7 @@ class TestAcceptance:
             result = pd.read_csv(test_results_dir / file, index_col=0)
             try:
                 assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
-            except:
+            except Exception:
                 comparison_errors.append("{} is different.".format(file))
         # assert no error message has been registered, else print messages
         assert not comparison_errors, "errors occured:\n{}".format(
@@ -126,9 +126,7 @@ class TestAcceptance:
         _db_file = _test_input_directory.joinpath("vrtool_input.db")
         assert _db_file.exists(), "No database found at {}.".format(_db_file)
 
-        _test_config.input_database_path = _test_results_directory.joinpath(
-            "test_db.db"
-        )
+        _test_config.input_database_name = "test_db.db"
         shutil.copy(_db_file, _test_config.input_database_path)
 
         yield _test_config
@@ -188,9 +186,11 @@ class TestAcceptance:
         # Causing an error as the transaction requires said connection to be open.
         # Therefore the following has been found as the only possible way to assess whether the results are
         # written in the database without affecting other tests from using this db.
-        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
+        _bck_db_name = "bck_db.db"
+        _bck_db_filepath = valid_vrtool_config.input_directory.joinpath(_bck_db_name)
         shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        _results.vr_config.input_database_path = _bck_db_filepath
+        _results.vr_config.input_directory = valid_vrtool_config.input_directory
+        _results.vr_config.input_database_name = _bck_db_name
 
         # 4. Validate exporting results is possible
         export_results_safety_assessment(_results)
@@ -443,7 +443,7 @@ class TestAcceptance:
         for count, _result_strategy in enumerate(_results.results_strategies):
             ps = []
             for i in _result_strategy.Probabilities:
-                beta_t, p_t = calc_traject_prob(i, horizon=100)
+                _, p_t = calc_traject_prob(i, horizon=100)
                 ps.append(p_t)
             pd.DataFrame(ps, columns=range(100)).to_csv(
                 path_or_buf=_investment_steps_dir.joinpath(

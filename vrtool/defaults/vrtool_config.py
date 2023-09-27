@@ -40,7 +40,6 @@ class VrtoolConfig:
 
     # Directory to write the results to
     input_database_name: str = ""
-    input_database_path: Path = None
     input_directory: Path = None
     output_directory: Optional[Path] = None
     externals: Optional[Path] = None
@@ -125,6 +124,15 @@ class VrtoolConfig:
 
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
 
+    @property
+    def input_database_path(self) -> Path:
+        """
+        Construct database path as property from input dir and database name
+        """
+        if not (self.input_directory and self.input_database_name):
+            return None
+        return self.input_directory.joinpath(self.input_database_name)
+
     def __post_init__(self):
         """
         After initialization and set of the values through the constructor we modify certain properties to ensure they are of the correct type.
@@ -140,10 +148,6 @@ class VrtoolConfig:
 
         self.input_directory = _convert_to_path(self.input_directory)
         self.output_directory = _convert_to_path(self.output_directory)
-        if isinstance(self.input_directory, Path):
-            self.input_database_path = self.input_directory.joinpath(
-                self.input_database_name
-            )
         self.externals = _convert_to_path(self.externals)
 
     def _relative_paths_to_absolute(self, parent_path: Path):
@@ -163,7 +167,6 @@ class VrtoolConfig:
 
         self.input_directory = _relative_to_absolute(self.input_directory)
         self.output_directory = _relative_to_absolute(self.output_directory)
-        self.input_database_path = _relative_to_absolute(self.input_database_path)
         self.externals = _relative_to_absolute(self.externals)
 
     def export(self, export_path: Path):

@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -195,12 +196,16 @@ class TestOrmControllers:
     @pytest.fixture
     def database_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
-        _db_file = test_data / "test_db" / "with_valid_data.db"
-        assert _db_file.is_file()
+        _db_name = "with_valid_data.db"
 
         _vrtool_config = VrtoolConfig(
-            input_database_path=_db_file, traject="38-1", input_directory=test_data
+            input_directory=(test_data / "test_db"),
+            input_database_name=_db_name,
+            traject="38-1",
         )
+        _db_file = _vrtool_config.input_database_path
+        assert _db_file.is_file()
+
         _vrtool_config.output_directory = test_results.joinpath(request.node.name)
         if _vrtool_config.output_directory.exists():
             shutil.rmtree(_vrtool_config.output_directory)
@@ -298,7 +303,7 @@ class TestOrmControllers:
 
     @pytest.fixture
     def export_database(self, request: pytest.FixtureRequest) -> SqliteDatabase:
-        _db_file = test_data / "test_db" / f"empty_db.db"
+        _db_file = test_data / "test_db" / "empty_db.db"
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
             shutil.rmtree(_output_dir)
@@ -341,7 +346,8 @@ class TestOrmControllers:
         # Safety assessment.
         _safety_assessment = ResultsSafetyAssessment()
         _safety_assessment.vr_config = VrtoolConfig(
-            input_database_path=export_database.database
+            input_directory=Path(export_database.database).parent,
+            input_database_name=Path(export_database.database).name,
         )
         _safety_assessment.selected_traject = _test_traject
 
@@ -401,7 +407,10 @@ class TestOrmControllers:
         _db_connection.close()
 
         # Call
-        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=Path(_db_connection.database).parent,
+            input_database_name=Path(_db_connection.database).name,
+        )
         clear_assessment_results(_vrtool_config)
 
         # Assert
@@ -445,7 +454,10 @@ class TestOrmControllers:
         _db_connection.close()
 
         # Call
-        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=Path(_db_connection.database).parent,
+            input_database_name=Path(_db_connection.database).name,
+        )
         clear_measure_results(_vrtool_config)
 
         # Assert

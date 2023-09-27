@@ -52,7 +52,8 @@ class TestMain:
             shutil.rmtree(_output_dir)
 
         json_config = {
-            "input_database_path": str(_input_dir / "vrtool_input.db"),
+            "input_directory": str(_input_dir),
+            "input_database_name": "vrtool_input.db",
             "traject": "38-1",
             "output_directory": str(_output_dir),
             "mechanisms": ["Overflow", "StabilityInner", "Piping"],
@@ -113,7 +114,7 @@ class TestMain:
         # 3. Verify expectations.
         assert str(
             exception_error.value
-        ) == "No json config file found in the model directory. {}".format(_input_dir)
+        ) == "No json config file found in the model directory {}.".format(_input_dir)
 
     def test_given_directory_with_too_many_jsons_raises_error(
         self, request: pytest.FixtureRequest
