@@ -21,10 +21,10 @@ from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
+from vrtool.orm.models.optimization import *
 from vrtool.orm.models.profile_point import ProfilePoint
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.slope_part import SlopePart
 from vrtool.orm.models.standard_measure import StandardMeasure
 from vrtool.orm.models.supporting_file import SupportingFile
 from vrtool.orm.models.water_level_data import WaterlevelData
-from vrtool.orm.models.optimization import *
