@@ -13,8 +13,7 @@ from tests.orm.io.exporters.measures import (
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
+from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
 
 
 class TestMeasureExporter:

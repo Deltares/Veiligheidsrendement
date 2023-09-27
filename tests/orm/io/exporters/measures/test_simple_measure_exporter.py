@@ -8,8 +8,7 @@ from vrtool.orm.io.exporters.measures.simple_measure_exporter import (
     SimpleMeasureExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
+from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
 
 
 class MeasureTest(MeasureProtocol):

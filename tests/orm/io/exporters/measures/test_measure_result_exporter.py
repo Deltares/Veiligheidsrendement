@@ -14,8 +14,7 @@ from vrtool.orm.io.exporters.measures.measure_result_exporter import (
     MeasureResultExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
+from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
 
 
 class TestMeasureResultExporter:
