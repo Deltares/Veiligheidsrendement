@@ -1,8 +1,16 @@
 import shutil
+from typing import Type
 
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
+from tests.orm.io.exporters.measures import (
+    MeasureResultTestInputData,
+    MeasureWithDictMocked,
+    MeasureWithListOfDictMocked,
+    MeasureWithMeasureResultCollectionMocked,
+)
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
@@ -11,6 +19,7 @@ from tests.orm import (
     get_basic_dike_traject_info,
     get_basic_measure_type,
     get_basic_mechanism_per_section,
+    empty_db_fixture,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -25,15 +34,21 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    export_results_measures,
     export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
     initialize_database,
     open_database,
+)
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
+    ResultsOptimization,
 )
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -371,12 +386,62 @@ class TestOrmControllers:
             )
         )
 
-    def test_export_measure_results_given_valid_data(
-        self, export_database: pytest.FixtureRequest
+    @pytest.mark.parametrize(
+        "type_measure",
+        [
+            pytest.param(MeasureWithDictMocked, id="With dictionary"),
+            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+    )
+    def test_export_results_measures_given_valid_data(
+        self,
+        type_measure: Type[MeasureProtocol],
+        export_database: pytest.FixtureRequest,
     ):
-        pytest.fail(reason="TODO")
+        """
+        Virtually this test verifies (almost) the same as
+        `TestMeasureExporter.test_export_dom_with_valid_data`.
+        """
+        # 1. Define test data.
+        _measures_input_data = MeasureResultTestInputData.with_measures_type(
+            type_measure
+        )
 
-    def test_export_optimization_results_given_valid_data(
+        # Define vrtool config.
+        _vrtool_config = VrtoolConfig(
+            input_database_path=export_database.database,
+            traject=_measures_input_data.domain_dike_section.TrajectInfo.traject_name,
+        )
+
+        # Define solutions.
+        _solutions = Solutions(
+            dike_section=_measures_input_data.domain_dike_section, config=_vrtool_config
+        )
+        _solutions.measures = [_measures_input_data.measure]
+
+        # Define results measures object.
+        _results_measures = ResultsMeasures()
+        _results_measures.vr_config = _vrtool_config
+        _results_measures.selected_traject = _measures_input_data
+        _results_measures.solutions_dict["sth"] = _solutions
+
+        # 2. Run test.
+        export_results_measures(_results_measures)
+
+        # 3. Verify expectations.
+        _expected_measures = len(_measures_input_data.t_columns)
+        assert (
+            len(_measures_input_data.measure_per_section.measure_per_section_result)
+            == _expected_measures
+        )
+
+        assert len(MeasureResult.select()) == _expected_measures
+
+    def test_export_results_optimization_given_valid_data(
         self, export_database: pytest.FixtureRequest
     ):
         pytest.fail(reason="TODO")

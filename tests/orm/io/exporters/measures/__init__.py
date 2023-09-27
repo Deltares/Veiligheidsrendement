@@ -3,12 +3,14 @@ from typing import Type
 import pandas as pd
 import pytest
 
-from tests.orm import get_basic_measure_per_section
+from tests.orm import get_basic_measure_per_section, get_domain_basic_dike_section
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
     MeasureResultProtocol,
 )
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 
@@ -68,13 +70,15 @@ class MeasureResultTestInputData:
     section_reliability: SectionReliability
     measure_per_section: MeasurePerSection
     measure: MeasureProtocol
+    domain_dike_section: DikeSection
 
     def __init__(self) -> None:
         self.t_columns = [0, 2, 4, 24, 42]
         self.expected_cost = 42.24
         self.section_reliability = create_section_reliability(self.t_columns)
         self.measure_per_section = get_basic_measure_per_section()
-
+        self.domain_dike_section = get_domain_basic_dike_section()
+    
     @classmethod
     def with_measures_type(cls, type_measure: Type[MeasureProtocol]):
         _this = cls()

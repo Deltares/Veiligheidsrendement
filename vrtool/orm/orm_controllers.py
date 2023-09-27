@@ -217,7 +217,7 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
     logging.info("Closed connection after clearing optimization results.")
 
 
-def export_solutions(result: ResultsMeasures) -> None:
+def export_results_measures(result: ResultsMeasures) -> None:
     """
     Exports the solutions to a database
 
@@ -237,7 +237,7 @@ def export_solutions(result: ResultsMeasures) -> None:
     logging.info("Closed connection after export solution.")
 
 
-def export_optimizations(result: ResultsOptimization) -> None:
+def export_results_optimization(result: ResultsOptimization) -> None:
     """
     Exports the optimization results (`list[StrategyBase]`) to a database.
 
