@@ -371,6 +371,16 @@ class TestOrmControllers:
             )
         )
 
+    def test_export_measure_results_given_valid_data(
+        self, export_database: pytest.FixtureRequest
+    ):
+        pytest.fail(reason="TODO")
+
+    def test_export_optimization_results_given_valid_data(
+        self, export_database: pytest.FixtureRequest
+    ):
+        pytest.fail(reason="TODO")
+
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase
     ):
