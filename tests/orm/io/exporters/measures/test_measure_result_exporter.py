@@ -19,6 +19,8 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
 )
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
 class TestMeasureResultExporter:
@@ -137,9 +139,19 @@ class TestMeasureResultExporter:
         year: int,
     ):
         for _mechanism_name in input_data.available_mechanisms:
-            _retrieved_result_section = MeasureResultMechanism.get_or_none(
-                (MeasureResultMechanism.measure_result == measure_result)
-                & (MeasureResultMechanism.time == year)
+            _mechanism = Mechanism.get_or_none(Mechanism.name == _mechanism_name)
+            _retrieved_result_section = (
+                MeasureResultMechanism.select()
+                .join(MechanismPerSection)
+                .where(
+                    (MeasureResultMechanism.measure_result == measure_result)
+                    & (MeasureResultMechanism.time == year)
+                    & (
+                        MeasureResultMechanism.mechanism_per_section.mechanism
+                        == _mechanism
+                    )
+                )
+                .get_or_none()
             )
 
             assert isinstance(_retrieved_result_section, MeasureResultMechanism)
