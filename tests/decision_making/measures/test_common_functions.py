@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import shutil
 from pathlib import Path
 
@@ -199,7 +200,7 @@ class TestCommonFunctions:
 
     def test_geometry_berm_too_high(self):
         # 1. Define test data.
-        _geometry_dictionary = pd.DataFrame.from_dict(
+        _geometry_dictionary1 = pd.DataFrame.from_dict(
         {
             "x": {
                 "BUT": -5.14865,
@@ -215,6 +216,8 @@ class TestCommonFunctions:
             },
         })
 
+        _geometry_dictionary2 = copy.deepcopy(_geometry_dictionary1)
+
         # 2. Run test.
         # in this case: berm_height is cut off at 1.45;
         # so berm_heights > 1.45 all give the same answer
@@ -222,7 +225,7 @@ class TestCommonFunctions:
             (0,3),
             direction="inward",
             max_berm_out=20.0,
-            initial=_geometry_dictionary,
+            initial=_geometry_dictionary1,
             berm_height=2.0,
             geometry_plot = False
         )
@@ -231,7 +234,7 @@ class TestCommonFunctions:
             (0,3),
             direction="inward",
             max_berm_out=20.0,
-            initial=_geometry_dictionary,
+            initial=_geometry_dictionary2,
             berm_height=3.0,
             geometry_plot = False
         )
