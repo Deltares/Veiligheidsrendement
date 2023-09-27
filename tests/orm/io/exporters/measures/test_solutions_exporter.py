@@ -18,8 +18,7 @@ from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporte
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
+from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
 from vrtool.orm.models.section_data import SectionData
 
 
