@@ -1,45 +1,27 @@
-import logging
+from vrtool.orm.io.exporters.measures.measure_result_collection_exporter import (
+    MeasureResultCollectionExporter,
+)
+from vrtool.orm.io.exporters.measures.measure_type_converters import MeasureDictListAsMeasureResultCollection
 
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
 
-_supported_parameters = ["dcrest", "dberm"]
 
 
 class MeasureDictListExporter(OrmExporterProtocol):
+    """
+    TODO: Deprecated, can be removed by using the classes
+     in `measure_type_converters.py`.
+    """
     _measure_per_section: MeasurePerSection
 
     def __init__(self, measure_per_section: MeasurePerSection) -> None:
         self._measure_per_section = measure_per_section
 
     def export_dom(self, measure_dict_list: list) -> None:
-        # TODO: Potentially this could be done in SimpleMeasureExporter and here only iterate over the measures.
-        logging.info("STARTED exporting measure's results list.")
-        for _measure in measure_dict_list:
-            logging.debug("STARTED exporting measure id: {}".format(_measure["id"]))
-            _available_parameters = list(
-                filter(lambda x: x in _measure, _supported_parameters)
-            )
-            _measure_reliability = _measure["Reliability"].SectionReliability
-            _measure_cost = _measure["Cost"]
-            for col_name, beta_value in _measure_reliability.loc["Section"].iteritems():
-                _measure_result = MeasureResult.create(
-                    beta=beta_value,
-                    time=int(col_name),
-                    cost=_measure_cost,
-                    measure_per_section=self._measure_per_section,
-                )
-                _mr_parameters = map(
-                    lambda x: dict(
-                        name=x.upper(),
-                        value=_measure[x],
-                        measure_result=_measure_result,
-                    ),
-                    _available_parameters,
-                )
-                MeasureResultParameter.insert_many(_mr_parameters).execute()
-
-            logging.debug("FINISHED exporting measure id: {}".format(_measure["id"]))
-
-        logging.info("FINISHED exporting measure's results.")
+        _as_measure_result_collection = MeasureDictListAsMeasureResultCollection(
+            measure_dict_list
+        )
+        MeasureResultCollectionExporter(self._measure_per_section).export_dom(
+            _as_measure_result_collection
+        )

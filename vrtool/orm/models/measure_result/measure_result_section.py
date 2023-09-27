@@ -8,9 +8,7 @@ from vrtool.orm.models.orm_base_model import (
 
 
 class MeasureResultSection(OrmBaseModel):
-    measure_result = ForeignKeyField(
-        MeasureResult, unique=True, backref="sections_measure_result"
-    )
+    measure_result = ForeignKeyField(MeasureResult, backref="sections_measure_result")
 
     beta = FloatField()
     time = IntegerField()

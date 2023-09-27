@@ -1,7 +1,7 @@
 from typing import Type
 
 from peewee import SqliteDatabase
-
+import pandas as pd
 from tests.orm import empty_db_fixture
 from tests.orm.io.exporters.measures import MeasureResultTestInputData
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
@@ -15,6 +15,10 @@ from vrtool.orm.io.exporters.measures.measure_result_exporter import (
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
+from vrtool.orm.models.measure_result.measure_result_mechanism import (
+    MeasureResultMechanism,
+)
+from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 
 
 class TestMeasureResultExporter:
@@ -87,40 +91,81 @@ class TestMeasureResultExporter:
     def _validate_measure_result_export(
         self, input_data: MeasureResultTestInputData, parameters_to_validate: dict
     ):
-        assert len(MeasureResult.select()) == len(input_data.t_columns)
-        assert len(MeasureResultParameter.select()) == len(input_data.t_columns) * len(
-            parameters_to_validate
+        # Validate number of entries.
+        assert len(MeasureResult.select()) == 1
+        _measure_result = MeasureResult.get()
+        self._validate_measure_result_parameters(
+            _measure_result, parameters_to_validate
         )
+
+        assert len(MeasureResultSection.select()) == len(input_data.t_columns)
+        assert len(MeasureResultMechanism.select()) == len(input_data.t_columns) * len(
+            input_data.available_mechanisms
+        )
+
+        # Validate values.
         for year in input_data.t_columns:
-            _retrieved_result = MeasureResult.get_or_none(
-                (MeasureResult.measure_per_section == input_data.measure_per_section)
-                & (MeasureResult.time == year)
+            self._validate_measure_result_section_year(
+                _measure_result, input_data, year
+            )
+            self._validate_measure_result_mechanisms_year(
+                _measure_result, input_data, year
             )
 
-            assert isinstance(_retrieved_result, MeasureResult)
+    def _validate_measure_result_section_year(
+        self,
+        measure_result: MeasureResult,
+        input_data: MeasureResultTestInputData,
+        year: int,
+    ):
+        _retrieved_result_section = MeasureResultSection.get_or_none(
+            (MeasureResultSection.measure_result == measure_result)
+            & (MeasureResultSection.time == year)
+        )
+
+        assert isinstance(_retrieved_result_section, MeasureResultSection)
+        assert (
+            _retrieved_result_section.beta
+            == input_data.section_reliability.SectionReliability.loc["Section"][year]
+        )
+        assert _retrieved_result_section.cost == input_data.expected_cost
+
+    def _validate_measure_result_mechanisms_year(
+        self,
+        measure_result: MeasureResult,
+        input_data: MeasureResultTestInputData,
+        year: int,
+    ):
+        for _mechanism_name in input_data.available_mechanisms:
+            _retrieved_result_section = MeasureResultMechanism.get_or_none(
+                (MeasureResultMechanism.measure_result == measure_result)
+                & (MeasureResultMechanism.time == year)
+            )
+
+            assert isinstance(_retrieved_result_section, MeasureResultMechanism)
             assert (
-                _retrieved_result.beta
-                == input_data.section_reliability.SectionReliability.loc["Section"][
-                    year
-                ]
-            )
-            assert _retrieved_result.cost == input_data.expected_cost
-            assert len(_retrieved_result.measure_result_parameters) == len(
-                parameters_to_validate.items()
+                _retrieved_result_section.beta
+                == input_data.section_reliability.SectionReliability.loc[
+                    _mechanism_name
+                ][year]
             )
 
-            def measure_result_parameter_exists(name: str, value: float) -> bool:
-                return (
-                    MeasureResultParameter.select()
-                    .where(
-                        (MeasureResultParameter.name == name.upper())
-                        & (MeasureResultParameter.value == value)
-                        & (MeasureResultParameter.measure_result == _retrieved_result)
-                    )
-                    .exists()
+    def _validate_measure_result_parameters(
+        self, measure_result: MeasureResult, parameters_to_validate: dict
+    ):
+        def measure_result_parameter_exists(name: str, value: float) -> bool:
+            return (
+                MeasureResultParameter.select()
+                .where(
+                    (MeasureResultParameter.name == name.upper())
+                    & (MeasureResultParameter.value == value)
+                    & (MeasureResultParameter.measure_result == measure_result)
                 )
-
-            assert all(
-                measure_result_parameter_exists(name, value)
-                for name, value in parameters_to_validate.items()
+                .exists()
             )
+
+        assert len(MeasureResultParameter.select()) == len(parameters_to_validate)
+        assert all(
+            measure_result_parameter_exists(name, value)
+            for name, value in parameters_to_validate.items()
+        )
