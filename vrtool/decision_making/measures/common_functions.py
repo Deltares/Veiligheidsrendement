@@ -162,7 +162,7 @@ def calculate_area(geometry):
     return areaPol, polygonXZ
 
 
-def modify_geometry_input(initial: pd.DataFrame, berm_height: float):
+def modify_geometry_input(initial: pd.DataFrame, berm_height: float) -> pd.DataFrame:
     """Checks geometry and corrects if necessary"""
     # TODO move this to the beginning for the input.
     # modify the old structure
