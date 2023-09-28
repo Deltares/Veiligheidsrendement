@@ -14,12 +14,37 @@ from vrtool.orm.models.mechanism import Mechanism
 
 import pandas as pd
 
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+
 
 class MeasureResultExporter(OrmExporterProtocol):
     _measure_per_section: MeasurePerSection
 
     def __init__(self, measure_per_section: MeasurePerSection) -> None:
         self._measure_per_section = measure_per_section
+
+    @staticmethod
+    def get_mechanism_per_section(
+        measure_per_section: MeasurePerSection, mechanism_name: str
+    ) -> MechanismPerSection:
+        """
+        Retrieves the associated `MechanismPerSection` for a given
+        `SectionData` and a given `mechanism_name`.
+
+        Args:
+            measure_per_section (MeasurePerSection): Instance used
+             to derive de `SectionData` row.
+            mechanism_name (str): Name of the desired `Mechanism` related entry.
+
+        Returns:
+            MechanismPerSection: Instance connected to the provided
+             `MeasurePerSection`.
+        """
+        return (
+            measure_per_section.section.mechanisms_per_section.join(Mechanism)
+            .where(Mechanism.name == mechanism_name)
+            .get()
+        )
 
     def _get_parameters_dict(self, measure_result: MeasureResultProtocol) -> dict:
         if isinstance(measure_result, MeasureResultProtocol):
@@ -57,16 +82,6 @@ class MeasureResultExporter(OrmExporterProtocol):
             _available_mechanisms,
         )
         MeasureResultMechanism.insert_many(_mr_mechanism).execute()
-
-    @staticmethod
-    def get_mechanism_per_section(
-        measure_per_section: MeasurePerSection, mechanism_name: str
-    ):
-        return (
-            measure_per_section.section.mechanisms_per_section.join(Mechanism)
-            .where(Mechanism.name == mechanism_name)
-            .get()
-        )
 
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
         logging.info(
