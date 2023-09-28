@@ -7,10 +7,13 @@ import pytest
 from pandas.testing import assert_frame_equal
 from peewee import SqliteDatabase, fn
 
+from tests.orm import empty_db_fixture
+
 from tests import get_test_results_dir, test_data, test_externals
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
+from vrtool.orm.io.exporters.optimization.strategy_base_exporter import StrategyBaseExporter
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.measure import Measure
@@ -21,6 +24,7 @@ from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import (
     export_results_measures,
+    export_results_optimization,
     clear_assessment_results,
     clear_measure_results,
     export_results_safety_assessment,
@@ -323,13 +327,18 @@ class TestAcceptance:
         _results_assessment.load_results(
             alternative_path=_shelve_path / "AfterStep1.out"
         )
-        _results_measures = ResultsMeasures()
 
+        _results_measures = ResultsMeasures()
         _results_measures.vr_config = valid_vrtool_config
         _results_measures.selected_traject = _results_assessment.selected_traject
-
         _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
-        _results_optimization = RunOptimization(_results_measures).run()
+        export_results_measures(_results_measures)
+
+        _optimizer = RunOptimization(_results_measures)
+        _results_optimization = _optimizer.run()
+        _results_optimization.vr_config = valid_vrtool_config
+
+        export_results_optimization(_results_optimization)
 
         self._validate_acceptance_result_cases(
             valid_vrtool_config.output_directory, _test_reference_path
