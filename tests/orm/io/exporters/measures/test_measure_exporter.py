@@ -10,10 +10,14 @@ from tests.orm.io.exporters.measures import (
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
 )
+from tests.orm.io.exporters.measures.measure_result_test_validators import (
+    validate_clean_database,
+    validate_measure_result_export,
+    validate_no_parameters,
+)
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
 
 
 class TestMeasureExporter:
@@ -43,23 +47,16 @@ class TestMeasureExporter:
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
             type_measure
         )
-
-        assert not any(MeasureResult.select())
-        assert not any(MeasureResultParameter.select())
-
-        _exporter = MeasureExporter(_measures_input_data.measure_per_section)
+        # Verify no parameters (except ID) are present as input data.
+        validate_no_parameters(_measures_input_data)
+        validate_clean_database()
 
         # Call
+        _exporter = MeasureExporter(_measures_input_data.measure_per_section)
         _exporter.export_dom(_measures_input_data.measure)
 
         # Assert
-        _expected_measures = len(_measures_input_data.t_columns)
-        assert (
-            len(_measures_input_data.measure_per_section.measure_per_section_result)
-            == _expected_measures
-        )
-
-        assert len(MeasureResult.select()) == _expected_measures
+        validate_measure_result_export(_measures_input_data, {})
 
     def test_export_dom_invalid_data(self, empty_db_fixture: SqliteDatabase):
         # Setup
@@ -69,8 +66,7 @@ class TestMeasureExporter:
 
         _measure_per_section = get_basic_measure_per_section()
 
-        assert not any(MeasureResult.select())
-        assert not any(MeasureResultParameter.select())
+        validate_clean_database()
 
         _exporter = MeasureExporter(_measure_per_section)
 
@@ -87,8 +83,7 @@ class TestMeasureExporter:
         # Setup
         _measure_per_section = get_basic_measure_per_section()
 
-        assert not any(MeasureResult.select())
-        assert not any(MeasureResultParameter.select())
+        validate_clean_database()
 
         _exporter = MeasureExporter(_measure_per_section)
 

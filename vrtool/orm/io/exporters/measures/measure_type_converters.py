@@ -10,6 +10,7 @@ class MeasureDictAsMeasureResult(MeasureResultProtocol):
     parameters: dict
 
     def __init__(self, measure_as_dict: dict) -> None:
+        self.measure_id = measure_as_dict.get("ID", "custom-measure-without-id")
         self.cost = measure_as_dict["Cost"]
         self.section_reliability = measure_as_dict["Reliability"]
         self.parameters = dict(

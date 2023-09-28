@@ -10,6 +10,11 @@ from tests.orm.io.exporters.measures import (
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
 )
+from tests.orm.io.exporters.measures.measure_result_test_validators import (
+    validate_clean_database,
+    validate_measure_result_export,
+    validate_no_parameters,
+)
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -168,17 +173,11 @@ class TestSolutionsExporter:
             _measures_test_input_data.measure_per_section.section.section_name
         )
         _test_solution.measures = [_measures_test_input_data.measure]
-        assert not any(MeasureResult.select())
-        assert not any(MeasureResultParameter.select())
+        validate_clean_database()
+        validate_no_parameters(_measures_test_input_data)
 
         # 2. Run test.
         _exporter.export_dom(_test_solution)
 
         # 3. Verify expectations.
-        assert any(MeasureResult.select())
-        assert len(MeasureResult.select()) == len(_measures_test_input_data.t_columns)
-        assert len(
-            MeasureResult.select().where(
-                MeasureResult.cost == _measures_test_input_data.expected_cost
-            )
-        ) == len(_measures_test_input_data.t_columns)
+        validate_measure_result_export(_measures_test_input_data, {})
