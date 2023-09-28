@@ -164,33 +164,17 @@ def calculate_area(geometry):
 
 def modify_geometry_input(initial: pd.DataFrame, berm_height: float) -> pd.DataFrame:
     """Checks geometry and corrects if necessary"""
-    # TODO move this to the beginning for the input.
-    # modify the old structure
-    if not "BUK" in initial.index:
-        initial = (
-            initial.replace(
-                {
-                    "innertoe": "BIT",
-                    "innerberm1": "EBL",
-                    "innerberm2": "BBL",
-                    "innercrest": "BIK",
-                    "outercrest": "BUK",
-                    "outertoe": "BUT",
-                }
-            )
-            .reset_index()
-            .set_index("type")
-        )
 
     if initial.loc["BUK"].x != 0.0:
-        # if BUK is not at x = 0 , modify entire profile
+        # if BUK is not at x = 0 , modify entire profile:
         initial["x"] = np.subtract(initial["x"], initial.loc["BUK"].x)
 
     if initial.loc["BUK"].x > initial.loc["BIK"].x:
         # BIK must have larger x than BUK, so likely the profile is mirrored, mirror it back:
         initial["x"] = np.multiply(initial["x"], -1.0)
-    # if EBL and BBL not there, generate them.
+
     if not "EBL" in initial.index:
+        # if EBL and BBL are not there, generate them:
         inner_slope = np.abs(initial.loc["BIT"].z - initial.loc["BIK"].z) / np.abs(
             initial.loc["BIT"].x - initial.loc["BIK"].x
         )

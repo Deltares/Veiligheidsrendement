@@ -53,10 +53,10 @@ _geometry_cases = {
         "BIT": [21, 0.37],
     },
     "DV56": {
-        "innertoe": [-24, 1.392649],
-        "innercrest": [-6, 6.41152],
-        "outercrest": [0, 6.41152],
-        "outertoe": [14, 1.833213],
+        "BIT": [-24, 1.392649],
+        "BIK": [-6, 6.41152],
+        "BUK": [0, 6.41152],
+        "BUT": [14, 1.833213],
     },
     "DV53": {
         "BIT": [-28, 1.253734],
@@ -67,10 +67,10 @@ _geometry_cases = {
         "BUT": [18, 1.229376],
     },
     "DV86": {
-        "innertoe": [-22, 1.287424],
-        "innercrest": [-14, 4.857041],
-        "outercrest": [0, 4.857041],
-        "outertoe": [10, 1.156215],
+        "BIT": [-22, 1.287424],
+        "BIK": [-14, 4.857041],
+        "BUK": [0, 4.857041],
+        "BUT": [10, 1.156215],
     },
 }
 
@@ -80,8 +80,7 @@ class TestCommonFunctions:
         def _to_record(geom_item) -> dict:
             return dict(type=geom_item[0], x=geom_item[1][0], z=geom_item[1][1])
 
-        _df_geometry = pd.DataFrame.from_records(map(_to_record, geom_dict.items()))
-        _df_geometry.set_index("type")
+        _df_geometry = pd.DataFrame.from_records(map(_to_record, geom_dict.items())).reset_index().set_index("type")
         return _df_geometry
 
     @pytest.mark.parametrize(
