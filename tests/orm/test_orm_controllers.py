@@ -429,7 +429,10 @@ class TestOrmControllers:
         self._generate_measure_results(export_database)
 
         # Call
-        _vrtool_config = VrtoolConfig(input_database_path=export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=Path(export_database.database).parent,
+            input_database_name=Path(export_database.database).name,
+        )
         clear_measure_results(_vrtool_config)
 
         # Assert
@@ -443,7 +446,10 @@ class TestOrmControllers:
         self._generate_optimization_results(export_database)
 
         # 2. Run test.
-        _vrtool_config = VrtoolConfig(input_database_path=export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=Path(export_database.database).parent,
+            input_database_name=Path(export_database.database).name,
+        )
         clear_optimization_results(_vrtool_config)
 
         # 3. Verify expectations.
