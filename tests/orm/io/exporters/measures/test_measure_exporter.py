@@ -40,15 +40,26 @@ class TestMeasureExporter:
             ),
         ],
     )
+    @pytest.mark.parametrize(
+        "parameters_to_validate",
+        [
+            pytest.param(dict(), id="Without supported parameters"),
+            pytest.param(dict(dcrest=4.2, dberm=2.4), id="With supported parameters"),
+        ],
+    )
     def test_export_dom_with_valid_data(
-        self, type_measure: Type[MeasureProtocol], empty_db_fixture: SqliteDatabase
+        self,
+        type_measure: Type[MeasureProtocol],
+        parameters_to_validate: dict,
+        empty_db_fixture: SqliteDatabase,
     ):
         # Setup
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
-            type_measure
+            type_measure, parameters_to_validate
         )
         # Verify no parameters (except ID) are present as input data.
-        validate_no_parameters(_measures_input_data)
+        if not parameters_to_validate:
+            validate_no_parameters(_measures_input_data)
         validate_clean_database()
 
         # Call
@@ -56,7 +67,45 @@ class TestMeasureExporter:
         _exporter.export_dom(_measures_input_data.measure)
 
         # Assert
-        validate_measure_result_export(_measures_input_data, {})
+        validate_measure_result_export(_measures_input_data, parameters_to_validate)
+
+    def test_export_dom_given_valid_measure_dict_list(
+        self, empty_db_fixture: SqliteDatabase
+    ):
+        # 1. Define test data.
+        _unsupported_param = "unsupported_param"
+        _parameters_to_validate = dict(dcrest=4.2, dberm=2.4)
+        _params_dict = {
+            _unsupported_param: 13,
+        } | _parameters_to_validate
+        _input_data = MeasureResultTestInputData.with_measures_type(
+            MeasureWithListOfDictMocked, _params_dict
+        )
+
+        validate_clean_database()
+
+        # 2. Run test.
+        MeasureExporter(_input_data.measure_per_section).export_dom(
+            _input_data.measure.measures
+        )
+
+        # 3. Verify final expectations.
+        validate_measure_result_export(_input_data, _parameters_to_validate)
+
+    def test_export_dom_given_dict_measure(self, empty_db_fixture: SqliteDatabase):
+        # Setup
+        _test_input_data = MeasureResultTestInputData.with_measures_type(
+            MeasureWithDictMocked
+        )
+        validate_clean_database()
+        validate_no_parameters(_test_input_data)
+
+        # Call
+        _exporter = MeasureExporter(_test_input_data.measure_per_section)
+        _exporter.export_dom(_test_input_data.measure)
+
+        # Assert
+        validate_measure_result_export(_test_input_data, {})
 
     def test_export_dom_invalid_data(self, empty_db_fixture: SqliteDatabase):
         # Setup

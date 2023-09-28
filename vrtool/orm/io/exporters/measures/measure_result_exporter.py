@@ -26,13 +26,11 @@ class MeasureResultExporter(OrmExporterProtocol):
         self._measure_per_section = measure_per_section
 
     def _get_parameters_dict(self, measure_result: MeasureResultProtocol) -> dict:
-        if isinstance(measure_result, RevetmentMeasureSectionReliability):
-            return {
-                "BETA_TARGET": measure_result.beta_target,
-                "TRANSITION_LEVEL": measure_result.transition_level,
-            }
-        if isinstance(measure_result, MeasureDictAsMeasureResult):
-            return measure_result.parameters
+        if isinstance(measure_result, MeasureResultProtocol):
+            return dict(
+                (k.upper(), v)
+                for k, v in measure_result.get_measure_result_parameters().items()
+            )
         return {}
 
     @staticmethod
@@ -56,7 +54,9 @@ class MeasureResultExporter(OrmExporterProtocol):
         # Create the "group" of parameters for this measure.
         def to_params_dict(dict_entry: tuple) -> list[dict]:
             _name, _value = dict_entry
-            return dict(name=_name, value=float(_value), measure_result=_orm_measure_result)
+            return dict(
+                name=_name, value=float(_value), measure_result=_orm_measure_result
+            )
 
         MeasureResultParameter.insert_many(
             map(

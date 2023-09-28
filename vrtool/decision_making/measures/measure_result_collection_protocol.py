@@ -3,7 +3,6 @@ from typing import Protocol, runtime_checkable
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-
 @runtime_checkable
 class MeasureResultProtocol(Protocol):
     measure_id: str
@@ -14,6 +13,15 @@ class MeasureResultProtocol(Protocol):
     reinforcement_type: str
     # TODO: This should be an ENUM
     combinable_type: str
+
+    def get_measure_result_parameters(self) -> list[dict]:
+        """
+        Gets all the existing result parameters related to this `MeasureResultProtocol`.
+
+        Returns:
+            list[dict]: Dictionary representing parameter name and value.
+        """
+        pass
 
     def get_measure_output_values(
         self, split_params: bool, beta_columns: list[str]

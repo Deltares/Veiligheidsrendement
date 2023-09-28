@@ -42,37 +42,52 @@ def create_mechanism_per_section(section_data: SectionData) -> list[str]:
 
 
 class MeasureWithDictMocked(MeasureProtocol):
-    def __init__(self, cost: float, section_reliability: SectionReliability) -> None:
-        self.measures = {
-            "Cost": cost,
-            "Reliability": section_reliability,
-        }
+    """
+    This mocked class represents a measure whose `measures` property is just a `dict`.
+    """
+
+    def __init__(
+        self, measure_parameters: dict, measure_result_parameters: dict
+    ) -> None:
+        self.measures = measure_result_parameters
+        self.parameters = measure_parameters
 
 
 class MeasureWithListOfDictMocked(MeasureProtocol):
-    def __init__(self, cost: float, section_reliability: SectionReliability) -> None:
-        self.measures = [
-            {
-                "Cost": cost,
-                "Reliability": section_reliability,
-                "id": "Mocked Dict",
-            }
-        ]
+    """
+    This mocked class represents a measure whose `measures` property are a `list[dict]` type,
+    at the moment only present for `SoilReinforcementMeasure`.
+    """
+
+    def __init__(
+        self, measure_parameters: dict, measure_result_parameters: dict
+    ) -> None:
+        self.measures = [measure_result_parameters]
+        self.parameters = measure_parameters
 
 
 class MeasureWithMeasureResultCollectionMocked(MeasureProtocol):
-    def __init__(self, cost: float, section_reliability: SectionReliability) -> None:
+    def __init__(
+        self, measure_parameters: dict, measure_result_parameters: dict
+    ) -> None:
         class MeasureResultCollectionMocked(MeasureResultCollectionProtocol):
             def __init__(self) -> None:
                 class MeasureResultMocked(MeasureResultProtocol):
                     def __init__(self) -> None:
-                        self.cost = cost
-                        self.section_reliability = section_reliability
-                        self.measure_id = "Mocked MeasureResult"
+                        self.cost = measure_result_parameters.pop("Cost")
+                        self.section_reliability = measure_result_parameters.pop(
+                            "Reliability"
+                        )
+                        self.measure_id = measure_result_parameters.pop("ID")
+                        self._result_parameters = measure_result_parameters
+
+                    def get_measure_result_parameters(self) -> list[dict]:
+                        return self._result_parameters
 
                 self.result_collection = [MeasureResultMocked()]
 
         self.measures = MeasureResultCollectionMocked()
+        self.parameters = measure_parameters
 
 
 class MeasureResultTestInputData:
@@ -88,11 +103,21 @@ class MeasureResultTestInputData:
         self.expected_cost = 42.24
         self.section_reliability = create_section_reliability(self.t_columns)
         self.measure_per_section = get_basic_measure_per_section()
-        self.available_mechanisms = create_mechanism_per_section(self.measure_per_section.section.get())
+        self.available_mechanisms = create_mechanism_per_section(
+            self.measure_per_section.section.get()
+        )
 
     @classmethod
-    def with_measures_type(cls, type_measure: Type[MeasureProtocol]):
+    def with_measures_type(cls, type_measure: Type[MeasureProtocol], parameters: dict):
         _this = cls()
-        _this.measure = type_measure(_this.expected_cost, _this.section_reliability)
-        _this.measure.parameters = {"ID": _this.measure_per_section.get_id()}
+
+        _this.measure = type_measure(
+            measure_parameters={},
+            measure_result_parameters={
+                "ID": _this.measure_per_section.get_id(),
+                "Cost": _this.expected_cost,
+                "Reliability": _this.section_reliability,
+            }
+            | parameters,
+        )
         return _this

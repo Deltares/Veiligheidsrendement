@@ -23,6 +23,11 @@ class RevetmentMeasureSectionReliability(MeasureResultProtocol):
     # TODO: This should be an ENUM
     combinable_type: str
 
+    def get_measure_result_parameters(self) -> list[dict]:
+        return dict(
+            beta_target=self.beta_target, transition_level=self.transition_level
+        )
+
     def _get_input_vector(
         self,
         split_params: bool,
