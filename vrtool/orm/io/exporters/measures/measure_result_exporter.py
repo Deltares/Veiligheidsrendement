@@ -3,13 +3,18 @@ import logging
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_section_reliability import (
-    RevetmentMeasureSectionReliability,
-)
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
+from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
+from vrtool.orm.models.measure_result.measure_result_mechanism import (
+    MeasureResultMechanism,
+)
+from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
+from vrtool.orm.models.mechanism import Mechanism
+
+import pandas as pd
+
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
 class MeasureResultExporter(OrmExporterProtocol):
@@ -18,41 +23,98 @@ class MeasureResultExporter(OrmExporterProtocol):
     def __init__(self, measure_per_section: MeasurePerSection) -> None:
         self._measure_per_section = measure_per_section
 
+    @staticmethod
+    def get_mechanism_per_section(
+        measure_per_section: MeasurePerSection, mechanism_name: str
+    ) -> MechanismPerSection:
+        """
+        Retrieves the associated `MechanismPerSection` for a given
+        `SectionData` and a given `mechanism_name`.
+
+        Args:
+            measure_per_section (MeasurePerSection): Instance used
+             to derive de `SectionData` row.
+            mechanism_name (str): Name of the desired `Mechanism` related entry.
+
+        Returns:
+            MechanismPerSection: Instance connected to the provided
+             `MeasurePerSection`.
+        """
+        return (
+            measure_per_section.section.mechanisms_per_section.join(Mechanism)
+            .where(Mechanism.name == mechanism_name)
+            .get()
+        )
+
     def _get_parameters_dict(self, measure_result: MeasureResultProtocol) -> dict:
-        if isinstance(measure_result, RevetmentMeasureSectionReliability):
+        if isinstance(measure_result, MeasureResultProtocol):
             return dict(
-                beta_target=measure_result.beta_target,
-                transition_level=measure_result.transition_level,
+                (k.upper(), v)
+                for k, v in measure_result.get_measure_result_parameters().items()
             )
-        return dict()
+        return {}
+
+    def _export_measure_results_per_time(
+        self,
+        measure_result: MeasureResultProtocol,
+        orm_measure_result: MeasureResult,
+        time_value: int,
+        time_reliability: pd.Series,
+    ):
+        MeasureResultSection.create(
+            time=time_value,
+            beta=time_reliability["Section"],
+            cost=measure_result.cost,
+            measure_result=orm_measure_result,
+        )
+        _available_mechanisms = [
+            m_idx for m_idx in time_reliability.index if m_idx != "Section"
+        ]
+        _mr_mechanism = map(
+            lambda mechanism_name: dict(
+                time=time_value,
+                beta=time_reliability[mechanism_name],
+                measure_result=orm_measure_result,
+                mechanism_per_section=self.get_mechanism_per_section(
+                    self._measure_per_section, mechanism_name
+                ),
+            ),
+            _available_mechanisms,
+        )
+        MeasureResultMechanism.insert_many(_mr_mechanism).execute()
 
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
         logging.info(
             "STARTED exporting measure id: {}".format(measure_result.measure_id)
         )
-        _parameters_dict_list = [
-            dict(name=m_parameter.upper(), value=m_value)
-            for m_parameter, m_value in self._get_parameters_dict(
-                measure_result
-            ).items()
-        ]
-        for (
-            col_name,
-            beta_value,
-        ) in measure_result.section_reliability.SectionReliability.loc[
-            "Section"
-        ].iteritems():
-            _orm_result = MeasureResult.create(
-                beta=beta_value,
-                time=int(col_name),
-                cost=measure_result.cost,
-                measure_per_section=self._measure_per_section,
+        _orm_measure_result = MeasureResult.create(
+            measure_per_section=self._measure_per_section,
+        )
+
+        # Create the "group" of parameters for this measure.
+        def to_params_dict(dict_entry: tuple) -> list[dict]:
+            _name, _value = dict_entry
+            return dict(
+                name=_name, value=float(_value), measure_result=_orm_measure_result
             )
-            _mr_parameters = map(
-                lambda p_dict: p_dict | dict(measure_result=_orm_result),
-                _parameters_dict_list,
+
+        MeasureResultParameter.insert_many(
+            map(
+                to_params_dict,
+                self._get_parameters_dict(measure_result).items(),
             )
-            MeasureResultParameter.insert_many(_mr_parameters).execute()
+        ).execute()
+
+        # Create (per calculated time) a measure section and as many present mechanisms.
+        _measure_reliability = measure_result.section_reliability.SectionReliability
+        for time_column in _measure_reliability.columns:
+            self._export_measure_results_per_time(
+                measure_result,
+                _orm_measure_result,
+                int(time_column),
+                _measure_reliability[time_column],
+            )
+
         logging.info(
             "FINISHED exporting measure id: {}".format(measure_result.measure_id)
         )
