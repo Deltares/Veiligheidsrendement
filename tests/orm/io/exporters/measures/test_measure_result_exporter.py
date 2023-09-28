@@ -35,6 +35,9 @@ class TestMeasureResultExporter:
             def __init__(self) -> None:
                 pass
 
+            def get_measure_result_parameters(self) -> dict:
+                return {}
+
         _test_input_data = MeasureResultTestInputData()
         _test_measure_result = self._initialize_mocked_measure_result(
             MockedMeasureResult, _test_input_data

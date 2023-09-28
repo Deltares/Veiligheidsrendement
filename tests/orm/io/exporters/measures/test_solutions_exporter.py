@@ -159,8 +159,9 @@ class TestSolutionsExporter:
         empty_db_fixture: SqliteDatabase,
     ):
         # 1. Define test data.
+        _measure_parameters = {}
         _measures_test_input_data = MeasureResultTestInputData.with_measures_type(
-            type_measure
+            type_measure, _measure_parameters
         )
         _exporter = SolutionsExporter()
         _test_solution = Solutions(
@@ -180,4 +181,4 @@ class TestSolutionsExporter:
         _exporter.export_dom(_test_solution)
 
         # 3. Verify expectations.
-        validate_measure_result_export(_measures_test_input_data, {})
+        validate_measure_result_export(_measures_test_input_data, _measure_parameters)

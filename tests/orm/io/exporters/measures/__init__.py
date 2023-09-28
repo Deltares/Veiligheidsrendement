@@ -86,8 +86,8 @@ class MeasureWithMeasureResultCollectionMocked(MeasureProtocol):
 
                 self.result_collection = [MeasureResultMocked()]
 
-        self.measures = MeasureResultCollectionMocked()
         self.parameters = measure_parameters
+        self.measures = MeasureResultCollectionMocked()
 
 
 class MeasureResultTestInputData:
@@ -112,7 +112,7 @@ class MeasureResultTestInputData:
         _this = cls()
 
         _this.measure = type_measure(
-            measure_parameters={},
+            measure_parameters={"ID": _this.measure_per_section.get_id()},
             measure_result_parameters={
                 "ID": _this.measure_per_section.get_id(),
                 "Cost": _this.expected_cost,

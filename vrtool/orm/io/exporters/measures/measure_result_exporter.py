@@ -3,12 +3,6 @@ import logging
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_section_reliability import (
-    RevetmentMeasureSectionReliability,
-)
-from vrtool.orm.io.exporters.measures.measure_type_converters import (
-    MeasureDictAsMeasureResult,
-)
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter

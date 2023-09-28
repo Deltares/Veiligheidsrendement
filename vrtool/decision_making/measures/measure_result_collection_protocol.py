@@ -14,12 +14,12 @@ class MeasureResultProtocol(Protocol):
     # TODO: This should be an ENUM
     combinable_type: str
 
-    def get_measure_result_parameters(self) -> list[dict]:
+    def get_measure_result_parameters(self) -> dict:
         """
         Gets all the existing result parameters related to this `MeasureResultProtocol`.
 
         Returns:
-            list[dict]: Dictionary representing parameter name and value.
+            dict: Dictionary representing parameter name and value.
         """
         pass
 

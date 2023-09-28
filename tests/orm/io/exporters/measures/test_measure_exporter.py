@@ -75,19 +75,14 @@ class TestMeasureExporter:
         # 1. Define test data.
         _unsupported_param = "unsupported_param"
         _parameters_to_validate = dict(dcrest=4.2, dberm=2.4)
-        _params_dict = {
-            _unsupported_param: 13,
-        } | _parameters_to_validate
         _input_data = MeasureResultTestInputData.with_measures_type(
-            MeasureWithListOfDictMocked, _params_dict
+            MeasureWithListOfDictMocked, _parameters_to_validate
         )
 
         validate_clean_database()
 
         # 2. Run test.
-        MeasureExporter(_input_data.measure_per_section).export_dom(
-            _input_data.measure.measures
-        )
+        MeasureExporter(_input_data.measure_per_section).export_dom(_input_data.measure)
 
         # 3. Verify final expectations.
         validate_measure_result_export(_input_data, _parameters_to_validate)
@@ -95,7 +90,7 @@ class TestMeasureExporter:
     def test_export_dom_given_dict_measure(self, empty_db_fixture: SqliteDatabase):
         # Setup
         _test_input_data = MeasureResultTestInputData.with_measures_type(
-            MeasureWithDictMocked
+            MeasureWithDictMocked, {}
         )
         validate_clean_database()
         validate_no_parameters(_test_input_data)
@@ -122,11 +117,11 @@ class TestMeasureExporter:
         # Call
         _measure_to_export = InvalidMeasureMocked()
 
-        with pytest.raises(ValueError) as value_error:
+        with pytest.raises(TypeError) as value_error:
             _exporter.export_dom(_measure_to_export)
 
         # Assert
-        assert str(value_error.value) == "Unknown measure type: InvalidMeasureMocked"
+        assert str(value_error.value) == "Unknown measure type: 'InvalidMeasureMocked'."
 
     def test_export_dom_invalid_type(self, empty_db_fixture: SqliteDatabase):
         # Setup
@@ -139,8 +134,8 @@ class TestMeasureExporter:
         # Call
         _measure_to_export = "Cost: 13.37, Reliability: 4.56"
 
-        with pytest.raises(AttributeError) as value_error:
+        with pytest.raises(TypeError) as value_error:
             _exporter.export_dom(_measure_to_export)
 
         # Assert
-        assert str(value_error.value) == "'str' object has no attribute 'measures'"
+        assert str(value_error.value) == "Unknown measure type: 'str'."
