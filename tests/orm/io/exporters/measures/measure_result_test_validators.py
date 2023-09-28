@@ -1,7 +1,4 @@
-from tests.orm.io.exporters.measures import (
-    create_mechanism_per_section,
-    create_section_reliability,
-)
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
@@ -13,7 +10,7 @@ from vrtool.orm.models.measure_result.measure_result_section import MeasureResul
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
-from tests.orm import get_basic_measure_per_section
+from tests.orm import get_basic_measure_per_section, get_domain_basic_dike_section
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
@@ -21,6 +18,12 @@ from vrtool.decision_making.measures.measure_result_collection_protocol import (
 )
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+import pandas as pd
+
+from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.section_data import SectionData
 
 
 class MeasureWithDictMocked(MeasureProtocol):
@@ -79,15 +82,42 @@ class MeasureResultTestInputData:
     measure_per_section: MeasurePerSection
     measure: MeasureProtocol
     available_mechanisms: list[str]
+    domain_dike_section: DikeSection
+
+    @staticmethod
+    def create_section_reliability(years: list[int]) -> SectionReliability:
+        _section_reliability = SectionReliability()
+
+        _section_reliability.SectionReliability = pd.DataFrame.from_dict(
+            {
+                "IrrelevantMechanism1": [year / 12.0 for year in years],
+                "IrrelevantMechanism2": [year / 13.0 for year in years],
+                "Section": [year / 10.0 for year in years],
+            },
+            orient="index",
+            columns=years,
+        )
+        return _section_reliability
+
+    @staticmethod
+    def create_mechanism_per_section(section_data: SectionData) -> list[str]:
+        def create_combination(mechanism_name: str):
+            _mechanism = Mechanism.create(name=mechanism_name)
+            MechanismPerSection.create(section=section_data, mechanism=_mechanism)
+
+        _mechanism_names = ["IrrelevantMechanism1", "IrrelevantMechanism2"]
+        list(map(create_combination, _mechanism_names))
+        return _mechanism_names
 
     def __init__(self) -> None:
         self.t_columns = [0, 2, 4, 24, 42]
         self.expected_cost = 42.24
-        self.section_reliability = create_section_reliability(self.t_columns)
+        self.section_reliability = self.create_section_reliability(self.t_columns)
         self.measure_per_section = get_basic_measure_per_section()
-        self.available_mechanisms = create_mechanism_per_section(
+        self.available_mechanisms = self.create_mechanism_per_section(
             self.measure_per_section.section.get()
         )
+        self.domain_dike_section = get_domain_basic_dike_section()
 
     @classmethod
     def with_measures_type(cls, type_measure: type[MeasureProtocol], parameters: dict):
