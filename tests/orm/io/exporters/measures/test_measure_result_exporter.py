@@ -2,10 +2,10 @@ from typing import Type
 
 from peewee import SqliteDatabase
 from tests.orm import empty_db_fixture
-from tests.orm.io.exporters.measures import MeasureResultTestInputData
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     validate_clean_database,
     validate_measure_result_export,
+    MeasureResultTestInputData,
 )
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,

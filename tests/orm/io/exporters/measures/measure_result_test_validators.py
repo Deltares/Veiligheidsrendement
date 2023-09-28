@@ -1,4 +1,7 @@
-from tests.orm.io.exporters.measures import MeasureResultTestInputData
+from tests.orm.io.exporters.measures import (
+    create_mechanism_per_section,
+    create_section_reliability,
+)
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
@@ -10,17 +13,109 @@ from vrtool.orm.models.measure_result.measure_result_section import MeasureResul
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
+from tests.orm import get_basic_measure_per_section
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.measure_result_collection_protocol import (
+    MeasureResultCollectionProtocol,
+    MeasureResultProtocol,
+)
+from vrtool.orm.models.measure_per_section import MeasurePerSection
+from vrtool.flood_defence_system.section_reliability import SectionReliability
+
+
+class MeasureWithDictMocked(MeasureProtocol):
+    """
+    This mocked class represents a measure whose `measures` property is just a `dict`.
+    """
+
+    def __init__(
+        self, measure_parameters: dict, measure_result_parameters: dict
+    ) -> None:
+        self.measures = measure_result_parameters
+        self.parameters = measure_parameters
+
+
+class MeasureWithListOfDictMocked(MeasureProtocol):
+    """
+    This mocked class represents a measure whose `measures` property are a `list[dict]` type,
+    at the moment only present for `SoilReinforcementMeasure`.
+    """
+
+    def __init__(
+        self, measure_parameters: dict, measure_result_parameters: dict
+    ) -> None:
+        self.measures = [measure_result_parameters]
+        self.parameters = measure_parameters
+
+
+class MeasureWithMeasureResultCollectionMocked(MeasureProtocol):
+    def __init__(
+        self, measure_parameters: dict, measure_result_parameters: dict
+    ) -> None:
+        class MeasureResultCollectionMocked(MeasureResultCollectionProtocol):
+            def __init__(self) -> None:
+                class MeasureResultMocked(MeasureResultProtocol):
+                    def __init__(self) -> None:
+                        self.cost = measure_result_parameters.pop("Cost")
+                        self.section_reliability = measure_result_parameters.pop(
+                            "Reliability"
+                        )
+                        self.measure_id = measure_result_parameters.pop("ID")
+                        self._result_parameters = measure_result_parameters
+
+                    def get_measure_result_parameters(self) -> list[dict]:
+                        return self._result_parameters
+
+                self.result_collection = [MeasureResultMocked()]
+
+        self.parameters = measure_parameters
+        self.measures = MeasureResultCollectionMocked()
+
+
+class MeasureResultTestInputData:
+    t_columns: list[int]
+    expected_cost: float
+    section_reliability: SectionReliability
+    measure_per_section: MeasurePerSection
+    measure: MeasureProtocol
+    available_mechanisms: list[str]
+
+    def __init__(self) -> None:
+        self.t_columns = [0, 2, 4, 24, 42]
+        self.expected_cost = 42.24
+        self.section_reliability = create_section_reliability(self.t_columns)
+        self.measure_per_section = get_basic_measure_per_section()
+        self.available_mechanisms = create_mechanism_per_section(
+            self.measure_per_section.section.get()
+        )
+
+    @classmethod
+    def with_measures_type(cls, type_measure: type[MeasureProtocol], parameters: dict):
+        _this = cls()
+
+        _this.measure = type_measure(
+            measure_parameters={"ID": _this.measure_per_section.get_id()},
+            measure_result_parameters={
+                "ID": _this.measure_per_section.get_id(),
+                "Cost": _this.expected_cost,
+                "Reliability": _this.section_reliability,
+            }
+            | parameters,
+        )
+        return _this
+
+
 def validate_clean_database():
     assert not any(MeasureResult.select())
     assert not any(MeasureResultSection.select())
     assert not any(MeasureResultMechanism.select())
     assert not any(MeasureResultParameter.select())
 
+
 def validate_no_parameters(input_data: MeasureResultTestInputData):
     # Verify no parameters (except ID) are present as input data.
-        assert not any(
-            filter(lambda x: x != "ID", input_data.measure.parameters.keys())
-        )
+    assert not any(filter(lambda x: x != "ID", input_data.measure.parameters.keys()))
+
 
 def validate_measure_result_export(
     input_data: MeasureResultTestInputData, parameters_to_validate: dict
