@@ -83,6 +83,7 @@ class MeasureResultTestInputData:
     measure: MeasureProtocol
     available_mechanisms: list[str]
     domain_dike_section: DikeSection
+    parameters_to_validate: dict
 
     @staticmethod
     def create_section_reliability(years: list[int]) -> SectionReliability:
@@ -118,11 +119,12 @@ class MeasureResultTestInputData:
             self.measure_per_section.section.get()
         )
         self.domain_dike_section = get_domain_basic_dike_section()
+        self.parameters_to_validate = dict()
 
     @classmethod
     def with_measures_type(cls, type_measure: type[MeasureProtocol], parameters: dict):
         _this = cls()
-
+        _this.parameters_to_validate = parameters
         _this.measure = type_measure(
             measure_parameters={"ID": _this.measure_per_section.get_id()},
             measure_result_parameters={
@@ -133,6 +135,9 @@ class MeasureResultTestInputData:
             | parameters,
         )
         return _this
+
+    def validate_exported_measure_results(self):
+        validate_measure_result_export(self, self.parameters_to_validate)
 
 
 def validate_clean_database():

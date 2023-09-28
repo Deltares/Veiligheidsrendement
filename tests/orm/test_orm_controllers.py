@@ -405,7 +405,7 @@ class TestOrmControllers:
         """
         # 1. Define test data.
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
-            type_measure
+            type_measure, {}
         )
 
         # Define vrtool config.
@@ -430,16 +430,23 @@ class TestOrmControllers:
         export_results_measures(_results_measures)
 
         # 3. Verify expectations.
-        _expected_measures = len(_measures_input_data.t_columns)
-        assert (
-            len(_measures_input_data.measure_per_section.measure_per_section_result)
-            == _expected_measures
-        )
+        _measures_input_data.validate_exported_measure_results()
 
-        assert len(MeasureResult.select()) == _expected_measures
-
+    @pytest.mark.parametrize(
+        "type_measure",
+        [
+            pytest.param(MeasureWithDictMocked, id="With dictionary"),
+            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+    )
     def test_export_results_optimization_given_valid_data(
-        self, export_database: pytest.FixtureRequest
+        self,
+        type_measure: type[MeasureProtocol],
+        export_database: pytest.FixtureRequest,
     ):
         pytest.fail(reason="TODO")
 
