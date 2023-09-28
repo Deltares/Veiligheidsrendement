@@ -4,7 +4,7 @@ from typing import Type
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
-from tests.orm.io.exporters.measures import (
+from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
     MeasureWithListOfDictMocked,
@@ -47,9 +47,6 @@ from vrtool.orm.orm_controllers import (
     open_database,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from vrtool.run_workflows.optimization_workflow.results_optimization import (
-    ResultsOptimization,
-)
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
