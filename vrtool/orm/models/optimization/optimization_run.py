@@ -1,6 +1,6 @@
 from peewee import CharField, FloatField, ForeignKeyField
-from vrtool.orm.models.optimization.optimization_type import OptimizationType
 
+from vrtool.orm.models.optimization.optimization_type import OptimizationType
 from vrtool.orm.models.orm_base_model import (
     OrmBaseModel,
     _get_table_name,
