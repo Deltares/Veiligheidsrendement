@@ -162,38 +162,23 @@ def calculate_area(geometry):
     return areaPol, polygonXZ
 
 
-def modify_geometry_input(initial: pd.DataFrame, berm_height: float):
+def modify_geometry_input(initial: pd.DataFrame, berm_height: float) -> pd.DataFrame:
     """Checks geometry and corrects if necessary"""
-    # TODO move this to the beginning for the input.
-    # modify the old structure
-    if not "BUK" in initial.index:
-        initial = (
-            initial.replace(
-                {
-                    "innertoe": "BIT",
-                    "innerberm1": "EBL",
-                    "innerberm2": "BBL",
-                    "innercrest": "BIK",
-                    "outercrest": "BUK",
-                    "outertoe": "BUT",
-                }
-            )
-            .reset_index()
-            .set_index("type")
-        )
 
     if initial.loc["BUK"].x != 0.0:
-        # if BUK is not at x = 0 , modify entire profile
+        # if BUK is not at x = 0 , modify entire profile:
         initial["x"] = np.subtract(initial["x"], initial.loc["BUK"].x)
 
     if initial.loc["BUK"].x > initial.loc["BIK"].x:
         # BIK must have larger x than BUK, so likely the profile is mirrored, mirror it back:
         initial["x"] = np.multiply(initial["x"], -1.0)
-    # if EBL and BBL not there, generate them.
+
     if not "EBL" in initial.index:
+        # if EBL and BBL are not there, generate them:
         inner_slope = np.abs(initial.loc["BIT"].z - initial.loc["BIK"].z) / np.abs(
             initial.loc["BIT"].x - initial.loc["BIK"].x
         )
+        berm_height = min(berm_height, initial.loc["BIK"].z - initial.loc["BIT"].z - 0.01)
         initial.loc["EBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "z"] = initial.loc["BIT"].z + berm_height
@@ -234,16 +219,23 @@ def determine_new_geometry(
     max_berm_out: float,
     initial: pd.DataFrame,
     geometry_plot: bool,
-    plot_dir: Union[Path, None] = None,
+    plot_dir: Path = None,
     berm_height: float = 2,
     crest_extra: float = np.nan,
-):
+) -> list:
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
-    If this is not the case and it is input of the old type, first it is transformed to obey that.
-    crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
-    In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
-    such that after reinforcement the height is crest_extra + increment.
-    It has to be ensured that the BUK has x = 0, and that x increases inward"""
+       If this is not the case, first it is transformed to obey that.
+       crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
+       In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
+       such that after reinforcement the height is crest_extra + increment.
+       It has to be ensured that the BUK has x = 0, and that x increases inward
+
+       Returns:
+           four values: new_geometry, area_extra, area_excavate, d_house
+       Raises:
+           ValueError if intersection of geometries fails
+    """
+
     initial = modify_geometry_input(initial, berm_height)
 
     # Geometry is always from inner to outer toe
@@ -321,7 +313,8 @@ def determine_new_geometry(
             plt.plot(*polygon_new.exterior.xy, "r--")
             plt.savefig("testgeom.png")
             plt.close()
-        area_intersect = polygon_old.intersection(polygon_new).area  # 1.0
+            raise ValueError("invalid geometry; intersection between original and modified geometry can not be evaluated.")
+        area_intersect = poly_intsects.area
         area_excavate = area_old - area_intersect
         area_extra = area_new - area_intersect
 
@@ -339,9 +332,6 @@ def determine_new_geometry(
             raise Exception("area calculation failed")
 
         if geometry_plot:
-            if not plot_dir.joinpath("Geometry").is_dir():
-                # plot_dir.joinpath.mkdir(parents=True, exist_ok=True)
-                plot_dir.joinpath("Geometry").mkdir(parents=True, exist_ok=True)
             plt.plot(initial.loc[:, "x"], initial.loc[:, "z"], "k")
             plt.plot(_new_geometry.loc[:, "x"], _new_geometry.loc[:, "z"], "--r")
             if poly_diff.area > 0:
@@ -360,14 +350,6 @@ def determine_new_geometry(
                 else:
                     x1, y1 = poly_diff2.exterior.xy
                     plt.fill(x1, y1, "b--", alpha=0.8)  #
-            # if hasattr(poly_intsects, 'geoms'):
-            #     for i in range(len(poly_intsects.geoms)):
-            #         x1, y1 = poly_intsects[i].exterior.xy
-            #         plt.fill(x1, y1, 'g--', alpha=.1)
-            # else:
-            #     x1, y1 = poly_intsects.exterior.xy
-            #     plt.fill(x1, y1, 'g--', alpha=.1)
-            # plt.show()
 
             plt.text(
                 np.mean(_new_geometry.loc[:, "x"]),
@@ -376,6 +358,9 @@ def determine_new_geometry(
                     str(area_extra), str(area_excavate)
                 ),
             )
+
+            if (plot_dir == None):
+                plot_dir = Path.cwd()
 
             plt.savefig(
                 plot_dir.joinpath(

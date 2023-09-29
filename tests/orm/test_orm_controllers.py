@@ -282,6 +282,7 @@ class TestOrmControllers:
         _dike_section.InitialGeometry = pd.DataFrame.from_records(
             map(_to_record, _initial_geom.items())
         )
+        _dike_section.InitialGeometry.set_index("type", inplace=True, drop=True)
 
         # Mechanism data
         _dike_section.mechanism_data["StabilityInner"] = [
