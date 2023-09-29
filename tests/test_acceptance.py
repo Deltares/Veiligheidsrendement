@@ -134,7 +134,8 @@ class TestAcceptance:
         yield _test_config
 
         # Move the test database to the results directory
-        shutil.move(_tst_db_file, _test_config.output_directory)
+        if _tst_db_file.exists():
+            shutil.move(_tst_db_file, _test_config.output_directory)
 
         # Make sure that the database connection will be closed even if the test fails.
         if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
