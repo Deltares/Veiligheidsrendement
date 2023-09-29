@@ -1,6 +1,7 @@
 import shutil
 from os import remove
 from pathlib import Path
+from re import search
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -105,12 +106,16 @@ class TestAcceptance:
         assert _test_input_directory.exists()
 
         _test_results_directory = get_test_results_dir(request) / _casename
+        _test_db_name = f"{request.node.name}.db"
         if "[" in request.node.name:
             # It is a parametrized case:
-            _node_case = request.node.name.split("[")[-1].split("]")[0].strip()
+            _node_parts = search(r"(.*)\[(.*)\]", request.node.name)
+            _node_case = _node_parts.group(2).strip()
             _test_results_directory = _test_results_directory / _node_case.replace(
                 ",", "_"
             ).replace(" ", "_")
+            _node_name = _node_parts.group(1).strip()
+            _test_db_name = f"{_node_name}.db"
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
 
@@ -127,7 +132,7 @@ class TestAcceptance:
         _db_file = _test_input_directory.joinpath("vrtool_input.db")
         assert _db_file.exists(), "No database found at {}.".format(_db_file)
 
-        _test_config.input_database_name = "test_db.db"
+        _test_config.input_database_name = _test_db_name
         _tst_db_file = _test_config.input_database_path
         if _tst_db_file.exists():
             remove(_tst_db_file)
@@ -138,7 +143,7 @@ class TestAcceptance:
 
         # Copy the test database to the results directory
         if _tst_db_file.exists():
-            shutil.copy(_tst_db_file, _test_config.output_directory)
+            shutil.move(_tst_db_file, _test_config.output_directory)
 
         # Make sure that the database connection will be closed even if the test fails.
         if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
