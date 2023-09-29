@@ -128,6 +128,9 @@ class TestAcceptance:
 
         _test_config.input_database_name = "test_db.db"
         shutil.copy(_db_file, _test_config.input_database_path)
+        assert (
+            _test_config.input_database_path.exists()
+        ), "No database found at {}.".format(_db_file)
 
         yield _test_config
 
@@ -187,7 +190,9 @@ class TestAcceptance:
         # Therefore the following has been found as the only possible way to assess whether the results are
         # written in the database without affecting other tests from using this db.
         _bck_db_name = "bck_db.db"
-        _bck_db_filepath = valid_vrtool_config.input_directory.joinpath(_bck_db_name)
+        _bck_db_filepath = valid_vrtool_config.input_database_path.with_name(
+            _bck_db_name
+        )
         shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
         _results.vr_config.input_directory = valid_vrtool_config.input_directory
         _results.vr_config.input_database_name = _bck_db_name

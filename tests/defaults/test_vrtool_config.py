@@ -197,25 +197,36 @@ class TestVrtoolConfig:
         assert _vrtool_config.output_directory == _test_path
 
     @pytest.mark.parametrize(
-        "_test_input_path, _test_db_name, expected",
+        "_input_directory",
         [
-            pytest.param(Path("C:\\"), "MyDb.db", Path("C:\\MyDb.db"), id="Positive"),
-            pytest.param(None, None, None, id="All None"),
-            pytest.param(Path("C:\\"), None, None, id="Directory None"),
-            pytest.param(None, "MyDb.db", None, id="Database None"),
+            pytest.param(Path(r"X:\any\folder"), id="VALID directory"),
+            pytest.param(None, id="NONE input directory"),
+            pytest.param(Path(""), id="EMPTY input directory"),
         ],
     )
-    def test_input_database_path(self, _test_input_path, _test_db_name, expected):
+    @pytest.mark.parametrize(
+        "_db_name",
+        [
+            pytest.param("MyDb.db", id="VALID DB name"),
+            pytest.param(None, id="NONE DB name"),
+            pytest.param("", id="EMPTY DB name"),
+        ],
+    )
+    def test_input_database_path(self, _input_directory: Path, _db_name: str):
         # 1. Define test data
         _vrtool_config = VrtoolConfig(
-            input_directory=_test_input_path, input_database_name=_test_db_name
+            input_directory=_input_directory, input_database_name=_db_name
         )
 
         # 2. Run test
         _test_db_path = _vrtool_config.input_database_path
 
         # 3. Verify expectations
-        assert _test_db_path == expected
+        if _input_directory and _db_name:
+            _expectation = _input_directory.joinpath(_db_name)
+        else:
+            _expectation = None
+        assert _test_db_path == _expectation
 
     @pytest.mark.parametrize(
         "path_value, expected_value",
