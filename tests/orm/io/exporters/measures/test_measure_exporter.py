@@ -1,4 +1,5 @@
 from typing import Type
+from pandas import DataFrame
 
 import pytest
 from peewee import SqliteDatabase
@@ -28,13 +29,16 @@ class TestMeasureExporter:
         assert isinstance(_exporter, OrmExporterProtocol)
 
     @pytest.mark.parametrize(
-        "type_measure",
+        "unsupported_parameters",
         [
-            pytest.param(MeasureWithDictMocked, id="With dictionary"),
-            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
+            pytest.param(dict(), id="WITHOUT unsupported parameters present"),
             pytest.param(
-                MeasureWithMeasureResultCollectionMocked,
-                id="With Measure Result Collection object",
+                dict(
+                    geometry=DataFrame.from_dict(
+                        {"x_coord": [0.24, 0.42], "y_coord": [2.4, 4.2]}
+                    )
+                ),
+                id="WITH unsupported parameters present",
             ),
         ],
     )
@@ -45,15 +49,27 @@ class TestMeasureExporter:
             pytest.param(dict(dcrest=4.2, dberm=2.4), id="With supported parameters"),
         ],
     )
+    @pytest.mark.parametrize(
+        "type_measure",
+        [
+            pytest.param(MeasureWithDictMocked, id="With dictionary"),
+            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+    )
     def test_export_dom_with_valid_data(
         self,
         type_measure: Type[MeasureProtocol],
         parameters_to_validate: dict,
+        unsupported_parameters: dict,
         empty_db_fixture: SqliteDatabase,
     ):
         # Setup
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
-            type_measure, parameters_to_validate
+            type_measure, parameters_to_validate | unsupported_parameters
         )
         # Verify no parameters (except ID) are present as input data.
         if not parameters_to_validate:
