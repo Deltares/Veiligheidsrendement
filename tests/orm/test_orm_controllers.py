@@ -204,8 +204,7 @@ class TestOrmControllers:
             input_database_name=_db_name,
             traject="38-1",
         )
-        _db_file = _vrtool_config.input_database_path
-        assert _db_file.is_file()
+        assert _vrtool_config.input_database_path.is_file()
 
         _vrtool_config.output_directory = test_results.joinpath(request.node.name)
         if _vrtool_config.output_directory.exists():
@@ -346,9 +345,10 @@ class TestOrmControllers:
 
         # Safety assessment.
         _safety_assessment = ResultsSafetyAssessment()
+        _db_path = Path(export_database.database)
         _safety_assessment.vr_config = VrtoolConfig(
-            input_directory=Path(export_database.database).parent,
-            input_database_name=Path(export_database.database).name,
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
         )
         _safety_assessment.selected_traject = _test_traject
 
@@ -408,9 +408,10 @@ class TestOrmControllers:
         _db_connection.close()
 
         # Call
+        _db_path = Path(_db_connection.database)
         _vrtool_config = VrtoolConfig(
-            input_directory=Path(_db_connection.database).parent,
-            input_database_name=Path(_db_connection.database).name,
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
         )
         clear_assessment_results(_vrtool_config)
 
@@ -429,9 +430,10 @@ class TestOrmControllers:
         self._generate_measure_results(export_database)
 
         # Call
+        _db_path = Path(export_database.database)
         _vrtool_config = VrtoolConfig(
-            input_directory=Path(export_database.database).parent,
-            input_database_name=Path(export_database.database).name,
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
         )
         clear_measure_results(_vrtool_config)
 
@@ -446,9 +448,10 @@ class TestOrmControllers:
         self._generate_optimization_results(export_database)
 
         # 2. Run test.
+        _db_path = Path(export_database.database)
         _vrtool_config = VrtoolConfig(
-            input_directory=Path(export_database.database).parent,
-            input_database_name=Path(export_database.database).name,
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
         )
         clear_optimization_results(_vrtool_config)
 
