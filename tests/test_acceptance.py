@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+from re import search
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -90,7 +91,7 @@ class TestAcceptance:
             result = pd.read_csv(test_results_dir / file, index_col=0)
             try:
                 assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
-            except:
+            except Exception:
                 comparison_errors.append("{} is different.".format(file))
         # assert no error message has been registered, else print messages
         assert not comparison_errors, "errors occured:\n{}".format(
@@ -104,12 +105,16 @@ class TestAcceptance:
         assert _test_input_directory.exists()
 
         _test_results_directory = get_test_results_dir(request) / _casename
+        _test_db_name = f"{request.node.name}.db"
         if "[" in request.node.name:
             # It is a parametrized case:
-            _node_case = request.node.name.split("[")[-1].split("]")[0].strip()
+            _node_parts = search(r"(.*)\[(.*)\]", request.node.name)
+            _node_case = _node_parts.group(2).strip()
             _test_results_directory = _test_results_directory / _node_case.replace(
                 ",", "_"
             ).replace(" ", "_")
+            _node_name = _node_parts.group(1).strip()
+            _test_db_name = f"{_node_name}.db"
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
 
@@ -126,12 +131,18 @@ class TestAcceptance:
         _db_file = _test_input_directory.joinpath("vrtool_input.db")
         assert _db_file.exists(), "No database found at {}.".format(_db_file)
 
-        _test_config.input_database_path = _test_results_directory.joinpath(
-            "test_db.db"
-        )
-        shutil.copy(_db_file, _test_config.input_database_path)
+        _test_config.input_database_name = _test_db_name
+        _tst_db_file = _test_config.input_database_path
+        if _tst_db_file.exists():
+            shutil.remove(_tst_db_file)
+        shutil.copy(_db_file, _tst_db_file)
+        assert _tst_db_file.exists(), "No database found at {}.".format(_db_file)
 
         yield _test_config
+
+        # Copy the test database to the results directory
+        if _tst_db_file.exists():
+            shutil.move(_tst_db_file, _test_config.output_directory)
 
         # Make sure that the database connection will be closed even if the test fails.
         if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
@@ -188,9 +199,13 @@ class TestAcceptance:
         # Causing an error as the transaction requires said connection to be open.
         # Therefore the following has been found as the only possible way to assess whether the results are
         # written in the database without affecting other tests from using this db.
-        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
+        _bck_db_name = "bck_db.db"
+        _bck_db_filepath = valid_vrtool_config.input_database_path.with_name(
+            _bck_db_name
+        )
         shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        _results.vr_config.input_database_path = _bck_db_filepath
+        _results.vr_config.input_directory = valid_vrtool_config.input_directory
+        _results.vr_config.input_database_name = _bck_db_name
 
         # 4. Validate exporting results is possible
         export_results_safety_assessment(_results)
@@ -443,7 +458,7 @@ class TestAcceptance:
         for count, _result_strategy in enumerate(_results.results_strategies):
             ps = []
             for i in _result_strategy.Probabilities:
-                beta_t, p_t = calc_traject_prob(i, horizon=100)
+                _, p_t = calc_traject_prob(i, horizon=100)
                 ps.append(p_t)
             pd.DataFrame(ps, columns=range(100)).to_csv(
                 path_or_buf=_investment_steps_dir.joinpath(
