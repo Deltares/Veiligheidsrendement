@@ -3,6 +3,8 @@ from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
 
+_supported_parameters = ["dberm", "dcrest"]
+
 
 def to_measure_result_collection(
     measure_results: list | dict | MeasureResultCollectionProtocol,
@@ -31,7 +33,13 @@ def to_measure_result_collection(
             self.measure_id = measure_as_dict.pop("ID", "custom-measure-without-id")
             self.cost = measure_as_dict.pop("Cost")
             self.section_reliability = measure_as_dict.pop("Reliability")
-            self.parameters = measure_as_dict
+            self.parameters = dict(
+                [
+                    (k, v)
+                    for k, v in measure_as_dict.items()
+                    if k.lower() in _supported_parameters
+                ]
+            )
 
         def get_measure_result_parameters(self) -> list[dict]:
             return self.parameters
