@@ -199,7 +199,7 @@ class TestVrtoolConfig:
     @pytest.mark.parametrize(
         "_input_directory",
         [
-            pytest.param(Path(r"X:\any\folder"), id="VALID directory"),
+            pytest.param(Path(r"X:\any\folder"), id="VALID input directory"),
             pytest.param(None, id="NONE input directory"),
             pytest.param(Path(""), id="EMPTY input directory"),
         ],
