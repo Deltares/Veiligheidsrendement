@@ -222,13 +222,18 @@ def determine_new_geometry(
     plot_dir: Path = None,
     berm_height: float = 2,
     crest_extra: float = np.nan,
-):
+) -> list:
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
-       If this is not the case and it is input of the old type, first it is transformed to obey that.
+       If this is not the case, first it is transformed to obey that.
        crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
        In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
        such that after reinforcement the height is crest_extra + increment.
        It has to be ensured that the BUK has x = 0, and that x increases inward
+
+       Returns:
+           four values: new_geometry, area_extra, area_excavate, d_house
+       Raises:
+           ValueError if intersection of geometries fails
     """
 
     initial = modify_geometry_input(initial, berm_height)
@@ -308,7 +313,7 @@ def determine_new_geometry(
             plt.plot(*polygon_new.exterior.xy, "r--")
             plt.savefig("testgeom.png")
             plt.close()
-            return
+            raise ValueError("invalid geometry; intersection between original and modified geometry can not be evaluated.")
         area_intersect = poly_intsects.area
         area_excavate = area_old - area_intersect
         area_extra = area_new - area_intersect
