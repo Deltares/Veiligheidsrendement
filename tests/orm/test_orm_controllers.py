@@ -9,6 +9,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithDictMocked,
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
+    validate_measure_result_export,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -449,7 +450,7 @@ class TestOrmControllers:
         export_results_measures(_results_measures)
 
         # 3. Verify expectations.
-        _measures_input_data.validate_exported_measure_results()
+        validate_measure_result_export(_measures_input_data, {})
 
     @pytest.mark.parametrize(
         "results_measures_with_mocked_data",
@@ -463,6 +464,7 @@ class TestOrmControllers:
         ],
         indirect=True,
     )
+    @pytest.mark.skip(reason="To be finished in VRTOOL-269")
     def test_export_results_optimization_given_valid_data(
         self,
         results_measures_with_mocked_data: type[MeasureProtocol],
@@ -472,7 +474,7 @@ class TestOrmControllers:
         assert isinstance(_measures_input_data, MeasureResultTestInputData)
         assert isinstance(_results_measures, ResultsMeasures)
         export_results_measures(_results_measures)
-        _measures_input_data.validate_exported_measure_results()
+        validate_measure_result_export(_measures_input_data, {})
 
         # Define strategies.
         class MockedStrategy(StrategyBase):

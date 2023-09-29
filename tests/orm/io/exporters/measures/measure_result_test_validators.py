@@ -149,9 +149,6 @@ class MeasureResultTestInputData:
         )
         return _this
 
-    def validate_exported_measure_results(self):
-        validate_measure_result_export(self, self.parameters_to_validate)
-
     def validate_exported_optimization_results(self):
         raise NotImplementedError()
 

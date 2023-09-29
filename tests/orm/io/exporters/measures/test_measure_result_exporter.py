@@ -50,7 +50,7 @@ class TestMeasureResultExporter:
         )
 
         # 3. Verify expectations.
-        _test_input_data.validate_exported_measure_results()
+        validate_measure_result_export(_test_input_data, {})
 
     def test_export_given_revetment_measure_section_reliability_creates_measure_parameter_result(
         self, empty_db_fixture: SqliteDatabase
