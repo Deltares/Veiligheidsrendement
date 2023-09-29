@@ -127,12 +127,14 @@ class TestAcceptance:
         assert _db_file.exists(), "No database found at {}.".format(_db_file)
 
         _test_config.input_database_name = "test_db.db"
-        shutil.copy(_db_file, _test_config.input_database_path)
-        assert (
-            _test_config.input_database_path.exists()
-        ), "No database found at {}.".format(_db_file)
+        _tst_db_file = _test_config.input_database_path
+        shutil.copy(_db_file, _tst_db_file)
+        assert _tst_db_file.exists(), "No database found at {}.".format(_db_file)
 
         yield _test_config
+
+        # Move the test database to the results directory
+        shutil.move(_tst_db_file, _test_config.output_directory)
 
         # Make sure that the database connection will be closed even if the test fails.
         if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
