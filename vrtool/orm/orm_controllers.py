@@ -10,6 +10,9 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
+from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
+    StrategyBaseExporter,
+)
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
@@ -17,6 +20,9 @@ from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
+    ResultsOptimization,
+)
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -207,7 +213,7 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
     logging.info("Closed connection after clearing optimization results.")
 
 
-def export_solutions(result: ResultsMeasures) -> None:
+def export_results_measures(result: ResultsMeasures) -> None:
     """
     Exports the solutions to a database
 
@@ -225,3 +231,23 @@ def export_solutions(result: ResultsMeasures) -> None:
     _connected_db.close()
 
     logging.info("Closed connection after export solution.")
+
+
+def export_results_optimization(result: ResultsOptimization) -> None:
+    """
+    Exports the optimization results (`list[StrategyBase]`) to a database.
+
+    Args:
+        result (ResultsOptimization): result of an optimization run.
+    """
+
+    _connected_db = open_database(result.vr_config.input_database_path)
+
+    logging.info("Opened connection to export optimizations.")
+
+    _exporter = StrategyBaseExporter()
+    for _strategy_result in result.results_strategies:
+        _exporter.export_dom(_strategy_result)
+    _connected_db.close()
+
+    logging.info("Closed connection after export optimizations.")

@@ -1,8 +1,17 @@
 import shutil
+from typing import Type
 
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
+from tests.orm.io.exporters.measures.measure_result_test_validators import (
+    MeasureResultTestInputData,
+    MeasureWithDictMocked,
+    MeasureWithListOfDictMocked,
+    MeasureWithMeasureResultCollectionMocked,
+)
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
@@ -11,6 +20,7 @@ from tests.orm import (
     get_basic_dike_traject_info,
     get_basic_measure_type,
     get_basic_mechanism_per_section,
+    empty_db_fixture,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -25,15 +35,22 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    export_results_measures,
+    export_results_optimization,
     export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
     initialize_database,
     open_database,
+)
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
+    ResultsOptimization,
 )
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -370,6 +387,117 @@ class TestOrmControllers:
                 & (orm_models.AssessmentMechanismResult.time == 42)
             )
         )
+
+    @pytest.fixture
+    def results_measures_with_mocked_data(
+        self, request: pytest.FixtureRequest, export_database: pytest.FixtureRequest
+    ):
+        _measures_input_data = MeasureResultTestInputData.with_measures_type(
+            request.param, {}
+        )
+
+        # Define vrtool config.
+        _vrtool_config = VrtoolConfig(
+            input_database_path=export_database.database,
+            traject=_measures_input_data.domain_dike_section.TrajectInfo.traject_name,
+        )
+
+        # Define solutions.
+        _solutions = Solutions(
+            dike_section=_measures_input_data.domain_dike_section, config=_vrtool_config
+        )
+        _solutions.measures = [_measures_input_data.measure]
+
+        # Define results measures object.
+        _results_measures = ResultsMeasures()
+        _results_measures.vr_config = _vrtool_config
+        _results_measures.selected_traject = _measures_input_data
+        _results_measures.solutions_dict["sth"] = _solutions
+
+        yield _measures_input_data, _results_measures
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(MeasureWithDictMocked, id="With dictionary"),
+            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    def test_export_results_measures_given_valid_data(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+        export_database: pytest.FixtureRequest,
+    ):
+        """
+        Virtually this test verifies (almost) the same as
+        `TestMeasureExporter.test_export_dom_with_valid_data`.
+        """
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+
+        # 2. Run test.
+        export_results_measures(_results_measures)
+
+        # 3. Verify expectations.
+        _measures_input_data.validate_exported_measure_results()
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(MeasureWithDictMocked, id="With dictionary"),
+            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    def test_export_results_optimization_given_valid_data(
+        self,
+        results_measures_with_mocked_data: type[MeasureProtocol],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+        _measures_input_data.validate_exported_measure_results()
+
+        # Define strategies.
+        class MockedStrategy(StrategyBase):
+            def __init__(self, type, config: VrtoolConfig):
+                # TODO: Not entirely sure what needs to be used here.
+                # should be solved after (or in) VRTOOL-268.
+                self.FinalSolution = pd.DataFrame()
+                self.OptimalSolution = pd.DataFrame()
+                self.SatisfiedStandardSolution = pd.DataFrame()
+                self.TakenMeasures = pd.DataFrame()
+                self.Probabilities = []
+
+        _test_strategy = MockedStrategy(type="", config=_results_measures.vr_config)
+
+        # Define results optimization object.
+        _results_optimization = ResultsOptimization()
+        _results_optimization.vr_config = _results_measures.vr_config
+        _results_optimization.selected_traject = _measures_input_data
+        _results_optimization.results_solutions = _results_measures.solutions_dict
+        _results_optimization.results_strategies = [_test_strategy]
+
+        # 2. Run test.
+        export_results_optimization()
+
+        # 3. Verify expectations.
+        _measures_input_data.validate_exported_optimization_results()
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase

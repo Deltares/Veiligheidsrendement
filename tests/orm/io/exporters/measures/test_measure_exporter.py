@@ -7,7 +7,6 @@ from peewee import SqliteDatabase
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     validate_clean_database,
-    validate_measure_result_export,
     validate_no_parameters,
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -81,7 +80,7 @@ class TestMeasureExporter:
         _exporter.export_dom(_measures_input_data.measure)
 
         # Assert
-        validate_measure_result_export(_measures_input_data, parameters_to_validate)
+        _measures_input_data.validate_exported_measure_results()
 
     def test_export_dom_given_valid_measure_dict_list(
         self, empty_db_fixture: SqliteDatabase
@@ -99,7 +98,7 @@ class TestMeasureExporter:
         MeasureExporter(_input_data.measure_per_section).export_dom(_input_data.measure)
 
         # 3. Verify final expectations.
-        validate_measure_result_export(_input_data, _parameters_to_validate)
+        _input_data.validate_exported_measure_results()
 
     def test_export_dom_given_dict_measure(self, empty_db_fixture: SqliteDatabase):
         # Setup
@@ -114,7 +113,7 @@ class TestMeasureExporter:
         _exporter.export_dom(_test_input_data.measure)
 
         # Assert
-        validate_measure_result_export(_test_input_data, {})
+        _test_input_data.validate_exported_measure_results()
 
     def test_export_dom_invalid_data(self, empty_db_fixture: SqliteDatabase):
         # Setup

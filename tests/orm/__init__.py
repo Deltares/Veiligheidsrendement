@@ -2,10 +2,12 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
+from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result import MeasureResult
@@ -28,14 +30,38 @@ def empty_db_fixture():
     _db.close()
 
 
-def get_basic_dike_traject_info() -> DikeTrajectInfo:
+def get_domain_basic_dike_traject_info() -> DikeTrajectInfo:
+    """
+    Gets a basic dike traject info from the Vrtool data model.
+
+    Returns:
+        DikeTrajectInfo: the created domain object.
+    """
+    return DikeTrajectInfo(traject_name=123)
+
+
+def get_basic_dike_traject_info() -> OrmDikeTrajectInfo:
     """
     Gets a basic dike traject info entity.
 
     Returns:
-        DikeTrajectInfo: The created dike traject info entity in the database.
+        OrmDikeTrajectInfo: The created dike traject info entity in the database.
     """
-    return DikeTrajectInfo.create(traject_name="123")
+    _domain_traject_info = get_domain_basic_dike_traject_info()
+    return OrmDikeTrajectInfo.create(traject_name=_domain_traject_info.traject_name)
+
+
+def get_domain_basic_dike_section() -> DikeSection:
+    """
+    Gets a basic dike section from the Vrtool data model.
+
+    Returns:
+        DikeSection: the created domain object.
+    """
+    _dike_section = DikeSection()
+    _dike_section.name = "TestSection"
+    _dike_section.TrajectInfo = get_domain_basic_dike_traject_info()
+    return _dike_section
 
 
 def get_basic_section_data() -> SectionData:
@@ -48,7 +74,7 @@ def get_basic_section_data() -> SectionData:
     _test_dike_traject = get_basic_dike_traject_info()
     return SectionData.create(
         dike_traject=_test_dike_traject,
-        section_name="TestSection",
+        section_name=get_domain_basic_dike_section().name,
         meas_start=2.4,
         meas_end=4.2,
         section_length=123,
