@@ -178,7 +178,9 @@ def modify_geometry_input(initial: pd.DataFrame, berm_height: float) -> pd.DataF
         inner_slope = np.abs(initial.loc["BIT"].z - initial.loc["BIK"].z) / np.abs(
             initial.loc["BIT"].x - initial.loc["BIK"].x
         )
-        berm_height = min(berm_height, initial.loc["BIK"].z - initial.loc["BIT"].z - 0.01)
+        berm_height = min(
+            berm_height, initial.loc["BIK"].z - initial.loc["BIT"].z - 0.01
+        )
         initial.loc["EBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "x"] = initial.loc["BIT"].x - (berm_height / inner_slope)
         initial.loc["BBL", "z"] = initial.loc["BIT"].z + berm_height
@@ -224,16 +226,16 @@ def determine_new_geometry(
     crest_extra: float = np.nan,
 ) -> list:
     """initial should be a DataFrame with index values BUT, BUK, BIK, BBL, EBL and BIT.
-       If this is not the case, first it is transformed to obey that.
-       crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
-       In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
-       such that after reinforcement the height is crest_extra + increment.
-       It has to be ensured that the BUK has x = 0, and that x increases inward
+    If this is not the case, first it is transformed to obey that.
+    crest_extra is an additional argument in case the crest height for overflow is higher than the BUK and BIT.
+    In such cases the crest heightening is the given increment + the difference between crest_extra and the BUK/BIT,
+    such that after reinforcement the height is crest_extra + increment.
+    It has to be ensured that the BUK has x = 0, and that x increases inward
 
-       Returns:
-           four values: new_geometry, area_extra, area_excavate, d_house
-       Raises:
-           ValueError if intersection of geometries fails
+    Returns:
+        four values: new_geometry, area_extra, area_excavate, d_house
+    Raises:
+        ValueError if intersection of geometries fails
     """
 
     initial = modify_geometry_input(initial, berm_height)
@@ -313,7 +315,9 @@ def determine_new_geometry(
             plt.plot(*polygon_new.exterior.xy, "r--")
             plt.savefig("testgeom.png")
             plt.close()
-            raise ValueError("invalid geometry; intersection between original and modified geometry can not be evaluated.")
+            raise ValueError(
+                "invalid geometry; intersection between original and modified geometry can not be evaluated."
+            )
         area_intersect = poly_intsects.area
         area_excavate = area_old - area_intersect
         area_extra = area_new - area_intersect
@@ -359,7 +363,7 @@ def determine_new_geometry(
                 ),
             )
 
-            if (plot_dir == None):
+            if plot_dir == None:
                 plot_dir = Path.cwd()
 
             plt.savefig(
