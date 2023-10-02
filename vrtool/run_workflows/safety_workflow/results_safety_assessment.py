@@ -10,35 +10,12 @@ class ResultsSafetyAssessment(VrToolRunResultProtocol):
         _case_settings = {
             "directory": self.vr_config.output_directory,
             "language": self.vr_config.language,
-            "beta_or_prob": self.vr_config.beta_or_prob,
         }
 
         if not self.vr_config.output_directory.exists():
             self.vr_config.output_directory.mkdir(parents=True)
 
         self.selected_traject.write_initial_assessment_results(
-            case_settings=_case_settings,
-        )
-
-    def plot_results(self):
-        """
-        Plot initial reliability for `selected_traject`.
-        """
-        _case_settings = {
-            "directory": self.vr_config.output_directory,
-            "language": self.vr_config.language,
-            "beta_or_prob": self.vr_config.beta_or_prob,
-        }
-
-        if not self.vr_config.output_directory.exists():
-            self.vr_config.output_directory.mkdir(parents=True)
-
-        # Previously this plotting would be skipped for 'test' type of plotting.
-        self.selected_traject.plot_assessment(
-            fig_size=(12, 4),
-            draw_targetbeta="off",
-            last=True,
-            t_list=[0, 25, 50],
             case_settings=_case_settings,
         )
 

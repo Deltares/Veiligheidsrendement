@@ -17,7 +17,7 @@ class SectionReliabilityExporter(OrmExporterProtocol):
         _added_assessments = []
         for col_name, beta_value in dom_model.SectionReliability.loc[
             "Section"
-        ].iteritems():
+        ].items():
             _added_assessments.append(
                 AssessmentSectionResult.create(
                     beta=beta_value,

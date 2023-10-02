@@ -18,7 +18,7 @@ class TestRunSafetyAssessment:
         _traject = MockedDikeTraject()
 
         # 2. Run test.
-        _assessment = RunSafetyAssessment(_vr_config, _traject, "sth")
+        _assessment = RunSafetyAssessment(_vr_config, _traject)
 
         # 3. Verify expectations.
         assert isinstance(_assessment, RunSafetyAssessment)
@@ -27,7 +27,7 @@ class TestRunSafetyAssessment:
     def test_init_with_invalid_vr_config(self):
         # 1. Run test
         with pytest.raises(ValueError) as exception_error:
-            RunSafetyAssessment("nothing", "else", "matters")
+            RunSafetyAssessment("paradise", "city")
 
         # 2. Verify expectations
         assert str(exception_error.value) == "Expected instance of a VrtoolConfig."
@@ -38,7 +38,7 @@ class TestRunSafetyAssessment:
 
         # 1. Run test
         with pytest.raises(ValueError) as exception_error:
-            RunSafetyAssessment(_vr_config, "else", "matters")
+            RunSafetyAssessment(_vr_config, "city")
 
         # 2. Verify expectations
         assert str(exception_error.value) == "Expected instance of a DikeTraject."
@@ -49,7 +49,7 @@ class TestRunSafetyAssessment:
         # 1. Define test data
         _vr_config = VrtoolConfig()
         _traject = MockedDikeTraject()
-        _assessment = RunSafetyAssessment(_vr_config, _traject, "sth")
+        _assessment = RunSafetyAssessment(_vr_config, _traject)
         _assessment.vr_config = VrtoolConfig()
         _assessment.vr_config.output_directory = test_results / request.node.name
         if _assessment.vr_config.output_directory.exists():

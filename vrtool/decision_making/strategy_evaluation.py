@@ -723,12 +723,8 @@ def update_probability(init_probability, strategy, index):
     for i in init_probability:
         from scipy.stats import norm
 
-        # plt.plot(-norm.ppf(init_probability[i][index[0],:]), 'r')
         if i in ["Overflow", "Revetment"]:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]
-        # plt.plot(-norm.ppf(init_probability[i][index[0],:]),'b')
-        # plt.savefig('Beta ' + i + str(index) + '.png')
-        # plt.close()
     return init_probability
