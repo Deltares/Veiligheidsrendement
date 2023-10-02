@@ -42,9 +42,8 @@ class VrtoolConfig:
     input_database_name: str = ""
     input_directory: Path = None
     output_directory: Optional[Path] = None
-    externals: Optional[Path] = None
+    externals: Optional[Path] = None  # for DStability
     language: str = "EN"
-    timing: bool = False
 
     ## RELIABILITY COMPUTATION
     traject: str = ""

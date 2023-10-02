@@ -39,7 +39,6 @@ class TestVrtoolConfig:
         # 1. Define test data.
         _expected_keys = [
             "language",
-            "timing",
             "traject",
             "input_directory",
             "output_directory",
@@ -87,7 +86,6 @@ class TestVrtoolConfig:
 
         # Verify default values.
         assert _config.language == "EN"
-        assert not _config.timing
         assert _config.input_directory is None
 
         assert _config.t_0 == 2025
