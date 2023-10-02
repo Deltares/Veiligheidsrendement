@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -196,12 +197,15 @@ class TestOrmControllers:
     @pytest.fixture
     def database_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
-        _db_file = test_data / "test_db" / "with_valid_data.db"
-        assert _db_file.is_file()
+        _db_name = "with_valid_data.db"
 
         _vrtool_config = VrtoolConfig(
-            input_database_path=_db_file, traject="38-1", input_directory=test_data
+            input_directory=(test_data / "test_db"),
+            input_database_name=_db_name,
+            traject="38-1",
         )
+        assert _vrtool_config.input_database_path.is_file()
+
         _vrtool_config.output_directory = test_results.joinpath(request.node.name)
         if _vrtool_config.output_directory.exists():
             shutil.rmtree(_vrtool_config.output_directory)
@@ -282,6 +286,7 @@ class TestOrmControllers:
         _dike_section.InitialGeometry = pd.DataFrame.from_records(
             map(_to_record, _initial_geom.items())
         )
+        _dike_section.InitialGeometry.set_index("type", inplace=True, drop=True)
 
         # Mechanism data
         _dike_section.mechanism_data["StabilityInner"] = [
@@ -341,8 +346,10 @@ class TestOrmControllers:
 
         # Safety assessment.
         _safety_assessment = ResultsSafetyAssessment()
+        _db_path = Path(export_database.database)
         _safety_assessment.vr_config = VrtoolConfig(
-            input_database_path=export_database.database
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
         )
         _safety_assessment.selected_traject = _test_traject
 
@@ -402,7 +409,11 @@ class TestOrmControllers:
         _db_connection.close()
 
         # Call
-        _vrtool_config = VrtoolConfig(input_database_path=_db_connection.database)
+        _db_path = Path(_db_connection.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
+        )
         clear_assessment_results(_vrtool_config)
 
         # Assert
@@ -420,7 +431,11 @@ class TestOrmControllers:
         self._generate_measure_results(export_database)
 
         # Call
-        _vrtool_config = VrtoolConfig(input_database_path=export_database.database)
+        _db_path = Path(export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
+        )
         clear_measure_results(_vrtool_config)
 
         # Assert
@@ -434,7 +449,11 @@ class TestOrmControllers:
         self._generate_optimization_results(export_database)
 
         # 2. Run test.
-        _vrtool_config = VrtoolConfig(input_database_path=export_database.database)
+        _db_path = Path(export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
+        )
         clear_optimization_results(_vrtool_config)
 
         # 3. Verify expectations.

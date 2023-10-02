@@ -67,7 +67,7 @@ class TestVrtoolConfig:
             "design_methods",
             "unit_costs",
             "externals",
-            "input_database_path",
+            "input_database_name",
         ]
 
         # 2. Run test.
@@ -197,6 +197,38 @@ class TestVrtoolConfig:
         assert _vrtool_config.output_directory == _test_path
 
     @pytest.mark.parametrize(
+        "input_directory",
+        [
+            pytest.param(Path(r"X:\any\folder"), id="VALID input directory"),
+            pytest.param(None, id="NONE input directory"),
+            pytest.param(Path(""), id="EMPTY input directory"),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "db_name",
+        [
+            pytest.param("MyDb.db", id="VALID DB name"),
+            pytest.param(None, id="NONE DB name"),
+            pytest.param("", id="EMPTY DB name"),
+        ],
+    )
+    def test_input_database_path(self, input_directory: Path, db_name: str):
+        # 1. Define test data
+        _vrtool_config = VrtoolConfig(
+            input_directory=input_directory, input_database_name=db_name
+        )
+
+        # 2. Run test
+        _test_db_path = _vrtool_config.input_database_path
+
+        # 3. Verify expectations
+        if input_directory and db_name:
+            _expectation = input_directory.joinpath(db_name)
+        else:
+            _expectation = None
+        assert _test_db_path == _expectation
+
+    @pytest.mark.parametrize(
         "path_value, expected_value",
         [
             pytest.param(
@@ -219,7 +251,6 @@ class TestVrtoolConfig:
         _vrtool_config = VrtoolConfig()
         _vrtool_config.input_directory = path_value
         _vrtool_config.output_directory = path_value
-        _vrtool_config.input_database_path = path_value
         _vrtool_config.externals = path_value
 
         # 2. Run test.
@@ -228,5 +259,4 @@ class TestVrtoolConfig:
         # 3. Verify expectations.
         assert _vrtool_config.input_directory == expected_value
         assert _vrtool_config.output_directory == expected_value
-        assert _vrtool_config.input_database_path == expected_value
         assert _vrtool_config.externals == expected_value

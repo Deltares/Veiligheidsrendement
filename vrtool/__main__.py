@@ -33,7 +33,7 @@ def _get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
     _found_json = list(model_directory.glob("*.json"))
     if not any(_found_json):
         raise FileNotFoundError(
-            "No json config file found in the model directory. {}".format(
+            "No json config file found in the model directory {}.".format(
                 model_directory
             )
         )
