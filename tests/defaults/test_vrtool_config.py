@@ -138,7 +138,7 @@ class TestVrtoolConfig:
         "custom_path",
         [
             pytest.param("just\\a\\path", id="Double slash"),
-            pytest.param("with\simple\slash", id="Simple slash"),
+            pytest.param(r"with\simple\slash", id="Simple slash"),
         ],
     )
     def test_init_with_mapproperty_as_str_sets_to_path(self, custom_path: str):
