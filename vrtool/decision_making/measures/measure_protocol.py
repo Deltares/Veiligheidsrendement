@@ -20,7 +20,6 @@ class MeasureProtocol(Protocol):
     crest_step: float
     berm_step: list[int]
     t_0: int
-    geometry_plot: bool
     unit_costs: dict
     input_directory: Path
     measures: Union[list, dict, MeasureResultCollectionProtocol]

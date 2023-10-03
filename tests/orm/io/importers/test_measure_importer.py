@@ -79,7 +79,6 @@ class TestMeasureImporter:
         _vr_config.output_directory = test_results
         _vr_config.berm_step = 4.2
         _vr_config.t_0 = 42
-        _vr_config.geometry_plot = True
         _vr_config.unit_costs = {"lorem ipsum": 123}
         return _vr_config
 
@@ -204,7 +203,6 @@ class TestMeasureImporter:
         assert measure_base.config == valid_config
         assert measure_base.berm_step == 4.2
         assert measure_base.t_0 == 42
-        assert measure_base.geometry_plot
         assert measure_base.unit_costs == {"lorem ipsum": 123}
 
     def test_import_orm_with_unknown_standard_measure_raises_error(

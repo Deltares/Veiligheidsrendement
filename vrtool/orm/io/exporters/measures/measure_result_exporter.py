@@ -41,7 +41,7 @@ class MeasureResultExporter(OrmExporterProtocol):
             beta_value,
         ) in measure_result.section_reliability.SectionReliability.loc[
             "Section"
-        ].iteritems():
+        ].items():
             _orm_result = MeasureResult.create(
                 beta=beta_value,
                 time=int(col_name),

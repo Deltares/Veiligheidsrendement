@@ -151,7 +151,6 @@ class TestCommonFunctions:
             max_berm_out=20.0,
             initial=_traject_test_data,
             berm_height=2,
-            geometry_plot=False,
         )
 
         # 3. Verify expectations.
@@ -191,7 +190,6 @@ class TestCommonFunctions:
             max_berm_out=20.0,
             initial=_traject_test_data,
             berm_height=2,
-            geometry_plot=False,
             crest_extra=_traject_test_data["z"].max() - dcrest_extra,
         )
 
@@ -231,7 +229,6 @@ class TestCommonFunctions:
             max_berm_out=20.0,
             initial=_geometry_dictionary1,
             berm_height=2.0,
-            geometry_plot=False,
         )
 
         _reinforced_geometry2 = determine_new_geometry(
@@ -240,7 +237,6 @@ class TestCommonFunctions:
             max_berm_out=20.0,
             initial=_geometry_dictionary2,
             berm_height=3.0,
-            geometry_plot=False,
         )
 
         assert _reinforced_geometry1[1] == _reinforced_geometry2[1]

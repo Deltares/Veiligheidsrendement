@@ -8,7 +8,7 @@ from vrtool.decision_making.measures.modified_dike_geometry_measure_input import
 class TestModifiedDikeGeometryOutput:
     def test_from_dictionary_returns_expected_output(self):
         # Setup
-        new_geometry = pd.Series()
+        new_geometry = pd.Series(dtype="float64")
         area_extra = 1.1
         area_excavated = 2.2
         d_house = 3.3

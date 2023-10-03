@@ -24,7 +24,7 @@ class MeasureDictListExporter(OrmExporterProtocol):
             _measure_cost = _measure["Cost"]
             logging.debug("STARTED exporting measure id: {}".format(_measure["id"]))
             for col_name, beta_value in (
-                _measure["Reliability"].SectionReliability.loc["Section"].iteritems()
+                _measure["Reliability"].SectionReliability.loc["Section"].items()
             ):
                 _measure_result = MeasureResult.create(
                     beta=beta_value,

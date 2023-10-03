@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 from re import search
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
@@ -31,7 +30,6 @@ from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
-from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
@@ -163,7 +161,7 @@ class TestAcceptance:
         _test_traject = get_dike_traject(valid_vrtool_config)
 
         # 2. Run test.
-        RunFullModel(valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD).run()
+        RunFullModel(valid_vrtool_config, _test_traject).run()
 
         # 3. Verify final expectations.
         self._validate_acceptance_result_cases(
@@ -184,9 +182,7 @@ class TestAcceptance:
         assert not any(AssessmentSectionResult.select())
 
         # 2. Run test.
-        _results = RunSafetyAssessment(
-            valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
-        ).run()
+        _results = RunSafetyAssessment(valid_vrtool_config, _test_traject).run()
 
         # 3. Verify expectations.
         assert isinstance(_results, ResultsSafetyAssessment)
@@ -313,9 +309,7 @@ class TestAcceptance:
         _results_measures.selected_traject = _results_assessment.selected_traject
 
         _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
-        _results_optimization = RunOptimization(
-            _results_measures, valid_vrtool_config
-        ).run()
+        _results_optimization = RunOptimization(_results_measures).run()
 
         self._validate_acceptance_result_cases(
             valid_vrtool_config.output_directory, _test_reference_path
@@ -333,112 +327,13 @@ class TestAcceptance:
         ## READ ALL DATA
         ##First we read all the input data for the different sections. We store these in a Traject object.
         # Initialize a list of all sections that are of relevance (these start with DV).
-        _results = RunFullModel(
-            _test_config, _test_traject, VrToolPlotMode.STANDARD
-        ).run()
+        _results = RunFullModel(_test_config, _test_traject).run()
 
         # Now some general output figures and csv's are generated:
 
         # First make a table of all the solutions:
         _measure_table = StrategyBase.get_measure_table(
             _results.results_solutions, language="EN", abbrev=True
-        )
-
-        # plot beta costs for t=0
-        figure_size = (12, 7)
-
-        # LCC-beta for t = 0
-        plt.figure(101, figsize=figure_size)
-        _results.results_strategies[0].plot_beta_costs(
-            _test_traject,
-            save_dir=_test_config.output_directory,
-            fig_id=101,
-            series_name=_test_config.design_methods[0],
-            MeasureTable=_measure_table,
-            color="b",
-        )
-        _results.results_strategies[1].plot_beta_costs(
-            _test_traject,
-            save_dir=_test_config.output_directory,
-            fig_id=101,
-            series_name=_test_config.design_methods[1],
-            MeasureTable=_measure_table,
-            last="yes",
-        )
-        plt.savefig(
-            _test_config.output_directory.joinpath(
-                "Priority order Beta vs LCC_" + str(_test_config.t_0) + ".png"
-            ),
-            dpi=300,
-            bbox_inches="tight",
-            format="png",
-        )
-
-        # LCC-beta for t=50
-        plt.figure(102, figsize=figure_size)
-        _results.results_strategies[0].plot_beta_costs(
-            _test_traject,
-            save_dir=_test_config.output_directory,
-            t=50,
-            fig_id=102,
-            series_name=_test_config.design_methods[0],
-            MeasureTable=_measure_table,
-            color="b",
-        )
-        _results.results_strategies[1].plot_beta_costs(
-            _test_traject,
-            save_dir=_test_config.output_directory,
-            t=50,
-            fig_id=102,
-            series_name=_test_config.design_methods[1],
-            MeasureTable=_measure_table,
-            last="yes",
-        )
-        plt.savefig(
-            _test_config.output_directory.joinpath(
-                "Priority order Beta vs LCC_" + str(_test_config.t_0 + 50) + ".png"
-            ),
-            dpi=300,
-            bbox_inches="tight",
-            format="png",
-        )
-
-        # Costs2025-beta
-        plt.figure(103, figsize=figure_size)
-        _results.results_strategies[0].plot_beta_costs(
-            _test_traject,
-            save_dir=_test_config.output_directory,
-            cost_type="Initial",
-            fig_id=103,
-            series_name=_test_config.design_methods[0],
-            MeasureTable=_measure_table,
-            color="b",
-        )
-        _results.results_strategies[1].plot_beta_costs(
-            _test_traject,
-            save_dir=_test_config.output_directory,
-            cost_type="Initial",
-            fig_id=103,
-            series_name=_test_config.design_methods[1],
-            MeasureTable=_measure_table,
-            last="yes",
-        )
-        plt.savefig(
-            _test_config.output_directory.joinpath(
-                "Priority order Beta vs Costs_" + str(_test_config.t_0 + 50) + ".png"
-            ),
-            dpi=300,
-            bbox_inches="tight",
-            format="png",
-        )
-
-        _results.results_strategies[0].plot_investment_limit(
-            _test_traject,
-            investmentlimit=20e6,
-            path=_test_config.output_directory.joinpath("figures"),
-            figure_size=(12, 6),
-            years=[0],
-            flip=True,
         )
 
         ## write a LOG of all probabilities for all steps:
