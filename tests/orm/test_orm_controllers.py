@@ -484,11 +484,18 @@ class TestOrmControllers:
             def __init__(self, type, config: VrtoolConfig):
                 # TODO: Not entirely sure what needs to be used here.
                 # should be solved after (or in) VRTOOL-268.
-                self.FinalSolution = pd.DataFrame()
-                self.OptimalSolution = pd.DataFrame()
-                self.SatisfiedStandardSolution = pd.DataFrame()
-                self.TakenMeasures = pd.DataFrame()
-                self.Probabilities = []
+                # Has a lot of information already present in measure results.
+                self.TakenMeasures = (
+                    pd.DataFrame()
+                )  # This is actually OptimizationStep (with extra info).
+                # First run could just be exporting the index of TakenMeasures.
+                self.options = (
+                    pd.DataFrame()
+                )  # All possible combinations of MeasureResults (by ID).
+                self.options_geotechnical = pd.DataFrame()
+                self.options_height = pd.DataFrame()
+                # Measures selected per step
+                self.MeasureIndices = pd.DataFrame()
 
         _test_strategy = MockedStrategy(type="", config=_results_measures.vr_config)
 
