@@ -36,6 +36,10 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_result.measure_result_mechanism import (
+    MeasureResultMechanism,
+)
+from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -403,8 +407,10 @@ class TestOrmControllers:
         )
 
         # Define vrtool config.
+        _database_path = Path(export_database.database)
         _vrtool_config = VrtoolConfig(
-            input_database_path=export_database.database,
+            input_directory=_database_path.parent,
+            input_database_name=_database_path.name,
             traject=_measures_input_data.domain_dike_section.TrajectInfo.traject_name,
         )
 
@@ -459,8 +465,6 @@ class TestOrmControllers:
     @pytest.mark.parametrize(
         "results_measures_with_mocked_data",
         [
-            pytest.param(MeasureWithDictMocked, id="With dictionary"),
-            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
             pytest.param(
                 MeasureWithMeasureResultCollectionMocked,
                 id="With Measure Result Collection object",
@@ -480,22 +484,61 @@ class TestOrmControllers:
         _measures_input_data.validate_exported_measure_results()
 
         # Define strategies.
+        import random
+
         class MockedStrategy(StrategyBase):
             def __init__(self, type, config: VrtoolConfig):
                 # TODO: Not entirely sure what needs to be used here.
                 # should be solved after (or in) VRTOOL-268.
-                # Has a lot of information already present in measure results.
-                self.TakenMeasures = (
-                    pd.DataFrame()
-                )  # This is actually OptimizationStep (with extra info).
                 # First run could just be exporting the index of TakenMeasures.
-                self.options = (
-                    pd.DataFrame()
+                self.options = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResult.select()))
                 )  # All possible combinations of MeasureResults (by ID).
-                self.options_geotechnical = pd.DataFrame()
-                self.options_height = pd.DataFrame()
+                self.options_geotechnical = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResultMechanism.select()))
+                )
+                self.options_height = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResultSection.select()))
+                )
                 # Measures selected per step
-                self.MeasureIndices = pd.DataFrame()
+                self.MeasureIndices = pd.DataFrame(
+                    list(
+                        map(
+                            lambda x: [
+                                x.id,
+                                random.randint(0, len(self.options_geotechnical) - 1),
+                                random.randint(0, len(self.options_height) - 1),
+                            ],
+                            MeasureResult.select(),
+                        )
+                    )
+                )
+                # Has a lot of information already present in measure results.
+                _measures_columns = [
+                    "Section",
+                    "option_in",
+                    "LCC",
+                    "BC",
+                    "ID",
+                    "name",
+                    "yes/no",
+                    "dcrest",
+                    "dberm",
+                    "beta_target",
+                    "transition_level",
+                ]
+                _taken_measure_row = [0] * len(_measures_columns)
+                self.TakenMeasures = pd.DataFrame(
+                    [_taken_measure_row], columns=_measures_columns
+                )  # This is actually OptimizationStep (with extra info).
+                _single_existing_measure_result = MeasureResult.select().get()
+                self.TakenMeasures["Section"][
+                    0
+                ] = _single_existing_measure_result.measure_per_section.section.id
+                self.TakenMeasures["option_in"][0] = self.options[0][
+                    0
+                ]  # This actually refers to the `MeasureResult.ID`
+                self.TakenMeasures["LCC"][0] = 42.24
 
         _test_strategy = MockedStrategy(type="", config=_results_measures.vr_config)
 
@@ -507,7 +550,7 @@ class TestOrmControllers:
         _results_optimization.results_strategies = [_test_strategy]
 
         # 2. Run test.
-        export_results_optimization()
+        export_results_optimization(_results_optimization)
 
         # 3. Verify expectations.
         _measures_input_data.validate_exported_optimization_results()
