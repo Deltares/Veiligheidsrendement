@@ -1,10 +1,18 @@
+from tests.orm import get_basic_measure_per_section
 from tests.orm.io.exporters.measures import (
     create_mechanism_per_section,
     create_section_reliability,
 )
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.measure_result_collection_protocol import (
+    MeasureResultCollectionProtocol,
+    MeasureResultProtocol,
+)
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.measures.measure_result_type_converter import (
     filter_supported_parameters_dict,
 )
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
@@ -15,15 +23,6 @@ from vrtool.orm.models.measure_result.measure_result_parameter import (
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-
-from tests.orm import get_basic_measure_per_section
-from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.measure_result_collection_protocol import (
-    MeasureResultCollectionProtocol,
-    MeasureResultProtocol,
-)
-from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class MeasureWithDictMocked(MeasureProtocol):

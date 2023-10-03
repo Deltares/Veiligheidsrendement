@@ -1,16 +1,15 @@
-from peewee import ForeignKeyField, FloatField, IntegerField
+from peewee import FloatField, ForeignKeyField, IntegerField
 
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.orm_base_model import (
-    OrmBaseModel,
-    _get_table_name,
-)
+from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 
 class MeasureResultMechanism(OrmBaseModel):
     measure_result = ForeignKeyField(MeasureResult, backref="measure_result_mechanisms")
-    mechanism_per_section = ForeignKeyField(MechanismPerSection, backref="mechanism_measure_results")
+    mechanism_per_section = ForeignKeyField(
+        MechanismPerSection, backref="mechanism_measure_results"
+    )
 
     beta = FloatField()
     time = IntegerField()
