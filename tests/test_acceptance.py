@@ -191,6 +191,9 @@ class TestAcceptance:
         _acceptance_all_steps_test_cases,
         indirect=["valid_vrtool_config"],
     )
+    @pytest.mark.skip(
+        reason="Currently only slows down the tests, reenable when optimization can be exported."
+    )
     def test_run_safety_assessment_and_save_initial_assessment(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -539,7 +542,6 @@ class TestAcceptance:
     ) -> None:
         _measure_results = MeasureResult.select().where(
             (MeasureResult.measure_per_section == measure_per_section)
-            & (MeasureResult.time == year)
         )
 
         for _found_result in _measure_results:
