@@ -354,9 +354,12 @@ class TestAcceptance:
         # Causing an error as the transaction requires said connection to be open.
         # Therefore the following has been found as the only possible way to assess whether the results are
         # written in the database without affecting other tests from using this db.
-        _bck_db_filepath = valid_vrtool_config.output_directory.joinpath("bck_db.db")
+        _bck_db_name = "bck_db.db"
+        _bck_db_filepath = valid_vrtool_config.input_database_path.with_name(
+            _bck_db_name
+        )
         shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        _results.vr_config.input_database_path = _bck_db_filepath
+        _results.vr_config.input_database_name = _bck_db_name
 
         # 4. Validate exporting results is possible
         clear_measure_results(valid_vrtool_config)
