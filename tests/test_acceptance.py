@@ -1,5 +1,4 @@
 import shutil
-from os import remove
 from pathlib import Path
 from re import search
 
@@ -134,8 +133,7 @@ class TestAcceptance:
 
         _test_config.input_database_name = _test_db_name
         _tst_db_file = _test_config.input_database_path
-        if _tst_db_file.exists():
-            remove(_tst_db_file)
+        _tst_db_file.unlink(missing_ok=False)
         shutil.copy(_db_file, _tst_db_file)
         assert _tst_db_file.exists(), "No database found at {}.".format(_db_file)
 
