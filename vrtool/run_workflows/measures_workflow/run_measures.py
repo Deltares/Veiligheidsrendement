@@ -12,7 +12,6 @@ from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasu
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
-from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
@@ -21,7 +20,6 @@ class RunMeasures(VrToolRunProtocol):
         self,
         vr_config: VrtoolConfig,
         selected_traject: DikeTraject,
-        plot_mode: VrToolPlotMode,
     ) -> None:
         if not isinstance(vr_config, VrtoolConfig):
             raise ValueError("Expected instance of a {}.".format(VrtoolConfig.__name__))
@@ -30,7 +28,6 @@ class RunMeasures(VrToolRunProtocol):
 
         self.vr_config = vr_config
         self.selected_traject = selected_traject
-        self._plot_mode = plot_mode
 
     def _get_section_solution(
         self,
@@ -43,9 +40,7 @@ class RunMeasures(VrToolRunProtocol):
 
     def run(self) -> ResultsMeasures:
         # Safety Assessment run
-        _safety_run = RunSafetyAssessment(
-            self.vr_config, self.selected_traject, self._plot_mode
-        )
+        _safety_run = RunSafetyAssessment(self.vr_config, self.selected_traject)
         _safety_run.run()
 
         # Get measurements solutions
@@ -73,7 +68,4 @@ class RunMeasures(VrToolRunProtocol):
 
         logging.info("Finished step 2: evaluation of measures")
 
-        # If desired: plot beta(t)-cost for all measures at a section:
-        if self.vr_config.plot_measure_reliability:
-            _results_measures.plot_results()
         return _results_measures

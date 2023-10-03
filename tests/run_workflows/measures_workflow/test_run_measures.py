@@ -14,7 +14,7 @@ class TestRunMeasures:
         _traject = MockedDikeTraject()
 
         # 2. Run test
-        _run = RunMeasures(_vr_config, _traject, "sth")
+        _run = RunMeasures(_vr_config, _traject)
 
         # 3. Verify expectations
         assert isinstance(_run, RunMeasures)
@@ -23,7 +23,7 @@ class TestRunMeasures:
     def test_init_with_invalid_vr_config(self):
         # 1. Run test
         with pytest.raises(ValueError) as exception_error:
-            RunMeasures("nothing", "else", "matters")
+            RunMeasures("paradise", "city")
 
         # 2. Verify expectations
         assert str(exception_error.value) == "Expected instance of a VrtoolConfig."
@@ -34,7 +34,7 @@ class TestRunMeasures:
 
         # 1. Run test
         with pytest.raises(ValueError) as exception_error:
-            RunMeasures(_vr_config, "else", "matters")
+            RunMeasures(_vr_config, "city")
 
         # 2. Verify expectations
         assert str(exception_error.value) == "Expected instance of a DikeTraject."

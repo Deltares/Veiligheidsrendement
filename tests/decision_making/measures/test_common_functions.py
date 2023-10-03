@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import shutil
 from pathlib import Path
 
@@ -52,10 +53,10 @@ _geometry_cases = {
         "BIT": [21, 0.37],
     },
     "DV56": {
-        "innertoe": [-24, 1.392649],
-        "innercrest": [-6, 6.41152],
-        "outercrest": [0, 6.41152],
-        "outertoe": [14, 1.833213],
+        "BIT": [-24, 1.392649],
+        "BIK": [-6, 6.41152],
+        "BUK": [0, 6.41152],
+        "BUT": [14, 1.833213],
     },
     "DV53": {
         "BIT": [-28, 1.253734],
@@ -66,10 +67,10 @@ _geometry_cases = {
         "BUT": [18, 1.229376],
     },
     "DV86": {
-        "innertoe": [-22, 1.287424],
-        "innercrest": [-14, 4.857041],
-        "outercrest": [0, 4.857041],
-        "outertoe": [10, 1.156215],
+        "BIT": [-22, 1.287424],
+        "BIK": [-14, 4.857041],
+        "BUK": [0, 4.857041],
+        "BUT": [10, 1.156215],
     },
 }
 
@@ -79,8 +80,11 @@ class TestCommonFunctions:
         def _to_record(geom_item) -> dict:
             return dict(type=geom_item[0], x=geom_item[1][0], z=geom_item[1][1])
 
-        _df_geometry = pd.DataFrame.from_records(map(_to_record, geom_dict.items()))
-        _df_geometry.set_index("type")
+        _df_geometry = (
+            pd.DataFrame.from_records(map(_to_record, geom_dict.items()))
+            .reset_index()
+            .set_index("type")
+        )
         return _df_geometry
 
     @pytest.mark.parametrize(
@@ -147,7 +151,6 @@ class TestCommonFunctions:
             max_berm_out=20.0,
             initial=_traject_test_data,
             berm_height=2,
-            geometry_plot=False,
         )
 
         # 3. Verify expectations.
@@ -187,7 +190,6 @@ class TestCommonFunctions:
             max_berm_out=20.0,
             initial=_traject_test_data,
             berm_height=2,
-            geometry_plot=False,
             crest_extra=_traject_test_data["z"].max() - dcrest_extra,
         )
 
@@ -196,6 +198,50 @@ class TestCommonFunctions:
         _reinforcement_1, _reinforcement_3 = expected_values
         assert _reinforced_geometry[1] == pytest.approx(_reinforcement_1, _tolerance)
         assert _reinforced_geometry[3] == pytest.approx(_reinforcement_3, _tolerance)
+
+    def test_geometry_berm_too_high(self):
+        # 1. Define test data.
+        _geometry_dictionary1 = pd.DataFrame.from_dict(
+            {
+                "x": {
+                    "BUT": -5.14865,
+                    "BUK": 0.0,
+                    "BIK": 9,
+                    "BIT": 33.86232,
+                },
+                "z": {
+                    "BUT": 7.23,
+                    "BUK": 8.5,
+                    "BIK": 8.5,
+                    "BIT": 7.04,
+                },
+            }
+        )
+
+        _geometry_dictionary2 = copy.deepcopy(_geometry_dictionary1)
+
+        # 2. Run test.
+        # in this case: berm_height is cut off at 1.45;
+        # so berm_heights > 1.45 all give the same answer
+        _reinforced_geometry1 = determine_new_geometry(
+            (0, 3),
+            direction="inward",
+            max_berm_out=20.0,
+            initial=_geometry_dictionary1,
+            berm_height=2.0,
+        )
+
+        _reinforced_geometry2 = determine_new_geometry(
+            (0, 3),
+            direction="inward",
+            max_berm_out=20.0,
+            initial=_geometry_dictionary2,
+            berm_height=3.0,
+        )
+
+        assert _reinforced_geometry1[1] == _reinforced_geometry2[1]
+        assert _reinforced_geometry1[2] == _reinforced_geometry2[2]
+        assert _reinforced_geometry1[3] == _reinforced_geometry2[3]
 
     def test_implement_berm_widening_dstability_with_screen_generates_intermediate_stix_file(
         self, request: pytest.FixtureRequest

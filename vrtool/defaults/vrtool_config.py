@@ -39,12 +39,11 @@ class VrtoolConfig:
     """
 
     # Directory to write the results to
-    input_database_path: Path = None
-    input_directory: Optional[Path] = None
+    input_database_name: str = ""
+    input_directory: Path = None
     output_directory: Optional[Path] = None
-    externals: Optional[Path] = None
+    externals: Optional[Path] = None  # for DStability
     language: str = "EN"
-    timing: bool = False
 
     ## RELIABILITY COMPUTATION
     traject: str = ""
@@ -83,46 +82,21 @@ class VrtoolConfig:
     # General settings:
     shelves: bool = False  # setting to shelve intermediate results
     reuse_output: bool = False  # reuse intermediate result if available
-    # whether to use 'beta' or 'prob' for plotting reliability
-    beta_or_prob: str = "beta"
-
-    # Settings for step 1:
-    # Setting to turn on plotting the reliability in time for each section.
-    plot_reliability_in_time: bool = False
-    # Setting to turn on plotting beta of measures at each section.
-    plot_measure_reliability: bool = False
-
-    # Setting to flip the direction of the longitudinal plots. Used for SAFE as sections are numbered east-west
-    flip_traject: bool = True
-    # years (relative to t_0) to plot the reliability
-    assessment_plot_years: list[int] = field(
-        default_factory=lambda: [
-            0,
-            20,
-            50,
-        ]
-    )
-
-    # Settings for step 2:
-    # Setting to plot the change in geometry for each soil reinforcement combination. Only use for debugging: very time consuming.
-    geometry_plot: bool = False
-
-    # Settings for step 3:
-    # dictionary with settings for beta-cost curve:
-    beta_cost_settings: dict = field(
-        default_factory=lambda: {
-            # whether to include symbols in the beta-cost curve
-            "symbols": True,
-            # base size of markers.
-            "markersize": 10,
-        }
-    )
 
     design_methods: list[str] = field(
         default_factory=lambda: ["Veiligheidsrendement", "Doorsnede-eisen"]
     )
 
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
+
+    @property
+    def input_database_path(self) -> Path:
+        """
+        Construct database path as property from input dir and database name
+        """
+        if not (self.input_directory and self.input_database_name):
+            return None
+        return self.input_directory.joinpath(self.input_database_name)
 
     def __post_init__(self):
         """
@@ -139,7 +113,6 @@ class VrtoolConfig:
 
         self.input_directory = _convert_to_path(self.input_directory)
         self.output_directory = _convert_to_path(self.output_directory)
-        self.input_database_path = _convert_to_path(self.input_database_path)
         self.externals = _convert_to_path(self.externals)
 
     def _relative_paths_to_absolute(self, parent_path: Path):
@@ -159,7 +132,6 @@ class VrtoolConfig:
 
         self.input_directory = _relative_to_absolute(self.input_directory)
         self.output_directory = _relative_to_absolute(self.output_directory)
-        self.input_database_path = _relative_to_absolute(self.input_database_path)
         self.externals = _relative_to_absolute(self.externals)
 
     def export(self, export_path: Path):

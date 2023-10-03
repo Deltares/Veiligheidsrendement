@@ -66,6 +66,10 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.AssessmentMechanismResult,
             orm.MeasureResult,
             orm.MeasureResultParameter,
+            orm.OptimizationType,
+            orm.OptimizationRun,
+            orm.OptimizationStep,
+            orm.OptimizationSelectedMeasure,
         ]
     )
     return vrtool_db
@@ -157,8 +161,8 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
     logging.info("Opened connection for clearing initial assessment results.")
 
     with vrtool_db.atomic():
-        vrtool_db.execute_sql("DELETE FROM AssessmentSectionResult;")
-        vrtool_db.execute_sql("DELETE FROM AssessmentMechanismResult;")
+        orm.AssessmentMechanismResult.delete().execute()
+        orm.AssessmentSectionResult.delete().execute()
 
     vrtool_db.close()
 
@@ -177,12 +181,34 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     logging.info("Opened connection for clearing measure results.")
 
     with vrtool_db.atomic():
-        vrtool_db.execute_sql("DELETE FROM MeasureResult;")
-        vrtool_db.execute_sql("DELETE FROM MeasureResultParameter;")
+        orm.MeasureResult.delete().execute()
+        # This table should be cleared 'on cascade'.
+        orm.MeasureResultParameter.delete().execute()
 
     vrtool_db.close()
 
     logging.info("Closed connection after clearing measure results.")
+
+
+def clear_optimization_results(config: VrtoolConfig) -> None:
+    """
+    Clears all the optimization related results from the database.
+
+    Args:
+        config (VrtoolConfig): Vrtool configuration.
+    """
+    open_database(config.input_database_path)
+    logging.info("Opened connection for clearing optimization results.")
+
+    with vrtool_db.atomic():
+        orm.OptimizationRun.delete().execute()
+        # These tables should be cleared 'on cascade'.
+        orm.OptimizationSelectedMeasure.delete().execute()
+        orm.OptimizationStep.delete().execute()
+
+    vrtool_db.close()
+
+    logging.info("Closed connection after clearing optimization results.")
 
 
 def export_solutions(result: ResultsMeasures) -> None:
