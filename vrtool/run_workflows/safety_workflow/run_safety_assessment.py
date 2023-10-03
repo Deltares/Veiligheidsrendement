@@ -14,7 +14,6 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class RunSafetyAssessment(VrToolRunProtocol):
-
     def __init__(
         self,
         vr_config: VrtoolConfig,
