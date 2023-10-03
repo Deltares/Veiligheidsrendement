@@ -1,4 +1,7 @@
 from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.orm.io.exporters.measures.measure_result_type_converter import (
+    filter_supported_parameters_dict,
+)
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
@@ -52,9 +55,16 @@ class MeasureWithListOfDictMocked(MeasureProtocol):
 
 
 class MeasureWithMeasureResultCollectionMocked(MeasureProtocol):
+    """
+    This mocked class represents a measure whose `measures` property are a
+    `MeasureResultCollectionProperty` type, such as `RevetmentMeasure`.
+    """
+
     def __init__(
         self, measure_parameters: dict, measure_result_parameters: dict
     ) -> None:
+
+        # Definition of internal mocked classes.
         class MeasureResultCollectionMocked(MeasureResultCollectionProtocol):
             def __init__(self) -> None:
                 class MeasureResultMocked(MeasureResultProtocol):
@@ -64,13 +74,16 @@ class MeasureWithMeasureResultCollectionMocked(MeasureProtocol):
                             "Reliability"
                         )
                         self.measure_id = measure_result_parameters.pop("ID")
-                        self._result_parameters = measure_result_parameters
+                        self._result_parameters = filter_supported_parameters_dict(
+                            measure_result_parameters
+                        )
 
                     def get_measure_result_parameters(self) -> list[dict]:
                         return self._result_parameters
 
                 self.result_collection = [MeasureResultMocked()]
 
+        # Keep in order because we 'pop out' the parameters during mocking.
         self.parameters = measure_parameters
         self.measures = MeasureResultCollectionMocked()
 
