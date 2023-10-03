@@ -15,8 +15,7 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
+from vrtool.orm.models.measure_result import *
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection

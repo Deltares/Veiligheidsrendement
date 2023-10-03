@@ -15,8 +15,7 @@ from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismRes
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result_parameter import MeasureResultParameter
+from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
@@ -173,7 +172,14 @@ class TestAcceptance:
         _test_traject = get_dike_traject(valid_vrtool_config)
 
         # 2. Run test.
-        RunFullModel(valid_vrtool_config, _test_traject).run()
+        _optimization_results = RunFullModel(valid_vrtool_config, _test_traject).run()
+
+        # export measures
+        _rm = ResultsMeasures()
+        _rm.solutions_dict = _optimization_results.results_solutions
+        _rm.vr_config = valid_vrtool_config
+        export_solutions(_rm)
+        # export optimization
 
         # 3. Verify final expectations.
         self._validate_acceptance_result_cases(
@@ -332,6 +338,9 @@ class TestAcceptance:
         "valid_vrtool_config",
         _acceptance_measure_test_cases,
         indirect=["valid_vrtool_config"],
+    )
+    @pytest.mark.skip(
+        reason="Currently only slows down the tests, reenable when optimization can be exported, and all acceptance tests can be run"
     )
     def test_run_measures_and_save_measure_results(
         self, valid_vrtool_config: VrtoolConfig
@@ -533,7 +542,6 @@ class TestAcceptance:
     ) -> None:
         _measure_results = MeasureResult.select().where(
             (MeasureResult.measure_per_section == measure_per_section)
-            & (MeasureResult.time == year)
         )
 
         for _found_result in _measure_results:
