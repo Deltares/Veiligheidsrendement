@@ -342,9 +342,7 @@ class TestAcceptance:
         assert not any(MeasureResultParameter.select())
 
         # 2. Run test.
-        _results = RunMeasures(
-            valid_vrtool_config, _test_traject, VrToolPlotMode.STANDARD
-        ).run()
+        _results = RunMeasures(valid_vrtool_config, _test_traject).run()
 
         # 3. Verify expectations.
         assert isinstance(_results, ResultsMeasures)
