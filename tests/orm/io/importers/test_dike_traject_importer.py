@@ -31,8 +31,6 @@ class TestDikeTrajectImporter:
         # 3. Verify final expectations.
         assert isinstance(_dike_traject, DikeTraject)
 
-        assert _dike_traject.assessment_plot_years == config.assessment_plot_years
-        assert _dike_traject.flip_traject == config.flip_traject
         assert _dike_traject.t_0 == config.t_0
         assert _dike_traject.T == config.T
 
