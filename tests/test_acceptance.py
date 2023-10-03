@@ -299,17 +299,12 @@ class TestAcceptance:
     def test_run_optimization(self, valid_vrtool_config: VrtoolConfig):
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
 
-        _shelve_path = valid_vrtool_config.input_directory / "shelves"
         _results_assessment = ResultsSafetyAssessment()
-        _results_assessment.load_results(
-            alternative_path=_shelve_path / "AfterStep1.out"
-        )
         _results_measures = ResultsMeasures()
 
         _results_measures.vr_config = valid_vrtool_config
         _results_measures.selected_traject = _results_assessment.selected_traject
 
-        _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
         _results_optimization = RunOptimization(_results_measures).run()
 
         self._validate_acceptance_result_cases(

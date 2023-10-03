@@ -49,22 +49,14 @@ class RunMeasures(VrToolRunProtocol):
         _results_measures.vr_config = self.vr_config
         _results_measures.selected_traject = self.selected_traject
 
-        if self.vr_config.reuse_output:
-            _results_measures.load_results()
+        _results_measures.solutions_dict.update(
+            dict(map(self._get_section_solution, self.selected_traject.sections))
+        )
 
-        else:
-            _results_measures.solutions_dict.update(
-                dict(map(self._get_section_solution, self.selected_traject.sections))
+        for i in self.selected_traject.sections:
+            _results_measures.solutions_dict[i.name].solutions_to_dataframe(
+                filtering="off", splitparams=True
             )
-
-            for i in self.selected_traject.sections:
-                _results_measures.solutions_dict[i.name].solutions_to_dataframe(
-                    filtering="off", splitparams=True
-                )
-
-        # Store intermediate results:
-        if self.vr_config.shelves:
-            _results_measures.save_results()
 
         logging.info("Finished step 2: evaluation of measures")
 

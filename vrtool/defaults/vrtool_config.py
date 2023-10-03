@@ -79,9 +79,6 @@ class VrtoolConfig:
     discount_rate: float = 0.03
 
     ## OUTPUT SETTINGS:
-    # General settings:
-    shelves: bool = False  # setting to shelve intermediate results
-    reuse_output: bool = False  # reuse intermediate result if available
 
     design_methods: list[str] = field(
         default_factory=lambda: ["Veiligheidsrendement", "Doorsnede-eisen"]

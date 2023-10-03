@@ -165,24 +165,20 @@ class RunOptimization(VrToolRunProtocol):
         logging.info("Start step 3: Optimization")
         _results_optimization = ResultsOptimization()
         _results_optimization.vr_config = self.vr_config
-        if self.vr_config.reuse_output:
-            _results_optimization.load_results()
-        else:
-            ## STEP 3: EVALUATE THE STRATEGIES
-            _evaluation_mapping = self._get_evaluation_mapping()
-            _results_optimization.results_strategies.extend(
-                [
-                    _evaluation_mapping[_design_method](_design_method)
-                    for _design_method in self.vr_config.design_methods
-                    if _design_method in _evaluation_mapping.keys()
-                ]
-            )
+
+        ## STEP 3: EVALUATE THE STRATEGIES
+        _evaluation_mapping = self._get_evaluation_mapping()
+        _results_optimization.results_strategies.extend(
+            [
+                _evaluation_mapping[_design_method](_design_method)
+                for _design_method in self.vr_config.design_methods
+                if _design_method in _evaluation_mapping.keys()
+            ]
+        )
 
         logging.info("Finished step 3: Optimization")
         _results_optimization.selected_traject = self.selected_traject
         _results_optimization.results_solutions = self._solutions_dict
-        if self.vr_config.shelves:
-            _results_optimization.save_results()
 
         return _results_optimization
 
