@@ -9,12 +9,6 @@ class VrToolRunResultProtocol(Protocol):
     vr_config: VrtoolConfig
     selected_traject: DikeTraject
 
-    def plot_results(self):
-        """
-        Plots the results contained by this `VrToolRunResultProtocol` instance.
-        """
-        pass
-
     def save_results(self):
         """
         Saves the results contained by this `VrToolRunResultProtocol` instance.

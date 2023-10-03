@@ -12,14 +12,11 @@ from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasu
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
-from vrtool.run_workflows.vrtool_plot_mode import VrToolPlotMode
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class RunOptimization(VrToolRunProtocol):
-    def __init__(
-        self, results_measures: ResultsMeasures, plot_mode: VrToolPlotMode
-    ) -> None:
+    def __init__(self, results_measures: ResultsMeasures) -> None:
         if not isinstance(results_measures, ResultsMeasures):
             raise ValueError(
                 "Required valid instance of {} as an argument.".format(
@@ -30,7 +27,6 @@ class RunOptimization(VrToolRunProtocol):
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
         self._solutions_dict = results_measures.solutions_dict
-        self._plot_mode = plot_mode
 
     def _get_output_dir(self) -> Path:
         _results_dir = self.vr_config.output_directory
@@ -61,14 +57,6 @@ class RunOptimization(VrToolRunProtocol):
             max_count=600,
             BCstop=0.1,
         )
-
-        # plot beta time for all measure steps for each strategy
-        if self._plot_mode == VrToolPlotMode.EXTENSIVE:
-            _greedy_optimization.plot_beta_time(
-                self.selected_traject,
-                typ="single",
-                path=self.vr_config.directory,
-            )
 
         _greedy_optimization = self._replace_names(
             _greedy_optimization, self._solutions_dict
@@ -142,14 +130,6 @@ class RunOptimization(VrToolRunProtocol):
             ),
             type="Final",
         )
-
-        # plot beta time for all measure steps for each strategy
-        if self._plot_mode == VrToolPlotMode.EXTENSIVE:
-            _target_reliability_based.plot_beta_time(
-                self.selected_traject,
-                typ="single",
-                path=self.vr_config.directory,
-            )
 
         _target_reliability_based = self._replace_names(
             _target_reliability_based, self._solutions_dict

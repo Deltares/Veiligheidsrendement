@@ -13,7 +13,7 @@ class TestVrtoolRunFullModel:
         _traject = MockedDikeTraject()
 
         # 2. Run test
-        _run = RunFullModel(_vr_config, _traject, "sth")
+        _run = RunFullModel(_vr_config, _traject)
 
         # 3. Verify expectations
         assert isinstance(_run, RunFullModel)
@@ -22,7 +22,7 @@ class TestVrtoolRunFullModel:
     def test_init_with_invalid_vr_config(self):
         # 1. Run test
         with pytest.raises(ValueError) as exception_error:
-            RunFullModel("nothing", "else", "matters")
+            RunFullModel("paradise", "city")
 
         # 2. Verify expectations
         assert str(exception_error.value) == "Expected instance of a VrtoolConfig."
@@ -33,7 +33,7 @@ class TestVrtoolRunFullModel:
 
         # 2. Run test
         with pytest.raises(ValueError) as exception_error:
-            RunFullModel(_vr_config, "else", "matters")
+            RunFullModel(_vr_config, "city")
 
         # 3. Verify expectations
         assert str(exception_error.value) == "Expected instance of a DikeTraject."

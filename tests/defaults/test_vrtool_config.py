@@ -39,7 +39,6 @@ class TestVrtoolConfig:
         # 1. Define test data.
         _expected_keys = [
             "language",
-            "timing",
             "traject",
             "input_directory",
             "output_directory",
@@ -57,13 +56,6 @@ class TestVrtoolConfig:
             "discount_rate",
             "shelves",
             "reuse_output",
-            "beta_or_prob",
-            "plot_reliability_in_time",
-            "plot_measure_reliability",
-            "flip_traject",
-            "assessment_plot_years",
-            "geometry_plot",
-            "beta_cost_settings",
             "design_methods",
             "unit_costs",
             "externals",
@@ -87,7 +79,6 @@ class TestVrtoolConfig:
 
         # Verify default values.
         assert _config.language == "EN"
-        assert not _config.timing
         assert _config.input_directory is None
 
         assert _config.t_0 == 2025
@@ -109,13 +100,6 @@ class TestVrtoolConfig:
         assert _config.discount_rate == pytest.approx(0.03)
         assert not _config.shelves
         assert not _config.reuse_output
-        assert _config.beta_or_prob == "beta"
-        assert not _config.plot_reliability_in_time
-        assert not _config.plot_measure_reliability
-        assert _config.flip_traject
-        assert _config.assessment_plot_years == [0, 20, 50]
-        assert not _config.geometry_plot
-        assert _config.beta_cost_settings == {"symbols": True, "markersize": 10}
         assert _config.design_methods == ["Veiligheidsrendement", "Doorsnede-eisen"]
         assert isinstance(_config.unit_costs, dict)
         assert any(_config.unit_costs.items())
@@ -154,7 +138,7 @@ class TestVrtoolConfig:
         "custom_path",
         [
             pytest.param("just\\a\\path", id="Double slash"),
-            pytest.param("with\simple\slash", id="Simple slash"),
+            pytest.param(r"with\simple\slash", id="Simple slash"),
         ],
     )
     def test_init_with_mapproperty_as_str_sets_to_path(self, custom_path: str):

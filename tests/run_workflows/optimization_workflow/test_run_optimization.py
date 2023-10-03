@@ -14,7 +14,7 @@ class TestRunOptimization:
         _results_measures.selected_traject = 456
 
         # 2. Run test.
-        _run = RunOptimization(_results_measures, "sth_else")
+        _run = RunOptimization(_results_measures)
 
         # 3. Verify expectations.
         assert isinstance(_run, RunOptimization)
@@ -24,7 +24,7 @@ class TestRunOptimization:
 
     def test_init_with_invalid_data(self):
         with pytest.raises(ValueError) as exception_error:
-            RunOptimization("not a result instance", "doh")
+            RunOptimization("not a result instance")
 
         assert (
             str(exception_error.value)
