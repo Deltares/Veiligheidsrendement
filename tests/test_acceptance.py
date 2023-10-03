@@ -18,8 +18,9 @@ from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import (
+    export_results_measures,
     export_results_safety_assessment,
-    export_solutions,
+    export_results_optimization,
     get_dike_traject,
     open_database,
     vrtool_db,
@@ -173,7 +174,7 @@ class TestAcceptance:
         _rm = ResultsMeasures()
         _rm.solutions_dict = _optimization_results.results_solutions
         _rm.vr_config = valid_vrtool_config
-        export_solutions(_rm)
+        export_results_measures(_rm)
         # export optimization
 
         # 3. Verify final expectations.
