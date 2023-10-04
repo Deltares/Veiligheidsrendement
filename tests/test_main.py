@@ -109,7 +109,7 @@ class TestMain:
 
         # 2. Run test.
         with pytest.raises(FileNotFoundError) as exception_error:
-            __main__._get_valid_vrtool_config(_input_dir)
+            __main__.get_valid_vrtool_config(_input_dir)
 
         # 3. Verify expectations.
         assert str(
@@ -130,7 +130,7 @@ class TestMain:
 
         # 2. Run test.
         with pytest.raises(ValueError) as exception_error:
-            __main__._get_valid_vrtool_config(_input_dir)
+            __main__.get_valid_vrtool_config(_input_dir)
 
         # 3. Verify expectations.
         assert str(
@@ -145,7 +145,7 @@ class TestMain:
         assert _input_dir.exists()
 
         # 2. Run test.
-        _vrtool_config = __main__._get_valid_vrtool_config(_input_dir)
+        _vrtool_config = __main__.get_valid_vrtool_config(_input_dir)
 
         # 3. Verify expectations.
         assert isinstance(_vrtool_config, VrtoolConfig)
