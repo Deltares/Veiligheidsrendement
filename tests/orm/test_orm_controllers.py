@@ -566,7 +566,8 @@ class TestOrmControllers:
             )
 
     def _create_mechanism(self, mechanism_name: str) -> orm_models.Mechanism:
-        return orm_models.Mechanism.create(name=mechanism_name)
+        _mechanism, _ = orm_models.Mechanism.get_or_create(name=mechanism_name)
+        return _mechanism
 
     def _create_basic_mechanism_per_section(
         self, section: orm_models.SectionData, mechanism: orm_models.Mechanism
@@ -592,7 +593,7 @@ class TestOrmControllers:
         section = self._create_basic_section_data(traject_info, section_name)
 
         _mechanism_per_section = self._create_basic_mechanism_per_section(
-            section, "TestMechanism"
+            section, self._create_mechanism("TestMechanism")
         )
 
         for measure in measures:
@@ -624,15 +625,17 @@ class TestOrmControllers:
             measure_per_section=measure_per_section,
         )
         _measure_result_parameters = self._get_measure_result_parameters(measure_result)
-        orm_models.MeasureResultParameter.insert_many(_measure_result_parameters)
+        orm_models.MeasureResultParameter.insert_many(
+            _measure_result_parameters
+        ).execute()
         orm_models.MeasureResultSection.insert_many(
             self._get_measure_result_section(measure_result, _t_range)
-        )
+        ).execute()
         orm_models.MeasureResultMechanism.insert_many(
-            self._get_measure_result_section(
+            self._get_measure_result_mechanism(
                 measure_result, _t_range, mechanism_per_section
             )
-        )
+        ).execute()
 
     def _get_measure_result_section(
         self, measure_result: orm_models.MeasureResult, t_range: list[int]
