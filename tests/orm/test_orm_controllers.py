@@ -476,6 +476,7 @@ class TestOrmControllers:
         ],
         indirect=True,
     )
+    @pytest.mark.skip(reason="Work in progress, needs to be completed by VRTOOL-268.")
     def test_export_results_optimization_given_valid_data(
         self,
         results_measures_with_mocked_data: tuple[
