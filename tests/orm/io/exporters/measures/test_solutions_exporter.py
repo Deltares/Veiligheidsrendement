@@ -5,12 +5,14 @@ from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
+    validate_clean_database,
+    validate_measure_result_export,
+    validate_no_parameters,
     MeasureResultTestInputData,
     MeasureWithDictMocked,
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
     validate_clean_database,
-    validate_measure_result_export,
     validate_no_parameters,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -178,4 +180,6 @@ class TestSolutionsExporter:
         _exporter.export_dom(_test_solution)
 
         # 3. Verify expectations.
-        validate_measure_result_export(_measures_test_input_data, _measure_parameters)
+        validate_measure_result_export(
+            _measures_test_input_data, _measures_test_input_data.parameters_to_validate
+        )
