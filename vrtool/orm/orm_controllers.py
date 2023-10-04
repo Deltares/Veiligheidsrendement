@@ -234,6 +234,41 @@ def export_results_measures(result: ResultsMeasures) -> None:
     logging.info("Closed connection after export solution.")
 
 
+def export_optimization_selected_measures(
+    result: ResultsOptimization, optimization_name: str
+) -> None:
+    _connected_db = open_database(result.vr_config.input_database_path)
+    logging.info(
+        "Opened connection to export optimization run {}.".format(optimization_name)
+    )
+
+    for _strategy in result.results_strategies:
+        _optimization_type, _ = orm.OptimizationType.get_or_create(
+            name=_strategy.type.upper()
+        )
+        _optimization_run = orm.OptimizationRun.create(
+            name=optimization_name,
+            discount_rate=_strategy.discount_rate,
+            optimization_type=_optimization_type,
+        )
+        _selected_measures_ids = list(set(_strategy.TakenMeasures["ID"]))
+        orm.OptimizationSelectedMeasure.insert_many(
+            [
+                dict(
+                    optimization_run=_optimization_run,
+                    measure_result=orm.MeasureResult.get_by_id(_measure_id),
+                    investment_year=0,
+                )
+                for _measure_id in _selected_measures_ids
+            ]
+        ).execute()
+
+    logging.info(
+        "Closed connection after export optimization run {}.".format(optimization_name)
+    )
+    _connected_db.close()
+
+
 def export_results_optimization(result: ResultsOptimization) -> None:
     """
     Exports the optimization results (`list[StrategyBase]`) to a database.

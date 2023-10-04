@@ -46,6 +46,7 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    export_optimization_selected_measures,
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
@@ -476,6 +477,106 @@ class TestOrmControllers:
         ],
         indirect=True,
     )
+    def test_export_optimization_selected_measures_given_valid_data(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
+
+        # Define strategies.
+        class MockedStrategy(StrategyBase):
+            def __init__(self, type: str, config: VrtoolConfig):
+                self.type = type
+                self.discount_rate = 0.42
+                # First run could just be exporting the index of TakenMeasures.
+                self.options = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResult.select()))
+                )  # All possible combinations of MeasureResults (by ID).
+                # Has a lot of information already present in measure results.
+                _measures_columns = [
+                    "Section",
+                    "option_in",
+                    "LCC",
+                    "BC",
+                    "ID",
+                    "name",
+                    "yes/no",
+                    "dcrest",
+                    "dberm",
+                    "beta_target",
+                    "transition_level",
+                ]
+                _taken_measures = []
+                _id_idx = _measures_columns.index("ID")
+                for _measure_result in MeasureResult.select():
+                    _taken_measure_row = [0] * len(_measures_columns)
+                    _taken_measure_row[_id_idx] = _measure_result.get_id()
+                    _taken_measures.append(_taken_measure_row)
+
+                self.TakenMeasures = pd.DataFrame(
+                    _taken_measures, columns=_measures_columns
+                )
+
+        _optimization_type = "Test optimization type"
+        _optimization_run_name = "Test optimization name"
+        _test_strategy = MockedStrategy(
+            type=_optimization_type, config=_results_measures.vr_config
+        )
+
+        assert not any(orm_models.OptimizationRun.select())
+        assert not any(orm_models.OptimizationType.select())
+        assert not any(orm_models.OptimizationSelectedMeasure.select())
+
+        _results_optimization = ResultsOptimization()
+        _results_optimization.vr_config = _results_measures.vr_config
+        _results_optimization.selected_traject = (
+            _measures_input_data.domain_dike_section.TrajectInfo.traject_name
+        )
+        _results_optimization.results_solutions = _results_measures.solutions_dict
+        _results_optimization.results_strategies = [_test_strategy]
+
+        # 2. Run test.
+        export_optimization_selected_measures(
+            _results_optimization, _optimization_run_name
+        )
+
+        # 3. Verify expectations.
+        assert len(orm_models.OptimizationType.select()) == 1
+        _optimization_type = orm_models.OptimizationType.get_or_none(
+            name=_test_strategy.type.upper()
+        )
+        assert isinstance(_optimization_type, orm_models.OptimizationType)
+
+        assert len(orm_models.OptimizationRun.select()) == 1
+        _optimization_run = orm_models.OptimizationRun.get_or_none(
+            optimization_type=_optimization_type, name=_optimization_run_name
+        )
+        assert isinstance(_optimization_run, orm_models.OptimizationRun)
+        assert _optimization_run.discount_rate == _test_strategy.discount_rate
+
+        assert len(orm_models.OptimizationSelectedMeasure.select()) == len(
+            orm_models.MeasureResult.select()
+        )
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
     @pytest.mark.skip(reason="Work in progress, needs to be completed by VRTOOL-268.")
     def test_export_results_optimization_given_valid_data(
         self,
@@ -574,8 +675,6 @@ class TestOrmControllers:
         )
         _results_optimization.results_solutions = _results_measures.solutions_dict
         _results_optimization.results_strategies = [_test_strategy]
-
-        assert not any(_optimization_run)
 
         # 2. Run test.
         export_results_optimization(_results_optimization)
