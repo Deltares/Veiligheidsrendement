@@ -1,3 +1,4 @@
+import random
 import shutil
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithDictMocked,
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
+    validate_measure_result_export,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -401,7 +403,7 @@ class TestOrmControllers:
     @pytest.fixture
     def results_measures_with_mocked_data(
         self, request: pytest.FixtureRequest, export_database: pytest.FixtureRequest
-    ):
+    ) -> tuple[MeasureResultTestInputData, ResultsMeasures]:
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
             request.param, {}
         )
@@ -460,7 +462,9 @@ class TestOrmControllers:
         export_results_measures(_results_measures)
 
         # 3. Verify expectations.
-        _measures_input_data.validate_exported_measure_results()
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
 
     @pytest.mark.parametrize(
         "results_measures_with_mocked_data",
@@ -474,22 +478,39 @@ class TestOrmControllers:
     )
     def test_export_results_optimization_given_valid_data(
         self,
-        results_measures_with_mocked_data: type[MeasureProtocol],
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
     ):
         # 1. Define test data.
         _measures_input_data, _results_measures = results_measures_with_mocked_data
         assert isinstance(_measures_input_data, MeasureResultTestInputData)
         assert isinstance(_results_measures, ResultsMeasures)
         export_results_measures(_results_measures)
-        _measures_input_data.validate_exported_measure_results()
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
+
+        # Generate default run data.
+        _optimization_type = "Test optimization type"
+        _test_optimization_type = orm_models.OptimizationType.create(
+            name=_optimization_type
+        )
+        _optimization_run = orm_models.OptimizationRun.create(
+            name="PremadeOptimization",
+            discount_rate=0.42,
+            optimization_type=_test_optimization_type,
+        )
+        for _measure_result in orm_models.MeasureResult.select():
+            orm_models.OptimizationSelectedMeasure.create(
+                optimization_run=_optimization_run,
+                measure_result=_measure_result,
+                investment_year=2023,
+            )
 
         # Define strategies.
-        import random
-
         class MockedStrategy(StrategyBase):
             def __init__(self, type, config: VrtoolConfig):
-                # TODO: Not entirely sure what needs to be used here.
-                # should be solved after (or in) VRTOOL-268.
                 # First run could just be exporting the index of TakenMeasures.
                 self.options = pd.DataFrame(
                     list(map(lambda x: x.id, MeasureResult.select()))
@@ -540,20 +561,36 @@ class TestOrmControllers:
                 ]  # This actually refers to the `MeasureResult.ID`
                 self.TakenMeasures["LCC"][0] = 42.24
 
-        _test_strategy = MockedStrategy(type="", config=_results_measures.vr_config)
+        _test_strategy = MockedStrategy(
+            type=_optimization_type, config=_results_measures.vr_config
+        )
 
         # Define results optimization object.
         _results_optimization = ResultsOptimization()
         _results_optimization.vr_config = _results_measures.vr_config
-        _results_optimization.selected_traject = _measures_input_data
+        _results_optimization.selected_traject = (
+            _measures_input_data.domain_dike_section.TrajectInfo.traject_name
+        )
         _results_optimization.results_solutions = _results_measures.solutions_dict
         _results_optimization.results_strategies = [_test_strategy]
+
+        assert not any(_optimization_run)
 
         # 2. Run test.
         export_results_optimization(_results_optimization)
 
         # 3. Verify expectations.
-        _measures_input_data.validate_exported_optimization_results()
+        assert len(orm_models.OptimizationStep.select()) == 1
+        assert len(orm_models.OptimizationStepResult) == len(
+            _measures_input_data.t_columns
+        )
+
+        _optimization_step = orm_models.OptimizationStep.get()
+        for _t_column in _measures_input_data.t_columns:
+            _step_result = orm_models.OptimizationStepResult.get_or_none(
+                optimization_step=_optimization_step, time=_t_column
+            )
+            assert isinstance(_step_result, orm_models.OptimizationStepResult)
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase

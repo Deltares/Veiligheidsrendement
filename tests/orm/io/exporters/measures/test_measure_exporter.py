@@ -11,6 +11,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
     validate_clean_database,
+    validate_measure_result_export,
     validate_no_parameters,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -80,7 +81,9 @@ class TestMeasureExporter:
         _exporter.export_dom(_measures_input_data.measure)
 
         # Assert
-        _measures_input_data.validate_exported_measure_results()
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
 
     def test_export_dom_given_valid_measure_dict_list(
         self, empty_db_fixture: SqliteDatabase
@@ -98,7 +101,7 @@ class TestMeasureExporter:
         MeasureExporter(_input_data.measure_per_section).export_dom(_input_data.measure)
 
         # 3. Verify final expectations.
-        _input_data.validate_exported_measure_results()
+        validate_measure_result_export(_input_data, _input_data.parameters_to_validate)
 
     def test_export_dom_given_dict_measure(self, empty_db_fixture: SqliteDatabase):
         # Setup
@@ -113,7 +116,9 @@ class TestMeasureExporter:
         _exporter.export_dom(_test_input_data.measure)
 
         # Assert
-        _test_input_data.validate_exported_measure_results()
+        validate_measure_result_export(
+            _test_input_data, _test_input_data.parameters_to_validate
+        )
 
     def test_export_dom_invalid_data(self, empty_db_fixture: SqliteDatabase):
         # Setup
