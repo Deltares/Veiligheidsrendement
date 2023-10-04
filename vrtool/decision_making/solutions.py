@@ -31,7 +31,6 @@ class Solutions:
 
         self.config = config
         self.T = config.T
-        # Mechanisms is deprecated, it will be replaced by "excluded_mechanisms".
         self.mechanisms = config.mechanisms
         self.measures: list[MeasureProtocol] = []
         self.measure_table = pd.DataFrame(columns=["ID", "Name"])

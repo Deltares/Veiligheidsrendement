@@ -44,7 +44,8 @@ class TestVrtoolConfig:
             "output_directory",
             "t_0",
             "T",
-            "mechanisms",
+            "supported_mechanisms",
+            "excluded_mechanisms",
             "LE_in_section",
             "crest_step",
             "berm_step",
@@ -211,6 +212,30 @@ class TestVrtoolConfig:
         else:
             _expectation = None
         assert _test_db_path == _expectation
+
+    _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
+
+    @pytest.mark.parametrize(
+        "excluded_mechanisms, expected",
+        [
+            pytest.param(
+                _available_mechanisms[3:], _available_mechanisms[:3], id="VALID filter"
+            ),
+            pytest.param(
+                ["Invalid mechanism"], _available_mechanisms[:], id="INVALID filter"
+            ),
+            pytest.param([None], _available_mechanisms[:], id="NONE filter"),
+        ],
+    )
+    def test_filter_mechanisms(self, excluded_mechanisms, expected):
+        # 1. Define test data
+        _vrtool_config = VrtoolConfig(excluded_mechanisms=excluded_mechanisms)
+
+        # 2. Run test
+        _mechamisms = _vrtool_config.mechanisms
+
+        # 3. Verify expectations
+        assert _mechamisms.sort() == expected.sort()
 
     @pytest.mark.parametrize(
         "path_value, expected_value",
