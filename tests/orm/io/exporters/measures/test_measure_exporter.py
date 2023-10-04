@@ -81,9 +81,7 @@ class TestMeasureExporter:
         _exporter.export_dom(_measures_input_data.measure)
 
         # Assert
-        validate_measure_result_export(
-            _measures_input_data, _measures_input_data.parameters_to_validate
-        )
+        validate_measure_result_export(_measures_input_data, parameters_to_validate)
 
     def test_export_dom_given_valid_measure_dict_list(
         self, empty_db_fixture: SqliteDatabase
