@@ -7,9 +7,12 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
+    create_optimization_run,
+    export_results_optimization,
     export_results_safety_assessment,
     export_results_measures,
     get_dike_traject,
+    get_exported_measure_result_ids,
 )
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
@@ -115,12 +118,21 @@ def run_step_optimization(**kwargs):
     _selected_traject = get_dike_traject(_vr_config)
 
     # Step 2. Measures.
+    clear_assessment_results(
+        _vr_config
+    )  # Assessment results also cleared because it is part of the RunMeasures workflow
+    clear_measure_results(_vr_config)
     _measures = RunMeasures(_vr_config, _selected_traject)
     _measures_result = _measures.run()
+    # Step 2b. Export solutions to database
+    export_results_measures(_measures_result)
 
     # Step 3. Optimization.
+    _ids = get_exported_measure_result_ids(_measures_result)
+    create_optimization_run(_vr_config, _ids, "run_step_optimization")
     _optimization = RunOptimization(_measures_result)
-    _optimization.run()
+    _optimization_result = _optimization.run()
+    export_results_optimization(_optimization_result)
 
 
 @cli.command(name="run_full", help="Full run of the model in the given directory.")

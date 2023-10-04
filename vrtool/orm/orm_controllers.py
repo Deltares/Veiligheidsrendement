@@ -5,6 +5,7 @@ from peewee import SqliteDatabase
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -234,24 +235,65 @@ def export_results_measures(result: ResultsMeasures) -> None:
     logging.info("Closed connection after export solution.")
 
 
-def export_optimization_selected_measures(
-    result: ResultsOptimization, optimization_name: str
+def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[int]:
+    """
+    Retrieves from the database the list of IDs for the provided results measures.
+    To do so we check all the available `MeasureResult` related to the `MeasurePerSection`
+    contained in the `ResultsMeasures` object.
+
+    Args:
+        result_measures (ResultsMeasures): Result measures' whose ids need to be retrieved.
+
+    Returns:
+        list[int]: List of IDs of `MeasureResult`.
+    """
+    _connected_db = open_database(result_measures.vr_config.input_database_path)
+    _result_measure_ids = []
+    for _solution in result_measures.solutions_dict.values():
+        for _measure in _solution.measures:
+            _measure_per_section = SolutionsExporter.get_measure_per_section(
+                _solution.section_name,
+                _solution.config.traject,
+                _measure.parameters["ID"],
+            )
+            _result_measure_ids.extend(
+                [
+                    mxsr.get_id()
+                    for mxsr in _measure_per_section.measure_per_section_result
+                ]
+            )
+
+    _connected_db.close()
+    return _result_measure_ids
+
+
+def create_optimization_run(
+    vr_config: VrtoolConfig,
+    selected_measure_result_ids: list[int],
+    optimization_name: str,
 ) -> None:
-    _connected_db = open_database(result.vr_config.input_database_path)
+    """
+    Creates an `OptimizationRun` database entry and as many entries as needed
+    in the `OptimizationSelectedMeasure` table based on the provided arguments.
+
+    Args:
+        vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
+        selected_measure_result_ids (list[int]): list of `MeasureResult` id's in the database.
+        optimization_name (str): name to give to an optimization run.
+    """
+    _connected_db = open_database(vr_config.input_database_path)
     logging.info(
         "Opened connection to export optimization run {}.".format(optimization_name)
     )
-
-    for _strategy in result.results_strategies:
+    for _method_type in vr_config.design_methods:
         _optimization_type, _ = orm.OptimizationType.get_or_create(
-            name=_strategy.type.upper()
+            name=_method_type.upper()
         )
         _optimization_run = orm.OptimizationRun.create(
             name=optimization_name,
-            discount_rate=_strategy.discount_rate,
+            discount_rate=vr_config.discount_rate,
             optimization_type=_optimization_type,
         )
-        _selected_measures_ids = list(set(_strategy.TakenMeasures["ID"]))
         orm.OptimizationSelectedMeasure.insert_many(
             [
                 dict(
@@ -259,7 +301,7 @@ def export_optimization_selected_measures(
                     measure_result=orm.MeasureResult.get_by_id(_measure_id),
                     investment_year=0,
                 )
-                for _measure_id in _selected_measures_ids
+                for _measure_id in selected_measure_result_ids
             ]
         ).execute()
 

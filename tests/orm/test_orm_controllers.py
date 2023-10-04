@@ -46,12 +46,13 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    export_optimization_selected_measures,
+    create_optimization_run,
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
+    get_exported_measure_result_ids,
     initialize_database,
     open_database,
 )
@@ -477,6 +478,38 @@ class TestOrmControllers:
         ],
         indirect=True,
     )
+    def test_get_selected_measure_result_ids_returns_list_of_exported_results_measures(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+
+        # 2. Run test.
+        _return_values = get_exported_measure_result_ids(
+            _results_measures.vr_config.input_database_path, _results_measures
+        )
+
+        # 3. Verify expectations.
+        assert len(MeasureResult.select()) == 1
+        _expected_id = MeasureResult.get().get_id()
+        assert _return_values == [_expected_id]
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
     def test_export_optimization_selected_measures_given_valid_data(
         self,
         results_measures_with_mocked_data: tuple[
@@ -532,21 +565,10 @@ class TestOrmControllers:
             type=_optimization_type, config=_results_measures.vr_config
         )
 
-        assert not any(orm_models.OptimizationRun.select())
-        assert not any(orm_models.OptimizationType.select())
-        assert not any(orm_models.OptimizationSelectedMeasure.select())
-
-        _results_optimization = ResultsOptimization()
-        _results_optimization.vr_config = _results_measures.vr_config
-        _results_optimization.selected_traject = (
-            _measures_input_data.domain_dike_section.TrajectInfo.traject_name
-        )
-        _results_optimization.results_solutions = _results_measures.solutions_dict
-        _results_optimization.results_strategies = [_test_strategy]
-
         # 2. Run test.
-        export_optimization_selected_measures(
-            _results_optimization, _optimization_run_name
+        _measure_result_ids = [mr.get_id() for mr in orm_models.MeasureResult.select()]
+        create_optimization_run(
+            _results_measures.vr_config, _measure_result_ids, _optimization_run_name
         )
 
         # 3. Verify expectations.
@@ -564,7 +586,7 @@ class TestOrmControllers:
         assert _optimization_run.discount_rate == _test_strategy.discount_rate
 
         assert len(orm_models.OptimizationSelectedMeasure.select()) == len(
-            orm_models.MeasureResult.select()
+            _measure_result_ids
         )
 
     @pytest.mark.parametrize(

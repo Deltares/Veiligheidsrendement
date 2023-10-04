@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict
 
 from vrtool.decision_making.solutions import Solutions
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
