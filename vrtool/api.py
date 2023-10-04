@@ -1,5 +1,6 @@
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from pathlib import Path
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -7,13 +8,19 @@ from vrtool.orm.orm_controllers import (
     export_solutions,
     get_dike_traject,
 )
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
+    ResultsOptimization,
+)
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
+from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
+    ResultsSafetyAssessment,
+)
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
-from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
-from vrtool.vrtool_logger import VrToolLogger
+import logging
 
 
 def get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
@@ -53,17 +60,8 @@ def run_step_assessment(vrtool_config: VrtoolConfig) -> None:
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    _selected_traject = get_dike_traject(vrtool_config)
+    ApiRunWorkflows(vrtool_config).run_assessment()
 
-    # Clear the results
-    clear_assessment_results(vrtool_config)
-
-    # Step 1. Safety assessment.
-    _safety_assessment = RunSafetyAssessment(vrtool_config, _selected_traject)
-    _result = _safety_assessment.run()
-
-    # Export the results.
-    export_results_safety_assessment(_result)
 
 def run_step_measures(vrtool_config: VrtoolConfig) -> None:
     """
@@ -73,21 +71,8 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    _selected_traject = get_dike_traject(vrtool_config)
+    ApiRunWorkflows(vrtool_config).run_measures()
 
-    # Clear the results
-    clear_assessment_results(
-        vrtool_config
-    )
-    # Assessment results also cleared because it is part of the RunMeasures workflow
-    clear_measure_results(vrtool_config)
-
-    # Step 2a. Measures.
-    _measures = RunMeasures(vrtool_config, _selected_traject)
-    _measures_result = _measures.run()
-
-    # Step 2b. Export solutions to database
-    export_solutions(_measures_result)
 
 def run_step_optimization(vrtool_config: VrtoolConfig) -> None:
     """
@@ -97,15 +82,8 @@ def run_step_optimization(vrtool_config: VrtoolConfig) -> None:
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    _selected_traject = get_dike_traject(vrtool_config)
+    ApiRunWorkflows(vrtool_config).run_optimization()
 
-    # Step 2. Measures.
-    _measures = RunMeasures(vrtool_config, _selected_traject)
-    _measures_result = _measures.run()
-
-    # Step 3. Optimization.
-    _optimization = RunOptimization(_measures_result)
-    _optimization.run()
 
 def run_full(vrtool_config: VrtoolConfig) -> None:
     """
@@ -118,5 +96,71 @@ def run_full(vrtool_config: VrtoolConfig) -> None:
     _selected_traject = get_dike_traject(vrtool_config)
 
     # Run all steps with one command.
-    _full_model = RunFullModel(vrtool_config, _selected_traject)
-    _full_model.run()
+    if not vrtool_config.output_directory.is_dir():
+        logging.info(
+            "Creating output directories at {}".format(vrtool_config.output_directory)
+        )
+        vrtool_config.output_directory.mkdir(parents=True, exist_ok=True)
+        vrtool_config.output_directory.joinpath("figures").mkdir(
+            parents=True, exist_ok=True
+        )
+        vrtool_config.output_directory.joinpath("results", "investment_steps").mkdir(
+            parents=True, exist_ok=True
+        )
+
+    logging.info("Start run full model.")
+
+    # Step 1. Safety assessment.
+    _safety_assessment = RunSafetyAssessment(vrtool_config, _selected_traject)
+    _safety_assessment.run()
+
+    # Step 2. Measures.
+    _measures = RunMeasures(vrtool_config, _selected_traject)
+    _measures_result = _measures.run()
+
+    # Step 3. Optimization.
+    _optimization = RunOptimization(_measures_result)
+    _optimization_result = _optimization.run()
+
+    logging.info("Finished run full model.")
+    return _optimization_result
+
+
+class ApiRunWorkflows:
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
+        self.vrtool_config = vrtool_config
+        self.selected_traject = get_dike_traject(vrtool_config)
+
+    def run_assessment(self) -> ResultsSafetyAssessment:
+        # Clear the results
+        clear_assessment_results(self.vrtool_config)
+
+        # Step 1. Safety assessment.
+        _safety_assessment = RunSafetyAssessment(
+            self.vrtool_config, self.selected_traject
+        )
+        _result = _safety_assessment.run()
+
+        # Export the results.
+        export_results_safety_assessment(_result)
+
+    def run_measures(self) -> ResultsMeasures:
+        self.run_assessment()
+
+        # Assessment results also cleared because it is part of the RunMeasures workflow
+        clear_measure_results(self.vrtool_config)
+
+        # Run Measures.
+        _measures = RunMeasures(self.vrtool_config, self.selected_traject)
+        _measures_result = _measures.run()
+
+        # Export solutions to database
+        export_solutions(_measures_result)
+
+    def run_optimization(self) -> ResultsOptimization:
+        # Run Measures.
+        _measures_result = self.run_measures()
+
+        # run Optimization.
+        _optimization = RunOptimization(_measures_result)
+        _optimization.run()
