@@ -7,8 +7,8 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
-    export_results_safety_assessment,
     export_results_measures,
+    export_results_safety_assessment,
     get_dike_traject,
 )
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures

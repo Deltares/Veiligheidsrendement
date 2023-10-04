@@ -20,11 +20,11 @@ from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import (
-    export_results_measures,
     clear_assessment_results,
     clear_measure_results,
-    export_results_safety_assessment,
+    export_results_measures,
     export_results_optimization,
+    export_results_safety_assessment,
     get_dike_traject,
     open_database,
     vrtool_db,

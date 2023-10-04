@@ -5,6 +5,16 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
+
+import vrtool.orm.models as orm_models
+from tests import test_data, test_results
+from tests.orm import (
+    empty_db_fixture,
+    get_basic_combinable_type,
+    get_basic_dike_traject_info,
+    get_basic_measure_type,
+    get_basic_mechanism_per_section,
+)
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -12,21 +22,11 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithMeasureResultCollectionMocked,
     validate_measure_result_export,
 )
-from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
-
-import vrtool.orm.models as orm_models
-from tests import test_data, test_results
-from tests.orm import (
-    get_basic_combinable_type,
-    get_basic_dike_traject_info,
-    get_basic_measure_type,
-    get_basic_mechanism_per_section,
-    empty_db_fixture,
-)
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
