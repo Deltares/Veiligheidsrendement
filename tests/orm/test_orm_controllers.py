@@ -26,6 +26,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -441,6 +442,8 @@ class TestOrmControllers:
         # Assert
         assert not any(orm_models.MeasureResult.select())
         assert not any(orm_models.MeasureResultParameter.select())
+        assert not any(orm_models.MeasureResultSection.select())
+        assert not any(orm_models.MeasureResultMechanism.select())
 
     def test_clear_optimization_results_clears_all_results(
         self, export_database: SqliteDatabase
@@ -483,6 +486,8 @@ class TestOrmControllers:
 
         assert any(orm_models.MeasureResult.select())
         assert any(orm_models.MeasureResultParameter.select())
+        assert any(orm_models.MeasureResultSection.select())
+        assert any(orm_models.MeasureResultMechanism.select())
 
     def _generate_optimization_results(self, db_connection: SqliteDatabase):
         self._generate_measure_results(db_connection)
@@ -586,11 +591,15 @@ class TestOrmControllers:
     ) -> None:
         section = self._create_basic_section_data(traject_info, section_name)
 
+        _mechanism_per_section = self._create_basic_mechanism_per_section(
+            section, "TestMechanism"
+        )
+
         for measure in measures:
             measure_per_section = orm_models.MeasurePerSection.create(
                 section=section, measure=measure
             )
-            self._create_measure_results(measure_per_section)
+            self._create_measure_results(measure_per_section, _mechanism_per_section)
 
     def _create_measure(
         self,
@@ -606,22 +615,52 @@ class TestOrmControllers:
         )
 
     def _create_measure_results(
-        self, measure_per_section: orm_models.MeasurePerSection
+        self,
+        measure_per_section: orm_models.MeasurePerSection,
+        mechanism_per_section: MechanismPerSection,
     ) -> None:
+        _t_range = list(range(2000, 2100, 10))
+        measure_result = orm_models.MeasureResult.create(
+            measure_per_section=measure_per_section,
+        )
+        _measure_result_parameters = self._get_measure_result_parameters(measure_result)
+        orm_models.MeasureResultParameter.insert_many(_measure_result_parameters)
+        orm_models.MeasureResultSection.insert_many(
+            self._get_measure_result_section(measure_result, _t_range)
+        )
+        orm_models.MeasureResultMechanism.insert_many(
+            self._get_measure_result_section(
+                measure_result, _t_range, mechanism_per_section
+            )
+        )
+
+    def _get_measure_result_section(
+        self, measure_result: orm_models.MeasureResult, t_range: list[int]
+    ) -> list[dict]:
         cost = 13.37
-        for i in range(2000, 2100, 10):
-            measure_result = orm_models.MeasureResult.create(
+        for i in t_range:
+            yield dict(
+                measure_result=measure_result, beta=i / 1000.0, time=i, cost=cost
+            )
+
+    def _get_measure_result_mechanism(
+        self,
+        measure_result: orm_models.MeasureResult,
+        t_range: list[int],
+        mechanism_per_section: MechanismPerSection,
+    ) -> list[dict]:
+        for i in t_range:
+            yield dict(
+                measure_result=measure_result,
                 beta=i / 1000.0,
                 time=i,
-                cost=cost,
-                measure_per_section=measure_per_section,
+                mechanism_per_section=mechanism_per_section,
             )
-            self._create_measure_result_parameters(measure_result)
 
-    def _create_measure_result_parameters(
+    def _get_measure_result_parameters(
         self, measure_result: orm_models.MeasureResult
-    ) -> None:
+    ) -> list[dict]:
         for i in range(1, 10):
-            orm_models.MeasureResultParameter.create(
+            yield dict(
                 name=f"Parameter {i}", value=i / 10.0, measure_result=measure_result
             )
