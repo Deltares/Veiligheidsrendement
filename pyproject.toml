@@ -44,6 +44,7 @@ pytest-cov = "^3.0.0"
 coverage = "^6.4.4"
 teamcity-messages = "^1.32"
 pytest-xdist = "^3.3.1"
+pytest-profiling = "^1.7.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"
@@ -86,6 +87,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "externals: marks tests that require of external binaries (deselect with '-m \"not externals\"')",
 ]
+
 
 [tool.commitizen]
 name = "cz_conventional_commits"
