@@ -178,4 +178,6 @@ class TestSolutionsExporter:
         _exporter.export_dom(_test_solution)
 
         # 3. Verify expectations.
-        validate_measure_result_export(_measures_test_input_data, _measure_parameters)
+        validate_measure_result_export(
+            _measures_test_input_data, _measures_test_input_data.parameters_to_validate
+        )

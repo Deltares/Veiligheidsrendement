@@ -7,8 +7,8 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
+    export_results_measures,
     export_results_safety_assessment,
-    export_solutions,
     get_dike_traject,
 )
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
@@ -100,7 +100,7 @@ def run_step_measures(**kwargs):
     _measures_result = _measures.run()
 
     # Step 2b. Export solutions to database
-    export_solutions(_measures_result)
+    export_results_measures(_measures_result)
 
 
 @cli.command(

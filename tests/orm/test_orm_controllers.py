@@ -1,3 +1,4 @@
+import random
 import shutil
 from pathlib import Path
 
@@ -8,14 +9,24 @@ from peewee import SqliteDatabase
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
 from tests.orm import (
+    empty_db_fixture,
     get_basic_combinable_type,
     get_basic_dike_traject_info,
     get_basic_measure_type,
     get_basic_mechanism_per_section,
 )
+from tests.orm.io.exporters.measures.measure_result_test_validators import (
+    MeasureResultTestInputData,
+    MeasureWithDictMocked,
+    MeasureWithListOfDictMocked,
+    MeasureWithMeasureResultCollectionMocked,
+    validate_measure_result_export,
+)
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.hydraulic_loads.load_input import LoadInput
+from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -26,16 +37,28 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_result.measure_result_mechanism import (
+    MeasureResultMechanism,
+)
+from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    export_optimization_selected_measures,
+    export_results_measures,
+    export_results_optimization,
     export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
     initialize_database,
     open_database,
+)
+from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
+    ResultsOptimization,
 )
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
@@ -378,6 +401,297 @@ class TestOrmControllers:
                 & (orm_models.AssessmentMechanismResult.time == 42)
             )
         )
+
+    @pytest.fixture
+    def results_measures_with_mocked_data(
+        self, request: pytest.FixtureRequest, export_database: pytest.FixtureRequest
+    ) -> tuple[MeasureResultTestInputData, ResultsMeasures]:
+        _measures_input_data = MeasureResultTestInputData.with_measures_type(
+            request.param, {}
+        )
+
+        # Define vrtool config.
+        _database_path = Path(export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=_database_path.parent,
+            input_database_name=_database_path.name,
+            traject=_measures_input_data.domain_dike_section.TrajectInfo.traject_name,
+        )
+
+        # Define solutions.
+        _solutions = Solutions(
+            dike_section=_measures_input_data.domain_dike_section, config=_vrtool_config
+        )
+        _solutions.measures = [_measures_input_data.measure]
+
+        # Define results measures object.
+        _results_measures = ResultsMeasures()
+        _results_measures.vr_config = _vrtool_config
+        _results_measures.selected_traject = _measures_input_data
+        _results_measures.solutions_dict["sth"] = _solutions
+
+        yield _measures_input_data, _results_measures
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(MeasureWithDictMocked, id="With dictionary"),
+            pytest.param(MeasureWithListOfDictMocked, id="With list of dictionaries"),
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    def test_export_results_measures_given_valid_data(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+        export_database: pytest.FixtureRequest,
+    ):
+        """
+        Virtually this test verifies (almost) the same as
+        `TestMeasureExporter.test_export_dom_with_valid_data`.
+        """
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+
+        # 2. Run test.
+        export_results_measures(_results_measures)
+
+        # 3. Verify expectations.
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    def test_export_optimization_selected_measures_given_valid_data(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
+
+        # Define strategies.
+        class MockedStrategy(StrategyBase):
+            def __init__(self, type: str, config: VrtoolConfig):
+                self.type = type
+                self.discount_rate = 0.42
+                # First run could just be exporting the index of TakenMeasures.
+                self.options = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResult.select()))
+                )  # All possible combinations of MeasureResults (by ID).
+                # Has a lot of information already present in measure results.
+                _measures_columns = [
+                    "Section",
+                    "option_in",
+                    "LCC",
+                    "BC",
+                    "ID",
+                    "name",
+                    "yes/no",
+                    "dcrest",
+                    "dberm",
+                    "beta_target",
+                    "transition_level",
+                ]
+                _taken_measures = []
+                _id_idx = _measures_columns.index("ID")
+                for _measure_result in MeasureResult.select():
+                    _taken_measure_row = [0] * len(_measures_columns)
+                    _taken_measure_row[_id_idx] = _measure_result.get_id()
+                    _taken_measures.append(_taken_measure_row)
+
+                self.TakenMeasures = pd.DataFrame(
+                    _taken_measures, columns=_measures_columns
+                )
+
+        _optimization_type = "Test optimization type"
+        _optimization_run_name = "Test optimization name"
+        _test_strategy = MockedStrategy(
+            type=_optimization_type, config=_results_measures.vr_config
+        )
+
+        assert not any(orm_models.OptimizationRun.select())
+        assert not any(orm_models.OptimizationType.select())
+        assert not any(orm_models.OptimizationSelectedMeasure.select())
+
+        _results_optimization = ResultsOptimization()
+        _results_optimization.vr_config = _results_measures.vr_config
+        _results_optimization.selected_traject = (
+            _measures_input_data.domain_dike_section.TrajectInfo.traject_name
+        )
+        _results_optimization.results_solutions = _results_measures.solutions_dict
+        _results_optimization.results_strategies = [_test_strategy]
+
+        # 2. Run test.
+        export_optimization_selected_measures(
+            _results_optimization, _optimization_run_name
+        )
+
+        # 3. Verify expectations.
+        assert len(orm_models.OptimizationType.select()) == 1
+        _optimization_type = orm_models.OptimizationType.get_or_none(
+            name=_test_strategy.type.upper()
+        )
+        assert isinstance(_optimization_type, orm_models.OptimizationType)
+
+        assert len(orm_models.OptimizationRun.select()) == 1
+        _optimization_run = orm_models.OptimizationRun.get_or_none(
+            optimization_type=_optimization_type, name=_optimization_run_name
+        )
+        assert isinstance(_optimization_run, orm_models.OptimizationRun)
+        assert _optimization_run.discount_rate == _test_strategy.discount_rate
+
+        assert len(orm_models.OptimizationSelectedMeasure.select()) == len(
+            orm_models.MeasureResult.select()
+        )
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    @pytest.mark.skip(reason="Work in progress, needs to be completed by VRTOOL-268.")
+    def test_export_results_optimization_given_valid_data(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
+
+        # Generate default run data.
+        _optimization_type = "Test optimization type"
+        _test_optimization_type = orm_models.OptimizationType.create(
+            name=_optimization_type
+        )
+        _optimization_run = orm_models.OptimizationRun.create(
+            name="PremadeOptimization",
+            discount_rate=0.42,
+            optimization_type=_test_optimization_type,
+        )
+        for _measure_result in orm_models.MeasureResult.select():
+            orm_models.OptimizationSelectedMeasure.create(
+                optimization_run=_optimization_run,
+                measure_result=_measure_result,
+                investment_year=2023,
+            )
+
+        # Define strategies.
+        class MockedStrategy(StrategyBase):
+            def __init__(self, type, config: VrtoolConfig):
+                # First run could just be exporting the index of TakenMeasures.
+                self.options = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResult.select()))
+                )  # All possible combinations of MeasureResults (by ID).
+                self.options_geotechnical = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResultMechanism.select()))
+                )
+                self.options_height = pd.DataFrame(
+                    list(map(lambda x: x.id, MeasureResultSection.select()))
+                )
+                # Measures selected per step
+                self.MeasureIndices = pd.DataFrame(
+                    list(
+                        map(
+                            lambda x: [
+                                x.id,
+                                random.randint(0, len(self.options_geotechnical) - 1),
+                                random.randint(0, len(self.options_height) - 1),
+                            ],
+                            MeasureResult.select(),
+                        )
+                    )
+                )
+                # Has a lot of information already present in measure results.
+                _measures_columns = [
+                    "Section",
+                    "option_in",
+                    "LCC",
+                    "BC",
+                    "ID",
+                    "name",
+                    "yes/no",
+                    "dcrest",
+                    "dberm",
+                    "beta_target",
+                    "transition_level",
+                ]
+                _taken_measure_row = [0] * len(_measures_columns)
+                self.TakenMeasures = pd.DataFrame(
+                    [_taken_measure_row], columns=_measures_columns
+                )  # This is actually OptimizationStep (with extra info).
+                _single_existing_measure_result = MeasureResult.select().get()
+                self.TakenMeasures["Section"][
+                    0
+                ] = _single_existing_measure_result.measure_per_section.section.id
+                self.TakenMeasures["option_in"][0] = self.options[0][
+                    0
+                ]  # This actually refers to the `MeasureResult.ID`
+                self.TakenMeasures["LCC"][0] = 42.24
+
+        _test_strategy = MockedStrategy(
+            type=_optimization_type, config=_results_measures.vr_config
+        )
+
+        # Define results optimization object.
+        _results_optimization = ResultsOptimization()
+        _results_optimization.vr_config = _results_measures.vr_config
+        _results_optimization.selected_traject = (
+            _measures_input_data.domain_dike_section.TrajectInfo.traject_name
+        )
+        _results_optimization.results_solutions = _results_measures.solutions_dict
+        _results_optimization.results_strategies = [_test_strategy]
+
+        # 2. Run test.
+        export_results_optimization(_results_optimization)
+
+        # 3. Verify expectations.
+        assert len(orm_models.OptimizationStep.select()) == 1
+        assert len(orm_models.OptimizationStepResult) == len(
+            _measures_input_data.t_columns
+        )
+
+        _optimization_step = orm_models.OptimizationStep.get()
+        for _t_column in _measures_input_data.t_columns:
+            _step_result = orm_models.OptimizationStepResult.get_or_none(
+                optimization_step=_optimization_step, time=_t_column
+            )
+            assert isinstance(_step_result, orm_models.OptimizationStepResult)
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase
