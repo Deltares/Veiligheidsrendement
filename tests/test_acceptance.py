@@ -192,9 +192,6 @@ class TestAcceptance:
         _acceptance_all_steps_test_cases,
         indirect=["valid_vrtool_config"],
     )
-    @pytest.mark.skip(
-        reason="Currently only slows down the tests, reenable when optimization can be exported."
-    )
     def test_run_safety_assessment_and_save_initial_assessment(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -342,6 +339,9 @@ class TestAcceptance:
         "valid_vrtool_config",
         _acceptance_measure_test_cases,
         indirect=["valid_vrtool_config"],
+    )
+    @pytest.mark.skip(
+        reason="Currently only slows down the tests, reenable when optimization can be exported, and all acceptance tests can be run"
     )
     def test_run_measures_and_save_measure_results(
         self, valid_vrtool_config: VrtoolConfig

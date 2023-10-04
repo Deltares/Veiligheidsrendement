@@ -207,6 +207,7 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
         # These tables should be cleared 'on cascade'.
         orm.OptimizationSelectedMeasure.delete().execute()
         orm.OptimizationStep.delete().execute()
+        orm.OptimizationStepResult.delete().execute()
 
     vrtool_db.close()
 

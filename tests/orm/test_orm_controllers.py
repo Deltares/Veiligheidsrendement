@@ -637,6 +637,7 @@ class TestOrmControllers:
         assert not any(orm_models.OptimizationRun.select())
         assert not any(orm_models.OptimizationSelectedMeasure.select())
         assert not any(orm_models.OptimizationStep.select())
+        assert not any(orm_models.OptimizationStepResult.select())
 
     def _generate_measure_results(self, db_connection: SqliteDatabase):
         db_connection.connect()
@@ -671,13 +672,25 @@ class TestOrmControllers:
             discount_rate=0.42,
             optimization_type=_dummy_optimization_type,
         )
+        _measure_result = orm_models.MeasureResult.select()[0].get()
         _optimization_selected_measure = orm_models.OptimizationSelectedMeasure.create(
             optimization_run=_optimization_run,
-            measure_result=orm_models.MeasureResult.select()[0],
+            measure_result=_measure_result,
             investment_year=2021,
         )
-        orm_models.OptimizationStep.create(
+        _optimization_step = orm_models.OptimizationStep.create(
             optimization_selected_measure=_optimization_selected_measure, step_number=42
+        )
+        _mechanism = orm_models.Mechanism.create(name="A Mechanism")
+        _mechanism_per_section = orm_models.MechanismPerSection.create(
+            mechanism=_mechanism, section=_measure_result.measure_per_section.section
+        )
+        orm_models.OptimizationStepResult.create(
+            optimization_step=_optimization_step,
+            mechanism_per_section=_mechanism_per_section,
+            beta=4.2,
+            time=20,
+            lcc=2023.12,
         )
 
         db_connection.close()
@@ -685,6 +698,7 @@ class TestOrmControllers:
         assert any(orm_models.OptimizationRun.select())
         assert any(orm_models.OptimizationSelectedMeasure.select())
         assert any(orm_models.OptimizationStep.select())
+        assert any(orm_models.OptimizationStepResult.select())
 
     def _create_section_with_fully_configured_assessment_results(
         self,

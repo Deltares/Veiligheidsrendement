@@ -1,5 +1,7 @@
 import logging
 
+import pandas as pd
+
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
@@ -11,9 +13,6 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
 )
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.mechanism import Mechanism
-
-import pandas as pd
-
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 

@@ -11,6 +11,8 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithDictMocked,
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
+    validate_clean_database,
+    validate_no_parameters,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
