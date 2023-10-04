@@ -1,7 +1,7 @@
-from peewee import ForeignKeyField, IntegerField, FloatField
+from peewee import FloatField, ForeignKeyField, IntegerField
+
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
-
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 
