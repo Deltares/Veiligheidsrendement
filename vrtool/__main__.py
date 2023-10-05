@@ -8,6 +8,7 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     create_optimization_run,
+    export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
     get_dike_traject,
