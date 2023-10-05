@@ -1,11 +1,11 @@
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from pathlib import Path
-from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     export_results_safety_assessment,
-    export_solutions,
+    export_results_measures,
+    export_results_optimization,
     get_dike_traject,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
@@ -125,7 +125,7 @@ class ApiRunWorkflows:
         _measures_result = _measures.run()
 
         # Export solutions to database
-        export_solutions(_measures_result)
+        export_results_measures(_measures_result)
 
     def run_optimization(self) -> ResultsOptimization:
         # Run Measures.
@@ -133,7 +133,10 @@ class ApiRunWorkflows:
 
         # run Optimization.
         _optimization = RunOptimization(_measures_result)
-        _optimization.run()
+        _optimization_result = _optimization.run()
+
+        # Export results
+        export_results_optimization(_optimization_result)
 
     def run_all(self) -> ResultsOptimization:
         # Run all steps with one command.
