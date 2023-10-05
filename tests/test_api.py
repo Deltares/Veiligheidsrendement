@@ -219,6 +219,9 @@ class TestRunWorkflows:
         _acceptance_measure_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(
+        reason="Extremely slow due to the validation, these tests are validated in 'run_full'."
+    )
     def test_run_step_measures_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -471,7 +474,8 @@ class RunStepMeasuresValidator:
                 * 2
             )
 
-        assert len(MeasureResult.select()) == total_nr_of_measure_results
+        assert len(MeasureResult.select()) == len(reference_data.index)
+        assert len(MeasureResultSection.select()) == total_nr_of_measure_results
         assert (
             len(MeasureResultParameter.select())
             == total_nr_of_measure_result_parameters
