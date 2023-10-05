@@ -7,6 +7,7 @@ from typing import Optional, Union
 
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults import default_unit_costs_csv
 
 
@@ -96,21 +97,18 @@ class VrtoolConfig:
         return self.input_directory.joinpath(self.input_database_name)
 
     @property
-    def supported_mechanisms(self) -> list[str]:
+    def supported_mechanisms(self) -> list[MechanismEnum]:
         """Mechanisms that are supported"""
-        return [
-            "Overflow",
-            "StabilityInner",
-            "Piping",
-            "Revetment",
-        ]
+        return list(MechanismEnum)
 
     @property
-    def mechanisms(self) -> list[str]:
+    def mechanisms(self) -> list[MechanismEnum]:
         """Filtered list of mechanisms"""
 
-        def non_excluded_mechanisms(mechanism: str) -> bool:
-            return mechanism not in self.excluded_mechanisms
+        # def non_excluded_mechanisms(mechanism: MechanismEnum) -> bool:
+        #     return mechanism.name not in self.excluded_mechanisms
+        def non_excluded_mechanisms(mechanism: MechanismEnum) -> bool:
+            return mechanism.name not in self.excluded_mechanisms
 
         return list(filter(non_excluded_mechanisms, self.supported_mechanisms))
 
