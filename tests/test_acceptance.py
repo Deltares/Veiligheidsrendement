@@ -1,43 +1,97 @@
-import shutil
-from pathlib import Path
-from re import search
-
-import pandas as pd
+from vrtool.defaults.vrtool_config import VrtoolConfig
 import pytest
 from pandas.testing import assert_frame_equal
-from peewee import SqliteDatabase, fn
 
-from tests import get_test_results_dir, test_data, test_externals
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
-from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
+from tests import get_test_results_dir, test_data, test_results, test_externals
+from vrtool.api import (
+    get_valid_vrtool_config,
+    run_full,
+    run_step_assessment,
+    run_step_measures,
+    run_step_optimization,
+)
+import shutil
+from pathlib import Path
+from peewee import SqliteDatabase, fn
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+import pandas as pd
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.measure_result import MeasureResult, MeasureResultParameter
+from vrtool.orm.models.measure_result.measure_result import MeasureResult
+from vrtool.orm.models.measure_result.measure_result_parameter import (
+    MeasureResultParameter,
+)
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
-from vrtool.orm.orm_controllers import (
-    clear_assessment_results,
-    clear_measure_results,
-    export_results_safety_assessment,
-    export_solutions,
-    get_dike_traject,
-    open_database,
-    vrtool_db,
-)
+
+from vrtool.orm.orm_controllers import open_database, vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
-from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
-    RunSafetyAssessment,
-)
-from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
+from re import search
+
+
+class TestApi:
+    def test_given_directory_without_json_raises_error(
+        self, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _input_dir = test_results / request.node.name
+        if not _input_dir.exists():
+            _input_dir.mkdir(parents=True)
+
+        assert _input_dir.exists()
+
+        # 2. Run test.
+        with pytest.raises(FileNotFoundError) as exception_error:
+            get_valid_vrtool_config(_input_dir)
+
+        # 3. Verify expectations.
+        assert str(
+            exception_error.value
+        ) == "No json config file found in the model directory {}.".format(_input_dir)
+
+    def test_given_directory_with_too_many_jsons_raises_error(
+        self, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _input_dir = test_results / request.node.name
+        if _input_dir.exists():
+            shutil.rmtree(_input_dir)
+
+        _input_dir.mkdir(parents=True)
+        Path.joinpath(_input_dir, "first.json").touch()
+        Path.joinpath(_input_dir, "second.json").touch()
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exception_error:
+            get_valid_vrtool_config(_input_dir)
+
+        # 3. Verify expectations.
+        assert str(
+            exception_error.value
+        ) == "More than one json file found in the directory {}. Only one json at the root directory supported.".format(
+            _input_dir
+        )
+
+    def test_given_directory_with_valid_config_returns_vrtool_config(self):
+        # 1. Define test data.
+        _input_dir = test_data / "vrtool_config"
+        assert _input_dir.exists()
+
+        # 2. Run test.
+        _vrtool_config = get_valid_vrtool_config(_input_dir)
+
+        # 3. Verify expectations.
+        assert isinstance(_vrtool_config, VrtoolConfig)
+        assert _vrtool_config.traject == "MyCustomTraject"
+        assert _vrtool_config.input_directory == _input_dir
+        assert _vrtool_config.output_directory == _input_dir / "results"
+
 
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
@@ -82,147 +136,99 @@ _acceptance_measure_test_cases = [
 ]
 
 
-@pytest.mark.slow
-class TestAcceptance:
-    def _validate_acceptance_result_cases(
-        self, test_results_dir: Path, test_reference_dir: Path
-    ):
-        files_to_compare = [
-            "TakenMeasures_Doorsnede-eisen.csv",
-            "TakenMeasures_Veiligheidsrendement.csv",
-            "TotalCostValues_Greedy.csv",
-        ]
-        comparison_errors = []
-        for file in files_to_compare:
-            reference = pd.read_csv(
-                test_reference_dir.joinpath("results", file), index_col=0
-            )
-            result = pd.read_csv(test_results_dir / file, index_col=0)
-            try:
-                assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
-            except Exception:
-                comparison_errors.append("{} is different.".format(file))
-        # assert no error message has been registered, else print messages
-        assert not comparison_errors, "errors occured:\n{}".format(
-            "\n".join(comparison_errors)
+def _validate_acceptance_result_cases(test_results_dir: Path, test_reference_dir: Path):
+    files_to_compare = [
+        "TakenMeasures_Doorsnede-eisen.csv",
+        "TakenMeasures_Veiligheidsrendement.csv",
+        "TotalCostValues_Greedy.csv",
+    ]
+    comparison_errors = []
+    for file in files_to_compare:
+        reference = pd.read_csv(
+            test_reference_dir.joinpath("results", file), index_col=0
         )
+        result = pd.read_csv(test_results_dir / file, index_col=0)
+        try:
+            assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
+        except Exception:
+            comparison_errors.append("{} is different.".format(file))
+    # assert no error message has been registered, else print messages
+    assert not comparison_errors, "errors occured:\n{}".format(
+        "\n".join(comparison_errors)
+    )
 
-    @pytest.fixture
-    def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
-        _casename, _traject, _mechanisms = request.param
-        _test_input_directory = Path.joinpath(test_data, _casename)
-        assert _test_input_directory.exists()
 
-        _test_results_directory = get_test_results_dir(request) / _casename
-        _test_db_name = f"{request.node.name}.db"
-        if "[" in request.node.name:
-            # It is a parametrized case:
-            _node_parts = search(r"(.*)\[(.*)\]", request.node.name)
-            _node_case = _node_parts.group(2).strip()
-            _test_results_directory = _test_results_directory / _node_case.replace(
-                ",", "_"
-            ).replace(" ", "_")
-            _node_name = _node_parts.group(1).strip()
-            _test_db_name = f"{_node_name}.db"
-        if _test_results_directory.exists():
-            shutil.rmtree(_test_results_directory)
+@pytest.fixture
+def valid_vrtool_config(request: pytest.FixtureRequest) -> VrtoolConfig:
+    _casename, _traject, _mechanisms = request.param
+    _test_input_directory = Path.joinpath(test_data, _casename)
+    assert _test_input_directory.exists()
 
-        _test_results_directory.mkdir(parents=True)
+    _test_results_directory = get_test_results_dir(request) / _casename
+    _test_db_name = f"{request.node.name}.db"
+    if "[" in request.node.name:
+        # It is a parametrized case:
+        _node_parts = search(r"(.*)\[(.*)\]", request.node.name)
+        _node_case = _node_parts.group(2).strip()
+        _test_results_directory = _test_results_directory / _node_case.replace(
+            ",", "_"
+        ).replace(" ", "_")
+        _node_name = _node_parts.group(1).strip()
+        _test_db_name = f"{_node_name}.db"
+    if _test_results_directory.exists():
+        shutil.rmtree(_test_results_directory)
 
-        _test_config = VrtoolConfig()
-        _test_config.input_directory = _test_input_directory
-        _test_config.output_directory = _test_results_directory
-        _test_config.traject = _traject
-        _test_config.mechanisms = _mechanisms
-        _test_config.externals = test_externals
+    _test_results_directory.mkdir(parents=True)
 
-        # Create a copy of the database to avoid parallelization runs locked databases.
-        _db_file = _test_input_directory.joinpath("vrtool_input.db")
-        assert _db_file.exists(), "No database found at {}.".format(_db_file)
+    _test_config = VrtoolConfig()
+    _test_config.input_directory = _test_input_directory
+    _test_config.output_directory = _test_results_directory
+    _test_config.traject = _traject
+    _test_config.mechanisms = _mechanisms
+    _test_config.externals = test_externals
 
-        _test_config.input_database_name = _test_db_name
-        _tst_db_file = _test_config.input_database_path
-        _tst_db_file.unlink(missing_ok=True)
-        shutil.copy(_db_file, _tst_db_file)
-        assert _tst_db_file.exists(), "No database found at {}.".format(_db_file)
+    # Create a copy of the database to avoid parallelization runs locked databases.
+    _db_file = _test_input_directory.joinpath("vrtool_input.db")
+    assert _db_file.exists(), "No database found at {}.".format(_db_file)
 
-        yield _test_config
+    _test_config.input_database_name = _test_db_name
+    _tst_db_file = _test_config.input_database_path
+    _tst_db_file.unlink(missing_ok=True)
+    shutil.copy(_db_file, _tst_db_file)
+    assert _tst_db_file.exists(), "No database found at {}.".format(_db_file)
 
-        # Copy the test database to the results directory
-        if _tst_db_file.exists():
-            shutil.move(_tst_db_file, _test_config.output_directory)
+    yield _test_config
 
-        # Make sure that the database connection will be closed even if the test fails.
-        if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
-            vrtool_db.close()
+    # Copy the test database to the results directory
+    if _tst_db_file.exists():
+        shutil.move(_tst_db_file, _test_config.output_directory)
 
+    # Make sure that the database connection will be closed even if the test fails.
+    if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
+        vrtool_db.close()
+
+
+class TestRunStepAssessment:
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         _acceptance_all_steps_test_cases,
-        indirect=["valid_vrtool_config"],
+        indirect=True,
     )
-    def test_run_full_model(self, valid_vrtool_config: VrtoolConfig):
-        """
-        This test so far only checks the output values after optimization.
-        """
-        # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
-        assert _test_reference_path.exists()
-
-        _test_traject = get_dike_traject(valid_vrtool_config)
-
-        # 2. Run test.
-        _optimization_results = RunFullModel(valid_vrtool_config, _test_traject).run()
-
-        # export measures
-        _rm = ResultsMeasures()
-        _rm.solutions_dict = _optimization_results.results_solutions
-        _rm.vr_config = valid_vrtool_config
-        export_solutions(_rm)
-        # export optimization
-
-        # 3. Verify final expectations.
-        self._validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
-        )
-
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
-        indirect=["valid_vrtool_config"],
-    )
-    def test_run_safety_assessment_and_save_initial_assessment(
+    def test_given_acceptance_test_then_gets_expected_results(
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        _test_traject = get_dike_traject(valid_vrtool_config)
         assert not any(AssessmentMechanismResult.select())
         assert not any(AssessmentSectionResult.select())
 
         # 2. Run test.
-        _results = RunSafetyAssessment(valid_vrtool_config, _test_traject).run()
+        run_step_assessment(valid_vrtool_config)
 
         # 3. Verify expectations.
-        assert isinstance(_results, ResultsSafetyAssessment)
         assert valid_vrtool_config.output_directory.exists()
         assert any(valid_vrtool_config.output_directory.glob("*"))
 
-        # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
-        # However, this is not possible as the connection will be closed during the export_initial_assessment.
-        # Causing an error as the transaction requires said connection to be open.
-        # Therefore the following has been found as the only possible way to assess whether the results are
-        # written in the database without affecting other tests from using this db.
-        _bck_db_name = "bck_db.db"
-        _bck_db_filepath = valid_vrtool_config.input_database_path.with_name(
-            _bck_db_name
-        )
-        shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        _results.vr_config.input_directory = valid_vrtool_config.input_directory
-        _results.vr_config.input_database_name = _bck_db_name
-
         # 4. Validate exporting results is possible
-        clear_assessment_results(valid_vrtool_config)
-        export_results_safety_assessment(_results)
         self.validate_safety_assessment_results(valid_vrtool_config)
 
     def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
@@ -309,70 +315,27 @@ class TestAcceptance:
                     row["name"], _mechanism_name, _t_column
                 )
 
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        _acceptance_optimization_test_cases,
-        indirect=["valid_vrtool_config"],
-    )
-    def test_run_optimization(self, valid_vrtool_config: VrtoolConfig):
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
 
-        _shelve_path = valid_vrtool_config.input_directory / "shelves"
-        _results_assessment = ResultsSafetyAssessment()
-        _results_assessment.load_results(
-            alternative_path=_shelve_path / "AfterStep1.out"
-        )
-        _results_measures = ResultsMeasures()
-
-        _results_measures.vr_config = valid_vrtool_config
-        _results_measures.selected_traject = _results_assessment.selected_traject
-
-        _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
-        _results_optimization = RunOptimization(_results_measures).run()
-
-        self._validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
-        )
-
+class TestRunStepMeasures:
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         _acceptance_measure_test_cases,
-        indirect=["valid_vrtool_config"],
+        indirect=True,
     )
-    @pytest.mark.skip(
-        reason="Currently only slows down the tests, reenable when optimization can be exported, and all acceptance tests can be run"
-    )
-    def test_run_measures_and_save_measure_results(
+    def test_given_acceptance_test_then_gets_expected_results(
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        _test_traject = get_dike_traject(valid_vrtool_config)
         assert not any(MeasureResult.select())
         assert not any(MeasureResultParameter.select())
 
         # 2. Run test.
-        _results = RunMeasures(valid_vrtool_config, _test_traject).run()
+        run_step_measures(valid_vrtool_config)
 
         # 3. Verify expectations.
-        assert isinstance(_results, ResultsMeasures)
         assert valid_vrtool_config.output_directory.exists()
         assert any(valid_vrtool_config.output_directory.glob("*"))
 
-        # NOTE: Ideally this is done with the context manager and a db.savepoint() transaction.
-        # However, this is not possible as the connection will be closed during the export_initial_assessment.
-        # Causing an error as the transaction requires said connection to be open.
-        # Therefore the following has been found as the only possible way to assess whether the results are
-        # written in the database without affecting other tests from using this db.
-        _bck_db_name = "bck_db.db"
-        _bck_db_filepath = valid_vrtool_config.input_database_path.with_name(
-            _bck_db_name
-        )
-        shutil.copyfile(valid_vrtool_config.input_database_path, _bck_db_filepath)
-        _results.vr_config.input_database_name = _bck_db_name
-
-        # 4. Validate exporting results is possible
-        clear_measure_results(valid_vrtool_config)
-        export_solutions(_results)
         self.validate_measure_results(valid_vrtool_config)
 
     def validate_measure_results(self, valid_vrtool_config: VrtoolConfig):
@@ -531,9 +494,6 @@ class TestAcceptance:
                     casted_year,
                 )
 
-    def is_soil_reinforcement_measure(self, dberm: float, dcrest: float) -> bool:
-        return dberm != -999 and dcrest != -999
-
     def fill_measure_result_lookup_for_soil_reinforcement_measures(
         self,
         lookup: dict[tuple[int, float, float], MeasureResult],
@@ -603,47 +563,79 @@ class TestAcceptance:
 
         return _measure_result
 
-    @pytest.mark.skip(reason="TODO. No (test) input data available.")
-    def test_investments_safe(self):
+    def is_soil_reinforcement_measure(self, dberm: float, dcrest: float) -> bool:
+        return dberm != -999 and dcrest != -999
+
+
+class TestRunStepOptimization:
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        _acceptance_optimization_test_cases,
+        indirect=True,
+    )
+    def test_run_optimization_old_approach(self, valid_vrtool_config: VrtoolConfig):
+        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+
+        _shelve_path = valid_vrtool_config.input_directory / "shelves"
+        _results_assessment = ResultsSafetyAssessment()
+        _results_assessment.load_results(
+            alternative_path=_shelve_path / "AfterStep1.out"
+        )
+        _results_measures = ResultsMeasures()
+
+        _results_measures.vr_config = valid_vrtool_config
+        _results_measures.selected_traject = _results_assessment.selected_traject
+
+        _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
+        _results_optimization = RunOptimization(_results_measures).run()
+
+        _validate_acceptance_result_cases(
+            valid_vrtool_config.output_directory, _test_reference_path
+        )
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        _acceptance_measure_test_cases,
+        indirect=True,
+    )
+    def test_given_acceptance_test_then_gets_expected_results(
+        self, valid_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        assert not any(MeasureResult.select())
+        assert not any(MeasureResultParameter.select())
+
+        # 2. Run test.
+        run_step_optimization(valid_vrtool_config)
+
+        # 3. Verify expectations.
+        assert valid_vrtool_config.output_directory.exists()
+        assert any(valid_vrtool_config.output_directory.glob("*"))
+
+        _validate_acceptance_result_cases(
+            valid_vrtool_config.output_directory, _test_reference_path
+        )
+
+
+class TestRunFullModel:
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        _acceptance_all_steps_test_cases,
+        indirect=True,
+    )
+    def test_run_full_model(self, valid_vrtool_config: VrtoolConfig):
         """
-        Test migrated from previous tools.RunSAFE.InvestmentsSafe
+        This test so far only checks the output values after optimization.
         """
-        ## MAKE TRAJECT OBJECT
-        _test_config = VrtoolConfig()
-        _test_traject = DikeTraject.from_config(_test_config)
+        # 1. Define test data.
+        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        assert _test_reference_path.exists()
 
-        ## READ ALL DATA
-        ##First we read all the input data for the different sections. We store these in a Traject object.
-        # Initialize a list of all sections that are of relevance (these start with DV).
-        _results = RunFullModel(_test_config, _test_traject).run()
+        # 2. Run test.
+        run_full(valid_vrtool_config)
 
-        # Now some general output figures and csv's are generated:
-
-        # First make a table of all the solutions:
-        _measure_table = StrategyBase.get_measure_table(
-            _results.results_solutions, language="EN", abbrev=True
+        # 3. Verify final expectations.
+        _validate_acceptance_result_cases(
+            valid_vrtool_config.output_directory, _test_reference_path
         )
-
-        ## write a LOG of all probabilities for all steps:
-        _investment_steps_dir = (
-            _test_config.output_directory / "results" / "investment_steps"
-        )
-        if not _investment_steps_dir.exists():
-            _investment_steps_dir.mkdir(parents=True)
-        _results.results_strategies[0].write_reliability_to_csv(
-            _investment_steps_dir, type=_test_config.design_methods[0]
-        )
-        _results.results_strategies[1].write_reliability_to_csv(
-            _investment_steps_dir, type=_test_config.design_methods[1]
-        )
-
-        for count, _result_strategy in enumerate(_results.results_strategies):
-            ps = []
-            for i in _result_strategy.Probabilities:
-                _, p_t = calc_traject_prob(i, horizon=100)
-                ps.append(p_t)
-            pd.DataFrame(ps, columns=range(100)).to_csv(
-                path_or_buf=_investment_steps_dir.joinpath(
-                    "PfT_" + _test_config.design_methods[count] + ".csv",
-                )
-            )

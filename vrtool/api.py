@@ -93,37 +93,7 @@ def run_full(vrtool_config: VrtoolConfig) -> None:
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    _selected_traject = get_dike_traject(vrtool_config)
-
-    # Run all steps with one command.
-    if not vrtool_config.output_directory.is_dir():
-        logging.info(
-            "Creating output directories at {}".format(vrtool_config.output_directory)
-        )
-        vrtool_config.output_directory.mkdir(parents=True, exist_ok=True)
-        vrtool_config.output_directory.joinpath("figures").mkdir(
-            parents=True, exist_ok=True
-        )
-        vrtool_config.output_directory.joinpath("results", "investment_steps").mkdir(
-            parents=True, exist_ok=True
-        )
-
-    logging.info("Start run full model.")
-
-    # Step 1. Safety assessment.
-    _safety_assessment = RunSafetyAssessment(vrtool_config, _selected_traject)
-    _safety_assessment.run()
-
-    # Step 2. Measures.
-    _measures = RunMeasures(vrtool_config, _selected_traject)
-    _measures_result = _measures.run()
-
-    # Step 3. Optimization.
-    _optimization = RunOptimization(_measures_result)
-    _optimization_result = _optimization.run()
-
-    logging.info("Finished run full model.")
-    return _optimization_result
+    ApiRunWorkflows(vrtool_config).run_all()
 
 
 class ApiRunWorkflows:
@@ -164,3 +134,31 @@ class ApiRunWorkflows:
         # run Optimization.
         _optimization = RunOptimization(_measures_result)
         _optimization.run()
+
+    def run_all(self) -> ResultsOptimization:
+        # Run all steps with one command.
+        if not self.vrtool_config.output_directory.is_dir():
+            logging.info(
+                "Creating output directories at {}".format(
+                    self.vrtool_config.output_directory
+                )
+            )
+            self.vrtool_config.output_directory.mkdir(parents=True, exist_ok=True)
+            self.vrtool_config.output_directory.joinpath("figures").mkdir(
+                parents=True, exist_ok=True
+            )
+            self.vrtool_config.output_directory.joinpath(
+                "results", "investment_steps"
+            ).mkdir(parents=True, exist_ok=True)
+
+        logging.info("Start run full model.")
+
+        # Step 1. Safety assessment + measures
+        _measures_result = self.run_measures()
+
+        # Step 2. Optimization.
+        _optimization = RunOptimization(_measures_result)
+        _optimization_result = _optimization.run()
+
+        logging.info("Finished run full model.")
+        return _optimization_result
