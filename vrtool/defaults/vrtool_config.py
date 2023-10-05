@@ -51,13 +51,10 @@ class VrtoolConfig:
     t_0: int = 2025
     # years to compute reliability for
     T: list[int] = field(default_factory=lambda: [0, 19, 20, 25, 50, 75, 100])
-    # mechanisms to consider
-    mechanisms: list[str] = field(
+    # mechanisms to exclude
+    excluded_mechanisms: list[str] = field(
         default_factory=lambda: [
-            "Overflow",
-            "StabilityInner",
-            "Piping",
-            "Revetment",
+            "HydraulicStructures",
         ]
     )
     # whether to consider length-effects within a dike section
@@ -90,13 +87,32 @@ class VrtoolConfig:
     unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
 
     @property
-    def input_database_path(self) -> Path:
+    def input_database_path(self) -> None | Path:
         """
         Construct database path as property from input dir and database name
         """
         if not (self.input_directory and self.input_database_name):
             return None
         return self.input_directory.joinpath(self.input_database_name)
+
+    @property
+    def supported_mechanisms(self) -> list[str]:
+        """Mechanisms that are supported"""
+        return [
+            "Overflow",
+            "StabilityInner",
+            "Piping",
+            "Revetment",
+        ]
+
+    @property
+    def mechanisms(self) -> list[str]:
+        """Filtered list of mechanisms"""
+
+        def non_excluded_mechanisms(mechanism: str) -> bool:
+            return mechanism not in self.excluded_mechanisms
+
+        return list(filter(non_excluded_mechanisms, self.supported_mechanisms))
 
     def __post_init__(self):
         """
