@@ -17,7 +17,7 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure import 
     RevetmentMeasure,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.io.importers.measure_importer import MeasureImporter
+from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.custom_measure import CustomMeasure as OrmCustomMeasure
