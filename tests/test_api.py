@@ -196,7 +196,7 @@ class TestRunWorkflows:
     ):
         # 1. Define test data.
         _validator = RunStepAssessmentValidator()
-        _validator.validate_preconditions()
+        _validator.validate_preconditions(valid_vrtool_config)
 
         # 2. Run test.
         run_step_assessment(valid_vrtool_config)
@@ -218,7 +218,7 @@ class TestRunWorkflows:
     ):
         # 1. Define test data.
         _validator = RunStepMeasuresValidator()
-        _validator.validate_preconditions()
+        _validator.validate_preconditions(valid_vrtool_config)
 
         # 2. Run test.
         run_step_measures(valid_vrtool_config)
@@ -300,9 +300,12 @@ class TestRunWorkflows:
 
 
 class RunStepAssessmentValidator:
-    def validate_preconditions(self):
+    def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
         assert not any(AssessmentMechanismResult.select())
         assert not any(AssessmentSectionResult.select())
+        if not _connected_db.is_closed():
+            _connected_db.close()
 
     def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
@@ -318,7 +321,7 @@ class RunStepAssessmentValidator:
         # Open the database (whose path has been overwritten with the backup).
         # This will overwrite the global variable vrtool_db.
         # In the test's teardown we can ensure closing its connection.
-        open_database(valid_vrtool_config.input_database_path)
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
         self.validate_mechanism_per_section_initial_assessment(
             _reference_df[_reference_df["mechanism"] != "Section"],
             valid_vrtool_config,
@@ -327,6 +330,8 @@ class RunStepAssessmentValidator:
             _reference_df[_reference_df["mechanism"] == "Section"],
             valid_vrtool_config,
         )
+        if not _connected_db.is_closed():
+            _connected_db.close()
 
     def validate_section_data_initial_assessment(
         self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
@@ -390,9 +395,13 @@ class RunStepAssessmentValidator:
 
 
 class RunStepMeasuresValidator:
-    def validate_preconditions(self):
+    def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
         assert not any(MeasureResult.select())
         assert not any(MeasureResultParameter.select())
+
+        if not _connected_db.is_closed():
+            _connected_db.close()
 
     def validate_measure_results(self, valid_vrtool_config: VrtoolConfig):
         assert valid_vrtool_config.output_directory.exists()
@@ -412,7 +421,7 @@ class RunStepMeasuresValidator:
         ]
 
         # 2. Open the database to retrieve the section names to read the references from
-        open_database(valid_vrtool_config.input_database_path)
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
 
         # 3. Verify there are no measures whose section's reference file does not exist.
         _sections_with_measures = list(
@@ -460,6 +469,8 @@ class RunStepMeasuresValidator:
             len(MeasureResultParameter.select())
             == total_nr_of_measure_result_parameters
         )
+        if not _connected_db.is_closed():
+            _connected_db.close()
 
     def get_section_name(self, file_path: Path) -> str:
         return file_path.name.split("_")[0]
