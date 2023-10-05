@@ -99,7 +99,7 @@ class TestMeasureExporter:
         MeasureExporter(_input_data.measure_per_section).export_dom(_input_data.measure)
 
         # 3. Verify final expectations.
-        validate_measure_result_export(_input_data, _parameters_to_validate)
+        validate_measure_result_export(_input_data, _input_data.parameters_to_validate)
 
     def test_export_dom_given_dict_measure(self, empty_db_fixture: SqliteDatabase):
         # Setup
@@ -114,7 +114,9 @@ class TestMeasureExporter:
         _exporter.export_dom(_test_input_data.measure)
 
         # Assert
-        validate_measure_result_export(_test_input_data, {})
+        validate_measure_result_export(
+            _test_input_data, _test_input_data.parameters_to_validate
+        )
 
     def test_export_dom_invalid_data(self, empty_db_fixture: SqliteDatabase):
         # Setup
