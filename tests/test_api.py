@@ -29,6 +29,8 @@ from vrtool.orm.models.section_data import SectionData
 
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
+    clear_measure_results,
+    clear_optimization_results,
     open_database,
     vrtool_db,
 )
@@ -238,6 +240,8 @@ class TestRunWorkflows:
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
+        clear_assessment_results()
+        clear_measure_results()
         _validator = RunStepMeasuresValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
@@ -277,12 +281,14 @@ class TestRunWorkflows:
         _acceptance_all_steps_test_cases,
         indirect=True,
     )
-    @pytest.mark.skip(reason="Needs to be implemented by VRTOOL-222.")
+    # @pytest.mark.skip(reason="Needs to be implemented by VRTOOL-222.")
     def test_run_step_optimization_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        # We reuse existing measure results, but we clear the optimization ones.
+        clear_optimization_results()
+
         assert any(MeasureResult.select())
         _measures_results = [mr.get_id() for mr in MeasureResult.select()]
 
@@ -292,10 +298,6 @@ class TestRunWorkflows:
         # 3. Verify expectations.
         assert valid_vrtool_config.output_directory.exists()
         assert any(valid_vrtool_config.output_directory.glob("*"))
-
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
-        )
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",

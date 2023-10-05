@@ -7,6 +7,7 @@ from vrtool.orm.orm_controllers import (
     export_results_measures,
     export_results_optimization,
     get_dike_traject,
+    import_results_measures,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
@@ -84,7 +85,8 @@ def run_step_optimization(
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    ApiRunWorkflows(vrtool_config).run_optimization(measures_results)
+    _results_measures = import_results_measures(vrtool_config, measures_results)
+    ApiRunWorkflows(vrtool_config).run_optimization(_results_measures)
 
 
 def run_full(vrtool_config: VrtoolConfig) -> None:
@@ -131,21 +133,20 @@ class ApiRunWorkflows:
         export_results_measures(_measures_result)
         return _measures_result
 
-    def run_optimization(self, measures_results: list[int]) -> ResultsOptimization:
+    def run_optimization(
+        self, results_measures: ResultsMeasures
+    ) -> ResultsOptimization:
         """
         Runs an optimization for the given measure results ID's.
 
         Args:
-            measures_results (list[int]): List of `MeasureResult` id entries in the database.
+            results_measures (ResultsMeasures): Selected set of measures' results to optimize.
 
         Returns:
             ResultsOptimization: Optimization results.
         """
-        # Get Measures.
-        _measures_result = []
-
-        # run Optimization.
-        _optimization = RunOptimization(_measures_result)
+        # Run Optimization.
+        _optimization = RunOptimization(results_measures)
         _optimization_result = _optimization.run()
 
         # Export results

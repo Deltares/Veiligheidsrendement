@@ -268,6 +268,18 @@ def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[in
     _connected_db.close()
     return _result_measure_ids
 
+def import_results_measures(vrtool_config: VrtoolConfig, results_ids_to_import: list[int]) -> ResultsMeasures:
+    """
+    Imports results masures from a database into a `ResultsMeasure` instance.
+
+    Args:
+        vrtool_config (VrtoolConfig): Configuration containing database path.
+        results_ids_to_import (list[int]): List of measure results' IDs.
+
+    Returns:
+        ResultsMeasures: Instance hosting all the required measures' results.
+    """
+    pass
 
 def create_optimization_run(
     vr_config: VrtoolConfig,
