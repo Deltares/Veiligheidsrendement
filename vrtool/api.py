@@ -113,6 +113,7 @@ class ApiRunWorkflows:
 
         # Export the results.
         export_results_safety_assessment(_result)
+        return _result
 
     def run_measures(self) -> ResultsMeasures:
         self.run_assessment()
@@ -126,6 +127,7 @@ class ApiRunWorkflows:
 
         # Export solutions to database
         export_results_measures(_measures_result)
+        return _measures_result
 
     def run_optimization(self) -> ResultsOptimization:
         # Run Measures.
@@ -137,6 +139,7 @@ class ApiRunWorkflows:
 
         # Export results
         export_results_optimization(_optimization_result)
+        return _optimization_result
 
     def run_all(self) -> ResultsOptimization:
         # Run all steps with one command.
