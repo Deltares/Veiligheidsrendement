@@ -187,6 +187,8 @@ def clear_measure_results(config: VrtoolConfig) -> None:
         orm.MeasureResult.delete().execute()
         # This table should be cleared 'on cascade'.
         orm.MeasureResultParameter.delete().execute()
+        orm.MeasureResultSection.delete().execute()
+        orm.MeasureResultMechanism.delete().execute()
 
     vrtool_db.close()
 
