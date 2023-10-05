@@ -10,7 +10,6 @@ from vrtool.orm.orm_controllers import (
     create_optimization_run,
     export_results_optimization,
     export_results_safety_assessment,
-    export_results_measures,
     get_dike_traject,
     get_exported_measure_result_ids,
 )

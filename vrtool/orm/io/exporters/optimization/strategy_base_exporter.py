@@ -6,5 +6,6 @@ class StrategyBaseExporter(OrmExporterProtocol):
     """
     TODO: Placeholder for issue VRTOOL-268.
     """
+
     def export_dom(self, dom_model: StrategyBase) -> None:
         raise NotImplementedError()
