@@ -186,7 +186,10 @@ class TestRunWorkflows:
 
         # Copy the test database to the results directory so it can be manually reviewed.
         if _test_config.input_database_path.exists():
-            shutil.move(_test_config.input_database_path, _test_config.output_directory)
+            _results_db_name = _test_config.output_directory.joinpath(
+                "vrtool_result.db"
+            )
+            shutil.move(_test_config.input_database_path, _results_db_name)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
