@@ -22,6 +22,7 @@ from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_parameter import (
     MeasureResultParameter,
 )
+from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
@@ -547,8 +548,12 @@ class RunStepMeasuresValidator:
                     dberm,
                     dcrest,
                 )
+                _measure_result_section = MeasureResultSection.get_or_none(
+                    measure_result=_measure_result, time=casted_year
+                )
+                assert isinstance(_measure_result_section, MeasureResultSection)
 
-                assert _measure_result.beta == pytest.approx(
+                assert _measure_result_section.beta == pytest.approx(
                     reference_section_reliabilities[year], 0.00000001
                 ), "Mismatched beta for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
                     section.section_name,
@@ -559,7 +564,7 @@ class RunStepMeasuresValidator:
                     casted_year,
                 )
 
-                assert _measure_result.cost == float(
+                assert _measure_result_section.cost == float(
                     row[("cost",)]
                 ), "Mismatched cost for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
                     section.section_name,
@@ -627,7 +632,6 @@ class RunStepMeasuresValidator:
 
         _measure_result = MeasureResult.get_or_none(
             (MeasureResult.measure_per_section == measure_per_section)
-            & (MeasureResult.time == int(year))
         )
 
         assert isinstance(
