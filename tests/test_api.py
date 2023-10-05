@@ -27,7 +27,11 @@ from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 
-from vrtool.orm.orm_controllers import open_database, vrtool_db
+from vrtool.orm.orm_controllers import (
+    clear_assessment_results,
+    open_database,
+    vrtool_db,
+)
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
@@ -208,6 +212,7 @@ class TestRunWorkflows:
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
+        clear_assessment_results()
         _validator = RunStepAssessmentValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
