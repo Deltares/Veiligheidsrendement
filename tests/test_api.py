@@ -278,11 +278,11 @@ class TestRunWorkflows:
     ):
         # 1. Define test data.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
-        assert not any(MeasureResult.select())
-        assert not any(MeasureResultParameter.select())
+        assert any(MeasureResult.select())
+        _measures_results = [mr.get_id() for mr in MeasureResult.select()]
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config)
+        run_step_optimization(valid_vrtool_config, _measures_results)
 
         # 3. Verify expectations.
         assert valid_vrtool_config.output_directory.exists()

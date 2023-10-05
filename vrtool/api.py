@@ -74,7 +74,9 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
     ApiRunWorkflows(vrtool_config).run_measures()
 
 
-def run_step_optimization(vrtool_config: VrtoolConfig) -> None:
+def run_step_optimization(
+    vrtool_config: VrtoolConfig, measures_results: list[int]
+) -> None:
     """
     Runs an optimization by assessing and then optimizing the available measures
     in the database. The results are then exported into the database.
@@ -82,7 +84,7 @@ def run_step_optimization(vrtool_config: VrtoolConfig) -> None:
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    ApiRunWorkflows(vrtool_config).run_optimization()
+    ApiRunWorkflows(vrtool_config).run_optimization(measures_results)
 
 
 def run_full(vrtool_config: VrtoolConfig) -> None:
@@ -129,9 +131,18 @@ class ApiRunWorkflows:
         export_results_measures(_measures_result)
         return _measures_result
 
-    def run_optimization(self) -> ResultsOptimization:
-        # Run Measures.
-        _measures_result = self.run_measures()
+    def run_optimization(self, measures_results: list[int]) -> ResultsOptimization:
+        """
+        Runs an optimization for the given measure results ID's.
+
+        Args:
+            measures_results (list[int]): List of `MeasureResult` id entries in the database.
+
+        Returns:
+            ResultsOptimization: Optimization results.
+        """
+        # Get Measures.
+        _measures_result = []
 
         # run Optimization.
         _optimization = RunOptimization(_measures_result)
