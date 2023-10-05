@@ -253,9 +253,10 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_measure_test_cases,
+        _acceptance_all_steps_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(reason="Needs to be implemented by VRTOOL-222.")
     def test_run_step_optimization_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
