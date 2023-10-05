@@ -5,7 +5,6 @@ from peewee import SqliteDatabase
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -18,7 +17,7 @@ from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter
     DikeSectionReliabilityExporter,
 )
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
+from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -268,7 +267,10 @@ def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[in
     _connected_db.close()
     return _result_measure_ids
 
-def import_results_measures(vrtool_config: VrtoolConfig, results_ids_to_import: list[int]) -> ResultsMeasures:
+
+def import_results_measures(
+    vrtool_config: VrtoolConfig, results_ids_to_import: list[int]
+) -> ResultsMeasures:
     """
     Imports results masures from a database into a `ResultsMeasure` instance.
 
@@ -280,6 +282,7 @@ def import_results_measures(vrtool_config: VrtoolConfig, results_ids_to_import: 
         ResultsMeasures: Instance hosting all the required measures' results.
     """
     pass
+
 
 def create_optimization_run(
     vr_config: VrtoolConfig,
