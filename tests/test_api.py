@@ -33,6 +33,7 @@ from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
 from re import search
+import hashlib
 
 
 class TestApi:
@@ -143,22 +144,12 @@ class TestRunWorkflows:
         _test_input_directory = Path.joinpath(test_data, _casename)
         assert _test_input_directory.exists()
 
-        _test_results_directory = get_test_results_dir(request) / _casename
-        _test_db_name = f"{request.node.name}.db"
-        if "[" in request.node.name:
-            # It is a parametrized case:
-            _node_parts = search(r"(.*)\[(.*)\]", request.node.name)
-            _node_case = _node_parts.group(2).strip()
-            _test_results_directory = _test_results_directory / _node_case.replace(
-                ",", "_"
-            ).replace(" ", "_")
-            _node_name = _node_parts.group(1).strip()
-            _test_db_name = f"{_node_name}.db"
+        _test_results_directory = get_test_results_dir(request).joinpath(_casename)
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
-
         _test_results_directory.mkdir(parents=True)
 
+        # Define the VrtoolConfig
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
@@ -166,25 +157,36 @@ class TestRunWorkflows:
         _test_config.mechanisms = _mechanisms
         _test_config.externals = test_externals
 
-        # Create a copy of the database to avoid parallelization runs locked databases.
-        _db_file = _test_input_directory.joinpath("vrtool_input.db")
-        assert _db_file.exists(), "No database found at {}.".format(_db_file)
-
+        # We need to create a copy of the database on the input directory.
+        _test_db_name = "test_{}.db".format(
+            hashlib.shake_128(_test_results_directory.__bytes__()).hexdigest(4)
+        )
         _test_config.input_database_name = _test_db_name
-        _tst_db_file = _test_config.input_database_path
-        _tst_db_file.unlink(missing_ok=True)
-        shutil.copy(_db_file, _tst_db_file)
-        assert _tst_db_file.exists(), "No database found at {}.".format(_db_file)
+
+        # Create a copy of the database to avoid parallelization runs locked databases.
+        _reference_db_file = _test_input_directory.joinpath("vrtool_input.db")
+        assert _reference_db_file.exists(), "No database found at {}.".format(
+            _reference_db_file
+        )
+
+        if _test_config.input_database_path.exists():
+            # Somehow it was not removed in the previous test run.
+            _test_config.input_database_path.unlink(missing_ok=True)
+
+        shutil.copy(_reference_db_file, _test_config.input_database_path)
+        assert (
+            _test_config.input_database_path.exists()
+        ), "No database found at {}.".format(_reference_db_file)
 
         yield _test_config
-
-        # Copy the test database to the results directory
-        if _tst_db_file.exists():
-            shutil.move(_tst_db_file, _test_config.output_directory)
 
         # Make sure that the database connection will be closed even if the test fails.
         if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
             vrtool_db.close()
+
+        # Copy the test database to the results directory so it can be manually reviewed.
+        if _test_config.input_database_path.exists():
+            shutil.move(_test_config.input_database_path, _test_config.output_directory)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
