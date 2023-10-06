@@ -53,34 +53,42 @@ class MeasureResultExporter(OrmExporterProtocol):
             )
         return {}
 
-    def _export_measure_results_per_time(
+    def _get_measure_result_section_dict(
         self,
         measure_result: MeasureResultProtocol,
         orm_measure_result: MeasureResult,
         time_value: int,
         time_reliability: pd.Series,
-    ):
-        MeasureResultSection.create(
+    ) -> dict:
+        return dict(
             time=time_value,
             beta=time_reliability["Section"],
             cost=measure_result.cost,
             measure_result=orm_measure_result,
         )
+
+    def _get_measure_result_mechanism_list_dict(
+        self,
+        orm_measure_result: MeasureResult,
+        time_value: int,
+        time_reliability: pd.Series,
+    ) -> list[dict]:
         _available_mechanisms = [
             m_idx for m_idx in time_reliability.index if m_idx != "Section"
         ]
-        _mr_mechanism = map(
-            lambda mechanism_name: dict(
-                time=time_value,
-                beta=time_reliability[mechanism_name],
-                measure_result=orm_measure_result,
-                mechanism_per_section=self.get_mechanism_per_section(
-                    self._measure_per_section, mechanism_name
+        return list(
+            map(
+                lambda mechanism_name: dict(
+                    time=time_value,
+                    beta=time_reliability[mechanism_name],
+                    measure_result=orm_measure_result,
+                    mechanism_per_section=self.get_mechanism_per_section(
+                        self._measure_per_section, mechanism_name
+                    ),
                 ),
-            ),
-            _available_mechanisms,
+                _available_mechanisms,
+            )
         )
-        MeasureResultMechanism.insert_many(_mr_mechanism).execute()
 
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
         logging.info(
@@ -106,13 +114,29 @@ class MeasureResultExporter(OrmExporterProtocol):
 
         # Create (per calculated time) a measure section and as many present mechanisms.
         _measure_reliability = measure_result.section_reliability.SectionReliability
+        _measure_result_mechanisms_list_dict = []
+        _measure_result_section_list_dict = []
         for time_column in _measure_reliability.columns:
-            self._export_measure_results_per_time(
-                measure_result,
-                _orm_measure_result,
-                int(time_column),
-                _measure_reliability[time_column],
+            _time = int(time_column)
+            _time_reliability = _measure_reliability[time_column]
+            _measure_result_section_list_dict.append(
+                self._get_measure_result_section_dict(
+                    measure_result,
+                    _orm_measure_result,
+                    _time,
+                    _time_reliability,
+                )
             )
+            _measure_result_mechanisms_list_dict.extend(
+                self._get_measure_result_mechanism_list_dict(
+                    _orm_measure_result, _time, _time_reliability
+                )
+            )
+
+        MeasureResultSection.insert_many(_measure_result_section_list_dict).execute()
+        MeasureResultMechanism.insert_many(
+            _measure_result_mechanisms_list_dict
+        ).execute()
 
         logging.info(
             "FINISHED exporting measure id: {}".format(measure_result.measure_id)

@@ -10,6 +10,6 @@ There is a generic input that can be used to host information for every failure 
 
 The idea for each failure mechanism module is as follows:
 
-* A module has a specific input which unpacks the `MechaninismInput` into the elements and properties that are required for the failure mechanism implementation to calculate the reliability and the safety factor.
+* A module has a specific input which unpacks the `MechanismInput` into the elements and properties that are required for the failure mechanism implementation to calculate the reliability and the safety factor.
 * The specific input of the previous point is subsequently used by the implementation of the `FailureMechanismCalculatorProtocol` to calculate the reliability and the safety factor. Note that the calculator can be dependent on other parameters as well.
 * In case certain functionality is not only used in the failure mechanism implementation, but also at other parts of the application, a failure mechanism specific function library can be introduced.
