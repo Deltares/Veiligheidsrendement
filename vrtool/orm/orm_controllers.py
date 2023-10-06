@@ -313,7 +313,6 @@ def import_results_measures(
             config,
             _mapped_section,
         ).import_orm(_selected_measure_results)
-        _mapped_section.section_reliability.calculate_section_reliability()
         _solutions_dict[_section.section_name] = _imported_solution
     _dike_traject.set_probabilities()
     vrtool_db.close()

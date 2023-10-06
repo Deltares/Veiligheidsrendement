@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import defaultdict
 
 import logging
 from pathlib import Path
@@ -17,7 +18,10 @@ from vrtool.orm.io.importers.mechanism_reliability_collection_importer import (
 )
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.buildings import Buildings
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -38,6 +42,42 @@ class DikeSectionImporter(OrmImporterProtocol):
         self.t_0 = vrtool_config.t_0
         self.externals = vrtool_config.externals
         self._config = vrtool_config
+
+    @staticmethod
+    def import_assessment_reliability_df(section_data: SectionData) -> pd.DataFrame:
+        """
+        Imports the assessment reliability data realted to a section as a `pd.DataFrame`.
+
+        Args:
+            section_data (SectionData): Section Data with an already saved initial assessment.
+
+        Returns:
+            pd.DataFrame: Dataframe containing information of section and mechanisms assessments.
+        """
+        _columns = []
+        _section_reliability_dict = defaultdict(list)
+        for _asr in section_data.assessment_section_results.order_by(
+            AssessmentSectionResult.time.asc()
+        ):
+            _columns.append(_asr.time)
+            _section_reliability_dict["Section"].append(_asr.beta)
+            for _amr in (
+                AssessmentMechanismResult.select()
+                .join(MechanismPerSection)
+                .where(
+                    (AssessmentMechanismResult.time == _asr.time)
+                    & (
+                        AssessmentMechanismResult.mechanism_per_section.section
+                        == section_data
+                    ),
+                )
+            ):
+                _section_reliability_dict[
+                    _amr.mechanism_per_section.mechanism.name
+                ].append(_amr.beta)
+        return pd.DataFrame.from_dict(
+            _section_reliability_dict, columns=_columns, orient="index"
+        )
 
     def _import_buildings_list(self, buildings_list: list[Buildings]) -> pd.DataFrame:
         _buildings_data = [
@@ -97,6 +137,10 @@ class DikeSectionImporter(OrmImporterProtocol):
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
                 _mechanism_data
             )
+
+        _section_reliability.SectionReliability = self.import_assessment_reliability_df(
+            section_data
+        )
 
         return _section_reliability
 
