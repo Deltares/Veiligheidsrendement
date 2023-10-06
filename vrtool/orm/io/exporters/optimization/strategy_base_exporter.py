@@ -1,6 +1,6 @@
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.measure_result.measure_result_mechanism import MeasureResultMechanism
+from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
 from vrtool.orm.models.optimization.optimization_step_result import OptimizationStepResult
 
@@ -44,7 +44,6 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 _measure_result = MeasureResult.get_by_id(msrId)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
-                    print(row.mechanism_per_section_id, row.beta, row.time)
                     stepResults.append({"optimization_step_id":self._opt_step_id,
                                         "mechanism_per_section_id": row.mechanism_per_section_id,
                                         "time": row.time, "beta": row.beta, "lcc":lcc })
