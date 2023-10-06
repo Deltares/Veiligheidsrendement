@@ -31,12 +31,9 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    (
     export_results_optimization,
     open_database,
-   
     vrtool_db,
-),
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
