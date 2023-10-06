@@ -524,45 +524,7 @@ class TestOrmControllers:
             _measures_input_data, _measures_input_data.parameters_to_validate
         )
 
-        # Define strategies.
-        class MockedStrategy(StrategyBase):
-            def __init__(self, type: str, config: VrtoolConfig):
-                self.type = type
-                self.discount_rate = 0.42
-                # First run could just be exporting the index of TakenMeasures.
-                self.options = pd.DataFrame(
-                    list(map(lambda x: x.id, MeasureResult.select()))
-                )  # All possible combinations of MeasureResults (by ID).
-                # Has a lot of information already present in measure results.
-                _measures_columns = [
-                    "Section",
-                    "option_in",
-                    "LCC",
-                    "BC",
-                    "ID",
-                    "name",
-                    "yes/no",
-                    "dcrest",
-                    "dberm",
-                    "beta_target",
-                    "transition_level",
-                ]
-                _taken_measures = []
-                _id_idx = _measures_columns.index("ID")
-                for _measure_result in MeasureResult.select():
-                    _taken_measure_row = [0] * len(_measures_columns)
-                    _taken_measure_row[_id_idx] = _measure_result.get_id()
-                    _taken_measures.append(_taken_measure_row)
-
-                self.TakenMeasures = pd.DataFrame(
-                    _taken_measures, columns=_measures_columns
-                )
-
-        _optimization_type = "Test optimization type"
         _optimization_run_name = "Test optimization name"
-        _test_strategy = MockedStrategy(
-            type=_optimization_type, config=_results_measures.vr_config
-        )
 
         # 2. Run test.
         _measure_result_ids = [mr.get_id() for mr in orm_models.MeasureResult.select()]
@@ -571,22 +533,24 @@ class TestOrmControllers:
         )
 
         # 3. Verify expectations.
-        assert len(orm_models.OptimizationType.select()) == 1
-        _optimization_type = orm_models.OptimizationType.get_or_none(
-            name=_test_strategy.type.upper()
+        assert len(orm_models.OptimizationType.select()) == len(
+            _results_measures.vr_config.design_methods
         )
-        assert isinstance(_optimization_type, orm_models.OptimizationType)
+        for _optimization_type in orm_models.OptimizationType:
+            assert isinstance(_optimization_type, orm_models.OptimizationType)
 
-        assert len(orm_models.OptimizationRun.select()) == 1
-        _optimization_run = orm_models.OptimizationRun.get_or_none(
-            optimization_type=_optimization_type, name=_optimization_run_name
-        )
-        assert isinstance(_optimization_run, orm_models.OptimizationRun)
-        assert _optimization_run.discount_rate == _test_strategy.discount_rate
+            assert len(_optimization_type.optimization_runs) == 1
+            _optimization_run = _optimization_type.optimization_runs[0]
 
-        assert len(orm_models.OptimizationSelectedMeasure.select()) == len(
-            _measure_result_ids
-        )
+            assert isinstance(_optimization_run, orm_models.OptimizationRun)
+            assert _optimization_run.name == _optimization_run_name
+            assert (
+                _optimization_run.discount_rate
+                == _results_measures.vr_config.discount_rate
+            )
+            assert len(_optimization_run.optimization_run_measure_results) == len(
+                _measure_result_ids
+            )
 
     @pytest.mark.parametrize(
         "results_measures_with_mocked_data",
