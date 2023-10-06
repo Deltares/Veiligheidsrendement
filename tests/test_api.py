@@ -266,7 +266,7 @@ class TestRunWorkflows:
         _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
         _results_optimization = RunOptimization(_results_measures).run()
 
-        export_results_optimization(_results_optimization)
+        # export_results_optimization(_results_optimization)
 
         RunFullValidator().validate_acceptance_result_cases(
             valid_vrtool_config.output_directory, _test_reference_path
