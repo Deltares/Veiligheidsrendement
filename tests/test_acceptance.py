@@ -7,13 +7,14 @@ import pytest
 from pandas.testing import assert_frame_equal
 from peewee import SqliteDatabase, fn
 
-from tests.orm import empty_db_fixture
-
 from tests import get_test_results_dir, test_data, test_externals
+from tests.orm import empty_db_fixture
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
-from vrtool.orm.io.exporters.optimization.strategy_base_exporter import StrategyBaseExporter
+from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
+    StrategyBaseExporter,
+)
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
 from vrtool.orm.models.measure import Measure
