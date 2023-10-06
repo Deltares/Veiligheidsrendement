@@ -60,7 +60,7 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
             return
 
         if isinstance(measure, RevetmentMeasure):
-            _collections = RevetmentMeasureResultCollection()
+            _measure_collection = RevetmentMeasureResultCollection()
             for _imported_measure in _imported_results:
                 _converted_measure = RevetmentMeasureSectionReliability()
                 _converted_measure.beta_target = _imported_measure[
@@ -69,13 +69,17 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
                 _converted_measure.transition_level = _imported_measure[
                     "imported_parameters"
                 ]["transition_level"]
-                _converted_measure.section_reliability = SectionReliability()
-                _converted_measure.section_reliability.SectionReliability = (
-                    _imported_measure["Reliability"]
-                )
+                _converted_measure.section_reliability = _imported_measure[
+                    "Reliability"
+                ]
                 _converted_measure.cost = _imported_measure["Cost"]
                 _converted_measure.measure_id = _imported_measure["measure_id"]
-                _collections.result_collection.append(_converted_measure)
+                _converted_measure.reinforcement_type = measure.parameters["Type"]
+                _converted_measure.combinable_type = measure.parameters["Class"]
+                _converted_measure.measure_year = measure.parameters["year"]
+                _measure_collection.result_collection.append(_converted_measure)
+            measure.measures = _measure_collection
+            return
 
         if len(_imported_results) > 1:
             logging.error("Only first record will be set as for the measures.")
@@ -112,4 +116,5 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
             _solutions.measures.append(_imported_measure)
 
         SolutionsImporter.set_solution_measure_table(_solutions)
+        _solutions.solutions_to_dataframe(filtering="off", splitparams=True)
         return _solutions

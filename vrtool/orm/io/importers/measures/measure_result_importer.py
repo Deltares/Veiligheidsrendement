@@ -1,6 +1,5 @@
-from typing import Any
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
 )
@@ -38,11 +37,14 @@ class MeasureResultImporter(OrmImporterProtocol):
             _section_reliability_dict, columns=_columns, orient="index"
         )
 
+        _section_reliability = SectionReliability()
+        _section_reliability.SectionReliability = _section_reliability_df
+
         return dict(
             measure_result_id=measure_result.get_id(),
             measure_id=measure_result.measure_per_section.measure.get_id(),
             Cost=_cost,
-            Reliability=_section_reliability_df,
+            Reliability=_section_reliability,
             imported_parameters=_imported_parameters,
             combinable=measure_result.measure_per_section.measure.combinable_type.name,
             reinforcement_type=measure_result.measure_per_section.measure.measure_type.name,
