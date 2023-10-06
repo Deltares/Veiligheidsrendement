@@ -288,7 +288,9 @@ def import_results_measures(
     Returns:
         ResultsMeasures: Instance hosting all the required measures' results.
     """
+    _dike_traject = get_dike_traject(config)
     open_database(config.input_database_path)
+
     _solutions_dict = dict()
     # Group the measure results by section.
     measure_results = orm.MeasureResult.select().where(
@@ -303,15 +305,14 @@ def import_results_measures(
 
     # Import a solution per section:
     for _section, _selected_measure_results in _grouped_by_section:
-        # Import the section properties (minimum required).
-        _dike_section = DikeSection()
-        _dike_section.name = _section.section_name
-        _dike_section.length = _section.section_length
-        _dike_section.crest_height = _section.crest_height
-
         # Import measures into solution
         _imported_solution = SolutionsForMeasureResultsImporter(
-            config, _dike_section
+            config,
+            next(
+                _ds
+                for _ds in _dike_traject.sections
+                if _ds.name == _section.section_name
+            ),
         ).import_orm(_selected_measure_results)
 
         _solutions_dict[_section.section_name] = _imported_solution
@@ -320,6 +321,8 @@ def import_results_measures(
 
     _results_measures = ResultsMeasures()
     _results_measures.solutions_dict = _solutions_dict
+    _results_measures.selected_traject = _dike_traject
+    _results_measures.vr_config = config
 
     return _results_measures
 

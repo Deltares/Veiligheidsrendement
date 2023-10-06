@@ -29,6 +29,7 @@ from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
     MeasureResultImporter,
 )
+from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 import logging
@@ -110,4 +111,5 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
             self._set_measure_results(_imported_measure, _grouped_measure_results)
             _solutions.measures.append(_imported_measure)
 
+        SolutionsImporter.set_solution_measure_table(_solutions)
         return _solutions

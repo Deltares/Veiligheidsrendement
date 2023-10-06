@@ -27,7 +27,14 @@ class SolutionsImporter(OrmImporterProtocol):
         _measure_importer = MeasureImporter(self._config)
         return list(map(_measure_importer.import_orm, orm_measures))
 
-    def _set_measure_table(self, solution: Solutions):
+    @staticmethod
+    def set_solution_measure_table(solution: Solutions):
+        """
+        Sets the measure table for a given imported solution.
+
+        Args:
+            solution (Solutions): Entity whose `measure_table` property needs to be set.
+        """
         _combinables = []
         _partials = []
         for i, measure in enumerate(solution.measures):
@@ -70,5 +77,5 @@ class SolutionsImporter(OrmImporterProtocol):
                 .where(orm_model.id == MeasurePerSection.section_id)
             )
         )
-        self._set_measure_table(_solutions)
+        self.set_solution_measure_table(_solutions)
         return _solutions

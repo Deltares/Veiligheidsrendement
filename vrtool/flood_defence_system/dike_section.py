@@ -41,7 +41,9 @@ class DikeSection:
     def get_dike_sections_from_vr_config(
         cls, vrtool_config: VrtoolConfig
     ) -> list[DikeSection]:
-        """Gets a collection of dike sections based on the config.
+        """
+        **TODO: DEPRECATED**
+        Gets a collection of dike sections based on the config.
 
         Args:
             vrtool_config (VrtoolConfig): The configuration to retrieve the collection of dike sections with.
