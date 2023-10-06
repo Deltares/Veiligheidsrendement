@@ -1,4 +1,4 @@
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
@@ -7,16 +7,16 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 class FailureMechanismCollection:
     """Class holding a collection of failure mechanisms and their associated information"""
 
-    _failure_mechanisms: dict[str, MechanismReliabilityCollection]
+    _failure_mechanisms: dict[MechanismEnum, MechanismReliabilityCollection]
 
     def __init__(self) -> None:
         self._failure_mechanisms = {}
 
-    def get_available_mechanisms(self) -> set[str]:
+    def get_available_mechanisms(self) -> set[MechanismEnum]:
         """Gets the available failure mechanisms.
 
         Returns:
-            set[str]: A collection with all the available failure mechanisms.
+            set[MechanismEnum]: A collection with all the available failure mechanisms.
         """
         return self._failure_mechanisms.keys()
 
@@ -29,9 +29,9 @@ class FailureMechanismCollection:
         if not self._failure_mechanisms:
             return []
 
-        mechanism_name = list(self._failure_mechanisms)[0]
+        mechanism = list(self._failure_mechanisms)[0]
         return list(
-            self.get_mechanism_reliability_collection(mechanism_name).Reliability.keys()
+            self.get_mechanism_reliability_collection(mechanism).Reliability.keys()
         )
 
     def add_failure_mechanism_reliability_collection(
@@ -46,24 +46,24 @@ class FailureMechanismCollection:
         Raises:
             ValueError: Raised when a collection with the same failure mechanism was already added.
         """
-        mechanism_name = reliability_collection.mechanism_name
-        if mechanism_name in self._failure_mechanisms:
-            raise ValueError(f'Mechanism "{mechanism_name}" already added.')
+        mechanism = reliability_collection.mechanism
+        if mechanism in self._failure_mechanisms:
+            raise ValueError(f'Mechanism "{mechanism}" already added.')
 
-        self._failure_mechanisms[mechanism_name] = reliability_collection
+        self._failure_mechanisms[mechanism] = reliability_collection
 
     def get_mechanism_reliability_collection(
-        self, mechanism_name: str
+        self, mechanism: MechanismEnum
     ) -> MechanismReliabilityCollection:
         """Gets the associated collection of reliabilities for the given failure mechanism.
 
         Args:
-            mechanism_name (str): The name of the failure mechanism to retrieve the collection of reliabilities for.
+            mechanism (MechanismEnum): The failure mechanism to retrieve the collection of reliabilities for.
 
         Returns:
             MechanismReliabilityCollection: A collection of reliabilities. None if the mechanism was not present.
         """
-        return self._failure_mechanisms.get(mechanism_name)
+        return self._failure_mechanisms.get(mechanism)
 
     def get_all_mechanism_reliability_collections(
         self,

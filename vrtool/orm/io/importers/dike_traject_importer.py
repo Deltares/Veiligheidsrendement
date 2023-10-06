@@ -1,3 +1,4 @@
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -51,7 +52,8 @@ class DikeTrajectImporter(OrmImporterProtocol):
         for _section in _dike_traject.sections:
             _section.TrajectInfo = _dike_traject.general_info
         _mechanisms = self._select_available_mechanisms(orm_model)
-        _dike_traject.mechanism_names = list(set([_m.name for _m in _mechanisms]))
+        _mechanism_names = list(set([_m.name for _m in _mechanisms]))
+        _dike_traject.mechanisms = list(map(MechanismEnum.get_enum, _mechanism_names))
         _dike_traject.t_0 = self._vrtool_config.t_0
         _dike_traject.T = self._vrtool_config.T
 

@@ -5,6 +5,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result import (
@@ -47,7 +48,7 @@ class RevetmentMeasure(MeasureProtocol):
         NOTE (VRTOOL-254): Retrieves the Beta value for the first computation year (lowest integer value).
         """
         _mech_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            "Revetment"
+            MechanismEnum["REVETMENT"]
         )
         _min_reliability_year = str(
             min(map(int, _mech_reliability_collection.Reliability.keys()))
@@ -72,7 +73,7 @@ class RevetmentMeasure(MeasureProtocol):
 
     def _get_revetment(self, dike_section: DikeSection) -> RevetmentDataClass:
         _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            "Revetment"
+            MechanismEnum["REVETMENT"]
         )
         _first_year = list(_reliability_collection.Reliability.keys())[0]
         return _reliability_collection.Reliability[_first_year].Input.input[
@@ -222,7 +223,7 @@ class RevetmentMeasure(MeasureProtocol):
 
     def _get_configured_section_reliability_and_cost(
         self,
-        mechanism_name: str,
+        mechanism: MechanismEnum,
         calc_type: str,
         dike_section: DikeSection,
         revetment_measure_results: list[RevetmentMeasureResult],
@@ -234,12 +235,12 @@ class RevetmentMeasure(MeasureProtocol):
         )
         _assessment_revetment = (
             _failure_mechanism_collection.get_mechanism_reliability_collection(
-                mechanism_name
+                mechanism
             )
         )
         _assessment_revetment.Reliability = (
             self._get_mechanism_reliabilty_for_beta_transition(
-                mechanism_name, calc_type, revetment_measure_results
+                mechanism, calc_type, revetment_measure_results
             )
         )
         section_reliability.failure_mechanisms = _failure_mechanism_collection
@@ -250,7 +251,7 @@ class RevetmentMeasure(MeasureProtocol):
 
     def _get_mechanism_reliabilty_for_beta_transition(
         self,
-        mechanism_name: str,
+        mechanism: MechanismEnum,
         calc_type: str,
         revetment_measure_results: list[RevetmentMeasureResult],
     ) -> dict[str, MechanismReliability]:
@@ -259,7 +260,7 @@ class RevetmentMeasure(MeasureProtocol):
                 self,
                 strength: MechanismInput,
                 load: LoadInput,
-                mechanism: str,
+                mechanism: MechanismEnum,
                 year: float,
                 traject_info: DikeTrajectInfo,
             ):
@@ -270,7 +271,7 @@ class RevetmentMeasure(MeasureProtocol):
         _reliability_dict = {}
         for result in revetment_measure_results:
             mechanism_reliability = RevetmentMeasureMechanismReliability(
-                mechanism_name, calc_type, self.config.t_0
+                mechanism, calc_type, self.config.t_0
             )
             mechanism_reliability.Beta = result.beta_combined
             mechanism_reliability.Pf = beta_to_pf(result.beta_combined)

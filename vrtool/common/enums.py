@@ -2,11 +2,6 @@ from enum import Enum
 from re import sub
 
 
-def _normalize_name(in_name) -> str:
-    """Convert string to match naming convention (upper with _)"""
-    return sub(r"(?<!^)(?=[A-Z])", "_", in_name).upper()
-
-
 class MechanismEnum(Enum):
     OVERFLOW = 1
     STABILITY_INNER = 2
@@ -17,18 +12,32 @@ class MechanismEnum(Enum):
         return self.name
 
     @classmethod
+    def _normalize_name(cls, in_name: str) -> None | str:
+        """Convert string to match naming convention (upper with _)"""
+        if not in_name:
+            return None
+        return sub(r"(?<!^)(?=[A-Z])", "_", in_name).upper()
+
+    @classmethod
     def get_enum(cls, enum_name: str) -> None | Enum:
         """Return matching enum for name"""
 
-        if enum_name.isupper():
+        try:
+            # Default: enum name exists
+            return cls[enum_name]
+        except KeyError:
             try:
-                return cls[enum_name]
-            except KeyError:
+                # Fallback: enum name needs to be normalized first
+                return next(
+                    _enum
+                    for _enum in list(cls)
+                    if cls._normalize_name(enum_name) == _enum.name
+                )
+            except StopIteration:
                 return None
 
-        try:
-            return next(
-                _enum for _enum in list(cls) if _normalize_name(enum_name) == _enum.name
-            )
-        except StopIteration:
-            return None
+
+#
+#     @classmethod
+#     def get_names(cls) -> list(str):
+#         return cls._member_names_

@@ -7,6 +7,7 @@ from typing import Union
 import pytest
 
 from tests import test_data, test_results
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
 
 
@@ -84,10 +85,10 @@ class TestVrtoolConfig:
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
         assert _config.mechanisms == [
-            "OVERFLOW",
-            "STABILITY_INNER",
-            "PIPING",
-            "REVETMENT",
+            MechanismEnum["OVERFLOW"],
+            MechanismEnum["STABILITY_INNER"],
+            MechanismEnum["PIPING"],
+            MechanismEnum["REVETMENT"],
         ]
         assert not _config.LE_in_section
         assert _config.crest_step == pytest.approx(0.5)

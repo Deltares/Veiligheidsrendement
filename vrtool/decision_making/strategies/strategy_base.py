@@ -10,6 +10,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import interp1d
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
@@ -38,7 +39,7 @@ class StrategyBase:
         self.config = config
         self.OI_year = config.OI_year
         self.OI_horizon = config.OI_horizon
-        self.mechanisms = config.mechanisms
+        self.mechanisms: list[MechanismEnum] = config.mechanisms
         self.T = config.T
         self.LE_in_section = config.LE_in_section
 
@@ -317,7 +318,7 @@ class StrategyBase:
             probability_of_failure_lookup: dict[str, np.array]
         ) -> np.array:
             return CombinFunctions.combine_probabilities(
-                probability_of_failure_lookup, ("StabilityInner", "Piping")
+                probability_of_failure_lookup, ("STABILITY_INNER", "PIPING")
             )
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
@@ -325,7 +326,7 @@ class StrategyBase:
         #  should be fixed though
 
         self.options_height, self.options_geotechnical = split_options(
-            self.options, traject.mechanism_names
+            self.options, traject.mechanisms
         )
 
         N = len(self.options)  # Number of dike sections
@@ -348,13 +349,13 @@ class StrategyBase:
 
         # probabilities [N,S,T]
         self.Pf = {}
-        for _mechanism_name in self.mechanisms:
-            if _mechanism_name == "Overflow":
-                self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0)
-            elif _mechanism_name == "Revetment":
-                self.Pf[_mechanism_name] = np.full((N, Sh + 1, T), 1.0e-18)
+        for _mechanism in self.mechanisms:
+            if _mechanism.name == "OVERFLOW":
+                self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0)
+            elif _mechanism.name == "REVENTMENT":
+                self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0e-18)
             else:
-                self.Pf[_mechanism_name] = np.full((N, Sg + 1, T), 1.0)
+                self.Pf[_mechanism.name] = np.full((N, Sg + 1, T), 1.0)
 
         # fill values
         # TODO Think about the initial condition and whether this should be added separately or teh 0,
@@ -364,34 +365,34 @@ class StrategyBase:
         # get all probabilities. Interpolate on beta per section, then combine p_f
         betas = {}
         for n in range(0, N):
-            for _mechanism_name in traject.sections[n].mechanism_data:
+            for _mechanism in traject.sections[n].mechanism_data:
                 len_beta1 = traject.sections[
                     n
                 ].section_reliability.SectionReliability.shape[1]
 
                 beta1 = (
                     traject.sections[n]
-                    .section_reliability.SectionReliability.loc[_mechanism_name]
+                    .section_reliability.SectionReliability.loc[_mechanism.name]
                     .values.reshape((len_beta1, 1))
                     .T
                 )
                 # Initial
                 # condition with no measure
-                if _mechanism_name == "Overflow" or _mechanism_name == "Revetment":
-                    beta2 = self.options_height[section_keys[n]][_mechanism_name]
+                if _mechanism.name == "OVERFLOW" or _mechanism.name == "REVENTMENT":
+                    beta2 = self.options_height[section_keys[n]][_mechanism.name]
                     # All solutions
                 else:
                     beta2 = self.options_geotechnical[section_keys[n]][
-                        _mechanism_name
+                        _mechanism.name
                     ]  # All solutions
-                betas[_mechanism_name] = np.concatenate((beta1, beta2), axis=0)
-                if np.shape(betas[_mechanism_name])[1] != T:
-                    betas[_mechanism_name] = interp1d(self.T, betas[_mechanism_name])(
+                betas[_mechanism.name] = np.concatenate((beta1, beta2), axis=0)
+                if np.shape(betas[_mechanism.name])[1] != T:
+                    betas[_mechanism.name] = interp1d(self.T, betas[_mechanism.name])(
                         np.arange(0, T, 1)
                     )
-                self.Pf[_mechanism_name][
-                    n, 0 : np.size(betas[_mechanism_name], 0), :
-                ] = beta_to_pf(betas[_mechanism_name])
+                self.Pf[_mechanism.name][
+                    n, 0 : np.size(betas[_mechanism.name], 0), :
+                ] = beta_to_pf(betas[_mechanism.name])
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
@@ -449,11 +450,11 @@ class StrategyBase:
             self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = self.Pf["Overflow"] * np.tile(self.D.T, (N, Sh + 1, 1))
+        self.RiskOverflow = self.Pf["OVERFLOW"] * np.tile(self.D.T, (N, Sh + 1, 1))
 
         self.RiskRevetment = []
-        if "Revetment" in self.mechanisms:
-            self.RiskRevetment = self.Pf["Revetment"] * np.tile(
+        if "REVETMENT" in self.mechanisms.name:
+            self.RiskRevetment = self.Pf["REVETMENT"] * np.tile(
                 self.D.T, (N, Sh + 1, 1)
             )
         else:

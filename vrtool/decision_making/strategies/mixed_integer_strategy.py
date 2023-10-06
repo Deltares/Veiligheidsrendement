@@ -189,8 +189,8 @@ class MixedIntegerStrategy(StrategyBase):
                     for sst in grSh:
                         # derive the index of the relevant decision variables
                         index = (
-                            self.Pf["Overflow"][n, :, t]
-                            > self.Pf["Overflow"][nst, sst, t]
+                            self.Pf["OVERFLOW"][n, :, t]
+                            > self.Pf["OVERFLOW"][nst, sst, t]
                         )
                         index1 = np.where(index)[0]
                         ii = []
@@ -202,8 +202,8 @@ class MixedIntegerStrategy(StrategyBase):
                         for kk in grN:
 
                             index = (
-                                self.Pf["Overflow"][kk, :, t]
-                                <= self.Pf["Overflow"][nst, sst, t]
+                                self.Pf["OVERFLOW"][kk, :, t]
+                                <= self.Pf["OVERFLOW"][nst, sst, t]
                             )
                             index1 = np.where(index)[0]
                             if np.size(index1) > 0:

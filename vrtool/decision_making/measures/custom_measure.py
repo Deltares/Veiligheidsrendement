@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
@@ -61,7 +62,7 @@ class CustomMeasure(MeasureProtocol):
         self, section: DikeSection, base_data: pd.DataFrame
     ) -> Optional[float]:
         overflow_reliability_collection = section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            "Overflow"
+            MechanismEnum["OVERFLOW"]
         )
         if not overflow_reliability_collection:
             logging.warning(f'Overflow data is not present in section "{section.name}"')
@@ -96,13 +97,13 @@ class CustomMeasure(MeasureProtocol):
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
-        mechanism_names = (
+        mechanisms = (
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
-        for mechanism_name in mechanism_names:
+        for mechanism in mechanisms:
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
-                    mechanism_name, dike_section, traject_info
+                    mechanism, dike_section, traject_info
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -113,12 +114,12 @@ class CustomMeasure(MeasureProtocol):
 
     def _get_configured_mechanism_reliability_collection(
         self,
-        mechanism_name: str,
+        mechanism: MechanismEnum,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism_name, "", self.config.T, self.config.t_0, 0
+            mechanism, "", self.config.T, self.config.t_0, 0
         )
 
         for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
@@ -126,7 +127,7 @@ class CustomMeasure(MeasureProtocol):
                 year_to_calculate
             ] = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism_name
+                    mechanism
                 ).Reliability[
                     year_to_calculate
                 ]
@@ -136,12 +137,12 @@ class CustomMeasure(MeasureProtocol):
                 year_to_calculate
             ]
             if np.int_(year_to_calculate) >= self.parameters["year"]:
-                if mechanism_name == "Overflow":
+                if mechanism.name == "OVERFLOW":
                     self._configure_overflow(mechanism_reliability)
-                elif mechanism_name == "Piping":
+                elif mechanism.name == "PIPING":
                     self._configure_piping(mechanism_reliability)
                 else:
-                    self._configure_other(mechanism_reliability, mechanism_name)
+                    self._configure_other(mechanism_reliability, mechanism)
 
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
@@ -164,16 +165,16 @@ class CustomMeasure(MeasureProtocol):
         # change Lvoor
 
     def _configure_other(
-        self, mechanism_reliability: MechanismReliability, mechanism_name: str
+        self, mechanism_reliability: MechanismReliability, mechanism: MechanismEnum
     ) -> None:
         # Direct input: remove existing inputs and replace with beta
         mechanism_reliability.mechanism_type = "DirectInput"
         mechanism_reliability.Input.input = {}
         mechanism_reliability.Input.input["beta"] = {}
 
-        for input in self.reliability_data[mechanism_name]:
+        for input in self.reliability_data[mechanism.name]:
             # only read non-nan values:
-            if not np.isnan(self.reliability_data[mechanism_name, input].values[0]):
+            if not np.isnan(self.reliability_data[mechanism.name, input].values[0]):
                 mechanism_reliability.Input.input["beta"][
                     input - self.t_0
-                ] = self.reliability_data[mechanism_name, input].values[0]
+                ] = self.reliability_data[mechanism.name, input].values[0]

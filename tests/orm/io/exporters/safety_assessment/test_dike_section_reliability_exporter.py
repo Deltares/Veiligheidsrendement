@@ -4,6 +4,7 @@ from tests.orm.io.exporters import (
     section_reliability_with_values,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
@@ -106,9 +107,11 @@ class TestDikeSectionReliabilityExporter:
                 section_reliability_with_values.SectionReliability.index != "Section"
             ]
         )
-        create_required_mechanism_per_section(
-            _test_section_data, _expected_mechanisms_reliability.index
+        _mechanisms = list(
+            MechanismEnum.get_enum(_mech_name)
+            for _mech_name in _expected_mechanisms_reliability.index
         )
+        create_required_mechanism_per_section(_test_section_data, _mechanisms)
 
         _time_entries = len(section_reliability_with_values.SectionReliability.columns)
 

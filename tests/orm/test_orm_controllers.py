@@ -14,6 +14,7 @@ from tests.orm import (
     get_basic_mechanism_per_section,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -69,7 +70,7 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
-    mechanism_data = [dict(name="a_mechanism"), dict(name="b_mechanism")]
+    mechanism_data = [dict(name="OVERFLOW"), dict(name="STABILITY_INNER")]
     buildings_data = [
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
@@ -222,9 +223,9 @@ class TestOrmControllers:
 
         def check_section_reliability(section: DikeSection):
             _recognized_keys = [
-                "Overflow",
-                "Piping",
-                "StabilityInner",
+                MechanismEnum["OVERFLOW"],
+                MechanismEnum["PIPING"],
+                MechanismEnum["STABILITY_INNER"],
             ]
 
             def check_key_value(key_value):
@@ -263,12 +264,16 @@ class TestOrmControllers:
         _water_load_input.input["d_cover"] = None
         _water_load_input.input["beta"] = 42.24
         _stability_inner_collection = MechanismReliabilityCollection(
-            "StabilityInner", "combinable", database_vrtool_config.T, 2023, 2025
+            MechanismEnum["STABILITY_INNER"],
+            "combinable",
+            database_vrtool_config.T,
+            2023,
+            2025,
         )
         _stability_inner_collection.Reliability["0"].Input = _water_load_input
         _dike_section.section_reliability.load = _water_load_input
         _dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
-            "StabilityInner"
+            MechanismEnum["STABILITY_INNER"]
         ] = _stability_inner_collection
 
         # Initial Geometry
@@ -289,7 +294,7 @@ class TestOrmControllers:
         _dike_section.InitialGeometry.set_index("type", inplace=True, drop=True)
 
         # Mechanism data
-        _dike_section.mechanism_data["StabilityInner"] = [
+        _dike_section.mechanism_data[MechanismEnum["STABILITY_INNER"]] = [
             ("RW000", "SIMPLE"),
             "combinable",
         ]

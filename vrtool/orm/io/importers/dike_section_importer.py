@@ -77,7 +77,7 @@ class DikeSectionImporter(OrmImporterProtocol):
             _available_cs = []
             for _cs in _mechanism_per_section.computation_scenarios:
                 _available_cs.append((_cs.scenario_name, _cs.computation_type.name))
-            _mechanism_data[_mechanism_per_section.mechanism.name] = _available_cs
+            _mechanism_data[_mechanism_per_section.mechanism] = _available_cs
         return _mechanism_data
 
     def _get_section_reliability(

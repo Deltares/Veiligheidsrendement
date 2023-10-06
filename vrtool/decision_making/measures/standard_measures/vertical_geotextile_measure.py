@@ -3,6 +3,7 @@ import copy
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -45,14 +46,14 @@ class VerticalGeotextileMeasure(MeasureProtocol):
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
-        mechanism_names = (
+        mechanisms = (
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
-        for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
+        for mechanism in mechanisms:
+            calc_type = dike_section.mechanism_data[mechanism][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
-                    mechanism_name, calc_type, dike_section, traject_info
+                    mechanism, calc_type, dike_section, traject_info
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -63,13 +64,13 @@ class VerticalGeotextileMeasure(MeasureProtocol):
 
     def _get_configured_mechanism_reliability_collection(
         self,
-        mechanism_name: str,
+        mechanism: MechanismEnum,
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism_name, calc_type, self.config.T, self.config.t_0, 0
+            mechanism, calc_type, self.config.T, self.config.t_0, 0
         )
 
         for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
@@ -77,7 +78,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
                 year_to_calculate
             ].Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism_name
+                    mechanism
                 )
                 .Reliability[year_to_calculate]
                 .Input
@@ -87,17 +88,17 @@ class VerticalGeotextileMeasure(MeasureProtocol):
                 year_to_calculate
             ]
             dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                mechanism_name
+                mechanism
             ).Reliability[
                 year_to_calculate
             ]
-            if mechanism_name == "Piping":
+            if mechanism.name == "PIPING":
                 self._configure_piping(
                     mechanism_reliability,
                     year_to_calculate,
                     dike_section_mechanism_reliability,
                 )
-            if mechanism_name in ["Overflow", "StabilityInner"]:
+            if mechanism.name in ["OVERFLOW", "STABILITY_INNER"]:
                 self._copy_results(
                     mechanism_reliability, dike_section_mechanism_reliability
                 )

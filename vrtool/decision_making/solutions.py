@@ -36,7 +36,7 @@ class Solutions:
         self.measure_table = pd.DataFrame(columns=["ID", "Name"])
 
     def _is_stability_screen_measure_valid(self) -> bool:
-        return "StabilityInner" in self.mechanisms
+        return "STABILITY_INNER" in self.mechanisms.name
 
     def _is_soil_reinforcement_measure_valid(self, stability_screen: str) -> bool:
         if stability_screen.lower().strip() == "yes":

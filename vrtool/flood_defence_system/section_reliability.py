@@ -26,19 +26,19 @@ class SectionReliability:
         trange = [int(i) for i in calculation_years]
         pf_mechanisms_time = np.zeros((len(available_mechanisms), len(trange)))
         count = 0
-        for mechanism_name in available_mechanisms:  # mechanisms
+        for mechanism in available_mechanisms:  # mechanisms
             for j in range(0, len(trange)):
                 mechanism_collection = (
                     self.failure_mechanisms.get_mechanism_reliability_collection(
-                        mechanism_name
+                        mechanism
                     )
                 )
 
-                if mechanism_name in ["Overflow", "Revetment"]:
+                if mechanism.name in ["OVERFLOW", "REVETMENT"]:
                     pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
                         str(trange[j])
                     ].Pf
-                elif mechanism_name in ["StabilityInner", "Piping"]:
+                elif mechanism.name in ["STABILITY_INNER", "PIPING"]:
                     pf = mechanism_collection.Reliability[str(trange[j])].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1
@@ -59,7 +59,7 @@ class SectionReliability:
         beta_mech_time = pd.DataFrame(
             pb_functions.pf_to_beta(pf_mechanisms_time),
             columns=calculation_years,
-            index=list(available_mechanisms),
+            index=list(_mech.name for _mech in available_mechanisms),
         )
         beta_time = pd.DataFrame(
             [pb_functions.pf_to_beta(np.sum(pf_mechanisms_time, axis=0))],

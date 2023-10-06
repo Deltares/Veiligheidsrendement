@@ -3,6 +3,7 @@ import copy
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     probabilistic_design,
@@ -48,14 +49,14 @@ class DiaphragmWallMeasure(MeasureProtocol):
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
-        mechanism_names = (
+        mechanisms = (
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
-        for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
+        for mechanism in mechanisms:
+            calc_type = dike_section.mechanism_data[mechanism][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
-                    mechanism_name, calc_type, dike_section, traject_info
+                    mechanism, calc_type, dike_section, traject_info
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -66,13 +67,13 @@ class DiaphragmWallMeasure(MeasureProtocol):
 
     def _get_configured_mechanism_reliability_collection(
         self,
-        mechanism_name: str,
+        mechanism: MechanismEnum,
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism_name, calc_type, self.config.T, self.config.t_0, 0
+            mechanism, calc_type, self.config.T, self.config.t_0, 0
         )
 
         for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
@@ -80,7 +81,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 year_to_calculate
             ].Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism_name
+                    mechanism
                 )
                 .Reliability[year_to_calculate]
                 .Input
@@ -90,11 +91,11 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 year_to_calculate
             ]
             if float(year_to_calculate) >= self.parameters["year"]:
-                if mechanism_name == "Overflow":
+                if mechanism.name == "OVERFLOW":
                     self._configure_overflow(
                         mechanism_reliability, traject_info, dike_section
                     )
-                if mechanism_name in ["Piping", "StabilityInner"]:
+                if mechanism.name in ["PIPING", "STABILITY_INNER"]:
                     self._configure_piping_or_stability_inner(mechanism_reliability)
 
         mechanism_reliability_collection.generate_LCR_profile(
@@ -122,7 +123,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                     t_0=self.t_0,
                     horizon=self.parameters["year"] + 100,
                     load_change=dike_section.HBNRise_factor * dike_section.YearlyWLRise,
-                    mechanism="Overflow",
+                    mechanism=MechanismEnum["OVERFLOW"],
                 )
             else:
                 hc = probabilistic_design(
@@ -132,7 +133,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                     t_0=self.t_0,
                     horizon=self.parameters["year"] + 100,
                     load_change=None,
-                    mechanism="Overflow",
+                    mechanism=MechanismEnum["OVERFLOW"],
                 )
         else:
             hc = probabilistic_design(
@@ -143,7 +144,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 horizon=self.parameters["year"] + 100,
                 load_change=None,
                 type="HRING",
-                mechanism="Overflow",
+                mechanism=MechanismEnum["OVERFLOW"],
             )
 
         mechanism_input["h_crest"] = np.max(

@@ -38,9 +38,9 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
             # compute reliability in time for each mechanism:
             # logging.info(section.End)
-            for mechanism_name in self.selected_traject.mechanism_names:
+            for mechanism in self.selected_traject.mechanisms:
                 _mechanism_reliability_collection = _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism_name
+                    mechanism
                 )
 
                 if _mechanism_reliability_collection:

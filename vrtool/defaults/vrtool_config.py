@@ -55,7 +55,7 @@ class VrtoolConfig:
     # mechanisms to exclude
     excluded_mechanisms: list[str] = field(
         default_factory=lambda: [
-            "HydraulicStructures",
+            "HYDRAULIC_STRUCTURES",
         ]
     )
     # whether to consider length-effects within a dike section

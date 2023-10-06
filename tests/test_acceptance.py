@@ -36,14 +36,14 @@ from vrtool.run_workflows.vrtool_run_full_model import RunFullModel
 
 _acceptance_all_steps_test_cases = [
     pytest.param(
-        ("TestCase1_38-1_no_housing", "38-1", ["Revetment", "HydraulicStructures"]),
+        ("TestCase1_38-1_no_housing", "38-1", ["REVENTMENT", "HYDRAULIC_STRUCTURES"]),
         id="Traject 38-1, no housing",
     ),
     pytest.param(
         (
             "TestCase1_38-1_no_housing_stix",
             "38-1",
-            ["Revetment", "HydraulicStructures"],
+            ["Revetment", "HYDRAULIC_STRUCTURES"],
         ),
         id="Traject 38-1, no housing, with dstability",
     ),
@@ -51,20 +51,20 @@ _acceptance_all_steps_test_cases = [
         (
             "TestCase2_38-1_overflow_no_housing",
             "38-1",
-            ["Revetment", "HydraulicStructures"],
+            ["Revetment", "HYDRAULIC_STRUCTURES"],
         ),
         id="Traject 38-1, no-housing, with overflow",
     ),
     pytest.param(
-        ("TestCase1_38-1_revetment", "38-1", ["HydraulicStructures"]),
+        ("TestCase1_38-1_revetment", "38-1", ["HYDRAULIC_STRUCTURES"]),
         id="Traject 38-1, with revetment, case 1",
     ),
     pytest.param(
-        ("TestCase3_38-1_revetment", "38-1", ["HydraulicStructures"]),
+        ("TestCase3_38-1_revetment", "38-1", ["HYDRAULIC_STRUCTURES"]),
         id="Traject 38-1, with revetment, including bundling",
     ),
     pytest.param(
-        ("TestCase4_38-1_revetment_small", "38-1", ["HydraulicStructures"]),
+        ("TestCase4_38-1_revetment_small", "38-1", ["HYDRAULIC_STRUCTURES"]),
         id="Traject 38-1, two sections with revetment",
     ),
 ]
@@ -72,7 +72,7 @@ _acceptance_all_steps_test_cases = [
 _acceptance_optimization_test_cases = [
     _acceptance_all_steps_test_cases[0],
     pytest.param(
-        ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
+        ("TestCase3_38-1_small", "38-1", ["REVETMENT", "HYDRAULIC_STRUCTURES"]),
         id="Traject 38-1, two sections",
     ),
 ]

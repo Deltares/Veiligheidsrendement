@@ -6,6 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
@@ -472,7 +473,7 @@ def implement_option(section, traject_probability, new_probability):
 
 
 def split_options(
-    options: dict[str, pd.DataFrame], available_mechanism_names: list[str]
+    options: dict[str, pd.DataFrame], available_mechanisms: list[MechanismEnum]
 ) -> tuple[list[dict[str, pd.DataFrame]], list[dict[str, pd.DataFrame]]]:
     """Splits the options for the measures.
 
@@ -486,23 +487,23 @@ def split_options(
     """
 
     def get_dropped_dependent_options(
-        available_mechanism_names: list[str],
+        available_mechanisms: list[MechanismEnum],
     ) -> list[str]:
         options = []
-        for available_mechanism_name in available_mechanism_names:
-            if available_mechanism_name in ["StabilityInner", "Piping"]:
-                options.append(available_mechanism_name)
+        for available_mechanism in available_mechanisms:
+            if available_mechanism.name in ["STABILITY_INNER", "PIPING"]:
+                options.append(available_mechanism.name)
 
         options.append("Section")
         return options
 
     def get_dropped_independent_options(
-        available_mechanism_names: list[str],
+        available_mechanisms: list[MechanismEnum],
     ) -> list[str]:
         options = []
-        for available_mechanism_name in available_mechanism_names:
-            if available_mechanism_name in ["Overflow", "Revetment"]:
-                options.append(available_mechanism_name)
+        for available_mechanism in available_mechanisms:
+            if available_mechanism.name in ["OVERFLOW", "REVETMENT"]:
+                options.append(available_mechanism.name)
 
         options.append("Section")
         return options
@@ -678,13 +679,13 @@ def split_options(
 
         # only keep reliability of relevant mechanisms in dictionary
         options_dependent[i].drop(
-            get_dropped_dependent_options(available_mechanism_names),
+            get_dropped_dependent_options(available_mechanisms),
             axis=1,
             level=0,
             inplace=True,
         )
         options_independent[i].drop(
-            get_dropped_independent_options(available_mechanism_names),
+            get_dropped_independent_options(available_mechanisms),
             axis=1,
             level=0,
             inplace=True,
@@ -708,10 +709,10 @@ def evaluate_risk(
     sg,
     config: VrtoolConfig,
 ):
-    for i in config.mechanisms:
-        if i == "Overflow":
+    for mechanism in config.mechanisms:
+        if mechanism.name == "OVERFLOW":
             init_overflow_risk[n, :] = strategy.RiskOverflow[n, sh, :]
-        elif i == "Revetment":
+        elif mechanism.name == "REVETMENT":
             init_revetment_risk[n, :] = strategy.RiskRevetment[n, sh, :]
         else:
             init_geo_risk[n, :] = strategy.RiskGeotechnical[n, sg, :]
@@ -723,7 +724,7 @@ def update_probability(init_probability, strategy, index):
     for i in init_probability:
         from scipy.stats import norm
 
-        if i in ["Overflow", "Revetment"]:
+        if i in ["OVERFLOW", "REVETMENT"]:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]

@@ -83,7 +83,7 @@ class TestDatabaseIntegration:
         _overflow_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "Overflow")
+            .where(Mechanism.name == "OVERFLOW")
         )
 
         # Precondition
@@ -127,7 +127,7 @@ class TestDatabaseIntegration:
         _dstability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "StabilityInner")
+            .where(Mechanism.name == "STABILITY_INNER")
         )
 
         # Precondition
@@ -147,7 +147,7 @@ class TestDatabaseIntegration:
         _mechanism_input = _importer.import_orm(computation_scenarios[0])
 
         # Assert
-        assert _mechanism_input.mechanism == "StabilityInner"
+        assert _mechanism_input.mechanism == "STABILITY_INNER"
 
         expected_parameters = computation_scenarios[0].parameters.select()
         assert len(_mechanism_input.input) == len(expected_parameters) + 2
@@ -184,7 +184,7 @@ class TestDatabaseIntegration:
         _stability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "StabilityInner")
+            .where(Mechanism.name == "STABILITY_INNER")
         )
 
         # Precondition
@@ -225,7 +225,7 @@ class TestDatabaseIntegration:
         _piping_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "Piping")
+            .where(Mechanism.name == "PIPING")
         )
 
         # Precondition
@@ -285,7 +285,7 @@ class TestDatabaseIntegration:
     def _assert_overflow_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
     ) -> None:
-        assert actual.mechanism == "Overflow"
+        assert actual.mechanism == "OVERFLOW"
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters) + 1
@@ -316,7 +316,7 @@ class TestDatabaseIntegration:
     def _assert_stability_simple_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
     ) -> None:
-        assert actual.mechanism == "StabilityInner"
+        assert actual.mechanism.name == "STABILITY_INNER"
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters)
@@ -325,7 +325,7 @@ class TestDatabaseIntegration:
     def _assert_piping_mechanism_input(
         self, actual: MechanismInput, expected: list[ComputationScenario]
     ) -> None:
-        assert actual.mechanism == "Piping"
+        assert actual.mechanism.name == "PIPING"
 
         assert all(
             [

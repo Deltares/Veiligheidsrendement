@@ -79,7 +79,7 @@ class TestDStabilityImporter:
         # Assert
         assert isinstance(_mechanism_input, MechanismInput)
 
-        assert _mechanism_input.mechanism == "StabilityInner"
+        assert _mechanism_input.mechanism.name == "STABILITY_INNER"
         assert len(_mechanism_input.input) == len(parameters) + 2
         assert (
             _mechanism_input.input["STIXNAAM"]

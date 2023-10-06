@@ -56,7 +56,7 @@ class TestMain:
             "input_database_name": "vrtool_input.db",
             "traject": "38-1",
             "output_directory": str(_output_dir),
-            "excluded_mechanisms": ["Revetment", "HydraulicStructures"],
+            "excluded_mechanisms": ["REVETMENT", "HYDRAULIC_STRUCTURES"],
         }
         json_file = _input_dir.joinpath("test_config.json")
         json_file.touch()

@@ -9,6 +9,7 @@ import pytest
 from geolib import DStabilityModel
 
 from tests import test_data, test_externals, test_results
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
     implement_berm_widening,
@@ -266,7 +267,7 @@ class TestCommonFunctions:
             _berm_input,
             _measure_input,
             measure_parameters={},
-            mechanism="StabilityInner",
+            mechanism=MechanismEnum.get_enum("STABILITY_INNER"),
             computation_type="DStability",
             path_intermediate_stix=_path_intermediate_stix,
             SFincrease=0.2,

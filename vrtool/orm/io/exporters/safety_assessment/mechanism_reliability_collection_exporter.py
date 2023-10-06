@@ -2,6 +2,7 @@ import logging
 
 from peewee import fn
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
@@ -17,10 +18,7 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         self._section_data = section_data
 
     def _get_mechanism_per_section(self, mechanism_name: str) -> MechanismPerSection:
-        # peewee 'fn' allows us to add query operators. Unfortunately it does not include 'strip'.
-        _mechanism = Mechanism.get_or_none(
-            fn.Upper(Mechanism.name) == mechanism_name.upper().strip()
-        )
+        _mechanism = Mechanism.get_or_none(Mechanism.name == mechanism_name)
 
         if not _mechanism:
             raise ValueError("No mechanism found for {}.".format(mechanism_name))

@@ -86,7 +86,7 @@ class TestOverflowHydraRingImporter:
         # Assert
         assert isinstance(_mechanism_input, MechanismInput)
 
-        assert _mechanism_input.mechanism == "Overflow"
+        assert _mechanism_input.mechanism.name == "OVERFLOW"
         assert len(_mechanism_input.input) == 3
         assert _mechanism_input.input["h_crest"] == _orm_section_data.crest_height
         assert (
