@@ -39,7 +39,6 @@ from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptim
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
-from re import search
 import hashlib
 
 
@@ -214,7 +213,7 @@ class TestRunWorkflows:
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        clear_assessment_results()
+        clear_assessment_results(valid_vrtool_config)
         _validator = RunStepAssessmentValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
@@ -240,8 +239,8 @@ class TestRunWorkflows:
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        clear_assessment_results()
-        clear_measure_results()
+        clear_assessment_results(valid_vrtool_config)
+        clear_measure_results(valid_vrtool_config)
         _validator = RunStepMeasuresValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
@@ -287,10 +286,10 @@ class TestRunWorkflows:
     ):
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results()
+        clear_optimization_results(valid_vrtool_config)
 
         assert any(MeasureResult.select())
-        _measures_results = [mr.get_id() for mr in MeasureResult.select()]
+        _measures_results = [mr.get_id() for mr in MeasureResult.select().limit(50)]
 
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_results)

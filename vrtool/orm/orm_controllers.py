@@ -17,7 +17,10 @@ from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter
     DikeSectionReliabilityExporter,
 )
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
+from vrtool.orm.io.importers.measures.solutions_importer import (
+    SolutionsForMeasureResultsImporter,
+    SolutionsImporter,
+)
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -26,6 +29,8 @@ from vrtool.run_workflows.optimization_workflow.results_optimization import (
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
+
+import itertools
 
 
 def initialize_database(database_path: Path) -> SqliteDatabase:
@@ -269,19 +274,52 @@ def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[in
 
 
 def import_results_measures(
-    vrtool_config: VrtoolConfig, results_ids_to_import: list[int]
+    config: VrtoolConfig, results_ids_to_import: list[int]
 ) -> ResultsMeasures:
     """
     Imports results masures from a database into a `ResultsMeasure` instance.
 
     Args:
-        vrtool_config (VrtoolConfig): Configuration containing database path.
+        config (VrtoolConfig): Configuration containing database path.
         results_ids_to_import (list[int]): List of measure results' IDs.
 
     Returns:
         ResultsMeasures: Instance hosting all the required measures' results.
     """
-    pass
+    open_database(config.input_database_path)
+    _solutions_dict = dict()
+    # Group the measure results by section.
+    measure_results = orm.MeasureResult.select().where(
+        orm.MeasureResult.id in results_ids_to_import
+    )
+    _grouped_by_section = [
+        (_section, list(_grouped_measure_results))
+        for _section, _grouped_measure_results in itertools.groupby(
+            measure_results, lambda x: x.measure_per_section.section
+        )
+    ]
+
+    # Import a solution per section:
+    for _section, _selected_measure_results in _grouped_by_section:
+        # Import the section properties (minimum required).
+        _dike_section = DikeSection()
+        _dike_section.name = _section.section_name
+        _dike_section.length = _section.section_length
+        _dike_section.crest_height = _section.crest_height
+
+        # Import measures into solution
+        _imported_solution = SolutionsForMeasureResultsImporter(
+            config, _dike_section
+        ).import_orm(_selected_measure_results)
+
+        _solutions_dict[_section.section_name] = _imported_solution
+
+    vrtool_db.close()
+
+    _results_measures = ResultsMeasures()
+    _results_measures.solutions_dict = _solutions_dict
+
+    return _results_measures
 
 
 def create_optimization_run(
