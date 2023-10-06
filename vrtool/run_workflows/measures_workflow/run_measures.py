@@ -9,9 +9,6 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import get_dike_section_solutions
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
-    RunSafetyAssessment,
-)
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
@@ -39,10 +36,6 @@ class RunMeasures(VrToolRunProtocol):
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:
-        # Safety Assessment run
-        _safety_run = RunSafetyAssessment(self.vr_config, self.selected_traject)
-        _safety_run.run()
-
         # Get measurements solutions
         logging.info("Start step 2: evaluation of measures.")
         _results_measures = ResultsMeasures()
