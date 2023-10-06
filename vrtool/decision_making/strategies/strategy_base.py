@@ -176,6 +176,7 @@ class StrategyBase:
     ):
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
+        self.indexCombined2single = {}
 
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
@@ -249,16 +250,20 @@ class StrategyBase:
                 for measure_class in available_measure_classes
             }
 
+        self.indexCombined2single[section.name] = [ [i] for i in range(len(solutions_dict[section.name].MeasureData))]
+
         combinedmeasures = measure_combinations(
             measures_per_class["combinable"],
             measures_per_class["partial"],
             solutions_dict[section.name],
+            self.indexCombined2single[section.name],
             splitparams=splitparams,
         )
 
         if "revetment" in measures_per_class:
             combinedmeasures_with_revetment = revetment_combinations(
-                combinedmeasures, measures_per_class["revetment"]
+                combinedmeasures, measures_per_class["revetment"],
+                self.indexCombined2single[section.name]
             )
             # combine solutions_dict[section.name].MeasureData with revetments
             base_measures_with_revetment = revetment_combinations(
@@ -266,6 +271,7 @@ class StrategyBase:
                     solutions_dict[section.name].MeasureData["class"] != "revetment"
                 ],
                 measures_per_class["revetment"],
+                self.indexCombined2single[section.name]
             )
             combinedmeasures = pd.concat(
                 [base_measures_with_revetment, combinedmeasures_with_revetment]
