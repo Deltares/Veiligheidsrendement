@@ -13,19 +13,29 @@ class StrategyBaseExporter(OrmExporterProtocol):
         dims = dom_model.TakenMeasures.values.shape
         steps = []
         stepResults = []
+
+        cntMeasuresPerSection = {}
+        sumMeasures = 0
+        for section in dom_model.indexCombined2single:
+            cntMeasuresPerSection[section] = sumMeasures
+            singlesMeasures = max(dom_model.indexCombined2single[section])
+            sumMeasures += singlesMeasures[0]
+
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i,0]
-            measure_id = dom_model.TakenMeasures.values[i,1] # TODO: split combined measures
-            msr = dom_model.options[section].values[measure_id]
-            lcc = dom_model.TakenMeasures.values[i,2]
-            steps.append({"step_number":i, "optimization_selected_measure_id":measure_id})
-            offset = len(msr) - len(dom_model.T)
-            for j in range(len(dom_model.T)):
-                t  = dom_model.T[j]
-                beta = msr[offset+j]
-                # TODO mechanism_per_section_id not evaluated
-                stepResults.append({"optimization_step_id":self._opt_step_id, "mechanism_per_section_id": -999, "time": t, "beta": beta, "lcc":lcc })
-            self._opt_step_id += 1
+            measure_id = dom_model.TakenMeasures.values[i,1]
+            splittedMeasures = dom_model.indexCombined2single[section][measure_id]
+            for singleMsrId in splittedMeasures:
+                msr = dom_model.options[section].values[singleMsrId]
+                lcc = dom_model.TakenMeasures.values[i,2]
+                steps.append({"step_number":i, "optimization_selected_measure_id":singleMsrId+cntMeasuresPerSection[section]})
+                self._opt_step_id += 1
+                offset = len(msr) - len(dom_model.T)
+                for j in range(len(dom_model.T)):
+                    t  = dom_model.T[j]
+                    beta = msr[offset+j]
+                    # TODO mechanism_per_section_id not evaluated
+                    stepResults.append({"optimization_step_id":self._opt_step_id, "mechanism_per_section_id": -999, "time": t, "beta": beta, "lcc":lcc })
 
         OptimizationStep.insert_many(steps).execute()
 
