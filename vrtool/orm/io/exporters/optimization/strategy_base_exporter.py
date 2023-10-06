@@ -41,7 +41,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
                                         "mechanism_per_section_id": mechanism_per_section_id,
                                         "time": t, "beta": beta, "lcc":lcc })
 
-                rows=MeasureResultMechanism.select().where(MeasureResultMechanism.measure_result==msrId)
+                _measure_result = MeasureResult.get_by_id(msrId)
+                rows = _measure_result.measure_result_mechanisms
                 for row in rows:
                     print(row.mechanism_per_section_id, row.beta, row.time)
                     stepResults.append({"optimization_step_id":self._opt_step_id,

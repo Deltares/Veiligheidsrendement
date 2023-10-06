@@ -250,9 +250,7 @@ class StrategyBase:
                 for measure_class in available_measure_classes
             }
 
-        self.indexCombined2single[section.name] = []
-        for i in range(len(solutions_dict[section.name].MeasureData)):
-            self.indexCombined2single[section.name].append([i])
+        self.indexCombined2single[section.name] = [ [i] for i, md in enumerate(solutions_dict[section.name].MeasureData)]
 
         combinedmeasures = measure_combinations(
             measures_per_class["combinable"],
