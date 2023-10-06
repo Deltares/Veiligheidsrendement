@@ -31,8 +31,12 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    (
+    export_results_optimization,
     open_database,
+   
     vrtool_db,
+),
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
@@ -270,6 +274,8 @@ class TestRunWorkflows:
 
         _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
         _results_optimization = RunOptimization(_results_measures).run()
+
+        export_results_optimization(_results_optimization)
 
         RunFullValidator().validate_acceptance_result_cases(
             valid_vrtool_config.output_directory, _test_reference_path

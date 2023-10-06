@@ -14,7 +14,11 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 
 # This script combines two sets of measures to a single option
 def measure_combinations(
-    combinables, partials, solutions: Solutions, splitparams=False
+    combinables,
+    partials,
+    solutions: Solutions,
+    indexCombined2single: list[int],
+    splitparams=False,
 ):
     _combined_measures = pd.DataFrame(columns=combinables.columns)
     # all columns without a second index are attributes of the measure
@@ -48,9 +52,9 @@ def measure_combinations(
     count = 0
     # loop over partials
     for i, row1 in partials.iterrows():
-        # combine with all combinables (in this case revetment measures)
+        # combine with all combinables
         for j, row2 in combinables.iterrows():
-
+            indexCombined2single.append([i, j])
             for col in attribute_col_names:
                 if (
                     col == "ID"
@@ -148,7 +152,9 @@ def measure_combinations(
 
 
 def revetment_combinations(
-    partials: pd.DataFrame, revetment_measures: pd.DataFrame
+    partials: pd.DataFrame,
+    revetment_measures: pd.DataFrame,
+    indexCombined2single: list[int],
 ) -> pd.DataFrame:
     """
     Combines the revetment measures based on the input arguments.
@@ -194,6 +200,12 @@ def revetment_combinations(
     for i, row1 in partials.iterrows():
         # combine with all combinables (in this case revetment measures)
         for j, row2 in revetment_measures.iterrows():
+            newIndex = [j]  # revetment is a single measure
+            for k in indexCombined2single[i]:
+                newIndex.append(
+                    k
+                )  # partial can be combined (TODO name partial is not correct)
+            indexCombined2single.append(newIndex)
             for col in attribute_col_names:
                 if (
                     col == "ID"
