@@ -277,10 +277,9 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
+        _acceptance_all_steps_test_cases[-1:],
         indirect=True,
     )
-    # @pytest.mark.skip(reason="Needs to be implemented by VRTOOL-222.")
     def test_run_step_optimization_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -289,18 +288,20 @@ class TestRunWorkflows:
         clear_optimization_results(valid_vrtool_config)
 
         assert any(MeasureResult.select())
-        _measures_results = [mr.get_id() for mr in MeasureResult.select().limit(50)]
+        _measures_results = [mr.get_id() for mr in MeasureResult.select()]
 
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_results)
 
         # 3. Verify expectations.
-        assert valid_vrtool_config.output_directory.exists()
-        assert any(valid_vrtool_config.output_directory.glob("*"))
+        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        RunFullValidator().validate_acceptance_result_cases(
+            valid_vrtool_config.output_directory, _test_reference_path
+        )
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
+        _acceptance_all_steps_test_cases[:-1],
         indirect=True,
     )
     def test_run_full_given_valid_vrtool_config(

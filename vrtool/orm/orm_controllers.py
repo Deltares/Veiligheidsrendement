@@ -306,17 +306,16 @@ def import_results_measures(
     # Import a solution per section:
     for _section, _selected_measure_results in _grouped_by_section:
         # Import measures into solution
+        _mapped_section = next(
+            _ds for _ds in _dike_traject.sections if _ds.name == _section.section_name
+        )
         _imported_solution = SolutionsForMeasureResultsImporter(
             config,
-            next(
-                _ds
-                for _ds in _dike_traject.sections
-                if _ds.name == _section.section_name
-            ),
+            _mapped_section,
         ).import_orm(_selected_measure_results)
-
+        _mapped_section.section_reliability.calculate_section_reliability()
         _solutions_dict[_section.section_name] = _imported_solution
-
+    _dike_traject.set_probabilities()
     vrtool_db.close()
 
     _results_measures = ResultsMeasures()
