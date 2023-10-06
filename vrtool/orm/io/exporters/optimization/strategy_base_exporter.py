@@ -1,5 +1,6 @@
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
+from vrtool.orm.models.measure_result.measure_result_mechanism import MeasureResultMechanism
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
 from vrtool.orm.models.optimization.optimization_step_result import OptimizationStepResult
 
@@ -26,16 +27,26 @@ class StrategyBaseExporter(OrmExporterProtocol):
             measure_id = dom_model.TakenMeasures.values[i,1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
+                msrId = singleMsrId+cntMeasuresPerSection[section]
                 msr = dom_model.options[section].values[singleMsrId]
                 lcc = dom_model.TakenMeasures.values[i,2]
-                steps.append({"step_number":i, "optimization_selected_measure_id":singleMsrId+cntMeasuresPerSection[section]})
+                steps.append({"step_number":i, "optimization_selected_measure_id":msrId})
                 self._opt_step_id += 1
                 offset = len(msr) - len(dom_model.T)
                 for j in range(len(dom_model.T)):
                     t  = dom_model.T[j]
                     beta = msr[offset+j]
-                    # TODO mechanism_per_section_id not evaluated
-                    stepResults.append({"optimization_step_id":self._opt_step_id, "mechanism_per_section_id": -999, "time": t, "beta": beta, "lcc":lcc })
+                    mechanism_per_section_id = -1 # TODO value for combined mechanisms
+                    stepResults.append({"optimization_step_id":self._opt_step_id,
+                                        "mechanism_per_section_id": mechanism_per_section_id,
+                                        "time": t, "beta": beta, "lcc":lcc })
+
+                rows=MeasureResultMechanism.select().where(MeasureResultMechanism.measure_result==msrId)
+                for row in rows:
+                    print(row.mechanism_per_section_id, row.beta, row.time)
+                    stepResults.append({"optimization_step_id":self._opt_step_id,
+                                        "mechanism_per_section_id": row.mechanism_per_section_id,
+                                        "time": row.time, "beta": row.beta, "lcc":lcc })
 
         OptimizationStep.insert_many(steps).execute()
 
