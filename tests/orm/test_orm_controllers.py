@@ -492,9 +492,7 @@ class TestOrmControllers:
         export_results_measures(_results_measures)
 
         # 2. Run test.
-        _return_values = get_exported_measure_result_ids(
-            _results_measures.vr_config.input_database_path, _results_measures
-        )
+        _return_values = get_exported_measure_result_ids(_results_measures)
 
         # 3. Verify expectations.
         assert len(MeasureResult.select()) == 1
