@@ -1,8 +1,13 @@
-from vrtool.defaults.vrtool_config import VrtoolConfig
+import hashlib
+import shutil
+from pathlib import Path
+
+import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
+from peewee import SqliteDatabase, fn
 
-from tests import get_test_results_dir, test_data, test_results, test_externals
+from tests import get_test_results_dir, test_data, test_externals, test_results
 from vrtool.api import (
     get_valid_vrtool_config,
     run_full,
@@ -10,12 +15,9 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-import shutil
-from pathlib import Path
-from peewee import SqliteDatabase, fn
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
-import pandas as pd
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -26,7 +28,6 @@ from vrtool.orm.models.measure_result.measure_result_section import MeasureResul
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
-
 from vrtool.orm.orm_controllers import (
     export_results_optimization,
     open_database,
@@ -37,7 +38,6 @@ from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptim
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
-import hashlib
 
 
 class TestApi:

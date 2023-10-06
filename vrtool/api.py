@@ -1,11 +1,13 @@
-from vrtool.defaults.vrtool_config import VrtoolConfig
+import logging
 from pathlib import Path
+
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
-    export_results_safety_assessment,
     export_results_measures,
     export_results_optimization,
+    export_results_safety_assessment,
     get_dike_traject,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
@@ -20,7 +22,6 @@ from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
-import logging
 
 
 def get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:

@@ -3,8 +3,8 @@ from pathlib import Path
 
 import click
 
-from vrtool.vrtool_logger import VrToolLogger
 from vrtool import api
+from vrtool.vrtool_logger import VrToolLogger
 
 
 @click.group()
