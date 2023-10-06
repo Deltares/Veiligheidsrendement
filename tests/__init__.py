@@ -12,7 +12,5 @@ if not test_results.is_dir():
 
 def get_test_results_dir(request: FixtureRequest) -> Path:
     _test_dir = test_results.joinpath(request.node.originalname)
-    if not _test_dir.is_dir():
-        # exist_ok = true to avoid parallelization errors.
-        _test_dir.mkdir(parents=True, exist_ok=True)
+    _test_dir.mkdir(parents=True, exist_ok=True)
     return _test_dir

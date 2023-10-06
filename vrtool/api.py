@@ -76,7 +76,7 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
 
 def run_step_optimization(vrtool_config: VrtoolConfig) -> None:
     """
-    Runs an optimization by assessing and then optimizing the available measures
+    Runs an optimization by optimizing the available measures
     in the database. The results are then exported into the database.
 
     Args:
