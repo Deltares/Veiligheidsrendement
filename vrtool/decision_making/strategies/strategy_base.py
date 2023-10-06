@@ -250,7 +250,9 @@ class StrategyBase:
                 for measure_class in available_measure_classes
             }
 
-        self.indexCombined2single[section.name] = [ [i] for i in range(len(solutions_dict[section.name].MeasureData))]
+        self.indexCombined2single[section.name] = [
+            [i] for i in range(len(solutions_dict[section.name].MeasureData))
+        ]
 
         combinedmeasures = measure_combinations(
             measures_per_class["combinable"],
@@ -262,8 +264,9 @@ class StrategyBase:
 
         if "revetment" in measures_per_class:
             combinedmeasures_with_revetment = revetment_combinations(
-                combinedmeasures, measures_per_class["revetment"],
-                self.indexCombined2single[section.name]
+                combinedmeasures,
+                measures_per_class["revetment"],
+                self.indexCombined2single[section.name],
             )
             # combine solutions_dict[section.name].MeasureData with revetments
             base_measures_with_revetment = revetment_combinations(
@@ -271,7 +274,7 @@ class StrategyBase:
                     solutions_dict[section.name].MeasureData["class"] != "revetment"
                 ],
                 measures_per_class["revetment"],
-                self.indexCombined2single[section.name]
+                self.indexCombined2single[section.name],
             )
             combinedmeasures = pd.concat(
                 [base_measures_with_revetment, combinedmeasures_with_revetment]
