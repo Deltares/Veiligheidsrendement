@@ -96,38 +96,45 @@ class TestApi:
 
 
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
-_available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
 
 _acceptance_all_steps_test_cases = [
     pytest.param(
-        ("TestCase1_38-1_no_housing", "38-1", _available_mechanisms[:3]),
+        ("TestCase1_38-1_no_housing", "38-1", ["Revetment", "HydraulicStructures"]),
         id="Traject 38-1, no housing",
     ),
     pytest.param(
-        ("TestCase1_38-1_no_housing_stix", "38-1", _available_mechanisms[:3]),
+        (
+            "TestCase1_38-1_no_housing_stix",
+            "38-1",
+            ["Revetment", "HydraulicStructures"],
+        ),
         id="Traject 38-1, no housing, with dstability",
     ),
     pytest.param(
-        ("TestCase2_38-1_overflow_no_housing", "38-1", _available_mechanisms[:3]),
+        (
+            "TestCase2_38-1_overflow_no_housing",
+            "38-1",
+            ["Revetment", "HydraulicStructures"],
+        ),
         id="Traject 38-1, no-housing, with overflow",
     ),
     pytest.param(
-        ("TestCase1_38-1_revetment", "38-1", _available_mechanisms),
+        ("TestCase1_38-1_revetment", "38-1", ["HydraulicStructures"]),
         id="Traject 38-1, with revetment, case 1",
     ),
     pytest.param(
-        ("TestCase3_38-1_revetment", "38-1", _available_mechanisms),
+        ("TestCase3_38-1_revetment", "38-1", ["HydraulicStructures"]),
         id="Traject 38-1, with revetment, including bundling",
     ),
     pytest.param(
-        ("TestCase4_38-1_revetment_small", "38-1", _available_mechanisms),
+        ("TestCase4_38-1_revetment_small", "38-1", ["HydraulicStructures"]),
         id="Traject 38-1, two sections with revetment",
     ),
 ]
 _acceptance_optimization_test_cases = [
     _acceptance_all_steps_test_cases[0],
     pytest.param(
-        ("TestCase3_38-1_small", "38-1", _available_mechanisms[:3]),
+        ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
         id="Traject 38-1, two sections",
     ),
 ]
@@ -141,7 +148,7 @@ _acceptance_measure_test_cases = [
 class TestRunWorkflows:
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
-        _casename, _traject, _mechanisms = request.param
+        _casename, _traject, _excluded_mechanisms = request.param
         _test_input_directory = Path.joinpath(test_data, _casename)
         assert _test_input_directory.exists()
 
@@ -155,7 +162,7 @@ class TestRunWorkflows:
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
         _test_config.traject = _traject
-        _test_config.mechanisms = _mechanisms
+        _test_config.excluded_mechanisms = _excluded_mechanisms
         _test_config.externals = test_externals
 
         # We need to create a copy of the database on the input directory.
