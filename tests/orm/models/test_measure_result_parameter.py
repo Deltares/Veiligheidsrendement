@@ -1,5 +1,7 @@
 from tests.orm import empty_db_fixture, get_basic_measure_result
-from vrtool.orm.models import MeasureResultParameter
+from vrtool.orm.models.measure_result.measure_result_parameter import (
+    MeasureResultParameter,
+)
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
