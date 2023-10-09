@@ -132,17 +132,6 @@ _acceptance_all_steps_test_cases = [
         id="Traject 38-1, two sections with revetment",
     ),
 ]
-_acceptance_optimization_test_cases = [
-    _acceptance_all_steps_test_cases[0],
-    pytest.param(
-        ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
-        id="Traject 38-1, two sections",
-    ),
-]
-_acceptance_measure_test_cases = [
-    _acceptance_all_steps_test_cases[0],
-    _acceptance_all_steps_test_cases[2],
-]
 
 
 @pytest.mark.slow
@@ -227,7 +216,7 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases[-1:],
+        _acceptance_all_steps_test_cases,
         indirect=True,
     )
     # @pytest.mark.skip(reason="Work in progress.")
@@ -248,12 +237,22 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases[-1:],
+        [
+            _acceptance_all_steps_test_cases[0],
+            _acceptance_all_steps_test_cases[-1],
+            pytest.param(
+                ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
+                id="Traject 38-1, two sections",
+                marks=[pytest.mark.skip(reason="Missing input database.")],
+            ),
+        ],
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
+        # TODO: Extend this test with ALL the `_acceptance_all_steps_test_cases`
+        # once `test_run_step_measures_given_valid_vrtool_config` works correctly.
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
@@ -275,10 +274,17 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_optimization_test_cases,
+        [
+            pytest.param(
+                ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
+                id="Traject 38-1, two sections",
+            ),
+        ],
         indirect=True,
     )
     def test_run_optimization_old_approach(self, valid_vrtool_config: VrtoolConfig):
+        # TODO: Get the input database of `TestCase3_38-1_small` and run
+        # the test in `test_run_step_optimization_given_valid_vrtool_config` instead.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
 
         _shelve_path = valid_vrtool_config.input_directory / "shelves"
@@ -307,6 +313,7 @@ class TestRunWorkflows:
         _acceptance_all_steps_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(reason="Phased out in favor of running each step individually.")
     def test_run_full_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
