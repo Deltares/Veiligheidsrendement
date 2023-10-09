@@ -70,8 +70,13 @@ class TargetReliabilityStrategy(StrategyBase):
         # Rank sections based on 2075 Section probability
         beta_horizon = []
         for i in traject.sections:
+            _oi_horizon = (
+                self.OI_horizon
+                if isinstance(self.OI_horizon, str)
+                else str(self.OI_horizon)
+            )
             beta_horizon.append(
-                i.section_reliability.SectionReliability.loc["Section"][self.OI_horizon]
+                i.section_reliability.SectionReliability.loc["Section"][_oi_horizon]
             )
 
         section_indices = np.argsort(beta_horizon)
