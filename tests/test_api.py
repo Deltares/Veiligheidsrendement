@@ -13,19 +13,9 @@ from vrtool.api import (
 import shutil
 from pathlib import Path
 from peewee import SqliteDatabase, fn
-from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
-from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
+import vrtool.orm.models as orm_models
 import pandas as pd
-from vrtool.orm.models.measure import Measure
-from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.measure_result.measure_result import MeasureResult
-from vrtool.orm.models.measure_result.measure_result_parameter import (
-    MeasureResultParameter,
-)
-from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
-from vrtool.orm.models.mechanism import Mechanism
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.orm.models.section_data import SectionData
 
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
@@ -152,6 +142,8 @@ _acceptance_measure_test_cases = [
 
 @pytest.mark.slow
 class TestRunWorkflows:
+    vrtool_db_input_name = "vrtool_input.db"
+
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         _casename, _traject, _excluded_mechanisms = request.param
@@ -178,7 +170,7 @@ class TestRunWorkflows:
         _test_config.input_database_name = _test_db_name
 
         # Create a copy of the database to avoid parallelization runs locked databases.
-        _reference_db_file = _test_input_directory.joinpath("vrtool_input.db")
+        _reference_db_file = _test_input_directory.joinpath(self.vrtool_db_input_name)
         assert _reference_db_file.exists(), "No database found at {}.".format(
             _reference_db_file
         )
@@ -290,8 +282,8 @@ class TestRunWorkflows:
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
 
-        assert any(MeasureResult.select())
-        _measures_results = [mr.get_id() for mr in MeasureResult.select()]
+        assert any(orm_models.MeasureResult.select())
+        _measures_results = [mr.get_id() for mr in orm_models.MeasureResult.select()]
 
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_results)
@@ -329,12 +321,49 @@ class TestRunWorkflows:
 class RunStepAssessmentValidator:
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
-        assert not any(AssessmentMechanismResult.select())
-        assert not any(AssessmentSectionResult.select())
+        assert not any(orm_models.AssessmentMechanismResult.select())
+        assert not any(orm_models.AssessmentSectionResult.select())
         if not _connected_db.is_closed():
             _connected_db.close()
 
     def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
+        def load_assessment_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
+            _connected_db = open_database(vrtool_db)
+            _assessment_reliabilities = dict(
+                (_sd, DikeSectionImporter.import_assessment_reliability_df(_sd))
+                for _sd in orm_models.SectionData.select()
+                .join(orm_models.DikeTrajectInfo)
+                .where(
+                    orm_models.SectionData.dike_traject.traject_name
+                    == valid_vrtool_config.traject
+                )
+            )
+            _connected_db.close()
+            return _assessment_reliabilities
+
+        _result_assessment = load_assessment_reliabilities(
+            valid_vrtool_config.input_database_path
+        )
+        _reference_assessment = load_assessment_reliabilities(
+            valid_vrtool_config.input_database_path.with_name(
+                TestRunWorkflows.vrtool_db_input_name
+            )
+        )
+
+        assert any(
+            _reference_assessment.items()
+        ), "No reference assessments were loaded."
+        _errors = []
+        for _ref_key, _ref_dataframe in _reference_assessment.items():
+            _res_dataframe = _result_assessment.get(_ref_key, None)
+            if not _res_dataframe:
+                _errors.append(
+                    "Section {} has no reliability results.".format(_ref_key)
+                )
+                continue
+            pd.testing.assert_frame_equal(_ref_dataframe, _res_dataframe)
+
+    def validate_safety_assessment_results_old(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
         assert _test_reference_path.exists()
@@ -363,18 +392,20 @@ class RunStepAssessmentValidator:
     def validate_section_data_initial_assessment(
         self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
     ):
-        assert len(AssessmentSectionResult.select()) == (
+        assert len(orm_models.AssessmentSectionResult.select()) == (
             len(reference_df.index) * len(vrtool_config.T)
         )
         for _, row in reference_df.iterrows():
-            _section_data = SectionData.get(SectionData.section_name == row["name"])
+            _section_data = orm_models.SectionData.get(
+                orm_models.SectionData.section_name == row["name"]
+            )
             for _t_column in vrtool_config.T:
-                _assessment_result = AssessmentSectionResult.get_or_none(
-                    (AssessmentSectionResult.section_data == _section_data)
-                    & (AssessmentSectionResult.time == int(_t_column))
+                _assessment_result = orm_models.AssessmentSectionResult.get_or_none(
+                    (orm_models.AssessmentSectionResult.section_data == _section_data)
+                    & (orm_models.AssessmentSectionResult.time == int(_t_column))
                 )
                 assert isinstance(
-                    _assessment_result, AssessmentSectionResult
+                    _assessment_result, orm_models.AssessmentSectionResult
                 ), "Initial assessment not found for dike section {}, t {}.".format(
                     row["name"], _t_column
                 )
@@ -387,30 +418,32 @@ class RunStepAssessmentValidator:
     def validate_mechanism_per_section_initial_assessment(
         self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
     ):
-        assert len(AssessmentMechanismResult.select()) == (
+        assert len(orm_models.AssessmentMechanismResult.select()) == (
             len(reference_df.index) * len(vrtool_config.T)
         )
         for _, row in reference_df.iterrows():
             _mechanism_name = row["mechanism"]
-            _section_data = SectionData.get(SectionData.section_name == row["name"])
-            _mechanism = Mechanism.get(
-                fn.Upper(Mechanism.name) == _mechanism_name.upper()
+            _section_data = orm_models.SectionData.get(
+                orm_models.SectionData.section_name == row["name"]
             )
-            _mechanism_x_section = MechanismPerSection.get_or_none(
-                (MechanismPerSection.section == _section_data)
-                & (MechanismPerSection.mechanism == _mechanism)
+            _mechanism = orm_models.Mechanism.get(
+                fn.Upper(orm_models.Mechanism.name) == _mechanism_name.upper()
             )
-            assert isinstance(_mechanism_x_section, MechanismPerSection)
+            _mechanism_x_section = orm_models.MechanismPerSection.get_or_none(
+                (orm_models.MechanismPerSection.section == _section_data)
+                & (orm_models.MechanismPerSection.mechanism == _mechanism)
+            )
+            assert isinstance(_mechanism_x_section, orm_models.MechanismPerSection)
             for _t_column in vrtool_config.T:
-                _assessment_result = AssessmentMechanismResult.get_or_none(
+                _assessment_result = orm_models.AssessmentMechanismResult.get_or_none(
                     (
-                        AssessmentMechanismResult.mechanism_per_section
+                        orm_models.AssessmentMechanismResult.mechanism_per_section
                         == _mechanism_x_section
                     )
-                    & (AssessmentMechanismResult.time == int(_t_column))
+                    & (orm_models.AssessmentMechanismResult.time == int(_t_column))
                 )
                 assert isinstance(
-                    _assessment_result, AssessmentMechanismResult
+                    _assessment_result, orm_models.AssessmentMechanismResult
                 ), "No entry found for section {} and mechanism {}".format(
                     row["name"], _mechanism_name
                 )
@@ -424,8 +457,8 @@ class RunStepAssessmentValidator:
 class RunStepMeasuresValidator:
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
-        assert not any(MeasureResult.select())
-        assert not any(MeasureResultParameter.select())
+        assert not any(orm_models.MeasureResult.select())
+        assert not any(orm_models.MeasureResultParameter.select())
 
         if not _connected_db.is_closed():
             _connected_db.close()
@@ -454,9 +487,9 @@ class RunStepMeasuresValidator:
         _sections_with_measures = list(
             set(
                 _measure_per_section.section.section_name
-                for _measure_per_section in MeasurePerSection.select(
-                    MeasurePerSection, SectionData
-                ).join(SectionData)
+                for _measure_per_section in orm_models.MeasurePerSection.select(
+                    orm_models.MeasurePerSection, orm_models.SectionData
+                ).join(orm_models.SectionData)
             )
         )
         assert all(_rds in _sections_with_measures for _rds in _reference_section_names)
@@ -468,7 +501,9 @@ class RunStepMeasuresValidator:
             reference_data = self.get_reference_measure_result_data(reference_file_path)
 
             section_name = self.get_section_name(reference_file_path)
-            section = SectionData.get_or_none(SectionData.section_name == section_name)
+            section = orm_models.SectionData.get_or_none(
+                orm_models.SectionData.section_name == section_name
+            )
             assert section, "SectionData not found for dike section {}.".format(
                 section_name
             )
@@ -491,10 +526,12 @@ class RunStepMeasuresValidator:
                 * 2
             )
 
-        assert len(MeasureResult.select()) == len(reference_data.index)
-        assert len(MeasureResultSection.select()) == total_nr_of_measure_results
+        assert len(orm_models.MeasureResult.select()) == len(reference_data.index)
         assert (
-            len(MeasureResultParameter.select())
+            len(orm_models.MeasureResultSection.select()) == total_nr_of_measure_results
+        )
+        assert (
+            len(orm_models.MeasureResultParameter.select())
             == total_nr_of_measure_result_parameters
         )
         if not _connected_db.is_closed():
@@ -533,9 +570,11 @@ class RunStepMeasuresValidator:
         return _filtered_reference_df
 
     def validate_measure_result_per_section(
-        self, reference_df: pd.DataFrame, section: SectionData
+        self, reference_df: pd.DataFrame, section: orm_models.SectionData
     ) -> None:
-        measure_result_lookup: dict[tuple(int, float, float), MeasureResult] = {}
+        measure_result_lookup: dict[
+            tuple(int, float, float), orm_models.MeasureResult
+        ] = {}
         unique_measure_ids = set()
         for _, row in reference_df.iterrows():
             casted_measure_id = int(row[("ID",)])
@@ -543,10 +582,10 @@ class RunStepMeasuresValidator:
                 unique_measure_ids.add(casted_measure_id)
                 measure_result_lookup.clear()  # Reset the lookup for each measure or the lookup maintains the  entries of the previous measure
 
-                _measure = Measure.get_by_id(casted_measure_id)
-                _measure_per_section = MeasurePerSection.get_or_none(
-                    (MeasurePerSection.section == section)
-                    & (MeasurePerSection.measure == _measure)
+                _measure = orm_models.Measure.get_by_id(casted_measure_id)
+                _measure_per_section = orm_models.MeasurePerSection.get_or_none(
+                    (orm_models.MeasurePerSection.section == section)
+                    & (orm_models.MeasurePerSection.measure == _measure)
                 )
 
             dberm = float(row[("dberm",)].item())
@@ -569,10 +608,12 @@ class RunStepMeasuresValidator:
                     dberm,
                     dcrest,
                 )
-                _measure_result_section = MeasureResultSection.get_or_none(
+                _measure_result_section = orm_models.MeasureResultSection.get_or_none(
                     measure_result=_measure_result, time=casted_year
                 )
-                assert isinstance(_measure_result_section, MeasureResultSection)
+                assert isinstance(
+                    _measure_result_section, orm_models.MeasureResultSection
+                )
 
                 assert _measure_result_section.beta == pytest.approx(
                     reference_section_reliabilities[year], 0.00000001
@@ -598,23 +639,23 @@ class RunStepMeasuresValidator:
 
     def fill_measure_result_lookup_for_soil_reinforcement_measures(
         self,
-        lookup: dict[tuple[int, float, float], MeasureResult],
-        measure_per_section: MeasurePerSection,
+        lookup: dict[tuple[int, float, float], orm_models.MeasureResult],
+        measure_per_section: orm_models.MeasurePerSection,
         year: int,
     ) -> None:
-        _measure_results = MeasureResult.select().where(
-            (MeasureResult.measure_per_section == measure_per_section)
+        _measure_results = orm_models.MeasureResult.select().where(
+            (orm_models.MeasureResult.measure_per_section == measure_per_section)
         )
 
         for _found_result in _measure_results:
-            _dberm_parameter = MeasureResultParameter.get(
-                (MeasureResultParameter.measure_result == _found_result)
-                & (MeasureResultParameter.name == "DBERM")
+            _dberm_parameter = orm_models.MeasureResultParameter.get(
+                (orm_models.MeasureResultParameter.measure_result == _found_result)
+                & (orm_models.MeasureResultParameter.name == "DBERM")
             )
 
-            _dcrest_parameter = MeasureResultParameter.get(
-                (MeasureResultParameter.measure_result == _found_result)
-                & (MeasureResultParameter.name == "DCREST")
+            _dcrest_parameter = orm_models.MeasureResultParameter.get(
+                (orm_models.MeasureResultParameter.measure_result == _found_result)
+                & (orm_models.MeasureResultParameter.name == "DCREST")
             )
 
             _dberm = _dberm_parameter.value
@@ -625,15 +666,15 @@ class RunStepMeasuresValidator:
     def get_measure_result(
         self,
         soil_reinforcement_measures_lookup: dict[
-            tuple[int, float, float], MeasureResult
+            tuple[int, float, float], orm_models.MeasureResult
         ],
-        measure_per_section: MeasurePerSection,
+        measure_per_section: orm_models.MeasurePerSection,
         year: int,
         measure_type: str,
         measure_id: str,
         dberm: float,
         dcrest: float,
-    ) -> MeasureResult:
+    ) -> orm_models.MeasureResult:
         if self.is_soil_reinforcement_measure(
             dberm, dcrest
         ):  # Filter on parameter to get the right measure result
@@ -643,7 +684,7 @@ class RunStepMeasuresValidator:
 
             # Assert that the associated parameters are only DCREST and DBERM
             assert isinstance(
-                _measure_result, MeasureResult
+                _measure_result, orm_models.MeasureResult
             ), "No entry found for section {} and measure result {} with id {} and year {}".format(
                 measure_per_section.section.section_name, measure_type, measure_id, year
             )
@@ -651,12 +692,12 @@ class RunStepMeasuresValidator:
 
             return _measure_result
 
-        _measure_result = MeasureResult.get_or_none(
-            (MeasureResult.measure_per_section == measure_per_section)
+        _measure_result = orm_models.MeasureResult.get_or_none(
+            (orm_models.MeasureResult.measure_per_section == measure_per_section)
         )
 
         assert isinstance(
-            _measure_result, MeasureResult
+            _measure_result, orm_models.MeasureResult
         ), "No entry found for section {} and measure result {} with id {} and year {}".format(
             measure_per_section.section.section_name, measure_type, measure_id, year
         )
