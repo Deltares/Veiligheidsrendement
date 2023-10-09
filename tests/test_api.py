@@ -341,27 +341,35 @@ class RunStepAssessmentValidator:
             _connected_db.close()
             return _assessment_reliabilities
 
+        # Get database paths.
+        _reference_database_path = valid_vrtool_config.input_database_path.with_name(
+            TestRunWorkflows.vrtool_db_input_name
+        )
+        assert (
+            _reference_database_path != valid_vrtool_config.input_database_path
+        ), "Reference and result database point to the same Path {}.".path(
+            valid_vrtool_config.input_database_path
+        )
+
         _result_assessment = load_assessment_reliabilities(
             valid_vrtool_config.input_database_path
         )
-        _reference_assessment = load_assessment_reliabilities(
-            valid_vrtool_config.input_database_path.with_name(
-                TestRunWorkflows.vrtool_db_input_name
-            )
-        )
+        _reference_assessment = load_assessment_reliabilities(_reference_database_path)
 
         assert any(
             _reference_assessment.items()
         ), "No reference assessments were loaded."
         _errors = []
         for _ref_key, _ref_dataframe in _reference_assessment.items():
-            _res_dataframe = _result_assessment.get(_ref_key, None)
-            if not _res_dataframe:
+            _res_dataframe = _result_assessment.get(_ref_key, pd.DataFrame())
+            if _res_dataframe.empty:
                 _errors.append(
                     "Section {} has no reliability results.".format(_ref_key)
                 )
                 continue
             pd.testing.assert_frame_equal(_ref_dataframe, _res_dataframe)
+        if _errors:
+            pytest.fail("\n".join(_errors))
 
     def validate_safety_assessment_results_old(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
