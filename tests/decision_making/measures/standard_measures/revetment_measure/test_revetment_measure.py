@@ -26,7 +26,7 @@ class TestRevetmentMeasure:
         _computation_years = [0, 2, 6, 20]
         shuffle(_computation_years)
         _mech_reliability_collection = MechanismReliabilityCollection(
-            mechanism=MechanismEnum.get_enum("REVETMENT"),
+            mechanism=MechanismEnum["REVETMENT"],
             computation_type="nvt",
             computation_years=_computation_years,
             t_0=0,
