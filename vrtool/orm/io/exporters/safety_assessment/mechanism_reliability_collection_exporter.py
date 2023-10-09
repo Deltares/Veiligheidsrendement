@@ -17,15 +17,19 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
     def __init__(self, section_data: SectionData) -> None:
         self._section_data = section_data
 
-    def _get_mechanism_per_section(self, mechanism_name: str) -> MechanismPerSection:
-        _mechanism = Mechanism.get_or_none(Mechanism.name == mechanism_name)
+    def _get_mechanism_per_section(
+        self, mechanism: MechanismEnum
+    ) -> MechanismPerSection:
+        _mech_inst = Mechanism.get_or_none(
+            Mechanism.name << [mechanism.name, mechanism.get_old_name()]
+        )
 
-        if not _mechanism:
-            raise ValueError("No mechanism found for {}.".format(mechanism_name))
+        if not _mech_inst:
+            raise ValueError("No mechanism found for {}.".format(mechanism))
 
         return MechanismPerSection.get_or_none(
             (MechanismPerSection.section == self._section_data)
-            & (MechanismPerSection.mechanism == _mechanism)
+            & (MechanismPerSection.mechanism == _mech_inst)
         )
 
     def export_dom(self, section_reliability: SectionReliability) -> None:
@@ -37,7 +41,7 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         ).iterrows():
             _mechanism = MechanismEnum.get_enum(row_idx)
             logging.info(f"Exporting reliability for mechanism: '{_mechanism}'.")
-            _mechanism_per_section = self._get_mechanism_per_section(_mechanism.name)
+            _mechanism_per_section = self._get_mechanism_per_section(_mechanism)
             _assessment_list = []
             for time_idx, beta_value in enumerate(mechanism_row):
                 _assessment_list.append(

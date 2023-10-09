@@ -15,6 +15,7 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
@@ -378,7 +379,7 @@ class RunStepAssessmentValidator:
                 )
                 assert _assessment_result.beta == pytest.approx(
                     row[str(_t_column)], 0.00000001
-                ), "Missmatched values for section {}, t {}".format(
+                ), "Mismatched values for section {}, t {}".format(
                     row["name"], _t_column
                 )
 
@@ -389,14 +390,14 @@ class RunStepAssessmentValidator:
             len(reference_df.index) * len(vrtool_config.T)
         )
         for _, row in reference_df.iterrows():
-            _mechanism_name = row["mechanism"]
             _section_data = SectionData.get(SectionData.section_name == row["name"])
-            _mechanism = Mechanism.get(
-                fn.Upper(Mechanism.name) == _mechanism_name.upper()
+            _mechanism = MechanismEnum.get_enum(row["mechanism"])
+            _mech_inst = Mechanism.get(
+                Mechanism.name << [_mechanism.name, _mechanism.get_old_name()]
             )
             _mechanism_x_section = MechanismPerSection.get_or_none(
                 (MechanismPerSection.section == _section_data)
-                & (MechanismPerSection.mechanism == _mechanism)
+                & (MechanismPerSection.mechanism == _mech_inst)
             )
             assert isinstance(_mechanism_x_section, MechanismPerSection)
             for _t_column in vrtool_config.T:
@@ -410,12 +411,12 @@ class RunStepAssessmentValidator:
                 assert isinstance(
                     _assessment_result, AssessmentMechanismResult
                 ), "No entry found for section {} and mechanism {}".format(
-                    row["name"], _mechanism_name
+                    row["name"], _mechanism
                 )
                 assert _assessment_result.beta == pytest.approx(
                     row[str(_t_column)], 0.00000001
                 ), "Missmatched values for section {}, mechanism {}, t {}".format(
-                    row["name"], _mechanism_name, _t_column
+                    row["name"], _mechanism, _t_column
                 )
 
 

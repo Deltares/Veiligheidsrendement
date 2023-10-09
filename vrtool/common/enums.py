@@ -11,9 +11,14 @@ class MechanismEnum(Enum):
     def __str__(self) -> str:
         return self.name
 
+    # TODO: delete this method after rationalizing the testdata
+    def get_old_name(self) -> str:
+        """Get name according to old naming convention (CamelCase)"""
+        return "".join(x.lower().capitalize() or "_" for x in self.name.split("_"))
+
     @classmethod
     def _normalize_name(cls, in_name: str) -> None | str:
-        """Convert string to match naming convention (upper with _)"""
+        """Convert string to match naming convention (upper snake)"""
         if not in_name:
             return None
         return sub(r"(?<!^)(?=[A-Z])", "_", in_name).upper()
@@ -35,9 +40,3 @@ class MechanismEnum(Enum):
                 )
             except StopIteration:
                 return None
-
-
-#
-#     @classmethod
-#     def get_names(cls) -> list(str):
-#         return cls._member_names_
