@@ -331,6 +331,16 @@ class RunStepAssessmentValidator:
             _connected_db.close()
 
     def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
+        # Get database paths.
+        _reference_database_path = valid_vrtool_config.input_database_path.with_name(
+            TestRunWorkflows.vrtool_db_input_name
+        )
+        assert (
+            _reference_database_path != valid_vrtool_config.input_database_path
+        ), "Reference and result database point to the same Path {}.".path(
+            valid_vrtool_config.input_database_path
+        )
+
         def load_assessment_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
             _connected_db = open_database(vrtool_db)
             _assessment_reliabilities = dict(
@@ -344,16 +354,6 @@ class RunStepAssessmentValidator:
             )
             _connected_db.close()
             return _assessment_reliabilities
-
-        # Get database paths.
-        _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            TestRunWorkflows.vrtool_db_input_name
-        )
-        assert (
-            _reference_database_path != valid_vrtool_config.input_database_path
-        ), "Reference and result database point to the same Path {}.".path(
-            valid_vrtool_config.input_database_path
-        )
 
         _result_assessment = load_assessment_reliabilities(
             valid_vrtool_config.input_database_path
@@ -386,7 +386,57 @@ class RunStepMeasuresValidator:
             _connected_db.close()
 
     def validate_measure_results(self, valid_vrtool_config: VrtoolConfig):
-        pass
+        """
+        {
+            "section_id":
+                "measure_id":
+                    "measure_result_with_params": reliability
+        }
+        """
+
+        # Get database paths.
+        _reference_database_path = valid_vrtool_config.input_database_path.with_name(
+            TestRunWorkflows.vrtool_db_input_name
+        )
+        assert (
+            _reference_database_path != valid_vrtool_config.input_database_path
+        ), "Reference and result database point to the same Path {}.".path(
+            valid_vrtool_config.input_database_path
+        )
+
+        def load_measures_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
+            _connected_db = open_database(vrtool_db)
+            _assessment_reliabilities = dict(
+                (_sd, DikeSectionImporter.import_assessment_reliability_df(_sd))
+                for _sd in orm_models.SectionData.select()
+                .join(orm_models.DikeTrajectInfo)
+                .where(
+                    orm_models.SectionData.dike_traject.traject_name
+                    == valid_vrtool_config.traject
+                )
+            )
+            _connected_db.close()
+            return _assessment_reliabilities
+
+        _result_assessment = load_assessment_reliabilities(
+            valid_vrtool_config.input_database_path
+        )
+        _reference_assessment = load_assessment_reliabilities(_reference_database_path)
+
+        assert any(
+            _reference_assessment.items()
+        ), "No reference assessments were loaded."
+        _errors = []
+        for _ref_key, _ref_dataframe in _reference_assessment.items():
+            _res_dataframe = _result_assessment.get(_ref_key, pd.DataFrame())
+            if _res_dataframe.empty:
+                _errors.append(
+                    "Section {} has no reliability results.".format(_ref_key)
+                )
+                continue
+            pd.testing.assert_frame_equal(_ref_dataframe, _res_dataframe)
+        if _errors:
+            pytest.fail("\n".join(_errors))
 
     def validate_measure_results_old(self, valid_vrtool_config: VrtoolConfig):
         assert valid_vrtool_config.output_directory.exists()

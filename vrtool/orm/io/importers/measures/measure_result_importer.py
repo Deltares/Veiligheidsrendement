@@ -49,7 +49,7 @@ class MeasureResultImporter(OrmImporterProtocol):
         _cost = float("nan")
         if any(measure_result.sections_measure_result):
             # The measure cost has the same value regardless of the time.
-            _cost = measure_result.section_measure_result[0].cost
+            _cost = measure_result.sections_measure_result[0].cost
         _section_reliability = SectionReliability()
         _section_reliability.SectionReliability = self.import_measure_reliability_df(
             measure_result
