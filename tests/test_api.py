@@ -289,17 +289,19 @@ class TestRunWorkflows:
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
-
-        assert any(orm_models.MeasureResult.select())
-        _measures_results = [mr.get_id() for mr in orm_models.MeasureResult.select()]
+        
+        _validator = RunStepOptimizationValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
+        _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
 
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_results)
 
         # 3. Verify expectations.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        _validator.validate_optimization_results(valid_vrtool_config)
         RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
+            valid_vrtool_config.output_directory,
+            valid_vrtool_config.input_directory.joinpath("reference"),
         )
 
     @pytest.mark.parametrize(
@@ -426,7 +428,9 @@ class RunStepMeasuresValidator:
                         (_mxs.measure.name, _mxs.section.section_name)
                     ].keys()
                 ):
-                    _keys_values = [f"{k}={v}" for k, v in _available_parameters.items()]
+                    _keys_values = [
+                        f"{k}={v}" for k, v in _available_parameters.items()
+                    ]
                     _as_string = ", ".join(_keys_values)
                     pytest.fail(
                         "Measure reliability contains twice the same parameters {}.".format(
@@ -459,250 +463,36 @@ class RunStepMeasuresValidator:
         if _errors:
             pytest.fail("\n".join(_errors))
 
-    def validate_measure_results_old(self, valid_vrtool_config: VrtoolConfig):
-        assert valid_vrtool_config.output_directory.exists()
-        assert any(valid_vrtool_config.output_directory.glob("*"))
 
-        # 1. Define test data.
-        _test_reference_path = (
-            valid_vrtool_config.input_directory / "reference" / "results"
-        )
-        assert _test_reference_path.exists()
-
-        _reference_file_paths = list(
-            _test_reference_path.glob("*_Options_Veiligheidsrendement.csv")
-        )
-        _reference_section_names = [
-            self.get_section_name(_file_path) for _file_path in _reference_file_paths
-        ]
-
-        # 2. Open the database to retrieve the section names to read the references from
+class RunStepOptimizationValidator:
+    def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
 
-        # 3. Verify there are no measures whose section's reference file does not exist.
-        _sections_with_measures = list(
-            set(
-                _measure_per_section.section.section_name
-                for _measure_per_section in orm_models.MeasurePerSection.select(
-                    orm_models.MeasurePerSection, orm_models.SectionData
-                ).join(orm_models.SectionData)
-            )
-        )
-        assert all(_rds in _sections_with_measures for _rds in _reference_section_names)
+        assert any(orm_models.MeasureResult.select())
+        assert not any(orm_models.OptimizationRun)
+        assert not any(orm_models.OptimizationSelectedMeasure)
+        assert not any(orm_models.OptimizationStep)
+        assert not any(orm_models.OptimizationStepResult)
 
-        # 4. Load reference as pandas dataframe.
-        total_nr_of_measure_results = 0
-        total_nr_of_measure_result_parameters = 0
-        for reference_file_path in _reference_file_paths:
-            reference_data = self.get_reference_measure_result_data(reference_file_path)
+        _connected_db.close()
 
-            section_name = self.get_section_name(reference_file_path)
-            section = orm_models.SectionData.get_or_none(
-                orm_models.SectionData.section_name == section_name
-            )
-            assert section, "SectionData not found for dike section {}.".format(
-                section_name
-            )
-            self.validate_measure_result_per_section(reference_data, section)
+    def get_test_measure_result_ids(
+        self, valid_vrtool_config: VrtoolConfig
+    ) -> list[int]:
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
+        _id_list = [mr.get_id() for mr in orm_models.MeasureResult.select()]
+        _connected_db.close()
+        return _id_list
 
-            # The total amount of results for a single section must be equal to the amount
-            #  of years * the amount of measures that are not of the "class" combined
-            nr_of_years = reference_data[("Section",)].shape[1]
-            total_nr_of_measure_results += len(reference_data.index) * nr_of_years
+    def validate_optimization_results(self, valid_vrtool_config: VrtoolConfig):
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
+        # For now just check that there are outputs.
+        assert any(orm_models.OptimizationRun)
+        assert any(orm_models.OptimizationSelectedMeasure)
+        assert any(orm_models.OptimizationStep)
+        assert any(orm_models.OptimizationStepResult)
+        _connected_db.close()
 
-            # The total amount of measure parameters are equal to the amount of rows in the reference
-            # data where the dcrest and dberm are unequal to -999 * the amount of years * nr of parameters
-            # (which is just dcrest and dberm) for the reference data
-            total_nr_of_measure_result_parameters += (
-                reference_data[
-                    (reference_data[("dcrest",)] != -999)
-                    & (reference_data[("dberm",)] != -999)
-                ].shape[0]
-                * nr_of_years
-                * 2
-            )
-
-        assert len(orm_models.MeasureResult.select()) == len(reference_data.index)
-        assert (
-            len(orm_models.MeasureResultSection.select()) == total_nr_of_measure_results
-        )
-        assert (
-            len(orm_models.MeasureResultParameter.select())
-            == total_nr_of_measure_result_parameters
-        )
-        if not _connected_db.is_closed():
-            _connected_db.close()
-
-    def get_section_name(self, file_path: Path) -> str:
-        return file_path.name.split("_")[0]
-
-    def get_reference_measure_result_data(
-        self, reference_file_path: Path
-    ) -> pd.DataFrame:
-        _read_reference_df = pd.read_csv(reference_file_path, header=[0, 1])
-
-        # Filter reference values as we are not interested in the reliabilities for the individual failure mechanisms
-        _filtered_reference_df = _read_reference_df.loc[
-            :,
-            _read_reference_df.columns.get_level_values(0).isin(
-                ["ID", "type", "class", "year", "dcrest", "dberm", "cost", "Section"]
-            ),
-        ]
-
-        # Rename the "unnamed" columns or the reference data cannot be filtered
-        normalised_columns = [
-            (column[0], "") if column[0] != "Section" else (column[0], column[1])
-            for column in _filtered_reference_df.columns.tolist()
-        ]
-        new_columns = pd.MultiIndex.from_tuples(normalised_columns)
-        _filtered_reference_df.columns = new_columns
-
-        # We are also not interested in the combined measure results, because these are derived solutions and are not
-        # exported by the measure exporter
-        _filtered_reference_df = _filtered_reference_df[
-            _filtered_reference_df[("class",)] != "combined"
-        ]
-
-        return _filtered_reference_df
-
-    def validate_measure_result_per_section(
-        self, reference_df: pd.DataFrame, section: orm_models.SectionData
-    ) -> None:
-        measure_result_lookup: dict[
-            tuple(int, float, float), orm_models.MeasureResult
-        ] = {}
-        unique_measure_ids = set()
-        for _, row in reference_df.iterrows():
-            casted_measure_id = int(row[("ID",)])
-            if not (casted_measure_id in unique_measure_ids):
-                unique_measure_ids.add(casted_measure_id)
-                measure_result_lookup.clear()  # Reset the lookup for each measure or the lookup maintains the  entries of the previous measure
-
-                _measure = orm_models.Measure.get_by_id(casted_measure_id)
-                _measure_per_section = orm_models.MeasurePerSection.get_or_none(
-                    (orm_models.MeasurePerSection.section == section)
-                    & (orm_models.MeasurePerSection.measure == _measure)
-                )
-
-            dberm = float(row[("dberm",)].item())
-            dcrest = float(row[("dcrest",)].item())
-
-            reference_section_reliabilities = row[("Section",)]
-            for year in reference_section_reliabilities.index:
-                casted_year = int(year)
-                if self.is_soil_reinforcement_measure(dberm, dcrest):
-                    self.fill_measure_result_lookup_for_soil_reinforcement_measures(
-                        measure_result_lookup, _measure_per_section, casted_year
-                    )
-
-                _measure_result = self.get_measure_result(
-                    measure_result_lookup,
-                    _measure_per_section,
-                    casted_year,
-                    row["type"],
-                    casted_measure_id,
-                    dberm,
-                    dcrest,
-                )
-                _measure_result_section = orm_models.MeasureResultSection.get_or_none(
-                    measure_result=_measure_result, time=casted_year
-                )
-                assert isinstance(
-                    _measure_result_section, orm_models.MeasureResultSection
-                )
-
-                assert _measure_result_section.beta == pytest.approx(
-                    reference_section_reliabilities[year], 0.00000001
-                ), "Mismatched beta for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
-                    section.section_name,
-                    row[("type",)],
-                    casted_measure_id,
-                    dberm,
-                    dcrest,
-                    casted_year,
-                )
-
-                assert _measure_result_section.cost == float(
-                    row[("cost",)]
-                ), "Mismatched cost for section {} and measure result {} with id {}, dberm {}, dcrest {}, and year {}".format(
-                    section.section_name,
-                    row[("type",)],
-                    casted_measure_id,
-                    dberm,
-                    dcrest,
-                    casted_year,
-                )
-
-    def fill_measure_result_lookup_for_soil_reinforcement_measures(
-        self,
-        lookup: dict[tuple[int, float, float], orm_models.MeasureResult],
-        measure_per_section: orm_models.MeasurePerSection,
-        year: int,
-    ) -> None:
-        _measure_results = orm_models.MeasureResult.select().where(
-            (orm_models.MeasureResult.measure_per_section == measure_per_section)
-        )
-
-        for _found_result in _measure_results:
-            _dberm_parameter = orm_models.MeasureResultParameter.get(
-                (orm_models.MeasureResultParameter.measure_result == _found_result)
-                & (orm_models.MeasureResultParameter.name == "DBERM")
-            )
-
-            _dcrest_parameter = orm_models.MeasureResultParameter.get(
-                (orm_models.MeasureResultParameter.measure_result == _found_result)
-                & (orm_models.MeasureResultParameter.name == "DCREST")
-            )
-
-            _dberm = _dberm_parameter.value
-            _dcrest = _dcrest_parameter.value
-            if not ((year, _dberm, _dcrest) in lookup):
-                lookup[(year, _dberm, _dcrest)] = _found_result
-
-    def get_measure_result(
-        self,
-        soil_reinforcement_measures_lookup: dict[
-            tuple[int, float, float], orm_models.MeasureResult
-        ],
-        measure_per_section: orm_models.MeasurePerSection,
-        year: int,
-        measure_type: str,
-        measure_id: str,
-        dberm: float,
-        dcrest: float,
-    ) -> orm_models.MeasureResult:
-        if self.is_soil_reinforcement_measure(
-            dberm, dcrest
-        ):  # Filter on parameter to get the right measure result
-            _measure_result = soil_reinforcement_measures_lookup.get(
-                (year, dberm, dcrest), None
-            )
-
-            # Assert that the associated parameters are only DCREST and DBERM
-            assert isinstance(
-                _measure_result, orm_models.MeasureResult
-            ), "No entry found for section {} and measure result {} with id {} and year {}".format(
-                measure_per_section.section.section_name, measure_type, measure_id, year
-            )
-            assert len(_measure_result.measure_result_parameters.select()) == 2
-
-            return _measure_result
-
-        _measure_result = orm_models.MeasureResult.get_or_none(
-            (orm_models.MeasureResult.measure_per_section == measure_per_section)
-        )
-
-        assert isinstance(
-            _measure_result, orm_models.MeasureResult
-        ), "No entry found for section {} and measure result {} with id {} and year {}".format(
-            measure_per_section.section.section_name, measure_type, measure_id, year
-        )
-        assert not any(_measure_result.measure_result_parameters.select())
-
-        return _measure_result
-
-    def is_soil_reinforcement_measure(self, dberm: float, dcrest: float) -> bool:
-        return dberm != -999 and dcrest != -999
 
 
 class RunFullValidator:
