@@ -47,6 +47,7 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    create_basic_optimization_run,
     create_optimization_run_for_selected_measures,
     export_results_measures,
     export_results_optimization,
@@ -527,8 +528,67 @@ class TestOrmControllers:
         _optimization_run_name = "Test optimization name"
 
         # 2. Run test.
+        _measure_result_selection = len(orm_models.MeasureResult.select()) // 2
+        assert _measure_result_selection > 0
+        _measure_result_ids = [
+            mr.get_id()
+            for mr in orm_models.MeasureResult.select(_measure_result_selection)
+        ]
+        _return_value = create_optimization_run_for_selected_measures(
+            _results_measures.vr_config, _measure_result_ids, _optimization_run_name
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_return_value, ResultsMeasures)
+        assert len(orm_models.OptimizationType.select()) == len(
+            _results_measures.vr_config.design_methods
+        )
+        for _optimization_type in orm_models.OptimizationType:
+            assert isinstance(_optimization_type, orm_models.OptimizationType)
+
+            assert len(_optimization_type.optimization_runs) == 1
+            _optimization_run = _optimization_type.optimization_runs[0]
+
+            assert isinstance(_optimization_run, orm_models.OptimizationRun)
+            assert _optimization_run.name == _optimization_run_name
+            assert (
+                _optimization_run.discount_rate
+                == _results_measures.vr_config.discount_rate
+            )
+            assert len(_optimization_run.optimization_run_measure_results) == len(
+                _measure_result_ids
+            )
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    def test_create_basic_optimization_run_selects_all_measures(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
+        )
+
+        _optimization_run_name = "Test optimization name"
+
+        # 2. Run test.
         _measure_result_ids = [mr.get_id() for mr in orm_models.MeasureResult.select()]
-        create_optimization_run_for_selected_measures(
+        create_basic_optimization_run(
             _results_measures.vr_config, _measure_result_ids, _optimization_run_name
         )
 
