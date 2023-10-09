@@ -1,8 +1,13 @@
-from vrtool.defaults.vrtool_config import VrtoolConfig
+import hashlib
+import shutil
+from pathlib import Path
+
+import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
+from peewee import SqliteDatabase, fn
 
-from tests import get_test_results_dir, test_data, test_results, test_externals
+from tests import get_test_results_dir, test_data, test_externals, test_results
 from vrtool.api import (
     get_valid_vrtool_config,
     run_full,
@@ -18,9 +23,7 @@ import vrtool.orm.models as orm_models
 import pandas as pd
 
 from vrtool.orm.orm_controllers import (
-    clear_assessment_results,
-    clear_measure_results,
-    clear_optimization_results,
+    export_results_measures,
     export_results_optimization,
     open_database,
     vrtool_db,
@@ -30,7 +33,6 @@ from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptim
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
-import hashlib
 
 
 class TestApi:
@@ -264,6 +266,8 @@ class TestRunWorkflows:
         _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
         _results_optimization = RunOptimization(_results_measures).run()
 
+        export_results_measures(_results_measures)
+        _results_optimization.vr_config = valid_vrtool_config
         export_results_optimization(_results_optimization)
 
         RunFullValidator().validate_acceptance_result_cases(
