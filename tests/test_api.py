@@ -18,11 +18,15 @@ from vrtool.api import (
 import shutil
 from pathlib import Path
 from peewee import SqliteDatabase, fn
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 import vrtool.orm.models as orm_models
 import pandas as pd
 
 from vrtool.orm.orm_controllers import (
+    clear_assessment_results,
+    clear_measure_results,
+    clear_optimization_results,
     export_results_measures,
     export_results_optimization,
     open_database,
@@ -234,7 +238,6 @@ class TestRunWorkflows:
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        clear_assessment_results(valid_vrtool_config)
         clear_measure_results(valid_vrtool_config)
         _validator = RunStepMeasuresValidator()
         _validator.validate_preconditions(valid_vrtool_config)
@@ -329,141 +332,6 @@ class RunStepAssessmentValidator:
         assert not any(orm_models.AssessmentSectionResult.select())
         if not _connected_db.is_closed():
             _connected_db.close()
-
-    def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
-        def load_assessment_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
-            _connected_db = open_database(vrtool_db)
-            _assessment_reliabilities = dict(
-                (_sd, DikeSectionImporter.import_assessment_reliability_df(_sd))
-                for _sd in orm_models.SectionData.select()
-                .join(orm_models.DikeTrajectInfo)
-                .where(
-                    orm_models.SectionData.dike_traject.traject_name
-                    == valid_vrtool_config.traject
-                )
-            )
-            _connected_db.close()
-            return _assessment_reliabilities
-
-        # Get database paths.
-        _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            TestRunWorkflows.vrtool_db_input_name
-        )
-        assert (
-            _reference_database_path != valid_vrtool_config.input_database_path
-        ), "Reference and result database point to the same Path {}.".path(
-            valid_vrtool_config.input_database_path
-        )
-
-        _result_assessment = load_assessment_reliabilities(
-            valid_vrtool_config.input_database_path
-        )
-        _reference_assessment = load_assessment_reliabilities(_reference_database_path)
-
-        assert any(
-            _reference_assessment.items()
-        ), "No reference assessments were loaded."
-        _errors = []
-        for _ref_key, _ref_dataframe in _reference_assessment.items():
-            _res_dataframe = _result_assessment.get(_ref_key, pd.DataFrame())
-            if _res_dataframe.empty:
-                _errors.append(
-                    "Section {} has no reliability results.".format(_ref_key)
-                )
-                continue
-            pd.testing.assert_frame_equal(_ref_dataframe, _res_dataframe)
-        if _errors:
-            pytest.fail("\n".join(_errors))
-
-    def validate_safety_assessment_results_old(self, valid_vrtool_config: VrtoolConfig):
-        # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
-        assert _test_reference_path.exists()
-
-        # 2. Load reference as pandas dataframe.
-        _reference_df = pd.read_csv(
-            _test_reference_path.joinpath("InitialAssessment_Betas.csv"), header=0
-        )
-
-        # 3. Validate each of the rows.
-        # Open the database (whose path has been overwritten with the backup).
-        # This will overwrite the global variable vrtool_db.
-        # In the test's teardown we can ensure closing its connection.
-        _connected_db = open_database(valid_vrtool_config.input_database_path)
-        self.validate_mechanism_per_section_initial_assessment(
-            _reference_df[_reference_df["mechanism"] != "Section"],
-            valid_vrtool_config,
-        )
-        self.validate_section_data_initial_assessment(
-            _reference_df[_reference_df["mechanism"] == "Section"],
-            valid_vrtool_config,
-        )
-        if not _connected_db.is_closed():
-            _connected_db.close()
-
-    def validate_section_data_initial_assessment(
-        self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
-    ):
-        assert len(orm_models.AssessmentSectionResult.select()) == (
-            len(reference_df.index) * len(vrtool_config.T)
-        )
-        for _, row in reference_df.iterrows():
-            _section_data = orm_models.SectionData.get(
-                orm_models.SectionData.section_name == row["name"]
-            )
-            for _t_column in vrtool_config.T:
-                _assessment_result = orm_models.AssessmentSectionResult.get_or_none(
-                    (orm_models.AssessmentSectionResult.section_data == _section_data)
-                    & (orm_models.AssessmentSectionResult.time == int(_t_column))
-                )
-                assert isinstance(
-                    _assessment_result, orm_models.AssessmentSectionResult
-                ), "Initial assessment not found for dike section {}, t {}.".format(
-                    row["name"], _t_column
-                )
-                assert _assessment_result.beta == pytest.approx(
-                    row[str(_t_column)], 0.00000001
-                ), "Missmatched values for section {}, t {}".format(
-                    row["name"], _t_column
-                )
-
-    def validate_mechanism_per_section_initial_assessment(
-        self, reference_df: pd.DataFrame, vrtool_config: VrtoolConfig
-    ):
-        assert len(orm_models.AssessmentMechanismResult.select()) == (
-            len(reference_df.index) * len(vrtool_config.T)
-        )
-        for _, row in reference_df.iterrows():
-            _mechanism_name = row["mechanism"]
-            _section_data = orm_models.SectionData.get(
-                orm_models.SectionData.section_name == row["name"]
-            )
-            _mechanism = orm_models.Mechanism.get(
-                fn.Upper(orm_models.Mechanism.name) == _mechanism_name.upper()
-            )
-            _mechanism_x_section = orm_models.MechanismPerSection.get_or_none(
-                (orm_models.MechanismPerSection.section == _section_data)
-                & (orm_models.MechanismPerSection.mechanism == _mechanism)
-            )
-            assert isinstance(_mechanism_x_section, orm_models.MechanismPerSection)
-            for _t_column in vrtool_config.T:
-                _assessment_result = orm_models.AssessmentMechanismResult.get_or_none(
-                    (
-                        orm_models.AssessmentMechanismResult.mechanism_per_section
-                        == _mechanism_x_section
-                    )
-                    & (orm_models.AssessmentMechanismResult.time == int(_t_column))
-                )
-                assert isinstance(
-                    _assessment_result, orm_models.AssessmentMechanismResult
-                ), "No entry found for section {} and mechanism {}".format(
-                    row["name"], _mechanism_name
-                )
-                assert _assessment_result.beta == pytest.approx(
-                    row[str(_t_column)], 0.00000001
-                ), "Missmatched values for section {}, mechanism {}, t {}".format(
-                    row["name"], _mechanism_name, _t_column
-                )
 
 
 class RunStepMeasuresValidator:
