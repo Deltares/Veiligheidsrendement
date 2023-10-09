@@ -126,24 +126,21 @@ class ApiRunWorkflows:
 
     def run_measures(self) -> ResultsMeasures:
         # Assessment results also cleared because it is part of the RunMeasures workflow
-        clear_measure_results(self.vr_config)
+        clear_measure_results(self.vrtool_config)
 
         # Run Measures.
-        _measures = RunMeasures(self.vr_config, self.selected_traject)
+        _measures = RunMeasures(self.vrtool_config, self.selected_traject)
         _measures_result = _measures.run()
 
         # Export solutions to database
         export_results_measures(_measures_result)
         return _measures_result
 
-    def run_optimization(
-        self, results_measures: ResultsMeasures, selected_measures_id: list[int]
-    ) -> ResultsOptimization:
+    def run_optimization(self, selected_measures_id: list[int]) -> ResultsOptimization:
         """
         Runs an optimization for the given measure results ID's.
 
         Args:
-            results_measures (ResultsMeasures): Solution of the `run_measure` step..
             selected_measures (Measureresult): Selected set of measures' results to optimize.
 
         Returns:
@@ -151,14 +148,14 @@ class ApiRunWorkflows:
         """
         # Create optimization run
         _date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        create_optimization_run_for_selected_measures(
-            results_measures.vr_config,
+        _results_measures = create_optimization_run_for_selected_measures(
+            self.vrtool_config,
             selected_measures_id,
             "Single opt. at: {}".format(_date),
         )
 
         # Run Optimization.
-        _optimization = RunOptimization(results_measures)
+        _optimization = RunOptimization(_results_measures)
         _optimization_result = _optimization.run()
 
         # Export results
@@ -193,7 +190,7 @@ class ApiRunWorkflows:
         clear_optimization_results(self.vrtool_config)
 
         # Create optimization run in the db
-        create_basic_optimization_run(self.vr_config, "Run full optimization")
+        create_basic_optimization_run(self.vrtool_config, "Run full optimization")
 
         # Run optimization
         _optimization = RunOptimization(_measures_result)
