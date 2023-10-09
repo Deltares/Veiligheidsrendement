@@ -121,7 +121,7 @@ class ApiRunWorkflows:
         return _result
 
     def run_measures(self) -> ResultsMeasures:
-        self.run_assessment()
+        # self.run_assessment()
 
         # Assessment results also cleared because it is part of the RunMeasures workflow
         clear_measure_results(self.vrtool_config)

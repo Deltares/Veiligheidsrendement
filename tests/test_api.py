@@ -1,3 +1,4 @@
+from collections import defaultdict
 import hashlib
 import shutil
 from pathlib import Path
@@ -20,6 +21,9 @@ from pathlib import Path
 from peewee import SqliteDatabase, fn
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
+from vrtool.orm.io.importers.measures.measure_result_importer import (
+    MeasureResultImporter,
+)
 import vrtool.orm.models as orm_models
 import pandas as pd
 
@@ -228,7 +232,7 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_measure_test_cases,
+        _acceptance_all_steps_test_cases,
         indirect=True,
     )
     def test_run_step_measures_given_valid_vrtool_config(
@@ -406,22 +410,26 @@ class RunStepMeasuresValidator:
 
         def load_measures_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
             _connected_db = open_database(vrtool_db)
-            _assessment_reliabilities = dict(
-                (_sd, DikeSectionImporter.import_assessment_reliability_df(_sd))
-                for _sd in orm_models.SectionData.select()
-                .join(orm_models.DikeTrajectInfo)
-                .where(
-                    orm_models.SectionData.dike_traject.traject_name
-                    == valid_vrtool_config.traject
+            _m_reliabilities = defaultdict(defaultdict(dict))
+            for _measure_result in orm_models.MeasureResult.select():
+                _mxs = _measure_result.measure_per_section
+                _reliability_df = MeasureResultImporter.import_measure_reliability_df(
+                    _measure_result
                 )
-            )
+                _available_parameters = dict(
+                    (mrp.name, mrp.value)
+                    for mrp in _measure_result.measure_result_parameters
+                )
+                _m_reliabilities[(_mxs.measure.name, _mxs.section.section_name)][
+                    _available_parameters
+                ] = _reliability_df
             _connected_db.close()
-            return _assessment_reliabilities
+            return _m_reliabilities
 
-        _result_assessment = load_assessment_reliabilities(
+        _result_assessment = load_measures_reliabilities(
             valid_vrtool_config.input_database_path
         )
-        _reference_assessment = load_assessment_reliabilities(_reference_database_path)
+        _reference_assessment = load_measures_reliabilities(_reference_database_path)
 
         assert any(
             _reference_assessment.items()
