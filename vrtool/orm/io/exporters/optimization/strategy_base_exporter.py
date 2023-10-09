@@ -1,9 +1,10 @@
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
-from vrtool.orm.models.optimization.optimization_step import OptimizationStep
-from vrtool.orm.models.optimization.optimization_step_result import (
-    OptimizationStepResult,
+from vrtool.orm.models.optimization import (
+    OptimizationStep,
+    OptimizationStepResultMechanism,
+    OptimizationStepResultSection,
 )
 
 
@@ -65,4 +66,4 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
         OptimizationStep.insert_many(steps).execute()
 
-        OptimizationStepResult.insert_many(stepResults).execute()
+        # OptimizationStepResult.insert_many(stepResults).execute()
