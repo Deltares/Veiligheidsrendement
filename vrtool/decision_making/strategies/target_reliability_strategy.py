@@ -71,9 +71,7 @@ class TargetReliabilityStrategy(StrategyBase):
         beta_horizon = []
         for i in traject.sections:
             beta_horizon.append(
-                i.section_reliability.SectionReliability.loc["Section"][
-                    str(self.OI_horizon)
-                ]
+                i.section_reliability.SectionReliability.loc["Section"][self.OI_horizon]
             )
 
         section_indices = np.argsort(beta_horizon)
