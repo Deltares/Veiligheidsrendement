@@ -125,6 +125,8 @@ class ApiRunWorkflows:
         return _result
 
     def run_measures(self) -> ResultsMeasures:
+        # Run asssessment due to a bug during import of reliability.
+        self.run_assessment()
         clear_measure_results(self.vrtool_config)
 
         # Run Measures.
