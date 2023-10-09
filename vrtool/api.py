@@ -108,6 +108,8 @@ def run_full(vrtool_config: VrtoolConfig) -> None:
 class ApiRunWorkflows:
     def __init__(self, vrtool_config: VrtoolConfig) -> None:
         self.vrtool_config = vrtool_config
+
+        # Import the DikeTraject and all present reliability data.
         self.selected_traject = get_dike_traject(vrtool_config)
 
     def run_assessment(self) -> ResultsSafetyAssessment:
@@ -125,8 +127,7 @@ class ApiRunWorkflows:
         return _result
 
     def run_measures(self) -> ResultsMeasures:
-        # Run asssessment due to a bug during import of reliability.
-        self.run_assessment()
+        # Clear the results
         clear_measure_results(self.vrtool_config)
 
         # Run Measures.

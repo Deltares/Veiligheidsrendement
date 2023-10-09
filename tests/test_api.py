@@ -219,7 +219,6 @@ class TestRunWorkflows:
         _acceptance_all_steps_test_cases,
         indirect=True,
     )
-    # @pytest.mark.skip(reason="Work in progress.")
     def test_run_step_measures_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -237,14 +236,13 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        [
-            _acceptance_all_steps_test_cases[0],
-            _acceptance_all_steps_test_cases[-1],
+        _acceptance_all_steps_test_cases
+        + [
             pytest.param(
                 ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
                 id="Traject 38-1, two sections",
                 marks=[pytest.mark.skip(reason="Missing input database.")],
-            ),
+            )
         ],
         indirect=True,
     )
