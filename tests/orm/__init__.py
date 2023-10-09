@@ -67,8 +67,8 @@ def get_basic_mechanism_per_section() -> MechanismPerSection:
     """
     _test_section = get_basic_section_data()
 
-    _mechanism = Mechanism.create(name="OVERFLOW")
-    return MechanismPerSection.create(section=_test_section, mechanism=_mechanism)
+    _mech_inst = Mechanism.create(name="OVERFLOW")
+    return MechanismPerSection.create(section=_test_section, mechanism=_mech_inst)
 
 
 def get_basic_computation_scenario() -> ComputationScenario:

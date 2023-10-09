@@ -28,7 +28,7 @@ def create_required_mechanism_per_section(
 ) -> None:
     _added_mechanisms = []
     for mechanism in mechanism_available_list:
-        _mechanism, _ = Mechanism.get_or_create(name=mechanism.name)
+        _mech_inst, _ = Mechanism.get_or_create(name=mechanism.name)
         _added_mechanisms.append(
-            MechanismPerSection.create(section=section_data, mechanism=_mechanism.name)
+            MechanismPerSection.create(section=section_data, mechanism=_mech_inst)
         )

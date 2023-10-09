@@ -23,9 +23,9 @@ class TestComputationScenario:
             crest_height=24,
             annual_crest_decline=42,
         )
-        _test_mechanism = Mechanism.create(name="TestMechanism")
+        _test_mech_inst = Mechanism.create(name="TestMechanism")
         _mech_per_section = MechanismPerSection.create(
-            section=_test_section, mechanism=_test_mechanism
+            section=_test_section, mechanism=_test_mech_inst
         )
 
         # 2. Run test.

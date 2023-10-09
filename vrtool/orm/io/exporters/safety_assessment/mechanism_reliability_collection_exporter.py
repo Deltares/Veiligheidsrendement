@@ -36,8 +36,9 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         for row_idx, mechanism_row in (
             _section_reliability.loc[_section_reliability.index != "Section"]
         ).iterrows():
-            logging.info(f"Exporting reliability for mechanism: '{row_idx}'.")
-            _mechanism_per_section = self._get_mechanism_per_section(row_idx)
+            _mechanism = MechanismEnum.get_enum(row_idx)
+            logging.info(f"Exporting reliability for mechanism: '{_mechanism}'.")
+            _mechanism_per_section = self._get_mechanism_per_section(_mechanism.name)
 
             for time_idx, beta_value in enumerate(mechanism_row):
                 _added_assessments.append(

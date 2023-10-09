@@ -65,8 +65,8 @@ class TestDataHelper:
             annual_crest_decline=42,
         )
 
-        _mechanism = Mechanism.create(name=mechanism.name)
-        return MechanismPerSection.create(section=_test_section, mechanism=_mechanism)
+        _mech_inst = Mechanism.create(name=mechanism.name)
+        return MechanismPerSection.create(section=_test_section, mechanism=_mech_inst)
 
     @staticmethod
     def get_valid_mechanism_per_section(

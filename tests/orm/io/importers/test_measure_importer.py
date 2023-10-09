@@ -43,10 +43,10 @@ def _set_standard_measure(measure: Measure) -> None:
 
 
 def _set_custom_measure(measure: Measure) -> None:
-    _mechanism = Mechanism.create(name="Just a mechanism")
+    _mech_inst = Mechanism.create(name="Just a mechanism")
     _measure = OrmCustomMeasure.create(
         measure=measure,
-        mechanism=_mechanism,
+        mechanism=_mech_inst,
         cost=1234.56,
         beta=42.24,
         year=2023,

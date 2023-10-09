@@ -124,10 +124,10 @@ class TestOrmControllers:
         _dike_section.save()
 
         for _m_dict in DummyModelsData.mechanism_data:
-            _mechanism = orm_models.Mechanism.create(**_m_dict)
-            _mechanism.save()
+            _mech_inst = orm_models.Mechanism.create(**_m_dict)
+            _mech_inst.save()
             _mechanism_section = orm_models.MechanismPerSection.create(
-                mechanism=_mechanism, section=_dike_section
+                mechanism=_mech_inst, section=_dike_section
             )
             _mechanism_section.save()
 
@@ -551,14 +551,14 @@ class TestOrmControllers:
                 beta=i / 1000.0, time=i, section_data=section
             )
 
-    def _create_mechanism(self, mechanism_name: str) -> orm_models.Mechanism:
-        return orm_models.Mechanism.create(name=mechanism_name)
+    def _create_mechanism(self, mech_name: str) -> orm_models.Mechanism:
+        return orm_models.Mechanism.create(name=mech_name)
 
     def _create_basic_mechanism_per_section(
-        self, section: orm_models.SectionData, mechanism: orm_models.Mechanism
+        self, section: orm_models.SectionData, mech_inst: orm_models.Mechanism
     ) -> orm_models.MechanismPerSection:
         return orm_models.MechanismPerSection.create(
-            section=section, mechanism=mechanism
+            section=section, mechanism=mech_inst
         )
 
     def _create_assessment_mechanism_results(
