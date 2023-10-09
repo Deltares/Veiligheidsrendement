@@ -391,7 +391,7 @@ class RunStepMeasuresValidator:
         {
             "section_id":
                 "measure_id":
-                    "measure_result_with_params": reliability
+                    "frozenset[measure_result_with_params]": reliability
         }
         """
 
@@ -447,14 +447,20 @@ class RunStepMeasuresValidator:
             _reference_assessment.items()
         ), "No reference assessments were loaded."
         _errors = []
-        for _ref_key, _ref_dataframe in _reference_assessment.items():
-            _res_dataframe = _result_assessment.get(_ref_key, pd.DataFrame())
-            if _res_dataframe.empty:
+        for _ref_key, _ref_section_measure_dict in _reference_assessment.items():
+            _res_section_measure_dict = _result_assessment.get(_ref_key, dict())
+            if not any(_res_section_measure_dict):
                 _errors.append(
-                    "Section {} has no reliability results.".format(_ref_key)
+                    "Measure {} = Section {}, have no reliability results.".format(_ref_key[0], _ref_key[1])
                 )
                 continue
-            pd.testing.assert_frame_equal(_ref_dataframe, _res_dataframe)
+            for _ref_params, _ref_measure_result_reliability in _ref_section_measure_dict.items():
+                _res_measure_result_reliability = _res_section_measure_dict.get(_ref_params, pd.DataFrame())
+                if _res_measure_result_reliability.empty:
+                    _parameters = [f"{k}={v}" for k, v in _ref_params]
+                    _parameters_as_str = ", ".join(_parameters)
+                    _errors.append("Measure {} = Section {}, Parameters: {}, have no reliability results".format(_ref_key[0], _ref_key[1], _parameters_as_str))
+                pd.testing.assert_frame_equal(_ref_measure_result_reliability, _res_measure_result_reliability)
         if _errors:
             pytest.fail("\n".join(_errors))
 
