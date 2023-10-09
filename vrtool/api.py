@@ -73,7 +73,13 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    ApiRunWorkflows(vrtool_config).run_measures()
+    _api_workflows = ApiRunWorkflows(vrtool_config)
+
+    _results_assessment = ResultsSafetyAssessment()
+    _results_assessment.vr_config = _api_workflows.vrtool_config
+    _results_assessment.selected_traject = _api_workflows.selected_traject
+
+    _api_workflows.run_measures(_results_assessment)
 
 
 def run_step_optimization(
@@ -120,12 +126,16 @@ class ApiRunWorkflows:
         export_results_safety_assessment(_result)
         return _result
 
-    def run_measures(self) -> ResultsMeasures:
+    def run_measures(
+        self, results_assessment: ResultsSafetyAssessment
+    ) -> ResultsMeasures:
         # Assessment results also cleared because it is part of the RunMeasures workflow
-        clear_measure_results(self.vrtool_config)
+        clear_measure_results(results_assessment.vr_config)
 
         # Run Measures.
-        _measures = RunMeasures(self.vrtool_config, self.selected_traject)
+        _measures = RunMeasures(
+            results_assessment.vr_config, results_assessment.selected_traject
+        )
         _measures_result = _measures.run()
 
         # Export solutions to database
@@ -174,7 +184,7 @@ class ApiRunWorkflows:
         _assessment_results = self.run_assessment()
 
         # Step 2. Run measures.
-        _measures_result = self.run_measures()
+        _measures_result = self.run_measures(_assessment_results)
 
         # Step 2. Optimization.
         _optimization = RunOptimization(_measures_result)
