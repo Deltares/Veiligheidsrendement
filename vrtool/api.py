@@ -125,6 +125,10 @@ class ApiRunWorkflows:
         return _result
 
     def run_measures(self) -> ResultsMeasures:
+        # Import directly from database does not seem to be working correctly,
+        # so we need this.
+        self.run_assessment()
+
         # Assessment results also cleared because it is part of the RunMeasures workflow
         clear_measure_results(self.vrtool_config)
 
