@@ -410,16 +410,29 @@ class RunStepMeasuresValidator:
 
         def load_measures_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
             _connected_db = open_database(vrtool_db)
-            _m_reliabilities = defaultdict(defaultdict(dict))
+            _m_reliabilities = defaultdict(dict)
             for _measure_result in orm_models.MeasureResult.select():
                 _mxs = _measure_result.measure_per_section
                 _reliability_df = MeasureResultImporter.import_measure_reliability_df(
                     _measure_result
                 )
-                _available_parameters = dict(
+                _available_parameters = frozenset(
                     (mrp.name, mrp.value)
                     for mrp in _measure_result.measure_result_parameters
                 )
+                if (
+                    _available_parameters
+                    in _m_reliabilities[
+                        (_mxs.measure.name, _mxs.section.section_name)
+                    ].keys()
+                ):
+                    _keys_values = [f"{k}={v}" for k, v in _available_parameters.items()]
+                    _as_string = ", ".join(_keys_values)
+                    pytest.fail(
+                        "Measure reliability contains twice the same parameters {}.".format(
+                            _as_string
+                        )
+                    )
                 _m_reliabilities[(_mxs.measure.name, _mxs.section.section_name)][
                     _available_parameters
                 ] = _reliability_df
