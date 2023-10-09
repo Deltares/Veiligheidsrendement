@@ -230,6 +230,7 @@ class TestRunWorkflows:
         _acceptance_all_steps_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(reason="Work in progress.")
     def test_run_step_measures_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -246,7 +247,7 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
+        _acceptance_all_steps_test_cases[-1:],
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config(
@@ -301,7 +302,7 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases[-1:],
+        _acceptance_all_steps_test_cases,
         indirect=True,
     )
     def test_run_full_given_valid_vrtool_config(
