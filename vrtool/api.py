@@ -121,8 +121,6 @@ class ApiRunWorkflows:
         return _result
 
     def run_measures(self) -> ResultsMeasures:
-        # self.run_assessment()
-
         # Assessment results also cleared because it is part of the RunMeasures workflow
         clear_measure_results(self.vrtool_config)
 
@@ -172,7 +170,10 @@ class ApiRunWorkflows:
 
         logging.info("Start run full model.")
 
-        # Step 1. Safety assessment + measures
+        # Step 1. Safety assessment.
+        _assessment_results = self.run_assessment()
+
+        # Step 2. Run measures.
         _measures_result = self.run_measures()
 
         # Step 2. Optimization.
