@@ -47,7 +47,7 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    create_optimization_run,
+    create_optimization_run_for_selected_measures,
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
@@ -528,7 +528,7 @@ class TestOrmControllers:
 
         # 2. Run test.
         _measure_result_ids = [mr.get_id() for mr in orm_models.MeasureResult.select()]
-        create_optimization_run(
+        create_optimization_run_for_selected_measures(
             _results_measures.vr_config, _measure_result_ids, _optimization_run_name
         )
 

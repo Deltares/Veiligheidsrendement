@@ -325,20 +325,29 @@ def import_results_measures(
     return _results_measures
 
 
-def create_optimization_run(
+def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
     selected_measure_result_ids: list[int],
     optimization_name: str,
-) -> None:
+) -> ResultsMeasures:
     """
-    Creates an `OptimizationRun` database entry and as many entries as needed
-    in the `OptimizationSelectedMeasure` table based on the provided arguments.
+    Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
+    database entry and as many entries as needed in the `OptimizationSelectedMeasure`
+    table based on the provided arguments.
+
+    This is the method to call for running 'lose' single optimization runs.
 
     Args:
         vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
         selected_measure_result_ids (list[int]): list of `MeasureResult` id's in the database.
         optimization_name (str): name to give to an optimization run.
+
+    Returns:
+        ResultsMeasures: Instance hosting all the required measures' results.
     """
+
+    _results_measures = import_results_measures(vr_config, selected_measure_result_ids)
+
     _connected_db = open_database(vr_config.input_database_path)
     logging.info(
         "Opened connection to export optimization run {}.".format(optimization_name)
@@ -360,6 +369,46 @@ def create_optimization_run(
                     investment_year=0,
                 )
                 for _measure_id in selected_measure_result_ids
+            ]
+        ).execute()
+
+    logging.info(
+        "Closed connection after export optimization run {}.".format(optimization_name)
+    )
+    _connected_db.close()
+
+    return _results_measures
+
+
+def create_basic_optimization_run(vr_config: VrtoolConfig, optimization_name: str) -> None:
+    """
+    Creates all the required entries to run a basic optimization run on ALL available measure results (`MeasureResult`).
+
+    Args:
+        vr_config (VrtoolConfig): Configuration to use for importing / exporting and running.
+        optimization_name (str): Name to give to the optimization run(s).
+    """
+    _connected_db = open_database(vr_config.input_database_path)
+    logging.info(
+        "Opened connection to export optimization run {}.".format(optimization_name)
+    )
+    for _method_type in vr_config.design_methods:
+        _optimization_type, _ = orm.OptimizationType.get_or_create(
+            name=_method_type.upper()
+        )
+        _optimization_run = orm.OptimizationRun.create(
+            name=optimization_name,
+            discount_rate=vr_config.discount_rate,
+            optimization_type=_optimization_type,
+        )
+        orm.OptimizationSelectedMeasure.insert_many(
+            [
+                dict(
+                    optimization_run=_optimization_run,
+                    measure_result=_measure_result,
+                    investment_year=0,
+                )
+                for _measure_result in orm.MeasureResult.select()
             ]
         ).execute()
 

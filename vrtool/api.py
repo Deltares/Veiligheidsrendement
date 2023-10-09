@@ -1,15 +1,19 @@
+from datetime import datetime
 import logging
 from pathlib import Path
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
+    clear_optimization_results,
+    create_basic_optimization_run,
+    create_optimization_run_for_selected_measures,
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
     get_dike_traject,
-    import_results_measures,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
@@ -73,17 +77,11 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
-    _api_workflows = ApiRunWorkflows(vrtool_config)
-
-    _results_assessment = ResultsSafetyAssessment()
-    _results_assessment.vr_config = _api_workflows.vrtool_config
-    _results_assessment.selected_traject = _api_workflows.selected_traject
-
-    _api_workflows.run_measures(_results_assessment)
+    ApiRunWorkflows(vrtool_config).run_measures()
 
 
 def run_step_optimization(
-    vrtool_config: VrtoolConfig, measures_results: list[int]
+    vrtool_config: VrtoolConfig, measure_results_ids: list[int]
 ) -> None:
     """
     Runs an optimization by optimizing the available measures
@@ -91,9 +89,9 @@ def run_step_optimization(
 
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
+        measure_results_ids (list[int]): List of id's for the selected `MeasureResult` entries to use.
     """
-    _results_measures = import_results_measures(vrtool_config, measures_results)
-    ApiRunWorkflows(vrtool_config).run_optimization(_results_measures)
+    ApiRunWorkflows(vrtool_config).run_optimization(measure_results_ids)
 
 
 def run_full(vrtool_config: VrtoolConfig) -> None:
@@ -126,16 +124,12 @@ class ApiRunWorkflows:
         export_results_safety_assessment(_result)
         return _result
 
-    def run_measures(
-        self, results_assessment: ResultsSafetyAssessment
-    ) -> ResultsMeasures:
+    def run_measures(self) -> ResultsMeasures:
         # Assessment results also cleared because it is part of the RunMeasures workflow
-        clear_measure_results(results_assessment.vr_config)
+        clear_measure_results(self.vr_config)
 
         # Run Measures.
-        _measures = RunMeasures(
-            results_assessment.vr_config, results_assessment.selected_traject
-        )
+        _measures = RunMeasures(self.vr_config, self.selected_traject)
         _measures_result = _measures.run()
 
         # Export solutions to database
@@ -143,17 +137,26 @@ class ApiRunWorkflows:
         return _measures_result
 
     def run_optimization(
-        self, results_measures: ResultsMeasures
+        self, results_measures: ResultsMeasures, selected_measures_id: list[int]
     ) -> ResultsOptimization:
         """
         Runs an optimization for the given measure results ID's.
 
         Args:
-            results_measures (ResultsMeasures): Selected set of measures' results to optimize.
+            results_measures (ResultsMeasures): Solution of the `run_measure` step..
+            selected_measures (Measureresult): Selected set of measures' results to optimize.
 
         Returns:
             ResultsOptimization: Optimization results.
         """
+        # Create optimization run
+        _date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        create_optimization_run_for_selected_measures(
+            results_measures.vr_config,
+            selected_measures_id,
+            "Single opt. at: {}".format(_date),
+        )
+
         # Run Optimization.
         _optimization = RunOptimization(results_measures)
         _optimization_result = _optimization.run()
@@ -181,12 +184,18 @@ class ApiRunWorkflows:
         logging.info("Start run full model.")
 
         # Step 1. Safety assessment.
-        _assessment_results = self.run_assessment()
+        self.run_assessment()
 
         # Step 2. Run measures.
-        _measures_result = self.run_measures(_assessment_results)
+        _measures_result = self.run_measures()
 
         # Step 2. Optimization.
+        clear_optimization_results(self.vrtool_config)
+
+        # Create optimization run in the db
+        create_basic_optimization_run(self.vr_config, "Run full optimization")
+
+        # Run optimization
         _optimization = RunOptimization(_measures_result)
         _optimization_result = _optimization.run()
 
