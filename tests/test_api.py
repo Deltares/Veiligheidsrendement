@@ -246,6 +246,32 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
+        _acceptance_all_steps_test_cases,
+        indirect=True,
+    )
+    def test_run_step_optimization_given_valid_vrtool_config(
+        self, valid_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        # We reuse existing measure results, but we clear the optimization ones.
+        clear_optimization_results(valid_vrtool_config)
+
+        _validator = RunStepOptimizationValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
+        _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
+
+        # 2. Run test.
+        run_step_optimization(valid_vrtool_config, _measures_results)
+
+        # 3. Verify expectations.
+        _validator.validate_optimization_results(valid_vrtool_config)
+        RunFullValidator().validate_acceptance_result_cases(
+            valid_vrtool_config.output_directory,
+            valid_vrtool_config.input_directory.joinpath("reference"),
+        )
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
         _acceptance_optimization_test_cases,
         indirect=True,
     )
@@ -271,32 +297,6 @@ class TestRunWorkflows:
 
         RunFullValidator().validate_acceptance_result_cases(
             valid_vrtool_config.output_directory, _test_reference_path
-        )
-
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
-        indirect=True,
-    )
-    def test_run_step_optimization_given_valid_vrtool_config(
-        self, valid_vrtool_config: VrtoolConfig
-    ):
-        # 1. Define test data.
-        # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results(valid_vrtool_config)
-
-        _validator = RunStepOptimizationValidator()
-        _validator.validate_preconditions(valid_vrtool_config)
-        _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
-
-        # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_results)
-
-        # 3. Verify expectations.
-        _validator.validate_optimization_results(valid_vrtool_config)
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory,
-            valid_vrtool_config.input_directory.joinpath("reference"),
         )
 
     @pytest.mark.parametrize(
@@ -451,16 +451,29 @@ class RunStepMeasuresValidator:
             _res_section_measure_dict = _result_assessment.get(_ref_key, dict())
             if not any(_res_section_measure_dict):
                 _errors.append(
-                    "Measure {} = Section {}, have no reliability results.".format(_ref_key[0], _ref_key[1])
+                    "Measure {} = Section {}, have no reliability results.".format(
+                        _ref_key[0], _ref_key[1]
+                    )
                 )
                 continue
-            for _ref_params, _ref_measure_result_reliability in _ref_section_measure_dict.items():
-                _res_measure_result_reliability = _res_section_measure_dict.get(_ref_params, pd.DataFrame())
+            for (
+                _ref_params,
+                _ref_measure_result_reliability,
+            ) in _ref_section_measure_dict.items():
+                _res_measure_result_reliability = _res_section_measure_dict.get(
+                    _ref_params, pd.DataFrame()
+                )
                 if _res_measure_result_reliability.empty:
                     _parameters = [f"{k}={v}" for k, v in _ref_params]
                     _parameters_as_str = ", ".join(_parameters)
-                    _errors.append("Measure {} = Section {}, Parameters: {}, have no reliability results".format(_ref_key[0], _ref_key[1], _parameters_as_str))
-                pd.testing.assert_frame_equal(_ref_measure_result_reliability, _res_measure_result_reliability)
+                    _errors.append(
+                        "Measure {} = Section {}, Parameters: {}, have no reliability results".format(
+                            _ref_key[0], _ref_key[1], _parameters_as_str
+                        )
+                    )
+                pd.testing.assert_frame_equal(
+                    _ref_measure_result_reliability, _res_measure_result_reliability
+                )
         if _errors:
             pytest.fail("\n".join(_errors))
 
@@ -488,10 +501,10 @@ class RunStepOptimizationValidator:
     def validate_optimization_results(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
         # For now just check that there are outputs.
-        assert any(orm_models.OptimizationRun)
-        assert any(orm_models.OptimizationSelectedMeasure)
-        assert any(orm_models.OptimizationStep)
-        assert any(orm_models.OptimizationStepResult)
+        assert any(orm_models.OptimizationRun.select())
+        assert any(orm_models.OptimizationSelectedMeasure.select())
+        assert any(orm_models.OptimizationStep.select())
+        assert any(orm_models.OptimizationStepResult.select())
         _connected_db.close()
 
 
