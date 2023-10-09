@@ -1,13 +1,14 @@
-from collections import defaultdict
 import hashlib
 import shutil
+from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
-from peewee import SqliteDatabase, fn
+from peewee import SqliteDatabase
 
+import vrtool.orm.models as orm_models
 from tests import get_test_results_dir, test_data, test_externals, test_results
 from vrtool.api import (
     get_valid_vrtool_config,
@@ -16,17 +17,11 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-import shutil
-from pathlib import Path
-from peewee import SqliteDatabase, fn
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
     MeasureResultImporter,
 )
-import vrtool.orm.models as orm_models
-import pandas as pd
-
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -289,7 +284,7 @@ class TestRunWorkflows:
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
-        
+
         _validator = RunStepOptimizationValidator()
         _validator.validate_preconditions(valid_vrtool_config)
         _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
@@ -492,7 +487,6 @@ class RunStepOptimizationValidator:
         assert any(orm_models.OptimizationStep)
         assert any(orm_models.OptimizationStepResult)
         _connected_db.close()
-
 
 
 class RunFullValidator:
