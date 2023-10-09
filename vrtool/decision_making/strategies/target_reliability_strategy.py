@@ -70,6 +70,7 @@ class TargetReliabilityStrategy(StrategyBase):
         # Rank sections based on 2075 Section probability
         beta_horizon = []
         for i in traject.sections:
+            # For now (VRTOOL-221) `OI_horizon` is assumed to be a string.
             _oi_horizon = (
                 self.OI_horizon
                 if isinstance(self.OI_horizon, str)

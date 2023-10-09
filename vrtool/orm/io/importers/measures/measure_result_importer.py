@@ -32,7 +32,7 @@ class MeasureResultImporter(OrmImporterProtocol):
         for _smr in measure_result.sections_measure_result.order_by(
             MeasureResultSection.time.asc()
         ):
-            _columns.append(_smr.time)
+            _columns.append(str(_smr.time))
             _section_reliability_dict["Section"].append(_smr.beta)
             for _mrm in measure_result.measure_result_mechanisms.where(
                 MeasureResultMechanism.time == _smr.time

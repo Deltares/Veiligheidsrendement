@@ -59,7 +59,7 @@ class DikeSectionImporter(OrmImporterProtocol):
         for _asr in section_data.assessment_section_results.order_by(
             AssessmentSectionResult.time.asc()
         ):
-            _columns.append(_asr.time)
+            _columns.append(str(_asr.time))
             _section_reliability_dict["Section"].append(_asr.beta)
             for _amr in (
                 AssessmentMechanismResult.select()
@@ -147,7 +147,7 @@ class DikeSectionImporter(OrmImporterProtocol):
                 for _reliability_t, _beta in _imported_initial_assessment.loc[
                     _mechanism_data.mechanism_name
                 ].items():
-                    _mechanism_data.Reliability[str(_reliability_t)].Beta = _beta
+                    _mechanism_data.Reliability[_reliability_t].Beta = _beta
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
                 _mechanism_data
             )

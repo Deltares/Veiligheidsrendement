@@ -227,16 +227,17 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
+        _acceptance_all_steps_test_cases[-1:],
         indirect=True,
     )
-    @pytest.mark.skip(reason="Work in progress.")
+    # @pytest.mark.skip(reason="Work in progress.")
     def test_run_step_measures_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        clear_measure_results(valid_vrtool_config)
         _validator = RunStepMeasuresValidator()
+
+        clear_measure_results(valid_vrtool_config)
         _validator.validate_preconditions(valid_vrtool_config)
 
         # 2. Run test.
@@ -259,6 +260,7 @@ class TestRunWorkflows:
 
         _validator = RunStepOptimizationValidator()
         _validator.validate_preconditions(valid_vrtool_config)
+
         _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
 
         # 2. Run test.
@@ -406,7 +408,9 @@ class RunStepMeasuresValidator:
             valid_vrtool_config.input_database_path
         )
 
-        def load_measures_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
+        def load_measures_reliabilities(
+            vrtool_db: Path,
+        ) -> dict[str, dict[tuple, pd.DataFrame]]:
             _connected_db = open_database(vrtool_db)
             _m_reliabilities = defaultdict(dict)
             for _measure_result in orm_models.MeasureResult.select():
@@ -449,8 +453,11 @@ class RunStepMeasuresValidator:
         ), "No reference assessments were loaded."
         _errors = []
         for _ref_key, _ref_section_measure_dict in _reference_assessment.items():
+            # Iterate over each dictiory entry,
+            # which represents ALL the measure results (the values)
+            # of a given `MeasurePerSection` (the key).
             _res_section_measure_dict = _result_assessment.get(_ref_key, dict())
-            if not any(_res_section_measure_dict):
+            if not any(_res_section_measure_dict.items()):
                 _errors.append(
                     "Measure {} = Section {}, have no reliability results.".format(
                         _ref_key[0], _ref_key[1]
@@ -461,6 +468,9 @@ class RunStepMeasuresValidator:
                 _ref_params,
                 _ref_measure_result_reliability,
             ) in _ref_section_measure_dict.items():
+                # Iterate over each dictionary entry,
+                # which represents the measure reliability results (the values as `pd.DataFrame`)
+                # for a given set of parameters represented as `dict` (the keys)
                 _res_measure_result_reliability = _res_section_measure_dict.get(
                     _ref_params, pd.DataFrame()
                 )
@@ -472,6 +482,7 @@ class RunStepMeasuresValidator:
                             _ref_key[0], _ref_key[1], _parameters_as_str
                         )
                     )
+                    continue
                 pd.testing.assert_frame_equal(
                     _ref_measure_result_reliability, _res_measure_result_reliability
                 )
