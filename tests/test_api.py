@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from peewee import SqliteDatabase
+from vrtool.orm.io.importers.dike_traject_info_importer import DikeTrajectInfoImporter
 
 import vrtool.orm.models as orm_models
 from tests import get_test_results_dir, test_data, test_externals, test_results
@@ -23,6 +24,7 @@ from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
     MeasureResultImporter,
 )
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -149,6 +151,11 @@ _acceptance_all_steps_test_cases = [
     ),
 ]
 
+_simple_case_two_sections = pytest.param(
+    ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
+    id="Traject 38-1, two sections",
+)
+
 
 @pytest.mark.slow
 class TestApiRunWorkflowsAcceptance:
@@ -232,7 +239,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
+        _acceptance_all_steps_test_cases + [_simple_case_two_sections],
         indirect=True,
     )
     def test_run_step_measures_given_valid_vrtool_config(
@@ -252,14 +259,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases
-        + [
-            pytest.param(
-                ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
-                id="Traject 38-1, two sections",
-                marks=[pytest.mark.skip(reason="Missing input database.")],
-            )
-        ],
+        _acceptance_all_steps_test_cases + [_simple_case_two_sections],
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config(
@@ -306,9 +306,17 @@ class TestApiRunWorkflowsAcceptance:
         _results_assessment.load_results(
             alternative_path=_shelve_path / "AfterStep1.out"
         )
+        clear_assessment_results(valid_vrtool_config)
+        clear_measure_results(valid_vrtool_config)
+        clear_optimization_results(valid_vrtool_config)
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
+        _dike_traject_info = DikeTrajectInfoImporter().import_orm(DikeTrajectInfo.get())
+        _connected_db.close()
         _results_assessment.vr_config = valid_vrtool_config
-        _results_assessment.selected_traject = _results_assessment.selected_traject
-        # export_results_safety_assessment(_results_assessment)
+        _results_assessment.selected_traject.general_info = _dike_traject_info
+        for _section in _results_assessment.selected_traject.sections:
+            _section.TrajectInfo = _dike_traject_info
+        export_results_safety_assessment(_results_assessment)
 
         _results_measures = ResultsMeasures()
 
@@ -453,9 +461,7 @@ class RunStepMeasuresValidator:
                         (_mxs.measure.name, _mxs.section.section_name)
                     ].keys()
                 ):
-                    _keys_values = [
-                        f"{k}={v}" for k, v in _available_parameters.items()
-                    ]
+                    _keys_values = [f"{k}={v}" for k, v in _available_parameters]
                     _as_string = ", ".join(_keys_values)
                     pytest.fail(
                         "Measure reliability contains twice the same parameters {}.".format(
