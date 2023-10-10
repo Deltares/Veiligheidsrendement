@@ -380,7 +380,9 @@ def create_optimization_run_for_selected_measures(
     return _results_measures
 
 
-def create_basic_optimization_run(vr_config: VrtoolConfig, optimization_name: str) -> None:
+def create_basic_optimization_run(
+    vr_config: VrtoolConfig, optimization_name: str
+) -> None:
     """
     Creates all the required entries to run a basic optimization run on ALL available measure results (`MeasureResult`).
 

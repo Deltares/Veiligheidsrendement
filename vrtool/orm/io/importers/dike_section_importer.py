@@ -137,10 +137,6 @@ class DikeSectionImporter(OrmImporterProtocol):
         _imported_initial_assessment = self.import_assessment_reliability_df(
             section_data
         )
-        if _imported_initial_assessment.empty:
-            logging.info(
-                "No initial section -  mechanism (reliability) assessment was found."
-            )
 
         for _mechanism_data in _mechanism_collection:
             if _mechanism_data.mechanism_name in _imported_initial_assessment.index:
@@ -152,7 +148,12 @@ class DikeSectionImporter(OrmImporterProtocol):
                 _mechanism_data
             )
 
-        _section_reliability.SectionReliability = _imported_initial_assessment
+        if _imported_initial_assessment.empty:
+            logging.info(
+                "No initial section -  mechanism (reliability) assessment was found."
+            )
+        else:
+            _section_reliability.SectionReliability = _imported_initial_assessment
 
         return _section_reliability
 

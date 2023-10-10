@@ -11,6 +11,7 @@ from peewee import SqliteDatabase
 import vrtool.orm.models as orm_models
 from tests import get_test_results_dir, test_data, test_externals, test_results
 from vrtool.api import (
+    ApiRunWorkflows,
     get_valid_vrtool_config,
     run_full,
     run_step_assessment,
@@ -28,6 +29,8 @@ from vrtool.orm.orm_controllers import (
     clear_optimization_results,
     export_results_measures,
     export_results_optimization,
+    export_results_safety_assessment,
+    get_dike_traject,
     open_database,
     vrtool_db,
 )
@@ -96,6 +99,19 @@ class TestApi:
         assert _vrtool_config.output_directory == _input_dir / "results"
 
 
+class TestApiRunWorkflows:
+    @pytest.mark.parametrize(
+        "vrtool_config",
+        [
+            pytest.param(None, id="No provided VrtoolConfig"),
+            pytest.param(VrtoolConfig("just_a_db.db"), id="With dummy VrtoolConfig"),
+        ],
+    )
+    def test_init_with_different_vrtool_config(self, vrtool_config: VrtoolConfig):
+        _api_run_workflows = ApiRunWorkflows(vrtool_config)
+        assert isinstance(_api_run_workflows, ApiRunWorkflows)
+
+
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 
 _acceptance_all_steps_test_cases = [
@@ -132,22 +148,11 @@ _acceptance_all_steps_test_cases = [
         id="Traject 38-1, two sections with revetment",
     ),
 ]
-_acceptance_optimization_test_cases = [
-    _acceptance_all_steps_test_cases[0],
-    pytest.param(
-        ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
-        id="Traject 38-1, two sections",
-    ),
-]
-_acceptance_measure_test_cases = [
-    _acceptance_all_steps_test_cases[0],
-    _acceptance_all_steps_test_cases[2],
-]
 
 
 @pytest.mark.slow
-class TestRunWorkflows:
-    vrtool_db_input_name = "vrtool_input.db"
+class TestApiRunWorkflowsAcceptance:
+    vrtool_db_default_name = "vrtool_input.db"
 
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
@@ -175,7 +180,7 @@ class TestRunWorkflows:
         _test_config.input_database_name = _test_db_name
 
         # Create a copy of the database to avoid parallelization runs locked databases.
-        _reference_db_file = _test_input_directory.joinpath(self.vrtool_db_input_name)
+        _reference_db_file = _test_input_directory.joinpath(self.vrtool_db_default_name)
         assert _reference_db_file.exists(), "No database found at {}.".format(
             _reference_db_file
         )
@@ -227,10 +232,9 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases[-1:],
+        _acceptance_all_steps_test_cases,
         indirect=True,
     )
-    # @pytest.mark.skip(reason="Work in progress.")
     def test_run_step_measures_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -248,12 +252,21 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases[-1:],
+        _acceptance_all_steps_test_cases
+        + [
+            pytest.param(
+                ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
+                id="Traject 38-1, two sections",
+                marks=[pytest.mark.skip(reason="Missing input database.")],
+            )
+        ],
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
+        # TODO: Extend this test with ALL the `_acceptance_all_steps_test_cases`
+        # once `test_run_step_measures_given_valid_vrtool_config` works correctly.
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
@@ -275,17 +288,28 @@ class TestRunWorkflows:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_optimization_test_cases,
+        [
+            pytest.param(
+                ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
+                id="Traject 38-1, two sections",
+            ),
+        ],
         indirect=True,
     )
     def test_run_optimization_old_approach(self, valid_vrtool_config: VrtoolConfig):
+        # TODO: Get the input database of `TestCase3_38-1_small` and run
+        # the test in `test_run_step_optimization_given_valid_vrtool_config` instead.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
-
         _shelve_path = valid_vrtool_config.input_directory / "shelves"
+
         _results_assessment = ResultsSafetyAssessment()
         _results_assessment.load_results(
             alternative_path=_shelve_path / "AfterStep1.out"
         )
+        _results_assessment.vr_config = valid_vrtool_config
+        _results_assessment.selected_traject = _results_assessment.selected_traject
+        # export_results_safety_assessment(_results_assessment)
+
         _results_measures = ResultsMeasures()
 
         _results_measures.vr_config = valid_vrtool_config
@@ -307,6 +331,7 @@ class TestRunWorkflows:
         _acceptance_all_steps_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(reason="Phased out in favor of running each step individually.")
     def test_run_full_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -337,7 +362,7 @@ class RunStepAssessmentValidator:
     def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
         # Get database paths.
         _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            TestRunWorkflows.vrtool_db_input_name
+            TestApiRunWorkflowsAcceptance.vrtool_db_default_name
         )
         assert (
             _reference_database_path != valid_vrtool_config.input_database_path
@@ -400,7 +425,7 @@ class RunStepMeasuresValidator:
 
         # Get database paths.
         _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            TestRunWorkflows.vrtool_db_input_name
+            TestApiRunWorkflowsAcceptance.vrtool_db_default_name
         )
         assert (
             _reference_database_path != valid_vrtool_config.input_database_path
