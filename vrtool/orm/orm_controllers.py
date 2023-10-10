@@ -10,6 +10,9 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
+from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
+    StrategyBaseExporter,
+)
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
@@ -17,6 +20,9 @@ from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.results_optimization import (
+    ResultsOptimization,
+)
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
@@ -64,13 +70,9 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.GrassRevetmentRelation,
             orm.AssessmentSectionResult,
             orm.AssessmentMechanismResult,
-            orm.MeasureResult,
-            orm.MeasureResultParameter,
-            orm.OptimizationType,
-            orm.OptimizationRun,
-            orm.OptimizationStep,
-            orm.OptimizationSelectedMeasure,
         ]
+        + orm.get_optimization_results_tables()
+        + orm.get_measure_results_tables()
     )
     return vrtool_db
 
@@ -184,6 +186,8 @@ def clear_measure_results(config: VrtoolConfig) -> None:
         orm.MeasureResult.delete().execute()
         # This table should be cleared 'on cascade'.
         orm.MeasureResultParameter.delete().execute()
+        orm.MeasureResultSection.delete().execute()
+        orm.MeasureResultMechanism.delete().execute()
 
     vrtool_db.close()
 
@@ -205,13 +209,14 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
         # These tables should be cleared 'on cascade'.
         orm.OptimizationSelectedMeasure.delete().execute()
         orm.OptimizationStep.delete().execute()
+        orm.OptimizationStepResult.delete().execute()
 
     vrtool_db.close()
 
     logging.info("Closed connection after clearing optimization results.")
 
 
-def export_solutions(result: ResultsMeasures) -> None:
+def export_results_measures(result: ResultsMeasures) -> None:
     """
     Exports the solutions to a database
 
@@ -229,3 +234,58 @@ def export_solutions(result: ResultsMeasures) -> None:
     _connected_db.close()
 
     logging.info("Closed connection after export solution.")
+
+
+def export_optimization_selected_measures(
+    result: ResultsOptimization, optimization_name: str
+) -> None:
+    _connected_db = open_database(result.vr_config.input_database_path)
+    logging.info(
+        "Opened connection to export optimization run {}.".format(optimization_name)
+    )
+
+    for _strategy in result.results_strategies:
+        _optimization_type, _ = orm.OptimizationType.get_or_create(
+            name=_strategy.type.upper()
+        )
+        _optimization_run = orm.OptimizationRun.create(
+            name=optimization_name,
+            discount_rate=_strategy.discount_rate,
+            optimization_type=_optimization_type,
+        )
+        _selected_measures_ids = list(set(_strategy.TakenMeasures["ID"]))
+        orm.OptimizationSelectedMeasure.insert_many(
+            [
+                dict(
+                    optimization_run=_optimization_run,
+                    measure_result=orm.MeasureResult.get_by_id(_measure_id),
+                    investment_year=0,
+                )
+                for _measure_id in _selected_measures_ids
+            ]
+        ).execute()
+
+    logging.info(
+        "Closed connection after export optimization run {}.".format(optimization_name)
+    )
+    _connected_db.close()
+
+
+def export_results_optimization(result: ResultsOptimization) -> None:
+    """
+    Exports the optimization results (`list[StrategyBase]`) to a database.
+
+    Args:
+        result (ResultsOptimization): result of an optimization run.
+    """
+
+    _connected_db = open_database(result.vr_config.input_database_path)
+
+    logging.info("Opened connection to export optimizations.")
+
+    _exporter = StrategyBaseExporter()
+    for _strategy_result in result.results_strategies:
+        _exporter.export_dom(_strategy_result)
+    _connected_db.close()
+
+    logging.info("Closed connection after export optimizations.")
