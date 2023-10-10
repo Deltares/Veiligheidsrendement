@@ -105,7 +105,6 @@ class TestApiRunWorkflows:
 
 
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
-
 _acceptance_all_steps_test_cases = [
     pytest.param(
         ("TestCase1_38-1_no_housing", "38-1", ["Revetment", "HydraulicStructures"]),
@@ -254,8 +253,6 @@ class TestApiRunWorkflowsAcceptance:
     def test_run_step_optimization_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
-        # TODO: Extend this test with ALL the `_acceptance_all_steps_test_cases`
-        # once `test_run_step_measures_given_valid_vrtool_config` works correctly.
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
@@ -263,6 +260,7 @@ class TestApiRunWorkflowsAcceptance:
         _validator = RunStepOptimizationValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
+        # We actually run using ALL the available measure results.
         _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
 
         # 2. Run test.
@@ -277,18 +275,15 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases,
+        _acceptance_all_steps_test_cases[0:1],
         indirect=True,
     )
-    @pytest.mark.skip(reason="Phased out in favor of running each step individually.")
-    def test_run_full_given_valid_vrtool_config(
-        self, valid_vrtool_config: VrtoolConfig
-    ):
+    def test_run_full_given_simple_test_case(self, valid_vrtool_config: VrtoolConfig):
         """
         This test so far only checks the output values after optimization.
         """
         # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
+        _test_reference_path = valid_vrtool_config.input_directory.joinpath("reference")
         assert _test_reference_path.exists()
 
         # 2. Run test.
