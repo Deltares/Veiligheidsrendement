@@ -11,6 +11,7 @@ from peewee import SqliteDatabase
 import vrtool.orm.models as orm_models
 from tests import get_test_results_dir, test_data, test_externals, test_results
 from vrtool.api import (
+    ApiRunWorkflows,
     get_valid_vrtool_config,
     run_full,
     run_step_assessment,
@@ -96,6 +97,19 @@ class TestApi:
         assert _vrtool_config.output_directory == _input_dir / "results"
 
 
+class TestApiRunWorkflows:
+    @pytest.mark.parametrize(
+        "vrtool_config",
+        [
+            pytest.param(None, id="No provided VrtoolConfig"),
+            pytest.param(VrtoolConfig("just_a_db.db"), id="With dummy VrtoolConfig"),
+        ],
+    )
+    def test_init_with_different_vrtool_config(self, vrtool_config: VrtoolConfig):
+        _api_run_workflows = ApiRunWorkflows(vrtool_config)
+        assert isinstance(_api_run_workflows, ApiRunWorkflows)
+
+
 # Defining acceptance test cases so they are accessible from the `TestAcceptance` class.
 
 _acceptance_all_steps_test_cases = [
@@ -135,7 +149,7 @@ _acceptance_all_steps_test_cases = [
 
 
 @pytest.mark.slow
-class TestRunWorkflows:
+class TestApiRunWorkflowsAcceptance:
     vrtool_db_input_name = "vrtool_input.db"
 
     @pytest.fixture
