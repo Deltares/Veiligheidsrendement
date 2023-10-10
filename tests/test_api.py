@@ -7,7 +7,6 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from peewee import SqliteDatabase
-from vrtool.orm.io.importers.dike_traject_info_importer import DikeTrajectInfoImporter
 
 import vrtool.orm.models as orm_models
 from tests import get_test_results_dir, test_data, test_externals, test_results
@@ -24,22 +23,13 @@ from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
     MeasureResultImporter,
 )
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    export_results_measures,
-    export_results_optimization,
-    export_results_safety_assessment,
-    get_dike_traject,
     open_database,
     vrtool_db,
-)
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
-from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
-    ResultsSafetyAssessment,
 )
 
 
