@@ -2,6 +2,7 @@ import logging
 
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
@@ -24,7 +25,7 @@ class MeasureResultExporter(OrmExporterProtocol):
 
     @staticmethod
     def get_mechanism_per_section(
-        measure_per_section: MeasurePerSection, mechanism_name: str
+        measure_per_section: MeasurePerSection, mechanism: MechanismEnum
     ) -> MechanismPerSection:
         """
         Retrieves the associated `MechanismPerSection` for a given
@@ -33,7 +34,7 @@ class MeasureResultExporter(OrmExporterProtocol):
         Args:
             measure_per_section (MeasurePerSection): Instance used
              to derive de `SectionData` row.
-            mechanism_name (str): Name of the desired `Mechanism` related entry.
+            mechanism (MechanismEnum: Desired `Mechanism` related entry.
 
         Returns:
             MechanismPerSection: Instance connected to the provided
@@ -41,7 +42,7 @@ class MeasureResultExporter(OrmExporterProtocol):
         """
         return (
             measure_per_section.section.mechanisms_per_section.join(Mechanism)
-            .where(Mechanism.name == mechanism_name)
+            .where(Mechanism.name == mechanism.name)
             .get()
         )
 
@@ -74,16 +75,18 @@ class MeasureResultExporter(OrmExporterProtocol):
         time_reliability: pd.Series,
     ) -> list[dict]:
         _available_mechanisms = [
-            m_idx for m_idx in time_reliability.index if m_idx != "Section"
+            MechanismEnum.get_enum(m_idx)
+            for m_idx in time_reliability.index
+            if m_idx != "Section"
         ]
         return list(
             map(
-                lambda mechanism_name: dict(
+                lambda mechanism: dict(
                     time=time_value,
-                    beta=time_reliability[mechanism_name],
+                    beta=time_reliability[mechanism.name],
                     measure_result=orm_measure_result,
                     mechanism_per_section=self.get_mechanism_per_section(
-                        self._measure_per_section, mechanism_name
+                        self._measure_per_section, mechanism
                     ),
                 ),
                 _available_mechanisms,

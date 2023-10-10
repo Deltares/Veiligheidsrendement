@@ -38,7 +38,7 @@ class Solutions:
         self.measure_table = pd.DataFrame(columns=["ID", "Name"])
 
     def _is_stability_screen_measure_valid(self) -> bool:
-        return "STABILITY_INNER" in self.mechanisms.name
+        return MechanismEnum["STABILITY_INNER"] in self.mechanisms
 
     def _is_soil_reinforcement_measure_valid(self, stability_screen: str) -> bool:
         if stability_screen.lower().strip() == "yes":
@@ -64,8 +64,9 @@ class Solutions:
     ):
         # write all solutions to one single dataframe:
         years = self.T
+        _mechanism_names = list(_mechanism.name for _mechanism in self.mechanisms)
         cols_r = pd.MultiIndex.from_product(
-            [self.mechanisms + ["Section"], years], names=["base", "year"]
+            [_mechanism_names + ["Section"], years], names=["base", "year"]
         )
         reliability = pd.DataFrame(columns=cols_r)
         if splitparams:
@@ -99,7 +100,7 @@ class Solutions:
             if isinstance(measure.measures, list):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
-                for j in range(len(measure.measures)):
+                for j, _measure in enumerate(measure.measures):
                     measure_in = []
                     reliability_in = []
                     if _normalized_measure_type in [
@@ -128,7 +129,10 @@ class Solutions:
 
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
-                    for ij in self.mechanisms + ["Section"]:
+                    _mechanism_names = list(
+                        _mechanism.name for _mechanism in self.mechanisms
+                    )
+                    for ij in _mechanism_names + ["Section"]:
                         if ij not in betas.index:
                             # TODO (VRTOOL-187).
                             # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
@@ -192,7 +196,10 @@ class Solutions:
                     )
                 betas = measure.measures["Reliability"].SectionReliability
                 beta = []
-                for ij in self.mechanisms + ["Section"]:
+                _mechanism_names = list(
+                    _mechanism.name for _mechanism in self.mechanisms
+                )
+                for ij in _mechanism_names + ["Section"]:
                     if ij not in betas.index:
                         # TODO (VRTOOL-187).
                         # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
