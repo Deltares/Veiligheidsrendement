@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-import numpy as np
-
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -61,9 +59,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
         _results._write_results_to_file()
 
         logging.info("Finished step 1: assessment of current situation")
-        if self.vr_config.shelves:
-            # TODO: Deprecated, needs to be removed as we will be exporting to the database.
-            _results.save_results()
+
         return _results
 
     def _get_valid_output_dir(self, path_args: list[str]) -> Path:
