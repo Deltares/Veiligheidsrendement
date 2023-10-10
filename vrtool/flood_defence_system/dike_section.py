@@ -92,7 +92,8 @@ class DikeSection:
                 self.mechanism_data = {}
                 for i in range(len(data)):
                     if data.index[i] in available_mechs:
-                        self.mechanism_data[data.index[i]] = (
+                        mechanism = MechanismEnum.get_enum(data.index[i])
+                        self.mechanism_data[mechanism] = (
                             data.loc[data.index[i]][0],
                             data.loc[data.index[i]][1],
                         )
@@ -142,7 +143,7 @@ class DikeSection:
                 input_path.joinpath(mechanism.name),
                 input_path.joinpath("Stix"),
                 externals_path,
-                mechanism.name,
+                mechanism,
                 self.mechanism_data[mechanism],
                 t_value,
                 t_0,

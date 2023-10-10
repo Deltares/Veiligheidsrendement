@@ -35,7 +35,7 @@ def measure_combinations(
         .tolist()
     )
     # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanisms = (
+    mechanism_names = (
         combinables.columns.get_level_values(0)[
             combinables.columns.get_level_values(1) != ""
         ]
@@ -48,7 +48,8 @@ def measure_combinations(
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
-        mechanism: {year: [] for year in years} for mechanism in mechanisms
+        mechanism_name: {year: [] for year in years}
+        for mechanism_name in mechanism_names
     }
     count = 0
     # loop over partials
@@ -95,11 +96,11 @@ def measure_combinations(
                 attribute_col_dict[col].append(attribute_value)
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
-            for mechanism in mechanism_beta_dict.keys():
-                if mechanism == "Section":
+            for mechanism_name in mechanism_beta_dict.keys():
+                if mechanism_name == "Section":
                     continue
                 else:
-                    for year in mechanism_beta_dict[mechanism].keys():
+                    for year in mechanism_beta_dict[mechanism_name].keys():
                         if row1["type"].all() == "Vertical Geotextile":
                             vzg_idx = solutions.measure_table.loc[
                                 solutions.measure_table["Name"]
@@ -110,14 +111,17 @@ def measure_combinations(
                             ]
                             P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
                             pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(
-                                row2[(mechanism, year)]
+                                row2[(mechanism_name, year)]
                             )
-                            mechanism_beta_dict[mechanism][year].append(
+                            mechanism_beta_dict[mechanism_name][year].append(
                                 pf_to_beta(pf_vzg)
                             )
                         else:
-                            mechanism_beta_dict[mechanism][year].append(
-                                np.maximum(row1[mechanism, year], row2[mechanism, year])
+                            mechanism_beta_dict[mechanism_name][year].append(
+                                np.maximum(
+                                    row1[mechanism_name, year],
+                                    row2[mechanism_name, year],
+                                )
                             )
 
             count += 1
@@ -181,7 +185,7 @@ def revetment_combinations(
         .tolist()
     )
     # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanisms = (
+    mechanism_names = (
         revetment_measures.columns.get_level_values(0)[
             revetment_measures.columns.get_level_values(1) != ""
         ]
@@ -194,7 +198,8 @@ def revetment_combinations(
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
-        mechanism: {year: [] for year in years} for mechanism in mechanisms
+        mechanism_name: {year: [] for year in years}
+        for mechanism_name in mechanism_names
     }
 
     # loop over partials
@@ -246,13 +251,15 @@ def revetment_combinations(
                 attribute_col_dict[col].append(attribute_value)
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
-            for mechanism in mechanism_beta_dict.keys():
-                if mechanism == "Section":
+            for mechanism_name in mechanism_beta_dict.keys():
+                if mechanism_name == "Section":
                     continue
                 else:
-                    for year in mechanism_beta_dict[mechanism].keys():
-                        mechanism_beta_dict[mechanism][year].append(
-                            np.maximum(row1[mechanism, year], row2[mechanism, year])
+                    for year in mechanism_beta_dict[mechanism_name].keys():
+                        mechanism_beta_dict[mechanism_name][year].append(
+                            np.maximum(
+                                row1[mechanism_name, year], row2[mechanism_name, year]
+                            )
                         )
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
@@ -293,14 +300,14 @@ def make_traject_df(traject: DikeTraject, cols):
     for i in traject.sections:
         sections.append(i.name)
 
-    mechanisms = list(traject.mechanism_names) + ["Section"]
+    mechanism_names = list(traject.mechanism_names) + ["Section"]
     df_index = pd.MultiIndex.from_product(
-        [sections, mechanisms], names=["name", "mechanism"]
+        [sections, mechanism_names], names=["name", "mechanism"]
     )
     _traject_probability = pd.DataFrame(columns=cols, index=df_index)
 
     for _section in traject.sections:
-        for _mechanism_name in mechanisms:
+        for _mechanism_name in mechanism_names:
             if (
                 _mechanism_name
                 not in _section.section_reliability.SectionReliability.index
@@ -491,7 +498,7 @@ def split_options(
 
     Args:
         options (_type_): The available options to split.
-        available_mechanism_names (list[str]): The collection of the names of the available mechanisms for the evaluation.
+        available_mechanisms (list[MechanismEnum]): The collection of the names of the available mechanisms for the evaluation.
 
     Returns:
         list[dict[str, pd.DataFrame]]: The collection of splitted options_dependent

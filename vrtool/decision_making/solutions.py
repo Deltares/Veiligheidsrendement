@@ -6,6 +6,7 @@ import pandas as pd
 import seaborn as sns
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
@@ -21,6 +22,7 @@ class Solutions:
     initial_geometry: pd.DataFrame
     config: VrtoolConfig
     T: list[int]
+    mechanisms: list[MechanismEnum]
     measures: list[MeasureProtocol]
     measure_table: pd.DataFrame
 

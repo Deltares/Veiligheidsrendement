@@ -94,7 +94,7 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
-    mechanism_data = [dict(name="OVERFLOW"), dict(name="STABILITY_INNER")]
+    mechanism_data = [MechanismEnum["OVERFLOW"], MechanismEnum["STABILITY_INNER"]]
     buildings_data = [
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
