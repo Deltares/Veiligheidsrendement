@@ -687,16 +687,29 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert len(orm_models.OptimizationStep.select()) == 1
-        assert len(orm_models.OptimizationStepResult) == len(
+        assert len(orm_models.OptimizationStepResultMechanism) == len(
+            _measures_input_data.t_columns
+        )
+        assert len(orm_models.OptimizationStepResultSection) == len(
             _measures_input_data.t_columns
         )
 
         _optimization_step = orm_models.OptimizationStep.get()
         for _t_column in _measures_input_data.t_columns:
-            _step_result = orm_models.OptimizationStepResult.get_or_none(
+            _step_result_mechanism = (
+                orm_models.OptimizationStepResultMechanism.get_or_none(
+                    optimization_step=_optimization_step, time=_t_column
+                )
+            )
+            assert isinstance(
+                _step_result_mechanism, orm_models.OptimizationStepResultMechanism
+            )
+            _step_result_section = orm_models.OptimizationStepResultSection.get_or_none(
                 optimization_step=_optimization_step, time=_t_column
             )
-            assert isinstance(_step_result, orm_models.OptimizationStepResult)
+            assert isinstance(
+                _step_result_section, orm_models.OptimizationStepResultSection
+            )
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase
@@ -782,7 +795,8 @@ class TestOrmControllers:
         assert not any(orm_models.OptimizationRun.select())
         assert not any(orm_models.OptimizationSelectedMeasure.select())
         assert not any(orm_models.OptimizationStep.select())
-        assert not any(orm_models.OptimizationStepResult.select())
+        assert not any(orm_models.OptimizationStepResultMechanism.select())
+        assert not any(orm_models.OptimizationStepResultSection.select())
 
     def _generate_measure_results(self, db_connection: SqliteDatabase):
         db_connection.connect()
@@ -832,9 +846,15 @@ class TestOrmControllers:
         _mechanism_per_section = orm_models.MechanismPerSection.create(
             mechanism=_mechanism, section=_measure_result.measure_per_section.section
         )
-        orm_models.OptimizationStepResult.create(
+        orm_models.OptimizationStepResultMechanism.create(
             optimization_step=_optimization_step,
             mechanism_per_section=_mechanism_per_section,
+            beta=4.2,
+            time=20,
+            lcc=2023.12,
+        )
+        orm_models.OptimizationStepResultSection.create(
+            optimization_step=_optimization_step,
             beta=4.2,
             time=20,
             lcc=2023.12,
@@ -845,7 +865,8 @@ class TestOrmControllers:
         assert any(orm_models.OptimizationRun.select())
         assert any(orm_models.OptimizationSelectedMeasure.select())
         assert any(orm_models.OptimizationStep.select())
-        assert any(orm_models.OptimizationStepResult.select())
+        assert any(orm_models.OptimizationStepResultMechanism.select())
+        assert any(orm_models.OptimizationStepResultSection.select())
 
     def _create_section_with_fully_configured_assessment_results(
         self,
