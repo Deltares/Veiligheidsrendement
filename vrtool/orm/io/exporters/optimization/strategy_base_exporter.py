@@ -15,7 +15,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
     def export_dom(self, dom_model: StrategyBase) -> None:
         dims = dom_model.TakenMeasures.values.shape
         steps = []
-        stepResults = []
+        _step_results_section = []
+        _step_results_mechanism = []
 
         cntMeasuresPerSection = {}
         sumMeasures = 0
@@ -41,7 +42,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                     t = dom_model.T[j]
                     beta = msr[offset + j]
                     mechanism_per_section_id = -1  # TODO value for combined mechanisms
-                    stepResults.append(
+                    _step_results_section.append(
                         {
                             "optimization_step_id": self._opt_step_id,
                             "mechanism_per_section_id": mechanism_per_section_id,
@@ -54,7 +55,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 _measure_result = MeasureResult.get_by_id(msrId)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
-                    stepResults.append(
+                    _step_results_mechanism.append(
                         {
                             "optimization_step_id": self._opt_step_id,
                             "mechanism_per_section_id": row.mechanism_per_section_id,
@@ -66,4 +67,5 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
         OptimizationStep.insert_many(steps).execute()
 
-        # OptimizationStepResult.insert_many(stepResults).execute()
+        OptimizationStepResultSection.insert_many(_step_results_section).execute()
+        OptimizationStepResultMechanism.insert_many(_step_results_mechanism).execute()
