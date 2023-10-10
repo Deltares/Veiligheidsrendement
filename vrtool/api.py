@@ -153,12 +153,14 @@ class ApiRunWorkflows:
         return _result
 
     def run_measures(self) -> ResultsMeasures:
+        # Run assessment to achieve a stable step (for now)
+        _results_assessment = self.run_assessment()
         # Clear the results
-        clear_measure_results(self.vrtool_config)
+        clear_measure_results(_results_assessment.vr_config)
 
         # Run Measures.
         _measures = RunMeasures(
-            self.vrtool_config, self.get_dike_traject(self.vrtool_config)
+            _results_assessment.vr_config, _results_assessment.selected_traject
         )
         _measures_result = _measures.run()
 
