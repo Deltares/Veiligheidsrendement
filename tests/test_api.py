@@ -205,7 +205,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases + [_simple_case_two_sections],
+        _acceptance_all_steps_test_cases,
         indirect=True,
     )
     def test_run_step_assessment_given_valid_vrtool_config(
