@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 from pathlib import Path
+from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -30,6 +31,19 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 
 
 def get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
+    """
+    Gets the location of a valid `VrtoolConfig` file within the provided directory.
+
+    Args:
+        model_directory (Path): Directory containing a `.json` VRTOOL config file.
+
+    Raises:
+        FileNotFoundError: When no `.json` config file was found.
+        ValueError: When more than one `.json` config file is present.
+
+    Returns:
+        VrtoolConfig: Configuration file representing the model in the given directory.
+    """
     _found_json = list(model_directory.glob("*.json"))
     if not any(_found_json):
         raise FileNotFoundError(
@@ -109,8 +123,20 @@ class ApiRunWorkflows:
     def __init__(self, vrtool_config: VrtoolConfig) -> None:
         self.vrtool_config = vrtool_config
 
+    @staticmethod
+    def get_dike_traject(vrtool_config: VrtoolConfig) -> DikeTrajectInfo:
+        """
+        Imports the `DikeTrajectInfo` with all its `DikeSection`, `Mechanism`,
+        and so on. Setting as well all available assessments.
+
+        Args:
+            vrtool_config (VrtoolConfig): Configuration determening how and from where to import the `DikeTrajectInfo`.
+
+        Returns:
+            DikeTrajectInfo: Imported instance with all related entities also imported.
+        """
         # Import the DikeTraject and all present reliability data.
-        self.selected_traject = get_dike_traject(vrtool_config)
+        return get_dike_traject(vrtool_config)
 
     def run_assessment(self) -> ResultsSafetyAssessment:
         # Clear the results
@@ -118,7 +144,7 @@ class ApiRunWorkflows:
 
         # Safety assessment.
         _safety_assessment = RunSafetyAssessment(
-            self.vrtool_config, self.selected_traject
+            self.vrtool_config, self.get_dike_traject(self.vrtool_config)
         )
         _result = _safety_assessment.run()
 
@@ -131,7 +157,9 @@ class ApiRunWorkflows:
         clear_measure_results(self.vrtool_config)
 
         # Run Measures.
-        _measures = RunMeasures(self.vrtool_config, self.selected_traject)
+        _measures = RunMeasures(
+            self.vrtool_config, self.get_dike_traject(self.vrtool_config)
+        )
         _measures_result = _measures.run()
 
         # Export solutions to database
