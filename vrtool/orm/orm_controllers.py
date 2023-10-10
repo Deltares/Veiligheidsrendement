@@ -294,7 +294,7 @@ def import_results_measures(
     _solutions_dict = dict()
     # Group the measure results by section.
     measure_results = orm.MeasureResult.select().where(
-        orm.MeasureResult.id in results_ids_to_import
+        orm.MeasureResult.id.in_(results_ids_to_import)
     )
     _grouped_by_section = [
         (_section, list(_grouped_measure_results))
