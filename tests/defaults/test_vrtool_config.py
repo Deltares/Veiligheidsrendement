@@ -54,8 +54,6 @@ class TestVrtoolConfig:
             "max_greedy_iterations",
             "f_cautious",
             "discount_rate",
-            "shelves",
-            "reuse_output",
             "design_methods",
             "unit_costs",
             "externals",
@@ -98,8 +96,6 @@ class TestVrtoolConfig:
         assert _config.max_greedy_iterations == 150
         assert _config.f_cautious == pytest.approx(1.5)
         assert _config.discount_rate == pytest.approx(0.03)
-        assert not _config.shelves
-        assert not _config.reuse_output
         assert _config.design_methods == ["Veiligheidsrendement", "Doorsnede-eisen"]
         assert isinstance(_config.unit_costs, dict)
         assert any(_config.unit_costs.items())
