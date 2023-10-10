@@ -42,7 +42,7 @@ class MeasureResultExporter(OrmExporterProtocol):
         """
         return (
             measure_per_section.section.mechanisms_per_section.join(Mechanism)
-            .where(Mechanism.name == mechanism.name)
+            .where(Mechanism.name << [mechanism.name, mechanism.get_old_name()])
             .get()
         )
 
