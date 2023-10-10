@@ -393,7 +393,9 @@ def create_basic_optimization_run(
     """
     _connected_db = open_database(vr_config.input_database_path)
     logging.info(
-        "Opened connection to export optimization run {}.".format(optimization_name)
+        "Opened connection to create a basic optimization run {}.".format(
+            optimization_name
+        )
     )
     for _method_type in vr_config.design_methods:
         _optimization_type, _ = orm.OptimizationType.get_or_create(
@@ -416,7 +418,9 @@ def create_basic_optimization_run(
         ).execute()
 
     logging.info(
-        "Closed connection after export optimization run {}.".format(optimization_name)
+        "Closed connection after creating basic optimization run {}.".format(
+            optimization_name
+        )
     )
     _connected_db.close()
 

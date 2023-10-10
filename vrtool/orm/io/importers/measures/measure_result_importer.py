@@ -22,10 +22,12 @@ class MeasureResultImporter(OrmImporterProtocol):
          `beta`.
 
         Args:
-            measure_result (MeasureResult): _description_
+            measure_result (MeasureResult): The measure result whose reliability
+            dataframe (`pd.DataFrame`) needs to be imported.
 
         Returns:
-            pd.DataFrame: _description_
+            pd.DataFrame: Dataframe containing reliability relative to the
+            measure - section and measure - mechanisms.
         """
         _columns = []
         _section_reliability_dict = defaultdict(list)

@@ -46,7 +46,7 @@ class DikeSectionImporter(OrmImporterProtocol):
     @staticmethod
     def import_assessment_reliability_df(section_data: SectionData) -> pd.DataFrame:
         """
-        Imports the assessment reliability data realted to a section as a `pd.DataFrame`.
+        Imports the assessment reliability data related to a section as a `pd.DataFrame`.
 
         Args:
             section_data (SectionData): Section Data with an already saved initial assessment.
