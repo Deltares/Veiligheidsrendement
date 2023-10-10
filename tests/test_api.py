@@ -23,21 +23,13 @@ from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
     MeasureResultImporter,
 )
+
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    export_results_measures,
-    export_results_optimization,
-    export_results_safety_assessment,
-    get_dike_traject,
     open_database,
     vrtool_db,
-)
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
-from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
-from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
-    ResultsSafetyAssessment,
 )
 
 
@@ -147,6 +139,10 @@ _acceptance_all_steps_test_cases = [
         ("TestCase4_38-1_revetment_small", "38-1", ["HydraulicStructures"]),
         id="Traject 38-1, two sections with revetment",
     ),
+    pytest.param(
+        ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
+        id="Traject 38-1, two sections",
+    ),
 ]
 
 
@@ -252,14 +248,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        _acceptance_all_steps_test_cases
-        + [
-            pytest.param(
-                ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
-                id="Traject 38-1, two sections",
-                marks=[pytest.mark.skip(reason="Missing input database.")],
-            )
-        ],
+        _acceptance_all_steps_test_cases,
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config(
@@ -284,46 +273,6 @@ class TestApiRunWorkflowsAcceptance:
         RunFullValidator().validate_acceptance_result_cases(
             valid_vrtool_config.output_directory,
             valid_vrtool_config.input_directory.joinpath("reference"),
-        )
-
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        [
-            pytest.param(
-                ("TestCase3_38-1_small", "38-1", ["Revetment", "HydraulicStructures"]),
-                id="Traject 38-1, two sections",
-            ),
-        ],
-        indirect=True,
-    )
-    def test_run_optimization_old_approach(self, valid_vrtool_config: VrtoolConfig):
-        # TODO: Get the input database of `TestCase3_38-1_small` and run
-        # the test in `test_run_step_optimization_given_valid_vrtool_config` instead.
-        _test_reference_path = valid_vrtool_config.input_directory / "reference"
-        _shelve_path = valid_vrtool_config.input_directory / "shelves"
-
-        _results_assessment = ResultsSafetyAssessment()
-        _results_assessment.load_results(
-            alternative_path=_shelve_path / "AfterStep1.out"
-        )
-        _results_assessment.vr_config = valid_vrtool_config
-        _results_assessment.selected_traject = _results_assessment.selected_traject
-        # export_results_safety_assessment(_results_assessment)
-
-        _results_measures = ResultsMeasures()
-
-        _results_measures.vr_config = valid_vrtool_config
-        _results_measures.selected_traject = _results_assessment.selected_traject
-
-        _results_measures.load_results(alternative_path=_shelve_path / "AfterStep2.out")
-        _results_optimization = RunOptimization(_results_measures).run()
-
-        export_results_measures(_results_measures)
-        _results_optimization.vr_config = valid_vrtool_config
-        export_results_optimization(_results_optimization)
-
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
         )
 
     @pytest.mark.parametrize(
@@ -395,9 +344,9 @@ class RunStepAssessmentValidator:
         _errors = []
         for _ref_key, _ref_dataframe in _reference_assessment.items():
             _res_dataframe = _result_assessment.get(_ref_key, pd.DataFrame())
-            if _res_dataframe.empty:
+            if _res_dataframe.empty and not _ref_dataframe.empty:
                 _errors.append(
-                    "Section {} has no reliability results.".format(_ref_key)
+                    "Section {} has no exported reliability results.".format(_ref_key)
                 )
                 continue
             pd.testing.assert_frame_equal(_ref_dataframe, _res_dataframe)
@@ -453,9 +402,7 @@ class RunStepMeasuresValidator:
                         (_mxs.measure.name, _mxs.section.section_name)
                     ].keys()
                 ):
-                    _keys_values = [
-                        f"{k}={v}" for k, v in _available_parameters.items()
-                    ]
+                    _keys_values = [f"{k}={v}" for k, v in _available_parameters]
                     _as_string = ", ".join(_keys_values)
                     pytest.fail(
                         "Measure reliability contains twice the same parameters {}.".format(
