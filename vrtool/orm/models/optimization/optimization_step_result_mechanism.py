@@ -12,8 +12,9 @@ class OptimizationStepResultMechanism(OrmBaseModel):
         on_delete="CASCADE",
     )
     mechanism_per_section = ForeignKeyField(
-        MechanismPerSection, backref="mechanism_optimization_step_results",
-        on_delete="CASCADE"
+        MechanismPerSection,
+        backref="mechanism_optimization_step_results",
+        on_delete="CASCADE",
     )
     beta = FloatField()
     time = IntegerField()
