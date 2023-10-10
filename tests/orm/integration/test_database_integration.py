@@ -285,7 +285,7 @@ class TestDatabaseIntegration:
     def _assert_overflow_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
     ) -> None:
-        assert actual.mechanism == "OVERFLOW"
+        assert actual.mechanism.name == "OVERFLOW"
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters) + 1

@@ -52,7 +52,9 @@ class DikeTrajectImporter(OrmImporterProtocol):
         for _section in _dike_traject.sections:
             _section.TrajectInfo = _dike_traject.general_info
         _mechanisms = self._select_available_mechanisms(orm_model)
-        _mechanism_names = list(set([_m.name for _m in _mechanisms]))
+        _mechanism_names = list(
+            set([_mechanism.name for _mechanism in _mechanisms])
+        )  # deduplicate
         _dike_traject.mechanisms = list(map(MechanismEnum.get_enum, _mechanism_names))
         _dike_traject.t_0 = self._vrtool_config.t_0
         _dike_traject.T = self._vrtool_config.T

@@ -300,7 +300,9 @@ def make_traject_df(traject: DikeTraject, cols):
     for i in traject.sections:
         sections.append(i.name)
 
-    mechanism_names = list(traject.mechanism_names) + ["Section"]
+    mechanism_names = list(_mechanism.name for _mechanism in traject.mechanisms) + [
+        "Section"
+    ]
     df_index = pd.MultiIndex.from_product(
         [sections, mechanism_names], names=["name", "mechanism"]
     )

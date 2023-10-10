@@ -467,7 +467,7 @@ class GreedyStrategy(StrategyBase):
             # for overflow:
             BC_bundleOverflow = 0
             (overflow_bundle_index, BC_bundleOverflow) = self.bundling_of_measures(
-                "OVERFLOW",
+                MechanismEnum["OVERFLOW"],
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
                 copy.deepcopy(LifeCycleCost),
