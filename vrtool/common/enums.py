@@ -11,7 +11,7 @@ class MechanismEnum(Enum):
     def __str__(self) -> str:
         return self.name
 
-    # TODO: delete this method after rationalizing the testdata
+    # TODO: delete this method after rationalizing the testdata (VRTOOL-296)
     def get_old_name(self) -> str:
         """Get name according to old naming convention (CamelCase)"""
         return "".join(x.lower().capitalize() or "_" for x in self.name.split("_"))

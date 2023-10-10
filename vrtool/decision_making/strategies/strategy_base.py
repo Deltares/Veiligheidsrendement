@@ -387,7 +387,7 @@ class StrategyBase:
                 )
                 # Initial
                 # condition with no measure
-                if _mechanism.name == "OVERFLOW" or _mechanism.name == "REVENTMENT":
+                if _mechanism.name == "OVERFLOW" or _mechanism.name == "REVETMENT":
                     beta2 = self.options_height[section_keys[n]][_mechanism.name]
                     # All solutions
                 else:

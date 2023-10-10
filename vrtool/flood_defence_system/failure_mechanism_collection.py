@@ -18,7 +18,7 @@ class FailureMechanismCollection:
         Returns:
             set[MechanismEnum]: A collection with all the available failure mechanisms.
         """
-        return self._failure_mechanisms.keys()
+        return self._failure_mechanisms
 
     def get_calculation_years(self) -> list[str]:
         """Gets the collection of years that are calculated.
