@@ -14,6 +14,7 @@ from tests.api_acceptance_cases import (
     RunStepAssessmentValidator,
     RunStepMeasuresValidator,
     RunStepOptimizationValidator,
+    vrtool_db_default_name,
 )
 from vrtool.api import (
     run_full,
@@ -119,11 +120,13 @@ acceptance_test_cases = list(
 class TestApiRunWorkflowsAcceptance:
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
-        _casename, _traject, _excluded_mechanisms = request.param
-        _test_input_directory = Path.joinpath(test_data, _casename)
+        _test_case: AcceptanceTestCase = request.param
+        _test_input_directory = Path.joinpath(test_data, _test_case.model_directory)
         assert _test_input_directory.exists()
 
-        _test_results_directory = get_test_results_dir(request).joinpath(_casename)
+        _test_results_directory = get_test_results_dir(request).joinpath(
+            _test_case.case_name
+        )
         if _test_results_directory.exists():
             shutil.rmtree(_test_results_directory)
         _test_results_directory.mkdir(parents=True)
@@ -132,8 +135,8 @@ class TestApiRunWorkflowsAcceptance:
         _test_config = VrtoolConfig()
         _test_config.input_directory = _test_input_directory
         _test_config.output_directory = _test_results_directory
-        _test_config.traject = _traject
-        _test_config.excluded_mechanisms = _excluded_mechanisms
+        _test_config.traject = _test_case.traject_name
+        _test_config.excluded_mechanisms = _test_case.excluded_mechanisms
         _test_config.externals = test_externals
 
         # We need to create a copy of the database on the input directory.
@@ -143,7 +146,7 @@ class TestApiRunWorkflowsAcceptance:
         _test_config.input_database_name = _test_db_name
 
         # Create a copy of the database to avoid parallelization runs locked databases.
-        _reference_db_file = _test_input_directory.joinpath(self.vrtool_db_default_name)
+        _reference_db_file = _test_input_directory.joinpath(vrtool_db_default_name)
         assert _reference_db_file.exists(), "No database found at {}.".format(
             _reference_db_file
         )
