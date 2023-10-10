@@ -40,11 +40,9 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 for j in range(len(dom_model.T)):
                     t = dom_model.T[j]
                     beta = msr[offset + j]
-                    mechanism_per_section_id = -1  # TODO value for combined mechanisms
                     _step_results_section.append(
                         {
                             "optimization_step": _created_optimization_step,
-                            "mechanism_per_section_id": mechanism_per_section_id,
                             "time": t,
                             "beta": beta,
                             "lcc": lcc,
