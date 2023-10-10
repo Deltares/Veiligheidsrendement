@@ -8,15 +8,3 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 class VrToolRunResultProtocol(Protocol):
     vr_config: VrtoolConfig
     selected_traject: DikeTraject
-
-    def save_results(self):
-        """
-        Saves the results contained by this `VrToolRunResultProtocol` instance.
-        """
-        pass
-
-    def load_results(self):
-        """
-        Loads the results contained by this `VrToolRunResultProtocol` instance.
-        """
-        pass

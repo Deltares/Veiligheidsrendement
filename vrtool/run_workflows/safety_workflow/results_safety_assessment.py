@@ -1,5 +1,3 @@
-import logging
-import shelve
 from pathlib import Path
 
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
@@ -28,25 +26,3 @@ class ResultsSafetyAssessment(VrToolRunResultProtocol):
             Path: Instance representing the file location.
         """
         return self.vr_config.output_directory / "AfterStep1.out"
-
-    def save_results(self):
-        # Save intermediate results to shelf:
-        my_shelf = shelve.open(str(self._step_output_filepath), "n")
-        my_shelf["SelectedTraject"] = self.selected_traject
-        my_shelf.close()
-
-    def load_results(self, alternative_path=None):
-        try:
-            if self._step_output_filepath.exists():
-                _shelf = shelve.open(str(self._step_output_filepath))
-                self.selected_traject = _shelf["SelectedTraject"]
-                _shelf.close()
-                logging.info("Loaded SelectedTraject from file")
-        except:
-            if alternative_path != None:
-                try:
-                    _shelf = shelve.open(str(alternative_path))
-                    self.selected_traject = _shelf["SelectedTraject"]
-                    logging.info("Loaded SelectedTraject from file")
-                except:
-                    pass
