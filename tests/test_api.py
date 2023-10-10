@@ -465,7 +465,8 @@ class RunStepOptimizationValidator:
         assert not any(orm_models.OptimizationRun)
         assert not any(orm_models.OptimizationSelectedMeasure)
         assert not any(orm_models.OptimizationStep)
-        assert not any(orm_models.OptimizationStepResult)
+        assert not any(orm_models.OptimizationStepResultMechanism)
+        assert not any(orm_models.OptimizationStepResultSection)
 
         _connected_db.close()
 
@@ -483,7 +484,8 @@ class RunStepOptimizationValidator:
         assert any(orm_models.OptimizationRun.select())
         assert any(orm_models.OptimizationSelectedMeasure.select())
         assert any(orm_models.OptimizationStep.select())
-        assert any(orm_models.OptimizationStepResult.select())
+        assert any(orm_models.OptimizationStepResultSection.select())
+        assert any(orm_models.OptimizationStepResultMechanism.select())
         _connected_db.close()
 
 
