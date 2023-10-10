@@ -150,7 +150,7 @@ _acceptance_all_steps_test_cases = [
 
 @pytest.mark.slow
 class TestApiRunWorkflowsAcceptance:
-    vrtool_db_input_name = "vrtool_input.db"
+    vrtool_db_default_name = "vrtool_input.db"
 
     @pytest.fixture
     def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
@@ -178,7 +178,7 @@ class TestApiRunWorkflowsAcceptance:
         _test_config.input_database_name = _test_db_name
 
         # Create a copy of the database to avoid parallelization runs locked databases.
-        _reference_db_file = _test_input_directory.joinpath(self.vrtool_db_input_name)
+        _reference_db_file = _test_input_directory.joinpath(self.vrtool_db_default_name)
         assert _reference_db_file.exists(), "No database found at {}.".format(
             _reference_db_file
         )
@@ -356,7 +356,7 @@ class RunStepAssessmentValidator:
     def validate_safety_assessment_results(self, valid_vrtool_config: VrtoolConfig):
         # Get database paths.
         _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            TestRunWorkflows.vrtool_db_input_name
+            TestApiRunWorkflowsAcceptance.vrtool_db_default_name
         )
         assert (
             _reference_database_path != valid_vrtool_config.input_database_path
@@ -419,7 +419,7 @@ class RunStepMeasuresValidator:
 
         # Get database paths.
         _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            TestRunWorkflows.vrtool_db_input_name
+            TestApiRunWorkflowsAcceptance.vrtool_db_default_name
         )
         assert (
             _reference_database_path != valid_vrtool_config.input_database_path
