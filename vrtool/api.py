@@ -1,10 +1,9 @@
 from datetime import datetime
 import logging
 from pathlib import Path
-from vrtool.common.dike_traject_info import DikeTrajectInfo
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.models.measure_result.measure_result import MeasureResult
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -124,16 +123,16 @@ class ApiRunWorkflows:
         self.vrtool_config = vrtool_config
 
     @staticmethod
-    def get_dike_traject(vrtool_config: VrtoolConfig) -> DikeTrajectInfo:
+    def get_dike_traject(vrtool_config: VrtoolConfig) -> DikeTraject:
         """
-        Imports the `DikeTrajectInfo` with all its `DikeSection`, `Mechanism`,
+        Imports the `DikeTraject` with all its `DikeSection`, `Mechanism`,
         and so on. Setting as well all available assessments.
 
         Args:
-            vrtool_config (VrtoolConfig): Configuration determening how and from where to import the `DikeTrajectInfo`.
+            vrtool_config (VrtoolConfig): Configuration determening how and from where to import the `DikeTraject`.
 
         Returns:
-            DikeTrajectInfo: Imported instance with all related entities also imported.
+            DikeTraject: Imported instance with all related entities also imported.
         """
         # Import the DikeTraject and all present reliability data.
         return get_dike_traject(vrtool_config)

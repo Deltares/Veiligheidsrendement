@@ -29,6 +29,8 @@ from vrtool.orm.orm_controllers import (
     clear_optimization_results,
     export_results_measures,
     export_results_optimization,
+    export_results_safety_assessment,
+    get_dike_traject,
     open_database,
     vrtool_db,
 )
@@ -298,12 +300,16 @@ class TestApiRunWorkflowsAcceptance:
         # TODO: Get the input database of `TestCase3_38-1_small` and run
         # the test in `test_run_step_optimization_given_valid_vrtool_config` instead.
         _test_reference_path = valid_vrtool_config.input_directory / "reference"
-
         _shelve_path = valid_vrtool_config.input_directory / "shelves"
+
         _results_assessment = ResultsSafetyAssessment()
         _results_assessment.load_results(
             alternative_path=_shelve_path / "AfterStep1.out"
         )
+        _results_assessment.vr_config = valid_vrtool_config
+        _results_assessment.selected_traject = _results_assessment.selected_traject
+        # export_results_safety_assessment(_results_assessment)
+
         _results_measures = ResultsMeasures()
 
         _results_measures.vr_config = valid_vrtool_config
