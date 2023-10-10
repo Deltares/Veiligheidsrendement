@@ -320,6 +320,7 @@ def import_results_measures(
     _results_measures.solutions_dict = _solutions_dict
     _results_measures.selected_traject = _dike_traject
     _results_measures.vr_config = config
+    _results_measures.ids_to_import = results_ids_to_import
 
     return _results_measures
 

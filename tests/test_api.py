@@ -293,6 +293,8 @@ class TestRunWorkflows:
         assert any(orm_models.MeasureResult.select())
         _measures_results = [mr.get_id() for mr in orm_models.MeasureResult.select()]
 
+        _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results))
+
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_results)
 

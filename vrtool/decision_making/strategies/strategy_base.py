@@ -171,6 +171,7 @@ class StrategyBase:
         self,
         traject: DikeTraject,
         solutions_dict: Dict[str, Solutions],
+        ids_to_import: list[int],
         filtering="off",
         splitparams=False,
     ):
@@ -178,10 +179,12 @@ class StrategyBase:
         self.options = {}
         self.indexCombined2single = {}
 
+        _ids_copied = ids_to_import.copy()
+
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
-            combinedmeasures = self._step1combine(solutions_dict, section, splitparams)
+            combinedmeasures = self._step1combine(solutions_dict, section, _ids_copied, splitparams)
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
@@ -217,6 +220,7 @@ class StrategyBase:
         self,
         solutions_dict: dict[str, Solutions],
         section: DikeSection,
+        ids_to_import: list[int],
         splitparams: bool,
     ) -> pd.DataFrame:
         """
@@ -251,7 +255,7 @@ class StrategyBase:
             }
 
         self.indexCombined2single[section.name] = [
-            [i] for i in range(len(solutions_dict[section.name].MeasureData))
+            [ids_to_import.pop(0)] for i in range(len(solutions_dict[section.name].MeasureData))
         ]
 
         combinedmeasures = measure_combinations(

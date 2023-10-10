@@ -19,7 +19,7 @@ def measure_combinations(
     solutions: Solutions,
     indexCombined2single: list[int],
     splitparams=False,
-):
+) -> pd.DataFrame:
     _combined_measures = pd.DataFrame(columns=combinables.columns)
     # all columns without a second index are attributes of the measure
     attribute_col_names = combinables.columns.get_level_values(0)[
