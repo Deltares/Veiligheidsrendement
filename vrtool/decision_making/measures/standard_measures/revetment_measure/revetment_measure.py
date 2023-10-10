@@ -122,7 +122,7 @@ class RevetmentMeasure(MeasureProtocol):
                     _beta_target_results.section_reliability,
                     _beta_target_results.cost,
                 ) = self._get_configured_section_reliability_and_cost(
-                    self.parameters["Type"],
+                    MechanismEnum.get_enum(self.parameters["Type"]),
                     self.parameters["Type"],
                     dike_section,
                     transition_grouping,

@@ -214,12 +214,12 @@ class GreedyStrategy(StrategyBase):
                     ).any(axis=1)
                     if "REVETMENT" in HeightOptions.columns:
                         comparison_height = comparison_height & (
-                            HeightOptions.Revetment
+                            HeightOptions.REVETMENT
                             >= current_height_investments["REVETMENT"]
                         ).all(axis=1)
                 elif mechanism.name == "REVETMENT":
                     comparison_height = (
-                        HeightOptions.Revetment
+                        HeightOptions.REVETMENT
                         > current_height_investments["REVETMENT"]
                     ).any(axis=1)
                     if "OVERFLOW" in HeightOptions.columns:

@@ -361,7 +361,7 @@ class StrategyBase:
         for _mechanism in self.mechanisms:
             if _mechanism.name == "OVERFLOW":
                 self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0)
-            elif _mechanism.name == "REVENTMENT":
+            elif _mechanism.name == "REVETMENT":
                 self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0e-18)
             else:
                 self.Pf[_mechanism.name] = np.full((N, Sg + 1, T), 1.0)

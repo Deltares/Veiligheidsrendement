@@ -216,11 +216,14 @@ class Solutions:
                 inputs_r.append(beta)
 
             elif isinstance(measure.measures, MeasureResultCollectionProtocol):
+                _mechanism_names = list(
+                    _mechanism.name for _mechanism in self.mechanisms
+                )
                 (
                     _input_values,
                     _beta_values,
                 ) = measure.measures.get_measure_output_values(
-                    splitparams, self.mechanisms + ["Section"]
+                    splitparams, _mechanism_names + ["Section"]
                 )
                 inputs_m.extend(_input_values)
                 inputs_r.extend(_beta_values)
