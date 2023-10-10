@@ -13,7 +13,6 @@ class TestMeasureResultImporter:
         assert _test_db.is_file()
 
         _db = open_database(_test_db)
-        # MeasureResult.select().group_by(MeasureResult.measure_per_section.measure.measure_type.name)
         _measure_result = MeasureResult.get_or_none()
         assert isinstance(
             _measure_result, MeasureResult

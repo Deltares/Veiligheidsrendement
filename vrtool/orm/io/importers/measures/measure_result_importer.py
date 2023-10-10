@@ -22,17 +22,19 @@ class MeasureResultImporter(OrmImporterProtocol):
          `beta`.
 
         Args:
-            measure_result (MeasureResult): _description_
+            measure_result (MeasureResult): The measure result whose reliability
+            dataframe (`pd.DataFrame`) needs to be imported.
 
         Returns:
-            pd.DataFrame: _description_
+            pd.DataFrame: Dataframe containing reliability relative to the
+            measure - section and measure - mechanisms.
         """
         _columns = []
         _section_reliability_dict = defaultdict(list)
         for _smr in measure_result.sections_measure_result.order_by(
             MeasureResultSection.time.asc()
         ):
-            _columns.append(_smr.time)
+            _columns.append(str(_smr.time))
             _section_reliability_dict["Section"].append(_smr.beta)
             for _mrm in measure_result.measure_result_mechanisms.where(
                 MeasureResultMechanism.time == _smr.time

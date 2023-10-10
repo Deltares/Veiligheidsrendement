@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-import shelve
 from pathlib import Path
 from typing import Dict
 
@@ -25,19 +23,3 @@ class ResultsMeasures(VrToolRunResultProtocol):
             Path: Instance representing the file location.
         """
         return self.vr_config.output_directory / "AfterStep2.out"
-
-    def load_results(self, alternative_path=None):
-        if self._step_output_filepath.exists():
-            _shelf = shelve.open(str(self._step_output_filepath))
-            self.solutions_dict = _shelf["AllSolutions"]
-            _shelf.close()
-            logging.info("Loaded AllSolutions from file")
-        elif alternative_path != None:
-            _shelf = shelve.open(str(alternative_path))
-            self.solutions_dict = _shelf["AllSolutions"]
-            logging.info("Loaded AllSolutions from file")
-
-    def save_results(self):
-        _shelf = shelve.open(str(self._step_output_filepath), "n")
-        _shelf["AllSolutions"] = self.solutions_dict
-        _shelf.close()

@@ -46,7 +46,7 @@ class DikeSectionImporter(OrmImporterProtocol):
     @staticmethod
     def import_assessment_reliability_df(section_data: SectionData) -> pd.DataFrame:
         """
-        Imports the assessment reliability data realted to a section as a `pd.DataFrame`.
+        Imports the assessment reliability data related to a section as a `pd.DataFrame`.
 
         Args:
             section_data (SectionData): Section Data with an already saved initial assessment.
@@ -59,7 +59,7 @@ class DikeSectionImporter(OrmImporterProtocol):
         for _asr in section_data.assessment_section_results.order_by(
             AssessmentSectionResult.time.asc()
         ):
-            _columns.append(_asr.time)
+            _columns.append(str(_asr.time))
             _section_reliability_dict["Section"].append(_asr.beta)
             for _amr in (
                 AssessmentMechanismResult.select()
@@ -133,14 +133,27 @@ class DikeSectionImporter(OrmImporterProtocol):
         _mechanism_collection = self._get_mechanism_reliability_collection_list(
             section_data
         )
+
+        _imported_initial_assessment = self.import_assessment_reliability_df(
+            section_data
+        )
+
         for _mechanism_data in _mechanism_collection:
+            if _mechanism_data.mechanism_name in _imported_initial_assessment.index:
+                for _reliability_t, _beta in _imported_initial_assessment.loc[
+                    _mechanism_data.mechanism_name
+                ].items():
+                    _mechanism_data.Reliability[_reliability_t].Beta = _beta
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
                 _mechanism_data
             )
 
-        _section_reliability.SectionReliability = self.import_assessment_reliability_df(
-            section_data
-        )
+        if _imported_initial_assessment.empty:
+            logging.info(
+                "No initial section -  mechanism (reliability) assessment was found."
+            )
+        else:
+            _section_reliability.SectionReliability = _imported_initial_assessment
 
         return _section_reliability
 

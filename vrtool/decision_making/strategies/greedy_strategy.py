@@ -648,19 +648,6 @@ class GreedyStrategy(StrategyBase):
         # pd.DataFrame([risk_per_step,cost_per_step]).to_csv('GreedyResults_per_step.csv') #useful for debugging
         logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
-        # #make dump
-        # import shelve
-        #
-        # filename = config.directory.joinpath('FinalGreedyResult.out')
-        # # make shelf
-        # my_shelf = shelve.open(str(filename), 'n')
-        # my_shelf['Strategy'] = locals()['self']
-        # my_shelf['solutions'] = locals()['solutions']
-        # my_shelf['measure_list'] = locals()['measure_list']
-        # my_shelf['BC_list'] = locals()['BC_list']
-        # my_shelf['Probabilities'] = locals()['Probabilities']
-        #
-        # my_shelf.close()
 
         self.write_greedy_results(
             traject, solutions_dict, measure_list, BC_list, Probabilities

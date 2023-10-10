@@ -98,10 +98,11 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
         they belong to the same dike section.
 
         Args:
-            measure_results (list[MeasureResult]): _description_
+            measure_results (list[MeasureResult]): list of measure results which
+            will be imported into a `Solutions` instance.
 
         Returns:
-            Solutions: _description_
+            Solutions: instance containing all measures-per-dikesection results.
         """
 
         _solutions = Solutions(self._dike_section, self._config)
