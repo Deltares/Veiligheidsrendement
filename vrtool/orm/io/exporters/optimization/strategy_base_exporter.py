@@ -34,7 +34,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 lcc = dom_model.TakenMeasures.values[i, 2]
                 offset = len(msr) - len(dom_model.T)
                 _created_optimization_step = OptimizationStep.create(
-                    {"step_number": i, "optimization_selected_measure_id": msrId}
+                    step_number=i,
+                    optimization_selected_measure_id=msrId,
                 )
                 for j in range(len(dom_model.T)):
                     t = dom_model.T[j]
