@@ -193,6 +193,13 @@ class ApiRunWorkflows:
         return _optimization_result
 
     def run_all(self) -> ResultsOptimization:
+        """
+        Runs the combination of the three steps at once.
+        This (at the moment) is different from running each of them after each other.
+
+        Returns:
+            ResultsOptimization: The final results contained in the `ResultsOptimization`.
+        """
         # Run all steps with one command.
         if not self.vrtool_config.output_directory.is_dir():
             logging.info(
@@ -211,10 +218,16 @@ class ApiRunWorkflows:
         logging.info("Start run full model.")
 
         # Step 1. Safety assessment.
-        self.run_assessment()
+        _safety_assessment = RunSafetyAssessment(
+            self.vrtool_config, self.get_dike_traject(self.vrtool_config)
+        )
+        _assessment_result = _safety_assessment.run()
 
         # Step 2. Run measures.
-        _measures_result = self.run_measures()
+        _measures = RunMeasures(
+            _assessment_result.vr_config, _assessment_result.selected_traject
+        )
+        _measures_result = _measures.run()
 
         # Step 3. Optimization.
         clear_optimization_results(self.vrtool_config)
