@@ -24,7 +24,7 @@ class StabilityInnerSimpleImporter(OrmImporterProtocol):
                 f"No valid value given for {ComputationScenario.__name__}."
             )
 
-        mechanism_input = MechanismInput(MechanismEnum["STABILITY_INNER"])
+        mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
         self._set_parameters(
             mechanism_input, orm_model.computation_scenario_parameters.select()
         )

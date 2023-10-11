@@ -123,7 +123,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                     t_0=self.t_0,
                     horizon=self.parameters["year"] + 100,
                     load_change=dike_section.HBNRise_factor * dike_section.YearlyWLRise,
-                    mechanism=MechanismEnum["OVERFLOW"],
+                    mechanism=MechanismEnum.OVERFLOW,
                 )
             else:
                 hc = probabilistic_design(
@@ -133,7 +133,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                     t_0=self.t_0,
                     horizon=self.parameters["year"] + 100,
                     load_change=None,
-                    mechanism=MechanismEnum["OVERFLOW"],
+                    mechanism=MechanismEnum.OVERFLOW,
                 )
         else:
             hc = probabilistic_design(
@@ -144,7 +144,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 horizon=self.parameters["year"] + 100,
                 load_change=None,
                 type="HRING",
-                mechanism=MechanismEnum["OVERFLOW"],
+                mechanism=MechanismEnum.OVERFLOW,
             )
 
         mechanism_input["h_crest"] = np.max(

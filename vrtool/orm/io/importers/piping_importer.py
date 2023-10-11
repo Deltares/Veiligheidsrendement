@@ -38,7 +38,7 @@ class PipingImporter(OrmImporterProtocol):
                 f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        mechanism_input = MechanismInput(MechanismEnum["PIPING"])
+        mechanism_input = MechanismInput(MechanismEnum.PIPING)
         mechanism_input.temporals = []
 
         index = 0

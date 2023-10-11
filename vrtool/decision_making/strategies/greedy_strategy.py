@@ -467,7 +467,7 @@ class GreedyStrategy(StrategyBase):
             # for overflow:
             BC_bundleOverflow = 0
             (overflow_bundle_index, BC_bundleOverflow) = self.bundling_of_measures(
-                MechanismEnum["OVERFLOW"],
+                MechanismEnum.OVERFLOW,
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
                 copy.deepcopy(LifeCycleCost),
@@ -475,12 +475,12 @@ class GreedyStrategy(StrategyBase):
             )
             # for revetment:
             BC_bundleRevetment = 0.0
-            if MechanismEnum["REVETMENT"] in self.mechanisms:
+            if MechanismEnum.REVETMENT in self.mechanisms:
                 (
                     revetment_bundle_index,
                     BC_bundleRevetment,
                 ) = self.bundling_of_measures(
-                    MechanismEnum["REVETMENT"],
+                    MechanismEnum.REVETMENT,
                     copy.deepcopy(init_revetment_risk),
                     copy.deepcopy(measure_list),
                     copy.deepcopy(LifeCycleCost),

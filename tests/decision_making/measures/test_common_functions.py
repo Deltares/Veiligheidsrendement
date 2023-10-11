@@ -267,7 +267,7 @@ class TestCommonFunctions:
             _berm_input,
             _measure_input,
             measure_parameters={},
-            mechanism=MechanismEnum["STABILITY_INNER"],
+            mechanism=MechanismEnum.STABILITY_INNER,
             computation_type="DStability",
             path_intermediate_stix=_path_intermediate_stix,
             SFincrease=0.2,

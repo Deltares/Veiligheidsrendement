@@ -436,7 +436,7 @@ def probabilistic_design(
     t_0: int,
     horizon: int = 50,
     load_change: float = 0,
-    mechanism: MechanismEnum = MechanismEnum["OVERFLOW"],
+    mechanism: MechanismEnum = MechanismEnum.OVERFLOW,
     type: str = "SAFE",
 ) -> float:
     if mechanism.name == "OVERFLOW":

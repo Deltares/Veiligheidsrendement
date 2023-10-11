@@ -83,10 +83,10 @@ class TestVrtoolConfig:
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
         assert _config.mechanisms == [
-            MechanismEnum["OVERFLOW"],
-            MechanismEnum["STABILITY_INNER"],
-            MechanismEnum["PIPING"],
-            MechanismEnum["REVETMENT"],
+            MechanismEnum.OVERFLOW,
+            MechanismEnum.STABILITY_INNER,
+            MechanismEnum.PIPING,
+            MechanismEnum.REVETMENT,
         ]
         assert not _config.LE_in_section
         assert _config.crest_step == pytest.approx(0.5)

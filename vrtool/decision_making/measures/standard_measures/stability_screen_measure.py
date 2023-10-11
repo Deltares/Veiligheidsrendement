@@ -60,7 +60,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             float: The depth to be used for the stability screen calculation.
         """
         stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum["STABILITY_INNER"]
+            MechanismEnum.STABILITY_INNER
         )
         if not stability_inner_reliability_collection:
             error_message = f'No StabilityInner present for stability screen measure at section "{dike_section.name}".'
@@ -170,7 +170,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         SFincrease: float = 0.2,
     ) -> None:
-        _calc_type = dike_section.mechanism_data[MechanismEnum["STABILITY_INNER"]][0][1]
+        _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][1]
 
         mechanism_reliability_input = mechanism_reliability.Input.input
         if _calc_type == "DStability":

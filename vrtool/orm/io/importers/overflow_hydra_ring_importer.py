@@ -65,7 +65,7 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
                 f"No valid value given for {ComputationScenario.__name__}."
             )
 
-        mechanism_input = MechanismInput(MechanismEnum["OVERFLOW"])
+        mechanism_input = MechanismInput(MechanismEnum.OVERFLOW)
         mechanism_input.input["hc_beta"] = self._get_crest_height_beta(
             orm_model.mechanism_tables.select(), orm_model.scenario_name
         )

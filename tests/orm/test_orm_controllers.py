@@ -94,7 +94,7 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
-    mechanism_data = [MechanismEnum["OVERFLOW"], MechanismEnum["STABILITY_INNER"]]
+    mechanism_data = [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
     buildings_data = [
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
@@ -247,9 +247,9 @@ class TestOrmControllers:
 
         def check_section_reliability(section: DikeSection):
             _recognized_keys = [
-                MechanismEnum["OVERFLOW"],
-                MechanismEnum["PIPING"],
-                MechanismEnum["STABILITY_INNER"],
+                MechanismEnumOVERFLOW,
+                MechanismEnum.PIPING,
+                MechanismEnum.STABILITY_INNER,
             ]
 
             def check_key_value(key_value):
@@ -288,7 +288,7 @@ class TestOrmControllers:
         _water_load_input.input["d_cover"] = None
         _water_load_input.input["beta"] = 42.24
         _stability_inner_collection = MechanismReliabilityCollection(
-            MechanismEnum["STABILITY_INNER"],
+            MechanismEnum.STABILITY_INNER,
             "combinable",
             database_vrtool_config.T,
             2023,
@@ -297,7 +297,7 @@ class TestOrmControllers:
         _stability_inner_collection.Reliability["0"].Input = _water_load_input
         _dike_section.section_reliability.load = _water_load_input
         _dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
-            MechanismEnum["STABILITY_INNER"]
+            MechanismEnum.STABILITY_INNER
         ] = _stability_inner_collection
 
         # Initial Geometry
@@ -318,7 +318,7 @@ class TestOrmControllers:
         _dike_section.InitialGeometry.set_index("type", inplace=True, drop=True)
 
         # Mechanism data
-        _dike_section.mechanism_data[MechanismEnum["STABILITY_INNER"]] = [
+        _dike_section.mechanism_data[MechanismEnum.STABILITY_INNER] = [
             ("RW000", "SIMPLE"),
             "combinable",
         ]

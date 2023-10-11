@@ -462,7 +462,7 @@ class StrategyBase:
         self.RiskOverflow = self.Pf["OVERFLOW"] * np.tile(self.D.T, (N, Sh + 1, 1))
 
         self.RiskRevetment = []
-        if MechanismEnum["REVETMENT"] in self.mechanisms:
+        if MechanismEnum.REVETMENT in self.mechanisms:
             self.RiskRevetment = self.Pf["REVETMENT"] * np.tile(
                 self.D.T, (N, Sh + 1, 1)
             )

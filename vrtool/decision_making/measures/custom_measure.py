@@ -62,7 +62,7 @@ class CustomMeasure(MeasureProtocol):
         self, section: DikeSection, base_data: pd.DataFrame
     ) -> Optional[float]:
         overflow_reliability_collection = section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum["OVERFLOW"]
+            MechanismEnum.OVERFLOW
         )
         if not overflow_reliability_collection:
             logging.warning(f'Overflow data is not present in section "{section.name}"')
