@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
@@ -95,17 +95,16 @@ class Solutions:
         inputs_r = []
 
         for measure in self.measures:
-            _measure_type = measure.parameters["Type"]
-            _normalized_measure_type = _measure_type.lower().strip()
+            _measure_type = MeasureTypeEnum.get_enum(measure.parameters["Type"])
             if isinstance(measure.measures, list):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
                 for j, _measure in enumerate(measure.measures):
                     measure_in = []
                     reliability_in = []
-                    if _normalized_measure_type in [
-                        "soil reinforcement",
-                        "soil reinforcement with stability screen",
+                    if _measure_type in [
+                        MeasureTypeEnum.SOIL_REINFORCEMENT,
+                        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
                     ]:
                         designvars = (
                             measure.measures[j]["dcrest"],
@@ -153,16 +152,16 @@ class Solutions:
             elif isinstance(measure.measures, dict):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 ID = str(measure.parameters["ID"])
-                if _normalized_measure_type == "vertical geotextile":
+                if _measure_type == MeasureTypeEnum.VERTICAL_GEOTEXTILE:
                     designvars = measure.measures["VZG"]
 
-                if _normalized_measure_type == "diaphragm wall":
+                if _measure_type == MeasureTypeEnum.DIAPHRAGM_WALL:
                     designvars = measure.measures["DiaphragmWall"]
 
-                if _normalized_measure_type == "revetment":
+                if _measure_type == MeasureTypeEnum.REVETMENT:
                     designvars = measure.measures["Revetment"]
 
-                if _normalized_measure_type == "custom":
+                if _measure_type == MeasureTypeEnum.CUSTOM:
                     designvars = 1.0  ##TODO check
 
                 measure_class = measure.parameters["Class"]

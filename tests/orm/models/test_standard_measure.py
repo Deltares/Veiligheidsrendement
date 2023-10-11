@@ -11,10 +11,10 @@ from vrtool.orm.models.standard_measure import StandardMeasure
 class TestStandardMeasure:
     def test_initialize_standard_measure(self, empty_db_fixture: SqliteDatabase):
         # 1. Define test data.
-        _measure_type = MeasureType.create(name="dummy_measure_type")
+        _measure_type_inst = MeasureType.create(name="dummy_measure_type")
         _combinable_type = CombinableType.create(name="dummy_combinable_type")
         _measure = Measure.create(
-            measure_type=_measure_type,
+            measure_type=_measure_type_inst,
             combinable_type=_combinable_type,
             name="dummy_measure",
         )

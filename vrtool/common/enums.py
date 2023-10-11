@@ -2,19 +2,18 @@ from enum import Enum
 from re import sub
 
 
-class MechanismEnum(Enum):
-    OVERFLOW = 1
-    STABILITY_INNER = 2
-    PIPING = 3
-    REVETMENT = 4
-
+class VrtoolEnum(Enum):
     def __str__(self) -> str:
         return self.name
+
+    def _denormalize_name(self, in_name: str) -> None | str:
+        """Get name according to old naming convention (CamelCase)"""
+        return "".join(x.lower().capitalize() or "_" for x in in_name.split("_"))
 
     # TODO: delete this method after rationalizing the testdata (VRTOOL-296)
     def get_old_name(self) -> str:
         """Get name according to old naming convention (CamelCase)"""
-        return "".join(x.lower().capitalize() or "_" for x in self.name.split("_"))
+        return self._denormalize_name(self.name)
 
     @classmethod
     def _normalize_name(cls, in_name: str) -> None | str:
@@ -40,3 +39,21 @@ class MechanismEnum(Enum):
                 )
             except StopIteration:
                 return None
+
+
+class MeasureTypeEnum(VrtoolEnum):
+    SOIL_REINFORCEMENT = 1
+    SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN = 2
+    STABILITY_SCREEN = 3
+    VERTICAL_GEOTEXTILE = 4
+    DIAPHRAGM_WALL = 5
+    REVETMENT = 6
+    CUSTOM = 7
+    INVALID = 99
+
+
+class MechanismEnum(VrtoolEnum):
+    OVERFLOW = 1
+    STABILITY_INNER = 2
+    PIPING = 3
+    REVETMENT = 4

@@ -9,6 +9,7 @@ from tests.orm.io.importers.test_measure_importer import (
     _set_custom_measure,
     _set_standard_measure,
 )
+from vrtool.common.enums import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -127,9 +128,11 @@ class TestSolutionsImporter:
         self, valid_section_data_without_measures: SectionData
     ) -> SectionData:
         _standard_measure = _get_valid_measure(
-            "Soil reinforcement", "combinable", _set_standard_measure
+            MeasureTypeEnum.SOIL_REINFORCEMENT, "combinable", _set_standard_measure
         )
-        _custom_measure = _get_valid_measure("Custom", "full", _set_custom_measure)
+        _custom_measure = _get_valid_measure(
+            MeasureTypeEnum.CUSTOM, "full", _set_custom_measure
+        )
 
         MeasurePerSection.create(
             section=valid_section_data_without_measures, measure=_standard_measure

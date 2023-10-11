@@ -15,7 +15,7 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
@@ -628,7 +628,7 @@ class RunStepMeasuresValidator:
         ],
         measure_per_section: MeasurePerSection,
         year: int,
-        measure_type: str,
+        measure_type: MeasureTypeEnum,
         measure_id: str,
         dberm: float,
         dcrest: float,

@@ -5,6 +5,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
+from vrtool.common.enums import MeasureTypeEnum
 from vrtool.decision_making.measures import (
     DiaphragmWallMeasure,
     SoilReinforcementMeasure,
@@ -57,12 +58,12 @@ def _set_custom_measure(measure: Measure) -> None:
 
 
 def _get_valid_measure(
-    measure_type: str, combinable_type: str, set_measure: Callable
+    measure_type: MeasureTypeEnum, combinable_type: str, set_measure: Callable
 ) -> Measure:
-    _measure_type = MeasureType.create(name=measure_type)
+    _measure_type_inst = MeasureType.create(name=measure_type.name)
     _combinable_type = CombinableType.create(name=combinable_type)
     _measure = Measure.create(
-        measure_type=_measure_type,
+        measure_type=_measure_type_inst,
         combinable_type=_combinable_type,
         name="Test Measure",
         year=2023,
@@ -106,27 +107,27 @@ class TestMeasureImporter:
         assert str(exc_err.value) == f"No valid value given for Measure."
 
     @pytest.mark.parametrize(
-        "measure_type, expected_type",
+        "measure_type_name, expected_type",
         [
             pytest.param(
-                "Soil reinforcement",
+                "SOIL_REINFORCEMENT",
                 SoilReinforcementMeasure,
                 id="Soil Reinforcement measure.",
             ),
             pytest.param(
-                "Diaphragm wall", DiaphragmWallMeasure, id="Diaphragm Wall measure."
+                "DIAPHRAGM_WALL", DiaphragmWallMeasure, id="Diaphragm Wall measure."
             ),
             pytest.param(
-                "Stability Screen",
+                "STABILITY_SCREEN",
                 StabilityScreenMeasure,
                 id="Stability Screen measure.",
             ),
             pytest.param(
-                "Vertical Geotextile",
+                "VERTICAL_GEOTEXTILE",
                 VerticalGeotextileMeasure,
                 id="Vertical Geotextile measure.",
             ),
-            pytest.param("Revetment", RevetmentMeasure, id="Revetment measure"),
+            pytest.param("REVETMENT", RevetmentMeasure, id="Revetment measure"),
         ],
     )
     @pytest.mark.parametrize(
@@ -139,7 +140,7 @@ class TestMeasureImporter:
     )
     def test_import_orm_with_standard_measure(
         self,
-        measure_type: str,
+        measure_type_name: str,
         combinable_type: str,
         expected_type: Type[MeasureProtocol],
         valid_config: VrtoolConfig,
@@ -148,7 +149,7 @@ class TestMeasureImporter:
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
         _orm_measure = _get_valid_measure(
-            measure_type, combinable_type, _set_standard_measure
+            MeasureTypeEnum[measure_type_name], combinable_type, _set_standard_measure
         )
 
         # 2. Run test.
@@ -157,7 +158,7 @@ class TestMeasureImporter:
         # 3. Verify final expectations.
         assert isinstance(_imported_measure, expected_type)
         self._validate_measure_base_values(_imported_measure, valid_config)
-        assert _imported_measure.parameters["Type"] == measure_type
+        assert _imported_measure.parameters["Type"] == measure_type_name
         assert _imported_measure.parameters["Direction"] == "onwards"
         assert _imported_measure.parameters["StabilityScreen"] == "no"
         assert _imported_measure.parameters["dcrest_min"] == 0
@@ -177,9 +178,9 @@ class TestMeasureImporter:
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _measure_type_name = "Custom"
+        _measure_type_name = "CUSTOM"
         _orm_measure = _get_valid_measure(
-            _measure_type_name, "combinable", _set_custom_measure
+            MeasureTypeEnum[_measure_type_name], "combinable", _set_custom_measure
         )
 
         # 2. Run test.
@@ -210,9 +211,9 @@ class TestMeasureImporter:
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _measure_type_name = "Not a valid measure"
+        _measure_type_name = "INVALID"
         _orm_measure = _get_valid_measure(
-            _measure_type_name, "combinable", _set_standard_measure
+            MeasureTypeEnum[_measure_type_name], "combinable", _set_standard_measure
         )
 
         # 2. Run test.

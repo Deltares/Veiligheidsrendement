@@ -144,10 +144,10 @@ def get_basic_measure() -> Measure:
     Returns:
         Measure: The created measure entity in the database.
     """
-    _test_measure_type = get_basic_measure_type()
+    _test_measure_type_inst = get_basic_measure_type()
     _test_combinable_type = get_basic_combinable_type()
     return Measure.create(
-        measure_type=_test_measure_type,
+        measure_type=_test_measure_type_inst,
         combinable_type=_test_combinable_type,
         name="TestMeasure",
         year=20,

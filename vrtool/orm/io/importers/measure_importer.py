@@ -1,5 +1,6 @@
 from typing import Type
 
+from vrtool.common.enums import MeasureTypeEnum
 from vrtool.decision_making.measures import (
     CustomMeasure,
     DiaphragmWallMeasure,
@@ -91,16 +92,16 @@ class MeasureImporter(OrmImporterProtocol):
 
     def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureProtocol:
         _mapping_types = {
-            "soil reinforcement": SoilReinforcementMeasure,
-            "soil reinforcement with stability screen": SoilReinforcementMeasure,
-            "diaphragm wall": DiaphragmWallMeasure,
-            "stability screen": StabilityScreenMeasure,
-            "vertical geotextile": VerticalGeotextileMeasure,
-            "revetment": RevetmentMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT: SoilReinforcementMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN: SoilReinforcementMeasure,
+            MeasureTypeEnum.DIAPHRAGM_WALL: DiaphragmWallMeasure,
+            MeasureTypeEnum.STABILITY_SCREEN: StabilityScreenMeasure,
+            MeasureTypeEnum.VERTICAL_GEOTEXTILE: VerticalGeotextileMeasure,
+            MeasureTypeEnum.REVETMENT: RevetmentMeasure,
         }
 
         _found_type = _mapping_types.get(
-            orm_measure.measure.measure_type.name.lower().strip(), None
+            MeasureTypeEnum.get_enum(orm_measure.measure.measure_type.name), None
         )
         if not _found_type:
             raise NotImplementedError(
@@ -116,7 +117,6 @@ class MeasureImporter(OrmImporterProtocol):
         if not orm_model:
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
-        _measure_type = orm_model.measure_type.name.lower()
-        if _measure_type == "custom":
+        if MeasureTypeEnum.get_enum(orm_model.measure_type.name) == MeasureTypeEnum.CUSTOM:
             return self._import_custom_measure(orm_model.custom_measures.select().get())
         return self._import_standard_measure(orm_model.standard_measure.select().get())

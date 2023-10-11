@@ -802,11 +802,11 @@ class TestOrmControllers:
         db_connection.connect()
         traject_info = get_basic_dike_traject_info()
 
-        _measure_type = get_basic_measure_type()
+        _measure_type_inst = get_basic_measure_type()
         _combinable_type = get_basic_combinable_type()
         _measures = [
-            self._create_measure(_measure_type, _combinable_type, "measure 1"),
-            self._create_measure(_measure_type, _combinable_type, "measure 2"),
+            self._create_measure(_measure_type_inst, _combinable_type, "measure 1"),
+            self._create_measure(_measure_type_inst, _combinable_type, "measure 2"),
         ]
 
         self._create_section_with_fully_configured_measure_results(
@@ -944,12 +944,12 @@ class TestOrmControllers:
 
     def _create_measure(
         self,
-        measure_type: orm_models.MeasureType,
+        measure_type_inst: orm_models.MeasureType,
         combinable_type: orm_models.CombinableType,
         measure_name: str,
     ) -> orm_models.Measure:
         return orm_models.Measure.create(
-            measure_type=measure_type,
+            measure_type=measure_type_inst,
             combinable_type=combinable_type,
             name=measure_name,
             year=20,

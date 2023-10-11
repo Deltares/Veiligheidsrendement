@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.decision_making.measures.berm_widening_dstability import (
     BermWideningDStability,
 )
@@ -334,7 +334,7 @@ def determine_new_geometry(
 # Script to determine the costs of a reinforcement:
 def determine_costs(
     parameters,
-    measure_type: str,
+    measure_type: MeasureTypeEnum,
     length: float,
     depth: float,
     unit_costs: dict,
@@ -346,9 +346,8 @@ def determine_costs(
     direction: bool = False,
     section: str = "",
 ) -> float:
-    _measure_type_name = measure_type.lower().strip()
     if (
-        (_measure_type_name == "soil reinforcement")
+        (measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT)
         and (direction == "outward")
         and (dberm_in > 0.0)
     ):
@@ -356,7 +355,7 @@ def determine_costs(
         logging.warning(
             "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
         )
-    if "soil reinforcement" in _measure_type_name:
+    if MeasureTypeEnum.SOIL_REINFORCEMENT in measure_type:
         if direction == "inward":
             total_cost = (
                 unit_costs["Inward added volume"] * area_extra * length
@@ -416,11 +415,11 @@ def determine_costs(
             total_cost += unit_costs["Road renewal"] * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
-    elif _measure_type_name == "vertical geotextile":
+    elif measure_type == MeasureTypeEnum.VERTICAL_GEOTEXTILE:
         total_cost = unit_costs["Vertical Geotextile"] * length
-    elif _measure_type_name == "diaphragm wall":
+    elif measure_type == MeasureTypeEnum.DIAPHRAGM_WALL:
         total_cost = unit_costs["Diaphragm wall"] * length
-    elif _measure_type_name == "stability screen":
+    elif measure_type == MeasureTypeEnum.STABILITY_SCREEN:
         total_cost = unit_costs["Sheetpile"] * depth * length
     else:
         logging.error("Unknown measure type: {}".format(measure_type))
