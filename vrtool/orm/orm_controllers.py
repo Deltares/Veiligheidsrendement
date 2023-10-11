@@ -17,7 +17,12 @@ from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter
     DikeSectionReliabilityExporter,
 )
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.solutions_importer import SolutionsImporter
+from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer import (
+    SolutionsForMeasureResultsImporter,
+)
+from vrtool.orm.io.importers.measures.solutions_importer import (
+    SolutionsImporter,
+)
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -26,6 +31,8 @@ from vrtool.run_workflows.optimization_workflow.results_optimization import (
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
+
+import itertools
 
 
 def initialize_database(database_path: Path) -> SqliteDatabase:
@@ -237,24 +244,124 @@ def export_results_measures(result: ResultsMeasures) -> None:
     logging.info("Closed connection after export solution.")
 
 
-def export_optimization_selected_measures(
-    result: ResultsOptimization, optimization_name: str
-) -> None:
-    _connected_db = open_database(result.vr_config.input_database_path)
+def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[int]:
+    """
+    Retrieves from the database the list of IDs for the provided results measures.
+    To do so we check all the available `MeasureResult` related to the `MeasurePerSection`
+    contained in the `ResultsMeasures` object.
+
+    Args:
+        result_measures (ResultsMeasures): Result measures' whose ids need to be retrieved.
+
+    Returns:
+        list[int]: List of IDs of `MeasureResult`.
+    """
+    _connected_db = open_database(result_measures.vr_config.input_database_path)
+    _result_measure_ids = []
+    for _solution in result_measures.solutions_dict.values():
+        for _measure in _solution.measures:
+            _measure_per_section = SolutionsExporter.get_measure_per_section(
+                _solution.section_name,
+                _solution.config.traject,
+                _measure.parameters["ID"],
+            )
+            _result_measure_ids.extend(
+                [
+                    mxsr.get_id()
+                    for mxsr in _measure_per_section.measure_per_section_result
+                ]
+            )
+
+    _connected_db.close()
+    return _result_measure_ids
+
+
+def import_results_measures(
+    config: VrtoolConfig, results_ids_to_import: list[int]
+) -> ResultsMeasures:
+    """
+    Imports results masures from a database into a `ResultsMeasure` instance.
+
+    Args:
+        config (VrtoolConfig): Configuration containing database path.
+        results_ids_to_import (list[int]): List of measure results' IDs.
+
+    Returns:
+        ResultsMeasures: Instance hosting all the required measures' results.
+    """
+    _dike_traject = get_dike_traject(config)
+    open_database(config.input_database_path)
+
+    _solutions_dict = dict()
+    # Group the measure results by section.
+    measure_results = orm.MeasureResult.select().where(
+        orm.MeasureResult.id.in_(results_ids_to_import)
+    )
+    _grouped_by_section = [
+        (_section, list(_grouped_measure_results))
+        for _section, _grouped_measure_results in itertools.groupby(
+            measure_results, lambda x: x.measure_per_section.section
+        )
+    ]
+
+    # Import a solution per section:
+    for _section, _selected_measure_results in _grouped_by_section:
+        # Import measures into solution
+        _mapped_section = next(
+            _ds for _ds in _dike_traject.sections if _ds.name == _section.section_name
+        )
+        _imported_solution = SolutionsForMeasureResultsImporter(
+            config,
+            _mapped_section,
+        ).import_orm(_selected_measure_results)
+        _solutions_dict[_section.section_name] = _imported_solution
+    _dike_traject.set_probabilities()
+    vrtool_db.close()
+
+    _results_measures = ResultsMeasures()
+    _results_measures.solutions_dict = _solutions_dict
+    _results_measures.selected_traject = _dike_traject
+    _results_measures.vr_config = config
+
+    return _results_measures
+
+
+def create_optimization_run_for_selected_measures(
+    vr_config: VrtoolConfig,
+    selected_measure_result_ids: list[int],
+    optimization_name: str,
+) -> ResultsMeasures:
+    """
+    Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
+    database entry and as many entries as needed in the `OptimizationSelectedMeasure`
+    table based on the provided arguments.
+
+    This is the method to call for running 'lose' single optimization runs.
+
+    Args:
+        vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
+        selected_measure_result_ids (list[int]): list of `MeasureResult` id's in the database.
+        optimization_name (str): name to give to an optimization run.
+
+    Returns:
+        ResultsMeasures: Instance hosting all the required measures' results.
+    """
+
+    _results_measures = import_results_measures(vr_config, selected_measure_result_ids)
+
+    _connected_db = open_database(vr_config.input_database_path)
     logging.info(
         "Opened connection to export optimization run {}.".format(optimization_name)
     )
-
-    for _strategy in result.results_strategies:
+    for _method_type in vr_config.design_methods:
         _optimization_type, _ = orm.OptimizationType.get_or_create(
-            name=_strategy.type.upper()
+            name=_method_type.upper()
         )
         _optimization_run = orm.OptimizationRun.create(
             name=optimization_name,
-            discount_rate=_strategy.discount_rate,
+            discount_rate=vr_config.discount_rate,
             optimization_type=_optimization_type,
         )
-        _selected_measures_ids = list(set(_strategy.TakenMeasures["ID"]))
         orm.OptimizationSelectedMeasure.insert_many(
             [
                 dict(
@@ -262,12 +369,58 @@ def export_optimization_selected_measures(
                     measure_result=orm.MeasureResult.get_by_id(_measure_id),
                     investment_year=0,
                 )
-                for _measure_id in _selected_measures_ids
+                for _measure_id in selected_measure_result_ids
             ]
         ).execute()
 
     logging.info(
         "Closed connection after export optimization run {}.".format(optimization_name)
+    )
+    _connected_db.close()
+
+    return _results_measures
+
+
+def create_basic_optimization_run(
+    vr_config: VrtoolConfig, optimization_name: str
+) -> None:
+    """
+    Creates all the required entries to run a basic optimization run on ALL available measure results (`MeasureResult`).
+
+    Args:
+        vr_config (VrtoolConfig): Configuration to use for importing / exporting and running.
+        optimization_name (str): Name to give to the optimization run(s).
+    """
+    _connected_db = open_database(vr_config.input_database_path)
+    logging.info(
+        "Opened connection to create a basic optimization run {}.".format(
+            optimization_name
+        )
+    )
+    for _method_type in vr_config.design_methods:
+        _optimization_type, _ = orm.OptimizationType.get_or_create(
+            name=_method_type.upper()
+        )
+        _optimization_run = orm.OptimizationRun.create(
+            name=optimization_name,
+            discount_rate=vr_config.discount_rate,
+            optimization_type=_optimization_type,
+        )
+        orm.OptimizationSelectedMeasure.insert_many(
+            [
+                dict(
+                    optimization_run=_optimization_run,
+                    measure_result=_measure_result,
+                    investment_year=0,
+                )
+                for _measure_result in orm.MeasureResult.select()
+            ]
+        ).execute()
+
+    logging.info(
+        "Closed connection after creating basic optimization run {}.".format(
+            optimization_name
+        )
     )
     _connected_db.close()
 
