@@ -247,7 +247,7 @@ class TestOrmControllers:
 
         def check_section_reliability(section: DikeSection):
             _recognized_keys = [
-                MechanismEnumOVERFLOW,
+                MechanismEnum.OVERFLOW,
                 MechanismEnum.PIPING,
                 MechanismEnum.STABILITY_INNER,
             ]
