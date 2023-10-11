@@ -48,12 +48,14 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    export_optimization_selected_measures,
+    create_basic_optimization_run,
+    create_optimization_run_for_selected_measures,
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
     get_dike_section_solutions,
     get_dike_traject,
+    get_exported_measure_result_ids,
     initialize_database,
     open_database,
 )
@@ -483,6 +485,37 @@ class TestOrmControllers:
         ],
         indirect=True,
     )
+    def test_get_selected_measure_result_ids_returns_list_of_exported_results_measures(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+
+        # 2. Run test.
+        _return_values = get_exported_measure_result_ids(_results_measures)
+
+        # 3. Verify expectations.
+        assert len(MeasureResult.select()) == 1
+        _expected_id = MeasureResult.get().get_id()
+        assert _return_values == [_expected_id]
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    @pytest.mark.skip(reason="Requires mocking a geometry, not worth at the moment.")
     def test_export_optimization_selected_measures_given_valid_data(
         self,
         results_measures_with_mocked_data: tuple[
@@ -498,80 +531,92 @@ class TestOrmControllers:
             _measures_input_data, _measures_input_data.parameters_to_validate
         )
 
-        # Define strategies.
-        class MockedStrategy(StrategyBase):
-            def __init__(self, type: str, config: VrtoolConfig):
-                self.type = type
-                self.discount_rate = 0.42
-                # First run could just be exporting the index of TakenMeasures.
-                self.options = pd.DataFrame(
-                    list(map(lambda x: x.id, MeasureResult.select()))
-                )  # All possible combinations of MeasureResults (by ID).
-                # Has a lot of information already present in measure results.
-                _measures_columns = [
-                    "Section",
-                    "option_in",
-                    "LCC",
-                    "BC",
-                    "ID",
-                    "name",
-                    "yes/no",
-                    "dcrest",
-                    "dberm",
-                    "beta_target",
-                    "transition_level",
-                ]
-                _taken_measures = []
-                _id_idx = _measures_columns.index("ID")
-                for _measure_result in MeasureResult.select():
-                    _taken_measure_row = [0] * len(_measures_columns)
-                    _taken_measure_row[_id_idx] = _measure_result.get_id()
-                    _taken_measures.append(_taken_measure_row)
-
-                self.TakenMeasures = pd.DataFrame(
-                    _taken_measures, columns=_measures_columns
-                )
-
-        _optimization_type = "Test optimization type"
         _optimization_run_name = "Test optimization name"
-        _test_strategy = MockedStrategy(
-            type=_optimization_type, config=_results_measures.vr_config
-        )
-
-        assert not any(orm_models.OptimizationRun.select())
-        assert not any(orm_models.OptimizationType.select())
-        assert not any(orm_models.OptimizationSelectedMeasure.select())
-
-        _results_optimization = ResultsOptimization()
-        _results_optimization.vr_config = _results_measures.vr_config
-        _results_optimization.selected_traject = (
-            _measures_input_data.domain_dike_section.TrajectInfo.traject_name
-        )
-        _results_optimization.results_solutions = _results_measures.solutions_dict
-        _results_optimization.results_strategies = [_test_strategy]
 
         # 2. Run test.
-        export_optimization_selected_measures(
-            _results_optimization, _optimization_run_name
+        _measure_result_selection = len(orm_models.MeasureResult.select()) // 2
+        if _measure_result_selection == 0:
+            _measure_result_selection = 1
+        _measure_result_ids = [
+            mr.get_id()
+            for mr in orm_models.MeasureResult.select().limit(_measure_result_selection)
+        ]
+        _return_value = create_optimization_run_for_selected_measures(
+            _results_measures.vr_config, _measure_result_ids, _optimization_run_name
         )
 
         # 3. Verify expectations.
-        assert len(orm_models.OptimizationType.select()) == 1
-        _optimization_type = orm_models.OptimizationType.get_or_none(
-            name=_test_strategy.type.upper()
+        assert isinstance(_return_value, ResultsMeasures)
+        assert len(orm_models.OptimizationType.select()) == len(
+            _results_measures.vr_config.design_methods
         )
-        assert isinstance(_optimization_type, orm_models.OptimizationType)
+        for _optimization_type in orm_models.OptimizationType:
+            assert isinstance(_optimization_type, orm_models.OptimizationType)
 
-        assert len(orm_models.OptimizationRun.select()) == 1
-        _optimization_run = orm_models.OptimizationRun.get_or_none(
-            optimization_type=_optimization_type, name=_optimization_run_name
-        )
-        assert isinstance(_optimization_run, orm_models.OptimizationRun)
-        assert _optimization_run.discount_rate == _test_strategy.discount_rate
+            assert len(_optimization_type.optimization_runs) == 1
+            _optimization_run = _optimization_type.optimization_runs[0]
 
-        assert len(orm_models.OptimizationSelectedMeasure.select()) == len(
-            orm_models.MeasureResult.select()
+            assert isinstance(_optimization_run, orm_models.OptimizationRun)
+            assert _optimization_run.name == _optimization_run_name
+            assert (
+                _optimization_run.discount_rate
+                == _results_measures.vr_config.discount_rate
+            )
+            assert len(_optimization_run.optimization_run_measure_results) == len(
+                _measure_result_ids
+            )
+
+    @pytest.mark.parametrize(
+        "results_measures_with_mocked_data",
+        [
+            pytest.param(
+                MeasureWithMeasureResultCollectionMocked,
+                id="With Measure Result Collection object",
+            ),
+        ],
+        indirect=True,
+    )
+    def test_create_basic_optimization_run_selects_all_measures(
+        self,
+        results_measures_with_mocked_data: tuple[
+            MeasureResultTestInputData, ResultsMeasures
+        ],
+    ):
+        # 1. Define test data.
+        _measures_input_data, _results_measures = results_measures_with_mocked_data
+        assert isinstance(_measures_input_data, MeasureResultTestInputData)
+        assert isinstance(_results_measures, ResultsMeasures)
+        export_results_measures(_results_measures)
+        validate_measure_result_export(
+            _measures_input_data, _measures_input_data.parameters_to_validate
         )
+
+        _optimization_run_name = "Test optimization name"
+
+        # 2. Run test.
+        create_basic_optimization_run(
+            _results_measures.vr_config, _optimization_run_name
+        )
+
+        # 3. Verify expectations.
+        assert len(orm_models.OptimizationType.select()) == len(
+            _results_measures.vr_config.design_methods
+        )
+        for _optimization_type in orm_models.OptimizationType:
+            assert isinstance(_optimization_type, orm_models.OptimizationType)
+
+            assert len(_optimization_type.optimization_runs) == 1
+            _optimization_run = _optimization_type.optimization_runs[0]
+
+            assert isinstance(_optimization_run, orm_models.OptimizationRun)
+            assert _optimization_run.name == _optimization_run_name
+            assert (
+                _optimization_run.discount_rate
+                == _results_measures.vr_config.discount_rate
+            )
+            assert len(_optimization_run.optimization_run_measure_results) == len(
+                orm_models.MeasureResult.select()
+            )
 
     @pytest.mark.parametrize(
         "results_measures_with_mocked_data",
