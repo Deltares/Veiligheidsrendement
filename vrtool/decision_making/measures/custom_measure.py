@@ -137,9 +137,9 @@ class CustomMeasure(MeasureProtocol):
                 year_to_calculate
             ]
             if np.int_(year_to_calculate) >= self.parameters["year"]:
-                if mechanism.name == "OVERFLOW":
+                if mechanism == MechanismEnum.OVERFLOW:
                     self._configure_overflow(mechanism_reliability)
-                elif mechanism.name == "PIPING":
+                elif mechanism == MechanismEnum.PIPING:
                     self._configure_piping(mechanism_reliability)
                 else:
                     self._configure_other(mechanism_reliability, mechanism)

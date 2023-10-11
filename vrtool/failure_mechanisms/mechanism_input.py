@@ -41,7 +41,7 @@ class MechanismInput:
             None.
         """
 
-        if mechanism.name == "STABILITY_INNER":
+        if mechanism ==MechanismEnum.STABILITY_INNER:
             if calctype == "DStability":
                 data = read_data_from_csv(input_path, reference)
                 data = data.loc[data.index.isin(["STIXNAAM"])]
@@ -52,7 +52,7 @@ class MechanismInput:
             else:
                 data = read_data_from_csv(input_path, reference)
 
-        elif mechanism.name == "OVERFLOW":
+        elif mechanism == MechanismEnum.OVERFLOW:
             if calctype == "Simple":
                 data = pd.read_csv(
                     input_path.joinpath(Path(reference).name), delimiter=","

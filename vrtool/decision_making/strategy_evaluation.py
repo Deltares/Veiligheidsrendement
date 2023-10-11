@@ -731,9 +731,9 @@ def evaluate_risk(
     config: VrtoolConfig,
 ):
     for mechanism in config.mechanisms:
-        if mechanism.name == "OVERFLOW":
+        if mechanism == MechanismEnum.OVERFLOW:
             init_overflow_risk[n, :] = strategy.RiskOverflow[n, sh, :]
-        elif mechanism.name == "REVETMENT":
+        elif mechanism == MechanismEnum.REVETMENT:
             init_revetment_risk[n, :] = strategy.RiskRevetment[n, sh, :]
         else:
             init_geo_risk[n, :] = strategy.RiskGeotechnical[n, sg, :]

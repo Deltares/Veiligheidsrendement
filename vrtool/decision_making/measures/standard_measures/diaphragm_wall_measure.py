@@ -91,11 +91,11 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 year_to_calculate
             ]
             if float(year_to_calculate) >= self.parameters["year"]:
-                if mechanism.name == "OVERFLOW":
+                if mechanism == MechanismEnum.OVERFLOW:
                     self._configure_overflow(
                         mechanism_reliability, traject_info, dike_section
                     )
-                if mechanism.name in ["PIPING", "STABILITY_INNER"]:
+                if mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
                     self._configure_piping_or_stability_inner(mechanism_reliability)
 
         mechanism_reliability_collection.generate_LCR_profile(

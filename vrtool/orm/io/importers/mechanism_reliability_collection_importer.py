@@ -73,18 +73,21 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
     ) -> MechanismInput:
         _computation_type_name = computation_type.upper().strip()
 
-        if mechanism.name == "OVERFLOW":
+        if mechanism == MechanismEnum.OVERFLOW:
             return OverFlowHydraRingImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if mechanism.name == "STABILITY_INNER" and _computation_type_name == "SIMPLE":
+        if (
+            mechanism == MechanismEnum.STABILITY_INNER
+            and _computation_type_name == "SIMPLE"
+        ):
             return StabilityInnerSimpleImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
         if (
-            mechanism.name == "STABILITY_INNER"
+            mechanism.name == MechanismEnum.STABILITY_INNER
             and _computation_type_name == "DSTABILITY"
         ):
             _dstability_importer = DStabilityImporter(
@@ -94,10 +97,10 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if mechanism.name == "PIPING":
+        if mechanism == MechanismEnum.PIPING:
             return PipingImporter().import_orm(mechanism_per_section)
 
-        if mechanism.name == "REVETMENT":
+        if mechanism == MechanismEnum.REVETMENT:
             return RevetmentImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )

@@ -8,6 +8,7 @@ from peewee import SqliteDatabase
 from tests import test_data
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -285,7 +286,7 @@ class TestDatabaseIntegration:
     def _assert_overflow_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
     ) -> None:
-        assert actual.mechanism.name == "OVERFLOW"
+        assert actual.mechanism == MechanismEnum.OVERFLOW
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters) + 1
@@ -316,7 +317,7 @@ class TestDatabaseIntegration:
     def _assert_stability_simple_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
     ) -> None:
-        assert actual.mechanism.name == "STABILITY_INNER"
+        assert actual.mechanism == MechanismEnum.STABILITY_INNER
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters)
@@ -325,7 +326,7 @@ class TestDatabaseIntegration:
     def _assert_piping_mechanism_input(
         self, actual: MechanismInput, expected: list[ComputationScenario]
     ) -> None:
-        assert actual.mechanism.name == "PIPING"
+        assert actual.mechanism == MechanismEnum.PIPING
 
         assert all(
             [

@@ -111,13 +111,13 @@ class GreedyStrategy(StrategyBase):
                 break
 
             # insert next cheapest measure from sorted list into mechanism_risk, then compute the LCC value and BC
-            if mechanism.name == "OVERFLOW":
+            if mechanism == MechanismEnum.OVERFLOW:
                 new_mechanism_risk[ind_highest_risk, :] = self.RiskOverflow[
                     ind_highest_risk,
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
                     :,
                 ]
-            elif mechanism.name == "REVETMENT":
+            elif mechanism == MechanismEnum.REVETMENT:
                 new_mechanism_risk[ind_highest_risk, :] = self.RiskRevetment[
                     ind_highest_risk,
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
@@ -208,7 +208,7 @@ class GreedyStrategy(StrategyBase):
                     ]["REVETMENT"]
 
                 # check if all rows in comparison only contain True values
-                if mechanism.name == "OVERFLOW":
+                if mechanism == MechanismEnum.OVERFLOW:
                     comparison_height = (
                         HeightOptions.OVERFLOW > current_height_investments["OVERFLOW"]
                     ).any(axis=1)
@@ -217,7 +217,7 @@ class GreedyStrategy(StrategyBase):
                             HeightOptions.REVETMENT
                             >= current_height_investments["REVETMENT"]
                         ).all(axis=1)
-                elif mechanism.name == "REVETMENT":
+                elif mechanism == MechanismEnum.REVETMENT:
                     comparison_height = (
                         HeightOptions.REVETMENT
                         > current_height_investments["REVETMENT"]
@@ -381,9 +381,9 @@ class GreedyStrategy(StrategyBase):
                 init_probability[mechanism.name][n, :] = self.Pf[mechanism.name][
                     n, 0, :
                 ]
-                if mechanism.name == "OVERFLOW":
+                if mechanism == MechanismEnum.OVERFLOW:
                     init_overflow_risk[n, :] = self.RiskOverflow[n, 0, :]
-                elif mechanism.name == "REVETMENT":
+                elif mechanism == MechanismEnum.REVETMENT:
                     init_revetment_risk[n, :] = self.RiskRevetment[n, 0, :]
                 else:
                     init_independent_risk[n, :] = self.RiskGeotechnical[n, 0, :]

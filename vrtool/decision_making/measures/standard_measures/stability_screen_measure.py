@@ -139,14 +139,14 @@ class StabilityScreenMeasure(MeasureProtocol):
                 year_to_calculate
             ]
             if float(year_to_calculate) >= self.parameters["year"]:
-                if mechanism.name == "STABILITY_INNER":
+                if mechanism == MechanismEnum.STABILITY_INNER:
                     self._configure_stability_inner(
                         mechanism_reliability,
                         year_to_calculate,
                         dike_section,
                         safety_factor_increase,
                     )
-                if mechanism.name in ["PIPING", "OVERFLOW"]:
+                if mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW]:
                     self._copy_results(
                         mechanism_reliability, dike_section_mechanism_reliability
                     )  # No influence
