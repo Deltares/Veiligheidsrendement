@@ -2,14 +2,7 @@ from enum import Enum
 from re import sub
 
 
-class MechanismEnum(Enum):
-    OVERFLOW = 1
-    STABILITY_INNER = 2
-    PIPING = 3
-    REVETMENT = 4
-    HYDRAULIC_STRUCTURES = 5
-    INVALID = 99
-
+class VrtoolEnum(Enum):
     def __str__(self) -> str:
         return self.name
 
@@ -26,7 +19,9 @@ class MechanismEnum(Enum):
             """Convert string to match naming convention (upper snake)"""
             if not in_name:
                 return cls.INVALID.name
-            return sub(r"(?<!^)(?=[A-Z])", "_", in_name.strip()).upper()
+            return sub(
+                r"(?<!^)(?=[A-Z])", "_", in_name.strip().replace(" ", "_")
+            ).upper()
 
         try:
             # Default: enum name exists
@@ -43,3 +38,23 @@ class MechanismEnum(Enum):
                 ),
                 cls.INVALID,
             )
+
+
+class MeasureTypeEnum(VrtoolEnum):
+    SOIL_REINFORCEMENT = 1
+    SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN = 2
+    STABILITY_SCREEN = 3
+    VERTICAL_GEOTEXTILE = 4
+    DIAPHRAGM_WALL = 5
+    REVETMENT = 6
+    CUSTOM = 7
+    INVALID = 99
+
+
+class MechanismEnum(VrtoolEnum):
+    OVERFLOW = 1
+    STABILITY_INNER = 2
+    PIPING = 3
+    REVETMENT = 4
+    HYDRAULIC_STRUCTURES = 5
+    INVALID = 99

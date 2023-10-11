@@ -606,10 +606,10 @@ def split_options(
             # if it is a soil reinforcement combined with others we need to modify the right value from the list of costs
             if (not float_costs[idx]) & soil_reinforcements[idx]:
                 # break the type string at '+' and find the value that contains soil reinforcement
-                for cost_index, measure_type in enumerate(
+                for cost_index, measure_type_name in enumerate(
                     row["type"].item().split("+")
                 ):
-                    if "Soil reinforcement" in measure_type:
+                    if "SOIL_REINFORCEMENT" in measure_type_name:
                         # get list of costs and subtract startcosts from the cost that contains soil reinforcement
                         cost_list = row["cost"].item()
                         cost_list[cost_index] = np.subtract(
@@ -638,10 +638,10 @@ def split_options(
             # subtract cost_stability_screen from all entries in options_dependent where stability_screens is true
             if stability_screens[idx]:
                 # break the type string at '+' and find the value that contains soil reinforcement
-                for cost_index, measure_type in enumerate(
+                for cost_index, measure_type_name in enumerate(
                     row["type"].item().split("+")
                 ):
-                    if "Soil reinforcement with stability screen" in measure_type:
+                    if "SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN" in measure_type_name:
                         if isinstance(row["cost"].item(), float):
                             options_dependent[i].loc[idx, "cost"] = np.subtract(
                                 options_dependent[i].loc[idx, "cost"],
@@ -668,10 +668,10 @@ def split_options(
             for row_idx, option_row in options_set.iterrows():
                 if bools[row_idx]:
                     # break the type string at '+' and find the value that is a vertical Geotextile
-                    for cost_index, measure_type in enumerate(
+                    for cost_index, measure_type_name in enumerate(
                         option_row["type"].item().split("+")
                     ):
-                        if measure_type == measure_string:
+                        if measure_type_name == measure_string:
                             if isinstance(option_row["cost"].item(), float):
                                 options_set.loc[row_idx, "cost"] = 0.0
                             else:
@@ -687,18 +687,18 @@ def split_options(
         # set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
         if any(vertical_geotextiles):
             options_dependent[i] = set_cost_to_zero(
-                options_dependent[i], vertical_geotextiles, "Vertical Geotextile"
+                options_dependent[i], vertical_geotextiles, "VERTICAL_GEOTEXTILE"
             )
 
         if any(diaphragm_walls):
             options_dependent[i] = set_cost_to_zero(
-                options_dependent[i], diaphragm_walls, "Diaphragm Wall"
+                options_dependent[i], diaphragm_walls, "DIAPHRAGM_WALL"
             )
 
         revetments = options_independent[i]["type"].str.contains("Revetment")
         if any(revetments):
             options_independent[i] = set_cost_to_zero(
-                options_independent[i], revetments, "Revetment"
+                options_independent[i], revetments, "REVETMENT"
             )
 
         options_independent[i] = options_independent[i].reset_index(drop=True)

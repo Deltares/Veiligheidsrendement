@@ -3,7 +3,7 @@ import pytest
 from vrtool.common.enums import MechanismEnum
 
 
-class TestMechanismEnums:
+class TestVrtoolEnums:
     @pytest.mark.parametrize(
         "enum_name",
         [
@@ -11,6 +11,7 @@ class TestMechanismEnums:
             pytest.param("STABILITY_INNER", id="VALID UPPER_SNAKE"),
             pytest.param("stability_inner", id="VALID lower_snake"),
             pytest.param(" StabilityInner", id="VALID space before"),
+            pytest.param("stability inner", id="VALID space within"),
             pytest.param("StabilityInner ", id="VALID space after"),
         ],
     )
@@ -27,7 +28,6 @@ class TestMechanismEnums:
         "enum_name",
         [
             pytest.param("stabilityinner", id="INVALID camelcase"),
-            pytest.param("stability inner", id="INVALID space within"),
         ],
     )
     def test_get_invalid_enum(self, enum_name: str):
