@@ -1,3 +1,4 @@
+from vrtool.decision_making.strategies.greedy_strategy import GreedyStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -17,6 +18,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
         _step_results_section = []
         _step_results_mechanism = []
 
+        indexIsPerSection = isinstance(dom_model, GreedyStrategy)
+
         cntMeasuresPerSection = {}
         sumMeasures = 0
         for section in dom_model.indexCombined2single:
@@ -29,8 +32,14 @@ class StrategyBaseExporter(OrmExporterProtocol):
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
-                msrId = singleMsrId + cntMeasuresPerSection[section]
-                msr = dom_model.options[section].values[singleMsrId]
+                if (indexIsPerSection):
+                    globalId = singleMsrId + cntMeasuresPerSection[section]
+                    localId  = singleMsrId
+                else:
+                    globalId = singleMsrId
+                    localId  = self._find_id_in_section(singleMsrId, dom_model.indexCombined2single[section])
+                msrId = globalId
+                msr = dom_model.options[section].values[localId]
                 lcc = dom_model.TakenMeasures.values[i, 2]
                 offset = len(msr) - len(dom_model.T)
                 _created_optimization_step = OptimizationStep.create(
@@ -49,7 +58,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                         }
                     )
 
-                _measure_result = MeasureResult.get_by_id(singleMsrId)
+                _measure_result = MeasureResult.get_by_id(globalId)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
                     _step_results_mechanism.append(
@@ -64,3 +73,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
         OptimizationStepResultSection.insert_many(_step_results_section).execute()
         OptimizationStepResultMechanism.insert_many(_step_results_mechanism).execute()
+
+    def _find_id_in_section(self, id, indexSection):
+        for i in range(len(indexSection)):
+            if (indexSection[i][0] == id):
+                return i
