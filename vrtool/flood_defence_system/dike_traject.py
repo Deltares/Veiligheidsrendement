@@ -108,7 +108,6 @@ def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=
         ts = base.columns.values
         if not mechs:
             mechs = np.unique(base.index.get_level_values("mechanism").values)
-        # mechs = ['OVERFLOW']
     # pf_traject = np.zeros((len(ts),))
     pf_traject = np.zeros((len(trange),))
 

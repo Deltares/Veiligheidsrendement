@@ -7,6 +7,8 @@ class MechanismEnum(Enum):
     STABILITY_INNER = 2
     PIPING = 3
     REVETMENT = 4
+    HYDRAULIC_STRUCTURES = 5
+    INVALID = 99
 
     def __str__(self) -> str:
         return self.name
@@ -17,15 +19,14 @@ class MechanismEnum(Enum):
         return "".join(x.lower().capitalize() or "_" for x in self.name.split("_"))
 
     @classmethod
-    def _normalize_name(cls, in_name: str) -> None | str:
-        """Convert string to match naming convention (upper snake)"""
-        if not in_name:
-            return None
-        return sub(r"(?<!^)(?=[A-Z])", "_", in_name).upper()
-
-    @classmethod
     def get_enum(cls, enum_name: str) -> None | Enum:
         """Return matching enum for name"""
+
+        def _normalize_name(in_name: str) -> None | str:
+            """Convert string to match naming convention (upper snake)"""
+            if not in_name:
+                return None
+            return sub(r"(?<!^)(?=[A-Z])", "_", in_name).upper()
 
         try:
             # Default: enum name exists
@@ -36,7 +37,7 @@ class MechanismEnum(Enum):
                 return next(
                     _enum
                     for _enum in list(cls)
-                    if cls._normalize_name(enum_name) == _enum.name
+                    if _normalize_name(enum_name) == _enum.name
                 )
             except StopIteration:
                 return None

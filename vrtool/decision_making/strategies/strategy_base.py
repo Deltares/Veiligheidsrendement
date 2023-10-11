@@ -39,7 +39,7 @@ class StrategyBase:
         self.config = config
         self.OI_year = config.OI_year
         self.OI_horizon = config.OI_horizon
-        self.mechanisms: list[MechanismEnum] = config.mechanisms
+        self.mechanisms: config.mechanisms
         self.T = config.T
         self.LE_in_section = config.LE_in_section
 

@@ -978,7 +978,7 @@ class TestOrmControllers:
         section = self._create_basic_section_data(traject_info, section_name)
 
         _mechanism_per_section = self._create_basic_mechanism_per_section(
-            section, self._create_mechanism("TestMechanism")
+            section, self._create_mechanism(MechanismEnum.OVERFLOW.name)
         )
 
         for measure in measures:

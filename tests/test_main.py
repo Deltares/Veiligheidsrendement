@@ -57,8 +57,8 @@ class TestMain:
             "traject": "38-1",
             "output_directory": str(_output_dir),
             "excluded_mechanisms": [
-                MechanismEnum.REVETMENT.name,
-                "HYDRAULIC_STRUCTURES",
+                MechanismEnum.REVETMENT,
+                MechanismEnum.HYDRAULIC_STRUCTURES,
             ],
         }
         json_file = _input_dir.joinpath("test_config.json")

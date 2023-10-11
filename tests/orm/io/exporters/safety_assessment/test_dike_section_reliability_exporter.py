@@ -108,8 +108,7 @@ class TestDikeSectionReliabilityExporter:
             ]
         )
         _mechanisms = list(
-            MechanismEnum.get_enum(_mech_name)
-            for _mech_name in _expected_mechanisms_reliability.index
+            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
         )
         create_required_mechanism_per_section(_test_section_data, _mechanisms)
 

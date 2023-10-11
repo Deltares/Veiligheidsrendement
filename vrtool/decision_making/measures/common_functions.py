@@ -40,7 +40,7 @@ def implement_berm_widening(
         berm_input (dict): input dictionary of the mechanism
         measure_input (dict): input dictionary of the measure
         measure_parameters (dict): parameters dictionary of the measure
-        mechanism (MechanismEnum): mechanism, one of ['PIPING', 'OVERFLOW', 'STABILITY_INNER']
+        mechanism (MechanismEnum): mechanism, one of [MechanismEnum.PIPING, MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
         computation_type (str): type of computation for the mechanism
         path_intermediate_stix (Path): path to the intermediate stix files
         SFincrease (float): increase in safety factor

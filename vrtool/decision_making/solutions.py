@@ -129,9 +129,7 @@ class Solutions:
 
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
-                    _mechanism_names = list(
-                        _mechanism.name for _mechanism in self.mechanisms
-                    )
+                    _mechanism_names = list(map(str, self.mechanisms))
                     for ij in _mechanism_names + ["Section"]:
                         if ij not in betas.index:
                             # TODO (VRTOOL-187).

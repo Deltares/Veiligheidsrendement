@@ -1,4 +1,5 @@
 from tests.orm import empty_db_fixture
+from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
@@ -23,7 +24,7 @@ class TestComputationScenario:
             crest_height=24,
             annual_crest_decline=42,
         )
-        _test_mech_inst = Mechanism.create(name="TestMechanism")
+        _test_mech_inst = Mechanism.create(name=MechanismEnum.OVERFLOW.name)
         _mech_per_section = MechanismPerSection.create(
             section=_test_section, mechanism=_test_mech_inst
         )

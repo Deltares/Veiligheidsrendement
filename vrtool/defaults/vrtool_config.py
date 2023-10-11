@@ -53,9 +53,9 @@ class VrtoolConfig:
     # years to compute reliability for
     T: list[int] = field(default_factory=lambda: [0, 19, 20, 25, 50, 75, 100])
     # mechanisms to exclude
-    excluded_mechanisms: list[str] = field(
+    excluded_mechanisms: list[MechanismEnum] = field(
         default_factory=lambda: [
-            "HYDRAULIC_STRUCTURES",
+            MechanismEnum.HYDRAULIC_STRUCTURES,
         ]
     )
     # whether to consider length-effects within a dike section
@@ -102,10 +102,8 @@ class VrtoolConfig:
     def mechanisms(self) -> list[MechanismEnum]:
         """Filtered list of mechanisms"""
 
-        # def non_excluded_mechanisms(mechanism: MechanismEnum) -> bool:
-        #     return mechanism.name not in self.excluded_mechanisms
         def non_excluded_mechanisms(mechanism: MechanismEnum) -> bool:
-            return mechanism.name not in self.excluded_mechanisms
+            return mechanism not in self.excluded_mechanisms + [MechanismEnum.INVALID]
 
         return list(filter(non_excluded_mechanisms, self.supported_mechanisms))
 

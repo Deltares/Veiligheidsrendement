@@ -210,10 +210,11 @@ class TestVrtoolConfig:
         assert _test_db_path == _expectation
 
     _available_mechanisms = [
-        MechanismEnum.OVERFLOW.name,
-        MechanismEnum.STABILITY_INNER.name,
-        MechanismEnum.PIPING.name,
-        MechanismEnum.REVETMENT.name,
+        MechanismEnum.OVERFLOW,
+        MechanismEnum.STABILITY_INNER,
+        MechanismEnum.PIPING,
+        MechanismEnum.REVETMENT,
+        MechanismEnum.HYDRAULIC_STRUCTURES,
     ]
 
     @pytest.mark.parametrize(
@@ -221,9 +222,6 @@ class TestVrtoolConfig:
         [
             pytest.param(
                 _available_mechanisms[3:], _available_mechanisms[:3], id="VALID filter"
-            ),
-            pytest.param(
-                ["Invalid mechanism"], _available_mechanisms[:], id="INVALID filter"
             ),
             pytest.param([None], _available_mechanisms[:], id="NONE filter"),
         ],
@@ -236,7 +234,7 @@ class TestVrtoolConfig:
         _mechanisms = _vrtool_config.mechanisms
 
         # 3. Verify expectations
-        assert all(_mech.name in expected for _mech in _mechanisms)
+        assert all(_mech in expected for _mech in _mechanisms)
 
     @pytest.mark.parametrize(
         "path_value, expected_value",

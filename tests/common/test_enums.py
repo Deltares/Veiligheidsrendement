@@ -5,39 +5,35 @@ from vrtool.common.enums import MechanismEnum
 
 class TestMechanismEnums:
     @pytest.mark.parametrize(
-        "enum_name, expected",
+        "enum_name",
         [
-            pytest.param("CamelCase", "CAMEL_CASE", id="VALID Normalized CamelCase"),
-            pytest.param(None, None, id="INVALID None"),
+            pytest.param("StabilityInner", id="VALID CamelCase"),
+            pytest.param("STABILITY_INNER", id="VALID UPPER_SNAKE"),
+            pytest.param("stability_inner", id="VALID lower_snake"),
         ],
     )
-    def test_normalize_enum_name(self, enum_name: str, expected: str):
-        # 1. Setup
-
-        # 2. Call
-        _mech_name = MechanismEnum._normalize_name(enum_name)
-
-        # 3. Assert
-        assert _mech_name == expected
-
-    # @pytest.mark.parametrize()
-    # def test_denormalize_enum(self, enum: MechanismEnum):
-    #     pass
-
-    @pytest.mark.parametrize(
-        "enum_name, expected",
-        [
-            pytest.param("StabilityInner", "STABILITY_INNER", id="VALID CamelCase"),
-            pytest.param("OVERFLOW", "OVERFLOW", id="VALID UPPER"),
-            pytest.param("Invalid", None, id="INVALID CamelCase"),
-        ],
-    )
-    def test_get_enum(self, enum_name: str, expected: str):
+    def test_get_valid_enum(self, enum_name: str):
         # 1. Setup
 
         # 2. Call
         _mech = MechanismEnum.get_enum(enum_name)
 
         # 3. Assert
-        if _mech:
-            assert _mech.name == expected
+        assert _mech.name == "STABILITY_INNER"
+
+    @pytest.mark.parametrize(
+        "enum_name",
+        [
+            pytest.param("stabilityinner", id="INVALID camelcase"),
+            pytest.param(" StabilityInner", id="INVALID space before"),
+            pytest.param("StabilityInner ", id="INVALID space after"),
+        ],
+    )
+    def test_get_invalid_enum(self, enum_name: str):
+        # 1. Setup
+
+        # 2. Call
+        _mech = MechanismEnum.get_enum(enum_name)
+
+        # 3. Assert
+        assert not _mech
