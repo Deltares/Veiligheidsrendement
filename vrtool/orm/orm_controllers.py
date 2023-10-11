@@ -1,3 +1,4 @@
+import itertools
 import logging
 from pathlib import Path
 
@@ -20,9 +21,7 @@ from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer import (
     SolutionsForMeasureResultsImporter,
 )
-from vrtool.orm.io.importers.measures.solutions_importer import (
-    SolutionsImporter,
-)
+from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -31,8 +30,6 @@ from vrtool.run_workflows.optimization_workflow.results_optimization import (
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )
-
-import itertools
 
 
 def initialize_database(database_path: Path) -> SqliteDatabase:

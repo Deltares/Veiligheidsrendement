@@ -1,10 +1,8 @@
+import hashlib
 import shutil
 from pathlib import Path
 
 import pytest
-
-import hashlib
-
 from peewee import SqliteDatabase
 
 from tests import get_test_results_dir, test_data, test_externals, test_results
@@ -17,16 +15,14 @@ from tests.api_acceptance_cases import (
     vrtool_db_default_name,
 )
 from vrtool.api import (
+    ApiRunWorkflows,
+    get_valid_vrtool_config,
     run_full,
     run_step_assessment,
     run_step_measures,
     run_step_optimization,
-    ApiRunWorkflows,
-    get_valid_vrtool_config,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-
-
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
