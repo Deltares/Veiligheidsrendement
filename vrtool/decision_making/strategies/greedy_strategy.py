@@ -31,8 +31,8 @@ class GreedyStrategy(StrategyBase):
         measure_index = np.zeros((no_of_sections,), dtype=np.int32)
         for i in range(0, no_of_sections):
             if optimal_counter_combination[i] != 0:  # a measure was taken
-                measure_index[i] = sh_array[i, optimal_counter_combination[i]]
-                sg_index[i] = sg_array[i, optimal_counter_combination[i]]
+                measure_index[i] = sh_array[i, optimal_counter_combination[i]-1]
+                sg_index[i] = sg_array[i, optimal_counter_combination[i]-1]
             else:  # no measure was taken
                 measure_index[i] = existing_investments[i, 0]
                 sg_index[i] = existing_investments[i, 1]
@@ -238,9 +238,13 @@ class GreedyStrategy(StrategyBase):
 
             # now replace the life_cycle_cost where available_measures_height is False with a very high value:
             # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
+            #get intex of available_measures_height where True
+            if isinstance(available_measures_height, pd.DataFrame):
+                available_measures_height = available_measures_height.squeeze()
+            unavailable_measure_indices = available_measures_height.index[~available_measures_height]
             life_cycle_cost[
                 section_no,
-                available_measures_height[~available_measures_height].index + 1,
+                unavailable_measure_indices + 1,
                 :,
             ] = 1e99
 
@@ -263,6 +267,35 @@ class GreedyStrategy(StrategyBase):
         elif (
             np.max(existing_investments[section_no, :]) == 0
         ):  # nothing has been invested yet
+            # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
+            if mechanism == "Overflow":
+                current_reliability_overflow = traject.probabilities.loc[traject.sections[section_no].name].loc['Overflow'].drop('Length').to_frame().transpose()
+                current_reliability_overflow.columns = current_reliability_overflow.columns.astype(int)
+                comparison_height = pd.DataFrame((
+                            HeightOptions.Overflow.values > current_reliability_overflow.values
+                        ).any(axis=1),index = HeightOptions.index)
+            elif mechanism == "Revetment":                
+                current_reliability_revetment = traject.probabilities.loc[traject.sections[section_no].name].loc['Revetment'].drop('Length')
+                current_reliability_revetment.columns = current_reliability_revetment.columns.astype(int)
+
+                comparison_height = pd.DataFrame((
+                            HeightOptions.Revetment.values > current_reliability_revetment.values
+                        ).any(axis=1),index = HeightOptions.index)
+
+            else:
+                raise Exception("Unknown mechanism in overflow bundling")
+
+            available_measures_height = comparison_height
+
+            # now replace the life_cycle_cost where available_measures_height is False with a very high value:
+            # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
+            unavailable_measure_indices = available_measures_height.index[~available_measures_height[0]]
+            life_cycle_cost[
+                section_no,
+                unavailable_measure_indices + 1,
+                :,
+            ] = 1e99
+    
             sg_section[0, :] = np.argmin(life_cycle_cost[section_no, :, :], axis=1)
             LCCs = np.min(life_cycle_cost[section_no, :, :], axis=1)
             sh_section_sorted[0, :] = np.argsort(LCCs)
