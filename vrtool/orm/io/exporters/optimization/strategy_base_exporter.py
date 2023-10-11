@@ -49,7 +49,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                         }
                     )
 
-                _measure_result = MeasureResult.get_by_id(msrId)
+                _measure_result = MeasureResult.get_by_id(singleMsrId)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
                     _step_results_mechanism.append(

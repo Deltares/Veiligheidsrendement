@@ -25,12 +25,14 @@ from vrtool.api import (
     get_valid_vrtool_config,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.orm.models.optimization.optimization_step_result_section import OptimizationStepResultSection
 
 
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    open_database,
     vrtool_db,
 )
 
@@ -234,8 +236,6 @@ class TestApiRunWorkflowsAcceptance:
         # We actually run using ALL the available measure results.
         _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
 
-        _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results))
-
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_results)
 
@@ -245,6 +245,35 @@ class TestApiRunWorkflowsAcceptance:
             valid_vrtool_config.output_directory,
             valid_vrtool_config.input_directory.joinpath("reference"),
         )
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases[5:6],
+        indirect=True,
+    )
+    def test_run_step_optimization_given_valid_vrtool_config_with_filtering(
+        self, valid_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        # We reuse existing measure results, but we clear the optimization ones.
+        clear_optimization_results(valid_vrtool_config)
+
+        _validator = RunStepOptimizationValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
+
+        # We actually run the available measure results with odd ids.
+        _measures_results_all = _validator.get_test_measure_result_ids(valid_vrtool_config)
+        _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results_all))
+
+        # 2. Run test.
+        run_step_optimization(valid_vrtool_config, _measures_results)
+
+        # 3. Verify expectations.
+        _connected_db = open_database(valid_vrtool_config.input_database_path)
+        stepResult = OptimizationStepResultSection.get_by_id(28)
+        assert stepResult.beta == pytest.approx(3.06527)
+        assert stepResult.lcc  == pytest.approx(8612354)
+        _connected_db.close()
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
