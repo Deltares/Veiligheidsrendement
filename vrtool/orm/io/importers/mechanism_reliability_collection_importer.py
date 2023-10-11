@@ -87,7 +87,7 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
             )
 
         if (
-            mechanism.name == MechanismEnum.STABILITY_INNER
+            mechanism == MechanismEnum.STABILITY_INNER
             and _computation_type_name == "DSTABILITY"
         ):
             _dstability_importer = DStabilityImporter(

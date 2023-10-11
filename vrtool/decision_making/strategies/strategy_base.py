@@ -359,9 +359,9 @@ class StrategyBase:
         # probabilities [N,S,T]
         self.Pf = {}
         for _mechanism in self.mechanisms:
-            if _mechanism.name == "OVERFLOW":
+            if _mechanism == MechanismEnum.OVERFLOW:
                 self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0)
-            elif _mechanism.name == "REVETMENT":
+            elif _mechanism == MechanismEnum.REVETMENT:
                 self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0e-18)
             else:
                 self.Pf[_mechanism.name] = np.full((N, Sg + 1, T), 1.0)
@@ -387,7 +387,7 @@ class StrategyBase:
                 )
                 # Initial
                 # condition with no measure
-                if _mechanism.name == "OVERFLOW" or _mechanism.name == "REVETMENT":
+                if _mechanism == MechanismEnum.OVERFLOW or _mechanism == MechanismEnum.REVETMENT:
                     beta2 = self.options_height[section_keys[n]][_mechanism.name]
                     # All solutions
                 else:
