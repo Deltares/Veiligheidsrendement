@@ -200,7 +200,7 @@ def revetment_combinations(
     for i, row1 in partials.iterrows():
         # combine with all combinables (in this case revetment measures)
         for j, row2 in revetment_measures.iterrows():
-            newIndex = [j]  # revetment is a single measure
+            newIndex = [indexCombined2single[j][0]]  # revetment is a single measure
             for k in indexCombined2single[i]:
                 newIndex.append(
                     k
