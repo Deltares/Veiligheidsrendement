@@ -116,7 +116,7 @@ class MeasureResultTestInputData:
             _mech_inst = Mechanism.create(name=mechanism.name)
             MechanismPerSection.create(section=section_data, mechanism=_mech_inst)
 
-        _mechanisms = [MechanismEnum.OVERFLOW"], MechanismEnum["STABILITY_INNER]
+        _mechanisms = [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
         list(map(create_combination, _mechanisms))
         return _mechanisms
 
