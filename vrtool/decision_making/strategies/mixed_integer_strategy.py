@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 
 
@@ -187,10 +188,11 @@ class MixedIntegerStrategy(StrategyBase):
                 C3 = list()
                 for nst in grN:
                     for sst in grSh:
+                        _mech_name = MechanismEnum.OVERFLOW.name
                         # derive the index of the relevant decision variables
                         index = (
-                            self.Pf["OVERFLOW"][n, :, t]
-                            > self.Pf["OVERFLOW"][nst, sst, t]
+                            self.Pf[_mech_name][n, :, t]
+                            > self.Pf[_mech_name][nst, sst, t]
                         )
                         index1 = np.where(index)[0]
                         ii = []
@@ -202,8 +204,8 @@ class MixedIntegerStrategy(StrategyBase):
                         for kk in grN:
 
                             index = (
-                                self.Pf["OVERFLOW"][kk, :, t]
-                                <= self.Pf["OVERFLOW"][nst, sst, t]
+                                self.Pf[_mech_name][kk, :, t]
+                                <= self.Pf[_mech_name][nst, sst, t]
                             )
                             index1 = np.where(index)[0]
                             if np.size(index1) > 0:

@@ -209,7 +209,12 @@ class TestVrtoolConfig:
             _expectation = None
         assert _test_db_path == _expectation
 
-    _available_mechanisms = ["OVERFLOW", "STABILITY_INNER", "PIPING", "REVETMENT"]
+    _available_mechanisms = [
+        MechanismEnum.OVERFLOW.name,
+        MechanismEnum.STABILITY_INNER.name,
+        MechanismEnum.PIPING.name,
+        MechanismEnum.REVETMENT.name,
+    ]
 
     @pytest.mark.parametrize(
         "excluded_mechanisms, expected",

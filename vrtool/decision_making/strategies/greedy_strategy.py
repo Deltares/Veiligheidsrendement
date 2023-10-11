@@ -179,9 +179,11 @@ class GreedyStrategy(StrategyBase):
                     investment_id
                 ]
                 current_investment_stability = current_investment_geotechnical[
-                    "STABILITY_INNER"
+                    MechanismEnum.STABILITY_INNER.name
                 ]
-                current_investment_piping = current_investment_geotechnical["PIPING"]
+                current_investment_piping = current_investment_geotechnical[
+                    MechanismEnum.PIPING.name
+                ]
                 # check if all rows in comparison only contain True values
                 comparison_geotechnical = (
                     GeotechnicalOptions.STABILITY_INNER >= current_investment_stability
@@ -198,34 +200,37 @@ class GreedyStrategy(StrategyBase):
             if existing_investments[section_no, 0] > 0:
                 current_height_investments = {}
                 # exclude rows for height options that are not safer than current
-                if "OVERFLOW" in HeightOptions.columns:
-                    current_height_investments["OVERFLOW"] = HeightOptions.iloc[
+                _mech_name = MechanismEnum.OVERFLOW.name
+                if _mech_name in HeightOptions.columns:
+                    current_height_investments[_mech_name] = HeightOptions.iloc[
                         existing_investments[section_no, 0] - 1
-                    ]["OVERFLOW"]
-                if "REVETMENT" in HeightOptions.columns:
-                    current_height_investments["REVETMENT"] = HeightOptions.iloc[
+                    ][_mech_name]
+                _mech_name = MechanismEnum.REVETMENT.name
+                if _mech_name in HeightOptions.columns:
+                    current_height_investments[_mech_name] = HeightOptions.iloc[
                         existing_investments[section_no, 0] - 1
-                    ]["REVETMENT"]
+                    ][_mech_name]
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
                     comparison_height = (
-                        HeightOptions.OVERFLOW > current_height_investments["OVERFLOW"]
+                        HeightOptions.OVERFLOW
+                        > current_height_investments[MechanismEnum.OVERFLOW.name]
                     ).any(axis=1)
-                    if "REVETMENT" in HeightOptions.columns:
+                    if MechanismEnum.REVETMENT.name in HeightOptions.columns:
                         comparison_height = comparison_height & (
                             HeightOptions.REVETMENT
-                            >= current_height_investments["REVETMENT"]
+                            >= current_height_investments[MechanismEnum.REVETMENT.name]
                         ).all(axis=1)
                 elif mechanism == MechanismEnum.REVETMENT:
                     comparison_height = (
                         HeightOptions.REVETMENT
-                        > current_height_investments["REVETMENT"]
+                        > current_height_investments[MechanismEnum.REVETMENT.name]
                     ).any(axis=1)
-                    if "OVERFLOW" in HeightOptions.columns:
+                    if MechanismEnum.OVERFLOW.name in HeightOptions.columns:
                         comparison_height = comparison_height & (
                             HeightOptions.OVERFLOW
-                            >= current_height_investments["OVERFLOW"]
+                            >= current_height_investments[MechanismEnum.OVERFLOW.name]
                         ).all(axis=1)
 
                 else:
@@ -830,7 +835,7 @@ class GreedyStrategy(StrategyBase):
         # writing the probabilities to self.Probabilities
         tgrid = copy.deepcopy(self.T)
         # make sure it doesnt exceed the data:
-        tgrid[-1] = np.size(Probabilities[0]["OVERFLOW"], axis=1) - 1
+        tgrid[-1] = np.size(Probabilities[0][MechanismEnum.OVERFLOW.name], axis=1) - 1
         probabilities_columns = ["name", "mechanism"] + tgrid
         count = 0
         self.Probabilities = []

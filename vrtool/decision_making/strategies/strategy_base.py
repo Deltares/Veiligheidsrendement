@@ -327,7 +327,8 @@ class StrategyBase:
             probability_of_failure_lookup: dict[str, np.array]
         ) -> np.array:
             return CombinFunctions.combine_probabilities(
-                probability_of_failure_lookup, ("STABILITY_INNER", "PIPING")
+                probability_of_failure_lookup,
+                (MechanismEnum.STABILITY_INNER.name, MechanismEnum.PIPING.name),
             )
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
@@ -387,7 +388,10 @@ class StrategyBase:
                 )
                 # Initial
                 # condition with no measure
-                if _mechanism == MechanismEnum.OVERFLOW or _mechanism == MechanismEnum.REVETMENT:
+                if (
+                    _mechanism == MechanismEnum.OVERFLOW
+                    or _mechanism == MechanismEnum.REVETMENT
+                ):
                     beta2 = self.options_height[section_keys[n]][_mechanism.name]
                     # All solutions
                 else:
@@ -459,11 +463,13 @@ class StrategyBase:
             self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = self.Pf["OVERFLOW"] * np.tile(self.D.T, (N, Sh + 1, 1))
+        self.RiskOverflow = self.Pf[MechanismEnum.OVERFLOW.name] * np.tile(
+            self.D.T, (N, Sh + 1, 1)
+        )
 
         self.RiskRevetment = []
         if MechanismEnum.REVETMENT in self.mechanisms:
-            self.RiskRevetment = self.Pf["REVETMENT"] * np.tile(
+            self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(
                 self.D.T, (N, Sh + 1, 1)
             )
         else:

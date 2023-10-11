@@ -104,14 +104,14 @@ class TestApi:
 
 _acceptance_all_steps_test_cases = [
     pytest.param(
-        ("TestCase1_38-1_no_housing", "38-1", ["REVETMENT", "HYDRAULIC_STRUCTURES"]),
+        ("TestCase1_38-1_no_housing", "38-1", [MechanismEnum.REVETMENT.name, "HYDRAULIC_STRUCTURES"]),
         id="Traject 38-1, no housing",
     ),
     pytest.param(
         (
             "TestCase1_38-1_no_housing_stix",
             "38-1",
-            ["REVETMENT", "HYDRAULIC_STRUCTURES"],
+            [MechanismEnum.REVETMENT.name, "HYDRAULIC_STRUCTURES"],
         ),
         id="Traject 38-1, no housing, with dstability",
     ),
@@ -119,7 +119,7 @@ _acceptance_all_steps_test_cases = [
         (
             "TestCase2_38-1_overflow_no_housing",
             "38-1",
-            ["REVETMENT", "HYDRAULIC_STRUCTURES"],
+            [MechanismEnum.REVETMENT.name, "HYDRAULIC_STRUCTURES"],
         ),
         id="Traject 38-1, no-housing, with overflow",
     ),
@@ -139,7 +139,7 @@ _acceptance_all_steps_test_cases = [
 _acceptance_optimization_test_cases = [
     _acceptance_all_steps_test_cases[0],
     pytest.param(
-        ("TestCase3_38-1_small", "38-1", ["REVETMENT", "HYDRAULIC_STRUCTURES"]),
+        ("TestCase3_38-1_small", "38-1", [MechanismEnum.REVETMENT.name, "HYDRAULIC_STRUCTURES"]),
         id="Traject 38-1, two sections",
     ),
 ]

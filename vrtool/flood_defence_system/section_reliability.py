@@ -39,7 +39,7 @@ class SectionReliability:
                     pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
                         str(trange[j])
                     ].Pf
-                elif mechanism.name in ["STABILITY_INNER", "PIPING"]:
+                elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     pf = mechanism_collection.Reliability[str(trange[j])].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1

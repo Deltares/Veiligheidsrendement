@@ -7,6 +7,7 @@ from click.testing import CliRunner
 
 from tests import test_data, test_results
 from vrtool import __main__
+from vrtool.common.enums import MechanismEnum
 
 
 class TestMain:
@@ -55,7 +56,10 @@ class TestMain:
             "input_database_name": "vrtool_input.db",
             "traject": "38-1",
             "output_directory": str(_output_dir),
-            "excluded_mechanisms": ["REVETMENT", "HYDRAULIC_STRUCTURES"],
+            "excluded_mechanisms": [
+                MechanismEnum.REVETMENT.name,
+                "HYDRAULIC_STRUCTURES",
+            ],
         }
         json_file = _input_dir.joinpath("test_config.json")
         json_file.touch()

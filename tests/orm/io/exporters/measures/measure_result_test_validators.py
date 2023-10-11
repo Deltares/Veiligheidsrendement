@@ -101,8 +101,8 @@ class MeasureResultTestInputData:
 
         _section_reliability.SectionReliability = pd.DataFrame.from_dict(
             {
-                "OVERFLOW": [year / 12.0 for year in years],
-                "STABILITY_INNER": [year / 13.0 for year in years],
+                MechanismEnum.OVERFLOW.name: [year / 12.0 for year in years],
+                MechanismEnum.STABILITY_INNER.name: [year / 13.0 for year in years],
                 "Section": [year / 10.0 for year in years],
             },
             orient="index",

@@ -168,7 +168,7 @@ class MechanismReliability:
         mechanism: MechanismEnum,
         mechanism_input: MechanismInput,
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism.name != "STABILITY_INNER":
+        if mechanism != MechanismEnum.STABILITY_INNER:
             raise Exception(
                 "Unknown computation type DStability for {}".format(mechanism)
             )

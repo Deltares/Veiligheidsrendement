@@ -84,7 +84,7 @@ class TestDatabaseIntegration:
         _overflow_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "OVERFLOW")
+            .where(Mechanism.name == MechanismEnum.OVERFLOW.name)
         )
 
         # Precondition
@@ -128,7 +128,7 @@ class TestDatabaseIntegration:
         _dstability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "STABILITY_INNER")
+            .where(Mechanism.name == MechanismEnum.STABILITY_INNER.name)
         )
 
         # Precondition
@@ -148,7 +148,7 @@ class TestDatabaseIntegration:
         _mechanism_input = _importer.import_orm(computation_scenarios[0])
 
         # Assert
-        assert _mechanism_input.mechanism == "STABILITY_INNER"
+        assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER.name
 
         expected_parameters = computation_scenarios[0].parameters.select()
         assert len(_mechanism_input.input) == len(expected_parameters) + 2
@@ -185,7 +185,7 @@ class TestDatabaseIntegration:
         _stability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "STABILITY_INNER")
+            .where(Mechanism.name == MechanismEnum.STABILITY_INNER.name)
         )
 
         # Precondition
@@ -226,7 +226,7 @@ class TestDatabaseIntegration:
         _piping_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "PIPING")
+            .where(Mechanism.name == MechanismEnum.PIPING.name)
         )
 
         # Precondition

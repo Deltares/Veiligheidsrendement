@@ -3,6 +3,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -93,7 +94,7 @@ def get_basic_mechanism_per_section() -> MechanismPerSection:
     """
     _test_section = get_basic_section_data()
 
-    _mech_inst = Mechanism.create(name="OVERFLOW")
+    _mech_inst = Mechanism.create(name=MechanismEnum.OVERFLOW.name)
     return MechanismPerSection.create(section=_test_section, mechanism=_mech_inst)
 
 
