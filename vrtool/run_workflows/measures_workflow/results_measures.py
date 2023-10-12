@@ -12,6 +12,7 @@ class ResultsMeasures(VrToolRunResultProtocol):
 
     def __init__(self) -> None:
         self.solutions_dict = {}
+        self.ids_to_import = []
 
     @property
     def _step_output_filepath(self) -> Path:

@@ -171,6 +171,7 @@ class StrategyBase:
         self,
         traject: DikeTraject,
         solutions_dict: Dict[str, Solutions],
+        ids_to_import: list[int],
         filtering="off",
         splitparams=False,
     ):
@@ -178,10 +179,13 @@ class StrategyBase:
         self.options = {}
         self.indexCombined2single = {}
 
+        # copy the ids as it will be emptied in step1combine, and the ids are needed lateron
+        _ids_copied = ids_to_import.copy()
+
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
-            combinedmeasures = self._step1combine(solutions_dict, section, splitparams)
+            combinedmeasures = self._step1combine(solutions_dict, section, _ids_copied, splitparams)
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
@@ -217,6 +221,7 @@ class StrategyBase:
         self,
         solutions_dict: dict[str, Solutions],
         section: DikeSection,
+        ids_to_import: list[int],
         splitparams: bool,
     ) -> pd.DataFrame:
         """
@@ -250,17 +255,27 @@ class StrategyBase:
                 for measure_class in available_measure_classes
             }
 
+        # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
+        # using pop to have it working correctly for the other sections
         self.indexCombined2single[section.name] = [
-            [i] for i in range(len(solutions_dict[section.name].MeasureData))
+            [ids_to_import.pop(0)] for i in range(len(solutions_dict[section.name].MeasureData))
         ]
 
-        combinedmeasures = measure_combinations(
-            measures_per_class["combinable"],
-            measures_per_class["partial"],
-            solutions_dict[section.name],
-            self.indexCombined2single[section.name],
-            splitparams=splitparams,
-        )
+        if ("combinable" in measures_per_class and "partial" in measures_per_class):
+            combinedmeasures = measure_combinations(
+                measures_per_class["combinable"],
+                measures_per_class["partial"],
+                solutions_dict[section.name],
+                self.indexCombined2single[section.name],
+                splitparams=splitparams,
+            )
+        elif ("combinable" in measures_per_class):
+            combinedmeasures = measures_per_class["combinable"]
+        elif ("partial" in measures_per_class):
+            combinedmeasures = measures_per_class["partial"]
+        else:
+            # apparently only revetments, so return them without any combining
+            return measures_per_class["revetment"]
 
         if "revetment" in measures_per_class:
             combinedmeasures_with_revetment = revetment_combinations(

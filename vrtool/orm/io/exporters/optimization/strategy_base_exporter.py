@@ -30,7 +30,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
                 msrId = singleMsrId + cntMeasuresPerSection[section]
-                msr = dom_model.options[section].values[singleMsrId]
+                localId  = self._find_id_in_section(singleMsrId, dom_model.indexCombined2single[section])
+                msr = dom_model.options[section].values[localId]
                 lcc = dom_model.TakenMeasures.values[i, 2]
                 offset = len(msr) - len(dom_model.T)
                 _created_optimization_step = OptimizationStep.create(
@@ -49,7 +50,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                         }
                     )
 
-                _measure_result = MeasureResult.get_by_id(msrId)
+                _measure_result = MeasureResult.get_by_id(singleMsrId)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
                     _step_results_mechanism.append(
@@ -64,3 +65,9 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
         OptimizationStepResultSection.insert_many(_step_results_section).execute()
         OptimizationStepResultMechanism.insert_many(_step_results_mechanism).execute()
+
+    def _find_id_in_section(self, measure_id: int, index_section: list[int]) -> int:
+        for i in range(len(index_section)):
+            if (index_section[i][0] == measure_id):
+                return i
+        raise ValueError("Measure ID {} not found in any of the section indices.".format(measure_id))
