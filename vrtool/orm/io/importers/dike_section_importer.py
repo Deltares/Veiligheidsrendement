@@ -73,9 +73,10 @@ class DikeSectionImporter(OrmImporterProtocol):
                     ),
                 )
             ):
-                _section_reliability_dict[
+                _mech_name = MechanismEnum.get_enum(
                     _amr.mechanism_per_section.mechanism.name
-                ].append(_amr.beta)
+                ).name
+                _section_reliability_dict[_mech_name].append(_amr.beta)
         return pd.DataFrame.from_dict(
             _section_reliability_dict, columns=_columns, orient="index"
         )
