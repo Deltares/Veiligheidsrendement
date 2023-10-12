@@ -23,10 +23,12 @@ from vrtool.api import (
     run_step_optimization,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.models.optimization.optimization_step_result_mechanism import OptimizationStepResultMechanism
-from vrtool.orm.models.optimization.optimization_step_result_section import OptimizationStepResultSection
-
-
+from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
+    OptimizationStepResultMechanism,
+)
+from vrtool.orm.models.optimization.optimization_step_result_section import (
+    OptimizationStepResultSection,
+)
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -261,7 +263,9 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run the available measure results with odd ids.
-        _measures_results_all = _validator.get_test_measure_result_ids(valid_vrtool_config)
+        _measures_results_all = _validator.get_test_measure_result_ids(
+            valid_vrtool_config
+        )
         _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results_all))
 
         # 2. Run test.
@@ -270,12 +274,12 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         with open_database(valid_vrtool_config.input_database_path) as _connected_db:
             stepResult = OptimizationStepResultSection.get_by_id(28)
-        
+
             assert len(OptimizationStepResultSection.select()) == 28
             assert len(OptimizationStepResultMechanism.select()) == 112
 
             assert stepResult.beta == pytest.approx(2.59342)
-            assert stepResult.lcc  == pytest.approx(8612354)
+            assert stepResult.lcc == pytest.approx(8612354)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",

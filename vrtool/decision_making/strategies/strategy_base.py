@@ -185,7 +185,9 @@ class StrategyBase:
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
-            combinedmeasures = self._step1combine(solutions_dict, section, _ids_copied, splitparams)
+            combinedmeasures = self._step1combine(
+                solutions_dict, section, _ids_copied, splitparams
+            )
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
@@ -258,10 +260,11 @@ class StrategyBase:
         # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
         # using pop to have it working correctly for the other sections
         self.indexCombined2single[section.name] = [
-            [ids_to_import.pop(0)] for i in range(len(solutions_dict[section.name].MeasureData))
+            [ids_to_import.pop(0)]
+            for i in range(len(solutions_dict[section.name].MeasureData))
         ]
 
-        if ("combinable" in measures_per_class and "partial" in measures_per_class):
+        if "combinable" in measures_per_class and "partial" in measures_per_class:
             combinedmeasures = measure_combinations(
                 measures_per_class["combinable"],
                 measures_per_class["partial"],
@@ -269,9 +272,9 @@ class StrategyBase:
                 self.indexCombined2single[section.name],
                 splitparams=splitparams,
             )
-        elif ("combinable" in measures_per_class):
+        elif "combinable" in measures_per_class:
             combinedmeasures = measures_per_class["combinable"]
-        elif ("partial" in measures_per_class):
+        elif "partial" in measures_per_class:
             combinedmeasures = measures_per_class["partial"]
         else:
             # apparently only revetments, so return them without any combining

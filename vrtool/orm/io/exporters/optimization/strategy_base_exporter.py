@@ -30,7 +30,9 @@ class StrategyBaseExporter(OrmExporterProtocol):
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
                 msrId = singleMsrId + cntMeasuresPerSection[section]
-                localId  = self._find_id_in_section(singleMsrId, dom_model.indexCombined2single[section])
+                localId = self._find_id_in_section(
+                    singleMsrId, dom_model.indexCombined2single[section]
+                )
                 msr = dom_model.options[section].values[localId]
                 lcc = dom_model.TakenMeasures.values[i, 2]
                 offset = len(msr) - len(dom_model.T)
@@ -68,6 +70,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
     def _find_id_in_section(self, measure_id: int, index_section: list[int]) -> int:
         for i in range(len(index_section)):
-            if (index_section[i][0] == measure_id):
+            if index_section[i][0] == measure_id:
                 return i
-        raise ValueError("Measure ID {} not found in any of the section indices.".format(measure_id))
+        raise ValueError(
+            "Measure ID {} not found in any of the section indices.".format(measure_id)
+        )
