@@ -1,4 +1,4 @@
 ,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm,beta_target,transition_level
 0,,,0.0,,,,,,,,
-1,31,81,15109600.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
-2,32,81,22159500.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
+1,31,81,15109600.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999.0,-999,-999
+2,32,81,22159500.0,[],6,['Zelfkerende constructie'],yes,-999.0,-999.0,-999,-999
