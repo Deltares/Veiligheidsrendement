@@ -225,4 +225,4 @@ class TestMeasureImporter:
             _importer.import_orm(_orm_measure)
 
         # 3. Verify expectations.
-        assert str(exc_err.value) == f"No import available for {_measure_type}."
+        assert str(exc_err.value) == f"No import available for '{_measure_type}'."

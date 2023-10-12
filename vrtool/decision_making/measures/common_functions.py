@@ -355,7 +355,7 @@ def determine_costs(
         logging.warning(
             "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
         )
-    if MeasureTypeEnum.SOIL_REINFORCEMENT in measure_type:
+    if measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT:
         if direction == "inward":
             total_cost = (
                 unit_costs["Inward added volume"] * area_extra * length
