@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -46,17 +47,17 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
                 f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        mechanism_name = orm_model.mechanism.name
+        mechanism = MechanismEnum.get_enum(orm_model.mechanism.name)
 
         # Assume computation type is the same accross the computation scenarios
         computation_scenarios = orm_model.computation_scenarios.select()
         computation_type = computation_scenarios[0].computation_type.name
         collection = MechanismReliabilityCollection(
-            mechanism_name, computation_type, self.computation_years, self.t_0, 0
+            mechanism, computation_type, self.computation_years, self.t_0, 0
         )
 
         mechanism_input = self._get_mechanism_input(
-            orm_model, mechanism_name, computation_type
+            orm_model, mechanism, computation_type
         )
 
         for year in collection.Reliability.keys():
@@ -67,24 +68,26 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
     def _get_mechanism_input(
         self,
         mechanism_per_section: MechanismPerSection,
-        mechanism: str,
+        mechanism: MechanismEnum,
         computation_type: str,
     ) -> MechanismInput:
-        _mechanism_name = mechanism.lower().strip()
         _computation_type_name = computation_type.upper().strip()
 
-        if _mechanism_name == "overflow":
+        if mechanism == MechanismEnum.OVERFLOW:
             return OverFlowHydraRingImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if _mechanism_name == "stabilityinner" and _computation_type_name == "SIMPLE":
+        if (
+            mechanism == MechanismEnum.STABILITY_INNER
+            and _computation_type_name == "SIMPLE"
+        ):
             return StabilityInnerSimpleImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
         if (
-            _mechanism_name == "stabilityinner"
+            mechanism == MechanismEnum.STABILITY_INNER
             and _computation_type_name == "DSTABILITY"
         ):
             _dstability_importer = DStabilityImporter(
@@ -94,10 +97,10 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if _mechanism_name == "piping":
+        if mechanism == MechanismEnum.PIPING:
             return PipingImporter().import_orm(mechanism_per_section)
 
-        if _mechanism_name == "revetment":
+        if mechanism == MechanismEnum.REVETMENT:
             return RevetmentImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )

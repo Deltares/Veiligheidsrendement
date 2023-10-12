@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.mixed_integer_strategy import (
     MixedIntegerStrategy,
@@ -80,7 +81,7 @@ class ParetoFrontierStrategy(StrategyBase):
         """This is an optional routine that can be used to filter measures per section.
         It is based on defining a Pareto front, its main idea is that you throw out measures that have a certain reliability but are more costly than other measures that provide the same reliability."""
         self.options_height, self.options_geotechnical = split_options(
-            self.options, traject.mechanism_names
+            self.options, traject.mechanisms
         )
         if type == "ParetoPerSection":
             damage = traject.general_info.FloodDamage
@@ -98,9 +99,15 @@ class ParetoFrontierStrategy(StrategyBase):
                     self.options_g_filtered[i], self.discount_rate
                 )
 
-                tgrid = self.options_g_filtered[i]["StabilityInner"].columns.values
-                pf_SI = beta_to_pf(self.options_g_filtered[i]["StabilityInner"])
-                pf_pip = beta_to_pf(self.options_g_filtered[i]["Piping"])
+                tgrid = self.options_g_filtered[i][
+                    MechanismEnum.STABILITY_INNER.name
+                ].columns.values
+                pf_SI = beta_to_pf(
+                    self.options_g_filtered[i][MechanismEnum.STABILITY_INNER.name]
+                )
+                pf_pip = beta_to_pf(
+                    self.options_g_filtered[i][MechanismEnum.PIPING.name]
+                )
 
                 pftot1 = interp1d(tgrid, np.add(pf_SI, pf_pip))
                 risk1 = np.sum(

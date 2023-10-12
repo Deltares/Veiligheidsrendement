@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -40,9 +41,10 @@ class MeasureResultImporter(OrmImporterProtocol):
             for _mrm in measure_result.measure_result_mechanisms.where(
                 MeasureResultMechanism.time == _smr.time
             ):
-                _section_reliability_dict[
+                _mech_name = MechanismEnum.get_enum(
                     _mrm.mechanism_per_section.mechanism.name
-                ].append(_mrm.beta)
+                ).name
+                _section_reliability_dict[_mech_name].append(_mrm.beta)
 
         return pd.DataFrame.from_dict(
             _section_reliability_dict, columns=_columns, orient="index"

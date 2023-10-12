@@ -7,6 +7,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data, test_externals
 from tests.orm import empty_db_fixture
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
@@ -42,14 +43,16 @@ class TestDataHelper:
         return ComputationScenario.create(
             mechanism_per_section=mechanism_per_section,
             computation_type=_computation_type,
-            computation_name=f"Computation Name",
+            computation_name="Computation Name",
             scenario_name="Scenario Name",
             scenario_probability=0.9,
             probability_of_failure=0.8,
         )
 
     @staticmethod
-    def get_mechanism_per_section_with_scenario(mechanism: str) -> ComputationScenario:
+    def get_mechanism_per_section_with_scenario(
+        mechanism: MechanismEnum,
+    ) -> ComputationScenario:
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
             dike_traject=_test_dike_traject,
@@ -62,12 +65,12 @@ class TestDataHelper:
             annual_crest_decline=42,
         )
 
-        _mechanism = Mechanism.create(name=mechanism)
-        return MechanismPerSection.create(section=_test_section, mechanism=_mechanism)
+        _mech_inst = Mechanism.create(name=mechanism.name)
+        return MechanismPerSection.create(section=_test_section, mechanism=_mech_inst)
 
     @staticmethod
     def get_valid_mechanism_per_section(
-        mechanism: str, computation_type: str
+        mechanism: MechanismEnum, computation_type: str
     ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
@@ -78,7 +81,7 @@ class TestDataHelper:
 
     @staticmethod
     def get_mechanism_per_section_with_supporting_file(
-        mechanism: str, computation_type: str
+        mechanism: MechanismEnum, computation_type: str
     ) -> MechanismPerSection:
         _file_name = "something.stix"
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
@@ -95,7 +98,7 @@ class TestDataHelper:
 
     @staticmethod
     def get_overflow_hydraring_mechanism_per_section(
-        mechanism: str, computation_type: str
+        mechanism: MechanismEnum, computation_type: str
     ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
@@ -114,7 +117,7 @@ class TestDataHelper:
 
     @staticmethod
     def get_revetment_mechanism_per_section(
-        mechanism: str, computation_type: str
+        mechanism: MechanismEnum, computation_type: str
     ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
@@ -145,7 +148,7 @@ class TestDataHelper:
 class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_for_dstability(self, empty_db_fixture: SqliteDatabase):
         # Setup
-        _mechanism = "StabilityInner"
+        _mechanism = MechanismEnum.STABILITY_INNER
         _computation_type = "DSTABILITY"
         _config = TestDataHelper.create_valid_config()
         _config.input_directory = test_data
@@ -178,25 +181,25 @@ class TestMechanismReliabilityCollectionImporter:
         "mechanism, computation_type, get_mechanism_per_section",
         [
             pytest.param(
-                "StabilityInner",
+                MechanismEnum.STABILITY_INNER,
                 "SIMPLE",
                 TestDataHelper.get_valid_mechanism_per_section,
                 id="Stability Inner simple",
             ),
             pytest.param(
-                "Piping",
+                MechanismEnum.PIPING,
                 "SEMIPROB",
                 TestDataHelper.get_valid_mechanism_per_section,
                 id="Piping SEMIPROB",
             ),
             pytest.param(
-                "Overflow",
+                MechanismEnum.OVERFLOW,
                 "HRING",
                 TestDataHelper.get_overflow_hydraring_mechanism_per_section,
                 id="Overflow HRING",
             ),
             pytest.param(
-                "Revetment",
+                MechanismEnum.REVETMENT,
                 "",
                 TestDataHelper.get_revetment_mechanism_per_section,
                 id="Revetment",
@@ -205,7 +208,7 @@ class TestMechanismReliabilityCollectionImporter:
     )
     def test_import_orm_with_simple_mechanism_per_section(
         self,
-        mechanism: str,
+        mechanism: MechanismEnum,
         computation_type: str,
         get_mechanism_per_section: Callable,
         empty_db_fixture: SqliteDatabase,
@@ -245,7 +248,7 @@ class TestMechanismReliabilityCollectionImporter:
     def _assert_mechanism_properties(
         self,
         collection: MechanismReliabilityCollection,
-        mechanism: str,
+        mechanism: MechanismEnum,
         computation_type: str,
     ) -> None:
         mechanism_reliabilities = collection.Reliability.values()

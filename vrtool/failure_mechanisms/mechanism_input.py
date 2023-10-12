@@ -5,13 +5,14 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_reader import read_data_from_csv
 from vrtool.probabilistic_tools.hydra_ring_scripts import read_design_table
 
 
 class MechanismInput:
     # Class for input of a mechanism
-    def __init__(self, mechanism):
+    def __init__(self, mechanism: MechanismEnum):
         self.mechanism = mechanism
         self.input = {}
 
@@ -23,7 +24,7 @@ class MechanismInput:
         externals_path: Path,
         reference: Union[int, str],
         calctype: str,
-        mechanism=None,
+        mechanism: MechanismEnum = None,
         **kwargs,
     ):
         """
@@ -33,14 +34,14 @@ class MechanismInput:
             externals_path (str): Path to the folder containing all the externals.
             reference (str): A reference to use for the calculation.
             calctype (str): Calculation type for the given mechanism, one of ['Simple', 'HRING', 'DStability', 'DirectInput'].
-            mechanism (str): The mechanism to use for the calculation.
+            mechanism (MechanismEnum): The mechanism to use for the calculation.
             **kwargs: Additional keyword arguments to pass.
 
         Returns:
             None.
         """
 
-        if mechanism == "StabilityInner":
+        if mechanism ==MechanismEnum.STABILITY_INNER:
             if calctype == "DStability":
                 data = read_data_from_csv(input_path, reference)
                 data = data.loc[data.index.isin(["STIXNAAM"])]
@@ -51,7 +52,7 @@ class MechanismInput:
             else:
                 data = read_data_from_csv(input_path, reference)
 
-        elif mechanism == "Overflow":
+        elif mechanism == MechanismEnum.OVERFLOW:
             if calctype == "Simple":
                 data = pd.read_csv(
                     input_path.joinpath(Path(reference).name), delimiter=","

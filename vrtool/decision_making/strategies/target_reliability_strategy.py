@@ -5,6 +5,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategy_evaluation import (
@@ -129,10 +130,10 @@ class TargetReliabilityStrategy(StrategyBase):
             _beta_t_overflow = beta_cs_overflow
             _beta_t_revetment = beta_cs_revetment
             _beta_t = {
-                "Piping": _beta_t_piping,
-                "StabilityInner": _beta_t_sabinner,
-                "Overflow": _beta_t_overflow,
-                "Revetment": _beta_t_revetment,
+                MechanismEnum.PIPING.name: _beta_t_piping,
+                MechanismEnum.STABILITY_INNER.name: _beta_t_sabinner,
+                MechanismEnum.OVERFLOW.name: _beta_t_overflow,
+                MechanismEnum.REVETMENT.name: _beta_t_revetment,
             }
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
             if isinstance(self.OI_year, int):
@@ -142,9 +143,10 @@ class TargetReliabilityStrategy(StrategyBase):
             # make PossibleMeasures dataframe
             _possible_measures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
-            for mechanism in traject.mechanism_names:
+            for mechanism in traject.mechanisms:
                 _possible_measures = _possible_measures.loc[
-                    self.options[i.name][(mechanism, _target_year)] > _beta_t[mechanism]
+                    self.options[i.name][(mechanism.name, _target_year)]
+                    > _beta_t[mechanism.name]
                 ]
 
             if len(_possible_measures) == 0:
@@ -159,7 +161,7 @@ class TargetReliabilityStrategy(StrategyBase):
             _lcc = calc_tc(
                 _possible_measures,
                 self.discount_rate,
-                horizon=self.options[i.name]["Overflow"].columns[-1],
+                horizon=self.options[i.name][MechanismEnum.OVERFLOW.name].columns[-1],
             )
 
             # select measure with lowest cost

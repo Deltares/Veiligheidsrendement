@@ -10,6 +10,7 @@ import seaborn as sns
 from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
@@ -19,7 +20,7 @@ class DikeTraject:
     general_info: DikeTrajectInfo
     sections: list[DikeSection]
     probabilities: pd.DataFrame
-    mechanism_names: list[str]
+    mechanisms: list[MechanismEnum]
     t_0: int
     T: list[int]
 
@@ -43,7 +44,7 @@ class DikeTraject:
 
         _dike_traject = cls()
 
-        _dike_traject.mechanism_names = config.mechanisms
+        _dike_traject.mechanisms = config.mechanisms
         _dike_traject.t_0 = config.t_0
         _dike_traject.T = config.T
 
@@ -107,23 +108,24 @@ def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=
         ts = base.columns.values
         if not mechs:
             mechs = np.unique(base.index.get_level_values("mechanism").values)
-        # mechs = ['Overflow']
     # pf_traject = np.zeros((len(ts),))
     pf_traject = np.zeros((len(trange),))
 
-    for i in mechs:
-        if i != "Section":
+    for mech in mechs:
+        if mech != "Section":
             if datatype == "DataFrame":
-                betas = base.xs(i, level="mechanism").values.astype("float")
+                betas = base.xs(mech, level="mechanism").values.astype("float")
             else:
-                betas = base[i]
+                betas = base[mech]
             beta_interp = interp1d(np.array(ts).astype(np.int_), betas)
-            pfs[i] = beta_to_pf(beta_interp(trange))
+            pfs[mech] = beta_to_pf(beta_interp(trange))
             # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
-            pnonfs = 1 - pfs[i]
-            if i == "Overflow":
+            pnonfs = 1 - pfs[mech]
+            if mech == MechanismEnum.OVERFLOW.name:
                 # pf_traject += np.max(pfs[i], axis=0)
-                pf_traject = 1 - np.multiply(1 - pf_traject, 1 - np.max(pfs[i], axis=0))
+                pf_traject = 1 - np.multiply(
+                    1 - pf_traject, 1 - np.max(pfs[mech], axis=0)
+                )
             else:
                 # pf_traject += np.sum(pfs[i], axis=0)
                 # pf_traject += 1-np.prod(pnonfs, axis=0)

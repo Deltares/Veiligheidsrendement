@@ -23,6 +23,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     validate_measure_result_export,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
@@ -95,7 +96,7 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
-    mechanism_data = [dict(name="a_mechanism"), dict(name="b_mechanism")]
+    mechanism_data = [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
     buildings_data = [
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
@@ -149,10 +150,10 @@ class TestOrmControllers:
         _dike_section.save()
 
         for _m_dict in DummyModelsData.mechanism_data:
-            _mechanism = orm_models.Mechanism.create(**_m_dict)
-            _mechanism.save()
+            _mech_inst = orm_models.Mechanism.create(**_m_dict)
+            _mech_inst.save()
             _mechanism_section = orm_models.MechanismPerSection.create(
-                mechanism=_mechanism, section=_dike_section
+                mechanism=_mech_inst, section=_dike_section
             )
             _mechanism_section.save()
 
@@ -248,9 +249,9 @@ class TestOrmControllers:
 
         def check_section_reliability(section: DikeSection):
             _recognized_keys = [
-                "Overflow",
-                "Piping",
-                "StabilityInner",
+                MechanismEnum.OVERFLOW,
+                MechanismEnum.PIPING,
+                MechanismEnum.STABILITY_INNER,
             ]
 
             def check_key_value(key_value):
@@ -289,12 +290,16 @@ class TestOrmControllers:
         _water_load_input.input["d_cover"] = None
         _water_load_input.input["beta"] = 42.24
         _stability_inner_collection = MechanismReliabilityCollection(
-            "StabilityInner", "combinable", database_vrtool_config.T, 2023, 2025
+            MechanismEnum.STABILITY_INNER,
+            "combinable",
+            database_vrtool_config.T,
+            2023,
+            2025,
         )
         _stability_inner_collection.Reliability["0"].Input = _water_load_input
         _dike_section.section_reliability.load = _water_load_input
         _dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
-            "StabilityInner"
+            MechanismEnum.STABILITY_INNER
         ] = _stability_inner_collection
 
         # Initial Geometry
@@ -315,7 +320,7 @@ class TestOrmControllers:
         _dike_section.InitialGeometry.set_index("type", inplace=True, drop=True)
 
         # Mechanism data
-        _dike_section.mechanism_data["StabilityInner"] = [
+        _dike_section.mechanism_data[MechanismEnum.STABILITY_INNER] = [
             ("RW000", "SIMPLE"),
             "combinable",
         ]
@@ -356,10 +361,13 @@ class TestOrmControllers:
         _test_section_data = _test_mechanism_per_section.section
 
         # Dike Section and Dike Traject.
+        _mech_name = MechanismEnum.get_enum(
+            _test_mechanism_per_section.mechanism.name
+        ).name
         _reliability_df = pd.DataFrame(
             [4.2, 2.4],
             columns=["42"],
-            index=[_test_mechanism_per_section.mechanism.name, "Section"],
+            index=[_mech_name, "Section"],
         )
         _dummy_section = DikeSection()
         _dummy_section.name = _test_section_data.section_name
@@ -946,14 +954,14 @@ class TestOrmControllers:
             )
 
     def _create_mechanism(self, mechanism_name: str) -> orm_models.Mechanism:
-        _mechanism, _ = orm_models.Mechanism.get_or_create(name=mechanism_name)
-        return _mechanism
+        _mech_inst, _ = orm_models.Mechanism.get_or_create(name=mechanism_name)
+        return _mech_inst
 
     def _create_basic_mechanism_per_section(
-        self, section: orm_models.SectionData, mechanism: orm_models.Mechanism
+        self, section: orm_models.SectionData, mech_inst: orm_models.Mechanism
     ) -> orm_models.MechanismPerSection:
         return orm_models.MechanismPerSection.create(
-            section=section, mechanism=mechanism
+            section=section, mechanism=mech_inst
         )
 
     def _create_assessment_mechanism_results(
@@ -973,7 +981,7 @@ class TestOrmControllers:
         section = self._create_basic_section_data(traject_info, section_name)
 
         _mechanism_per_section = self._create_basic_mechanism_per_section(
-            section, self._create_mechanism("TestMechanism")
+            section, self._create_mechanism(MechanismEnum.OVERFLOW.name)
         )
 
         for measure in measures:

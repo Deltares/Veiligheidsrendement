@@ -7,6 +7,7 @@ from typing import Union
 import pytest
 
 from tests import test_data, test_results
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
 
 
@@ -82,10 +83,10 @@ class TestVrtoolConfig:
         assert _config.t_0 == 2025
         assert _config.T == [0, 19, 20, 25, 50, 75, 100]
         assert _config.mechanisms == [
-            "Overflow",
-            "StabilityInner",
-            "Piping",
-            "Revetment",
+            MechanismEnum.OVERFLOW,
+            MechanismEnum.STABILITY_INNER,
+            MechanismEnum.PIPING,
+            MechanismEnum.REVETMENT,
         ]
         assert not _config.LE_in_section
         assert _config.crest_step == pytest.approx(0.5)
@@ -208,16 +209,19 @@ class TestVrtoolConfig:
             _expectation = None
         assert _test_db_path == _expectation
 
-    _available_mechanisms = ["Overflow", "StabilityInner", "Piping", "Revetment"]
+    _available_mechanisms = [
+        MechanismEnum.OVERFLOW,
+        MechanismEnum.STABILITY_INNER,
+        MechanismEnum.PIPING,
+        MechanismEnum.REVETMENT,
+        MechanismEnum.HYDRAULIC_STRUCTURES,
+    ]
 
     @pytest.mark.parametrize(
         "excluded_mechanisms, expected",
         [
             pytest.param(
                 _available_mechanisms[3:], _available_mechanisms[:3], id="VALID filter"
-            ),
-            pytest.param(
-                ["Invalid mechanism"], _available_mechanisms[:], id="INVALID filter"
             ),
             pytest.param([None], _available_mechanisms[:], id="NONE filter"),
         ],
@@ -227,10 +231,10 @@ class TestVrtoolConfig:
         _vrtool_config = VrtoolConfig(excluded_mechanisms=excluded_mechanisms)
 
         # 2. Run test
-        _mechamisms = _vrtool_config.mechanisms
+        _mechanisms = _vrtool_config.mechanisms
 
         # 3. Verify expectations
-        assert _mechamisms.sort() == expected.sort()
+        assert all(_mech in expected for _mech in _mechanisms)
 
     @pytest.mark.parametrize(
         "path_value, expected_value",

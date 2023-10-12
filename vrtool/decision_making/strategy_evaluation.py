@@ -6,6 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
@@ -34,7 +35,7 @@ def measure_combinations(
         .tolist()
     )
     # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanisms = (
+    mechanism_names = (
         combinables.columns.get_level_values(0)[
             combinables.columns.get_level_values(1) != ""
         ]
@@ -47,7 +48,8 @@ def measure_combinations(
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
-        mechanism: {year: [] for year in years} for mechanism in mechanisms
+        mechanism_name: {year: [] for year in years}
+        for mechanism_name in mechanism_names
     }
     count = 0
     # loop over partials
@@ -96,11 +98,11 @@ def measure_combinations(
                 attribute_col_dict[col].append(attribute_value)
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
-            for mechanism in mechanism_beta_dict.keys():
-                if mechanism == "Section":
+            for mechanism_name in mechanism_beta_dict.keys():
+                if mechanism_name == "Section":
                     continue
                 else:
-                    for year in mechanism_beta_dict[mechanism].keys():
+                    for year in mechanism_beta_dict[mechanism_name].keys():
                         if row1["type"].all() == "Vertical Geotextile":
                             vzg_idx = solutions.measure_table.loc[
                                 solutions.measure_table["Name"]
@@ -111,14 +113,17 @@ def measure_combinations(
                             ]
                             P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
                             pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(
-                                row2[(mechanism, year)]
+                                row2[(mechanism_name, year)]
                             )
-                            mechanism_beta_dict[mechanism][year].append(
+                            mechanism_beta_dict[mechanism_name][year].append(
                                 pf_to_beta(pf_vzg)
                             )
                         else:
-                            mechanism_beta_dict[mechanism][year].append(
-                                np.maximum(row1[mechanism, year], row2[mechanism, year])
+                            mechanism_beta_dict[mechanism_name][year].append(
+                                np.maximum(
+                                    row1[mechanism_name, year],
+                                    row2[mechanism_name, year],
+                                )
                             )
 
             count += 1
@@ -182,7 +187,7 @@ def revetment_combinations(
         .tolist()
     )
     # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanisms = (
+    mechanism_names = (
         revetment_measures.columns.get_level_values(0)[
             revetment_measures.columns.get_level_values(1) != ""
         ]
@@ -195,7 +200,8 @@ def revetment_combinations(
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
-        mechanism: {year: [] for year in years} for mechanism in mechanisms
+        mechanism_name: {year: [] for year in years}
+        for mechanism_name in mechanism_names
     }
 
     # loop over partials
@@ -247,13 +253,15 @@ def revetment_combinations(
                 attribute_col_dict[col].append(attribute_value)
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
-            for mechanism in mechanism_beta_dict.keys():
-                if mechanism == "Section":
+            for mechanism_name in mechanism_beta_dict.keys():
+                if mechanism_name == "Section":
                     continue
                 else:
-                    for year in mechanism_beta_dict[mechanism].keys():
-                        mechanism_beta_dict[mechanism][year].append(
-                            np.maximum(row1[mechanism, year], row2[mechanism, year])
+                    for year in mechanism_beta_dict[mechanism_name].keys():
+                        mechanism_beta_dict[mechanism_name][year].append(
+                            np.maximum(
+                                row1[mechanism_name, year], row2[mechanism_name, year]
+                            )
                         )
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
@@ -294,14 +302,14 @@ def make_traject_df(traject: DikeTraject, cols):
     for i in traject.sections:
         sections.append(i.name)
 
-    mechanisms = list(traject.mechanism_names) + ["Section"]
+    mechanism_names = list(map(str, traject.mechanisms)) + ["Section"]
     df_index = pd.MultiIndex.from_product(
-        [sections, mechanisms], names=["name", "mechanism"]
+        [sections, mechanism_names], names=["name", "mechanism"]
     )
     _traject_probability = pd.DataFrame(columns=cols, index=df_index)
 
     for _section in traject.sections:
-        for _mechanism_name in mechanisms:
+        for _mechanism_name in mechanism_names:
             if (
                 _mechanism_name
                 not in _section.section_reliability.SectionReliability.index
@@ -486,13 +494,13 @@ def implement_option(section, traject_probability, new_probability):
 
 
 def split_options(
-    options: dict[str, pd.DataFrame], available_mechanism_names: list[str]
+    options: dict[str, pd.DataFrame], available_mechanisms: list[MechanismEnum]
 ) -> tuple[list[dict[str, pd.DataFrame]], list[dict[str, pd.DataFrame]]]:
     """Splits the options for the measures.
 
     Args:
         options (_type_): The available options to split.
-        available_mechanism_names (list[str]): The collection of the names of the available mechanisms for the evaluation.
+        available_mechanisms (list[MechanismEnum]): The collection of the names of the available mechanisms for the evaluation.
 
     Returns:
         list[dict[str, pd.DataFrame]]: The collection of splitted options_dependent
@@ -500,23 +508,29 @@ def split_options(
     """
 
     def get_dropped_dependent_options(
-        available_mechanism_names: list[str],
+        available_mechanisms: list[MechanismEnum],
     ) -> list[str]:
         options = []
-        for available_mechanism_name in available_mechanism_names:
-            if available_mechanism_name in ["StabilityInner", "Piping"]:
-                options.append(available_mechanism_name)
+        for available_mechanism in available_mechanisms:
+            if available_mechanism in [
+                MechanismEnum.STABILITY_INNER,
+                MechanismEnum.PIPING,
+            ]:
+                options.append(available_mechanism.name)
 
         options.append("Section")
         return options
 
     def get_dropped_independent_options(
-        available_mechanism_names: list[str],
+        available_mechanisms: list[MechanismEnum],
     ) -> list[str]:
         options = []
-        for available_mechanism_name in available_mechanism_names:
-            if available_mechanism_name in ["Overflow", "Revetment"]:
-                options.append(available_mechanism_name)
+        for available_mechanism in available_mechanisms:
+            if available_mechanism.name in [
+                MechanismEnum.OVERFLOW,
+                MechanismEnum.REVETMENT,
+            ]:
+                options.append(available_mechanism.name)
 
         options.append("Section")
         return options
@@ -692,13 +706,13 @@ def split_options(
 
         # only keep reliability of relevant mechanisms in dictionary
         options_dependent[i].drop(
-            get_dropped_dependent_options(available_mechanism_names),
+            get_dropped_dependent_options(available_mechanisms),
             axis=1,
             level=0,
             inplace=True,
         )
         options_independent[i].drop(
-            get_dropped_independent_options(available_mechanism_names),
+            get_dropped_independent_options(available_mechanisms),
             axis=1,
             level=0,
             inplace=True,
@@ -722,10 +736,10 @@ def evaluate_risk(
     sg,
     config: VrtoolConfig,
 ):
-    for i in config.mechanisms:
-        if i == "Overflow":
+    for mechanism in config.mechanisms:
+        if mechanism == MechanismEnum.OVERFLOW:
             init_overflow_risk[n, :] = strategy.RiskOverflow[n, sh, :]
-        elif i == "Revetment":
+        elif mechanism == MechanismEnum.REVETMENT:
             init_revetment_risk[n, :] = strategy.RiskRevetment[n, sh, :]
         else:
             init_geo_risk[n, :] = strategy.RiskGeotechnical[n, sg, :]
@@ -737,7 +751,7 @@ def update_probability(init_probability, strategy, index):
     for i in init_probability:
         from scipy.stats import norm
 
-        if i in ["Overflow", "Revetment"]:
+        if i in [MechanismEnum.OVERFLOW.name, MechanismEnum.REVETMENT.name]:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]
