@@ -95,7 +95,7 @@ class Solutions:
         inputs_r = []
 
         for measure in self.measures:
-            _measure_type = MeasureTypeEnum.get_enum(measure.parameters["Type"])
+            _measure_type = MeasureTypeEnum[measure.parameters["Type"]]
             if isinstance(measure.measures, list):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
@@ -113,7 +113,7 @@ class Solutions:
 
                     cost = measure.measures[j]["Cost"]
                     measure_in.append(str(measure.parameters["ID"]))
-                    measure_in.append(_measure_type)
+                    measure_in.append(_measure_type.name)
                     measure_in.append(measure.parameters["Class"])
                     measure_in.append(measure.parameters["year"])
                     if splitparams:
@@ -169,7 +169,7 @@ class Solutions:
                     inputs_m.append(
                         [
                             ID,
-                            _measure_type,
+                            _measure_type.name,
                             measure_class,
                             year,
                             designvars,
@@ -184,7 +184,7 @@ class Solutions:
                     inputs_m.append(
                         [
                             ID,
-                            _measure_type,
+                            _measure_type.name,
                             measure_class,
                             year,
                             designvars,

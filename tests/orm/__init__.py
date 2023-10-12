@@ -3,7 +3,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -125,7 +125,7 @@ def get_basic_measure_type() -> MeasureType:
     Returns:
         MeasureType: The created measure type entity in the database.
     """
-    return MeasureType.create(name="TestMeasureType")
+    return MeasureType.create(name=MeasureTypeEnum.STABILITY_SCREEN.name)
 
 
 def get_basic_combinable_type() -> CombinableType:

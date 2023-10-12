@@ -105,7 +105,7 @@ class MeasureImporter(OrmImporterProtocol):
         )
         if not _found_type:
             raise NotImplementedError(
-                "No import available for {}.".format(
+                "No import available for '{}'.".format(
                     orm_measure.measure.measure_type.name
                 )
             )
@@ -117,6 +117,9 @@ class MeasureImporter(OrmImporterProtocol):
         if not orm_model:
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
-        if MeasureTypeEnum.get_enum(orm_model.measure_type.name) == MeasureTypeEnum.CUSTOM:
+        if (
+            MeasureTypeEnum.get_enum(orm_model.measure_type.name)
+            == MeasureTypeEnum.CUSTOM
+        ):
             return self._import_custom_measure(orm_model.custom_measures.select().get())
         return self._import_standard_measure(orm_model.standard_measure.select().get())

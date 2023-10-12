@@ -4,7 +4,7 @@ import logging
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     determine_new_geometry,
@@ -32,7 +32,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
         # self. parameters = measure.parameters
-        type = self.parameters["Type"]
+        measure_type = MeasureTypeEnum[self.parameters["Type"]]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
 
@@ -47,7 +47,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
             _modified_measure["Cost"] = determine_costs(
                 self.parameters,
-                type,
+                measure_type,
                 dike_section.Length,
                 self.parameters.get("Depth", float("nan")),
                 self.unit_costs,

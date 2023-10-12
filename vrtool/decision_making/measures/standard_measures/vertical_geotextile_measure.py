@@ -3,7 +3,7 @@ import copy
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -22,7 +22,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         preserve_slope: bool = False,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        type = self.parameters["Type"]
+        measure_type = MeasureTypeEnum[self.parameters["Type"]]
 
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years
@@ -30,7 +30,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         self.measures["VZG"] = "yes"
         self.measures["Cost"] = determine_costs(
             self.parameters,
-            type,
+            measure_type,
             dike_section.Length,
             self.parameters.get("Depth", float("nan")),
             self.unit_costs,
