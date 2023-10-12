@@ -1,3 +1,7 @@
+from collections import defaultdict
+
+import pandas as pd
+
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -5,9 +9,6 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
 )
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
-from collections import defaultdict
-import pandas as pd
-
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -14,10 +15,7 @@ from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
     MeasureResultImporter,
 )
-
-from vrtool.orm.orm_controllers import (
-    open_database,
-)
+from vrtool.orm.orm_controllers import open_database
 
 vrtool_db_default_name = "vrtool_input.db"
 

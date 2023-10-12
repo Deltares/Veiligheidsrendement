@@ -1,14 +1,11 @@
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
-
 from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.section_data import SectionData
 

@@ -1,4 +1,6 @@
 import itertools
+import logging
+
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.diaphragm_wall_measure import (
     DiaphragmWallMeasure,
@@ -32,7 +34,6 @@ from vrtool.orm.io.importers.measures.measure_result_importer import (
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
-import logging
 
 
 class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
