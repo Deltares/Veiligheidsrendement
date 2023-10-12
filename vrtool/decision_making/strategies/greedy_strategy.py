@@ -276,7 +276,7 @@ class GreedyStrategy(StrategyBase):
                             HeightOptions.Overflow.values > current_reliability_overflow.values
                         ).any(axis=1),index = HeightOptions.index)
             elif mechanism == "Revetment":                
-                current_reliability_revetment = traject.probabilities.loc[traject.sections[section_no].name].loc['Revetment'].drop('Length')
+                current_reliability_revetment = traject.probabilities.loc[traject.sections[section_no].name].loc['Revetment'].drop('Length').to_frame().transpose()
                 current_reliability_revetment.columns = current_reliability_revetment.columns.astype(int)
 
                 comparison_height = pd.DataFrame((
