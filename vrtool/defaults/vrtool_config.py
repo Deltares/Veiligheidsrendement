@@ -56,6 +56,7 @@ class VrtoolConfig:
     excluded_mechanisms: list[MechanismEnum] = field(
         default_factory=lambda: [
             MechanismEnum.HYDRAULIC_STRUCTURES,
+            MechanismEnum.INVALID,
         ]
     )
     # whether to consider length-effects within a dike section
@@ -103,7 +104,7 @@ class VrtoolConfig:
         """Filtered list of mechanisms"""
 
         def non_excluded_mechanisms(mechanism: MechanismEnum) -> bool:
-            return mechanism not in self.excluded_mechanisms + [MechanismEnum.INVALID]
+            return mechanism not in self.excluded_mechanisms
 
         return list(filter(non_excluded_mechanisms, self.supported_mechanisms))
 
@@ -123,6 +124,15 @@ class VrtoolConfig:
         self.input_directory = _convert_to_path(self.input_directory)
         self.output_directory = _convert_to_path(self.output_directory)
         self.externals = _convert_to_path(self.externals)
+
+        def _valid_mechanism(mechanism: MechanismEnum | str) -> MechanismEnum:
+            if isinstance(mechanism, MechanismEnum):
+                return mechanism
+            return MechanismEnum.get_enum(mechanism)
+
+        self.excluded_mechanisms = list(map(_valid_mechanism, self.excluded_mechanisms))
+        if MechanismEnum.INVALID not in self.excluded_mechanisms:
+            self.excluded_mechanisms.append(MechanismEnum.INVALID)
 
     def _relative_paths_to_absolute(self, parent_path: Path):
         """
