@@ -435,9 +435,9 @@ def export_results_optimization(result: ResultsOptimization) -> None:
 
     logging.info("Opened connection to export optimizations.")
 
-    _exporter = StrategyBaseExporter()
     for i in range(len(result.results_strategies)):
-        _exporter.export_dom(i+1, result.results_strategies[i])
+        _exporter = StrategyBaseExporter(i+1)
+        _exporter.export_dom(result.results_strategies[i])
     _connected_db.close()
 
     logging.info("Closed connection after export optimizations.")
