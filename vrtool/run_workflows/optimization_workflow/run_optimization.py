@@ -32,7 +32,7 @@ class RunOptimization(VrToolRunProtocol):
         else:
             self._ids_to_import = self._get_default_measure_result_ids()
 
-    def _get_default_measure_result_ids(self):
+    def _get_default_measure_result_ids(self) -> list[int]:
         ii = 1
         ids = []
         for value in self._solutions_dict.values():

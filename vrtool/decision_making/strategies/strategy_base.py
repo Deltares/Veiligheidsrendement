@@ -179,6 +179,7 @@ class StrategyBase:
         self.options = {}
         self.indexCombined2single = {}
 
+        # copy the ids as it will be emptied in step1combine, and the ids are needed lateron
         _ids_copied = ids_to_import.copy()
 
         # measures at t=0 (2025) and t=20 (2045)
@@ -254,6 +255,8 @@ class StrategyBase:
                 for measure_class in available_measure_classes
             }
 
+        # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
+        # using pop to have it working correctly for the other sections
         self.indexCombined2single[section.name] = [
             [ids_to_import.pop(0)] for i in range(len(solutions_dict[section.name].MeasureData))
         ]

@@ -66,7 +66,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
         OptimizationStepResultSection.insert_many(_step_results_section).execute()
         OptimizationStepResultMechanism.insert_many(_step_results_mechanism).execute()
 
-    def _find_id_in_section(self, id, indexSection):
-        for i in range(len(indexSection)):
-            if (indexSection[i][0] == id):
+    def _find_id_in_section(self, measure_id: int, index_section: list[int]) -> int:
+        for i in range(len(index_section)):
+            if (index_section[i][0] == measure_id):
                 return i
+        raise ValueError("Measure ID {} not found in any of the section indices.".format(measure_id))

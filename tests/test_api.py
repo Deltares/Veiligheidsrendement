@@ -23,6 +23,7 @@ from vrtool.api import (
     run_step_optimization,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.orm.models.optimization.optimization_step_result_mechanism import OptimizationStepResultMechanism
 from vrtool.orm.models.optimization.optimization_step_result_section import OptimizationStepResultSection
 
 
@@ -267,11 +268,14 @@ class TestApiRunWorkflowsAcceptance:
         run_step_optimization(valid_vrtool_config, _measures_results)
 
         # 3. Verify expectations.
-        _connected_db = open_database(valid_vrtool_config.input_database_path)
-        stepResult = OptimizationStepResultSection.get_by_id(28)
-        _connected_db.close()
-        assert stepResult.beta == pytest.approx(2.59342)
-        assert stepResult.lcc  == pytest.approx(8612354)
+        with open_database(valid_vrtool_config.input_database_path) as _connected_db:
+            stepResult = OptimizationStepResultSection.get_by_id(28)
+        
+            assert len(OptimizationStepResultSection.select()) == 28
+            assert len(OptimizationStepResultMechanism.select()) == 112
+
+            assert stepResult.beta == pytest.approx(2.59342)
+            assert stepResult.lcc  == pytest.approx(8612354)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
