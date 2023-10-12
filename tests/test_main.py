@@ -59,6 +59,7 @@ class TestMain:
             "excluded_mechanisms": [
                 MechanismEnum.REVETMENT.name,
                 MechanismEnum.HYDRAULIC_STRUCTURES.name,
+                MechanismEnum.INVALID.name,
             ],
         }
         json_file = _input_dir.joinpath("test_config.json")
