@@ -20,7 +20,7 @@ def measure_combinations(
     solutions: Solutions,
     indexCombined2single: list[int],
     splitparams=False,
-):
+) -> pd.DataFrame:
     _combined_measures = pd.DataFrame(columns=combinables.columns)
     # all columns without a second index are attributes of the measure
     attribute_col_names = combinables.columns.get_level_values(0)[
@@ -56,7 +56,9 @@ def measure_combinations(
     for i, row1 in partials.iterrows():
         # combine with all combinables
         for j, row2 in combinables.iterrows():
-            indexCombined2single.append([i, j])
+            indexCombined2single.append(
+                [indexCombined2single[i][0], indexCombined2single[j][0]]
+            )
             for col in attribute_col_names:
                 if (
                     col == "ID"
@@ -206,7 +208,7 @@ def revetment_combinations(
     for i, row1 in partials.iterrows():
         # combine with all combinables (in this case revetment measures)
         for j, row2 in revetment_measures.iterrows():
-            newIndex = [j]  # revetment is a single measure
+            newIndex = [indexCombined2single[j][0]]  # revetment is a single measure
             for k in indexCombined2single[i]:
                 newIndex.append(
                     k

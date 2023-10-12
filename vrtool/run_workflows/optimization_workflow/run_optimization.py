@@ -27,6 +27,20 @@ class RunOptimization(VrToolRunProtocol):
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
         self._solutions_dict = results_measures.solutions_dict
+        if any(results_measures.ids_to_import):
+            self._ids_to_import = results_measures.ids_to_import
+        else:
+            self._ids_to_import = self._get_default_measure_result_ids()
+
+    def _get_default_measure_result_ids(self) -> list[int]:
+        ii = 1
+        ids = []
+        for value in self._solutions_dict.values():
+            dims = value.MeasureData.shape
+            for i in range(dims[0]):
+                ids.append(ii)
+                ii += 1
+        return ids
 
     def _get_output_dir(self) -> Path:
         _results_dir = self.vr_config.output_directory
@@ -43,6 +57,7 @@ class RunOptimization(VrToolRunProtocol):
         _greedy_optimization.combine(
             self.selected_traject,
             self._solutions_dict,
+            self._ids_to_import,
             filtering="off",
             splitparams=True,
         )
@@ -116,6 +131,7 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based.combine(
             self.selected_traject,
             self._solutions_dict,
+            self._ids_to_import,
             filtering="off",
             splitparams=True,
         )
