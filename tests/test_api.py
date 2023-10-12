@@ -22,7 +22,6 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
     OptimizationStepResultMechanism,

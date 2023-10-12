@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
@@ -609,7 +609,7 @@ def split_options(
                 for cost_index, measure_type_name in enumerate(
                     row["type"].item().split("+")
                 ):
-                    if "SOIL_REINFORCEMENT" in measure_type_name:
+                    if measure_type_name == MeasureTypeEnum.SOIL_REINFORCEMENT.name:
                         # get list of costs and subtract startcosts from the cost that contains soil reinforcement
                         cost_list = row["cost"].item()
                         cost_list[cost_index] = np.subtract(
@@ -641,7 +641,10 @@ def split_options(
                 for cost_index, measure_type_name in enumerate(
                     row["type"].item().split("+")
                 ):
-                    if "SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN" in measure_type_name:
+                    if (
+                        measure_type_name
+                        == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.name
+                    ):
                         if isinstance(row["cost"].item(), float):
                             options_dependent[i].loc[idx, "cost"] = np.subtract(
                                 options_dependent[i].loc[idx, "cost"],
@@ -664,14 +667,14 @@ def split_options(
         )
         diaphragm_walls = options_dependent[i]["type"].str.contains("Diaphragm Wall")
 
-        def set_cost_to_zero(options_set, bools, measure_string):
+        def set_cost_to_zero(options_set, bools, measure_type: MeasureTypeEnum):
             for row_idx, option_row in options_set.iterrows():
                 if bools[row_idx]:
                     # break the type string at '+' and find the value that is a vertical Geotextile
                     for cost_index, measure_type_name in enumerate(
                         option_row["type"].item().split("+")
                     ):
-                        if measure_type_name == measure_string:
+                        if measure_type_name == measure_type.name:
                             if isinstance(option_row["cost"].item(), float):
                                 options_set.loc[row_idx, "cost"] = 0.0
                             else:
@@ -687,18 +690,20 @@ def split_options(
         # set costs of vertical geotextiles & diaphragm walls to 0 in options_dependent
         if any(vertical_geotextiles):
             options_dependent[i] = set_cost_to_zero(
-                options_dependent[i], vertical_geotextiles, "VERTICAL_GEOTEXTILE"
+                options_dependent[i],
+                vertical_geotextiles,
+                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             )
 
         if any(diaphragm_walls):
             options_dependent[i] = set_cost_to_zero(
-                options_dependent[i], diaphragm_walls, "DIAPHRAGM_WALL"
+                options_dependent[i], diaphragm_walls, MeasureTypeEnum.DIAPHRAGM_WALL
             )
 
         revetments = options_independent[i]["type"].str.contains("Revetment")
         if any(revetments):
             options_independent[i] = set_cost_to_zero(
-                options_independent[i], revetments, "REVETMENT"
+                options_independent[i], revetments, MeasureTypeEnum.REVETMENT
             )
 
         options_independent[i] = options_independent[i].reset_index(drop=True)
