@@ -271,9 +271,9 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _connected_db = open_database(valid_vrtool_config.input_database_path)
         stepResult = OptimizationStepResultSection.get_by_id(28)
-        assert stepResult.beta == pytest.approx(3.06527)
-        assert stepResult.lcc  == pytest.approx(8612354)
         _connected_db.close()
+        assert stepResult.beta == pytest.approx(2.59342)
+        assert stepResult.lcc  == pytest.approx(8612354)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",

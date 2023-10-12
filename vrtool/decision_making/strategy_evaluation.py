@@ -54,7 +54,7 @@ def measure_combinations(
     for i, row1 in partials.iterrows():
         # combine with all combinables
         for j, row2 in combinables.iterrows():
-            indexCombined2single.append([i, j])
+            indexCombined2single.append([indexCombined2single[i][0], indexCombined2single[j][0]])
             for col in attribute_col_names:
                 if (
                     col == "ID"
