@@ -12,24 +12,19 @@ class StrategyBaseExporter(OrmExporterProtocol):
     def __init__(self) -> None:
         self._opt_step_id = 0
 
-    def export_dom(self, dom_model: StrategyBase) -> None:
+    def export_dom(self, run_id:int, dom_model: StrategyBase) -> None:
         dims = dom_model.TakenMeasures.values.shape
         _step_results_section = []
         _step_results_mechanism = []
 
-        cntMeasuresPerSection = {}
-        sumMeasures = 0
         for section in dom_model.indexCombined2single:
-            cntMeasuresPerSection[section] = sumMeasures
             singlesMeasures = max(dom_model.indexCombined2single[section])
-            sumMeasures += singlesMeasures[0]
 
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i, 0]
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
-                msrId = singleMsrId + cntMeasuresPerSection[section]
                 localId = self._find_id_in_section(
                     singleMsrId, dom_model.indexCombined2single[section]
                 )
@@ -38,7 +33,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 offset = len(msr) - len(dom_model.T)
                 _created_optimization_step = OptimizationStep.create(
                     step_number=i,
-                    optimization_selected_measure_id=msrId,
+                    optimization_selected_measure_id=singleMsrId + run_id*singlesMeasures[0],
                 )
                 for j in range(len(dom_model.T)):
                     t = dom_model.T[j]

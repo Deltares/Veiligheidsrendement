@@ -23,6 +23,7 @@ from vrtool.api import (
     run_step_optimization,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.orm.models.optimization.optimization_step import OptimizationStep
 from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
     OptimizationStepResultMechanism,
 )
@@ -277,6 +278,7 @@ class TestApiRunWorkflowsAcceptance:
 
             assert len(OptimizationStepResultSection.select()) == 28
             assert len(OptimizationStepResultMechanism.select()) == 112
+            assert len(OptimizationStep.select()) == 4
 
             assert stepResult.beta == pytest.approx(2.59342)
             assert stepResult.lcc == pytest.approx(8612354)
