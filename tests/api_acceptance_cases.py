@@ -27,7 +27,10 @@ class AcceptanceTestCase:
     model_directory: Path
     traject_name: str
     excluded_mechanisms: list[MechanismEnum] = field(
-        default_factory=lambda: [MechanismEnum.HYDRAULIC_STRUCTURES]
+        default_factory=lambda: [
+            MechanismEnum.HYDRAULIC_STRUCTURES,
+            MechanismEnum.INVALID,
+        ]
     )
 
     @staticmethod
@@ -40,6 +43,7 @@ class AcceptanceTestCase:
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
+                    MechanismEnum.INVALID,
                 ],
                 case_name="Traject 38-1, no housing",
             ),
@@ -49,6 +53,7 @@ class AcceptanceTestCase:
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
+                    MechanismEnum.INVALID,
                 ],
                 case_name="Traject 38-1, no housing, with dstability",
             ),
@@ -58,25 +63,35 @@ class AcceptanceTestCase:
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
+                    MechanismEnum.INVALID,
                 ],
                 case_name="Traject 38-1, no-housing, with overflow",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase1_38-1_revetment",
                 traject_name="38-1",
-                excluded_mechanisms=[MechanismEnum.HYDRAULIC_STRUCTURES],
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                    MechanismEnum.INVALID,
+                ],
                 case_name="Traject 38-1, with revetment, case 1",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase3_38-1_revetment",
                 traject_name="38-1",
-                excluded_mechanisms=[MechanismEnum.HYDRAULIC_STRUCTURES],
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                    MechanismEnum.INVALID,
+                ],
                 case_name="Traject 38-1, with revetment, including bundling",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase4_38-1_revetment_small",
                 traject_name="38-1",
-                excluded_mechanisms=[MechanismEnum.HYDRAULIC_STRUCTURES],
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                    MechanismEnum.INVALID,
+                ],
                 case_name="Traject 38-1, two sections with revetment",
             ),
             AcceptanceTestCase(
@@ -85,6 +100,7 @@ class AcceptanceTestCase:
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
+                    MechanismEnum.INVALID,
                 ],
                 case_name="Traject 38-1, two sections",
             ),
