@@ -31,8 +31,8 @@ class GreedyStrategy(StrategyBase):
         measure_index = np.zeros((no_of_sections,), dtype=np.int32)
         for i in range(0, no_of_sections):
             if optimal_counter_combination[i] != 0:  # a measure was taken
-                measure_index[i] = sh_array[i, optimal_counter_combination[i]-1]
-                sg_index[i] = sg_array[i, optimal_counter_combination[i]-1]
+                measure_index[i] = sh_array[i, optimal_counter_combination[i]]
+                sg_index[i] = sg_array[i, optimal_counter_combination[i]]
             else:  # no measure was taken
                 measure_index[i] = existing_investments[i, 0]
                 sg_index[i] = existing_investments[i, 1]
@@ -73,8 +73,8 @@ class GreedyStrategy(StrategyBase):
         number_of_sections = sh_array.shape[0]
         number_of_available_height_measures = sh_array.shape[1] - 1
         LCC_values = np.zeros((number_of_sections,))  # total LCC spent for each section
-        index_counter = np.zeros(
-            (number_of_sections,), dtype=np.int32
+        index_counter = np.full(
+            (number_of_sections,),-1, dtype=np.int32
         )  # counter that keeps track of the next cheapest option for each section
 
         run_number = 0  # used for counting the loop
