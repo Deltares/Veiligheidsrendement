@@ -6,6 +6,7 @@ from vrtool.orm.models.optimization import (
     OptimizationStepResultMechanism,
     OptimizationStepResultSection,
 )
+from vrtool.orm.models.optimization.optimization_selected_measure import OptimizationSelectedMeasure
 
 
 class StrategyBaseExporter(OrmExporterProtocol):
@@ -17,24 +18,24 @@ class StrategyBaseExporter(OrmExporterProtocol):
         _step_results_section = []
         _step_results_mechanism = []
 
-        for section in dom_model.indexCombined2single:
-            singlesMeasures = max(dom_model.indexCombined2single[section])
-
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i, 0]
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
+                
+                opt_sel_msr_id = self._get_sel_msr_id(run_id, singleMsrId)
+                _created_optimization_step = OptimizationStep.create(
+                    step_number=i,
+                    optimization_selected_measure_id=opt_sel_msr_id,
+                )
+
                 localId = self._find_id_in_section(
                     singleMsrId, dom_model.indexCombined2single[section]
                 )
                 msr = dom_model.options[section].values[localId]
                 lcc = dom_model.TakenMeasures.values[i, 2]
                 offset = len(msr) - len(dom_model.T)
-                _created_optimization_step = OptimizationStep.create(
-                    step_number=i,
-                    optimization_selected_measure_id=singleMsrId + run_id*singlesMeasures[0],
-                )
                 for j in range(len(dom_model.T)):
                     t = dom_model.T[j]
                     beta = msr[offset + j]
@@ -70,3 +71,9 @@ class StrategyBaseExporter(OrmExporterProtocol):
         raise ValueError(
             "Measure ID {} not found in any of the section indices.".format(measure_id)
         )
+
+    def _get_sel_msr_id(self, run_id, single_msr_id):
+        rows = OptimizationSelectedMeasure.select().where((OptimizationSelectedMeasure.optimization_run==run_id) & (OptimizationSelectedMeasure.measure_result == single_msr_id))
+        if (len(rows) == 1):
+            return rows[0].id
+        raise ValueError ("OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(run_id, single_msr_id))
