@@ -269,19 +269,23 @@ class GreedyStrategy(StrategyBase):
             np.max(existing_investments[section_no, :]) == 0
         ):  # nothing has been invested yet
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
-            if mechanism == "Overflow":
+            if mechanism == "Overflow": #Overflow is always present for a section.
                 current_reliability_overflow = traject.probabilities.loc[traject.sections[section_no].name].loc['Overflow'].drop('Length').to_frame().transpose()
                 current_reliability_overflow.columns = current_reliability_overflow.columns.astype(int)
                 comparison_height = pd.DataFrame((
                             HeightOptions.Overflow.values > current_reliability_overflow.values
                         ).any(axis=1),index = HeightOptions.index)
-            elif mechanism == "Revetment":                
-                current_reliability_revetment = traject.probabilities.loc[traject.sections[section_no].name].loc['Revetment'].drop('Length').to_frame().transpose()
-                current_reliability_revetment.columns = current_reliability_revetment.columns.astype(int)
+            elif mechanism == "Revetment":
+                try: #if Revetment has been computed, get it from the assessment:                
+                    current_reliability_revetment = traject.probabilities.loc[traject.sections[section_no].name].loc['Revetment'].drop('Length').to_frame().transpose()
+                    current_reliability_revetment.columns = current_reliability_revetment.columns.astype(int)
 
-                comparison_height = pd.DataFrame((
-                            HeightOptions.Revetment.values > current_reliability_revetment.values
-                        ).any(axis=1),index = HeightOptions.index)
+                    comparison_height = pd.DataFrame((
+                                HeightOptions.Revetment.values > current_reliability_revetment.values
+                            ).any(axis=1),index = HeightOptions.index)
+                except:
+                    #fill comparison_height with True values
+                    comparison_height = pd.DataFrame(np.ones(len(HeightOptions), dtype=bool),index = HeightOptions.index)
 
             else:
                 raise Exception("Unknown mechanism in overflow bundling")
