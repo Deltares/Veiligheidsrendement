@@ -64,7 +64,7 @@ class Solutions:
     ):
         # write all solutions to one single dataframe:
         years = self.T
-        _mechanism_names = list(_mechanism.name for _mechanism in self.mechanisms)
+        _mechanism_names = list(map(str, self.mechanisms))
         cols_r = pd.MultiIndex.from_product(
             [_mechanism_names + ["Section"], years], names=["base", "year"]
         )

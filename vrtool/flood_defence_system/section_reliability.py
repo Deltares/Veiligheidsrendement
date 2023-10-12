@@ -60,7 +60,7 @@ class SectionReliability:
         beta_mech_time = pd.DataFrame(
             pb_functions.pf_to_beta(pf_mechanisms_time),
             columns=calculation_years,
-            index=list(_mech.name for _mech in available_mechanisms),
+            index=list(map(str, available_mechanisms)),
         )
         beta_time = pd.DataFrame(
             [pb_functions.pf_to_beta(np.sum(pf_mechanisms_time, axis=0))],
