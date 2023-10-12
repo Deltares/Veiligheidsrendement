@@ -361,10 +361,13 @@ class TestOrmControllers:
         _test_section_data = _test_mechanism_per_section.section
 
         # Dike Section and Dike Traject.
+        _mech_name = MechanismEnum.get_enum(
+            _test_mechanism_per_section.mechanism.name
+        ).name
         _reliability_df = pd.DataFrame(
             [4.2, 2.4],
             columns=["42"],
-            index=[_test_mechanism_per_section.mechanism.name, "Section"],
+            index=[_mech_name, "Section"],
         )
         _dummy_section = DikeSection()
         _dummy_section.name = _test_section_data.section_name

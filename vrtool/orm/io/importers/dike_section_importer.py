@@ -143,8 +143,9 @@ class DikeSectionImporter(OrmImporterProtocol):
 
         for _mechanism_data in _mechanism_collection:
             if _mechanism_data.mechanism.name in _imported_initial_assessment.index:
+                _mech_name = MechanismEnum.get_enum(_mechanism_data.mechanism.name).name
                 for _reliability_t, _beta in _imported_initial_assessment.loc[
-                    _mechanism_data.mechanism.name
+                    _mech_name
                 ].items():
                     _mechanism_data.Reliability[_reliability_t].Beta = _beta
             _section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
