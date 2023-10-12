@@ -148,7 +148,7 @@ class TestDataHelper:
 class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_for_dstability(self, empty_db_fixture: SqliteDatabase):
         # Setup
-        _mechanism = MechanismEnum["STABILITY_INNER"]
+        _mechanism = MechanismEnum.STABILITY_INNER
         _computation_type = "DSTABILITY"
         _config = TestDataHelper.create_valid_config()
         _config.input_directory = test_data
@@ -181,25 +181,25 @@ class TestMechanismReliabilityCollectionImporter:
         "mechanism, computation_type, get_mechanism_per_section",
         [
             pytest.param(
-                MechanismEnum["STABILITY_INNER"],
+                MechanismEnum.STABILITY_INNER,
                 "SIMPLE",
                 TestDataHelper.get_valid_mechanism_per_section,
                 id="Stability Inner simple",
             ),
             pytest.param(
-                MechanismEnum["PIPING"],
+                MechanismEnum.PIPING,
                 "SEMIPROB",
                 TestDataHelper.get_valid_mechanism_per_section,
                 id="Piping SEMIPROB",
             ),
             pytest.param(
-                MechanismEnum["OVERFLOW"],
+                MechanismEnum.OVERFLOW,
                 "HRING",
                 TestDataHelper.get_overflow_hydraring_mechanism_per_section,
                 id="Overflow HRING",
             ),
             pytest.param(
-                MechanismEnum["REVETMENT"],
+                MechanismEnum.REVETMENT,
                 "",
                 TestDataHelper.get_revetment_mechanism_per_section,
                 id="Revetment",

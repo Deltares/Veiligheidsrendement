@@ -26,7 +26,11 @@ class DikeTrajectImporter(OrmImporterProtocol):
     def _select_available_mechanisms(
         self, dike_traject_info: OrmDikeTrajectInfo
     ) -> list[Mechanism]:
-        return list(
+        def to_enum(mechanism_inst: Mechanism) -> MechanismEnum:
+            return MechanismEnum.get_enum(mechanism_inst.name)
+
+        # Just define the query but don't instantiate it yet.
+        _mechanism_selection_query = (
             Mechanism.select()
             .join(MechanismPerSection)
             .join(SectionData)
@@ -36,6 +40,10 @@ class DikeTrajectImporter(OrmImporterProtocol):
                 & (SectionData.in_analysis == True)
             )
         )
+        # Map selection to `MechanismEnum`
+        # -> (set) remove duplicates
+        # -> return as list
+        return list(set(map(to_enum, _mechanism_selection_query)))
 
     def import_orm(self, orm_model: OrmDikeTrajectInfo) -> DikeTraject:
         if not orm_model:
@@ -51,11 +59,7 @@ class DikeTrajectImporter(OrmImporterProtocol):
         _dike_traject.sections = self._import_dike_section_list(_selected_sections)
         for _section in _dike_traject.sections:
             _section.TrajectInfo = _dike_traject.general_info
-        _mechanisms = self._select_available_mechanisms(orm_model)
-        _mechanism_names = list(
-            set([_mechanism.name for _mechanism in _mechanisms])
-        )  # deduplicate
-        _dike_traject.mechanisms = list(map(MechanismEnum.get_enum, _mechanism_names))
+        _dike_traject.mechanisms = self._select_available_mechanisms(orm_model)
         _dike_traject.t_0 = self._vrtool_config.t_0
         _dike_traject.T = self._vrtool_config.T
 

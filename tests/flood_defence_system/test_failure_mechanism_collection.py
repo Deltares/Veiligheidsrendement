@@ -21,9 +21,9 @@ class TestFailureMechanismCollection:
         self,
     ):
         # Given
-        mechanism_one = MechanismEnum["OVERFLOW"]
-        mechanism_two = MechanismEnum["STABILITY_INNER"]
-        mechanism_three = MechanismEnum["PIPING"]
+        mechanism_one = MechanismEnum.OVERFLOW
+        mechanism_two = MechanismEnum.STABILITY_INNER
+        mechanism_three = MechanismEnum.PIPING
 
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
@@ -49,12 +49,12 @@ class TestFailureMechanismCollection:
         # Setup
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(MechanismEnum["OVERFLOW"], "", [], 0, 0)
+            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [], 0, 0)
         )
 
         # Call
         reliability_collection = collection.get_mechanism_reliability_collection(
-            MechanismEnum["STABILITY_INNER"]
+            MechanismEnum.STABILITY_INNER
         )
 
         # Assert
@@ -64,7 +64,7 @@ class TestFailureMechanismCollection:
         self,
     ):
         # Setup
-        mechanism_to_retrieve = MechanismEnum["OVERFLOW"]
+        mechanism_to_retrieve = MechanismEnum.OVERFLOW
         collection_to_retrieve = MechanismReliabilityCollection(
             mechanism_to_retrieve, "", [], 0, 0
         )
@@ -73,7 +73,7 @@ class TestFailureMechanismCollection:
         collection.add_failure_mechanism_reliability_collection(collection_to_retrieve)
         collection.add_failure_mechanism_reliability_collection(
             MechanismReliabilityCollection(
-                MechanismEnum["STABILITY_INNER"], "", [], 0, 0
+                MechanismEnum.STABILITY_INNER, "", [], 0, 0
             )
         )
 
@@ -102,10 +102,10 @@ class TestFailureMechanismCollection:
     ):
         # Setup
         reliability_collection_one = MechanismReliabilityCollection(
-            MechanismEnum["OVERFLOW"], "", [4, 5, 6], 0, 0
+            MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0
         )
         reliability_collection_two = MechanismReliabilityCollection(
-            MechanismEnum["STABILITY_INNER"], "", [4, 5, 6], 0, 0
+            MechanismEnum.STABILITY_INNER, "", [4, 5, 6], 0, 0
         )
 
         collection = FailureMechanismCollection()
@@ -130,7 +130,7 @@ class TestFailureMechanismCollection:
         self,
     ):
         # Setup
-        mechanism_to_add = MechanismEnum["OVERFLOW"]
+        mechanism_to_add = MechanismEnum.OVERFLOW
         collection_to_add = MechanismReliabilityCollection(
             mechanism_to_add, "", [], 0, 0
         )
@@ -151,7 +151,7 @@ class TestFailureMechanismCollection:
 
     def test_add_reliability_collection_and_mechanism_in_collection_raises_error(self):
         # Setup
-        duplicate_mechanism = MechanismEnum["OVERFLOW"]
+        duplicate_mechanism = MechanismEnum.OVERFLOW
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
             MechanismReliabilityCollection(duplicate_mechanism, "", [], 0, 0)
@@ -186,12 +186,12 @@ class TestFailureMechanismCollection:
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
             MechanismReliabilityCollection(
-                MechanismEnum["OVERFLOW"], "", [4, 5, 6], 0, 0
+                MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0
             )
         )
         collection.add_failure_mechanism_reliability_collection(
             MechanismReliabilityCollection(
-                MechanismEnum["STABILITY_INNER"], "", [1, 2, 3], 0, 0
+                MechanismEnum.STABILITY_INNER, "", [1, 2, 3], 0, 0
             )
         )
 

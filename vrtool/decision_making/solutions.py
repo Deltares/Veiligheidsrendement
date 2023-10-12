@@ -38,7 +38,7 @@ class Solutions:
         self.measure_table = pd.DataFrame(columns=["ID", "Name"])
 
     def _is_stability_screen_measure_valid(self) -> bool:
-        return MechanismEnum["STABILITY_INNER"] in self.mechanisms
+        return MechanismEnum.STABILITY_INNER in self.mechanisms
 
     def _is_soil_reinforcement_measure_valid(self, stability_screen: str) -> bool:
         if stability_screen.lower().strip() == "yes":
@@ -128,9 +128,7 @@ class Solutions:
 
                     betas = measure.measures[j]["Reliability"].SectionReliability
 
-                    _mechanism_names = list(
-                        _mechanism.name for _mechanism in self.mechanisms
-                    )
+                    _mechanism_names = list(map(str, self.mechanisms))
                     for ij in _mechanism_names + ["Section"]:
                         if ij not in betas.index:
                             # TODO (VRTOOL-187).

@@ -101,8 +101,8 @@ class MeasureResultTestInputData:
 
         _section_reliability.SectionReliability = pd.DataFrame.from_dict(
             {
-                "OVERFLOW": [year / 12.0 for year in years],
-                "STABILITY_INNER": [year / 13.0 for year in years],
+                MechanismEnum.OVERFLOW.name: [year / 12.0 for year in years],
+                MechanismEnum.STABILITY_INNER.name: [year / 13.0 for year in years],
                 "Section": [year / 10.0 for year in years],
             },
             orient="index",
@@ -116,7 +116,7 @@ class MeasureResultTestInputData:
             _mech_inst = Mechanism.create(name=mechanism.name)
             MechanismPerSection.create(section=section_data, mechanism=_mech_inst)
 
-        _mechanisms = [MechanismEnum["OVERFLOW"], MechanismEnum["STABILITY_INNER"]]
+        _mechanisms = [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
         list(map(create_combination, _mechanisms))
         return _mechanisms
 

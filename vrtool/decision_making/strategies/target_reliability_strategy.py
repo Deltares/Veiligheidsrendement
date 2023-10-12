@@ -5,6 +5,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategy_evaluation import (
@@ -70,10 +71,14 @@ class TargetReliabilityStrategy(StrategyBase):
         # Rank sections based on 2075 Section probability
         beta_horizon = []
         for i in traject.sections:
+            # For now (VRTOOL-221) `OI_horizon` is assumed to be a string.
+            _oi_horizon = (
+                self.OI_horizon
+                if isinstance(self.OI_horizon, str)
+                else str(self.OI_horizon)
+            )
             beta_horizon.append(
-                i.section_reliability.SectionReliability.loc["Section"][
-                    str(self.OI_horizon)
-                ]
+                i.section_reliability.SectionReliability.loc["Section"][_oi_horizon]
             )
 
         section_indices = np.argsort(beta_horizon)
@@ -125,10 +130,10 @@ class TargetReliabilityStrategy(StrategyBase):
             _beta_t_overflow = beta_cs_overflow
             _beta_t_revetment = beta_cs_revetment
             _beta_t = {
-                "PIPING": _beta_t_piping,
-                "STABILITY_INNER": _beta_t_sabinner,
-                "OVERFLOW": _beta_t_overflow,
-                "REVETMENT": _beta_t_revetment,
+                MechanismEnum.PIPING.name: _beta_t_piping,
+                MechanismEnum.STABILITY_INNER.name: _beta_t_sabinner,
+                MechanismEnum.OVERFLOW.name: _beta_t_overflow,
+                MechanismEnum.REVETMENT.name: _beta_t_revetment,
             }
             # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
             if isinstance(self.OI_year, int):
@@ -156,7 +161,7 @@ class TargetReliabilityStrategy(StrategyBase):
             _lcc = calc_tc(
                 _possible_measures,
                 self.discount_rate,
-                horizon=self.options[i.name]["OVERFLOW"].columns[-1],
+                horizon=self.options[i.name][MechanismEnum.OVERFLOW.name].columns[-1],
             )
 
             # select measure with lowest cost

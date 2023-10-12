@@ -40,7 +40,7 @@ def implement_berm_widening(
         berm_input (dict): input dictionary of the mechanism
         measure_input (dict): input dictionary of the measure
         measure_parameters (dict): parameters dictionary of the measure
-        mechanism (MechanismEnum): mechanism, one of ['PIPING', 'OVERFLOW', 'STABILITY_INNER']
+        mechanism (MechanismEnum): mechanism, one of [MechanismEnum.PIPING, MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
         computation_type (str): type of computation for the mechanism
         path_intermediate_stix (Path): path to the intermediate stix files
         SFincrease (float): increase in safety factor
@@ -63,9 +63,9 @@ def implement_berm_widening(
         )
 
     # this function implements a berm widening based on the relevant inputs
-    if mechanism.name == "OVERFLOW":
+    if mechanism == MechanismEnum.OVERFLOW:
         berm_input["h_crest"] = berm_input["h_crest"] + measure_input["dcrest"]
-    elif mechanism.name == "STABILITY_INNER":
+    elif mechanism == MechanismEnum.STABILITY_INNER:
         # Case where the berm widened through DStability and the stability factors will be recalculated
         if computation_type.lower() == "dstability":
             _dstability_wrapper = DStabilityWrapper(
@@ -144,7 +144,7 @@ def implement_berm_widening(
                 )
             )
 
-    elif mechanism.name == "PIPING":
+    elif mechanism == MechanismEnum.PIPING:
         berm_input["l_voor"] = berm_input["l_voor"] + measure_input["dberm"]
         # input['Lachter'] = np.max([0., input['Lachter'] - measure_input['dberm']])
         berm_input["l_achter"] = (berm_input["l_achter"] - measure_input["dberm"]).clip(
@@ -435,10 +435,10 @@ def probabilistic_design(
     t_0: int,
     horizon: int = 50,
     load_change: float = 0,
-    mechanism: MechanismEnum = MechanismEnum["OVERFLOW"],
+    mechanism: MechanismEnum = MechanismEnum.OVERFLOW,
     type: str = "SAFE",
 ) -> float:
-    if mechanism.name == "OVERFLOW":
+    if mechanism == MechanismEnum.OVERFLOW:
         if type == "SAFE":
             # determine the crest required for the target
             h_crest, beta = calculate_overflow_simple_design(

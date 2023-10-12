@@ -512,7 +512,10 @@ def split_options(
     ) -> list[str]:
         options = []
         for available_mechanism in available_mechanisms:
-            if available_mechanism.name in ["STABILITY_INNER", "PIPING"]:
+            if available_mechanism in [
+                MechanismEnum.STABILITY_INNER,
+                MechanismEnum.PIPING,
+            ]:
                 options.append(available_mechanism.name)
 
         options.append("Section")
@@ -523,7 +526,10 @@ def split_options(
     ) -> list[str]:
         options = []
         for available_mechanism in available_mechanisms:
-            if available_mechanism.name in ["OVERFLOW", "REVETMENT"]:
+            if available_mechanism.name in [
+                MechanismEnum.OVERFLOW,
+                MechanismEnum.REVETMENT,
+            ]:
                 options.append(available_mechanism.name)
 
         options.append("Section")
@@ -731,9 +737,9 @@ def evaluate_risk(
     config: VrtoolConfig,
 ):
     for mechanism in config.mechanisms:
-        if mechanism.name == "OVERFLOW":
+        if mechanism == MechanismEnum.OVERFLOW:
             init_overflow_risk[n, :] = strategy.RiskOverflow[n, sh, :]
-        elif mechanism.name == "REVETMENT":
+        elif mechanism == MechanismEnum.REVETMENT:
             init_revetment_risk[n, :] = strategy.RiskRevetment[n, sh, :]
         else:
             init_geo_risk[n, :] = strategy.RiskGeotechnical[n, sg, :]
@@ -745,7 +751,7 @@ def update_probability(init_probability, strategy, index):
     for i in init_probability:
         from scipy.stats import norm
 
-        if i in ["OVERFLOW", "REVETMENT"]:
+        if i in [MechanismEnum.OVERFLOW.name, MechanismEnum.REVETMENT.name]:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
         else:
             init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]

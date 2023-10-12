@@ -108,7 +108,6 @@ def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=
         ts = base.columns.values
         if not mechs:
             mechs = np.unique(base.index.get_level_values("mechanism").values)
-        # mechs = ['OVERFLOW']
     # pf_traject = np.zeros((len(ts),))
     pf_traject = np.zeros((len(trange),))
 
@@ -122,7 +121,7 @@ def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=
             pfs[mech] = beta_to_pf(beta_interp(trange))
             # pfs[i] = ProbabilisticFunctions.beta_to_pf(betas)
             pnonfs = 1 - pfs[mech]
-            if mech == "OVERFLOW":
+            if mech == MechanismEnum.OVERFLOW.name:
                 # pf_traject += np.max(pfs[i], axis=0)
                 pf_traject = 1 - np.multiply(
                     1 - pf_traject, 1 - np.max(pfs[mech], axis=0)

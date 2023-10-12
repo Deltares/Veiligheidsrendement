@@ -40,8 +40,7 @@ class TestMechanismReliabilityCollectionExporter:
         )
         _expected_time_entries = len(_expected_mechanisms_reliability.columns)
         _expected_mechanisms = list(
-            MechanismEnum.get_enum(_mech_name)
-            for _mech_name in _expected_mechanisms_reliability.index
+            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
         )
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         assert any(Mechanism.select())
@@ -101,8 +100,7 @@ class TestMechanismReliabilityCollectionExporter:
         )
         _expected_time_entries = len(_expected_mechanisms_reliability.columns)
         _expected_mechanisms = list(
-            MechanismEnum.get_enum(_mech_name)
-            for _mech_name in _expected_mechanisms_reliability.index
+            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
         )
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         create_required_mechanism_per_section(

@@ -38,7 +38,7 @@ class DStabilityImporter(OrmImporterProtocol):
         if orm_model.computation_type.name != self._computation_type:
             raise ValueError(f"Computation type must be '{self._computation_type}'.")
 
-        mechanism_input = MechanismInput(MechanismEnum["STABILITY_INNER"])
+        mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
 
         self._set_parameters(
             mechanism_input, orm_model.computation_scenario_parameters.select()

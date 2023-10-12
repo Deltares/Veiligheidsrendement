@@ -26,7 +26,7 @@ class TestRevetmentMeasure:
         _computation_years = [0, 2, 6, 20]
         shuffle(_computation_years)
         _mech_reliability_collection = MechanismReliabilityCollection(
-            mechanism=MechanismEnum["REVETMENT"],
+            mechanism=MechanismEnum.REVETMENT,
             computation_type="nvt",
             computation_years=_computation_years,
             t_0=0,
@@ -37,7 +37,7 @@ class TestRevetmentMeasure:
                 str(_computation_year)
             ].Beta = 0.24 + (0.24 * _idx)
         _test_dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
-            MechanismEnum["REVETMENT"]
+            MechanismEnum.REVETMENT
         ] = _mech_reliability_collection
 
         # 2. Run test

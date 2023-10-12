@@ -5,58 +5,53 @@ from vrtool.common.enums import MechanismEnum, VrtoolEnum
 
 class TestVrtoolEnums:
     @pytest.mark.parametrize(
-        "enum_name, expected",
+        "enum_name",
         [
-            pytest.param("StabilityInner", "STABILITY_INNER", id="VALID CamelCase"),
-            pytest.param("OVERFLOW", "OVERFLOW", id="VALID UPPER"),
-            pytest.param("Invalid", None, id="INVALID CamelCase"),
+            pytest.param("StabilityInner", id="VALID CamelCase"),
+            pytest.param("STABILITY_INNER", id="VALID UPPER_SNAKE"),
+            pytest.param("stability_inner", id="VALID lower_snake"),
+            pytest.param(" StabilityInner", id="VALID space before"),
+            pytest.param("StabilityInner ", id="VALID space after"),
         ],
     )
-    def test_get_enum(self, enum_name: str, expected: str):
+    def test_get_valid_enum(self, enum_name: str):
         # 1. Setup
 
         # 2. Call
         _mech = MechanismEnum.get_enum(enum_name)
 
         # 3. Assert
-        if _mech:
-            assert _mech.name == expected
+        assert _mech.name == "STABILITY_INNER"
+
+    @pytest.mark.parametrize(
+        "enum_name",
+        [
+            pytest.param("stabilityinner", id="INVALID camelcase"),
+            pytest.param("stability inner", id="INVALID space within"),
+        ],
+    )
+    def test_get_invalid_enum(self, enum_name: str):
+        # 1. Setup
+
+        # 2. Call
+        _mech = MechanismEnum.get_enum(enum_name)
+
+        # 3. Assert
+        assert _mech.name == "INVALID"
 
     @pytest.mark.parametrize(
         "enum_name, expected",
         [
-            pytest.param("CamelCase", "CAMEL_CASE", id="VALID Normalized CamelCase"),
-            pytest.param(None, None, id="INVALID None"),
+            pytest.param("OVERFLOW", "Overflow", id="VALID UPPER"),
+            pytest.param("STABILITY_INNER", "StabilityInner", id="VALID UPPER_SNAKE"),
         ],
     )
-    def test_normalize_enum_name(self, enum_name: str, expected: str):
+    def test_get_valid_old_name(self, enum_name: str, expected: str):
         # 1. Setup
+        _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 2. Call
-        _enum_name = VrtoolEnum._normalize_name(enum_name)
+        _mech_name = _mechanism.get_old_name()
 
         # 3. Assert
-        assert _enum_name == expected
-
-    @pytest.mark.parametrize(
-        "enum_name, expected",
-        [
-            pytest.param(
-                "OVERFLOW", "Overflow", id="VALID Denormalized CamelCase (simple)"
-            ),
-            pytest.param(
-                "STABILITY_INNER",
-                "StabilityInner",
-                id="VALID Denormalized CamelCase (with _)",
-            ),
-        ],
-    )
-    def test_denormalize_enum_name(self, enum_name: str, expected: str):
-        # 1. Setup
-        _enum = MechanismEnum[enum_name]
-
-        # 2. Call
-        _enum_name = _enum._denormalize_name(enum_name)
-
-        # 3. Assert
-        assert _enum_name == expected
+        assert _mech_name == expected

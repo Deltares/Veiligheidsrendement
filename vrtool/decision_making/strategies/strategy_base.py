@@ -39,7 +39,7 @@ class StrategyBase:
         self.config = config
         self.OI_year = config.OI_year
         self.OI_horizon = config.OI_horizon
-        self.mechanisms: list[MechanismEnum] = config.mechanisms
+        self.mechanisms = config.mechanisms
         self.T = config.T
         self.LE_in_section = config.LE_in_section
 
@@ -327,7 +327,8 @@ class StrategyBase:
             probability_of_failure_lookup: dict[str, np.array]
         ) -> np.array:
             return CombinFunctions.combine_probabilities(
-                probability_of_failure_lookup, ("STABILITY_INNER", "PIPING")
+                probability_of_failure_lookup,
+                (MechanismEnum.STABILITY_INNER.name, MechanismEnum.PIPING.name),
             )
 
         # TODO Currently incorrectly combined measures with sh = 0.5 crest and sg 0.5 crest + geotextile have not cost 1e99. However they
@@ -359,9 +360,9 @@ class StrategyBase:
         # probabilities [N,S,T]
         self.Pf = {}
         for _mechanism in self.mechanisms:
-            if _mechanism.name == "OVERFLOW":
+            if _mechanism == MechanismEnum.OVERFLOW:
                 self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0)
-            elif _mechanism.name == "REVETMENT":
+            elif _mechanism == MechanismEnum.REVETMENT:
                 self.Pf[_mechanism.name] = np.full((N, Sh + 1, T), 1.0e-18)
             else:
                 self.Pf[_mechanism.name] = np.full((N, Sg + 1, T), 1.0)
@@ -387,7 +388,10 @@ class StrategyBase:
                 )
                 # Initial
                 # condition with no measure
-                if _mechanism.name == "OVERFLOW" or _mechanism.name == "REVETMENT":
+                if (
+                    _mechanism == MechanismEnum.OVERFLOW
+                    or _mechanism == MechanismEnum.REVETMENT
+                ):
                     beta2 = self.options_height[section_keys[n]][_mechanism.name]
                     # All solutions
                 else:
@@ -459,11 +463,13 @@ class StrategyBase:
             self.Pf
         ) * np.tile(self.D.T, (N, Sg + 1, 1))
 
-        self.RiskOverflow = self.Pf["OVERFLOW"] * np.tile(self.D.T, (N, Sh + 1, 1))
+        self.RiskOverflow = self.Pf[MechanismEnum.OVERFLOW.name] * np.tile(
+            self.D.T, (N, Sh + 1, 1)
+        )
 
         self.RiskRevetment = []
-        if MechanismEnum["REVETMENT"] in self.mechanisms:
-            self.RiskRevetment = self.Pf["REVETMENT"] * np.tile(
+        if MechanismEnum.REVETMENT in self.mechanisms:
+            self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(
                 self.D.T, (N, Sh + 1, 1)
             )
         else:

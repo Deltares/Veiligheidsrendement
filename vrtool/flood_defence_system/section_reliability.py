@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
+from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
@@ -34,11 +35,11 @@ class SectionReliability:
                     )
                 )
 
-                if mechanism.name in ["OVERFLOW", "REVETMENT"]:
+                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                     pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
                         str(trange[j])
                     ].Pf
-                elif mechanism.name in ["STABILITY_INNER", "PIPING"]:
+                elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     pf = mechanism_collection.Reliability[str(trange[j])].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1

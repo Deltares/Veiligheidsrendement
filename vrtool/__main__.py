@@ -42,12 +42,15 @@ def run_step_measures(**kwargs):
     name="optimization", help="Optimizes the model measures in the given directory."
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
+@click.argument("measure_result_ids", type=click.INT, nargs=-1)
 def run_step_optimization(**kwargs):
     logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
-    api.run_step_optimization(_vr_config)
+    api.run_step_optimization(
+        _vr_config, kwargs["model_directory"], kwargs.get("measure_result_ids", [])
+    )
 
 
 @cli.command(name="run_full", help="Full run of the model in the given directory.")

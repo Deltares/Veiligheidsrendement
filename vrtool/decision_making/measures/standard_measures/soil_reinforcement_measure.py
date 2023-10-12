@@ -135,7 +135,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             float: The depth to be used for the stability screen calculation.
         """
         stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum["STABILITY_INNER"]
+            MechanismEnum.STABILITY_INNER
         )
         if not stability_inner_reliability_collection:
             error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'

@@ -54,7 +54,7 @@ class MechanismReliability:
         self.Pf = float("nan")
         self.Beta = float("nan")
 
-        if mechanism.name == "PIPING":
+        if mechanism == MechanismEnum.PIPING:
             self.gamma_schem_heave = 1  # 1.05
             self.gamma_schem_upl = 1  # 1.05
             self.gamma_schem_pip = 1  # 1.05
@@ -121,7 +121,7 @@ class MechanismReliability:
     def _get_hydra_ring_calculator(
         self, mechanism: MechanismEnum, mechanism_input: MechanismInput
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism.name == "OVERFLOW":
+        if mechanism == MechanismEnum.OVERFLOW:
             _mechanism_input = OverflowHydraRingInput.from_mechanism_input(
                 mechanism_input
             )
@@ -132,13 +132,13 @@ class MechanismReliability:
     def _get_simple_calculator(
         self, mechanism: MechanismEnum, mechanism_input: MechanismInput, load: LoadInput
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism.name == "STABILITY_INNER":
+        if mechanism == MechanismEnum.STABILITY_INNER:
             _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
                 mechanism_input
             )
             return StabilityInnerSimpleCalculator(_mechanism_input)
 
-        if mechanism.name == "OVERFLOW":  # specific for SAFE
+        if mechanism == MechanismEnum.OVERFLOW:  # specific for SAFE
             _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
             return OverflowSimpleCalculator(_mechanism_input, load)
 
@@ -151,12 +151,12 @@ class MechanismReliability:
         load: LoadInput,
         traject_info: DikeTrajectInfo,
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism.name == "PIPING":
+        if mechanism == MechanismEnum.PIPING:
             return PipingSemiProbabilisticCalculator(
                 mechanism_input, load, self.t_0, traject_info
             )
 
-        if mechanism.name == "REVETMENT":
+        if mechanism == MechanismEnum.REVETMENT:
             return RevetmentCalculator(
                 mechanism_input.input["revetment_input"], self.t_0
             )
@@ -168,7 +168,7 @@ class MechanismReliability:
         mechanism: MechanismEnum,
         mechanism_input: MechanismInput,
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism.name != "STABILITY_INNER":
+        if mechanism != MechanismEnum.STABILITY_INNER:
             raise Exception(
                 "Unknown computation type DStability for {}".format(mechanism)
             )

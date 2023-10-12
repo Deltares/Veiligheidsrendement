@@ -48,7 +48,7 @@ class RevetmentMeasure(MeasureProtocol):
         NOTE (VRTOOL-254): Retrieves the Beta value for the first computation year (lowest integer value).
         """
         _mech_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum["REVETMENT"]
+            MechanismEnum.REVETMENT
         )
         _min_reliability_year = str(
             min(map(int, _mech_reliability_collection.Reliability.keys()))
@@ -73,7 +73,7 @@ class RevetmentMeasure(MeasureProtocol):
 
     def _get_revetment(self, dike_section: DikeSection) -> RevetmentDataClass:
         _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum["REVETMENT"]
+            MechanismEnum.REVETMENT
         )
         _first_year = list(_reliability_collection.Reliability.keys())[0]
         return _reliability_collection.Reliability[_first_year].Input.input[

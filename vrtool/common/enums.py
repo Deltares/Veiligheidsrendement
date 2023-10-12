@@ -16,29 +16,39 @@ class VrtoolEnum(Enum):
         return self._denormalize_name(self.name)
 
     @classmethod
-    def _normalize_name(cls, in_name: str) -> None | str:
-        """Convert string to match naming convention (upper snake)"""
-        if not in_name:
-            return None
-        return sub(r"(?<!^)(?=[A-Z])", "_", in_name).upper()
-
-    @classmethod
-    def get_enum(cls, enum_name: str) -> None | Enum:
+    def get_enum(cls, enum_name: str) -> Enum:
         """Return matching enum for name"""
+
+        def _normalize_name(in_name: str) -> str:
+            """Convert string to match naming convention (upper snake)"""
+            if not in_name:
+                return cls.INVALID.name
+            return sub(r"(?<!^)(?=[A-Z])", "_", in_name.strip()).upper()
 
         try:
             # Default: enum name exists
             return cls[enum_name]
         except KeyError:
-            try:
-                # Fallback: enum name needs to be normalized first
-                return next(
+            # Fallback:
+            # -> enum name needs to be normalized first
+            # -> if still no match: INVALID is returned
+            return next(
+                (
                     _enum
                     for _enum in list(cls)
-                    if cls._normalize_name(enum_name) == _enum.name
-                )
-            except StopIteration:
-                return None
+                    if _normalize_name(enum_name) == _enum.name
+                ),
+                cls.INVALID,
+            )
+
+
+class MechanismEnum(VrtoolEnum):
+    OVERFLOW = 1
+    STABILITY_INNER = 2
+    PIPING = 3
+    REVETMENT = 4
+    HYDRAULIC_STRUCTURES = 5
+    INVALID = 99
 
 
 class MeasureTypeEnum(VrtoolEnum):
@@ -50,10 +60,3 @@ class MeasureTypeEnum(VrtoolEnum):
     REVETMENT = 6
     CUSTOM = 7
     INVALID = 99
-
-
-class MechanismEnum(VrtoolEnum):
-    OVERFLOW = 1
-    STABILITY_INNER = 2
-    PIPING = 3
-    REVETMENT = 4

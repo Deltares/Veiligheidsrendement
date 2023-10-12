@@ -92,13 +92,13 @@ class VerticalGeotextileMeasure(MeasureProtocol):
             ).Reliability[
                 year_to_calculate
             ]
-            if mechanism.name == "PIPING":
+            if mechanism == MechanismEnum.PIPING:
                 self._configure_piping(
                     mechanism_reliability,
                     year_to_calculate,
                     dike_section_mechanism_reliability,
                 )
-            if mechanism.name in ["OVERFLOW", "STABILITY_INNER"]:
+            if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]:
                 self._copy_results(
                     mechanism_reliability, dike_section_mechanism_reliability
                 )
