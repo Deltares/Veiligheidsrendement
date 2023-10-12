@@ -19,25 +19,27 @@ class MechanismEnum(Enum):
         return "".join(x.lower().capitalize() or "_" for x in self.name.split("_"))
 
     @classmethod
-    def get_enum(cls, enum_name: str) -> None | Enum:
+    def get_enum(cls, enum_name: str) -> Enum:
         """Return matching enum for name"""
 
-        def _normalize_name(in_name: str) -> None | str:
+        def _normalize_name(in_name: str) -> str:
             """Convert string to match naming convention (upper snake)"""
             if not in_name:
-                return None
-            return sub(r"(?<!^)(?=[A-Z])", "_", in_name).upper()
+                return cls.INVALID
+            return sub(r"(?<!^)(?=[A-Z])", "_", in_name.strip()).upper()
 
         try:
             # Default: enum name exists
             return cls[enum_name]
         except KeyError:
-            try:
-                # Fallback: enum name needs to be normalized first
-                return next(
+            # Fallback:
+            # -> enum name needs to be normalized first
+            # -> if still no match: INVALID is returned
+            return next(
+                (
                     _enum
                     for _enum in list(cls)
                     if _normalize_name(enum_name) == _enum.name
-                )
-            except StopIteration:
-                return None
+                ),
+                cls.INVALID,
+            )
