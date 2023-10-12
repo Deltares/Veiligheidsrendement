@@ -30,7 +30,7 @@ class GreedyStrategy(StrategyBase):
         sg_index = np.zeros((no_of_sections,))
         measure_index = np.zeros((no_of_sections,), dtype=np.int32)
         for i in range(0, no_of_sections):
-            if optimal_counter_combination[i] != 0:  # a measure was taken
+            if optimal_counter_combination[i] >= 0:  # a measure was taken
                 measure_index[i] = sh_array[i, optimal_counter_combination[i]]
                 sg_index[i] = sg_array[i, optimal_counter_combination[i]]
             else:  # no measure was taken
