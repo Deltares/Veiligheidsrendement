@@ -25,7 +25,7 @@ class MechanismEnum(Enum):
         def _normalize_name(in_name: str) -> str:
             """Convert string to match naming convention (upper snake)"""
             if not in_name:
-                return cls.INVALID
+                return cls.INVALID.name
             return sub(r"(?<!^)(?=[A-Z])", "_", in_name.strip()).upper()
 
         try:
