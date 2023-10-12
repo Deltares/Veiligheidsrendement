@@ -27,7 +27,7 @@ class RunOptimization(VrToolRunProtocol):
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
         self._solutions_dict = results_measures.solutions_dict
-        if (len(results_measures.ids_to_import) > 0):
+        if any(results_measures.ids_to_import):
             self._ids_to_import = results_measures.ids_to_import
         else:
             self._ids_to_import = self._get_default_measure_result_ids()
