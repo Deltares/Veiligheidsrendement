@@ -92,15 +92,16 @@ class GreedyStrategy(StrategyBase):
 
             # We should increase the measure at the weakest section, but only if we have not reached the end of the array yet:
             if number_of_available_height_measures > index_counter[ind_highest_risk]:
-                index_counter[ind_highest_risk] += 1
                 # take next step, exception if there is no valid measure. In that case exit the routine.
-                if sh_array[ind_highest_risk, index_counter[ind_highest_risk]] == 999:
+                if sh_array[ind_highest_risk, index_counter[ind_highest_risk]+1] == 999:
                     logging.error(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(
                             run_number
                         )
                     )
                     break
+                else:
+                    index_counter[ind_highest_risk] += 1
             else:
                 logging.error(
                     "Bundle quit after {} steps, weakest section has no more available measures".format(
