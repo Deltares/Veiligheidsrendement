@@ -72,9 +72,7 @@ class TestFailureMechanismCollection:
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(collection_to_retrieve)
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(
-                MechanismEnum.STABILITY_INNER, "", [], 0, 0
-            )
+            MechanismReliabilityCollection(MechanismEnum.STABILITY_INNER, "", [], 0, 0)
         )
 
         # Call
@@ -185,9 +183,7 @@ class TestFailureMechanismCollection:
         # Setup
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(
-                MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0
-            )
+            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0)
         )
         collection.add_failure_mechanism_reliability_collection(
             MechanismReliabilityCollection(
