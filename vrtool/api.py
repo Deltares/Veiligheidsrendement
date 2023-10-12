@@ -2,6 +2,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
+
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
@@ -14,6 +16,7 @@ from vrtool.orm.orm_controllers import (
     export_results_optimization,
     export_results_safety_assessment,
     get_dike_traject,
+    get_optimization_step_with_lowest_total_cost,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
@@ -116,6 +119,13 @@ def run_full(vrtool_config: VrtoolConfig) -> None:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
     ApiRunWorkflows(vrtool_config).run_all()
+
+
+def get_optimization_step_with_lowest_total_cost_table(
+    vrtool_config: VrtoolConfig,
+) -> pd.DataFrame:
+    _optimization_step = get_optimization_step_with_lowest_total_cost(vrtool_config)
+    raise NotImplementedError()
 
 
 class ApiRunWorkflows:
