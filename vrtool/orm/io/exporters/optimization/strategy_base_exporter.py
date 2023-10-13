@@ -7,12 +7,16 @@ from vrtool.orm.models.optimization import (
     OptimizationStepResultSection,
 )
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
-from vrtool.orm.models.optimization.optimization_selected_measure import OptimizationSelectedMeasure
+from vrtool.orm.models.optimization.optimization_selected_measure import (
+    OptimizationSelectedMeasure,
+)
 
 
 class StrategyBaseExporter(OrmExporterProtocol):
     def __init__(self, optimization_run_id: int) -> None:
-        self.optimization_run: OptimizationRun = OptimizationRun.get_by_id(optimization_run_id)
+        self.optimization_run: OptimizationRun = OptimizationRun.get_by_id(
+            optimization_run_id
+        )
 
     def export_dom(self, dom_model: StrategyBase) -> None:
         dims = dom_model.TakenMeasures.values.shape
@@ -24,7 +28,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
-                
+
                 opt_sel_msr_id = self._get_sel_msr_id(singleMsrId)
                 _created_optimization_step = OptimizationStep.create(
                     step_number=i,
@@ -74,9 +78,15 @@ class StrategyBaseExporter(OrmExporterProtocol):
         )
 
     def _get_sel_msr_id(self, single_msr_id) -> int:
-        for run_measure_result in self.optimization_run.optimization_run_measure_results:
+        for (
+            run_measure_result
+        ) in self.optimization_run.optimization_run_measure_results:
             if run_measure_result.measure_result_id == single_msr_id:
                 return run_measure_result.get_id()
 
         run_id = self.optimization_run.get_id()
-        raise ValueError ("OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(run_id, single_msr_id))
+        raise ValueError(
+            "OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(
+                run_id, single_msr_id
+            )
+        )

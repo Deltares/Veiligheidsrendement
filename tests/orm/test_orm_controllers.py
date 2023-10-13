@@ -667,7 +667,7 @@ class TestOrmControllers:
         class MockedStrategy(StrategyBase):
             def __init__(self, type, config: VrtoolConfig):
                 # First run could just be exporting the index of TakenMeasures.
-                self.options = pd.DataFrame([[[1,2,3]],[[2,3,4]]], columns=["0"])
+                self.options = pd.DataFrame([[[1, 2, 3]], [[2, 3, 4]]], columns=["0"])
                 self.options_geotechnical = pd.DataFrame(
                     list(map(lambda x: x.id, MeasureResultMechanism.select()))
                 )
@@ -701,10 +701,15 @@ class TestOrmControllers:
                     "beta_target",
                     "transition_level",
                 ]
-                _taken_measure_row1 = [0] * len(_measures_columns)  # first row is header
-                _taken_measure_row2 = [0] * len(_measures_columns)  # second row is the first one with values
+                _taken_measure_row1 = [0] * len(
+                    _measures_columns
+                )  # first row is header
+                _taken_measure_row2 = [0] * len(
+                    _measures_columns
+                )  # second row is the first one with values
                 self.TakenMeasures = pd.DataFrame(
-                    [_taken_measure_row1, _taken_measure_row2], columns=_measures_columns
+                    [_taken_measure_row1, _taken_measure_row2],
+                    columns=_measures_columns,
                 )  # This is actually OptimizationStep (with extra info).
                 self.TakenMeasures["Section"][1] = "0"
                 self.TakenMeasures["option_in"][1] = 0
