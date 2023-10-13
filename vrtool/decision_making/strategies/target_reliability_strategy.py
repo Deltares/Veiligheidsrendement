@@ -135,12 +135,10 @@ class TargetReliabilityStrategy(StrategyBase):
                 MechanismEnum.OVERFLOW.name: _beta_t_overflow,
                 MechanismEnum.REVETMENT.name: _beta_t_revetment,
             }
-
-            # find cheapest design that satisfies betatcs in 50 years from invest year
-            _invest_year = self.options[i.name]["year"][122][0]
-            if isinstance(_invest_year, list):
-                _invest_year = _invest_year[0]
-            _target_year = _invest_year + 50
+            # find cheapest design that satisfies betatcs in 50 years from OI_year if OI_year is an int that is not 0
+            if isinstance(self.OI_year, int):
+                # TODO: should this not be OI_year + 50?
+                _target_year = 50
 
             # make PossibleMeasures dataframe
             _possible_measures = copy.deepcopy(self.options[i.name])

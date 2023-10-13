@@ -49,6 +49,7 @@ class TestVrtoolConfig:
             "LE_in_section",
             "crest_step",
             "berm_step",
+            "OI_year",
             "OI_horizon",
             "BC_stop",
             "max_greedy_iterations",
@@ -90,6 +91,7 @@ class TestVrtoolConfig:
         assert not _config.LE_in_section
         assert _config.crest_step == pytest.approx(0.5)
         assert _config.berm_step == [0, 5, 8, 10, 12, 15, 20, 30]
+        assert _config.OI_year == 0
         assert _config.OI_horizon == 50
         assert _config.BC_stop == pytest.approx(0.1)
         assert _config.max_greedy_iterations == 150
