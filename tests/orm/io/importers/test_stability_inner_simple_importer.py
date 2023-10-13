@@ -4,6 +4,7 @@ from peewee import SqliteDatabase
 
 from tests.orm import empty_db_fixture, get_basic_computation_scenario
 from tests.orm.io import add_computation_scenario_id
+from vrtool.common.enums import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.stability_inner_simple_importer import (
@@ -72,7 +73,7 @@ class TestStabilityInnerSimpleImporter:
         # Assert
         assert isinstance(_mechanism_input, MechanismInput)
 
-        assert _mechanism_input.mechanism == "StabilityInner"
+        assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER
         assert len(_mechanism_input.input) == len(parameters)
         for parameter in parameters:
             mechanism_parameter = _mechanism_input.input[parameter.get("parameter")]

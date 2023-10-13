@@ -1,5 +1,6 @@
 import numpy as np
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -37,7 +38,7 @@ class PipingImporter(OrmImporterProtocol):
                 f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        mechanism_input = MechanismInput("Piping")
+        mechanism_input = MechanismInput(MechanismEnum.PIPING)
         mechanism_input.temporals = []
 
         index = 0

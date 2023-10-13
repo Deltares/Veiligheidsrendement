@@ -1,5 +1,6 @@
 import pytest
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
@@ -20,19 +21,19 @@ class TestFailureMechanismCollection:
         self,
     ):
         # Given
-        mechanism_name_one = "mechanism 1"
-        mechanism_name_two = "mechanism 2"
-        mechanism_name_three = "mechanism 3"
+        mechanism_one = MechanismEnum.OVERFLOW
+        mechanism_two = MechanismEnum.STABILITY_INNER
+        mechanism_three = MechanismEnum.PIPING
 
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(mechanism_name_one, "", [], 0, 0)
+            MechanismReliabilityCollection(mechanism_one, "", [], 0, 0)
         )
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(mechanism_name_two, "", [], 0, 0)
+            MechanismReliabilityCollection(mechanism_two, "", [], 0, 0)
         )
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection(mechanism_name_three, "", [], 0, 0)
+            MechanismReliabilityCollection(mechanism_three, "", [], 0, 0)
         )
 
         # When
@@ -40,20 +41,20 @@ class TestFailureMechanismCollection:
 
         # Then
         assert len(available_mechanisms) == 3
-        assert mechanism_name_one in available_mechanisms
-        assert mechanism_name_two in available_mechanisms
-        assert mechanism_name_three in available_mechanisms
+        assert mechanism_one in available_mechanisms
+        assert mechanism_two in available_mechanisms
+        assert mechanism_three in available_mechanisms
 
     def test_get_reliability_collection_when_not_in_collection_returns_None(self):
         # Setup
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection("mechanism", "", [], 0, 0)
+            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [], 0, 0)
         )
 
         # Call
         reliability_collection = collection.get_mechanism_reliability_collection(
-            "other mechanism"
+            MechanismEnum.STABILITY_INNER
         )
 
         # Assert
@@ -63,7 +64,7 @@ class TestFailureMechanismCollection:
         self,
     ):
         # Setup
-        mechanism_to_retrieve = "mechanism"
+        mechanism_to_retrieve = MechanismEnum.OVERFLOW
         collection_to_retrieve = MechanismReliabilityCollection(
             mechanism_to_retrieve, "", [], 0, 0
         )
@@ -71,7 +72,7 @@ class TestFailureMechanismCollection:
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(collection_to_retrieve)
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection("other mechanism", "", [], 0, 0)
+            MechanismReliabilityCollection(MechanismEnum.STABILITY_INNER, "", [], 0, 0)
         )
 
         # Call
@@ -99,10 +100,10 @@ class TestFailureMechanismCollection:
     ):
         # Setup
         reliability_collection_one = MechanismReliabilityCollection(
-            "mechanism 1", "", [4, 5, 6], 0, 0
+            MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0
         )
         reliability_collection_two = MechanismReliabilityCollection(
-            "mechanism 2", "", [4, 5, 6], 0, 0
+            MechanismEnum.STABILITY_INNER, "", [4, 5, 6], 0, 0
         )
 
         collection = FailureMechanismCollection()
@@ -127,7 +128,7 @@ class TestFailureMechanismCollection:
         self,
     ):
         # Setup
-        mechanism_to_add = "mechanism"
+        mechanism_to_add = MechanismEnum.OVERFLOW
         collection_to_add = MechanismReliabilityCollection(
             mechanism_to_add, "", [], 0, 0
         )
@@ -148,7 +149,7 @@ class TestFailureMechanismCollection:
 
     def test_add_reliability_collection_and_mechanism_in_collection_raises_error(self):
         # Setup
-        duplicate_mechanism = "mechanism"
+        duplicate_mechanism = MechanismEnum.OVERFLOW
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
             MechanismReliabilityCollection(duplicate_mechanism, "", [], 0, 0)
@@ -182,10 +183,12 @@ class TestFailureMechanismCollection:
         # Setup
         collection = FailureMechanismCollection()
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection("mechanism 1", "", [4, 5, 6], 0, 0)
+            MechanismReliabilityCollection(MechanismEnum.OVERFLOW, "", [4, 5, 6], 0, 0)
         )
         collection.add_failure_mechanism_reliability_collection(
-            MechanismReliabilityCollection("mechanism 2", "", [1, 2, 3], 0, 0)
+            MechanismReliabilityCollection(
+                MechanismEnum.STABILITY_INNER, "", [1, 2, 3], 0, 0
+            )
         )
 
         # Call

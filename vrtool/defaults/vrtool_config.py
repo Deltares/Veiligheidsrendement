@@ -7,6 +7,7 @@ from typing import Optional, Union
 
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults import default_unit_costs_csv
 
 
@@ -52,9 +53,9 @@ class VrtoolConfig:
     # years to compute reliability for
     T: list[int] = field(default_factory=lambda: [0, 19, 20, 25, 50, 75, 100])
     # mechanisms to exclude
-    excluded_mechanisms: list[str] = field(
+    excluded_mechanisms: list[MechanismEnum] = field(
         default_factory=lambda: [
-            "HydraulicStructures",
+            MechanismEnum.HYDRAULIC_STRUCTURES,
         ]
     )
     # whether to consider length-effects within a dike section
@@ -93,20 +94,17 @@ class VrtoolConfig:
         return self.input_directory.joinpath(self.input_database_name)
 
     @property
-    def supported_mechanisms(self) -> list[str]:
+    def supported_mechanisms(self) -> list[MechanismEnum]:
         """Mechanisms that are supported"""
-        return [
-            "Overflow",
-            "StabilityInner",
-            "Piping",
-            "Revetment",
-        ]
+        return list(
+            mech for mech in list(MechanismEnum) if mech != MechanismEnum.INVALID
+        )
 
     @property
-    def mechanisms(self) -> list[str]:
+    def mechanisms(self) -> list[MechanismEnum]:
         """Filtered list of mechanisms"""
 
-        def non_excluded_mechanisms(mechanism: str) -> bool:
+        def non_excluded_mechanisms(mechanism: MechanismEnum) -> bool:
             return mechanism not in self.excluded_mechanisms
 
         return list(filter(non_excluded_mechanisms, self.supported_mechanisms))
@@ -127,6 +125,13 @@ class VrtoolConfig:
         self.input_directory = _convert_to_path(self.input_directory)
         self.output_directory = _convert_to_path(self.output_directory)
         self.externals = _convert_to_path(self.externals)
+
+        def _valid_mechanism(mechanism: MechanismEnum | str) -> MechanismEnum:
+            if isinstance(mechanism, MechanismEnum):
+                return mechanism
+            return MechanismEnum.get_enum(mechanism)
+
+        self.excluded_mechanisms = list(map(_valid_mechanism, self.excluded_mechanisms))
 
     def _relative_paths_to_absolute(self, parent_path: Path):
         """

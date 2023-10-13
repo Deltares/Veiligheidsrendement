@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -19,7 +20,7 @@ class DikeSection:
     """
 
     crest_height: float
-    mechanism_data: dict[str, tuple[str, str]]
+    mechanism_data: dict[MechanismEnum, tuple[str, str]]
     section_reliability: SectionReliability
     TrajectInfo: DikeTrajectInfo
     name: str
@@ -93,7 +94,8 @@ class DikeSection:
                 self.mechanism_data = {}
                 for i in range(len(data)):
                     if data.index[i] in available_mechs:
-                        self.mechanism_data[data.index[i]] = (
+                        mechanism = MechanismEnum.get_enum(data.index[i])
+                        self.mechanism_data[mechanism] = (
                             data.loc[data.index[i]][0],
                             data.loc[data.index[i]][1],
                         )
@@ -121,7 +123,7 @@ class DikeSection:
     def set_section_reliability(
         self,
         input_path: Path,
-        mechanism_names: list[str],
+        mechanisms: list[MechanismEnum],
         t_value: float,
         t_0: float,
         externals_path: Path = None,
@@ -130,7 +132,7 @@ class DikeSection:
 
         Args:
             input_path (Path): The path to retrieve the input from.
-            mechanism_names (list[str]): A collection of the names of the mechanisms to consider.
+            mechanisms (list[MechanismEnum]): A collection of the mechanisms to consider.
             t_value (float): The year to compute the reliability for.
             t_0 (float): The initial year.
         """
@@ -138,13 +140,13 @@ class DikeSection:
         self.section_reliability.load = self._get_load_input(input_path)
 
         # Then the input for all the mechanisms:
-        for mechanism_name in mechanism_names:
+        for mechanism in mechanisms:
             reliability_collection = self._get_mechanism_reliability_collection(
-                input_path.joinpath(mechanism_name),
+                input_path.joinpath(mechanism.name),
                 input_path.joinpath("Stix"),
                 externals_path,
-                mechanism_name,
-                self.mechanism_data[mechanism_name],
+                mechanism,
+                self.mechanism_data[mechanism],
                 t_value,
                 t_0,
                 self.section_reliability.load.load_type,
@@ -180,7 +182,7 @@ class DikeSection:
         mechanism_path: Path,
         stix_path: Path,
         externals_path: Path,
-        mechanism: str,
+        mechanism: MechanismEnum,
         mechanism_data,
         t_value: float,
         t_0: float,

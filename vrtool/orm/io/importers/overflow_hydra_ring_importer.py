@@ -1,5 +1,6 @@
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -64,7 +65,7 @@ class OverFlowHydraRingImporter(OrmImporterProtocol):
                 f"No valid value given for {ComputationScenario.__name__}."
             )
 
-        mechanism_input = MechanismInput("Overflow")
+        mechanism_input = MechanismInput(MechanismEnum.OVERFLOW)
         mechanism_input.input["hc_beta"] = self._get_crest_height_beta(
             orm_model.mechanism_tables.select(), orm_model.scenario_name
         )

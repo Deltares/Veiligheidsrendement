@@ -1,6 +1,6 @@
 import numpy as np
-import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -24,7 +24,7 @@ class StabilityInnerSimpleImporter(OrmImporterProtocol):
                 f"No valid value given for {ComputationScenario.__name__}."
             )
 
-        mechanism_input = MechanismInput("StabilityInner")
+        mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
         self._set_parameters(
             mechanism_input, orm_model.computation_scenario_parameters.select()
         )

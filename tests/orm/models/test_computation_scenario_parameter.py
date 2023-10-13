@@ -1,4 +1,5 @@
 from tests.orm import empty_db_fixture
+from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
@@ -25,9 +26,9 @@ class TestComputationScenarioParameter:
             crest_height=24,
             annual_crest_decline=42,
         )
-        _test_mechanism = Mechanism.create(name="TestMechanism")
+        _test_mech_inst = Mechanism.create(name=MechanismEnum.OVERFLOW.name)
         _mech_per_section = MechanismPerSection.create(
-            section=_test_section, mechanism=_test_mechanism
+            section=_test_section, mechanism=_test_mech_inst
         )
         _computation_type = ComputationType.create(name="TestComputation")
         _scenario = ComputationScenario.create(
@@ -68,9 +69,9 @@ class TestComputationScenarioParameter:
             crest_height=24,
             annual_crest_decline=42,
         )
-        _test_mechanism = Mechanism.create(name="TestMechanism")
+        _test_mech_inst = Mechanism.create(name=MechanismEnum.OVERFLOW.name)
         _mech_per_section = MechanismPerSection.create(
-            section=_test_section, mechanism=_test_mechanism
+            section=_test_section, mechanism=_test_mech_inst
         )
         _computation_type = ComputationType.create(name="TestComputation")
         _scenario_a = ComputationScenario.create(

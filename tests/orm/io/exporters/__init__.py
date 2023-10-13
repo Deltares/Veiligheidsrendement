@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from tests import test_data
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
@@ -23,11 +24,11 @@ def section_reliability_with_values() -> SectionReliability:
 
 
 def create_required_mechanism_per_section(
-    section_data: SectionData, mechanism_available_list: list[str]
+    section_data: SectionData, mechanism_available_list: list[MechanismEnum]
 ) -> None:
     _added_mechanisms = []
-    for mechanism_name in mechanism_available_list:
-        _mechanism, _ = Mechanism.get_or_create(name=mechanism_name.strip().upper())
+    for mechanism in mechanism_available_list:
+        _mech_inst, _ = Mechanism.get_or_create(name=mechanism.name)
         _added_mechanisms.append(
-            MechanismPerSection.create(section=section_data, mechanism=_mechanism)
+            MechanismPerSection.create(section=section_data, mechanism=_mech_inst)
         )

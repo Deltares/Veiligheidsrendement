@@ -10,6 +10,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 import vrtool.orm.models as orm_models
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
@@ -25,8 +26,10 @@ class AcceptanceTestCase:
     case_name: str
     model_directory: Path
     traject_name: str
-    excluded_mechanisms: list[str] = field(
-        default_factory=lambda: ["HydraulicStructures"]
+    excluded_mechanisms: list[MechanismEnum] = field(
+        default_factory=lambda: [
+            MechanismEnum.HYDRAULIC_STRUCTURES,
+        ]
     )
 
     @staticmethod
@@ -36,43 +39,61 @@ class AcceptanceTestCase:
             AcceptanceTestCase(
                 model_directory="TestCase1_38-1_no_housing",
                 traject_name="38-1",
-                excluded_mechanisms=["Revetment", "HydraulicStructures"],
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
                 case_name="Traject 38-1, no housing",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase1_38-1_no_housing_stix",
                 traject_name="38-1",
-                excluded_mechanisms=["Revetment", "HydraulicStructures"],
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
                 case_name="Traject 38-1, no housing, with dstability",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase2_38-1_overflow_no_housing",
                 traject_name="38-1",
-                excluded_mechanisms=["Revetment", "HydraulicStructures"],
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
                 case_name="Traject 38-1, no-housing, with overflow",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase1_38-1_revetment",
                 traject_name="38-1",
-                excluded_mechanisms=["HydraulicStructures"],
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
                 case_name="Traject 38-1, with revetment, case 1",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase3_38-1_revetment",
                 traject_name="38-1",
-                excluded_mechanisms=["HydraulicStructures"],
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
                 case_name="Traject 38-1, with revetment, including bundling",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase4_38-1_revetment_small",
                 traject_name="38-1",
-                excluded_mechanisms=["HydraulicStructures"],
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
                 case_name="Traject 38-1, two sections with revetment",
             ),
             AcceptanceTestCase(
                 model_directory="TestCase3_38-1_small",
                 traject_name="38-1",
-                excluded_mechanisms=["Revetment", "HydraulicStructures"],
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
                 case_name="Traject 38-1, two sections",
             ),
         ]
