@@ -239,7 +239,7 @@ class GreedyStrategy(StrategyBase):
 
             # now replace the life_cycle_cost where available_measures_height is False with a very high value:
             # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
-            #get intex of available_measures_height where True
+            # get index of available_measures_height where `True`
             if isinstance(available_measures_height, pd.DataFrame):
                 available_measures_height = available_measures_height.squeeze()
             unavailable_measure_indices = available_measures_height.index[~available_measures_height]
@@ -269,15 +269,16 @@ class GreedyStrategy(StrategyBase):
             np.max(existing_investments[section_no, :]) == 0
         ):  # nothing has been invested yet
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
-            if mechanism == "Overflow": #Overflow is always present for a section.
-                current_reliability_overflow = traject.probabilities.loc[traject.sections[section_no].name].loc['Overflow'].drop('Length').to_frame().transpose()
+            if mechanism == MechanismEnum.OVERFLOW:
+                #Overflow is always present for a section.
+                current_reliability_overflow = traject.probabilities.loc[traject.sections[section_no].name].loc[MechanismEnum.OVERFLOW.name].drop('Length').to_frame().transpose()
                 current_reliability_overflow.columns = current_reliability_overflow.columns.astype(int)
                 comparison_height = pd.DataFrame((
                             HeightOptions.Overflow.values > current_reliability_overflow.values
                         ).any(axis=1),index = HeightOptions.index)
-            elif mechanism == "Revetment":
+            elif mechanism == MechanismEnum.REVETMENT:
                 try: #if Revetment has been computed, get it from the assessment:                
-                    current_reliability_revetment = traject.probabilities.loc[traject.sections[section_no].name].loc['Revetment'].drop('Length').to_frame().transpose()
+                    current_reliability_revetment = traject.probabilities.loc[traject.sections[section_no].name].loc[MechanismEnum.REVETMENT.name].drop('Length').to_frame().transpose()
                     current_reliability_revetment.columns = current_reliability_revetment.columns.astype(int)
 
                     comparison_height = pd.DataFrame((
