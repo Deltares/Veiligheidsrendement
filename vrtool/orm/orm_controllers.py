@@ -8,6 +8,7 @@ from peewee import SqliteDatabase
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategy_evaluation import calc_life_cycle_risks
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -463,15 +464,8 @@ def get_optimization_steps(optimization_run_id: int) -> Iterator[orm.Optimizatio
     )
 
 
-def get_step_cost_from_dataframe(optimization_step_df: pd.DataFrame) -> float:
-    # build dataframe.
-    # run tr method.
-    # return result.
-    return float("nan")
-
-
 def get_optimization_step_with_lowest_total_cost(
-    vrtool_db_path: Path, optimization_run_id: int
+    vrtool_config: VrtoolConfig, optimization_run_id: int
 ) -> orm.OptimizationStep:
     """
     Gets the `OptimizationStep` with the lowest *total* cost.
@@ -483,7 +477,7 @@ def get_optimization_step_with_lowest_total_cost(
     Returns:
         orm.OptimizationStep: The `OptimizationStep` instance with the lowest *total* cost
     """
-    _connected_db = open_database(vrtool_db_path)
+    _connected_db = open_database(vrtool_config.input_database_path)
     logging.info(
         "Openned connection to retrieve 'OptimizationStep' with lowest total cost."
     )
@@ -493,9 +487,9 @@ def get_optimization_step_with_lowest_total_cost(
         _as_df = OptimizationStepImporter.import_optimization_step_results_df(
             _optimization_step
         )
-        _results.append(
-            (_optimization_step, _as_df, get_step_cost_from_dataframe(_as_df))
-        )
+        _lcc = _optimization_step.optimization_step_results_section[0].lcc
+        _cost = calc_life_cycle_risks()
+        _results.append((_optimization_step, _as_df, _cost))
 
     _connected_db.close()
     logging.info(
