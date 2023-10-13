@@ -423,7 +423,7 @@ class StrategyBase:
                     )
                 self.Pf[_mechanism.name][
                     n, 0 : np.size(betas[_mechanism.name], 0), :
-                ] = beta_to_pf(betas[_mechanism.name])
+                ] = beta_to_pf(betas[_mechanism.name].astype(float))
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
