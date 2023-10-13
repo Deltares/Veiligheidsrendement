@@ -238,9 +238,10 @@ class TestApiRunWorkflowsAcceptance:
 
         # We actually run using ALL the available measure results.
         _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
+        _measures_input = _validator.get_investment_year(valid_vrtool_config, _measures_results)
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_results)
+        run_step_optimization(valid_vrtool_config, _measures_input)
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)

@@ -921,13 +921,13 @@ class GreedyStrategy(StrategyBase):
         costs["TC_min"] = np.argmin(costs["TC"])
 
         return costs
-    def set_investment_years(self, traject: DikeTraject, ids_to_import: list[int], solutions_dict: dict[str, Solutions], investment_year_dict: Dict[int, int]):
+    def set_investment_years(self, traject: DikeTraject, ids_to_import: dict[int,int], solutions_dict: dict[str, Solutions]):
         """
         Set the investment years for the dike ring.
         """
         # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
         # using pop to have it working correctly for the other sections
-        _ids_copied = ids_to_import.copy()
+        _ids_copied = list(ids_to_import.keys())
 
         self.indexCombined2single = {}
         for section in traject.sections:
@@ -938,8 +938,6 @@ class GreedyStrategy(StrategyBase):
             
             flattened_indexCombined2single = [item for sublist in self.indexCombined2single[section.name] for item in sublist]
 
-            #generate TESTING investment_year_dict with keys from indexCombined2single and values randomly between 0 and 28
-            investment_year_dict = {key: random.randint(0,28) for key in ids_to_import}
             #get betas from assessment from section and interpolate such that values are given for 0 until 100 (or what has been defined in config)
             beta_array_initial = {}
             beta_array_measures = {}
@@ -957,12 +955,12 @@ class GreedyStrategy(StrategyBase):
                 #for each row in beta_array_measures make a row with the values until t from initial_beta and after that from beta_array_measures and store in beta_array_investment_year
                 beta_array_investment_year[beta_type] = np.empty((len(self.indexCombined2single[section.name]),np.max(self.T)))
                 for row in range(len(self.indexCombined2single[section.name])):
-                    beta_array_investment_year[beta_type][row] = np.concatenate((beta_array_initial[beta_type][:investment_year_dict[flattened_indexCombined2single[row]]],
-                                                                                  beta_array_measures[beta_type][row][investment_year_dict[flattened_indexCombined2single[row]]:]))
+                    beta_array_investment_year[beta_type][row] = np.concatenate((beta_array_initial[beta_type][:ids_to_import[flattened_indexCombined2single[row]]],
+                                                                                  beta_array_measures[beta_type][row][ids_to_import[flattened_indexCombined2single[row]]:]))
             
             
             #replace year column in solutions_dict[section.name].MeasureData with value from investment_year_dict
-            solutions_dict[section.name].MeasureData['year'] = [investment_year_dict[key] for key in flattened_indexCombined2single]
+            solutions_dict[section.name].MeasureData['year'] = [ids_to_import[key] for key in flattened_indexCombined2single]
 
             #replace betas in solutions_dict[section.name].MeasureData with values from beta_array_investment_year and use np.aranage(0,np.max(self.T),1) as second level index
             new_section_reliability_df = pd.DataFrame(index=section.section_reliability.SectionReliability.index, columns=np.arange(0,np.max(self.T),1))

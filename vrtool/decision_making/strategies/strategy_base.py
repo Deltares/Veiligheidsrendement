@@ -181,7 +181,7 @@ class StrategyBase:
         self.indexCombined2single = {}
 
         # copy the ids as it will be emptied in step1combine, and the ids are needed lateron
-        _ids_copied = ids_to_import.copy()
+        _ids_copied = list(ids_to_import.keys())
 
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):

@@ -274,14 +274,14 @@ def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[in
 
 
 def import_results_measures(
-    config: VrtoolConfig, results_ids_to_import: list[int]
+    config: VrtoolConfig, results_ids_to_import: dict[int,int]
 ) -> ResultsMeasures:
     """
     Imports results masures from a database into a `ResultsMeasure` instance.
 
     Args:
         config (VrtoolConfig): Configuration containing database path.
-        results_ids_to_import (list[int]): List of measure results' IDs.
+        results_ids_to_import (dict[int,int]): List of measure results' IDs.
 
     Returns:
         ResultsMeasures: Instance hosting all the required measures' results.
@@ -292,7 +292,7 @@ def import_results_measures(
     _solutions_dict = dict()
     # Group the measure results by section.
     measure_results = orm.MeasureResult.select().where(
-        orm.MeasureResult.id.in_(results_ids_to_import)
+        orm.MeasureResult.id.in_(list(results_ids_to_import.keys()))
     )
     _grouped_by_section = [
         (_section, list(_grouped_measure_results))
@@ -326,7 +326,7 @@ def import_results_measures(
 
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
-    selected_measure_result_ids: list[int],
+    selected_measure_result_ids: dict[int,int],
     optimization_name: str,
 ) -> ResultsMeasures:
     """
@@ -365,9 +365,9 @@ def create_optimization_run_for_selected_measures(
                 dict(
                     optimization_run=_optimization_run,
                     measure_result=orm.MeasureResult.get_by_id(_measure_id),
-                    investment_year=0,
+                    investment_year=selected_measure_result_ids[_measure_id],
                 )
-                for _measure_id in selected_measure_result_ids
+                for _measure_id in selected_measure_result_ids.keys()
             ]
         ).execute()
 

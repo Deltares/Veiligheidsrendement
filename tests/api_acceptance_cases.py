@@ -296,6 +296,14 @@ class RunStepOptimizationValidator(RunStepValidator):
         _connected_db.close()
         return _id_list
 
+    def get_investment_year(self, valid_vrtool_config, _measures_results):
+        # check : check if available in database ; if not fill with defaults
+        default_year = 0
+        measure_dict = {}
+        for _result in _measures_results:
+            measure_dict[_result] = default_year
+        return measure_dict
+
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
         # For now just check that there are outputs.

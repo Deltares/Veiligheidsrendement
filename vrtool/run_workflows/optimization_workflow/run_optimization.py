@@ -32,13 +32,13 @@ class RunOptimization(VrToolRunProtocol):
         else:
             self._ids_to_import = self._get_default_measure_result_ids()
 
-    def _get_default_measure_result_ids(self) -> list[int]:
+    def _get_default_measure_result_ids(self) -> dict[int,int]:
         ii = 1
-        ids = []
+        ids = {}
         for value in self._solutions_dict.values():
             dims = value.MeasureData.shape
             for i in range(dims[0]):
-                ids.append(ii)
+                ids[ii] = 0 # default investment year
                 ii += 1
         return ids
 
@@ -52,8 +52,7 @@ class RunOptimization(VrToolRunProtocol):
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
         _results_dir = self._get_output_dir()
-        investment_year_dict = {1: 23, 2: 34}   #To be removed, if we read from database. Is now overruled with dict in set_investment_years function.
-        _greedy_optimization.set_investment_years(self.selected_traject, self._ids_to_import, self._solutions_dict, investment_year_dict)
+        _greedy_optimization.set_investment_years(self.selected_traject, self._ids_to_import, self._solutions_dict)
         # Combine available measures
         _greedy_optimization.combine(
             self.selected_traject,
