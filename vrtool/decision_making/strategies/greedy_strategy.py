@@ -966,7 +966,7 @@ class GreedyStrategy(StrategyBase):
             new_section_reliability_df = pd.DataFrame(index=section.section_reliability.SectionReliability.index, columns=np.arange(0,np.max(self.T),1))
             for beta_type in section.section_reliability.SectionReliability.index:
                 #remove columns for beta_type
-                solutions_dict[section.name].MeasureData.drop(columns=beta_type, inplace=True)
+                solutions_dict[section.name].MeasureData.drop(columns=beta_type, inplace=True, level=0)
                 #concatenate a df with mulitindex columns beta_type and np.arange(0,np.max(self.T),1) to solutions_dict[section.name].MeasureData
                 solutions_dict[section.name].MeasureData = pd.concat([solutions_dict[section.name].MeasureData,
                                                                        pd.DataFrame(beta_array_investment_year[beta_type],

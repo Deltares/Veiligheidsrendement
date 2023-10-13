@@ -298,12 +298,29 @@ class RunStepOptimizationValidator(RunStepValidator):
 
     def get_investment_year(self, valid_vrtool_config, _measures_results):
         # check : check if available in database ; if not fill with defaults
-        default_year = 0
+        #for measures of soil reinforcement type get the measure_id. These should be added at t=0 and t=20
+        meas_types = {mr.get_id(): mr.name for mr in orm_models.MeasureType.select() if 'Soil reinforcement' in mr.name}
+        
+        #get the ids for MeasurePerSection for the measures of soil reinforcement type
+        meas_per_section_soil_ids = [mps.get_id() for mps in orm_models.MeasurePerSection.select() if mps.measure_id in meas_types.keys()]
+
         measure_dict = {}
         for _result in _measures_results:
-            measure_dict[_result] = default_year
+            if _result in meas_per_section_soil_ids:
+                measure_dict[_result] = 0
+                measure_dict[_result] = 20
+            else:
+                measure_dict[_result] = 0
         return measure_dict
-
+        #take this once we have a list of tuples
+        measure_dict = []
+        for _result in _measures_results:
+            if _result in meas_per_section_soil_ids:
+                measure_dict.append((_result, 20))
+                measure_dict.append((_result, 0))
+            else:
+                measure_dict.append((_result, 0))
+        return measure_dict
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
         # For now just check that there are outputs.
