@@ -33,7 +33,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         safety_factor_increase: float = 0.2,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        measure_type = MeasureTypeEnum[self.parameters["Type"]]
+        measure_type = self.parameters["Type"]
         self.measures = {}
         self.measures["Stability Screen"] = "yes"
         self.parameters["Depth"] = self._get_depth(dike_section)

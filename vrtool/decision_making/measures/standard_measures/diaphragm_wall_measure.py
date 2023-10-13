@@ -26,7 +26,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
         preserve_slope: bool = False,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        measure_type = MeasureTypeEnum[self.parameters["Type"]]
+        measure_type = self.parameters["Type"]
         # StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
         # It is assumed that the diaphragm wall is extendable after that.
         # Only 1 parameterized version with a lifetime of 100 years

@@ -75,7 +75,7 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
                 ]
                 _converted_measure.cost = _imported_measure["Cost"]
                 _converted_measure.measure_id = _imported_measure["measure_id"]
-                _converted_measure.reinforcement_type = measure.parameters["Type"]
+                _converted_measure.reinforcement_type = measure.parameters["Type"].name
                 _converted_measure.combinable_type = measure.parameters["Class"]
                 _converted_measure.measure_year = measure.parameters["year"]
                 _measure_collection.result_collection.append(_converted_measure)

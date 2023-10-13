@@ -74,5 +74,5 @@ class MeasureResultImporter(OrmImporterProtocol):
             Reliability=_section_reliability,
             imported_parameters=_imported_parameters,
             combinable=measure_result.measure_per_section.measure.combinable_type.name,
-            reinforcement_type=MechanismEnum.get_enum(measure_result.measure_per_section.measure.measure_type.name),
+            reinforcement_type=measure_result.measure_per_section.measure.measure_type.name,
         )

@@ -95,7 +95,7 @@ class Solutions:
         inputs_r = []
 
         for measure in self.measures:
-            _measure_type = MeasureTypeEnum[measure.parameters["Type"]]
+            _measure_type = measure.parameters["Type"]
             if isinstance(measure.measures, list):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe

@@ -22,7 +22,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         preserve_slope: bool = False,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        measure_type = MeasureTypeEnum[self.parameters["Type"]]
+        measure_type = self.parameters["Type"]
 
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years

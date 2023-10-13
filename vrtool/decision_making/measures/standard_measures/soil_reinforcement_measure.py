@@ -32,7 +32,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
         # self. parameters = measure.parameters
-        measure_type = MeasureTypeEnum[self.parameters["Type"]]
+        measure_type = self.parameters["Type"]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
 

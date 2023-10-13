@@ -152,8 +152,9 @@ class TestMeasureImporter:
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
+        _measure_type = MeasureTypeEnum[measure_type_name]
         _orm_measure = _get_valid_measure(
-            MeasureTypeEnum[measure_type_name], combinable_type, _set_standard_measure
+            _measure_type, combinable_type, _set_standard_measure
         )
 
         # 2. Run test.
@@ -162,7 +163,7 @@ class TestMeasureImporter:
         # 3. Verify final expectations.
         assert isinstance(_imported_measure, expected_type)
         self._validate_measure_base_values(_imported_measure, valid_config)
-        assert _imported_measure.parameters["Type"] == measure_type_name
+        assert _imported_measure.parameters["Type"] == _measure_type
         assert _imported_measure.parameters["Direction"] == "onwards"
         assert _imported_measure.parameters["StabilityScreen"] == "no"
         assert _imported_measure.parameters["dcrest_min"] == 0
