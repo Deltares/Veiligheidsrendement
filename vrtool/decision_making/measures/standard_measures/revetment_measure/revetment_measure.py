@@ -112,7 +112,9 @@ class RevetmentMeasure(MeasureProtocol):
                 _beta_target_results = RevetmentMeasureSectionReliability()
                 _beta_target_results.measure_id = self.parameters["ID"]
                 _beta_target_results.measure_name = self.parameters["Name"]
-                _beta_target_results.reinforcement_type = self.parameters["Type"].name
+                _beta_target_results.reinforcement_type = self.parameters[
+                    "Type"
+                ].get_old_name()
                 _beta_target_results.combinable_type = self.parameters["Class"]
                 _beta_target_results.measure_year = self.parameters["year"]
                 _beta_target_results.beta_target = beta_target
@@ -122,7 +124,7 @@ class RevetmentMeasure(MeasureProtocol):
                     _beta_target_results.section_reliability,
                     _beta_target_results.cost,
                 ) = self._get_configured_section_reliability_and_cost(
-                    self.parameters["Type"],
+                    MechanismEnum.get_enum(self.parameters["Type"].name),
                     self.parameters["Type"].name,
                     dike_section,
                     transition_grouping,

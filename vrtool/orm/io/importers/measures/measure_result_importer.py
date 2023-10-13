@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import pandas as pd
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums import MeasureTypeEnum, MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -74,5 +74,7 @@ class MeasureResultImporter(OrmImporterProtocol):
             Reliability=_section_reliability,
             imported_parameters=_imported_parameters,
             combinable=measure_result.measure_per_section.measure.combinable_type.name,
-            reinforcement_type=measure_result.measure_per_section.measure.measure_type.name,
+            reinforcement_type=MeasureTypeEnum.get_enum(
+                measure_result.measure_per_section.measure.measure_type.name
+            ).get_old_name(),
         )

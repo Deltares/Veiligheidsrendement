@@ -102,14 +102,11 @@ class MeasureImporter(OrmImporterProtocol):
             MeasureTypeEnum.REVETMENT: RevetmentMeasure,
         }
 
-        _found_type = _mapping_types.get(
-            MeasureTypeEnum.get_enum(orm_measure.measure.measure_type.name), None
-        )
+        _measure_type = MeasureTypeEnum.get_enum(orm_measure.measure.measure_type.name)
+        _found_type = _mapping_types.get(_measure_type, None)
         if not _found_type:
             raise NotImplementedError(
-                "No import available for '{}'.".format(
-                    orm_measure.measure.measure_type.name
-                )
+                "No import available for '{}'.".format(_measure_type)
             )
 
         return self._get_standard_measure(_found_type, orm_measure)

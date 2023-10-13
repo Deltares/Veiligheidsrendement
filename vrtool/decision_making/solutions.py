@@ -113,7 +113,7 @@ class Solutions:
 
                     cost = measure.measures[j]["Cost"]
                     measure_in.append(str(measure.parameters["ID"]))
-                    measure_in.append(_measure_type.name)
+                    measure_in.append(_measure_type)
                     measure_in.append(measure.parameters["Class"])
                     measure_in.append(measure.parameters["year"])
                     if splitparams:
@@ -169,7 +169,7 @@ class Solutions:
                     inputs_m.append(
                         [
                             ID,
-                            _measure_type.name,
+                            _measure_type,
                             measure_class,
                             year,
                             designvars,
@@ -184,7 +184,7 @@ class Solutions:
                     inputs_m.append(
                         [
                             ID,
-                            _measure_type.name,
+                            _measure_type,
                             measure_class,
                             year,
                             designvars,
