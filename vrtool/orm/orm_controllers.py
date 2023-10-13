@@ -358,6 +358,7 @@ def create_optimization_run_for_selected_measures(
     logging.info(
         "Opened connection to export optimization run {}.".format(optimization_name)
     )
+    _results_measures._optimization_selected_measure_ids = {}
     for _method_type in vr_config.design_methods:
         _optimization_type, _ = orm.OptimizationType.get_or_create(
             name=_method_type.upper()
@@ -377,7 +378,9 @@ def create_optimization_run_for_selected_measures(
                 for _measure_id in selected_measure_result_ids
             ]
         ).execute()
-
+        #from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
+        _results_measures._optimization_selected_measure_ids[_optimization_run.id] = [measure.id for measure in orm.OptimizationSelectedMeasure.select(orm.OptimizationSelectedMeasure.id).where(orm.OptimizationSelectedMeasure.optimization_run_id == _optimization_run.id)]
+    
     logging.info(
         "Closed connection after export optimization run {}.".format(optimization_name)
     )
