@@ -81,7 +81,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
         for (
             run_measure_result
         ) in self.optimization_run.optimization_run_measure_results:
-            if run_measure_result.measure_result_id == single_msr_id:
+            if run_measure_result.id == single_msr_id:
                 return run_measure_result.get_id()
 
         run_id = self.optimization_run.get_id()
