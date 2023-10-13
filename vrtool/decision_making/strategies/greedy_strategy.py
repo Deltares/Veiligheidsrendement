@@ -280,7 +280,7 @@ class GreedyStrategy(StrategyBase):
                 current_reliability_overflow = traject.probabilities.loc[traject.sections[section_no].name].loc[MechanismEnum.OVERFLOW.name].drop('Length').to_frame().transpose()
                 current_reliability_overflow.columns = current_reliability_overflow.columns.astype(int)
                 comparison_height = pd.DataFrame((
-                            HeightOptions.Overflow.values > current_reliability_overflow.values
+                            HeightOptions.OVERFLOW.values > current_reliability_overflow.values
                         ).any(axis=1),index = HeightOptions.index)
             elif mechanism == MechanismEnum.REVETMENT:
                 try: #if Revetment has been computed, get it from the assessment:                
@@ -288,7 +288,7 @@ class GreedyStrategy(StrategyBase):
                     current_reliability_revetment.columns = current_reliability_revetment.columns.astype(int)
 
                     comparison_height = pd.DataFrame((
-                                HeightOptions.Revetment.values > current_reliability_revetment.values
+                                HeightOptions.REVETMENT.values > current_reliability_revetment.values
                             ).any(axis=1),index = HeightOptions.index)
                 except:
                     #fill comparison_height with True values
