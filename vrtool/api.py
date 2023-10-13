@@ -94,7 +94,7 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
 
 
 def run_step_optimization(
-    vrtool_config: VrtoolConfig, measure_results_ids: dict[int,int]
+    vrtool_config: VrtoolConfig, measure_results_ids: list[tuple]
 ) -> None:
     """
     Runs an optimization by optimizing the available measures
@@ -167,7 +167,7 @@ class ApiRunWorkflows:
         export_results_measures(_measures_result)
         return _measures_result
 
-    def run_optimization(self, selected_measures_id: dict[int,int]) -> ResultsOptimization:
+    def run_optimization(self, selected_measures_id: list[tuple]) -> ResultsOptimization:
         """
         Runs an optimization for the given measure results ID's.
 

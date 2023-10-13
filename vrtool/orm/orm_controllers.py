@@ -274,14 +274,14 @@ def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[in
 
 
 def import_results_measures(
-    config: VrtoolConfig, results_ids_to_import: dict[int,int]
+    config: VrtoolConfig, results_ids_to_import: list[tuple]
 ) -> ResultsMeasures:
     """
     Imports results masures from a database into a `ResultsMeasure` instance.
 
     Args:
         config (VrtoolConfig): Configuration containing database path.
-        results_ids_to_import (dict[int,int]): List of measure results' IDs.
+        results_ids_to_import (list[tuple]): List of measure results' IDs. including investment year
 
     Returns:
         ResultsMeasures: Instance hosting all the required measures' results.
@@ -289,10 +289,14 @@ def import_results_measures(
     _dike_traject = get_dike_traject(config)
     open_database(config.input_database_path)
 
+    ids = []
+    for mr in results_ids_to_import:
+        ids.append(mr[0])
+
     _solutions_dict = dict()
     # Group the measure results by section.
     measure_results = orm.MeasureResult.select().where(
-        orm.MeasureResult.id.in_(list(results_ids_to_import.keys()))
+        orm.MeasureResult.id.in_(ids)
     )
     _grouped_by_section = [
         (_section, list(_grouped_measure_results))
@@ -326,7 +330,7 @@ def import_results_measures(
 
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
-    selected_measure_result_ids: dict[int,int],
+    selected_measure_result_ids: list[tuple],
     optimization_name: str,
 ) -> ResultsMeasures:
     """
@@ -338,7 +342,7 @@ def create_optimization_run_for_selected_measures(
 
     Args:
         vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
-        selected_measure_result_ids (list[int]): list of `MeasureResult` id's in the database.
+        selected_measure_result_ids (list[tuple]): list of `MeasureResult` id's in the database including investment year.
         optimization_name (str): name to give to an optimization run.
 
     Returns:
@@ -364,10 +368,10 @@ def create_optimization_run_for_selected_measures(
             [
                 dict(
                     optimization_run=_optimization_run,
-                    measure_result=orm.MeasureResult.get_by_id(_measure_id),
-                    investment_year=selected_measure_result_ids[_measure_id],
+                    measure_result=orm.MeasureResult.get_by_id(_measure_id[0]),
+                    investment_year=_measure_id[1],
                 )
-                for _measure_id in selected_measure_result_ids.keys()
+                for _measure_id in selected_measure_result_ids
             ]
         ).execute()
 

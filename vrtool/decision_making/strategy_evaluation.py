@@ -119,12 +119,15 @@ def measure_combinations(
                                 pf_to_beta(pf_vzg)
                             )
                         else:
-                            mechanism_beta_dict[mechanism_name][year].append(
-                                np.maximum(
-                                    row1[mechanism_name, year],
-                                    row2[mechanism_name, year],
+                            try:
+                                mechanism_beta_dict[mechanism_name][year].append(
+                                    np.maximum(
+                                        row1[mechanism_name, year],
+                                        row2[mechanism_name, year],
+                                    )
                                 )
-                            )
+                            except:
+                                pass
 
             count += 1
 

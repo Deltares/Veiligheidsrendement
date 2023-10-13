@@ -921,13 +921,17 @@ class GreedyStrategy(StrategyBase):
         costs["TC_min"] = np.argmin(costs["TC"])
 
         return costs
-    def set_investment_years(self, traject: DikeTraject, ids_to_import: dict[int,int], solutions_dict: dict[str, Solutions]):
+
+    def set_investment_years(self, traject: DikeTraject, ids_to_import: dict[tuple], solutions_dict: dict[str, Solutions]) -> None:
         """
         Set the investment years for the dike ring.
         """
         # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
         # using pop to have it working correctly for the other sections
-        _ids_copied = list(ids_to_import.keys())
+        pass
+        _ids_copied = []
+        for msr in ids_to_import:
+            _ids_copied.append(msr[0])
 
         self.indexCombined2single = {}
         for section in traject.sections:
