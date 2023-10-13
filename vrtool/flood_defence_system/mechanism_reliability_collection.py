@@ -1,6 +1,5 @@
-import openturns as ot
-
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 
@@ -10,11 +9,11 @@ class MechanismReliabilityCollection:
     """Represents a collection of MechanismReliability objects over time."""
 
     Reliability: dict[str, MechanismReliability]
-    mechanism_name: str
+    mechanism: MechanismEnum
 
     def __init__(
         self,
-        mechanism: str,
+        mechanism: MechanismEnum,
         computation_type: str,
         computation_years: list[int],
         t_0: float,
@@ -23,7 +22,7 @@ class MechanismReliabilityCollection:
         """Creates a new instance of the MechanismReliabilityCollection
 
         Args:
-            mechanism (str): The name of the mechanism.
+            mechanism (MechanismEnum): The mechanism.
             computation_type (str): The computation type.
             computation_years (list[int]): The collection of years to compute the reliability for.
             t_0 (float): The initial year.
@@ -36,7 +35,7 @@ class MechanismReliabilityCollection:
         # (the latter is the case if a measure is taken later than the considered point in time)
         self.T = computation_years
         self.t_0 = t_0
-        self.mechanism_name = mechanism
+        self.mechanism = mechanism
         self.Reliability = {}
 
         for _computation_year in computation_years:
@@ -67,7 +66,7 @@ class MechanismReliabilityCollection:
             self.Reliability[i].calculate_reliability(
                 self.Reliability[i].Input,
                 load,
-                self.mechanism_name,
+                self.mechanism,
                 float(i),
                 traject_info,
             )

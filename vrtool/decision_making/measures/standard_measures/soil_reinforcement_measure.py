@@ -4,6 +4,7 @@ import logging
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     determine_new_geometry,
@@ -134,7 +135,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             float: The depth to be used for the stability screen calculation.
         """
         stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            "StabilityInner"
+            MechanismEnum.STABILITY_INNER
         )
         if not stability_inner_reliability_collection:
             error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
@@ -223,14 +224,14 @@ class SoilReinforcementMeasure(MeasureProtocol):
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
-        mechanism_names = (
+        mechanisms = (
             dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
         )
-        for mechanism_name in mechanism_names:
-            calc_type = dike_section.mechanism_data[mechanism_name][0][1]
+        for mechanism in mechanisms:
+            calc_type = dike_section.mechanism_data[mechanism][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
-                    mechanism_name,
+                    mechanism,
                     calc_type,
                     dike_section,
                     traject_info,
@@ -245,14 +246,14 @@ class SoilReinforcementMeasure(MeasureProtocol):
 
     def _get_configured_mechanism_reliability_collection(
         self,
-        mechanism_name: str,
+        mechanism: MechanismEnum,
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         modified_geometry_measure: dict,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism_name,
+            mechanism,
             calc_type,
             self.config.T,
             self.config.t_0,
@@ -266,7 +267,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             # first copy the data
             reliability_input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism_name
+                    mechanism
                 )
                 .Reliability[year_to_calculate]
                 .Input
@@ -277,7 +278,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     berm_input=reliability_input.input,
                     measure_input=modified_geometry_measure,
                     measure_parameters=self.parameters,
-                    mechanism=mechanism_name,
+                    mechanism=mechanism,
                     computation_type=calc_type,
                     path_intermediate_stix=self.config.output_directory
                     / "intermediate_result",

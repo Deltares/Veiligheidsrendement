@@ -5,6 +5,7 @@ from tests.orm.io.exporters import (
     create_required_mechanism_per_section,
     section_reliability_with_values,
 )
+from vrtool.common.enums import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.safety_assessment.mechanism_reliability_collection_exporter import (
@@ -38,7 +39,9 @@ class TestMechanismReliabilityCollectionExporter:
             ]
         )
         _expected_time_entries = len(_expected_mechanisms_reliability.columns)
-        _expected_mechanisms = _expected_mechanisms_reliability.index
+        _expected_mechanisms = list(
+            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
+        )
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         assert any(Mechanism.select())
         assert any(MechanismPerSection.select())
@@ -54,7 +57,7 @@ class TestMechanismReliabilityCollectionExporter:
         )
 
         for row_idx, mechanism_row in _expected_mechanisms_reliability.iterrows():
-            _mechanism_name = row_idx.upper().strip()
+            _mechanism = MechanismEnum.get_enum(row_idx)
             for time_idx, beta_value in enumerate(mechanism_row):
                 time_value = int(mechanism_row.index[time_idx])
                 _orm_assessment = (
@@ -62,7 +65,7 @@ class TestMechanismReliabilityCollectionExporter:
                     .join(MechanismPerSection)
                     .join(Mechanism)
                     .where(
-                        (Mechanism.name == _mechanism_name)
+                        (Mechanism.name == _mechanism.name)
                         & (MechanismPerSection.section == _test_section_data)
                         & (AssessmentMechanismResult.time == time_value)
                     )
@@ -70,7 +73,7 @@ class TestMechanismReliabilityCollectionExporter:
                 )
                 assert isinstance(
                     _orm_assessment, AssessmentMechanismResult
-                ), f"No assessment created for mechanism {_mechanism_name}, time {time_value}."
+                ), f"No assessment created for mechanism {_mechanism}, time {time_value}."
                 assert _orm_assessment.beta == beta_value
 
     def test_export_dom_with_two_sections_exports_to_expected(
@@ -96,7 +99,9 @@ class TestMechanismReliabilityCollectionExporter:
             ]
         )
         _expected_time_entries = len(_expected_mechanisms_reliability.columns)
-        _expected_mechanisms = _expected_mechanisms_reliability.index
+        _expected_mechanisms = list(
+            map(MechanismEnum.get_enum, _expected_mechanisms_reliability.index)
+        )
         create_required_mechanism_per_section(_test_section_data, _expected_mechanisms)
         create_required_mechanism_per_section(
             _additional_section_data, _expected_mechanisms
@@ -126,7 +131,7 @@ class TestMechanismReliabilityCollectionExporter:
         assert not any(AssessmentMechanismResult.select())
         assert not any(Mechanism.select())
 
-        _expected_mechanism_not_found = (
+        _expected_mechanism_not_found = MechanismEnum.get_enum(
             section_reliability_with_values.SectionReliability.index[0]
         )
 

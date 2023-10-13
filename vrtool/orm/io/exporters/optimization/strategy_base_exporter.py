@@ -6,40 +6,41 @@ from vrtool.orm.models.optimization import (
     OptimizationStepResultMechanism,
     OptimizationStepResultSection,
 )
+from vrtool.orm.models.optimization.optimization_run import OptimizationRun
+from vrtool.orm.models.optimization.optimization_selected_measure import (
+    OptimizationSelectedMeasure,
+)
 
 
 class StrategyBaseExporter(OrmExporterProtocol):
-    def __init__(self) -> None:
-        self._opt_step_id = 0
+    def __init__(self, optimization_run_id: int) -> None:
+        self.optimization_run: OptimizationRun = OptimizationRun.get_by_id(
+            optimization_run_id
+        )
 
     def export_dom(self, dom_model: StrategyBase) -> None:
         dims = dom_model.TakenMeasures.values.shape
         _step_results_section = []
         _step_results_mechanism = []
 
-        cntMeasuresPerSection = {}
-        sumMeasures = 0
-        for section in dom_model.indexCombined2single:
-            cntMeasuresPerSection[section] = sumMeasures
-            singlesMeasures = max(dom_model.indexCombined2single[section])
-            sumMeasures += singlesMeasures[0]
-
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i, 0]
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
-                msrId = singleMsrId + cntMeasuresPerSection[section]
+
+                opt_sel_msr_id = self._get_sel_msr_id(singleMsrId)
+                _created_optimization_step = OptimizationStep.create(
+                    step_number=i,
+                    optimization_selected_measure_id=opt_sel_msr_id,
+                )
+
                 localId = self._find_id_in_section(
                     singleMsrId, dom_model.indexCombined2single[section]
                 )
                 msr = dom_model.options[section].values[localId]
                 lcc = dom_model.TakenMeasures.values[i, 2]
                 offset = len(msr) - len(dom_model.T)
-                _created_optimization_step = OptimizationStep.create(
-                    step_number=i,
-                    optimization_selected_measure_id=msrId,
-                )
                 for j in range(len(dom_model.T)):
                     t = dom_model.T[j]
                     beta = msr[offset + j]
@@ -74,4 +75,18 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 return i
         raise ValueError(
             "Measure ID {} not found in any of the section indices.".format(measure_id)
+        )
+
+    def _get_sel_msr_id(self, single_msr_id) -> int:
+        for (
+            run_measure_result
+        ) in self.optimization_run.optimization_run_measure_results:
+            if run_measure_result.measure_result_id == single_msr_id:
+                return run_measure_result.get_id()
+
+        run_id = self.optimization_run.get_id()
+        raise ValueError(
+            "OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(
+                run_id, single_msr_id
+            )
         )

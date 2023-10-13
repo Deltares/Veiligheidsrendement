@@ -4,6 +4,7 @@ from typing import Optional
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.general import (
@@ -38,13 +39,13 @@ class MechanismReliability:
     # This class contains evaluations of the reliability for a mechanism in a given year.
     def __init__(
         self,
-        mechanism_name: str,
+        mechanism: MechanismEnum,
         mechanism_type: str,
         t_0: int,
         copy_or_calculate="calculate",
     ):
         # Initialize: set mechanism and type. These are the most important basic parameters
-        self.mechanism = mechanism_name
+        self.mechanism = mechanism
         self.mechanism_type = mechanism_type
         self.t_0 = t_0
         self.copy_or_calculate = copy_or_calculate
@@ -53,7 +54,7 @@ class MechanismReliability:
         self.Pf = float("nan")
         self.Beta = float("nan")
 
-        if mechanism_name == "Piping":
+        if mechanism == MechanismEnum.PIPING:
             self.gamma_schem_heave = 1  # 1.05
             self.gamma_schem_upl = 1  # 1.05
             self.gamma_schem_pip = 1  # 1.05
@@ -72,7 +73,7 @@ class MechanismReliability:
         self,
         strength: MechanismInput,
         load: LoadInput,
-        mechanism: str,
+        mechanism: MechanismEnum,
         year: float,
         traject_info: DikeTrajectInfo,
     ):
@@ -84,29 +85,28 @@ class MechanismReliability:
 
     def _get_failure_mechanism_calculator(
         self,
-        mechanism: str,
+        mechanism: MechanismEnum,
         traject_info: DikeTrajectInfo,
         strength: Optional[MechanismInput],
         load: Optional[LoadInput],
     ) -> FailureMechanismCalculatorProtocol:
         _normalized_type = self.mechanism_type.lower().strip()
-        _normalized_mechanism = mechanism.lower().strip()
 
         if _normalized_type == "directinput":
             return self._get_direct_input_calculator(strength)
 
         if _normalized_type == "hring":
-            return self._get_hydra_ring_calculator(_normalized_mechanism, self.Input)
+            return self._get_hydra_ring_calculator(mechanism, self.Input)
 
         if _normalized_type == "simple":
-            return self._get_simple_calculator(_normalized_mechanism, strength, load)
+            return self._get_simple_calculator(mechanism, strength, load)
 
         if _normalized_type == "semiprob":
             return self._get_semi_probabilistic_calculator(
-                _normalized_mechanism, strength, load, traject_info
+                mechanism, strength, load, traject_info
             )
         if _normalized_type == "dstability":
-            return self._get_d_stability_calculator(_normalized_mechanism, strength)
+            return self._get_d_stability_calculator(mechanism, strength)
 
         raise Exception("Unknown computation type {}".format(self.mechanism_type))
 
@@ -119,9 +119,9 @@ class MechanismReliability:
         return GenericFailureMechanismCalculator(_mechanism_input)
 
     def _get_hydra_ring_calculator(
-        self, mechanism: str, mechanism_input: MechanismInput
+        self, mechanism: MechanismEnum, mechanism_input: MechanismInput
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism == "overflow":
+        if mechanism == MechanismEnum.OVERFLOW:
             _mechanism_input = OverflowHydraRingInput.from_mechanism_input(
                 mechanism_input
             )
@@ -130,15 +130,15 @@ class MechanismReliability:
         raise Exception("Unknown computation type HRING for {}".format(mechanism))
 
     def _get_simple_calculator(
-        self, mechanism, mechanism_input: MechanismInput, load: LoadInput
+        self, mechanism: MechanismEnum, mechanism_input: MechanismInput, load: LoadInput
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism == "stabilityinner":
+        if mechanism == MechanismEnum.STABILITY_INNER:
             _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
                 mechanism_input
             )
             return StabilityInnerSimpleCalculator(_mechanism_input)
 
-        if mechanism == "overflow":  # specific for SAFE
+        if mechanism == MechanismEnum.OVERFLOW:  # specific for SAFE
             _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
             return OverflowSimpleCalculator(_mechanism_input, load)
 
@@ -146,17 +146,17 @@ class MechanismReliability:
 
     def _get_semi_probabilistic_calculator(
         self,
-        mechanism: str,
+        mechanism: MechanismEnum,
         mechanism_input: MechanismInput,
         load: LoadInput,
         traject_info: DikeTrajectInfo,
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism == "piping":
+        if mechanism == MechanismEnum.PIPING:
             return PipingSemiProbabilisticCalculator(
                 mechanism_input, load, self.t_0, traject_info
             )
 
-        if mechanism == "revetment":
+        if mechanism == MechanismEnum.REVETMENT:
             return RevetmentCalculator(
                 mechanism_input.input["revetment_input"], self.t_0
             )
@@ -165,10 +165,10 @@ class MechanismReliability:
 
     def _get_d_stability_calculator(
         self,
-        mechanism: str,
+        mechanism: MechanismEnum,
         mechanism_input: MechanismInput,
     ) -> FailureMechanismCalculatorProtocol:
-        if mechanism != "stabilityinner":
+        if mechanism != MechanismEnum.STABILITY_INNER:
             raise Exception(
                 "Unknown computation type DStability for {}".format(mechanism)
             )

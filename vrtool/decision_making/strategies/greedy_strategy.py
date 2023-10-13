@@ -8,6 +8,7 @@ import numpy
 import numpy as np
 import pandas as pd
 
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategy_evaluation import (
@@ -52,7 +53,7 @@ class GreedyStrategy(StrategyBase):
         life_cycle_cost: numpy.ndarray,
         sh_array: numpy.ndarray,
         sg_array: numpy.ndarray,
-        mechanism: str,
+        mechanism: MechanismEnum,
         n_runs: int = 100,
     ):
         """
@@ -111,13 +112,13 @@ class GreedyStrategy(StrategyBase):
                 break
 
             # insert next cheapest measure from sorted list into mechanism_risk, then compute the LCC value and BC
-            if mechanism == "Overflow":
+            if mechanism == MechanismEnum.OVERFLOW:
                 new_mechanism_risk[ind_highest_risk, :] = self.RiskOverflow[
                     ind_highest_risk,
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
                     :,
                 ]
-            elif mechanism == "Revetment":
+            elif mechanism == MechanismEnum.REVETMENT:
                 new_mechanism_risk[ind_highest_risk, :] = self.RiskRevetment[
                     ind_highest_risk,
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
@@ -155,7 +156,7 @@ class GreedyStrategy(StrategyBase):
         section_no: int,
         life_cycle_cost: np.array,
         existing_investments: np.array,
-        mechanism: str,
+        mechanism: MechanismEnum,
         dim_sh: int,
         traject: DikeTraject,
     ):
@@ -179,13 +180,15 @@ class GreedyStrategy(StrategyBase):
                     investment_id
                 ]
                 current_investment_stability = current_investment_geotechnical[
-                    "StabilityInner"
+                    MechanismEnum.STABILITY_INNER.name
                 ]
-                current_investment_piping = current_investment_geotechnical["Piping"]
+                current_investment_piping = current_investment_geotechnical[
+                    MechanismEnum.PIPING.name
+                ]
                 # check if all rows in comparison only contain True values
                 comparison_geotechnical = (
-                    GeotechnicalOptions.StabilityInner >= current_investment_stability
-                ) & (GeotechnicalOptions.Piping >= current_investment_piping)
+                    GeotechnicalOptions.STABILITY_INNER >= current_investment_stability
+                ) & (GeotechnicalOptions.PIPING >= current_investment_piping)
                 available_measures_geotechnical = comparison_geotechnical.all(
                     axis=1
                 )  # df indexing, so a False should be added before
@@ -198,34 +201,37 @@ class GreedyStrategy(StrategyBase):
             if existing_investments[section_no, 0] > 0:
                 current_height_investments = {}
                 # exclude rows for height options that are not safer than current
-                if "Overflow" in HeightOptions.columns:
-                    current_height_investments["Overflow"] = HeightOptions.iloc[
+                _mech_name = MechanismEnum.OVERFLOW.name
+                if _mech_name in HeightOptions.columns:
+                    current_height_investments[_mech_name] = HeightOptions.iloc[
                         existing_investments[section_no, 0] - 1
-                    ]["Overflow"]
-                if "Revetment" in HeightOptions.columns:
-                    current_height_investments["Revetment"] = HeightOptions.iloc[
+                    ][_mech_name]
+                _mech_name = MechanismEnum.REVETMENT.name
+                if _mech_name in HeightOptions.columns:
+                    current_height_investments[_mech_name] = HeightOptions.iloc[
                         existing_investments[section_no, 0] - 1
-                    ]["Revetment"]
+                    ][_mech_name]
 
                 # check if all rows in comparison only contain True values
-                if mechanism == "Overflow":
+                if mechanism == MechanismEnum.OVERFLOW:
                     comparison_height = (
-                        HeightOptions.Overflow > current_height_investments["Overflow"]
+                        HeightOptions.OVERFLOW
+                        > current_height_investments[MechanismEnum.OVERFLOW.name]
                     ).any(axis=1)
-                    if "Revetment" in HeightOptions.columns:
+                    if MechanismEnum.REVETMENT.name in HeightOptions.columns:
                         comparison_height = comparison_height & (
-                            HeightOptions.Revetment
-                            >= current_height_investments["Revetment"]
+                            HeightOptions.REVETMENT
+                            >= current_height_investments[MechanismEnum.REVETMENT.name]
                         ).all(axis=1)
-                elif mechanism == "Revetment":
+                elif mechanism == MechanismEnum.REVETMENT:
                     comparison_height = (
-                        HeightOptions.Revetment
-                        > current_height_investments["Revetment"]
+                        HeightOptions.REVETMENT
+                        > current_height_investments[MechanismEnum.REVETMENT.name]
                     ).any(axis=1)
-                    if "Overflow" in HeightOptions.columns:
+                    if MechanismEnum.OVERFLOW.name in HeightOptions.columns:
                         comparison_height = comparison_height & (
-                            HeightOptions.Overflow
-                            >= current_height_investments["Overflow"]
+                            HeightOptions.OVERFLOW
+                            >= current_height_investments[MechanismEnum.OVERFLOW.name]
                         ).all(axis=1)
 
                 else:
@@ -320,7 +326,7 @@ class GreedyStrategy(StrategyBase):
 
     def bundling_of_measures(
         self,
-        mechanism: str,
+        mechanism: MechanismEnum,
         init_mechanism_risk: np.array,
         existing_investment: list,
         life_cycle_cost: np.array,
@@ -411,15 +417,17 @@ class GreedyStrategy(StrategyBase):
         init_independent_risk = np.empty(
             (self.opt_parameters["N"], self.opt_parameters["T"])
         )
-        for m in self.mechanisms:
-            init_probability[m] = np.empty(
+        for mechanism in self.mechanisms:
+            init_probability[mechanism.name] = np.empty(
                 (self.opt_parameters["N"], self.opt_parameters["T"])
             )
             for n in range(0, self.opt_parameters["N"]):
-                init_probability[m][n, :] = self.Pf[m][n, 0, :]
-                if m == "Overflow":
+                init_probability[mechanism.name][n, :] = self.Pf[mechanism.name][
+                    n, 0, :
+                ]
+                if mechanism == MechanismEnum.OVERFLOW:
                     init_overflow_risk[n, :] = self.RiskOverflow[n, 0, :]
-                elif m == "Revetment":
+                elif mechanism == MechanismEnum.REVETMENT:
                     init_revetment_risk[n, :] = self.RiskRevetment[n, 0, :]
                 else:
                     init_independent_risk[n, :] = self.RiskGeotechnical[n, 0, :]
@@ -503,7 +511,7 @@ class GreedyStrategy(StrategyBase):
             # for overflow:
             BC_bundleOverflow = 0
             (overflow_bundle_index, BC_bundleOverflow) = self.bundling_of_measures(
-                "Overflow",
+                MechanismEnum.OVERFLOW,
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
                 copy.deepcopy(LifeCycleCost),
@@ -511,12 +519,12 @@ class GreedyStrategy(StrategyBase):
             )
             # for revetment:
             BC_bundleRevetment = 0.0
-            if "Revetment" in self.mechanisms:
+            if MechanismEnum.REVETMENT in self.mechanisms:
                 (
                     revetment_bundle_index,
                     BC_bundleRevetment,
                 ) = self.bundling_of_measures(
-                    "Revetment",
+                    MechanismEnum.REVETMENT,
                     copy.deepcopy(init_revetment_risk),
                     copy.deepcopy(measure_list),
                     copy.deepcopy(LifeCycleCost),
@@ -866,7 +874,7 @@ class GreedyStrategy(StrategyBase):
         # writing the probabilities to self.Probabilities
         tgrid = copy.deepcopy(self.T)
         # make sure it doesnt exceed the data:
-        tgrid[-1] = np.size(Probabilities[0]["Overflow"], axis=1) - 1
+        tgrid[-1] = np.size(Probabilities[0][MechanismEnum.OVERFLOW.name], axis=1) - 1
         probabilities_columns = ["name", "mechanism"] + tgrid
         count = 0
         self.Probabilities = []
@@ -875,10 +883,10 @@ class GreedyStrategy(StrategyBase):
             mech = []
             probs = []
             for n in range(0, self.opt_parameters["N"]):
-                for m in self.mechanisms:
+                for mechanism in self.mechanisms:
                     name.append(traject.sections[n].name)
-                    mech.append(m)
-                    probs.append(i[m][n, np.array(tgrid)])
+                    mech.append(mechanism.name)
+                    probs.append(i[mechanism.name][n, np.array(tgrid)])
                     pass
                 name.append(traject.sections[n].name)
                 mech.append("Section")

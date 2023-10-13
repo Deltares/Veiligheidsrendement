@@ -8,6 +8,7 @@ from peewee import SqliteDatabase
 from tests import test_data
 from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -83,7 +84,7 @@ class TestDatabaseIntegration:
         _overflow_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "Overflow")
+            .where(Mechanism.name == MechanismEnum.OVERFLOW.name)
         )
 
         # Precondition
@@ -127,7 +128,7 @@ class TestDatabaseIntegration:
         _dstability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "StabilityInner")
+            .where(Mechanism.name == MechanismEnum.STABILITY_INNER.name)
         )
 
         # Precondition
@@ -147,7 +148,7 @@ class TestDatabaseIntegration:
         _mechanism_input = _importer.import_orm(computation_scenarios[0])
 
         # Assert
-        assert _mechanism_input.mechanism == "StabilityInner"
+        assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER.name
 
         expected_parameters = computation_scenarios[0].parameters.select()
         assert len(_mechanism_input.input) == len(expected_parameters) + 2
@@ -184,7 +185,7 @@ class TestDatabaseIntegration:
         _stability_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "StabilityInner")
+            .where(Mechanism.name == MechanismEnum.STABILITY_INNER.name)
         )
 
         # Precondition
@@ -225,7 +226,7 @@ class TestDatabaseIntegration:
         _piping_per_first_section = (
             _mechanisms_per_first_section.select()
             .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == "Piping")
+            .where(Mechanism.name == MechanismEnum.PIPING.name)
         )
 
         # Precondition
@@ -285,7 +286,7 @@ class TestDatabaseIntegration:
     def _assert_overflow_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
     ) -> None:
-        assert actual.mechanism == "Overflow"
+        assert actual.mechanism == MechanismEnum.OVERFLOW
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters) + 1
@@ -316,7 +317,7 @@ class TestDatabaseIntegration:
     def _assert_stability_simple_mechanism_input(
         self, actual: MechanismInput, expected: ComputationScenario
     ) -> None:
-        assert actual.mechanism == "StabilityInner"
+        assert actual.mechanism == MechanismEnum.STABILITY_INNER
 
         expected_parameters = expected.parameters.select()
         assert len(actual.input) == len(expected_parameters)
@@ -325,7 +326,7 @@ class TestDatabaseIntegration:
     def _assert_piping_mechanism_input(
         self, actual: MechanismInput, expected: list[ComputationScenario]
     ) -> None:
-        assert actual.mechanism == "Piping"
+        assert actual.mechanism == MechanismEnum.PIPING
 
         assert all(
             [

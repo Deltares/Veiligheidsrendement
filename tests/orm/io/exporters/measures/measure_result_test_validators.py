@@ -1,6 +1,7 @@
 import pandas as pd
 
 from tests.orm import get_basic_measure_per_section, get_domain_basic_dike_section
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
@@ -90,7 +91,7 @@ class MeasureResultTestInputData:
     section_reliability: SectionReliability
     measure_per_section: MeasurePerSection
     measure: MeasureProtocol
-    available_mechanisms: list[str]
+    available_mechanisms: list[MechanismEnum]
     domain_dike_section: DikeSection
     parameters_to_validate: dict
 
@@ -100,8 +101,8 @@ class MeasureResultTestInputData:
 
         _section_reliability.SectionReliability = pd.DataFrame.from_dict(
             {
-                "IrrelevantMechanism1": [year / 12.0 for year in years],
-                "IrrelevantMechanism2": [year / 13.0 for year in years],
+                MechanismEnum.OVERFLOW.name: [year / 12.0 for year in years],
+                MechanismEnum.STABILITY_INNER.name: [year / 13.0 for year in years],
                 "Section": [year / 10.0 for year in years],
             },
             orient="index",
@@ -110,14 +111,14 @@ class MeasureResultTestInputData:
         return _section_reliability
 
     @staticmethod
-    def create_mechanism_per_section(section_data: SectionData) -> list[str]:
-        def create_combination(mechanism_name: str):
-            _mechanism = Mechanism.create(name=mechanism_name)
-            MechanismPerSection.create(section=section_data, mechanism=_mechanism)
+    def create_mechanism_per_section(section_data: SectionData) -> list[MechanismEnum]:
+        def create_combination(mechanism: MechanismEnum):
+            _mech_inst = Mechanism.create(name=mechanism.name)
+            MechanismPerSection.create(section=section_data, mechanism=_mech_inst)
 
-        _mechanism_names = ["IrrelevantMechanism1", "IrrelevantMechanism2"]
-        list(map(create_combination, _mechanism_names))
-        return _mechanism_names
+        _mechanisms = [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
+        list(map(create_combination, _mechanisms))
+        return _mechanisms
 
     def __init__(self) -> None:
         self.t_columns = [0, 2, 4, 24, 42]
@@ -200,15 +201,15 @@ def validate_measure_result_mechanisms_year(
     input_data: MeasureResultTestInputData,
     year: int,
 ):
-    for _mechanism_name in input_data.available_mechanisms:
-        _mechanism = Mechanism.get_or_none(Mechanism.name == _mechanism_name)
+    for _mechanism in input_data.available_mechanisms:
+        _mech_inst = Mechanism.get_or_none(Mechanism.name == _mechanism.name)
         _retrieved_result_section = (
             MeasureResultMechanism.select()
             .join(MechanismPerSection)
             .where(
                 (MeasureResultMechanism.measure_result == measure_result)
                 & (MeasureResultMechanism.time == year)
-                & (MeasureResultMechanism.mechanism_per_section.mechanism == _mechanism)
+                & (MeasureResultMechanism.mechanism_per_section.mechanism == _mech_inst)
             )
             .get_or_none()
         )
@@ -216,7 +217,7 @@ def validate_measure_result_mechanisms_year(
         assert isinstance(_retrieved_result_section, MeasureResultMechanism)
         assert (
             _retrieved_result_section.beta
-            == input_data.section_reliability.SectionReliability.loc[_mechanism_name][
+            == input_data.section_reliability.SectionReliability.loc[_mechanism.name][
                 year
             ]
         )
