@@ -64,8 +64,6 @@ class VrtoolConfig:
     berm_step: list[int] = field(default_factory=lambda: [0, 5, 8, 10, 12, 15, 20, 30])
 
     ## OPTIMIZATION SETTINGS
-    # investment year for TargetReliabilityBased approach
-    OI_year: int = 0
     # Design horizon for TargetReliabilityBased approach
     OI_horizon: int = 50
     # Stop criterion for benefit-cost ratio
