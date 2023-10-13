@@ -301,17 +301,28 @@ class RunStepOptimizationValidator(RunStepValidator):
         #for measures of soil reinforcement type get the measure_id. These should be added at t=0 and t=20
         meas_types = {mr.get_id(): mr.name for mr in orm_models.MeasureType.select() if 'Soil reinforcement' in mr.name}
         
+        
         #get the ids from Measure based on measure_type_id in meas_types
-        meas_ids = [m.get_id() for m in orm_models.Measure.select() if m.measure_type_id in meas_types.keys()]
+        meas_soil_ids = [m.get_id() for m in orm_models.Measure.select() if m.measure_type_id in meas_types.keys()]
         #get the ids for MeasurePerSection for the measures of soil reinforcement type
-        meas_per_section_soil_ids = [mps.get_id() for mps in orm_models.MeasurePerSection.select() if mps.measure_id in meas_ids]
-
+        meas_per_section_soil_ids = [mps.get_id() for mps in orm_models.MeasurePerSection.select() if mps.measure_id in meas_soil_ids]    
         #get the measure_results ids from MeasureResult based on the measure_per_section_id as stored in meas_per_section_soil_ids
         measures_results_soil = [mr.get_id() for mr in orm_models.MeasureResult.select() if mr.measure_per_section_id in meas_per_section_soil_ids]
 
+        #NOTE: this is a temporary fix as we dont have good databases yet. This part should be deleted later!
+        #get the ids from Measure if year is 20 
+        meas_year_ids = [m.get_id() for m in orm_models.Measure.select() if m.year == 20]
+        #get the ids for MeasurePerSection for the measures in meas_year_ids
+        meas_per_section_year_ids = [mps.get_id() for mps in orm_models.MeasurePerSection.select() if mps.measure_id in meas_year_ids]
+        #get the measure_results ids from MeasureResult based on the measure_per_section_id as stored in meas_per_section_year_ids
+        measures_results_year = [mr.get_id() for mr in orm_models.MeasureResult.select() if mr.measure_per_section_id in meas_per_section_year_ids]
+
+
         measure_list = []
         for _result in _measures_results:
-            if _result in measures_results_soil:
+            if _result in measures_results_year:
+                continue #NOTE: remove this condition o databases are up to date
+            elif _result in measures_results_soil:
                 measure_list.append((_result, 20))
                 measure_list.append((_result, 0))
             else:
