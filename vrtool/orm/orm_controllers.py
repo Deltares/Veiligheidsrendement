@@ -24,6 +24,9 @@ from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer imp
     SolutionsForMeasureResultsImporter,
 )
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
+from vrtool.orm.io.importers.optimization.optimization_step_importer import (
+    OptimizationStepImporter,
+)
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -484,13 +487,15 @@ def get_optimization_step_with_lowest_total_cost(
     logging.info(
         "Openned connection to retrieve 'OptimizationStep' with lowest total cost."
     )
-    _optimization_run_steps = get_optimization_steps(
-        vrtool_db_path, optimization_run_id
-    )
+
     _results = []
-    for _optimization_step in _optimization_run_steps:
-        _as_df = pd.DataFrame()
-        _results.append((_optimization_step, _as_df, get_step_cost_from_dataframe(_as_df)))
+    for _optimization_step in get_optimization_steps(optimization_run_id):
+        _as_df = OptimizationStepImporter.import_optimization_step_results_df(
+            _optimization_step
+        )
+        _results.append(
+            (_optimization_step, _as_df, get_step_cost_from_dataframe(_as_df))
+        )
 
     _connected_db.close()
     logging.info(
