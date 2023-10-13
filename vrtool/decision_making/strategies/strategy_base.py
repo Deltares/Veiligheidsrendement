@@ -37,7 +37,6 @@ class StrategyBase:
         self.discount_rate = config.discount_rate
 
         self.config = config
-        self.OI_year = config.OI_year
         self.OI_horizon = config.OI_horizon
         self.mechanisms = config.mechanisms
         self.T = config.T
@@ -192,7 +191,9 @@ class StrategyBase:
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
-                StrategyData = StrategyData.loc[StrategyData["year"] == self.OI_year]
+                StrategyData = StrategyData.loc[
+                    StrategyData["year"] == min(StrategyData["year"])
+                ]
 
             StrategyData = pd.concat((StrategyData, combinedmeasures))
             if filtering == "on":
@@ -250,10 +251,11 @@ class StrategyBase:
         }
 
         if self.__class__.__name__ == "TargetReliabilityStrategy":
-            # only consider measures at the OI_year
+            # only consider measures in the closest year
             measures_per_class = {
                 measure_class: measures_per_class[measure_class].loc[
-                    measures_per_class[measure_class]["year"] == self.OI_year
+                    measures_per_class[measure_class]["year"]
+                    == min(measures_per_class[measure_class]["year"])
                 ]
                 for measure_class in available_measure_classes
             }
