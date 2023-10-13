@@ -193,7 +193,7 @@ class StrategyBase:
                 _investment_years.pop(0)
                 for i in range(len(solutions_dict[section.name].MeasureData))
             ]
-            selected_measure_ids.pop(_run_id)
+            
 
             #get betas from assessment from section and interpolate such that values are given for 0 until 100 (or what has been defined in config)
             beta_array_initial = {}
@@ -248,7 +248,8 @@ class StrategyBase:
                                                                     pd.DataFrame(beta_array_investment_year[beta_type],
                                                                                     columns=pd.MultiIndex.from_product([[beta_type],np.arange(0,np.max(self.T),1)]))],
                                                                     axis=1)
-
+        #remove the now empty measure_ids list from the dictionary such that the next run will take the next set of selected_measures.
+        selected_measure_ids.pop(_run_id)
     def combine(
         self,
         traject: DikeTraject,
