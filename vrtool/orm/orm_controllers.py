@@ -289,24 +289,26 @@ def import_results_measures(
     _dike_traject = get_dike_traject(config)
     open_database(config.input_database_path)
 
-    ids = []
-    for mr in results_ids_to_import:
-        ids.append(mr[0])
+    #unpack list of tuples in results_ids_to_import as 3 lists
+    # measure_result_ids, investment_years = zip(*results_ids_to_import)
 
     _solutions_dict = dict()
-    # Group the measure results by section.
-    measure_results = orm.MeasureResult.select().where(
-        orm.MeasureResult.id.in_(ids)
-    )
+
+    _mr_list = []
+    for _measure_result_id,_investment_year in results_ids_to_import:
+        _measure_result = orm.MeasureResult.get_by_id(_measure_result_id)
+        _mr_list.append((_measure_result,_investment_year))
+
     _grouped_by_section = [
         (_section, list(_grouped_measure_results))
         for _section, _grouped_measure_results in itertools.groupby(
-            measure_results, lambda x: x.measure_per_section.section
+            _mr_list, lambda x: x[0].measure_per_section.section
         )
     ]
 
     # Import a solution per section:
-    for _section, _selected_measure_results in _grouped_by_section:
+    for _section, _selected_measure_year_results in _grouped_by_section:
+        _selected_measure_id, _selected_measure_year = zip(*_selected_measure_year_results)
         # Import measures into solution
         _mapped_section = next(
             _ds for _ds in _dike_traject.sections if _ds.name == _section.section_name
@@ -314,8 +316,9 @@ def import_results_measures(
         _imported_solution = SolutionsForMeasureResultsImporter(
             config,
             _mapped_section,
-        ).import_orm(_selected_measure_results)
+        ).import_orm(_selected_measure_id)
         _solutions_dict[_section.section_name] = _imported_solution
+        _solutions_dict[_section.section_name].MeasureData['year'] = _selected_measure_year
     _dike_traject.set_probabilities()
     vrtool_db.close()
 
