@@ -52,7 +52,8 @@ class RunOptimization(VrToolRunProtocol):
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
         _results_dir = self._get_output_dir()
-
+        investment_year_dict = {1: 23, 2: 34}   #To be removed, if we read from database. Is now overruled with dict in set_investment_years function.
+        _greedy_optimization.set_investment_years(self.selected_traject, self._ids_to_import, self._solutions_dict, investment_year_dict)
         # Combine available measures
         _greedy_optimization.combine(
             self.selected_traject,
