@@ -26,10 +26,12 @@ class RunOptimization(VrToolRunProtocol):
 
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
+        self._selected_measure_ids = results_measures._optimization_selected_measure_ids
         self._solutions_dict = results_measures.solutions_dict
         if any(results_measures.ids_to_import):
             self._ids_to_import = results_measures.ids_to_import
         else:
+            #@Edwin: will this work and do we need it?
             self._ids_to_import = self._get_default_measure_result_ids()
 
     def _get_default_measure_result_ids(self) -> list[tuple]:
@@ -52,7 +54,7 @@ class RunOptimization(VrToolRunProtocol):
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
         _results_dir = self._get_output_dir()
-        _greedy_optimization.set_investment_years(self.selected_traject, self._ids_to_import, self._solutions_dict)
+        _greedy_optimization.set_investment_years(self.selected_traject, self._ids_to_import, self._selected_measure_ids, self._solutions_dict)
         # Combine available measures
         _greedy_optimization.combine(
             self.selected_traject,
@@ -126,6 +128,7 @@ class RunOptimization(VrToolRunProtocol):
             design_method, self.vr_config
         )
         _results_dir = self._get_output_dir()
+        _target_reliability_based.set_investment_years(self.selected_traject, self._ids_to_import, self._selected_measure_ids, self._solutions_dict)
 
         # Combine available measures
         _target_reliability_based.combine(
