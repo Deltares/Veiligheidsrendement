@@ -1,6 +1,8 @@
 import itertools
 import logging
 from pathlib import Path
+from typing import Iterator
+import pandas as pd
 
 from peewee import SqliteDatabase
 
@@ -443,8 +445,30 @@ def export_results_optimization(result: ResultsOptimization) -> None:
     logging.info("Closed connection after export optimizations.")
 
 
+def get_optimization_steps(optimization_run_id: int) -> Iterator[orm.OptimizationStep]:
+    """
+    DISCLAIMER: An open database connection is required to run this call!
+    """
+    _optimization_run = orm.OptimizationRun.get_by_id(optimization_run_id)
+    return (
+        orm.OptimizationStep.select()
+        .join(orm.OptimizationSelectedMeasure)
+        .where(
+            orm.OptimizationStep.optimization_selected_measure.optimization_run
+            == _optimization_run
+        )
+    )
+
+
+def get_step_cost_from_dataframe(optimization_step_df: pd.DataFrame) -> float:
+    # build dataframe.
+    # run tr method.
+    # return result.
+    return float("nan")
+
+
 def get_optimization_step_with_lowest_total_cost(
-    vrtool_db_path: Path,
+    vrtool_db_path: Path, optimization_run_id: int
 ) -> orm.OptimizationStep:
     """
     Gets the `OptimizationStep` with the lowest *total* cost.
@@ -460,8 +484,17 @@ def get_optimization_step_with_lowest_total_cost(
     logging.info(
         "Openned connection to retrieve 'OptimizationStep' with lowest total cost."
     )
+    _optimization_run_steps = get_optimization_steps(
+        vrtool_db_path, optimization_run_id
+    )
+    _results = []
+    for _optimization_step in _optimization_run_steps:
+        _as_df = pd.DataFrame()
+        _results.append((_optimization_step, _as_df, get_step_cost_from_dataframe(_as_df)))
 
     _connected_db.close()
     logging.info(
         "Closed connection after retrieval of lowest total cost 'OptimizationStep'."
     )
+
+    return min(_results, lambda step_df_cost: step_df_cost[2])

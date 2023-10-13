@@ -122,9 +122,11 @@ def run_full(vrtool_config: VrtoolConfig) -> None:
 
 
 def get_optimization_step_with_lowest_total_cost_table(
-    vrtool_config: VrtoolConfig,
+    vrtool_config: VrtoolConfig, optimization_run_id: int
 ) -> pd.DataFrame:
-    _optimization_step = get_optimization_step_with_lowest_total_cost(vrtool_config)
+    _optimization_step = get_optimization_step_with_lowest_total_cost(
+        vrtool_config.input_database_path, optimization_run_id
+    )
     raise NotImplementedError()
 
 
