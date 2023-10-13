@@ -52,10 +52,11 @@ class StrategyBaseExporter(OrmExporterProtocol):
                             "lcc": lcc,
                         }
                     )
-
-                _measure_result = MeasureResult.get_by_id(singleMsrId)
+                #from OptimizationSelectedMeasure get measure_result_id based on singleMsrId
+                _measure_result = MeasureResult.get_by_id(OptimizationSelectedMeasure.get_by_id(opt_sel_msr_id).measure_result_id)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
+                    #TODO: @Edwin: hier pakt hij nu voor elke tijdstap de beta van de maatregel, maar dat is niet goed en moet hij uit de solutions_dict halen.
                     _step_results_mechanism.append(
                         {
                             "optimization_step": _created_optimization_step,
