@@ -631,7 +631,6 @@ class TestOrmControllers:
         ],
         indirect=True,
     )
-    @pytest.mark.skip(reason="Work in progress, needs to be completed by VRTOOL-268.")
     def test_export_results_optimization_given_valid_data(
         self,
         results_measures_with_mocked_data: tuple[
@@ -668,9 +667,7 @@ class TestOrmControllers:
         class MockedStrategy(StrategyBase):
             def __init__(self, type, config: VrtoolConfig):
                 # First run could just be exporting the index of TakenMeasures.
-                self.options = pd.DataFrame(
-                    list(map(lambda x: x.id, MeasureResult.select()))
-                )  # All possible combinations of MeasureResults (by ID).
+                self.options = pd.DataFrame([[[1,2,3]],[[2,3,4]]], columns=["0"])
                 self.options_geotechnical = pd.DataFrame(
                     list(map(lambda x: x.id, MeasureResultMechanism.select()))
                 )
@@ -704,18 +701,17 @@ class TestOrmControllers:
                     "beta_target",
                     "transition_level",
                 ]
-                _taken_measure_row = [0] * len(_measures_columns)
+                _taken_measure_row1 = [0] * len(_measures_columns)  # first row is header
+                _taken_measure_row2 = [0] * len(_measures_columns)  # second row is the first one with values
                 self.TakenMeasures = pd.DataFrame(
-                    [_taken_measure_row], columns=_measures_columns
+                    [_taken_measure_row1, _taken_measure_row2], columns=_measures_columns
                 )  # This is actually OptimizationStep (with extra info).
-                _single_existing_measure_result = MeasureResult.select().get()
-                self.TakenMeasures["Section"][
-                    0
-                ] = _single_existing_measure_result.measure_per_section.section.id
-                self.TakenMeasures["option_in"][0] = self.options[0][
-                    0
-                ]  # This actually refers to the `MeasureResult.ID`
-                self.TakenMeasures["LCC"][0] = 42.24
+                self.TakenMeasures["Section"][1] = "0"
+                self.TakenMeasures["option_in"][1] = 0
+                self.TakenMeasures["LCC"][1] = 42.24
+                self.indexCombined2single = {}
+                self.indexCombined2single["0"] = [[1]]
+                self.T = [0, 20, 100]
 
         _test_strategy = MockedStrategy(
             type=_optimization_type, config=_results_measures.vr_config
@@ -735,29 +731,8 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert len(orm_models.OptimizationStep.select()) == 1
-        assert len(orm_models.OptimizationStepResultMechanism) == len(
-            _measures_input_data.t_columns
-        )
-        assert len(orm_models.OptimizationStepResultSection) == len(
-            _measures_input_data.t_columns
-        )
-
-        _optimization_step = orm_models.OptimizationStep.get()
-        for _t_column in _measures_input_data.t_columns:
-            _step_result_mechanism = (
-                orm_models.OptimizationStepResultMechanism.get_or_none(
-                    optimization_step=_optimization_step, time=_t_column
-                )
-            )
-            assert isinstance(
-                _step_result_mechanism, orm_models.OptimizationStepResultMechanism
-            )
-            _step_result_section = orm_models.OptimizationStepResultSection.get_or_none(
-                optimization_step=_optimization_step, time=_t_column
-            )
-            assert isinstance(
-                _step_result_section, orm_models.OptimizationStepResultSection
-            )
+        assert len(orm_models.OptimizationStepResultMechanism) == 10
+        assert len(orm_models.OptimizationStepResultSection) == 3
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase
