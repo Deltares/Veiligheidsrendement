@@ -1,6 +1,9 @@
+from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.optimization import (
     OptimizationStep,
     OptimizationStepResultMechanism,
@@ -38,12 +41,11 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 localId = self._find_id_in_section(
                     singleMsrId, dom_model.indexCombined2single[section]
                 )
-                msr = dom_model.options[section].values[localId]
+                beta_section = dom_model.options[section]["Section"].values[localId]
                 lcc = dom_model.TakenMeasures.values[i, 2]
-                offset = len(msr) - len(dom_model.T)
                 for j in range(len(dom_model.T)):
                     t = dom_model.T[j]
-                    beta = msr[offset + j]
+                    beta = self._get_selected_time(t, beta_section)
                     _step_results_section.append(
                         {
                             "optimization_step": _created_optimization_step,
@@ -56,13 +58,16 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 _measure_result = MeasureResult.get_by_id(OptimizationSelectedMeasure.get_by_id(opt_sel_msr_id).measure_result_id)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
-                    #TODO: @Edwin: hier pakt hij nu voor elke tijdstap de beta van de maatregel, maar dat is niet goed en moet hij uit de solutions_dict halen.
+                    mechanismId = MechanismPerSection.get_by_id(row.mechanism_per_section_id)
+                    mechanismName = MechanismEnum.get_enum(Mechanism.get_by_id(mechanismId.mechanism_id).name).name
+                    beta_mechanism = dom_model.options[section][mechanismName].values[localId]
+                    beta = self._get_selected_time(row.time, beta_mechanism)
                     _step_results_mechanism.append(
                         {
                             "optimization_step": _created_optimization_step,
                             "mechanism_per_section_id": row.mechanism_per_section_id,
                             "time": row.time,
-                            "beta": row.beta,
+                            "beta": beta,
                             "lcc": lcc,
                         }
                     )
@@ -91,3 +96,12 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 run_id, single_msr_id
             )
         )
+    
+    def _get_selected_time(self, t:int, values:list[float]) -> float:
+        # fix for t=100 where 99 is the last
+        if (t < values.shape[0]-1):
+            value = values[t]
+        else:
+            value = values[-1]
+        return value
+

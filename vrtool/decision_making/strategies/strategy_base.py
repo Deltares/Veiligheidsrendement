@@ -167,6 +167,7 @@ class StrategyBase:
                 )
 
         return (section, sh, sg)
+
     def set_investment_years(self, traject: DikeTraject, ids_to_import: list[tuple], selected_measure_ids: list[int], solutions_dict: dict[str, Solutions]) -> None:
         """
         Set the investment years for the dike ring.
@@ -186,7 +187,7 @@ class StrategyBase:
 
         for section in traject.sections:
             self.indexCombined2single[section.name] = [
-                [selected_measure_ids[_run_id].pop(0)]
+                [_sel_measure_ids_copy[_run_id].pop(0)]
                 for i in range(len(solutions_dict[section.name].MeasureData))
             ]
             self.investment_years[section.name] = [
@@ -250,20 +251,16 @@ class StrategyBase:
                                                                     axis=1)
         #remove the now empty measure_ids list from the dictionary such that the next run will take the next set of selected_measures.
         selected_measure_ids.pop(_run_id)
+
     def combine(
         self,
         traject: DikeTraject,
         solutions_dict: Dict[str, Solutions],
-        ids_to_import: list[int],
         filtering="off",
         splitparams=False,
     ):
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
-        # self.indexCombined2single = {}
-
-        # copy the ids as it will be emptied in step1combine, and the ids are needed lateron
-        _ids_copied = ids_to_import.copy()
 
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
