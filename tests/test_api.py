@@ -270,9 +270,10 @@ class TestApiRunWorkflowsAcceptance:
             valid_vrtool_config
         )
         _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results_all))
+        _measures_input = _validator.get_investment_year(valid_vrtool_config, _measures_results)
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_results)
+        run_step_optimization(valid_vrtool_config, _measures_input)
 
         # 3. Verify expectations.
         with open_database(valid_vrtool_config.input_database_path) as _connected_db:
@@ -282,7 +283,7 @@ class TestApiRunWorkflowsAcceptance:
             assert len(OptimizationStepResultMechanism.select()) == 112
             assert len(OptimizationStep.select()) == 4
 
-            assert stepResult.beta == pytest.approx(2.59342)
+            assert stepResult.beta == pytest.approx(2.6018124)
             assert stepResult.lcc == pytest.approx(8612354)
 
     @pytest.mark.parametrize(

@@ -289,9 +289,6 @@ def import_results_measures(
     _dike_traject = get_dike_traject(config)
     open_database(config.input_database_path)
 
-    #unpack list of tuples in results_ids_to_import as 3 lists
-    # measure_result_ids, investment_years = zip(*results_ids_to_import)
-
     _solutions_dict = dict()
 
     _mr_list = []
