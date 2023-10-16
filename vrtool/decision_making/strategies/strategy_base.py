@@ -191,9 +191,8 @@ class StrategyBase:
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
             if self.__class__.__name__ == "TargetReliabilityStrategy":
-                StrategyData = StrategyData.loc[
-                    StrategyData["year"] == min(StrategyData["year"])
-                ]
+                _min_year = min(StrategyData["year"])
+                StrategyData = StrategyData.loc[StrategyData["year"] == _min_year]
 
             StrategyData = pd.concat((StrategyData, combinedmeasures))
             if filtering == "on":
@@ -252,13 +251,11 @@ class StrategyBase:
 
         if self.__class__.__name__ == "TargetReliabilityStrategy":
             # only consider measures at the nearest year
-            measures_per_class = {
-                measure_class: measures_per_class[measure_class].loc[
-                    measures_per_class[measure_class]["year"]
-                    == min(measures_per_class[measure_class]["year"])
-                ]
-                for measure_class in available_measure_classes
-            }
+            for measure_class in available_measure_classes:
+                _min_year = min(measures_per_class[measure_class]["year"])
+                measures_per_class[measure_class] = measures_per_class[
+                    measure_class
+                ].loc[measures_per_class[measure_class]["year"] == _min_year]
 
         # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
         # using pop to have it working correctly for the other sections
