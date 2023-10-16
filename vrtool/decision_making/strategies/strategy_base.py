@@ -185,6 +185,11 @@ class StrategyBase:
         _measure_result_ids = list(_measure_result_ids)
         _investment_years = list(_investment_years)
 
+        # remove sections that do not have any measures (due to filtering)
+        for i in reversed(range(len(traject.sections))):
+            if not traject.sections[i].name in solutions_dict:
+                del traject.sections[i]
+
         for section in traject.sections:
             self.indexCombined2single[section.name] = [
                 [_sel_measure_ids_copy[_run_id].pop(0)]
