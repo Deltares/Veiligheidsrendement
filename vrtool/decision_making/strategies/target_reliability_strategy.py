@@ -22,7 +22,7 @@ class TargetReliabilityStrategy(StrategyBase):
     """Subclass for evaluation in accordance with basic OI2014 approach.
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability"""
 
-    def get_total_lcc_and_risk(self) -> tuple[float, float]:
+    def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         return float("nan"), float("nan")
 
     def evaluate(

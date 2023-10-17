@@ -123,11 +123,25 @@ def run_full(vrtool_config: VrtoolConfig) -> None:
 
 def get_optimization_step_with_lowest_total_cost_table(
     vrtool_config: VrtoolConfig, optimization_run_id: int
-) -> pd.DataFrame:
-    _optimization_step = get_optimization_step_with_lowest_total_cost(
-        vrtool_config, optimization_run_id
-    )
-    raise NotImplementedError()
+) -> tuple[int, pd.DataFrame, float]:
+    """
+    Gets the (id) optimization step, all its related betas and the
+    total cost of said step.
+
+    Args:
+        vrtool_config (VrtoolConfig): Configuration containing connection details.
+        optimization_run_id (int): Optimization whose steps need to be analyzed.
+
+    Returns:
+        tuple[int, pd.DataFrame, float]: `OptimizationStep.id`, reliability dataframe
+        and total cost of said step.
+    """
+    (
+        _optimization_step,
+        dataframe_betas,
+        total_cost,
+    ) = get_optimization_step_with_lowest_total_cost(vrtool_config, optimization_run_id)
+    return _optimization_step.get_id(), dataframe_betas, total_cost
 
 
 class ApiRunWorkflows:

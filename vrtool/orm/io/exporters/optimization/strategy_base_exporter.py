@@ -7,9 +7,6 @@ from vrtool.orm.models.optimization import (
     OptimizationStepResultSection,
 )
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
-from vrtool.orm.models.optimization.optimization_selected_measure import (
-    OptimizationSelectedMeasure,
-)
 
 
 class StrategyBaseExporter(OrmExporterProtocol):
@@ -22,12 +19,12 @@ class StrategyBaseExporter(OrmExporterProtocol):
         dims = dom_model.TakenMeasures.values.shape
         _step_results_section = []
         _step_results_mechanism = []
-        _total_lcc, _total_risk = dom_model.get_total_lcc_and_risk()
 
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i, 0]
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
+            _total_lcc, _total_risk = dom_model.get_total_lcc_and_risk(i)
             for singleMsrId in splittedMeasures:
 
                 opt_sel_msr_id = self._get_sel_msr_id(singleMsrId)

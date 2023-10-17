@@ -466,7 +466,7 @@ def get_optimization_steps(optimization_run_id: int) -> Iterator[orm.Optimizatio
 
 def get_optimization_step_with_lowest_total_cost(
     vrtool_config: VrtoolConfig, optimization_run_id: int
-) -> orm.OptimizationStep:
+) -> tuple[orm.OptimizationStep, pd.DataFrame, float]:
     """
     Gets the `OptimizationStep` with the lowest *total* cost.
     The total cost is calculated based on `LCC` and risk.
@@ -487,9 +487,7 @@ def get_optimization_step_with_lowest_total_cost(
         _as_df = OptimizationStepImporter.import_optimization_step_results_df(
             _optimization_step
         )
-        _lcc = _optimization_step.optimization_step_results_section[0].lcc
-        # base_traject reliability of all dike sections.
-        _cost = calc_life_cycle_risks()
+        _cost = _optimization_step.total_lcc + _optimization_step.total_risk
         _results.append((_optimization_step, _as_df, _cost))
 
     _connected_db.close()
@@ -497,4 +495,4 @@ def get_optimization_step_with_lowest_total_cost(
         "Closed connection after retrieval of lowest total cost 'OptimizationStep'."
     )
 
-    return min(_results, lambda step_df_cost: step_df_cost[2])
+    return min(_results, key=lambda results_tuple: results_tuple[2])

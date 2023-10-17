@@ -994,5 +994,7 @@ class GreedyStrategy(StrategyBase):
         self.costs = costs
         return costs
 
-    def get_total_lcc_and_risk(self) -> tuple[float, float]:
-        return self.costs["TC"][0], self.costs["TC"][1]
+    def get_total_lcc_and_risk(
+        self, step_number: int
+    ) -> tuple[list[float], list[float]]:
+        return self.costs["LCC"][step_number], self.costs["TR"][step_number]

@@ -601,5 +601,5 @@ class StrategyBase:
         raise NotImplementedError("Expected concrete definition in inherited class.")
 
     @abstractmethod
-    def get_total_lcc_and_risk(self) -> tuple[float, float]:
+    def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         raise NotImplementedError("Expected concrete definition in inherited class.")
