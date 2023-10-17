@@ -1,43 +1,57 @@
 ,Section,option_index,LCC,BC,ID,name,yes/no,dcrest,dberm,beta_target,transition_level
 0,,,0.0,0.0,,,,,,,
-1,37B,9,567806.1582045944,50.57168604684168,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-2,01A,2,12274210.0,3.792314883481797,6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
-3,01B,9,665980.3767648865,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-4,4,9,2131184.0819265256,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-5,12,9,2263678.700386267,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-6,15,9,1764996.9122042283,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-7,33A,9,940962.8990394382,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-8,34,9,1567626.6584993233,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-9,37B,25,591400.7613516094,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,1.5,0,-999,-999
-10,40,9,880189.8912675937,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-11,50,9,903123.1276174892,3.792314883481797,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0,-999,-999
-12,15,127,38162.63067577104,22575.862129888203,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,8,-999,-999
-13,01B,129,53507.00371511374,13136.723868515237,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,12,-999,-999
-14,4,127,67258.22399347555,8755.344375838413,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,8,-999,-999
-15,34,130,25894.819000676274,5678.161647878535,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,15,-999,-999
-16,12,128,54168.62921373639,4592.50290669437,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,10,-999,-999
-17,33A,10,63676.15540000028,531.4783337960381,2,['Grondversterking binnenwaarts 2025'],-999,0.5,5,-999,-999
-18,37B,135,25148.926488390192,352.9550839813485,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,8,-999,-999
-19,33A,12,63676.15539999935,35.43601353980765,2,['Grondversterking binnenwaarts 2025'],-999,0.5,10,-999,-999
-20,40,11,402062.2444800001,11.324124865448649,2,['Grondversterking binnenwaarts 2025'],-999,0.5,8,-999,-999
-21,01B,145,1058183.267838245,6.283801975396719,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,12,-999,-999
-22,4,143,3324623.633026367,6.283801975396719,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8,-999,-999
-23,12,144,3438375.5215693396,6.283801975396719,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10,-999,-999
-24,15,143,2741580.1267396584,6.283801975396719,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8,-999,-999
-25,34,146,2428237.555028217,6.283801975396719,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,15,-999,-999
-26,37B,151,591400.7613516094,6.283801975396719,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.5,8,-999,-999
-27,33A,13,25470.46216000081,4.898283483879945,2,['Grondversterking binnenwaarts 2025'],-999,0.5,12,-999,-999
-28,40,18,314686.2158430703,2.4669661783121066,2,['Grondversterking binnenwaarts 2025'],-999,1.0,5,-999,-999
-29,50,17,500905.76402323914,5.210385869275525,2,['Grondversterking binnenwaarts 2025'],-999,1.0,0,-999,-999
-30,33A,23,648243.2535335664,5.554205855676437,2,['Grondversterking binnenwaarts 2025'],-999,1.0,20,-999,-999
-31,40,19,150773.34168000054,1.3456364276397326,2,['Grondversterking binnenwaarts 2025'],-999,1.0,8,-999,-999
-32,33A,24,127352.31079999963,0.8393160367902418,2,['Grondversterking binnenwaarts 2025'],-999,1.0,30,-999,-999
-33,15,144,179214.8857200006,0.7433270986622973,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10,-999,-999
-34,12,145,167089.46591999847,0.3836909443072649,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,12,-999,-999
-35,40,20,100515.56111999997,0.3574489690887802,2,['Grondversterking binnenwaarts 2025'],-999,1.0,10,-999,-999
-36,4,149,372441.7543531563,0.3181736966851861,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.5,0,-999,-999
-37,33A,146,358071.53379999986,0.2809833815801581,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,15,-999,-999
-38,40,143,472384.43888000003,0.22461102098625305,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8,-999,-999
-39,15,145,179214.88572000153,0.19378686197404174,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,12,-999,-999
-40,40,144,100515.56111999974,0.19238178086245303,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10,-999,-999
-41,01B,122,5949269.351681755,0.11748042972027702,6,['Zelfkerende constructie'],yes,-999.0,-999,-999,-999
+1,01B,126,523903.07520000014,1341.1404420217489,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,5.0,-999,-999
+2,15,121,1086300.0,799.0285417367573,5,['Verticaal Zanddicht Geotextiel'],yes,-999.0,-999.0,-999,-999
+3,01A,1,610300.0,720.4857763893382,5,['Verticaal Zanddicht Geotextiel'],yes,-999.0,-999.0,-999,-999
+4,4,121,1302200.0,493.7969869096159,5,['Verticaal Zanddicht Geotextiel'],yes,-999.0,-999.0,-999,-999
+5,34,2,350493.4925000005,387.8229165582008,2,['Grondversterking binnenwaarts 2025'],-999,0.0,5.0,-999,-999
+6,33A,2,145214.27540000033,233.05213541374505,2,['Grondversterking binnenwaarts 2025'],-999,0.0,5.0,-999,-999
+7,12,127,2150757.863679999,115.55508088474949,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,8.0,-999,-999
+8,34,3,123204.29550000007,74.33909946746266,2,['Grondversterking binnenwaarts 2025'],-999,0.0,8.0,-999,-999
+9,33A,3,38205.69323999848,50.92395031958804,2,['Grondversterking binnenwaarts 2025'],-999,0.0,8.0,-999,-999
+10,37B,9,567806.1582045944,50.57168604684168,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0.0,-999,-999
+11,15,126,448037.2143000001,46.36543099103508,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.0,5.0,-999,-999
+12,37B,10,144156.05489999964,25.448585454233854,2,['Grondversterking binnenwaarts 2025'],-999,0.5,5.0,-999,-999
+13,37B,133,241743.94510000036,21.54204283562837,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,0.0,-999,-999
+14,34,4,82136.1969999994,16.847900342489126,2,['Grondversterking binnenwaarts 2025'],-999,0.0,10.0,-999,-999
+15,40,2,336361.18279999937,12.93287448652798,2,['Grondversterking binnenwaarts 2025'],-999,0.0,5.0,-999,-999
+16,33A,5,50940.92432000159,8.551195927009166,2,['Grondversterking binnenwaarts 2025'],-999,0.0,12.0,-999,-999
+17,34,5,82136.19699999946,5.005960777381606,2,['Grondversterking binnenwaarts 2025'],-999,0.0,12.0,-999,-999
+18,01A,2,11663910.0,3.9968149543643645,6,['Zelfkerende constructie'],yes,-999.0,-999.0,-999,-999
+19,01B,134,665980.3767648865,3.9968149543643645,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,5.0,-999,-999
+20,4,133,2131184.0819265256,3.9968149543643645,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,0.0,-999,-999
+21,12,135,2263678.7003862676,3.9968149543643645,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,8.0,-999,-999
+22,15,134,1764996.9122042283,3.9968149543643645,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,5.0,-999,-999
+23,33A,13,859424.7790394382,3.9968149543643645,2,['Grondversterking binnenwaarts 2025'],-999,0.5,12.0,-999,-999
+24,34,13,1422473.6584993233,3.9968149543643645,2,['Grondversterking binnenwaarts 2025'],-999,0.5,12.0,-999,-999
+25,37B,141,286337.6798520689,3.9968149543643645,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,0.0,-999,-999
+26,40,10,795117.6112675937,3.9968149543643645,2,['Grondversterking binnenwaarts 2025'],-999,0.5,5.0,-999,-999
+27,50,9,903123.1276174892,3.9968149543643645,2,['Grondversterking binnenwaarts 2025'],-999,0.5,0.0,-999,-999
+28,15,135,268822.3285799995,3.9016803129518833,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,8.0,-999,-999
+29,01B,135,83821.84511999949,2.9168336021645453,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,0.5,8.0,-999,-999
+30,33A,14,38205.69323999854,2.441596045894467,2,['Grondversterking binnenwaarts 2025'],-999,0.5,15.0,-999,-999
+31,4,141,1193439.5510998415,1.9521913983601136,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,0.0,-999,-999
+32,12,143,1174696.8211830724,1.5558334095355073,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8.0,-999,-999
+33,33A,22,546361.4048935673,1.5558334095355073,2,['Grondversterking binnenwaarts 2025'],-999,1.0,15.0,-999,-999
+34,34,21,860610.8965288936,1.5558334095355073,2,['Grondversterking binnenwaarts 2025'],-999,1.0,12.0,-999,-999
+35,40,18,465459.55752307107,1.5558334095355073,2,['Grondversterking binnenwaarts 2025'],-999,1.0,5.0,-999,-999
+36,50,17,500905.76402323914,1.5558334095355073,2,['Grondversterking binnenwaarts 2025'],-999,1.0,0.0,-999,-999
+37,15,143,976583.2145354301,1.4898875764449944,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8.0,-999,-999
+38,33A,23,63676.15540000051,1.4783571233345738,2,['Grondversterking binnenwaarts 2025'],-999,1.0,20.0,-999,-999
+39,12,144,167089.46592000406,1.4279069800534547,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10.0,-999,-999
+40,40,19,150773.34168000054,1.3456364276397357,2,['Grondversterking binnenwaarts 2025'],-999,1.0,8.0,-999,-999
+41,34,22,123204.29550000001,1.1041752391058217,2,['Grondversterking binnenwaarts 2025'],-999,1.0,15.0,-999,-999
+42,01B,143,392202.8910733585,0.9087989657874501,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8.0,-999,-999
+43,37B,149,305063.0814995405,0.9087989657874501,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.5,0.0,-999,-999
+44,33A,24,127352.31079999963,0.8393160367902455,2,['Grondversterking binnenwaarts 2025'],-999,1.0,30.0,-999,-999
+45,15,144,179214.8857200006,0.7433270986622946,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10.0,-999,-999
+46,01B,144,55881.23008000036,0.49938928552269973,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10.0,-999,-999
+47,12,145,167089.46591999847,0.38369094430726775,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,12.0,-999,-999
+48,40,20,100515.56111999997,0.3574489690887802,2,['Grondversterking binnenwaarts 2025'],-999,1.0,10.0,-999,-999
+49,33A,146,358071.53379999986,0.2809833815801581,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,15.0,-999,-999
+50,40,143,472384.43888000003,0.22461102098625305,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,8.0,-999,-999
+51,15,145,179214.88572000153,0.19378686197404174,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,12.0,-999,-999
+52,40,144,100515.56111999974,0.1923817808624484,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,10.0,-999,-999
+53,01B,145,55881.23008000036,0.12043623183839562,5+2,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts 2025'],yes,1.0,12.0,-999,-999
+54,01B,122,5949269.351681755,0.1174804297202771,6,['Zelfkerende constructie'],yes,-999.0,-999.0,-999,-999
+55,34,23,205340.49250000156,0.11190907557245512,2,['Grondversterking binnenwaarts 2025'],-999,1.0,20.0,-999,-999

@@ -33,7 +33,7 @@ class GreedyStrategy(StrategyBase):
         sg_index = np.zeros((no_of_sections,))
         measure_index = np.zeros((no_of_sections,), dtype=np.int32)
         for i in range(0, no_of_sections):
-            if optimal_counter_combination[i] != 0:  # a measure was taken
+            if optimal_counter_combination[i] >= 0:  # a measure was taken
                 measure_index[i] = sh_array[i, optimal_counter_combination[i]]
                 sg_index[i] = sg_array[i, optimal_counter_combination[i]]
             else:  # no measure was taken
@@ -76,8 +76,8 @@ class GreedyStrategy(StrategyBase):
         number_of_sections = sh_array.shape[0]
         number_of_available_height_measures = sh_array.shape[1] - 1
         LCC_values = np.zeros((number_of_sections,))  # total LCC spent for each section
-        index_counter = np.zeros(
-            (number_of_sections,), dtype=np.int32
+        index_counter = np.full(
+            (number_of_sections,), -1, dtype=np.int32
         )  # counter that keeps track of the next cheapest option for each section
 
         run_number = 0  # used for counting the loop
@@ -95,15 +95,19 @@ class GreedyStrategy(StrategyBase):
 
             # We should increase the measure at the weakest section, but only if we have not reached the end of the array yet:
             if number_of_available_height_measures > index_counter[ind_highest_risk]:
-                index_counter[ind_highest_risk] += 1
                 # take next step, exception if there is no valid measure. In that case exit the routine.
-                if sh_array[ind_highest_risk, index_counter[ind_highest_risk]] == 999:
+                if (
+                    sh_array[ind_highest_risk, index_counter[ind_highest_risk] + 1]
+                    == 999
+                ):
                     logging.error(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(
                             run_number
                         )
                     )
                     break
+                else:
+                    index_counter[ind_highest_risk] += 1
             else:
                 logging.error(
                     "Bundle quit after {} steps, weakest section has no more available measures".format(
@@ -246,9 +250,15 @@ class GreedyStrategy(StrategyBase):
 
             # now replace the life_cycle_cost where available_measures_height is False with a very high value:
             # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
+            # get index of available_measures_height where `True`
+            if isinstance(available_measures_height, pd.DataFrame):
+                available_measures_height = available_measures_height.squeeze()
+            unavailable_measure_indices = available_measures_height.index[
+                ~available_measures_height
+            ]
             life_cycle_cost[
                 section_no,
-                available_measures_height[~available_measures_height].index + 1,
+                unavailable_measure_indices + 1,
                 :,
             ] = 1e99
 
@@ -271,6 +281,69 @@ class GreedyStrategy(StrategyBase):
         elif (
             np.max(existing_investments[section_no, :]) == 0
         ):  # nothing has been invested yet
+            # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
+            if mechanism == MechanismEnum.OVERFLOW:
+                # Overflow is always present for a section.
+                current_reliability_overflow = (
+                    traject.probabilities.loc[traject.sections[section_no].name]
+                    .loc[MechanismEnum.OVERFLOW.name]
+                    .drop("Length")
+                    .to_frame()
+                    .transpose()
+                )
+                current_reliability_overflow.columns = (
+                    current_reliability_overflow.columns.astype(int)
+                )
+                comparison_height = pd.DataFrame(
+                    (
+                        HeightOptions.OVERFLOW.values
+                        > current_reliability_overflow.values
+                    ).any(axis=1),
+                    index=HeightOptions.index,
+                )
+            elif mechanism == MechanismEnum.REVETMENT:
+                try:  # if Revetment has been computed, get it from the assessment:
+                    current_reliability_revetment = (
+                        traject.probabilities.loc[traject.sections[section_no].name]
+                        .loc[MechanismEnum.REVETMENT.name]
+                        .drop("Length")
+                        .to_frame()
+                        .transpose()
+                    )
+                    current_reliability_revetment.columns = (
+                        current_reliability_revetment.columns.astype(int)
+                    )
+
+                    comparison_height = pd.DataFrame(
+                        (
+                            HeightOptions.REVETMENT.values
+                            > current_reliability_revetment.values
+                        ).any(axis=1),
+                        index=HeightOptions.index,
+                    )
+                except:
+                    # fill comparison_height with True values
+                    comparison_height = pd.DataFrame(
+                        np.ones(len(HeightOptions), dtype=bool),
+                        index=HeightOptions.index,
+                    )
+
+            else:
+                raise Exception("Unknown mechanism in overflow bundling")
+
+            available_measures_height = comparison_height
+
+            # now replace the life_cycle_cost where available_measures_height is False with a very high value:
+            # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
+            unavailable_measure_indices = available_measures_height.index[
+                ~available_measures_height[0]
+            ]
+            life_cycle_cost[
+                section_no,
+                unavailable_measure_indices + 1,
+                :,
+            ] = 1e99
+
             sg_section[0, :] = np.argmin(life_cycle_cost[section_no, :, :], axis=1)
             LCCs = np.min(life_cycle_cost[section_no, :, :], axis=1)
             sh_section_sorted[0, :] = np.argsort(LCCs)
