@@ -990,5 +990,9 @@ class GreedyStrategy(StrategyBase):
             count += 1
         costs["TC"] = np.add(costs["TR"], costs["LCC"])
         costs["TC_min"] = np.argmin(costs["TC"])
-
+        # TODO: We require these "costs" for determining lowest cost step.
+        self.costs = costs
         return costs
+
+    def get_total_lcc_and_risk(self) -> tuple[float, float]:
+        return self.costs["TC"][0], self.costs["TC"][1]

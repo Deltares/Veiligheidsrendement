@@ -22,6 +22,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
         dims = dom_model.TakenMeasures.values.shape
         _step_results_section = []
         _step_results_mechanism = []
+        _total_lcc, _total_risk = dom_model.get_total_lcc_and_risk()
 
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i, 0]
@@ -33,6 +34,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 _created_optimization_step = OptimizationStep.create(
                     step_number=i,
                     optimization_selected_measure_id=opt_sel_msr_id,
+                    total_lcc=_total_lcc,
+                    total_risk=_total_risk,
                 )
 
                 localId = self._find_id_in_section(

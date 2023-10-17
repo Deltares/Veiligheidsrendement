@@ -488,6 +488,7 @@ def get_optimization_step_with_lowest_total_cost(
             _optimization_step
         )
         _lcc = _optimization_step.optimization_step_results_section[0].lcc
+        # base_traject reliability of all dike sections.
         _cost = calc_life_cycle_risks()
         _results.append((_optimization_step, _as_df, _cost))
 
