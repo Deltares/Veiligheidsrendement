@@ -142,7 +142,11 @@ class TestApi:
         )
 
         # 3. Verify expectations.
-        assert isinstance(_result, pd.DataFrame)
+        assert isinstance(_result, tuple)
+        # Optimization step with lowest total_lcc + total_risk
+        assert _result[0] == 1
+        assert isinstance(_result[1], pd.DataFrame)
+        assert _result[2] == pytest.approx(2.59, rel=0.01)
 
 
 acceptance_test_cases = list(
