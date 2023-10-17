@@ -284,16 +284,8 @@ class GreedyStrategy(StrategyBase):
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
             if mechanism == MechanismEnum.OVERFLOW:
                 # Overflow is always present for a section.
-                current_reliability_overflow = (
-                    traject.probabilities.loc[traject.sections[section_no].name]
-                    .loc[MechanismEnum.OVERFLOW.name]
-                    .drop("Length")
-                    .to_frame()
-                    .transpose()
-                )
-                current_reliability_overflow.columns = (
-                    current_reliability_overflow.columns.astype(int)
-                )
+                current_reliability_overflow = (traject.sections[section_no].section_reliability.SectionReliability.loc[MechanismEnum.OVERFLOW.name])
+
                 comparison_height = pd.DataFrame(
                     (
                         HeightOptions.OVERFLOW.values
@@ -303,16 +295,7 @@ class GreedyStrategy(StrategyBase):
                 )
             elif mechanism == MechanismEnum.REVETMENT:
                 try:  # if Revetment has been computed, get it from the assessment:
-                    current_reliability_revetment = (
-                        traject.probabilities.loc[traject.sections[section_no].name]
-                        .loc[MechanismEnum.REVETMENT.name]
-                        .drop("Length")
-                        .to_frame()
-                        .transpose()
-                    )
-                    current_reliability_revetment.columns = (
-                        current_reliability_revetment.columns.astype(int)
-                    )
+                    current_reliability_revetment = (traject.sections[section_no].section_reliability.SectionReliability.loc[MechanismEnum.REVETMENT.name])
 
                     comparison_height = pd.DataFrame(
                         (
