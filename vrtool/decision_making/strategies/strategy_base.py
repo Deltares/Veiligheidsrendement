@@ -175,7 +175,6 @@ class StrategyBase:
         # using pop to have it working correctly for the other sections
         self.indexCombined2single = {}
         self.investment_years = {}
-        #TODO @Edwin I modified this. I think that the indexCombined2single should contain the SelectedMeasureId and not the MeasureResultId
 
         _ids_copied = ids_to_import.copy()
         _sel_measure_ids_copy = selected_measure_ids.copy()
@@ -184,21 +183,29 @@ class StrategyBase:
         _measure_result_ids = list(_measure_result_ids)
         _investment_years = list(_investment_years)
 
-        # remove sections that do not have any measures (due to filtering)
-        for i in reversed(range(len(traject.sections))):
-            if not traject.sections[i].name in solutions_dict:
-                del traject.sections[i]
+        # find a valid measure to be inserted in a section without measures
+        s = list(solutions_dict.keys())
+        sampleMeasure = copy.deepcopy(solutions_dict[s[0]].MeasureData)
+        sampleConfig = solutions_dict[s[0]].config
 
         for section in traject.sections:
-            self.indexCombined2single[section.name] = [
-                [_sel_measure_ids_copy[_run_id].pop(0)]
-                for i in range(len(solutions_dict[section.name].MeasureData))
-            ]
-            self.investment_years[section.name] = [
-                _investment_years.pop(0)
-                for i in range(len(solutions_dict[section.name].MeasureData))
-            ]
-            
+            if section.name in solutions_dict:
+                if section.with_measures:
+                    self.indexCombined2single[section.name] = [
+                        [_sel_measure_ids_copy[_run_id].pop(0)]
+                        for i in range(len(solutions_dict[section.name].MeasureData))
+                    ]
+                    self.investment_years[section.name] = [
+                        _investment_years.pop(0)
+                        for i in range(len(solutions_dict[section.name].MeasureData))
+                    ]
+                else:
+                    self.indexCombined2single[section.name] = []
+            else:
+                section.with_measures = False
+                self.indexCombined2single[section.name] = []
+                self.investment_years[section.name] = []
+                solutions_dict[section.name] = Solutions(section, sampleConfig)
 
             #get betas from assessment from section and interpolate such that values are given for 0 until 100 (or what has been defined in config)
             beta_array_initial = {}
@@ -207,7 +214,7 @@ class StrategyBase:
                 beta_array_initial[beta_type] = interp1d(section.section_reliability.SectionReliability.columns.astype(int),
                                                          section.section_reliability.SectionReliability.loc[beta_type].values)(np.arange(0,np.max(self.T),1))
                 new_section_reliability_df.loc[beta_type,:] = beta_array_initial[beta_type]
-            
+
             section.section_reliability.SectionReliability = new_section_reliability_df
 
             #flatten the index for measures at the section
@@ -217,7 +224,7 @@ class StrategyBase:
             beta_array_investment_year = {}
             #if the list is empty, create a dummy measure
             if len(flattened_indexCombined2single) == 0:
-                solutions_dict[section.name].MeasureData = solutions_dict[section.name].MeasureData.iloc[0]
+                solutions_dict[section.name].MeasureData = sampleMeasure.iloc[0]
                 solutions_dict[section.name].MeasureData.loc['cost'] = [1e60]
                 for beta_type in section.section_reliability.SectionReliability.index:
                     beta_array_investment_year[beta_type] = np.full((1,np.max(self.T)),8.)

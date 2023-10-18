@@ -1,3 +1,4 @@
+import logging
 from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
@@ -28,6 +29,9 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i, 0]
+            if len(dom_model.indexCombined2single[section]) == 0:
+                logging.warning("Found measure for section without measures; section: " + section)
+                continue
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
             for singleMsrId in splittedMeasures:
