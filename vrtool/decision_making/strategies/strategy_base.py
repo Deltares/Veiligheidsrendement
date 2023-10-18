@@ -525,6 +525,7 @@ class StrategyBase:
                     .index[self.options_height[section_keys[n]].ID == sh_id]
                     .tolist()
                 )
+                sh_years = self.options_height[section_keys[n]].loc[self.options_height[section_keys[n]].ID == sh_id].year
 
                 # we get the indices of sg_id in the options_geotechnical df
                 sg_indices = (
@@ -532,6 +533,7 @@ class StrategyBase:
                     .index[self.options_geotechnical[section_keys[n]].ID == sh_id]
                     .tolist()
                 )
+                sg_years = self.options_geotechnical[section_keys[n]].loc[self.options_geotechnical[section_keys[n]].ID == sh_id].year
                 # combined LCC array for sh_indices and sg_indices
                 LCC_combined = np.add(
                     np.tile(LCC_sh[sh_indices], (len(sg_indices), 1)),
@@ -542,7 +544,10 @@ class StrategyBase:
                 # Loop through the indices and update values
                 for i, sh_idx in enumerate(sh_indices):
                     for j, sg_idx in enumerate(sg_indices):
-                        self.LCCOption[n, sh_idx + 1, sg_idx + 1] = LCC_combined[j, i]
+                        if sh_years[sh_idx] == sg_years[sg_idx]:
+                            self.LCCOption[n, sh_idx + 1, sg_idx + 1] = LCC_combined[j, i]
+                        else:
+                            pass #different years so not a good combination
 
         # Decision Variables for executed options [N,Sh] & [N,Sg]
         self.Cint_h = np.zeros((N, Sh))

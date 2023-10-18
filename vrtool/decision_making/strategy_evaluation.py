@@ -614,7 +614,7 @@ def split_options(
                 ):
                     if "Soil reinforcement" in measure_type:
                         # get list of costs and subtract startcosts from the cost that contains soil reinforcement
-                        cost_list = row["cost"].item()
+                        cost_list = row["cost"].item().copy()
                         cost_list[cost_index] = np.subtract(
                             cost_list[cost_index], startcosts_soil
                         )
