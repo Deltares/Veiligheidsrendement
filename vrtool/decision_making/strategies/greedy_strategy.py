@@ -427,13 +427,13 @@ class GreedyStrategy(StrategyBase):
         self.Cint_h[:, 0] = 1
 
         init_probability = {}
-        init_overflow_risk = np.empty(
+        init_overflow_risk = np.zeros(
             (self.opt_parameters["N"], self.opt_parameters["T"])
         )
-        init_revetment_risk = np.empty(
+        init_revetment_risk = np.zeros(
             (self.opt_parameters["N"], self.opt_parameters["T"])
         )
-        init_independent_risk = np.empty(
+        init_independent_risk = np.zeros(
             (self.opt_parameters["N"], self.opt_parameters["T"])
         )
         for mechanism in self.mechanisms:
@@ -554,6 +554,7 @@ class GreedyStrategy(StrategyBase):
             # 'overflow bundle'
             if np.isnan(np.max(BC)):
                 ids = np.argwhere(np.isnan(BC))
+                logging.warning("NaN encountered in benefit-cost ratio matrix. Trying to output the measure for which this happens:")
                 for i in range(0, ids.shape[0]):
                     error_measure = self.get_measure_from_index(ids[i, :])
                     logging.error(error_measure)

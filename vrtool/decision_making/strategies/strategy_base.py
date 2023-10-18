@@ -110,7 +110,7 @@ class StrategyBase:
                     (sg.type.values == "Stability Screen")
                     or (sg.type.values == "Vertical Geotextile")
                 ):
-                    raise Exception("Illegal combination")
+                    raise Exception("Illegal combination") #TODO think of a more explicit catch here.
             else:
                 sg = "No measure"
                 logging.info("SECTION {}".format(section))
