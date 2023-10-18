@@ -736,6 +736,7 @@ class GreedyStrategy(StrategyBase):
             "BC",
             "ID",
             "name",
+            "year",
             "yes/no",
             "dcrest",
             "dberm",
@@ -751,6 +752,7 @@ class GreedyStrategy(StrategyBase):
         dberm = []
         beta_target = []
         transition_level = []
+        year = []
         yes_no = []
         option_index = []
         names = []
@@ -761,6 +763,7 @@ class GreedyStrategy(StrategyBase):
         dcrest.append("")
         beta_target.append("")
         transition_level.append("")
+        year.append(None)
         dberm.append("")
         yes_no.append("")
         option_index.append("")
@@ -822,6 +825,11 @@ class GreedyStrategy(StrategyBase):
                 .iloc[i[2] - 1]["yes/no"]
                 .values[0]
             )
+            year.append(
+                self.options_geotechnical[traject.sections[i[0]].name]
+                .iloc[i[2] - 1]["year"]
+                .values[0]
+            )
 
             # get the option_index
             option_df = self.options[traject.sections[i[0]].name].loc[
@@ -861,12 +869,7 @@ class GreedyStrategy(StrategyBase):
             # get the name
             try:
                 names.append(
-                    solutions_dict[traject.sections[i[0]].name]
-                    .measure_table.loc[
-                        solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
-                        == ID[-1]
-                    ]["Name"]
-                    .values[0][0]
+                    solutions_dict[traject.sections[i[0]].name].measure_table.loc[solutions_dict[traject.sections[i[0]].name].measure_table["ID"]== ID[-1]]["Name"].values[0]
                 )
             except:
                 names.append("missing")
@@ -880,6 +883,7 @@ class GreedyStrategy(StrategyBase):
                     BC,
                     ID,
                     names,
+                    year,
                     yes_no,
                     dcrest,
                     dberm,
