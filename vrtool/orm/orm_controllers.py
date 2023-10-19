@@ -1,11 +1,14 @@
 import itertools
 import logging
 from pathlib import Path
+from typing import Iterator
+import pandas as pd
 
 from peewee import SqliteDatabase
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategy_evaluation import calc_life_cycle_risks
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -22,6 +25,9 @@ from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer imp
     SolutionsForMeasureResultsImporter,
 )
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
+from vrtool.orm.io.importers.optimization.optimization_step_importer import (
+    OptimizationStepImporter,
+)
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -441,3 +447,52 @@ def export_results_optimization(result: ResultsOptimization) -> None:
     _connected_db.close()
 
     logging.info("Closed connection after export optimizations.")
+
+
+def get_optimization_steps(optimization_run_id: int) -> Iterator[orm.OptimizationStep]:
+    """
+    DISCLAIMER: An open database connection is required to run this call!
+    """
+    _optimization_run = orm.OptimizationRun.get_by_id(optimization_run_id)
+    return (
+        orm.OptimizationStep.select()
+        .join(orm.OptimizationSelectedMeasure)
+        .where(
+            orm.OptimizationStep.optimization_selected_measure.optimization_run
+            == _optimization_run
+        )
+    )
+
+
+def get_optimization_step_with_lowest_total_cost(
+    vrtool_config: VrtoolConfig, optimization_run_id: int
+) -> tuple[orm.OptimizationStep, pd.DataFrame, float]:
+    """
+    Gets the `OptimizationStep` with the lowest *total* cost.
+    The total cost is calculated based on `LCC` and risk.
+
+    Args:
+        vrtool_db_path (Path): Sqlite database path.
+
+    Returns:
+        orm.OptimizationStep: The `OptimizationStep` instance with the lowest *total* cost
+    """
+    _connected_db = open_database(vrtool_config.input_database_path)
+    logging.info(
+        "Openned connection to retrieve 'OptimizationStep' with lowest total cost."
+    )
+
+    _results = []
+    for _optimization_step in get_optimization_steps(optimization_run_id):
+        _as_df = OptimizationStepImporter.import_optimization_step_results_df(
+            _optimization_step
+        )
+        _cost = _optimization_step.total_lcc + _optimization_step.total_risk
+        _results.append((_optimization_step, _as_df, _cost))
+
+    _connected_db.close()
+    logging.info(
+        "Closed connection after retrieval of lowest total cost 'OptimizationStep'."
+    )
+
+    return min(_results, key=lambda results_tuple: results_tuple[2])

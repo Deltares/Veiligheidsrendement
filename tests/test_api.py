@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import pandas as pd
 from peewee import SqliteDatabase
 
 from tests import get_test_results_dir, test_data, test_externals, test_results
@@ -16,14 +17,16 @@ from tests.api_acceptance_cases import (
 )
 from vrtool.api import (
     ApiRunWorkflows,
+    get_optimization_step_with_lowest_total_cost_table,
     get_valid_vrtool_config,
     run_full,
     run_step_assessment,
     run_step_measures,
     run_step_optimization,
 )
-from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
+from vrtool.orm.models.optimization.optimization_run import OptimizationRun
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
 from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
     OptimizationStepResultMechanism,
@@ -111,6 +114,39 @@ class TestApi:
     ):
         _api_run_workflows = ApiRunWorkflows(vrtool_config)
         assert isinstance(_api_run_workflows, ApiRunWorkflows)
+
+    def test_when_get_optimization_step_with_lowest_total_cost_table_given_db_with_results(
+        self, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _test_db_path = test_data.joinpath("test_db", "vrtool_with_filtered_results.db")
+        assert _test_db_path.exists()
+
+        _opened_db = open_database(_test_db_path)
+        _found_dike_traject = DikeTrajectInfo.get()
+
+        # Get a test `VrtoolConfig`.
+        _vrtool_config = VrtoolConfig(traject=_found_dike_traject.traject_name)
+        _vrtool_config.input_directory = _test_db_path.parent
+        _vrtool_config.input_database_name = _test_db_path.name
+        _vrtool_config.output_directory = test_results.joinpath(request.node.name)
+
+        # Get a valid test `OptimizationRun`
+        _optimization_run = OptimizationRun.get_by_id(1)
+        assert _optimization_run.optimization_type.name == "VEILIGHEIDSRENDEMENT"
+        _opened_db.close()
+
+        # 2. Run test.
+        _result = get_optimization_step_with_lowest_total_cost_table(
+            _vrtool_config, _optimization_run.get_id()
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_result, tuple)
+        # Optimization step with lowest total_lcc + total_risk
+        assert _result[0] == 1
+        assert isinstance(_result[1], pd.DataFrame)
+        assert _result[2] == pytest.approx(2.59, rel=0.01)
 
 
 acceptance_test_cases = list(

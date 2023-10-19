@@ -1,13 +1,11 @@
 import copy
 import logging
 from abc import abstractmethod
-from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, Union
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from scipy.interpolate import interp1d
 
 from vrtool.common.enums import MechanismEnum
@@ -599,4 +597,8 @@ class StrategyBase:
 
     @abstractmethod
     def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
+        raise NotImplementedError("Expected concrete definition in inherited class.")
+
+    @abstractmethod
+    def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         raise NotImplementedError("Expected concrete definition in inherited class.")
