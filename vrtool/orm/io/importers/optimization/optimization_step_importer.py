@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Any
+
 import pandas as pd
+
 from vrtool.common.enums import MechanismEnum
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep

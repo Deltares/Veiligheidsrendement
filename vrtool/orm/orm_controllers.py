@@ -2,8 +2,8 @@ import itertools
 import logging
 from pathlib import Path
 from typing import Iterator
-import pandas as pd
 
+import pandas as pd
 from peewee import SqliteDatabase
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo

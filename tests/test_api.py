@@ -2,8 +2,8 @@ import hashlib
 import shutil
 from pathlib import Path
 
-import pytest
 import pandas as pd
+import pytest
 from peewee import SqliteDatabase
 
 from tests import get_test_results_dir, test_data, test_externals, test_results
