@@ -237,11 +237,13 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run using ALL the available measure results.
-        _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
-        _measures_input = _validator.get_investment_year(valid_vrtool_config, _measures_results)
+        _measure_results = _validator.get_test_measure_results(valid_vrtool_config)
+        _measures_results_with_year = (
+            _validator.get_test_measure_result_with_investment_year(_measure_results)
+        )
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_input)
+        run_step_optimization(valid_vrtool_config, _measures_results_with_year)
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
@@ -266,14 +268,17 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run the available measure results with odd ids.
-        _measures_results_all = _validator.get_test_measure_result_ids(
-            valid_vrtool_config
+        _measures_results = list(
+            filter(
+                lambda x: (x.get_id() % 2 != 0), _validator.get_test_measure_results(valid_vrtool_config)
+            )
         )
-        _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results_all))
-        _measures_input = _validator.get_investment_year(valid_vrtool_config, _measures_results)
+        _measures_results_with_year = (
+            _validator.get_test_measure_result_with_investment_year(_measures_results)
+        )
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_input)
+        run_step_optimization(valid_vrtool_config, _measures_results_with_year)
 
         # 3. Verify expectations.
         with open_database(valid_vrtool_config.input_database_path) as _connected_db:
