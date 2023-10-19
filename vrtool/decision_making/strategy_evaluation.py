@@ -127,7 +127,7 @@ def measure_combinations(
                                     )
                                 )
                             except Exception as exc_found:
-                                logging.debug("Exception {} risen with error {}".format(type(exc_found), exc_found)
+                                logging.debug("Exception {} risen with error {}".format(type(exc_found), exc_found))
 
 
             count += 1
