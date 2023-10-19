@@ -190,7 +190,7 @@ class ApiRunWorkflows:
         _optimization_result = _optimization.run()
 
         # Export results
-        export_results_optimization(_optimization_result)
+        export_results_optimization(_optimization_result,_optimization.run_ids)
         return _optimization_result
 
     def run_all(self) -> ResultsOptimization:

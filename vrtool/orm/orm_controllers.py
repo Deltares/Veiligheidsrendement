@@ -430,7 +430,7 @@ def create_basic_optimization_run(
     _connected_db.close()
 
 
-def export_results_optimization(result: ResultsOptimization) -> None:
+def export_results_optimization(result: ResultsOptimization, run_ids: list) -> None:
     """
     Exports the optimization results (`list[StrategyBase]`) to a database.
 
@@ -443,7 +443,7 @@ def export_results_optimization(result: ResultsOptimization) -> None:
     logging.info("Opened connection to export optimizations.")
 
     for i in range(len(result.results_strategies)):
-        _exporter = StrategyBaseExporter(i + 1)
+        _exporter = StrategyBaseExporter(run_ids[i])
         _exporter.export_dom(result.results_strategies[i])
     _connected_db.close()
 
