@@ -29,7 +29,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
         for i in range(1, dims[0]):
             section = dom_model.TakenMeasures.values[i, 0]
-            if len(dom_model.indexCombined2single[section]) == 0:
+            if any(dom_model.indexCombined2single[section]):
                 logging.warning("Found measure for section without measures; section: " + section)
                 continue
             measure_id = dom_model.TakenMeasures.values[i, 1]
@@ -58,12 +58,12 @@ class StrategyBaseExporter(OrmExporterProtocol):
                             "lcc": lcc,
                         }
                     )
-                #from OptimizationSelectedMeasure get measure_result_id based on singleMsrId
+                # From OptimizationSelectedMeasure get measure_result_id based on singleMsrId
                 _measure_result = MeasureResult.get_by_id(OptimizationSelectedMeasure.get_by_id(opt_sel_msr_id).measure_result_id)
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
-                    mechanismId = MechanismPerSection.get_by_id(row.mechanism_per_section_id)
-                    mechanismName = MechanismEnum.get_enum(Mechanism.get_by_id(mechanismId.mechanism_id).name).name
+                    mechanism_per_section = MechanismPerSection.get_by_id(row.mechanism_per_section_id)
+                    _mechanism = MechanismEnum.get_enum(mechanism_per_section.mechanism.name)
                     beta_mechanism = dom_model.options[section][mechanismName].values[localId]
                     beta = self._get_selected_time(row.time, beta_mechanism)
                     _step_results_mechanism.append(
@@ -104,8 +104,6 @@ class StrategyBaseExporter(OrmExporterProtocol):
     def _get_selected_time(self, t:int, values:list[float]) -> float:
         # fix for t=100 where 99 is the last
         if (t < values.shape[0]-1):
-            value = values[t]
-        else:
-            value = values[-1]
-        return value
+            return values[t]
+        return values[-1]
 

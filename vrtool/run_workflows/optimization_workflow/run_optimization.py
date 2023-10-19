@@ -35,13 +35,14 @@ class RunOptimization(VrToolRunProtocol):
             #@Edwin: will this work and do we need it?
             self._ids_to_import = self._get_default_measure_result_ids()
 
-    def _get_default_measure_result_ids(self) -> list[tuple]:
+    def _get_default_measure_result_ids(self) -> list[tuple[int, int]]:
         ii = 1
         ids = []
         for value in self._solutions_dict.values():
             dims = value.MeasureData.shape
             for i in range(dims[0]):
-                ids.append([ii, 0]) # 0 : default investment year
+                # 0 : default investment year
+                ids.append([ii, 0])
                 ii += 1
         return ids
 

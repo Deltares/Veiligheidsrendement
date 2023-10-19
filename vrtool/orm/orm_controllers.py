@@ -274,14 +274,14 @@ def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[in
 
 
 def import_results_measures(
-    config: VrtoolConfig, results_ids_to_import: list[tuple]
+    config: VrtoolConfig, results_ids_to_import: list[tuple[int, int]]
 ) -> ResultsMeasures:
     """
     Imports results masures from a database into a `ResultsMeasure` instance.
 
     Args:
         config (VrtoolConfig): Configuration containing database path.
-        results_ids_to_import (list[tuple]): List of measure results' IDs. including investment year
+        results_ids_to_import (list[tuple[int, int]]): List of measure results' IDs. including their respective investment year.
 
     Returns:
         ResultsMeasures: Instance hosting all the required measures' results.
@@ -291,11 +291,7 @@ def import_results_measures(
 
     _solutions_dict = dict()
 
-    _mr_list = []
-    for _measure_result_id,_investment_year in results_ids_to_import:
-        _measure_result = orm.MeasureResult.get_by_id(_measure_result_id)
-        _mr_list.append((_measure_result,_investment_year))
-
+    _mr_list = [(orm.MeasureResult.get_by_id(result_tuple[0]), _result_tuple[1]) for _result_tuple in results_ids_to_import]
     _grouped_by_section = [
         (_section, list(_grouped_measure_results))
         for _section, _grouped_measure_results in itertools.groupby(
@@ -330,7 +326,7 @@ def import_results_measures(
 
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
-    selected_measure_result_ids: list[tuple],
+    selected_measure_result_ids: list[tuple[int, int]],
     optimization_name: str,
 ) -> ResultsMeasures:
     """
@@ -342,7 +338,7 @@ def create_optimization_run_for_selected_measures(
 
     Args:
         vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
-        selected_measure_result_ids (list[tuple]): list of `MeasureResult` id's in the database including investment year.
+        selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
         optimization_name (str): name to give to an optimization run.
 
     Returns:
