@@ -292,42 +292,26 @@ class RunStepOptimizationValidator(RunStepValidator):
         self, valid_vrtool_config: VrtoolConfig
     ) -> list[int]:
         _connected_db = open_database(valid_vrtool_config.input_database_path)
-        _id_list = [mr.get_id() for mr in orm_models.MeasureResult.select()]
+        _id_list = [mr for mr in orm_models.MeasureResult.select()]
         _connected_db.close()
         return _id_list
 
-    def get_investment_year(self, valid_vrtool_config, _measures_results) -> list[tuple]:
-        # check : check if available in database ; if not fill with defaults
-        #for measures of soil reinforcement type get the measure_id. These should be added at t=0 and t=20
-        meas_types = {mr.get_id(): mr.name for mr in orm_models.MeasureType.select() if 'Soil reinforcement' in mr.name}
-        
-        
-        #get the ids from Measure based on measure_type_id in meas_types
-        meas_soil_ids = [m.get_id() for m in orm_models.Measure.select() if m.measure_type_id in meas_types.keys()]
-        #get the ids for MeasurePerSection for the measures of soil reinforcement type
-        meas_per_section_soil_ids = [mps.get_id() for mps in orm_models.MeasurePerSection.select() if mps.measure_id in meas_soil_ids]    
-        #get the measure_results ids from MeasureResult based on the measure_per_section_id as stored in meas_per_section_soil_ids
-        measures_results_soil = [mr.get_id() for mr in orm_models.MeasureResult.select() if mr.measure_per_section_id in meas_per_section_soil_ids]
-
-        #NOTE: this is a temporary fix as we dont have good databases yet. This part should be deleted later!
-        #get the ids from Measure if year is 20 
-        meas_year_ids = [m.get_id() for m in orm_models.Measure.select() if m.year == 20]
-        #get the ids for MeasurePerSection for the measures in meas_year_ids
-        meas_per_section_year_ids = [mps.get_id() for mps in orm_models.MeasurePerSection.select() if mps.measure_id in meas_year_ids]
-        #get the measure_results ids from MeasureResult based on the measure_per_section_id as stored in meas_per_section_year_ids
-        measures_results_year = [mr.get_id() for mr in orm_models.MeasureResult.select() if mr.measure_per_section_id in meas_per_section_year_ids]
-
-
-        measure_list = []
-        for _result in _measures_results:
-            if _result in measures_results_year:
-                continue #NOTE: remove this condition o databases are up to date
-            elif _result in measures_results_soil:
-                measure_list.append((_result, 20))
-                measure_list.append((_result, 0))
-            else:
-                measure_list.append((_result, 0))
-        return measure_list
+    def get_test_measure_result_with_investment_year(
+        self,
+        measures_results: list[orm_models.MeasureResult],
+    ) -> list[tuple[int, int]]:
+        _measure_result_with_year_list = []
+        for _measure_result in measures_results:
+            if _measure_result.measure_per_section.measure.year == 20:
+                # We do not want measures that have a year variable >0 initially, as then the interpolation is messed up.
+                continue
+            
+            # All will get at least year 0.
+            _measure_result_with_year_list.append((_measure_result.get_id(), 0))
+            if "Soil reinforcement" in _measure_result.measure_per_section.measure.measure_type.name:
+                # For those of type "Soil reinforcement" we also add year 20.
+                _measure_result_with_year_list.append((_measure_result.get_id(), 20))
+        return _measure_result_with_year_list
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
