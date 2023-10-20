@@ -291,7 +291,7 @@ def import_results_measures(
 
     _solutions_dict = dict()
 
-    _mr_list = [(orm.MeasureResult.get_by_id(result_tuple[0]), _result_tuple[1]) for _result_tuple in results_ids_to_import]
+    _mr_list = [(orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1]) for _result_tuple in results_ids_to_import]
     _grouped_by_section = [
         (_section, list(_grouped_measure_results))
         for _section, _grouped_measure_results in itertools.groupby(
