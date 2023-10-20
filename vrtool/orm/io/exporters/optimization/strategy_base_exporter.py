@@ -11,9 +11,6 @@ from vrtool.orm.models.optimization import (
     OptimizationStepResultSection,
 )
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
-from vrtool.orm.models.optimization.optimization_selected_measure import (
-    OptimizationSelectedMeasure,
-)
 
 
 class StrategyBaseExporter(OrmExporterProtocol):
@@ -34,12 +31,15 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 continue
             measure_id = dom_model.TakenMeasures.values[i, 1]
             splittedMeasures = dom_model.indexCombined2single[section][measure_id]
+            _total_lcc, _total_risk = dom_model.get_total_lcc_and_risk(i)
             for singleMsrId in splittedMeasures:
 
                 opt_sel_msr_id = self._get_sel_msr_id(singleMsrId)
                 _created_optimization_step = OptimizationStep.create(
                     step_number=i,
                     optimization_selected_measure_id=opt_sel_msr_id,
+                    total_lcc=_total_lcc,
+                    total_risk=_total_risk,
                 )
 
                 localId = self._find_id_in_section(

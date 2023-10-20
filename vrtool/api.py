@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
 from vrtool.api_validator import apiValidator
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -17,6 +18,7 @@ from vrtool.orm.orm_controllers import (
     export_results_safety_assessment,
     fill_optimization_selected_measure_ids,
     get_dike_traject,
+    get_optimization_step_with_lowest_total_cost,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
@@ -119,6 +121,29 @@ def run_full(vrtool_config: VrtoolConfig) -> None:
         vrtool_config (VrtoolConfig): Configuration to use during run.
     """
     ApiRunWorkflows(vrtool_config).run_all()
+
+
+def get_optimization_step_with_lowest_total_cost_table(
+    vrtool_config: VrtoolConfig, optimization_run_id: int
+) -> tuple[int, pd.DataFrame, float]:
+    """
+    Gets the (id) optimization step, all its related betas and the
+    total cost of said step.
+
+    Args:
+        vrtool_config (VrtoolConfig): Configuration containing connection details.
+        optimization_run_id (int): Optimization whose steps need to be analyzed.
+
+    Returns:
+        tuple[int, pd.DataFrame, float]: `OptimizationStep.id`, reliability dataframe
+        and total cost of said step.
+    """
+    (
+        _optimization_step,
+        dataframe_betas,
+        total_cost,
+    ) = get_optimization_step_with_lowest_total_cost(vrtool_config, optimization_run_id)
+    return _optimization_step.get_id(), dataframe_betas, total_cost
 
 
 class ApiRunWorkflows:

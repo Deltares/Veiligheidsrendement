@@ -344,14 +344,14 @@ def calc_tc(section_options, discount_rate: float, horizon=100):
 
 
 def calc_tr(
-    section,
-    section_options,
-    base_traject,
-    original_section,
+    section: str,
+    section_options: pd.DataFrame | pd.Series,
+    base_traject: pd.DataFrame,
+    original_section: pd.DataFrame,
     discount_rate: float,
-    horizon=100,
-    damage=1e9,
-):
+    horizon: float = 100,
+    damage: float = 1e9,
+) -> tuple[float, list, list]:
     # section: the section name
     # section_options: all options for the section
     # base_traject: traject probability with all implemented measures
@@ -360,28 +360,31 @@ def calc_tr(
     if damage == 1e9:
         logging.warning("No damage defined.")
 
-    TotalRisk = []
+    total_risk = []
     dR = []
-    mechs = np.unique(base_traject.index.get_level_values("mechanism").values)
-    sections = np.unique(base_traject.index.get_level_values("name").values)
-    section_idx = np.where(sections == section)[0]
     section_options_array = {}
     base_array = {}
-    TotalRisk = []
-    dR = []
 
-    for i in mechs:
-        base_array[i] = base_traject.xs(i, level=1).values.astype("float")
+    _mechanism_name_list = np.unique(
+        base_traject.index.get_level_values("mechanism").values
+    )
+    sections = np.unique(base_traject.index.get_level_values("name").values)
+    section_idx = np.where(sections == section)[0]
+
+    for _mechanism_name in _mechanism_name_list:
+        base_array[_mechanism_name] = base_traject.xs(
+            _mechanism_name, level=1
+        ).values.astype("float")
         if isinstance(section_options, pd.DataFrame):
-            section_options_array[i] = section_options.xs(
-                i, level=0, axis=1
+            section_options_array[_mechanism_name] = section_options.xs(
+                _mechanism_name, level=0, axis=1
             ).values.astype("float")
-            range_idx = len(section_options_array[mechs[0]])
+            range_idx = len(section_options_array[_mechanism_name_list[0]])
 
         if isinstance(section_options, pd.Series):
-            section_options_array[i] = section_options.xs(i, level=0).values.astype(
-                "float"
-            )
+            section_options_array[_mechanism_name] = section_options.xs(
+                _mechanism_name, level=0
+            ).values.astype("float")
             range_idx = 0
 
     if "section_options_array" in locals():
@@ -392,10 +395,10 @@ def calc_tr(
             damage,
             datatype="Array",
             ts=base_traject.columns.values,
-            mechs=mechs,
+            mechs=_mechanism_name_list,
         )
 
-        for i in range(range_idx):
+        for _mechanism_name in range(range_idx):
             TR = calc_life_cycle_risks(
                 base_array,
                 discount_rate,
@@ -405,15 +408,15 @@ def calc_tr(
                 section=section_idx,
                 datatype="Array",
                 ts=base_traject.columns.values,
-                mechs=mechs,
-                option=i,
+                mechs=_mechanism_name_list,
+                option=_mechanism_name,
             )
-            TotalRisk.append(TR)
+            total_risk.append(TR)
             dR.append(base_risk - TR)
     else:
         base_risk = calc_life_cycle_risks(base_traject, discount_rate, horizon, damage)
         if isinstance(section_options, pd.DataFrame):
-            for i, row in section_options.iterrows():
+            for _mechanism_name, row in section_options.iterrows():
                 TR = calc_life_cycle_risks(
                     base_traject,
                     discount_rate,
@@ -422,7 +425,7 @@ def calc_tr(
                     change=row,
                     section=section,
                 )
-                TotalRisk.append(TR)
+                total_risk.append(TR)
                 dR.append(base_risk - TR)
 
         elif isinstance(section_options, pd.Series):
@@ -434,10 +437,10 @@ def calc_tr(
                 change=section_options,
                 section=section,
             )
-            TotalRisk.append(TR)
+            total_risk.append(TR)
             dR.append(base_risk - TR)
 
-    return base_risk, dR, TotalRisk
+    return base_risk, dR, total_risk
 
 
 def calc_life_cycle_risks(

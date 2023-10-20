@@ -1,4 +1,4 @@
-from peewee import ForeignKeyField, IntegerField
+from peewee import FloatField, ForeignKeyField, IntegerField
 
 from vrtool.orm.models.optimization.optimization_selected_measure import (
     OptimizationSelectedMeasure,
@@ -17,6 +17,8 @@ class OptimizationStep(OrmBaseModel):
         OptimizationSelectedMeasure, backref="optimization_steps", on_delete="CASCADE"
     )
     step_number = IntegerField()
+    total_lcc = FloatField(null=True)
+    total_risk = FloatField(null=True)
 
     class Meta:
         table_name = _get_table_name(__qualname__)

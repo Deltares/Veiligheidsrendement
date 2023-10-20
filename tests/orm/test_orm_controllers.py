@@ -718,6 +718,9 @@ class TestOrmControllers:
                 self.indexCombined2single["0"] = [[1]]
                 self.T = [0, 20, 100]
 
+            def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
+                return 0.42, 0.24
+
         _test_strategy = MockedStrategy(
             type=_optimization_type, config=_results_measures.vr_config
         )
@@ -736,6 +739,9 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert len(orm_models.OptimizationStep.select()) == 1
+        _optimization_step = orm_models.OptimizationStep.get()
+        assert _optimization_step.total_lcc == 0.42
+        assert _optimization_step.total_risk == 0.24
         assert len(orm_models.OptimizationStepResultMechanism) == 10
         assert len(orm_models.OptimizationStepResultSection) == 3
 

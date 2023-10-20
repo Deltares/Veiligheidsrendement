@@ -6,8 +6,6 @@ from typing import Dict
 
 import numpy
 import numpy as np
-from scipy.interpolate import interp1d
-import random
 import pandas as pd
 
 from vrtool.common.enums import MechanismEnum
@@ -980,7 +978,11 @@ class GreedyStrategy(StrategyBase):
             count += 1
         costs["TC"] = np.add(costs["TR"], costs["LCC"])
         costs["TC_min"] = np.argmin(costs["TC"])
-
+        # TODO: We require these "costs" for determining lowest cost step.
+        self.costs = costs
         return costs
 
-
+    def get_total_lcc_and_risk(
+        self, step_number: int
+    ) -> tuple[list[float], list[float]]:
+        return self.costs["LCC"][step_number], self.costs["TR"][step_number]
