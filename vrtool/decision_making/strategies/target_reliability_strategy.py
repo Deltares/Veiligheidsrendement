@@ -83,7 +83,22 @@ class TargetReliabilityStrategy(StrategyBase):
 
         if splitparams:
             _taken_measures = pd.DataFrame(
-                data=[[None, None, 0, None, None, None, None, None, None, None, None, None]],
+                data=[
+                    [
+                        None,
+                        None,
+                        0,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ]
+                ],
                 columns=measure_cols
                 + [
                     "ID",

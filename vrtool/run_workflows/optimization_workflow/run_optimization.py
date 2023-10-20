@@ -16,7 +16,11 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class RunOptimization(VrToolRunProtocol):
-    def __init__(self, results_measures: ResultsMeasures, _optimization_selected_measure_ids: dict[int, list[int]]) -> None:
+    def __init__(
+        self,
+        results_measures: ResultsMeasures,
+        _optimization_selected_measure_ids: dict[int, list[int]],
+    ) -> None:
         if not isinstance(results_measures, ResultsMeasures):
             raise ValueError(
                 "Required valid instance of {} as an argument.".format(
@@ -41,7 +45,12 @@ class RunOptimization(VrToolRunProtocol):
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
         _results_dir = self._get_output_dir()
-        _greedy_optimization.set_investment_years(self.selected_traject, self._ids_to_import, self._selected_measure_ids, self._solutions_dict)
+        _greedy_optimization.set_investment_years(
+            self.selected_traject,
+            self._ids_to_import,
+            self._selected_measure_ids,
+            self._solutions_dict,
+        )
         # Combine available measures
         _greedy_optimization.combine(
             self.selected_traject,
@@ -115,7 +124,12 @@ class RunOptimization(VrToolRunProtocol):
             design_method, self.vr_config
         )
         _results_dir = self._get_output_dir()
-        _target_reliability_based.set_investment_years(self.selected_traject, self._ids_to_import, self._selected_measure_ids, self._solutions_dict)
+        _target_reliability_based.set_investment_years(
+            self.selected_traject,
+            self._ids_to_import,
+            self._selected_measure_ids,
+            self._solutions_dict,
+        )
 
         # Combine available measures
         _target_reliability_based.combine(

@@ -3,8 +3,8 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
-from vrtool.api_validator import apiValidator
 
+from vrtool.api_validator import apiValidator
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
@@ -99,7 +99,8 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
 
 
 def run_step_optimization(
-    vrtool_config: VrtoolConfig, measure_results_ids: list[tuple[int, int]],
+    vrtool_config: VrtoolConfig,
+    measure_results_ids: list[tuple[int, int]],
 ) -> None:
     """
     Runs an optimization by optimizing the available measures
@@ -195,7 +196,9 @@ class ApiRunWorkflows:
         export_results_measures(_measures_result)
         return _measures_result
 
-    def run_optimization(self, selected_measures_id: list[tuple[int, int]]) -> ResultsOptimization:
+    def run_optimization(
+        self, selected_measures_id: list[tuple[int, int]]
+    ) -> ResultsOptimization:
         """
         Runs an optimization for the given measure results ID's.
 
@@ -207,18 +210,23 @@ class ApiRunWorkflows:
         """
         # Create optimization run
         _date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        _results_measures, _optimization_selected_measure_ids = create_optimization_run_for_selected_measures(
+        (
+            _results_measures,
+            _optimization_selected_measure_ids,
+        ) = create_optimization_run_for_selected_measures(
             self.vrtool_config,
             selected_measures_id,
             "Single opt. at: {}".format(_date),
         )
 
         # Run Optimization.
-        _optimization = RunOptimization(_results_measures, _optimization_selected_measure_ids)
+        _optimization = RunOptimization(
+            _results_measures, _optimization_selected_measure_ids
+        )
         _optimization_result = _optimization.run()
 
         # Export results
-        export_results_optimization(_optimization_result,_optimization.run_ids)
+        export_results_optimization(_optimization_result, _optimization.run_ids)
         return _optimization_result
 
     def run_all(self) -> ResultsOptimization:
@@ -260,9 +268,13 @@ class ApiRunWorkflows:
 
         _api_validator = apiValidator()
         _measures_results_db = _api_validator.get_measure_result_ids(self.vrtool_config)
-        _measures_result.ids_to_import = _api_validator.get_measure_result_with_investment_year(_measures_results_db)
+        _measures_result.ids_to_import = (
+            _api_validator.get_measure_result_with_investment_year(_measures_results_db)
+        )
 
-        _optimization_selected_measure_ids = fill_optimization_selected_measure_ids(self.vrtool_config, _measures_result)
+        _optimization_selected_measure_ids = fill_optimization_selected_measure_ids(
+            self.vrtool_config, _measures_result
+        )
 
         # Step 3. Optimization.
         clear_optimization_results(self.vrtool_config)
@@ -271,7 +283,9 @@ class ApiRunWorkflows:
         create_basic_optimization_run(self.vrtool_config, "Run full optimization")
 
         # Run optimization
-        _optimization = RunOptimization(_measures_result, _optimization_selected_measure_ids)
+        _optimization = RunOptimization(
+            _measures_result, _optimization_selected_measure_ids
+        )
         _optimization_result = _optimization.run()
 
         logging.info("Finished run full model.")

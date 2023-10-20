@@ -297,7 +297,10 @@ def import_results_measures(
 
     _solutions_dict = dict()
 
-    _mr_list = [(orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1]) for _result_tuple in results_ids_to_import]
+    _mr_list = [
+        (orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1])
+        for _result_tuple in results_ids_to_import
+    ]
     _grouped_by_section = [
         (_section, list(_grouped_measure_results))
         for _section, _grouped_measure_results in itertools.groupby(
@@ -307,7 +310,9 @@ def import_results_measures(
 
     # Import a solution per section:
     for _section, _selected_measure_year_results in _grouped_by_section:
-        _selected_measure_id, _selected_measure_year = zip(*_selected_measure_year_results)
+        _selected_measure_id, _selected_measure_year = zip(
+            *_selected_measure_year_results
+        )
         # Import measures into solution
         _mapped_section = next(
             _ds for _ds in _dike_traject.sections if _ds.name == _section.section_name
@@ -317,7 +322,9 @@ def import_results_measures(
             _mapped_section,
         ).import_orm(_selected_measure_id)
         _solutions_dict[_section.section_name] = _imported_solution
-        _solutions_dict[_section.section_name].MeasureData['year'] = _selected_measure_year
+        _solutions_dict[_section.section_name].MeasureData[
+            "year"
+        ] = _selected_measure_year
     _dike_traject.set_probabilities()
     vrtool_db.close()
 
@@ -329,16 +336,32 @@ def import_results_measures(
 
     return _results_measures
 
-def fill_optimization_selected_measure_ids(vr_config: VrtoolConfig, _results_measures: ResultsMeasures) -> None:
+
+def fill_optimization_selected_measure_ids(
+    vr_config: VrtoolConfig, _results_measures: ResultsMeasures
+) -> None:
     _connected_db = open_database(vr_config.input_database_path)
     _optimization_selected_measure_ids = {}
     for _method_type in vr_config.design_methods:
-        _optimization_type, _ = orm.OptimizationType.get_or_create(name=_method_type.upper())
-        _optimization_runs = orm.OptimizationRun.select().where(orm.OptimizationRun.optimization_type==_optimization_type)
+        _optimization_type, _ = orm.OptimizationType.get_or_create(
+            name=_method_type.upper()
+        )
+        _optimization_runs = orm.OptimizationRun.select().where(
+            orm.OptimizationRun.optimization_type == _optimization_type
+        )
         for _optimization_run in _optimization_runs:
-            _optimization_selected_measure_ids[_optimization_run.id] = [measure.id for measure in orm.OptimizationSelectedMeasure.select(orm.OptimizationSelectedMeasure.id).where(orm.OptimizationSelectedMeasure.optimization_run_id == _optimization_run.id)]
+            _optimization_selected_measure_ids[_optimization_run.id] = [
+                measure.id
+                for measure in orm.OptimizationSelectedMeasure.select(
+                    orm.OptimizationSelectedMeasure.id
+                ).where(
+                    orm.OptimizationSelectedMeasure.optimization_run_id
+                    == _optimization_run.id
+                )
+            ]
     _connected_db.close()
     return _optimization_selected_measure_ids
+
 
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
@@ -387,8 +410,10 @@ def create_optimization_run_for_selected_measures(
                 for _measure_id in selected_measure_result_ids
             ]
         ).execute()
-        #from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
-        _optimization_selected_measure_ids[_optimization_run.id] = list(map(lambda x: x.id, _optimization_run.optimization_run_measure_results))          
+        # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
+        _optimization_selected_measure_ids[_optimization_run.id] = list(
+            map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
+        )
     logging.info(
         "Closed connection after export optimization run {}.".format(optimization_name)
     )

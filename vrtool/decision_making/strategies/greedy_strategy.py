@@ -282,7 +282,9 @@ class GreedyStrategy(StrategyBase):
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
             if mechanism == MechanismEnum.OVERFLOW:
                 # Overflow is always present for a section.
-                current_reliability_overflow = (traject.sections[section_no].section_reliability.SectionReliability.loc[mechanism.name])
+                current_reliability_overflow = traject.sections[
+                    section_no
+                ].section_reliability.SectionReliability.loc[mechanism.name]
 
                 comparison_height = pd.DataFrame(
                     (
@@ -293,7 +295,9 @@ class GreedyStrategy(StrategyBase):
                 )
             elif mechanism == MechanismEnum.REVETMENT:
                 try:  # if Revetment has been computed, get it from the assessment:
-                    current_reliability_revetment = (traject.sections[section_no].section_reliability.SectionReliability.loc[mechanism.name])
+                    current_reliability_revetment = traject.sections[
+                        section_no
+                    ].section_reliability.SectionReliability.loc[mechanism.name]
 
                     comparison_height = pd.DataFrame(
                         (
@@ -552,7 +556,9 @@ class GreedyStrategy(StrategyBase):
             # 'overflow bundle'
             if np.isnan(np.max(BC)):
                 ids = np.argwhere(np.isnan(BC))
-                logging.warning("NaN encountered in benefit-cost ratio matrix. Trying to output the measure for which this happens:")
+                logging.warning(
+                    "NaN encountered in benefit-cost ratio matrix. Trying to output the measure for which this happens:"
+                )
                 for i in range(0, ids.shape[0]):
                     error_measure = self.get_measure_from_index(ids[i, :])
                     logging.error(error_measure)
@@ -868,7 +874,12 @@ class GreedyStrategy(StrategyBase):
             # get the name
             try:
                 names.append(
-                    solutions_dict[traject.sections[i[0]].name].measure_table.loc[solutions_dict[traject.sections[i[0]].name].measure_table["ID"]== ID[-1]]["Name"].values[0]
+                    solutions_dict[traject.sections[i[0]].name]
+                    .measure_table.loc[
+                        solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
+                        == ID[-1]
+                    ]["Name"]
+                    .values[0]
                 )
             except:
                 names.append("missing")
