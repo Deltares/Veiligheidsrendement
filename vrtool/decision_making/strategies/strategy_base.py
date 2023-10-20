@@ -168,7 +168,7 @@ class StrategyBase:
 
         return (section, sh, sg)
 
-    def set_investment_years(self, traject: DikeTraject, ids_to_import: list[tuple], selected_measure_ids: list[int], solutions_dict: dict[str, Solutions]) -> None:
+    def set_investment_years(self, traject: DikeTraject, ids_to_import: list[tuple[int, int]], selected_measure_ids: dict[int, list[int]], solutions_dict: dict[str, Solutions]) -> None:
         """
         Set the investment years for the dike ring.
         """
@@ -190,6 +190,8 @@ class StrategyBase:
         sampleConfig = solutions_dict[s[0]].config
 
         for section in traject.sections:
+            self.indexCombined2single[section.name] = []
+            self.investment_years[section.name] = []
             if section.name in solutions_dict:
                 if section.with_measures:
                     self.indexCombined2single[section.name] = [
@@ -204,8 +206,6 @@ class StrategyBase:
                     self.indexCombined2single[section.name] = []
             else:
                 section.with_measures = False
-                self.indexCombined2single[section.name] = []
-                self.investment_years[section.name] = []
                 solutions_dict[section.name] = Solutions(section, sampleConfig)
 
             #get betas from assessment from section and interpolate such that values are given for 0 until 100 (or what has been defined in config)
@@ -545,10 +545,9 @@ class StrategyBase:
                 # Loop through the indices and update values
                 for i, sh_idx in enumerate(sh_indices):
                     for j, sg_idx in enumerate(sg_indices):
+                        #Only add LCC if years are the same
                         if sh_years[sh_idx] == sg_years[sg_idx]:
                             self.LCCOption[n, sh_idx + 1, sg_idx + 1] = LCC_combined[j, i]
-                        else:
-                            pass #different years so not a good combination
 
         # Decision Variables for executed options [N,Sh] & [N,Sg]
         self.Cint_h = np.zeros((N, Sh))
