@@ -764,7 +764,7 @@ class GreedyStrategy(StrategyBase):
         dcrest.append("")
         beta_target.append("")
         transition_level.append("")
-        year.append(None)
+        year.append("")
         dberm.append("")
         yes_no.append("")
         option_index.append("")
