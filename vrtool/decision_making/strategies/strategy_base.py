@@ -194,16 +194,11 @@ class StrategyBase:
             self.investment_years[section.name] = []
             if section.name in solutions_dict:
                 if section.with_measures:
-                    self.indexCombined2single[section.name] = [
-                        [_sel_measure_ids_copy[_run_id].pop(0)]
-                        for i in range(len(solutions_dict[section.name].MeasureData))
-                    ]
-                    self.investment_years[section.name] = [
-                        _investment_years.pop(0)
-                        for i in range(len(solutions_dict[section.name].MeasureData))
-                    ]
-                else:
-                    self.indexCombined2single[section.name] = []
+                    for _ in range(len(solutions_dict[section.name].MeasureData)):
+                        # I believe you would achieve the same just iterating over `MeasureData` such as:
+                        # for _ in solutions_dict[section.name].MeasureData):
+                        self.indexCombined2single[section.name].append([_sel_measure_ids_copy[_run_id].pop(0)])
+                        self.investment_years[section.name].append(_investment_years.pop(0))
             else:
                 section.with_measures = False
                 solutions_dict[section.name] = Solutions(section, sampleConfig)
