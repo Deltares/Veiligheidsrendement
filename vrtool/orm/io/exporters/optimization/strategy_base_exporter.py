@@ -63,7 +63,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 rows = _measure_result.measure_result_mechanisms
                 for row in rows:
                     mechanism_per_section = MechanismPerSection.get_by_id(row.mechanism_per_section_id)
-                    mechanismName = MechanismEnum.get_enum(mechanism_per_section.mechanism.name)
+                    mechanismName = MechanismEnum.get_enum(mechanism_per_section.mechanism.name).__str__()
                     beta_mechanism = dom_model.options[section][mechanismName].values[localId]
                     beta = self._get_selected_time(row.time, beta_mechanism)
                     _step_results_mechanism.append(
