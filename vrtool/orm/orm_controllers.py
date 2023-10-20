@@ -337,7 +337,7 @@ def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
     selected_measure_result_ids: list[tuple[int, int]],
     optimization_name: str,
-) -> ResultsMeasures:
+) -> tuple[ResultsMeasures, dict[int, list[int]]]:
     """
     Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
     database entry and as many entries as needed in the `OptimizationSelectedMeasure`
@@ -360,7 +360,7 @@ def create_optimization_run_for_selected_measures(
     logging.info(
         "Opened connection to export optimization run {}.".format(optimization_name)
     )
-    _results_measures._optimization_selected_measure_ids = {}
+    _optimization_selected_measure_ids = {}
     for _method_type in vr_config.design_methods:
         _optimization_type, _ = orm.OptimizationType.get_or_create(
             name=_method_type.upper()
@@ -381,13 +381,13 @@ def create_optimization_run_for_selected_measures(
             ]
         ).execute()
         #from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
-        _results_measures._optimization_selected_measure_ids[_optimization_run.id] = list(map(lambda x: x.id, _optimization_run.optimization_run_measure_results))          
+        _optimization_selected_measure_ids[_optimization_run.id] = list(map(lambda x: x.id, _optimization_run.optimization_run_measure_results))          
     logging.info(
         "Closed connection after export optimization run {}.".format(optimization_name)
     )
     _connected_db.close()
 
-    return _results_measures
+    return (_results_measures, _optimization_selected_measure_ids)
 
 
 def create_basic_optimization_run(

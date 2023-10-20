@@ -182,14 +182,14 @@ class ApiRunWorkflows:
         """
         # Create optimization run
         _date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        _results_measures = create_optimization_run_for_selected_measures(
+        _results_measures, _optimization_selected_measure_ids = create_optimization_run_for_selected_measures(
             self.vrtool_config,
             selected_measures_id,
             "Single opt. at: {}".format(_date),
         )
 
         # Run Optimization.
-        _optimization = RunOptimization(_results_measures)
+        _optimization = RunOptimization(_results_measures, _optimization_selected_measure_ids)
         _optimization_result = _optimization.run()
 
         # Export results

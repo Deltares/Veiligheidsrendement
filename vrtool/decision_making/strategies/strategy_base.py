@@ -219,7 +219,7 @@ class StrategyBase:
             beta_array_measures = {}
             beta_array_investment_year = {}
             #if the list is empty, create a dummy measure
-            if len(flattened_indexCombined2single) == 0:
+            if not any(flattened_indexCombined2single):
                 solutions_dict[section.name].MeasureData = sampleMeasure.iloc[0]
                 solutions_dict[section.name].MeasureData.loc['cost'] = [1e60]
                 for beta_type in section.section_reliability.SectionReliability.index:
