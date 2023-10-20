@@ -372,8 +372,7 @@ def create_optimization_run_for_selected_measures(
             ]
         ).execute()
         #from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
-        _results_measures._optimization_selected_measure_ids[_optimization_run.id] = [measure.id for measure in orm.OptimizationSelectedMeasure.select(orm.OptimizationSelectedMeasure.id).where(orm.OptimizationSelectedMeasure.optimization_run_id == _optimization_run.id)]
-    
+        _results_measures._optimization_selected_measure_ids[_optimization_run.id] = list(map(lambda x: x.id, _optimization_run.optimization_run_measure_results))          
     logging.info(
         "Closed connection after export optimization run {}.".format(optimization_name)
     )
