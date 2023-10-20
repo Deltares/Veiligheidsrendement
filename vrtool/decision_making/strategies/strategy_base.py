@@ -108,7 +108,8 @@ class StrategyBase:
                     (sg.type.values == "Stability Screen")
                     or (sg.type.values == "Vertical Geotextile")
                 ):
-                    raise Exception("Illegal combination")
+                    raise ValueError("Illegal combination for geotechnical option {}".format(sg.type.values))
+
             else:
                 sg = "No measure"
                 logging.info("SECTION {}".format(section))
@@ -165,26 +166,112 @@ class StrategyBase:
 
         return (section, sh, sg)
 
+    def set_investment_years(self, traject: DikeTraject, ids_to_import: list[tuple[int, int]], selected_measure_ids: dict[int, list[int]], solutions_dict: dict[str, Solutions]) -> None:
+        """
+        Set the investment years for the dike ring.
+        """
+        # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
+        # using pop to have it working correctly for the other sections
+        self.indexCombined2single = {}
+        self.investment_years = {}
+
+        _ids_copied = ids_to_import.copy()
+        _sel_measure_ids_copy = selected_measure_ids.copy()
+        _run_id = min(selected_measure_ids.keys())
+        _measure_result_ids, _investment_years = zip(*_ids_copied)
+        _measure_result_ids = list(_measure_result_ids)
+        _investment_years = list(_investment_years)
+
+        # find a valid measure to be inserted in a section without measures
+        s = list(solutions_dict.keys())
+        sampleMeasure = copy.deepcopy(solutions_dict[s[0]].MeasureData)
+        sampleConfig = solutions_dict[s[0]].config
+
+        for section in traject.sections:
+            self.indexCombined2single[section.name] = []
+            self.investment_years[section.name] = []
+            if section.name in solutions_dict:
+                if section.with_measures:
+                    for _ in range(len(solutions_dict[section.name].MeasureData)):
+                        # I believe you would achieve the same just iterating over `MeasureData` such as:
+                        # for _ in solutions_dict[section.name].MeasureData):
+                        self.indexCombined2single[section.name].append([_sel_measure_ids_copy[_run_id].pop(0)])
+                        self.investment_years[section.name].append(_investment_years.pop(0))
+            else:
+                section.with_measures = False
+                solutions_dict[section.name] = Solutions(section, sampleConfig)
+
+            #get betas from assessment from section and interpolate such that values are given for 0 until 100 (or what has been defined in config)
+            beta_array_initial = {}
+            new_section_reliability_df = pd.DataFrame(index=section.section_reliability.SectionReliability.index, columns=np.arange(0,np.max(self.T),1))
+            for beta_type in section.section_reliability.SectionReliability.index:
+                beta_array_initial[beta_type] = interp1d(section.section_reliability.SectionReliability.columns.astype(int),
+                                                         section.section_reliability.SectionReliability.loc[beta_type].values)(np.arange(0,np.max(self.T),1))
+                new_section_reliability_df.loc[beta_type,:] = beta_array_initial[beta_type]
+
+            section.section_reliability.SectionReliability = new_section_reliability_df
+
+            #flatten the index for measures at the section
+            flattened_indexCombined2single = [item for sublist in self.indexCombined2single[section.name] for item in sublist]
+
+            beta_array_measures = {}
+            beta_array_investment_year = {}
+            #if the list is empty, create a dummy measure
+            if not any(flattened_indexCombined2single):
+                solutions_dict[section.name].MeasureData = sampleMeasure.iloc[0]
+                solutions_dict[section.name].MeasureData.loc['cost'] = [1e60]
+                for beta_type in section.section_reliability.SectionReliability.index:
+                    beta_array_investment_year[beta_type] = np.full((1,np.max(self.T)),8.)
+            else:
+                for beta_type in section.section_reliability.SectionReliability.index:
+                    beta_array_measures[beta_type] = np.empty((len(self.indexCombined2single[section.name]),np.max(self.T)))
+                    #interpolate the betas for each beta_type in solutions_dict[section.name].MeasureData
+                    beta_array_measures[beta_type] = interp1d(solutions_dict[section.name].MeasureData[beta_type].columns.astype(int),
+                                                                        solutions_dict[section.name].MeasureData[beta_type].values)(np.arange(0,np.max(self.T),1))
+
+                    #flatten self.indexCombined2single[section.name]
+
+                    #for each row in beta_array_measures make a row with the values until t from initial_beta and after that from beta_array_measures and store in beta_array_investment_year
+                    beta_array_investment_year[beta_type] = np.empty((len(self.indexCombined2single[section.name]),np.max(self.T)))
+                    for row in range(len(self.indexCombined2single[section.name])):
+                        beta_array_investment_year[beta_type][row] = np.concatenate((beta_array_initial[beta_type][:self.investment_years[section.name][row]],
+                                                                                    beta_array_measures[beta_type][row][self.investment_years[section.name][row]:]))
+                
+                
+                # #replace year column in solutions_dict[section.name].MeasureData with value from investment_year_dict
+                # solutions_dict[section.name].MeasureData['year'] = [ids_to_import[key] for key in flattened_indexCombined2single]
+
+            #ensure that solutions_dict[section.name].MeasureData is a dataframe and not a series (which happens if there is only one measure)
+            if not isinstance(solutions_dict[section.name].MeasureData, pd.DataFrame):
+                solutions_dict[section.name].MeasureData = solutions_dict[section.name].MeasureData.to_frame().T
+
+            #replace betas in solutions_dict[section.name].MeasureData with values from beta_array_investment_year and use np.aranage(0,np.max(self.T),1) as second level index
+            for beta_type in section.section_reliability.SectionReliability.index:
+                #remove columns for beta_type
+                solutions_dict[section.name].MeasureData.drop(columns=beta_type, inplace=True, level=0)
+                #concatenate a df with mulitindex columns beta_type and np.arange(0,np.max(self.T),1) to solutions_dict[section.name].MeasureData
+                solutions_dict[section.name].MeasureData = pd.concat([solutions_dict[section.name].MeasureData,
+                                                                    pd.DataFrame(beta_array_investment_year[beta_type],
+                                                                                    columns=pd.MultiIndex.from_product([[beta_type],np.arange(0,np.max(self.T),1)]))],
+                                                                    axis=1)
+        #remove the now empty measure_ids list from the dictionary such that the next run will take the next set of selected_measures.
+        selected_measure_ids.pop(_run_id)
+
     def combine(
         self,
         traject: DikeTraject,
         solutions_dict: Dict[str, Solutions],
-        ids_to_import: list[int],
         filtering="off",
         splitparams=False,
     ):
         # This routine combines 'combinable' solutions to options with two measures (e.g. VZG + 10 meter berm)
         self.options = {}
-        self.indexCombined2single = {}
-
-        # copy the ids as it will be emptied in step1combine, and the ids are needed lateron
-        _ids_copied = ids_to_import.copy()
 
         # measures at t=0 (2025) and t=20 (2045)
         # for i in range(0, len(traject.sections)):
         for i, section in enumerate(traject.sections):
             combinedmeasures = self._step1combine(
-                solutions_dict, section, _ids_copied, splitparams
+                solutions_dict, section, splitparams
             )
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
@@ -222,7 +309,6 @@ class StrategyBase:
         self,
         solutions_dict: dict[str, Solutions],
         section: DikeSection,
-        ids_to_import: list[int],
         splitparams: bool,
     ) -> pd.DataFrame:
         """
@@ -254,13 +340,6 @@ class StrategyBase:
                 measures_per_class[measure_class] = measures_per_class[
                     measure_class
                 ].loc[measures_per_class[measure_class]["year"] == _min_year]
-
-        # copy the entries from ids_to_import related to the current section to indexCombined2single[section]
-        # using pop to have it working correctly for the other sections
-        self.indexCombined2single[section.name] = [
-            [ids_to_import.pop(0)]
-            for i in range(len(solutions_dict[section.name].MeasureData))
-        ]
 
         if "combinable" in measures_per_class and "partial" in measures_per_class:
             combinedmeasures = measure_combinations(
@@ -420,7 +499,7 @@ class StrategyBase:
                     )
                 self.Pf[_mechanism.name][
                     n, 0 : np.size(betas[_mechanism.name], 0), :
-                ] = beta_to_pf(betas[_mechanism.name])
+                ] = beta_to_pf(betas[_mechanism.name].astype(float))
 
         # Costs of options [N,Sh,Sg]
         self.LCCOption = np.full((N, Sh + 1, Sg + 1), 1e99)
@@ -440,6 +519,7 @@ class StrategyBase:
                     .index[self.options_height[section_keys[n]].ID == sh_id]
                     .tolist()
                 )
+                sh_years = self.options_height[section_keys[n]].loc[self.options_height[section_keys[n]].ID == sh_id].year
 
                 # we get the indices of sg_id in the options_geotechnical df
                 sg_indices = (
@@ -447,6 +527,7 @@ class StrategyBase:
                     .index[self.options_geotechnical[section_keys[n]].ID == sh_id]
                     .tolist()
                 )
+                sg_years = self.options_geotechnical[section_keys[n]].loc[self.options_geotechnical[section_keys[n]].ID == sh_id].year
                 # combined LCC array for sh_indices and sg_indices
                 LCC_combined = np.add(
                     np.tile(LCC_sh[sh_indices], (len(sg_indices), 1)),
@@ -457,7 +538,9 @@ class StrategyBase:
                 # Loop through the indices and update values
                 for i, sh_idx in enumerate(sh_indices):
                     for j, sg_idx in enumerate(sg_indices):
-                        self.LCCOption[n, sh_idx + 1, sg_idx + 1] = LCC_combined[j, i]
+                        #Only add LCC if years are the same
+                        if sh_years[sh_idx] == sg_years[sg_idx]:
+                            self.LCCOption[n, sh_idx + 1, sg_idx + 1] = LCC_combined[j, i]
 
         # Decision Variables for executed options [N,Sh] & [N,Sg]
         self.Cint_h = np.zeros((N, Sh))
@@ -531,6 +614,7 @@ class StrategyBase:
                             0,
                             0,
                             "No measure",
+                            0,
                             "no",
                             0.0,
                             0.0,
@@ -548,6 +632,7 @@ class StrategyBase:
             "Section",
             "LCC",
             "name",
+            "year",
             "yes/no",
             "dcrest",
             "dberm",

@@ -24,6 +24,7 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
+from vrtool.api_validator import apiValidator
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
@@ -273,10 +274,12 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run using ALL the available measure results.
-        _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
+        _api_validator = apiValidator()
+        _measures_results = _api_validator.get_measure_result_ids(valid_vrtool_config)
+        _measures_input = _api_validator.get_measure_result_with_investment_year(_measures_results)
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_results)
+        run_step_optimization(valid_vrtool_config, _measures_input)
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
@@ -301,13 +304,13 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run the available measure results with odd ids.
-        _measures_results_all = _validator.get_test_measure_result_ids(
-            valid_vrtool_config
-        )
-        _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results_all))
+        _api_validator = apiValidator()
+        _measures_results_all = _api_validator.get_measure_result_ids(valid_vrtool_config)
+        _measures_results = list(filter(lambda x: (x.id % 2 != 0), _measures_results_all))
+        _measures_input = _api_validator.get_measure_result_with_investment_year(_measures_results)
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_results)
+        run_step_optimization(valid_vrtool_config, _measures_input)
 
         # 3. Verify expectations.
         with open_database(valid_vrtool_config.input_database_path) as _connected_db:
@@ -317,7 +320,7 @@ class TestApiRunWorkflowsAcceptance:
             assert len(OptimizationStepResultMechanism.select()) == 112
             assert len(OptimizationStep.select()) == 4
 
-            assert stepResult.beta == pytest.approx(2.59342)
+            assert stepResult.beta == pytest.approx(2.6018124)
             assert stepResult.lcc == pytest.approx(8612354)
 
     @pytest.mark.parametrize(

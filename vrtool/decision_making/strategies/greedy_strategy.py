@@ -282,16 +282,8 @@ class GreedyStrategy(StrategyBase):
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
             if mechanism == MechanismEnum.OVERFLOW:
                 # Overflow is always present for a section.
-                current_reliability_overflow = (
-                    traject.probabilities.loc[traject.sections[section_no].name]
-                    .loc[MechanismEnum.OVERFLOW.name]
-                    .drop("Length")
-                    .to_frame()
-                    .transpose()
-                )
-                current_reliability_overflow.columns = (
-                    current_reliability_overflow.columns.astype(int)
-                )
+                current_reliability_overflow = (traject.sections[section_no].section_reliability.SectionReliability.loc[mechanism.name])
+
                 comparison_height = pd.DataFrame(
                     (
                         HeightOptions.OVERFLOW.values
@@ -301,16 +293,7 @@ class GreedyStrategy(StrategyBase):
                 )
             elif mechanism == MechanismEnum.REVETMENT:
                 try:  # if Revetment has been computed, get it from the assessment:
-                    current_reliability_revetment = (
-                        traject.probabilities.loc[traject.sections[section_no].name]
-                        .loc[MechanismEnum.REVETMENT.name]
-                        .drop("Length")
-                        .to_frame()
-                        .transpose()
-                    )
-                    current_reliability_revetment.columns = (
-                        current_reliability_revetment.columns.astype(int)
-                    )
+                    current_reliability_revetment = (traject.sections[section_no].section_reliability.SectionReliability.loc[mechanism.name])
 
                     comparison_height = pd.DataFrame(
                         (
@@ -442,13 +425,13 @@ class GreedyStrategy(StrategyBase):
         self.Cint_h[:, 0] = 1
 
         init_probability = {}
-        init_overflow_risk = np.empty(
+        init_overflow_risk = np.zeros(
             (self.opt_parameters["N"], self.opt_parameters["T"])
         )
-        init_revetment_risk = np.empty(
+        init_revetment_risk = np.zeros(
             (self.opt_parameters["N"], self.opt_parameters["T"])
         )
-        init_independent_risk = np.empty(
+        init_independent_risk = np.zeros(
             (self.opt_parameters["N"], self.opt_parameters["T"])
         )
         for mechanism in self.mechanisms:
@@ -569,6 +552,7 @@ class GreedyStrategy(StrategyBase):
             # 'overflow bundle'
             if np.isnan(np.max(BC)):
                 ids = np.argwhere(np.isnan(BC))
+                logging.warning("NaN encountered in benefit-cost ratio matrix. Trying to output the measure for which this happens:")
                 for i in range(0, ids.shape[0]):
                     error_measure = self.get_measure_from_index(ids[i, :])
                     logging.error(error_measure)
@@ -751,6 +735,7 @@ class GreedyStrategy(StrategyBase):
             "BC",
             "ID",
             "name",
+            "year",
             "yes/no",
             "dcrest",
             "dberm",
@@ -766,6 +751,7 @@ class GreedyStrategy(StrategyBase):
         dberm = []
         beta_target = []
         transition_level = []
+        year = []
         yes_no = []
         option_index = []
         names = []
@@ -776,6 +762,7 @@ class GreedyStrategy(StrategyBase):
         dcrest.append("")
         beta_target.append("")
         transition_level.append("")
+        year.append("")
         dberm.append("")
         yes_no.append("")
         option_index.append("")
@@ -837,6 +824,11 @@ class GreedyStrategy(StrategyBase):
                 .iloc[i[2] - 1]["yes/no"]
                 .values[0]
             )
+            year.append(
+                self.options_geotechnical[traject.sections[i[0]].name]
+                .iloc[i[2] - 1]["year"]
+                .values[0]
+            )
 
             # get the option_index
             option_df = self.options[traject.sections[i[0]].name].loc[
@@ -876,12 +868,7 @@ class GreedyStrategy(StrategyBase):
             # get the name
             try:
                 names.append(
-                    solutions_dict[traject.sections[i[0]].name]
-                    .measure_table.loc[
-                        solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
-                        == ID[-1]
-                    ]["Name"]
-                    .values[0][0]
+                    solutions_dict[traject.sections[i[0]].name].measure_table.loc[solutions_dict[traject.sections[i[0]].name].measure_table["ID"]== ID[-1]]["Name"].values[0]
                 )
             except:
                 names.append("missing")
@@ -895,6 +882,7 @@ class GreedyStrategy(StrategyBase):
                     BC,
                     ID,
                     names,
+                    year,
                     yes_no,
                     dcrest,
                     dberm,

@@ -288,14 +288,6 @@ class RunStepOptimizationValidator(RunStepValidator):
 
         _connected_db.close()
 
-    def get_test_measure_result_ids(
-        self, valid_vrtool_config: VrtoolConfig
-    ) -> list[int]:
-        _connected_db = open_database(valid_vrtool_config.input_database_path)
-        _id_list = [mr.get_id() for mr in orm_models.MeasureResult.select()]
-        _connected_db.close()
-        return _id_list
-
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
         # For now just check that there are outputs.

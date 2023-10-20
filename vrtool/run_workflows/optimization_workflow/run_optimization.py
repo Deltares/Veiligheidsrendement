@@ -16,7 +16,7 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class RunOptimization(VrToolRunProtocol):
-    def __init__(self, results_measures: ResultsMeasures) -> None:
+    def __init__(self, results_measures: ResultsMeasures, _optimization_selected_measure_ids: dict[int, list[int]]) -> None:
         if not isinstance(results_measures, ResultsMeasures):
             raise ValueError(
                 "Required valid instance of {} as an argument.".format(
@@ -26,21 +26,10 @@ class RunOptimization(VrToolRunProtocol):
 
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
+        self.run_ids = list(_optimization_selected_measure_ids.keys())
+        self._selected_measure_ids = _optimization_selected_measure_ids
         self._solutions_dict = results_measures.solutions_dict
-        if any(results_measures.ids_to_import):
-            self._ids_to_import = results_measures.ids_to_import
-        else:
-            self._ids_to_import = self._get_default_measure_result_ids()
-
-    def _get_default_measure_result_ids(self) -> list[int]:
-        ii = 1
-        ids = []
-        for value in self._solutions_dict.values():
-            dims = value.MeasureData.shape
-            for i in range(dims[0]):
-                ids.append(ii)
-                ii += 1
-        return ids
+        self._ids_to_import = results_measures.ids_to_import
 
     def _get_output_dir(self) -> Path:
         _results_dir = self.vr_config.output_directory
@@ -52,12 +41,11 @@ class RunOptimization(VrToolRunProtocol):
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
         _results_dir = self._get_output_dir()
-
+        _greedy_optimization.set_investment_years(self.selected_traject, self._ids_to_import, self._selected_measure_ids, self._solutions_dict)
         # Combine available measures
         _greedy_optimization.combine(
             self.selected_traject,
             self._solutions_dict,
-            self._ids_to_import,
             filtering="off",
             splitparams=True,
         )
@@ -115,7 +103,8 @@ class RunOptimization(VrToolRunProtocol):
             _greedy_optimization.options[j].to_csv(
                 _results_dir.joinpath(
                     j + "_Options_" + _greedy_optimization.type + ".csv",
-                )
+                ),
+                float_format="%.3f",
             )
 
         return _greedy_optimization
@@ -126,12 +115,12 @@ class RunOptimization(VrToolRunProtocol):
             design_method, self.vr_config
         )
         _results_dir = self._get_output_dir()
+        _target_reliability_based.set_investment_years(self.selected_traject, self._ids_to_import, self._selected_measure_ids, self._solutions_dict)
 
         # Combine available measures
         _target_reliability_based.combine(
             self.selected_traject,
             self._solutions_dict,
-            self._ids_to_import,
             filtering="off",
             splitparams=True,
         )
@@ -160,7 +149,8 @@ class RunOptimization(VrToolRunProtocol):
             _target_reliability_based.options[j].to_csv(
                 _results_dir.joinpath(
                     j + "_Options_" + _target_reliability_based.type + ".csv",
-                )
+                ),
+                float_format="%.3f",
             )
 
         return _target_reliability_based
