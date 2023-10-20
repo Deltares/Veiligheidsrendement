@@ -149,7 +149,8 @@ class RunOptimization(VrToolRunProtocol):
             _target_reliability_based.options[j].to_csv(
                 _results_dir.joinpath(
                     j + "_Options_" + _target_reliability_based.type + ".csv",
-                )
+                ),
+                float_format="%.3f",
             )
 
         return _target_reliability_based
