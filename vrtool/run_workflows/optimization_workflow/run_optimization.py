@@ -103,7 +103,8 @@ class RunOptimization(VrToolRunProtocol):
             _greedy_optimization.options[j].to_csv(
                 _results_dir.joinpath(
                     j + "_Options_" + _greedy_optimization.type + ".csv",
-                )
+                ),
+                float_format="%.3f",
             )
 
         return _greedy_optimization
