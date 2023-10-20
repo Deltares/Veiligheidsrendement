@@ -10,6 +10,9 @@ from vrtool.orm.models.optimization import (
     OptimizationStepResultMechanism,
     OptimizationStepResultSection,
 )
+from vrtool.orm.models.optimization.optimization_selected_measure import (
+    OptimizationSelectedMeasure,
+)
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
 
 
