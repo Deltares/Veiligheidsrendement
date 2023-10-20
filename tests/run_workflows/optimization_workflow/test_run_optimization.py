@@ -13,10 +13,10 @@ class TestRunOptimization:
         _results_measures.solutions_dict = 123
         _results_measures.selected_traject = 456
         _results_measures.ids_to_import = [[1,20]]
-        _results_measures._optimization_selected_measure_ids = {1:[1], 2:[2]}
+        _optimization_selected_measure_ids = {1:[1], 2:[2]}
 
         # 2. Run test.
-        _run = RunOptimization(_results_measures, _results_measures._optimization_selected_measure_ids)
+        _run = RunOptimization(_results_measures, _optimization_selected_measure_ids)
 
         # 3. Verify expectations.
         assert isinstance(_run, RunOptimization)

@@ -262,7 +262,7 @@ class ApiRunWorkflows:
         _measures_results_db = _api_validator.get_measure_result_ids(self.vrtool_config)
         _measures_result.ids_to_import = _api_validator.get_measure_result_with_investment_year(_measures_results_db)
 
-        fill_optimization_selected_measure_ids(self.vrtool_config, _measures_result)
+        _optimization_selected_measure_ids = fill_optimization_selected_measure_ids(self.vrtool_config, _measures_result)
 
         # Step 3. Optimization.
         clear_optimization_results(self.vrtool_config)
@@ -271,7 +271,7 @@ class ApiRunWorkflows:
         create_basic_optimization_run(self.vrtool_config, "Run full optimization")
 
         # Run optimization
-        _optimization = RunOptimization(_measures_result, _measures_result._optimization_selected_measure_ids)
+        _optimization = RunOptimization(_measures_result, _optimization_selected_measure_ids)
         _optimization_result = _optimization.run()
 
         logging.info("Finished run full model.")

@@ -331,13 +331,14 @@ def import_results_measures(
 
 def fill_optimization_selected_measure_ids(vr_config: VrtoolConfig, _results_measures: ResultsMeasures) -> None:
     _connected_db = open_database(vr_config.input_database_path)
-    _results_measures._optimization_selected_measure_ids = {}
+    _optimization_selected_measure_ids = {}
     for _method_type in vr_config.design_methods:
         _optimization_type, _ = orm.OptimizationType.get_or_create(name=_method_type.upper())
         _optimization_runs = orm.OptimizationRun.select().where(orm.OptimizationRun.optimization_type==_optimization_type)
         for _optimization_run in _optimization_runs:
-            _results_measures._optimization_selected_measure_ids[_optimization_run.id] = [measure.id for measure in orm.OptimizationSelectedMeasure.select(orm.OptimizationSelectedMeasure.id).where(orm.OptimizationSelectedMeasure.optimization_run_id == _optimization_run.id)]
+            _optimization_selected_measure_ids[_optimization_run.id] = [measure.id for measure in orm.OptimizationSelectedMeasure.select(orm.OptimizationSelectedMeasure.id).where(orm.OptimizationSelectedMeasure.optimization_run_id == _optimization_run.id)]
     _connected_db.close()
+    return _optimization_selected_measure_ids
 
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
