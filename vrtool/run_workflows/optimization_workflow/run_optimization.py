@@ -29,22 +29,7 @@ class RunOptimization(VrToolRunProtocol):
         self.run_ids = list(results_measures._optimization_selected_measure_ids.keys())
         self._selected_measure_ids = results_measures._optimization_selected_measure_ids
         self._solutions_dict = results_measures.solutions_dict
-        if any(results_measures.ids_to_import):
-            self._ids_to_import = results_measures.ids_to_import
-        else:
-            #@Edwin: will this work and do we need it?
-            self._ids_to_import = self._get_default_measure_result_ids()
-
-    def _get_default_measure_result_ids(self) -> list[tuple[int, int]]:
-        ii = 1
-        ids = []
-        for value in self._solutions_dict.values():
-            dims = value.MeasureData.shape
-            for i in range(dims[0]):
-                # 0 : default investment year
-                ids.append([ii, 0])
-                ii += 1
-        return ids
+        self._ids_to_import = results_measures.ids_to_import
 
     def _get_output_dir(self) -> Path:
         _results_dir = self.vr_config.output_directory

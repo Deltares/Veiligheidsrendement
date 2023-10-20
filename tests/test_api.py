@@ -269,7 +269,7 @@ class TestApiRunWorkflowsAcceptance:
         _measures_results_all = _validator.get_test_measure_result_ids(
             valid_vrtool_config
         )
-        _measures_results = list(filter(lambda x: (x % 2 != 0), _measures_results_all))
+        _measures_results = list(filter(lambda x: (x.id % 2 != 0), _measures_results_all))
         _measures_input = _validator.get_test_measure_result_with_investment_year(_measures_results)
 
         # 2. Run test.

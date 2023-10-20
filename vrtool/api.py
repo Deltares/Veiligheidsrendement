@@ -2,6 +2,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+from tests.api_acceptance_cases import RunStepOptimizationValidator
+
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
@@ -13,6 +15,7 @@ from vrtool.orm.orm_controllers import (
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
+    fill_optimization_selected_measure_ids,
     get_dike_traject,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
@@ -229,6 +232,13 @@ class ApiRunWorkflows:
             _assessment_result.vr_config, _assessment_result.selected_traject
         )
         _measures_result = _measures.run()
+
+        _validator = RunStepOptimizationValidator()
+
+        _measures_results_db = _validator.get_test_measure_result_ids(self.vrtool_config)
+        _measures_result.ids_to_import = _validator.get_test_measure_result_with_investment_year(_measures_results_db)
+
+        fill_optimization_selected_measure_ids(self.vrtool_config, _measures_result)
 
         # Step 3. Optimization.
         clear_optimization_results(self.vrtool_config)
