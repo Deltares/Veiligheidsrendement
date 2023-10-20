@@ -271,7 +271,7 @@ class ApiRunWorkflows:
         create_basic_optimization_run(self.vrtool_config, "Run full optimization")
 
         # Run optimization
-        _optimization = RunOptimization(_measures_result)
+        _optimization = RunOptimization(_measures_result, _measures_result._optimization_selected_measure_ids)
         _optimization_result = _optimization.run()
 
         logging.info("Finished run full model.")
