@@ -22,6 +22,7 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
+from vrtool.api_validator import apiValidator
 from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
@@ -237,8 +238,9 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run using ALL the available measure results.
-        _measures_results = _validator.get_test_measure_result_ids(valid_vrtool_config)
-        _measures_input = _validator.get_test_measure_result_with_investment_year(_measures_results)
+        _api_validator = apiValidator()
+        _measures_results = _api_validator.get_measure_result_ids(valid_vrtool_config)
+        _measures_input = _api_validator.get_measure_result_with_investment_year(_measures_results)
 
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_input)
@@ -266,11 +268,10 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run the available measure results with odd ids.
-        _measures_results_all = _validator.get_test_measure_result_ids(
-            valid_vrtool_config
-        )
+        _api_validator = apiValidator()
+        _measures_results_all = _api_validator.get_measure_result_ids(valid_vrtool_config)
         _measures_results = list(filter(lambda x: (x.id % 2 != 0), _measures_results_all))
-        _measures_input = _validator.get_test_measure_result_with_investment_year(_measures_results)
+        _measures_input = _api_validator.get_measure_result_with_investment_year(_measures_results)
 
         # 2. Run test.
         run_step_optimization(valid_vrtool_config, _measures_input)
