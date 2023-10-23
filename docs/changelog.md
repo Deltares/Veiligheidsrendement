@@ -1,3 +1,54 @@
+## v0.1.0 (2023-10-23)
+
+### Feat
+
+- Added logic to export solutions based on a given list of measure results ids
+- Added controller logic to export optimization results
+- Added api file to streamline the workflows and allow for 'sandbox' exporting directly
+- Added table to represent beta, time and lcc per optimization step
+- Added missing table to represent the measure results per mechanism
+- Added tables to represent the optimization runs and their related results
+- Created exporter for solutions containing measures (SolutionsExporter)
+- Created exporter for MeasureResultCollection; Renamed and created new protocols 'MeasureResultProtocol' and 'MeasureResultCollectionProtocol', so that it's easier to handle generic objects
+- Added exporter for CompositeMeasures (when Measure.measures is a list of dictionaries)
+- **DikeSectionReliabilityExporter**: It is now possible to export at the same time all initial assessment's reliability related to a dike section (per mechanism and general).
+- **MechanismReliabilityCollectionExporter**: It is now possible to export all mechanisms reliability each into an AssessmentMechanismResult
+- **SectionReliabilityExporter**: It is now possible to export section's reliability into AssessmentSectionResults
+
+### Fix
+
+- add run id to ensure proper export when more than 2 runs are present in the database.
+- change empty to zeros as it is not always overwritten and should be zero. Also add more explicit warning for NaN values
+- add year to TakenMeasures
+- add condition to distinguish measures with different years. add copy to prevent ignoring start costs.
+- incorrect reference to redundant trajectdata that was not interpolated
+- optimize determining min year
+- update for revetment in case there Revetment is not an active mechanism at the section.
+- ensure revetment runs as well.
+- fix error in indexing to avoid taking a 999 index.
+- further changes to indexing
+- fix error in indexing of measures + improvement to selection of measures to filter out measures with 0 dimensions
+- fix ids in export such that correct id is used
+- further wiring of selected_measure_id in optimization workflow
+- export selected_measure_id rather than measure_result_id
+- improve handling INVALID enum
+- change df index to normalized enum name
+- normalize mechanism names from imported measure reliability
+- uniform method for creating list of mechanism names
+- typo in initialization
+- allow serialization of enum value
+- improve building excluded_mechanisms
+- improve finding enum;
+- resolve most review comments
+- Corrected create statement
+- Small correction to the measure results filter
+- change mechanism string with enum names
+- improve refering to enum
+- imporove enum comparison
+- improve refering to enum
+- Modified measure ORM tables and exporters to include mechanisms and reduce duplications of MeasureResultParameters
+- replace input_database_path by input_database_name in config
+
 ## v0.0.4 (2023-09-11)
 
 ### Feat

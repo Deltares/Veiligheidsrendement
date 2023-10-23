@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 import pytest
 from peewee import SqliteDatabase
 
@@ -667,7 +668,39 @@ class TestOrmControllers:
         class MockedStrategy(StrategyBase):
             def __init__(self, type, config: VrtoolConfig):
                 # First run could just be exporting the index of TakenMeasures.
-                self.options = pd.DataFrame([[[1, 2, 3]], [[2, 3, 4]]], columns=["0"])
+                _section_name = (
+                    _measures_input_data.measure_per_section.section.section_name
+                )
+                self.options = {
+                    _section_name: pd.DataFrame(
+                        [
+                            [
+                                1,
+                                np.array([2, 3, 4]),
+                                np.array([2, 3, 4]),
+                                np.array([3, 4, 5]),
+                            ],
+                            [
+                                4,
+                                np.array([5, 6, 7]),
+                                np.array([2, 3, 4]),
+                                np.array([6, 7, 8]),
+                            ],
+                            [
+                                7,
+                                np.array([8, 9, 10]),
+                                np.array([2, 3, 4]),
+                                np.array([9, 10, 11]),
+                            ],
+                        ],
+                        columns=[
+                            "ID",
+                            MechanismEnum.OVERFLOW.name,
+                            MechanismEnum.STABILITY_INNER.name,
+                            "Section",
+                        ],
+                    )
+                }
                 self.options_geotechnical = pd.DataFrame(
                     list(map(lambda x: x.id, MeasureResultMechanism.select()))
                 )
@@ -711,11 +744,11 @@ class TestOrmControllers:
                     [_taken_measure_row1, _taken_measure_row2],
                     columns=_measures_columns,
                 )  # This is actually OptimizationStep (with extra info).
-                self.TakenMeasures["Section"][1] = "0"
+                self.TakenMeasures["Section"][1] = _section_name
                 self.TakenMeasures["option_in"][1] = 0
                 self.TakenMeasures["LCC"][1] = 42.24
                 self.indexCombined2single = {}
-                self.indexCombined2single["0"] = [[1]]
+                self.indexCombined2single[_section_name] = [[1]]
                 self.T = [0, 20, 100]
 
             def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
@@ -735,7 +768,7 @@ class TestOrmControllers:
         _results_optimization.results_strategies = [_test_strategy]
 
         # 2. Run test.
-        export_results_optimization(_results_optimization)
+        export_results_optimization(_results_optimization, [_optimization_run.id])
 
         # 3. Verify expectations.
         assert len(orm_models.OptimizationStep.select()) == 1

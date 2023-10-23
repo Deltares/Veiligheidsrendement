@@ -4,8 +4,6 @@ from vrtool.common.enums import MechanismEnum
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
-from vrtool.orm.models.mechanism import Mechanism
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.optimization import (
     OptimizationStep,
     OptimizationStepResultMechanism,
@@ -36,22 +34,24 @@ class StrategyBaseExporter(OrmExporterProtocol):
                 )
                 continue
             measure_id = dom_model.TakenMeasures.values[i, 1]
-            splittedMeasures = dom_model.indexCombined2single[section][measure_id]
+            split_measures = dom_model.indexCombined2single[section][measure_id]
             _total_lcc, _total_risk = dom_model.get_total_lcc_and_risk(i)
-            for singleMsrId in splittedMeasures:
+            for single_measure_result_id in split_measures:
 
-                opt_sel_msr_id = self._get_sel_msr_id(singleMsrId)
+                _option_selected_measure_result = (
+                    self._get_optimization_selected_measure(single_measure_result_id)
+                )
                 _created_optimization_step = OptimizationStep.create(
                     step_number=i,
-                    optimization_selected_measure_id=opt_sel_msr_id,
+                    optimization_selected_measure=_option_selected_measure_result,
                     total_lcc=_total_lcc,
                     total_risk=_total_risk,
                 )
 
-                localId = self._find_id_in_section(
-                    singleMsrId, dom_model.indexCombined2single[section]
+                _local_id = self._find_id_in_section(
+                    single_measure_result_id, dom_model.indexCombined2single[section]
                 )
-                beta_section = dom_model.options[section]["Section"].values[localId]
+                beta_section = dom_model.options[section]["Section"].values[_local_id]
                 lcc = dom_model.TakenMeasures.values[i, 2]
                 for j in range(len(dom_model.T)):
                     t = dom_model.T[j]
@@ -65,28 +65,25 @@ class StrategyBaseExporter(OrmExporterProtocol):
                         }
                     )
                 # From OptimizationSelectedMeasure get measure_result_id based on singleMsrId
-                _measure_result = MeasureResult.get_by_id(
-                    OptimizationSelectedMeasure.get_by_id(
-                        opt_sel_msr_id
-                    ).measure_result_id
-                )
-                rows = _measure_result.measure_result_mechanisms
-                for row in rows:
-                    mechanism_per_section = MechanismPerSection.get_by_id(
-                        row.mechanism_per_section_id
-                    )
-                    mechanismName = MechanismEnum.get_enum(
-                        mechanism_per_section.mechanism.name
+                for (
+                    _measure_result_mechanism
+                ) in (
+                    _option_selected_measure_result.measure_result.measure_result_mechanisms
+                ):
+                    _mechanism_name = MechanismEnum.get_enum(
+                        _measure_result_mechanism.mechanism_per_section.mechanism.name
                     ).name
-                    beta_mechanism = dom_model.options[section][mechanismName].values[
-                        localId
+                    beta_mechanism = dom_model.options[section][_mechanism_name].values[
+                        _local_id
                     ]
-                    beta = self._get_selected_time(row.time, beta_mechanism)
+                    beta = self._get_selected_time(
+                        _measure_result_mechanism.time, beta_mechanism
+                    )
                     _step_results_mechanism.append(
                         {
                             "optimization_step": _created_optimization_step,
-                            "mechanism_per_section_id": row.mechanism_per_section_id,
-                            "time": row.time,
+                            "mechanism_per_section_id": _measure_result_mechanism.mechanism_per_section_id,
+                            "time": _measure_result_mechanism.time,
                             "beta": beta,
                             "lcc": lcc,
                         }
@@ -103,19 +100,21 @@ class StrategyBaseExporter(OrmExporterProtocol):
             "Measure ID {} not found in any of the section indices.".format(measure_id)
         )
 
-    def _get_sel_msr_id(self, single_msr_id) -> int:
-        for (
-            run_measure_result
-        ) in self.optimization_run.optimization_run_measure_results:
-            if run_measure_result.id == single_msr_id:
-                return run_measure_result.get_id()
-
-        run_id = self.optimization_run.get_id()
-        raise ValueError(
-            "OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(
-                run_id, single_msr_id
-            )
+    def _get_optimization_selected_measure(
+        self, single_msr_id: int
+    ) -> OptimizationSelectedMeasure:
+        _opt_selected_measure = (
+            self.optimization_run.optimization_run_measure_results.where(
+                OptimizationSelectedMeasure.id == single_msr_id
+            ).get_or_none()
         )
+        if not _opt_selected_measure:
+            raise ValueError(
+                "OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(
+                    self.optimization_run.get_id(), single_msr_id
+                )
+            )
+        return _opt_selected_measure
 
     def _get_selected_time(self, t: int, values: list[float]) -> float:
         # fix for t=100 where 99 is the last
