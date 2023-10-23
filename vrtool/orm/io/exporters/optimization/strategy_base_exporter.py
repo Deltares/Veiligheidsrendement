@@ -10,6 +10,9 @@ from vrtool.orm.models.optimization import (
     OptimizationStepResultSection,
 )
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
+from vrtool.orm.models.optimization.optimization_selected_measure import (
+    OptimizationSelectedMeasure,
+)
 
 
 class StrategyBaseExporter(OrmExporterProtocol):
@@ -35,8 +38,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
             _total_lcc, _total_risk = dom_model.get_total_lcc_and_risk(i)
             for single_measure_result_id in split_measures:
 
-                _option_selected_measure_result = self._get_selected_measure_result_id(
-                    single_measure_result_id
+                _option_selected_measure_result = (
+                    self._get_optimization_selected_measure(single_measure_result_id)
                 )
                 _created_optimization_step = OptimizationStep.create(
                     step_number=i,
@@ -97,19 +100,21 @@ class StrategyBaseExporter(OrmExporterProtocol):
             "Measure ID {} not found in any of the section indices.".format(measure_id)
         )
 
-    def _get_selected_measure_result_id(self, single_msr_id: int) -> MeasureResult:
-        _measure_result_found = (
-            self.optimization_run.optimization_run_measure_results.join(MeasureResult)
-            .where(MeasureResult.id == single_msr_id)
-            .get_or_none()
+    def _get_optimization_selected_measure(
+        self, single_msr_id: int
+    ) -> OptimizationSelectedMeasure:
+        _opt_selected_measure = (
+            self.optimization_run.optimization_run_measure_results.where(
+                OptimizationSelectedMeasure.id == single_msr_id
+            ).get_or_none()
         )
-        if not _measure_result_found:
+        if not _opt_selected_measure:
             raise ValueError(
                 "OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(
                     self.optimization_run.get_id(), single_msr_id
                 )
             )
-        return _measure_result_found
+        return _opt_selected_measure
 
     def _get_selected_time(self, t: int, values: list[float]) -> float:
         # fix for t=100 where 99 is the last
