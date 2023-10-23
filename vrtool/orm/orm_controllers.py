@@ -466,7 +466,9 @@ def create_basic_optimization_run(
     _connected_db.close()
 
 
-def export_results_optimization(result: ResultsOptimization, run_ids: list) -> None:
+def export_results_optimization(
+    result: ResultsOptimization, run_ids: list[int]
+) -> None:
     """
     Exports the optimization results (`list[StrategyBase]`) to a database.
 
