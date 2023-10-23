@@ -17,20 +17,14 @@
 
 ### Fix
 
-- import was accidentally removed with merge.
-- take string to select beta rather than enum object
-- condition should contain not.
-- "the forgotten bracket"
 - add run id to ensure proper export when more than 2 runs are present in the database.
 - change empty to zeros as it is not always overwritten and should be zero. Also add more explicit warning for NaN values
 - add year to TakenMeasures
 - add condition to distinguish measures with different years. add copy to prevent ignoring start costs.
 - incorrect reference to redundant trajectdata that was not interpolated
 - optimize determining min year
-- reference data for revetment cases
 - update for revetment in case there Revetment is not an active mechanism at the section.
 - ensure revetment runs as well.
-- forgot to copy a pretty essential line.
 - fix error in indexing to avoid taking a 999 index.
 - further changes to indexing
 - fix error in indexing of measures + improvement to selection of measures to filter out measures with 0 dimensions
@@ -41,38 +35,19 @@
 - change df index to normalized enum name
 - normalize mechanism names from imported measure reliability
 - uniform method for creating list of mechanism names
-- add INVALID to excluded_mechanisms in api test case
-- add INVALID to excluded_mechanisms in api test case
 - typo in initialization
 - allow serialization of enum value
 - improve building excluded_mechanisms
-- resolve review comment
-- improve finding enum; extend test
-- improve finding enum; extend test
+- improve finding enum;
 - resolve most review comments
 - Corrected create statement
 - Small correction to the measure results filter
 - change mechanism string with enum names
 - improve refering to enum
 - imporove enum comparison
-- imporove enum comparison
-- improve refering to enum
 - improve refering to enum
 - Modified measure ORM tables and exporters to include mechanisms and reduce duplications of MeasureResultParameters
 - replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- replace input_database_path by input_database_name in config
-- small change in error message
 
 ## v0.0.4 (2023-09-11)
 
