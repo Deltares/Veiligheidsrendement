@@ -210,7 +210,22 @@ def revetment_combinations(
         mechanism_name: {year: [] for year in years}
         for mechanism_name in mechanism_names
     }
+    partials_dict = partials.to_dict()
+    revetment_measures_dict = revetment_measures.to_dict()
+    #take all combinations of partials_dict and revetment_measures_dict for key ('REVETMENT', '0')
 
+
+    # we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+    for mechanism_name in mechanism_beta_dict.keys():
+        if mechanism_name == "Section":
+            continue
+        else:
+            for year in mechanism_beta_dict[mechanism_name].keys():
+                combinations = list(itertools.product(partials_dict[(mechanism_name,year)].values(),revetment_measures_dict[(mechanism_name,year)].values()))
+                #find max value for each tuple in combinations
+                max_combinations = list(map(max, combinations))
+                mechanism_beta_dict[mechanism_name][year] = max_combinations
+                
     # loop over partials
     for i, row1 in partials.iterrows():
         # combine with all combinables (in this case revetment measures)
@@ -259,17 +274,6 @@ def revetment_combinations(
                         pass
                 attribute_col_dict[col].append(attribute_value)
 
-            # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
-            for mechanism_name in mechanism_beta_dict.keys():
-                if mechanism_name == "Section":
-                    continue
-                else:
-                    for year in mechanism_beta_dict[mechanism_name].keys():
-                        mechanism_beta_dict[mechanism_name][year].append(
-                            np.maximum(
-                                row1[mechanism_name, year], row2[mechanism_name, year]
-                            )
-                        )
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
     attribute_col_df.columns = pd.MultiIndex.from_tuples(
