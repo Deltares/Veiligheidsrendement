@@ -290,15 +290,20 @@ class StrategyBase:
                 solutions_dict[section.name].MeasureData = (
                     solutions_dict[section.name].MeasureData.to_frame().T
                 )
-            #drop columns for included mechanisms in preparation for overwriting with new interpolated data:
-            
-            for mechanism_name in [mechanism.name for mechanism  in self.config.mechanisms] + ['Section']:
-                #first drop the columns:
+            # drop columns for included mechanisms in preparation for overwriting with new interpolated data:
+
+            for mechanism_name in [
+                mechanism.name for mechanism in self.config.mechanisms
+            ] + ["Section"]:
+                # first drop the columns:
                 solutions_dict[section.name].MeasureData.drop(
                     columns=mechanism_name, inplace=True, level=0
                 )
-                if mechanism_name in section.section_reliability.SectionReliability.index:
-                # replace betas in solutions_dict[section.name].MeasureData with values from beta_array_investment_year and use np.aranage(0,np.max(self.T),1) as second level index
+                if (
+                    mechanism_name
+                    in section.section_reliability.SectionReliability.index
+                ):
+                    # replace betas in solutions_dict[section.name].MeasureData with values from beta_array_investment_year and use np.aranage(0,np.max(self.T),1) as second level index
                     # # remove columns for beta_type
                     # solutions_dict[section.name].MeasureData.drop(
                     #     columns=beta_type, inplace=True, level=0
@@ -322,8 +327,13 @@ class StrategyBase:
                         [
                             solutions_dict[section.name].MeasureData,
                             pd.DataFrame(
-                                np.full((len(self.indexCombined2single[section.name]), np.arange(0, np.max(self.T), 1).shape[0]),
-                                        8.),
+                                np.full(
+                                    (
+                                        len(self.indexCombined2single[section.name]),
+                                        np.arange(0, np.max(self.T), 1).shape[0],
+                                    ),
+                                    8.0,
+                                ),
                                 columns=pd.MultiIndex.from_product(
                                     [[mechanism_name], np.arange(0, np.max(self.T), 1)]
                                 ),
