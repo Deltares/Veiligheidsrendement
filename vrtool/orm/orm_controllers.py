@@ -339,9 +339,24 @@ def import_results_measures(
 
 def fill_optimization_selected_measure_ids(
     vr_config: VrtoolConfig, results_measures: ResultsMeasures
-) -> None:
+) -> dict[int, list[int]]:
+    """
+    Retrieves a dicitonary of optimization run id and its selected result measures' ids
+    which are also present in the property `ids_to_import` from the `ResultsMeasures`
+    object.
+
+    Args:
+        vr_config (VrtoolConfig): Configuration contaning database connection details.
+        results_measures (ResultsMeasures): Result of the "run measures" step containing
+            which are the "selected measure's ids" to consider in the optimization run.
+
+    Returns:
+        dict[int, list[int]]:
+            Dictionary of optimization run id - list of measure results ids.
+    """
     _connected_db = open_database(vr_config.input_database_path)
     _optimization_selected_measure_ids = {}
+    _results_measures_ids = list(set(list(zip(*results_measures.ids_to_import))[0]))
     for _method_type in vr_config.design_methods:
         _optimization_type, _ = orm.OptimizationType.get_or_create(
             name=_method_type.upper()
@@ -350,6 +365,7 @@ def fill_optimization_selected_measure_ids(
             _optimization_selected_measure_ids[_optimization_run.id] = [
                 selected_measure.id
                 for selected_measure in _optimization_run.optimization_run_measure_results
+                if selected_measure.id in _results_measures_ids
             ]
     _connected_db.close()
     return _optimization_selected_measure_ids
@@ -363,7 +379,7 @@ def get_all_measure_results_with_supported_investment_years(
     to a valid investment year (all except for 20).
 
     Args:
-        valid_vrtool_config (VrtoolConfig): 
+        valid_vrtool_config (VrtoolConfig):
             Configuration contanining database connection details.
 
     Returns:

@@ -269,14 +269,14 @@ class ApiRunWorkflows:
         _measures = RunMeasures(
             _assessment_result.vr_config, _assessment_result.selected_traject
         )
-        _measures_result = _measures.run()
+        _results_measures = _measures.run()
 
-        _measures_result.ids_to_import = (
+        _results_measures.ids_to_import = (
             get_all_measure_results_with_supported_investment_years(self.vrtool_config)
         )
 
         _optimization_selected_measure_ids = fill_optimization_selected_measure_ids(
-            self.vrtool_config, _measures_result
+            self.vrtool_config, _results_measures
         )
 
         # Step 3. Optimization.
@@ -287,7 +287,7 @@ class ApiRunWorkflows:
 
         # Run optimization
         _optimization = RunOptimization(
-            _measures_result, _optimization_selected_measure_ids
+            _results_measures, _optimization_selected_measure_ids
         )
         _optimization_result = _optimization.run()
 
