@@ -365,8 +365,8 @@ def fill_optimization_selected_measure_ids(
 
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
-    selected_measure_result_ids: list[tuple[int, int]],
     optimization_name: str,
+    selected_measure_result_ids: list[tuple[int, int]],
 ) -> tuple[ResultsMeasures, dict[int, list[int]]]:
     """
     Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
@@ -377,8 +377,8 @@ def create_optimization_run_for_selected_measures(
 
     Args:
         vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
-        selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
         optimization_name (str): name to give to an optimization run.
+        selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
 
     Returns:
         ResultsMeasures: Instance hosting all the required measures' results.

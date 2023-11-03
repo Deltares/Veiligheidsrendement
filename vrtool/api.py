@@ -100,6 +100,7 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
 
 def run_step_optimization(
     vrtool_config: VrtoolConfig,
+    optimization_name: str,
     measure_results_ids: list[tuple[int, int]],
 ) -> None:
     """
@@ -108,9 +109,12 @@ def run_step_optimization(
 
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
+        optimization_name (str): Name given to an optimization run entry.
         measure_results_ids (list[int]): List of id's for the selected `MeasureResult` entries to use.
     """
-    ApiRunWorkflows(vrtool_config).run_optimization(measure_results_ids)
+    ApiRunWorkflows(vrtool_config).run_optimization(
+        optimization_name, measure_results_ids
+    )
 
 
 def run_full(vrtool_config: VrtoolConfig) -> None:
@@ -197,26 +201,26 @@ class ApiRunWorkflows:
         return _measures_result
 
     def run_optimization(
-        self, selected_measures_id: list[tuple[int, int]]
+        self, optimization_name: str, selected_measures_id: list[tuple[int, int]]
     ) -> ResultsOptimization:
         """
         Runs an optimization for the given measure results ID's.
 
         Args:
+            optimization_name (str): Name given to an optimization run entry.
             selected_measures (Measureresult): Selected set of measures' results to optimize.
 
         Returns:
             ResultsOptimization: Optimization results.
         """
         # Create optimization run
-        _date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         (
             _results_measures,
             _optimization_selected_measure_ids,
         ) = create_optimization_run_for_selected_measures(
             self.vrtool_config,
+            optimization_name,
             selected_measures_id,
-            "Single opt. at: {}".format(_date),
         )
 
         # Run Optimization.
