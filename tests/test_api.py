@@ -300,7 +300,7 @@ class TestApiRunWorkflowsAcceptance:
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config_with_filtering(
-        self, valid_vrtool_config: VrtoolConfig
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
@@ -320,12 +320,18 @@ class TestApiRunWorkflowsAcceptance:
         _measures_input = _api_validator.get_measure_result_with_investment_year(
             _measures_results
         )
+        _normalized_casename = (
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+        _optimization_name = "test_filtered_optimization_{}".format(
+            _normalized_casename
+        )
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_input)
+        run_step_optimization(valid_vrtool_config, _optimization_name, _measures_input)
 
         # 3. Verify expectations.
-        with open_database(valid_vrtool_config.input_database_path) as _connected_db:
+        with open_database(valid_vrtool_config.input_database_path):
             stepResult = OptimizationStepResultSection.get_by_id(28)
 
             assert len(OptimizationStepResultSection.select()) == 28
