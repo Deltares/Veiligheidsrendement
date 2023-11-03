@@ -358,6 +358,17 @@ def fill_optimization_selected_measure_ids(
 def get_all_measure_results_with_supported_investment_years(
     valid_vrtool_config: VrtoolConfig,
 ) -> list[tuple[int, int]]:
+    """
+    Gets all available measure results (`MeasureResult`) from the database paired
+    to a valid investment year (all except for 20).
+
+    Args:
+        valid_vrtool_config (VrtoolConfig): 
+            Configuration contanining database connection details.
+
+    Returns:
+        list[tuple[int, int]]: List of measure result - investment year pairs.
+    """
     _connected_db = open_database(valid_vrtool_config.input_database_path)
     # We do not want measures that have a year variable >0 initially, as then the interpolation is messed up.
     _supported_measures = (

@@ -24,7 +24,6 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-from vrtool.api_validator import apiValidator
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
@@ -268,6 +267,8 @@ class TestApiRunWorkflowsAcceptance:
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
+        _new_optimization_name = "test_optimization_{}".format(request.node.callspec.id.replace(" ", "_").replace(",", "").lower())
+
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
 
@@ -275,18 +276,12 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run using ALL the available measure results.
-        _api_validator = apiValidator()
-        _measures_results = _api_validator.get_measure_result_ids(valid_vrtool_config)
-        _measures_input = _api_validator.get_measure_result_with_investment_year(
-            _measures_results
+        _measures_input = get_all_measure_results_with_supported_investment_years(
+            valid_vrtool_config
         )
-        _normalized_casename = (
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
-        _optimization_name = "test_optimization_{}".format(_normalized_casename)
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _optimization_name, _measures_input)
+        run_step_optimization(valid_vrtool_config, _new_optimization_name, _measures_input)
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)

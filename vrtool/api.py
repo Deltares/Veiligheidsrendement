@@ -1,10 +1,8 @@
 import logging
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
-from vrtool.api_validator import apiValidator
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
