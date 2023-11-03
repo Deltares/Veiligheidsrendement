@@ -39,6 +39,7 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    get_all_measure_results_with_supported_investment_years,
     open_database,
     vrtool_db,
 )
@@ -304,31 +305,29 @@ class TestApiRunWorkflowsAcceptance:
     ):
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
+        _new_optimization_name = "test_filtered_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
         clear_optimization_results(valid_vrtool_config)
 
         _validator = RunStepOptimizationValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
-        # We actually run the available measure results with odd ids.
-        _api_validator = apiValidator()
-        _measures_results_all = _api_validator.get_measure_result_ids(
-            valid_vrtool_config
-        )
-        _measures_results = list(
-            filter(lambda x: (x.id % 2 != 0), _measures_results_all)
-        )
-        _measures_input = _api_validator.get_measure_result_with_investment_year(
-            _measures_results
-        )
-        _normalized_casename = (
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
-        _optimization_name = "test_filtered_optimization_{}".format(
-            _normalized_casename
+        # Get the available measure results with supported investment  years.
+        # For this test, we only use measure reults with odd ids.
+        _measures_input = list(
+            filter(
+                lambda x: (x[0] % 2 != 0),
+                get_all_measure_results_with_supported_investment_years(
+                    valid_vrtool_config
+                ),
+            )
         )
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _optimization_name, _measures_input)
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
 
         # 3. Verify expectations.
         with open_database(valid_vrtool_config.input_database_path):

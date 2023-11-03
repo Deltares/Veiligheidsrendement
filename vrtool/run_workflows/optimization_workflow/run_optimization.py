@@ -19,7 +19,7 @@ class RunOptimization(VrToolRunProtocol):
     def __init__(
         self,
         results_measures: ResultsMeasures,
-        _optimization_selected_measure_ids: dict[int, list[int]],
+        optimization_selected_measure_ids: dict[int, list[int]],
     ) -> None:
         if not isinstance(results_measures, ResultsMeasures):
             raise ValueError(
@@ -30,8 +30,8 @@ class RunOptimization(VrToolRunProtocol):
 
         self.selected_traject = results_measures.selected_traject
         self.vr_config = results_measures.vr_config
-        self.run_ids = list(_optimization_selected_measure_ids.keys())
-        self._selected_measure_ids = _optimization_selected_measure_ids
+        self.run_ids = list(optimization_selected_measure_ids.keys())
+        self._selected_measure_ids = optimization_selected_measure_ids
         self._solutions_dict = results_measures.solutions_dict
         self._ids_to_import = results_measures.ids_to_import
 
