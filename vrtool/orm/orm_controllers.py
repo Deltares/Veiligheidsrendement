@@ -337,7 +337,7 @@ def import_results_measures(
     return _results_measures
 
 
-def fill_optimization_selected_measure_ids(
+def get_optimization_selected_measure_ids(
     vr_config: VrtoolConfig, results_measures: ResultsMeasures
 ) -> dict[int, list[int]]:
     """

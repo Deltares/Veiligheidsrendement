@@ -14,7 +14,7 @@ from vrtool.orm.orm_controllers import (
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
-    fill_optimization_selected_measure_ids,
+    get_optimization_selected_measure_ids,
     get_all_measure_results_with_supported_investment_years,
     get_dike_traject,
     get_optimization_step_with_lowest_total_cost,
@@ -275,7 +275,7 @@ class ApiRunWorkflows:
             get_all_measure_results_with_supported_investment_years(self.vrtool_config)
         )
 
-        _optimization_selected_measure_ids = fill_optimization_selected_measure_ids(
+        _optimization_selected_measure_ids = get_optimization_selected_measure_ids(
             self.vrtool_config, _results_measures
         )
 
