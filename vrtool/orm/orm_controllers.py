@@ -358,14 +358,15 @@ def fill_optimization_selected_measure_ids(
     _optimization_selected_measure_ids = {}
     _results_measures_ids = list(set(list(zip(*results_measures.ids_to_import))[0]))
     for _method_type in vr_config.design_methods:
-        _optimization_type, _ = orm.OptimizationType.get_or_create(
-            name=_method_type.upper()
-        )
+        _optimization_type = orm.OptimizationType.get_or_none(name=_method_type.upper())
+        if not _optimization_type:
+            logging.warning("No optimizations found of type {}.".format(_method_type))
+            continue
         for _optimization_run in _optimization_type.optimization_runs:
             _optimization_selected_measure_ids[_optimization_run.id] = [
                 selected_measure.id
                 for selected_measure in _optimization_run.optimization_run_measure_results
-                if selected_measure.id in _results_measures_ids
+                if selected_measure.measure_result.id in _results_measures_ids
             ]
     _connected_db.close()
     return _optimization_selected_measure_ids
