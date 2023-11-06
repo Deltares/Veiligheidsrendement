@@ -103,7 +103,7 @@ def measure_combinations(
                     continue
                 else:
                     for year in mechanism_beta_dict[mechanism_name].keys():
-                        if row1["type"].all() == "Vertical Geotextile":
+                        if (row1["type"] == "Vertical Geotextile").all():
                             vzg_idx = solutions.measure_table.loc[
                                 solutions.measure_table["Name"]
                                 == "Verticaal Zanddicht Geotextiel"
