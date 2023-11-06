@@ -275,7 +275,7 @@ def revetment_combinations(
                 if (
                     len(attribute_value[count]) == 1
                 ):  # if there is only one value we take that value
-                    attribute_value[count] = attribute[0]
+                    attribute_value[count] = attribute_value[count][0]
                 elif len(attribute_value[count]) == 0:  # if there is no value we take -999
                     attribute_value[count] = -999
                 else:
