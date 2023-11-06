@@ -132,15 +132,8 @@ class Solutions:
                     _mechanism_names = list(map(str, self.mechanisms))
                     for ij in _mechanism_names + ["Section"]:
                         if ij not in betas.index:
-                            # TODO (VRTOOL-187).
-                            # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
-                            # This could happen in the future for other 'new' mechanisms.
-                            reliability_in.extend([-999] * len(self.config.T))
-                            logging.warning(
-                                "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
-                                    measure.parameters["Name"], ij
-                                )
-                            )
+                            # If a mechanism has not been computed it is irrelevant so the beta is assumed to be 10.
+                            reliability_in.extend([10.0] * len(self.config.T))
                             continue
                         for ijk in betas.loc[ij].values:
                             reliability_in.append(ijk)
@@ -199,15 +192,8 @@ class Solutions:
                 )
                 for ij in _mechanism_names + ["Section"]:
                     if ij not in betas.index:
-                        # TODO (VRTOOL-187).
-                        # It seems the other mechanisms are not including Revetment in their measure calculations, therefore failing.
-                        # This could happen in the future for other 'new' mechanisms.
-                        beta.extend([-999] * len(self.config.T))
-                        logging.warning(
-                            "Measure '{}' does not contain data for mechanism '{}', using 'nan' instead.".format(
-                                measure.parameters["Name"], ij
-                            )
-                        )
+                        # If a mechanism has not been computed it is irrelevant so the beta is assumed to be 10.
+                        beta.extend([10.0] * len(self.config.T))
                         continue
                     for ijk in betas.loc[ij].values:
                         beta.append(ijk)

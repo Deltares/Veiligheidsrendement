@@ -249,7 +249,7 @@ class StrategyBase:
                 solutions_dict[section.name].MeasureData.loc["cost"] = [1e60]
                 for beta_type in section.section_reliability.SectionReliability.index:
                     beta_array_investment_year[beta_type] = np.full(
-                        (1, np.max(self.T)), 8.0
+                        (1, np.max(self.T)), 10.0
                     )
             else:
                 for beta_type in section.section_reliability.SectionReliability.index:
@@ -332,7 +332,7 @@ class StrategyBase:
                                         len(self.indexCombined2single[section.name]),
                                         np.arange(0, np.max(self.T), 1).shape[0],
                                     ),
-                                    8.0,
+                                    10.0,
                                 ),
                                 columns=pd.MultiIndex.from_product(
                                     [[mechanism_name], np.arange(0, np.max(self.T), 1)]
