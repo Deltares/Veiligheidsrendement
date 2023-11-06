@@ -263,7 +263,7 @@ class RevetmentMeasureResultBuilder:
             _recalculated_beta = calculated_beta
             _is_reinforced = True
         except:
-            _top_layer_thickness = float("nan")
+            _top_layer_thickness = slope_part.top_layer_thickness
 
         if (
             _top_layer_thickness <= slope_part.top_layer_thickness
