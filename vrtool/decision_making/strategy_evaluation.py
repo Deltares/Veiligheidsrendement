@@ -225,7 +225,12 @@ def revetment_combinations(
                 #find max value for each tuple in combinations
                 max_combinations = list(map(max, combinations))
                 mechanism_beta_dict[mechanism_name][year] = max_combinations
-                
+    #indices
+    partial_index = [indexCombined2single[i] for i in partials.index]                
+    revetment_index = [indexCombined2single[i] for i in revetment_measures.index]
+    new_indices = list(map(list, itertools.product(revetment_index,partial_index)))
+    indexCombined2single.append(new_indices)
+    #TODO dont store as TUPLES
     # loop over partials
     for i, row1 in partials.iterrows():
         # combine with all combinables (in this case revetment measures)
@@ -236,43 +241,46 @@ def revetment_combinations(
                     k
                 )  # partial can be combined (TODO name partial is not correct)
             indexCombined2single.append(newIndex)
-            for col in attribute_col_names:
+    for col in attribute_col_names:
+        if col == "ID":
+            combined_IDs = list(itertools.product(partials.ID,revetment_measures.ID))
+            #for each tuple in combinations concatenate them to a string with "value1 + value2"
+            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_IDs))
+        elif col == "class":
+            attribute_col_dict[col] = len(partials)*len(revetment_measures) * ["combined"]
+        elif col == "type":
+            combined_types = list(itertools.product(partials.type,revetment_measures.type))
+            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_types))
+        else:
+            #combine the lists using itertools.product and make sure that it is not nested
+            combined_data = list(itertools.product(partials[col].tolist(),revetment_measures[col].tolist()))
+            #convert each entry in list to a flattened sublist to proved a list of the same length as the original list
+                #TODO check this with combined measures
+            attribute_value = [list(
+                itertools.chain.from_iterable(
+                    itertools.repeat(x, 1)
+                    if (isinstance(x, str))
+                    or (isinstance(x, int))
+                    or (isinstance(x, float))
+                    else x
+                    for x in value
+                )
+            ) for value in combined_data]
+            
+            for count, attribute in enumerate(attribute_value):
+                # drop all -999 values from attribute_value
+                attribute_value[count] = [
+                    x for x in attribute if x != -999 and x != -999.0
+                ]
                 if (
-                    col == "ID"
-                ):  # TODO maybe add type here as well and just concatenate the types as a string
-                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
-                elif col == "class":
-                    attribute_value = "combined"
+                    len(attribute_value[count]) == 1
+                ):  # if there is only one value we take that value
+                    attribute_value[count] = attribute[0]
+                elif len(attribute_value[count]) == 0:  # if there is no value we take -999
+                    attribute_value[count] = -999
                 else:
-                    # for all other columns we combine the lists and make sure that it is not nested
-                    combined_data = row1[col].tolist() + row2[col].tolist()
-                    attribute_value = list(
-                        itertools.chain.from_iterable(
-                            itertools.repeat(x, 1)
-                            if (isinstance(x, str))
-                            or (isinstance(x, int))
-                            or (isinstance(x, float))
-                            else x
-                            for x in combined_data
-                        )
-                    )
-                    if (
-                        col == "type"
-                    ):  # if it is the type we make sure that it is a single string and store it as list of length 1
-                        attribute_value = ["+".join(attribute_value)]
-                    # drop all -999 values from attribute_value
-                    attribute_value = [
-                        x for x in attribute_value if x != -999 and x != -999.0
-                    ]
-                    if (
-                        len(attribute_value) == 1
-                    ):  # if there is only one value we take that value
-                        attribute_value = attribute_value[0]
-                    elif len(attribute_value) == 0:  # if there is no value we take -999
-                        attribute_value = -999
-                    else:
-                        pass
-                attribute_col_dict[col].append(attribute_value)
+                    pass
+            attribute_col_dict[col] = attribute_value
 
 
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
