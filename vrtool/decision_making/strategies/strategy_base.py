@@ -290,26 +290,57 @@ class StrategyBase:
                 solutions_dict[section.name].MeasureData = (
                     solutions_dict[section.name].MeasureData.to_frame().T
                 )
+            # drop columns for included mechanisms in preparation for overwriting with new interpolated data:
 
-            # replace betas in solutions_dict[section.name].MeasureData with values from beta_array_investment_year and use np.aranage(0,np.max(self.T),1) as second level index
-            for beta_type in section.section_reliability.SectionReliability.index:
-                # remove columns for beta_type
+            for mechanism_name in [
+                mechanism.name for mechanism in self.config.mechanisms
+            ] + ["Section"]:
+                # first drop the columns:
                 solutions_dict[section.name].MeasureData.drop(
-                    columns=beta_type, inplace=True, level=0
+                    columns=mechanism_name, inplace=True, level=0
                 )
-                # concatenate a df with mulitindex columns beta_type and np.arange(0,np.max(self.T),1) to solutions_dict[section.name].MeasureData
-                solutions_dict[section.name].MeasureData = pd.concat(
-                    [
-                        solutions_dict[section.name].MeasureData,
-                        pd.DataFrame(
-                            beta_array_investment_year[beta_type],
-                            columns=pd.MultiIndex.from_product(
-                                [[beta_type], np.arange(0, np.max(self.T), 1)]
+                if (
+                    mechanism_name
+                    in section.section_reliability.SectionReliability.index
+                ):
+                    # replace betas in solutions_dict[section.name].MeasureData with values from beta_array_investment_year and use np.aranage(0,np.max(self.T),1) as second level index
+                    # # remove columns for beta_type
+                    # solutions_dict[section.name].MeasureData.drop(
+                    #     columns=beta_type, inplace=True, level=0
+                    # )
+                    # concatenate a df with mulitindex columns beta_type and np.arange(0,np.max(self.T),1) to solutions_dict[section.name].MeasureData
+                    solutions_dict[section.name].MeasureData = pd.concat(
+                        [
+                            solutions_dict[section.name].MeasureData,
+                            pd.DataFrame(
+                                beta_array_investment_year[mechanism_name],
+                                columns=pd.MultiIndex.from_product(
+                                    [[mechanism_name], np.arange(0, np.max(self.T), 1)]
+                                ),
                             ),
-                        ),
-                    ],
-                    axis=1,
-                )
+                        ],
+                        axis=1,
+                    )
+                else:
+                    # insert a matrix with beta=8
+                    solutions_dict[section.name].MeasureData = pd.concat(
+                        [
+                            solutions_dict[section.name].MeasureData,
+                            pd.DataFrame(
+                                np.full(
+                                    (
+                                        len(self.indexCombined2single[section.name]),
+                                        np.arange(0, np.max(self.T), 1).shape[0],
+                                    ),
+                                    8.0,
+                                ),
+                                columns=pd.MultiIndex.from_product(
+                                    [[mechanism_name], np.arange(0, np.max(self.T), 1)]
+                                ),
+                            ),
+                        ],
+                        axis=1,
+                    )
         # remove the now empty measure_ids list from the dictionary such that the next run will take the next set of selected_measures.
         selected_measure_ids.pop(_run_id)
 
@@ -354,8 +385,8 @@ class StrategyBase:
                         # inefficient measure
                         pass
 
-                StrategyData = StrategyData.ix[indexes]
-                StrategyData = StrategyData.sort_index()
+                    StrategyData = StrategyData.ix[indexes]
+                    StrategyData = StrategyData.sort_index()
 
             self.options[section.name] = StrategyData.reset_index(drop=True)
 
