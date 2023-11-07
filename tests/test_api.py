@@ -267,7 +267,9 @@ class TestApiRunWorkflowsAcceptance:
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _new_optimization_name = "test_optimization_{}".format(request.node.callspec.id.replace(" ", "_").replace(",", "").lower())
+        _new_optimization_name = "test_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
 
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
@@ -281,7 +283,9 @@ class TestApiRunWorkflowsAcceptance:
         )
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _new_optimization_name, _measures_input)
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)

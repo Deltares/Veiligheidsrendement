@@ -14,9 +14,9 @@ from vrtool.orm.orm_controllers import (
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
-    get_optimization_selected_measure_ids,
     get_all_measure_results_with_supported_investment_years,
     get_dike_traject,
+    get_optimization_selected_measure_ids,
     get_optimization_step_with_lowest_total_cost,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures

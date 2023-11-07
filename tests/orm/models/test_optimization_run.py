@@ -1,8 +1,8 @@
 import pytest
-from vrtool.orm.models.optimization.optimization_run import OptimizationRun
-from tests.orm import empty_db_fixture
-from peewee import SqliteDatabase, IntegrityError
+from peewee import IntegrityError, SqliteDatabase
 
+from tests.orm import empty_db_fixture
+from vrtool.orm.models.optimization.optimization_run import OptimizationRun
 from vrtool.orm.models.optimization.optimization_type import OptimizationType
 
 
