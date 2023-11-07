@@ -428,7 +428,7 @@ def create_optimization_run_for_selected_measures(
         selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
 
     Returns:
-        tuple[ResultsMeasures, dict[int, list[int]]: Tuple with the `ResultsMeasure` object and a dictionary mapping each selectead measure to an optimization run.
+        tuple[ResultsMeasures, dict[int, list[int]]: Tuple with the `ResultsMeasure` object and a dictionary mapping each selected measure to an optimization run.
     """
 
     _results_measures = import_results_measures(vr_config, selected_measure_result_ids)

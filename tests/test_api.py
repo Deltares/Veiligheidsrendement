@@ -308,8 +308,8 @@ class TestApiRunWorkflowsAcceptance:
         _validator = RunStepOptimizationValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
-        # Get the available measure results with supported investment  years.
-        # For this test, we only use measure reults with odd ids.
+        # Get the available measure results with supported investment years.
+        # For this test, we only use measure results with odd ids.
         _measures_input = list(
             filter(
                 lambda x: (x[0] % 2 != 0),
