@@ -410,6 +410,12 @@ def get_all_measure_results_with_supported_investment_years(
     return _measure_result_with_year_list
 
 
+def _normalize_optimization_run_name(
+    optimization_name: str, optimization_type: str
+) -> str:
+    return f"{optimization_name} {optimization_type}"
+
+
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
     optimization_name: str,
@@ -443,7 +449,7 @@ def create_optimization_run_for_selected_measures(
             name=_method_type.upper()
         )
         _optimization_run = orm.OptimizationRun.create(
-            name=optimization_name,
+            name=_normalize_optimization_run_name(optimization_name, _method_type),
             discount_rate=vr_config.discount_rate,
             optimization_type=_optimization_type,
         )
@@ -490,7 +496,7 @@ def create_basic_optimization_run(
             name=_method_type.upper()
         )
         _optimization_run = orm.OptimizationRun.create(
-            name=optimization_name,
+            name=_normalize_optimization_run_name(optimization_name, _method_type),
             discount_rate=vr_config.discount_rate,
             optimization_type=_optimization_type,
         )
