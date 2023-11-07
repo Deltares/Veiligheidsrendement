@@ -28,7 +28,7 @@ def measure_combinations(
     (years, mechanism_names) = _get_years_and_mechanism_names(combinables.columns)
 
     # make dict with attribute_col_names as keys and empty lists as values
-    attribute_col_dict = {col: [] for col in attribute_col_names}
+    #attribute_col_dict = {col: [] for col in attribute_col_names}
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
@@ -43,43 +43,6 @@ def measure_combinations(
             indexCombined2single.append(
                 [indexCombined2single[i][0], indexCombined2single[j][0]]
             )
-            for col in attribute_col_names:
-                if (
-                    col == "ID"
-                ):  # TODO maybe add type here as well and just concatenate the types as a string
-                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
-                elif col == "class":
-                    attribute_value = "combined"
-                else:
-                    # for all other columns we combine the lists and make sure that it is not nested
-                    combined_data = row1[col].tolist() + row2[col].tolist()
-                    attribute_value = list(
-                        itertools.chain.from_iterable(
-                            itertools.repeat(x, 1)
-                            if (isinstance(x, str))
-                            or (isinstance(x, int))
-                            or (isinstance(x, float))
-                            else x
-                            for x in combined_data
-                        )
-                    )
-                    if (
-                        col == "type"
-                    ):  # if it is the type we make sure that it is a single string and store it as list of length 1
-                        attribute_value = ["+".join(attribute_value)]
-                    # drop all -999 values from attribute_value
-                    attribute_value = [
-                        x for x in attribute_value if x != -999 and x != -999.0
-                    ]
-                    if (
-                        len(attribute_value) == 1
-                    ):  # if there is only one value we take that value
-                        attribute_value = attribute_value[0]
-                    elif len(attribute_value) == 0:  # if there is no value we take -999
-                        attribute_value = -999
-                    else:
-                        pass
-                attribute_col_dict[col].append(attribute_value)
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
             for mechanism_name in mechanism_beta_dict.keys():
@@ -112,6 +75,8 @@ def measure_combinations(
 
             count += 1
 
+    attribute_col_dict = _build_attribute_columns(attribute_col_names, partials, combinables)
+
     return _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
 
 
@@ -138,7 +103,7 @@ def revetment_combinations(
     (years, mechanism_names) = _get_years_and_mechanism_names(revetment_measures.columns)
 
     # make dict with attribute_col_names as keys and empty lists as values
-    attribute_col_dict = {col: [] for col in attribute_col_names}
+    #attribute_col_dict = {col: [] for col in attribute_col_names}
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
@@ -173,46 +138,8 @@ def revetment_combinations(
                     k
                 )  # partial can be combined (TODO name partial is not correct)
             indexCombined2single.append(newIndex)
-    for col in attribute_col_names:
-        if col == "ID":
-            combined_IDs = list(itertools.product(partials.ID,revetment_measures.ID))
-            #for each tuple in combinations concatenate them to a string with "value1 + value2"
-            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_IDs))
-        elif col == "class":
-            attribute_col_dict[col] = len(partials)*len(revetment_measures) * ["combined"]
-        elif col == "type":
-            combined_types = list(itertools.product(partials.type,revetment_measures.type))
-            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_types))
-        else:
-            #combine the lists using itertools.product and make sure that it is not nested
-            combined_data = list(itertools.product(partials[col].tolist(),revetment_measures[col].tolist()))
-            #convert each entry in list to a flattened sublist to proved a list of the same length as the original list
-                #TODO check this with combined measures
-            attribute_value = [list(
-                itertools.chain.from_iterable(
-                    itertools.repeat(x, 1)
-                    if (isinstance(x, str))
-                    or (isinstance(x, int))
-                    or (isinstance(x, float))
-                    else x
-                    for x in value
-                )
-            ) for value in combined_data]
-            
-            for count, attribute in enumerate(attribute_value):
-                # drop all -999 values from attribute_value
-                attribute_value[count] = [
-                    x for x in attribute if x != -999 and x != -999.0
-                ]
-                if (
-                    len(attribute_value[count]) == 1
-                ):  # if there is only one value we take that value
-                    attribute_value[count] = attribute_value[count][0]
-                elif len(attribute_value[count]) == 0:  # if there is no value we take -999
-                    attribute_value[count] = -999
-                else:
-                    pass
-            attribute_col_dict[col] = attribute_value
+
+    attribute_col_dict = _build_attribute_columns(attribute_col_names, partials, revetment_measures)
 
     return _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
 
@@ -263,6 +190,49 @@ def _convert_mechanism_beta_to_df(attribute_col_dict: dict, mechanism_beta_dict:
 
     return _combined_measures
 
+def _build_attribute_columns(attribute_col_names, measuresA, measuresB):
+    attribute_col_dict = {col: [] for col in attribute_col_names}
+    for col in attribute_col_names:
+        if col == "ID":
+            combined_IDs = list(itertools.product(measuresA.ID,measuresB.ID))
+            #for each tuple in combinations concatenate them to a string with "value1 + value2"
+            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_IDs))
+        elif col == "class":
+            attribute_col_dict[col] = len(measuresA)*len(measuresB) * ["combined"]
+        elif col == "type":
+            combined_types = list(itertools.product(measuresA.type,measuresB.type))
+            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_types))
+        else:
+            #combine the lists using itertools.product and make sure that it is not nested
+            combined_data = list(itertools.product(measuresA[col].tolist(),measuresB[col].tolist()))
+            #convert each entry in list to a flattened sublist to proved a list of the same length as the original list
+                #TODO check this with combined measures
+            attribute_value = [list(
+                itertools.chain.from_iterable(
+                    itertools.repeat(x, 1)
+                    if (isinstance(x, str))
+                    or (isinstance(x, int))
+                    or (isinstance(x, float))
+                    else x
+                    for x in value
+                )
+            ) for value in combined_data]
+            
+            for count, attribute in enumerate(attribute_value):
+                # drop all -999 values from attribute_value
+                attribute_value[count] = [
+                    x for x in attribute if x != -999 and x != -999.0
+                ]
+                if (
+                    len(attribute_value[count]) == 1
+                ):  # if there is only one value we take that value
+                    attribute_value[count] = attribute_value[count][0]
+                elif len(attribute_value[count]) == 0:  # if there is no value we take -999
+                    attribute_value[count] = -999
+                else:
+                    pass
+            attribute_col_dict[col] = attribute_value
+    return attribute_col_dict
 
 def make_traject_df(traject: DikeTraject, cols):
     # cols = cols[1:]
