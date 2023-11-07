@@ -18,10 +18,8 @@ def measure_combinations(
     combinables,
     partials,
     solutions: Solutions,
-    indexCombined2single: list[int],
-    splitparams=False,
+    indexCombined2single: list[int]
 ) -> pd.DataFrame:
-    _combined_measures = pd.DataFrame(columns=combinables.columns)
     # all columns without a second index are attributes of the measure
     attribute_col_names = combinables.columns.get_level_values(0)[
         combinables.columns.get_level_values(1) == ""
@@ -114,33 +112,7 @@ def measure_combinations(
 
             count += 1
 
-    attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
-    attribute_col_df.columns = pd.MultiIndex.from_tuples(
-        [(col, "") for col in attribute_col_df.columns]
-    )
-    mechanism_beta_df = (
-        pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
-    )
-    mechanism_beta_df = pd.DataFrame(
-        mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index
-    )
-    mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
-    _combined_measures = pd.concat(
-        (attribute_col_df, mechanism_beta_df.transpose()), axis=1
-    )
-    for year in years:
-        # compute the section beta
-        betas_in_year = _combined_measures.loc[
-            :,
-            (
-                _combined_measures.columns.get_level_values(1) == 25,
-            ),
-        ]
-        pf_in_year = beta_to_pf(betas_in_year)
-        section_beta = pf_to_beta(1 - np.prod(1 - pf_in_year, axis=1))
-        # add the section beta to the dataframe
-        _combined_measures.loc[:, ("Section", year)] = section_beta
-    return _combined_measures
+    return _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
 
 
 def revetment_combinations(
@@ -158,7 +130,6 @@ def revetment_combinations(
     Returns:
         pd.DataFrame: An object containing the combined revetment measures.
     """
-    _combined_measures = pd.DataFrame(columns=revetment_measures.columns)
     # all columns without a second index are attributes of the measure
     attribute_col_names = revetment_measures.columns.get_level_values(0)[
         revetment_measures.columns.get_level_values(1) == ""
@@ -243,7 +214,26 @@ def revetment_combinations(
                     pass
             attribute_col_dict[col] = attribute_value
 
+    return _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
 
+
+def _get_years_and_mechanism_names(columns:pd.MultiIndex) -> tuple[list,list]:
+    # years are those columns of level 2 with a second index that is not ''
+    years = (
+        columns.get_level_values(1)[columns.get_level_values(1) != ""]
+        .unique()
+        .tolist()
+    )
+    # mechanisms are those columns of level 1 with a second index that is not ''
+    mechanism_names = (
+        columns.get_level_values(0)[columns.get_level_values(1) != ""]
+        .unique()
+        .tolist()
+    )
+    mechanism_names.remove("Section")
+    return (years, mechanism_names)
+
+def _convert_mechanism_beta_to_df(attribute_col_dict: dict, mechanism_beta_dict: dict, years: list[int]) -> pd.DataFrame:
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
     attribute_col_df.columns = pd.MultiIndex.from_tuples(
         [(col, "") for col in attribute_col_df.columns]
@@ -272,23 +262,6 @@ def revetment_combinations(
         _combined_measures.loc[:, ("Section", year)] = section_beta
 
     return _combined_measures
-
-
-def _get_years_and_mechanism_names(columns:pd.MultiIndex) -> tuple[list,list]:
-    # years are those columns of level 2 with a second index that is not ''
-    years = (
-        columns.get_level_values(1)[columns.get_level_values(1) != ""]
-        .unique()
-        .tolist()
-    )
-    # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanism_names = (
-        columns.get_level_values(0)[columns.get_level_values(1) != ""]
-        .unique()
-        .tolist()
-    )
-    mechanism_names.remove("Section")
-    return (years, mechanism_names)
 
 
 def make_traject_df(traject: DikeTraject, cols):
