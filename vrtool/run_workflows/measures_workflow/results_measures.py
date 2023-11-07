@@ -9,6 +9,7 @@ from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProto
 
 class ResultsMeasures(VrToolRunResultProtocol):
     solutions_dict: Dict[str, Solutions]
+    ids_to_import: list[tuple[int, int]]
 
     def __init__(self) -> None:
         self.solutions_dict = {}

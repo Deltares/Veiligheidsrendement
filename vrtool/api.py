@@ -1,10 +1,8 @@
 import logging
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
-from vrtool.api_validator import apiValidator
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.orm_controllers import (
@@ -16,7 +14,8 @@ from vrtool.orm.orm_controllers import (
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
-    fill_optimization_selected_measure_ids,
+    get_optimization_selected_measure_ids,
+    get_all_measure_results_with_supported_investment_years,
     get_dike_traject,
     get_optimization_step_with_lowest_total_cost,
 )
@@ -101,7 +100,7 @@ def run_step_measures(vrtool_config: VrtoolConfig) -> None:
 def run_step_optimization(
     vrtool_config: VrtoolConfig,
     optimization_name: str,
-    measure_results_ids: list[tuple[int, int]],
+    measure_result_id_year: list[tuple[int, int]],
 ) -> None:
     """
     Runs an optimization by optimizing the available measures
@@ -110,10 +109,11 @@ def run_step_optimization(
     Args:
         vrtool_config (VrtoolConfig): Configuration to use during run.
         optimization_name (str): Name given to an optimization run entry.
-        measure_results_ids (list[int]): List of id's for the selected `MeasureResult` entries to use.
+        measure_results_ids (list[tuple[int, int]]): List of measure result's ids
+            paired with an investement year.
     """
     ApiRunWorkflows(vrtool_config).run_optimization(
-        optimization_name, measure_results_ids
+        optimization_name, measure_result_id_year
     )
 
 
@@ -201,14 +201,15 @@ class ApiRunWorkflows:
         return _measures_result
 
     def run_optimization(
-        self, optimization_name: str, selected_measures_id: list[tuple[int, int]]
+        self, optimization_name: str, selected_measures_id_year: list[tuple[int, int]]
     ) -> ResultsOptimization:
         """
         Runs an optimization for the given measure results ID's.
 
         Args:
             optimization_name (str): Name given to an optimization run entry.
-            selected_measures (Measureresult): Selected set of measures' results to optimize.
+            selected_measures_id_year (list[tuple[int, int]]):
+                Selected set of measures' results ids with investment year to optimize.
 
         Returns:
             ResultsOptimization: Optimization results.
@@ -220,7 +221,7 @@ class ApiRunWorkflows:
         ) = create_optimization_run_for_selected_measures(
             self.vrtool_config,
             optimization_name,
-            selected_measures_id,
+            selected_measures_id_year,
         )
 
         # Run Optimization.
@@ -268,16 +269,14 @@ class ApiRunWorkflows:
         _measures = RunMeasures(
             _assessment_result.vr_config, _assessment_result.selected_traject
         )
-        _measures_result = _measures.run()
+        _results_measures = _measures.run()
 
-        _api_validator = apiValidator()
-        _measures_results_db = _api_validator.get_measure_result_ids(self.vrtool_config)
-        _measures_result.ids_to_import = (
-            _api_validator.get_measure_result_with_investment_year(_measures_results_db)
+        _results_measures.ids_to_import = (
+            get_all_measure_results_with_supported_investment_years(self.vrtool_config)
         )
 
-        _optimization_selected_measure_ids = fill_optimization_selected_measure_ids(
-            self.vrtool_config, _measures_result
+        _optimization_selected_measure_ids = get_optimization_selected_measure_ids(
+            self.vrtool_config, _results_measures
         )
 
         # Step 3. Optimization.
@@ -288,7 +287,7 @@ class ApiRunWorkflows:
 
         # Run optimization
         _optimization = RunOptimization(
-            _measures_result, _optimization_selected_measure_ids
+            _results_measures, _optimization_selected_measure_ids
         )
         _optimization_result = _optimization.run()
 
