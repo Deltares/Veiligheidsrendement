@@ -42,6 +42,7 @@ def measure_combinations(
         .unique()
         .tolist()
     )
+    mechanism_names.remove("Section")
 
     # make dict with attribute_col_names as keys and empty lists as values
     attribute_col_dict = {col: [] for col in attribute_col_names}
@@ -99,39 +100,32 @@ def measure_combinations(
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
             for mechanism_name in mechanism_beta_dict.keys():
-                if mechanism_name == "Section":
-                    continue
-                else:
-                    for year in mechanism_beta_dict[mechanism_name].keys():
-                        if row1["type"].all() == "Vertical Geotextile":
-                            vzg_idx = solutions.measure_table.loc[
-                                solutions.measure_table["Name"]
-                                == "Verticaal Zanddicht Geotextiel"
-                            ].index.values[0]
-                            Pf_VZG = solutions.measures[vzg_idx].parameters[
-                                "Pf_solution"
-                            ]
-                            P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
-                            pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(
-                                row2[(mechanism_name, year)]
-                            )
+                for year in mechanism_beta_dict[mechanism_name].keys():
+                    if row1["type"].all() == "Vertical Geotextile":
+                        vzg_idx = solutions.measure_table.loc[
+                            solutions.measure_table["Name"]
+                            == "Verticaal Zanddicht Geotextiel"
+                        ].index.values[0]
+                        Pf_VZG = solutions.measures[vzg_idx].parameters["Pf_solution"]
+                        P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
+                        pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(
+                            row2[(mechanism_name, year)]
+                        )
+                        mechanism_beta_dict[mechanism_name][year].append(pf_to_beta(pf_vzg))
+                    else:
+                        try:
                             mechanism_beta_dict[mechanism_name][year].append(
-                                pf_to_beta(pf_vzg)
+                                np.maximum(
+                                    row1[mechanism_name, year],
+                                    row2[mechanism_name, year],
+                                )
                             )
-                        else:
-                            try:
-                                mechanism_beta_dict[mechanism_name][year].append(
-                                    np.maximum(
-                                        row1[mechanism_name, year],
-                                        row2[mechanism_name, year],
-                                    )
+                        except Exception as exc_found:
+                            logging.debug(
+                                "Exception {} risen with error {}".format(
+                                    type(exc_found), exc_found
                                 )
-                            except Exception as exc_found:
-                                logging.debug(
-                                    "Exception {} risen with error {}".format(
-                                        type(exc_found), exc_found
-                                    )
-                                )
+                            )
 
             count += 1
 
@@ -154,7 +148,6 @@ def measure_combinations(
         betas_in_year = _combined_measures.loc[
             :,
             (
-                _combined_measures.columns.get_level_values(0) != "Section",
                 _combined_measures.columns.get_level_values(1) == 25,
             ),
         ]
