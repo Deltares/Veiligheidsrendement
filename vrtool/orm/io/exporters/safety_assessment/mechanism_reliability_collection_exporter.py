@@ -33,7 +33,11 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         )
 
     def export_dom(self, section_reliability: SectionReliability) -> None:
-        logging.info("STARTED exporting Mechanism's reliability (Beta) over time for section {}".format(self._section_data.section_name))
+        logging.info(
+            "STARTED exporting Mechanism's reliability (Beta) over time for section {}".format(
+                self._section_data.section_name
+            )
+        )
         _section_reliability = section_reliability.SectionReliability
 
         for row_idx, mechanism_row in (

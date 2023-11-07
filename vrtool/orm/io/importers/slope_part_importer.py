@@ -22,7 +22,7 @@ class SlopePartImporter(OrmImporterProtocol):
         if orm_model.tan_alpha == 0:
             raise ValueError(
                 f"tan_alpha of slope part is equal to 0. Ensure that berms always have a positive value for tan_alpha."
-            )            
+            )
         imported_part = SlopePartBuilder.build(
             begin_part=orm_model.begin_part,
             end_part=orm_model.end_part,
