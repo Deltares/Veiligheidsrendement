@@ -201,6 +201,7 @@ def revetment_combinations(
         .unique()
         .tolist()
     )
+    mechanism_names.remove("Section")
 
     # make dict with attribute_col_names as keys and empty lists as values
     attribute_col_dict = {col: [] for col in attribute_col_names}
@@ -217,14 +218,11 @@ def revetment_combinations(
 
     # we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
     for mechanism_name in mechanism_beta_dict.keys():
-        if mechanism_name == "Section":
-            continue
-        else:
-            for year in mechanism_beta_dict[mechanism_name].keys():
-                combinations = list(itertools.product(partials_dict[(mechanism_name,year)].values(),revetment_measures_dict[(mechanism_name,year)].values()))
-                #find max value for each tuple in combinations
-                max_combinations = list(map(max, combinations))
-                mechanism_beta_dict[mechanism_name][year] = max_combinations
+        for year in mechanism_beta_dict[mechanism_name].keys():
+            combinations = list(itertools.product(partials_dict[(mechanism_name,year)].values(),revetment_measures_dict[(mechanism_name,year)].values()))
+            #find max value for each tuple in combinations
+            max_combinations = list(map(max, combinations))
+            mechanism_beta_dict[mechanism_name][year] = max_combinations
     #indices
     partial_index = [indexCombined2single[i] for i in partials.index]                
     revetment_index = [indexCombined2single[i] for i in revetment_measures.index]
@@ -232,9 +230,9 @@ def revetment_combinations(
     indexCombined2single.append(new_indices)
     #TODO dont store as TUPLES
     # loop over partials
-    for i, row1 in partials.iterrows():
+    for i in partials.index:
         # combine with all combinables (in this case revetment measures)
-        for j, row2 in revetment_measures.iterrows():
+        for j in revetment_measures.index:
             newIndex = [indexCombined2single[j][0]]  # revetment is a single measure
             for k in indexCombined2single[i]:
                 newIndex.append(
