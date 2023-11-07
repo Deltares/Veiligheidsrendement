@@ -300,7 +300,6 @@ def revetment_combinations(
         betas_in_year = _combined_measures.loc[
             :,
             (
-                _combined_measures.columns.get_level_values(0) != "Section",
                 _combined_measures.columns.get_level_values(1) == year,
             ),
         ]
