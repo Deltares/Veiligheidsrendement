@@ -337,36 +337,89 @@ def import_results_measures(
     return _results_measures
 
 
-def fill_optimization_selected_measure_ids(
-    vr_config: VrtoolConfig, _results_measures: ResultsMeasures
-) -> None:
+def get_optimization_selected_measure_ids(
+    vr_config: VrtoolConfig, results_measures: ResultsMeasures
+) -> dict[int, list[int]]:
+    """
+    Retrieves a dicitonary of optimization run id and its selected result measures' ids
+    which are also present in the property `ids_to_import` from the `ResultsMeasures`
+    object.
+
+    Args:
+        vr_config (VrtoolConfig): Configuration contaning database connection details.
+        results_measures (ResultsMeasures): Result of the "run measures" step containing
+            which are the "selected measure's ids" to consider in the optimization run.
+
+    Returns:
+        dict[int, list[int]]:
+            Dictionary of optimization run id - list of measure results ids.
+    """
     _connected_db = open_database(vr_config.input_database_path)
     _optimization_selected_measure_ids = {}
+    _results_measures_ids = list(set(list(zip(*results_measures.ids_to_import))[0]))
     for _method_type in vr_config.design_methods:
-        _optimization_type, _ = orm.OptimizationType.get_or_create(
-            name=_method_type.upper()
-        )
-        _optimization_runs = orm.OptimizationRun.select().where(
-            orm.OptimizationRun.optimization_type == _optimization_type
-        )
-        for _optimization_run in _optimization_runs:
+        _optimization_type = orm.OptimizationType.get_or_none(name=_method_type.upper())
+        if not _optimization_type:
+            logging.warning("No optimizations found of type {}.".format(_method_type))
+            continue
+        for _optimization_run in _optimization_type.optimization_runs:
             _optimization_selected_measure_ids[_optimization_run.id] = [
-                measure.id
-                for measure in orm.OptimizationSelectedMeasure.select(
-                    orm.OptimizationSelectedMeasure.id
-                ).where(
-                    orm.OptimizationSelectedMeasure.optimization_run_id
-                    == _optimization_run.id
-                )
+                selected_measure.id
+                for selected_measure in _optimization_run.optimization_run_measure_results
+                if selected_measure.measure_result.id in _results_measures_ids
             ]
     _connected_db.close()
     return _optimization_selected_measure_ids
 
 
+def get_all_measure_results_with_supported_investment_years(
+    valid_vrtool_config: VrtoolConfig,
+) -> list[tuple[int, int]]:
+    """
+    Gets all available measure results (`MeasureResult`) from the database paired
+    to a valid investment year (all except for 20).
+
+    Args:
+        valid_vrtool_config (VrtoolConfig):
+            Configuration contanining database connection details.
+
+    Returns:
+        list[tuple[int, int]]: List of measure result - investment year pairs.
+    """
+    _connected_db = open_database(valid_vrtool_config.input_database_path)
+    # We do not want measures that have a year variable >0 initially, as then the interpolation is messed up.
+    _supported_measures = (
+        orm.MeasureResult.select()
+        .join(orm.MeasurePerSection)
+        .join(orm.Measure)
+        .where(orm.Measure.year != 20)
+    )
+    _connected_db.close()
+
+    _measure_result_with_year_list = []
+    for _measure_result in _supported_measures:
+        # All will get at least year 0.
+        _measure_result_with_year_list.append((_measure_result.get_id(), 0))
+        if (
+            "Soil reinforcement"
+            in _measure_result.measure_per_section.measure.measure_type.name
+        ):
+            # For those of type "Soil reinforcement" we also add year 20.
+            _measure_result_with_year_list.append((_measure_result.get_id(), 20))
+
+    return _measure_result_with_year_list
+
+
+def _normalize_optimization_run_name(
+    optimization_name: str, optimization_type: str
+) -> str:
+    return f"{optimization_name} {optimization_type}"
+
+
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
-    selected_measure_result_ids: list[tuple[int, int]],
     optimization_name: str,
+    selected_measure_result_ids: list[tuple[int, int]],
 ) -> tuple[ResultsMeasures, dict[int, list[int]]]:
     """
     Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
@@ -377,11 +430,11 @@ def create_optimization_run_for_selected_measures(
 
     Args:
         vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
-        selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
         optimization_name (str): name to give to an optimization run.
+        selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
 
     Returns:
-        ResultsMeasures: Instance hosting all the required measures' results.
+        tuple[ResultsMeasures, dict[int, list[int]]: Tuple with the `ResultsMeasure` object and a dictionary mapping each selected measure to an optimization run.
     """
 
     _results_measures = import_results_measures(vr_config, selected_measure_result_ids)
@@ -396,7 +449,7 @@ def create_optimization_run_for_selected_measures(
             name=_method_type.upper()
         )
         _optimization_run = orm.OptimizationRun.create(
-            name=optimization_name,
+            name=_normalize_optimization_run_name(optimization_name, _method_type),
             discount_rate=vr_config.discount_rate,
             optimization_type=_optimization_type,
         )
@@ -443,7 +496,7 @@ def create_basic_optimization_run(
             name=_method_type.upper()
         )
         _optimization_run = orm.OptimizationRun.create(
-            name=optimization_name,
+            name=_normalize_optimization_run_name(optimization_name, _method_type),
             discount_rate=vr_config.discount_rate,
             optimization_type=_optimization_type,
         )

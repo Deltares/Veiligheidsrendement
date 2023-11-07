@@ -9,7 +9,7 @@ from vrtool.orm.models.orm_base_model import (
 
 
 class OptimizationRun(OrmBaseModel):
-    name = CharField(max_length=_max_char_length)
+    name = CharField(max_length=_max_char_length, unique=True)
     discount_rate = FloatField()
     optimization_type = ForeignKeyField(OptimizationType, backref="optimization_runs")
 
