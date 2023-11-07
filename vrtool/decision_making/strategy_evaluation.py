@@ -26,23 +26,8 @@ def measure_combinations(
     attribute_col_names = combinables.columns.get_level_values(0)[
         combinables.columns.get_level_values(1) == ""
     ].tolist()
-    # years are those columns of level 2 with a second index that is not ''
-    years = (
-        combinables.columns.get_level_values(1)[
-            combinables.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
-    # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanism_names = (
-        combinables.columns.get_level_values(0)[
-            combinables.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
-    mechanism_names.remove("Section")
+
+    (years, mechanism_names) = _get_years_and_mechanism_names(combinables.columns)
 
     # make dict with attribute_col_names as keys and empty lists as values
     attribute_col_dict = {col: [] for col in attribute_col_names}
@@ -178,23 +163,8 @@ def revetment_combinations(
     attribute_col_names = revetment_measures.columns.get_level_values(0)[
         revetment_measures.columns.get_level_values(1) == ""
     ].tolist()
-    # years are those columns of level 2 with a second index that is not ''
-    years = (
-        revetment_measures.columns.get_level_values(1)[
-            revetment_measures.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
-    # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanism_names = (
-        revetment_measures.columns.get_level_values(0)[
-            revetment_measures.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
-    mechanism_names.remove("Section")
+
+    (years, mechanism_names) = _get_years_and_mechanism_names(revetment_measures.columns)
 
     # make dict with attribute_col_names as keys and empty lists as values
     attribute_col_dict = {col: [] for col in attribute_col_names}
@@ -302,6 +272,23 @@ def revetment_combinations(
         _combined_measures.loc[:, ("Section", year)] = section_beta
 
     return _combined_measures
+
+
+def _get_years_and_mechanism_names(columns:pd.MultiIndex) -> tuple[list,list]:
+    # years are those columns of level 2 with a second index that is not ''
+    years = (
+        columns.get_level_values(1)[columns.get_level_values(1) != ""]
+        .unique()
+        .tolist()
+    )
+    # mechanisms are those columns of level 1 with a second index that is not ''
+    mechanism_names = (
+        columns.get_level_values(0)[columns.get_level_values(1) != ""]
+        .unique()
+        .tolist()
+    )
+    mechanism_names.remove("Section")
+    return (years, mechanism_names)
 
 
 def make_traject_df(traject: DikeTraject, cols):
