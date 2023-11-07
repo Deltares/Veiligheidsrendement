@@ -1,5 +1,5 @@
 from typing import Type
-
+from math import floor
 from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
     AsphaltSlopePart,
 )
@@ -43,7 +43,7 @@ class SlopePartBuilder:
             return StoneSlopePart
         elif AsphaltSlopePart.is_asphalt_slope_part(top_layer_type):
             return AsphaltSlopePart
-        if round(top_layer_type) in MOST_RELEVANT_TOP_LAYER_TYPES.keys():
+        if floor(top_layer_type) in MOST_RELEVANT_TOP_LAYER_TYPES.keys():
             raise ValueError(
                 "No SlopePart type found for top layer type: {} ({}). Ignored in computation.".format(
                     top_layer_type,
