@@ -27,15 +27,12 @@ def measure_combinations(
 
     (years, mechanism_names) = _get_years_and_mechanism_names(combinables.columns)
 
-    # make dict with attribute_col_names as keys and empty lists as values
-    #attribute_col_dict = {col: [] for col in attribute_col_names}
-
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
         mechanism_name: {year: [] for year in years}
         for mechanism_name in mechanism_names
     }
-    count = 0
+
     # loop over partials
     for i, row1 in partials.iterrows():
         # combine with all combinables
@@ -73,8 +70,6 @@ def measure_combinations(
                                 )
                             )
 
-            count += 1
-
     attribute_col_dict = _build_attribute_columns(attribute_col_names, partials, combinables)
 
     return _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
@@ -101,9 +96,6 @@ def revetment_combinations(
     ].tolist()
 
     (years, mechanism_names) = _get_years_and_mechanism_names(revetment_measures.columns)
-
-    # make dict with attribute_col_names as keys and empty lists as values
-    #attribute_col_dict = {col: [] for col in attribute_col_names}
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
@@ -190,21 +182,21 @@ def _convert_mechanism_beta_to_df(attribute_col_dict: dict, mechanism_beta_dict:
 
     return _combined_measures
 
-def _build_attribute_columns(attribute_col_names, measuresA, measuresB):
+def _build_attribute_columns(attribute_col_names: list[str], measuresA: pd.DataFrame, measuresB: pd.DataFrame) -> dict:
     attribute_col_dict = {col: [] for col in attribute_col_names}
     for col in attribute_col_names:
         if col == "ID":
-            combined_IDs = list(itertools.product(measuresA.ID,measuresB.ID))
+            combined_IDs = list(itertools.product(measuresA.ID, measuresB.ID))
             #for each tuple in combinations concatenate them to a string with "value1 + value2"
             attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_IDs))
         elif col == "class":
-            attribute_col_dict[col] = len(measuresA)*len(measuresB) * ["combined"]
+            attribute_col_dict[col] = len(measuresA) * len(measuresB) * ["combined"]
         elif col == "type":
-            combined_types = list(itertools.product(measuresA.type,measuresB.type))
+            combined_types = list(itertools.product(measuresA.type, measuresB.type))
             attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_types))
         else:
             #combine the lists using itertools.product and make sure that it is not nested
-            combined_data = list(itertools.product(measuresA[col].tolist(),measuresB[col].tolist()))
+            combined_data = list(itertools.product(measuresA[col].tolist(), measuresB[col].tolist()))
             #convert each entry in list to a flattened sublist to proved a list of the same length as the original list
                 #TODO check this with combined measures
             attribute_value = [list(
