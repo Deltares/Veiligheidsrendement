@@ -431,7 +431,7 @@ class StrategyBase:
                 measures_per_class["combinable"],
                 measures_per_class["partial"],
                 solutions_dict[section.name],
-                self.indexCombined2single[section.name]
+                self.indexCombined2single[section.name],
             )
         elif "combinable" in measures_per_class:
             combinedmeasures = measures_per_class["combinable"]
