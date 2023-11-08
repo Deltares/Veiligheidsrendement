@@ -24,7 +24,6 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-from vrtool.api_validator import apiValidator
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
@@ -39,6 +38,7 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
+    get_all_measure_results_with_supported_investment_years,
     open_database,
     vrtool_db,
 )
@@ -264,9 +264,13 @@ class TestApiRunWorkflowsAcceptance:
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config(
-        self, valid_vrtool_config: VrtoolConfig
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
+        _new_optimization_name = "test_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
 
@@ -274,14 +278,14 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         # We actually run using ALL the available measure results.
-        _api_validator = apiValidator()
-        _measures_results = _api_validator.get_measure_result_ids(valid_vrtool_config)
-        _measures_input = _api_validator.get_measure_result_with_investment_year(
-            _measures_results
+        _measures_input = get_all_measure_results_with_supported_investment_years(
+            valid_vrtool_config
         )
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_input)
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
@@ -296,32 +300,36 @@ class TestApiRunWorkflowsAcceptance:
         indirect=True,
     )
     def test_run_step_optimization_given_valid_vrtool_config_with_filtering(
-        self, valid_vrtool_config: VrtoolConfig
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
         # We reuse existing measure results, but we clear the optimization ones.
+        _new_optimization_name = "test_filtered_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
         clear_optimization_results(valid_vrtool_config)
 
         _validator = RunStepOptimizationValidator()
         _validator.validate_preconditions(valid_vrtool_config)
 
-        # We actually run the available measure results with odd ids.
-        _api_validator = apiValidator()
-        _measures_results_all = _api_validator.get_measure_result_ids(
-            valid_vrtool_config
-        )
-        _measures_results = list(
-            filter(lambda x: (x.id % 2 != 0), _measures_results_all)
-        )
-        _measures_input = _api_validator.get_measure_result_with_investment_year(
-            _measures_results
+        # Get the available measure results with supported investment years.
+        # For this test, we only use measure results with odd ids.
+        _measures_input = list(
+            filter(
+                lambda x: (x[0] % 2 != 0),
+                get_all_measure_results_with_supported_investment_years(
+                    valid_vrtool_config
+                ),
+            )
         )
 
         # 2. Run test.
-        run_step_optimization(valid_vrtool_config, _measures_input)
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
 
         # 3. Verify expectations.
-        with open_database(valid_vrtool_config.input_database_path) as _connected_db:
+        with open_database(valid_vrtool_config.input_database_path):
             stepResult = OptimizationStepResultSection.get_by_id(28)
 
             assert len(OptimizationStepResultSection.select()) == 28

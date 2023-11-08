@@ -1,3 +1,4 @@
+from math import floor
 from typing import Type
 
 from vrtool.failure_mechanisms.revetment.slope_part.asphalt_slope_part import (
@@ -12,6 +13,16 @@ from vrtool.failure_mechanisms.revetment.slope_part.slope_part_protocol import (
 from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
     StoneSlopePart,
 )
+
+MOST_RELEVANT_TOP_LAYER_TYPES = {
+    10: "Betonblokken met afgeschuinde hoeken of gaten erin",
+    11: "Betonblokken",
+    7: "Breuksteen, gepenetreerd met asfalt (vol en zat)",
+    25: "Breuksteen/teenbestorting",
+    28: "Natuursteen",
+    29: "Koperslakblokken",
+    32: "Klinkers, bton of gebakken",
+}
 
 
 class SlopePartBuilder:
@@ -35,10 +46,18 @@ class SlopePartBuilder:
             return StoneSlopePart
         elif AsphaltSlopePart.is_asphalt_slope_part(top_layer_type):
             return AsphaltSlopePart
-
-        raise ValueError(
-            "No SlopePart type found for top layer type: {}.".format(top_layer_type)
-        )
+        if floor(top_layer_type) in MOST_RELEVANT_TOP_LAYER_TYPES.keys():
+            raise ValueError(
+                "No SlopePart type found for top layer type: {} ({}). Ignored in computation.".format(
+                    top_layer_type, MOST_RELEVANT_TOP_LAYER_TYPES[round(top_layer_type)]
+                )
+            )
+        else:
+            raise ValueError(
+                "No SlopePart type found for top layer type: {}. Ignored in computation.".format(
+                    top_layer_type
+                )
+            )
 
     @staticmethod
     def build(**kwargs) -> SlopePartProtocol:

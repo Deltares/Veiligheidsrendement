@@ -7,7 +7,8 @@ from vrtool.failure_mechanisms.revetment.slope_part.slope_part_protocol import (
     SlopePartProtocol,
 )
 
-ASPHALT_TYPE = 5.0
+MIN_ASPHALT = 1.0
+MAX_ASPHALT = 6.0
 
 
 @dataclass
@@ -27,4 +28,4 @@ class AsphaltSlopePart(SlopePartProtocol):
 
     @staticmethod
     def is_asphalt_slope_part(top_layer_type: float) -> bool:
-        return top_layer_type == ASPHALT_TYPE
+        return top_layer_type >= MIN_ASPHALT and top_layer_type <= MAX_ASPHALT

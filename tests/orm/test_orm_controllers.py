@@ -613,7 +613,7 @@ class TestOrmControllers:
             _optimization_run = _optimization_type.optimization_runs[0]
 
             assert isinstance(_optimization_run, orm_models.OptimizationRun)
-            assert _optimization_run.name == _optimization_run_name
+            assert _optimization_run_name in _optimization_run.name
             assert (
                 _optimization_run.discount_rate
                 == _results_measures.vr_config.discount_rate

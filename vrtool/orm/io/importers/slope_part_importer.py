@@ -15,7 +15,14 @@ class SlopePartImporter(OrmImporterProtocol):
     def import_orm(self, orm_model: SlopePart) -> SlopePartProtocol:
         if not orm_model:
             raise ValueError(f"No valid value given for {SlopePart.__name__}.")
-
+        if orm_model.tan_alpha < 0:
+            raise ValueError(
+                f"tan_alpha of slope part is smaller than 0 ({orm_model.tan_alpha})."
+            )
+        if orm_model.tan_alpha == 0:
+            raise ValueError(
+                f"tan_alpha of slope part is equal to 0. Ensure that berms always have a positive value for tan_alpha."
+            )
         imported_part = SlopePartBuilder.build(
             begin_part=orm_model.begin_part,
             end_part=orm_model.end_part,

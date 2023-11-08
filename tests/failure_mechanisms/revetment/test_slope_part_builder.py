@@ -35,7 +35,10 @@ class TestSlopePartBuilder:
         with pytest.raises(ValueError) as exc_err:
             SlopePartBuilder.get_slope_part_type(-1)
 
-        assert str(exc_err.value) == "No SlopePart type found for top layer type: -1."
+        assert (
+            str(exc_err.value)
+            == "No SlopePart type found for top layer type: -1. Ignored in computation."
+        )
 
     @pytest.mark.parametrize("top_layer_type, expected_type", _slope_part_cases)
     def test_build_with_arguments_returns_object(
@@ -64,4 +67,7 @@ class TestSlopePartBuilder:
         with pytest.raises(ValueError) as exc_err:
             SlopePartBuilder.build(top_layer_type=-1)
 
-        assert str(exc_err.value) == "No SlopePart type found for top layer type: -1."
+        assert (
+            str(exc_err.value)
+            == "No SlopePart type found for top layer type: -1. Ignored in computation."
+        )
