@@ -1,3 +1,3 @@
 ,ID,Section,LCC,name,year,yes/no,dcrest,dberm,transition_level,beta_target
-9,3+1+6,01A,4804130.989952498,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,"[0, 0, 0]",yes,1.0,0.0,3.98,4.952892647472083
-10,3+1+6,01B,1976850.9304588495,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,"[0, 0, 0]",yes,0.5,8.0,3.98,4.952892647472083
+2,3+1+6,01A,660477.3967518606,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,"[0, 20, 0]",yes,0.0,0.0,3.98,3.6112402089287357
+3,3+1+6,01B,601428.492325841,Grondversterking binnenwaarts 2025+Verticaal Zanddicht Geotextiel+Aanpassing bekleding,"[0, 20, 0]",yes,0.0,12.0,3.98,3.6112402089287357
