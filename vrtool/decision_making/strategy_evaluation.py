@@ -18,40 +18,21 @@ def measure_combinations(
     combinables,
     partials,
     solutions: Solutions,
-    indexCombined2single: list[int],
-    splitparams=False,
+    indexCombined2single: list[int]
 ) -> pd.DataFrame:
-    _combined_measures = pd.DataFrame(columns=combinables.columns)
     # all columns without a second index are attributes of the measure
     attribute_col_names = combinables.columns.get_level_values(0)[
         combinables.columns.get_level_values(1) == ""
     ].tolist()
-    # years are those columns of level 2 with a second index that is not ''
-    years = (
-        combinables.columns.get_level_values(1)[
-            combinables.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
-    # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanism_names = (
-        combinables.columns.get_level_values(0)[
-            combinables.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
 
-    # make dict with attribute_col_names as keys and empty lists as values
-    attribute_col_dict = {col: [] for col in attribute_col_names}
+    (years, mechanism_names) = _get_years_and_mechanism_names(combinables.columns)
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
         mechanism_name: {year: [] for year in years}
         for mechanism_name in mechanism_names
     }
-    count = 0
+
     # loop over partials
     for i, row1 in partials.iterrows():
         # combine with all combinables
@@ -59,110 +40,39 @@ def measure_combinations(
             indexCombined2single.append(
                 [indexCombined2single[i][0], indexCombined2single[j][0]]
             )
-            for col in attribute_col_names:
-                if (
-                    col == "ID"
-                ):  # TODO maybe add type here as well and just concatenate the types as a string
-                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
-                elif col == "class":
-                    attribute_value = "combined"
-                else:
-                    # for all other columns we combine the lists and make sure that it is not nested
-                    combined_data = row1[col].tolist() + row2[col].tolist()
-                    attribute_value = list(
-                        itertools.chain.from_iterable(
-                            itertools.repeat(x, 1)
-                            if (isinstance(x, str))
-                            or (isinstance(x, int))
-                            or (isinstance(x, float))
-                            else x
-                            for x in combined_data
-                        )
-                    )
-                    if (
-                        col == "type"
-                    ):  # if it is the type we make sure that it is a single string and store it as list of length 1
-                        attribute_value = ["+".join(attribute_value)]
-                    # drop all -999 values from attribute_value
-                    attribute_value = [
-                        x for x in attribute_value if x != -999 and x != -999.0
-                    ]
-                    if (
-                        len(attribute_value) == 1
-                    ):  # if there is only one value we take that value
-                        attribute_value = attribute_value[0]
-                    elif len(attribute_value) == 0:  # if there is no value we take -999
-                        attribute_value = -999
-                    else:
-                        pass
-                attribute_col_dict[col].append(attribute_value)
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
             for mechanism_name in mechanism_beta_dict.keys():
-                if mechanism_name == "Section":
-                    continue
-                else:
-                    for year in mechanism_beta_dict[mechanism_name].keys():
-                        if row1["type"].all() == "Vertical Geotextile":
-                            vzg_idx = solutions.measure_table.loc[
-                                solutions.measure_table["Name"]
-                                == "Verticaal Zanddicht Geotextiel"
-                            ].index.values[0]
-                            Pf_VZG = solutions.measures[vzg_idx].parameters[
-                                "Pf_solution"
-                            ]
-                            P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
-                            pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(
-                                row2[(mechanism_name, year)]
-                            )
+                for year in mechanism_beta_dict[mechanism_name].keys():
+                    if row1["type"].all() == "Vertical Geotextile":
+                        vzg_idx = solutions.measure_table.loc[
+                            solutions.measure_table["Name"]
+                            == "Verticaal Zanddicht Geotextiel"
+                        ].index.values[0]
+                        Pf_VZG = solutions.measures[vzg_idx].parameters["Pf_solution"]
+                        P_VZG = solutions.measures[vzg_idx].parameters["P_solution"]
+                        pf_vzg = (1 - P_VZG) * Pf_VZG + P_VZG * beta_to_pf(
+                            row2[(mechanism_name, year)]
+                        )
+                        mechanism_beta_dict[mechanism_name][year].append(pf_to_beta(pf_vzg))
+                    else:
+                        try:
                             mechanism_beta_dict[mechanism_name][year].append(
-                                pf_to_beta(pf_vzg)
+                                np.maximum(
+                                    row1[mechanism_name, year],
+                                    row2[mechanism_name, year],
+                                )
                             )
-                        else:
-                            try:
-                                mechanism_beta_dict[mechanism_name][year].append(
-                                    np.maximum(
-                                        row1[mechanism_name, year],
-                                        row2[mechanism_name, year],
-                                    )
+                        except Exception as exc_found:
+                            logging.debug(
+                                "Exception {} risen with error {}".format(
+                                    type(exc_found), exc_found
                                 )
-                            except Exception as exc_found:
-                                logging.debug(
-                                    "Exception {} risen with error {}".format(
-                                        type(exc_found), exc_found
-                                    )
-                                )
+                            )
 
-            count += 1
+    attribute_col_dict = _build_attribute_columns(attribute_col_names, partials, combinables)
 
-    attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
-    attribute_col_df.columns = pd.MultiIndex.from_tuples(
-        [(col, "") for col in attribute_col_df.columns]
-    )
-    mechanism_beta_df = (
-        pd.DataFrame.from_dict(mechanism_beta_dict, orient="index").stack().to_frame()
-    )
-    mechanism_beta_df = pd.DataFrame(
-        mechanism_beta_df[0].values.tolist(), index=mechanism_beta_df.index
-    )
-    mechanism_beta_df.index = pd.MultiIndex.from_tuples(mechanism_beta_df.index)
-    _combined_measures = pd.concat(
-        (attribute_col_df, mechanism_beta_df.transpose()), axis=1
-    )
-    for year in years:
-        # compute the section beta
-        betas_in_year = _combined_measures.loc[
-            :,
-            (
-                _combined_measures.columns.get_level_values(0) != "Section",
-                _combined_measures.columns.get_level_values(1) == 25,
-            ),
-        ]
-        pf_in_year = beta_to_pf(betas_in_year)
-        section_beta = pf_to_beta(1 - np.prod(1 - pf_in_year, axis=1))
-        # add the section beta to the dataframe
-        _combined_measures.loc[:, ("Section", year)] = section_beta
-    return _combined_measures
+    return _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
 
 
 def revetment_combinations(
@@ -180,97 +90,69 @@ def revetment_combinations(
     Returns:
         pd.DataFrame: An object containing the combined revetment measures.
     """
-    _combined_measures = pd.DataFrame(columns=revetment_measures.columns)
     # all columns without a second index are attributes of the measure
     attribute_col_names = revetment_measures.columns.get_level_values(0)[
         revetment_measures.columns.get_level_values(1) == ""
     ].tolist()
-    # years are those columns of level 2 with a second index that is not ''
-    years = (
-        revetment_measures.columns.get_level_values(1)[
-            revetment_measures.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
-    # mechanisms are those columns of level 1 with a second index that is not ''
-    mechanism_names = (
-        revetment_measures.columns.get_level_values(0)[
-            revetment_measures.columns.get_level_values(1) != ""
-        ]
-        .unique()
-        .tolist()
-    )
 
-    # make dict with attribute_col_names as keys and empty lists as values
-    attribute_col_dict = {col: [] for col in attribute_col_names}
+    (years, mechanism_names) = _get_years_and_mechanism_names(revetment_measures.columns)
 
     # make dict with mechanisms as keys, sub dicts of years and then empty lists as values
     mechanism_beta_dict = {
         mechanism_name: {year: [] for year in years}
         for mechanism_name in mechanism_names
     }
+    partials_dict = partials.to_dict()
+    revetment_measures_dict = revetment_measures.to_dict()
+    #take all combinations of partials_dict and revetment_measures_dict for key ('REVETMENT', '0')
 
+
+    # we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
+    for mechanism_name in mechanism_beta_dict.keys():
+        for year in mechanism_beta_dict[mechanism_name].keys():
+            combinations = list(itertools.product(partials_dict[(mechanism_name,year)].values(),revetment_measures_dict[(mechanism_name,year)].values()))
+            #find max value for each tuple in combinations
+            max_combinations = list(map(max, combinations))
+            mechanism_beta_dict[mechanism_name][year] = max_combinations
+    #indices
+    partial_index = [indexCombined2single[i] for i in partials.index]                
+    revetment_index = [indexCombined2single[i] for i in revetment_measures.index]
+    new_indices = list(map(list, itertools.product(revetment_index,partial_index)))
+    indexCombined2single.append(new_indices)
+    #TODO dont store as TUPLES
     # loop over partials
-    for i, row1 in partials.iterrows():
+    for i in partials.index:
         # combine with all combinables (in this case revetment measures)
-        for j, row2 in revetment_measures.iterrows():
+        for j in revetment_measures.index:
             newIndex = [indexCombined2single[j][0]]  # revetment is a single measure
             for k in indexCombined2single[i]:
                 newIndex.append(
                     k
                 )  # partial can be combined (TODO name partial is not correct)
             indexCombined2single.append(newIndex)
-            for col in attribute_col_names:
-                if (
-                    col == "ID"
-                ):  # TODO maybe add type here as well and just concatenate the types as a string
-                    attribute_value = f'{row1["ID"].values[0]}+{row2["ID"].values[0]}'
-                elif col == "class":
-                    attribute_value = "combined"
-                else:
-                    # for all other columns we combine the lists and make sure that it is not nested
-                    combined_data = row1[col].tolist() + row2[col].tolist()
-                    attribute_value = list(
-                        itertools.chain.from_iterable(
-                            itertools.repeat(x, 1)
-                            if (isinstance(x, str))
-                            or (isinstance(x, int))
-                            or (isinstance(x, float))
-                            else x
-                            for x in combined_data
-                        )
-                    )
-                    if (
-                        col == "type"
-                    ):  # if it is the type we make sure that it is a single string and store it as list of length 1
-                        attribute_value = ["+".join(attribute_value)]
-                    # drop all -999 values from attribute_value
-                    attribute_value = [
-                        x for x in attribute_value if x != -999 and x != -999.0
-                    ]
-                    if (
-                        len(attribute_value) == 1
-                    ):  # if there is only one value we take that value
-                        attribute_value = attribute_value[0]
-                    elif len(attribute_value) == 0:  # if there is no value we take -999
-                        attribute_value = -999
-                    else:
-                        pass
-                attribute_col_dict[col].append(attribute_value)
 
-            # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
-            for mechanism_name in mechanism_beta_dict.keys():
-                if mechanism_name == "Section":
-                    continue
-                else:
-                    for year in mechanism_beta_dict[mechanism_name].keys():
-                        mechanism_beta_dict[mechanism_name][year].append(
-                            np.maximum(
-                                row1[mechanism_name, year], row2[mechanism_name, year]
-                            )
-                        )
+    attribute_col_dict = _build_attribute_columns(attribute_col_names, partials, revetment_measures)
 
+    return _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
+
+
+def _get_years_and_mechanism_names(columns:pd.MultiIndex) -> tuple[list,list]:
+    # years are those columns of level 2 with a second index that is not ''
+    years = (
+        columns.get_level_values(1)[columns.get_level_values(1) != ""]
+        .unique()
+        .tolist()
+    )
+    # mechanisms are those columns of level 1 with a second index that is not ''
+    mechanism_names = (
+        columns.get_level_values(0)[columns.get_level_values(1) != ""]
+        .unique()
+        .tolist()
+    )
+    mechanism_names.remove("Section")
+    return (years, mechanism_names)
+
+def _convert_mechanism_beta_to_df(attribute_col_dict: dict, mechanism_beta_dict: dict, years: list[int]) -> pd.DataFrame:
     attribute_col_df = pd.DataFrame.from_dict(attribute_col_dict)
     attribute_col_df.columns = pd.MultiIndex.from_tuples(
         [(col, "") for col in attribute_col_df.columns]
@@ -290,7 +172,6 @@ def revetment_combinations(
         betas_in_year = _combined_measures.loc[
             :,
             (
-                _combined_measures.columns.get_level_values(0) != "Section",
                 _combined_measures.columns.get_level_values(1) == year,
             ),
         ]
@@ -301,6 +182,49 @@ def revetment_combinations(
 
     return _combined_measures
 
+def _build_attribute_columns(attribute_col_names: list[str], measuresA: pd.DataFrame, measuresB: pd.DataFrame) -> dict:
+    attribute_col_dict = {col: [] for col in attribute_col_names}
+    for col in attribute_col_names:
+        if col == "ID":
+            combined_IDs = list(itertools.product(measuresA.ID, measuresB.ID))
+            #for each tuple in combinations concatenate them to a string with "value1 + value2"
+            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_IDs))
+        elif col == "class":
+            attribute_col_dict[col] = len(measuresA) * len(measuresB) * ["combined"]
+        elif col == "type":
+            combined_types = list(itertools.product(measuresA.type, measuresB.type))
+            attribute_col_dict[col] = list(map(lambda x: f'{x[0]}+{x[1]}', combined_types))
+        else:
+            #combine the lists using itertools.product and make sure that it is not nested
+            combined_data = list(itertools.product(measuresA[col].tolist(), measuresB[col].tolist()))
+            #convert each entry in list to a flattened sublist to proved a list of the same length as the original list
+                #TODO check this with combined measures
+            attribute_value = [list(
+                itertools.chain.from_iterable(
+                    itertools.repeat(x, 1)
+                    if (isinstance(x, str))
+                    or (isinstance(x, int))
+                    or (isinstance(x, float))
+                    else x
+                    for x in value
+                )
+            ) for value in combined_data]
+            
+            for count, attribute in enumerate(attribute_value):
+                # drop all -999 values from attribute_value
+                attribute_value[count] = [
+                    x for x in attribute if x != -999 and x != -999.0
+                ]
+                if (
+                    len(attribute_value[count]) == 1
+                ):  # if there is only one value we take that value
+                    attribute_value[count] = attribute_value[count][0]
+                elif len(attribute_value[count]) == 0:  # if there is no value we take -999
+                    attribute_value[count] = -999
+                else:
+                    pass
+            attribute_col_dict[col] = attribute_value
+    return attribute_col_dict
 
 def make_traject_df(traject: DikeTraject, cols):
     # cols = cols[1:]
