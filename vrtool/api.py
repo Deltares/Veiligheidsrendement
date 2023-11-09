@@ -265,17 +265,11 @@ class ApiRunWorkflows:
         )
         _assessment_result = _safety_assessment.run()
 
-        # Export the results.
-        export_results_safety_assessment(_assessment_result)
-
         # Step 2. Run measures.
         _measures = RunMeasures(
             _assessment_result.vr_config, _assessment_result.selected_traject
         )
         _results_measures = _measures.run()
-        
-        # Export solutions to database
-        export_results_measures(_results_measures)
 
         _results_measures.ids_to_import = (
             get_all_measure_results_with_supported_investment_years(self.vrtool_config)
