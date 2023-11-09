@@ -94,9 +94,6 @@ class MeasureResultExporter(OrmExporterProtocol):
         )
 
     def export_dom(self, measure_result: MeasureResultProtocol) -> None:
-        logging.info(
-            "STARTED exporting measure id: {}".format(measure_result.measure_id)
-        )
         _orm_measure_result = MeasureResult.create(
             measure_per_section=self._measure_per_section,
         )
@@ -140,7 +137,3 @@ class MeasureResultExporter(OrmExporterProtocol):
         MeasureResultMechanism.insert_many(
             _measure_result_mechanisms_list_dict
         ).execute()
-
-        logging.info(
-            "FINISHED exporting measure id: {}".format(measure_result.measure_id)
-        )
