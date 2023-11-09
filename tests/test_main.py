@@ -1,5 +1,6 @@
 import json
 import shutil
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -45,15 +46,23 @@ class TestMain:
 
     @pytest.fixture
     def cli_config_fixture(self, request: pytest.FixtureRequest):
-        _test_case = request.param
-        _input_dir = test_data / _test_case
+        _input_dir = test_data.joinpath(request.param)
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
             shutil.rmtree(_output_dir)
 
+        # We need to create a copy of the database on the input directory.
+        _reference_db_file = _input_dir.joinpath("vrtool_input.db")
+        _test_db_name = "test_{}.db".format(
+            hashlib.shake_128(_input_dir.__bytes__()).hexdigest(4)
+        )
+        if _input_dir.joinpath(_test_db_name).exists():
+            _input_dir.joinpath(_test_db_name).unlink()
+        shutil.copy(_reference_db_file, _input_dir.joinpath(_test_db_name))
+
         json_config = {
             "input_directory": str(_input_dir),
-            "input_database_name": "vrtool_input.db",
+            "input_database_name": _test_db_name,
             "traject": "38-1",
             "output_directory": str(_output_dir),
             "excluded_mechanisms": [
@@ -72,22 +81,18 @@ class TestMain:
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "cli_config_fixture",
-        ["TestCase1_38-1_no_housing"],
+        ["TestCase3_38-1_small"],
         indirect=True,
     )
     def test_given_valid_input_when_run_full_then_succeeds(
         self, cli_config_fixture: tuple[Path, Path]
     ):
-        # TODO: Ideally we want a really small test.
+        # NOTE: Keep the test case as the fastest of all
+        # available in `api_acceptance_cases`.
         # 1. Define test data.
         _input_dir, _output_dir = cli_config_fixture
         assert _input_dir.exists()
         assert not _output_dir.exists()
-
-        # Ensure we have a clean results dir.
-        _results_dir = _input_dir / "results"
-        if _results_dir.exists():
-            shutil.rmtree(_results_dir)
 
         # 2. Run test.
         _run_result = CliRunner().invoke(
