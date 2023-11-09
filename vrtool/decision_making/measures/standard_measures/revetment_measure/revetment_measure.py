@@ -64,7 +64,9 @@ class RevetmentMeasure(MeasureProtocol):
         self, current_transition_level: float, crest_height: float
     ) -> list[float]:
         if current_transition_level > crest_height:
-            raise ValueError('Transition level is higher than crest height. This is not allowed.')
+            raise ValueError(
+                "Transition level is higher than crest height. This is not allowed."
+            )
         elif current_transition_level == crest_height:
             return [current_transition_level]
         else:
