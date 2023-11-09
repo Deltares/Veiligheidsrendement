@@ -215,11 +215,14 @@ class ApiRunWorkflows:
         """
         # Create optimization run
         _results_measures = import_results_measures(
-            self.vrtool_config, selected_measures_id_year)
-        _optimization_selected_measure_ids = create_optimization_run_for_selected_measures(
-            self.vrtool_config,
-            optimization_name,
-            _results_measures.ids_to_import,
+            self.vrtool_config, selected_measures_id_year
+        )
+        _optimization_selected_measure_ids = (
+            create_optimization_run_for_selected_measures(
+                self.vrtool_config,
+                optimization_name,
+                _results_measures.ids_to_import,
+            )
         )
 
         # Run Optimization.
@@ -281,7 +284,13 @@ class ApiRunWorkflows:
         clear_optimization_results(self.vrtool_config)
 
         # Create optimization run in the db
-        _optimization_selected_measure_ids = create_optimization_run_for_selected_measures(self.vrool_config, "Run full optimization",  _results_measures.ids_to_import)
+        _optimization_selected_measure_ids = (
+            create_optimization_run_for_selected_measures(
+                self.vrtool_config,
+                "Run full optimization",
+                _results_measures.ids_to_import,
+            )
+        )
 
         # Run optimization
         _optimization = RunOptimization(
