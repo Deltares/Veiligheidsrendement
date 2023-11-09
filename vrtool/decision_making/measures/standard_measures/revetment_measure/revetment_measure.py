@@ -63,13 +63,18 @@ class RevetmentMeasure(MeasureProtocol):
     def _get_transition_level_vector(
         self, current_transition_level: float, crest_height: float
     ) -> list[float]:
-        return list(
-            np.arange(
-                current_transition_level,
-                crest_height,
-                self.transition_level_increase_step,
+        if current_transition_level > crest_height:
+            raise Exception('Transition level is higher than crest height. This is not allowed.')
+        elif current_transition_level == crest_height:
+            return [current_transition_level]
+        else:
+            return list(
+                np.arange(
+                    current_transition_level,
+                    crest_height,
+                    self.transition_level_increase_step,
+                )
             )
-        )
 
     def _get_revetment(self, dike_section: DikeSection) -> RevetmentDataClass:
         _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
