@@ -56,13 +56,14 @@ class TestMain:
         _test_db_name = "test_{}.db".format(
             hashlib.shake_128(_input_dir.__bytes__()).hexdigest(4)
         )
+        _test_db_file = _input_dir.joinpath(_test_db_name)
         if _input_dir.joinpath(_test_db_name).exists():
             _input_dir.joinpath(_test_db_name).unlink()
-        shutil.copy(_reference_db_file, _input_dir.joinpath(_test_db_name))
+        shutil.copy(_reference_db_file, _test_db_file)
 
         json_config = {
             "input_directory": str(_input_dir),
-            "input_database_name": _test_db_name,
+            "input_database_name": _test_db_file.name,
             "traject": "38-1",
             "output_directory": str(_output_dir),
             "excluded_mechanisms": [
@@ -77,6 +78,7 @@ class TestMain:
         yield _input_dir, _output_dir
 
         json_file.unlink()
+        _test_db_file.unlink()
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
