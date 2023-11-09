@@ -26,7 +26,6 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
-from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -49,7 +48,6 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    create_basic_optimization_run,
     create_optimization_run_for_selected_measures,
     export_results_measures,
     export_results_optimization,
@@ -550,7 +548,7 @@ class TestOrmControllers:
         )
 
         # 3. Verify expectations.
-        assert isinstance(_return_value, ResultsMeasures)
+        assert isinstance(_return_value, dict)
         assert len(orm_models.OptimizationType.select()) == len(
             _results_measures.vr_config.design_methods
         )
@@ -568,58 +566,6 @@ class TestOrmControllers:
             )
             assert len(_optimization_run.optimization_run_measure_results) == len(
                 _measure_result_ids
-            )
-
-    @pytest.mark.parametrize(
-        "results_measures_with_mocked_data",
-        [
-            pytest.param(
-                MeasureWithMeasureResultCollectionMocked,
-                id="With Measure Result Collection object",
-            ),
-        ],
-        indirect=True,
-    )
-    def test_create_basic_optimization_run_selects_all_measures(
-        self,
-        results_measures_with_mocked_data: tuple[
-            MeasureResultTestInputData, ResultsMeasures
-        ],
-    ):
-        # 1. Define test data.
-        _measures_input_data, _results_measures = results_measures_with_mocked_data
-        assert isinstance(_measures_input_data, MeasureResultTestInputData)
-        assert isinstance(_results_measures, ResultsMeasures)
-        export_results_measures(_results_measures)
-        validate_measure_result_export(
-            _measures_input_data, _measures_input_data.parameters_to_validate
-        )
-
-        _optimization_run_name = "Test optimization name"
-
-        # 2. Run test.
-        create_basic_optimization_run(
-            _results_measures.vr_config, _optimization_run_name
-        )
-
-        # 3. Verify expectations.
-        assert len(orm_models.OptimizationType.select()) == len(
-            _results_measures.vr_config.design_methods
-        )
-        for _optimization_type in orm_models.OptimizationType:
-            assert isinstance(_optimization_type, orm_models.OptimizationType)
-
-            assert len(_optimization_type.optimization_runs) == 1
-            _optimization_run = _optimization_type.optimization_runs[0]
-
-            assert isinstance(_optimization_run, orm_models.OptimizationRun)
-            assert _optimization_run_name in _optimization_run.name
-            assert (
-                _optimization_run.discount_rate
-                == _results_measures.vr_config.discount_rate
-            )
-            assert len(_optimization_run.optimization_run_measure_results) == len(
-                orm_models.MeasureResult.select()
             )
 
     @pytest.mark.parametrize(
