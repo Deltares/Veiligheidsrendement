@@ -41,7 +41,7 @@ def measure_combinations(
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
             for mechanism_name in mechanism_beta_dict.keys():
                 for year in mechanism_beta_dict[mechanism_name].keys():
-                    if row1["type"].all() == "Vertical Geotextile":
+                    if (row1["type"] == "Vertical Geotextile").all():
                         vzg_idx = solutions.measure_table.loc[
                             solutions.measure_table["Name"]
                             == "Verticaal Zanddicht Geotextiel"
