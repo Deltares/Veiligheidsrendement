@@ -287,7 +287,7 @@ class ApiRunWorkflows:
         _optimization_selected_measure_ids = (
             create_optimization_run_for_selected_measures(
                 self.vrtool_config,
-                "Run full optimization",
+                "Basisberekening",
                 _results_measures.ids_to_import,
             )
         )
@@ -297,7 +297,7 @@ class ApiRunWorkflows:
             _results_measures, _optimization_selected_measure_ids
         )
         _optimization_result = _optimization.run()
-        export_results_optimization(_optimization_result, list(_optimization_selected_measure_ids.keys()))
+        export_results_optimization(_optimization_result, list(_optimization.run_ids))
 
         logging.info("Finished run full model.")
         return _optimization_result
