@@ -1,6 +1,6 @@
+import hashlib
 import json
 import shutil
-import hashlib
 from pathlib import Path
 
 import pytest

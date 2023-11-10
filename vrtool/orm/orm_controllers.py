@@ -336,6 +336,7 @@ def import_results_measures(
 
     return _results_measures
 
+
 def get_all_measure_results_with_supported_investment_years(
     valid_vrtool_config: VrtoolConfig,
 ) -> list[tuple[int, int]]:

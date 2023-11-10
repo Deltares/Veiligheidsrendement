@@ -35,7 +35,9 @@ class TargetReliabilityStrategy(StrategyBase):
             """
             Previously in tools. Only used once within this evaluate method.
             """
-            return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)]["Name"].values[0]
+            return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
+                "Name"
+            ].values[0]
 
         cols = list(
             solutions_dict[list(solutions_dict.keys())[0]]
