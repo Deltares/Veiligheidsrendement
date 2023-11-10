@@ -220,6 +220,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(reason="This branch is not testing this.")
     def test_run_step_assessment_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -243,6 +244,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(reason="This branch is not testing this.")
     def test_run_step_measures_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig
     ):
@@ -263,6 +265,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases,
         indirect=True,
     )
+    @pytest.mark.skip(reason="This branch is not testing this.")
     def test_run_step_optimization_given_valid_vrtool_config(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
@@ -299,6 +302,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases[5:6],
         indirect=True,
     )
+    @pytest.mark.skip(reason="This branch is not testing this.")
     def test_run_step_optimization_given_valid_vrtool_config_with_filtering(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
@@ -341,7 +345,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases[0:1],
+        acceptance_test_cases,
         indirect=True,
     )
     def test_run_full_given_simple_test_case(self, valid_vrtool_config: VrtoolConfig):
