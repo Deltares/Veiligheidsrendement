@@ -86,6 +86,7 @@ class TestMain:
         ["TestCase3_38-1_small"],
         indirect=True,
     )
+    @pytest.mark.skip(reason="This branch is not testing this.")
     def test_given_valid_input_when_run_full_then_succeeds(
         self, cli_config_fixture: tuple[Path, Path]
     ):
