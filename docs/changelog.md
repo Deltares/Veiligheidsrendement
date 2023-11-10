@@ -1,3 +1,23 @@
+## v0.1.1 (2023-11-10)
+
+### Fix
+
+- add export/import to run_all api
+- take proper run_ids as the previous one was a dict that is emptied in the process.
+- ensure that API works as expected. Results should also be exported
+- ensure that transition_level_vector always contains at least 1 value. Raise Exception if transition is above crest.
+- Removed unnecessary api / controllers call; streamlined the selection of measures when running a full model
+- error in modifying attribute values.
+- data handling in combination with revetments
+- use itertools to combine betas rather than accessing the Series a gazillion times
+- if mechanism not relevant, assume beta = 10
+- improve import errors for slope parts with an invalid tan_alpha
+- extend error handling for non-implemented top layer types
+- extend types for asphalt
+- update reference of large revetment test
+- update reference for revetment test
+- fix bug causing incorrect interpolations
+
 ## v0.1.0 (2023-10-23)
 
 ### Feat
