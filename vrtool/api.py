@@ -260,34 +260,21 @@ class ApiRunWorkflows:
 
         logging.info("Start run full model.")
 
-        # Step 1. Safety assessment.
-        clear_assessment_results(self.vrtool_config)
-        _safety_assessment = RunSafetyAssessment(
-            self.vrtool_config, self.get_dike_traject(self.vrtool_config)
-        )
-        _assessment_result = _safety_assessment.run()
-        export_results_safety_assessment(_assessment_result)
+        # Step 1 + 2. Both assessment and measure evaluation through run_measures.
+        self.run_measures()
 
-        # Step 2. Run measures.
-        clear_measure_results(self.vrtool_config)
-        _measures = RunMeasures(
-            _assessment_result.vr_config, _assessment_result.selected_traject
-        )
-        _results_measures = _measures.run()
+        # Step 3. Optimization.
 
-        export_results_measures(_results_measures)
-        
-        #we need to reimport the measures
+        # Clear any existing results
+        clear_optimization_results(self.vrtool_config)
+
+        # Import measure results and the ids that should be used for default runs
         _results_measures.ids_to_import = (
             get_all_measure_results_with_supported_investment_years(self.vrtool_config)
         )
         _results_measures = import_results_measures(
             self.vrtool_config, _results_measures.ids_to_import
         )
-
-
-        # Step 3. Optimization.
-        clear_optimization_results(self.vrtool_config)
 
         # Create optimization run in the db
         _optimization_selected_measure_ids = (
