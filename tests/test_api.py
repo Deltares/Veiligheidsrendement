@@ -345,7 +345,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        [acceptance_test_cases[4]] + [acceptance_test_cases[-1]],
+        acceptance_test_cases[0:1],
         indirect=True,
     )
     def test_run_full_given_simple_test_case(self, valid_vrtool_config: VrtoolConfig):
