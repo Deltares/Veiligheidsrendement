@@ -260,49 +260,15 @@ class ApiRunWorkflows:
 
         logging.info("Start run full model.")
 
-        # Step 1. Safety assessment.
-        clear_assessment_results(self.vrtool_config)
-        _safety_assessment = RunSafetyAssessment(
-            self.vrtool_config, self.get_dike_traject(self.vrtool_config)
-        )
-        _assessment_result = _safety_assessment.run()
-        export_results_safety_assessment(_assessment_result)
-
-        # Step 2. Run measures.
-        clear_measure_results(self.vrtool_config)
-        _measures = RunMeasures(
-            _assessment_result.vr_config, _assessment_result.selected_traject
-        )
-        _results_measures = _measures.run()
-
-        export_results_measures(_results_measures)
-
-        # we need to reimport the measures
-        _results_measures.ids_to_import = (
-            get_all_measure_results_with_supported_investment_years(self.vrtool_config)
-        )
-        _results_measures = import_results_measures(
-            self.vrtool_config, _results_measures.ids_to_import
-        )
+        # Step 1 + 2. Run assessment through running measures.
+        self.run_measures()
 
         # Step 3. Optimization.
         clear_optimization_results(self.vrtool_config)
-
-        # Create optimization run in the db
-        _optimization_selected_measure_ids = (
-            create_optimization_run_for_selected_measures(
-                self.vrtool_config,
-                "Basisberekening",
-                _results_measures.ids_to_import,
-            )
+        _ids_to_import = get_all_measure_results_with_supported_investment_years(
+            self.vrtool_config
         )
-
-        # Run optimization
-        _optimization = RunOptimization(
-            _results_measures, _optimization_selected_measure_ids
-        )
-        _optimization_result = _optimization.run()
-        export_results_optimization(_optimization_result, list(_optimization.run_ids))
+        _optimization_result = self.run_optimization("Basisberekening", _ids_to_import)
 
         logging.info("Finished run full model.")
         return _optimization_result
