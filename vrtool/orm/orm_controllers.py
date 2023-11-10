@@ -336,42 +336,6 @@ def import_results_measures(
 
     return _results_measures
 
-
-def get_optimization_selected_measure_ids(
-    vr_config: VrtoolConfig, results_measures: ResultsMeasures
-) -> dict[int, list[int]]:
-    """
-    Retrieves a dicitonary of optimization run id and its selected result measures' ids
-    which are also present in the property `ids_to_import` from the `ResultsMeasures`
-    object.
-
-    Args:
-        vr_config (VrtoolConfig): Configuration contaning database connection details.
-        results_measures (ResultsMeasures): Result of the "run measures" step containing
-            which are the "selected measure's ids" to consider in the optimization run.
-
-    Returns:
-        dict[int, list[int]]:
-            Dictionary of optimization run id - list of measure results ids.
-    """
-    _connected_db = open_database(vr_config.input_database_path)
-    _optimization_selected_measure_ids = {}
-    _results_measures_ids = list(set(list(zip(*results_measures.ids_to_import))[0]))
-    for _method_type in vr_config.design_methods:
-        _optimization_type = orm.OptimizationType.get_or_none(name=_method_type.upper())
-        if not _optimization_type:
-            logging.warning("No optimizations found of type {}.".format(_method_type))
-            continue
-        for _optimization_run in _optimization_type.optimization_runs:
-            _optimization_selected_measure_ids[_optimization_run.id] = [
-                selected_measure.id
-                for selected_measure in _optimization_run.optimization_run_measure_results
-                if selected_measure.measure_result.id in _results_measures_ids
-            ]
-    _connected_db.close()
-    return _optimization_selected_measure_ids
-
-
 def get_all_measure_results_with_supported_investment_years(
     valid_vrtool_config: VrtoolConfig,
 ) -> list[tuple[int, int]]:
@@ -420,7 +384,7 @@ def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
     optimization_name: str,
     selected_measure_result_ids: list[tuple[int, int]],
-) -> tuple[ResultsMeasures, dict[int, list[int]]]:
+) -> dict[int, list[int]]:
     """
     Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
     database entry and as many entries as needed in the `OptimizationSelectedMeasure`
@@ -434,10 +398,8 @@ def create_optimization_run_for_selected_measures(
         selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
 
     Returns:
-        tuple[ResultsMeasures, dict[int, list[int]]: Tuple with the `ResultsMeasure` object and a dictionary mapping each selected measure to an optimization run.
+        dict[int, list[int]: A dictionary mapping each selected measure to an optimization run.
     """
-
-    _results_measures = import_results_measures(vr_config, selected_measure_result_ids)
 
     _connected_db = open_database(vr_config.input_database_path)
     logging.info(
@@ -472,51 +434,7 @@ def create_optimization_run_for_selected_measures(
     )
     _connected_db.close()
 
-    return (_results_measures, _optimization_selected_measure_ids)
-
-
-def create_basic_optimization_run(
-    vr_config: VrtoolConfig, optimization_name: str
-) -> None:
-    """
-    Creates all the required entries to run a basic optimization run on ALL available measure results (`MeasureResult`).
-
-    Args:
-        vr_config (VrtoolConfig): Configuration to use for importing / exporting and running.
-        optimization_name (str): Name to give to the optimization run(s).
-    """
-    _connected_db = open_database(vr_config.input_database_path)
-    logging.info(
-        "Opened connection to create a basic optimization run {}.".format(
-            optimization_name
-        )
-    )
-    for _method_type in vr_config.design_methods:
-        _optimization_type, _ = orm.OptimizationType.get_or_create(
-            name=_method_type.upper()
-        )
-        _optimization_run = orm.OptimizationRun.create(
-            name=_normalize_optimization_run_name(optimization_name, _method_type),
-            discount_rate=vr_config.discount_rate,
-            optimization_type=_optimization_type,
-        )
-        orm.OptimizationSelectedMeasure.insert_many(
-            [
-                dict(
-                    optimization_run=_optimization_run,
-                    measure_result=_measure_result,
-                    investment_year=0,
-                )
-                for _measure_result in orm.MeasureResult.select()
-            ]
-        ).execute()
-
-    logging.info(
-        "Closed connection after creating basic optimization run {}.".format(
-            optimization_name
-        )
-    )
-    _connected_db.close()
+    return _optimization_selected_measure_ids
 
 
 def export_results_optimization(

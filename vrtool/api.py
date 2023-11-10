@@ -9,15 +9,14 @@ from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
-    create_basic_optimization_run,
     create_optimization_run_for_selected_measures,
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
     get_all_measure_results_with_supported_investment_years,
     get_dike_traject,
-    get_optimization_selected_measure_ids,
     get_optimization_step_with_lowest_total_cost,
+    import_results_measures,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
@@ -215,13 +214,15 @@ class ApiRunWorkflows:
             ResultsOptimization: Optimization results.
         """
         # Create optimization run
-        (
-            _results_measures,
-            _optimization_selected_measure_ids,
-        ) = create_optimization_run_for_selected_measures(
-            self.vrtool_config,
-            optimization_name,
-            selected_measures_id_year,
+        _results_measures = import_results_measures(
+            self.vrtool_config, selected_measures_id_year
+        )
+        _optimization_selected_measure_ids = (
+            create_optimization_run_for_selected_measures(
+                self.vrtool_config,
+                optimization_name,
+                _results_measures.ids_to_import,
+            )
         )
 
         # Run Optimization.
@@ -260,36 +261,43 @@ class ApiRunWorkflows:
         logging.info("Start run full model.")
 
         # Step 1. Safety assessment.
+        clear_assessment_results(self.vrtool_config)
         _safety_assessment = RunSafetyAssessment(
             self.vrtool_config, self.get_dike_traject(self.vrtool_config)
         )
         _assessment_result = _safety_assessment.run()
+        export_results_safety_assessment(_assessment_result)
 
         # Step 2. Run measures.
+        clear_measure_results(self.vrtool_config)
         _measures = RunMeasures(
             _assessment_result.vr_config, _assessment_result.selected_traject
         )
         _results_measures = _measures.run()
 
+        export_results_measures(_results_measures)
         _results_measures.ids_to_import = (
             get_all_measure_results_with_supported_investment_years(self.vrtool_config)
-        )
-
-        _optimization_selected_measure_ids = get_optimization_selected_measure_ids(
-            self.vrtool_config, _results_measures
         )
 
         # Step 3. Optimization.
         clear_optimization_results(self.vrtool_config)
 
         # Create optimization run in the db
-        create_basic_optimization_run(self.vrtool_config, "Run full optimization")
+        _optimization_selected_measure_ids = (
+            create_optimization_run_for_selected_measures(
+                self.vrtool_config,
+                "Basisberekening",
+                _results_measures.ids_to_import,
+            )
+        )
 
         # Run optimization
         _optimization = RunOptimization(
             _results_measures, _optimization_selected_measure_ids
         )
         _optimization_result = _optimization.run()
+        export_results_optimization(_optimization_result, list(_optimization.run_ids))
 
         logging.info("Finished run full model.")
         return _optimization_result
