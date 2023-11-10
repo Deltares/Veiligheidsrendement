@@ -276,9 +276,15 @@ class ApiRunWorkflows:
         _results_measures = _measures.run()
 
         export_results_measures(_results_measures)
+        
+        #we need to reimport the measures
         _results_measures.ids_to_import = (
             get_all_measure_results_with_supported_investment_years(self.vrtool_config)
         )
+        _results_measures = import_results_measures(
+            self.vrtool_config, _results_measures.ids_to_import
+        )
+
 
         # Step 3. Optimization.
         clear_optimization_results(self.vrtool_config)
