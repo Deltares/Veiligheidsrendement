@@ -98,7 +98,7 @@ class GreedyStrategy(StrategyBase):
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk] + 1]
                     == 999
                 ):
-                    logging.error(
+                    logging.info(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(
                             run_number
                         )
@@ -107,7 +107,7 @@ class GreedyStrategy(StrategyBase):
                 else:
                     index_counter[ind_highest_risk] += 1
             else:
-                logging.error(
+                logging.info(
                     "Bundle quit after {} steps, weakest section has no more available measures".format(
                         run_number
                     )
