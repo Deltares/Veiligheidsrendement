@@ -360,9 +360,6 @@ class StrategyBase:
             combinedmeasures = self._step1combine(solutions_dict, section, splitparams)
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
-            if self.__class__.__name__ == "TargetReliabilityStrategy":
-                _min_year = min(StrategyData["year"])
-                StrategyData = StrategyData.loc[StrategyData["year"] == _min_year]
 
             StrategyData = pd.concat((StrategyData, combinedmeasures))
             if filtering == "on":

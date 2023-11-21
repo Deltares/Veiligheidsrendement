@@ -336,7 +336,7 @@ class TestApiRunWorkflowsAcceptance:
             assert len(OptimizationStepResultMechanism.select()) == 112
             assert len(OptimizationStep.select()) == 4
 
-            assert stepResult.beta == pytest.approx(2.6018124)
+            assert stepResult.beta == pytest.approx(2.600553)
             assert stepResult.lcc == pytest.approx(8612354)
 
     @pytest.mark.parametrize(

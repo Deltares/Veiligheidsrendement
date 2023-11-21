@@ -43,7 +43,10 @@ class RunOptimization(VrToolRunProtocol):
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
         # Initialize a GreedyStrategy:
-        _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
+        _greedy_optimization = GreedyStrategy(
+            design_method, self.vr_config
+            )
+        
         _results_dir = self._get_output_dir()
         _greedy_optimization.set_investment_years(
             self.selected_traject,
@@ -124,6 +127,10 @@ class RunOptimization(VrToolRunProtocol):
             design_method, self.vr_config
         )
         _results_dir = self._get_output_dir()
+        
+        #filter those measures that are not available at the first available time step
+        self._filter_measures_first_time()
+        
         _target_reliability_based.set_investment_years(
             self.selected_traject,
             self._ids_to_import,
@@ -221,3 +228,22 @@ class RunOptimization(VrToolRunProtocol):
             )
             strategy_case.TakenMeasures.at[i, "name"] = name
         return strategy_case
+
+    def _filter_measures_first_time(self):
+        '''Filter measures that are not in the first time step that is available for the measure as these should not be included for target reliability strategy'''
+        min_dict = {} #dict to store measure for ids_to_import
+        count_dict = {} #dict to store counter for selected_measure_ids
+        run_id = list(self._selected_measure_ids.keys())[0]
+        for counter, (id, value) in enumerate(self._ids_to_import):
+            if (id not in min_dict) or (value < min_dict[id]):
+                min_dict[id] = value
+                count_dict[id] = counter
+
+        self._ids_to_import = [(id, value) for id, value in min_dict.items()]
+        self._selected_measure_ids[run_id] = [self._selected_measure_ids[run_id][index] for index in count_dict.values()]
+
+        #filter solutions_dict
+        for section in self._solutions_dict.keys():
+            _min_year = min(self._solutions_dict[section].MeasureData["year"])
+            self._solutions_dict[section].MeasureData = self._solutions_dict[section].MeasureData.loc[self._solutions_dict[section].MeasureData["year"] == _min_year].reset_index(drop=True)
+
