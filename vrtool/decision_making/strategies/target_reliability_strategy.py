@@ -247,4 +247,3 @@ class TargetReliabilityStrategy(StrategyBase):
             _probability_steps.append(copy.deepcopy(_traject_probability))
         self.TakenMeasures = _taken_measures
         self.Probabilities = _probability_steps
-        
