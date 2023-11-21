@@ -235,7 +235,7 @@ class RunOptimization(VrToolRunProtocol):
         count_dict = {} #dict to store counter for selected_measure_ids
         run_id = list(self._selected_measure_ids.keys())[0]
         for counter, (id, value) in enumerate(self._ids_to_import):
-            if id not in min_dict or value < min_dict[id]:
+            if (id not in min_dict) or (value < min_dict[id]):
                 min_dict[id] = value
                 count_dict[id] = counter
 
