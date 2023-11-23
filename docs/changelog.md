@@ -1,3 +1,9 @@
+## v0.1.2 (2023-11-23)
+
+### Fix
+
+- change to removal of measures for TargetReliabilityStrategy to ensure proper handling of indices
+
 ## v0.1.1 (2023-11-10)
 
 ### Fix
