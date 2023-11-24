@@ -424,7 +424,7 @@ class StrategyBase:
                 ].loc[measures_per_class[measure_class]["year"] == _min_year]
 
         if "combinable" in measures_per_class and "partial" in measures_per_class:
-            combinedmeasures = measure_combinations(
+            new_indices, combinedmeasures = measure_combinations(
                 measures_per_class["combinable"],
                 measures_per_class["partial"],
                 solutions_dict[section.name],
@@ -439,22 +439,28 @@ class StrategyBase:
             return measures_per_class["revetment"]
 
         if "revetment" in measures_per_class:
-            combinedmeasures_with_revetment = revetment_combinations(
+            new_indices, combinedmeasures_with_revetment = revetment_combinations(
                 combinedmeasures,
                 measures_per_class["revetment"],
                 self.indexCombined2single[section.name],
             )
+            self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices
             # combine solutions_dict[section.name].MeasureData with revetments
-            base_measures_with_revetment = revetment_combinations(
+            new_indices, base_measures_with_revetment = revetment_combinations(
                 solutions_dict[section.name].MeasureData.loc[
                     solutions_dict[section.name].MeasureData["class"] != "revetment"
                 ],
                 measures_per_class["revetment"],
                 self.indexCombined2single[section.name],
             )
+            
+            self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices
+            
             combinedmeasures = pd.concat(
                 [base_measures_with_revetment, combinedmeasures_with_revetment]
             )
+        else:
+            self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices
         # make sure combinable, mechanism and year are in the MeasureData dataframe
         # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
         # if there is a measureid that is not known yet, add it to the measure table
