@@ -82,7 +82,6 @@ def measure_combinations(
 def revetment_combinations(
     partials: pd.DataFrame,
     revetment_measures: pd.DataFrame,
-    indexCombined2single: list[int],
 ) -> pd.DataFrame:
     """
     Combines the revetment measures based on the input arguments.
@@ -129,9 +128,8 @@ def revetment_combinations(
         attribute_col_names, partials, revetment_measures
     )
     # indices
-    partial_index = [indexCombined2single[i] for i in partials.index]
-    revetment_index = [indexCombined2single[i] for i in revetment_measures.index]
-    new_indices = list(map(list, itertools.product(partial_index, revetment_index)))
+    new_indices = list(map(list, itertools.product(list(partials_dict[('combined_db_index', '')].values()), 
+                                                   list(revetment_measures_dict[('combined_db_index', '')].values()))))
     for count, new_index in enumerate(new_indices):
         #flatten new_index to a list of int, independent of the number of levels and put back
         new_indices[count] = list(itertools.chain.from_iterable(new_index))

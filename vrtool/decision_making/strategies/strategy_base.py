@@ -404,6 +404,10 @@ class StrategyBase:
         Returns:
             pd.DataFrame: An object that contains all information of the combined measures.
         """
+        # add self.indexCombined2single[section.name] as column to solutions_dict[section.name].MeasureData
+        solutions_dict[section.name].MeasureData["combined_db_index"] = self.indexCombined2single[
+            section.name
+        ]
         # split different measure types:
         available_measure_classes = (
             solutions_dict[section.name].MeasureData["class"].unique().tolist()
@@ -423,45 +427,51 @@ class StrategyBase:
                     measure_class
                 ].loc[measures_per_class[measure_class]["year"] == _min_year]
 
-        new_indices = []
+        combinedmeasures_indices = []
         if "combinable" in measures_per_class and "partial" in measures_per_class:
-            new_indices, combinedmeasures = measure_combinations(
+            combinedmeasures_indices, combinedmeasures = measure_combinations(
                 measures_per_class["combinable"],
                 measures_per_class["partial"],
                 solutions_dict[section.name],
                 self.indexCombined2single[section.name],
             )
         elif "combinable" in measures_per_class:
-            combinedmeasures = measures_per_class["combinable"]
+            combinedmeasures = [] #This might cause a crash. in some rare cases
         elif "partial" in measures_per_class:
-            combinedmeasures = measures_per_class["partial"]
+            combinedmeasures = []        
         else:
             # apparently only revetments, so return them without any combining
             return measures_per_class["revetment"]
 
         if "revetment" in measures_per_class:
-            new_indices, combinedmeasures_with_revetment = revetment_combinations(
-                combinedmeasures,
-                measures_per_class["revetment"],
-                self.indexCombined2single[section.name],
-            )
-            self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices
-            # combine solutions_dict[section.name].MeasureData with revetments
-            new_indices, base_measures_with_revetment = revetment_combinations(
+            # combine base measures solutions_dict[section.name].MeasureData with revetments
+            new_indices1, base_measures_with_revetment = revetment_combinations(
                 solutions_dict[section.name].MeasureData.loc[
                     solutions_dict[section.name].MeasureData["class"] != "revetment"
                 ],
                 measures_per_class["revetment"],
-                self.indexCombined2single[section.name],
             )
-            
-            self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices
-            
-            combinedmeasures = pd.concat(
+
+            if len(combinedmeasures_indices) > 0:
+                # combine combined measures with revetments
+                new_indices2, combinedmeasures_with_revetment = revetment_combinations(
+                    combinedmeasures,
+                    measures_per_class["revetment"],
+                    # self.indexCombined2single[section.name],
+                )
+                
+                self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices1 + new_indices2
+
+                combinedmeasures = pd.concat(
                 [base_measures_with_revetment, combinedmeasures_with_revetment]
             )
+            else:
+                combinedmeasures = base_measures_with_revetment
+
+                self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices1
+            
         else:
-            self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + new_indices
+            self.indexCombined2single[section.name] = self.indexCombined2single[section.name] + combinedmeasures_indices
         # make sure combinable, mechanism and year are in the MeasureData dataframe
         # make a strategies dataframe where all combinable measures are combined with partial measures for each timestep
         # if there is a measureid that is not known yet, add it to the measure table
