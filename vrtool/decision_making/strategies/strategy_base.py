@@ -423,6 +423,7 @@ class StrategyBase:
                     measure_class
                 ].loc[measures_per_class[measure_class]["year"] == _min_year]
 
+        new_indices = []
         if "combinable" in measures_per_class and "partial" in measures_per_class:
             new_indices, combinedmeasures = measure_combinations(
                 measures_per_class["combinable"],
