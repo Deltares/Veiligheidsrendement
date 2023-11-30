@@ -360,8 +360,8 @@ class StrategyBase:
             combinedmeasures = self._step1combine(solutions_dict, section, splitparams)
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
-
-            StrategyData = pd.concat((StrategyData, combinedmeasures))
+            if combinedmeasures is not None:
+                StrategyData = pd.concat((StrategyData, combinedmeasures))
             if filtering == "on":
                 StrategyData = copy.deepcopy(StrategyData)
                 StrategyData = StrategyData.reset_index(drop=True)
@@ -436,12 +436,12 @@ class StrategyBase:
                 self.indexCombined2single[section.name],
             )
         elif "combinable" in measures_per_class:
-            combinedmeasures = [] #This might cause a crash. in some rare cases
+            combinedmeasures = [] 
         elif "partial" in measures_per_class:
             combinedmeasures = []        
         else:
-            # apparently only revetments, so return them without any combining
-            return measures_per_class["revetment"]
+            # apparently only revetments, so return an empty list that can be ignored further
+            return None
 
         if "revetment" in measures_per_class:
             # combine base measures solutions_dict[section.name].MeasureData with revetments
