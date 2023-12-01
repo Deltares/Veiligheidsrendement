@@ -841,25 +841,33 @@ class GreedyStrategy(StrategyBase):
                 self.options[traject.sections[i[0]].name]["ID"] == ID[-1]
             ]
             if len(option_df) > 1:
-                option_df = option_df.loc[
-                    self.options[traject.sections[i[0]].name]["ID"] == ID[-1]].loc[
+                option_df = (
+                    option_df.loc[
+                        self.options[traject.sections[i[0]].name]["ID"] == ID[-1]
+                    ]
+                    .loc[
                         self.options[traject.sections[i[0]].name]["dcrest"]
                         == dcrest[-1]
-                    ].loc[
+                    ]
+                    .loc[
                         self.options[traject.sections[i[0]].name]["beta_target"]
                         == beta_target[-1]
-                    ].loc[
+                    ]
+                    .loc[
                         self.options[traject.sections[i[0]].name]["transition_level"]
                         == transition_level[-1]
-                    ].loc[
+                    ]
+                    .loc[
                         self.options[traject.sections[i[0]].name]["dberm"] == dberm[-1]
-                    ].loc[
+                    ]
+                    .loc[
                         self.options[traject.sections[i[0]].name]["yes/no"]
                         == yes_no[-1]
                     ]
+                )
                 if len(option_df) > 1:
-                    #get index of right year
-                    option_i = list(option_df['year'].values).index(year[-1])
+                    # get index of right year
+                    option_i = list(option_df["year"].values).index(year[-1])
                     option_index.append(option_df.iloc[option_i].name)
                 else:
                     option_index.append(option_df.index.values[0])

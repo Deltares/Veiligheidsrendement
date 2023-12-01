@@ -34,9 +34,7 @@ def measure_combinations(
     for i, row1 in partials.iterrows():
         # combine with all combinables
         for j, row2 in combinables.iterrows():
-            new_indices.append(
-                [indexCombined2single[i][0], indexCombined2single[j][0]]
-            )
+            new_indices.append([indexCombined2single[i][0], indexCombined2single[j][0]])
 
             # then we fill the mechanism_beta_dict we ignore Section as mechanism, we do that as a last step on the dataframe
             for mechanism_name in mechanism_beta_dict.keys():
@@ -76,7 +74,9 @@ def measure_combinations(
         attribute_col_names, partials, combinables
     )
 
-    return new_indices, _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
+    return new_indices, _convert_mechanism_beta_to_df(
+        attribute_col_dict, mechanism_beta_dict, years
+    )
 
 
 def revetment_combinations(
@@ -128,10 +128,17 @@ def revetment_combinations(
         attribute_col_names, partials, revetment_measures
     )
     # indices
-    new_indices = list(map(list, itertools.product(list(partials_dict[('combined_db_index', '')].values()), 
-                                                   list(revetment_measures_dict[('combined_db_index', '')].values()))))
+    new_indices = list(
+        map(
+            list,
+            itertools.product(
+                list(partials_dict[("combined_db_index", "")].values()),
+                list(revetment_measures_dict[("combined_db_index", "")].values()),
+            ),
+        )
+    )
     for count, new_index in enumerate(new_indices):
-        #flatten new_index to a list of int, independent of the number of levels and put back
+        # flatten new_index to a list of int, independent of the number of levels and put back
         new_indices[count] = list(itertools.chain.from_iterable(new_index))
     # # TODO dont store as TUPLES
     # # loop over partials
@@ -145,9 +152,9 @@ def revetment_combinations(
     #             )  # partial can be combined (TODO name partial is not correct)
     #         indexCombined2single.append(newIndex)
 
-
-
-    return new_indices, _convert_mechanism_beta_to_df(attribute_col_dict, mechanism_beta_dict, years)
+    return new_indices, _convert_mechanism_beta_to_df(
+        attribute_col_dict, mechanism_beta_dict, years
+    )
 
 
 def _get_years_and_mechanism_names(columns: pd.MultiIndex) -> tuple[list, list]:
