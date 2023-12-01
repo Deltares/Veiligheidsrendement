@@ -1,3 +1,12 @@
+## v0.1.3 (2023-12-01)
+
+### Fix
+
+- tweak database for stix test to include soil reinforcement in 2025
+- remove incorrect worrying comment and fix handling of rare combinations of types of measures
+- fixes to combination
+- ensure proper ordering. Some refactoring to make steps a bit more explicit.
+
 ## v0.1.2 (2023-11-23)
 
 ### Fix
