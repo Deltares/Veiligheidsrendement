@@ -17,6 +17,8 @@ from vrtool.orm.orm_controllers import (
     get_dike_traject,
     get_optimization_step_with_lowest_total_cost,
     import_results_measures,
+    modify_kunstwerkmaatregel,
+    modify_kunstwerk_initial_safety
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
@@ -198,6 +200,51 @@ class ApiRunWorkflows:
         # Export solutions to database
         export_results_measures(_measures_result)
         return _measures_result
+
+
+    
+    def run_optimization_with_structure(
+        self, optimization_name: str, selected_measures_id_year: list[tuple[int, int]],
+        structure_name: str, file_path: Path
+    ) -> ResultsOptimization:
+        """
+        Runs an optimization for the given measure results ID's.
+
+        Args:
+            optimization_name (str): Name given to an optimization run entry.
+            selected_measures_id_year (list[tuple[int, int]]):
+                Selected set of measures' results ids with investment year to optimize.
+
+        Returns:
+            ResultsOptimization: Optimization results.
+        """
+        # Create optimization run
+        _results_measures = import_results_measures(
+            self.vrtool_config, selected_measures_id_year
+        )
+        #modify base safety of structure
+        _results_measures = modify_kunstwerk_initial_safety(_results_measures, structure_name, file_path)
+        #modify measures of structure
+        _results_measures = modify_kunstwerkmaatregel(_results_measures, structure_name, file_path)
+
+        _optimization_selected_measure_ids = (
+            create_optimization_run_for_selected_measures(
+                self.vrtool_config,
+                optimization_name,
+                _results_measures.ids_to_import,
+            )
+        )
+
+        # Run Optimization.
+        _optimization = RunOptimization(
+            _results_measures, _optimization_selected_measure_ids
+        )
+        _optimization_result = _optimization.run()
+
+        # Export results
+        export_results_optimization(_optimization_result, _optimization.run_ids)
+        return _optimization_result
+    
 
     def run_optimization(
         self, optimization_name: str, selected_measures_id_year: list[tuple[int, int]]

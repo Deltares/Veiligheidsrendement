@@ -6,12 +6,15 @@ from typing import Iterator
 import pandas as pd
 from peewee import SqliteDatabase
 
+import numpy as np
+
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import calc_life_cycle_risks
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
@@ -335,7 +338,54 @@ def import_results_measures(
     _results_measures.ids_to_import = results_ids_to_import
 
     return _results_measures
+def modify_kunstwerk_initial_safety(results_measures: ResultsMeasures, structure_name: str, file_path: Path) -> ResultsMeasures:
+    #load from file path
+    kw_safety = pd.read_excel(file_path, sheet_name='HuidigeVeiligheid',index_col=0)
 
+    #modify the section_reliability dataframe
+    for section in results_measures.selected_traject.sections:
+        if section.name == structure_name:
+            section.section_reliability.SectionReliability.drop('Section',axis=0,inplace=True)
+            section.section_reliability.SectionReliability.loc['OVERFLOW'] = kw_safety.loc['HTKW','beta']
+            section.section_reliability.SectionReliability.loc['PIPING'] = kw_safety.loc['BSKW','beta']
+            kw_combined = pf_to_beta(1-(1-beta_to_pf(kw_safety.loc['STKWp','beta']))*(1-beta_to_pf(kw_safety.loc['PKW','beta'])))
+            section.section_reliability.SectionReliability.loc['STABILITY_INNER'] = kw_combined
+
+    return results_measures
+def modify_kunstwerkmaatregel(results_measures: ResultsMeasures, structure_name: str, file_path: Path) -> ResultsMeasures:
+    #load from file path
+    kw_measures = pd.read_excel(file_path, sheet_name='Maatregelen')
+
+    #make new measure data:
+    new_measures = pd.DataFrame(columns = results_measures.solutions_dict[structure_name].MeasureData.columns)
+
+    #add new measures:
+    new_measures['ID'] = list(range(90, 90+len(kw_measures)))
+    new_measures['type'] = kw_measures['naam']
+    new_measures['class'] = 'full'
+    new_measures['year'] = 0
+    new_measures['yes/no'] = -999
+    new_measures['dcrest'] = -999
+    new_measures['dberm'] = -999   
+    new_measures['beta_target'] = -999   
+    new_measures['transition_level'] = -999   
+    new_measures['cost'] = kw_measures['kosten']
+    new_measures['OVERFLOW'] = np.tile(list(kw_measures['HTKW']), (7,1)).T
+    new_measures['PIPING'] = np.tile(list(kw_measures['BSKW']), (7,1)).T
+    #combine betas for PKW and STKWp:
+    pf_pkw = beta_to_pf(kw_measures['PKW'])
+    pf_stkwp = beta_to_pf(kw_measures['STKWp'])
+    #combine:
+    pf_combined = 1-np.multiply(1-pf_pkw, 1-pf_stkwp)
+    new_measures['STABILITY_INNER'] = np.tile(pf_to_beta(pf_combined),(7,1)).T
+    pf_section = 1-np.multiply(1-pf_combined, 1-beta_to_pf(kw_measures['BSKW']), 1-beta_to_pf(kw_measures['HTKW']))
+    new_measures['Section'] = np.tile(pf_to_beta(pf_section),(7,1)).T
+    #put back in ResultsMeasures:
+    results_measures.solutions_dict[structure_name].MeasureData = new_measures
+
+    #add IDs to measure_table
+    pass
+    return results_measures
 
 def get_all_measure_results_with_supported_investment_years(
     valid_vrtool_config: VrtoolConfig,
