@@ -384,7 +384,10 @@ def modify_kunstwerkmaatregel(results_measures: ResultsMeasures, structure_name:
     results_measures.solutions_dict[structure_name].MeasureData = new_measures
 
     #add IDs to measure_table
-    pass
+    new_table = pd.DataFrame(columns = results_measures.solutions_dict[structure_name].measure_table.columns)
+    new_table['ID'] = list(range(90, 90+len(kw_measures)))
+    new_table['Name'] = kw_measures['naam']
+    results_measures.solutions_dict[structure_name].measure_table = new_table
     return results_measures
 
 def get_all_measure_results_with_supported_investment_years(
