@@ -14,9 +14,11 @@ class MeasureTypeEnum(VrtoolEnum):
     # TODO: delete this method after rationalizing the testdata (VRTOOL-296)
     def get_old_name(self) -> str:
         """Get name according to old naming convention"""
-        if self.name.find("REINFORCEMENT") > 0:  # Space separated
+        if self.name.find("REINFORCEMENT") > 0:
+            # Capitalize first char of string
             return self.name.lower().replace("_", " ").capitalize()
-        else:  # Space Separated
+        else:
+            # Capitalize first char of each word
             return self.name.lower().replace("_", " ").title()
 
     @classmethod
