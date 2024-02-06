@@ -3,7 +3,7 @@ import pytest
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
-class TestMechanismEnums:
+class TestMechanismEnum:
     @pytest.mark.parametrize(
         "enum_name",
         [
