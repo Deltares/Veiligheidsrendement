@@ -1,6 +1,6 @@
 import pytest
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
 class TestMechanismEnums:
@@ -18,10 +18,10 @@ class TestMechanismEnums:
         # 1. Setup
 
         # 2. Call
-        _mech = MechanismEnum.get_enum(enum_name)
+        _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 3. Assert
-        assert _mech.name == "STABILITY_INNER"
+        assert _mechanism.name == "STABILITY_INNER"
 
     @pytest.mark.parametrize(
         "enum_name",
@@ -34,10 +34,10 @@ class TestMechanismEnums:
         # 1. Setup
 
         # 2. Call
-        _mech = MechanismEnum.get_enum(enum_name)
+        _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 3. Assert
-        assert _mech.name == "INVALID"
+        assert _mechanism.name == "INVALID"
 
     @pytest.mark.parametrize(
         "enum_name, expected",
@@ -51,7 +51,7 @@ class TestMechanismEnums:
         _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 2. Call
-        _mech_name = _mechanism.get_old_name()
+        _mechanism_name = _mechanism.get_old_name()
 
         # 3. Assert
-        assert _mech_name == expected
+        assert _mechanism_name == expected

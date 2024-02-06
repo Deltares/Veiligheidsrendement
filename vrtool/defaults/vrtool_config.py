@@ -7,7 +7,7 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults import default_unit_costs_csv
 
 

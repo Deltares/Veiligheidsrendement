@@ -7,7 +7,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data, test_externals
 from tests.orm import empty_db_fixture
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,

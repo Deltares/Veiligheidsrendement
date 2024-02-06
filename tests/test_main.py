@@ -8,7 +8,7 @@ from click.testing import CliRunner
 
 from tests import test_data, test_results
 from vrtool import __main__
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
 class TestMain:

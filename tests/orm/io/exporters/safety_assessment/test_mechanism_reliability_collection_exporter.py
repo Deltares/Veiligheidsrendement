@@ -5,7 +5,7 @@ from tests.orm.io.exporters import (
     create_required_mechanism_per_section,
     section_reliability_with_values,
 )
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.safety_assessment.mechanism_reliability_collection_exporter import (

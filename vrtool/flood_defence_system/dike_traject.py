@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-import copy
-import logging
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta

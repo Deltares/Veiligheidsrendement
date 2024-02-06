@@ -7,7 +7,7 @@ from typing import Union
 import pytest
 
 from tests import test_data, test_results
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
 
 

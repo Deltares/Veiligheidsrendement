@@ -10,7 +10,6 @@ from peewee import SqliteDatabase
 import vrtool.orm.models as orm_models
 from tests import test_data, test_results
 from tests.orm import (
-    empty_db_fixture,
     get_basic_combinable_type,
     get_basic_dike_traject_info,
     get_basic_measure_type,
@@ -24,7 +23,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     validate_measure_result_export,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase

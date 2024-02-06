@@ -10,7 +10,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 import vrtool.orm.models as orm_models
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (

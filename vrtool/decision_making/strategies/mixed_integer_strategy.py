@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 
 
