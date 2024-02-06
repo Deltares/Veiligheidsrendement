@@ -20,29 +20,3 @@ class MeasureTypeEnum(VrtoolEnum):
         else:
             # Capitalize first char of each word
             return self.name.lower().replace("_", " ").title()
-
-    @classmethod
-    def get_enum(cls, enum_name: str) -> VrtoolEnum:
-        """Return matching enum for name"""
-
-        def _normalize_name(in_name: str) -> str:
-            """Convert string to match naming convention (UPPER SNAKE)"""
-            if not in_name:
-                return cls.INVALID.name
-            return in_name.strip().replace(" ", "_").upper()
-
-        try:
-            # Default: enum name exists
-            return cls[enum_name]
-        except KeyError:
-            # Fallback:
-            # -> enum name needs to be normalized first
-            # -> if still no match: INVALID is returned
-            return next(
-                (
-                    _enum
-                    for _enum in list(cls)
-                    if _normalize_name(enum_name) == _enum.name
-                ),
-                cls.INVALID,
-            )
