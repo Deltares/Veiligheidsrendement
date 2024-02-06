@@ -1,7 +1,7 @@
 import pandas as pd
 
 from tests.orm import get_basic_measure_per_section, get_domain_basic_dike_section
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,

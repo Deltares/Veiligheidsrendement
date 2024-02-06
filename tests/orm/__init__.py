@@ -3,7 +3,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.computation_scenario import ComputationScenario

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 import vrtool.probabilistic_tools.probabilistic_functions as pb_functions
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
