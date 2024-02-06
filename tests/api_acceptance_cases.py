@@ -20,10 +20,10 @@ from vrtool.orm.orm_controllers import open_database
 
 vrtool_db_default_name = "vrtool_input.db"
 
-def _get_database_reference_path(vrtool_config: VrtoolConfig) -> Path:
+def _get_database_reference_path(vrtool_config: VrtoolConfig, suffix_name: str = "") -> Path:
     # Get database paths.
     _reference_database_path = vrtool_config.input_database_path.with_name(
-        vrtool_db_default_name
+        f"vrtool_input{suffix_name}.db"
     )
     assert (
         _reference_database_path != vrtool_config.input_database_path

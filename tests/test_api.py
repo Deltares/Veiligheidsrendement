@@ -13,6 +13,7 @@ from tests.api_acceptance_cases import (
     RunStepAssessmentValidator,
     RunStepMeasuresValidator,
     RunStepOptimizationValidator,
+    _get_database_reference_path,
     vrtool_db_default_name,
 )
 from vrtool.api import (
@@ -331,35 +332,37 @@ class TestApiRunWorkflowsAcceptance:
         # )
 
         # 3. Verify expectations.
-        def get_opt_run() -> list[OptimizationRun]:
+        def get_opt_run(database_path: Path) -> list[OptimizationRun]:
             # IMPORTANT! Instantiate to list (or else), otherwise
             # the data will not be kept in memory, just its query!
             opt_run_list = []
-            for opt_run in list(OptimizationRun.select(
-                OptimizationRun,
-                OptimizationType,
-                OptimizationSelectedMeasure,
-                OptimizationStep,
-                OptimizationStepResultSection,
-                OptimizationStepResultMechanism,
-            )
-            .join_from(OptimizationRun, OptimizationType)
-            .join_from(OptimizationRun, OptimizationSelectedMeasure)
-            .join_from(OptimizationSelectedMeasure, OptimizationStep)
-            .join_from(OptimizationStep, OptimizationStepResultSection)
-            .join_from(OptimizationStep, OptimizationStepResultMechanism)
-            .group_by(OptimizationRun)):
-                opt_run.optimization_run_measure_results = list(opt_run.optimization_run_measure_results)                
-                for opt_selected_measure in opt_run.optimization_run_measure_results:
-                    opt_selected_measure.optimization_steps = list(opt_selected_measure.optimization_steps)
-                    for opt_step in opt_selected_measure.optimization_steps:
-                        opt_step.optimization_step_results_mechanism = list(opt_step.optimization_step_results_mechanism)
-                        opt_step.optimization_step_results_section = list(opt_step.optimization_step_results_section)
-                opt_run_list.append(opt_run)
+            with open_database(database_path):
+                for opt_run in list(OptimizationRun.select(
+                    OptimizationRun,
+                    OptimizationType,
+                    OptimizationSelectedMeasure,
+                    OptimizationStep,
+                    OptimizationStepResultSection,
+                    OptimizationStepResultMechanism,
+                )
+                .join_from(OptimizationRun, OptimizationType)
+                .join_from(OptimizationRun, OptimizationSelectedMeasure)
+                .join_from(OptimizationSelectedMeasure, OptimizationStep)
+                .join_from(OptimizationStep, OptimizationStepResultSection)
+                .join_from(OptimizationStep, OptimizationStepResultMechanism)
+                .group_by(OptimizationRun)):
+                    opt_run.optimization_run_measure_results = list(opt_run.optimization_run_measure_results)                
+                    for opt_selected_measure in opt_run.optimization_run_measure_results:
+                        opt_selected_measure.optimization_steps = list(opt_selected_measure.optimization_steps)
+                        for opt_step in opt_selected_measure.optimization_steps:
+                            opt_step.optimization_step_results_mechanism = list(opt_step.optimization_step_results_mechanism)
+                            opt_step.optimization_step_results_section = list(opt_step.optimization_step_results_section)
+                    opt_run_list.append(opt_run)
             return opt_run_list
 
-        with open_database(test_results.joinpath("vrtool_result_filtered.db")):
-            _ref_runs = get_opt_run()
+        # TODO: Temporary, these tests also have a "filtered" database.
+        _ref_runs = get_opt_run(_get_database_reference_path(valid_vrtool_config, "_filtered"))
+        _res_runs = get_opt_run(valid_vrtool_config.input_database_path)
 
         with open_database(valid_vrtool_config.input_database_path):
             _res_runs = get_opt_run()
