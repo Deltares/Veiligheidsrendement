@@ -20,6 +20,17 @@ from vrtool.orm.orm_controllers import open_database
 
 vrtool_db_default_name = "vrtool_input.db"
 
+def _get_database_reference_path(vrtool_config: VrtoolConfig) -> Path:
+    # Get database paths.
+    _reference_database_path = vrtool_config.input_database_path.with_name(
+        vrtool_db_default_name
+    )
+    assert (
+        _reference_database_path != vrtool_config.input_database_path
+    ), "Reference and result database point to the same Path {}.".path(
+        vrtool_config.input_database_path
+    )
+    return _reference_database_path
 
 @dataclass
 class AcceptanceTestCase:
@@ -116,15 +127,7 @@ class RunStepAssessmentValidator(RunStepValidator):
             _connected_db.close()
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
-        # Get database paths.
-        _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            vrtool_db_default_name
-        )
-        assert (
-            _reference_database_path != valid_vrtool_config.input_database_path
-        ), "Reference and result database point to the same Path {}.".path(
-            valid_vrtool_config.input_database_path
-        )
+        _reference_database_path = _get_database_reference_path(valid_vrtool_config)
 
         def load_assessment_reliabilities(vrtool_db: Path) -> dict[str, pd.DataFrame]:
             _connected_db = open_database(vrtool_db)
@@ -179,15 +182,7 @@ class RunStepMeasuresValidator(RunStepValidator):
         }
         """
 
-        # Get database paths.
-        _reference_database_path = valid_vrtool_config.input_database_path.with_name(
-            vrtool_db_default_name
-        )
-        assert (
-            _reference_database_path != valid_vrtool_config.input_database_path
-        ), "Reference and result database point to the same Path {}.".path(
-            valid_vrtool_config.input_database_path
-        )
+        _reference_database_path = _get_database_reference_path(valid_vrtool_config)
 
         def load_measures_reliabilities(
             vrtool_db: Path,
@@ -289,14 +284,24 @@ class RunStepOptimizationValidator(RunStepValidator):
         _connected_db.close()
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
-        _connected_db = open_database(valid_vrtool_config.input_database_path)
+        _result_database = open_database(valid_vrtool_config.input_database_path)
+
+        # Steps for validation.
+        # 1. Load optimization run.
+        _result_runs = orm_models.OptimizationRun.select()
+
         # For now just check that there are outputs.
         assert any(orm_models.OptimizationRun.select())
         assert any(orm_models.OptimizationSelectedMeasure.select())
         assert any(orm_models.OptimizationStep.select())
         assert any(orm_models.OptimizationStepResultSection.select())
         assert any(orm_models.OptimizationStepResultMechanism.select())
-        _connected_db.close()
+        _result_database.close()
+
+        _reference_database_path = _get_database_reference_path(valid_vrtool_config)
+        _reference_db = open_database(_reference_database_path)
+        _ref_runs = orm_models.OptimizationRun.select()
+        assert _result_runs == _ref_runs
 
 
 class RunFullValidator:

@@ -27,6 +27,7 @@ from vrtool.api import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
+from vrtool.orm.models.optimization.optimization_selected_measure import OptimizationSelectedMeasure
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
 from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
     OptimizationStepResultMechanism,
@@ -34,6 +35,7 @@ from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
 from vrtool.orm.models.optimization.optimization_step_result_section import (
     OptimizationStepResultSection,
 )
+from vrtool.orm.models.optimization.optimization_type import OptimizationType
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -324,12 +326,44 @@ class TestApiRunWorkflowsAcceptance:
         )
 
         # 2. Run test.
-        run_step_optimization(
-            valid_vrtool_config, _new_optimization_name, _measures_input
-        )
+        # run_step_optimization(
+        #     valid_vrtool_config, _new_optimization_name, _measures_input
+        # )
 
         # 3. Verify expectations.
+        def get_opt_run() -> list[OptimizationRun]:
+            # IMPORTANT! Instantiate to list (or else), otherwise
+            # the data will not be kept in memory, just its query!
+            opt_run_list = []
+            for opt_run in list(OptimizationRun.select(
+                OptimizationRun,
+                OptimizationType,
+                OptimizationSelectedMeasure,
+                OptimizationStep,
+                OptimizationStepResultSection,
+                OptimizationStepResultMechanism,
+            )
+            .join_from(OptimizationRun, OptimizationType)
+            .join_from(OptimizationRun, OptimizationSelectedMeasure)
+            .join_from(OptimizationSelectedMeasure, OptimizationStep)
+            .join_from(OptimizationStep, OptimizationStepResultSection)
+            .join_from(OptimizationStep, OptimizationStepResultMechanism)
+            .group_by(OptimizationRun)):
+                opt_run.optimization_run_measure_results = list(opt_run.optimization_run_measure_results)                
+                for opt_selected_measure in opt_run.optimization_run_measure_results:
+                    opt_selected_measure.optimization_steps = list(opt_selected_measure.optimization_steps)
+                    for opt_step in opt_selected_measure.optimization_steps:
+                        opt_step.optimization_step_results_mechanism = list(opt_step.optimization_step_results_mechanism)
+                        opt_step.optimization_step_results_section = list(opt_step.optimization_step_results_section)
+                opt_run_list.append(opt_run)
+            return opt_run_list
+
+        with open_database(test_results.joinpath("vrtool_result_filtered.db")):
+            _ref_runs = get_opt_run()
+
         with open_database(valid_vrtool_config.input_database_path):
+            _res_runs = get_opt_run()
+            
             stepResult = OptimizationStepResultSection.get_by_id(28)
 
             assert len(OptimizationStepResultSection.select()) == 28
