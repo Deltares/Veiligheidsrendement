@@ -8,3 +8,4 @@ class MechanismPerYear:
     mechanism: MechanismEnum
     year: int
     probability: float
+    beta: float
