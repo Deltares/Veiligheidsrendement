@@ -1,8 +1,9 @@
-from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
+
 
 class MechanismPerYearProbabilityCollection:
-    _probabilities : list[MechanismPerYear]
+    _probabilities: list[MechanismPerYear]
 
     def __init__(self, probabilities: list[MechanismPerYear]) -> None:
         self._probabilities = probabilities

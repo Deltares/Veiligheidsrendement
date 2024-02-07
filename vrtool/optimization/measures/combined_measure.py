@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 
-from vrtool.optimization.measures.measure_as_input_protocol import MeasureAsInputProtocol
-from vrtool.optimization.measures.mechanism_per_year_probability_collection import MechanismPerYearProbabilityCollection
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
+)
+
 
 @dataclass
 class CombinedMeasure:

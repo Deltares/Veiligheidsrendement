@@ -1,9 +1,11 @@
-from vrtool.optimization.measures.mechanism_per_year_probability_collection import MechanismPerYearProbabilityCollection
-from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
+)
+
 
 class TestMechanismPerYearProbCollection:
-
     def _getMechanismPerYearExample(self):
         _prob = []
         _prob.append(MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9))
