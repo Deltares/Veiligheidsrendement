@@ -510,7 +510,6 @@ class RunStepOptimizationValidator(RunStepValidator):
 
 
 class RunFullValidator(RunStepValidator):
-
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         assert RunStepOptimizationValidator.get_csv_reference_dir(
             valid_vrtool_config
