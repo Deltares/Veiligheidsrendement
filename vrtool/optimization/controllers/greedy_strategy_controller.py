@@ -15,8 +15,8 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.measures.sg_measure import SgMeasure
-from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sg_measure import ALLOWED_MECHANISMS_SG, SgMeasure
+from vrtool.optimization.measures.sh_measure import ALLOWED_MECHANISMS_SH, ShMeasure
 
 
 class GreedyStrategyController:
@@ -26,36 +26,41 @@ class GreedyStrategyController:
         self._section_measures_input: list[SectionAsInput] = []
 
     def _get_mechanism_year_collection(
-        self, measure_data: df, idx: int
+        self, measure_data: df, idx: int, allowed_mechanisms: list[MechanismEnum]
     ) -> MechanismPerYearProbabilityCollection:
 
         def _get_mech_cols(
-            mech: MechanismEnum, cols: list[MultiIndex]
-        ) -> list[MultiIndex]:
+            mech: MechanismEnum,
+            cols: list[MultiIndex],
+            allowed_mechanisms: list[MechanismEnum],
+        ) -> list[MultiIndex] | None:
             """Get mechanism columns from measure data"""
-            return [col for col in cols if col[0] == mech.name]
+            if mech in allowed_mechanisms:
+                return [col for col in cols if col[0] == mech.name]
+            return []
 
         _probabilities = []
         _cols = measure_data.columns
+
         for _mech in MechanismEnum:
-            _mech_cols = _get_mech_cols(_mech, _cols)
+            _mech_cols = _get_mech_cols(_mech, _cols, allowed_mechanisms)
             for _mech_col in _mech_cols:
                 _mech_year = _mech_col[1]
-                _prob = measure_data.at[
-                    idx, _mech_col
-                ]  # TODO: convert beta to probability
+                _beta = measure_data.at[idx, _mech_col]
                 _probabilities.append(
                     MechanismPerYear(
                         mechanism=_mech,
                         year=_mech_year,
-                        probability=_prob,
+                        probability=0,  # TODO
+                        beta=_beta,
                     )
                 )
 
         return MechanismPerYearProbabilityCollection(_probabilities)
 
     def _get_measures(self, measure_data: df) -> list[MeasureAsInputProtocol]:
-        _measures = []
+        _measures: list[MeasureAsInputProtocol] = []
+
         for _idx in measure_data.index:
             _meas_type = MeasureTypeEnum.get_enum(measure_data.at[_idx, ("type", "")])
             _comb_type = CombinableTypeEnum.get_enum(
@@ -63,27 +68,54 @@ class GreedyStrategyController:
             )
             _cost = measure_data.at[_idx, ("cost", "")]
             _year = measure_data.at[_idx, ("year", "")]
-            _lcc = 0  # TODO
-            _mech_year_coll = self._get_mechanism_year_collection(measure_data, _idx)
-            _measures.append(
-                SgMeasure(
-                    measure_type=_meas_type,
-                    combine_type=_comb_type,
-                    cost=_cost,
-                    year=_year,
-                    lcc=_lcc,
-                    mechanism_year_collection=_mech_year_coll,
-                    dberm=0,  # TODO
-                    dcrest=0,  # TODO
+            _lcc = _cost / (1 + self._vrtool_config.discount_rate) ** _year
+            _dberm = measure_data.at[_idx, ("dberm", "")]
+            _dcrest = measure_data.at[_idx, ("dcrest", "")]
+
+            if _dberm == 0 or _dberm == -999:  # Sg
+                _mech_year_coll = self._get_mechanism_year_collection(
+                    measure_data,
+                    _idx,
+                    ALLOWED_MECHANISMS_SH,
                 )
-            )
+                _beta = measure_data.at[_idx, ("beta_target", "")]
+                _trans_level = measure_data.at[_idx, ("transition_level", "")]
+                _measures.append(
+                    ShMeasure(
+                        measure_type=_meas_type,
+                        combine_type=_comb_type,
+                        cost=_cost,
+                        year=_year,
+                        lcc=_lcc,
+                        mechanism_year_collection=_mech_year_coll,
+                        beta_target=_beta,
+                        transition_level=_trans_level,
+                        dcrest=_dcrest,
+                    )
+                )
+            elif _dcrest == 0 or _dcrest == -999:  # Sh
+                _mech_year_coll = self._get_mechanism_year_collection(
+                    measure_data,
+                    _idx,
+                    ALLOWED_MECHANISMS_SG,
+                )
+                _measures.append(
+                    SgMeasure(
+                        measure_type=_meas_type,
+                        combine_type=_comb_type,
+                        cost=_cost,
+                        year=_year,
+                        lcc=_lcc,
+                        mechanism_year_collection=_mech_year_coll,
+                        dberm=_dberm,
+                        dcrest=_dcrest,
+                    )
+                )
         return _measures
 
     def map_input(
         self,
         selected_traject: DikeTraject,
-        ids_to_import: list[tuple[int, int]],
-        optimization_selected_measure_ids: dict[int, list[int]],
         solutions_dict: dict[str, Solutions],
     ) -> None:
         """
