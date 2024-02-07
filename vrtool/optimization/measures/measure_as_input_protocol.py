@@ -1,6 +1,6 @@
 from typing import Protocol, runtime_checkable
 
-from mechanism_per_year_probability_collection import MechanismPerYearProbabilityCollection
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import MechanismPerYearProbabilityCollection
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 
