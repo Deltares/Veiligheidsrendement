@@ -298,7 +298,7 @@ class RunStepOptimizationValidator(RunStepValidator):
 
     def _get_opt_run(self, database_path: Path) -> list[orm.OptimizationRun]:
         """
-        Gets a list of all existing `OptimizationRun` rows in the database with all the backrefs related to an "optimization" already insantiated ("eager loading").
+        Gets a list of all existing `OptimizationRun` rows in the database with all the backrefs related to an "optimization" already instantiated ("eager loading").
 
         IMPORTANT! We instantiate everything so that OptimizationRun has (in memory) access to all the backrefs.
         We could also decide to return `orm.OptimizationStepResultMechanism` and `orm.OptimizationStepResultSection`,
@@ -355,7 +355,7 @@ class RunStepOptimizationValidator(RunStepValidator):
         reference: orm.OptimizationRun,
         result: orm.OptimizationRun,
     ):
-        # We set names for the runs based on their type, so we only need to check they last name.
+        # We set names for the runs based on their type, so we only need to check the last name.
         assert reference.name.split(" ")[-1] == result.name.split(" ")[-1]
         assert reference.discount_rate == result.discount_rate
         assert reference.optimization_type.name == result.optimization_type.name
