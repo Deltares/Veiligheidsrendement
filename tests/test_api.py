@@ -28,7 +28,9 @@ from vrtool.api import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
-from vrtool.orm.models.optimization.optimization_selected_measure import OptimizationSelectedMeasure
+from vrtool.orm.models.optimization.optimization_selected_measure import (
+    OptimizationSelectedMeasure,
+)
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
 from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
     OptimizationStepResultMechanism,
@@ -312,7 +314,7 @@ class TestApiRunWorkflowsAcceptance:
         )
         clear_optimization_results(valid_vrtool_config)
 
-        _validator = RunStepOptimizationValidator()
+        _validator = RunStepOptimizationValidator("_filtered")
         _validator.validate_preconditions(valid_vrtool_config)
 
         # Get the available measure results with supported investment years.
@@ -327,54 +329,12 @@ class TestApiRunWorkflowsAcceptance:
         )
 
         # 2. Run test.
-        # run_step_optimization(
-        #     valid_vrtool_config, _new_optimization_name, _measures_input
-        # )
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
 
         # 3. Verify expectations.
-        def get_opt_run(database_path: Path) -> list[OptimizationRun]:
-            # IMPORTANT! Instantiate to list (or else), otherwise
-            # the data will not be kept in memory, just its query!
-            opt_run_list = []
-            with open_database(database_path):
-                for opt_run in list(OptimizationRun.select(
-                    OptimizationRun,
-                    OptimizationType,
-                    OptimizationSelectedMeasure,
-                    OptimizationStep,
-                    OptimizationStepResultSection,
-                    OptimizationStepResultMechanism,
-                )
-                .join_from(OptimizationRun, OptimizationType)
-                .join_from(OptimizationRun, OptimizationSelectedMeasure)
-                .join_from(OptimizationSelectedMeasure, OptimizationStep)
-                .join_from(OptimizationStep, OptimizationStepResultSection)
-                .join_from(OptimizationStep, OptimizationStepResultMechanism)
-                .group_by(OptimizationRun)):
-                    opt_run.optimization_run_measure_results = list(opt_run.optimization_run_measure_results)                
-                    for opt_selected_measure in opt_run.optimization_run_measure_results:
-                        opt_selected_measure.optimization_steps = list(opt_selected_measure.optimization_steps)
-                        for opt_step in opt_selected_measure.optimization_steps:
-                            opt_step.optimization_step_results_mechanism = list(opt_step.optimization_step_results_mechanism)
-                            opt_step.optimization_step_results_section = list(opt_step.optimization_step_results_section)
-                    opt_run_list.append(opt_run)
-            return opt_run_list
-
-        # TODO: Temporary, these tests also have a "filtered" database.
-        _ref_runs = get_opt_run(_get_database_reference_path(valid_vrtool_config, "_filtered"))
-        _res_runs = get_opt_run(valid_vrtool_config.input_database_path)
-
-        with open_database(valid_vrtool_config.input_database_path):
-            _res_runs = get_opt_run()
-            
-            stepResult = OptimizationStepResultSection.get_by_id(28)
-
-            assert len(OptimizationStepResultSection.select()) == 28
-            assert len(OptimizationStepResultMechanism.select()) == 112
-            assert len(OptimizationStep.select()) == 4
-
-            assert stepResult.beta == pytest.approx(2.525827)
-            assert stepResult.lcc == pytest.approx(8612354)
+        _validator.validate_results(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",

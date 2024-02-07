@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-import vrtool.orm.models as orm_models
+import vrtool.orm.models as orm
 from vrtool.common.enums import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
@@ -18,9 +18,16 @@ from vrtool.orm.io.importers.measures.measure_result_importer import (
 )
 from vrtool.orm.orm_controllers import open_database
 
+OptimizationStepResult = (
+    orm.OptimizationStepResultMechanism | orm.OptimizationStepResultSection
+)
+
 vrtool_db_default_name = "vrtool_input.db"
 
-def _get_database_reference_path(vrtool_config: VrtoolConfig, suffix_name: str = "") -> Path:
+
+def _get_database_reference_path(
+    vrtool_config: VrtoolConfig, suffix_name: str = ""
+) -> Path:
     # Get database paths.
     _reference_database_path = vrtool_config.input_database_path.with_name(
         f"vrtool_input{suffix_name}.db"
@@ -31,6 +38,7 @@ def _get_database_reference_path(vrtool_config: VrtoolConfig, suffix_name: str =
         vrtool_config.input_database_path
     )
     return _reference_database_path
+
 
 @dataclass
 class AcceptanceTestCase:
@@ -121,8 +129,8 @@ class RunStepValidator(Protocol):
 class RunStepAssessmentValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
-        assert not any(orm_models.AssessmentMechanismResult.select())
-        assert not any(orm_models.AssessmentSectionResult.select())
+        assert not any(orm.AssessmentMechanismResult.select())
+        assert not any(orm.AssessmentSectionResult.select())
         if not _connected_db.is_closed():
             _connected_db.close()
 
@@ -133,10 +141,10 @@ class RunStepAssessmentValidator(RunStepValidator):
             _connected_db = open_database(vrtool_db)
             _assessment_reliabilities = dict(
                 (_sd, DikeSectionImporter.import_assessment_reliability_df(_sd))
-                for _sd in orm_models.SectionData.select()
-                .join(orm_models.DikeTrajectInfo)
+                for _sd in orm.SectionData.select()
+                .join(orm.DikeTrajectInfo)
                 .where(
-                    orm_models.SectionData.dike_traject.traject_name
+                    orm.SectionData.dike_traject.traject_name
                     == valid_vrtool_config.traject
                 )
             )
@@ -167,8 +175,8 @@ class RunStepAssessmentValidator(RunStepValidator):
 class RunStepMeasuresValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
-        assert not any(orm_models.MeasureResult.select())
-        assert not any(orm_models.MeasureResultParameter.select())
+        assert not any(orm.MeasureResult.select())
+        assert not any(orm.MeasureResultParameter.select())
 
         if not _connected_db.is_closed():
             _connected_db.close()
@@ -189,7 +197,7 @@ class RunStepMeasuresValidator(RunStepValidator):
         ) -> dict[str, dict[tuple, pd.DataFrame]]:
             _connected_db = open_database(vrtool_db)
             _m_reliabilities = defaultdict(dict)
-            for _measure_result in orm_models.MeasureResult.select():
+            for _measure_result in orm.MeasureResult.select():
                 _measure_per_section = _measure_result.measure_per_section
                 _reliability_df = MeasureResultImporter.import_measure_reliability_df(
                     _measure_result
@@ -271,37 +279,200 @@ class RunStepMeasuresValidator(RunStepValidator):
 
 
 class RunStepOptimizationValidator(RunStepValidator):
+    _reference_db_suffix: str
+
+    def __init__(self, reference_db_suffix: str = "") -> None:
+        self._reference_db_suffix = reference_db_suffix
+
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
 
-        assert any(orm_models.MeasureResult.select())
-        assert not any(orm_models.OptimizationRun)
-        assert not any(orm_models.OptimizationSelectedMeasure)
-        assert not any(orm_models.OptimizationStep)
-        assert not any(orm_models.OptimizationStepResultMechanism)
-        assert not any(orm_models.OptimizationStepResultSection)
+        assert any(orm.MeasureResult.select())
+        assert not any(orm.OptimizationRun)
+        assert not any(orm.OptimizationSelectedMeasure)
+        assert not any(orm.OptimizationStep)
+        assert not any(orm.OptimizationStepResultMechanism)
+        assert not any(orm.OptimizationStepResultSection)
 
         _connected_db.close()
 
+    def _get_opt_run(self, database_path: Path) -> list[orm.OptimizationRun]:
+        """
+        Gets a list of all existing `OptimizationRun` rows in the database with all the backrefs related to an "optimization" already insantiated ("eager loading").
+
+        IMPORTANT! We instantiate everything so that OptimizationRun has (in memory) access to all the backrefs.
+        We could also decide to return `orm.OptimizationStepResultMechanism` and `orm.OptimizationStepResultSection`,
+        however that would make it 'harder' to validate later on, so we prefer an 'uglier' loading of data for a more
+        readable validation.
+
+        Args:
+            database_path (Path): Location of the `sqlite` database file.
+
+        Returns:
+            list[orm.OptimizationRun]: Collection of `OptimizationRun` with insantiated backrefs.
+        """
+        opt_run_list = []
+        with open_database(database_path):
+            for opt_run in list(
+                orm.OptimizationRun.select(
+                    orm.OptimizationRun,
+                    orm.OptimizationSelectedMeasure,
+                    orm.OptimizationStep,
+                    orm.OptimizationStepResultSection,
+                    orm.OptimizationStepResultMechanism,
+                )
+                .join_from(orm.OptimizationRun, orm.OptimizationSelectedMeasure)
+                .join_from(orm.OptimizationSelectedMeasure, orm.OptimizationStep)
+                .join_from(
+                    orm.OptimizationStep,
+                    orm.OptimizationStepResultSection,
+                )
+                .join_from(
+                    orm.OptimizationStep,
+                    orm.OptimizationStepResultMechanism,
+                )
+                .group_by(orm.OptimizationRun)
+            ):
+                opt_run.optimization_run_measure_results = list(
+                    opt_run.optimization_run_measure_results
+                )
+                for opt_selected_measure in opt_run.optimization_run_measure_results:
+                    opt_selected_measure.optimization_steps = list(
+                        opt_selected_measure.optimization_steps
+                    )
+                    for opt_step in opt_selected_measure.optimization_steps:
+                        opt_step.optimization_step_results_mechanism = list(
+                            opt_step.optimization_step_results_mechanism
+                        )
+                        opt_step.optimization_step_results_section = list(
+                            opt_step.optimization_step_results_section
+                        )
+                opt_run_list.append(opt_run)
+        return opt_run_list
+
+    def _compare_optimization_run(
+        self,
+        reference: orm.OptimizationRun,
+        result: orm.OptimizationRun,
+    ):
+        assert reference.name == result.name
+        assert reference.discount_rate == result.discount_rate
+        assert reference.optimization_type.name == result.optimization_type.name
+
+        self._compare_optimization_selected_measures(
+            reference.optimization_run_measure_results,
+            result.optimization_run_measure_results,
+        )
+
+    def _compare_measure_per_section(
+        self, reference: orm.MeasurePerSection, result: orm.MeasurePerSection
+    ):
+        assert reference.section.section_name == result.section.section_name
+        assert reference.measure.name == result.measure.name
+
+    def _compare_optimization_selected_measures(
+        self,
+        reference_list: list[orm.OptimizationSelectedMeasure],
+        result_list: list[orm.OptimizationSelectedMeasure],
+    ):
+        # Check row size.
+        assert len(reference_list) == len(result_list)
+
+        # Check each row individually.
+        for _idx, _reference in enumerate(reference_list):
+            _result = result_list[_idx]
+            assert _reference.investment_year == _result.investment_year
+            self._compare_measure_per_section(
+                _reference.measure_result.measure_per_section,
+                _result.measure_result.measure_per_section,
+            )
+            self._compare_optimization_steps(
+                _reference.optimization_steps,
+                _result.optimization_steps,
+            )
+
+    def _compare_optimization_steps(
+        self,
+        reference_list: list[orm.OptimizationStep],
+        result_list: list[orm.OptimizationStep],
+    ):
+        # Check collection size.
+        assert len(reference_list) == len(result_list)
+
+        # Check each row individually.
+        for _idx, _reference in enumerate(reference_list):
+            _result = result_list[_idx]
+            assert _reference.step_number == _result.step_number
+            assert _reference.total_lcc == _result.total_lcc
+            assert _reference.total_risk == _result.total_risk
+            self._compare_optimization_step_results_mechanism(
+                _reference.optimization_step_results_mechanism,
+                _result.optimization_step_results_mechanism,
+            )
+            self._compare_optimization_step_results_section(
+                _reference.optimization_step_results_section,
+                _result.optimization_step_results_section,
+            )
+
+    def _compare_optimization_step_result(
+        self,
+        reference: OptimizationStepResult,
+        result: OptimizationStepResult,
+    ):
+        assert reference.beta == result.beta
+        assert reference.time == result.time
+        assert reference.lcc == result.lcc
+
+    def _compare_mechanism_per_section(
+        self, reference: orm.MechanismPerSection, result: orm.MechanismPerSection
+    ):
+        assert reference.section.section_name == result.section.section_name
+        assert reference.mechanism.name == result.mechanism.name
+
+    def _compare_optimization_step_results_mechanism(
+        self,
+        reference_list: list[orm.OptimizationStepResultMechanism],
+        result_list: list[orm.OptimizationStepResultMechanism],
+    ):
+        # Check collection size.
+        assert len(reference_list) == len(result_list)
+
+        # Check each row individually.
+        for _idx, _reference in enumerate(reference_list):
+            _result = result_list[_idx]
+            self._compare_optimization_step_result(_reference, _result)
+            self._compare_mechanism_per_section(
+                _reference.mechanism_per_section,
+                _result.mechanism_per_section,
+            )
+
+    def _compare_optimization_step_results_section(
+        self,
+        reference_list: list[orm.OptimizationStepResultSection],
+        result_list: list[orm.OptimizationStepResultSection],
+    ):
+        # Check collection size.
+        assert len(reference_list) == len(result_list)
+
+        # Check each row individually.
+        for _idx, _reference in enumerate(reference_list):
+            self._compare_optimization_step_result(_reference, result_list[_idx])
+
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
-        _result_database = open_database(valid_vrtool_config.input_database_path)
-
         # Steps for validation.
-        # 1. Load optimization run.
-        _result_runs = orm_models.OptimizationRun.select()
+        # Load optimization runs.
+        _reference_runs = self._get_opt_run(
+            _get_database_reference_path(valid_vrtool_config, self._reference_db_suffix)
+        )
 
-        # For now just check that there are outputs.
-        assert any(orm_models.OptimizationRun.select())
-        assert any(orm_models.OptimizationSelectedMeasure.select())
-        assert any(orm_models.OptimizationStep.select())
-        assert any(orm_models.OptimizationStepResultSection.select())
-        assert any(orm_models.OptimizationStepResultMechanism.select())
-        _result_database.close()
+        # Verify models.
+        _result_runs = self._get_opt_run(valid_vrtool_config.input_database_path)
+        assert len(_reference_runs) == len(_result_runs)
 
-        _reference_database_path = _get_database_reference_path(valid_vrtool_config)
-        _reference_db = open_database(_reference_database_path)
-        _ref_runs = orm_models.OptimizationRun.select()
-        assert _result_runs == _ref_runs
+        # Because the resulting database does not contain the previous results,
+        # we can then assume all the values will be in the same exact order.
+        for _run_idx, _reference_run in enumerate(_reference_runs):
+            self._compare_optimization_run(_reference_run, _result_runs[_run_idx])
 
 
 class RunFullValidator:
