@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import pandas as pd
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure_result.measure_result import MeasureResult

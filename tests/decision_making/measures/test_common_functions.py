@@ -9,7 +9,7 @@ import pytest
 from geolib import DStabilityModel
 
 from tests import test_data, test_externals, test_results
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
     implement_berm_widening,

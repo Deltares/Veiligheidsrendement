@@ -1,9 +1,8 @@
 import logging
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.optimization import (
     OptimizationStep,
     OptimizationStepResultMechanism,

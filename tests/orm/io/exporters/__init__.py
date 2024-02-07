@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from tests import test_data
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection

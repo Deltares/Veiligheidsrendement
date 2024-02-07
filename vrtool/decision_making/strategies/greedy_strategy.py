@@ -8,7 +8,7 @@ import numpy
 import numpy as np
 import pandas as pd
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategy_evaluation import (

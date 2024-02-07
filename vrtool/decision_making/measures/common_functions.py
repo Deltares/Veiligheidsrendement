@@ -1,13 +1,13 @@
 import copy
 import logging
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.berm_widening_dstability import (
     BermWideningDStability,
 )

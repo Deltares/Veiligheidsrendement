@@ -1,9 +1,9 @@
 import pytest
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 
-class TestMechanismEnums:
+class TestMechanismEnum:
     @pytest.mark.parametrize(
         "enum_name",
         [
@@ -12,32 +12,32 @@ class TestMechanismEnums:
             pytest.param("stability_inner", id="VALID lower_snake"),
             pytest.param(" StabilityInner", id="VALID space before"),
             pytest.param("StabilityInner ", id="VALID space after"),
+            pytest.param("Stability inner ", id="VALID space in between"),
         ],
     )
-    def test_get_valid_enum(self, enum_name: str):
+    def test_get_valid_mechanism_enum(self, enum_name: str):
         # 1. Setup
 
         # 2. Call
-        _mech = MechanismEnum.get_enum(enum_name)
+        _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 3. Assert
-        assert _mech.name == "STABILITY_INNER"
+        assert _mechanism.name == "STABILITY_INNER"
 
     @pytest.mark.parametrize(
         "enum_name",
         [
             pytest.param("stabilityinner", id="INVALID camelcase"),
-            pytest.param("stability inner", id="INVALID space within"),
         ],
     )
-    def test_get_invalid_enum(self, enum_name: str):
+    def test_get_invalid_mechanism_enum(self, enum_name: str):
         # 1. Setup
 
         # 2. Call
-        _mech = MechanismEnum.get_enum(enum_name)
+        _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 3. Assert
-        assert _mech.name == "INVALID"
+        assert _mechanism.name == "INVALID"
 
     @pytest.mark.parametrize(
         "enum_name, expected",
@@ -46,12 +46,12 @@ class TestMechanismEnums:
             pytest.param("STABILITY_INNER", "StabilityInner", id="VALID UPPER_SNAKE"),
         ],
     )
-    def test_get_valid_old_name(self, enum_name: str, expected: str):
+    def test_get_valid_old_mechnism_name(self, enum_name: str, expected: str):
         # 1. Setup
         _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 2. Call
-        _mech_name = _mechanism.get_old_name()
+        _mechanism_name = _mechanism.get_old_name()
 
         # 3. Assert
-        assert _mech_name == expected
+        assert _mechanism_name == expected

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
@@ -20,7 +20,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class StrategyBase:
