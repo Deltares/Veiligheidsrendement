@@ -343,7 +343,7 @@ class TestApiRunWorkflowsAcceptance:
         """
         # 1. Define test data.
         _validator = RunFullValidator()
-        _validator.validate_preconditions()
+        _validator.validate_preconditions(valid_vrtool_config)
 
         # 2. Run test.
         run_full(valid_vrtool_config)
