@@ -27,6 +27,9 @@ from vrtool.api import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
+from vrtool.orm.models.optimization.optimization_selected_measure import (
+    OptimizationSelectedMeasure,
+)
 from vrtool.orm.models.optimization.optimization_step import OptimizationStep
 from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
     OptimizationStepResultMechanism,
@@ -34,6 +37,7 @@ from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
 from vrtool.orm.models.optimization.optimization_step_result_section import (
     OptimizationStepResultSection,
 )
+from vrtool.orm.models.optimization.optimization_type import OptimizationType
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -289,10 +293,7 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory,
-            valid_vrtool_config.input_directory.joinpath("reference"),
-        )
+        _validator.validate_phased_out_csv_files(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -309,7 +310,7 @@ class TestApiRunWorkflowsAcceptance:
         )
         clear_optimization_results(valid_vrtool_config)
 
-        _validator = RunStepOptimizationValidator()
+        _validator = RunStepOptimizationValidator("_filtered")
         _validator.validate_preconditions(valid_vrtool_config)
 
         # Get the available measure results with supported investment years.
@@ -329,15 +330,7 @@ class TestApiRunWorkflowsAcceptance:
         )
 
         # 3. Verify expectations.
-        with open_database(valid_vrtool_config.input_database_path):
-            stepResult = OptimizationStepResultSection.get_by_id(28)
-
-            assert len(OptimizationStepResultSection.select()) == 28
-            assert len(OptimizationStepResultMechanism.select()) == 112
-            assert len(OptimizationStep.select()) == 4
-
-            assert stepResult.beta == pytest.approx(2.525827)
-            assert stepResult.lcc == pytest.approx(8612354)
+        _validator.validate_results(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -349,16 +342,14 @@ class TestApiRunWorkflowsAcceptance:
         This test so far only checks the output values after optimization.
         """
         # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory.joinpath("reference")
-        assert _test_reference_path.exists()
+        _validator = RunFullValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
 
         # 2. Run test.
         run_full(valid_vrtool_config)
 
         # 3. Verify final expectations.
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
-        )
+        _validator.validate_results(valid_vrtool_config)
 
 
 @pytest.mark.slow
