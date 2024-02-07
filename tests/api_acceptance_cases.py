@@ -475,10 +475,22 @@ class RunStepOptimizationValidator(RunStepValidator):
             self._compare_optimization_run(_reference_run, _result_runs[_run_idx])
 
 
-class RunFullValidator:
-    def validate_acceptance_result_cases(
-        self, test_results_dir: Path, test_reference_dir: Path
-    ):
+class RunFullValidator(RunStepValidator):
+    def _get_csv_reference_dir(self, vrtool_config: VrtoolConfig) -> Path:
+        return vrtool_config.input_directory.joinpath("reference")
+
+    def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
+        assert self._get_csv_reference_dir(valid_vrtool_config).exists()
+
+    def _validate_phased_out_csv_files(self, vrtool_config: VrtoolConfig):
+        """
+        This validation is DEPRECATED as, in theory, the database validation should
+        phase out this way of testing. However we keep them until said theory is validated.
+
+        Args:
+            vrtool_config (VrtoolConfig): Configuration containing the input / output paths.
+        """
+        _test_reference_dir = self._get_csv_reference_dir(vrtool_config)
         files_to_compare = [
             "TakenMeasures_Doorsnede-eisen.csv",
             "TakenMeasures_Veiligheidsrendement.csv",
@@ -487,9 +499,9 @@ class RunFullValidator:
         comparison_errors = []
         for file in files_to_compare:
             reference = pd.read_csv(
-                test_reference_dir.joinpath("results", file), index_col=0
+                _test_reference_dir.joinpath("results", file), index_col=0
             )
-            result = pd.read_csv(test_results_dir / file, index_col=0)
+            result = pd.read_csv(vrtool_config.output_directory / file, index_col=0)
             try:
                 assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
             except Exception:
@@ -498,3 +510,9 @@ class RunFullValidator:
         assert not comparison_errors, "errors occured:\n{}".format(
             "\n".join(comparison_errors)
         )
+
+    def validate_results(self, valid_vrtool_config: VrtoolConfig):
+        self._validate_phased_out_csv_files(valid_vrtool_config)
+
+        # Validate the optimization results.
+        RunStepOptimizationValidator().validate_results(valid_vrtool_config)

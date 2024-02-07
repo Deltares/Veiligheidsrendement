@@ -346,13 +346,11 @@ class TestApiRunWorkflowsAcceptance:
         This test so far only checks the output values after optimization.
         """
         # 1. Define test data.
-        _test_reference_path = valid_vrtool_config.input_directory.joinpath("reference")
-        assert _test_reference_path.exists()
+        _validator = RunFullValidator()
+        _validator.validate_preconditions()
 
         # 2. Run test.
         run_full(valid_vrtool_config)
 
         # 3. Verify final expectations.
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory, _test_reference_path
-        )
+        _validator.validate_results(valid_vrtool_config)
