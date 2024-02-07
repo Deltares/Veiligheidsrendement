@@ -1,9 +1,5 @@
-import copy
-import logging
-
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -53,7 +49,8 @@ class Solutions:
         preserve_slope: bool,
     ):
         """This is the base routine to evaluate (i.e., determine costs and reliability) for each defined measure.
-        It also gathers those measures for which availability is set to 0 and removes these from the list of measures."""
+        It also gathers those measures for which availability is set to 0 and removes these from the list of measures.
+        """
         for measure in self.measures:
             measure.evaluate_measure(
                 dike_section, traject_info, preserve_slope=preserve_slope
