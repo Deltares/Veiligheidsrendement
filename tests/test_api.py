@@ -13,7 +13,6 @@ from tests.api_acceptance_cases import (
     RunStepAssessmentValidator,
     RunStepMeasuresValidator,
     RunStepOptimizationValidator,
-    _get_database_reference_path,
     vrtool_db_default_name,
 )
 from vrtool.api import (
@@ -294,10 +293,7 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory,
-            valid_vrtool_config.input_directory.joinpath("reference"),
-        )
+        _validator.validate_phased_out_csv_files(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
