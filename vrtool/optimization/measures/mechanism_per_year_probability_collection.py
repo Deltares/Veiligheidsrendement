@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from vrtool.optimization.models.mechanism_per_year import MechanismPerYear
+from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 
 class MechanismPerYearProbabilityCollection:
