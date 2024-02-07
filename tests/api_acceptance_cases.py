@@ -517,6 +517,8 @@ class RunFullValidator(RunStepValidator):
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Validate the optimization results.
+        # TODO: Remove this validator class if we understand that
+        # the optimization validation is enough.
         _optimization_validator = RunStepOptimizationValidator()
         _optimization_validator.validate_phased_out_csv_files(valid_vrtool_config)
         _optimization_validator.validate_results(valid_vrtool_config)
