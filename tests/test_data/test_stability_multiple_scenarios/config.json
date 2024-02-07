@@ -1,0 +1,17 @@
+{
+ "traject": "7-2",
+ "T": [
+  0,
+  20,
+  25,
+  50,
+  75,
+  100
+ ],
+ "excluded_mechanisms": [
+  "HYDRAULIC_STRUCTURES"
+ ],
+ "input_database_name": "traject_7_2.db",
+ "input_directory": "n:/Projects/11209000/11209353/B. Measurements and calculations/008 - Resultaten Proefvlucht/ZZL/7-2/test_stabiliteit_scenarios",
+ "output_directory": "Basisberekening"
+}
