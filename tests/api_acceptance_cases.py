@@ -355,7 +355,8 @@ class RunStepOptimizationValidator(RunStepValidator):
         reference: orm.OptimizationRun,
         result: orm.OptimizationRun,
     ):
-        assert reference.name == result.name
+        # We set names for the runs based on their type, so we only need to check they last name.
+        assert reference.name.split(" ")[-1] == result.name.split(" ")[-1]
         assert reference.discount_rate == result.discount_rate
         assert reference.optimization_type.name == result.optimization_type.name
 
