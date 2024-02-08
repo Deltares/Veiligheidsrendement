@@ -17,6 +17,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import ALLOWED_MECHANISMS_SG, SgMeasure
 from vrtool.optimization.measures.sh_measure import ALLOWED_MECHANISMS_SH, ShMeasure
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class StrategyController:
@@ -51,8 +52,7 @@ class StrategyController:
                     MechanismPerYear(
                         mechanism=_mech,
                         year=_mech_year,
-                        probability=0,  # TODO
-                        beta=_beta,
+                        probability=beta_to_pf(_beta),
                     )
                 )
 
@@ -119,7 +119,7 @@ class StrategyController:
         solutions_dict: dict[str, Solutions],
     ) -> None:
         """
-        Maps the input to the controller.
+        Maps the dataframe input to the controller.
 
         Args:
             selected_traject (DikeTraject): Selected dike traject.
