@@ -11,8 +11,9 @@ def calculate_reliability(safety_factor: np.ndarray) -> float:
     Returns:
         float: the safety factor.
     """
-    beta = ((safety_factor.item() / __model_factor) - 0.41) / 0.15
-    beta = np.min([beta, 8.0])
+    beta = ((safety_factor / __model_factor) - 0.41) / 0.15
+    # Replace values greater than 8.0 with 8.0
+    beta[beta > 8.0] = 8.0
     return beta
 
 
