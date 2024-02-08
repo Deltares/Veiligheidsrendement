@@ -44,8 +44,13 @@ class DStabilityImporter(OrmImporterProtocol):
                 f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        if orm_model.computation_type.name != self._computation_type:
-            raise ValueError(f"Computation type must be '{self._computation_type}'.")
+        if any(
+            cs.computation_type.name != self._computation_type
+            for cs in orm_model.computation_scenarios
+        ):
+            raise ValueError(
+                f"All computation types must be '{self._computation_type}'."
+            )
 
         mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
 

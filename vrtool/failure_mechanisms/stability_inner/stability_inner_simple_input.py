@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Union
 
 import numpy as np
 
@@ -41,7 +40,7 @@ class StabilityInnerSimpleInput:
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
     ) -> StabilityInnerSimpleInput:
-        def _get_valid_bool_value(input_value: Union[str, bool]) -> bool:
+        def _get_valid_bool_value(input_value: str | bool) -> bool:
             if isinstance(input_value, bool):
                 return input_value
 
