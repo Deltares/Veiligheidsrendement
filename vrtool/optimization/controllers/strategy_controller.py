@@ -19,7 +19,7 @@ from vrtool.optimization.measures.sg_measure import ALLOWED_MECHANISMS_SG, SgMea
 from vrtool.optimization.measures.sh_measure import ALLOWED_MECHANISMS_SH, ShMeasure
 
 
-class GreedyStrategyController:
+class StrategyController:
     def __init__(self, method: str, vrtool_config: VrtoolConfig) -> None:
         self._method: str = method
         self._vrtool_config: VrtoolConfig = vrtool_config
@@ -123,9 +123,6 @@ class GreedyStrategyController:
 
         Args:
             selected_traject (DikeTraject): Selected dike traject.
-            ids_to_import (list[tuple[int, int]]): List of measure results ids to import.
-            optimization_selected_measure_ids (list[tuple[int, int]]):
-                List of optimization selected measure ids.
             solutions_dict (dict[str, Solutions]): Solutions dictionary.
         """
         for _section in selected_traject.sections:

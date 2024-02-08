@@ -8,6 +8,9 @@ import pandas as pd
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.optimization.controllers.strategy_controller import (
+    StrategyController,
+)
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -40,6 +43,19 @@ class RunOptimization(VrToolRunProtocol):
         if not _results_dir.exists():
             _results_dir.mkdir(parents=True)
         return _results_dir
+
+    def _get_optimized_greedy_strategy_new(
+        self, design_method: str
+    ) -> StrategyController:
+        # Initialize a GreedyStrategy (new):
+        _greedy_optimization = StrategyController(design_method, self.vr_config)
+
+        _results_dir = self._get_output_dir()
+        _greedy_optimization.map_input(
+            self.selected_traject,
+            self._solutions_dict,
+        )
+        return _greedy_optimization
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
         # Initialize a GreedyStrategy:
@@ -181,6 +197,7 @@ class RunOptimization(VrToolRunProtocol):
             "Optimized": self._get_optimized_greedy_strategy,
             "Greedy": self._get_optimized_greedy_strategy,
             "Veiligheidsrendement": self._get_optimized_greedy_strategy,
+            "Veiligheidsrendement_new": self._get_optimized_greedy_strategy_new,
             "OI": self._get_target_reliability_strategy,
             "TargetReliability": self._get_target_reliability_strategy,
             "Doorsnede-eisen": self._get_target_reliability_strategy,
