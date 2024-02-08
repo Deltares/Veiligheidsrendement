@@ -51,7 +51,7 @@ class TestMechanismPerYearProbCollection:
         _prob20yr = _collection.filter(MechanismEnum.OVERFLOW, 20)
 
         # Assert
-        assert _prob20yr == pytest.approx(0.86)
+        assert _prob20yr == pytest.approx(0.86555, abs=1e-5)
 
     def test_not_adding_existing_year(self):
         # Setup

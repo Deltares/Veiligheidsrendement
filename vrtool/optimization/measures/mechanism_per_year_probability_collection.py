@@ -1,4 +1,5 @@
 from scipy.interpolate import interp1d
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
@@ -21,16 +22,16 @@ class MechanismPerYearProbabilityCollection:
 
     def _add_year_mechanism(self, mechanism: MechanismEnum, added_years: list[int]) -> None:
         _years = []
-        _probs = []
+        _betas = []
         for p in self._probabilities:
             if p.mechanism == mechanism:
                 _years.append(p.year)
-                _probs.append(p.probability)
+                _betas.append(p.beta)
 
-        _prob_interp = interp1d(_years, _probs, fill_value=("extrapolate"))(added_years)
+        _beta_interp = interp1d(_years, _betas, fill_value=("extrapolate"))(added_years)
         for i, _year in enumerate(added_years):
             if (not (_year in _years)):
-                _mechPerYr = MechanismPerYear(mechanism, _year, float(_prob_interp[i]))
+                _mechPerYr = MechanismPerYear(mechanism, _year, beta_to_pf(float(_beta_interp[i])))
                 self._probabilities.append(_mechPerYr)
 
     def add_years(self, years: list[int]) -> None:
