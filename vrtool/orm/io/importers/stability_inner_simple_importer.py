@@ -30,10 +30,30 @@ class StabilityInnerSimpleImporter(OrmImporterProtocol):
             )
 
         mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
-        for _computation_scenario in orm_model.computation_scenarios:
+        _scenario_key = "Scenario"
+        _scenario_probablity_key = "P_scenario"
+        _probability_of_failure = "Pf"
+
+        mechanism_input.input[_scenario_key] = []
+        mechanism_input.input[_scenario_probablity_key] = np.array([])
+        mechanism_input.input[_probability_of_failure] = np.array([])
+
+        def _append_to_numpy_input(input_key: str, value: float) -> None:
+            mechanism_input.input[input_key] = np.append(
+                mechanism_input.input[input_key], value
+            )
+
+        for _c_scenario in orm_model.computation_scenarios:
             self._set_parameters(
                 mechanism_input,
-                _computation_scenario.computation_scenario_parameters.select(),
+                _c_scenario.computation_scenario_parameters.select(),
+            )
+            mechanism_input.input[_scenario_key].append(_c_scenario.scenario_name)
+            _append_to_numpy_input(
+                _scenario_probablity_key, _c_scenario.scenario_probability
+            )
+            _append_to_numpy_input(
+                _probability_of_failure, _c_scenario.probability_of_failure
             )
 
         return mechanism_input

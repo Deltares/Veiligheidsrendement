@@ -43,9 +43,9 @@ class PipingImporter(OrmImporterProtocol):
 
         index = 0
 
-        computation_scenarios: list[
-            ComputationScenario
-        ] = orm_model.computation_scenarios.select()
+        computation_scenarios: list[ComputationScenario] = (
+            orm_model.computation_scenarios.select()
+        )
         nr_of_scenarios = len(computation_scenarios)
         scenario_probablity_key = "P_scenario"
         mechanism_input.input[scenario_probablity_key] = np.zeros(nr_of_scenarios)
@@ -63,6 +63,7 @@ class PipingImporter(OrmImporterProtocol):
             mechanism_input.input[scenario_probablity_key][
                 index
             ] = _c_scenario.scenario_probability
+            # TODO: VRTOOL-340. This does not support multiple scenarios.
             mechanism_input.input["Pf"] = _c_scenario.probability_of_failure
             index += 1
 
