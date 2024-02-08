@@ -75,8 +75,6 @@ class StabilityInnerSimpleInput:
         elif isinstance(_beta, np.ndarray) or _beta:
             _safety_factor_2025 = None
             _beta_2025 = None
-            # if isinstance(_beta, np.ndarray):
-            #     _beta = _beta[0]
             _reliability_calculation_method = ReliabilityCalculationMethod.BETA_SINGLE
         else:
             raise Exception("Warning: No input values SF or Beta StabilityInner")
