@@ -12,6 +12,7 @@ class TestMeasureTypeEnum:
             pytest.param("SoilReinforcement", id="VALID CamelCase"),
             pytest.param(" Soil reinforcement", id="VALID space before"),
             pytest.param("Soil reinforcement ", id="VALID space after"),
+            pytest.param("Soil Reinforcement", id="VALID With space and 2 upper"),
         ],
     )
     def test_get_valid_measure_type_enum(self, enum_name: str):
