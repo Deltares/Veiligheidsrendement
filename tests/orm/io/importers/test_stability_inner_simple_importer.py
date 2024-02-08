@@ -77,6 +77,15 @@ class TestStabilityInnerSimpleImporter:
 
         assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER
         assert len(_mechanism_input.input) == len(parameters) + 3
+        assert _mechanism_input.input["Scenario"] == [
+            _computation_scenario.scenario_name
+        ]
+        assert _mechanism_input.input["P_scenario"] == [
+            _computation_scenario.scenario_probability
+        ]
+        assert _mechanism_input.input["Pf"] == [
+            _computation_scenario.probability_of_failure
+        ]
         for parameter in parameters:
             mechanism_parameter = _mechanism_input.input[parameter.get("parameter")]
             assert isinstance(mechanism_parameter, np.ndarray)
