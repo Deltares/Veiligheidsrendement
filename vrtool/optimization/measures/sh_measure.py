@@ -30,3 +30,12 @@ class ShMeasure(MeasureAsInputProtocol):
     @classmethod
     def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
         return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
+
+    def __post_init__(self):
+        # Set LCC to 0 for Sh to avoid double counting with Sg
+        if self.measure_type in [
+            MeasureTypeEnum.DIAPHRAGM_WALL,
+            MeasureTypeEnum.STABILITY_SCREEN,
+            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+        ]:
+            self.lcc = 0
