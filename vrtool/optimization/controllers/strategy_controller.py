@@ -93,7 +93,8 @@ class StrategyController:
                         dcrest=_dcrest,
                     )
                 )
-            elif _dcrest == 0 or _dcrest == -999:  # Sh
+
+            if _dcrest == 0 or _dcrest == -999:  # Sh
                 _mech_year_coll = self._get_mechanism_year_collection(
                     measure_data,
                     _idx,
@@ -111,6 +112,7 @@ class StrategyController:
                         dcrest=_dcrest,
                     )
                 )
+
         return _measures
 
     def map_input(
