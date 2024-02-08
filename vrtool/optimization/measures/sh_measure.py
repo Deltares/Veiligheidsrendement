@@ -32,7 +32,9 @@ class ShMeasure(MeasureAsInputProtocol):
         return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
 
     def __post_init__(self):
-        # Set LCC to 0 for Sh to avoid double counting with Sg
+        """
+        Set LCC to 0 for Sh to avoid double counting with Sg
+        """
         if self.measure_type in [
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,

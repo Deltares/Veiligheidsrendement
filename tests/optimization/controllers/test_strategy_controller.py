@@ -226,34 +226,20 @@ class TestStrategyController:
         _optimization_controller.map_input(_selected_dike_traject, _solutions_dict)
 
         # 3. Verify expectations
-        assert len(_optimization_controller._section_measures_input) == 2
+        _sections = _optimization_controller._section_measures_input
+        assert len(_sections) == 2
+        assert _sections[0].section_name == SECTION1
+        assert _sections[0].traject_name == TRAJECT1
+        # Sh measures
+        assert len(_sections[0].sh_measures) == 7
+
+        assert isinstance(_sections[0].measures[0], ShMeasure)
         assert (
-            _optimization_controller._section_measures_input[0].section_name == SECTION1
+            len(_sections[0].measures[0].mechanism_year_collection._probabilities) == 2
         )
+        # Sg measures
+        assert len(_sections[0].sg_measures) == 7
+        assert isinstance(_sections[0].measures[1], SgMeasure)
         assert (
-            _optimization_controller._section_measures_input[0].traject_name == TRAJECT1
-        )
-        assert len(_optimization_controller._section_measures_input[0].sh_measures) == 7
-        assert len(_optimization_controller._section_measures_input[0].sg_measures) == 7
-        assert isinstance(
-            _optimization_controller._section_measures_input[0].measures[0], ShMeasure
-        )
-        assert (
-            len(
-                _optimization_controller._section_measures_input[0]
-                .measures[0]
-                .mechanism_year_collection._probabilities
-            )
-            == 2
-        )
-        assert isinstance(
-            _optimization_controller._section_measures_input[0].measures[1], SgMeasure
-        )
-        assert (
-            len(
-                _optimization_controller._section_measures_input[0]
-                .measures[1]
-                .mechanism_year_collection._probabilities
-            )
-            == 4
+            len(_sections[0].measures[1].mechanism_year_collection._probabilities) == 4
         )

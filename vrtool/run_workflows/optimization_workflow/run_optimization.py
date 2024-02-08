@@ -47,7 +47,16 @@ class RunOptimization(VrToolRunProtocol):
     def _get_optimized_greedy_strategy_new(
         self, design_method: str
     ) -> StrategyController:
-        # Initialize a GreedyStrategy (new):
+        """
+        Temporary function for VRTOOL-359 to convert legacy input
+        containing Pandas DataFrames to new inputcontaining MeasureAsInputProtocol objects.
+
+        Args:
+            design_method (str): Design method
+
+        Returns:
+            StrategyController: Controller containing the new input
+        """
         _greedy_optimization = StrategyController(design_method, self.vr_config)
 
         _results_dir = self._get_output_dir()
@@ -197,7 +206,7 @@ class RunOptimization(VrToolRunProtocol):
             "Optimized": self._get_optimized_greedy_strategy,
             "Greedy": self._get_optimized_greedy_strategy,
             "Veiligheidsrendement": self._get_optimized_greedy_strategy,
-            "Veiligheidsrendement_new": self._get_optimized_greedy_strategy_new,
+            "Veiligheidsrendement_new": self._get_optimized_greedy_strategy_new,  # temporary fix to use new greedy strategy
             "OI": self._get_target_reliability_strategy,
             "TargetReliability": self._get_target_reliability_strategy,
             "Doorsnede-eisen": self._get_target_reliability_strategy,

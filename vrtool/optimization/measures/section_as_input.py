@@ -14,9 +14,9 @@ class SectionAsInput:
     measures: list[MeasureAsInputProtocol]
 
     @property
-    def sh_measures(self):
-        return [m for m in self.measures if isinstance(m, ShMeasure)]
+    def sh_measures(self) -> list[ShMeasure]:
+        return list(filter(lambda x: isinstance(x, ShMeasure), self.measures))
 
     @property
-    def sg_measures(self):
-        return [m for m in self.measures if not isinstance(m, SgMeasure)]
+    def sg_measures(self) -> list[SgMeasure]:
+        return list(filter(lambda x: isinstance(x, SgMeasure), self.measures))

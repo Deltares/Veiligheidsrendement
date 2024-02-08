@@ -304,6 +304,7 @@ class TestApiRunWorkflowsAcceptance:
     ):
         """
         This test uses the new optimization run method.
+        TODO: Remove this test if the new optimization method is implemented fully.
         """
         # 1. Define test data.
         _new_optimization_name = "test_optimization_new_{}".format(
