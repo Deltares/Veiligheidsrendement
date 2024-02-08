@@ -15,8 +15,8 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.measures.sg_measure import ALLOWED_MECHANISMS_SG, SgMeasure
-from vrtool.optimization.measures.sh_measure import ALLOWED_MECHANISMS_SH, ShMeasure
+from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
@@ -34,7 +34,7 @@ class StrategyController:
             mech: MechanismEnum,
             cols: list[MultiIndex],
             allowed_mechanisms: list[MechanismEnum],
-        ) -> list[MultiIndex] | None:
+        ) -> list[MultiIndex]:
             """Get mechanism columns from measure data"""
             if mech in allowed_mechanisms:
                 return [col for col in cols if col[0] == mech.name]
@@ -76,7 +76,7 @@ class StrategyController:
                 _mech_year_coll = self._get_mechanism_year_collection(
                     measure_data,
                     _idx,
-                    ALLOWED_MECHANISMS_SH,
+                    ShMeasure.get_allowed_mechanisms(),
                 )
                 _beta = measure_data.at[_idx, ("beta_target", "")]
                 _trans_level = measure_data.at[_idx, ("transition_level", "")]
@@ -97,7 +97,7 @@ class StrategyController:
                 _mech_year_coll = self._get_mechanism_year_collection(
                     measure_data,
                     _idx,
-                    ALLOWED_MECHANISMS_SG,
+                    SgMeasure.get_allowed_mechanisms(),
                 )
                 _measures.append(
                     SgMeasure(

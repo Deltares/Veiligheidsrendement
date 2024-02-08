@@ -10,8 +10,6 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 
-ALLOWED_MECHANISMS_SG = [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
-
 
 @dataclass
 class SgMeasure(MeasureAsInputProtocol):
@@ -23,3 +21,11 @@ class SgMeasure(MeasureAsInputProtocol):
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
     dcrest: float
+
+    @classmethod
+    def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
+        return mechanism in cls.get_allowed_mechanisms()
+
+    @classmethod
+    def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+        return [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]

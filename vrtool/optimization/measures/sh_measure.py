@@ -10,8 +10,6 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 
-ALLOWED_MECHANISMS_SH = [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
-
 
 @dataclass
 class ShMeasure(MeasureAsInputProtocol):
@@ -24,3 +22,11 @@ class ShMeasure(MeasureAsInputProtocol):
     beta_target: float
     transition_level: float
     dcrest: float
+
+    @classmethod
+    def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
+        return mechanism in cls.get_allowed_mechanisms()
+
+    @classmethod
+    def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+        return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
