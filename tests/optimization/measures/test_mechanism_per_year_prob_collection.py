@@ -42,7 +42,7 @@ class TestMechanismPerYearProbCollection:
 
     def test_interpolation(self):
         # Setup
-        _prob = self._getMechanismPerYearExample();
+        _prob = self._getMechanismPerYearExample()
 
         # Call
         _collection = MechanismPerYearProbabilityCollection(_prob)
@@ -55,7 +55,7 @@ class TestMechanismPerYearProbCollection:
 
     def test_not_adding_existing_year(self):
         # Setup
-        _prob = self._getMechanismPerYearExample();
+        _prob = self._getMechanismPerYearExample()
 
         # Call
         _collection = MechanismPerYearProbabilityCollection(_prob)
@@ -65,4 +65,3 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert _size_before == _size_after
-
