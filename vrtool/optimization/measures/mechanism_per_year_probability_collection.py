@@ -16,27 +16,25 @@ class MechanismPerYearProbabilityCollection:
                 return p.probability
         raise ValueError("mechanism/year not found")
     
-    def _get_mechanisms(self) -> {MechanismEnum}:
-        myset = set()
-        for p in self._probabilities:
-            myset.add(p.mechanism)
-        return myset
-    
+    def _get_mechanisms(self) -> set[MechanismEnum]:
+        return set(p.mechanism for p in self._probabilities)
+
     def _add_year_mechanism(self, mechanism: MechanismEnum, added_years: list[int]) -> None:
-        years = []
-        probs = []
+        _years = []
+        _probs = []
         for p in self._probabilities:
             if p.mechanism == mechanism:
-                years.append(p.year)
-                probs.append(p.probability)
+                _years.append(p.year)
+                _probs.append(p.probability)
 
-        prob_interp = interp1d(years, probs, fill_value=("extrapolate"))(added_years)
-        for i in range(len(added_years)):
-            mechPerYr = MechanismPerYear(mechanism, added_years[i], float(prob_interp[i]))
-            self._probabilities.append(mechPerYr)
+        _prob_interp = interp1d(_years, _probs, fill_value=("extrapolate"))(added_years)
+        for i, _year in enumerate(added_years):
+            if (not (_year in _years)):
+                _mechPerYr = MechanismPerYear(mechanism, _year, float(_prob_interp[i]))
+                self._probabilities.append(_mechPerYr)
 
     def add_years(self, years: list[int]) -> None:
-        mechanisms = self._get_mechanisms()
-        for m in mechanisms:
+        _mechanisms = self._get_mechanisms()
+        for m in _mechanisms:
             self._add_year_mechanism(m, years)
 
