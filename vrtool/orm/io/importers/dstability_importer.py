@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import numpy as np
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -7,8 +9,6 @@ from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
-import numpy as np
-
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 

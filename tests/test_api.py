@@ -398,7 +398,6 @@ class TestApiRunWorkflowsAcceptance:
 
 @pytest.mark.slow
 class TestApiReportedBugs:
-
     def _get_vrtool_config_test_copy(
         self, config_file: Path, test_name: str
     ) -> VrtoolConfig:
