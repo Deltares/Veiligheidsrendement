@@ -43,9 +43,9 @@ class PipingImporter(OrmImporterProtocol):
 
         index = 0
 
-        computation_scenarios: list[ComputationScenario] = (
-            orm_model.computation_scenarios.select()
-        )
+        computation_scenarios: list[
+            ComputationScenario
+        ] = orm_model.computation_scenarios.select()
         nr_of_scenarios = len(computation_scenarios)
         scenario_probablity_key = "P_scenario"
         mechanism_input.input[scenario_probablity_key] = np.zeros(nr_of_scenarios)
