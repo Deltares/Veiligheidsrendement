@@ -1,7 +1,6 @@
 from pandas import DataFrame as df
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -29,7 +28,7 @@ class TestStrategyController:
         _dike_traject.sections = [_section1, _section2]
         return _dike_traject
 
-    def _create_measures(self) -> df:
+    def _create_measures_df(self) -> df:
         return df.from_dict(
             {
                 ("type", ""): [
@@ -311,7 +310,7 @@ class TestStrategyController:
         _solutions = Solutions(
             config=_config, dike_section=self._create_valid_dike_section(section_name)
         )
-        _solutions.MeasureData = self._create_measures()
+        _solutions.MeasureData = self._create_measures_df()
         return _solutions
 
     def _create_solution_dict(self):
@@ -346,11 +345,3 @@ class TestStrategyController:
         assert (
             len(_sections[0].measures[1].mechanism_year_collection._probabilities) == 4
         )
-
-    def test_combining_measures(self):
-        # 1. Define input
-        pass
-
-        # 2. Run test
-
-        # 3. Verify expectations
