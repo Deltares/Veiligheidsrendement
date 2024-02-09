@@ -75,7 +75,9 @@ class TestDStabilityImporter:
         _importer = DStabilityImporter(_externals_directory, _stix_directory)
 
         # Call
-        _mechanism_input = _importer.import_orm(_computation_scenario)
+        _mechanism_input = _importer.import_orm(
+            _computation_scenario.mechanism_per_section
+        )
 
         # Assert
         assert isinstance(_mechanism_input, MechanismInput)
@@ -124,10 +126,10 @@ class TestDStabilityImporter:
 
         # Call
         with pytest.raises(ValueError) as value_error:
-            _importer.import_orm(_computation_scenario)
+            _importer.import_orm(_computation_scenario.mechanism_per_section)
 
         # Assert
-        _expected_mssg = "Computation type must be 'DSTABILITY'."
+        _expected_mssg = "All computation types must be 'DSTABILITY'."
         assert str(value_error.value) == _expected_mssg
 
     def test_import_orm_with_multiple_supporting_files_raises_value_error(
@@ -149,7 +151,7 @@ class TestDStabilityImporter:
 
         # Call
         with pytest.raises(ValueError) as value_error:
-            _importer.import_orm(_computation_scenario)
+            _importer.import_orm(_computation_scenario.mechanism_per_section)
 
         # Assert
         _expected_mssg = "Invalid number of stix files."
@@ -169,7 +171,7 @@ class TestDStabilityImporter:
 
         # Call
         with pytest.raises(ValueError) as value_error:
-            _importer.import_orm(_computation_scenario)
+            _importer.import_orm(_computation_scenario.mechanism_per_section)
 
         # Assert
         _expected_mssg = "Invalid number of stix files."
@@ -180,7 +182,7 @@ class TestDStabilityImporter:
         _externals_directory = Path("path/to/externals")
         _stix_directory = Path("path/to/stix")
         _importer = DStabilityImporter(_externals_directory, _stix_directory)
-        _expected_mssg = "No valid value given for ComputationScenario."
+        _expected_mssg = "No valid value given for MechanismPerSection."
 
         # Call
         with pytest.raises(ValueError) as value_error:

@@ -7,26 +7,53 @@ from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
 class StabilityInnerSimpleImporter(OrmImporterProtocol):
     def _set_parameters(
-        self, input: MechanismInput, parameters: list[ComputationScenarioParameter]
+        self, mech_input: MechanismInput, parameters: list[ComputationScenarioParameter]
     ) -> None:
         for parameter in parameters:
-            input.input[parameter.parameter.lower().strip()] = np.array(
-                [float(parameter.value)]
-            )
+            _key = parameter.parameter.lower().strip()
+            if _key not in mech_input.input.keys():
+                mech_input.input[_key] = np.array([float(parameter.value)])
+            else:
+                mech_input.input[_key] = np.append(
+                    mech_input.input[_key], float(parameter.value)
+                )
 
-    def import_orm(self, orm_model: ComputationScenario) -> MechanismInput:
+    def import_orm(self, orm_model: MechanismPerSection) -> MechanismInput:
         if not orm_model:
             raise ValueError(
-                f"No valid value given for {ComputationScenario.__name__}."
+                f"No valid value given for {MechanismPerSection.__name__}."
             )
 
         mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
-        self._set_parameters(
-            mechanism_input, orm_model.computation_scenario_parameters.select()
-        )
+        _scenario_key = "Scenario"
+        _scenario_probablity_key = "P_scenario"
+        _probability_of_failure = "Pf"
+
+        mechanism_input.input[_scenario_key] = []
+        mechanism_input.input[_scenario_probablity_key] = np.array([])
+        mechanism_input.input[_probability_of_failure] = np.array([])
+
+        def _append_to_numpy_input(input_key: str, value: float) -> None:
+            mechanism_input.input[input_key] = np.append(
+                mechanism_input.input[input_key], value
+            )
+
+        for _c_scenario in orm_model.computation_scenarios:
+            self._set_parameters(
+                mechanism_input,
+                _c_scenario.computation_scenario_parameters.select(),
+            )
+            mechanism_input.input[_scenario_key].append(_c_scenario.scenario_name)
+            _append_to_numpy_input(
+                _scenario_probablity_key, _c_scenario.scenario_probability
+            )
+            _append_to_numpy_input(
+                _probability_of_failure, _c_scenario.probability_of_failure
+            )
 
         return mechanism_input

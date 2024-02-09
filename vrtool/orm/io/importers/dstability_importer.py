@@ -7,6 +7,9 @@ from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
+import numpy as np
+
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
 class DStabilityImporter(OrmImporterProtocol):
@@ -24,27 +27,43 @@ class DStabilityImporter(OrmImporterProtocol):
         self._computation_type = "DSTABILITY"
 
     def _set_parameters(
-        self, input: MechanismInput, parameters: list[ComputationScenarioParameter]
+        self, mech_input: MechanismInput, parameters: list[ComputationScenarioParameter]
     ) -> None:
         for parameter in parameters:
-            input.input[parameter.parameter] = parameter.value
+            _key = parameter.parameter.lower().strip()
+            if _key not in mech_input.input.keys():
+                mech_input.input[_key] = np.array([float(parameter.value)])
+            else:
+                mech_input.input[_key] = np.append(
+                    mech_input.input[_key], float(parameter.value)
+                )
 
-    def import_orm(self, orm_model: ComputationScenario) -> MechanismInput:
+    def import_orm(self, orm_model: MechanismPerSection) -> MechanismInput:
         if not orm_model:
             raise ValueError(
-                f"No valid value given for {ComputationScenario.__name__}."
+                f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        if orm_model.computation_type.name != self._computation_type:
-            raise ValueError(f"Computation type must be '{self._computation_type}'.")
+        if any(
+            cs.computation_type.name != self._computation_type
+            for cs in orm_model.computation_scenarios
+        ):
+            raise ValueError(
+                f"All computation types must be '{self._computation_type}'."
+            )
 
         mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
 
-        self._set_parameters(
-            mechanism_input, orm_model.computation_scenario_parameters.select()
-        )
+        for _computation_scenario in orm_model.computation_scenarios:
+            self._set_parameters(
+                mechanism_input,
+                _computation_scenario.computation_scenario_parameters.select(),
+            )
 
-        supporting_files = orm_model.supporting_files.select()
+        # TO DO: How are we supporting multiple scenarios with dstability files?
+        supporting_files = (
+            orm_model.computation_scenarios.select().get().supporting_files.select()
+        )
 
         if len(supporting_files) != 1:
             raise ValueError("Invalid number of stix files.")

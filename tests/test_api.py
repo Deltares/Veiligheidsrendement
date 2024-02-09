@@ -394,3 +394,61 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
+
+
+@pytest.mark.slow
+class TestApiReportedBugs:
+
+    def _get_vrtool_config_test_copy(
+        self, config_file: Path, test_name: str
+    ) -> VrtoolConfig:
+        """
+        Gets a `VrtoolConfig` with a copy of the database to avoid version issues.
+        """
+        # Create a results directory (ignored by git)
+        _test_results_directory = test_results.joinpath(test_name)
+        if _test_results_directory.exists():
+            shutil.rmtree(_test_results_directory)
+        _test_results_directory.mkdir(parents=True)
+
+        # Get the current configuration
+        _vrtool_config = VrtoolConfig.from_json(config_file)
+
+        # Create a db copy.
+        _new_db_name = "test_{}.db".format(
+            hashlib.shake_128(_test_results_directory.__bytes__()).hexdigest(4)
+        )
+        _new_db_path = _test_results_directory.joinpath(_new_db_name)
+        if _new_db_path.exists():
+            # Somehow it was not removed in the previous test run.
+            _new_db_path.unlink(missing_ok=True)
+
+        shutil.copy(_vrtool_config.input_database_path, _new_db_path)
+
+        # Set new configuration values.
+        _vrtool_config.input_directory = _test_results_directory
+        _vrtool_config.input_database_name = _new_db_name
+        _vrtool_config.output_directory = _test_results_directory.joinpath("output")
+        _vrtool_config.output_directory.mkdir()
+
+        return _vrtool_config
+
+    def test_given_multiple_scenario_with_dstability_all_scenarios_are_run(
+        self, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _multiple_scenarios_dir = test_data.joinpath(
+            "test_stability_multiple_scenarios"
+        )
+        assert _multiple_scenarios_dir.exists()
+        _vrtool_config = self._get_vrtool_config_test_copy(
+            _multiple_scenarios_dir.joinpath("config.json"), request.node.name
+        )
+
+        assert not any(_vrtool_config.output_directory.glob("*"))
+
+        # 2. Run test.
+        ApiRunWorkflows(_vrtool_config).run_all()
+
+        # 3. Verify expectations.
+        assert any(_vrtool_config.output_directory.glob("*"))
