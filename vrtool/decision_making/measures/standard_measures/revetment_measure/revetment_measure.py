@@ -69,14 +69,13 @@ class RevetmentMeasure(MeasureProtocol):
             )
         elif current_transition_level == crest_height:
             return [current_transition_level]
-        else:
-            return list(
-                np.arange(
-                    current_transition_level,
-                    crest_height,
-                    self.transition_level_increase_step,
-                )
+        return list(
+            np.arange(
+                current_transition_level,
+                crest_height,
+                self.transition_level_increase_step,
             )
+        ) + [crest_height]
 
     def _get_revetment(self, dike_section: DikeSection) -> RevetmentDataClass:
         _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
