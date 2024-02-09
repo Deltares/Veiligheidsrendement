@@ -29,7 +29,19 @@ class MechanismPerYearProbabilityCollection:
                 nwp = 1 - (1 - p.probability) * (1 - y)
                 nw_list.append(MechanismPerYear(mechanism, p.year, nwp))
 
-    def combine(self, second: MechanismPerYearProbabilityCollection):
+    def combine(self, second: MechanismPerYearProbabilityCollection) -> MechanismPerYearProbabilityCollection:
+        """
+        combines the probabilities in two collections
+
+        Args:
+            second (MechanismPerYearProbabilityCollection): the collection to combine with
+
+        Raises:
+            ValueError: can only combine if the overlying mechanisms are equal
+
+        Returns:
+            MechanismPerYearProbabilityCollection: the combined collection
+        """        
         _mechanism1 = self._get_mechanisms()
         _mechanism2 = second._get_mechanisms()
         if ( not (_mechanism1 == _mechanism2)):
