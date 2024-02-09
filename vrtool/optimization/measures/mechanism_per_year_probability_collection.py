@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from scipy.interpolate import interp1d
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -19,6 +21,23 @@ class MechanismPerYearProbabilityCollection:
 
     def _get_mechanisms(self) -> set[MechanismEnum]:
         return set(p.mechanism for p in self._probabilities)
+
+    def _combine_years(self, mechanism: MechanismEnum, secondary_list: list[MechanismPerYear], nw_list: list[MechanismPerYear]):
+        for p in secondary_list:
+            if p.mechanism == mechanism:
+                y = self.filter(mechanism, p.year)
+                nwp = 1 - (1 - p.probability) * (1 - y)
+                nw_list.append(MechanismPerYear(mechanism, p.year, nwp))
+
+    def combine(self, second: MechanismPerYearProbabilityCollection):
+        _mechanism1 = self._get_mechanisms()
+        _mechanism2 = second._get_mechanisms()
+        if ( not (_mechanism1 == _mechanism2)):
+            raise ValueError("mechanisms not equal in combine")
+        _nw_probabilities = []
+        for m in _mechanism1:
+            self._combine_years(m, second._probabilities, _nw_probabilities)
+        return _nw_probabilities
 
     def _add_year_mechanism(
         self, mechanism: MechanismEnum, added_years: list[int]
