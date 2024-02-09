@@ -1,9 +1,13 @@
-from vrtool.optimization.measures.mechanism_per_year_probability_collection import MechanismPerYearProbabilityCollection
-from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
+import pytest
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
+)
+
 
 class TestMechanismPerYearProbCollection:
-
     def _getMechanismPerYearExample(self):
         _prob = []
         _prob.append(MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9))
@@ -35,3 +39,29 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert _prob50yr == 0.8
+
+    def test_interpolation(self):
+        # Setup
+        _prob = self._getMechanismPerYearExample()
+
+        # Call
+        _collection = MechanismPerYearProbabilityCollection(_prob)
+        _collection.add_years([20, 21])
+
+        _prob20yr = _collection.filter(MechanismEnum.OVERFLOW, 20)
+
+        # Assert
+        assert _prob20yr == pytest.approx(0.86555, abs=1e-5)
+
+    def test_not_adding_existing_year(self):
+        # Setup
+        _prob = self._getMechanismPerYearExample()
+
+        # Call
+        _collection = MechanismPerYearProbabilityCollection(_prob)
+        _size_before = len(_collection._probabilities)
+        _collection.add_years([50])
+        _size_after = len(_collection._probabilities)
+
+        # Assert
+        assert _size_before == _size_after

@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-import vrtool.orm.models as orm_models
+import vrtool.orm.models as orm
 from tests import test_data, test_results
 from tests.orm import (
     get_basic_combinable_type,
@@ -137,35 +137,33 @@ class TestOrmControllers:
         initialize_database(_db_file)
 
         # 2. Define models.
-        _dike_traject_info: orm_models.DikeTrajectInfo = (
-            orm_models.DikeTrajectInfo.create(**DummyModelsData.dike_traject_info)
+        _dike_traject_info: orm.DikeTrajectInfo = orm.DikeTrajectInfo.create(
+            **DummyModelsData.dike_traject_info
         )
         _dike_traject_info.save()
 
-        _dike_section: orm_models.SectionData = orm_models.SectionData.create(
+        _dike_section: orm.SectionData = orm.SectionData.create(
             **(dict(dike_traject=_dike_traject_info) | DummyModelsData.section_data)
         )
         _dike_section.save()
 
         for _m_dict in DummyModelsData.mechanism_data:
-            _mech_inst = orm_models.Mechanism.create(**_m_dict)
+            _mech_inst = orm.Mechanism.create(**_m_dict)
             _mech_inst.save()
-            _mechanism_section = orm_models.MechanismPerSection.create(
+            _mechanism_section = orm.MechanismPerSection.create(
                 mechanism=_mech_inst, section=_dike_section
             )
             _mechanism_section.save()
 
         for _b_dict in DummyModelsData.buildings_data:
-            orm_models.Buildings.create(
-                **(_b_dict | dict(section_data=_dike_section))
-            ).save()
+            orm.Buildings.create(**(_b_dict | dict(section_data=_dike_section))).save()
 
         for idx, _p_point in enumerate(DummyModelsData.profile_points):
-            _c_point = orm_models.CharacteristicPointType.create(
+            _c_point = orm.CharacteristicPointType.create(
                 **dict(name=DummyModelsData.characteristic_point_type[idx])
             )
             _c_point.save()
-            orm_models.ProfilePoint.create(
+            orm.ProfilePoint.create(
                 **(
                     _p_point
                     | dict(section_data=_dike_section, profile_point_type=_c_point)
@@ -186,8 +184,8 @@ class TestOrmControllers:
 
         # 3. Verify expectations
         assert isinstance(_sql_db, SqliteDatabase)
-        assert any(orm_models.SectionData.select())
-        _section_data: orm_models.SectionData = orm_models.SectionData.get_by_id(1)
+        assert any(orm.SectionData.select())
+        _section_data: orm.SectionData = orm.SectionData.get_by_id(1)
         assert _section_data.section_name == _expected_data["section_name"]
         assert _section_data.dijkpaal_start == _expected_data["dijkpaal_start"]
         assert _section_data.dijkpaal_end == _expected_data["dijkpaal_end"]
@@ -385,28 +383,28 @@ class TestOrmControllers:
         )
         _safety_assessment.selected_traject = _test_traject
 
-        assert not any(orm_models.AssessmentSectionResult.select())
-        assert not any(orm_models.AssessmentMechanismResult.select())
+        assert not any(orm.AssessmentSectionResult.select())
+        assert not any(orm.AssessmentMechanismResult.select())
 
         # 2. Run test.
         export_results_safety_assessment(_safety_assessment)
 
         # 3. Verify final expectations.
         assert any(
-            orm_models.AssessmentSectionResult.select().where(
-                (orm_models.AssessmentSectionResult.section_data == _test_section_data)
-                & (orm_models.AssessmentSectionResult.beta == 2.4)
-                & (orm_models.AssessmentSectionResult.time == 42)
+            orm.AssessmentSectionResult.select().where(
+                (orm.AssessmentSectionResult.section_data == _test_section_data)
+                & (orm.AssessmentSectionResult.beta == 2.4)
+                & (orm.AssessmentSectionResult.time == 42)
             )
         )
         assert any(
-            orm_models.AssessmentMechanismResult.select().where(
+            orm.AssessmentMechanismResult.select().where(
                 (
-                    orm_models.AssessmentMechanismResult.mechanism_per_section
+                    orm.AssessmentMechanismResult.mechanism_per_section
                     == _test_mechanism_per_section
                 )
-                & (orm_models.AssessmentMechanismResult.beta == 4.2)
-                & (orm_models.AssessmentMechanismResult.time == 42)
+                & (orm.AssessmentMechanismResult.beta == 4.2)
+                & (orm.AssessmentMechanismResult.time == 42)
             )
         )
 
@@ -535,12 +533,12 @@ class TestOrmControllers:
         _optimization_run_name = "Test optimization name"
 
         # 2. Run test.
-        _measure_result_selection = len(orm_models.MeasureResult.select()) // 2
+        _measure_result_selection = len(orm.MeasureResult.select()) // 2
         if _measure_result_selection == 0:
             _measure_result_selection = 1
         _measure_result_ids = [
             mr.get_id()
-            for mr in orm_models.MeasureResult.select().limit(_measure_result_selection)
+            for mr in orm.MeasureResult.select().limit(_measure_result_selection)
         ]
         _return_value = create_optimization_run_for_selected_measures(
             _results_measures.vr_config, _measure_result_ids, _optimization_run_name
@@ -548,16 +546,16 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert isinstance(_return_value, dict)
-        assert len(orm_models.OptimizationType.select()) == len(
+        assert len(orm.OptimizationType.select()) == len(
             _results_measures.vr_config.design_methods
         )
-        for _optimization_type in orm_models.OptimizationType:
-            assert isinstance(_optimization_type, orm_models.OptimizationType)
+        for _optimization_type in orm.OptimizationType:
+            assert isinstance(_optimization_type, orm.OptimizationType)
 
             assert len(_optimization_type.optimization_runs) == 1
             _optimization_run = _optimization_type.optimization_runs[0]
 
-            assert isinstance(_optimization_run, orm_models.OptimizationRun)
+            assert isinstance(_optimization_run, orm.OptimizationRun)
             assert _optimization_run.name == _optimization_run_name
             assert (
                 _optimization_run.discount_rate
@@ -594,16 +592,14 @@ class TestOrmControllers:
 
         # Generate default run data.
         _optimization_type = "Test optimization type"
-        _test_optimization_type = orm_models.OptimizationType.create(
-            name=_optimization_type
-        )
-        _optimization_run = orm_models.OptimizationRun.create(
+        _test_optimization_type = orm.OptimizationType.create(name=_optimization_type)
+        _optimization_run = orm.OptimizationRun.create(
             name="PremadeOptimization",
             discount_rate=0.42,
             optimization_type=_test_optimization_type,
         )
-        for _measure_result in orm_models.MeasureResult.select():
-            orm_models.OptimizationSelectedMeasure.create(
+        for _measure_result in orm.MeasureResult.select():
+            orm.OptimizationSelectedMeasure.create(
                 optimization_run=_optimization_run,
                 measure_result=_measure_result,
                 investment_year=2023,
@@ -716,12 +712,12 @@ class TestOrmControllers:
         export_results_optimization(_results_optimization, [_optimization_run.id])
 
         # 3. Verify expectations.
-        assert len(orm_models.OptimizationStep.select()) == 1
-        _optimization_step = orm_models.OptimizationStep.get()
+        assert len(orm.OptimizationStep.select()) == 1
+        _optimization_step = orm.OptimizationStep.get()
         assert _optimization_step.total_lcc == 0.42
         assert _optimization_step.total_risk == 0.24
-        assert len(orm_models.OptimizationStepResultMechanism) == 10
-        assert len(orm_models.OptimizationStepResultSection) == 3
+        assert len(orm.OptimizationStepResultMechanism) == 10
+        assert len(orm.OptimizationStepResultSection) == 3
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase
@@ -730,8 +726,8 @@ class TestOrmControllers:
         _db_connection = export_database
         _db_connection.connect()
 
-        assert not any(orm_models.AssessmentSectionResult.select())
-        assert not any(orm_models.AssessmentMechanismResult.select())
+        assert not any(orm.AssessmentSectionResult.select())
+        assert not any(orm.AssessmentMechanismResult.select())
 
         traject_info = get_basic_dike_traject_info()
 
@@ -748,8 +744,8 @@ class TestOrmControllers:
         )
 
         # Precondition
-        assert any(orm_models.AssessmentSectionResult.select())
-        assert any(orm_models.AssessmentMechanismResult.select())
+        assert any(orm.AssessmentSectionResult.select())
+        assert any(orm.AssessmentMechanismResult.select())
 
         _db_connection.close()
 
@@ -764,8 +760,8 @@ class TestOrmControllers:
         # Assert
         _db_connection.connect()
 
-        assert not any(orm_models.AssessmentSectionResult.select())
-        assert not any(orm_models.AssessmentMechanismResult.select())
+        assert not any(orm.AssessmentSectionResult.select())
+        assert not any(orm.AssessmentMechanismResult.select())
 
         _db_connection.close()
 
@@ -784,10 +780,10 @@ class TestOrmControllers:
         clear_measure_results(_vrtool_config)
 
         # Assert
-        assert not any(orm_models.MeasureResult.select())
-        assert not any(orm_models.MeasureResultParameter.select())
-        assert not any(orm_models.MeasureResultSection.select())
-        assert not any(orm_models.MeasureResultMechanism.select())
+        assert not any(orm.MeasureResult.select())
+        assert not any(orm.MeasureResultParameter.select())
+        assert not any(orm.MeasureResultSection.select())
+        assert not any(orm.MeasureResultMechanism.select())
 
     def test_clear_optimization_results_clears_all_results(
         self, export_database: SqliteDatabase
@@ -804,11 +800,11 @@ class TestOrmControllers:
         clear_optimization_results(_vrtool_config)
 
         # 3. Verify expectations.
-        assert not any(orm_models.OptimizationRun.select())
-        assert not any(orm_models.OptimizationSelectedMeasure.select())
-        assert not any(orm_models.OptimizationStep.select())
-        assert not any(orm_models.OptimizationStepResultMechanism.select())
-        assert not any(orm_models.OptimizationStepResultSection.select())
+        assert not any(orm.OptimizationRun.select())
+        assert not any(orm.OptimizationSelectedMeasure.select())
+        assert not any(orm.OptimizationStep.select())
+        assert not any(orm.OptimizationStepResultMechanism.select())
+        assert not any(orm.OptimizationStepResultSection.select())
 
     def _generate_measure_results(self, db_connection: SqliteDatabase):
         db_connection.connect()
@@ -829,43 +825,43 @@ class TestOrmControllers:
         )
         db_connection.close()
 
-        assert any(orm_models.MeasureResult.select())
-        assert any(orm_models.MeasureResultParameter.select())
-        assert any(orm_models.MeasureResultSection.select())
-        assert any(orm_models.MeasureResultMechanism.select())
+        assert any(orm.MeasureResult.select())
+        assert any(orm.MeasureResultParameter.select())
+        assert any(orm.MeasureResultSection.select())
+        assert any(orm.MeasureResultMechanism.select())
 
     def _generate_optimization_results(self, db_connection: SqliteDatabase):
         self._generate_measure_results(db_connection)
         if db_connection.is_closed():
             # It could happen it has not been closed.
             db_connection.connect()
-        _dummy_optimization_type = orm_models.OptimizationType.create(name="DummyType")
-        _optimization_run = orm_models.OptimizationRun.create(
+        _dummy_optimization_type = orm.OptimizationType.create(name="DummyType")
+        _optimization_run = orm.OptimizationRun.create(
             name="DummyRun",
             discount_rate=0.42,
             optimization_type=_dummy_optimization_type,
         )
-        _measure_result = orm_models.MeasureResult.select()[0].get()
-        _optimization_selected_measure = orm_models.OptimizationSelectedMeasure.create(
+        _measure_result = orm.MeasureResult.select()[0].get()
+        _optimization_selected_measure = orm.OptimizationSelectedMeasure.create(
             optimization_run=_optimization_run,
             measure_result=_measure_result,
             investment_year=2021,
         )
-        _optimization_step = orm_models.OptimizationStep.create(
+        _optimization_step = orm.OptimizationStep.create(
             optimization_selected_measure=_optimization_selected_measure, step_number=42
         )
-        _mechanism = orm_models.Mechanism.create(name="A Mechanism")
-        _mechanism_per_section = orm_models.MechanismPerSection.create(
+        _mechanism = orm.Mechanism.create(name="A Mechanism")
+        _mechanism_per_section = orm.MechanismPerSection.create(
             mechanism=_mechanism, section=_measure_result.measure_per_section.section
         )
-        orm_models.OptimizationStepResultMechanism.create(
+        orm.OptimizationStepResultMechanism.create(
             optimization_step=_optimization_step,
             mechanism_per_section=_mechanism_per_section,
             beta=4.2,
             time=20,
             lcc=2023.12,
         )
-        orm_models.OptimizationStepResultSection.create(
+        orm.OptimizationStepResultSection.create(
             optimization_step=_optimization_step,
             beta=4.2,
             time=20,
@@ -874,17 +870,17 @@ class TestOrmControllers:
 
         db_connection.close()
 
-        assert any(orm_models.OptimizationRun.select())
-        assert any(orm_models.OptimizationSelectedMeasure.select())
-        assert any(orm_models.OptimizationStep.select())
-        assert any(orm_models.OptimizationStepResultMechanism.select())
-        assert any(orm_models.OptimizationStepResultSection.select())
+        assert any(orm.OptimizationRun.select())
+        assert any(orm.OptimizationSelectedMeasure.select())
+        assert any(orm.OptimizationStep.select())
+        assert any(orm.OptimizationStepResultMechanism.select())
+        assert any(orm.OptimizationStepResultSection.select())
 
     def _create_section_with_fully_configured_assessment_results(
         self,
         traject_info: DikeTrajectInfo,
         section_name: str,
-        mechanisms: list[orm_models.Mechanism],
+        mechanisms: list[orm.Mechanism],
     ) -> None:
         section = self._create_basic_section_data(traject_info, section_name)
         self._create_assessment_section_results(section)
@@ -897,8 +893,8 @@ class TestOrmControllers:
 
     def _create_basic_section_data(
         self, traject_info: DikeTrajectInfo, section_name: str
-    ) -> orm_models.SectionData:
-        return orm_models.SectionData.create(
+    ) -> orm.SectionData:
+        return orm.SectionData.create(
             dike_traject=traject_info,
             section_name=section_name,
             meas_start=2.4,
@@ -909,30 +905,26 @@ class TestOrmControllers:
             annual_crest_decline=42,
         )
 
-    def _create_assessment_section_results(
-        self, section: orm_models.SectionData
-    ) -> None:
+    def _create_assessment_section_results(self, section: orm.SectionData) -> None:
         for i in range(2000, 2100, 10):
-            orm_models.AssessmentSectionResult.create(
+            orm.AssessmentSectionResult.create(
                 beta=i / 1000.0, time=i, section_data=section
             )
 
-    def _create_mechanism(self, mechanism_name: str) -> orm_models.Mechanism:
-        _mech_inst, _ = orm_models.Mechanism.get_or_create(name=mechanism_name)
+    def _create_mechanism(self, mechanism_name: str) -> orm.Mechanism:
+        _mech_inst, _ = orm.Mechanism.get_or_create(name=mechanism_name)
         return _mech_inst
 
     def _create_basic_mechanism_per_section(
-        self, section: orm_models.SectionData, mech_inst: orm_models.Mechanism
-    ) -> orm_models.MechanismPerSection:
-        return orm_models.MechanismPerSection.create(
-            section=section, mechanism=mech_inst
-        )
+        self, section: orm.SectionData, mech_inst: orm.Mechanism
+    ) -> orm.MechanismPerSection:
+        return orm.MechanismPerSection.create(section=section, mechanism=mech_inst)
 
     def _create_assessment_mechanism_results(
-        self, mechanism_per_section: orm_models.MechanismPerSection
+        self, mechanism_per_section: orm.MechanismPerSection
     ) -> None:
         for i in range(2000, 2100, 10):
-            orm_models.AssessmentMechanismResult.create(
+            orm.AssessmentMechanismResult.create(
                 beta=i / 1000.0, time=i, mechanism_per_section=mechanism_per_section
             )
 
@@ -940,7 +932,7 @@ class TestOrmControllers:
         self,
         traject_info: DikeTrajectInfo,
         section_name: str,
-        measures: list[orm_models.Measure],
+        measures: list[orm.Measure],
     ) -> None:
         section = self._create_basic_section_data(traject_info, section_name)
 
@@ -949,18 +941,18 @@ class TestOrmControllers:
         )
 
         for measure in measures:
-            measure_per_section = orm_models.MeasurePerSection.create(
+            measure_per_section = orm.MeasurePerSection.create(
                 section=section, measure=measure
             )
             self._create_measure_results(measure_per_section, _mechanism_per_section)
 
     def _create_measure(
         self,
-        measure_type: orm_models.MeasureType,
-        combinable_type: orm_models.CombinableType,
+        measure_type: orm.MeasureType,
+        combinable_type: orm.CombinableType,
         measure_name: str,
-    ) -> orm_models.Measure:
-        return orm_models.Measure.create(
+    ) -> orm.Measure:
+        return orm.Measure.create(
             measure_type=measure_type,
             combinable_type=combinable_type,
             name=measure_name,
@@ -969,28 +961,26 @@ class TestOrmControllers:
 
     def _create_measure_results(
         self,
-        measure_per_section: orm_models.MeasurePerSection,
+        measure_per_section: orm.MeasurePerSection,
         mechanism_per_section: MechanismPerSection,
     ) -> None:
         _t_range = list(range(2000, 2100, 10))
-        measure_result = orm_models.MeasureResult.create(
+        measure_result = orm.MeasureResult.create(
             measure_per_section=measure_per_section,
         )
         _measure_result_parameters = self._get_measure_result_parameters(measure_result)
-        orm_models.MeasureResultParameter.insert_many(
-            _measure_result_parameters
-        ).execute()
-        orm_models.MeasureResultSection.insert_many(
+        orm.MeasureResultParameter.insert_many(_measure_result_parameters).execute()
+        orm.MeasureResultSection.insert_many(
             self._get_measure_result_section(measure_result, _t_range)
         ).execute()
-        orm_models.MeasureResultMechanism.insert_many(
+        orm.MeasureResultMechanism.insert_many(
             self._get_measure_result_mechanism(
                 measure_result, _t_range, mechanism_per_section
             )
         ).execute()
 
     def _get_measure_result_section(
-        self, measure_result: orm_models.MeasureResult, t_range: list[int]
+        self, measure_result: orm.MeasureResult, t_range: list[int]
     ) -> list[dict]:
         cost = 13.37
         for i in t_range:
@@ -1000,7 +990,7 @@ class TestOrmControllers:
 
     def _get_measure_result_mechanism(
         self,
-        measure_result: orm_models.MeasureResult,
+        measure_result: orm.MeasureResult,
         t_range: list[int],
         mechanism_per_section: MechanismPerSection,
     ) -> list[dict]:
@@ -1013,7 +1003,7 @@ class TestOrmControllers:
             )
 
     def _get_measure_result_parameters(
-        self, measure_result: orm_models.MeasureResult
+        self, measure_result: orm.MeasureResult
     ) -> list[dict]:
         for i in range(1, 10):
             yield dict(
