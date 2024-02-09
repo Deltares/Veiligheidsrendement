@@ -13,10 +13,16 @@ class SectionAsInput:
     traject_name: str
     measures: list[MeasureAsInputProtocol]
 
-    @property
-    def sh_measures(self) -> list[ShMeasure]:
-        return list(filter(lambda x: isinstance(x, ShMeasure), self.measures))
+    def get_measures_by_type(
+        self,
+        measure_type: type[MeasureAsInputProtocol],
+    ) -> list[MeasureAsInputProtocol]:
+        return list(filter(lambda x: isinstance(x, measure_type), self.measures))
 
     @property
-    def sg_measures(self) -> list[SgMeasure]:
-        return list(filter(lambda x: isinstance(x, SgMeasure), self.measures))
+    def sh_measures(self) -> list[MeasureAsInputProtocol]:
+        return self.get_measures_by_type(ShMeasure)
+
+    @property
+    def sg_measures(self) -> list[MeasureAsInputProtocol]:
+        return self.get_measures_by_type(SgMeasure)
