@@ -22,7 +22,7 @@ class VrtoolEnum(Enum):
             if not in_name:
                 return cls.INVALID.name
             return sub(
-                r"(?<!^)(?=[A-Z])", "_", in_name.strip().replace(" ", "_")
+                r"(?<!^)(?<!_)(?=[A-Z])", "_", in_name.strip().replace(" ", "_")
             ).upper()
 
         try:
