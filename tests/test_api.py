@@ -300,6 +300,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases[6:7],
         indirect=True,
     )
+    @pytest.mark.skip(reason="Only used for debugging purposes.")
     def test_run_step_optimization_given_valid_vrtool_config_new(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
