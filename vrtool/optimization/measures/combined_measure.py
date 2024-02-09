@@ -11,14 +11,15 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 @dataclass
 class CombinedMeasure:
     primary: MeasureAsInputProtocol
-    secondary: MeasureAsInputProtocol
+    secondary: MeasureAsInputProtocol | None
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     cost: list[float]
     lcc: float
 
-    def __init__(self, primaryMeasure: MeasureAsInputProtocol, secondaryMeasure: MeasureAsInputProtocol) -> None:
-        self.primary = primaryMeasure
-        self.secondary = secondaryMeasure
-        self.cost = [primaryMeasure.cost, secondaryMeasure.cost]
-        self.lcc = primaryMeasure.lcc + secondaryMeasure.lcc
-        self.mechanism_year_collection = primaryMeasure.mechanism_year_collection.combine(secondaryMeasure.mechanism_year_collection)
+    def __init__(
+        self,
+        primary_measure: MeasureAsInputProtocol,
+        secondary_measure: MeasureAsInputProtocol | None = None,
+    ) -> None:
+        self.primary = primary_measure
+        self.secondary = secondary_measure
