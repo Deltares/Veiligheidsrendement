@@ -65,3 +65,14 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert _size_before == _size_after
+
+    def test_combined_measures(self):
+        # Setup
+        _collection1 = MechanismPerYearProbabilityCollection(self._getMechanismPerYearExample())
+        _collection2 = MechanismPerYearProbabilityCollection(self._getMechanismPerYearExample())
+
+        # Call
+        _collection3 = _collection1.combine(_collection2)
+
+        # Assert
+        assert len(_collection1._probabilities) == len(_collection3)
