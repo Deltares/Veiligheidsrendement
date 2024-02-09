@@ -32,8 +32,16 @@ class ShMeasure(MeasureAsInputProtocol):
         return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
 
     @classmethod
-    def get_allowed_combinable_types(cls) -> list[CombinableTypeEnum]:
-        return [CombinableTypeEnum.REVETMENT]
+    def get_allowed_measure_combinations(
+        cls,
+    ) -> list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
+        return [
+            (CombinableTypeEnum.REVETMENT, None),
+            (CombinableTypeEnum.COMBINABLE, None),
+            (CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.REVETMENT),
+            (CombinableTypeEnum.FULL, None),
+            (CombinableTypeEnum.FULL, CombinableTypeEnum.REVETMENT),
+        ]
 
     def __post_init__(self):
         """

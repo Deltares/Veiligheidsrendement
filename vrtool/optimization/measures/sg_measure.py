@@ -31,5 +31,11 @@ class SgMeasure(MeasureAsInputProtocol):
         return [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
 
     @classmethod
-    def get_allowed_combinable_types(cls) -> list[CombinableTypeEnum]:
-        return [CombinableTypeEnum.PARTIAL]
+    def get_allowed_measure_combinations(
+        cls,
+    ) -> list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
+        return [
+            (CombinableTypeEnum.COMBINABLE, None),
+            (CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.PARTIAL),
+            (CombinableTypeEnum.FULL, None),
+        ]

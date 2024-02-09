@@ -21,12 +21,36 @@ class MeasureAsInputProtocol(Protocol):
 
     @classmethod
     def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
+        """
+        Check if mechanism is allowed for measure
+
+        Args:
+            mechanism (MechanismEnum): Mechanism
+
+        Returns:
+            bool: True if allowed
+        """
         pass
 
     @classmethod
     def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+        """
+        Get the allowed mechanisms for the measure
+
+        Returns:
+            list[MechanismEnum]: List of Mechanisms
+        """
         pass
 
     @classmethod
-    def get_allowed_combinable_types(cls) -> list[CombinableTypeEnum]:
+    def get_allowed_measure_combinations(
+        cls,
+    ) -> list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
+        """
+        Returns the allowed measure type combinations for the measure
+
+        Returns:
+            list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
+                List of measure type combinations
+        """
         pass
