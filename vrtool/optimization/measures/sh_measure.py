@@ -32,8 +32,8 @@ class ShMeasure(MeasureAsInputProtocol):
         return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
 
     @classmethod
-    def get_allowed_combine_measure_types(cls) -> list[MeasureTypeEnum]:
-        return [MeasureTypeEnum.REVETMENT]
+    def get_allowed_combinable_types(cls) -> list[CombinableTypeEnum]:
+        return [CombinableTypeEnum.REVETMENT]
 
     def __post_init__(self):
         """

@@ -29,3 +29,7 @@ class SgMeasure(MeasureAsInputProtocol):
     @classmethod
     def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
         return [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
+
+    @classmethod
+    def get_allowed_combinable_types(cls) -> list[CombinableTypeEnum]:
+        return [CombinableTypeEnum.PARTIAL]

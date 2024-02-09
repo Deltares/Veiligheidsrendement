@@ -26,3 +26,7 @@ class MeasureAsInputProtocol(Protocol):
     @classmethod
     def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
         pass
+
+    @classmethod
+    def get_allowed_combinable_types(cls) -> list[CombinableTypeEnum]:
+        pass
