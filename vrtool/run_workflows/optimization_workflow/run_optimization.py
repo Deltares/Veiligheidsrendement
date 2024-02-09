@@ -8,9 +8,7 @@ import pandas as pd
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
-from vrtool.optimization.controllers.strategy_controller import (
-    StrategyController,
-)
+from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
