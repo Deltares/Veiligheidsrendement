@@ -432,18 +432,29 @@ class TestApiReportedBugs:
 
         return _vrtool_config
 
-    def test_given_multiple_scenario_with_dstability_all_scenarios_are_run(
-        self, request: pytest.FixtureRequest
+    @pytest.mark.parametrize(
+        "directory_name",
+        [
+            pytest.param(
+                "test_stability_multiple_scenarios",
+                id="Stability case with multiple scenarios [VRTOOL-340]",
+            ),
+            pytest.param(
+                "test_revetment_step_transition_level",
+                id="Revetment case with many transition levels [VRTOOL-330]",
+            ),
+        ],
+    )
+    def test_given_case_from_reported_bug_run_all_succeeds(
+        self, directory_name: str, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _multiple_scenarios_dir = test_data.joinpath(
-            "test_stability_multiple_scenarios"
-        )
-        assert _multiple_scenarios_dir.exists()
+        _test_case_dir = test_data.joinpath(directory_name)
+        assert _test_case_dir.exists()
+        
         _vrtool_config = self._get_vrtool_config_test_copy(
-            _multiple_scenarios_dir.joinpath("config.json"), request.node.name
+            _test_case_dir.joinpath("config.json"), request.node.name
         )
-
         assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
