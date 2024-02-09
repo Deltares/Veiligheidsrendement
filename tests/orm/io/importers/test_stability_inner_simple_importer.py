@@ -68,13 +68,24 @@ class TestStabilityInnerSimpleImporter:
         _importer = StabilityInnerSimpleImporter()
 
         # Call
-        _mechanism_input = _importer.import_orm(_computation_scenario)
+        _mechanism_input = _importer.import_orm(
+            _computation_scenario.mechanism_per_section
+        )
 
         # Assert
         assert isinstance(_mechanism_input, MechanismInput)
 
         assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER
-        assert len(_mechanism_input.input) == len(parameters)
+        assert len(_mechanism_input.input) == len(parameters) + 3
+        assert _mechanism_input.input["Scenario"] == [
+            _computation_scenario.scenario_name
+        ]
+        assert _mechanism_input.input["P_scenario"] == [
+            _computation_scenario.scenario_probability
+        ]
+        assert _mechanism_input.input["Pf"] == [
+            _computation_scenario.probability_of_failure
+        ]
         for parameter in parameters:
             mechanism_parameter = _mechanism_input.input[parameter.get("parameter")]
             assert isinstance(mechanism_parameter, np.ndarray)
@@ -83,7 +94,7 @@ class TestStabilityInnerSimpleImporter:
     def test_import_orm_without_model_raises_value_error(self):
         # Setup
         _importer = StabilityInnerSimpleImporter()
-        _expected_mssg = "No valid value given for ComputationScenario."
+        _expected_mssg = "No valid value given for MechanismPerSection."
 
         # Call
         with pytest.raises(ValueError) as value_error:

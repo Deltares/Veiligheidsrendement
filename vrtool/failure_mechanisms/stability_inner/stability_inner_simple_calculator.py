@@ -8,6 +8,7 @@ from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method im
     ReliabilityCalculationMethod,
 )
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
+    BETA_THRESHOLD,
     calculate_reliability,
 )
 from vrtool.failure_mechanisms.stability_inner.stability_inner_simple_input import (
@@ -49,7 +50,7 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
                     fill_value="extrapolate",
                 )
                 safety_factor = safety_factor_interpolate_function(year)
-                beta = np.min([calculate_reliability(safety_factor), 8.0])
+                beta = np.min([calculate_reliability(safety_factor), BETA_THRESHOLD])
 
             case ReliabilityCalculationMethod.BETA_RANGE:
                 beta_interpolate_function = interpolate.interp1d(
@@ -64,11 +65,12 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
                 )
 
                 beta = beta_interpolate_function(year)
-                beta = np.min([beta, 8])
+                beta = np.min([beta, BETA_THRESHOLD])
 
             case ReliabilityCalculationMethod.BETA_SINGLE:
                 # situation where beta is constant in time
-                beta = np.min([self._mechanism_input.beta, 8.0])
+                _pf = self._mechanism_input.get_failure_probability_from_scenarios()
+                beta = np.min([pf_to_beta(_pf), BETA_THRESHOLD])
 
         # Check if there is an elimination measure present (diaphragm wall)
         if self._mechanism_input.is_eliminated:
