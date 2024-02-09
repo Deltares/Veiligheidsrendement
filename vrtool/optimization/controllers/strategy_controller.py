@@ -31,13 +31,13 @@ class StrategyController:
 
     def _get_mechanism_year_collection(
         self,
-        measure_data: pd.DataFrame,
+        measure_row: pd.DataFrame,
         idx: int,
         allowed_mechanisms: list[MechanismEnum],
     ) -> MechanismPerYearProbabilityCollection:
 
         _probabilities = []
-        _cols = measure_data.columns
+        _cols = measure_row.columns
 
         for _mech in filter(lambda x: x in allowed_mechanisms, MechanismEnum):
             _mech_probs = list(
@@ -45,7 +45,7 @@ class StrategyController:
                     lambda mech_col: MechanismPerYear(
                         mechanism=_mech,
                         year=mech_col[1],
-                        probability=beta_to_pf(measure_data.at[idx, mech_col]),
+                        probability=beta_to_pf(measure_row.at[idx, mech_col]),
                     ),
                     filter(lambda x: x[0] == _mech.name, _cols),
                 )
@@ -54,19 +54,19 @@ class StrategyController:
 
         return MechanismPerYearProbabilityCollection(_probabilities)
 
-    def _create_sg_measure(self, measure_data: pd.DataFrame, idx: int) -> SgMeasure:
+    def _create_sg_measure(self, measure_row: pd.DataFrame, idx: int) -> SgMeasure:
         _mech_year_coll = self._get_mechanism_year_collection(
-            measure_data,
+            measure_row,
             idx,
             SgMeasure.get_allowed_mechanisms(),
         )
-        _meas_type = MeasureTypeEnum.get_enum(measure_data.at[idx, ("type", "")])
-        _comb_type = CombinableTypeEnum.get_enum(measure_data.at[idx, ("class", "")])
-        _cost = measure_data.at[idx, ("cost", "")]
-        _year = measure_data.at[idx, ("year", "")]
+        _meas_type = MeasureTypeEnum.get_enum(measure_row.at[idx, ("type", "")])
+        _comb_type = CombinableTypeEnum.get_enum(measure_row.at[idx, ("class", "")])
+        _cost = measure_row.at[idx, ("cost", "")]
+        _year = measure_row.at[idx, ("year", "")]
         _lcc = _cost / (1 + self._vrtool_config.discount_rate) ** _year
-        _dberm = measure_data.at[idx, ("dberm", "")]
-        _dcrest = measure_data.at[idx, ("dcrest", "")]
+        _dberm = measure_row.at[idx, ("dberm", "")]
+        _dcrest = measure_row.at[idx, ("dcrest", "")]
 
         return SgMeasure(
             measure_type=_meas_type,
@@ -79,20 +79,20 @@ class StrategyController:
             dcrest=_dcrest,
         )
 
-    def _create_sh_measure(self, measure_data: pd.DataFrame, idx: int) -> ShMeasure:
+    def _create_sh_measure(self, measure_row: pd.DataFrame, idx: int) -> ShMeasure:
         _mech_year_coll = self._get_mechanism_year_collection(
-            measure_data,
+            measure_row,
             idx,
             ShMeasure.get_allowed_mechanisms(),
         )
-        _meas_type = MeasureTypeEnum.get_enum(measure_data.at[idx, ("type", "")])
-        _comb_type = CombinableTypeEnum.get_enum(measure_data.at[idx, ("class", "")])
-        _cost = measure_data.at[idx, ("cost", "")]
-        _year = measure_data.at[idx, ("year", "")]
+        _meas_type = MeasureTypeEnum.get_enum(measure_row.at[idx, ("type", "")])
+        _comb_type = CombinableTypeEnum.get_enum(measure_row.at[idx, ("class", "")])
+        _cost = measure_row.at[idx, ("cost", "")]
+        _year = measure_row.at[idx, ("year", "")]
         _lcc = _cost / (1 + self._vrtool_config.discount_rate) ** _year
-        _dcrest = measure_data.at[idx, ("dcrest", "")]
-        _beta = measure_data.at[idx, ("beta_target", "")]
-        _trans_level = measure_data.at[idx, ("transition_level", "")]
+        _dcrest = measure_row.at[idx, ("dcrest", "")]
+        _beta = measure_row.at[idx, ("beta_target", "")]
+        _trans_level = measure_row.at[idx, ("transition_level", "")]
 
         return ShMeasure(
             measure_type=_meas_type,
@@ -112,11 +112,15 @@ class StrategyController:
         for _idx in measure_data.index:
             _dberm = measure_data.at[_idx, ("dberm", "")]
             if _dberm == 0 or _dberm == -999:  # Sg
-                _measures.append(self._create_sh_measure(measure_data, _idx))
+                _measures.append(
+                    self._create_sh_measure(measure_data.iloc[[_idx]], _idx)
+                )
 
             _dcrest = measure_data.at[_idx, ("dcrest", "")]
             if _dcrest == 0 or _dcrest == -999:  # Sh
-                _measures.append(self._create_sg_measure(measure_data, _idx))
+                _measures.append(
+                    self._create_sg_measure(measure_data.iloc[[_idx]], _idx)
+                )
 
         return _measures
 
