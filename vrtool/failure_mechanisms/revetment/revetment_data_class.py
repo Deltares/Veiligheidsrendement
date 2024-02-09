@@ -39,15 +39,16 @@ class RevetmentDataClass:
         Returns:
             float: greatest transition level.
         """
-        return max(
-            set(
-                (
-                    gr.transition_level
-                    for gr in self.grass_relations
-                    if gr.transition_level <= threshold
-                )
+        _transition_levels = set(
+            (
+                gr.transition_level
+                for gr in self.grass_relations
+                if gr.transition_level <= threshold
             )
         )
+        if not _transition_levels:
+            raise ValueError("No values found below the threshold {}".format(threshold))
+        return max(_transition_levels)
 
     def get_available_years(self) -> list[int]:
         """

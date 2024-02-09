@@ -68,3 +68,44 @@ class TestRevetmentDataClass:
             revetments.get_available_years()
 
         assert str(value_error.value) == "Years for grass and stone differ."
+
+    @pytest.mark.parametrize(
+        "transition_levels, threshold, expected_result",
+        [
+            pytest.param([0.2, 0.4, 0.8], 0.4, 0.4, id="Max value equal to threshold"),
+            pytest.param([0.2, 0.4, 0.8], 0.5, 0.4, id="Max value less than threshold"),
+        ],
+    )
+    def test_get_transition_level_below_threshold_returns_transition_level_subset(
+        self, transition_levels: list[float], threshold: float, expected_result: float
+    ):
+        # 1. Define test data.
+        _revetment_dc = RevetmentDataClass(
+            grass_relations=[
+                RelationGrassRevetment(2020, tl, 4.2) for tl in transition_levels
+            ]
+        )
+
+        # 2. Run test.
+        _result = _revetment_dc.get_transition_level_below_threshold(threshold)
+
+        # 3. Verify final expectations.
+        assert _result == expected_result
+
+    def test_get_transition_level_below_threshold_when_threshold_is_low_then_raises(
+        self,
+    ):
+        # 1. Define test data.
+        _threshold = 0.5
+        _revetment_dc = RevetmentDataClass(
+            grass_relations=[RelationGrassRevetment(2020, tl, 4.2) for tl in [1, 2, 3]]
+        )
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as value_error:
+            _revetment_dc.get_transition_level_below_threshold(_threshold)
+
+        # 3. Verify final expectations.
+        assert str(
+            value_error.value
+        ) == "No values found below the threshold {}".format(_threshold)
