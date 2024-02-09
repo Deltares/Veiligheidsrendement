@@ -151,3 +151,5 @@ class StrategyController:
         """
         Combines the measures for each section.
         """
+        for _section in self._section_measures_input:
+            pass

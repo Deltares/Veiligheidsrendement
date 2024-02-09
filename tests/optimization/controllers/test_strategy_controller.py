@@ -243,3 +243,11 @@ class TestStrategyController:
         assert (
             len(_sections[0].measures[1].mechanism_year_collection._probabilities) == 4
         )
+
+    def test_combining_measures(self):
+        # 1. Define input
+        pass
+
+        # 2. Run test
+
+        # 3. Verify expectations

@@ -31,6 +31,10 @@ class ShMeasure(MeasureAsInputProtocol):
     def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
         return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
 
+    @classmethod
+    def get_allowed_combine_measure_types(cls) -> list[MeasureTypeEnum]:
+        return [MeasureTypeEnum.REVETMENT]
+
     def __post_init__(self):
         """
         Set LCC to 0 for Sh to avoid double counting with Sg

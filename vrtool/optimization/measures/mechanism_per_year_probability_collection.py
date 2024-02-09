@@ -40,11 +40,11 @@ class MechanismPerYearProbabilityCollection:
 
         _beta_interp = interp1d(_years, _betas, fill_value=("extrapolate"))(added_years)
         for i, _year in enumerate(added_years):
-            if not (_year in _years):
-                _mechPerYr = MechanismPerYear(
+            if _year not in _years:
+                _mech_per_year = MechanismPerYear(
                     mechanism, _year, beta_to_pf(float(_beta_interp[i]))
                 )
-                self._probabilities.append(_mechPerYr)
+                self._probabilities.append(_mech_per_year)
 
     def add_years(self, years: list[int]) -> None:
         """
