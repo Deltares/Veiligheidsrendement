@@ -7,6 +7,10 @@ from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure import (
     RevetmentMeasure,
 )
+from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
+    RelationGrassRevetment,
+)
+from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
@@ -79,16 +83,24 @@ class TestRevetmentMeasure:
         "revetment_parameters, expected_result",
         [
             pytest.param(
-                dict(current=0, crest_height=1, transition_level_increase_step=0.25),
-                [0, 0.25, 0.5, 0.75, 1],
+                dict(
+                    current=0,
+                    max_level=0.9,
+                    crest_height=1.0,
+                    transition_level_increase_step=0.25,
+                ),
+                [0, 0.25, 0.5, 0.75, 0.9],
                 id="0.0 to 1.0, step 0.25",
             ),
             pytest.param(
                 dict(
-                    current=2.3, crest_height=4.25, transition_level_increase_step=1.0
+                    current=2.3,
+                    max_level=4.25,
+                    crest_height=4.3,
+                    transition_level_increase_step=1.0,
                 ),
                 [2.3, 3.3, 4.25],
-                id="2.3 to 4.25, step 1.0, [VRTOOL-330]",
+                id="2.3 to 4.3, step 1.0, [VRTOOL-330]",
             ),
         ],
     )
@@ -98,19 +110,40 @@ class TestRevetmentMeasure:
         """
         This test represents the validation of VRTOOL-330
         """
+
         # 1. Define test data.
         _current_transition_level = revetment_parameters.pop("current")
+        _max_transition_level = revetment_parameters.pop("max_level")
+
+        class MockedRevetmentDataClass(RevetmentDataClass):
+            @property
+            def current_transition_level(self) -> float:
+                return _current_transition_level
+
+        def create_relation_grass_revetment(
+            transition_level: float,
+        ) -> RevetmentDataClass:
+            return RelationGrassRevetment(
+                year=2021, transition_level=transition_level, beta=4.2
+            )
+
+        _revetment_dc = MockedRevetmentDataClass(
+            grass_relations=[
+                create_relation_grass_revetment(_current_transition_level),
+                create_relation_grass_revetment(_max_transition_level),
+            ]
+        )
         _crest_height = revetment_parameters.pop("crest_height")
         _revetment_measure = RevetmentMeasure()
         _revetment_measure.parameters = revetment_parameters
 
         # 2. Run test.
         _transition_level_vector = _revetment_measure._get_transition_level_vector(
-            _current_transition_level, _crest_height
+            _revetment_dc, _crest_height
         )
 
         # 3. Verify expectations.
         assert isinstance(_transition_level_vector, list)
         assert _transition_level_vector[0] == _current_transition_level
-        assert _transition_level_vector[-1] == _crest_height
+        assert _transition_level_vector[-1] == _max_transition_level
         assert_array_almost_equal(_transition_level_vector, expected_result)

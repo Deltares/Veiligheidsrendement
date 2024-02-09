@@ -61,21 +61,33 @@ class RevetmentMeasure(MeasureProtocol):
         return list(np.arange(min_beta, _max_beta, _step))
 
     def _get_transition_level_vector(
-        self, current_transition_level: float, crest_height: float
+        self,
+        revetment: RevetmentDataClass,
+        crest_height: float,
     ) -> list[float]:
-        if current_transition_level > crest_height:
+        _max_transition_level = revetment.get_transition_level_below_threshold(
+            crest_height
+        )
+        _current_transition_level = revetment.current_transition_level
+        if _current_transition_level > crest_height:
             raise ValueError(
                 "Transition level is higher than crest height. This is not allowed."
             )
-        elif current_transition_level == crest_height:
-            return [current_transition_level]
-        return list(
+        elif _current_transition_level == crest_height:
+            return [_current_transition_level]
+        _level_vector = list(
             np.arange(
-                current_transition_level,
+                _current_transition_level,
                 crest_height,
                 self.transition_level_increase_step,
             )
-        ) + [crest_height]
+        )
+        if (
+            _level_vector[-1] < _max_transition_level
+            and _max_transition_level <= crest_height
+        ):
+            _level_vector.append(_max_transition_level)
+        return _level_vector
 
     def _get_revetment(self, dike_section: DikeSection) -> RevetmentDataClass:
         _reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
@@ -101,7 +113,8 @@ class RevetmentMeasure(MeasureProtocol):
 
         # 2. Get transition levels.
         _transition_levels = self._get_transition_level_vector(
-            _revetment.current_transition_level, dike_section.crest_height
+            _revetment,
+            dike_section.crest_height,
         )
 
         # 3 & 4. Iterate over beta_targets - transition level - year.

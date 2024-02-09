@@ -29,6 +29,26 @@ class RevetmentDataClass:
 
         return min(_grass_begin_parts)
 
+    def get_transition_level_below_threshold(self, threshold: float) -> float:
+        """
+        Returns the greatest transition level value lower than the threshold.
+
+        Args:
+            threshold (float): Threshold value usually representing the crest height.
+
+        Returns:
+            float: greatest transition level.
+        """
+        return max(
+            set(
+                (
+                    gr.transition_level
+                    for gr in self.grass_relations
+                    if gr.transition_level <= threshold
+                )
+            )
+        )
+
     def get_available_years(self) -> list[int]:
         """
         Returns a list of the years whose data is available within its revetments (`RelationRevetmentProtocol`) for this `RevetmentDataClass` instance.
