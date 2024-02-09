@@ -297,6 +297,50 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
+        acceptance_test_cases[6:7],
+        indirect=True,
+    )
+    @pytest.mark.skip(reason="Only used for debugging purposes.")
+    def test_run_step_optimization_given_valid_vrtool_config_new(
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+    ):
+        """
+        This test uses the new optimization run method.
+        TODO: Remove this test if the new optimization method is implemented fully.
+        """
+        # 1. Define test data.
+        _new_optimization_name = "test_optimization_new_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+
+        # Overwrite the design method
+        valid_vrtool_config.design_methods = ["Veiligheidsrendement_new"]
+
+        # We reuse existing measure results, but we clear the optimization ones.
+        clear_optimization_results(valid_vrtool_config)
+
+        _validator = RunStepOptimizationValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
+
+        # We actually run using ALL the available measure results.
+        _measures_input = get_all_measure_results_with_supported_investment_years(
+            valid_vrtool_config
+        )
+
+        # 2. Run test.
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
+
+        # 3. Verify expectations.
+        _validator.validate_results(valid_vrtool_config)
+        RunFullValidator().validate_acceptance_result_cases(
+            valid_vrtool_config.output_directory,
+            valid_vrtool_config.input_directory.joinpath("reference"),
+        )
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
         acceptance_test_cases[5:6],
         indirect=True,
     )

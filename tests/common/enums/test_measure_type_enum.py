@@ -7,11 +7,12 @@ class TestMeasureTypeEnum:
     @pytest.mark.parametrize(
         "enum_name",
         [
-            pytest.param("Soil reinforcement", id="VALID With space"),
+            pytest.param("Soil reinforcement", id="VALID With spacelower"),
+            pytest.param("Soil Reinforcement", id="VALID With Spaceupper"),
             pytest.param("SOIL_REINFORCEMENT", id="VALID UPPER_SNAKE"),
             pytest.param("SoilReinforcement", id="VALID CamelCase"),
-            pytest.param(" Soil reinforcement", id="VALID space before"),
-            pytest.param("Soil reinforcement ", id="VALID space after"),
+            pytest.param(" Soil reinforcement", id="VALID Space before"),
+            pytest.param("Soil reinforcement ", id="VALID Space after"),
         ],
     )
     def test_get_valid_measure_type_enum(self, enum_name: str):
