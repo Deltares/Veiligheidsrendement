@@ -16,9 +16,9 @@ class CombinedMeasure:
     cost: list[float]
     lcc: float
 
-    def __init__(self, primaryMeasure: MeasureAsInputProtocol, secondaryMeasure: MeasureAsInputProtocol) -> None:
-        self.primary = primaryMeasure
-        self.secondary = secondaryMeasure
-        self.cost = [primaryMeasure.cost, secondaryMeasure.cost]
-        self.lcc = primaryMeasure.lcc + secondaryMeasure.lcc
-        self.mechanism_year_collection = primaryMeasure.mechanism_year_collection.combine(secondaryMeasure.mechanism_year_collection)
+    def __init__(self, primary_measure: MeasureAsInputProtocol, secondary_measure: MeasureAsInputProtocol) -> None:
+        self.primary = primary_measure
+        self.secondary = secondary_measure
+        self.cost = [primary_measure.cost, secondary_measure.cost]
+        self.lcc = primary_measure.lcc + secondary_measure.lcc
+        self.mechanism_year_collection = primary_measure.mechanism_year_collection.combine(secondary_measure.mechanism_year_collection)
