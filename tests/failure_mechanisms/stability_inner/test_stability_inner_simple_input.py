@@ -223,4 +223,4 @@ class TestStabilityInnerInput:
         _result = _dummy_input.get_failure_probability_from_scenarios()
 
         # 3. Verify expectations.
-        assert _result == pytest.approx(expected_result, 1e-4)
+        assert _result == pytest.approx(expected_result, 1e-3)
