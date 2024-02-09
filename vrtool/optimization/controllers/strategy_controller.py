@@ -143,5 +143,11 @@ class StrategyController:
                     _section_name,
                     selected_traject.general_info.traject_name,
                     self._get_measures(solutions_dict[_section_name].MeasureData),
+                    None,
                 )
             )
+
+    def combine(self) -> None:
+        """
+        Combines the measures for each section.
+        """

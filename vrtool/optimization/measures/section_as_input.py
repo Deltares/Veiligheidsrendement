@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
 
+from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -12,6 +14,7 @@ class SectionAsInput:
     section_name: str
     traject_name: str
     measures: list[MeasureAsInputProtocol]
+    combined_measures: Optional[list[CombinedMeasure]]
 
     def get_measures_by_type(
         self,
