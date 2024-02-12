@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -17,8 +17,12 @@ class SectionAsInput:
     section_name: str
     traject_name: str
     measures: list[MeasureAsInputProtocol]
-    combined_measures: Optional[list[CombinedMeasure]]
-    aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]]
+    combined_measures: list[CombinedMeasure] = field(
+        default_factory=list[CombinedMeasure]
+    )
+    aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]] = (
+        field(default_factory=list[AggregatedMeasureCombination])
+    )
 
     def get_measures_by_class(
         self,
@@ -58,7 +62,7 @@ class SectionAsInput:
         """
         return list(
             filter(
-                lambda x: isinstance(x, measure_class), self.combined_measures.primary
+                lambda x: isinstance(x.primary, measure_class), self.combined_measures
             )
         )
 
