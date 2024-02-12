@@ -12,8 +12,8 @@ class MeasureCombineController:
     def __init__(self, section: SectionAsInput) -> None:
         self._section = section
 
+    @staticmethod
     def _combine_measures(
-        self,
         measures: list[MeasureAsInputProtocol],
         allowed_measure_combinations: dict[
             CombinableTypeEnum, list[CombinableTypeEnum | None]

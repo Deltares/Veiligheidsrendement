@@ -32,8 +32,8 @@ class StrategyController:
         self._vrtool_config = vrtool_config
         self._section_measures_input = []
 
+    @staticmethod
     def _get_mechanism_year_collection(
-        self,
         measure_row: pd.DataFrame,
         idx: int,
         allowed_mechanisms: list[MechanismEnum],
