@@ -19,7 +19,7 @@ class CombinedMeasure:
     def __init__(
         self,
         primary_measure: MeasureAsInputProtocol,
-        secondary_measure: MeasureAsInputProtocol,
+        secondary_measure: MeasureAsInputProtocol | None,
     ) -> None:
         self.primary = primary_measure
         self.secondary = secondary_measure
