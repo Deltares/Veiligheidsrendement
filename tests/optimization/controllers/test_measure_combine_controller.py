@@ -45,7 +45,6 @@ class TestMeasureCombineController:
             section_name="Section1",
             traject_name="Traject1",
             measures=[],
-            combined_measures=None,
         )
 
     def test_combine_combinable_partial_measures(self):
@@ -183,7 +182,6 @@ class TestMeasureCombineController:
             section_name="Section1",
             traject_name="Traject1",
             measures=[],
-            combined_measures=None,
         )
         _section.measures = [
             self._create_sg_measure(
