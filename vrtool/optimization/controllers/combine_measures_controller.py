@@ -8,7 +8,7 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
-class MeasureCombineController:
+class CombineMeasuresController:
     def __init__(self, section: SectionAsInput) -> None:
         self._section = section
 

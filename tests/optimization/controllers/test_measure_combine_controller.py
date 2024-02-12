@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.controllers.measure_combine_controller import (
-    MeasureCombineController,
+from vrtool.optimization.controllers.combine_measures_controller import (
+    CombineMeasuresController,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
@@ -63,7 +63,7 @@ class TestMeasureCombineController:
         }
 
         # 2. Run test
-        _combinations = MeasureCombineController._combine_measures(
+        _combinations = CombineMeasuresController._combine_measures(
             _measures, _allowed_combinations
         )
 
@@ -110,7 +110,7 @@ class TestMeasureCombineController:
         }
 
         # 2. Run test
-        _combinations = MeasureCombineController._combine_measures(
+        _combinations = CombineMeasuresController._combine_measures(
             _measures, _allowed_combinations
         )
 
@@ -171,7 +171,7 @@ class TestMeasureCombineController:
         ]
 
         # 2. Run test
-        _combine_controller = MeasureCombineController(_section)
+        _combine_controller = CombineMeasuresController(_section)
         _combined_measures = _combine_controller.combine()
 
         # 3. Verify expectations
@@ -202,7 +202,7 @@ class TestMeasureCombineController:
         ]
 
         # 2. Run test
-        _combine_controller = MeasureCombineController(_section)
+        _combine_controller = CombineMeasuresController(_section)
         _combined_measures = _combine_controller.combine()
 
         # 3. Verify expectations
