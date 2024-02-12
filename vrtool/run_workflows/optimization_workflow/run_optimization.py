@@ -64,6 +64,7 @@ class RunOptimization(VrToolRunProtocol):
         )
 
         _greedy_optimization.combine()
+        _greedy_optimization.aggregate()
 
         return _greedy_optimization
 
