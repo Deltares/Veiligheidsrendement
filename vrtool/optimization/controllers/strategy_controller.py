@@ -160,3 +160,11 @@ class StrategyController:
         for _section in self._section_measures_input:
             _combine_controller = CombineMeasuresController(_section)
             _section.combined_measures = _combine_controller.combine()
+
+    def aggregate(self) -> None:
+        """
+        Aggregates combinations of measures for each section.
+        """
+        for _section in self._section_measures_input:
+            _aggregate_controller = AggregateCombinationsController(_section)
+            _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
