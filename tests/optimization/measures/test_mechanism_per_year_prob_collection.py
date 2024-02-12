@@ -76,3 +76,16 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert len(_collection1._probabilities) == len(_collection3)
+
+    def test_combined_measures_different_years(self):
+        # Setup
+        _collection1 = MechanismPerYearProbabilityCollection(self._getMechanismPerYearExample())
+        _collection2 = MechanismPerYearProbabilityCollection(self._getMechanismPerYearExample())
+        _collection1.add_years([20])
+
+        # Call
+        with pytest.raises(ValueError) as exceptionInfo:
+            _collection3 = _collection1.combine(_collection2)
+
+        # Assert
+        assert "years not equal in combine" == str(exceptionInfo.value)

@@ -22,6 +22,9 @@ class MechanismPerYearProbabilityCollection:
     def _get_mechanisms(self) -> set[MechanismEnum]:
         return set(p.mechanism for p in self._probabilities)
 
+    def _get_years(self, mechanism: MechanismEnum) -> set[int]:
+        return set(p.year for p in self._probabilities if p.mechanism == mechanism)
+
     def _combine_years(self, mechanism: MechanismEnum, secondary_list: list[MechanismPerYear], nw_list: list[MechanismPerYear]):
         """
         helper routine for combin: combines for one mechanism.
@@ -56,6 +59,10 @@ class MechanismPerYearProbabilityCollection:
             raise ValueError("mechanisms not equal in combine")
         _nw_probabilities = []
         for m in _mechanism1:
+            _years1 = self._get_years(m)
+            _years2 = second._get_years(m)
+            if ( not (_years1 == _years2)):
+                raise ValueError("years not equal in combine")
             self._combine_years(m, second._probabilities, _nw_probabilities)
         return _nw_probabilities
 
