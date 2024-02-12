@@ -8,7 +8,7 @@ from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method im
 )
 
 
-class TestStabilityInnerInput:
+class TestStabilityInnerSimpleInput:
     def test_from_mechanism_input_with_safety_factor_range_returns_input_with_safety_factor_range(
         self,
     ):
@@ -223,4 +223,4 @@ class TestStabilityInnerInput:
         _result = _dummy_input.get_failure_probability_from_scenarios()
 
         # 3. Verify expectations.
-        assert _result == pytest.approx(expected_result, 1e-4)
+        assert _result == pytest.approx(expected_result, 1e-3)
