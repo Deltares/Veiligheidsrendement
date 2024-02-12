@@ -15,28 +15,32 @@ class MeasureCombineController:
     def _combine_measures(
         self,
         measures: list[MeasureAsInputProtocol],
-        allowed_measure_combinations: list[
-            tuple[CombinableTypeEnum, CombinableTypeEnum | None]
+        allowed_measure_combinations: dict[
+            CombinableTypeEnum, list[CombinableTypeEnum | None]
         ],
     ) -> list[CombinedMeasure]:
         _combined_measures = []
 
         # Loop over allowed combinations
-        for _combination in allowed_measure_combinations:
-            _primary_measures = filter(
-                lambda x: x.combine_type == _combination[0], measures
-            )
-            for _primary in _primary_measures:
-                # Add measure without combination
-                if _combination[1] is None:
-                    _combined_measures.append(CombinedMeasure(_primary, None))
-                    continue
-                # Add combination
-                _secondary_measures = filter(
-                    lambda x: x.combine_type == _combination[1], measures
-                )
-                for _secondary in _secondary_measures:
-                    _combined_measures.append(CombinedMeasure(_primary, _secondary))
+        for _primary_type in allowed_measure_combinations.keys():
+            # Find primary measures
+            for _primary_measure in filter(
+                lambda x: x.combine_type == _primary_type, measures
+            ):
+                for _secondary_type in allowed_measure_combinations[_primary_type]:
+                    # If no secondary is needed, add primary without secondary measure
+                    if _secondary_type is None:
+                        _combined_measures.append(
+                            CombinedMeasure(_primary_measure, None)
+                        )
+                        continue
+                    # Add combination of primary and secondary measure
+                    for _secondary_measure in filter(
+                        lambda x: x.combine_type == _secondary_type, measures
+                    ):
+                        _combined_measures.append(
+                            CombinedMeasure(_primary_measure, _secondary_measure)
+                        )
 
         return _combined_measures
 

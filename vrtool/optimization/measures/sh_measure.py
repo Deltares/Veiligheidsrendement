@@ -34,14 +34,12 @@ class ShMeasure(MeasureAsInputProtocol):
     @classmethod
     def get_allowed_measure_combinations(
         cls,
-    ) -> list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
-        return [
-            (CombinableTypeEnum.REVETMENT, None),
-            (CombinableTypeEnum.COMBINABLE, None),
-            (CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.REVETMENT),
-            (CombinableTypeEnum.FULL, None),
-            (CombinableTypeEnum.FULL, CombinableTypeEnum.REVETMENT),
-        ]
+    ) -> dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]:
+        return {
+            CombinableTypeEnum.REVETMENT: [None],
+            CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
+            CombinableTypeEnum.FULL: [None, CombinableTypeEnum.REVETMENT],
+        }
 
     def __post_init__(self):
         """

@@ -45,12 +45,13 @@ class MeasureAsInputProtocol(Protocol):
     @classmethod
     def get_allowed_measure_combinations(
         cls,
-    ) -> list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
+    ) -> dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]:
         """
         Returns the allowed measure type combinations for the measure
 
         Returns:
-            list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
-                List of measure type combinations
+            dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]:
+                List of measure type combinations (primary: secondary)
+                `None` means no secondary measure is needed
         """
         pass

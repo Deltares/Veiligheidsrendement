@@ -33,9 +33,8 @@ class SgMeasure(MeasureAsInputProtocol):
     @classmethod
     def get_allowed_measure_combinations(
         cls,
-    ) -> list[tuple[CombinableTypeEnum, CombinableTypeEnum | None]]:
-        return [
-            (CombinableTypeEnum.COMBINABLE, None),
-            (CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.PARTIAL),
-            (CombinableTypeEnum.FULL, None),
-        ]
+    ) -> dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]:
+        return {
+            CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL],
+            CombinableTypeEnum.FULL: [None],
+        }
