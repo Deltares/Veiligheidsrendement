@@ -37,7 +37,7 @@ class MechanismPerYearProbabilityCollection:
         for p in secondary_list:
             if p.mechanism == mechanism:
                 _prob_second = self.filter(mechanism, p.year)
-                _nwp = 1.0 - (1.0 - p.probability) * (1.0 - _prob_second)
+                _nwp = p.probability + _prob_second - p.probability * _prob_second
                 nw_list.append(MechanismPerYear(mechanism, p.year, _nwp))
 
     def combine(self, second: MechanismPerYearProbabilityCollection) -> list[MechanismPerYear]:
@@ -61,7 +61,7 @@ class MechanismPerYearProbabilityCollection:
         for m in _mechanism1:
             _years1 = self._get_years(m)
             _years2 = second._get_years(m)
-            if ( not (_years1 == _years2)):
+            if (_years1 != _years2):
                 raise ValueError("years not equal in combine")
             self._combine_years(m, second._probabilities, _nw_probabilities)
         return _nw_probabilities
