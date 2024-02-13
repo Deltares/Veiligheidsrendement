@@ -343,5 +343,5 @@ class TestStrategyController:
         assert len(_sections[0].sg_measures) == 10
         assert isinstance(_sections[0].measures[1], SgMeasure)
         assert (
-            len(_sections[0].measures[1].mechanism_year_collection._probabilities) == 4
+            len(_sections[0].measures[1].mechanism_year_collection.probabilities) == 4
         )
