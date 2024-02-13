@@ -69,8 +69,11 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
 
             case ReliabilityCalculationMethod.BETA_SINGLE:
                 # situation where beta is constant in time
-                _pf = self._mechanism_input.get_failure_probability_from_scenarios()
-                beta = np.min([pf_to_beta(_pf), BETA_THRESHOLD])
+                # TODO: VRTOOL-340 - This is producing an error in the results
+                # by not increasing the beta value as we are not really using it.
+                # _pf = self._mechanism_input.get_failure_probability_from_scenarios()
+                # beta = np.min([pf_to_beta(_pf), BETA_THRESHOLD])
+                beta = np.min([np.min(self._mechanism_input.beta), BETA_THRESHOLD])
 
         # Check if there is an elimination measure present (diaphragm wall)
         if self._mechanism_input.is_eliminated:
