@@ -21,7 +21,7 @@ class CombinedMeasure:
         return self.primary.lcc + self.secondary.lcc
 
     @classmethod
-    def from_section_as_input(
+    def from_input(
         cls,
         primary: MeasureAsInputProtocol,
         secondary: MeasureAsInputProtocol,
