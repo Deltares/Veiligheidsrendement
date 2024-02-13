@@ -8,7 +8,7 @@ from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method im
 )
 
 
-class TestStabilityInnerInput:
+class TestStabilityInnerSimpleInput:
     def test_from_mechanism_input_with_safety_factor_range_returns_input_with_safety_factor_range(
         self,
     ):
