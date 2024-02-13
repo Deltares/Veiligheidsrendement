@@ -6,6 +6,7 @@ from vrtool.failure_mechanisms.stability_inner import StabilityInnerSimpleInput
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class TestStabilityInnerSimpleInput:
@@ -210,7 +211,7 @@ class TestStabilityInnerSimpleInput:
             safety_factor_2075=np.array([]),
             beta_2025=np.array([]),
             beta_2075=np.array([]),
-            beta=np.array([]),
+            beta=pf_to_beta(np.array(probability_of_failure)),
             scenario_probability=np.array(scenario_probability),
             probability_of_failure=np.array(probability_of_failure),
             failure_probability_with_elimination=np.array([]),
