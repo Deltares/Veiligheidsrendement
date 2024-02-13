@@ -116,7 +116,7 @@ class TestSectionAsInput:
         _section = self._get_section_with_combinations()
 
         # 2. Run test
-        _sg_combinations = _section.sh_combinations
+        _sg_combinations = _section.sg_combinations
 
         # 3. Verify expectations
         assert len(_sg_combinations) == 1
