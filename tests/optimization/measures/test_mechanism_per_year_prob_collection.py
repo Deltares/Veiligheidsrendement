@@ -82,12 +82,12 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert len(_collection1.probabilities) == len(_collection3.probabilities)
-        assert _collection3.probabilities[0].probability == pytest.approx(0.9775)
-        assert _collection3.probabilities[1].probability == pytest.approx(0.9375)
-        assert _collection3.probabilities[2].probability == pytest.approx(0.8775)
-        assert _collection3.probabilities[3].probability == pytest.approx(0.99)
-        assert _collection3.probabilities[4].probability == pytest.approx(0.96)
-        assert _collection3.probabilities[5].probability == pytest.approx(0.91)
+        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 0) == pytest.approx(0.9775)
+        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 50) == pytest.approx(0.9375)
+        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 100) == pytest.approx(0.8775)
+        assert _collection3.filter(MechanismEnum.OVERFLOW, 0) == pytest.approx(0.99)
+        assert _collection3.filter(MechanismEnum.OVERFLOW, 50) == pytest.approx(0.96)
+        assert _collection3.filter(MechanismEnum.OVERFLOW, 100) == pytest.approx(0.91)
 
     def test_combined_measures_different_years(self):
         # Setup
