@@ -8,10 +8,10 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class MechanismPerYearProbabilityCollection:
-    _probabilities: list[MechanismPerYear]
+    probabilities: list[MechanismPerYear]
 
     def __init__(self, probabilities: list[MechanismPerYear]) -> None:
-        self._probabilities = probabilities
+        self.probabilities = probabilities
 
     def filter(self, mechanism: MechanismEnum, year: int) -> float:
         """
@@ -27,7 +27,7 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             float: the probability
         """
-        for p in self._probabilities:
+        for p in self.probabilities:
             if p.mechanism == mechanism and p.year == year:
                 return p.probability
         raise ValueError("mechanism/year not found")
@@ -39,7 +39,7 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             set[MechanismEnum]: a set with the mechanisms
         """
-        return set(p.mechanism for p in self._probabilities)
+        return set(p.mechanism for p in self.probabilities)
 
     def get_years(self, mechanism: MechanismEnum) -> set[int]:
         """
@@ -51,33 +51,46 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             set[int]: a set with the years
         """
-        return set(p.year for p in self._probabilities if p.mechanism == mechanism)
+        return set(p.year for p in self.probabilities if p.mechanism == mechanism)
 
-    def _combine_years(
-        self,
+    @staticmethod
+    def _combine_probs_for_mech(
         mechanism: MechanismEnum,
+        primary: MechanismPerYearProbabilityCollection,
         secondary: MechanismPerYearProbabilityCollection,
-        nw_list: list[MechanismPerYear],
-    ):
+    ) -> list[MechanismPerYear]:
         """
-        helper routine for combin: combines for one mechanism.
+        helper routine for combine: combines for one mechanism.
 
         Args:
             mechanism (MechanismEnum): the mechanism
             secondary (MechanismPerYearProbabilityCollection): the second measure
-            nw_list (list[MechanismPerYear]): resulting list with probabilities (inout)
-        """
-        for p in self._probabilities:
-            if p.mechanism == mechanism:
-                _prob_second = secondary.filter(mechanism, p.year)
-                _nwp = p.probability + _prob_second - p.probability * _prob_second
-                nw_list.append(MechanismPerYear(mechanism, p.year, _nwp))
 
-    def combine(
-        self, second: MechanismPerYearProbabilityCollection
-    ) -> list[MechanismPerYear]:
+        Returns:
+            list[MechanismPerYear]: resulting list with probabilities
         """
-        combines the probabilities in two collections
+        _nw_list = []
+        for _mech_per_year in filter(
+            lambda x: x.mechanism == mechanism, primary.probabilities
+        ):
+            _prob_second = secondary.filter(mechanism, _mech_per_year.year)
+            _nwp = (
+                _mech_per_year.probability
+                + _prob_second
+                - _mech_per_year.probability * _prob_second
+            )
+            _nw_list.append(MechanismPerYear(mechanism, _mech_per_year.year, _nwp))
+        return _nw_list
+
+    @classmethod
+    def combine(
+        cls,
+        primary: MechanismPerYearProbabilityCollection,
+        secondary: MechanismPerYearProbabilityCollection,
+    ) -> MechanismPerYearProbabilityCollection:
+        """
+        Combines the probabilities in two collections.
+        Years and mechanisms of both collections should match.
 
         Args:
             second (MechanismPerYearProbabilityCollection): the collection to combine with
@@ -88,18 +101,18 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             list[MechanismPerYear]: the combined collection
         """
-        _mechanism1 = self.get_mechanisms()
-        _mechanism2 = second.get_mechanisms()
-        if _mechanism1 != _mechanism2:
+        _mechanism1 = primary.get_mechanisms()
+        _mechanism2 = secondary.get_mechanisms()
+        if _mechanism1 != _mechanism2:  # TODO improve check
             raise ValueError("mechanisms not equal in combine")
         _nw_probabilities = []
         for m in _mechanism1:
-            _years1 = self.get_years(m)
-            _years2 = second.get_years(m)
-            if _years1 != _years2:
+            _years1 = primary.get_years(m)
+            _years2 = secondary.get_years(m)
+            if _years1 != _years2:  # TODO improve check
                 raise ValueError("years not equal in combine")
-            self._combine_years(m, second, _nw_probabilities)
-        return _nw_probabilities
+            _nw_probabilities.extend(cls._combine_probs_for_mech(m, primary, secondary))
+        return cls(_nw_probabilities)
 
     def _add_year_mechanism(
         self, mechanism: MechanismEnum, added_years: list[int]
@@ -114,18 +127,18 @@ class MechanismPerYearProbabilityCollection:
         """
         _years = []
         _betas = []
-        for p in self._probabilities:
+        for p in self.probabilities:
             if p.mechanism == mechanism:
                 _years.append(p.year)
                 _betas.append(p.beta)
 
         _beta_interp = interp1d(_years, _betas, fill_value="extrapolate")(added_years)
         for i, _year in enumerate(added_years):
-            if not _year in _years:
+            if _year not in _years:
                 _mech_per_yr = MechanismPerYear(
                     mechanism, _year, beta_to_pf(float(_beta_interp[i]))
                 )
-                self._probabilities.append(_mech_per_yr)
+                self.probabilities.append(_mech_per_yr)
 
     def add_years(self, years: list[int]) -> None:
         """
