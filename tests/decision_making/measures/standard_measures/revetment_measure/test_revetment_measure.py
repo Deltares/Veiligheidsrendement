@@ -102,6 +102,16 @@ class TestRevetmentMeasure:
                 [2.3, 3.3, 4.25],
                 id="2.3 to 4.3, step 1.0, [VRTOOL-330]",
             ),
+            pytest.param(
+                dict(
+                    current=0,
+                    max_level= 7 * 0.1,
+                    crest_height=0.7,
+                    transition_level_increase_step=0.1,
+                ),
+                [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+                id="0.0 to 0.7, step 0.1",
+            ),
         ],
     )
     def test_get_transition_level_vector(
