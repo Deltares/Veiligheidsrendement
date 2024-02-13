@@ -1,5 +1,6 @@
 from random import shuffle
 
+import pytest
 from numpy.testing import assert_array_almost_equal
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -15,7 +16,6 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
-import pytest
 
 
 class TestRevetmentMeasure:
@@ -38,9 +38,9 @@ class TestRevetmentMeasure:
             measure_year=2025,
         )
         for _idx, _computation_year in enumerate(_computation_years):
-            _mech_reliability_collection.Reliability[str(_computation_year)].Beta = (
-                0.24 + (0.24 * _idx)
-            )
+            _mech_reliability_collection.Reliability[
+                str(_computation_year)
+            ].Beta = 0.24 + (0.24 * _idx)
         _test_dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
             MechanismEnum.REVETMENT
         ] = _mech_reliability_collection

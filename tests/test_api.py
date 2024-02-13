@@ -451,7 +451,7 @@ class TestApiReportedBugs:
         # 1. Define test data.
         _test_case_dir = test_data.joinpath(directory_name)
         assert _test_case_dir.exists()
-        
+
         _vrtool_config = self._get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
