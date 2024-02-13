@@ -21,27 +21,57 @@ class CombineMeasuresController:
     ) -> list[CombinedMeasure]:
         _combined_measures = []
 
-        # Loop over allowed combinations
-        for _primary_type in allowed_measure_combinations.keys():
-            # Find primary measures
-            for _primary_measure in filter(
-                lambda x: x.combine_type == _primary_type, measures
-            ):
-                for _secondary_type in allowed_measure_combinations[_primary_type]:
-                    # If no secondary is needed, add primary without secondary measure
-                    if _secondary_type is None:
-                        _combined_measures.append(
-                            CombinedMeasure(_primary_measure, None)
-                        )
-                        continue
-                    # Add combination of primary and secondary measure
-                    for _secondary_measure in filter(
-                        lambda x: x.combine_type == _secondary_type, measures
-                    ):
-                        _combined_measures.append(
-                            CombinedMeasure(_primary_measure, _secondary_measure)
-                        )
+        def _find_measures(
+            combinable_types: list[CombinableTypeEnum | None],
+            measures: list[MeasureAsInputProtocol],
+        ) -> list[MeasureAsInputProtocol | None]:
+            _measures = []
+            for _type in combinable_types:
+                if _type is None:
+                    _measures.append(None)
+                else:
+                    _measures.extend(
+                        filter(lambda x: x.combine_type == _type, measures)
+                    )
+            return _measures
 
+        def _find_measure_combinations(
+            measures: list[MeasureAsInputProtocol],
+            combination: tuple[CombinableTypeEnum, list[CombinableTypeEnum | None]],
+        ) -> list[tuple[MeasureAsInputProtocol, list[MeasureAsInputProtocol | None]]]:
+            _measure_combinations = []
+            _primary_measures = _find_measures([combination[0]], measures)
+            for _primary_measure in _primary_measures:
+                _measure_combinations.append(
+                    (
+                        _primary_measure,
+                        _find_measures(combination[1], measures),
+                    )
+                )
+            return _measure_combinations
+
+        def _create_combined_measures(
+            measure_combination: tuple[
+                MeasureAsInputProtocol, list[MeasureAsInputProtocol | None]
+            ]
+        ) -> list[CombinedMeasure]:
+            _combined_measures = []
+            for _secondary_measure in measure_combination[1]:
+                _combined_measures.append(
+                    CombinedMeasure(
+                        measure_combination[0],
+                        _secondary_measure,
+                    )
+                )
+            return _combined_measures
+
+        # Loop over allowed combinations
+        for _combination in allowed_measure_combinations.items():
+            _measure_combinations = _find_measure_combinations(measures, _combination)
+            for _measure_combination in _measure_combinations:
+                _combined_measures.extend(
+                    _create_combined_measures(_measure_combination)
+                )
         return _combined_measures
 
     def combine(self) -> list[CombinedMeasure]:
