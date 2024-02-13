@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
@@ -43,7 +44,8 @@ class RevetmentDataClass:
             (
                 gr.transition_level
                 for gr in self.grass_relations
-                if gr.transition_level <= threshold
+                if (gr.transition_level < threshold)
+                or (math.isclose(gr.transition_level, threshold))
             )
         )
         if not _transition_levels:

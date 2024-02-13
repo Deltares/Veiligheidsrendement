@@ -74,6 +74,12 @@ class TestRevetmentDataClass:
         [
             pytest.param([0.2, 0.4, 0.8], 0.4, 0.4, id="Max value equal to threshold"),
             pytest.param([0.2, 0.4, 0.8], 0.5, 0.4, id="Max value less than threshold"),
+            pytest.param(
+                [0.6, 0.7000000000001],
+                0.7,
+                0.7000000000001,
+                id="Max value 'is close' to threshold",
+            ),
         ],
     )
     def test_get_transition_level_below_threshold_returns_transition_level_subset(

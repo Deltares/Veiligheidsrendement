@@ -66,16 +66,22 @@ class RevetmentMeasure(MeasureProtocol):
         revetment: RevetmentDataClass,
         crest_height: float,
     ) -> list[float]:
+        # Get max and current transition levels.
         _max_transition_level = revetment.get_transition_level_below_threshold(
             crest_height
         )
         _current_transition_level = revetment.current_transition_level
+
+        # Check for a 'fast' exit.
         if _current_transition_level > crest_height:
             raise ValueError(
                 "Transition level is higher than crest height. This is not allowed."
             )
         elif math.isclose(_current_transition_level, crest_height):
             return [_current_transition_level]
+
+        # Current transition level is less than the crest height.
+        # Get vector with transition levels.
         _level_vector = list(
             np.arange(
                 _current_transition_level,
@@ -83,9 +89,12 @@ class RevetmentMeasure(MeasureProtocol):
                 self.transition_level_increase_step,
             )
         )
-        if (
-            _level_vector[-1] < _max_transition_level
-            and _max_transition_level <= crest_height
+
+        # Check we need to include the maximum transition level or not.
+        # This happens when the step is just above it (VRTOOL-330).
+        if _level_vector[-1] < _max_transition_level and (
+            (_max_transition_level < crest_height)
+            or (math.isclose(_max_transition_level, crest_height))
         ):
             _level_vector.append(_max_transition_level)
         return _level_vector

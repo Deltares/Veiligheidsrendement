@@ -105,7 +105,7 @@ class TestRevetmentMeasure:
             pytest.param(
                 dict(
                     current=0,
-                    max_level= 7 * 0.1,
+                    max_level=7 * 0.1,
                     crest_height=0.7,
                     transition_level_increase_step=0.1,
                 ),
