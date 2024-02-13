@@ -1,5 +1,6 @@
 import copy
 from itertools import groupby
+import math
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -73,7 +74,7 @@ class RevetmentMeasure(MeasureProtocol):
             raise ValueError(
                 "Transition level is higher than crest height. This is not allowed."
             )
-        elif _current_transition_level == crest_height:
+        elif math.isclose(_current_transition_level, crest_height):
             return [_current_transition_level]
         _level_vector = list(
             np.arange(
