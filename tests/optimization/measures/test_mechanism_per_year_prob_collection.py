@@ -101,7 +101,9 @@ class TestMechanismPerYearProbCollection:
 
         # Call
         with pytest.raises(ValueError) as exceptionInfo:
-            _collection3 = _collection1.combine(_collection2)
+            _collection3 = MechanismPerYearProbabilityCollection.combine(
+                _collection1, _collection2
+            )
 
         # Assert
         assert "years not equal in combine" == str(exceptionInfo.value)
