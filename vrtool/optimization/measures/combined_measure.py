@@ -15,7 +15,7 @@ class CombinedMeasure:
 
     @property
     def lcc(self) -> float:
-        return self.primary_measure.lcc + self.secondary_measure.lcc
+        return self.primary.lcc + self.secondary.lcc
 
     @property
     def mechanism_year_collection(self) -> MechanismPerYearProbabilityCollection:
