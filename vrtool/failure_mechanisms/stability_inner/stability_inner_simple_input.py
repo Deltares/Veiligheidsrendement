@@ -8,6 +8,7 @@ from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 @dataclass
@@ -32,14 +33,31 @@ class StabilityInnerSimpleInput:
     reliability_calculation_method: ReliabilityCalculationMethod
 
     def get_failure_probability_from_scenarios(self) -> float:
-        return np.sum(
-            np.multiply(self.probability_of_failure, self.scenario_probability)
-        )
+        """
+        Gets the current failure probability based on the `secenario_probability` and `beta`.
+        We use `beta` instead of `probability_of_failure` as the latter remains constant whilst
+        `beta` changes throughout the different steps of an optimization since imported from the database.
+
+        Returns:
+            float: Failure probability as a combination of `beta` and `scenario_probability`.
+        """
+        _beta_as_pf = beta_to_pf(self.beta)
+        return np.sum(np.multiply(_beta_as_pf, self.scenario_probability))
 
     @classmethod
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
     ) -> StabilityInnerSimpleInput:
+        """
+        Generates a `StabilityInnerSimpleInput` object based on the provided `MechanismInput`.
+
+        Args:
+            mechanism_input (MechanismInput): Mechanism input containing all the required input data.
+
+        Returns:
+            StabilityInnerSimpleInput: Resulting mapped object.
+        """
+
         def _get_valid_bool_value(input_value: str | bool) -> bool:
             if isinstance(input_value, bool):
                 return input_value
