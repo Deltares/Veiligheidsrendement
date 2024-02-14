@@ -1,13 +1,37 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.controllers.measure_combine_controller import (
     MeasureCombineController,
+)
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
+from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+
+
+@dataclass
+class MockMechanismYearProColl(MechanismPerYearProbabilityCollection):
+    probabilities: list[MechanismPerYear] = field(default_factory=list)
+
+
+@dataclass
+class MockMeasure(MeasureAsInputProtocol):
+    combine_type: CombinableTypeEnum
+    mechanism_year_collection: MockMechanismYearProColl = MockMechanismYearProColl(
+        [
+            MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9),
+            MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.8),
+        ]
+    )
 
 
 class TestMeasureCombineController:
@@ -20,7 +44,12 @@ class TestMeasureCombineController:
             cost=0,
             year=0,
             lcc=0,
-            mechanism_year_collection=None,
+            mechanism_year_collection=MockMechanismYearProColl(
+                [
+                    MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9),
+                    MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.8),
+                ]
+            ),
             beta_target=0,
             transition_level=0,
             dcrest=0,
@@ -35,7 +64,12 @@ class TestMeasureCombineController:
             cost=0,
             year=0,
             lcc=0,
-            mechanism_year_collection=None,
+            mechanism_year_collection=MockMechanismYearProColl(
+                [
+                    MechanismPerYear(MechanismEnum.PIPING, 0, 0.7),
+                    MechanismPerYear(MechanismEnum.PIPING, 20, 0.6),
+                ]
+            ),
             dcrest=0,
             dberm=0,
         )
@@ -49,9 +83,6 @@ class TestMeasureCombineController:
         )
 
     def test_combine_combinable_partial_measures(self):
-        @dataclass
-        class MockMeasure:
-            combine_type: CombinableTypeEnum | None
 
         # 1. Define input
         _measures = [
@@ -95,9 +126,6 @@ class TestMeasureCombineController:
         )
 
     def test_combine_combinable_revetment_measures(self):
-        @dataclass
-        class MockMeasure:
-            combine_type: CombinableTypeEnum | None
 
         # 1. Define input
         _measures = [
