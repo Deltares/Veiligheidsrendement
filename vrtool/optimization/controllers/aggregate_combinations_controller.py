@@ -15,6 +15,7 @@ class AggregateCombinationsController:
     ) -> list[AggregatedMeasureCombination]:
         _aggr_meas_comb = []
         for _sh in sh_combinations:
+            # Year and primary measure type should match
             _sg_combinations = filter(
                 lambda x: x.primary.year == _sh.primary.year
                 and x.primary.measure_type == _sh.primary.measure_type,
