@@ -153,3 +153,33 @@ class MechanismPerYearProbabilityCollection:
         _mechanisms = self.get_mechanisms()
         for m in _mechanisms:
             self._add_year_mechanism(m, years)
+
+    def _replace(self, mechanism: MechanismEnum, year: int, prob: float) -> None:
+        for p in self.probabilities:
+            if p.mechanism == mechanism and p.year == year:
+                p.probability = prob
+                return
+
+    def _replace_values_mechanism(
+        self,
+        mechanism: MechanismEnum,
+        year_zero_values: MechanismPerYearProbabilityCollection,
+        investment_year,
+    ) -> None:
+        _years = self.get_years(mechanism)
+        for yr in _years:
+            if yr <= investment_year:
+                _nwprob = year_zero_values.get_probability(mechanism, yr)
+                self._replace(mechanism, yr, _nwprob)
+
+    def replace_values(
+        self,
+        year_zero_values: MechanismPerYearProbabilityCollection,
+        investment_year: int,
+    ):
+        _mechanism1 = self.get_mechanisms()
+        _mechanism2 = year_zero_values.get_mechanisms()
+        if _mechanism1 != _mechanism2:
+            raise ValueError("mechanisms not equal in replace_values")
+        for m in _mechanism1:
+            self._replace_values_mechanism(m, year_zero_values, investment_year)

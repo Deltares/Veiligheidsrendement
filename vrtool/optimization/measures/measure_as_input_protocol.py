@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -25,4 +26,7 @@ class MeasureAsInputProtocol(Protocol):
 
     @classmethod
     def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+        pass
+
+    def equals_except_year(self, second: MeasureAsInputProtocol) -> bool:
         pass

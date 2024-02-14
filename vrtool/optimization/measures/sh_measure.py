@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -41,3 +42,6 @@ class ShMeasure(MeasureAsInputProtocol):
             MeasureTypeEnum.VERTICAL_GEOTEXTILE,
         ]:
             self.lcc = 0
+
+    def equals_except_year(self, second: ShMeasure) -> bool:
+        return self.beta_target == second.beta_target and self.transition_level == second.transition_level

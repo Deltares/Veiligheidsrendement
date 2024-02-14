@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -29,3 +30,6 @@ class SgMeasure(MeasureAsInputProtocol):
     @classmethod
     def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
         return [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
+
+    def equals_except_year(self, second: SgMeasure) -> bool:
+        return self.dberm == second.dberm and self.dcrest == second.dcrest
