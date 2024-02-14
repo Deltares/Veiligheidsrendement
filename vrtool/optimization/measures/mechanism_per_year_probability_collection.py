@@ -34,7 +34,7 @@ class MechanismPerYearProbabilityCollection:
 
     def get_mechanisms(self) -> set[MechanismEnum]:
         """
-        get the mechanisms used in _probabilities
+        get the mechanisms used in probabilities
 
         Returns:
             set[MechanismEnum]: a set with the mechanisms
@@ -43,7 +43,7 @@ class MechanismPerYearProbabilityCollection:
 
     def get_years(self, mechanism: MechanismEnum) -> set[int]:
         """
-        get the years in _probabilities for a given mechanism
+        get the years in probabilities for a given mechanism
 
         Args:
             mechanism (MechanismEnum): the mechanism to filter
@@ -138,7 +138,7 @@ class MechanismPerYearProbabilityCollection:
                 _mech_per_year = MechanismPerYear(
                     mechanism, _year, beta_to_pf(float(_beta_interp[i]))
                 )
-                self._probabilities.append(_mech_per_year)
+                self.probabilities.append(_mech_per_year)
 
     def add_years(self, years: list[int]) -> None:
         """

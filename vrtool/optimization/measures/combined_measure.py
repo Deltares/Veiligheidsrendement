@@ -13,7 +13,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 @dataclass
 class CombinedMeasure:
     primary: MeasureAsInputProtocol
-    secondary: MeasureAsInputProtocol
+    secondary: MeasureAsInputProtocol | None
     mechanism_year_collection: MechanismPerYearProbabilityCollection
 
     @property
@@ -26,11 +26,15 @@ class CombinedMeasure:
         primary: MeasureAsInputProtocol,
         secondary: MeasureAsInputProtocol,
     ) -> CombinedMeasure:
+        if secondary is not None:
+            _mech_year_coll = MechanismPerYearProbabilityCollection.combine(
+                primary.mechanism_year_collection,
+                secondary.mechanism_year_collection,
+            )
+        else:
+            _mech_year_coll = primary.mechanism_year_collection
         return cls(
             primary=primary,
             secondary=secondary,
-            mechanism_year_collection=MechanismPerYearProbabilityCollection.combine(
-                primary.mechanism_year_collection,
-                secondary.mechanism_year_collection,
-            ),
+            mechanism_year_collection=_mech_year_coll,
         )

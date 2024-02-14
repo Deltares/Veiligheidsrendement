@@ -31,7 +31,7 @@ class MeasureCombineController:
                     # If no secondary is needed, add primary without secondary measure
                     if _secondary_type is None:
                         _combined_measures.append(
-                            CombinedMeasure(_primary_measure, None)
+                            CombinedMeasure.from_input(_primary_measure, None)
                         )
                         continue
                     # Add combination of primary and secondary measure
@@ -39,7 +39,9 @@ class MeasureCombineController:
                         lambda x: x.combine_type == _secondary_type, measures
                     ):
                         _combined_measures.append(
-                            CombinedMeasure(_primary_measure, _secondary_measure)
+                            CombinedMeasure.from_input(
+                                _primary_measure, _secondary_measure
+                            )
                         )
 
         return _combined_measures
