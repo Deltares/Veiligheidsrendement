@@ -61,7 +61,8 @@ class TestShMeasure:
         _allowed_mechanisms = ShMeasure.get_allowed_mechanisms()
 
         # 3. Verify expectations
-        assert all(x == y for x, y in zip(_expected_mechanisms, _allowed_mechanisms))
+        assert len(_expected_mechanisms) == len(_allowed_mechanisms)
+        assert all(x in _expected_mechanisms for x in _allowed_mechanisms)
 
     @pytest.mark.parametrize(
         "mechanism, expected",
