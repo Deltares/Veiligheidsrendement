@@ -93,13 +93,14 @@ class MechanismPerYearProbabilityCollection:
         Years and mechanisms of both collections should match.
 
         Args:
+            primary (MechanismPerYearProbabilityCollection): the primary collection
             second (MechanismPerYearProbabilityCollection): the collection to combine with
 
         Raises:
             ValueError: can only combine if the overlying mechanisms are equal
 
         Returns:
-            list[MechanismPerYear]: the combined collection
+            MechanismPerYearProbabilityCollection: the combined collection
         """
         _mechanism1 = primary.get_mechanisms()
         _mechanism2 = secondary.get_mechanisms()
