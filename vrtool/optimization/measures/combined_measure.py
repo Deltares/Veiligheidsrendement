@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from vrtool.optimization.measures.measure_as_input_protocol import (
@@ -13,3 +15,22 @@ class CombinedMeasure:
     primary: MeasureAsInputProtocol
     secondary: MeasureAsInputProtocol
     mechanism_year_collection: MechanismPerYearProbabilityCollection
+
+    @property
+    def lcc(self) -> float:
+        return self.primary.lcc + self.secondary.lcc
+
+    @classmethod
+    def from_input(
+        cls,
+        primary: MeasureAsInputProtocol,
+        secondary: MeasureAsInputProtocol,
+    ) -> CombinedMeasure:
+        return cls(
+            primary=primary,
+            secondary=secondary,
+            mechanism_year_collection=MechanismPerYearProbabilityCollection.combine(
+                primary.mechanism_year_collection,
+                secondary.mechanism_year_collection,
+            ),
+        )
