@@ -8,7 +8,7 @@ from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method im
 )
 
 
-class TestStabilityInnerInput:
+class TestStabilityInnerSimpleInput:
     def test_from_mechanism_input_with_safety_factor_range_returns_input_with_safety_factor_range(
         self,
     ):
@@ -189,3 +189,38 @@ class TestStabilityInnerInput:
             str(exception_error.value)
             == "Warning: Elimination defined but not turned on"
         )
+
+    @pytest.mark.parametrize(
+        "probability_of_failure, scenario_probability, expected_result",
+        [
+            pytest.param([0.1, 1], [0.2, 0.02], 0.04),
+            pytest.param([0.42, 0.24], [0.24, 0.42], 0.2015),
+            pytest.param([1, 0.1], [0.02, 0.2], 0.04),
+        ],
+    )
+    def test_given_probability_of_failure_and_scenario_probability_as_arrays_then_returns_expectation(
+        self,
+        probability_of_failure: list[float],
+        scenario_probability: list[float],
+        expected_result: float,
+    ):
+        # 1. Define test data.
+        _dummy_input = StabilityInnerSimpleInput(
+            safety_factor_2025=np.array([]),
+            safety_factor_2075=np.array([]),
+            beta_2025=np.array([]),
+            beta_2075=np.array([]),
+            beta=np.array([]),
+            scenario_probability=np.array(scenario_probability),
+            probability_of_failure=np.array(probability_of_failure),
+            failure_probability_with_elimination=np.array([]),
+            failure_probability_elimination=np.array([]),
+            is_eliminated=False,
+            reliability_calculation_method=ReliabilityCalculationMethod.BETA_SINGLE,
+        )
+
+        # 2. Run test.
+        _result = _dummy_input.get_failure_probability_from_scenarios()
+
+        # 3. Verify expectations.
+        assert _result == pytest.approx(expected_result, 1e-3)

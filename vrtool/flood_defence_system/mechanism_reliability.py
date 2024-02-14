@@ -181,5 +181,5 @@ class MechanismReliability:
         if mechanism_input.input.get("RERUN_STIX") == True:
             _wrapper.rerun_stix()
 
-        _mechanism_input = np.array(_wrapper.get_safety_factor())
+        _mechanism_input = np.array([_wrapper.get_safety_factor()])
         return StabilityInnerDStabilityCalculator(_mechanism_input)

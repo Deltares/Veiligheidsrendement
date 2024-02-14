@@ -71,36 +71,30 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
         mechanism: MechanismEnum,
         computation_type: str,
     ) -> MechanismInput:
+        # TODO: VRTOOL-340 - no multiple computation scenarios possible from here on.
         _computation_type_name = computation_type.upper().strip()
 
         if mechanism == MechanismEnum.OVERFLOW:
+            # TODO: VRTOOL-340. This does not support multiple scenarios.
             return OverFlowHydraRingImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )
 
-        if (
-            mechanism == MechanismEnum.STABILITY_INNER
-            and _computation_type_name == "SIMPLE"
-        ):
-            return StabilityInnerSimpleImporter().import_orm(
-                mechanism_per_section.computation_scenarios.select().get()
-            )
+        if mechanism == MechanismEnum.STABILITY_INNER:
+            if _computation_type_name == "SIMPLE":
+                return StabilityInnerSimpleImporter().import_orm(mechanism_per_section)
 
-        if (
-            mechanism == MechanismEnum.STABILITY_INNER
-            and _computation_type_name == "DSTABILITY"
-        ):
-            _dstability_importer = DStabilityImporter(
-                self.externals_path, self.input_directory / "stix"
-            )
-            return _dstability_importer.import_orm(
-                mechanism_per_section.computation_scenarios.select().get()
-            )
+            elif _computation_type_name == "DSTABILITY":
+                _dstability_importer = DStabilityImporter(
+                    self.externals_path, self.input_directory.joinpath("stix")
+                )
+                return _dstability_importer.import_orm(mechanism_per_section)
 
         if mechanism == MechanismEnum.PIPING:
             return PipingImporter().import_orm(mechanism_per_section)
 
         if mechanism == MechanismEnum.REVETMENT:
+            # TODO: VRTOOL-340. This does not support multiple scenarios.
             return RevetmentImporter().import_orm(
                 mechanism_per_section.computation_scenarios.select().get()
             )

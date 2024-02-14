@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
@@ -28,6 +29,28 @@ class RevetmentDataClass:
             raise ValueError("No slope part with grass found.")
 
         return min(_grass_begin_parts)
+
+    def get_transition_level_below_threshold(self, threshold: float) -> float:
+        """
+        Returns the greatest transition level value lower than the threshold.
+
+        Args:
+            threshold (float): Threshold value usually representing the crest height.
+
+        Returns:
+            float: greatest transition level.
+        """
+        _transition_levels = set(
+            (
+                gr.transition_level
+                for gr in self.grass_relations
+                if (gr.transition_level < threshold)
+                or (math.isclose(gr.transition_level, threshold))
+            )
+        )
+        if not _transition_levels:
+            raise ValueError("No values found below the threshold {}".format(threshold))
+        return max(_transition_levels)
 
     def get_available_years(self) -> list[int]:
         """

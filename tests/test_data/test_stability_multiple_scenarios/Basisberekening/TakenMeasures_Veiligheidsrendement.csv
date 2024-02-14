@@ -1,0 +1,17 @@
+,Section,option_index,LCC,BC,ID,name,year,yes/no,dcrest,dberm,beta_target,transition_level
+0,,,0.0,0.0,,,,,,,,
+1,29,315,1220668.0,23130.37811529596,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,5.0,3.339440248050748,2.3
+2,29,331,490058.3999999978,11555.73324802436,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,8.0,3.339440248050748,2.3
+3,29,347,326705.6000000022,5059.510644889681,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,10.0,3.339440248050748,2.3
+4,29,363,326705.59999999683,2453.034871373255,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,12.0,3.339440248050748,2.3
+5,29,379,490058.39999999804,933.0314407751323,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,15.0,3.339440248050748,2.3
+6,29,383,495314.1610489064,436.50026792750407,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,15.0,4.046432278436823,2.3
+7,29,385,54722.86903509498,209.90079740475028,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,15.0,4.399928293629861,2.3
+8,29,401,816764.0000000056,175.88391230863888,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,20.0,4.399928293629861,2.3
+9,29,417,1633527.9999999944,6.9856757503266955,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,30.0,4.399928293629861,2.3
+10,29,673,4456353.270029313,3.255772470441123,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.5,30.0,4.399928293629861,2.3
+11,29,674,1143070.4822445996,2.496256865212789,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.5,30.0,4.399928293629861,3.3
+12,29,802,1429034.556997545,1.6137363940011145,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.75,30.0,4.399928293629861,3.3
+13,29,930,1466939.8383194823,0.7280619327533755,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.0,30.0,4.399928293629861,3.3
+14,29,1058,1504845.1196414083,0.34930813931785887,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.25,30.0,4.399928293629861,3.3
+15,29,1186,1542750.4009633344,0.15229617253626546,1+8,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.5,30.0,4.399928293629861,3.3

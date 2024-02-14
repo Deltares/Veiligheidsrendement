@@ -284,7 +284,7 @@ class TestOrmControllers:
         # Stability Inner
         _water_load_input = LoadInput([])
         _water_load_input.input["d_cover"] = None
-        _water_load_input.input["beta"] = 42.24
+        _water_load_input.input["beta"] = np.array([42.24])
         _stability_inner_collection = MechanismReliabilityCollection(
             MechanismEnum.STABILITY_INNER,
             "combinable",

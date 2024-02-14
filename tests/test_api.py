@@ -394,3 +394,71 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
+
+
+@pytest.mark.slow
+class TestApiReportedBugs:
+    def _get_vrtool_config_test_copy(
+        self, config_file: Path, test_name: str
+    ) -> VrtoolConfig:
+        """
+        Gets a `VrtoolConfig` with a copy of the database to avoid version issues.
+        """
+        # Create a results directory (ignored by git)
+        _test_results_directory = test_results.joinpath(test_name)
+        if _test_results_directory.exists():
+            shutil.rmtree(_test_results_directory)
+        _test_results_directory.mkdir(parents=True)
+
+        # Get the current configuration
+        _vrtool_config = VrtoolConfig.from_json(config_file)
+
+        # Create a db copy.
+        _new_db_name = "test_{}.db".format(
+            hashlib.shake_128(_test_results_directory.__bytes__()).hexdigest(4)
+        )
+        _new_db_path = _test_results_directory.joinpath(_new_db_name)
+        if _new_db_path.exists():
+            # Somehow it was not removed in the previous test run.
+            _new_db_path.unlink(missing_ok=True)
+
+        shutil.copy(_vrtool_config.input_database_path, _new_db_path)
+
+        # Set new configuration values.
+        _vrtool_config.input_directory = _test_results_directory
+        _vrtool_config.input_database_name = _new_db_name
+        _vrtool_config.output_directory = _test_results_directory.joinpath("output")
+        _vrtool_config.output_directory.mkdir()
+
+        return _vrtool_config
+
+    @pytest.mark.parametrize(
+        "directory_name",
+        [
+            pytest.param(
+                "test_stability_multiple_scenarios",
+                id="Stability case with multiple scenarios [VRTOOL-340]",
+            ),
+            pytest.param(
+                "test_revetment_step_transition_level",
+                id="Revetment case with many transition levels [VRTOOL-330]",
+            ),
+        ],
+    )
+    def test_given_case_from_reported_bug_run_all_succeeds(
+        self, directory_name: str, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _test_case_dir = test_data.joinpath(directory_name)
+        assert _test_case_dir.exists()
+
+        _vrtool_config = self._get_vrtool_config_test_copy(
+            _test_case_dir.joinpath("config.json"), request.node.name
+        )
+        assert not any(_vrtool_config.output_directory.glob("*"))
+
+        # 2. Run test.
+        ApiRunWorkflows(_vrtool_config).run_all()
+
+        # 3. Verify expectations.
+        assert any(_vrtool_config.output_directory.glob("*"))
