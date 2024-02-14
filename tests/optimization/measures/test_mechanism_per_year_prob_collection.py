@@ -59,39 +59,51 @@ class TestMechanismPerYearProbCollection:
 
         # Call
         _collection = MechanismPerYearProbabilityCollection(_prob)
-        _size_before = len(_collection._probabilities)
+        _size_before = len(_collection.probabilities)
         _collection.add_years([50])
-        _size_after = len(_collection._probabilities)
+        _size_after = len(_collection.probabilities)
 
         # Assert
         assert _size_before == _size_after
 
     def test_combined_measures(self):
         # Setup
-        _collection1 = MechanismPerYearProbabilityCollection(self._get_mechanism_per_year_example())
-        _collection2 = MechanismPerYearProbabilityCollection(self._get_mechanism_per_year_example())
+        _collection1 = MechanismPerYearProbabilityCollection(
+            self._get_mechanism_per_year_example()
+        )
+        _collection2 = MechanismPerYearProbabilityCollection(
+            self._get_mechanism_per_year_example()
+        )
 
         # Call
-        _collection3 = _collection1.combine(_collection2)
+        _collection3 = MechanismPerYearProbabilityCollection.combine(
+            _collection1, _collection2
+        )
 
         # Assert
-        assert len(_collection1._probabilities) == len(_collection3)
-        assert _collection3[0].probability == pytest.approx(0.9775)
-        assert _collection3[1].probability == pytest.approx(0.9375)
-        assert _collection3[2].probability == pytest.approx(0.8775)
-        assert _collection3[3].probability == pytest.approx(0.99)
-        assert _collection3[4].probability == pytest.approx(0.96)
-        assert _collection3[5].probability == pytest.approx(0.91)
+        assert len(_collection1.probabilities) == len(_collection3.probabilities)
+        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 0) == pytest.approx(0.9775)
+        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 50) == pytest.approx(0.9375)
+        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 100) == pytest.approx(0.8775)
+        assert _collection3.filter(MechanismEnum.OVERFLOW, 0) == pytest.approx(0.99)
+        assert _collection3.filter(MechanismEnum.OVERFLOW, 50) == pytest.approx(0.96)
+        assert _collection3.filter(MechanismEnum.OVERFLOW, 100) == pytest.approx(0.91)
 
     def test_combined_measures_different_years(self):
         # Setup
-        _collection1 = MechanismPerYearProbabilityCollection(self._get_mechanism_per_year_example())
-        _collection2 = MechanismPerYearProbabilityCollection(self._get_mechanism_per_year_example())
+        _collection1 = MechanismPerYearProbabilityCollection(
+            self._get_mechanism_per_year_example()
+        )
+        _collection2 = MechanismPerYearProbabilityCollection(
+            self._get_mechanism_per_year_example()
+        )
         _collection1.add_years([20])
 
         # Call
         with pytest.raises(ValueError) as exceptionInfo:
-            _collection3 = _collection1.combine(_collection2)
+            _collection3 = MechanismPerYearProbabilityCollection.combine(
+                _collection1, _collection2
+            )
 
         # Assert
         assert "years not equal in combine" == str(exceptionInfo.value)

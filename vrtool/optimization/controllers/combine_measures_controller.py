@@ -58,7 +58,7 @@ class CombineMeasuresController:
             _combined_measures = []
             for _secondary_measure in measure_combination[1]:
                 _combined_measures.append(
-                    CombinedMeasure(
+                    CombinedMeasure.from_input(
                         measure_combination[0],
                         _secondary_measure,
                     )

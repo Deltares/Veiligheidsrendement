@@ -49,11 +49,11 @@ class TestSectionAsInput:
     def _get_section_with_combinations(self) -> SectionAsInput:
         _section = self._get_section_with_measures()
         _section.combined_measures = [
-            CombinedMeasure(
+            CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 None,
             ),
-            CombinedMeasure(
+            CombinedMeasure.from_input(
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
                 None,
             ),
