@@ -6,8 +6,8 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
-from vrtool.optimization.controllers.measure_combine_controller import (
-    MeasureCombineController,
+from vrtool.optimization.controllers.combine_measures_controller import (
+    CombineMeasuresController,
 )
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
@@ -155,5 +155,5 @@ class StrategyController:
         Combines the measures for each section.
         """
         for _section in self._section_measures_input:
-            _combine_controller = MeasureCombineController(_section)
+            _combine_controller = CombineMeasuresController(_section)
             _section.combined_measures = _combine_controller.combine()

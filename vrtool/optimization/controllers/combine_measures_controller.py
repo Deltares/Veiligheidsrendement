@@ -1,3 +1,5 @@
+from itertools import combinations
+
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.measure_as_input_protocol import (
@@ -8,7 +10,7 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
-class MeasureCombineController:
+class CombineMeasuresController:
     def __init__(self, section: SectionAsInput) -> None:
         self._section = section
 
@@ -19,32 +21,35 @@ class MeasureCombineController:
             CombinableTypeEnum, list[CombinableTypeEnum | None]
         ],
     ) -> list[CombinedMeasure]:
-        _combined_measures = []
+        # Create all possible combinations of measures
+        _list_to_combine = measures + [None]
+        _prospect_combinations = combinations(_list_to_combine, 2)
 
-        # Loop over allowed combinations
-        for _primary_type in allowed_measure_combinations.keys():
-            # Find primary measures
-            for _primary_measure in filter(
-                lambda x: x.combine_type == _primary_type, measures
+        def valid_combination(
+            primary: MeasureAsInputProtocol | None,
+            secondary: MeasureAsInputProtocol | None,
+        ) -> bool:
+            if primary is None or (
+                primary.combine_type not in allowed_measure_combinations.keys()
             ):
-                for _secondary_type in allowed_measure_combinations[_primary_type]:
-                    # If no secondary is needed, add primary without secondary measure
-                    if _secondary_type is None:
-                        _combined_measures.append(
-                            CombinedMeasure.from_input(_primary_measure, None)
-                        )
-                        continue
-                    # Add combination of primary and secondary measure
-                    for _secondary_measure in filter(
-                        lambda x: x.combine_type == _secondary_type, measures
-                    ):
-                        _combined_measures.append(
-                            CombinedMeasure.from_input(
-                                _primary_measure, _secondary_measure
-                            )
-                        )
+                # Primary measures MIGHT NOT be NONE.
+                return False
 
-        return _combined_measures
+            _allowed_secondary_combinations = allowed_measure_combinations[
+                primary.combine_type
+            ]
+            # Secondary measures MIGHT be NONE.
+            _combine_type = None
+            if isinstance(secondary, MeasureAsInputProtocol):
+                _combine_type = secondary.combine_type
+
+            return _combine_type in _allowed_secondary_combinations
+
+        return [
+            CombinedMeasure.from_input(_primary, _secondary)
+            for (_primary, _secondary) in _prospect_combinations
+            if valid_combination(_primary, _secondary)
+        ]
 
     def combine(self) -> list[CombinedMeasure]:
         """
