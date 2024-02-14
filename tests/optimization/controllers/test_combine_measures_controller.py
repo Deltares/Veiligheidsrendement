@@ -91,14 +91,15 @@ class TestCombineMeasuresController:
         _allowed_combinations = {
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL]
         }
+        _expected_combinations = len(_measures)
 
         # 2. Run test
-        _combinations = CombineMeasuresController._combine_measures(
+        _combinations = CombineMeasuresController.combine_measures(
             _measures, _allowed_combinations
         )
 
         # 3. Verify expectations
-        assert len(_combinations) == 2
+        assert len(_combinations) == _expected_combinations
         assert (
             len(
                 [
@@ -135,14 +136,15 @@ class TestCombineMeasuresController:
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
             CombinableTypeEnum.REVETMENT: [None],
         }
+        _expected_combinations = len(_measures) + 1
 
         # 2. Run test
-        _combinations = CombineMeasuresController._combine_measures(
+        _combinations = CombineMeasuresController.combine_measures(
             _measures, _allowed_combinations
         )
 
         # 3. Verify expectations
-        assert len(_combinations) == 3
+        assert len(_combinations) == _expected_combinations
         assert (
             len(
                 [
@@ -181,7 +183,7 @@ class TestCombineMeasuresController:
     def test_combining_sh_measures(self):
         # 1. Define input
         _section = self._create_section()
-        _section.measures = [
+        _measures = [
             self._create_sh_measure(
                 MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
             ),
@@ -199,13 +201,15 @@ class TestCombineMeasuresController:
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
             ),
         ]
+        _expected_combinations = len(_measures) + 3
+        _section.measures = _measures
 
         # 2. Run test
         _combine_controller = CombineMeasuresController(_section)
         _combined_measures = _combine_controller.combine()
 
         # 3. Verify expectations
-        assert len(_combined_measures) == 7
+        assert len(_combined_measures) == _expected_combinations
 
     def test_combining_sg_measures(self):
         # 1. Define input
@@ -214,7 +218,7 @@ class TestCombineMeasuresController:
             traject_name="Traject1",
             measures=[],
         )
-        _section.measures = [
+        _measures = [
             self._create_sg_measure(
                 MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
             ),
@@ -232,10 +236,12 @@ class TestCombineMeasuresController:
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
             ),
         ]
+        _expected_combinations = len(_measures) + 1
+        _section.measures = _measures
 
         # 2. Run test
         _combine_controller = CombineMeasuresController(_section)
         _combined_measures = _combine_controller.combine()
 
         # 3. Verify expectations
-        assert len(_combined_measures) == 5
+        assert len(_combined_measures) == _expected_combinations

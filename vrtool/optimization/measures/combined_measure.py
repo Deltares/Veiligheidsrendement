@@ -20,8 +20,7 @@ class CombinedMeasure:
     def lcc(self) -> float:
         if self.secondary is not None:
             return self.primary.lcc + self.secondary.lcc
-        else:
-            return self.primary.lcc
+        return self.primary.lcc
 
     @classmethod
     def from_input(
@@ -29,13 +28,12 @@ class CombinedMeasure:
         primary: MeasureAsInputProtocol,
         secondary: MeasureAsInputProtocol | None,
     ) -> CombinedMeasure:
+        _mech_year_coll = primary.mechanism_year_collection
         if secondary is not None:
             _mech_year_coll = MechanismPerYearProbabilityCollection.combine(
                 primary.mechanism_year_collection,
                 secondary.mechanism_year_collection,
             )
-        else:
-            _mech_year_coll = primary.mechanism_year_collection
 
         return cls(
             primary=primary,
