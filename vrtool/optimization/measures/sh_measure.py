@@ -17,11 +17,11 @@ class ShMeasure(MeasureAsInputProtocol):
     combine_type: CombinableTypeEnum
     cost: float
     year: int
-    lcc: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     beta_target: float
     transition_level: float
     dcrest: float
+    _lcc: float = 0
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -41,14 +41,16 @@ class ShMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.FULL: [None, CombinableTypeEnum.REVETMENT],
         }
 
-    def __post_init__(self):
-        """
-        Set LCC to 0 for Sh to avoid double counting with Sg
-        TODO: move this logic to the aggregate function (or add set/get methods for lcc)
-        """
+    @property
+    def lcc(self) -> float:
         if self.measure_type in [
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
             MeasureTypeEnum.VERTICAL_GEOTEXTILE,
         ]:
-            self.lcc = 0
+            return 0
+        return self._lcc
+
+    @lcc.setter
+    def lcc(self, value: float):
+        self._lcc = value
