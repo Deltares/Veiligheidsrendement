@@ -60,7 +60,12 @@ class StrategyController:
 
         return MechanismPerYearProbabilityCollection(_probabilities)
 
-    def _create_sg_measure(self, measure_row: pd.DataFrame, idx: int) -> SgMeasure:
+    def _create_sg_measure(
+        self,
+        measure_row: pd.DataFrame,
+        idx: int,
+        start_cost_dict: dict[MeasureTypeEnum, float],
+    ) -> SgMeasure:
         _mech_year_coll = self._get_mechanism_year_collection(
             measure_row,
             idx,
@@ -68,11 +73,17 @@ class StrategyController:
         )
         _meas_type = MeasureTypeEnum.get_enum(measure_row.at[idx, ("type", "")])
         _comb_type = CombinableTypeEnum.get_enum(measure_row.at[idx, ("class", "")])
-        _cost = measure_row.at[idx, ("cost", "")]
         _year = measure_row.at[idx, ("year", "")]
-        _lcc = _cost / (1 + self._vrtool_config.discount_rate) ** _year
         _dberm = measure_row.at[idx, ("dberm", "")]
         _dcrest = measure_row.at[idx, ("dcrest", "")]
+
+        _cost = measure_row.at[idx, ("cost", "")]
+        _lcc = (
+            _cost
+            - SgMeasure.get_start_cost(
+                start_cost_dict, _meas_type, _year, _dberm, _cost
+            )
+        ) / (1 + self._vrtool_config.discount_rate) ** _year
 
         return SgMeasure(
             measure_type=_meas_type,
@@ -85,7 +96,12 @@ class StrategyController:
             dcrest=_dcrest,
         )
 
-    def _create_sh_measure(self, measure_row: pd.DataFrame, idx: int) -> ShMeasure:
+    def _create_sh_measure(
+        self,
+        measure_row: pd.DataFrame,
+        idx: int,
+        start_cost_dict: dict[MeasureTypeEnum, float],
+    ) -> ShMeasure:
         _mech_year_coll = self._get_mechanism_year_collection(
             measure_row,
             idx,
@@ -93,43 +109,52 @@ class StrategyController:
         )
         _meas_type = MeasureTypeEnum.get_enum(measure_row.at[idx, ("type", "")])
         _comb_type = CombinableTypeEnum.get_enum(measure_row.at[idx, ("class", "")])
-        _cost = measure_row.at[idx, ("cost", "")]
         _year = measure_row.at[idx, ("year", "")]
-        _lcc = _cost / (1 + self._vrtool_config.discount_rate) ** _year
         _dcrest = measure_row.at[idx, ("dcrest", "")]
         _beta = measure_row.at[idx, ("beta_target", "")]
         _trans_level = measure_row.at[idx, ("transition_level", "")]
 
-        _measure = ShMeasure(
+        _cost = measure_row.at[idx, ("cost", "")]
+        _lcc = (
+            _cost - ShMeasure.get_start_cost(start_cost_dict, _meas_type, _year, _cost)
+        ) / (1 + self._vrtool_config.discount_rate) ** _year
+
+        return ShMeasure(
             measure_type=_meas_type,
             combine_type=_comb_type,
             cost=_cost,
             year=_year,
+            lcc=_lcc,
             mechanism_year_collection=_mech_year_coll,
             beta_target=_beta,
             transition_level=_trans_level,
             dcrest=_dcrest,
         )
-        _measure.lcc = _lcc
-        return _measure
 
-    def _get_measures(self, measure_data: pd.DataFrame) -> list[MeasureAsInputProtocol]:
+    def _get_measures(
+        self, measure_data: pd.DataFrame
+    ) -> tuple[list[MeasureAsInputProtocol], dict[MeasureTypeEnum, float]]:
         _measures: list[MeasureAsInputProtocol] = []
+        _start_cost_dict: dict[MeasureTypeEnum, float] = {MeasureTypeEnum.INVALID: 0}
 
         for _idx in measure_data.index:
             _dberm = measure_data.at[_idx, ("dberm", "")]
             if _dberm == 0 or _dberm == -999:  # Sg
                 _measures.append(
-                    self._create_sh_measure(measure_data.iloc[[_idx]], _idx)
+                    self._create_sh_measure(
+                        measure_data.iloc[[_idx]], _idx, _start_cost_dict
+                    )
                 )
 
             _dcrest = measure_data.at[_idx, ("dcrest", "")]
             if _dcrest == 0 or _dcrest == -999:  # Sh
                 _measures.append(
-                    self._create_sg_measure(measure_data.iloc[[_idx]], _idx)
+                    self._create_sg_measure(
+                        measure_data.iloc[[_idx]], _idx, _start_cost_dict
+                    )
                 )
 
-        return _measures
+        return (_measures, _start_cost_dict)
 
     def map_input(
         self,
@@ -149,7 +174,7 @@ class StrategyController:
                 SectionAsInput(
                     _section_name,
                     selected_traject.general_info.traject_name,
-                    self._get_measures(solutions_dict[_section_name].MeasureData),
+                    *self._get_measures(solutions_dict[_section_name].MeasureData),
                 )
             )
 

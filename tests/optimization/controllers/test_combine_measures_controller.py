@@ -38,11 +38,12 @@ class TestCombineMeasuresController:
     def _create_sh_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> ShMeasure:
-        _measure = ShMeasure(
+        return ShMeasure(
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=0,
             year=0,
+            lcc=0,
             mechanism_year_collection=MockMechanismYearProColl(
                 [
                     MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9),
@@ -53,8 +54,6 @@ class TestCombineMeasuresController:
             transition_level=0,
             dcrest=0,
         )
-        _measure.lcc = 0
-        return _measure
 
     def _create_sg_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum

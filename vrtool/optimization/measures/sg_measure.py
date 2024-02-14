@@ -38,3 +38,23 @@ class SgMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL],
             CombinableTypeEnum.FULL: [None],
         }
+
+    @staticmethod
+    def get_start_cost(
+        start_cost_dict: dict[MeasureTypeEnum, float],
+        measure_type: MeasureTypeEnum,
+        year: int,
+        dberm: float,
+        cost: float,
+    ) -> float:
+        if measure_type not in [
+            MeasureTypeEnum.SOIL_REINFORCEMENT,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+        ]:
+            return 0
+        if measure_type in start_cost_dict.keys():
+            return start_cost_dict[measure_type]
+        if year == 0 and dberm == 0:
+            start_cost_dict[measure_type] = cost
+            return cost
+        return 0

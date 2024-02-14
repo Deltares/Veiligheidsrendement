@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
@@ -17,6 +18,9 @@ class SectionAsInput:
     section_name: str
     traject_name: str
     measures: list[MeasureAsInputProtocol]
+    start_cost: dict[MeasureTypeEnum, float] = field(
+        default_factory=dict[MeasureTypeEnum, float]
+    )
     combined_measures: list[CombinedMeasure] = field(
         default_factory=list[CombinedMeasure]
     )  # TODO do we need this in SectionAsInput or can it be volatile?

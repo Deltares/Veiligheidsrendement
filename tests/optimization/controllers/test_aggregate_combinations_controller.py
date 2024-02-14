@@ -15,7 +15,12 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 class MockCombinedMeasure:
     primary: MockMeasure
     secondary: MockMeasure
-    lcc: float
+
+    @property
+    def lcc(self) -> float:
+        if self.secondary is not None:
+            return self.primary.lcc + self.secondary.lcc
+        return self.primary.lcc
 
 
 @dataclass
@@ -31,12 +36,10 @@ class TestAggregateCombinationsController:
         _sh_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 0, 100),
             MockMeasure(MeasureTypeEnum.REVETMENT, 0, 200),
-            300,
         )
         _sg_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 0, 50),
             MockMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE, 0, 100),
-            150,
         )
 
         # 2. Run test
@@ -55,12 +58,10 @@ class TestAggregateCombinationsController:
         _sh_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 0, 100),
             MockMeasure(MeasureTypeEnum.REVETMENT, 0, 200),
-            300,
         )
         _sg_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 20, 50),
             MockMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE, 0, 100),
-            150,
         )
 
         # 2. Run test
@@ -76,12 +77,10 @@ class TestAggregateCombinationsController:
         _sh_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.DIAPHRAGM_WALL, 0, 100),
             MockMeasure(MeasureTypeEnum.REVETMENT, 0, 200),
-            300,
         )
         _sg_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 0, 50),
             MockMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE, 0, 100),
-            150,
         )
 
         # 2. Run test

@@ -67,7 +67,7 @@ class TestStrategyController:
                     "revetment",
                     "revetment",
                 ],
-                ("year", ""): [0, 20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 0, 0, 0],
+                ("year", ""): [0, 20, 0, 20, 0, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0],
                 ("dcrest", ""): [
                     0,
                     0,

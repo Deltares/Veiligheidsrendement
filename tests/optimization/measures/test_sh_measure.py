@@ -11,18 +11,17 @@ class TestShMeasure:
     def _create_sh_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> ShMeasure:
-        _measure = ShMeasure(
+        return ShMeasure(
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=10.5,
             year=10,
+            lcc=20.3,
             mechanism_year_collection=None,
             beta_target=1.1,
             transition_level=0.5,
             dcrest=0.1,
         )
-        _measure.lcc = 20.3
-        return _measure
 
     def test_create_sh_measure(self):
         # 1. Define input
@@ -42,18 +41,6 @@ class TestShMeasure:
         assert _measure.beta_target == 1.1
         assert _measure.transition_level == 0.5
         assert _measure.dcrest == 0.1
-
-    def test_sh_measure_with_type_sets_lcc_0(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-
-        # 2. Run test
-        _lcc_after = _measure.lcc
-
-        # 3. Verify expectations
-        assert _lcc_after == 0
 
     def test_get_allowed_mechanism(self):
         # 1./2. Define input & Run test
