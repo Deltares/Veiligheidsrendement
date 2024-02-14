@@ -15,13 +15,23 @@ class CombineMeasuresController:
         self._section = section
 
     @staticmethod
-    def _combine_measures(
+    def combine_measures(
         measures: list[MeasureAsInputProtocol],
         allowed_measure_combinations: dict[
             CombinableTypeEnum, list[CombinableTypeEnum | None]
         ],
     ) -> list[CombinedMeasure]:
-        # Create all possible combinations of measures
+        """
+        Create all possible combinations of measures
+
+        Args:
+            measures (list[MeasureAsInputProtocol]): The measures to be combined
+            allowed_measure_combinations (dict[ CombinableTypeEnum, list[CombinableTypeEnum  |  None] ]):
+                The allowed combinations of measures
+
+        Returns:
+            list[CombinedMeasure]: The combined measures
+        """
         _list_to_combine = measures + [None]
         _prospect_combinations = combinations(_list_to_combine, 2)
 
@@ -61,12 +71,12 @@ class CombineMeasuresController:
         _combined_measures = []
 
         _combined_measures.extend(
-            self._combine_measures(
+            self.combine_measures(
                 self._section.sh_measures, ShMeasure.get_allowed_measure_combinations()
             )
         )
         _combined_measures.extend(
-            self._combine_measures(
+            self.combine_measures(
                 self._section.sg_measures, SgMeasure.get_allowed_measure_combinations()
             )
         )
