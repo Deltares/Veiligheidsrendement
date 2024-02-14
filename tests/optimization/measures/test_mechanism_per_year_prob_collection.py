@@ -35,7 +35,7 @@ class TestMechanismPerYearProbCollection:
 
         # Call
         _collection = MechanismPerYearProbabilityCollection(_prob)
-        _prob50yr = _collection.filter(MechanismEnum.OVERFLOW, 50)
+        _prob50yr = _collection.get_probability(MechanismEnum.OVERFLOW, 50)
 
         # Assert
         assert _prob50yr == 0.8
@@ -48,7 +48,7 @@ class TestMechanismPerYearProbCollection:
         _collection = MechanismPerYearProbabilityCollection(_prob)
         _collection.add_years([20, 21])
 
-        _prob20yr = _collection.filter(MechanismEnum.OVERFLOW, 20)
+        _prob20yr = _collection.get_probability(MechanismEnum.OVERFLOW, 20)
 
         # Assert
         assert _prob20yr == pytest.approx(0.86555, abs=1e-5)
@@ -82,12 +82,12 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert len(_collection1.probabilities) == len(_collection3.probabilities)
-        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 0) == pytest.approx(0.9775)
-        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 50) == pytest.approx(0.9375)
-        assert _collection3.filter(MechanismEnum.STABILITY_INNER, 100) == pytest.approx(0.8775)
-        assert _collection3.filter(MechanismEnum.OVERFLOW, 0) == pytest.approx(0.99)
-        assert _collection3.filter(MechanismEnum.OVERFLOW, 50) == pytest.approx(0.96)
-        assert _collection3.filter(MechanismEnum.OVERFLOW, 100) == pytest.approx(0.91)
+        assert _collection3.get_probability(MechanismEnum.STABILITY_INNER, 0) == pytest.approx(0.9775)
+        assert _collection3.get_probability(MechanismEnum.STABILITY_INNER, 50) == pytest.approx(0.9375)
+        assert _collection3.get_probability(MechanismEnum.STABILITY_INNER, 100) == pytest.approx(0.8775)
+        assert _collection3.get_probability(MechanismEnum.OVERFLOW, 0) == pytest.approx(0.99)
+        assert _collection3.get_probability(MechanismEnum.OVERFLOW, 50) == pytest.approx(0.96)
+        assert _collection3.get_probability(MechanismEnum.OVERFLOW, 100) == pytest.approx(0.91)
 
     def test_combined_measures_different_years(self):
         # Setup
