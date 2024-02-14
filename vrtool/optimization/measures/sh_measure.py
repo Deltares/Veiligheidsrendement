@@ -23,18 +23,18 @@ class ShMeasure(MeasureAsInputProtocol):
     transition_level: float
     dcrest: float
 
-    @classmethod
-    def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
-        return mechanism in cls.get_allowed_mechanisms()
+    @staticmethod
+    def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
+        return mechanism in ShMeasure.get_allowed_mechanisms()
 
-    @classmethod
-    def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+    @staticmethod
+    def get_allowed_mechanisms() -> list[MechanismEnum]:
         return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
 
-    @classmethod
-    def get_allowed_measure_combinations(
-        cls,
-    ) -> dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]:
+    @staticmethod
+    def get_allowed_measure_combinations() -> (
+        dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
+    ):
         return {
             CombinableTypeEnum.REVETMENT: [None],
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],

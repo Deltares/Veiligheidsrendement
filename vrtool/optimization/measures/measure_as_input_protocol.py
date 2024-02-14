@@ -19,8 +19,8 @@ class MeasureAsInputProtocol(Protocol):
     lcc: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
 
-    @classmethod
-    def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
+    @staticmethod
+    def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
         """
         Check if mechanism is allowed for measure
 
@@ -32,8 +32,8 @@ class MeasureAsInputProtocol(Protocol):
         """
         pass
 
-    @classmethod
-    def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+    @staticmethod
+    def get_allowed_mechanisms() -> list[MechanismEnum]:
         """
         Get the allowed mechanisms for the measure
 
@@ -42,10 +42,10 @@ class MeasureAsInputProtocol(Protocol):
         """
         pass
 
-    @classmethod
-    def get_allowed_measure_combinations(
-        cls,
-    ) -> dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]:
+    @staticmethod
+    def get_allowed_measure_combinations() -> (
+        dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
+    ):
         """
         Returns the allowed measure type combinations for the measure
 
