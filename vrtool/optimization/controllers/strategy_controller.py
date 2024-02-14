@@ -100,17 +100,18 @@ class StrategyController:
         _beta = measure_row.at[idx, ("beta_target", "")]
         _trans_level = measure_row.at[idx, ("transition_level", "")]
 
-        return ShMeasure(
+        _measure = ShMeasure(
             measure_type=_meas_type,
             combine_type=_comb_type,
             cost=_cost,
             year=_year,
-            lcc=_lcc,
             mechanism_year_collection=_mech_year_coll,
             beta_target=_beta,
             transition_level=_trans_level,
             dcrest=_dcrest,
         )
+        _measure.lcc = _lcc
+        return _measure
 
     def _get_measures(self, measure_data: pd.DataFrame) -> list[MeasureAsInputProtocol]:
         _measures: list[MeasureAsInputProtocol] = []
