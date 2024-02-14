@@ -103,13 +103,13 @@ class MechanismPerYearProbabilityCollection:
         """
         _mechanism1 = primary.get_mechanisms()
         _mechanism2 = secondary.get_mechanisms()
-        if _mechanism1 != _mechanism2:  # TODO improve check
+        if _mechanism1.difference(_mechanism2):
             raise ValueError("mechanisms not equal in combine")
         _nw_probabilities = []
         for m in _mechanism1:
             _years1 = primary.get_years(m)
             _years2 = secondary.get_years(m)
-            if _years1 != _years2:  # TODO improve check
+            if _years1.difference(_years2):
                 raise ValueError("years not equal in combine")
             _nw_probabilities.extend(cls._combine_probs_for_mech(m, primary, secondary))
         return cls(_nw_probabilities)
