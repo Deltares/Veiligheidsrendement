@@ -18,7 +18,7 @@ class CombinedMeasure:
 
     @property
     def lcc(self) -> float:
-        if self.secondary:
+        if self.secondary is not None:
             return self.primary.lcc + self.secondary.lcc
         else:
             return self.primary.lcc
@@ -36,6 +36,7 @@ class CombinedMeasure:
             )
         else:
             _mech_year_coll = primary.mechanism_year_collection
+
         return cls(
             primary=primary,
             secondary=secondary,
