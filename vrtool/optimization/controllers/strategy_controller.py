@@ -6,6 +6,9 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.controllers.combine_measures_controller import (
+    CombineMeasuresController,
+)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -29,8 +32,8 @@ class StrategyController:
         self._vrtool_config = vrtool_config
         self._section_measures_input = []
 
+    @staticmethod
     def _get_mechanism_year_collection(
-        self,
         measure_row: pd.DataFrame,
         idx: int,
         allowed_mechanisms: list[MechanismEnum],
@@ -143,5 +146,14 @@ class StrategyController:
                     _section_name,
                     selected_traject.general_info.traject_name,
                     self._get_measures(solutions_dict[_section_name].MeasureData),
+                    None,
                 )
             )
+
+    def combine(self) -> None:
+        """
+        Combines the measures for each section.
+        """
+        for _section in self._section_measures_input:
+            _combine_controller = CombineMeasuresController(_section)
+            _section.combined_measures = _combine_controller.combine()

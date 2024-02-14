@@ -62,6 +62,9 @@ class RunOptimization(VrToolRunProtocol):
             self.selected_traject,
             self._solutions_dict,
         )
+
+        _greedy_optimization.combine()
+
         return _greedy_optimization
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
