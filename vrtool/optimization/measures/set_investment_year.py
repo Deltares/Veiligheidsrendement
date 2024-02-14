@@ -7,6 +7,12 @@ class SetInvestmentYear:
     def update_measurelist_with_investment_year(
         self, measures: list[MeasureAsInputProtocol]
     ) -> None:
+        """
+        update the probabilities for measures with investment year > 0.
+
+        Args:
+            measures (list[MeasureAsInputProtocol]): list with all measures
+        """
         for measure in measures:
             if measure.year > 0:
                 _measure_zero = self._find_measure_with_year_zero(measure, measures)

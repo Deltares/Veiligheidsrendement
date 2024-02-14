@@ -159,12 +159,13 @@ class MechanismPerYearProbabilityCollection:
             if p.mechanism == mechanism and p.year == year:
                 p.probability = prob
                 return
+        raise ValueError("mechanism and year not found in replace")
 
     def _replace_values_mechanism(
         self,
         mechanism: MechanismEnum,
         year_zero_values: MechanismPerYearProbabilityCollection,
-        investment_year,
+        investment_year: int,
     ) -> None:
         _years = self.get_years(mechanism)
         for yr in _years:
@@ -177,6 +178,19 @@ class MechanismPerYearProbabilityCollection:
         year_zero_values: MechanismPerYearProbabilityCollection,
         investment_year: int,
     ):
+        """
+        Replace probabilities for years before investment_year (including) with values
+        from the measurement with investment_year = 0.
+        Assumes that these years are available.
+
+        Args:
+            year_zero_values (MechanismPerYearProbabilityCollection):
+                the measure with investment_year = 0
+            investment_year (int): the investment year
+
+        Raises:
+            ValueError: mismatch in mechanisms
+        """
         _mechanism1 = self.get_mechanisms()
         _mechanism2 = year_zero_values.get_mechanisms()
         if _mechanism1 != _mechanism2:
