@@ -47,6 +47,8 @@ class TestAggregateCombinationsController:
         # 3. Verify expectations
         assert len(_aggr_meas_comb) == 1
         assert _aggr_meas_comb[0].lcc == 450
+        assert _aggr_meas_comb[0].sh_combination == _sh_combination
+        assert _aggr_meas_comb[0].sg_combination == _sg_combination
 
     def test_aggregate_for_non_matching_year(self):
         # 1. Define input
