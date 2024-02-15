@@ -119,6 +119,7 @@ class StrategyController:
         )
 
     def _get_measures(self, measure_data: pd.DataFrame) -> list[MeasureAsInputProtocol]:
+        # Note: this method requires the order of measures is such that the "0-measure" comes first
         _sh_measures: list[MeasureAsInputProtocol] = []
         _sg_measures: list[MeasureAsInputProtocol] = []
         _previous_sh_measure: MeasureAsInputProtocol | None = None
