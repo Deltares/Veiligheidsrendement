@@ -22,13 +22,22 @@ class SgMeasure(MeasureAsInputProtocol):
     dberm: float
     dcrest: float
 
-    @classmethod
-    def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
-        return mechanism in cls.get_allowed_mechanisms()
+    @staticmethod
+    def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
+        return mechanism in SgMeasure.get_allowed_mechanisms()
 
-    @classmethod
-    def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+    @staticmethod
+    def get_allowed_mechanisms() -> list[MechanismEnum]:
         return [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
+
+    @staticmethod
+    def get_allowed_measure_combinations() -> (
+        dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
+    ):
+        return {
+            CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL],
+            CombinableTypeEnum.FULL: [None],
+        }
 
     def is_zero_measure(self) -> bool:
         return self.dberm == 0.0 and self.dcrest == 0.0
