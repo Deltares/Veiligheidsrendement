@@ -13,9 +13,9 @@ class MechanismPerYearProbabilityCollection:
     def __init__(self, probabilities: list[MechanismPerYear]) -> None:
         self.probabilities = probabilities
 
-    def filter(self, mechanism: MechanismEnum, year: int) -> float:
+    def get_probability(self, mechanism: MechanismEnum, year: int) -> float:
         """
-        filter probabilities given the mechanism and year
+        get the probability for a given mechanism and year
 
         Args:
             mechanism (MechanismEnum): the mechanism to filter
@@ -73,7 +73,7 @@ class MechanismPerYearProbabilityCollection:
         for _mech_per_year in filter(
             lambda x: x.mechanism == mechanism, primary.probabilities
         ):
-            _prob_second = secondary.filter(mechanism, _mech_per_year.year)
+            _prob_second = secondary.get_probability(mechanism, _mech_per_year.year)
             _nwp = (
                 _mech_per_year.probability
                 + _prob_second
@@ -104,13 +104,13 @@ class MechanismPerYearProbabilityCollection:
         """
         _mechanism1 = primary.get_mechanisms()
         _mechanism2 = secondary.get_mechanisms()
-        if _mechanism1.difference(_mechanism2):
+        if _mechanism1 != _mechanism2:
             raise ValueError("mechanisms not equal in combine")
         _nw_probabilities = []
         for m in _mechanism1:
             _years1 = primary.get_years(m)
             _years2 = secondary.get_years(m)
-            if _years1.difference(_years2):
+            if _years1 != _years2:
                 raise ValueError("years not equal in combine")
             _nw_probabilities.extend(cls._combine_probs_for_mech(m, primary, secondary))
         return cls(_nw_probabilities)
