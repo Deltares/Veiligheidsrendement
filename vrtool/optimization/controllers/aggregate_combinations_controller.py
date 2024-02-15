@@ -1,3 +1,5 @@
+from itertools import product
+
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
@@ -9,25 +11,37 @@ class AggregateCombinationsController:
     def __init__(self, section: SectionAsInput) -> None:
         self._section = section
 
-    @staticmethod
-    def _create_aggregates(
-        sh_combinations: list[CombinedMeasure], sg_combinations: list[CombinedMeasure]
-    ) -> list[AggregatedMeasureCombination]:
-        _aggr_meas_comb = []
-        for _sh in sh_combinations:
-            # Year and primary measure type should match
-            _sg_combinations = filter(
-                lambda x: x.primary.year == _sh.primary.year
-                and x.primary.measure_type == _sh.primary.measure_type,
-                sg_combinations,
-            )
-            for _sg in _sg_combinations:
-                _aggr_meas_comb.append(
-                    AggregatedMeasureCombination(_sh, _sg, _sh.primary.year)
-                )
-        return _aggr_meas_comb
-
     def aggregate(self) -> list[AggregatedMeasureCombination]:
-        return self._create_aggregates(
+        def _create_aggregates(
+            sh_combinations: list[CombinedMeasure],
+            sg_combinations: list[CombinedMeasure],
+        ) -> list[AggregatedMeasureCombination]:
+
+            def primaries_match(
+                aggregation: tuple[CombinedMeasure, CombinedMeasure]
+            ) -> bool:
+                # Check if the primary measures in both commbinations match
+                _sh_comb, _sg_comb = aggregation
+                return (
+                    _sh_comb.primary.year == _sg_comb.primary.year
+                    and _sh_comb.primary.measure_type == _sg_comb.primary.measure_type
+                )
+
+            def make_aggregate(
+                aggregation: tuple[CombinedMeasure, CombinedMeasure]
+            ) -> AggregatedMeasureCombination:
+                _sh_comb, _sg_comb = aggregation
+                return AggregatedMeasureCombination(
+                    _sh_comb, _sg_comb, _sh_comb.primary.year
+                )
+
+            return list(
+                map(
+                    make_aggregate,
+                    filter(primaries_match, product(sh_combinations, sg_combinations)),
+                )
+            )
+
+        return _create_aggregates(
             self._section.sh_combinations, self._section.sg_combinations
         )

@@ -72,9 +72,9 @@ class TestSectionAsInput:
         # 3. Verify expectations
         assert len(_sh_measures) == 2
         assert any(
-            [x.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT for x in _sh_measures]
+            x.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT for x in _sh_measures
         )
-        assert any([x.measure_type == MeasureTypeEnum.REVETMENT for x in _sh_measures])
+        assert any(x.measure_type == MeasureTypeEnum.REVETMENT for x in _sh_measures)
 
     def test_get_sg_measures(self):
         # 1. Define test data
@@ -86,17 +86,11 @@ class TestSectionAsInput:
         # 3. Verify expectations
         assert len(_sg_measures) == 2
         assert any(
-            [
-                x.measure_type
-                == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
-                for x in _sg_measures
-            ]
+            x.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+            for x in _sg_measures
         )
         assert any(
-            [
-                x.measure_type == MeasureTypeEnum.VERTICAL_GEOTEXTILE
-                for x in _sg_measures
-            ]
+            x.measure_type == MeasureTypeEnum.VERTICAL_GEOTEXTILE for x in _sg_measures
         )
 
     def test_get_sh_combinations(self):
