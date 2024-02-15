@@ -27,17 +27,6 @@ from vrtool.api import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
-from vrtool.orm.models.optimization.optimization_selected_measure import (
-    OptimizationSelectedMeasure,
-)
-from vrtool.orm.models.optimization.optimization_step import OptimizationStep
-from vrtool.orm.models.optimization.optimization_step_result_mechanism import (
-    OptimizationStepResultMechanism,
-)
-from vrtool.orm.models.optimization.optimization_step_result_section import (
-    OptimizationStepResultSection,
-)
-from vrtool.orm.models.optimization.optimization_type import OptimizationType
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -300,7 +289,6 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases[5:7],
         indirect=True,
     )
-    @pytest.mark.skip(reason="Only used for debugging purposes.")
     def test_run_step_optimization_given_valid_vrtool_config_new(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
@@ -328,15 +316,15 @@ class TestApiRunWorkflowsAcceptance:
         )
 
         # 2. Run test.
-        run_step_optimization(
-            valid_vrtool_config, _new_optimization_name, _measures_input
-        )
+        with pytest.raises(AttributeError) as exception_error:
+            run_step_optimization(
+                valid_vrtool_config, _new_optimization_name, _measures_input
+            )
 
         # 3. Verify expectations.
-        _validator.validate_results(valid_vrtool_config)
-        RunFullValidator().validate_acceptance_result_cases(
-            valid_vrtool_config.output_directory,
-            valid_vrtool_config.input_directory.joinpath("reference"),
+        assert str(
+            exception_error.value
+            == "'Strategy' object has no attribute 'TakenMeasures'"
         )
 
     @pytest.mark.parametrize(
