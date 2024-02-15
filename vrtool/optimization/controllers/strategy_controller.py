@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -29,6 +30,7 @@ class StrategyController:
     _method: str
     _vrtool_config: VrtoolConfig
     _section_measures_input: list[SectionAsInput]
+    Pf = dict[str, np.ndarray]
 
     def __init__(self, method: str, vrtool_config: VrtoolConfig) -> None:
         self._method = method
@@ -148,7 +150,7 @@ class StrategyController:
         solutions_dict: dict[str, Solutions],
     ) -> None:
         """
-        Maps the dataframe input to the controller.
+        Maps the dataframe input to the controller (temporarily).
 
         Args:
             selected_traject (DikeTraject): Selected dike traject.
@@ -179,3 +181,15 @@ class StrategyController:
         for _section in self._section_measures_input:
             _aggregate_controller = AggregateCombinationsController(_section)
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
+
+    def map_output(self) -> None:
+        """
+        Maps the aggregate combinations of measures to the legacy output (temporarily).
+        """
+        for _section in self._section_measures_input:
+            # initialize the Pf dictionary
+            # for _mechanism in ShMeasure.get_allowed_mechanisms():
+            #     if _mechanism == 
+            #     self.Pf[_mechanism.name] = np.full(
+            #         (N, len(_section.sh_measures, _section.max_year))
+            #     )
