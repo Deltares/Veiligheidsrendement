@@ -8,25 +8,30 @@ class SetInvestmentYear:
         self, measures: list[MeasureAsInputProtocol]
     ) -> None:
         """
-        update the probabilities for measures with investment year > 0.
+        Update the probabilities for measures with investment year > 0.
 
+        Raises:
+            ValueError: zero measure not found
         Args:
             measures (list[MeasureAsInputProtocol]): list with all measures
         """
         for measure in measures:
             if measure.year > 0:
-                _measure_zero = self._find_measure_with_year_zero(measure, measures)
-                self._update_measure(measure, _measure_zero)
+                _measure_zero = self._find_zero_measure(measure, measures)
+                if _measure_zero:
+                    self._update_measure(measure, _measure_zero)
+                else:
+                    _name = measure.measure_type.name
+                    raise ValueError("zero measure not found for this type: " + _name)
 
-    def _find_measure_with_year_zero(
-        self, measure: MeasureAsInputProtocol, measures: list[MeasureAsInputProtocol]
+    def _find_zero_measure(
+        self, measure: MeasureAsInputProtocol, measures: list[MeasureAsInputProtocol] | None
     ) -> MeasureAsInputProtocol:
         for m in measures:
-            if m.year == 0:
-                if m.measure_type == measure.measure_type:
-                    if m.equals_except_year(measure):
-                        return m
-        raise ValueError("equal measure for year=0 not found")
+            if m.measure_type == measure.measure_type:
+                if m.is_zero_measure():
+                    return m
+        return None
 
     def _update_measure(
         self, measure: MeasureAsInputProtocol, measure_zero: MeasureAsInputProtocol
