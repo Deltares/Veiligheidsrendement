@@ -73,3 +73,7 @@ class SectionAsInput:
     @property
     def sg_combinations(self) -> list[CombinedMeasure]:
         return self.get_combinations_by_class(SgMeasure)
+
+    @property
+    def max_year(self) -> int:
+        return max([measure.year for measure in self.measures])
