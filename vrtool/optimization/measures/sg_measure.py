@@ -23,6 +23,10 @@ class SgMeasure(MeasureAsInputProtocol):
     dcrest: float
 
     @staticmethod
+    def get_concrete_parameters() -> list[str]:
+        return ["dberm", "dcrest"]
+
+    @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
         return mechanism in SgMeasure.get_allowed_mechanisms()
 

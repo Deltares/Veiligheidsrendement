@@ -24,6 +24,10 @@ class ShMeasure(MeasureAsInputProtocol):
     dcrest: float
 
     @staticmethod
+    def get_concrete_parameters() -> list[str]:
+        return ["beta_target", "transition_level", "dcrest"]
+
+    @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
         return mechanism in ShMeasure.get_allowed_mechanisms()
 

@@ -343,36 +343,50 @@ def import_results_measures(
 def import_results_measures_for_optimization(
     config: VrtoolConfig, results_ids_to_import: list[tuple[int, int]]
 ) -> list[SectionAsInput]:
-    open_database(config.input_database_path)
+    """
+    Method used to import all requested measure results for an Optimization run.
+    It is meant to deprecate / replace / remove the previous `import_result_measures`.
 
-    _mr_list = [
-        (orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1])
-        for _result_tuple in results_ids_to_import
-    ]
-    _grouped_by_section = [
-        (_section, list(_grouped_measure_results))
-        for _section, _grouped_measure_results in itertools.groupby(
-            _mr_list, lambda x: x[0].measure_per_section.section
+    Args:
+        config (VrtoolConfig): Vrtool configuration containing connection and cost details.
+        results_ids_to_import (list[tuple[int, int]]): List of measure results' IDs. including their respective investment year.
+
+    Returns:
+        list[SectionAsInput]: Mapped sections with relevant measure results data.
+    """
+
+    def get_measure_results_to_import() -> (
+        Iterator[tuple[orm.SectionData, tuple[orm.MeasureResult, int]]]
+    ):
+        """
+        Returns a tuple of [`MeasureResult`, `investment_year`] values grouped by their `SectionData`.
+        """
+        _measure_results_to_import = (
+            (orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1])
+            for _result_tuple in results_ids_to_import
         )
-    ]
+        return itertools.groupby(
+            _measure_results_to_import, lambda x: x[0].measure_per_section.section
+        )
 
     # Import a solution per section:
     _list_section_as_input: list[SectionAsInput] = []
-    _optimization_importer = OptimizationMeasureImporter(config)
-    for _section, _selected_measure_year_results in _grouped_by_section:
-        _imported_measures = []
-        for _selected_measure_result in _selected_measure_year_results:
-            _measure_inputs = _optimization_importer.import_orm(_selected_measure_result)
-            _imported_measures.extend(_measure_inputs)
-        
-        _section_as_input = SectionAsInput(
-            _section.section_name,
-            traject_name=_section.traject.traject_name,
-            measures=_imported_measures,
-        )
-        _list_section_as_input.append(_section_as_input)
+    with open_database(config.input_database_path).connection_context():
+        for _section, _selected_measure_year_results in get_measure_results_to_import():
+            _imported_measures = []
+            for _smr, _investment_year in _selected_measure_year_results:
+                _imported_measures.extend(
+                    OptimizationMeasureImporter(config, _investment_year).import_orm(
+                        _smr
+                    )
+                )
+            _section_as_input = SectionAsInput(
+                _section.section_name,
+                traject_name=_section.dike_traject.traject_name,
+                measures=_imported_measures,
+            )
+            _list_section_as_input.append(_section_as_input)
 
-    vrtool_db.close()
     return _list_section_as_input
 
 

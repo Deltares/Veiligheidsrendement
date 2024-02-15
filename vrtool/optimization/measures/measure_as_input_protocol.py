@@ -20,6 +20,16 @@ class MeasureAsInputProtocol(Protocol):
     mechanism_year_collection: MechanismPerYearProbabilityCollection
 
     @staticmethod
+    def get_concrete_parameters() -> list[str]:
+        """
+        Gets the concrete parameters of a `MeasureAsInputProtocol` instance that are not defined in the protocol.
+
+        Returns:
+            list[str]: List of property names not defined in the `MeasureAsInputProtocol` type.
+        """
+        pass
+
+    @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
         """
         Check if mechanism is allowed for measure
