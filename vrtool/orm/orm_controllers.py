@@ -8,10 +8,10 @@ from peewee import SqliteDatabase
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategy_evaluation import calc_life_cycle_risks
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
@@ -21,6 +21,9 @@ from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter
     DikeSectionReliabilityExporter,
 )
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
+from vrtool.orm.io.importers.optimization.optimization_measure_importer import (
+    OptimizationMeasureImporter,
+)
 from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer import (
     SolutionsForMeasureResultsImporter,
 )
@@ -335,6 +338,42 @@ def import_results_measures(
     _results_measures.ids_to_import = results_ids_to_import
 
     return _results_measures
+
+
+def import_results_measures_for_optimization(
+    config: VrtoolConfig, results_ids_to_import: list[tuple[int, int]]
+) -> list[SectionAsInput]:
+    open_database(config.input_database_path)
+
+    _mr_list = [
+        (orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1])
+        for _result_tuple in results_ids_to_import
+    ]
+    _grouped_by_section = [
+        (_section, list(_grouped_measure_results))
+        for _section, _grouped_measure_results in itertools.groupby(
+            _mr_list, lambda x: x[0].measure_per_section.section
+        )
+    ]
+
+    # Import a solution per section:
+    _list_section_as_input: list[SectionAsInput] = []
+    _optimization_importer = OptimizationMeasureImporter(config)
+    for _section, _selected_measure_year_results in _grouped_by_section:
+        _imported_measures = []
+        for _selected_measure_result in _selected_measure_year_results:
+            _measure_inputs = _optimization_importer.import_orm(_selected_measure_result)
+            _imported_measures.extend(_measure_inputs)
+        
+        _section_as_input = SectionAsInput(
+            _section.section_name,
+            traject_name=_section.traject.traject_name,
+            measures=_imported_measures,
+        )
+        _list_section_as_input.append(_section_as_input)
+
+    vrtool_db.close()
+    return _list_section_as_input
 
 
 def get_all_measure_results_with_supported_investment_years(

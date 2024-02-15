@@ -398,9 +398,8 @@ class TestApiRunWorkflowsAcceptance:
 
 @pytest.mark.slow
 class TestApiReportedBugs:
-    def _get_vrtool_config_test_copy(
-        self, config_file: Path, test_name: str
-    ) -> VrtoolConfig:
+    @staticmethod
+    def get_vrtool_config_test_copy(config_file: Path, test_name: str) -> VrtoolConfig:
         """
         Gets a `VrtoolConfig` with a copy of the database to avoid version issues.
         """
@@ -452,7 +451,7 @@ class TestApiReportedBugs:
         _test_case_dir = test_data.joinpath(directory_name)
         assert _test_case_dir.exists()
 
-        _vrtool_config = self._get_vrtool_config_test_copy(
+        _vrtool_config = self.get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
         assert not any(_vrtool_config.output_directory.glob("*"))
