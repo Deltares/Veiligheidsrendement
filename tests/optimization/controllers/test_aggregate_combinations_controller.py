@@ -27,7 +27,11 @@ class MockCombinedMeasure:
 class MockMeasure(MeasureAsInputProtocol):
     measure_type: MeasureTypeEnum
     year: int
-    lcc: float
+    cost: float
+
+    @property
+    def lcc(self) -> float:
+        return self.cost
 
 
 class TestAggregateCombinationsController:

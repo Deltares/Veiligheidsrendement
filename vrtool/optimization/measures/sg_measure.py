@@ -17,10 +17,33 @@ class SgMeasure(MeasureAsInputProtocol):
     combine_type: CombinableTypeEnum
     cost: float
     year: int
-    lcc: float
+    discount_rate: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
     dcrest: float
+    start_cost: float = 0
+
+    @property
+    def lcc(self) -> float:
+        return self.cost - self.start_cost / (1 + self.discount_rate) ** self.year
+
+    def set_start_cost(
+        self,
+        previous_measure: MeasureAsInputProtocol | None,
+    ):
+        if self.measure_type not in [
+            MeasureTypeEnum.SOIL_REINFORCEMENT,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+        ]:
+            return
+        if previous_measure is None:
+            self.start_cost = self.cost
+            return
+        if self.measure_type != previous_measure.measure_type:
+            if self.year == 0:
+                self.start_cost = self.cost
+            else:
+                self.start_cost = previous_measure.start_cost
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -38,23 +61,3 @@ class SgMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL],
             CombinableTypeEnum.FULL: [None],
         }
-
-    @staticmethod
-    def get_start_cost(
-        start_cost_dict: dict[MeasureTypeEnum, float],
-        measure_type: MeasureTypeEnum,
-        year: int,
-        dberm: float,
-        cost: float,
-    ) -> float:
-        if measure_type not in [
-            MeasureTypeEnum.SOIL_REINFORCEMENT,
-            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-        ]:
-            return 0
-        if measure_type in start_cost_dict.keys():
-            return start_cost_dict[measure_type]
-        if year == 0 and dberm == 0:
-            start_cost_dict[measure_type] = cost
-            return cost
-        return 0

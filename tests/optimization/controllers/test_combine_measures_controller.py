@@ -43,7 +43,7 @@ class TestCombineMeasuresController:
             combine_type=combinable_type,
             cost=0,
             year=0,
-            lcc=0,
+            discount_rate=0,
             mechanism_year_collection=MockMechanismYearProColl(
                 [
                     MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9),
@@ -63,7 +63,7 @@ class TestCombineMeasuresController:
             combine_type=combinable_type,
             cost=0,
             year=0,
-            lcc=0,
+            discount_rate=0,
             mechanism_year_collection=MockMechanismYearProColl(
                 [
                     MechanismPerYear(MechanismEnum.PIPING, 0, 0.7),

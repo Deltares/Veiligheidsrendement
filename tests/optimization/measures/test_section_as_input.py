@@ -12,6 +12,7 @@ class MockShMeasure(ShMeasure):
     measure_type: MeasureTypeEnum
     combine_type: None = None
     cost: float = 0
+    discount_rate: float = 0
     year: int = 0
     lcc: float = 0
     mechanism_year_collection: None = None
@@ -25,6 +26,7 @@ class MockSgMeasure(SgMeasure):
     measure_type: MeasureTypeEnum
     combine_type: None = None
     cost: float = 0
+    discount_rate: float = 0
     year: int = 0
     lcc: float = 0
     mechanism_year_collection: None = None

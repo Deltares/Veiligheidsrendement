@@ -16,7 +16,7 @@ class TestShMeasure:
             combine_type=combinable_type,
             cost=10.5,
             year=10,
-            lcc=20.3,
+            discount_rate=0.03,
             mechanism_year_collection=None,
             beta_target=1.1,
             transition_level=0.5,
@@ -36,7 +36,7 @@ class TestShMeasure:
         assert _measure.combine_type == _combine_type
         assert _measure.cost == 10.5
         assert _measure.year == 10
-        assert _measure.lcc == 20.3
+        assert _measure.discount_rate == 0.03
         assert _measure.mechanism_year_collection is None
         assert _measure.beta_target == 1.1
         assert _measure.transition_level == 0.5

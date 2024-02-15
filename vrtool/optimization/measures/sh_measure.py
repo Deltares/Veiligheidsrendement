@@ -16,12 +16,36 @@ class ShMeasure(MeasureAsInputProtocol):
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     cost: float
+    discount_rate: float
     year: int
-    lcc: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     beta_target: float
     transition_level: float
     dcrest: float
+    start_cost: float = 0
+
+    @property
+    def lcc(self) -> float:
+        return self.cost - self.start_cost / (1 + self.discount_rate) ** self.year
+
+    def set_start_cost(
+        self,
+        previous_measure: MeasureAsInputProtocol | None,
+    ):
+        if self.measure_type not in [
+            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+            MeasureTypeEnum.DIAPHRAGM_WALL,
+            MeasureTypeEnum.STABILITY_SCREEN,
+        ]:
+            return
+        if previous_measure is None:
+            self.start_cost = self.cost
+            return
+        if self.measure_type != previous_measure.measure_type:
+            if self.year == 0:
+                self.start_cost = self.cost
+            else:
+                self.start_cost = previous_measure.start_cost
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -40,23 +64,3 @@ class ShMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
             CombinableTypeEnum.FULL: [None, CombinableTypeEnum.REVETMENT],
         }
-
-    @staticmethod
-    def get_start_cost(
-        start_cost_dict: dict[MeasureTypeEnum, float],
-        measure_type: MeasureTypeEnum,
-        year: int,
-        cost: float,
-    ) -> float:
-        if measure_type not in [
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
-            MeasureTypeEnum.DIAPHRAGM_WALL,
-            MeasureTypeEnum.STABILITY_SCREEN,
-        ]:
-            return 0
-        if measure_type in start_cost_dict.keys():
-            return start_cost_dict[measure_type]
-        if year == 0:
-            start_cost_dict[measure_type] = cost
-            return cost
-        return 0

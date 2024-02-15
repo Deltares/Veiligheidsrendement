@@ -16,10 +16,10 @@ class TestShMeasure:
             combine_type=combinable_type,
             cost=10.5,
             year=10,
+            discount_rate=0.03,
             mechanism_year_collection=None,
             dcrest=0.3,
             dberm=0.1,
-            lcc=20.3,
         )
         return _measure
 
@@ -36,7 +36,7 @@ class TestShMeasure:
         assert _measure.combine_type == _combine_type
         assert _measure.cost == 10.5
         assert _measure.year == 10
-        assert _measure.lcc == 20.3
+        assert _measure.discount_rate == 0.03
         assert _measure.mechanism_year_collection is None
         assert _measure.dcrest == 0.3
         assert _measure.dberm == 0.1
