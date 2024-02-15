@@ -26,7 +26,7 @@ class ShMeasure(MeasureAsInputProtocol):
 
     @property
     def lcc(self) -> float:
-        return self.cost - self.start_cost / (1 + self.discount_rate) ** self.year
+        return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
     def set_start_cost(
         self,
@@ -38,14 +38,15 @@ class ShMeasure(MeasureAsInputProtocol):
             MeasureTypeEnum.STABILITY_SCREEN,
         ]:
             return
-        if previous_measure is None:
-            self.start_cost = self.cost
-            return
-        if self.measure_type != previous_measure.measure_type:
-            if self.year == 0:
+        if (
+            previous_measure is None
+            or self.measure_type != previous_measure.measure_type
+        ):
+            if self.year == 0 and self.dcrest in [0, -999]:
                 self.start_cost = self.cost
-            else:
-                self.start_cost = previous_measure.start_cost
+                return
+            raise (ValueError("First measure of type isn't zero-version"))
+        self.start_cost = previous_measure.start_cost
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
