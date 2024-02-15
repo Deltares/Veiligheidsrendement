@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -6,7 +8,7 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.sg_measure import SgMeasure
 
 
-class TestShMeasure:
+class TestSgMeasure:
 
     def _create_sg_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
@@ -41,14 +43,60 @@ class TestShMeasure:
         assert _measure.dcrest == 0.3
         assert _measure.dberm == 0.1
 
-    def test_get_allowed_mechanism(self):
-        # 1./2. Define input & Run test
-        _expected_mechanisms = [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
-        _allowed_mechanisms = SgMeasure.get_allowed_mechanisms()
+    def test_lcc(self):
+        # 1. Define input
+        _measure = self._create_sg_measure(
+            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
+        )
+        _measure.start_cost = 5.5
+
+        # 2. Run test
+        _lcc = _measure.lcc
 
         # 3. Verify expectations
-        assert len(_expected_mechanisms) == len(_allowed_mechanisms)
-        assert all(x in _expected_mechanisms for x in _allowed_mechanisms)
+        assert _lcc == pytest.approx(6.407483)
+
+    def test_set_start_cost_when_no_previous_measure(self):
+        # 1. Define input
+        _measure = self._create_sg_measure(
+            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
+        )
+        _previous_measure = None
+
+        # 2. Run test
+        _measure.set_start_cost(_previous_measure)
+
+        # 3. Verify expectations
+        assert _measure.start_cost == _measure.cost
+
+    def test_set_start_cost_when_previous_measure_is_equal(self):
+        # 1. Define input
+        _measure = self._create_sg_measure(
+            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
+        )
+        _previous_measure = copy.deepcopy(_measure)
+
+        # 2. Run test
+        _measure.set_start_cost(_previous_measure)
+
+        # 3. Verify expectations
+        assert _measure.start_cost == _previous_measure.start_cost
+
+    def test_set_start_cost_when_previous_measure_is_different(self):
+        # 1. Define input
+        _measure = self._create_sg_measure(
+            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
+        )
+        _previous_measure = self._create_sg_measure(
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+            CombinableTypeEnum.FULL,
+        )
+
+        # 2. Run test
+        _measure.set_start_cost(_previous_measure)
+
+        # 3. Verify expectations
+        assert _measure.start_cost == _measure.start_cost
 
     @pytest.mark.parametrize(
         "mechanism, expected",
@@ -63,6 +111,15 @@ class TestShMeasure:
 
         # 3. Verify expectations
         assert _results == expected
+
+    def test_get_allowed_mechanism(self):
+        # 1./2. Define input & Run test
+        _expected_mechanisms = [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
+        _allowed_mechanisms = SgMeasure.get_allowed_mechanisms()
+
+        # 3. Verify expectations
+        assert len(_expected_mechanisms) == len(_allowed_mechanisms)
+        assert all(x in _expected_mechanisms for x in _allowed_mechanisms)
 
     def test_get_allowed_measure_combination(self):
         # 1./2. Define input & Run test
