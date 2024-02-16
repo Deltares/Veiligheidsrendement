@@ -7,12 +7,14 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
+_END_YEAR = 50
+_mechm = MechanismEnum.OVERFLOW
 
 class TestSetInvestmentYear:
-    _end_year = 50
 
     def _get_measure(
         self, year: int, revetment_params: list[float], betas: list[float]
@@ -28,12 +30,8 @@ class TestSetInvestmentYear:
         Returns:
             ShMeasure: a revetment measure based on the given arguments
         """
-        _mech_per_year1 = MechanismPerYear(
-            MeasureTypeEnum.REVETMENT, 0, beta_to_pf(betas[0])
-        )
-        _mech_per_year2 = MechanismPerYear(
-            MeasureTypeEnum.REVETMENT, self._end_year, beta_to_pf(betas[1])
-        )
+        _mech_per_year1 = MechanismPerYear(_mechm, 0, beta_to_pf(betas[0]))
+        _mech_per_year2 = MechanismPerYear(_mechm, _END_YEAR, beta_to_pf(betas[1]))
         _collection = MechanismPerYearProbabilityCollection(
             [_mech_per_year1, _mech_per_year2]
         )
@@ -58,30 +56,33 @@ class TestSetInvestmentYear:
         _prob_diff = 0.5
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _measures = [
-            self._get_measure( 0  , [0.0, 0.0, 0.0], _prob_zero),
             self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
         ]
 
+        _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
+
         # run test
         _setyear = SetInvestmentYear()
-        _setyear.update_measurelist_with_investment_year(_measures)
+        _setyear.update_measurelist_with_investment_year(
+            _measures, _zero_measure.mechanism_year_collection
+        )
 
         # check results
 
         # year 0 for the second measure is copied from the first measure:
-        _pf = _measures[1].mechanism_year_collection.get_probability(MeasureTypeEnum.REVETMENT, 0)
-        assert (pf_to_beta(_pf) == py.approx(_prob_zero[0]))
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
+        assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
         # year 20 for the second measure is an interpolated value copied from the first measure:
-        _pf = _measures[1].mechanism_year_collection.get_probability(MeasureTypeEnum.REVETMENT,_yr1)
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / self._end_year
-        assert (pf_to_beta(_pf) == py.approx(_beta_expected))
+        _pf = _measures[0].mechanism_year_collection.get_probability(MechanismEnum.OVERFLOW, _yr1)
+        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with two years:
-        _ref = {0, _yr1, _yr1 + 1, self._end_year}
-        _yrs = _measures[0].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
+        _ref = {0, _yr1, _yr1 + 1, _END_YEAR}
+        _yrs = _zero_measure.mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
-        _yrs = _measures[1].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
+        _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
 
     def test_three_measures(self):
@@ -91,50 +92,77 @@ class TestSetInvestmentYear:
         _prob_diff = 0.5
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _measures = [
-            self._get_measure(   0, [0.0, 0.0, 0.0], _prob_zero),
             self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
             self._get_measure(_yr2, [4.0, 2.0, 0.0], [5.0, 4.5]),
         ]
+        _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
         # run test
         _setyear = SetInvestmentYear()
-        _setyear.update_measurelist_with_investment_year(_measures)
+        _setyear.update_measurelist_with_investment_year(
+            _measures, _zero_measure.mechanism_year_collection
+        )
 
         # check results
 
         # year 0 for the second measure is copied from the first measure:
-        _pf = _measures[1].mechanism_year_collection.get_probability(MeasureTypeEnum.REVETMENT, 0)
-        assert (pf_to_beta(_pf) == py.approx(_prob_zero[0]))
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
+        assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
         # year 20 for the second measure is an interpolated value copied from the first measure:
-        _pf = _measures[1].mechanism_year_collection.get_probability(MeasureTypeEnum.REVETMENT,_yr1)
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / self._end_year
-        assert (pf_to_beta(_pf) == py.approx(_beta_expected))
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1)
+        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # year 30 for the third measure is an interpolated value copied from the first measure:
-        _pf = _measures[2].mechanism_year_collection.get_probability(MeasureTypeEnum.REVETMENT,_yr2)
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr2 / self._end_year
-        assert (pf_to_beta(_pf) == py.approx(_beta_expected))
+        _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2)
+        _beta_expected = _prob_zero[0] - _prob_diff * _yr2 / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with four years:
-        _ref = {0, _yr1, _yr1 + 1, _yr2, _yr2 + 1, self._end_year}
-        _yrs = _measures[0].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
+        _ref = {0, _yr1, _yr1 + 1, _yr2, _yr2 + 1, _END_YEAR}
+        _yrs = _zero_measure.mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
-        _yrs = _measures[1].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
+        _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
-        _yrs = _measures[2].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
+        _yrs = _measures[1].mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
 
-    def test_measures_without_year_zero(self):
+    def test_two_mechanisms(self):
         # setup
-        _measure_list = [self._get_measure(20, [4.0, 2.0, 0.0], [5.0, 4.5])]
+        _yr1 = 20
+        _prob_diff = 0.5
+        _prob_zero = [4.0, 4.0 - _prob_diff]
+        _measures = [
+            self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
+        ]
+
+        _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
+        _initial = _zero_measure.mechanism_year_collection
+        _stability0 = MechanismPerYear(MechanismEnum.STABILITY_INNER, 0, 0.01)
+        _stability50 = MechanismPerYear(MechanismEnum.STABILITY_INNER, 50, 0.02)
+        _initial.probabilities.append(_stability0)
+        _initial.probabilities.append(_stability50)
 
         # run test
-        with py.raises(ValueError) as exceptionInfo:
-            _setyear = SetInvestmentYear()
-            _setyear.update_measurelist_with_investment_year(_measure_list)
+        _setyear = SetInvestmentYear()
+        _setyear.update_measurelist_with_investment_year(_measures, _initial)
 
-        # check result
-        assert "zero measure not found for this type: REVETMENT" == str(
-            exceptionInfo.value
-        )
+        # check results
+
+        # year 0 for the second measure is copied from the first measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
+        assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
+
+        # year 20 for the second measure is an interpolated value copied from the first measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(MechanismEnum.OVERFLOW, _yr1)
+        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
+
+        # all measures are extended with two years:
+        _ref = {0, _yr1, _yr1 + 1, _END_YEAR}
+        _yrs = _zero_measure.mechanism_year_collection.get_years(_mechm)
+        assert _yrs == _ref
+        _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
+        assert _yrs == _ref
+

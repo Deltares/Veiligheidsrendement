@@ -51,6 +51,3 @@ class ShMeasure(MeasureAsInputProtocol):
             MeasureTypeEnum.VERTICAL_GEOTEXTILE,
         ]:
             self.lcc = 0
-
-    def is_zero_measure(self) -> bool:
-        return self.beta_target == 0.0 and self.transition_level == 0.0 and self.dcrest == 0.0

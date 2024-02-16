@@ -193,7 +193,7 @@ class MechanismPerYearProbabilityCollection:
         """
         _mechanism1 = self.get_mechanisms()
         _mechanism2 = year_zero_values.get_mechanisms()
-        if _mechanism1 != _mechanism2:
+        if not _mechanism1.issubset(_mechanism2):
             raise ValueError("mechanisms not equal in replace_values")
         for m in _mechanism1:
             self._replace_values_mechanism(m, year_zero_values, investment_year)

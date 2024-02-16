@@ -38,6 +38,3 @@ class SgMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL],
             CombinableTypeEnum.FULL: [None],
         }
-
-    def is_zero_measure(self) -> bool:
-        return self.dberm == 0.0 and self.dcrest == 0.0
