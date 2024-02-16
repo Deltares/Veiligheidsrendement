@@ -31,7 +31,7 @@ class SetInvestmentYear:
             if m.measure_type == measure.measure_type:
                 if m.is_zero_measure():
                     return m
-        return None
+        return
 
     def _update_measure(
         self, measure: MeasureAsInputProtocol, measure_zero: MeasureAsInputProtocol

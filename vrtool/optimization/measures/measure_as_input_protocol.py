@@ -57,4 +57,11 @@ class MeasureAsInputProtocol(Protocol):
         pass
 
     def is_zero_measure(self) -> bool:
+        """
+        Checks that the measure is a zero measure
+        A zero measure is a measure that has the same probabilities as the assessment
+
+        Returns:
+            bool: true for a zero measure
+        """
         pass
