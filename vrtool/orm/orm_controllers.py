@@ -25,8 +25,8 @@ from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer imp
     SolutionsForMeasureResultsImporter,
 )
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
-from vrtool.orm.io.importers.optimization.optimization_measure_importer import (
-    OptimizationMeasureImporter,
+from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
+    OptimizationMeasureResultImporter,
 )
 from vrtool.orm.io.importers.optimization.optimization_step_importer import (
     OptimizationStepImporter,
@@ -376,9 +376,9 @@ def import_results_measures_for_optimization(
             _imported_measures = []
             for _smr, _investment_year in _selected_measure_year_results:
                 _imported_measures.extend(
-                    OptimizationMeasureImporter(config, _investment_year).import_orm(
-                        _smr
-                    )
+                    OptimizationMeasureResultImporter(
+                        config, _investment_year
+                    ).import_orm(_smr)
                 )
             _section_as_input = SectionAsInput(
                 _section.section_name,
