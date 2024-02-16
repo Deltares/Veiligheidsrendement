@@ -9,7 +9,6 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
 class TestShMeasure:
-
     def _create_sh_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> ShMeasure:

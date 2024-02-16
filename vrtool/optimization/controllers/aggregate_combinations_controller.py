@@ -16,7 +16,6 @@ class AggregateCombinationsController:
         sh_combinations: list[CombinedMeasure],
         sg_combinations: list[CombinedMeasure],
     ) -> list[AggregatedMeasureCombination]:
-
         def primaries_match(
             aggregation: tuple[CombinedMeasure, CombinedMeasure]
         ) -> bool:
