@@ -183,9 +183,10 @@ class StrategyController:
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
         for _section in self._section_measures_input:
+            pass
             # initialize the Pf dictionary
             # for _mechanism in ShMeasure.get_allowed_mechanisms():
-            #     if _mechanism == 
+            #     if _mechanism ==
             #     self.Pf[_mechanism.name] = np.full(
             #         (N, len(_section.sh_measures, _section.max_year))
             #     )
