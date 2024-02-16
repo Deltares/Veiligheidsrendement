@@ -441,7 +441,7 @@ class StrategyBase:
             combinedmeasures = []
         else:
             # apparently only revetments, so return an empty list that can be ignored further
-            return None
+            return []
 
         if "revetment" in measures_per_class:
             # combine base measures solutions_dict[section.name].MeasureData with revetments
