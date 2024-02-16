@@ -112,7 +112,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                     ),
                     cost=_cost,
                     year=_time,
-                    lcc=_lcc,
+                    discount_rate=self.discount_rate,
                     mechanism_year_collection=_mech_year_coll.get(
                         _time, MechanismPerYearProbabilityCollection([])
                     ),
