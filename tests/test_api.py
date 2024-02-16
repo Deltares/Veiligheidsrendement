@@ -244,7 +244,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases[0:3],
+        acceptance_test_cases[0:5],
         indirect=True,
     )
     def test_run_step_measure_workflow(
@@ -264,7 +264,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[6:],
         indirect=True,
     )
     @pytest.mark.skip(reason="Deprecated test set.")
@@ -285,7 +285,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases[0:3],
+        acceptance_test_cases[0:5],
         indirect=True,
     )
     def test_run_step_optimization_workflow(
@@ -319,7 +319,7 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[6:],
         indirect=True,
     )
     @pytest.mark.skip(reason="Deprecated test set.")
