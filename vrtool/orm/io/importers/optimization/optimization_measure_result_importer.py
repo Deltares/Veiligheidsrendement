@@ -1,8 +1,6 @@
 import math
-from collections import defaultdict
 from typing import Type
 
-from peewee import fn
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -22,9 +20,7 @@ from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_result.measure_result import (
     MeasureResult as OrmMeasureResult,
 )
-from vrtool.orm.models.measure_result.measure_result_parameter import (
-    MeasureResultParameter as OrmMeasureResultParameter,
-)
+
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
