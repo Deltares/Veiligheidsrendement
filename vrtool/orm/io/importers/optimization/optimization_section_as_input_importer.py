@@ -1,0 +1,32 @@
+from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
+    OptimizationMeasureResultImporter,
+)
+from vrtool.orm.models.measure_result import MeasureResult as OrmMeasureResult
+from vrtool.orm.models.section_data import SectionData as OrmSectionData
+
+
+class OptimizationSectionAsInputImporter:
+    config: VrtoolConfig
+
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
+        self.config = vrtool_config
+
+    def import_from_section_data_results(
+        self,
+        section_data_results: tuple[OrmSectionData, list[tuple[OrmMeasureResult, int]]],
+    ) -> SectionAsInput:
+        _imported_measures = []
+        _section_data, _selected_measure_results = section_data_results
+        for _smr, _investment_year in _selected_measure_results:
+            _imported_measures.extend(
+                OptimizationMeasureResultImporter(
+                    self.config, _investment_year
+                ).import_orm(_smr)
+            )
+        return SectionAsInput(
+            section_name=_section_data.section_name,
+            traject_name=_section_data.dike_traject.traject_name,
+            measures=_imported_measures,
+        )

@@ -28,6 +28,9 @@ from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporte
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
 )
+from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
+    OptimizationSectionAsInputImporter,
+)
 from vrtool.orm.io.importers.optimization.optimization_step_importer import (
     OptimizationStepImporter,
 )
@@ -356,7 +359,7 @@ def import_results_measures_for_optimization(
     """
 
     def get_measure_results_to_import() -> (
-        Iterator[tuple[orm.SectionData, tuple[orm.MeasureResult, int]]]
+        Iterator[tuple[orm.SectionData, list[tuple[orm.MeasureResult, int]]]]
     ):
         """
         Returns a tuple of [`MeasureResult`, `investment_year`] values grouped by their `SectionData`.
@@ -372,20 +375,13 @@ def import_results_measures_for_optimization(
     # Import a solution per section:
     _list_section_as_input: list[SectionAsInput] = []
     with open_database(config.input_database_path).connection_context():
-        for _section, _selected_measure_year_results in get_measure_results_to_import():
-            _imported_measures = []
-            for _smr, _investment_year in _selected_measure_year_results:
-                _imported_measures.extend(
-                    OptimizationMeasureResultImporter(
-                        config, _investment_year
-                    ).import_orm(_smr)
-                )
-            _section_as_input = SectionAsInput(
-                _section.section_name,
-                traject_name=_section.dike_traject.traject_name,
-                measures=_imported_measures,
+        _importer = OptimizationSectionAsInputImporter(config)
+        _list_section_as_input = list(
+            map(
+                _importer.import_from_section_data_results,
+                get_measure_results_to_import(),
             )
-            _list_section_as_input.append(_section_as_input)
+        )
 
     return _list_section_as_input
 
