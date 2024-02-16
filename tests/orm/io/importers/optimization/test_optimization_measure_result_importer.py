@@ -1,8 +1,8 @@
 import pytest
 from tests.test_api import TestApiReportedBugs
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.orm.io.importers.optimization.optimization_measure_importer import (
-    OptimizationMeasureImporter,
+from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
+    OptimizationMeasureResultImporter,
 )
 from tests import test_data
 from vrtool.orm.models.measure_result.measure_result import (
@@ -14,7 +14,7 @@ from vrtool.orm.orm_controllers import (
 )
 
 
-class TestOptimizationMeasureImporter:
+class TestOptimizationMeasureResultImporter:
 
     def test_dummy(self, request: pytest.FixtureRequest):
         # 1. Define test data.
@@ -30,7 +30,7 @@ class TestOptimizationMeasureImporter:
         assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
-        _importer = OptimizationMeasureImporter(_vrtool_config, _investment_year)
+        _importer = OptimizationMeasureResultImporter(_vrtool_config, _investment_year)
 
         _test_db = open_database(_vrtool_config.input_database_path)
         _imported_results = _importer.import_orm(OrmMeasureResult.select().get())

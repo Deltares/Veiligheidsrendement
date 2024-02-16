@@ -29,7 +29,7 @@ from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
-class OptimizationMeasureImporter(OrmImporterProtocol):
+class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
     discount_rate: float
     unit_costs: dict
@@ -43,18 +43,16 @@ class OptimizationMeasureImporter(OrmImporterProtocol):
         self.unit_costs = vrtool_config.unit_costs
         self.investment_year = investment_year
 
-    @staticmethod
-    def get_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> float:
-        _values = measure_result.measure_result_parameters.where(
-            fn.Lower(OrmMeasureResultParameter.name) == parameter_name.lower()
-        ).select()
-        return _values[0].value if any(_values) else float("nan")
+    # @staticmethod
+    # def get_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> float:
+    #     _values = measure_result.measure_result_parameters.where(
+    #         fn.Lower(OrmMeasureResultParameter.name) == parameter_name.lower()
+    #     ).select()
+    #     return _values[0].value if any(_values) else float("nan")
 
     @staticmethod
     def valid_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> bool:
-        _parameter_value = OptimizationMeasureImporter.get_parameter(
-            measure_result, parameter_name
-        )
+        _parameter_value = measure_result.get_parameter(parameter_name)
         if math.isnan(_parameter_value):
             return False
         return any(math.isclose(_parameter_value, x) for x in [0, -999])
