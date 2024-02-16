@@ -201,7 +201,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             _dstability_wrapper.rerun_stix()
 
             # Calculate reliaiblity
-            mechanism_reliability_input["BETA"] = calculate_reliability(
+            mechanism_reliability_input["beta"] = calculate_reliability(
                 np.array([_dstability_wrapper.get_safety_factor()])
             )
 
@@ -229,10 +229,10 @@ class StabilityScreenMeasure(MeasureProtocol):
                         )
                     )
                 else:
-                    mechanism_reliability_input["BETA"] = calculate_reliability(
+                    mechanism_reliability_input["beta"] = calculate_reliability(
                         np.add(
                             calculate_safety_factor(
-                                mechanism_reliability_input["BETA"]
+                                mechanism_reliability_input["beta"]
                             ),
                             SFincrease,
                         )
