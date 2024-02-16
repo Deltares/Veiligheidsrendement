@@ -175,7 +175,7 @@ class MechanismPerYearProbabilityCollection:
 
     def replace_values(
         self,
-        year_zero_values: MechanismPerYearProbabilityCollection,
+        initial: MechanismPerYearProbabilityCollection,
         investment_year: int,
     ):
         """
@@ -184,16 +184,15 @@ class MechanismPerYearProbabilityCollection:
         Assumes that these years are available.
 
         Args:
-            year_zero_values (MechanismPerYearProbabilityCollection):
-                the measure with investment_year = 0
+            initial (MechanismPerYearProbabilityCollection): the initial probabilities
             investment_year (int): the investment year
 
         Raises:
             ValueError: mismatch in mechanisms
         """
         _mechanism1 = self.get_mechanisms()
-        _mechanism2 = year_zero_values.get_mechanisms()
+        _mechanism2 = initial.get_mechanisms()
         if not _mechanism1.issubset(_mechanism2):
-            raise ValueError("mechanisms not equal in replace_values")
+            raise ValueError("mechanism not found in replace_values")
         for m in _mechanism1:
-            self._replace_values_mechanism(m, year_zero_values, investment_year)
+            self._replace_values_mechanism(m, initial, investment_year)

@@ -23,33 +23,23 @@ class SetInvestmentYear:
             initial (MechanismPerYearProbabilityCollection): initial probabilities
         """
 
-        self._add_investment_years(measures, initial)
+        _investment_years = self._get_investment_years(measures)
+
+        if len(_investment_years) == 0:
+            return
+
+        initial.add_years(_investment_years)
+        for measure in measures:
+            measure.mechanism_year_collection.add_years(_investment_years)
 
         for measure in measures:
             if measure.year > 0:
-                self._update_measure(measure, initial)
+                measure.mechanism_year_collection.replace_values(initial, measure.year)
 
-    def _add_investment_years(
-        self,
-        measures: list[MeasureAsInputProtocol],
-        initial: MechanismPerYearProbabilityCollection,
-    ) -> None:
+    def _get_investment_years(self, measures: list[MeasureAsInputProtocol]) -> list[int]:
         _investment_years = set()
         for measure in measures:
             if measure.year > 0:
                 _investment_years.add(measure.year)
                 _investment_years.add(measure.year + 1)
-
-        if len(_investment_years) > 0:
-            _years = list(_investment_years)
-            initial.add_years(_years)
-            for measure in measures:
-                measure.mechanism_year_collection.add_years(_years)
-
-    def _update_measure(
-        self,
-        measure: MeasureAsInputProtocol,
-        initial: MechanismPerYearProbabilityCollection,
-    ) -> None:
-        _investment_year = measure.year
-        measure.mechanism_year_collection.replace_values(initial, _investment_year)
+        return list(_investment_years)
