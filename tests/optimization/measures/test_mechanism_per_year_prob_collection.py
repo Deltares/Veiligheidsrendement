@@ -29,7 +29,7 @@ class TestMechanismPerYearProbCollection:
         # Assert
         assert isinstance(_collection, MechanismPerYearProbabilityCollection)
 
-    def test_filter(self):
+    def test_get_probability(self):
         # Setup
         _prob = self._get_mechanism_per_year_example()
 
@@ -52,6 +52,20 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert _prob20yr == pytest.approx(0.86555, abs=1e-5)
+
+    def test_get_probabilities(self):
+        # 1. Setup
+        _prob = self._get_mechanism_per_year_example()
+        _collection = MechanismPerYearProbabilityCollection(_prob)
+        _years = 100
+
+        # 2. Call
+        _probs = _collection.get_probabilities(
+            MechanismEnum.OVERFLOW, list(range(_years))
+        )
+
+        # 3. Assert
+        assert len(_probs) == _years
 
     def test_not_adding_existing_year(self):
         # Setup

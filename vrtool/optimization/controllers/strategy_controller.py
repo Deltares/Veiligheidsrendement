@@ -13,6 +13,7 @@ from vrtool.optimization.controllers.aggregate_combinations_controller import (
 from vrtool.optimization.controllers.combine_measures_controller import (
     CombineMeasuresController,
 )
+from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -30,8 +31,9 @@ class StrategyController:
     _method: str
     _vrtool_config: VrtoolConfig
     _section_measures_input: list[SectionAsInput]
-    Pf: dict[str, np.ndarray] = {}
     opt_parameters: dict[str, int] = {}
+    Pf: dict[str, np.ndarray] = {}
+    LCCOptions: np.ndarray = np.array([])
 
     def __init__(self, method: str, vrtool_config: VrtoolConfig) -> None:
         self._method = method
@@ -184,51 +186,89 @@ class StrategyController:
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
         # Initialize datastructures
-        _num_sections = len(self._section_measures_input)
-        _max_year = max(s.max_year for s in self._section_measures_input)
-        _max_sg = max(map(len, (s.sg_measures for s in self._section_measures_input)))
-        _max_sh = max(map(len, (s.sh_measures for s in self._section_measures_input)))
-        _mechanisms = set(mech for sect in self._section_measures_input for mech in sect.mechanisms)
-        # - probabilities
-        for _mech in _mechanisms:
-            if _mech == MechanismEnum.OVERFLOW:
-                self.Pf[_mech.name] = np.full(
-                    (
-                        _num_sections,
-                        _max_sh + 1,
-                        _max_year,
-                    ),
-                    1.0,
-                )
-            elif _mech == MechanismEnum.REVETMENT:
-                self.Pf[_mech.name] = np.full(
-                    (
-                        _num_sections,
-                        _max_sh + 1,
-                        _max_year,
-                    ),
-                    1.0e-18,
-                )
-            else:
-                self.Pf[_mech.name] = np.full(
-                    (
-                        _num_sections,
-                        _max_sg + 1,
-                        _max_year,
-                    ),
-                    1.0,
-                )
-        # - general parameters
-        self.opt_parameters = {
-            "N": _num_sections,
-            "T": _max_year,
-            "Sg": _max_sg + 1,
-            "Sh": _max_sh + 1,
-        }
+        mechanisms = set(
+            mech for sect in self._section_measures_input for mech in sect.mechanisms
+        )
 
-        # Populate datastructure per section
-        for _section in self._section_measures_input:
-            # Probabilities for all years
-            for _mech in _mechanisms:
-                
+        def _init_structures(
+            sections: list[SectionAsInput], mechanisms: set[MechanismEnum]
+        ) -> tuple[dict[str, float], dict[str, MechanismEnum, np.array], np.array]:
+            parameters: dict[str, float] = {}
+            pf: dict[str, np.ndarray] = {}
+            lcc: np.ndarray = np.array([])
+
+            _num_sections = len(sections)
+            _max_year = max(s.max_year for s in sections)
+            _max_sg = max(map(len, (s.sg_measures for s in sections)))
+            _max_sh = max(map(len, (s.sh_measures for s in sections)))
+            parameters = {
+                "N": _num_sections,
+                "T": _max_year,
+                "Sg": _max_sg + 1,
+                "Sh": _max_sh + 1,
+            }
+
+            for _mech in mechanisms:
+                if _mech == MechanismEnum.OVERFLOW:
+                    pf[_mech.name] = np.full(
+                        (
+                            _num_sections,
+                            _max_sh + 1,
+                            _max_year,
+                        ),
+                        1.0,
+                    )
+                elif _mech == MechanismEnum.REVETMENT:
+                    pf[_mech.name] = np.full(
+                        (
+                            _num_sections,
+                            _max_sh + 1,
+                            _max_year,
+                        ),
+                        1.0e-18,
+                    )
+                else:
+                    pf[_mech.name] = np.full(
+                        (
+                            _num_sections,
+                            _max_sg + 1,
+                            _max_year,
+                        ),
+                        1.0,
+                    )
+
+            lcc = np.full((_num_sections, _max_sg + 1, _max_sh + 1), 1e99)
+
+            return (parameters, pf, lcc)
+
+        (self.opt_parameters, self.Pf, self.LCCOptions) = _init_structures(
+            self._section_measures_input, mechanisms
+        )
+
+        # Populate datastructure per section, per mechanism, per sg/sh measure, per  year
+        for n, _section in enumerate(self._section_measures_input):
+            # Probabilities
+            for _mech in mechanisms:
+                if _section.sg_measures[0].is_mechanism_allowed(_mech):
+                    for m, _meas in enumerate(_section.sg_measures):
+                        _probs = _meas.mechanism_year_collection.get_probabilities(
+                            _mech, list(range(self.opt_parameters["T"]))
+                        )
+                        self.Pf[_mech.name][n, m, :] = _probs
+                elif _section.sh_measures[0].is_mechanism_allowed(_mech):
+                    for m, _meas in enumerate(_section.sh_measures):
+                        _probs = _meas.mechanism_year_collection.get_probabilities(
+                            _mech, list(range(self.opt_parameters["T"]))
+                        )
+                        self.Pf[_mech.name][n, m, :] = _probs
+
+            def _get_comb_idx(
+                comb: CombinedMeasure, combinations: list[CombinedMeasure]
+            ) -> int:
+                return next((i for i, c in enumerate(combinations) if c == comb), -1)
+
             # Cost
+            for _aggr in _section.aggregated_measure_combinations:
+                _sh_idx = _get_comb_idx(_aggr.sh_combination, _section.sh_combinations)
+                _sg_idx = _get_comb_idx(_aggr.sg_combination, _section.sg_combinations)
+                self.LCCOptions[n, _sh_idx, _sg_idx] = _aggr.lcc
