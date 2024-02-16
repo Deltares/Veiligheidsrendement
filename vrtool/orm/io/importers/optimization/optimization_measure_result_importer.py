@@ -61,15 +61,13 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             return False
         return any(math.isclose(_parameter_value, x) for x in [0, -999])
 
-    @staticmethod
     def _get_mechanism_year_collection(
+        self,
         mechanism_measure_results: list[MechanismPerSection],
         allowed_mechanisms: list[MechanismEnum],
-    ) -> dict[int, MechanismPerYearProbabilityCollection]:
+    ) -> MechanismPerYearProbabilityCollection:
 
-        _prob_dictionary = defaultdict(
-            lambda: MechanismPerYearProbabilityCollection([])
-        )
+        _mech_collection = MechanismPerYearProbabilityCollection([])
         for _mech_result in mechanism_measure_results:
             _mech_enum = MechanismEnum.get_enum(
                 _mech_result.mechanism_per_section.mechanism.name
@@ -82,9 +80,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                 year=_mech_result.time,
                 probability=beta_to_pf(_mech_result.beta),
             )
-            _prob_dictionary[_mech_per_year.year].probabilities.append(_mech_per_year)
+            _mech_collection.probabilities.append(_mech_per_year)
 
-        return _prob_dictionary
+        return _mech_collection
 
     def _create_measure(
         self,
@@ -100,8 +98,6 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         for _section_result in measure_result.sections_measure_result:
             _time = _section_result.time
             _cost = _section_result.cost
-            _lcc = _cost / (1 + self.discount_rate) ** _time
-
             _measures_dict.append(
                 dict(
                     measure_type=MeasureTypeEnum.get_enum(
@@ -113,9 +109,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                     cost=_cost,
                     year=_time,
                     discount_rate=self.discount_rate,
-                    mechanism_year_collection=_mech_year_coll.get(
-                        _time, MechanismPerYearProbabilityCollection([])
-                    ),
+                    mechanism_year_collection=_mech_year_coll,
                 )
                 | {
                     _param: measure_result.get_parameter_value(_param)
@@ -131,10 +125,6 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
         _imported_measures = []
-        # TODO: It makes no sense to me that from the same measure we can create both SH and SG measures.
-        # It would make more sense to just create the measure type (sg/sh) from a static method
-        # by comparing whether the given `OrmMeasureResult.measure_per_section.measure.measure_type` is
-        # supported or not.
         if self.valid_parameter(orm_model, "dberm"):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
