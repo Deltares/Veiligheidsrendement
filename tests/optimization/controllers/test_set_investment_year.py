@@ -1,6 +1,6 @@
 import pytest as py
 
-from vrtool.optimization.measures.set_investment_year import SetInvestmentYear
+from vrtool.optimization.controllers.set_investment_year import SetInvestmentYear
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
