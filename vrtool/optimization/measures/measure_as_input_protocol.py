@@ -31,7 +31,13 @@ class MeasureAsInputProtocol(Protocol):
         self,
         previous_measure: MeasureAsInputProtocol | None,
     ):
-        """Set start cost for measure"""
+        """
+        Sets the start cost for the measure
+
+        Args:
+            previous_measure (MeasureAsInputProtocol | None):
+                The (possible) previous measure that might contain the start cost
+        """
         pass
 
     @staticmethod

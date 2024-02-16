@@ -47,7 +47,7 @@ class TestAggregateCombinationsController:
         )
 
         # 2. Run test
-        _aggr_meas_comb = AggregateCombinationsController._create_aggregates(
+        _aggr_meas_comb = AggregateCombinationsController(None)._create_aggregates(
             [_sh_combination], [_sg_combination]
         )
 
@@ -69,7 +69,7 @@ class TestAggregateCombinationsController:
         )
 
         # 2. Run test
-        _aggr_meas_comb = AggregateCombinationsController._create_aggregates(
+        _aggr_meas_comb = AggregateCombinationsController(None)._create_aggregates(
             [_sh_combination], [_sg_combination]
         )
 
@@ -88,7 +88,7 @@ class TestAggregateCombinationsController:
         )
 
         # 2. Run test
-        _aggr_meas_comb = AggregateCombinationsController._create_aggregates(
+        _aggr_meas_comb = AggregateCombinationsController(None)._create_aggregates(
             [_sh_combination], [_sg_combination]
         )
 
