@@ -9,7 +9,6 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 
 
 class TestSgMeasure:
-
     def _create_sg_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> SgMeasure:

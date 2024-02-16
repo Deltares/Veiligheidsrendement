@@ -35,7 +35,6 @@ class MockSgMeasure(SgMeasure):
 
 
 class TestSectionAsInput:
-
     def _get_section_with_measures(self) -> SectionAsInput:
         return SectionAsInput(
             section_name="section_name",
