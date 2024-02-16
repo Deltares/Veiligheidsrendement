@@ -1,6 +1,7 @@
 import random
 import shutil
 from pathlib import Path
+from typing import Iterator
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithMeasureResultCollectionMocked,
     validate_measure_result_export,
 )
+from tests.test_api import TestApiReportedBugs
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -37,6 +39,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
@@ -54,6 +57,7 @@ from vrtool.orm.orm_controllers import (
     get_dike_section_solutions,
     get_dike_traject,
     get_exported_measure_result_ids,
+    import_results_measures_for_optimization,
     initialize_database,
     open_database,
 )
@@ -981,7 +985,7 @@ class TestOrmControllers:
 
     def _get_measure_result_section(
         self, measure_result: orm.MeasureResult, t_range: list[int]
-    ) -> list[dict]:
+    ) -> Iterator[dict]:
         cost = 13.37
         for i in t_range:
             yield dict(
@@ -993,7 +997,7 @@ class TestOrmControllers:
         measure_result: orm.MeasureResult,
         t_range: list[int],
         mechanism_per_section: MechanismPerSection,
-    ) -> list[dict]:
+    ) -> Iterator[dict]:
         for i in t_range:
             yield dict(
                 measure_result=measure_result,
@@ -1004,8 +1008,33 @@ class TestOrmControllers:
 
     def _get_measure_result_parameters(
         self, measure_result: orm.MeasureResult
-    ) -> list[dict]:
+    ) -> Iterator[dict]:
         for i in range(1, 10):
             yield dict(
                 name=f"Parameter {i}", value=i / 10.0, measure_result=measure_result
             )
+
+    def test_import_results_measures_for_optimization_given_valid_case(
+        self, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _test_dir_name = "test_stability_multiple_scenarios"
+        _test_case_dir = test_data.joinpath(_test_dir_name)
+        assert _test_case_dir.exists()
+
+        _vrtool_config = TestApiReportedBugs.get_vrtool_config_test_copy(
+            _test_case_dir.joinpath("config.json"), request.node.name
+        )
+        assert not any(_vrtool_config.output_directory.glob("*"))
+
+        # 2. Run test.
+        with open_database(_vrtool_config.input_database_path).connection_context():
+            _imported_data = import_results_measures_for_optimization(
+                _vrtool_config, [(omr.id, 0) for omr in MeasureResult.select()]
+            )
+
+        # 3. Verify final expectations.
+        assert any(_imported_data)
+        assert all(
+            isinstance(_imp_data, SectionAsInput) for _imp_data in _imported_data
+        )

@@ -1,12 +1,14 @@
+import math
 from typing import Callable
+
 import pytest
+
 from tests.orm import empty_db_fixture, get_basic_measure_per_section
 from vrtool.orm.models import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_parameter import (
     MeasureResultParameter,
 )
 from vrtool.orm.models.orm_base_model import OrmBaseModel
-import math
 
 
 class TestMeasureResult:
