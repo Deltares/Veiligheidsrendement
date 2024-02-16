@@ -24,7 +24,7 @@ class StabilityInnerSimpleInput:
 
     beta: np.ndarray
     scenario_probability: np.ndarray
-    probability_of_failure: np.ndarray
+    initial_probability_of_failure: np.ndarray
 
     failure_probability_with_elimination: np.ndarray
     failure_probability_elimination: np.ndarray
@@ -35,7 +35,7 @@ class StabilityInnerSimpleInput:
     def get_failure_probability_from_scenarios(self) -> float:
         """
         Gets the current failure probability based on the `secenario_probability` and `beta`.
-        We use `beta` instead of `probability_of_failure` as the latter remains constant whilst
+        We use `beta` instead of `initial_probability_of_failure` as the latter remains constant whilst
         `beta` changes throughout the different steps of an optimization since imported from the database.
 
         Returns:
@@ -118,7 +118,9 @@ class StabilityInnerSimpleInput:
             scenario_probability=mechanism_input.input.get(
                 "P_scenario", np.ndarray([])
             ),
-            probability_of_failure=mechanism_input.input.get("Pf", np.ndarray([])),
+            initial_probability_of_failure=mechanism_input.input.get(
+                "Pf", np.ndarray([])
+            ),
             reliability_calculation_method=_reliability_calculation_method,
             failure_probability_with_elimination=_failure_probability_with_elimination,
             failure_probability_elimination=_failure_probability_elimination,

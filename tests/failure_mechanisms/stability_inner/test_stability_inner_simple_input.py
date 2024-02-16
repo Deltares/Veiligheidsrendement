@@ -192,16 +192,16 @@ class TestStabilityInnerSimpleInput:
         )
 
     @pytest.mark.parametrize(
-        "probability_of_failure, scenario_probability, expected_result",
+        "initial_probability_of_failure, scenario_probability, expected_result",
         [
             pytest.param([0.1, 1], [0.2, 0.02], 0.04),
             pytest.param([0.42, 0.24], [0.24, 0.42], 0.2015),
             pytest.param([1, 0.1], [0.02, 0.2], 0.04),
         ],
     )
-    def test_given_probability_of_failure_and_scenario_probability_as_arrays_then_returns_expectation(
+    def test_given_initial_probability_of_failure_and_scenario_probability_as_arrays_then_returns_expectation(
         self,
-        probability_of_failure: list[float],
+        initial_probability_of_failure: list[float],
         scenario_probability: list[float],
         expected_result: float,
     ):
@@ -211,9 +211,9 @@ class TestStabilityInnerSimpleInput:
             safety_factor_2075=np.array([]),
             beta_2025=np.array([]),
             beta_2075=np.array([]),
-            beta=pf_to_beta(np.array(probability_of_failure)),
+            beta=pf_to_beta(np.array(initial_probability_of_failure)),
             scenario_probability=np.array(scenario_probability),
-            probability_of_failure=np.array(probability_of_failure),
+            initial_probability_of_failure=np.array(initial_probability_of_failure),
             failure_probability_with_elimination=np.array([]),
             failure_probability_elimination=np.array([]),
             is_eliminated=False,
