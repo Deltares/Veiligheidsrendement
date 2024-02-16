@@ -30,7 +30,8 @@ class StrategyController:
     _method: str
     _vrtool_config: VrtoolConfig
     _section_measures_input: list[SectionAsInput]
-    Pf = dict[str, np.ndarray]
+    Pf: dict[str, np.ndarray] = {}
+    opt_parameters: dict[str, int] = {}
 
     def __init__(self, method: str, vrtool_config: VrtoolConfig) -> None:
         self._method = method
@@ -182,11 +183,52 @@ class StrategyController:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
+        # Initialize datastructures
+        _num_sections = len(self._section_measures_input)
+        _max_year = max(s.max_year for s in self._section_measures_input)
+        _max_sg = max(map(len, (s.sg_measures for s in self._section_measures_input)))
+        _max_sh = max(map(len, (s.sh_measures for s in self._section_measures_input)))
+        _mechanisms = set(mech for sect in self._section_measures_input for mech in sect.mechanisms)
+        # - probabilities
+        for _mech in _mechanisms:
+            if _mech == MechanismEnum.OVERFLOW:
+                self.Pf[_mech.name] = np.full(
+                    (
+                        _num_sections,
+                        _max_sh + 1,
+                        _max_year,
+                    ),
+                    1.0,
+                )
+            elif _mech == MechanismEnum.REVETMENT:
+                self.Pf[_mech.name] = np.full(
+                    (
+                        _num_sections,
+                        _max_sh + 1,
+                        _max_year,
+                    ),
+                    1.0e-18,
+                )
+            else:
+                self.Pf[_mech.name] = np.full(
+                    (
+                        _num_sections,
+                        _max_sg + 1,
+                        _max_year,
+                    ),
+                    1.0,
+                )
+        # - general parameters
+        self.opt_parameters = {
+            "N": _num_sections,
+            "T": _max_year,
+            "Sg": _max_sg + 1,
+            "Sh": _max_sh + 1,
+        }
+
+        # Populate datastructure per section
         for _section in self._section_measures_input:
-            pass
-            # initialize the Pf dictionary
-            # for _mechanism in ShMeasure.get_allowed_mechanisms():
-            #     if _mechanism ==
-            #     self.Pf[_mechanism.name] = np.full(
-            #         (N, len(_section.sh_measures, _section.max_year))
-            #     )
+            # Probabilities for all years
+            for _mech in _mechanisms:
+                
+            # Cost

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
@@ -20,9 +21,9 @@ class SectionAsInput:
     combined_measures: list[CombinedMeasure] = field(
         default_factory=list[CombinedMeasure]
     )  # TODO do we need this in SectionAsInput or can it be volatile?
-    aggregated_measure_combinations: Optional[
-        list[AggregatedMeasureCombination]
-    ] = field(default_factory=list[AggregatedMeasureCombination])
+    aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]] = (
+        field(default_factory=list[AggregatedMeasureCombination])
+    )
 
     def get_measures_by_class(
         self,
@@ -76,4 +77,35 @@ class SectionAsInput:
 
     @property
     def max_year(self) -> int:
-        return max([measure.year for measure in self.measures])
+        """
+        The maximum year for the section
+
+        Returns:
+            int: The maximum year
+        """
+        if not self.measures:
+            return 0
+        # Get the max year for all measures for a random mechanism
+        return max(
+            year
+            for meas in self.measures
+            for year in meas.mechanism_year_collection.get_years(
+                self.measures[0].get_allowed_mechanisms()[0]
+            )
+        )
+
+    @property
+    def mechanisms(self) -> set[MechanismEnum]:
+        """
+        All mechanisms for the section
+
+        Returns:
+            set[MechanismEnum]: Set of mechanisms
+        """
+        if not self.measures:
+            return set()
+        return set(
+            mech
+            for meas in self.measures
+            for mech in meas.mechanism_year_collection.get_mechanisms()
+        )
