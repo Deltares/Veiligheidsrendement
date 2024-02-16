@@ -17,10 +17,34 @@ class SgMeasure(MeasureAsInputProtocol):
     combine_type: CombinableTypeEnum
     cost: float
     year: int
-    lcc: float
+    discount_rate: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
     dcrest: float
+    start_cost: float = 0
+
+    @property
+    def lcc(self) -> float:
+        return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
+
+    def set_start_cost(
+        self,
+        previous_measure: MeasureAsInputProtocol | None,
+    ):
+        if self.measure_type not in [
+            MeasureTypeEnum.SOIL_REINFORCEMENT,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+        ]:
+            return
+        if (
+            previous_measure is None
+            or self.measure_type != previous_measure.measure_type
+        ):
+            if self.year == 0 and self.dberm == 0:
+                self.start_cost = self.cost
+                return
+            raise (ValueError("First measure of type isn't zero-version"))
+        self.start_cost = previous_measure.start_cost
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:

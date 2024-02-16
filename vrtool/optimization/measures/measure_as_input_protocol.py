@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Protocol, runtime_checkable
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -15,9 +17,28 @@ class MeasureAsInputProtocol(Protocol):
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     cost: float
+    discount_rate: float
     year: int
-    lcc: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
+    start_cost: float
+
+    @property
+    def lcc(self) -> float:
+        """Life cycle cost"""
+        pass
+
+    def set_start_cost(
+        self,
+        previous_measure: MeasureAsInputProtocol | None,
+    ):
+        """
+        Sets the start cost for the measure
+
+        Args:
+            previous_measure (MeasureAsInputProtocol | None):
+                The (possible) previous measure that might contain the start cost
+        """
+        pass
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:

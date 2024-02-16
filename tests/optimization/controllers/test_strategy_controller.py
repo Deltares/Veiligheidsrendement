@@ -67,7 +67,7 @@ class TestStrategyController:
                     "revetment",
                     "revetment",
                 ],
-                ("year", ""): [0, 20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 0, 0, 0],
+                ("year", ""): [0, 20, 0, 20, 0, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0],
                 ("dcrest", ""): [
                     0,
                     0,
@@ -335,13 +335,15 @@ class TestStrategyController:
         # Sh measures
         assert len(_sections[0].sh_measures) == 10
 
-        assert isinstance(_sections[0].measures[0], ShMeasure)
+        assert isinstance(_sections[0].sh_measures[0], ShMeasure)
         assert (
-            len(_sections[0].measures[0].mechanism_year_collection.probabilities) == 4
+            len(_sections[0].sh_measures[0].mechanism_year_collection.probabilities)
+            == 4
         )
         # Sg measures
         assert len(_sections[0].sg_measures) == 10
-        assert isinstance(_sections[0].measures[1], SgMeasure)
+        assert isinstance(_sections[0].sg_measures[0], SgMeasure)
         assert (
-            len(_sections[0].measures[1].mechanism_year_collection.probabilities) == 4
+            len(_sections[0].sh_measures[0].mechanism_year_collection.probabilities)
+            == 4
         )
