@@ -1,12 +1,4 @@
 ,Section,option_index,LCC,BC,ID,name,year,yes/no,dcrest,dberm,beta_target,transition_level
 0,,,0.0,,,,,,,,,
 1,7,169,1952612.1304731988,[],3+1,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.5,20.0,-999,-999
-2,2,145,27044290.0,[],4,['Zelfkerende constructie'],0,yes,-999.0,-999.0,-999,-999
-3,4,145,26189540.0,[],4,['Zelfkerende constructie'],0,yes,-999.0,-999.0,-999,-999
-4,3,145,12103260.0,[],4,['Zelfkerende constructie'],0,yes,-999.0,-999.0,-999,-999
-5,11,145,23215010.0,[],4,['Zelfkerende constructie'],0,yes,-999.0,-999.0,-999,-999
-6,8,177,6613645.449470626,[],3+1,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.75,20.0,-999,-999
-7,5,184,3437554.0511887386,[],3+1,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,1.0,15.0,-999,-999
-8,9,169,16012657.530532403,[],3+1,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.5,20.0,-999,-999
-9,10,165,5162678.207338236,[],3+1,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.5,8.0,-999,-999
-10,6,16,364288.8771739132,[],1,['Grondversterking binnenwaarts'],0,-999,0.5,0.0,-999,-999
+2,8,177,6613645.449470626,[],3+1,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.75,20.0,-999,-999

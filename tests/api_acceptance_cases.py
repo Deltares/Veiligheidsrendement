@@ -74,7 +74,7 @@ class AcceptanceTestCase:
             ),
             AcceptanceTestCase(
                 model_directory="31-1 base coastal case",
-                traject_name="38-1",
+                traject_name="31-1",
                 excluded_mechanisms=[
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
