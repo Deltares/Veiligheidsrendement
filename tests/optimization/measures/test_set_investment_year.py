@@ -77,13 +77,12 @@ class TestSetInvestmentYear:
         _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / self._end_year
         assert (pf_to_beta(_pf) == py.approx(_beta_expected))
 
-        # first measure is extended with one year:
+        # all measures are extended with two years:
+        _ref = {0, _yr1, _yr1 + 1, self._end_year}
         _yrs = _measures[0].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
-        assert _yrs == {0, _yr1, self._end_year}
-
-        # second measure is extended with two years:
+        assert _yrs == _ref
         _yrs = _measures[1].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
-        assert _yrs == {0, _yr1, _yr1 + 1, self._end_year}
+        assert _yrs == _ref
 
     def test_three_measures(self):
         # setup
@@ -117,17 +116,14 @@ class TestSetInvestmentYear:
         _beta_expected = _prob_zero[0] - _prob_diff * _yr2 / self._end_year
         assert (pf_to_beta(_pf) == py.approx(_beta_expected))
 
-        # first measure is extended with two years (20 and 30):
+        # all measures are extended with four years:
+        _ref = {0, _yr1, _yr1 + 1, _yr2, _yr2 + 1, self._end_year}
         _yrs = _measures[0].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
-        assert _yrs == {0, _yr1, _yr2, self._end_year}
-
-        # second measure is extended with two years (20 and 21):
+        assert _yrs == _ref
         _yrs = _measures[1].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
-        assert _yrs == {0, _yr1, _yr1 + 1, self._end_year}
-
-        # third measure is extended with two years (30 and 31):
+        assert _yrs == _ref
         _yrs = _measures[2].mechanism_year_collection.get_years(MeasureTypeEnum.REVETMENT)
-        assert _yrs == {0, _yr2, _yr2 + 1, self._end_year}
+        assert _yrs == _ref
 
     def test_measures_without_year_zero(self):
         # setup
