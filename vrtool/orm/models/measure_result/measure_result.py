@@ -21,8 +21,22 @@ class MeasureResult(OrmBaseModel):
         """
         return self.sections_measure_result.get()
 
-    def get_parameter(self, parameter_name: str) -> float:
-        _values = self.measure_result_parameters.where(
-            fn.Lower(OrmMeasureResultParameter.name) == parameter_name.lower()
-        ).select()
-        return _values[0].value if any(_values) else float("nan")
+    def get_parameter_value(self, parameter_name: str) -> float:
+        """
+        Gets the value, or `float("nan")` when not found, from the list of parameters (`MeasureResultParameter`)
+        which is accessed through backreference (`measure_result_parameters`).
+
+        Args:
+            parameter_name (str): Name of the parameter to look for.
+
+        Returns:
+            float: The value found or `float("nan")` when not.
+        """
+        return next(
+            (
+                _mrp.value
+                for _mrp in self.measure_result_parameters
+                if _mrp.name.lower() == parameter_name.lower()
+            ),
+            float("nan"),
+        )

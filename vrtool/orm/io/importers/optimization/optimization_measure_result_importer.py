@@ -43,16 +43,20 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         self.unit_costs = vrtool_config.unit_costs
         self.investment_year = investment_year
 
-    # @staticmethod
-    # def get_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> float:
-    #     _values = measure_result.measure_result_parameters.where(
-    #         fn.Lower(OrmMeasureResultParameter.name) == parameter_name.lower()
-    #     ).select()
-    #     return _values[0].value if any(_values) else float("nan")
-
     @staticmethod
     def valid_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> bool:
-        _parameter_value = measure_result.get_parameter(parameter_name)
+        """
+        Verifies whether the given parameter name exists and is within the expected values
+         as a `MeasureResultParameter` for the given `MeasureResult`.
+
+        Args:
+            measure_result (MeasureResult): The `MeasureResult` containing a list of parameters.
+            parameter_name (str): The parameter name which should be in the `MeasureResult`.
+
+        Returns:
+            bool: Parameter is a valid value of the `MeasureResult`.
+        """
+        _parameter_value = measure_result.get_parameter_value(parameter_name)
         if math.isnan(_parameter_value):
             return False
         return any(math.isclose(_parameter_value, x) for x in [0, -999])
@@ -114,7 +118,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                     ),
                 )
                 | {
-                    _param: self.get_parameter(measure_result, _param)
+                    _param: measure_result.get_parameter_value(_param)
                     for _param in _measure_concrete_params
                 }
             )
