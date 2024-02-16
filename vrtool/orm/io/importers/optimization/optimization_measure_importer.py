@@ -1,12 +1,12 @@
-from collections import defaultdict
 import math
+from collections import defaultdict
 from typing import Type
+
+from peewee import fn
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-
-
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
@@ -15,7 +15,6 @@ from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
-
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -23,17 +22,11 @@ from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_result.measure_result import (
     MeasureResult as OrmMeasureResult,
 )
-
 from vrtool.orm.models.measure_result.measure_result_parameter import (
     MeasureResultParameter as OrmMeasureResultParameter,
 )
-from vrtool.orm.models.measure_result.measure_result_section import (
-    MeasureResultSection as OrmMeasureResultSection,
-)
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
-
-from peewee import fn
 
 
 class OptimizationMeasureImporter(OrmImporterProtocol):
