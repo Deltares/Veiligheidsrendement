@@ -25,8 +25,8 @@ from vrtool.api import (
     run_step_optimization,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.optimization.optimization_run import OptimizationRun
+from vrtool.orm import models as orm
+
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -35,6 +35,7 @@ from vrtool.orm.orm_controllers import (
     open_database,
     vrtool_db,
 )
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum as MeasureType
 
 def get_list_of_sections_for_measure_ids(
         valid_vrtool_config: VrtoolConfig,
@@ -83,7 +84,7 @@ def get_all_measure_results_of_specific_type(
             .join(orm.Measure)
             .join(orm.MeasureType)
             .where(orm.Measure.year != 20)
-            .where(orm.MeasureType.name == measure_name)
+            .where(orm.MeasureType.name == measure_name.get_old_name())
         )
     #get all ids of _supported_measures
     return [x.get_id() for x in _supported_measures]
@@ -168,7 +169,7 @@ class TestApi:
         assert _test_db_path.exists()
 
         _opened_db = open_database(_test_db_path)
-        _found_dike_traject = DikeTrajectInfo.get()
+        _found_dike_traject = orm.DikeTrajectInfo.get()
 
         # Get a test `VrtoolConfig`.
         _vrtool_config = VrtoolConfig(traject=_found_dike_traject.traject_name)
@@ -177,7 +178,7 @@ class TestApi:
         _vrtool_config.output_directory = test_results.joinpath(request.node.name)
 
         # Get a valid test `OptimizationRun`
-        _optimization_run = OptimizationRun.get_by_id(1)
+        _optimization_run = orm.OptimizationRun.get_by_id(1)
         assert _optimization_run.optimization_type.name == "VEILIGHEIDSRENDEMENT"
         _opened_db.close()
 
@@ -354,7 +355,14 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         #get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
-        _measure_ids = [get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type) for measure_type in ["Soil reinforcement", "Revetment", "Vertical Geotextile"]]
+        _measure_ids = [
+            get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
+            for measure_type in [
+                MeasureType.SOIL_REINFORCEMENT,
+                MeasureType.REVETMENT,
+                MeasureType.VERTICAL_GEOTEXTILE,
+            ]
+        ]
         #flatten list of _measure_ids
         _measure_ids = [item for sublist in _measure_ids for item in sublist]
         # each measure should be executed in year 0 so generate tuples of id and 0
@@ -387,8 +395,14 @@ class TestApiRunWorkflowsAcceptance:
         _validator.validate_preconditions(valid_vrtool_config)
 
         #get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
-        _measure_ids = [get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type) for measure_type in ["Soil reinforcement", "Revetment", "Vertical Geotextile"]]
-
+        _measure_ids = [
+            get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
+            for measure_type in [
+                MeasureType.SOIL_REINFORCEMENT,
+                MeasureType.REVETMENT,
+                MeasureType.VERTICAL_GEOTEXTILE,
+            ]
+        ]
         #flatten list of _measure_ids and sort
         _measure_ids = sorted([item for sublist in _measure_ids for item in sublist])
         
