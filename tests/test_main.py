@@ -83,7 +83,7 @@ class TestMain:
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "cli_config_fixture",
-        ["TestCase3_38-1_small"],
+        ["38-1 two river sections"],
         indirect=True,
     )
     def test_given_valid_input_when_run_full_then_succeeds(
