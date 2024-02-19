@@ -29,6 +29,11 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class OptimizationMeasureResultImporter(OrmImporterProtocol):
+    """
+    This importer focuses on the creation of Sh / Sg measures for a given
+    `MeasureResult`. However, it does not set its real (start) cost, as this
+    depends on which other measures have been previously been imported.
+    """
 
     discount_rate: float
     unit_costs: dict

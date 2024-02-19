@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import logging
+import math
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -21,11 +23,37 @@ class SgMeasure(MeasureAsInputProtocol):
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
     dcrest: float
-    start_cost: float = 0
+    _start_cost: float = 0
 
     @property
     def lcc(self) -> float:
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
+
+    @property
+    def start_cost(self) -> float:
+        """
+        Gets the initial cost for this measure. This is a "protected" property as its
+        value depends on which other measures are present as well as its measure type
+        (`MeasureTypeEnum`).
+
+        Returns:
+            float: The start cost value.
+        """
+        return self._start_cost
+
+    @start_cost.setter
+    def start_cost(self, value: float):
+        if self.measure_type not in [
+            MeasureTypeEnum.SOIL_REINFORCEMENT,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+        ]:
+            logging.info(
+                "Start cost for {} must be always 0. (Attempt to set to {}).".format(
+                    self.measure_type, value
+                )
+            )
+            value = 0
+        self._start_cost = value
 
     def set_start_cost(
         self,
@@ -66,3 +94,9 @@ class SgMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL],
             CombinableTypeEnum.FULL: [None],
         }
+
+    def is_initial_cost_measure(self) -> bool:
+        if self.year != 0:
+            return False
+
+        return math.isclose(self.dberm, 0) or math.isnan(self.dberm)

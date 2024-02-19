@@ -27,16 +27,14 @@ class MeasureAsInputProtocol(Protocol):
         """Life cycle cost"""
         pass
 
-    def set_start_cost(
-        self,
-        previous_measure: MeasureAsInputProtocol | None,
-    ):
+    def is_initial_cost_measure(self) -> bool:
         """
-        Sets the start cost for the measure
+        Verifies whether the given measure is considered the "initial measure".
+        This happens when its year is 0 but most important when its
+        dberm or dcerst ar 0 / nan (for `ShMeasure` and `SgMeasure` respectively).
 
-        Args:
-            previous_measure (MeasureAsInputProtocol | None):
-                The (possible) previous measure that might contain the start cost
+        Returns:
+            bool: Whether its an initial measure or not.
         """
         pass
 

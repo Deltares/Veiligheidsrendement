@@ -5,6 +5,9 @@ import pytest
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
 from vrtool.optimization.measures.sg_measure import SgMeasure
 
 
@@ -33,14 +36,65 @@ class TestSgMeasure:
         _measure = self._create_sg_measure(_measure_type, _combine_type)
 
         # 3. Verify expectations
+        assert isinstance(_measure, SgMeasure)
+        assert isinstance(_measure, MeasureAsInputProtocol)
         assert _measure.measure_type == _measure_type
         assert _measure.combine_type == _combine_type
-        assert _measure.cost == 10.5
+        assert _measure.cost == pytest.approx(10.5)
         assert _measure.year == 10
-        assert _measure.discount_rate == 0.03
+        assert _measure.discount_rate == pytest.approx(0.03)
         assert _measure.mechanism_year_collection is None
-        assert _measure.dcrest == 0.3
-        assert _measure.dberm == 0.1
+        assert _measure.dcrest == pytest.approx(0.3)
+        assert _measure.dberm == pytest.approx(0.1)
+        assert _measure.start_cost == pytest.approx(0)
+
+    @pytest.mark.parametrize(
+        "measure_type",
+        [
+            pytest.param(mt)
+            for mt in MeasureTypeEnum
+            if mt
+            not in [
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+            ]
+        ],
+    )
+    def test_given_unsupported_measure_type_when_set_start_cost_value_is_set_to_0(
+        self, measure_type: MeasureTypeEnum
+    ):
+        # 1. Define test data.
+        _combine_type = CombinableTypeEnum.FULL
+        _measure = self._create_sg_measure(measure_type, _combine_type)
+        assert _measure.start_cost == pytest.approx(0)
+
+        # 2. Run test.
+        _measure.start_cost = 42
+
+        # 3. Verify expectations.
+        assert _measure.start_cost == pytest.approx(0)
+
+    @pytest.mark.parametrize(
+        "measure_type",
+        [
+            pytest.param(MeasureTypeEnum.SOIL_REINFORCEMENT),
+            pytest.param(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
+        ],
+    )
+    def test_given_supported_measure_type_when_set_start_cost_value_is_set_to_0(
+        self, measure_type: MeasureTypeEnum
+    ):
+        # 1. Define test data.
+        _combine_type = CombinableTypeEnum.FULL
+        _measure = self._create_sg_measure(measure_type, _combine_type)
+        assert _measure.start_cost == pytest.approx(0)
+        _new_value = 42
+
+        # 2. Run test.
+        _measure.start_cost = _new_value
+
+        # 3. Verify expectations.
+        assert _measure.start_cost == pytest.approx(_new_value)
 
     def test_lcc(self):
         # 1. Define input
@@ -131,3 +185,56 @@ class TestSgMeasure:
         # 3. Verify expectations
         assert isinstance(_allowed_combinations, dict)
         assert _allowed_combinations is not None
+
+    @pytest.mark.parametrize(
+        "dberm_value",
+        [
+            pytest.param(0),
+            pytest.param(float("nan")),
+        ],
+    )
+    def test_is_initial_cost_measure_when_year_0_and_dberm_0_or_nan_then_is_true(
+        self, dberm_value: float
+    ):
+        # 1. Define test data.
+        _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
+        _combine_type = CombinableTypeEnum.COMBINABLE
+        _measure = self._create_sg_measure(_measure_type, _combine_type)
+        _measure.dberm = dberm_value
+        _measure.year = 0
+
+        # 2. Run test and verify expectations.
+        assert _measure.is_initial_cost_measure() is True
+
+    @pytest.mark.parametrize(
+        "dberm_value",
+        [
+            pytest.param(0),
+            pytest.param(float("nan")),
+        ],
+    )
+    def test_is_initial_cost_measure_when_year_not_0_and_dberm_0_or_nan_then_is_false(
+        self, dberm_value: float
+    ):
+        # 1. Define test data.
+        _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
+        _combine_type = CombinableTypeEnum.COMBINABLE
+        _measure = self._create_sg_measure(_measure_type, _combine_type)
+        _measure.dcrest = dberm_value
+        _measure.year = 4.2
+
+        # 2. Run test and verify expectations.
+        assert _measure.is_initial_cost_measure() is False
+
+    def test_is_initial_cost_measure_when_year_0_and_dberm_not_0_or_not_nan_then_is_false(
+        self,
+    ):
+        # 1. Define test data.
+        _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
+        _combine_type = CombinableTypeEnum.COMBINABLE
+        _measure = self._create_sg_measure(_measure_type, _combine_type)
+        _measure.dcrest = 4.2
+        _measure.year = 0
+
+        # 2. Run test and verify expectations.
+        assert _measure.is_initial_cost_measure() is False

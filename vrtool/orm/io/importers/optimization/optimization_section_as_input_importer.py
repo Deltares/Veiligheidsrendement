@@ -1,4 +1,8 @@
+from collections import defaultdict
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
@@ -27,20 +31,26 @@ class OptimizationSectionAsInputImporter:
         Returns:
             SectionAsInput: Mapped resulting object.
         """
-        _imported_measures = []
+        _section_imported_measures: list[MeasureAsInputProtocol] = []
         _section_data, _measure_results_dict = section_data_results
-        for _measure_result, _investment_years in _measure_results_dict.items():
-            _imported_measures.extend(
-                OptimizationMeasureResultImporter(
-                    self.config, _investment_years
-                ).import_orm(_measure_result)
-            )
+        _initial_costs_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
 
-        # TODO: Update inital costs ONLY for SoilReinforcement measures (as primary)
-        # The code from the strategy controller can be used for this.
+        for _measure_result, _investment_years in _measure_results_dict.items():
+            _imported_measures = OptimizationMeasureResultImporter(
+                self.config, _investment_years
+            ).import_orm(_measure_result)
+
+            # Update the initial costs dictionary if possible (avoids extra computations later on).
+            for _im in filter(lambda x: x.is_initial_cost_measure, _imported_measures):
+                _initial_costs_dictionary[type(_im)][_im.measure_type] = _im.cost
+            _section_imported_measures.extend(_imported_measures)
+
+        # Update inital costs for all imported measures
+        for _im in _section_imported_measures:
+            _im.start_cost = _initial_costs_dictionary[type(_im)][_im.measure_type]
 
         return SectionAsInput(
             section_name=_section_data.section_name,
             traject_name=_section_data.dike_traject.traject_name,
-            measures=_imported_measures,
+            measures=_section_imported_measures,
         )
