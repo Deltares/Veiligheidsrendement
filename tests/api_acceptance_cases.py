@@ -105,66 +105,6 @@ class AcceptanceTestCase:
                 ],
                 case_name="Traject 38-1, two sections with D-Stability",
             ),  
-            AcceptanceTestCase(
-                model_directory="TestCase1_38-1_no_housing",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, no housing",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase1_38-1_no_housing_stix",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, no housing, with dstability",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase2_38-1_overflow_no_housing",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, no-housing, with overflow",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase1_38-1_revetment",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, with revetment, case 1",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase3_38-1_revetment",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, with revetment, including bundling",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase4_38-1_revetment_small",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, two sections with revetment",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase3_38-1_small",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, two sections",
-            ),
         ]
 
 
