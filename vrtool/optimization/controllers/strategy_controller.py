@@ -24,6 +24,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
@@ -31,9 +32,17 @@ class StrategyController:
     _method: str
     _vrtool_config: VrtoolConfig
     _section_measures_input: list[SectionAsInput]
+    # Input variables for optimization:
     opt_parameters: dict[str, int] = {}
     Pf: dict[str, np.ndarray] = {}
     LCCOptions: np.ndarray = np.array([])
+    Cint_h: np.ndarray = np.array([])
+    Cint_g: np.ndarray = np.array([])
+    Dint: np.ndarray = np.array([])
+    D: np.ndarray = np.array([])
+    RiskGeotechnical: np.ndarray = np.array([])
+    RiskOverflow: np.ndarray = np.array([])
+    RiskRevetment: np.ndarray = np.array([])
 
     def __init__(self, method: str, vrtool_config: VrtoolConfig) -> None:
         self._method = method
@@ -161,6 +170,7 @@ class StrategyController:
                 SectionAsInput(
                     _section_name,
                     selected_traject.general_info.traject_name,
+                    selected_traject.general_info.FloodDamage,
                     self._get_measures(solutions_dict[_section_name].MeasureData),
                 )
             )
@@ -190,17 +200,19 @@ class StrategyController:
             mech for sect in self._section_measures_input for mech in sect.mechanisms
         )
 
-        def _init_structures(
+        def _init_section_structures(
             sections: list[SectionAsInput], mechanisms: set[MechanismEnum]
-        ) -> tuple[dict[str, float], dict[str, MechanismEnum, np.array], np.array]:
-            parameters: dict[str, float] = {}
+        ) -> tuple[dict[str, int], dict[str, np.array], np.array]:
+            parameters: dict[str, int] = {}
             pf: dict[str, np.ndarray] = {}
             lcc: np.ndarray = np.array([])
 
             _num_sections = len(sections)
             _max_year = max(s.max_year for s in sections)
-            _max_sg = max(map(len, (s.sg_measures for s in sections)))
-            _max_sh = max(map(len, (s.sh_measures for s in sections)))
+            _max_sg = max(map(len, (s.sg_combinations for s in sections)))
+            _max_sh = max(map(len, (s.sh_combinations for s in sections)))
+
+            # General parameters
             parameters = {
                 "N": _num_sections,
                 "T": _max_year,
@@ -208,6 +220,7 @@ class StrategyController:
                 "Sh": _max_sh + 1,
             }
 
+            # Probabilities
             for _mech in mechanisms:
                 if _mech == MechanismEnum.OVERFLOW:
                     pf[_mech.name] = np.full(
@@ -237,38 +250,137 @@ class StrategyController:
                         1.0,
                     )
 
-            lcc = np.full((_num_sections, _max_sg + 1, _max_sh + 1), 1e99)
+            # LCC
+            lcc = np.full((_num_sections, _max_sh + 1, _max_sg + 1), 1e99)
 
             return (parameters, pf, lcc)
 
-        (self.opt_parameters, self.Pf, self.LCCOptions) = _init_structures(
+        (self.opt_parameters, self.Pf, self.LCCOptions) = _init_section_structures(
             self._section_measures_input, mechanisms
         )
 
-        # Populate datastructure per section, per mechanism, per sg/sh measure, per  year
+        def _get_combination_idx(
+            comb: CombinedMeasure, combinations: list[CombinedMeasure]
+        ) -> int:
+            """
+            Find the index of the combination in the list of combinations of measures.
+
+            Args:
+                comb (CombinedMeasure): The combination at hand.
+                combinations (list[CombinedMeasure]): LIs of all combined measures.
+
+            Returns:
+                int: Index of the combined measures in the list.
+            """
+            return next((i for i, c in enumerate(combinations) if c == comb), -1)
+
+        def _get_pf_for_measures(
+            mech: MechanismEnum,
+            combinations: list[CombinedMeasure],
+            dims: tuple[int, ...],
+        ) -> np.ndarray:
+            _probs = np.zeros(dims)
+            # Add other measures
+            for m, _meas in enumerate(combinations):
+                _probs[m + 1, :] = _meas.mechanism_year_collection.get_probabilities(
+                    mech, list(range(self.opt_parameters["T"]))
+                )
+            return _probs
+
+        def _get_pf_for_mech(
+            mech: MechanismEnum, section: SectionAsInput, dims: tuple[int, ...]
+        ) -> np.ndarray:
+            # Get initial assessment as first measure
+            _initial_probs = (
+                section.initial_assessment.mechanism_year_collection.get_probabilities(
+                    mech, list(range(self.opt_parameters["T"]))
+                )
+            )
+            # Get probabilities for all measures
+            if section.sg_measures[0].is_mechanism_allowed(mech):
+                return np.concatenate(
+                    _initial_probs,
+                    _get_pf_for_measures(
+                        mech, section.sg_combinations, (dims[0], dims[1] - 1), axis=0
+                    ),
+                )
+            elif section.sh_measures[0].is_mechanism_allowed(mech):
+                return _get_pf_for_measures(mech, section.sh_combinations, dims)
+
+            raise ValueError("Mechanism not allowed")
+
+        # Populate datastructure per section, per mechanism, per sg/sh measure, per year
         for n, _section in enumerate(self._section_measures_input):
             # Probabilities
             for _mech in mechanisms:
-                if _section.sg_measures[0].is_mechanism_allowed(_mech):
-                    for m, _meas in enumerate(_section.sg_measures):
-                        _probs = _meas.mechanism_year_collection.get_probabilities(
-                            _mech, list(range(self.opt_parameters["T"]))
-                        )
-                        self.Pf[_mech.name][n, m, :] = _probs
-                elif _section.sh_measures[0].is_mechanism_allowed(_mech):
-                    for m, _meas in enumerate(_section.sh_measures):
-                        _probs = _meas.mechanism_year_collection.get_probabilities(
-                            _mech, list(range(self.opt_parameters["T"]))
-                        )
-                        self.Pf[_mech.name][n, m, :] = _probs
+                _pf = _get_pf_for_mech(
+                    _mech,
+                    _section,
+                    self.Pf[_mech.name].shape[1:],
+                )
+                self.Pf[_mech.name][n, 0 : len(_pf), :] = _pf
 
-            def _get_comb_idx(
-                comb: CombinedMeasure, combinations: list[CombinedMeasure]
-            ) -> int:
-                return next((i for i, c in enumerate(combinations) if c == comb), -1)
-
-            # Cost
+            # LCC
             for _aggr in _section.aggregated_measure_combinations:
-                _sh_idx = _get_comb_idx(_aggr.sh_combination, _section.sh_combinations)
-                _sg_idx = _get_comb_idx(_aggr.sg_combination, _section.sg_combinations)
+                _sh_idx = _get_combination_idx(
+                    _aggr.sh_combination, _section.sh_combinations
+                )
+                _sg_idx = _get_combination_idx(
+                    _aggr.sg_combination, _section.sg_combinations
+                )
                 self.LCCOptions[n, _sh_idx, _sg_idx] = _aggr.lcc
+
+        # Initialize/calculate decision variables
+        # - for executed options [N, Sh] & [N, Sg]
+        self.Cint_h = np.zeros(
+            (self.opt_parameters["N"], self.opt_parameters["Sh"] - 1)
+        )
+        self.Cint_g = np.zeros(
+            (self.opt_parameters["N"], self.opt_parameters["Sg"] - 1)
+        )
+        # - for weakest overflow section with dims [N,Sh]
+        self.Dint = np.zeros((self.opt_parameters["N"], self.opt_parameters["Sh"] - 1))
+        # - for discounted damage [T,]
+        self.D = np.array(
+            self._section_measures_input[0].flood_damage
+            * (
+                1
+                / (
+                    (1 + self._section_measures_input[0].measures[0].discount_rate)
+                    ** np.arange(0, self.opt_parameters["T"], 1)
+                )
+            )
+        )
+
+        # Calculate expected damage
+        # - for overflow//piping/slope stability
+        def _get_independent_probability_of_failure(
+            probability_of_failure_lookup: dict[str, np.array]
+        ) -> np.array:
+            return CombinFunctions.combine_probabilities(
+                probability_of_failure_lookup,
+                SgMeasure.get_allowed_mechanisms(),
+            )
+
+        self.RiskGeotechnical = _get_independent_probability_of_failure(
+            self.Pf
+        ) * np.tile(self.D.T, (self.opt_parameters["N"], self.opt_parameters["Sg"], 1))
+
+        self.RiskOverflow = self.Pf[MechanismEnum.OVERFLOW.name] * np.tile(
+            self.D.T, (self.opt_parameters["N"], self.opt_parameters["Sh"], 1)
+        )
+
+        # - for revetment
+        self.RiskRevetment = []
+        if MechanismEnum.REVETMENT in mechanisms:
+            self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(
+                self.D.T, (self.opt_parameters["N"], self.opt_parameters["Sh"], 1)
+            )
+        else:
+            self.RiskRevetment = np.zeros(
+                (
+                    self.opt_parameters["N"],
+                    self.opt_parameters["Sh"],
+                    self.opt_parameters["T"],
+                )
+            )
