@@ -39,6 +39,7 @@ class TestSectionAsInput:
         return SectionAsInput(
             section_name="section_name",
             traject_name="traject_name",
+            flood_damage=0,
             measures=[
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 MockShMeasure(MeasureTypeEnum.REVETMENT),

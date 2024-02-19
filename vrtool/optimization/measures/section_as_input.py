@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -8,6 +9,9 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
+)
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
@@ -17,6 +21,7 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 class SectionAsInput:
     section_name: str
     traject_name: str
+    flood_damage: float
     measures: list[MeasureAsInputProtocol]
     combined_measures: list[CombinedMeasure] = field(
         default_factory=list[CombinedMeasure]
@@ -24,6 +29,17 @@ class SectionAsInput:
     aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]] = (
         field(default_factory=list[AggregatedMeasureCombination])
     )
+
+    @property
+    def initial_assessment(self) -> MechanismPerYearProbabilityCollection:
+        return next(
+            m.mechanism_year_collection
+            for m in self.sg_measures
+            if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
+            and m.year == 0
+            and m.dberm == 0
+            and m.dcrest == 0
+        )
 
     def get_measures_by_class(
         self,
@@ -41,11 +57,11 @@ class SectionAsInput:
         return list(filter(lambda x: isinstance(x, measure_class), self.measures))
 
     @property
-    def sh_measures(self) -> list[MeasureAsInputProtocol]:
+    def sh_measures(self) -> list[ShMeasure]:
         return self.get_measures_by_class(ShMeasure)
 
     @property
-    def sg_measures(self) -> list[MeasureAsInputProtocol]:
+    def sg_measures(self) -> list[SgMeasure]:
         return self.get_measures_by_class(SgMeasure)
 
     def get_combinations_by_class(
