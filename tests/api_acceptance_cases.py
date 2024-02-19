@@ -102,7 +102,7 @@ class AcceptanceTestCase:
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],8
+                ],
                 case_name="Traject 38-1, two sections with D-Stability",
             ),  
             AcceptanceTestCase(
