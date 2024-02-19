@@ -50,32 +50,47 @@ class TestSectionAsInput:
         )
         return _measure
 
-    def test_two_measures(self):
+    def test_investment_year_basic(self):
+        """
+        Minimal test: a zero measure and an actual measure
+        Reference values can be obtained using linear interpolation
+        """
         # setup
         _yr1 = 20
         _prob_diff = 0.5
         _prob_zero = [4.0, 4.0 - _prob_diff]
+        _prob_measure = [5.0, 5.0 - _prob_diff]
         _measures = [
-            self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
+            self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure),
         ]
-        _section_as_measures = SectionAsInput("section1", "traject1", _measures, [])
+        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
         # run test
-        _section_as_measures.update_measurelist_with_investment_year(
+        _section_as_input.update_measurelist_with_investment_year(
             _zero_measure.mechanism_year_collection
         )
 
         # check results
 
-        # year 0 for the second measure is copied from the first measure:
+        # year 0 for the first measure is copied from the zero measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
         assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
-        # year 20 for the second measure is an interpolated value copied from the first measure:
+        # year 20 for the first measure is an interpolated value copied from the zero measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(MechanismEnum.OVERFLOW, _yr1)
         _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
+
+        # year 21 for the first measure is an interpolated value from this measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1+1)
+        _beta_expected = _prob_measure[0] - _prob_diff * (_yr1+1) / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
+
+        # year 50 for the first measure is a copy of the last year
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _END_YEAR)
+        _beta_expected = _prob_measure[1]
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with two years:
@@ -85,39 +100,54 @@ class TestSectionAsInput:
         _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
 
-    def test_three_measures(self):
+    def test_two_investment_years(self):
+        """
+        Test a zero measure and and two actual measures that only differ in investment year
+        Reference values can be obtained using linear interpolation
+        """
         # setup
         _yr1 = 20
         _yr2 = 30
         _prob_diff = 0.5
         _prob_zero = [4.0, 4.0 - _prob_diff]
+        _prob_measure = [5.0, 5.0 - _prob_diff]
         _measures = [
-            self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
-            self._get_measure(_yr2, [4.0, 2.0, 0.0], [5.0, 4.5]),
+            self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure),
+            self._get_measure(_yr2, [4.0, 2.0, 0.0], _prob_measure),
         ]
-        _section_as_measures = SectionAsInput("section1", "traject1", _measures, [])
+        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
         # run test
-        _section_as_measures.update_measurelist_with_investment_year(
+        _section_as_input.update_measurelist_with_investment_year(
             _zero_measure.mechanism_year_collection
         )
 
         # check results
 
-        # year 0 for the second measure is copied from the first measure:
+        # year 0 for the first measure is copied from the zero measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
         assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
-        # year 20 for the second measure is an interpolated value copied from the first measure:
+        # year 20 for the first measure is an interpolated value copied from the zero measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1)
         _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
-        # year 30 for the third measure is an interpolated value copied from the first measure:
+        # year 21 for the first measure is an interpolated value from this measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1+1)
+        _beta_expected = _prob_measure[0] - _prob_diff * (_yr1+1) / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
+
+        # year 30 for the second measure is an interpolated value copied from the zero measure:
         _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2)
         _beta_expected = _prob_zero[0] - _prob_diff * _yr2 / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
+
+        # year 31 for the second measure is an interpolated value from this measure:
+        _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2+1)
+        _beta_expected = _prob_measure[0] - _prob_diff * (_yr2+1) / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with four years:
@@ -129,7 +159,7 @@ class TestSectionAsInput:
         _yrs = _measures[1].mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
 
-    def test_two_mechanisms(self):
+    def test_investment_years_with_two_mechanisms(self):
         # setup
         _yr1 = 20
         _prob_diff = 0.5
@@ -137,7 +167,7 @@ class TestSectionAsInput:
         _measures = [
             self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
         ]
-        _section_as_measures = SectionAsInput("section1", "traject1", _measures, [])
+        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
         _initial = _zero_measure.mechanism_year_collection
@@ -147,7 +177,7 @@ class TestSectionAsInput:
         _initial.probabilities.append(_stability50)
 
         # run test
-        _section_as_measures.update_measurelist_with_investment_year(_initial)
+        _section_as_input.update_measurelist_with_investment_year(_initial)
 
         # check results
 
