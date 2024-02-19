@@ -225,10 +225,11 @@ class TestSectionAsInput:
         _yr2 = 30
         _prob_diff = 0.5
         _prob_zero = [4.0, 4.0 - _prob_diff]
-        _prob_measure = [5.0, 5.0 - _prob_diff]
+        _prob_measure_a = [5.0, 5.0 - _prob_diff]
+        _prob_measure_b = [6.0, 6.0 - _prob_diff]
         _measures = [
-            self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure),
-            self._get_measure(_yr2, [4.0, 2.0, 0.0], _prob_measure),
+            self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure_a),
+            self._get_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
         ]
         _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
 
@@ -252,7 +253,7 @@ class TestSectionAsInput:
 
         # year 21 for the first measure is an interpolated value from this measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1+1)
-        _beta_expected = _prob_measure[0] - _prob_diff * (_yr1+1) / _END_YEAR
+        _beta_expected = _prob_measure_a[0] - _prob_diff * (_yr1+1) / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # year 30 for the second measure is an interpolated value copied from the zero measure:
@@ -262,7 +263,7 @@ class TestSectionAsInput:
 
         # year 31 for the second measure is an interpolated value from this measure:
         _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2+1)
-        _beta_expected = _prob_measure[0] - _prob_diff * (_yr2+1) / _END_YEAR
+        _beta_expected = _prob_measure_b[0] - _prob_diff * (_yr2+1) / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with four years:
@@ -275,6 +276,9 @@ class TestSectionAsInput:
         assert _yrs == _ref
 
     def test_investment_years_with_two_mechanisms(self):
+        """
+        Test investment years with two different mechanisms in the zero measure
+        """
         # setup
         _yr1 = 20
         _prob_diff = 0.5
@@ -311,4 +315,3 @@ class TestSectionAsInput:
         assert _yrs == _ref
         _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
         assert _yrs == _ref
-
