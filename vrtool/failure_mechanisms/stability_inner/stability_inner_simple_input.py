@@ -8,6 +8,7 @@ from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 @dataclass
@@ -23,7 +24,7 @@ class StabilityInnerSimpleInput:
 
     beta: np.ndarray
     scenario_probability: np.ndarray
-    probability_of_failure: np.ndarray
+    initial_probability_of_failure: np.ndarray
 
     failure_probability_with_elimination: np.ndarray
     failure_probability_elimination: np.ndarray
@@ -32,14 +33,33 @@ class StabilityInnerSimpleInput:
     reliability_calculation_method: ReliabilityCalculationMethod
 
     def get_failure_probability_from_scenarios(self) -> float:
+        """
+        Gets the current failure probability based on the `scenario_probability` and `beta`.
+        We use `beta` instead of `initial_probability_of_failure` as the latter remains constant whilst
+        `beta` changes throughout the different steps of an optimization since imported from the database.
+
+        Returns:
+            float: Failure probability as the inner product of `beta` and `scenario_probability`.
+        """
+        _probability_single_assessment = beta_to_pf(self.beta)
         return np.sum(
-            np.multiply(self.probability_of_failure, self.scenario_probability)
+            np.multiply(_probability_single_assessment, self.scenario_probability)
         )
 
     @classmethod
     def from_mechanism_input(
         cls, mechanism_input: MechanismInput
     ) -> StabilityInnerSimpleInput:
+        """
+        Generates a `StabilityInnerSimpleInput` object based on the provided `MechanismInput`.
+
+        Args:
+            mechanism_input (MechanismInput): Mechanism input containing all the required input data.
+
+        Returns:
+            StabilityInnerSimpleInput: Resulting mapped object.
+        """
+
         def _get_valid_bool_value(input_value: str | bool) -> bool:
             if isinstance(input_value, bool):
                 return input_value
@@ -100,7 +120,9 @@ class StabilityInnerSimpleInput:
             scenario_probability=mechanism_input.input.get(
                 "P_scenario", np.ndarray([])
             ),
-            probability_of_failure=mechanism_input.input.get("Pf", np.ndarray([])),
+            initial_probability_of_failure=mechanism_input.input.get(
+                "Pf", np.ndarray([])
+            ),
             reliability_calculation_method=_reliability_calculation_method,
             failure_probability_with_elimination=_failure_probability_with_elimination,
             failure_probability_elimination=_failure_probability_elimination,
