@@ -1,6 +1,8 @@
+import pytest
 from pandas import DataFrame as df
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -155,7 +157,7 @@ class TestStrategyController:
                     8641635.0,
                     1302200.0,
                     26189540.0,
-                    0.0,
+                    100000.0,
                     200000.0,
                 ],
                 ("OVERFLOW", 0): [
@@ -347,3 +349,48 @@ class TestStrategyController:
             len(_sections[0].sh_measures[0].mechanism_year_collection.probabilities)
             == 4
         )
+
+    def test_mapping_output(self):
+        # 1. Define input
+        _selected_dike_traject = self._create_valid_dike_traject()
+        _solutions_dict = self._create_solution_dict()
+        _optimization_controller = StrategyController("Dummy", VrtoolConfig())
+        _optimization_controller.map_input(_selected_dike_traject, _solutions_dict)
+        _optimization_controller.combine()
+        _optimization_controller.aggregate()
+
+        # 2. Run test
+        _optimization_controller.map_output()
+
+        # 3. Verify expectations
+        assert _optimization_controller.Pf is not None
+        assert _optimization_controller.Pf[MechanismEnum.PIPING.name].shape == (
+            2,
+            12,
+            50,
+        )
+        assert _optimization_controller.Pf[MechanismEnum.OVERFLOW.name].shape == (
+            2,
+            24,
+            50,
+        )
+        assert _optimization_controller.Pf[MechanismEnum.REVETMENT.name].shape == (
+            2,
+            24,
+            50,
+        )
+        assert _optimization_controller.Pf[
+            MechanismEnum.STABILITY_INNER.name
+        ].shape == (
+            2,
+            12,
+            50,
+        )
+        assert _optimization_controller.Pf[MechanismEnum.STABILITY_INNER.name][
+            0, 0, 0
+        ] == pytest.approx(1.412098e-08)
+
+        assert _optimization_controller.LCCOptions is not None
+        assert _optimization_controller.LCCOptions.shape == (2, 24, 12)
+        assert _optimization_controller.LCCOptions[0, 0, 0] == pytest.approx(1595569.0)
+        assert _optimization_controller.LCCOptions[1, 1, 1] == pytest.approx(393369)

@@ -282,7 +282,7 @@ class StrategyController:
             _probs = np.zeros(dims)
             # Add other measures
             for m, _meas in enumerate(combinations):
-                _probs[m + 1, :] = _meas.mechanism_year_collection.get_probabilities(
+                _probs[m, :] = _meas.mechanism_year_collection.get_probabilities(
                     mech, list(range(self.opt_parameters["T"]))
                 )
             return _probs
@@ -291,23 +291,22 @@ class StrategyController:
             mech: MechanismEnum, section: SectionAsInput, dims: tuple[int, ...]
         ) -> np.ndarray:
             # Get initial assessment as first measure
-            _initial_probs = (
-                section.initial_assessment.mechanism_year_collection.get_probabilities(
-                    mech, list(range(self.opt_parameters["T"]))
-                )
+            _initial_probs = section.initial_assessment.get_probabilities(
+                mech, list(range(self.opt_parameters["T"]))
             )
             # Get probabilities for all measures
             if section.sg_measures[0].is_mechanism_allowed(mech):
-                return np.concatenate(
-                    _initial_probs,
-                    _get_pf_for_measures(
-                        mech, section.sg_combinations, (dims[0], dims[1] - 1), axis=0
-                    ),
+                _probs = _get_pf_for_measures(
+                    mech, section.sg_combinations, (dims[0] - 1, dims[1])
                 )
             elif section.sh_measures[0].is_mechanism_allowed(mech):
-                return _get_pf_for_measures(mech, section.sh_combinations, dims)
-
-            raise ValueError("Mechanism not allowed")
+                _probs = _get_pf_for_measures(
+                    mech, section.sh_combinations, (dims[0] - 1, dims[1])
+                )
+            else:
+                raise ValueError("Mechanism not allowed")
+            # Concatenate both probabilities
+            return np.concatenate((np.array(_initial_probs)[None, :], _probs), axis=0)
 
         # Populate datastructure per section, per mechanism, per sg/sh measure, per year
         for n, _section in enumerate(self._section_measures_input):
@@ -359,7 +358,7 @@ class StrategyController:
         ) -> np.array:
             return CombinFunctions.combine_probabilities(
                 probability_of_failure_lookup,
-                SgMeasure.get_allowed_mechanisms(),
+                [m.name for m in SgMeasure.get_allowed_mechanisms()],
             )
 
         self.RiskGeotechnical = _get_independent_probability_of_failure(
@@ -371,7 +370,6 @@ class StrategyController:
         )
 
         # - for revetment
-        self.RiskRevetment = []
         if MechanismEnum.REVETMENT in mechanisms:
             self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(
                 self.D.T, (self.opt_parameters["N"], self.opt_parameters["Sh"], 1)
