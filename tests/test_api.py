@@ -378,62 +378,6 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
 
-
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        acceptance_test_cases[6:],
-        indirect=True,
-    )
-    @pytest.mark.skip(reason="Deprecated test set.")
-    def test_run_step_measures_given_valid_vrtool_config(
-        self, valid_vrtool_config: VrtoolConfig
-    ):
-        # 1. Define test data.
-        _validator = RunStepMeasuresValidator()
-
-        clear_measure_results(valid_vrtool_config)
-        _validator.validate_preconditions(valid_vrtool_config)
-
-        # 2. Run test.
-        run_step_measures(valid_vrtool_config)
-
-        # 3. Verify expectations.
-        _validator.validate_results(valid_vrtool_config)
-
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        acceptance_test_cases[6:],
-        indirect=True,
-    )
-    @pytest.mark.skip(reason="Deprecated test set.")
-    def test_run_step_optimization_given_valid_vrtool_config(
-        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
-    ):
-        # 1. Define test data.
-        _new_optimization_name = "test_optimization_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
-
-        # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results(valid_vrtool_config)
-
-        _validator = RunStepOptimizationValidator()
-        _validator.validate_preconditions(valid_vrtool_config)
-
-        # We actually run using ALL the available measure results.
-        _measures_input = get_all_measure_results_with_supported_investment_years(
-            valid_vrtool_config
-        )
-
-        # 2. Run test.
-        run_step_optimization(
-            valid_vrtool_config, _new_optimization_name, _measures_input
-        )
-
-        # 3. Verify expectations.
-        _validator.validate_results(valid_vrtool_config)
-        _validator.validate_phased_out_csv_files(valid_vrtool_config)
-
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases[5:7],
