@@ -51,15 +51,13 @@ def get_list_of_sections_for_measure_ids(
     Returns:
         list[int]: List of section ids.
     """
-    _connected_db = open_database(valid_vrtool_config.input_database_path)
-    _sections = (
-        orm.MeasurePerSection.select(orm.MeasurePerSection.section_id)
-        .join(orm.MeasureResult)
-        .where(orm.MeasureResult.id.in_(measure_ids))
-    )
-    _connected_db.close()
+    with open_database(valid_vrtool_config.input_database_path).connection_context():
+        _sections = (
+            orm.MeasurePerSection.select(orm.MeasurePerSection.section_id)
+            .join(orm.MeasureResult)
+            .where(orm.MeasureResult.id.in_(measure_ids))
+        )
     #return the sections for each MeasureResult
-    
     return [x.section.get_id() for x in _sections]
 
 def get_all_measure_results_of_specific_type(
@@ -77,17 +75,16 @@ def get_all_measure_results_of_specific_type(
     Returns:
         list[tuple[int, int]]: List of measure result - investment year pairs.
     """
-    _connected_db = open_database(valid_vrtool_config.input_database_path)
-    # We do not want measures that have a year variable >0 initially, as then the interpolation is messed up.
-    _supported_measures = (
-        orm.MeasureResult.select()
-        .join(orm.MeasurePerSection)
-        .join(orm.Measure)
-        .join(orm.MeasureType)
-        .where(orm.Measure.year != 20)
-        .where(orm.MeasureType.name == measure_name)
-    )
-    _connected_db.close()
+    with open_database(valid_vrtool_config.input_database_path).connection_context():
+        # We do not want measures that have a year variable >0 initially, as then the interpolation is messed up.
+        _supported_measures = (
+            orm.MeasureResult.select()
+            .join(orm.MeasurePerSection)
+            .join(orm.Measure)
+            .join(orm.MeasureType)
+            .where(orm.Measure.year != 20)
+            .where(orm.MeasureType.name == measure_name)
+        )
     #get all ids of _supported_measures
     return [x.get_id() for x in _supported_measures]
 
