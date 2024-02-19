@@ -17,6 +17,16 @@ class OptimizationSectionAsInputImporter:
         self,
         section_data_results: tuple[OrmSectionData, dict[OrmMeasureResult, list[int]]],
     ) -> SectionAsInput:
+        """
+        Imports the filtered collection of `SectionAsInput` containing all the information related
+        to the requested measure results (`MeasureResult`).
+
+        Args:
+            section_data_results (tuple[OrmSectionData, dict[OrmMeasureResult, list[int]]]): Measure results and requested years to import for a given `SectionData`.
+
+        Returns:
+            SectionAsInput: Mapped resulting object.
+        """
         _imported_measures = []
         _section_data, _measure_results_dict = section_data_results
         for _measure_result, _investment_years in _measure_results_dict.items():
