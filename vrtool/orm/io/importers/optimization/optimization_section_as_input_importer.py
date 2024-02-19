@@ -15,16 +15,20 @@ class OptimizationSectionAsInputImporter:
 
     def import_from_section_data_results(
         self,
-        section_data_results: tuple[OrmSectionData, list[tuple[OrmMeasureResult, int]]],
+        section_data_results: tuple[OrmSectionData, dict[OrmMeasureResult, list[int]]],
     ) -> SectionAsInput:
         _imported_measures = []
-        _section_data, _selected_measure_results = section_data_results
-        for _smr, _investment_year in _selected_measure_results:
+        _section_data, _measure_results_dict = section_data_results
+        for _measure_result, _investment_years in _measure_results_dict.items():
             _imported_measures.extend(
                 OptimizationMeasureResultImporter(
-                    self.config, _investment_year
-                ).import_orm(_smr)
+                    self.config, _investment_years
+                ).import_orm(_measure_result)
             )
+
+        # TODO: Update inital costs ONLY for SoilReinforcement measures (as primary)
+        # The code from the strategy controller can be used for this.
+
         return SectionAsInput(
             section_name=_section_data.section_name,
             traject_name=_section_data.dike_traject.traject_name,

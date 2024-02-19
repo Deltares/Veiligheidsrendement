@@ -1,3 +1,4 @@
+from collections import defaultdict
 import itertools
 import logging
 from pathlib import Path
@@ -328,6 +329,8 @@ def import_results_measures(
             _mapped_section,
         ).import_orm(_selected_measure_id)
         _solutions_dict[_section.section_name] = _imported_solution
+        # NOTE: This is an "implicit" filter of which years will be imported
+        # based on the input "investment_year".
         _solutions_dict[_section.section_name].MeasureData[
             "year"
         ] = _selected_measure_year
@@ -359,18 +362,21 @@ def import_results_measures_for_optimization(
     """
 
     def get_measure_results_to_import() -> (
-        Iterator[tuple[orm.SectionData, list[tuple[orm.MeasureResult, int]]]]
+        dict[orm.SectionData, dict[orm.MeasureResult, list[int]]]
     ):
         """
-        Returns a tuple of [`MeasureResult`, `investment_year`] values grouped by their `SectionData`.
+        Returns a dictionary of `orm.SectionData` containing dictionaries of their
+        to-be-imported `orm.MeasureResult` with their respective `investment_year`.
         """
-        _measure_results_to_import = (
-            (orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1])
-            for _result_tuple in results_ids_to_import
-        )
-        return itertools.groupby(
-            _measure_results_to_import, lambda x: x[0].measure_per_section.section
-        )
+        _section_measure_result_dict = defaultdict(lambda: defaultdict(list))
+        for _result_tuple in results_ids_to_import:
+            _measure_result = orm.MeasureResult.get_by_id(_result_tuple[0])
+            _measure_section = _measure_result.measure_per_section.section
+            _section_measure_result_dict[_measure_section][_measure_result].append(
+                _result_tuple[1]
+            )
+
+        return _section_measure_result_dict
 
     # Import a solution per section:
     _list_section_as_input: list[SectionAsInput] = []
@@ -379,7 +385,7 @@ def import_results_measures_for_optimization(
         _list_section_as_input = list(
             map(
                 _importer.import_from_section_data_results,
-                get_measure_results_to_import(),
+                get_measure_results_to_import().items(),
             )
         )
 

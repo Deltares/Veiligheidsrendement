@@ -20,6 +20,9 @@ from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_result.measure_result import (
     MeasureResult as OrmMeasureResult,
 )
+from vrtool.orm.models.measure_result.measure_result_section import (
+    MeasureResultSection as OrmMeasureResultSection,
+)
 
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
@@ -29,15 +32,17 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
     discount_rate: float
     unit_costs: dict
-    investment_year: int
+    investment_years: list[int]
 
-    def __init__(self, vrtool_config: VrtoolConfig, investment_year: int) -> None:
+    def __init__(
+        self, vrtool_config: VrtoolConfig, investment_years: list[int]
+    ) -> None:
         if not vrtool_config:
             raise ValueError("VrtoolConfig not provided.")
 
         self.discount_rate = vrtool_config.discount_rate
         self.unit_costs = vrtool_config.unit_costs
-        self.investment_year = investment_year
+        self.investment_years = investment_years
 
     @staticmethod
     def valid_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> bool:
@@ -53,9 +58,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             bool: Parameter is a valid value of the `MeasureResult`.
         """
         _parameter_value = measure_result.get_parameter_value(parameter_name)
-        if math.isnan(_parameter_value):
-            return False
-        return any(math.isclose(_parameter_value, x) for x in [0, -999])
+        return math.isclose(_parameter_value, 0) or math.isnan(_parameter_value)
 
     def _get_mechanism_year_collection(
         self,
@@ -91,7 +94,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         )
         _measure_concrete_params = measure_as_input_type.get_concrete_parameters()
         _measures_dict = []
-        for _section_result in measure_result.sections_measure_result:
+        for _section_result in measure_result.sections_measure_result.where(
+            OrmMeasureResultSection.time << self.investment_years
+        ):
             _time = _section_result.time
             _cost = _section_result.cost
             _measures_dict.append(
