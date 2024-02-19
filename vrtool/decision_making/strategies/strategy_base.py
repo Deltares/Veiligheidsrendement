@@ -360,7 +360,7 @@ class StrategyBase:
             combinedmeasures = self._step1combine(solutions_dict, section, splitparams)
 
             StrategyData = copy.deepcopy(solutions_dict[section.name].MeasureData)
-            if len(combinedmeasures)>0:
+            if any(combinedmeasures):
                 StrategyData = pd.concat((StrategyData, combinedmeasures))
             if filtering == "on":
                 StrategyData = copy.deepcopy(StrategyData)
@@ -405,9 +405,9 @@ class StrategyBase:
             pd.DataFrame: An object that contains all information of the combined measures.
         """
         # add self.indexCombined2single[section.name] as column to solutions_dict[section.name].MeasureData
-        solutions_dict[section.name].MeasureData[
-            "combined_db_index"
-        ] = self.indexCombined2single[section.name]
+        solutions_dict[section.name].MeasureData["combined_db_index"] = (
+            self.indexCombined2single[section.name]
+        )
         # split different measure types:
         available_measure_classes = (
             solutions_dict[section.name].MeasureData["class"].unique().tolist()
@@ -452,7 +452,7 @@ class StrategyBase:
                 measures_per_class["revetment"],
             )
 
-            if len(combinedmeasures_indices) > 0:
+            if any(combinedmeasures_indices):
                 # combine combined measures with revetments
                 new_indices2, combinedmeasures_with_revetment = revetment_combinations(
                     combinedmeasures,
@@ -485,9 +485,9 @@ class StrategyBase:
         # if there is a measureid that is not known yet, add it to the measure table
 
         existingIDs = solutions_dict[section.name].measure_table["ID"].values
-        if len(combinedmeasures) > 0:
+        if any(combinedmeasures):
             IDs = np.unique(combinedmeasures["ID"].values)
-            if len(IDs) > 0:
+            if any(IDs):
                 for ij in IDs:
                     if ij not in existingIDs:
                         indexes = ij.split("+")
