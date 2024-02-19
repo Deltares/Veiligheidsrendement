@@ -32,7 +32,7 @@ class SectionAsInput:
 
     @property
     def initial_assessment(self) -> MechanismPerYearProbabilityCollection:
-        return next(
+        _sg_collection = next(
             m.mechanism_year_collection
             for m in self.sg_measures
             if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
@@ -40,6 +40,19 @@ class SectionAsInput:
             and m.dberm == 0
             and m.dcrest == 0
         )
+        _sh_collection = next(
+            (
+                m.mechanism_year_collection
+                for m in self.sh_measures
+                if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
+                and m.year
+                and m.dcrest == 0
+            ),
+            None,
+        )
+        if _sh_collection:
+            _sg_collection.probabilities += _sh_collection.probabilities
+        return _sg_collection
 
     def get_measures_by_class(
         self,
