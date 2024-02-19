@@ -170,7 +170,9 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         SFincrease: float = 0.2,
     ) -> None:
-        _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][1].upper()
+        _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][
+            1
+        ].upper()
 
         mechanism_reliability_input = mechanism_reliability.Input.input
         if _calc_type == "DSTABILITY":

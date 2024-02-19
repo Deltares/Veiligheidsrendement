@@ -1,8 +1,9 @@
 import itertools
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
-from collections import defaultdict
+
 import pandas as pd
 from peewee import SqliteDatabase
 
@@ -308,7 +309,7 @@ def import_results_measures(
         )
     ]
     # If there are non_unique sections, we will have to combine the results.
-    #get the first entries of the tuples in _grouped_by_section
+    # get the first entries of the tuples in _grouped_by_section
     _grouped_by_section_unique = defaultdict(list)
     for key, value in _grouped_by_section:
         _grouped_by_section_unique[key].extend(value)
@@ -341,6 +342,7 @@ def import_results_measures(
     _results_measures.ids_to_import = results_ids_to_import
 
     return _results_measures
+
 
 def get_all_measure_results_with_supported_investment_years(
     valid_vrtool_config: VrtoolConfig,

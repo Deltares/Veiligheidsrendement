@@ -67,7 +67,7 @@ class AcceptanceTestCase:
                 model_directory="38-1 two river sections",
                 traject_name="38-1",
                 excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,                    
+                    MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 38-1, two river sections",
@@ -79,12 +79,12 @@ class AcceptanceTestCase:
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 31-1, base coastal case",
-            ),            
+            ),
             AcceptanceTestCase(
                 model_directory="38-1 base river case",
                 traject_name="38-1",
                 excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,                    
+                    MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 38-1, base river case",
@@ -96,7 +96,7 @@ class AcceptanceTestCase:
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 31-1, mixed coastal case",
-            ),  
+            ),
             AcceptanceTestCase(
                 model_directory="38-1 two river sections D-Stability",
                 traject_name="38-1",
@@ -104,7 +104,7 @@ class AcceptanceTestCase:
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 38-1, two sections with D-Stability",
-            ),  
+            ),
         ]
 
 

@@ -24,9 +24,9 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum as MeasureType
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm import models as orm
-
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -35,20 +35,20 @@ from vrtool.orm.orm_controllers import (
     open_database,
     vrtool_db,
 )
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum as MeasureType
+
 
 def get_list_of_sections_for_measure_ids(
-        valid_vrtool_config: VrtoolConfig,
-        measure_ids: list[int],
+    valid_vrtool_config: VrtoolConfig,
+    measure_ids: list[int],
 ) -> list[int]:
     """
     gets a list of the sectionIds for the measureIds provided in a list.
-    
+
     Args:
         valid_vrtool_config (VrtoolConfig):
             Configuration contanining database connection details.
         measure_ids (list[int]): List of measure ids to get the sections for.
-        
+
     Returns:
         list[int]: List of section ids.
     """
@@ -58,8 +58,9 @@ def get_list_of_sections_for_measure_ids(
             .join(orm.MeasureResult)
             .where(orm.MeasureResult.id.in_(measure_ids))
         )
-    #return the sections for each MeasureResult
+    # return the sections for each MeasureResult
     return [x.section.get_id() for x in _sections]
+
 
 def get_all_measure_results_of_specific_type(
     valid_vrtool_config: VrtoolConfig,
@@ -71,7 +72,7 @@ def get_all_measure_results_of_specific_type(
     Args:
         valid_vrtool_config (VrtoolConfig):
             Configuration contanining database connection details.
-        measure_type_name (str): Name of the measure type to get the results for 
+        measure_type_name (str): Name of the measure type to get the results for
 
     Returns:
         list[tuple[int, int]]: List of measure result - investment year pairs.
@@ -86,8 +87,9 @@ def get_all_measure_results_of_specific_type(
             .where(orm.Measure.year != 20)
             .where(orm.MeasureType.name == measure_name.get_old_name())
         )
-    #get all ids of _supported_measures
+    # get all ids of _supported_measures
     return [x.get_id() for x in _supported_measures]
+
 
 class TestApi:
     def test_when_get_valid_vrtool_config_given_directory_without_json_raises_error(
@@ -265,9 +267,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases[0:6],
         indirect=True,
     )
-    def test_run_step_assessment(
-        self, valid_vrtool_config: VrtoolConfig
-    ):
+    def test_run_step_assessment(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         clear_assessment_results(valid_vrtool_config)
         _validator = RunStepAssessmentValidator()
@@ -288,9 +288,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases[0:6],
         indirect=True,
     )
-    def test_run_step_measure(
-        self, valid_vrtool_config: VrtoolConfig
-    ):
+    def test_run_step_measure(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         _validator = RunStepMeasuresValidator()
 
@@ -354,7 +352,7 @@ class TestApiRunWorkflowsAcceptance:
         _validator = RunStepOptimizationValidator("_filtered")
         _validator.validate_preconditions(valid_vrtool_config)
 
-        #get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
+        # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
         _measure_ids = [
             get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
             for measure_type in [
@@ -363,7 +361,7 @@ class TestApiRunWorkflowsAcceptance:
                 MeasureType.VERTICAL_GEOTEXTILE,
             ]
         ]
-        #flatten list of _measure_ids
+        # flatten list of _measure_ids
         _measure_ids = [item for sublist in _measure_ids for item in sublist]
         # each measure should be executed in year 0 so generate tuples of id and 0
         _measures_input = [(measure_id, 0) for measure_id in _measure_ids]
@@ -375,7 +373,7 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
-    
+
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases[0:2],
@@ -394,7 +392,7 @@ class TestApiRunWorkflowsAcceptance:
         _validator = RunStepOptimizationValidator("_adjusted_timing")
         _validator.validate_preconditions(valid_vrtool_config)
 
-        #get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
+        # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
         _measure_ids = [
             get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
             for measure_type in [
@@ -403,16 +401,21 @@ class TestApiRunWorkflowsAcceptance:
                 MeasureType.VERTICAL_GEOTEXTILE,
             ]
         ]
-        #flatten list of _measure_ids and sort
+        # flatten list of _measure_ids and sort
         _measure_ids = sorted([item for sublist in _measure_ids for item in sublist])
-        
-        #get the sections for each measure
-        _sections_per_measure_id = get_list_of_sections_for_measure_ids(valid_vrtool_config, _measure_ids)
-        
-        #list of investment years (note that first value is not used)
+
+        # get the sections for each measure
+        _sections_per_measure_id = get_list_of_sections_for_measure_ids(
+            valid_vrtool_config, _measure_ids
+        )
+
+        # list of investment years (note that first value is not used)
         _investment_years_per_section = [3, 3, 23, 13]
         # each measure should be executed in year 0 so generate tuples of id and 0
-        _measures_input = [(measure_id, _investment_years_per_section[_sections_per_measure_id[count]]) for count, measure_id in enumerate(_measure_ids)]
+        _measures_input = [
+            (measure_id, _investment_years_per_section[_sections_per_measure_id[count]])
+            for count, measure_id in enumerate(_measure_ids)
+        ]
 
         # 2. Run test.
         run_step_optimization(
