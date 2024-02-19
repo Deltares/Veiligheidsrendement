@@ -199,7 +199,7 @@ class TestStabilityInnerSimpleInput:
             pytest.param([1, 0.1], [0.02, 0.2], 0.04),
         ],
     )
-    def test_given_initial_probability_of_failure_and_scenario_probability_as_arrays_then_returns_expectation(
+    def test_given_initial_pf_and_scenario_probability_as_arrays_then_returns_expectation(
         self,
         initial_probability_of_failure: list[float],
         scenario_probability: list[float],

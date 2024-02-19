@@ -6,6 +6,12 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.controllers.aggregate_combinations_controller import (
+    AggregateCombinationsController,
+)
+from vrtool.optimization.controllers.combine_measures_controller import (
+    CombineMeasuresController,
+)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -29,8 +35,8 @@ class StrategyController:
         self._vrtool_config = vrtool_config
         self._section_measures_input = []
 
+    @staticmethod
     def _get_mechanism_year_collection(
-        self,
         measure_row: pd.DataFrame,
         idx: int,
         allowed_mechanisms: list[MechanismEnum],
@@ -54,7 +60,11 @@ class StrategyController:
 
         return MechanismPerYearProbabilityCollection(_probabilities)
 
-    def _create_sg_measure(self, measure_row: pd.DataFrame, idx: int) -> SgMeasure:
+    def _create_sg_measure(
+        self,
+        measure_row: pd.DataFrame,
+        idx: int,
+    ) -> SgMeasure:
         _mech_year_coll = self._get_mechanism_year_collection(
             measure_row,
             idx,
@@ -64,7 +74,6 @@ class StrategyController:
         _comb_type = CombinableTypeEnum.get_enum(measure_row.at[idx, ("class", "")])
         _cost = measure_row.at[idx, ("cost", "")]
         _year = measure_row.at[idx, ("year", "")]
-        _lcc = _cost / (1 + self._vrtool_config.discount_rate) ** _year
         _dberm = measure_row.at[idx, ("dberm", "")]
         _dcrest = measure_row.at[idx, ("dcrest", "")]
 
@@ -73,13 +82,17 @@ class StrategyController:
             combine_type=_comb_type,
             cost=_cost,
             year=_year,
-            lcc=_lcc,
+            discount_rate=self._vrtool_config.discount_rate,
             mechanism_year_collection=_mech_year_coll,
             dberm=_dberm,
             dcrest=_dcrest,
         )
 
-    def _create_sh_measure(self, measure_row: pd.DataFrame, idx: int) -> ShMeasure:
+    def _create_sh_measure(
+        self,
+        measure_row: pd.DataFrame,
+        idx: int,
+    ) -> ShMeasure:
         _mech_year_coll = self._get_mechanism_year_collection(
             measure_row,
             idx,
@@ -89,7 +102,6 @@ class StrategyController:
         _comb_type = CombinableTypeEnum.get_enum(measure_row.at[idx, ("class", "")])
         _cost = measure_row.at[idx, ("cost", "")]
         _year = measure_row.at[idx, ("year", "")]
-        _lcc = _cost / (1 + self._vrtool_config.discount_rate) ** _year
         _dcrest = measure_row.at[idx, ("dcrest", "")]
         _beta = measure_row.at[idx, ("beta_target", "")]
         _trans_level = measure_row.at[idx, ("transition_level", "")]
@@ -99,7 +111,7 @@ class StrategyController:
             combine_type=_comb_type,
             cost=_cost,
             year=_year,
-            lcc=_lcc,
+            discount_rate=self._vrtool_config.discount_rate,
             mechanism_year_collection=_mech_year_coll,
             beta_target=_beta,
             transition_level=_trans_level,
@@ -107,22 +119,24 @@ class StrategyController:
         )
 
     def _get_measures(self, measure_data: pd.DataFrame) -> list[MeasureAsInputProtocol]:
-        _measures: list[MeasureAsInputProtocol] = []
+        # Note: this method requires the order of measures is such that the "0-measure" comes first
+        _sh_measures: list[MeasureAsInputProtocol] = []
+        _sg_measures: list[MeasureAsInputProtocol] = []
 
         for _idx in measure_data.index:
             _dberm = measure_data.at[_idx, ("dberm", "")]
-            if _dberm == 0 or _dberm == -999:  # Sg
-                _measures.append(
-                    self._create_sh_measure(measure_data.iloc[[_idx]], _idx)
-                )
+            if _dberm == 0 or _dberm == -999:  # Sh
+                _sh_measure = self._create_sh_measure(measure_data.iloc[[_idx]], _idx)
+                _sh_measure.set_start_cost(_sh_measures[-1] if _sh_measures else None)
+                _sh_measures.append(_sh_measure)
 
             _dcrest = measure_data.at[_idx, ("dcrest", "")]
-            if _dcrest == 0 or _dcrest == -999:  # Sh
-                _measures.append(
-                    self._create_sg_measure(measure_data.iloc[[_idx]], _idx)
-                )
+            if _dcrest == 0 or _dcrest == -999:  # Sg
+                _sg_measure = self._create_sg_measure(measure_data.iloc[[_idx]], _idx)
+                _sg_measure.set_start_cost(_sg_measures[-1] if _sg_measures else None)
+                _sg_measures.append(_sg_measure)
 
-        return _measures
+        return _sh_measures + _sg_measures
 
     def map_input(
         self,
@@ -145,3 +159,19 @@ class StrategyController:
                     self._get_measures(solutions_dict[_section_name].MeasureData),
                 )
             )
+
+    def combine(self) -> None:
+        """
+        Combines the measures for each section.
+        """
+        for _section in self._section_measures_input:
+            _combine_controller = CombineMeasuresController(_section)
+            _section.combined_measures = _combine_controller.combine()
+
+    def aggregate(self) -> None:
+        """
+        Aggregates combinations of measures for each section.
+        """
+        for _section in self._section_measures_input:
+            _aggregate_controller = AggregateCombinationsController(_section)
+            _section.aggregated_measure_combinations = _aggregate_controller.aggregate()

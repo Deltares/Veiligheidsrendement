@@ -16,28 +16,52 @@ class ShMeasure(MeasureAsInputProtocol):
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     cost: float
+    discount_rate: float
     year: int
-    lcc: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     beta_target: float
     transition_level: float
     dcrest: float
+    start_cost: float = 0
 
-    @classmethod
-    def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
-        return mechanism in cls.get_allowed_mechanisms()
+    @property
+    def lcc(self) -> float:
+        return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
-    @classmethod
-    def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
-        return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
-
-    def __post_init__(self):
-        """
-        Set LCC to 0 for Sh to avoid double counting with Sg
-        """
-        if self.measure_type in [
+    def set_start_cost(
+        self,
+        previous_measure: MeasureAsInputProtocol | None,
+    ):
+        if self.measure_type not in [
+            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
         ]:
-            self.lcc = 0
+            return
+        if (
+            previous_measure is None
+            or self.measure_type != previous_measure.measure_type
+        ):
+            if self.year == 0 and self.dcrest in [0, -999]:
+                self.start_cost = self.cost
+                return
+            raise (ValueError("First measure of type isn't zero-version"))
+        self.start_cost = previous_measure.start_cost
+
+    @staticmethod
+    def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
+        return mechanism in ShMeasure.get_allowed_mechanisms()
+
+    @staticmethod
+    def get_allowed_mechanisms() -> list[MechanismEnum]:
+        return [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]
+
+    @staticmethod
+    def get_allowed_measure_combinations() -> (
+        dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
+    ):
+        return {
+            CombinableTypeEnum.REVETMENT: [None],
+            CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
+            CombinableTypeEnum.FULL: [None, CombinableTypeEnum.REVETMENT],
+        }

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
+from dataclasses import dataclass, field
 
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,

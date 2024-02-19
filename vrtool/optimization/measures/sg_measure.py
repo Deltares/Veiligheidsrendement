@@ -17,15 +17,48 @@ class SgMeasure(MeasureAsInputProtocol):
     combine_type: CombinableTypeEnum
     cost: float
     year: int
-    lcc: float
+    discount_rate: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
     dcrest: float
+    start_cost: float = 0
 
-    @classmethod
-    def is_mechanism_allowed(cls, mechanism: MechanismEnum) -> bool:
-        return mechanism in cls.get_allowed_mechanisms()
+    @property
+    def lcc(self) -> float:
+        return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
-    @classmethod
-    def get_allowed_mechanisms(cls) -> list[MechanismEnum]:
+    def set_start_cost(
+        self,
+        previous_measure: MeasureAsInputProtocol | None,
+    ):
+        if self.measure_type not in [
+            MeasureTypeEnum.SOIL_REINFORCEMENT,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+        ]:
+            return
+        if (
+            previous_measure is None
+            or self.measure_type != previous_measure.measure_type
+        ):
+            if self.year == 0 and self.dberm == 0:
+                self.start_cost = self.cost
+                return
+            raise (ValueError("First measure of type isn't zero-version"))
+        self.start_cost = previous_measure.start_cost
+
+    @staticmethod
+    def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
+        return mechanism in SgMeasure.get_allowed_mechanisms()
+
+    @staticmethod
+    def get_allowed_mechanisms() -> list[MechanismEnum]:
         return [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
+
+    @staticmethod
+    def get_allowed_measure_combinations() -> (
+        dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
+    ):
+        return {
+            CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL],
+            CombinableTypeEnum.FULL: [None],
+        }
