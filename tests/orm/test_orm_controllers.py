@@ -1036,5 +1036,9 @@ class TestOrmControllers:
         # 3. Verify final expectations.
         assert any(_imported_data)
         assert all(
-            isinstance(_imp_data, SectionAsInput) for _imp_data in _imported_data
+            (
+                isinstance(_imp_data, SectionAsInput)
+                and any(_imp_data.initial_assessment.probabilities)
+            )
+            for _imp_data in _imported_data
         )
