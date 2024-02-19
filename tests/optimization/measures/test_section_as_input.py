@@ -1,6 +1,6 @@
 import pytest as py
 
-from vrtool.optimization.controllers.set_investment_year import SetInvestmentYear
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
@@ -14,7 +14,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 _END_YEAR = 50
 _mechm = MechanismEnum.OVERFLOW
 
-class TestSetInvestmentYear:
+class TestSectionAsInput:
 
     def _get_measure(
         self, year: int, revetment_params: list[float], betas: list[float]
@@ -58,13 +58,13 @@ class TestSetInvestmentYear:
         _measures = [
             self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
         ]
+        _section_as_measures = SectionAsInput("section1", "traject1", _measures, [])
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
         # run test
-        _setyear = SetInvestmentYear()
-        _setyear.update_measurelist_with_investment_year(
-            _measures, _zero_measure.mechanism_year_collection
+        _section_as_measures.update_measurelist_with_investment_year(
+            _zero_measure.mechanism_year_collection
         )
 
         # check results
@@ -95,12 +95,13 @@ class TestSetInvestmentYear:
             self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
             self._get_measure(_yr2, [4.0, 2.0, 0.0], [5.0, 4.5]),
         ]
+        _section_as_measures = SectionAsInput("section1", "traject1", _measures, [])
+
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
         # run test
-        _setyear = SetInvestmentYear()
-        _setyear.update_measurelist_with_investment_year(
-            _measures, _zero_measure.mechanism_year_collection
+        _section_as_measures.update_measurelist_with_investment_year(
+            _zero_measure.mechanism_year_collection
         )
 
         # check results
@@ -136,6 +137,7 @@ class TestSetInvestmentYear:
         _measures = [
             self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
         ]
+        _section_as_measures = SectionAsInput("section1", "traject1", _measures, [])
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
         _initial = _zero_measure.mechanism_year_collection
@@ -145,8 +147,7 @@ class TestSetInvestmentYear:
         _initial.probabilities.append(_stability50)
 
         # run test
-        _setyear = SetInvestmentYear()
-        _setyear.update_measurelist_with_investment_year(_measures, _initial)
+        _section_as_measures.update_measurelist_with_investment_year(_initial)
 
         # check results
 
