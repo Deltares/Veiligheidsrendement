@@ -57,7 +57,7 @@ class TestMechanismPerYearProbCollection:
         # 1. Setup
         _prob = self._get_mechanism_per_year_example()
         _collection = MechanismPerYearProbabilityCollection(_prob)
-        _years = 100
+        _years = 101
 
         # 2. Call
         _probs = _collection.get_probabilities(
@@ -66,6 +66,20 @@ class TestMechanismPerYearProbCollection:
 
         # 3. Assert
         assert len(_probs) == _years
+        assert _probs[0] == pytest.approx(
+            [
+                p.probability
+                for p in _collection.probabilities
+                if p.year == 0 and p.mechanism == MechanismEnum.OVERFLOW
+            ][0],
+        )
+        assert _probs[-1] == pytest.approx(
+            [
+                p.probability
+                for p in _collection.probabilities
+                if p.year == 100 and p.mechanism == MechanismEnum.OVERFLOW
+            ][0],
+        )
 
     def test_not_adding_existing_year(self):
         # Setup
