@@ -187,6 +187,7 @@ class TargetReliabilityStrategy(StrategyBase):
             measure = _possible_measures.iloc[idx]
             option_index = _possible_measures.index[idx]
             # calculate achieved risk reduction & BC ratio compared to base situation
+            #TODO: section based damage. we doen er niks mee dus niet nodig?
             _r_base, _dr, _t_r = calc_tr(
                 i.name,
                 measure,

@@ -402,6 +402,22 @@ def calc_tr(
 
     return base_risk, dR, total_risk
 
+def calc_life_cycle_risks_section_based(
+            base0,
+    discount_rate: float,
+    horizon,
+    damage,
+    change=None,
+    section=None,
+    datatype="DataFrame",
+    ts=None,
+    mechs=False,
+    option=None,
+    dumpPt=False,
+):
+    pass
+    # TODO: section based damage
+    #same as normal, except that damage should be an array of size N.
 
 def calc_life_cycle_risks(
     base0,
@@ -442,6 +458,7 @@ def calc_life_cycle_risks(
         )
 
     # trange = np.arange(0, horizon + 1, 1)
+    #TODO: modify for damage per section here
     trange = np.arange(0, horizon, 1)
     _d_t = damage / (1 + discount_rate) ** trange
     risk_t = p_t * _d_t

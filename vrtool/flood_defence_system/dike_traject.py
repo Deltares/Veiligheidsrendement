@@ -96,7 +96,7 @@ class DikeTraject:
         )
 
 
-def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=False):
+def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=False,return_section = False):
     pfs = {}
     if horizon:
         trange = np.arange(0, horizon, 1)
@@ -140,4 +140,7 @@ def calc_traject_prob(base, horizon=False, datatype="DataFrame", ts=None, mechs=
 
     beta_t = pf_to_beta(pf_traject)
     p_t = pf_traject
-    return beta_t, p_t
+    if return_section:
+        return beta_t, p_t, pfs
+    else:
+        return beta_t, p_t

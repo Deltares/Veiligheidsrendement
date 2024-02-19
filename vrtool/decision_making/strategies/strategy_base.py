@@ -666,26 +666,38 @@ class StrategyBase:
         self.Dint = np.zeros((N, Sh))
 
         # add discounted damage [T,]
-        self.D = np.array(
-            traject.general_info.FloodDamage
-            * (1 / ((1 + self.discount_rate) ** np.arange(0, T, 1)))
-        )
+        # TODO: modify this to account for section based damage
+        # self.D = np.array(
+        #     traject.general_info.FloodDamage
+        #     * (1 / ((1 + self.discount_rate) ** np.arange(0, T, 1)))
+        # )
+        # # expected damage for overflow and for piping & slope stability
+        # # self.RiskGeotechnical = np.zeros((N,Sg+1,T))        
+        # self.RiskGeotechnical = get_independent_probability_of_failure(
+        #     self.Pf
+        # ) * np.tile(self.D.T, (N, Sg + 1, 1))
+        # self.RiskOverflow = self.Pf[MechanismEnum.OVERFLOW.name] * np.tile(
+        #     self.D.T, (N, Sh + 1, 1)
+        # )
+        # self.RiskRevetment = []
+        # if MechanismEnum.REVETMENT in self.mechanisms:
+        #     self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(
+        #         self.D.T, (N, Sh + 1, 1)
+        #     )
+        # else:
+        #     self.RiskRevetment = np.zeros((N, Sh + 1, T))
 
-        # expected damage for overflow and for piping & slope stability
-        # self.RiskGeotechnical = np.zeros((N,Sg+1,T))
+        #same, but per section
+        #import damage per section here:
+        self.D = np.multiply(np.tile([1e9, 10e9, 100e9], (T,1)), np.tile((1 / ((1 + self.discount_rate) ** np.arange(0, T, 1))),(N,1)).T)
         self.RiskGeotechnical = get_independent_probability_of_failure(
             self.Pf
-        ) * np.tile(self.D.T, (N, Sg + 1, 1))
-
-        self.RiskOverflow = self.Pf[MechanismEnum.OVERFLOW.name] * np.tile(
-            self.D.T, (N, Sh + 1, 1)
-        )
+        ) * np.tile(self.D.T.reshape(N,1,100),(1,Sg+1,1))
+        self.RiskOverflow = self.Pf[MechanismEnum.OVERFLOW.name] * np.tile(self.D.T.reshape(N,1,100),(1,Sh+1,1))
 
         self.RiskRevetment = []
         if MechanismEnum.REVETMENT in self.mechanisms:
-            self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(
-                self.D.T, (N, Sh + 1, 1)
-            )
+            self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(self.D.T.reshape(N,1,100),(1,Sh+1,1))
         else:
             self.RiskRevetment = np.zeros((N, Sh + 1, T))
 
