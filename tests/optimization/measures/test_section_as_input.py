@@ -74,6 +74,53 @@ class TestSectionAsInput:
         ]
         return _section
 
+    def test_initial_assessment(self):
+        # 1. Define test data
+        _collection1 = MechanismPerYearProbabilityCollection(
+            [
+                MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
+                MechanismPerYear(MechanismEnum.OVERFLOW, 100, 0.3),
+            ],
+        )
+        _measure1 = SgMeasure(
+            measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
+            combine_type=CombinableTypeEnum.COMBINABLE,
+            cost=0,
+            year=0,
+            discount_rate=0,
+            mechanism_year_collection=_collection1,
+            dberm=0,
+            dcrest=0,
+        )
+        _collection2 = MechanismPerYearProbabilityCollection(
+            [
+                MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.4),
+                MechanismPerYear(MechanismEnum.OVERFLOW, 100, 0.2),
+            ]
+        )
+        _measure2 = SgMeasure(
+            measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
+            combine_type=CombinableTypeEnum.COMBINABLE,
+            cost=0,
+            year=20,
+            discount_rate=0,
+            mechanism_year_collection=_collection2,
+            dberm=0,
+            dcrest=0,
+        )
+        _section = SectionAsInput(
+            section_name="section_name",
+            traject_name="traject_name",
+            flood_damage=0,
+            measures=[_measure1, _measure2],
+        )
+
+        # 2. Run test
+        _initial_assessment = _section.initial_assessment
+
+        # 3. Verify expectations
+        assert _initial_assessment == _collection1
+
     def test_get_sh_measures(self):
         # 1. Define test data
         _section = self._get_section_with_measures()
