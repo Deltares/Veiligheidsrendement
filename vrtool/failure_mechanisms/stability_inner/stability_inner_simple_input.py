@@ -41,8 +41,10 @@ class StabilityInnerSimpleInput:
         Returns:
             float: Failure probability as a combination of `beta` and `scenario_probability`.
         """
-        _beta_as_pf = beta_to_pf(self.beta)
-        return np.sum(np.multiply(_beta_as_pf, self.scenario_probability))
+        _probability_single_assessment = beta_to_pf(self.beta)
+        return np.sum(
+            np.multiply(_probability_single_assessment, self.scenario_probability)
+        )
 
     @classmethod
     def from_mechanism_input(
