@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -26,6 +27,17 @@ class SectionAsInput:
     aggregated_measure_combinations: Optional[
         list[AggregatedMeasureCombination]
     ] = field(default_factory=list[AggregatedMeasureCombination])
+
+    @property
+    def initial_assessment(self) -> MechanismPerYearProbabilityCollection:
+        return next(
+            m.mechanism_year_collection
+            for m in self.sg_measures
+            if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
+            and m.year == 0
+            and m.dberm == 0
+            and m.dcrest == 0
+        )
 
     def get_measures_by_class(
         self,
