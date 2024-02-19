@@ -34,12 +34,12 @@ class StabilityInnerSimpleInput:
 
     def get_failure_probability_from_scenarios(self) -> float:
         """
-        Gets the current failure probability based on the `secenario_probability` and `beta`.
+        Gets the current failure probability based on the `scenario_probability` and `beta`.
         We use `beta` instead of `initial_probability_of_failure` as the latter remains constant whilst
         `beta` changes throughout the different steps of an optimization since imported from the database.
 
         Returns:
-            float: Failure probability as a combination of `beta` and `scenario_probability`.
+            float: Failure probability as the inner product of `beta` and `scenario_probability`.
         """
         _probability_single_assessment = beta_to_pf(self.beta)
         return np.sum(
