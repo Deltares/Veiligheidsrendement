@@ -8,6 +8,9 @@ from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
+)
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
@@ -17,12 +20,13 @@ class SectionAsInput:
     section_name: str
     traject_name: str
     measures: list[MeasureAsInputProtocol]
+    initial_assessment: MechanismPerYearProbabilityCollection
     combined_measures: list[CombinedMeasure] = field(
         default_factory=list[CombinedMeasure]
     )  # TODO do we need this in SectionAsInput or can it be volatile?
-    aggregated_measure_combinations: Optional[
-        list[AggregatedMeasureCombination]
-    ] = field(default_factory=list[AggregatedMeasureCombination])
+    aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]] = (
+        field(default_factory=list[AggregatedMeasureCombination])
+    )
 
     def get_measures_by_class(
         self,
