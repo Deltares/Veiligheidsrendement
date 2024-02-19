@@ -170,10 +170,10 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         SFincrease: float = 0.2,
     ) -> None:
-        _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][1]
+        _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][1].upper()
 
         mechanism_reliability_input = mechanism_reliability.Input.input
-        if _calc_type == "DStability":
+        if _calc_type == "DSTABILITY":
             # Add screen to model
             _dstability_wrapper = DStabilityWrapper(
                 Path(mechanism_reliability_input["STIXNAAM"]),
@@ -201,11 +201,11 @@ class StabilityScreenMeasure(MeasureProtocol):
             _dstability_wrapper.rerun_stix()
 
             # Calculate reliaiblity
-            mechanism_reliability_input["BETA"] = calculate_reliability(
-                np.array(_dstability_wrapper.get_safety_factor())
+            mechanism_reliability_input["beta"] = calculate_reliability(
+                np.array([_dstability_wrapper.get_safety_factor()])
             )
 
-        elif _calc_type == "Simple":
+        elif _calc_type == "SIMPLE":
             if int(year_to_calculate) >= self.parameters["year"]:
                 if "SF_2025" in mechanism_reliability_input:
                     mechanism_reliability_input["SF_2025"] += SFincrease
@@ -229,10 +229,10 @@ class StabilityScreenMeasure(MeasureProtocol):
                         )
                     )
                 else:
-                    mechanism_reliability_input["BETA"] = calculate_reliability(
+                    mechanism_reliability_input["beta"] = calculate_reliability(
                         np.add(
                             calculate_safety_factor(
-                                mechanism_reliability_input["BETA"]
+                                mechanism_reliability_input["beta"]
                             ),
                             SFincrease,
                         )
