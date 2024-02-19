@@ -96,7 +96,15 @@ class AcceptanceTestCase:
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 31-1, mixed coastal case",
-            ),           
+            ),  
+            AcceptanceTestCase(
+                model_directory="38-1 two river sections D-Stability",
+                traject_name="38-1",
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],8
+                case_name="Traject 38-1, two sections with D-Stability",
+            ),  
             AcceptanceTestCase(
                 model_directory="TestCase1_38-1_no_housing",
                 traject_name="38-1",
