@@ -152,13 +152,14 @@ class StrategyController:
         """
         for _section in selected_traject.sections:
             _section_name = _section.name
-            self._section_measures_input.append(
-                SectionAsInput(
+            _section_as_input = SectionAsInput(
                     _section_name,
                     selected_traject.general_info.traject_name,
-                    self._get_measures(solutions_dict[_section_name].MeasureData),
+                    self._get_measures(solutions_dict[_section_name].MeasureData)
                 )
-            )
+            _zero_msr = _section_as_input.initial_assessment
+            _section_as_input.update_measurelist_with_investment_year(_zero_msr)
+            self._section_measures_input.append(_section_as_input)
 
     def combine(self) -> None:
         """
