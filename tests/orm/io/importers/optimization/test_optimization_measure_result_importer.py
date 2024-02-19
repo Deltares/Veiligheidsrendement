@@ -24,7 +24,7 @@ class TestOptimizationMeasureResultImporter:
         _test_case_dir = test_data.joinpath(_test_dir_name)
         assert _test_case_dir.exists()
 
-        _investment_year = 0
+        _investment_years = [0]
 
         _vrtool_config = TestApiReportedBugs.get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
@@ -32,7 +32,7 @@ class TestOptimizationMeasureResultImporter:
         assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
-        _importer = OptimizationMeasureResultImporter(_vrtool_config, _investment_year)
+        _importer = OptimizationMeasureResultImporter(_vrtool_config, _investment_years)
 
         with open_database(_vrtool_config.input_database_path).connection_context():
             _imported_results = _importer.import_orm(OrmMeasureResult.select().get())
