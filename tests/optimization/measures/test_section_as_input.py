@@ -227,7 +227,12 @@ class TestSectionAsInput:
         _measures = [
             self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure),
         ]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
+        _section_as_input = SectionAsInput(
+            section_name="section1",
+            traject_name="traject1",
+            flood_damage=0,
+            measures=_measures,
+        )
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
@@ -282,7 +287,12 @@ class TestSectionAsInput:
             self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure_a),
             self._get_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
         ]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
+        _section_as_input = SectionAsInput(
+            section_name="section1",
+            traject_name="traject1",
+            flood_damage=0,
+            measures=_measures,
+        )
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
@@ -337,7 +347,12 @@ class TestSectionAsInput:
         _measures = [
             self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
         ]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
+        _section_as_input = SectionAsInput(
+            section_name="section1",
+            traject_name="traject1",
+            flood_damage=0,
+            measures=_measures,
+        )
 
         _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
         _initial = _zero_measure.mechanism_year_collection
