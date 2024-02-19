@@ -34,7 +34,7 @@ class MockMeasure(MeasureAsInputProtocol):
     )
 
 
-class TestMeasureCombineController:
+class TestCombineMeasuresController:
     def _create_sh_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> ShMeasure:
@@ -43,7 +43,7 @@ class TestMeasureCombineController:
             combine_type=combinable_type,
             cost=0,
             year=0,
-            lcc=0,
+            discount_rate=0,
             mechanism_year_collection=MockMechanismYearProColl(
                 [
                     MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9),
@@ -63,7 +63,7 @@ class TestMeasureCombineController:
             combine_type=combinable_type,
             cost=0,
             year=0,
-            lcc=0,
+            discount_rate=0,
             mechanism_year_collection=MockMechanismYearProColl(
                 [
                     MechanismPerYear(MechanismEnum.PIPING, 0, 0.7),
@@ -79,7 +79,6 @@ class TestMeasureCombineController:
             section_name="Section1",
             traject_name="Traject1",
             measures=[],
-            combined_measures=None,
         )
 
     def test_combine_combinable_partial_measures(self):
@@ -196,10 +195,13 @@ class TestMeasureCombineController:
                 CombinableTypeEnum.FULL,
             ),
             self._create_sh_measure(
+                MeasureTypeEnum.VERTICAL_GEOTEXTILE, CombinableTypeEnum.PARTIAL
+            ),
+            self._create_sh_measure(
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
             ),
         ]
-        _expected_combinations = len(_measures) + 3
+        _expected_combinations = len(_measures) + 2
         _section.measures = _measures
 
         # 2. Run test
@@ -215,7 +217,6 @@ class TestMeasureCombineController:
             section_name="Section1",
             traject_name="Traject1",
             measures=[],
-            combined_measures=None,
         )
         _measures = [
             self._create_sg_measure(
@@ -231,8 +232,11 @@ class TestMeasureCombineController:
             self._create_sg_measure(
                 MeasureTypeEnum.VERTICAL_GEOTEXTILE, CombinableTypeEnum.PARTIAL
             ),
+            self._create_sg_measure(
+                MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
+            ),
         ]
-        _expected_combinations = len(_measures) + 1
+        _expected_combinations = len(_measures)
         _section.measures = _measures
 
         # 2. Run test

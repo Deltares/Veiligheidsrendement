@@ -1,20 +1,135 @@
 import pytest as py
+from dataclasses import dataclass
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sh_measure import ShMeasure
+
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
-from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 _END_YEAR = 50
 _mechm = MechanismEnum.OVERFLOW
 
+@dataclass
+class MockShMeasure(ShMeasure):
+    measure_type: MeasureTypeEnum
+    combine_type: None = None
+    cost: float = 0
+    discount_rate: float = 0
+    year: int = 0
+    lcc: float = 0
+    mechanism_year_collection: None = None
+    beta_target: float = 0
+    transition_level: float = 0
+    dcrest: float = 0
+
+
+@dataclass
+class MockSgMeasure(SgMeasure):
+    measure_type: MeasureTypeEnum
+    combine_type: None = None
+    cost: float = 0
+    discount_rate: float = 0
+    year: int = 0
+    lcc: float = 0
+    mechanism_year_collection: None = None
+    dberm: float = 0
+    dcrest: float = 0
+
+
 class TestSectionAsInput:
+    def _get_section_with_measures(self) -> SectionAsInput:
+        return SectionAsInput(
+            section_name="section_name",
+            traject_name="traject_name",
+            measures=[
+                MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
+                MockShMeasure(MeasureTypeEnum.REVETMENT),
+                MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
+                MockSgMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE),
+            ],
+        )
+
+    def _get_section_with_combinations(self) -> SectionAsInput:
+        _section = self._get_section_with_measures()
+        _section.combined_measures = [
+            CombinedMeasure.from_input(
+                MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
+                None,
+            ),
+            CombinedMeasure.from_input(
+                MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
+                None,
+            ),
+        ]
+        return _section
+
+    def test_get_sh_measures(self):
+        # 1. Define test data
+        _section = self._get_section_with_measures()
+
+        # 2. Run test
+        _sh_measures = _section.sh_measures
+
+        # 3. Verify expectations
+        assert len(_sh_measures) == 2
+        assert any(
+            x.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT for x in _sh_measures
+        )
+        assert any(x.measure_type == MeasureTypeEnum.REVETMENT for x in _sh_measures)
+
+    def test_get_sg_measures(self):
+        # 1. Define test data
+        _section = self._get_section_with_measures()
+
+        # 2. Run test
+        _sg_measures = _section.sg_measures
+
+        # 3. Verify expectations
+        assert len(_sg_measures) == 2
+        assert any(
+            x.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+            for x in _sg_measures
+        )
+        assert any(
+            x.measure_type == MeasureTypeEnum.VERTICAL_GEOTEXTILE for x in _sg_measures
+        )
+
+    def test_get_sh_combinations(self):
+        # 1. Define test data
+        _section = self._get_section_with_combinations()
+
+        # 2. Run test
+        _sh_combinations = _section.sh_combinations
+
+        # 3. Verify expectations
+        assert len(_sh_combinations) == 1
+        assert (
+            _sh_combinations[0].primary.measure_type
+            == MeasureTypeEnum.SOIL_REINFORCEMENT
+        )
+
+    def test_get_sg_combinations(self):
+        # 1. Define test data
+        _section = self._get_section_with_combinations()
+
+        # 2. Run test
+        _sg_combinations = _section.sg_combinations
+
+        # 3. Verify expectations
+        assert len(_sg_combinations) == 1
+        assert (
+            _sg_combinations[0].primary.measure_type
+            == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+        )
 
     def _get_measure(
         self, year: int, revetment_params: list[float], betas: list[float]
@@ -36,13 +151,13 @@ class TestSectionAsInput:
             [_mech_per_year1, _mech_per_year2]
         )
         _dummy_cost = 999.0
-        _dummy_lcc = 999.9
+        _dummy_discount_rate = 0.05
         _measure = ShMeasure(
             MeasureTypeEnum.REVETMENT,
             CombinableTypeEnum.REVETMENT,
             _dummy_cost,
+            _dummy_discount_rate,
             year,
-            _dummy_lcc,
             _collection,
             revetment_params[0],
             revetment_params[1],

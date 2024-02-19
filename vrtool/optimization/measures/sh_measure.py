@@ -16,12 +16,37 @@ class ShMeasure(MeasureAsInputProtocol):
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     cost: float
+    discount_rate: float
     year: int
-    lcc: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     beta_target: float
     transition_level: float
     dcrest: float
+    start_cost: float = 0
+
+    @property
+    def lcc(self) -> float:
+        return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
+
+    def set_start_cost(
+        self,
+        previous_measure: MeasureAsInputProtocol | None,
+    ):
+        if self.measure_type not in [
+            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+            MeasureTypeEnum.DIAPHRAGM_WALL,
+            MeasureTypeEnum.STABILITY_SCREEN,
+        ]:
+            return
+        if (
+            previous_measure is None
+            or self.measure_type != previous_measure.measure_type
+        ):
+            if self.year == 0 and self.dcrest in [0, -999]:
+                self.start_cost = self.cost
+                return
+            raise (ValueError("First measure of type isn't zero-version"))
+        self.start_cost = previous_measure.start_cost
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -40,14 +65,3 @@ class ShMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
             CombinableTypeEnum.FULL: [None, CombinableTypeEnum.REVETMENT],
         }
-
-    def __post_init__(self):
-        """
-        Set LCC to 0 for Sh to avoid double counting with Sg
-        """
-        if self.measure_type in [
-            MeasureTypeEnum.DIAPHRAGM_WALL,
-            MeasureTypeEnum.STABILITY_SCREEN,
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
-        ]:
-            self.lcc = 0
