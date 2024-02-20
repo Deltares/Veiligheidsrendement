@@ -16,12 +16,11 @@ from vrtool.orm.orm_controllers import (
     get_all_measure_results_with_supported_investment_years,
     get_dike_traject,
     get_optimization_step_with_lowest_total_cost,
-    import_results_measures,
     import_results_measures_for_optimization,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
-from vrtool.run_workflows.optimization_workflow.input_measures_optimization import (
+from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
     OptimizationInputMeasures,
 )
 from vrtool.run_workflows.optimization_workflow.results_optimization import (

@@ -4,7 +4,7 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
-from vrtool.run_workflows.optimization_workflow.input_measures_optimization import (
+from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
     OptimizationInputMeasures,
 )
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
@@ -17,7 +17,7 @@ class MockedMeasure(MeasureAsInputProtocol):
     combine_type = None
     cost = float("nan")
     discount_rate = float("nan")
-    year: int = 0
+    year = 0
     mechanism_year_collection = None
     start_cost = float("nan")
 

@@ -10,7 +10,7 @@ from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityS
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.run_workflows.optimization_workflow.input_measures_optimization import (
+from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
     OptimizationInputMeasures,
 )
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
