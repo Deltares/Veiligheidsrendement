@@ -18,7 +18,7 @@ def cli():
 @cli.command(name="assessment", help="Assesses the model in the given directory.")
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_assessment(**kwargs):
-    logging.info("Assess, {0}!".format(kwargs["model_directory"]))
+    logging.info("Starting assessment for files in {0}".format(kwargs["model_directory"]))
 
     # Get the selected Traject.
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
@@ -31,7 +31,7 @@ def run_step_assessment(**kwargs):
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_measures(**kwargs):
-    logging.info("Measure, {0}!".format(kwargs["model_directory"]))
+    logging.info("Starting evaluating measures for files in {0}".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
@@ -44,7 +44,7 @@ def run_step_measures(**kwargs):
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 @click.argument("measure_result_ids", type=click.INT, nargs=-1)
 def run_step_optimization(**kwargs):
-    logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
+    logging.info("Starting optimization for files in {0}".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
@@ -56,7 +56,7 @@ def run_step_optimization(**kwargs):
 @cli.command(name="run_full", help="Full run of the model in the given directory.")
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_full(**kwargs):
-    logging.info("Optimize, {0}!".format(kwargs["model_directory"]))
+    logging.info("Starting full evaluation for files in {0}!".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))

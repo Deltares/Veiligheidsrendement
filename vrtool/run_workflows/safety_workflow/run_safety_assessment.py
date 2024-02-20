@@ -26,7 +26,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
     def run(self) -> ResultsSafetyAssessment:
         ## STEP 1: SAFETY ASSESSMENT
-        logging.info("Start step 1: safety assessment")
+        logging.info("Start stap 1: beoordeling & projectie veiligheid")
 
         # Loop over sections and do the assessment.
         for _, _section in enumerate(self.selected_traject.sections):
@@ -58,7 +58,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
         _results.vr_config = self.vr_config
         _results._write_results_to_file()
 
-        logging.info("Finished step 1: assessment of current situation")
+        logging.info("Stap 1 afgerond.")
 
         return _results
 

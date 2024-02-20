@@ -55,6 +55,7 @@ class RunOptimization(VrToolRunProtocol):
         Returns:
             StrategyController: Controller containing the new input
         """
+        logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
         _greedy_optimization = StrategyController(design_method, self.vr_config)
 
         _greedy_optimization.combine()
@@ -63,6 +64,7 @@ class RunOptimization(VrToolRunProtocol):
         return _greedy_optimization
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
+        logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
 
@@ -141,6 +143,7 @@ class RunOptimization(VrToolRunProtocol):
         return _greedy_optimization
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
+        logging.info(f"Start bepaling referentiemaatregelen voor {design_method}.")
         # Initialize a strategy type (i.e combination of objective & constraints)
         _target_reliability_based = TargetReliabilityStrategy(
             design_method, self.vr_config
@@ -209,7 +212,7 @@ class RunOptimization(VrToolRunProtocol):
         }
 
     def run(self) -> ResultsOptimization:
-        logging.info("Start step 3: Optimization")
+        logging.info("Start stap 3: Bepaling maatregelen op trajectniveau.")
         _results_optimization = ResultsOptimization()
         _results_optimization.vr_config = self.vr_config
 
@@ -223,7 +226,7 @@ class RunOptimization(VrToolRunProtocol):
             ]
         )
 
-        logging.info("Finished step 3: Optimization")
+        logging.info("Bepaling maatregelen op trajectniveau afgerond")
         _results_optimization.selected_traject = self.selected_traject
         _results_optimization.results_solutions = self._solutions_dict
 

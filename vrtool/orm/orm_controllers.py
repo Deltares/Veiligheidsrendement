@@ -160,12 +160,12 @@ def export_results_safety_assessment(result: ResultsSafetyAssessment) -> None:
         result (ResultsSafetyAssessment): Instance containing dike sections' reliability and output database's location.
     """
     _connected_db = open_database(result.vr_config.input_database_path)
-    logging.info("Opened connection to export Dike's section reliability.")
+    logging.debug("Opened connection to export Dike's section reliability.")
     _exporter = DikeSectionReliabilityExporter()
     for _section in result.selected_traject.sections:
         _exporter.export_dom(_section)
     _connected_db.close()
-    logging.info("Closed connection after export for Dike's section reliability.")
+    logging.info("Resultaten beoordeling & projectie geexporteerd naar database.")
 
 
 def clear_assessment_results(config: VrtoolConfig) -> None:
@@ -177,7 +177,7 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
     """
 
     open_database(config.input_database_path)
-    logging.info("Opened connection for clearing initial assessment results.")
+    logging.debug("Opened connection for clearing initial assessment results.")
 
     with vrtool_db.atomic():
         orm.AssessmentMechanismResult.delete().execute()
@@ -185,7 +185,7 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
 
     vrtool_db.close()
 
-    logging.info("Closed connection after clearing initial assessment results.")
+    logging.info("Bestaande beoordelingsresultaten verwijderd.")
 
 
 def clear_measure_results(config: VrtoolConfig) -> None:
@@ -197,7 +197,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     """
 
     open_database(config.input_database_path)
-    logging.info("Opened connection for clearing measure results.")
+    logging.debug("Opened connection for clearing measure results.")
 
     with vrtool_db.atomic():
         orm.MeasureResult.delete().execute()
@@ -208,7 +208,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
 
     vrtool_db.close()
 
-    logging.info("Closed connection after clearing measure results.")
+    logging.info("Bestaande resultaten voor maatregelen verwijderd.")
 
 
 def clear_optimization_results(config: VrtoolConfig) -> None:
@@ -219,7 +219,7 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
         config (VrtoolConfig): Vrtool configuration.
     """
     open_database(config.input_database_path)
-    logging.info("Opened connection for clearing optimization results.")
+    logging.debug("Opened connection for clearing optimization results.")
 
     with vrtool_db.atomic():
         orm.OptimizationRun.delete().execute()
@@ -231,7 +231,7 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
 
     vrtool_db.close()
 
-    logging.info("Closed connection after clearing optimization results.")
+    logging.info("Bestaande optimalisatieresultaten verwijderd.")
 
 
 def export_results_measures(result: ResultsMeasures) -> None:
@@ -244,14 +244,14 @@ def export_results_measures(result: ResultsMeasures) -> None:
 
     _connected_db = open_database(result.vr_config.input_database_path)
 
-    logging.info("Opened connection to export solution.")
+    logging.debug("Opened connection to export solution.")
 
     _exporter = SolutionsExporter()
     for _solution in result.solutions_dict.values():
         _exporter.export_dom(_solution)
     _connected_db.close()
 
-    logging.info("Closed connection after export solution.")
+    logging.info("Export van resultaten maatregelen afgerond.")
 
 
 def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[int]:
@@ -464,7 +464,7 @@ def create_optimization_run_for_selected_measures(
     """
 
     _connected_db = open_database(vr_config.input_database_path)
-    logging.info(
+    logging.debug(
         "Opened connection to export optimization run {}.".format(optimization_name)
     )
     _optimization_selected_measure_ids = {}
@@ -491,8 +491,8 @@ def create_optimization_run_for_selected_measures(
         _optimization_selected_measure_ids[_optimization_run.id] = list(
             map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
         )
-    logging.info(
-        "Closed connection after export optimization run {}.".format(optimization_name)
+    logging.debug(
+        "Optimalisatierun {} met methode {} aangemaakt in database.".format(optimization_name, _method_type)
     )
     _connected_db.close()
 

@@ -37,7 +37,7 @@ class RunMeasures(VrToolRunProtocol):
 
     def run(self) -> ResultsMeasures:
         # Get measurements solutions
-        logging.info("Start step 2: evaluation of measures.")
+        logging.info("Start stap 2: bepaling effecten en kosten van maatregelen.")
         _results_measures = ResultsMeasures()
         _results_measures.vr_config = self.vr_config
         _results_measures.selected_traject = self.selected_traject
@@ -51,6 +51,6 @@ class RunMeasures(VrToolRunProtocol):
                 filtering="off", splitparams=True
             )
 
-        logging.info("Finished step 2: evaluation of measures")
+        logging.info("Bepaling effecten en kosten van maatregelen afgerond.")
 
         return _results_measures

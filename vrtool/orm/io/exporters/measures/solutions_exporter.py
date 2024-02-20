@@ -65,7 +65,7 @@ class SolutionsExporter(OrmExporterProtocol):
         _logging_exporting = "exporting solutions for section {}.".format(
             dom_model.section_name
         )
-        logging.info("STARTED {}".format(_logging_exporting))
+        logging.debug("STARTED {}".format(_logging_exporting))
         for measure in dom_model.measures:
             _measure_per_section = self.get_measure_per_section(
                 dom_model.section_name,
@@ -73,4 +73,4 @@ class SolutionsExporter(OrmExporterProtocol):
                 measure.parameters["ID"],
             )
             MeasureExporter(_measure_per_section).export_dom(measure)
-        logging.info("FINISHED {}".format(_logging_exporting))
+        logging.info("Maatregelen voor dijkvak {} geexporteerd.".format(dom_model.section_name))

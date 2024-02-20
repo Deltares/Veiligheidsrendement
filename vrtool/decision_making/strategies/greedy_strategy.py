@@ -98,7 +98,7 @@ class GreedyStrategy(StrategyBase):
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk] + 1]
                     == 999
                 ):
-                    logging.info(
+                    logging.debug(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(
                             run_number
                         )
@@ -107,7 +107,7 @@ class GreedyStrategy(StrategyBase):
                 else:
                     index_counter[ind_highest_risk] += 1
             else:
-                logging.info(
+                logging.debug(
                     "Bundle quit after {} steps, weakest section has no more available measures".format(
                         run_number
                     )
@@ -640,7 +640,7 @@ class GreedyStrategy(StrategyBase):
                     Measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
-                    logging.info("Single measure in step " + str(count))
+                    logging.info("Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC[Index_Best]))
                 elif BC_bundleOverflow > BC_bundleRevetment:
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -673,6 +673,7 @@ class GreedyStrategy(StrategyBase):
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
+                    logging.info("Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleOverflow))
                 elif BC_bundleRevetment > np.max(BC):
                     for j in range(0, self.opt_parameters["N"]):
                         if revetment_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -708,7 +709,8 @@ class GreedyStrategy(StrategyBase):
                     # add the height measures in separate entries in the measure list
 
                     # write them to the measure_list
-                    logging.info("Bundled measures in step " + str(count))
+                    logging.info("Gebundelde maatregelen voor bekleding in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleRevetment))
+
 
             else:  # stop the search
                 break
@@ -717,7 +719,7 @@ class GreedyStrategy(StrategyBase):
                 pass
                 # Probabilities.append(copy.deepcopy(init_probability))
         # pd.DataFrame([risk_per_step,cost_per_step]).to_csv('GreedyResults_per_step.csv') #useful for debugging
-        logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
+        logging.info("Totale rekentijd voor veiligheidsrendementoptimalisatie {:.2f} seconden".format(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
 
         self.write_greedy_results(
