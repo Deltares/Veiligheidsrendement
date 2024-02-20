@@ -32,7 +32,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
     """
     This importer focuses on the creation of Sh / Sg measures for a given
     `MeasureResult`. However, it does not set its real (start) cost, as this
-    depends on which other measures have been previously been imported.
+    depends on which other measures have been previously imported.
     """
 
     discount_rate: float
@@ -98,13 +98,13 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             measure_as_input_type.get_allowed_mechanisms(),
         )
         _measure_concrete_params = measure_as_input_type.get_concrete_parameters()
-        _measures_dict = []
+        _measures_dicts = []
         for _section_result in measure_result.sections_measure_result.where(
             OrmMeasureResultSection.time << self.investment_years
         ):
             _time = _section_result.time
             _cost = _section_result.cost
-            _measures_dict.append(
+            _measures_dicts.append(
                 dict(
                     measure_type=MeasureTypeEnum.get_enum(
                         measure_result.measure_per_section.measure.measure_type.name
@@ -123,7 +123,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                 }
             )
 
-        return list(map(lambda x: measure_as_input_type(**x), _measures_dict))
+        return list(map(lambda x: measure_as_input_type(**x), _measures_dicts))
 
     def import_orm(self, orm_model: OrmMeasureResult) -> list[MeasureAsInputProtocol]:
 

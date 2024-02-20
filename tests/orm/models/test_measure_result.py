@@ -37,8 +37,8 @@ class TestMeasureResult:
         _measure_per_section = get_basic_measure_per_section()
         _measure_result = MeasureResult.create(
             beta=3.1234,
-            time=0.0,
-            cost=100,
+            time=0,
+            cost=100.54,
             measure_per_section=_measure_per_section,
         )
 

@@ -224,7 +224,7 @@ class TestShMeasure:
         _combine_type = CombinableTypeEnum.FULL
         _measure = self._create_sh_measure(_measure_type, _combine_type)
         _measure.dcrest = dcrest_value
-        _measure.year = 4.2
+        _measure.year = 4
 
         # 2. Run test and verify expectations.
         assert _measure.is_initial_cost_measure() is False

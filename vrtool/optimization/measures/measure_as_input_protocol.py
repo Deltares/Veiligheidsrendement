@@ -31,7 +31,7 @@ class MeasureAsInputProtocol(Protocol):
         """
         Verifies whether the given measure is considered the "initial measure".
         This happens when its year is 0 but most important when its
-        dberm or dcerst ar 0 / nan (for `ShMeasure` and `SgMeasure` respectively).
+        dberm or dcrest ar 0 / nan (for `ShMeasure` and `SgMeasure` respectively).
 
         Returns:
             bool: Whether its an initial measure or not.
