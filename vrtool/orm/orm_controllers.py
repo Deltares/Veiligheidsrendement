@@ -1,6 +1,7 @@
 from collections import defaultdict
 import itertools
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
 
@@ -314,9 +315,15 @@ def import_results_measures(
             _mr_list, lambda x: x[0].measure_per_section.section
         )
     ]
+    # If there are non_unique sections, we will have to combine the results.
+    # get the first entries of the tuples in _grouped_by_section
+    _grouped_by_section_unique = defaultdict(list)
+    for key, value in _grouped_by_section:
+        _grouped_by_section_unique[key].extend(value)
+    _grouped_by_section_unique = list(_grouped_by_section_unique.items())
 
     # Import a solution per section:
-    for _section, _selected_measure_year_results in _grouped_by_section:
+    for _section, _selected_measure_year_results in _grouped_by_section_unique:
         _selected_measure_id, _selected_measure_year = zip(
             *_selected_measure_year_results
         )

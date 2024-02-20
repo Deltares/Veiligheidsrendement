@@ -24,9 +24,9 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum as MeasureType
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
-from vrtool.orm.models.optimization.optimization_run import OptimizationRun
+from vrtool.orm import models as orm
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
     clear_measure_results,
@@ -36,6 +36,60 @@ from vrtool.orm.orm_controllers import (
     open_database,
     vrtool_db,
 )
+
+
+def get_list_of_sections_for_measure_ids(
+    valid_vrtool_config: VrtoolConfig,
+    measure_ids: list[int],
+) -> list[int]:
+    """
+    gets a list of the sectionIds for the measureIds provided in a list.
+
+    Args:
+        valid_vrtool_config (VrtoolConfig):
+            Configuration contanining database connection details.
+        measure_ids (list[int]): List of measure ids to get the sections for.
+
+    Returns:
+        list[int]: List of section ids.
+    """
+    with open_database(valid_vrtool_config.input_database_path).connection_context():
+        _sections = (
+            orm.MeasurePerSection.select(orm.MeasurePerSection.section_id)
+            .join(orm.MeasureResult)
+            .where(orm.MeasureResult.id.in_(measure_ids))
+        )
+    # return the sections for each MeasureResult
+    return [x.section.get_id() for x in _sections]
+
+
+def get_all_measure_results_of_specific_type(
+    valid_vrtool_config: VrtoolConfig,
+    measure_name: str,
+) -> list[int]:
+    """
+    Gets all available measure results (`MeasureResult`) from the database for a specific type of measure
+
+    Args:
+        valid_vrtool_config (VrtoolConfig):
+            Configuration contanining database connection details.
+        measure_type_name (str): Name of the measure type to get the results for
+
+    Returns:
+        list[tuple[int, int]]: List of measure result - investment year pairs.
+    """
+    with open_database(valid_vrtool_config.input_database_path).connection_context():
+        # We do not want measures that have a year variable >0 initially, as then the interpolation is messed up.
+        _supported_measures = (
+            orm.MeasureResult.select()
+            .join(orm.MeasurePerSection)
+            .join(orm.Measure)
+            .join(orm.MeasureType)
+            .where(orm.Measure.year != 20)
+            .where(orm.MeasureType.name == measure_name.get_old_name())
+        )
+    # get all ids of _supported_measures
+    return [x.get_id() for x in _supported_measures]
 
 
 class TestApi:
@@ -118,7 +172,7 @@ class TestApi:
         assert _test_db_path.exists()
 
         _opened_db = open_database(_test_db_path)
-        _found_dike_traject = DikeTrajectInfo.get()
+        _found_dike_traject = orm.DikeTrajectInfo.get()
 
         # Get a test `VrtoolConfig`.
         _vrtool_config = VrtoolConfig(traject=_found_dike_traject.traject_name)
@@ -127,7 +181,7 @@ class TestApi:
         _vrtool_config.output_directory = test_results.joinpath(request.node.name)
 
         # Get a valid test `OptimizationRun`
-        _optimization_run = OptimizationRun.get_by_id(1)
+        _optimization_run = orm.OptimizationRun.get_by_id(1)
         assert _optimization_run.optimization_type.name == "VEILIGHEIDSRENDEMENT"
         _opened_db.close()
 
@@ -211,12 +265,10 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[0:6],
         indirect=True,
     )
-    def test_run_step_assessment_given_valid_vrtool_config(
-        self, valid_vrtool_config: VrtoolConfig
-    ):
+    def test_run_step_assessment(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         clear_assessment_results(valid_vrtool_config)
         _validator = RunStepAssessmentValidator()
@@ -234,12 +286,10 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[0:6],
         indirect=True,
     )
-    def test_run_step_measures_given_valid_vrtool_config(
-        self, valid_vrtool_config: VrtoolConfig
-    ):
+    def test_run_step_measure(self, valid_vrtool_config: VrtoolConfig):
         # 1. Define test data.
         _validator = RunStepMeasuresValidator()
 
@@ -254,10 +304,10 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases,
+        acceptance_test_cases[0:6],
         indirect=True,
     )
-    def test_run_step_optimization_given_valid_vrtool_config(
+    def test_run_step_optimization(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
@@ -287,7 +337,117 @@ class TestApiRunWorkflowsAcceptance:
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases[6:7],
+        acceptance_test_cases[0:2],
+        indirect=True,
+    )
+    def test_run_step_optimization_with_filtering(
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        # We reuse existing measure results, but we clear the optimization ones.
+        _new_optimization_name = "test_filtered_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+        clear_optimization_results(valid_vrtool_config)
+
+        _validator = RunStepOptimizationValidator("_filtered")
+        _validator.validate_preconditions(valid_vrtool_config)
+
+        # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
+        _measure_ids = [
+            get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
+            for measure_type in [
+                MeasureType.SOIL_REINFORCEMENT,
+                MeasureType.REVETMENT,
+                MeasureType.VERTICAL_GEOTEXTILE,
+            ]
+        ]
+        # flatten list of _measure_ids
+        _measure_ids = [item for sublist in _measure_ids for item in sublist]
+        # each measure should be executed in year 0 so generate tuples of id and 0
+        _measures_input = [(measure_id, 0) for measure_id in _measure_ids]
+
+        # 2. Run test.
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
+
+        # 3. Verify expectations.
+        _validator.validate_results(valid_vrtool_config)
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases[0:2],
+        indirect=True,
+    )
+    def test_run_step_optimization_with_adjusted_timing(
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        # We reuse existing measure results, but we clear the optimization ones.
+        _new_optimization_name = "test_optimization_adjusted_timing_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+        clear_optimization_results(valid_vrtool_config)
+
+        _validator = RunStepOptimizationValidator("_adjusted_timing")
+        _validator.validate_preconditions(valid_vrtool_config)
+
+        # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
+        _measure_ids = [
+            get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
+            for measure_type in [
+                MeasureType.SOIL_REINFORCEMENT,
+                MeasureType.REVETMENT,
+                MeasureType.VERTICAL_GEOTEXTILE,
+            ]
+        ]
+        # flatten list of _measure_ids and sort
+        _measure_ids = sorted([item for sublist in _measure_ids for item in sublist])
+
+        # get the sections for each measure
+        _sections_per_measure_id = get_list_of_sections_for_measure_ids(
+            valid_vrtool_config, _measure_ids
+        )
+
+        # list of investment years (note that first value is not used)
+        _investment_years_per_section = [3, 3, 23, 13]
+        # each measure should be executed in year 0 so generate tuples of id and 0
+        _measures_input = [
+            (measure_id, _investment_years_per_section[_sections_per_measure_id[count]])
+            for count, measure_id in enumerate(_measure_ids)
+        ]
+
+        # 2. Run test.
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
+
+        # 3. Verify expectations.
+        _validator.validate_results(valid_vrtool_config)
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases[0:1],
+        indirect=True,
+    )
+    def test_run_full_given_simple_test_case(self, valid_vrtool_config: VrtoolConfig):
+        """
+        This test so far only checks the output values after optimization.
+        """
+        # 1. Define test data.
+        _validator = RunFullValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
+
+        # 2. Run test.
+        run_full(valid_vrtool_config)
+
+        # 3. Verify final expectations.
+        _validator.validate_results(valid_vrtool_config)
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases[5:7],
         indirect=True,
     )
     @pytest.mark.skip(reason="Only used for debugging purposes.")
@@ -328,62 +488,6 @@ class TestApiRunWorkflowsAcceptance:
             exception_error.value
             == "'Strategy' object has no attribute 'TakenMeasures'"
         )
-
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        acceptance_test_cases[5:6],
-        indirect=True,
-    )
-    def test_run_step_optimization_given_valid_vrtool_config_with_filtering(
-        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
-    ):
-        # 1. Define test data.
-        # We reuse existing measure results, but we clear the optimization ones.
-        _new_optimization_name = "test_filtered_optimization_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
-        clear_optimization_results(valid_vrtool_config)
-
-        _validator = RunStepOptimizationValidator("_filtered")
-        _validator.validate_preconditions(valid_vrtool_config)
-
-        # Get the available measure results with supported investment years.
-        # For this test, we only use measure results with odd ids.
-        _measures_input = list(
-            filter(
-                lambda x: (x[0] % 2 != 0),
-                get_all_measure_results_with_supported_investment_years(
-                    valid_vrtool_config
-                ),
-            )
-        )
-
-        # 2. Run test.
-        run_step_optimization(
-            valid_vrtool_config, _new_optimization_name, _measures_input
-        )
-
-        # 3. Verify expectations.
-        _validator.validate_results(valid_vrtool_config)
-
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        acceptance_test_cases[0:1],
-        indirect=True,
-    )
-    def test_run_full_given_simple_test_case(self, valid_vrtool_config: VrtoolConfig):
-        """
-        This test so far only checks the output values after optimization.
-        """
-        # 1. Define test data.
-        _validator = RunFullValidator()
-        _validator.validate_preconditions(valid_vrtool_config)
-
-        # 2. Run test.
-        run_full(valid_vrtool_config)
-
-        # 3. Verify final expectations.
-        _validator.validate_results(valid_vrtool_config)
 
 
 @pytest.mark.slow
