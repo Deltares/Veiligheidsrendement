@@ -1019,8 +1019,9 @@ class TestOrmControllers:
     ):
         # 1. Define test data.
         _test_dir_name = "test_stability_multiple_scenarios"
-        _test_case_dir = test_data.joinpath(_test_dir_name)
-        assert _test_case_dir.exists()
+        _test_case_dir = TestApiReportedBugs.get_copy_of_reference_directory(
+            _test_dir_name
+        )
 
         _vrtool_config = TestApiReportedBugs.get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name

@@ -492,6 +492,25 @@ class TestApiRunWorkflowsAcceptance:
 
 @pytest.mark.slow
 class TestApiReportedBugs:
+
+    @staticmethod
+    def get_copy_of_reference_directory(directory_name: str) -> Path:
+        # Check if reference path exists.
+        _reference_path = test_data.joinpath(directory_name)
+        assert _reference_path.exists()
+
+        # Ensure new path does not exist yet.
+        _new_path = test_results.joinpath(directory_name)
+        if _new_path.exists():
+            shutil.rmtree(_new_path)
+
+        # Copy the reference to new location.
+        shutil.copytree(_reference_path, _new_path)
+        assert _new_path.exists()
+
+        # Return new path location.
+        return _new_path
+
     @staticmethod
     def get_vrtool_config_test_copy(config_file: Path, test_name: str) -> VrtoolConfig:
         """
@@ -542,8 +561,7 @@ class TestApiReportedBugs:
         self, directory_name: str, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _test_case_dir = test_data.joinpath(directory_name)
-        assert _test_case_dir.exists()
+        _test_case_dir = self.get_copy_of_reference_directory(directory_name)
 
         _vrtool_config = self.get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
