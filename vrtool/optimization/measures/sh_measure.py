@@ -61,7 +61,6 @@ class ShMeasure(MeasureAsInputProtocol):
         dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
     ):
         return {
-            CombinableTypeEnum.REVETMENT: [None],
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
             CombinableTypeEnum.FULL: [None, CombinableTypeEnum.REVETMENT],
         }

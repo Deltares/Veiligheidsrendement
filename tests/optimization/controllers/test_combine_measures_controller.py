@@ -202,7 +202,7 @@ class TestCombineMeasuresController:
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
             ),
         ]
-        _expected_combinations = len(_measures) + 2
+        _expected_combinations = len(_measures) + 1
         _section.measures = _measures
 
         # 2. Run test
