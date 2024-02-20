@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 import logging
 import math
+from dataclasses import dataclass
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum

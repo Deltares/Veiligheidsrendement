@@ -15,7 +15,6 @@ from vrtool.orm.orm_controllers import open_database
 
 
 class TestOptimizationMeasureResultImporter:
-
     def test_given_valid_case_import_all_measure_results(
         self, request: pytest.FixtureRequest
     ):

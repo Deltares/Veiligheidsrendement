@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from peewee import ForeignKeyField, fn
 
 from vrtool.orm.models.measure_per_section import MeasurePerSection

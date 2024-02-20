@@ -1,4 +1,5 @@
 import math
+
 import pandas as pd
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
