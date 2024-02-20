@@ -16,6 +16,7 @@ class TestSgMeasure:
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> SgMeasure:
         _measure = SgMeasure(
+            measure_result_id=42,
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=10.5,
