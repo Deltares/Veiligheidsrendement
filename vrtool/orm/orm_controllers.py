@@ -26,9 +26,6 @@ from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer imp
     SolutionsForMeasureResultsImporter,
 )
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
-from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
-    OptimizationMeasureResultImporter,
-)
 from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
     OptimizationSectionAsInputImporter,
 )
@@ -445,7 +442,7 @@ def _normalize_optimization_run_name(
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
     optimization_name: str,
-    selected_measure_result_ids: list[tuple[int, int]],
+    selected_measure_results_year: list[tuple[int, int]],
 ) -> dict[int, list[int]]:
     """
     Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
@@ -457,44 +454,44 @@ def create_optimization_run_for_selected_measures(
     Args:
         vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
         optimization_name (str): name to give to an optimization run.
-        selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
+        selected_measure_results_year (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
 
     Returns:
         dict[int, list[int]: A dictionary mapping each selected measure to an optimization run.
     """
 
-    _connected_db = open_database(vr_config.input_database_path)
-    logging.info(
-        "Opened connection to export optimization run {}.".format(optimization_name)
-    )
-    _optimization_selected_measure_ids = {}
-    for _method_type in vr_config.design_methods:
-        _optimization_type, _ = orm.OptimizationType.get_or_create(
-            name=_method_type.upper()
+    with open_database(vr_config.input_database_path).connection_context():
+        logging.info(
+            "Opened connection to export optimization run {}.".format(optimization_name)
         )
-        _optimization_run = orm.OptimizationRun.create(
-            name=_normalize_optimization_run_name(optimization_name, _method_type),
-            discount_rate=vr_config.discount_rate,
-            optimization_type=_optimization_type,
-        )
-        orm.OptimizationSelectedMeasure.insert_many(
-            [
-                dict(
-                    optimization_run=_optimization_run,
-                    measure_result=orm.MeasureResult.get_by_id(_measure_id[0]),
-                    investment_year=_measure_id[1],
-                )
-                for _measure_id in selected_measure_result_ids
-            ]
-        ).execute()
-        # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
-        _optimization_selected_measure_ids[_optimization_run.id] = list(
-            map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
-        )
+        _optimization_selected_measure_ids = defaultdict(list)
+        for _method_type in vr_config.design_methods:
+            _optimization_type, _ = orm.OptimizationType.get_or_create(
+                name=_method_type.upper()
+            )
+            _optimization_run = orm.OptimizationRun.create(
+                name=_normalize_optimization_run_name(optimization_name, _method_type),
+                discount_rate=vr_config.discount_rate,
+                optimization_type=_optimization_type,
+            )
+            orm.OptimizationSelectedMeasure.insert_many(
+                [
+                    dict(
+                        optimization_run=_optimization_run,
+                        measure_result=orm.MeasureResult.get_by_id(_measure_id[0]),
+                        investment_year=_measure_id[1],
+                    )
+                    for _measure_id in selected_measure_results_year
+                ]
+            ).execute()
+            # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
+            _optimization_selected_measure_ids[_optimization_run.id] = list(
+                map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
+            )
+
     logging.info(
         "Closed connection after export optimization run {}.".format(optimization_name)
     )
-    _connected_db.close()
 
     return _optimization_selected_measure_ids
 

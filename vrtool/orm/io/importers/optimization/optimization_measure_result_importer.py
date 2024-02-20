@@ -104,7 +104,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             _cost = _section_result.cost
             _measures_dicts.append(
                 dict(
-                    measure_result_id=_section_result.id,
+                    measure_result_id=measure_result.id,
                     measure_type=MeasureTypeEnum.get_enum(
                         measure_result.measure_per_section.measure.measure_type.name
                     ),
