@@ -107,7 +107,8 @@ class SectionAsInput:
     @property
     def max_year(self) -> int:
         """
-        The maximum year for the section
+        The maximum year for the section.
+        Assumption: All measures and mechanisms have the same years.
 
         Returns:
             int: The maximum year
@@ -115,12 +116,10 @@ class SectionAsInput:
         if not self.measures:
             return 0
         # Get the max year for all measures for a random mechanism
+        _sample_measure = self.measures[0]
+        _sample_mechanism = _sample_measure.get_allowed_mechanisms()[0]
         return max(
-            year
-            for meas in self.measures
-            for year in meas.mechanism_year_collection.get_years(
-                self.measures[0].get_allowed_mechanisms()[0]
-            )
+            _sample_measure.mechanism_year_collection.get_years(_sample_mechanism)
         )
 
     @property

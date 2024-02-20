@@ -27,10 +27,13 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             float: the probability
         """
-        for p in self.probabilities:
-            if p.mechanism == mechanism and p.year == year:
-                return p.probability
-        raise ValueError("mechanism/year not found")
+        return next(
+            (
+                p.probability
+                for p in self.probabilities
+                if p.mechanism == mechanism and p.year == year
+            ),
+        )
 
     def get_beta(self, mechanism: MechanismEnum, year: int) -> float:
         """
@@ -43,17 +46,13 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             float: the beta
         """
-        _beta = next(
+        return next(
             (
                 p.beta
                 for p in self.probabilities
                 if p.mechanism == mechanism and p.year == year
             ),
-            None,
         )
-        if not _beta:
-            raise ValueError("mechanism/year not found")
-        return _beta
 
     def get_probabilities(
         self, mechanism: MechanismEnum, years: list[int]
