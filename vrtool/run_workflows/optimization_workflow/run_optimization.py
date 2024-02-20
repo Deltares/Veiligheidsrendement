@@ -63,6 +63,8 @@ class RunOptimization(VrToolRunProtocol):
             self._solutions_dict,
         )
 
+        _greedy_optimization.set_investment_year()
+
         _greedy_optimization.combine()
         _greedy_optimization.aggregate()
 

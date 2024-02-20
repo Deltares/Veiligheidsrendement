@@ -157,7 +157,6 @@ class StrategyController:
                     selected_traject.general_info.traject_name,
                     self._get_measures(solutions_dict[_section_name].MeasureData)
                 )
-            _section_as_input.update_measurelist_with_investment_year()
             self._section_measures_input.append(_section_as_input)
 
     def combine(self) -> None:
@@ -175,3 +174,10 @@ class StrategyController:
         for _section in self._section_measures_input:
             _aggregate_controller = AggregateCombinationsController(_section)
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
+
+    def set_investment_year(self) -> None:
+        """
+        Set investment year for all sections
+        """
+        for _section_as_input in self._section_measures_input:
+            _section_as_input.update_measurelist_with_investment_year()

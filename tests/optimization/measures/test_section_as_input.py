@@ -133,7 +133,7 @@ class TestSectionAsInput:
             == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
         )
 
-    def _get_measure(
+    def _get_revetment_measure(
         self, year: int, revetment_params: list[float], betas: list[float]
     ) -> ShMeasure:
         """
@@ -167,23 +167,42 @@ class TestSectionAsInput:
         )
         return _measure
 
-    def _get_zero_measures(self, prob_zero: list[float]) -> tuple[ShMeasure, SgMeasure]:
-        _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], prob_zero)
+    def _get_zero_measures(
+        self, beta_yr0: float, beta_end_year: float
+    ) -> tuple[ShMeasure, SgMeasure]:
+        _mech1_year1_prob = MechanismPerYear(
+            MechanismEnum.OVERFLOW, 0, beta_to_pf(beta_yr0)
+        )
+        _mech1_year2_prob = MechanismPerYear(
+            MechanismEnum.OVERFLOW, _END_YEAR, beta_to_pf(beta_end_year)
+        )
+        _mechanism_year_collection1 = MechanismPerYearProbabilityCollection(
+            [_mech1_year1_prob, _mech1_year2_prob]
+        )
         _zero_measure_sh = MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT)
-        _zero_measure_sg = MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT)
         _zero_measure_sh.mechanism_year_collection = copy.deepcopy(
-            _zero_measure.mechanism_year_collection
+            _mechanism_year_collection1
         )
+
+        _mech2_year1_prob = MechanismPerYear(
+            MechanismEnum.PIPING, 0, beta_to_pf(beta_yr0)
+        )
+        _mech2_year2_prob = MechanismPerYear(
+            MechanismEnum.PIPING, _END_YEAR, beta_to_pf(beta_end_year)
+        )
+        _mechanism_year_collection2 = MechanismPerYearProbabilityCollection(
+            [_mech2_year1_prob, _mech2_year2_prob]
+        )
+        _zero_measure_sg = MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT)
         _zero_measure_sg.mechanism_year_collection = copy.deepcopy(
-            _zero_measure.mechanism_year_collection
+            _mechanism_year_collection2
         )
-        for p in _zero_measure_sg.mechanism_year_collection.probabilities:
-            p.mechanism = MechanismEnum.PIPING
+
         return [_zero_measure_sh, _zero_measure_sg]
 
     def test_investment_year_basic(self):
         """
-        Minimal test: a zero measure and an actual measure
+        Minimal test: two zero measures and an actual measure
         Reference values can be obtained using linear interpolation
         """
         # setup
@@ -191,8 +210,10 @@ class TestSectionAsInput:
         _prob_diff = 0.5
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _prob_measure = [5.0, 5.0 - _prob_diff]
-        _measure = self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure)
-        [_zero_measure_sh, _zero_measure_sg] = self._get_zero_measures(_prob_zero)
+        _measure = self._get_revetment_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure)
+        [_zero_measure_sh, _zero_measure_sg] = self._get_zero_measures(
+            _prob_zero[0], _prob_zero[1]
+        )
         _measures = [_measure, _zero_measure_sh, _zero_measure_sg]
         _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
 
@@ -230,7 +251,7 @@ class TestSectionAsInput:
 
     def test_two_investment_years(self):
         """
-        Test a zero measure and and two actual measures that only differ in investment year
+        Test two zero measures and two actual measures that only differ in investment year
         Reference values can be obtained using linear interpolation
         """
         # setup
@@ -240,10 +261,12 @@ class TestSectionAsInput:
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _prob_measure_a = [5.0, 5.0 - _prob_diff]
         _prob_measure_b = [6.0, 6.0 - _prob_diff]
-        [_zero_measure_sh, _zero_measure_sg] = self._get_zero_measures(_prob_zero)
+        [_zero_measure_sh, _zero_measure_sg] = self._get_zero_measures(
+            _prob_zero[0], _prob_zero[1]
+        )
         _measures = [
-            self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure_a),
-            self._get_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
+            self._get_revetment_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure_a),
+            self._get_revetment_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
             _zero_measure_sh,
             _zero_measure_sg,
         ]

@@ -36,7 +36,7 @@ class SectionAsInput:
             for m in self.sg_measures
             if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
             and m.year == 0
-            and m.dberm == 0
+            and m.dberm == 0.0
             and m.dcrest == 0.0
         ), None)
         _zero_sh = next((
@@ -49,7 +49,7 @@ class SectionAsInput:
         for p in _zero_sh.probabilities:
             _zero_sg.probabilities.append(p)
 
-        return _zero_sg
+        return copy.deepcopy(_zero_sg)
 
     def get_measures_by_class(
         self,
@@ -105,11 +105,11 @@ class SectionAsInput:
         """
         Update the probabilities for all measures.
         Measures with investment year > 0 get values from the zero measure.
-        Other measure only get more years in mechanism_year_collection,
+        Other measures only get more years in mechanism_year_collection,
         to keep the number of years equal in a section.
         """
 
-        _initial = copy.deepcopy(self.initial_assessment)
+        _initial = self.initial_assessment
 
         _investment_years = self._get_investment_years()
 
