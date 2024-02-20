@@ -23,6 +23,9 @@ class SectionAsInput:
     traject_name: str
     flood_damage: float
     measures: list[MeasureAsInputProtocol]
+    initial_assessment: MechanismPerYearProbabilityCollection = field(
+        default_factory=lambda: MechanismPerYearProbabilityCollection([])
+    )
     combined_measures: list[CombinedMeasure] = field(
         default_factory=list[CombinedMeasure]
     )  # TODO do we need this in SectionAsInput or can it be volatile?
