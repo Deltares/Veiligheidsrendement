@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -125,13 +126,13 @@ class StrategyController:
 
         for _idx in measure_data.index:
             _dberm = measure_data.at[_idx, ("dberm", "")]
-            if _dberm == 0 or _dberm == -999:  # Sh
+            if math.isclose(_dberm, 0) or math.isclose(_dberm, -999):  # Sh
                 _sh_measure = self._create_sh_measure(measure_data.iloc[[_idx]], _idx)
                 _sh_measure.set_start_cost(_sh_measures[-1] if _sh_measures else None)
                 _sh_measures.append(_sh_measure)
 
             _dcrest = measure_data.at[_idx, ("dcrest", "")]
-            if _dcrest == 0 or _dcrest == -999:  # Sg
+            if math.isclose(_dcrest, 0) or math.isclose(_dcrest, -999):  # Sg
                 _sg_measure = self._create_sg_measure(measure_data.iloc[[_idx]], _idx)
                 _sg_measure.set_start_cost(_sg_measures[-1] if _sg_measures else None)
                 _sg_measures.append(_sg_measure)

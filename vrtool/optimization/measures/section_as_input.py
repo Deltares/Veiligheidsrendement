@@ -20,12 +20,15 @@ class SectionAsInput:
     section_name: str
     traject_name: str
     measures: list[MeasureAsInputProtocol]
+    initial_assessment: MechanismPerYearProbabilityCollection = field(
+        default_factory=lambda: MechanismPerYearProbabilityCollection([])
+    )
     combined_measures: list[CombinedMeasure] = field(
         default_factory=list[CombinedMeasure]
     )  # TODO do we need this in SectionAsInput or can it be volatile?
-    aggregated_measure_combinations: Optional[
-        list[AggregatedMeasureCombination]
-    ] = field(default_factory=list[AggregatedMeasureCombination])
+    aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]] = (
+        field(default_factory=list[AggregatedMeasureCombination])
+    )
 
     def get_measures_by_class(
         self,
