@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -17,8 +17,8 @@ class StrategyInput:
     _max_year: int = 0
     _max_sg: int = 0
     _max_sh: int = 0
-    opt_parameters: dict[str, int] = {}
-    Pf: dict[str, np.ndarray] = {}
+    opt_parameters: dict[str, int] = field(default_factory=dict)
+    Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOptions: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
     RiskGeotechnical: np.ndarray = np.array([])
@@ -35,30 +35,34 @@ class StrategyInput:
             mech: MechanismEnum,
             combinations: list[CombinedMeasure],
             dims: tuple[int, ...],
+            max_year: int,
         ) -> np.ndarray:
             _probs = np.zeros(dims)
             # Add other measures
             for m, _meas in enumerate(combinations):
                 _probs[m, :] = _meas.mechanism_year_collection.get_probabilities(
-                    mech, list(range(cls._max_year))
+                    mech, list(range(max_year))
                 )
             return _probs
 
         def _get_pf_for_mech(
-            mech: MechanismEnum, section: SectionAsInput, dims: tuple[int, ...]
+            mech: MechanismEnum,
+            section: SectionAsInput,
+            dims: tuple[int, ...],
+            max_year: int,
         ) -> np.ndarray:
             # Get initial assessment as first measure
             _initial_probs = section.initial_assessment.get_probabilities(
-                mech, list(range(cls._max_year))
+                mech, list(range(max_year))
             )
             # Get probabilities for all measures
             if section.sg_measures[0].is_mechanism_allowed(mech):
                 _probs = _get_pf_for_measures(
-                    mech, section.sg_combinations, (dims[0] - 1, dims[1])
+                    mech, section.sg_combinations, (dims[0] - 1, dims[1]), max_year
                 )
             elif section.sh_measures[0].is_mechanism_allowed(mech):
                 _probs = _get_pf_for_measures(
-                    mech, section.sh_combinations, (dims[0] - 1, dims[1])
+                    mech, section.sh_combinations, (dims[0] - 1, dims[1]), max_year
                 )
             else:
                 raise ValueError("Mechanism not allowed")
@@ -66,47 +70,32 @@ class StrategyInput:
             return np.concatenate((np.array(_initial_probs)[None, :], _probs), axis=0)
 
         def _get_probabilities(
-            sections: list[SectionAsInput], mechanisms: set[MechanismEnum]
+            sections: list[SectionAsInput],
+            mechanisms: set[MechanismEnum],
+            num_sections: int,
+            max_sh: int,
+            max_sg: int,
+            max_year: int,
         ) -> dict[str, np.ndarray]:
-            # Initialize datastructure
             _pf: dict[str, np.ndarray] = {}
 
             for _mech in mechanisms:
+                # Initialize datastructure:
                 if _mech == MechanismEnum.OVERFLOW:
-                    _pf[_mech.name] = np.full(
-                        (
-                            cls._num_sections,
-                            cls._max_sh + 1,
-                            cls._max_year,
-                        ),
-                        1.0,
-                    )
+                    _pf[_mech.name] = np.full((num_sections, max_sh + 1, max_year), 1.0)
                 elif _mech == MechanismEnum.REVETMENT:
                     _pf[_mech.name] = np.full(
-                        (
-                            cls._num_sections,
-                            cls._max_sh + 1,
-                            cls._max_year,
-                        ),
-                        1.0e-18,
+                        (num_sections, max_sh + 1, max_year), 1.0e-18
                     )
                 else:
-                    _pf[_mech.name] = np.full(
-                        (
-                            cls._num_sections,
-                            cls._max_sg + 1,
-                            cls._max_year,
-                        ),
-                        1.0,
-                    )
+                    _pf[_mech.name] = np.full((num_sections, max_sg + 1, max_year), 1.0)
 
+                # Loop over sections
                 for n, _section in enumerate(sections):
                     _probs = _get_pf_for_mech(
-                        _mech,
-                        _section,
-                        _pf[_mech.name].shape[1:],
+                        _mech, _section, _pf[_mech.name].shape[1:], max_year
                     )
-                    _pf[_mech.name][n, 0 : len(_pf), :] = _probs
+                    _pf[_mech.name][n, 0 : len(_probs), :] = _probs
 
             return _pf
 
@@ -125,9 +114,11 @@ class StrategyInput:
             """
             return next((i for i, c in enumerate(combinations) if c == comb), -1)
 
-        def _get_lifecycle_cost(sections: list[SectionAsInput]) -> np.ndarray:
+        def _get_lifecycle_cost(
+            sections: list[SectionAsInput], num_sections: int, max_sh: int, max_sg: int
+        ) -> np.ndarray:
             _lcc: np.ndarray = np.array([])
-            _lcc = np.full((cls._num_sections, cls._max_sh + 1, cls._max_sg + 1), 1e99)
+            _lcc = np.full((num_sections, max_sh + 1, max_sg + 1), 1e99)
 
             for n, _section in enumerate(sections):
                 _lcc[n, 0, 0] = 0.0
@@ -166,8 +157,20 @@ class StrategyInput:
 
         # Populate probabilities and lifecycle cost datastructures per section(/mechanism)
         mechanisms = set(mech for sect in sections for mech in sect.mechanisms)
-        _strategy_input.Pf = _get_probabilities(sections, mechanisms)
-        _strategy_input.LCCOptions = _get_lifecycle_cost(sections)
+        _strategy_input.Pf = _get_probabilities(
+            sections,
+            mechanisms,
+            _strategy_input._num_sections,
+            _strategy_input._max_sh,
+            _strategy_input._max_sg,
+            _strategy_input._max_year,
+        )
+        _strategy_input.LCCOptions = _get_lifecycle_cost(
+            sections,
+            _strategy_input._num_sections,
+            _strategy_input._max_sh,
+            _strategy_input._max_sg,
+        )
 
         # Decision variables for discounted damage [T,]
         _strategy_input.D = np.array(
