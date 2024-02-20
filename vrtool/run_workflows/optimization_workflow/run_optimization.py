@@ -38,7 +38,6 @@ class RunOptimization(VrToolRunProtocol):
         self.vr_config = optimization_input.vr_config
         self._section_input_collection = optimization_input.section_input_collection
         self._selected_measure_ids = optimization_selected_measure_ids
-        # self._solutions_dict = optimization_input.solutions_dict
         self._ids_to_import = optimization_input.measure_id_year_list
 
     def _get_output_dir(self) -> Path:

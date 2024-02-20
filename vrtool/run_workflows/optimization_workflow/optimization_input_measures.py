@@ -16,7 +16,7 @@ class OptimizationInputMeasures:
         Gets a list of tuples representing a `MeasureResult` id and its `investment_year`.
 
         Returns:
-            list[tuple[int, int]]: List of tuples `list[tuple[`id`, investment_year`]]`.
+            list[tuple[int, int]]: List of tuples `list[tuple[id, investment_year]]`.
         """
         return list(
             set(
