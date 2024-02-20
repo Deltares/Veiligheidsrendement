@@ -143,7 +143,7 @@ class RunOptimization(VrToolRunProtocol):
         return _greedy_optimization
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
-        logging.info(f"Start bepaling referentiemaatregelen voor {design_method}.")
+        logging.info(f"Start bepaling referentiemaatregelen op basis van {design_method}.")
         # Initialize a strategy type (i.e combination of objective & constraints)
         _target_reliability_based = TargetReliabilityStrategy(
             design_method, self.vr_config

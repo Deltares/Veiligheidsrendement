@@ -148,6 +148,7 @@ def get_dike_section_solutions(
     _solutions = _importer.import_orm(_orm_section_data)
     vrtool_db.close()
     _solutions.evaluate_solutions(dike_section, general_info, preserve_slope=False)
+    logging.info("Berekeningen voor maatregelen voor dijkvak {} afgerond".format(dike_section.name))
     return _solutions
 
 
@@ -511,14 +512,14 @@ def export_results_optimization(
 
     _connected_db = open_database(result.vr_config.input_database_path)
 
-    logging.info("Opened connection to export optimizations.")
+    logging.debug("Opened connection to export optimizations.")
 
     for i in range(len(result.results_strategies)):
         _exporter = StrategyBaseExporter(run_ids[i])
         _exporter.export_dom(result.results_strategies[i])
     _connected_db.close()
 
-    logging.info("Closed connection after export optimizations.")
+    logging.info("Resultaten geexporteerd.")
 
 
 def get_optimization_steps(optimization_run_id: int) -> Iterator[orm.OptimizationStep]:

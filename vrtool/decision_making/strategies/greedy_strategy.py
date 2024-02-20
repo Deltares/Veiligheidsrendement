@@ -556,8 +556,8 @@ class GreedyStrategy(StrategyBase):
             # 'overflow bundle'
             if np.isnan(np.max(BC)):
                 ids = np.argwhere(np.isnan(BC))
-                logging.warning(
-                    "NaN encountered in benefit-cost ratio matrix. Trying to output the measure for which this happens:"
+                logging.error(
+                    "NaN gevonden in matrix met kosten-batenratio. Uitvoer voor betreffende maatregel wordt gegenereerd."
                 )
                 for i in range(0, ids.shape[0]):
                     error_measure = self.get_measure_from_index(ids[i, :])

@@ -264,7 +264,7 @@ class ApiRunWorkflows:
         self.run_measures()
 
         # Step 3. Optimization.
-        logging.info("Start optimalisatie van maatregelen.")
+        logging.info("Start stap 3: optimalisatie van maatregelen.")
         clear_optimization_results(self.vrtool_config)
         _ids_to_import = get_all_measure_results_with_supported_investment_years(
             self.vrtool_config

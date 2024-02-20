@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import logging
 from typing import Tuple
 
@@ -41,7 +40,7 @@ class RunMeasures(VrToolRunProtocol):
         _results_measures = ResultsMeasures()
         _results_measures.vr_config = self.vr_config
         _results_measures.selected_traject = self.selected_traject
-
+        #TODO: maybe add tqdm here to generate a progress bar
         _results_measures.solutions_dict.update(
             dict(map(self._get_section_solution, self.selected_traject.sections))
         )

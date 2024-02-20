@@ -23,7 +23,7 @@ class WaterLevelImporter(OrmImporterProtocol):
         ).distinct()
         if not any(_available_years):
             logging.warning(
-                f"No available water level data for {orm_model.section_name}."
+                f"Geen waterstandsdata voor dijkvak {orm_model.section_name}."
             )
             return None
 
