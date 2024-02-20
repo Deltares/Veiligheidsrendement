@@ -1,28 +1,58 @@
 import pytest
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.run_workflows.optimization_workflow.input_measures_optimization import (
+    OptimizationInputMeasures,
+)
 from vrtool.run_workflows.optimization_workflow.run_optimization import RunOptimization
 from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
+
+
+class MockedMeasure(MeasureAsInputProtocol):
+    measure_result_id = 42
+    measure_type = None
+    combine_type = None
+    cost = float("nan")
+    discount_rate = float("nan")
+    year: int = 0
+    mechanism_year_collection = None
+    start_cost = float("nan")
 
 
 class TestRunOptimization:
     def test_init_with_valid_data(self):
         # 1. Define test data
-        _results_measures = ResultsMeasures()
-        _results_measures.vr_config = "sth"
-        _results_measures.solutions_dict = 123
-        _results_measures.selected_traject = 456
-        _results_measures.ids_to_import = [[1, 20]]
+        _mocked_measure = MockedMeasure()
+        _opt_input_measures = OptimizationInputMeasures(
+            vr_config="sth",
+            selected_traject=456,
+            section_input_collection=[
+                SectionAsInput(
+                    section_name="asdf", traject_name="456", measures=[_mocked_measure]
+                )
+            ],
+        )
         _optimization_selected_measure_ids = {1: [1], 2: [2]}
 
         # 2. Run test.
-        _run = RunOptimization(_results_measures, _optimization_selected_measure_ids)
+        _run = RunOptimization(_opt_input_measures, _optimization_selected_measure_ids)
 
         # 3. Verify expectations.
         assert isinstance(_run, RunOptimization)
         assert isinstance(_run, VrToolRunProtocol)
-        assert _run._solutions_dict == _results_measures.solutions_dict
-        assert _run.selected_traject == _results_measures.selected_traject
+        assert _run.vr_config == _opt_input_measures.vr_config
+        assert _run.selected_traject == _opt_input_measures.selected_traject
+        assert (
+            _run._section_input_collection
+            == _opt_input_measures.section_input_collection
+        )
+        assert _run._selected_measure_ids == _optimization_selected_measure_ids
+        assert _run._ids_to_import == [
+            (_mocked_measure.measure_result_id, _mocked_measure.year)
+        ]
 
     def test_init_with_invalid_data(self):
         _optimization_selected_measure_ids = {1: [1], 2: [2]}
@@ -31,5 +61,5 @@ class TestRunOptimization:
 
         assert (
             str(exception_error.value)
-            == "Required valid instance of ResultsMeasures as an argument."
+            == "Required valid instance of OptimizationInputMeasures as an argument."
         )
