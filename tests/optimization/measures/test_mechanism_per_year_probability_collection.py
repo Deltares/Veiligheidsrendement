@@ -5,10 +5,11 @@ from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class TestMechanismPerYearProbCollection:
-    def _get_mechanism_per_year_example(self):
+    def _get_mechanism_per_year_example(self) -> list[MechanismPerYear]:
         _prob = []
         _prob.append(MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9))
         _prob.append(MechanismPerYear(MechanismEnum.OVERFLOW, 50, 0.8))
@@ -29,7 +30,7 @@ class TestMechanismPerYearProbCollection:
         # Assert
         assert isinstance(_collection, MechanismPerYearProbabilityCollection)
 
-    def test_get_probability(self):
+    def test_get_probability_existing(self):
         # Setup
         _prob = self._get_mechanism_per_year_example()
 
@@ -39,6 +40,19 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert _prob50yr == 0.8
+
+    def test_get_probability_non_existing_raises_error(self):
+        # Setup
+        _prob = self._get_mechanism_per_year_example()
+
+        # Call
+        _collection = MechanismPerYearProbabilityCollection(_prob)
+
+        # Assert
+        with pytest.raises(StopIteration) as exception_error:
+            _prob50yr = _collection.get_probability(MechanismEnum.OVERFLOW, 77)
+
+        assert str(exception_error.value) == ""
 
     def test_interpolation(self):
         # Setup
@@ -52,6 +66,32 @@ class TestMechanismPerYearProbCollection:
 
         # Assert
         assert _prob20yr == pytest.approx(0.86555, abs=1e-5)
+
+    def test_beta_existing(self):
+        # 1. Define test data
+        _probs = self._get_mechanism_per_year_example()
+        _collection = MechanismPerYearProbabilityCollection(_probs)
+        _mech = MechanismEnum.OVERFLOW
+        _prob_exp = _collection.get_probability(_mech, 50)
+        _beta_exp = pf_to_beta(_prob_exp)
+
+        # 2. Run test
+        _beta = _collection.get_beta(_mech, 50)
+
+        # 3. Verify expectations
+        assert _beta == pytest.approx(_beta_exp)
+
+    def test_get_beta_non_existing_raises_error(self):
+        # 1. Define test data
+        _probs = self._get_mechanism_per_year_example()
+        _collection = MechanismPerYearProbabilityCollection(_probs)
+
+        # 2. Run test
+        with pytest.raises(StopIteration) as exception_error:
+            _beta = _collection.get_beta(MechanismEnum.OVERFLOW, 77)
+
+        # 3. Verify expectations
+        assert str(exception_error.value) == ""
 
     def test_get_probabilities(self):
         # 1. Setup
