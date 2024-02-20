@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
+import copy
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -30,21 +31,21 @@ class SectionAsInput:
 
     @property
     def initial_assessment(self) -> MechanismPerYearProbabilityCollection:
-        _zero_sg = next(
+        _zero_sg = next((
             m.mechanism_year_collection
             for m in self.sg_measures
             if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
             and m.year == 0
             and m.dberm == 0
             and m.dcrest == 0.0
-        )
-        _zero_sh = next(
+        ), None)
+        _zero_sh = next((
             m.mechanism_year_collection
             for m in self.sh_measures
             if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
             and m.year == 0
             and m.dcrest == 0.0
-        )
+        ), None)
         for p in _zero_sh.probabilities:
             _zero_sg.probabilities.append(p)
 
@@ -100,33 +101,28 @@ class SectionAsInput:
     def sg_combinations(self) -> list[CombinedMeasure]:
         return self.get_combinations_by_class(SgMeasure)
 
-    def update_measurelist_with_investment_year(
-        self,
-        initial: MechanismPerYearProbabilityCollection,
-    ) -> None:
+    def update_measurelist_with_investment_year(self) -> None:
         """
         Update the probabilities for all measures.
         Measures with investment year > 0 get values from the zero measure.
         Other measure only get more years in mechanism_year_collection,
         to keep the number of years equal in a section.
-
-        Args:
-            measures (list[MeasureAsInputProtocol]): list with all measures
-            initial (MechanismPerYearProbabilityCollection): initial probabilities
         """
+
+        _initial = copy.deepcopy(self.initial_assessment)
 
         _investment_years = self._get_investment_years()
 
         if len(_investment_years) == 0:
             return
 
-        initial.add_years(_investment_years)
+        _initial.add_years(_investment_years)
         for measure in self.measures:
             measure.mechanism_year_collection.add_years(_investment_years)
 
         for measure in self.measures:
             if measure.year > 0:
-                measure.mechanism_year_collection.replace_values(initial, measure.year)
+                measure.mechanism_year_collection.replace_values(_initial, measure.year)
 
     def _get_investment_years(self) -> list[int]:
         _investment_years = set()
