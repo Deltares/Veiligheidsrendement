@@ -1,4 +1,5 @@
 from collections import defaultdict
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.measures.measure_as_input_protocol import (

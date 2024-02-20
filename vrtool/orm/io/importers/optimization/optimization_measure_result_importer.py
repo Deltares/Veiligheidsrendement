@@ -1,7 +1,6 @@
 import math
 from typing import Type
 
-
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -23,7 +22,6 @@ from vrtool.orm.models.measure_result.measure_result import (
 from vrtool.orm.models.measure_result.measure_result_section import (
     MeasureResultSection as OrmMeasureResultSection,
 )
-
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 

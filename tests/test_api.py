@@ -492,7 +492,6 @@ class TestApiRunWorkflowsAcceptance:
 
 @pytest.mark.slow
 class TestApiReportedBugs:
-
     @staticmethod
     def get_copy_of_reference_directory(directory_name: str) -> Path:
         # Check if reference path exists.
