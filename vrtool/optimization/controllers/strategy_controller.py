@@ -320,6 +320,7 @@ class StrategyController:
                 self.Pf[_mech.name][n, 0 : len(_pf), :] = _pf
 
             # LCC
+            self.LCCOptions[n, 0, 0] = 0.0
             for _aggr in _section.aggregated_measure_combinations:
                 _sh_idx = _get_combination_idx(
                     _aggr.sh_combination, _section.sh_combinations
@@ -327,7 +328,7 @@ class StrategyController:
                 _sg_idx = _get_combination_idx(
                     _aggr.sg_combination, _section.sg_combinations
                 )
-                self.LCCOptions[n, _sh_idx, _sg_idx] = _aggr.lcc
+                self.LCCOptions[n, _sh_idx + 1, _sg_idx + 1] = _aggr.lcc
 
         # Initialize/calculate decision variables
         # - for executed options [N, Sh] & [N, Sg]
