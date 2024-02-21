@@ -12,7 +12,7 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 @dataclass
-class StrategyInput:
+class StrategyInputGreedy:
     _num_sections: int = 0
     _max_year: int = 0
     _max_sg: int = 0
@@ -26,7 +26,9 @@ class StrategyInput:
     RiskRevetment: np.ndarray = np.array([])
 
     @classmethod
-    def from_section_as_input(cls, sections: list[SectionAsInput]) -> StrategyInput:
+    def from_section_as_input(
+        cls, sections: list[SectionAsInput]
+    ) -> StrategyInputGreedy:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
@@ -140,7 +142,7 @@ class StrategyInput:
                 [m.name for m in SgMeasure.get_allowed_mechanisms()],
             )
 
-        # Initialize StrategyInput
+        # Initialize StrategyInputGreedy
         _strategy_input = cls()
 
         # Define general parameters

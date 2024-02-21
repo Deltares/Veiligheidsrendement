@@ -6,7 +6,7 @@ from vrtool.optimization.controllers.combine_measures_controller import (
     CombineMeasuresController,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.measures.strategy_input import StrategyInput
+from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
 
 
 class StrategyController:
@@ -35,8 +35,8 @@ class StrategyController:
             _aggregate_controller = AggregateCombinationsController(_section)
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
 
-    def get_evaluate_input(self) -> StrategyInput:
+    def get_evaluate_input(self) -> StrategyInputGreedy:
         """
         Get the input for the evaluation of the strategy.
         """
-        return StrategyInput.from_section_as_input(self._section_measures_input)
+        return StrategyInputGreedy.from_section_as_input(self._section_measures_input)

@@ -14,10 +14,10 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.optimization.measures.strategy_input import StrategyInput
+from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
 
 
-class TestStrategyInput:
+class TestStrategyInputGreedy:
     def test_optimization_input(self):
         # 1. Define input
 
@@ -273,7 +273,7 @@ class TestStrategyInput:
         ]
 
         # 2. Run test
-        _strategy_input = StrategyInput.from_section_as_input(_sections)
+        _strategy_input = StrategyInputGreedy.from_section_as_input(_sections)
 
         # 3. Verify expectations
 
