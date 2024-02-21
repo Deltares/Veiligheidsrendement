@@ -709,7 +709,6 @@ class TestOrmControllers:
         _results_optimization.selected_traject = (
             _measures_input_data.domain_dike_section.TrajectInfo.traject_name
         )
-        _results_optimization.results_solutions = _results_measures.solutions_dict
         _results_optimization.results_strategies = [_test_strategy]
 
         # 2. Run test.
