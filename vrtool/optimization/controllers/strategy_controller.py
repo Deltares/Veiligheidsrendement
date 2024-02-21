@@ -1,3 +1,7 @@
+from typing import Type
+
+from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.controllers.aggregate_combinations_controller import (
     AggregateCombinationsController,
@@ -7,6 +11,9 @@ from vrtool.optimization.controllers.combine_measures_controller import (
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
+from vrtool.optimization.strategy_input.strategy_input_protocol import (
+    StrategyInputProtocol,
+)
 
 
 class StrategyController:
@@ -14,10 +21,8 @@ class StrategyController:
     _vrtool_config: VrtoolConfig
     _section_measures_input: list[SectionAsInput]
 
-    def __init__(self, method: str, vrtool_config: VrtoolConfig) -> None:
-        self._method = method
-        self._vrtool_config = vrtool_config
-        self._section_measures_input = []
+    def __init__(self, section_measures_input: list[SectionAsInput]) -> None:
+        self._section_measures_input = section_measures_input
 
     def combine(self) -> None:
         """
@@ -35,8 +40,16 @@ class StrategyController:
             _aggregate_controller = AggregateCombinationsController(_section)
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
 
-    def get_evaluate_input(self) -> StrategyInputGreedy:
+    def get_evaluate_input(
+        self, strategy_type: Type[StrategyBase]
+    ) -> StrategyInputProtocol:
         """
         Get the input for the evaluation of the strategy.
         """
-        return StrategyInputGreedy.from_section_as_input(self._section_measures_input)
+        if strategy_type == GreedyStrategy:
+            return StrategyInputGreedy.from_section_as_input(
+                self._section_measures_input
+            )
+        elif strategy_type == TargetReliabilityStrategy:
+            raise NotImplementedError("TargetReliabilityStrategy not implemented yet.")
+        raise ValueError(f"Strategy type {strategy_type} not implemented yet.")
