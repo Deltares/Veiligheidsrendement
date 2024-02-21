@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import pytest as py
-import copy
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -269,8 +268,6 @@ class TestSectionAsInput:
             measures=_measures,
             initial_assessment=_initial_probabilities,
         )
-
-        # _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 
         # run test
         _section_as_input.update_measurelist_with_investment_year()
