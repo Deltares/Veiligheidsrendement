@@ -204,7 +204,11 @@ class TestSectionAsInput:
         _initial = self._get_initial_probabilities(_prob_zero[0], _prob_zero[1])
         _measures = [_measure]
         _section_as_input = SectionAsInput(
-            "section1", "traject1", _measures, _initial, []
+            section_name="section1",
+            traject_name="traject1",
+            flood_damage=0.0,
+            measures=_measures,
+            initial_assessment=_initial,
         )
 
         # run test
@@ -259,7 +263,11 @@ class TestSectionAsInput:
             self._get_revetment_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
         ]
         _section_as_input = SectionAsInput(
-            "section1", "traject1", _measures, _initial_probabilities, []
+            section_name="section1",
+            traject_name="traject1",
+            flood_damage=0.0,
+            measures=_measures,
+            initial_assessment=_initial_probabilities,
         )
 
         # _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
