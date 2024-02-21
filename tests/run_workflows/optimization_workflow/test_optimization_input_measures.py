@@ -28,7 +28,10 @@ class TestOptimizationInputMeasures:
             selected_traject=None,
             section_input_collection=[
                 SectionAsInput(
-                    section_name="aSection", traject_name="aTraject", measures=_measures
+                    section_name="aSection",
+                    traject_name="aTraject",
+                    measures=_measures,
+                    flood_damage=4.2,
                 )
             ],
         )
