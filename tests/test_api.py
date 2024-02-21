@@ -32,7 +32,6 @@ from vrtool.orm.orm_controllers import (
     clear_measure_results,
     clear_optimization_results,
     get_all_measure_results_with_supported_investment_years,
-    import_results_measures_for_optimization,
     open_database,
     vrtool_db,
 )
