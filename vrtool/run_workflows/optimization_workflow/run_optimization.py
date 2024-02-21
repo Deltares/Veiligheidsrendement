@@ -72,15 +72,15 @@ class RunOptimization(VrToolRunProtocol):
         _greedy_optimization.Cint_g = _evaluate_input.Cint_g
         _greedy_optimization.Dint = _evaluate_input.Dint
 
-        _greedy_optimization.evaluate(
-            self.selected_traject,
-            self._solutions_dict,
-            splitparams=True,
-            setting="cautious",
-            f_cautious=1.5,
-            max_count=600,
-            BCstop=0.1,
-        )
+        # _greedy_optimization.evaluate(
+        #     self.selected_traject,
+        #     self._solutions_dict,
+        #     splitparams=True,
+        #     setting="cautious",
+        #     f_cautious=1.5,
+        #     max_count=600,
+        #     BCstop=0.1,
+        # )
 
         return _greedy_optimization
 
