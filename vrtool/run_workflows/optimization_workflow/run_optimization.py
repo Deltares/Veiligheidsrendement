@@ -57,48 +57,6 @@ class RunOptimization(VrToolRunProtocol):
         _strategy_controller.aggregate()
         return _strategy_controller.get_evaluate_input(strategy_type)
 
-    def _get_optimized_greedy_strategy_new(self, design_method: str) -> StrategyBase:
-        """
-        Temporary function for VRTOOL-359 to convert legacy input
-        containing Pandas DataFrames to new inputcontaining MeasureAsInputProtocol objects.
-
-        Args:
-            design_method (str): Design method
-
-        Returns:
-            StrategyController: Controller containing the new input
-        """
-        _strategy_controller = StrategyController(design_method, self.vr_config)
-
-        # TODO: set investment year
-        _strategy_controller.combine()
-        _strategy_controller.aggregate()
-        _evaluate_input = _strategy_controller.get_evaluate_input()
-
-        _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
-        _greedy_optimization.opt_parameters = _evaluate_input.opt_parameters
-        _greedy_optimization.Pf = _evaluate_input.Pf
-        _greedy_optimization.LCCOption = _evaluate_input.LCCOption
-        _greedy_optimization.D = _evaluate_input.D
-        _greedy_optimization.RiskGeotechnical = _evaluate_input.RiskGeotechnical
-        _greedy_optimization.RiskOverflow = _evaluate_input.RiskOverflow
-        _greedy_optimization.RiskRevetment = _evaluate_input.RiskRevetment
-        _greedy_optimization.Cint_h = _evaluate_input.Cint_h
-        _greedy_optimization.Cint_g = _evaluate_input.Cint_g
-        _greedy_optimization.Dint = _evaluate_input.Dint
-
-        # _greedy_optimization.evaluate(
-        #     self.selected_traject,
-        #     self._solutions_dict,
-        #     splitparams=True,
-        #     setting="cautious",
-        #     f_cautious=1.5,
-        #     max_count=600,
-        #     BCstop=0.1,
-        # )
-
-        return _greedy_optimization
-
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
         # Initalize strategy controller
         _greedy_optimization = self._get_strategy_input(GreedyStrategy)
@@ -242,7 +200,6 @@ class RunOptimization(VrToolRunProtocol):
             "Optimized": self._get_optimized_greedy_strategy,
             "Greedy": self._get_optimized_greedy_strategy,
             "Veiligheidsrendement": self._get_optimized_greedy_strategy,
-            "Veiligheidsrendement_new": self._get_optimized_greedy_strategy_new,  # temporary fix to use new greedy strategy
             "OI": self._get_target_reliability_strategy,
             "TargetReliability": self._get_target_reliability_strategy,
             "Doorsnede-eisen": self._get_target_reliability_strategy,
