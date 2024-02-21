@@ -56,64 +56,54 @@ class AcceptanceTestCase:
         # Defining acceptance test cases so they are accessible from the other test classes.
         return [
             AcceptanceTestCase(
-                model_directory="TestCase1_38-1_no_housing",
+                model_directory="31-1 two coastal sections",
+                traject_name="31-1",
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+                case_name="Traject 31-1, two coastal sections",
+            ),
+            AcceptanceTestCase(
+                model_directory="38-1 two river sections",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, no housing",
+                case_name="Traject 38-1, two river sections",
             ),
             AcceptanceTestCase(
-                model_directory="TestCase1_38-1_no_housing_stix",
+                model_directory="31-1 base coastal case",
+                traject_name="31-1",
+                excluded_mechanisms=[
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+                case_name="Traject 31-1, base coastal case",
+            ),
+            AcceptanceTestCase(
+                model_directory="38-1 base river case",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, no housing, with dstability",
+                case_name="Traject 38-1, base river case",
             ),
             AcceptanceTestCase(
-                model_directory="TestCase2_38-1_overflow_no_housing",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, no-housing, with overflow",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase1_38-1_revetment",
-                traject_name="38-1",
+                model_directory="31-1 mixed coastal case",
+                traject_name="31-1",
                 excluded_mechanisms=[
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, with revetment, case 1",
+                case_name="Traject 31-1, mixed coastal case",
             ),
             AcceptanceTestCase(
-                model_directory="TestCase3_38-1_revetment",
+                model_directory="38-1 two river sections D-Stability",
                 traject_name="38-1",
                 excluded_mechanisms=[
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
-                case_name="Traject 38-1, with revetment, including bundling",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase4_38-1_revetment_small",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, two sections with revetment",
-            ),
-            AcceptanceTestCase(
-                model_directory="TestCase3_38-1_small",
-                traject_name="38-1",
-                excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,
-                    MechanismEnum.HYDRAULIC_STRUCTURES,
-                ],
-                case_name="Traject 38-1, two sections",
+                case_name="Traject 38-1, two sections with D-Stability",
             ),
         ]
 

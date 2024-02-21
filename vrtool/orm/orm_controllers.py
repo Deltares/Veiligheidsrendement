@@ -1,5 +1,6 @@
 import itertools
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
 
@@ -8,10 +9,10 @@ from peewee import SqliteDatabase
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategy_evaluation import calc_life_cycle_risks
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
@@ -25,6 +26,12 @@ from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer imp
     SolutionsForMeasureResultsImporter,
 )
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
+from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
+    OptimizationMeasureResultImporter,
+)
+from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
+    OptimizationSectionAsInputImporter,
+)
 from vrtool.orm.io.importers.optimization.optimization_step_importer import (
     OptimizationStepImporter,
 )
@@ -307,9 +314,15 @@ def import_results_measures(
             _mr_list, lambda x: x[0].measure_per_section.section
         )
     ]
+    # If there are non_unique sections, we will have to combine the results.
+    # get the first entries of the tuples in _grouped_by_section
+    _grouped_by_section_unique = defaultdict(list)
+    for key, value in _grouped_by_section:
+        _grouped_by_section_unique[key].extend(value)
+    _grouped_by_section_unique = list(_grouped_by_section_unique.items())
 
     # Import a solution per section:
-    for _section, _selected_measure_year_results in _grouped_by_section:
+    for _section, _selected_measure_year_results in _grouped_by_section_unique:
         _selected_measure_id, _selected_measure_year = zip(
             *_selected_measure_year_results
         )
@@ -322,6 +335,8 @@ def import_results_measures(
             _mapped_section,
         ).import_orm(_selected_measure_id)
         _solutions_dict[_section.section_name] = _imported_solution
+        # NOTE: This is an "implicit" filter of which years will be imported
+        # based on the input "investment_year".
         _solutions_dict[_section.section_name].MeasureData[
             "year"
         ] = _selected_measure_year
@@ -335,6 +350,52 @@ def import_results_measures(
     _results_measures.ids_to_import = results_ids_to_import
 
     return _results_measures
+
+
+def import_results_measures_for_optimization(
+    config: VrtoolConfig, results_ids_to_import: list[tuple[int, int]]
+) -> list[SectionAsInput]:
+    """
+    Method used to import all requested measure results for an Optimization run.
+    It is meant to deprecate / replace / remove the previous `import_result_measures`.
+
+    Args:
+        config (VrtoolConfig): Vrtool configuration containing connection and cost details.
+        results_ids_to_import (list[tuple[int, int]]): List of measure results' IDs. including their respective investment year.
+
+    Returns:
+        list[SectionAsInput]: Mapped sections with relevant measure results data.
+    """
+
+    def get_measure_results_to_import() -> (
+        dict[orm.SectionData, dict[orm.MeasureResult, list[int]]]
+    ):
+        """
+        Returns a dictionary of `orm.SectionData` containing dictionaries of their
+        to-be-imported `orm.MeasureResult` with their respective `investment_year`.
+        """
+        _section_measure_result_dict = defaultdict(lambda: defaultdict(list))
+        for _result_tuple in results_ids_to_import:
+            _measure_result = orm.MeasureResult.get_by_id(_result_tuple[0])
+            _measure_section = _measure_result.measure_per_section.section
+            _section_measure_result_dict[_measure_section][_measure_result].append(
+                _result_tuple[1]
+            )
+
+        return _section_measure_result_dict
+
+    # Import a solution per section:
+    _list_section_as_input: list[SectionAsInput] = []
+    with open_database(config.input_database_path).connection_context():
+        _importer = OptimizationSectionAsInputImporter(config)
+        _list_section_as_input = list(
+            map(
+                _importer.import_from_section_data_results,
+                get_measure_results_to_import().items(),
+            )
+        )
+
+    return _list_section_as_input
 
 
 def get_all_measure_results_with_supported_investment_years(

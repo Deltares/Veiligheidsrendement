@@ -57,12 +57,6 @@ class RunOptimization(VrToolRunProtocol):
         """
         _greedy_optimization = StrategyController(design_method, self.vr_config)
 
-        _results_dir = self._get_output_dir()
-        _greedy_optimization.map_input(
-            self.selected_traject,
-            self._solutions_dict,
-        )
-
         _greedy_optimization.set_investment_year()
 
         _greedy_optimization.combine()
