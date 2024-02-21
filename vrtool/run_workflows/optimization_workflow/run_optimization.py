@@ -55,9 +55,7 @@ class RunOptimization(VrToolRunProtocol):
         """
         _strategy_controller = StrategyController(design_method, self.vr_config)
 
-        _greedy_optimization.set_investment_year()
-
-        # TODO: set investment year
+        _strategy_controller.set_investment_year()
         _strategy_controller.combine()
         _strategy_controller.aggregate()
         _evaluate_input = _strategy_controller.get_evaluate_input()
