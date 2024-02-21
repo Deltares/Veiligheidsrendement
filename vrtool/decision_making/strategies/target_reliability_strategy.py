@@ -93,44 +93,44 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.config = config
         self.OI_horizon = config.OI_horizon
         self.mechanisms = config.mechanisms
-        self.T = config.T
+        self._time_periods = config.T
         self.LE_in_section = config.LE_in_section
 
         # New mappings
-        self.options = strategy_input.options
+        # self.options = strategy_input.options
+        self._section_as_input_dict = strategy_input.section_as_input_dict
 
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         return float("nan"), float("nan")
 
+    @staticmethod
+    def _id_to_name(found_id: str, measure_table: pd.DataFrame):
+        """
+        Previously in tools. Only used once within this evaluate method.
+        """
+        return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
+            "Name"
+        ].values[0]
+
     def evaluate(
         self,
         dike_traject: DikeTraject,
-        solutions_dict: Dict[str, Solutions],
-        splitparams=False,
+        splitparams: bool = False,
     ):
-        def id_to_name(found_id: str, measure_table: pd.DataFrame):
-            """
-            Previously in tools. Only used once within this evaluate method.
-            """
-            return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
-                "Name"
-            ].values[0]
-
-        cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]]
-            .MeasureData["Section"]
-            .columns.values
-        )
-
+        # Previous approach instead of self._time_periods = config.T:
+        # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
+        # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
         _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
             dike_traject
         )
 
         # Rank sections based on 2075 Section probability
         beta_horizon = []
-        for i in dike_traject.sections:
+        for _dike_section in dike_traject.sections:
             beta_horizon.append(
-                i.section_reliability.SectionReliability.loc["Section"][self.OI_horizon]
+                _dike_section.section_reliability.SectionReliability.loc["Section"][
+                    self.OI_horizon
+                ]
             )
 
         section_indices = np.argsort(beta_horizon)
@@ -172,12 +172,12 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 columns=measure_cols + ["ID", "name", "params"],
             )
         # columns (section name and index in self.options[section])
-        _base_traject_probability = make_traject_df(dike_traject, cols)
+        _base_traject_probability = make_traject_df(dike_traject, self._time_periods)
         _probability_steps = [copy.deepcopy(_base_traject_probability)]
         _traject_probability = copy.deepcopy(_base_traject_probability)
 
         for j in section_indices:
-            i = dike_traject.sections[j]
+            _dike_section = dike_traject.sections[j]
             # convert beta_cs to beta_section in order to correctly search self.options[section]
             # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
             if self.LE_in_section:
@@ -186,11 +186,11 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 )
                 _beta_t_piping = pf_to_beta(
                     _cross_sectional_requirements.pf_cs_piping
-                    * (i.Length / dike_traject.general_info.bPiping)
+                    * (_dike_section.Length / dike_traject.general_info.bPiping)
                 )
                 _beta_t_sabinner = pf_to_beta(
                     _cross_sectional_requirements.pf_cs_stabinner
-                    * (i.Length / dike_traject.general_info.bStabilityInner)
+                    * (_dike_section.Length / dike_traject.general_info.bStabilityInner)
                 )
             else:
                 _beta_t_piping = _cross_sectional_requirements.beta_cs_piping
@@ -205,25 +205,27 @@ class TargetReliabilityStrategy(StrategyProtocol):
             }
 
             # find cheapest design that satisfies betatcs in 50 years from invest year
-            _invest_year = self.options[i.name]["year"][0]
-            if isinstance(_invest_year, list):
-                _invest_year = _invest_year[0]
+            # previously _selected_section_as_input = self.options[_dike_section.name]
+            _selected_section_as_input = self._section_as_input_dict[_dike_section.name]
+            _invest_year = _selected_section_as_input.min_year
             _target_year = _invest_year + 50
 
             # make PossibleMeasures dataframe
-            _possible_measures = copy.deepcopy(self.options[i.name])
+            _possible_measures = copy.deepcopy(
+                self._section_as_input_dict[_dike_section.name]
+            )
             # filter for mechanisms that are considered
             for mechanism in dike_traject.mechanisms:
                 _possible_measures = _possible_measures.loc[
-                    self.options[i.name][(mechanism.name, _target_year)]
+                    self.options[_dike_section.name][(mechanism.name, _target_year)]
                     > _beta_t[mechanism.name]
                 ]
 
-            if len(_possible_measures) == 0:
+            if not any(_possible_measures):
                 # continue to next section if weakest has no more measures
                 logging.warning(
                     "Warning: for Target reliability strategy no suitable measures were found for section {}".format(
-                        i.name
+                        _dike_section.name
                     )
                 )
                 continue
@@ -231,7 +233,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _lcc = calc_tc(
                 _possible_measures,
                 self.discount_rate,
-                horizon=self.options[i.name][MechanismEnum.OVERFLOW.name].columns[-1],
+                horizon=_selected_section_as_input[MechanismEnum.OVERFLOW.name].columns[
+                    -1
+                ],
             )
 
             # select measure with lowest cost
@@ -241,24 +245,26 @@ class TargetReliabilityStrategy(StrategyProtocol):
             option_index = _possible_measures.index[idx]
             # calculate achieved risk reduction & BC ratio compared to base situation
             _r_base, _dr, _t_r = calc_tr(
-                i.name,
+                _dike_section.name,
                 measure,
                 _traject_probability,
-                original_section=_traject_probability.loc[i.name],
+                original_section=_traject_probability.loc[_dike_section.name],
                 discount_rate=self.discount_rate,
-                horizon=cols[-1],
+                horizon=self._time_periods[-1],
                 damage=dike_traject.general_info.FloodDamage,
             )
             _bc = _dr / _lcc[idx]
 
             if splitparams:
-                name = id_to_name(
-                    measure["ID"].values[0], solutions_dict[i.name].measure_table
-                )
+                _found_id = measure["ID"].values[0]
+                # TODO: We don't have the names as they were anymore :/
+                # solutions_dict[i.name].measure_table
+                # Which should translate to something like  SectionAsInput.get_measure_name_by_id()
+                name = self._id_to_name(_found_id, self._section_as_input_list)
                 data_opt = pd.DataFrame(
                     [
                         [
-                            i.name,
+                            _dike_section.name,
                             option_index,
                             _lcc[idx],
                             _bc,
@@ -278,7 +284,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 data_opt = pd.DataFrame(
                     [
                         [
-                            i.name,
+                            _dike_section.name,
                             option_index,
                             _lcc[idx],
                             _bc,
@@ -295,7 +301,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures = pd.concat((_taken_measures, data_opt))
             # Calculate new probabilities
             _traject_probability = implement_option(
-                i.name, _traject_probability, measure
+                _dike_section.name, _traject_probability, measure
             )
             _probability_steps.append(copy.deepcopy(_traject_probability))
         self.TakenMeasures = _taken_measures
