@@ -8,15 +8,14 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.strategy_input.strategy_input_protocol import (
+    StrategyInputProtocol,
+)
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 @dataclass
-class StrategyInputGreedy:
-    _num_sections: int = 0
-    _max_year: int = 0
-    _max_sg: int = 0
-    _max_sh: int = 0
+class StrategyInputGreedy(StrategyInputProtocol):
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -24,6 +23,10 @@ class StrategyInputGreedy:
     RiskGeotechnical: np.ndarray = np.array([])
     RiskOverflow: np.ndarray = np.array([])
     RiskRevetment: np.ndarray = np.array([])
+    _num_sections: int = 0
+    _max_year: int = 0
+    _max_sg: int = 0
+    _max_sh: int = 0
 
     @classmethod
     def from_section_as_input(
