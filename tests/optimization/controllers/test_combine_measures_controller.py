@@ -38,7 +38,9 @@ class TestCombineMeasuresController:
     def _create_sh_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> ShMeasure:
+        # For now we don't really care which id they get.
         return ShMeasure(
+            measure_result_id=42,
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=0,
@@ -58,7 +60,9 @@ class TestCombineMeasuresController:
     def _create_sg_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> SgMeasure:
+        # For now we don't really care which id they get.
         return SgMeasure(
+            measure_result_id=42,
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=0,

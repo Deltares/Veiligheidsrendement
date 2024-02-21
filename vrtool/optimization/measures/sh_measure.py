@@ -17,6 +17,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 class ShMeasure(MeasureAsInputProtocol):
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
+    measure_result_id: int
     cost: float
     discount_rate: float
     year: int

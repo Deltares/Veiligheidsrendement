@@ -22,6 +22,7 @@ _mechm = MechanismEnum.OVERFLOW
 @dataclass
 class MockShMeasure(ShMeasure):
     measure_type: MeasureTypeEnum
+    measure_result_id: int = 42
     combine_type: None = None
     cost: float = 0
     discount_rate: float = 0
@@ -36,6 +37,7 @@ class MockShMeasure(ShMeasure):
 @dataclass
 class MockSgMeasure(SgMeasure):
     measure_type: MeasureTypeEnum
+    measure_result_id: int = 42
     combine_type: None = None
     cost: float = 0
     discount_rate: float = 0
@@ -155,6 +157,7 @@ class TestSectionAsInput:
         _dummy_cost = 999.0
         _dummy_discount_rate = 0.05
         _measure = ShMeasure(
+            42,
             MeasureTypeEnum.REVETMENT,
             CombinableTypeEnum.REVETMENT,
             _dummy_cost,

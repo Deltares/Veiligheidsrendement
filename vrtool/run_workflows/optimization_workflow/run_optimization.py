@@ -9,7 +9,10 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.optimization.controllers.strategy_controller import StrategyController
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
+    OptimizationInputMeasures,
+)
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
@@ -17,24 +20,25 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class RunOptimization(VrToolRunProtocol):
+    _section_input_collection: list[SectionAsInput]
+
     def __init__(
         self,
-        results_measures: ResultsMeasures,
+        optimization_input: OptimizationInputMeasures,
         optimization_selected_measure_ids: dict[int, list[int]],
     ) -> None:
-        if not isinstance(results_measures, ResultsMeasures):
+        if not isinstance(optimization_input, OptimizationInputMeasures):
             raise ValueError(
                 "Required valid instance of {} as an argument.".format(
-                    ResultsMeasures.__name__
+                    OptimizationInputMeasures.__name__
                 )
             )
 
-        self.selected_traject = results_measures.selected_traject
-        self.vr_config = results_measures.vr_config
-        self.run_ids = list(optimization_selected_measure_ids.keys())
+        self.selected_traject = optimization_input.selected_traject
+        self.vr_config = optimization_input.vr_config
+        self._section_input_collection = optimization_input.section_input_collection
         self._selected_measure_ids = optimization_selected_measure_ids
-        self._solutions_dict = results_measures.solutions_dict
-        self._ids_to_import = results_measures.ids_to_import
+        self._ids_to_import = optimization_input.measure_id_year_list
 
     def _get_output_dir(self) -> Path:
         _results_dir = self.vr_config.output_directory
