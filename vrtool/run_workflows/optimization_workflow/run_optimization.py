@@ -53,6 +53,7 @@ class RunOptimization(VrToolRunProtocol):
         self, strategy_type: Type[StrategyBase]
     ) -> StrategyInputProtocol:
         _strategy_controller = StrategyController(self._section_input_collection)
+        _strategy_controller.set_investment_year()
         _strategy_controller.combine()
         _strategy_controller.aggregate()
         return _strategy_controller.get_evaluate_input(strategy_type)
