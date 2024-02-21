@@ -1,7 +1,7 @@
 import copy
 import logging
 from typing import Dict
-
+from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
@@ -22,6 +22,64 @@ from vrtool.optimization.strategy_input.strategy_input_target_reliability import
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
+@dataclass
+class CrossSectionalRequirements:
+    beta_cs_piping: np.ndarray
+    beta_cs_revetment: np.ndarray
+    beta_cs_stabinner: np.ndarray
+    beta_cs_overflow: np.ndarray
+
+    @property
+    def pf_cs_piping(self) -> np.ndarray:
+        return beta_to_pf(self.beta_cs_piping)
+
+    @property
+    def pf_cs_stabinner(self) -> np.ndarray:
+        return beta_to_pf(self.beta_cs_stabinner)
+
+    @classmethod
+    def from_dike_traject(cls, dike_traject: DikeTraject):
+        # compute cross sectional requirements
+        n_piping = 1 + (
+            dike_traject.general_info.aPiping
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bPiping
+        )
+        n_stab = 1 + (
+            dike_traject.general_info.aStabilityInner
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bStabilityInner
+        )
+        n_overflow = 1
+        n_revetment = 3
+        omegaRevetment = 0.1
+
+        _beta_cs_piping = pf_to_beta(
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaPiping
+            / n_piping
+        )
+        _beta_cs_revetment = pf_to_beta(
+            dike_traject.general_info.Pmax * omegaRevetment / n_revetment
+        )
+        _beta_cs_stabinner = pf_to_beta(
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaStabilityInner
+            / n_stab
+        )
+        _beta_cs_overflow = pf_to_beta(
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaOverflow
+            / n_overflow
+        )
+        return cls(
+            beta_cs_piping=_beta_cs_piping,
+            beta_cs_revetment=_beta_cs_revetment,
+            beta_cs_stabinner=_beta_cs_stabinner,
+            beta_cs_overflow=_beta_cs_overflow,
+        )
+
+
 class TargetReliabilityStrategy(StrategyProtocol):
     """Subclass for evaluation in accordance with basic OI2014 approach.
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
@@ -38,16 +96,19 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.T = config.T
         self.LE_in_section = config.LE_in_section
 
+        # New mappings
+        self.options = strategy_input.options
+
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         return float("nan"), float("nan")
 
     def evaluate(
         self,
-        traject: DikeTraject,
+        dike_traject: DikeTraject,
         solutions_dict: Dict[str, Solutions],
         splitparams=False,
     ):
-        def id_to_name(found_id, measure_table):
+        def id_to_name(found_id: str, measure_table: pd.DataFrame):
             """
             Previously in tools. Only used once within this evaluate method.
             """
@@ -60,38 +121,14 @@ class TargetReliabilityStrategy(StrategyProtocol):
             .MeasureData["Section"]
             .columns.values
         )
-        # compute cross sectional requirements
-        n_piping = 1 + (
-            traject.general_info.aPiping
-            * traject.general_info.TrajectLength
-            / traject.general_info.bPiping
-        )
-        n_stab = 1 + (
-            traject.general_info.aStabilityInner
-            * traject.general_info.TrajectLength
-            / traject.general_info.bStabilityInner
-        )
-        n_overflow = 1
-        beta_cs_piping = pf_to_beta(
-            traject.general_info.Pmax * traject.general_info.omegaPiping / n_piping
-        )
-        n_revetment = 3
-        omegaRevetment = 0.1
-        beta_cs_revetment = pf_to_beta(
-            traject.general_info.Pmax * omegaRevetment / n_revetment
-        )
-        beta_cs_stabinner = pf_to_beta(
-            traject.general_info.Pmax
-            * traject.general_info.omegaStabilityInner
-            / n_stab
-        )
-        beta_cs_overflow = pf_to_beta(
-            traject.general_info.Pmax * traject.general_info.omegaOverflow / n_overflow
+
+        _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
+            dike_traject
         )
 
         # Rank sections based on 2075 Section probability
         beta_horizon = []
-        for i in traject.sections:
+        for i in dike_traject.sections:
             beta_horizon.append(
                 i.section_reliability.SectionReliability.loc["Section"][self.OI_horizon]
             )
@@ -135,12 +172,12 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 columns=measure_cols + ["ID", "name", "params"],
             )
         # columns (section name and index in self.options[section])
-        _base_traject_probability = make_traject_df(traject, cols)
+        _base_traject_probability = make_traject_df(dike_traject, cols)
         _probability_steps = [copy.deepcopy(_base_traject_probability)]
         _traject_probability = copy.deepcopy(_base_traject_probability)
 
         for j in section_indices:
-            i = traject.sections[j]
+            i = dike_traject.sections[j]
             # convert beta_cs to beta_section in order to correctly search self.options[section]
             # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
             if self.LE_in_section:
@@ -148,18 +185,18 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
                 )
                 _beta_t_piping = pf_to_beta(
-                    beta_to_pf(beta_cs_piping)
-                    * (i.Length / traject.general_info.bPiping)
+                    _cross_sectional_requirements.pf_cs_piping
+                    * (i.Length / dike_traject.general_info.bPiping)
                 )
                 _beta_t_sabinner = pf_to_beta(
-                    beta_to_pf(beta_cs_stabinner)
-                    * (i.Length / traject.general_info.bStabilityInner)
+                    _cross_sectional_requirements.pf_cs_stabinner
+                    * (i.Length / dike_traject.general_info.bStabilityInner)
                 )
             else:
-                _beta_t_piping = beta_cs_piping
-                _beta_t_sabinner = beta_cs_stabinner
-            _beta_t_overflow = beta_cs_overflow
-            _beta_t_revetment = beta_cs_revetment
+                _beta_t_piping = _cross_sectional_requirements.beta_cs_piping
+                _beta_t_sabinner = _cross_sectional_requirements.beta_cs_stabinner
+            _beta_t_overflow = _cross_sectional_requirements.beta_cs_overflow
+            _beta_t_revetment = _cross_sectional_requirements.beta_cs_revetment
             _beta_t = {
                 MechanismEnum.PIPING.name: _beta_t_piping,
                 MechanismEnum.STABILITY_INNER.name: _beta_t_sabinner,
@@ -176,7 +213,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # make PossibleMeasures dataframe
             _possible_measures = copy.deepcopy(self.options[i.name])
             # filter for mechanisms that are considered
-            for mechanism in traject.mechanisms:
+            for mechanism in dike_traject.mechanisms:
                 _possible_measures = _possible_measures.loc[
                     self.options[i.name][(mechanism.name, _target_year)]
                     > _beta_t[mechanism.name]
@@ -210,7 +247,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 original_section=_traject_probability.loc[i.name],
                 discount_rate=self.discount_rate,
                 horizon=cols[-1],
-                damage=traject.general_info.FloodDamage,
+                damage=dike_traject.general_info.FloodDamage,
             )
             _bc = _dr / _lcc[idx]
 
