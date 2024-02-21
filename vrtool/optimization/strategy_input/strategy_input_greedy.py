@@ -16,6 +16,7 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 @dataclass
 class StrategyInputGreedy(StrategyInputProtocol):
+    design_method: str = ""
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])

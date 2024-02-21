@@ -7,20 +7,36 @@ import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
     calc_tr,
     implement_option,
     make_traject_df,
 )
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
+    StrategyInputTargetReliability,
+)
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
-class TargetReliabilityStrategy(StrategyBase):
+class TargetReliabilityStrategy(StrategyProtocol):
     """Subclass for evaluation in accordance with basic OI2014 approach.
-    This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability"""
+    This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
+    """
+
+    def __init__(
+        self, strategy_input: StrategyInputTargetReliability, config: VrtoolConfig
+    ):
+        # Mapping as in previuos `StrategyBase`
+        self.discount_rate = config.discount_rate
+        self.config = config
+        self.OI_horizon = config.OI_horizon
+        self.mechanisms = config.mechanisms
+        self.T = config.T
+        self.LE_in_section = config.LE_in_section
 
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         return float("nan"), float("nan")
