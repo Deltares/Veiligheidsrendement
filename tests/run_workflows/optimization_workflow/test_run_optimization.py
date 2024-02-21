@@ -31,7 +31,10 @@ class TestRunOptimization:
             selected_traject=456,
             section_input_collection=[
                 SectionAsInput(
-                    section_name="asdf", traject_name="456", measures=[_mocked_measure]
+                    section_name="asdf",
+                    traject_name="456",
+                    measures=[_mocked_measure],
+                    flood_damage=4.2,
                 )
             ],
         )

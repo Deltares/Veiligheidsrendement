@@ -14,10 +14,10 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.optimization.measures.strategy_input import StrategyInput
+from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
 
 
-class TestStrategyInput:
+class TestStrategyInputGreedy:
     def test_optimization_input(self):
         # 1. Define input
 
@@ -32,6 +32,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_soil_0_0 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -43,6 +44,7 @@ class TestStrategyInput:
             transition_level=-999,
         )
         _sh_measure_soil_20_0 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -63,6 +65,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_diaphragm_0 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
             combine_type=CombinableTypeEnum.FULL,
             cost=234567,
@@ -83,6 +86,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_revetment_0_384 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.REVETMENT,
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=123456,
@@ -103,6 +107,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_revetment_0_484 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.REVETMENT,
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=223456,
@@ -123,6 +128,7 @@ class TestStrategyInput:
             ]
         )
         _sg_measure_soil_0_0 = SgMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -133,6 +139,7 @@ class TestStrategyInput:
             dcrest=0,
         )
         _sg_measure_soil_20_0 = SgMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -152,6 +159,7 @@ class TestStrategyInput:
             ]
         )
         _sg_measure_vzg_0 = SgMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             combine_type=CombinableTypeEnum.PARTIAL,
             cost=1302200,
@@ -273,7 +281,7 @@ class TestStrategyInput:
         ]
 
         # 2. Run test
-        _strategy_input = StrategyInput.from_section_as_input(_sections)
+        _strategy_input = StrategyInputGreedy.from_section_as_input(_sections)
 
         # 3. Verify expectations
 

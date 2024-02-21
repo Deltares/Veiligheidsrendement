@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Callable, Dict, Type
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,9 @@ from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityS
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.strategy_input.strategy_input_protocol import (
+    StrategyInputProtocol,
+)
 from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
     OptimizationInputMeasures,
 )
@@ -45,6 +48,14 @@ class RunOptimization(VrToolRunProtocol):
         if not _results_dir.exists():
             _results_dir.mkdir(parents=True)
         return _results_dir
+
+    def _get_strategy_input(
+        self, strategy_type: Type[StrategyBase]
+    ) -> StrategyInputProtocol:
+        _strategy_controller = StrategyController(self._section_input_collection)
+        _strategy_controller.combine()
+        _strategy_controller.aggregate()
+        return _strategy_controller.get_evaluate_input(strategy_type)
 
     def _get_optimized_greedy_strategy_new(self, design_method: str) -> StrategyBase:
         """
@@ -89,7 +100,10 @@ class RunOptimization(VrToolRunProtocol):
         return _greedy_optimization
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
-        # Initialize a GreedyStrategy:
+        # Initalize strategy controller
+        _greedy_optimization = self._get_strategy_input(GreedyStrategy)
+
+        # TODO: refactor code:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
 
         _results_dir = self._get_output_dir()
