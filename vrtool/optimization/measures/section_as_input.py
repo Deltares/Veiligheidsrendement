@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
+import copy
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -117,33 +119,28 @@ class SectionAsInput:
             for mech in meas.mechanism_year_collection.get_mechanisms()
         )
 
-    def update_measurelist_with_investment_year(
-        self,
-        initial: MechanismPerYearProbabilityCollection,
-    ) -> None:
+    def update_measurelist_with_investment_year(self) -> None:
         """
         Update the probabilities for all measures.
         Measures with investment year > 0 get values from the zero measure.
-        Other measure only get more years in mechanism_year_collection,
+        Other measures only get more years in mechanism_year_collection,
         to keep the number of years equal in a section.
-
-        Args:
-            measures (list[MeasureAsInputProtocol]): list with all measures
-            initial (MechanismPerYearProbabilityCollection): initial probabilities
         """
+
+        _initial = self.initial_assessment
 
         _investment_years = self._get_investment_years()
 
         if len(_investment_years) == 0:
             return
 
-        initial.add_years(_investment_years)
+        _initial.add_years(_investment_years)
         for measure in self.measures:
             measure.mechanism_year_collection.add_years(_investment_years)
 
         for measure in self.measures:
             if measure.year > 0:
-                measure.mechanism_year_collection.replace_values(initial, measure.year)
+                measure.mechanism_year_collection.replace_values(_initial, measure.year)
 
     def _get_investment_years(self) -> list[int]:
         _investment_years = set()

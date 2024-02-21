@@ -40,3 +40,10 @@ class StrategyController:
         Get the input for the evaluation of the strategy.
         """
         return StrategyInput.from_section_as_input(self._section_measures_input)
+
+    def set_investment_year(self) -> None:
+        """
+        Set investment year for all sections
+        """
+        for _section_as_input in self._section_measures_input:
+            _section_as_input.update_measurelist_with_investment_year()
