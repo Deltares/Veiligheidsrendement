@@ -405,9 +405,9 @@ class StrategyBase:
             pd.DataFrame: An object that contains all information of the combined measures.
         """
         # add self.indexCombined2single[section.name] as column to solutions_dict[section.name].MeasureData
-        solutions_dict[section.name].MeasureData[
-            "combined_db_index"
-        ] = self.indexCombined2single[section.name]
+        solutions_dict[section.name].MeasureData["combined_db_index"] = (
+            self.indexCombined2single[section.name]
+        )
         # split different measure types:
         available_measure_classes = (
             solutions_dict[section.name].MeasureData["class"].unique().tolist()
@@ -682,7 +682,6 @@ class StrategyBase:
             self.D.T, (N, Sh + 1, 1)
         )
 
-        self.RiskRevetment = []
         if MechanismEnum.REVETMENT in self.mechanisms:
             self.RiskRevetment = self.Pf[MechanismEnum.REVETMENT.name] * np.tile(
                 self.D.T, (N, Sh + 1, 1)

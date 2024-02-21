@@ -78,6 +78,7 @@ class TestCombineMeasuresController:
         return SectionAsInput(
             section_name="Section1",
             traject_name="Traject1",
+            flood_damage=0,
             measures=[],
         )
 
@@ -201,7 +202,7 @@ class TestCombineMeasuresController:
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
             ),
         ]
-        _expected_combinations = len(_measures) + 2
+        _expected_combinations = len(_measures) + 1
         _section.measures = _measures
 
         # 2. Run test
@@ -216,6 +217,7 @@ class TestCombineMeasuresController:
         _section = SectionAsInput(
             section_name="Section1",
             traject_name="Traject1",
+            flood_damage=0,
             measures=[],
         )
         _measures = [
