@@ -167,21 +167,14 @@ class TestSectionAsInput:
         )
         return _measure
 
-    def _get_zero_measures(
+    def _get_initial_probabilities(
         self, beta_yr0: float, beta_end_year: float
-    ) -> tuple[ShMeasure, SgMeasure]:
+    ) -> MechanismPerYearProbabilityCollection:
         _mech1_year1_prob = MechanismPerYear(
             MechanismEnum.OVERFLOW, 0, beta_to_pf(beta_yr0)
         )
         _mech1_year2_prob = MechanismPerYear(
             MechanismEnum.OVERFLOW, _END_YEAR, beta_to_pf(beta_end_year)
-        )
-        _mechanism_year_collection1 = MechanismPerYearProbabilityCollection(
-            [_mech1_year1_prob, _mech1_year2_prob]
-        )
-        _zero_measure_sh = MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT)
-        _zero_measure_sh.mechanism_year_collection = copy.deepcopy(
-            _mechanism_year_collection1
         )
 
         _mech2_year1_prob = MechanismPerYear(
@@ -190,15 +183,11 @@ class TestSectionAsInput:
         _mech2_year2_prob = MechanismPerYear(
             MechanismEnum.PIPING, _END_YEAR, beta_to_pf(beta_end_year)
         )
-        _mechanism_year_collection2 = MechanismPerYearProbabilityCollection(
-            [_mech2_year1_prob, _mech2_year2_prob]
-        )
-        _zero_measure_sg = MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT)
-        _zero_measure_sg.mechanism_year_collection = copy.deepcopy(
-            _mechanism_year_collection2
+        _mechanism_year_collection = MechanismPerYearProbabilityCollection(
+            [_mech1_year1_prob, _mech1_year2_prob, _mech2_year1_prob, _mech2_year2_prob]
         )
 
-        return [_zero_measure_sh, _zero_measure_sg]
+        return _mechanism_year_collection
 
     def test_investment_year_basic(self):
         """
@@ -211,11 +200,11 @@ class TestSectionAsInput:
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _prob_measure = [5.0, 5.0 - _prob_diff]
         _measure = self._get_revetment_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure)
-        [_zero_measure_sh, _zero_measure_sg] = self._get_zero_measures(
-            _prob_zero[0], _prob_zero[1]
+        _initial = self._get_initial_probabilities(_prob_zero[0], _prob_zero[1])
+        _measures = [_measure]
+        _section_as_input = SectionAsInput(
+            "section1", "traject1", _measures, _initial, []
         )
-        _measures = [_measure, _zero_measure_sh, _zero_measure_sg]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
 
         # run test
         _section_as_input.update_measurelist_with_investment_year()
@@ -261,16 +250,16 @@ class TestSectionAsInput:
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _prob_measure_a = [5.0, 5.0 - _prob_diff]
         _prob_measure_b = [6.0, 6.0 - _prob_diff]
-        [_zero_measure_sh, _zero_measure_sg] = self._get_zero_measures(
+        _initial_probabilities = self._get_initial_probabilities(
             _prob_zero[0], _prob_zero[1]
         )
         _measures = [
             self._get_revetment_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure_a),
             self._get_revetment_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
-            _zero_measure_sh,
-            _zero_measure_sg,
         ]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
+        _section_as_input = SectionAsInput(
+            "section1", "traject1", _measures, _initial_probabilities, []
+        )
 
         # _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
 

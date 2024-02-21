@@ -32,28 +32,6 @@ class SectionAsInput:
         list[AggregatedMeasureCombination]
     ] = field(default_factory=list[AggregatedMeasureCombination])
 
-    @property
-    def initial_assessment(self) -> MechanismPerYearProbabilityCollection:
-        _zero_sg = next((
-            m.mechanism_year_collection
-            for m in self.sg_measures
-            if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
-            and m.year == 0
-            and m.dberm == 0.0
-            and m.dcrest == 0.0
-        ), None)
-        _zero_sh = next((
-            m.mechanism_year_collection
-            for m in self.sh_measures
-            if m.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
-            and m.year == 0
-            and m.dcrest == 0.0
-        ), None)
-        for p in _zero_sh.probabilities:
-            _zero_sg.probabilities.append(p)
-
-        return copy.deepcopy(_zero_sg)
-
     def get_measures_by_class(
         self,
         measure_class: type[MeasureAsInputProtocol],
