@@ -19,7 +19,7 @@ class StrategyInput:
     _max_sh: int = 0
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
-    LCCOptions: np.ndarray = np.array([])
+    LCCOption: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
     RiskGeotechnical: np.ndarray = np.array([])
     RiskOverflow: np.ndarray = np.array([])
@@ -165,7 +165,7 @@ class StrategyInput:
             _strategy_input._max_sg,
             _strategy_input._max_year,
         )
-        _strategy_input.LCCOptions = _get_lifecycle_cost(
+        _strategy_input.LCCOption = _get_lifecycle_cost(
             sections,
             _strategy_input._num_sections,
             _strategy_input._max_sh,

@@ -304,15 +304,15 @@ class TestStrategyInput:
         ] == pytest.approx(0.0010)
 
         # Cost
-        assert _strategy_input.LCCOptions is not None
-        assert _strategy_input.LCCOptions.shape == (1, 8, 5)
-        assert _strategy_input.LCCOptions[0, 0, 0] == pytest.approx(0.0)
-        assert _strategy_input.LCCOptions[0, 1, 1] == pytest.approx(386738.0)
-        assert _strategy_input.LCCOptions[0, 1, 2] == pytest.approx(1e99)
-        assert _strategy_input.LCCOptions[0, 1, 3] == pytest.approx(1688938.0)
-        assert _strategy_input.LCCOptions[0, 2, 2] == pytest.approx(214127.4538)
-        assert _strategy_input.LCCOptions[0, 3, 3] == pytest.approx(1812394.0)
-        assert _strategy_input.LCCOptions[0, 4, 4] == pytest.approx(1639783.4538)
+        assert _strategy_input.LCCOption is not None
+        assert _strategy_input.LCCOption.shape == (1, 8, 5)
+        assert _strategy_input.LCCOption[0, 0, 0] == pytest.approx(0.0)
+        assert _strategy_input.LCCOption[0, 1, 1] == pytest.approx(386738.0)
+        assert _strategy_input.LCCOption[0, 1, 2] == pytest.approx(1e99)
+        assert _strategy_input.LCCOption[0, 1, 3] == pytest.approx(1688938.0)
+        assert _strategy_input.LCCOption[0, 2, 2] == pytest.approx(214127.4538)
+        assert _strategy_input.LCCOption[0, 3, 3] == pytest.approx(1812394.0)
+        assert _strategy_input.LCCOption[0, 4, 4] == pytest.approx(1639783.4538)
 
         # Other structures
         assert _strategy_input.Cint_h.shape == (1, 7)
