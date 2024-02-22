@@ -51,7 +51,7 @@ class RunOptimization(VrToolRunProtocol):
         return _results_dir
 
     def _get_strategy_input(
-        self, strategy_type: type[StrategyBase], design_method: str
+        self, strategy_type: Type[StrategyBase], design_method: str
     ) -> StrategyInputProtocol:
         _strategy_controller = StrategyController(self._section_input_collection)
         _strategy_controller.set_investment_year()
@@ -127,37 +127,24 @@ class RunOptimization(VrToolRunProtocol):
         return _greedy_strategy
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
+        # Initalize strategy controller
+        _target_reliability_input = self._get_strategy_input(
+            TargetReliabilityStrategy, design_method
+        )
         # Initialize a strategy type (i.e combination of objective & constraints)
         _target_reliability_based = TargetReliabilityStrategy(
-            design_method, self.vr_config
+            _target_reliability_input, self.vr_config
         )
         _results_dir = self._get_output_dir()
 
         # filter those measures that are not available at the first available time step
-        self._filter_measures_first_time()
-
-        _target_reliability_based.set_investment_years(
-            self.selected_traject,
-            self._ids_to_import,
-            self._selected_measure_ids,
-            self._solutions_dict,
-        )
-
-        # Combine available measures
-        _target_reliability_based.combine(
-            self.selected_traject,
-            self._solutions_dict,
-            filtering="off",
-            splitparams=True,
-        )
+        # self._filter_measures_first_time()
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _target_reliability_based.evaluate(
-            self.selected_traject, self._solutions_dict, splitparams=True
-        )
+        _target_reliability_based.evaluate(self.selected_traject, splitparams=True)
         _target_reliability_based.make_solution(
             _results_dir.joinpath(
-                "FinalMeasures_" + _target_reliability_based.type + ".csv",
+                "FinalMeasures_" + _target_reliability_input.design_method + ".csv",
             ),
             type="Final",
         )
@@ -168,7 +155,7 @@ class RunOptimization(VrToolRunProtocol):
         # write to csv's
         _target_reliability_based.TakenMeasures.to_csv(
             _results_dir.joinpath(
-                "TakenMeasures_" + _target_reliability_based.type + ".csv",
+                "TakenMeasures_" + _target_reliability_input.design_method + ".csv",
             )
         )
         for j in _target_reliability_based.options:
@@ -236,28 +223,28 @@ class RunOptimization(VrToolRunProtocol):
             strategy_case.TakenMeasures.at[i, "name"] = name
         return strategy_case
 
-    def _filter_measures_first_time(self):
-        """Filter measures that are not in the first time step that is available for the measure as these should not be included for target reliability strategy"""
-        min_dict = {}  # dict to store measure for ids_to_import
-        count_dict = {}  # dict to store counter for selected_measure_ids
-        run_id = list(self._selected_measure_ids.keys())[0]
-        for counter, (id, value) in enumerate(self._ids_to_import):
-            if (id not in min_dict) or (value < min_dict[id]):
-                min_dict[id] = value
-                count_dict[id] = counter
+    # def _filter_measures_first_time(self):
+    #     """Filter measures that are not in the first time step that is available for the measure as these should not be included for target reliability strategy"""
+    #     min_dict = {}  # dict to store measure for ids_to_import
+    #     count_dict = {}  # dict to store counter for selected_measure_ids
+    #     run_id = list(self._selected_measure_ids.keys())[0]
+    #     for counter, (id, value) in enumerate(self._ids_to_import):
+    #         if (id not in min_dict) or (value < min_dict[id]):
+    #             min_dict[id] = value
+    #             count_dict[id] = counter
 
-        self._ids_to_import = [(id, value) for id, value in min_dict.items()]
-        self._selected_measure_ids[run_id] = [
-            self._selected_measure_ids[run_id][index] for index in count_dict.values()
-        ]
+    #     self._ids_to_import = [(id, value) for id, value in min_dict.items()]
+    #     self._selected_measure_ids[run_id] = [
+    #         self._selected_measure_ids[run_id][index] for index in count_dict.values()
+    #     ]
 
-        # filter solutions_dict
-        for section in self._solutions_dict.keys():
-            _min_year = min(self._solutions_dict[section].MeasureData["year"])
-            self._solutions_dict[section].MeasureData = (
-                self._solutions_dict[section]
-                .MeasureData.loc[
-                    self._solutions_dict[section].MeasureData["year"] == _min_year
-                ]
-                .reset_index(drop=True)
-            )
+    #     # filter solutions_dict
+    #     for section in self._solutions_dict.keys():
+    #         _min_year = min(self._solutions_dict[section].MeasureData["year"])
+    #         self._solutions_dict[section].MeasureData = (
+    #             self._solutions_dict[section]
+    #             .MeasureData.loc[
+    #                 self._solutions_dict[section].MeasureData["year"] == _min_year
+    #             ]
+    #             .reset_index(drop=True)
+    #         )

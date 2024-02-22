@@ -57,6 +57,7 @@ from vrtool.orm.orm_controllers import (
     get_dike_section_solutions,
     get_dike_traject,
     get_exported_measure_result_ids,
+    import_results_measures,
     import_results_measures_for_optimization,
     initialize_database,
     open_database,
@@ -1029,8 +1030,10 @@ class TestOrmControllers:
 
         # 2. Run test.
         with open_database(_vrtool_config.input_database_path).connection_context():
+            _measures_to_import = [(omr.id, 0) for omr in MeasureResult.select()]
+            _result = import_results_measures(_vrtool_config, _measures_to_import)
             _imported_data = import_results_measures_for_optimization(
-                _vrtool_config, [(omr.id, 0) for omr in MeasureResult.select()]
+                _vrtool_config, _measures_to_import
             )
 
         # 3. Verify final expectations.
