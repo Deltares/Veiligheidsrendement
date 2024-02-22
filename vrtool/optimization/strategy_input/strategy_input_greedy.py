@@ -7,6 +7,7 @@ import numpy as np
 from pandas import DataFrame as df
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.decision_making.strategy_evaluation import split_options
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
@@ -14,13 +15,14 @@ from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
 )
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 @dataclass
 class StrategyInputGreedy(StrategyInputProtocol):
     design_method: str = ""
     options: dict[str, df] = field(default_factory=dict)
+    options_height: list[dict[str, df]] = field(default_factory=list)
+    options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -46,7 +48,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
             _min_year = section.min_year
             _max_year = section.max_year
 
-            _options_dict[("id", "")] = []
+            _options_dict[("ID", "")] = []
             _options_dict[("type", "")] = []
             _options_dict[("class", "")] = []
             _options_dict[("year", "")] = []
@@ -204,6 +206,11 @@ class StrategyInputGreedy(StrategyInputProtocol):
         _strategy_input = cls()
 
         _strategy_input.options = _get_options(section_measures_input)
+        _strategy_input.options_height, _strategy_input.options_geotechnical = (
+            split_options(
+                _strategy_input.options, list(section_measures_input[0].mechanisms)
+            )
+        )
 
         # Define general parameters
         _strategy_input._num_sections = len(section_measures_input)
