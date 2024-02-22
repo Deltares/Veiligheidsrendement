@@ -6,25 +6,23 @@ from typing import Any
 import numpy as np
 from pandas import DataFrame as df
 
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.decision_making.strategy_evaluation import split_options
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
-from vrtool.optimization.measures.measure_as_input_protocol import (
-    MeasureAsInputProtocol,
-)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
 )
 from vrtool.probabilistic_tools.combin_functions import CombinFunctions
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 @dataclass
 class StrategyInputGreedy(StrategyInputProtocol):
     design_method: str = ""
     options: dict[str, df] = field(default_factory=dict)
+    options_height: list[dict[str, df]] = field(default_factory=list)
+    options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -47,8 +45,10 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
         def _get_section_options(section: SectionAsInput) -> df:
             _options_dict: dict[tuple, Any] = {}
+            _years = [*range(section.min_year, section.max_year)]
 
-            _options_dict[("id", "")] = []
+            # Initialize dict fields
+            _options_dict[("ID", "")] = []
             _options_dict[("type", "")] = []
             _options_dict[("class", "")] = []
             _options_dict[("year", "")] = []
@@ -59,8 +59,10 @@ class StrategyInputGreedy(StrategyInputProtocol):
             _options_dict[("transition_level", "")] = []
             _options_dict[("cost", "")] = []
             _options_dict[("combined_db_index", "")] = []
+
+            # Loop over measurs
             for i, _comb in enumerate(section.combined_measures):
-                _options_dict[("id", "")].append(_comb.id)
+                _options_dict[("ID", "")].append(_comb.combined_id)
                 _options_dict[("type", "")].append(_comb.combined_measure_type)
                 _options_dict[("class", "")].append(_comb.measure_class)
                 _options_dict[("year", "")].append(_comb.year)
@@ -72,14 +74,21 @@ class StrategyInputGreedy(StrategyInputProtocol):
                 _options_dict[("cost", "")].append(_comb.lcc)
                 _options_dict[("combined_db_index", "")].append(_comb.combined_db_index)
 
-                for _prob in _comb.mechanism_year_collection.probabilities:
-                    if (_prob.mechanism.name, _prob.year) not in _options_dict.keys():
-                        _options_dict[(_prob.mechanism.name, _prob.year)] = np.zeros(
-                            len(section.combined_measures)
-                        )
-                    _options_dict[(_prob.mechanism.name, _prob.year)][i] = pf_to_beta(
-                        _prob.probability
-                    )
+                # Get betas for all years
+                for _mech in section.mechanisms:
+                    _betas = _comb.mechanism_year_collection.get_betas(_mech, _years)
+                    for y, _beta in enumerate(_betas):
+                        if (_mech.name, _years[y]) not in _options_dict.keys():
+                            _options_dict[(_mech.name, _years[y])] = np.zeros(
+                                len(section.combined_measures)
+                            )
+                        _options_dict[(_mech.name, _years[y])][i] = _beta
+
+            # Add section for all years
+            for _year in _years:
+                _options_dict[("Section", _year)] = np.zeros(
+                    len(section.combined_measures)
+                )
 
             return df(_options_dict)
 
@@ -204,6 +213,11 @@ class StrategyInputGreedy(StrategyInputProtocol):
         _strategy_input = cls()
 
         _strategy_input.options = _get_options(section_measures_input)
+        _strategy_input.options_height, _strategy_input.options_geotechnical = (
+            split_options(
+                _strategy_input.options, list(section_measures_input[0].mechanisms)
+            )
+        )
 
         # Define general parameters
         _strategy_input._num_sections = len(section_measures_input)

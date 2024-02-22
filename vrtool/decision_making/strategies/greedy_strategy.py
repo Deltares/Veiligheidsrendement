@@ -31,6 +31,9 @@ class GreedyStrategy(StrategyProtocol):
     ) -> None:
         self.design_method = strategy_input.design_method
         self.options = strategy_input.options
+        self.options_geotechnical = strategy_input.options_geotechnical
+        self.options_height = strategy_input.options_height
+        
         self.opt_parameters = strategy_input.opt_parameters
         self.Pf = strategy_input.Pf
         self.LCCOption = strategy_input.LCCOption

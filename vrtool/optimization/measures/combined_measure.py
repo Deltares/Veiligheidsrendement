@@ -135,7 +135,7 @@ class CombinedMeasure:
         return -999
 
     @property
-    def id(self) -> int | str:
+    def combined_id(self) -> int | str:
         if self.secondary is not None:
             return (
                 f"{self.primary.measure_type.value}+{self.secondary.measure_type.value}"

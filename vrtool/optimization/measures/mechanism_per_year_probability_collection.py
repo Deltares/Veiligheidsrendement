@@ -69,9 +69,25 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             list[float]: List of probabilities
         """
+        return beta_to_pf(self.get_betas(mechanism, years))
+
+    def get_betas(self, mechanism: MechanismEnum, years: list[int]) -> list[float]:
+        """
+        Get the betas for a given mechanism and years.
+        Interpolation is used to get the betas for the years that are not part of the collection.
+
+        Args:
+            mechanism (MechanismEnum): Mechanism
+            years (list[int]): List of years
+
+        Returns:
+            list[float]: List of betas
+        """
         _years = list(self.get_years(mechanism))
+        if not _years:
+            return []
         _betas = list(map(lambda x: self.get_beta(mechanism, x), _years))
-        return beta_to_pf(interp1d(_years, _betas, fill_value="extrapolate")(years))
+        return interp1d(_years, _betas, fill_value="extrapolate")(years)
 
     def get_mechanisms(self) -> set[MechanismEnum]:
         """
