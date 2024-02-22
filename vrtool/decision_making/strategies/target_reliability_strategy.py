@@ -122,7 +122,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.LE_in_section = config.LE_in_section
 
         # New mappings
-        # self.options = strategy_input.options
+        self.options = strategy_input.options
         self._section_as_input_dict = strategy_input.section_as_input_dict
 
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
@@ -240,7 +240,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # previously _selected_section_as_input = self.options[_dike_section.name]
             _selected_section_as_input = self._section_as_input_dict[_dike_section.name]
             _selected_option = self.options[_dike_section.name]
-            _invest_year = _selected_option.min_year
+            _invest_year = _selected_section_as_input.min_year
             _target_year = _invest_year + 50
 
             # make PossibleMeasures dataframe

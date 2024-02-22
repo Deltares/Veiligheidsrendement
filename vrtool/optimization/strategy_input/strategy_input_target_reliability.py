@@ -50,7 +50,7 @@ class OldMappingHelper:
     @staticmethod
     def get_combined_measure_id_type(
         measure_id_dict: dict[MeasureTypeEnum, str], combined_measure: CombinedMeasure
-    ) -> tuple[str, str]:
+    ) -> tuple[int, str]:
         """Get or generate the sequence id for the measure type."""
 
         _primary_measure = combined_measure.primary
@@ -64,9 +64,9 @@ class OldMappingHelper:
 
             # Create new entry
             _type_primary = measure.measure_type.get_old_name()
-            _id_primary = "1"
+            _id_primary = 1
             if measure_id_dict.values():
-                _id_primary = str(max([v[0] for v in measure_id_dict.values()]) + 1)
+                _id_primary = max([v[0] for v in measure_id_dict.values()]) + 1
 
             measure_id_dict[measure.measure_type] = (
                 _id_primary,
@@ -124,7 +124,7 @@ class OldMappingHelper:
             _id, _type = OldMappingHelper.get_combined_measure_id_type(
                 _measure_id_dict, _comb
             )
-            _options_dict[("id", "")] = _id
+            _options_dict[("id", "")] = str(_id)
             _options_dict[("type", "")] = _type
             _options_dict[("class", "")] = _comb.class_name
             _options_dict[("year", "")] = _comb.combined_years
