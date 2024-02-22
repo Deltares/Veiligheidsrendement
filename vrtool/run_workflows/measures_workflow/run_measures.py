@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 from typing import Tuple
-
+from tqdm import tqdm 
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -42,7 +42,7 @@ class RunMeasures(VrToolRunProtocol):
         _results_measures.selected_traject = self.selected_traject
         #TODO: maybe add tqdm here to generate a progress bar
         _results_measures.solutions_dict.update(
-            dict(map(self._get_section_solution, self.selected_traject.sections))
+            dict(map(self._get_section_solution, tqdm(self.selected_traject.sections, desc="Aantal doorgerekende dijkvakken: ")))
         )
 
         for i in self.selected_traject.sections:

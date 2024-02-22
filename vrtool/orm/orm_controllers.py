@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
+from tqdm import tqdm 
 
 import pandas as pd
 from peewee import SqliteDatabase
@@ -148,7 +149,6 @@ def get_dike_section_solutions(
     _solutions = _importer.import_orm(_orm_section_data)
     vrtool_db.close()
     _solutions.evaluate_solutions(dike_section, general_info, preserve_slope=False)
-    logging.info("Berekeningen voor maatregelen voor dijkvak {} afgerond".format(dike_section.name))
     return _solutions
 
 
@@ -245,14 +245,14 @@ def export_results_measures(result: ResultsMeasures) -> None:
 
     _connected_db = open_database(result.vr_config.input_database_path)
 
-    logging.debug("Opened connection to export solution.")
+    logging.info("Start export resultaten maatregelen naar database.")
 
     _exporter = SolutionsExporter()
-    for _solution in result.solutions_dict.values():
+    for _solution in tqdm(result.solutions_dict.values(), desc="Aantal geexporteerde dijkvakken:",total= len(result.solutions_dict), unit='vak'):
         _exporter.export_dom(_solution)
     _connected_db.close()
 
-    logging.info("Export van resultaten maatregelen afgerond.")
+    logging.debug("Export van resultaten maatregelen afgerond.")
 
 
 def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[int]:
