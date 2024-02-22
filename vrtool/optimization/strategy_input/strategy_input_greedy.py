@@ -45,22 +45,20 @@ class StrategyInputGreedy(StrategyInputProtocol):
         """
 
         def _get_section_options(section: SectionAsInput) -> df:
-            _measure_id_dict: dict[MeasureTypeEnum, tuple[str, str]] = {}
+            _measure_id_dict: dict[MeasureTypeEnum, tuple[int, str]] = {}
 
             def _get_measure_id_type(
                 primary_measure: MeasureAsInputProtocol,
                 secondary_measure: MeasureAsInputProtocol | None,
-            ) -> tuple[str, str]:
+            ) -> tuple[int | str, str]:
                 """Get or generate the sequence id for the measure type."""
                 if primary_measure.measure_type not in _measure_id_dict.keys():
                     # Create new entry
                     _type_primary = primary_measure.measure_type.get_old_name()
                     if _measure_id_dict.values():
-                        _id_primary = str(
-                            max([int(v[0]) for v in _measure_id_dict.values()]) + 1
-                        )
+                        _id_primary = max([v[0] for v in _measure_id_dict.values()]) + 1
                     else:
-                        _id_primary = "1"
+                        _id_primary = 1
                     _measure_id_dict[primary_measure.measure_type] = (
                         _id_primary,
                         _type_primary,
@@ -85,10 +83,9 @@ class StrategyInputGreedy(StrategyInputProtocol):
                 secondary_measure: MeasureAsInputProtocol | None,
             ) -> str:
                 """Get the class of the measure."""
-                _class = primary_measure.combine_type.get_old_name()
                 if secondary_measure:
-                    _class += "+" + secondary_measure.combine_type.get_old_name()
-                return _class
+                    return "combined"
+                return primary_measure.combine_type.get_old_name()
 
             def _get_measure_year(
                 primary_measure: MeasureAsInputProtocol,
@@ -100,20 +97,59 @@ class StrategyInputGreedy(StrategyInputProtocol):
                     _year = [_year, secondary_measure.year]
                 return _year
 
+            def _get_yesno(comb: CombinedMeasure) -> int | str:
+                if comb.primary.measure_type in [
+                    MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+                    MeasureTypeEnum.DIAPHRAGM_WALL,
+                    MeasureTypeEnum.STABILITY_SCREEN,
+                ]:
+                    return "yes"
+                return -999
+
+            def _get_db_index(comb: CombinedMeasure) -> list[int]:
+                _db_index = [comb.primary.measure_result_id]
+                if comb.secondary:
+                    _db_index.append(comb.secondary.measure_result_id)
+                return _db_index
+
             _options_dict: dict[tuple, Any] = {}
+
+            _options_dict[("id", "")] = []
+            _options_dict[("type", "")] = []
+            _options_dict[("class", "")] = []
+            _options_dict[("year", "")] = []
+            _options_dict[("yes/no", "")] = []
+            _options_dict[("dcrest", "")] = []
+            _options_dict[("dberm", "")] = []
+            _options_dict[("beta_target", "")] = []
+            _options_dict[("transition_level", "")] = []
+            _options_dict[("cost", "")] = []
+            _options_dict[("combined_db_index", "")] = []
             for _comb in section.combined_measures:
-                if not _comb.secondary:
-                    _id, _type = _get_measure_id_type(_comb.primary, None)
-                else:
-                    _id, _type = _get_measure_id_type(_comb.primary, _comb.secondary)
-                _options_dict[("id", "")] = _id
-                _options_dict[("type", "")] = _type
-                _options_dict[("class", "")] = _get_measure_class(
-                    _comb.primary, _comb.secondary
+                _id, _type = _get_measure_id_type(_comb.primary, _comb.secondary)
+                _options_dict[("id", "")].append(_id)
+                _options_dict[("type", "")].append(_type)
+                _options_dict[("class", "")].append(
+                    _get_measure_class(_comb.primary, _comb.secondary)
                 )
-                _options_dict[("year", "")] = _get_measure_year(
-                    _comb.primary, _comb.secondary
+                _options_dict[("year", "")].append(
+                    _get_measure_year(_comb.primary, _comb.secondary)
                 )
+                _options_dict[("yes/no", "")].append(_get_yesno(_comb))
+                _options_dict[("dcrest", "")].append(_comb.dcrest)
+                _options_dict[("dberm", "")].append(_comb.dberm)
+                _options_dict[("transition_level", "")].append(_comb.transition_level)
+                _options_dict[("beta_target", "")].append(_comb.beta_target)
+                _options_dict[("cost", "")].append(_comb.lcc)
+                _options_dict[("combined_db_index", "")].append(_get_db_index(_comb))
+
+                for _prob in _comb.mechanism_year_collection.probabilities:
+                    if (_prob.mechanism.name, _prob.year) not in _options_dict.keys():
+                        _options_dict[(_prob.mechanism.name, _prob.year)] = []
+                    _options_dict[(_prob.mechanism.name, _prob.year)].append(
+                        _prob.probability
+                    )
+
             return df(_options_dict)
 
         def _get_options(

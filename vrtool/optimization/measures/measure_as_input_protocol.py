@@ -22,6 +22,7 @@ class MeasureAsInputProtocol(Protocol):
     year: int
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     start_cost: float
+    dcrest: float
 
     @property
     def lcc(self) -> float:
