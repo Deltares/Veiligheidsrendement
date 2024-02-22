@@ -51,8 +51,9 @@ class OldMappingHelper:
     @staticmethod
     def get_section_options(section: SectionAsInput) -> pd.DataFrame:
         _options_dict: dict[tuple, Any] = {}
+        _years = [*range(section.min_year, section.max_year)]
 
-        _options_dict[("id", "")] = []
+        _options_dict[("ID", "")] = []
         _options_dict[("type", "")] = []
         _options_dict[("class", "")] = []
         _options_dict[("year", "")] = []
@@ -64,7 +65,7 @@ class OldMappingHelper:
         _options_dict[("cost", "")] = []
         _options_dict[("combined_db_index", "")] = []
         for i, _comb in enumerate(section.combined_measures):
-            _options_dict[("id", "")].append(_comb.combined_id)
+            _options_dict[("ID", "")].append(_comb.combined_id)
             _options_dict[("type", "")].append(_comb.combined_measure_type)
             _options_dict[("class", "")].append(_comb.measure_class)
             _options_dict[("year", "")].append(_comb.year)
@@ -76,13 +77,18 @@ class OldMappingHelper:
             _options_dict[("cost", "")].append(_comb.lcc)
             _options_dict[("combined_db_index", "")].append(_comb.combined_db_index)
 
-            for _prob in _comb.mechanism_year_collection.probabilities:
-                if (_prob.mechanism.name, _prob.year) not in _options_dict.keys():
-                    _options_dict[(_prob.mechanism.name, _prob.year)] = np.zeros(
-                        len(section.combined_measures)
-                    )
-                _options_dict[(_prob.mechanism.name, _prob.year)][i] = pf_to_beta(
-                    _prob.probability
-                )
+            # Get betas for all years
+            for _mech in section.mechanisms:
+                _betas = _comb.mechanism_year_collection.get_betas(_mech, _years)
+                for y, _beta in enumerate(_betas):
+                    if (_mech.name, _years[y]) not in _options_dict.keys():
+                        _options_dict[(_mech.name, _years[y])] = np.zeros(
+                            len(section.combined_measures)
+                        )
+                    _options_dict[(_mech.name, _years[y])][i] = _beta
+
+        # Add section for all years
+        for _year in _years:
+            _options_dict[("Section", _year)] = np.zeros(len(section.combined_measures))
 
         return pd.DataFrame(_options_dict)
