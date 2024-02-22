@@ -45,9 +45,9 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
         def _get_section_options(section: SectionAsInput) -> df:
             _options_dict: dict[tuple, Any] = {}
-            _min_year = section.min_year
-            _max_year = section.max_year
+            _years = [*range(section.min_year, section.max_year)]
 
+            # Initialize dict fields
             _options_dict[("ID", "")] = []
             _options_dict[("type", "")] = []
             _options_dict[("class", "")] = []
@@ -59,6 +59,8 @@ class StrategyInputGreedy(StrategyInputProtocol):
             _options_dict[("transition_level", "")] = []
             _options_dict[("cost", "")] = []
             _options_dict[("combined_db_index", "")] = []
+
+            # Loop over measurs
             for i, _comb in enumerate(section.combined_measures):
                 _options_dict[("ID", "")].append(_comb.combined_id)
                 _options_dict[("type", "")].append(_comb.combined_measure_type)
@@ -74,7 +76,6 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
                 # Get betas for all years
                 for _mech in section.mechanisms:
-                    _years = [*range(_min_year, _max_year)]
                     _betas = _comb.mechanism_year_collection.get_betas(_mech, _years)
                     for y, _beta in enumerate(_betas):
                         if (_mech.name, _years[y]) not in _options_dict.keys():
@@ -82,6 +83,12 @@ class StrategyInputGreedy(StrategyInputProtocol):
                                 len(section.combined_measures)
                             )
                         _options_dict[(_mech.name, _years[y])][i] = _beta
+
+            # Add section for all years
+            for _year in _years:
+                _options_dict[("Section", _year)] = np.zeros(
+                    len(section.combined_measures)
+                )
 
             return df(_options_dict)
 
