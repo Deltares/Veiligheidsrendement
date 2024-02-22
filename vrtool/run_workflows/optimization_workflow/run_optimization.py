@@ -210,6 +210,10 @@ class RunOptimization(VrToolRunProtocol):
         logging.info("Start step 3: Optimization")
         _results_optimization = ResultsOptimization()
         _results_optimization.vr_config = self.vr_config
+        # TODO (VRTOOL-406): Selected traject is not required for exporting a result optimization.
+        # it is, however, required by the `VrToolRunResultProtocol` implemented by
+        # `ResultsOptimization`.
+        _results_optimization.selected_traject = self.selected_traject
 
         ## STEP 3: EVALUATE THE STRATEGIES
         _evaluation_mapping = self._get_evaluation_mapping()
@@ -222,8 +226,6 @@ class RunOptimization(VrToolRunProtocol):
         )
 
         logging.info("Finished step 3: Optimization")
-        _results_optimization.selected_traject = self.selected_traject
-        _results_optimization.results_solutions = self._solutions_dict
 
         return _results_optimization
 

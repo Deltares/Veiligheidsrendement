@@ -11,7 +11,6 @@ class ResultsOptimization(VrToolRunResultProtocol):
     results_solutions: Dict[str, Solutions]
 
     def __init__(self) -> None:
-        self.results_solutions = {}
         self.results_strategies = []
 
     @property
