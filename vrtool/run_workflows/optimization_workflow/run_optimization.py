@@ -51,7 +51,7 @@ class RunOptimization(VrToolRunProtocol):
         return _results_dir
 
     def _get_strategy_input(
-        self, strategy_type: Type[StrategyBase], design_method: str
+        self, strategy_type: type[StrategyBase], design_method: str
     ) -> StrategyInputProtocol:
         _strategy_controller = StrategyController(self._section_input_collection)
         _strategy_controller.set_investment_year()
