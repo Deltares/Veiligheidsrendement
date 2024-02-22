@@ -10,17 +10,45 @@ import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
     calc_life_cycle_risks,
     evaluate_risk,
     update_probability,
 )
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
-class GreedyStrategy(StrategyBase):
+class GreedyStrategy(StrategyProtocol):
+    design_method: str
+
+    def __init__(
+        self, strategy_input: StrategyInputGreedy, config: VrtoolConfig
+    ) -> None:
+        self.design_method = strategy_input.design_method
+        self.options = strategy_input.options
+        self.opt_parameters = strategy_input.opt_parameters
+        self.Pf = strategy_input.Pf
+        self.LCCOption = strategy_input.LCCOption
+        self.Cint_h = strategy_input.Cint_h
+        self.Cint_g = strategy_input.Cint_g
+        self.D = strategy_input.D
+        self.Dint = strategy_input.Dint
+        self.RiskGeotechnical = strategy_input.RiskGeotechnical
+        self.RiskOverflow = strategy_input.RiskOverflow
+        self.RiskRevetment = strategy_input.RiskRevetment
+
+        self.config = config
+        self.OI_horizon = config.OI_horizon
+        self.mechanisms = config.mechanisms
+        self.T = config.T
+        self.LE_in_section = config.LE_in_section
+        
+
     def bundling_output(
         self, BC_list, counter_list, sh_array, sg_array, existing_investments
     ):
@@ -413,7 +441,7 @@ class GreedyStrategy(StrategyBase):
     def evaluate(
         self,
         traject: DikeTraject,
-        solutions_dict: Dict[str, Solutions],
+        sections: list[SectionAsInput],
         splitparams=False,
         setting="fast",
         BCstop=0.1,
@@ -423,7 +451,6 @@ class GreedyStrategy(StrategyBase):
         """This is the main routine for a greedy evaluation of all solutions."""
         # TODO put settings in config
 
-        self.make_optimization_input(traject)
         start = time.time()
         # set start values:
         self.Cint_g[:, 0] = 1
@@ -722,13 +749,93 @@ class GreedyStrategy(StrategyBase):
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
 
         self.write_greedy_results(
-            traject, solutions_dict, measure_list, BC_list, Probabilities
+            traject, sections, measure_list, BC_list, Probabilities
         )
+
+    def make_solution(self, csv_path, step=False, type="Final"):
+        """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
+        There are 3 types:
+        FinalSolution: which is the result in the last step of the optimization
+        OptimalSolution: the result with the lowest total cost
+        SatisfiedStandardSolution: the result at which the reliability requirement is met.
+        Note that if type is not Final the step parameter has to be defined."""
+
+        if (type != "Final") and not step:
+            raise Exception(
+                "Error: input for make solution is inconsistent. If type is not Final, step should be provided"
+            )
+
+        if step:
+            AllMeasures = copy.deepcopy(self.TakenMeasures.iloc[0:step])
+        else:
+            AllMeasures = copy.deepcopy(self.TakenMeasures)
+        # sections = np.unique(AllMeasures['Section'][1:])
+        sections = list(self.options.keys())
+        Solution = pd.DataFrame(columns=AllMeasures.columns)
+        Solution = Solution.drop(columns=["option_index", "BC"])
+
+        for section in sections:
+            lines = AllMeasures.loc[AllMeasures["Section"] == section].drop(
+                columns=["option_index", "BC"]
+            )
+            if len(lines) > 1:
+                lcctot = np.sum(lines["LCC"])
+                lines.loc[lines.index.values[-1], "LCC"] = lcctot
+                Solution = pd.concat([Solution, lines[-1:]])
+            elif len(lines) == 0:
+                lines = pd.DataFrame(
+                    np.array(
+                        [
+                            section,
+                            0,
+                            0,
+                            "No measure",
+                            0,
+                            "no",
+                            0.0,
+                            0.0,
+                            -999.0,
+                            -999.0,
+                        ]
+                    ).reshape(1, len(Solution.columns)),
+                    columns=Solution.columns,
+                )
+                Solution = pd.concat([Solution, lines])
+            else:
+                Solution = pd.concat([Solution, lines])
+        colorder = [
+            "ID",
+            "Section",
+            "LCC",
+            "name",
+            "year",
+            "yes/no",
+            "dcrest",
+            "dberm",
+            "transition_level",
+            "beta_target",
+        ]
+        Solution = Solution[colorder]
+        for count, row in Solution.iterrows():
+            if isinstance(row["name"], np.ndarray) and any(row["name"]):  # clean output
+                Solution.loc[count, "name"] = row["name"][0]
+
+        # TODO: writing to csv is obsolete; use results in the database
+        if type == "Final":
+            self.FinalSolution = Solution
+            self.FinalSolution.to_csv(csv_path)
+        elif type == "Optimal":
+            self.OptimalSolution = Solution
+            self.OptimalSolution.to_csv(csv_path)
+            self.OptimalStep = step - 1
+        elif type == "SatisfiedStandard":
+            self.SatisfiedStandardSolution = Solution
+            self.SatisfiedStandardSolution.to_csv(csv_path)
 
     def write_greedy_results(
         self,
         traject: DikeTraject,
-        solutions_dict: Dict[str, Solutions],
+        sections: list[SectionAsInput],
         measure_list,
         BC,
         Probabilities,
@@ -880,14 +987,8 @@ class GreedyStrategy(StrategyBase):
                 )
             # get the name
             try:
-                names.append(
-                    solutions_dict[traject.sections[i[0]].name]
-                    .measure_table.loc[
-                        solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
-                        == ID[-1]
-                    ]["Name"]
-                    .values[0]
-                )
+                section_name = "TODO"
+                names.append(section_name)
             except:
                 names.append("missing")
 
@@ -1004,3 +1105,27 @@ class GreedyStrategy(StrategyBase):
         self, step_number: int
     ) -> tuple[list[float], list[float]]:
         return self.costs["LCC"][step_number], self.costs["TR"][step_number]
+
+    def write_reliability_to_csv(
+        self, input_path: Path, type: str, time_stamps=[0, 25, 50]
+    ) -> None:
+        """Routine to write all the reliability indices in a step of the algorithm to a csv file
+
+        Args:
+            input_path (Path)        : path to input folder
+            type (str)               : strategy type
+            time_stamps (list float) : list of years
+        """
+        # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
+        total_reliability = np.zeros((len(self.Probabilities), len(time_stamps)))
+        for i in range(len(self.Probabilities)):
+            name = input_path.joinpath(
+                "ReliabilityLog_" + type + "_Step" + str(i) + ".csv"
+            )
+            self.Probabilities[i].to_csv(path_or_buf=name, header=True)
+            beta_t, p_t = calc_traject_prob(self.Probabilities[i], ts=time_stamps)
+            total_reliability[i, :] = beta_t
+        reliability_df = pd.DataFrame(total_reliability, columns=time_stamps)
+        reliability_df.to_csv(
+            path_or_buf=input_path.joinpath("TrajectReliabilityInTime.csv"), header=True
+        )

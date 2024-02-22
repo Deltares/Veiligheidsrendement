@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Callable, Dict, Type
+from typing import Callable, Dict
 
 import numpy as np
 import pandas as pd
@@ -8,6 +8,7 @@ import pandas as pd
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
@@ -50,7 +51,7 @@ class RunOptimization(VrToolRunProtocol):
         return _results_dir
 
     def _get_strategy_input(
-        self, strategy_type: Type[StrategyBase], design_method: str
+        self, strategy_type: type[StrategyBase], design_method: str
     ) -> StrategyInputProtocol:
         _strategy_controller = StrategyController(self._section_input_collection)
         _strategy_controller.set_investment_year()
@@ -60,30 +61,18 @@ class RunOptimization(VrToolRunProtocol):
         _evaluate_input.design_method = design_method
         return _evaluate_input
 
-    def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
+    def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyProtocol:
         # Initalize strategy controller
-        _greedy_optimization = self._get_strategy_input(GreedyStrategy, design_method)
+        _greedy_optimization_input = self._get_strategy_input(
+            GreedyStrategy, design_method
+        )
 
-        # TODO: refactor code:
-        _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
+        _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
 
         _results_dir = self._get_output_dir()
-        _greedy_optimization.set_investment_years(
-            self.selected_traject,
-            self._ids_to_import,
-            self._selected_measure_ids,
-            self._solutions_dict,
-        )
-        # Combine available measures
-        _greedy_optimization.combine(
-            self.selected_traject,
-            self._solutions_dict,
-            filtering="off",
-            splitparams=True,
-        )
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _greedy_optimization.evaluate(
+        _greedy_strategy.evaluate(
             self.selected_traject,
             self._solutions_dict,
             splitparams=True,
@@ -93,17 +82,15 @@ class RunOptimization(VrToolRunProtocol):
             BCstop=0.1,
         )
 
-        _greedy_optimization = self._replace_names(
-            _greedy_optimization, self._solutions_dict
-        )
-        _cost_greedy = _greedy_optimization.determine_risk_cost_curve(
+        _greedy_strategy = self._replace_names(_greedy_strategy, self._solutions_dict)
+        _cost_greedy = _greedy_strategy.determine_risk_cost_curve(
             self.selected_traject.general_info.FloodDamage, None
         )
 
-        _greedy_optimization.write_reliability_to_csv(_results_dir, "Greedy")
+        _greedy_strategy.write_reliability_to_csv(_results_dir, "Greedy")
         # write to csv's
-        _greedy_optimization.TakenMeasures.to_csv(
-            _results_dir.joinpath("TakenMeasures_" + _greedy_optimization.type + ".csv")
+        _greedy_strategy.TakenMeasures.to_csv(
+            _results_dir.joinpath("TakenMeasures_" + _greedy_strategy.type + ".csv")
         )
         pd.DataFrame(
             np.array(
@@ -118,28 +105,26 @@ class RunOptimization(VrToolRunProtocol):
             _results_dir / "TotalCostValues_Greedy.csv",
             float_format="%.1f",
         )
-        _greedy_optimization.make_solution(
+        _greedy_strategy.make_solution(
             _results_dir.joinpath(
-                "TakenMeasures_Optimal_" + _greedy_optimization.type + ".csv",
+                "TakenMeasures_Optimal_" + _greedy_strategy.type + ".csv",
             ),
             step=_cost_greedy["TC_min"] + 1,
             type="Optimal",
         )
-        _greedy_optimization.make_solution(
-            _results_dir.joinpath(
-                "FinalMeasures_" + _greedy_optimization.type + ".csv"
-            ),
+        _greedy_optimization_input.make_solution(
+            _results_dir.joinpath("FinalMeasures_" + _greedy_strategy.type + ".csv"),
             type="Final",
         )
-        for j in _greedy_optimization.options:
-            _greedy_optimization.options[j].to_csv(
+        for j in _greedy_strategy.options:
+            _greedy_strategy.options[j].to_csv(
                 _results_dir.joinpath(
-                    j + "_Options_" + _greedy_optimization.type + ".csv",
+                    j + "_Options_" + _greedy_strategy.type + ".csv",
                 ),
                 float_format="%.3f",
             )
 
-        return _greedy_optimization
+        return _greedy_strategy
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
         # Initalize strategy controller
