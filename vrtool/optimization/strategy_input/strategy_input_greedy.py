@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
+from pandas import DataFrame as df
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
@@ -17,7 +19,7 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 @dataclass
 class StrategyInputGreedy(StrategyInputProtocol):
     design_method: str
-    options: dict[str, np.ndarray]
+    options: dict[str, df]
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -37,6 +39,19 @@ class StrategyInputGreedy(StrategyInputProtocol):
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
+
+        def _get_section_options(section: SectionAsInput) -> df:
+            _options_dict: dict[tuple, Any]
+            for _comb in section.combined_measures:
+                
+            
+        def _get_options(
+            section_measures_input: list[SectionAsInput],
+        ) -> dict[str, df]:
+            options: dict[str, df] = {}
+            for _section in section_measures_input:
+                options[_section] = _get_section_options(_section)
+            return options
 
         def _get_pf_for_measures(
             mech: MechanismEnum,
@@ -149,6 +164,8 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
         # Initialize StrategyInputGreedy
         _strategy_input = cls()
+
+        _strategy_input.options = _get_options(section_measures_input)
 
         # Define general parameters
         _strategy_input._num_sections = len(section_measures_input)
