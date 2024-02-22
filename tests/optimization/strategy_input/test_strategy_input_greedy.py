@@ -281,7 +281,9 @@ class TestStrategyInputGreedy:
         ]
 
         # 2. Run test
-        _strategy_input = StrategyInputGreedy.from_section_as_input(_sections)
+        _strategy_input = StrategyInputGreedy.from_section_as_input_collection(
+            _sections
+        )
 
         # 3. Verify expectations
 

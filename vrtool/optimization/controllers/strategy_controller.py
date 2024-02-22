@@ -47,7 +47,7 @@ class StrategyController:
         Get the input for the evaluation of the strategy.
         """
         if strategy_type == GreedyStrategy:
-            return StrategyInputGreedy.from_section_as_input(
+            return StrategyInputGreedy.from_section_as_input_collection(
                 self._section_measures_input
             )
         elif strategy_type == TargetReliabilityStrategy:
