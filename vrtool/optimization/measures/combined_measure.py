@@ -17,6 +17,42 @@ class CombinedMeasure:
     mechanism_year_collection: MechanismPerYearProbabilityCollection
 
     @property
+    def combined_id(self) -> str:
+        """
+        Gets an `ID` representing this combined measure.
+        When no `secondary` measure is present the `measure_result_id`
+          from the primary will be used.
+        When a `secondary` measure is present then both `measure_result_id`
+        are used joined by the `+` symbol.
+
+        Returns:
+            str: The combined measure's `ID`.
+        """
+        if not self.secondary:
+            return self.primary.measure_result_id
+        return "{}+{}".format(
+            self.primary.measure_result_id, self.secondary.measure_result_id
+        )
+
+    @property
+    def name(self) -> str:
+        """
+        Gets a name representing this combined measure.
+        When no `secondary` measure is present the `measure_type`
+          from the primary will be used.
+        When a `secondary` measure is present then both `measure_type`
+        are used joined by the `+` symbol.
+
+        Returns:
+            str: The combined measure's name.
+        """
+        if not self.secondary:
+            return self.primary.measure_type.name
+        return "{}+{}".format(
+            self.primary.measure_type.name, self.secondary.measure_type.name
+        )
+
+    @property
     def lcc(self) -> float:
         if self.secondary is not None:
             return self.primary.lcc + self.secondary.lcc

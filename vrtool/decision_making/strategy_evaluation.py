@@ -229,11 +229,13 @@ def _build_attribute_columns(
             attribute_value = [
                 list(
                     itertools.chain.from_iterable(
-                        itertools.repeat(x, 1)
-                        if (isinstance(x, str))
-                        or (isinstance(x, int))
-                        or (isinstance(x, float))
-                        else x
+                        (
+                            itertools.repeat(x, 1)
+                            if (isinstance(x, str))
+                            or (isinstance(x, int))
+                            or (isinstance(x, float))
+                            else x
+                        )
                         for x in value
                     )
                 )
@@ -259,12 +261,9 @@ def _build_attribute_columns(
     return attribute_col_dict
 
 
-def make_traject_df(traject: DikeTraject, cols):
+def make_traject_df(traject: DikeTraject, cols: list[int]) -> pd.DataFrame:
     # cols = cols[1:]
-    sections = []
-
-    for i in traject.sections:
-        sections.append(i.name)
+    sections = [_s.name for _s in traject.sections]
 
     mechanism_names = list(map(str, traject.mechanisms)) + ["Section"]
     df_index = pd.MultiIndex.from_product(
@@ -295,7 +294,7 @@ def make_traject_df(traject: DikeTraject, cols):
 
 
 # hereafter a bunch of functions to compute costs, risks and probabilities over time are defined:
-def calc_tc(section_options, discount_rate: float, horizon=100):
+def calc_tc(section_options: pd.DataFrame, discount_rate: float, horizon: int = 100):
     costs = section_options["cost"].values
     years = section_options["year"].values
     discountfactors = list(map(lambda x: 1 / (1 + discount_rate) ** np.array(x), years))
@@ -510,6 +509,7 @@ def split_options(
             options[i].transition_level[options[i].transition_level > 0].min()
         )
         min_beta_target = options[i].beta_target[options[i].beta_target > 0].min()
+
         # for dependent sections we have all measures where there is a transition_level larger than the minimum, or a beta_target larger than the minimum
         # and the berm should be either non-existent -999 or 0
         def is_dependent_measure_present(option):

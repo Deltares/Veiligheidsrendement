@@ -16,6 +16,7 @@ from vrtool.decision_making.strategy_evaluation import (
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
     StrategyInputTargetReliability,
 )
@@ -128,13 +129,18 @@ class TargetReliabilityStrategy(StrategyProtocol):
         return float("nan"), float("nan")
 
     @staticmethod
-    def _id_to_name(found_id: str, measure_table: pd.DataFrame):
+    def _id_to_name(found_id: str, section_as_input: SectionAsInput):
         """
         Previously in tools. Only used once within this evaluate method.
         """
-        return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
-            "Name"
-        ].values[0]
+        return next(
+            c.name
+            for c in section_as_input.combined_measures
+            if c.combined_id == str(found_id)
+        )
+        # return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
+        #     "Name"
+        # ].values[0]
 
     def _get_beta_t_dictionary(
         self,
@@ -173,7 +179,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         for _dike_section in dike_traject.sections:
             beta_horizon.append(
                 _dike_section.section_reliability.SectionReliability.loc["Section"][
-                    self.OI_horizon
+                    str(self.OI_horizon)
                 ]
             )
 
@@ -216,6 +222,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 columns=measure_cols + ["ID", "name", "params"],
             )
         # columns (section name and index in self.options[section])
+        # This is actually the `SectionAsInput.initial_assessment`, however we miss
+        # the initial assessment for the section.
         _base_traject_probability = make_traject_df(dike_traject, self._time_periods)
         _probability_steps = [copy.deepcopy(_base_traject_probability)]
         _traject_probability = copy.deepcopy(_base_traject_probability)
@@ -223,23 +231,24 @@ class TargetReliabilityStrategy(StrategyProtocol):
         _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
             dike_traject
         )
-        for j in section_indices:
-            _dike_section = dike_traject.sections[j]
+        for _section_idx in section_indices:
+            _dike_section = dike_traject.sections[_section_idx]
             _beta_t = self._get_beta_t_dictionary(
                 _cross_sectional_requirements, _dike_section.Length
             )
             # find cheapest design that satisfies betatcs in 50 years from invest year
             # previously _selected_section_as_input = self.options[_dike_section.name]
             _selected_section_as_input = self._section_as_input_dict[_dike_section.name]
-            _invest_year = _selected_section_as_input.min_year
+            _selected_option = self.options[_dike_section.name]
+            _invest_year = _selected_option.min_year
             _target_year = _invest_year + 50
 
             # make PossibleMeasures dataframe
-            _possible_measures = copy.deepcopy(_selected_section_as_input)
+            _possible_measures = copy.deepcopy(_selected_option)
             # filter for mechanisms that are considered
             for mechanism in dike_traject.mechanisms:
                 _possible_measures = _possible_measures.loc[
-                    self.options[_dike_section.name][(mechanism.name, _target_year)]
+                    _selected_option[(mechanism.name, _target_year)]
                     > _beta_t[mechanism.name]
                 ]
 
@@ -255,9 +264,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _lcc = calc_tc(
                 _possible_measures,
                 self.discount_rate,
-                horizon=_selected_section_as_input[MechanismEnum.OVERFLOW.name].columns[
-                    -1
-                ],
+                horizon=_selected_section_as_input.max_year,
+                # horizon=_selected_option[MechanismEnum.OVERFLOW.name].columns[-1],
             )
 
             # select measure with lowest cost
