@@ -29,6 +29,9 @@ class CrossSectionalRequirements:
     beta_cs_stabinner: np.ndarray
     beta_cs_overflow: np.ndarray
 
+    dike_traject_b_piping: float
+    dike_traject_b_stability_inner: float
+
     @property
     def pf_cs_piping(self) -> np.ndarray:
         return beta_to_pf(self.beta_cs_piping)
@@ -36,6 +39,25 @@ class CrossSectionalRequirements:
     @property
     def pf_cs_stabinner(self) -> np.ndarray:
         return beta_to_pf(self.beta_cs_stabinner)
+
+    def calculate_beta_t_piping(
+        self, dike_section_length: float, le_in_section: bool
+    ) -> np.ndarray:
+        if not le_in_section:
+            return self.beta_cs_piping
+        return pf_to_beta(
+            self.pf_cs_piping * (dike_section_length / self.dike_traject_b_piping)
+        )
+
+    def calculate_beta_t_sabinner(
+        self, dike_section_length: float, le_in_section: bool
+    ) -> np.ndarray:
+        if not le_in_section:
+            return self.beta_cs_stabinner
+        return pf_to_beta(
+            self.pf_cs_stabinner
+            * (dike_section_length / self.dike_traject_b_stability_inner)
+        )
 
     @classmethod
     def from_dike_traject(cls, dike_traject: DikeTraject):
@@ -77,6 +99,8 @@ class CrossSectionalRequirements:
             beta_cs_revetment=_beta_cs_revetment,
             beta_cs_stabinner=_beta_cs_stabinner,
             beta_cs_overflow=_beta_cs_overflow,
+            dike_traject_b_piping=dike_traject.general_info.bPiping,
+            dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
         )
 
 
@@ -112,6 +136,29 @@ class TargetReliabilityStrategy(StrategyProtocol):
             "Name"
         ].values[0]
 
+    def _get_beta_t_dictionary(
+        self,
+        cross_sectional_requirements: CrossSectionalRequirements,
+        dike_section_length: float,
+    ) -> dict[str, float]:
+        # convert beta_cs to beta_section in order to correctly search self.options[section]
+        # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
+        if self.LE_in_section:
+            logging.warning(
+                "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
+            )
+
+        return {
+            MechanismEnum.PIPING.name: cross_sectional_requirements.calculate_beta_t_piping(
+                dike_section_length, self.LE_in_section
+            ),
+            MechanismEnum.STABILITY_INNER.name: cross_sectional_requirements.calculate_beta_t_sabinner(
+                dike_section_length, self.LE_in_section
+            ),
+            MechanismEnum.OVERFLOW.name: cross_sectional_requirements.beta_cs_overflow,
+            MechanismEnum.REVETMENT.name: cross_sectional_requirements.beta_cs_revetment,
+        }
+
     def evaluate(
         self,
         dike_traject: DikeTraject,
@@ -120,9 +167,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # Previous approach instead of self._time_periods = config.T:
         # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
         # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
-        _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
-            dike_traject
-        )
 
         # Rank sections based on 2075 Section probability
         beta_horizon = []
@@ -176,34 +220,14 @@ class TargetReliabilityStrategy(StrategyProtocol):
         _probability_steps = [copy.deepcopy(_base_traject_probability)]
         _traject_probability = copy.deepcopy(_base_traject_probability)
 
+        _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
+            dike_traject
+        )
         for j in section_indices:
             _dike_section = dike_traject.sections[j]
-            # convert beta_cs to beta_section in order to correctly search self.options[section]
-            # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
-            if self.LE_in_section:
-                logging.warning(
-                    "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
-                )
-                _beta_t_piping = pf_to_beta(
-                    _cross_sectional_requirements.pf_cs_piping
-                    * (_dike_section.Length / dike_traject.general_info.bPiping)
-                )
-                _beta_t_sabinner = pf_to_beta(
-                    _cross_sectional_requirements.pf_cs_stabinner
-                    * (_dike_section.Length / dike_traject.general_info.bStabilityInner)
-                )
-            else:
-                _beta_t_piping = _cross_sectional_requirements.beta_cs_piping
-                _beta_t_sabinner = _cross_sectional_requirements.beta_cs_stabinner
-            _beta_t_overflow = _cross_sectional_requirements.beta_cs_overflow
-            _beta_t_revetment = _cross_sectional_requirements.beta_cs_revetment
-            _beta_t = {
-                MechanismEnum.PIPING.name: _beta_t_piping,
-                MechanismEnum.STABILITY_INNER.name: _beta_t_sabinner,
-                MechanismEnum.OVERFLOW.name: _beta_t_overflow,
-                MechanismEnum.REVETMENT.name: _beta_t_revetment,
-            }
-
+            _beta_t = self._get_beta_t_dictionary(
+                _cross_sectional_requirements, _dike_section.Length
+            )
             # find cheapest design that satisfies betatcs in 50 years from invest year
             # previously _selected_section_as_input = self.options[_dike_section.name]
             _selected_section_as_input = self._section_as_input_dict[_dike_section.name]
@@ -211,9 +235,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _target_year = _invest_year + 50
 
             # make PossibleMeasures dataframe
-            _possible_measures = copy.deepcopy(
-                self._section_as_input_dict[_dike_section.name]
-            )
+            _possible_measures = copy.deepcopy(_selected_section_as_input)
             # filter for mechanisms that are considered
             for mechanism in dike_traject.mechanisms:
                 _possible_measures = _possible_measures.loc[
@@ -260,7 +282,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 # TODO: We don't have the names as they were anymore :/
                 # solutions_dict[i.name].measure_table
                 # Which should translate to something like  SectionAsInput.get_measure_name_by_id()
-                name = self._id_to_name(_found_id, self._section_as_input_list)
+                name = self._id_to_name(_found_id, self._section_as_input_dict)
                 data_opt = pd.DataFrame(
                     [
                         [
