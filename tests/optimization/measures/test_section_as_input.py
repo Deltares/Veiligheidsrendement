@@ -51,6 +51,7 @@ class TestSectionAsInput:
         return SectionAsInput(
             section_name="section_name",
             traject_name="traject_name",
+            flood_damage=0,
             measures=[
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 MockShMeasure(MeasureTypeEnum.REVETMENT),
@@ -132,7 +133,7 @@ class TestSectionAsInput:
             == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
         )
 
-    def _get_measure(
+    def _get_revetment_measure(
         self, year: int, revetment_params: list[float], betas: list[float]
     ) -> ShMeasure:
         """
@@ -166,9 +167,31 @@ class TestSectionAsInput:
         )
         return _measure
 
+    def _get_initial_probabilities(
+        self, beta_yr0: float, beta_end_year: float
+    ) -> MechanismPerYearProbabilityCollection:
+        _mech1_year1_prob = MechanismPerYear(
+            MechanismEnum.OVERFLOW, 0, beta_to_pf(beta_yr0)
+        )
+        _mech1_year2_prob = MechanismPerYear(
+            MechanismEnum.OVERFLOW, _END_YEAR, beta_to_pf(beta_end_year)
+        )
+
+        _mech2_year1_prob = MechanismPerYear(
+            MechanismEnum.PIPING, 0, beta_to_pf(beta_yr0)
+        )
+        _mech2_year2_prob = MechanismPerYear(
+            MechanismEnum.PIPING, _END_YEAR, beta_to_pf(beta_end_year)
+        )
+        _mechanism_year_collection = MechanismPerYearProbabilityCollection(
+            [_mech1_year1_prob, _mech1_year2_prob, _mech2_year1_prob, _mech2_year2_prob]
+        )
+
+        return _mechanism_year_collection
+
     def test_investment_year_basic(self):
         """
-        Minimal test: a zero measure and an actual measure
+        Minimal test: two zero measures and an actual measure
         Reference values can be obtained using linear interpolation
         """
         # setup
@@ -176,17 +199,19 @@ class TestSectionAsInput:
         _prob_diff = 0.5
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _prob_measure = [5.0, 5.0 - _prob_diff]
-        _measures = [
-            self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure),
-        ]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
-
-        _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
+        _measure = self._get_revetment_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure)
+        _initial = self._get_initial_probabilities(_prob_zero[0], _prob_zero[1])
+        _measures = [_measure]
+        _section_as_input = SectionAsInput(
+            section_name="section1",
+            traject_name="traject1",
+            flood_damage=0.0,
+            measures=_measures,
+            initial_assessment=_initial,
+        )
 
         # run test
-        _section_as_input.update_measurelist_with_investment_year(
-            _zero_measure.mechanism_year_collection
-        )
+        _section_as_input.update_measurelist_with_investment_year()
 
         # check results
 
@@ -213,14 +238,13 @@ class TestSectionAsInput:
 
         # all measures are extended with two years:
         _ref = {0, _yr1, _yr1 + 1, _END_YEAR}
-        _yrs = _zero_measure.mechanism_year_collection.get_years(_mechm)
-        assert _yrs == _ref
-        _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
-        assert _yrs == _ref
+        for m in _measures:
+            _yrs = m.mechanism_year_collection.get_years(_mechm)
+            assert _yrs == _ref
 
     def test_two_investment_years(self):
         """
-        Test a zero measure and and two actual measures that only differ in investment year
+        Test two zero measures and two actual measures that only differ in investment year
         Reference values can be obtained using linear interpolation
         """
         # setup
@@ -230,18 +254,23 @@ class TestSectionAsInput:
         _prob_zero = [4.0, 4.0 - _prob_diff]
         _prob_measure_a = [5.0, 5.0 - _prob_diff]
         _prob_measure_b = [6.0, 6.0 - _prob_diff]
+        _initial_probabilities = self._get_initial_probabilities(
+            _prob_zero[0], _prob_zero[1]
+        )
         _measures = [
-            self._get_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure_a),
-            self._get_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
+            self._get_revetment_measure(_yr1, [4.0, 2.0, 0.0], _prob_measure_a),
+            self._get_revetment_measure(_yr2, [5.0, 2.0, 0.0], _prob_measure_b),
         ]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
-
-        _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
+        _section_as_input = SectionAsInput(
+            section_name="section1",
+            traject_name="traject1",
+            flood_damage=0.0,
+            measures=_measures,
+            initial_assessment=_initial_probabilities,
+        )
 
         # run test
-        _section_as_input.update_measurelist_with_investment_year(
-            _zero_measure.mechanism_year_collection
-        )
+        _section_as_input.update_measurelist_with_investment_year()
 
         # check results
 
@@ -271,52 +300,6 @@ class TestSectionAsInput:
 
         # all measures are extended with four years:
         _ref = {0, _yr1, _yr1 + 1, _yr2, _yr2 + 1, _END_YEAR}
-        _yrs = _zero_measure.mechanism_year_collection.get_years(_mechm)
-        assert _yrs == _ref
-        _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
-        assert _yrs == _ref
-        _yrs = _measures[1].mechanism_year_collection.get_years(_mechm)
-        assert _yrs == _ref
-
-    def test_investment_years_with_two_mechanisms(self):
-        """
-        Test investment years with two different mechanisms in the zero measure
-        """
-        # setup
-        _yr1 = 20
-        _prob_diff = 0.5
-        _prob_zero = [4.0, 4.0 - _prob_diff]
-        _measures = [
-            self._get_measure(_yr1, [4.0, 2.0, 0.0], [5.0, 4.5]),
-        ]
-        _section_as_input = SectionAsInput("section1", "traject1", _measures, [])
-
-        _zero_measure = self._get_measure(0, [0.0, 0.0, 0.0], _prob_zero)
-        _initial = _zero_measure.mechanism_year_collection
-        _stability0 = MechanismPerYear(MechanismEnum.STABILITY_INNER, 0, 0.01)
-        _stability50 = MechanismPerYear(MechanismEnum.STABILITY_INNER, 50, 0.02)
-        _initial.probabilities.append(_stability0)
-        _initial.probabilities.append(_stability50)
-
-        # run test
-        _section_as_input.update_measurelist_with_investment_year(_initial)
-
-        # check results
-
-        # year 0 for the second measure is copied from the first measure:
-        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
-        assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
-
-        # year 20 for the second measure is an interpolated value copied from the first measure:
-        _pf = _measures[0].mechanism_year_collection.get_probability(
-            MechanismEnum.OVERFLOW, _yr1
-        )
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
-        assert pf_to_beta(_pf) == py.approx(_beta_expected)
-
-        # all measures are extended with two years:
-        _ref = {0, _yr1, _yr1 + 1, _END_YEAR}
-        _yrs = _zero_measure.mechanism_year_collection.get_years(_mechm)
-        assert _yrs == _ref
-        _yrs = _measures[0].mechanism_year_collection.get_years(_mechm)
-        assert _yrs == _ref
+        for m in _measures:
+            _yrs = m.mechanism_year_collection.get_years(_mechm)
+            assert _yrs == _ref

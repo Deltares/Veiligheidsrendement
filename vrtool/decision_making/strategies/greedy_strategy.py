@@ -422,6 +422,7 @@ class GreedyStrategy(StrategyBase):
     ):
         """This is the main routine for a greedy evaluation of all solutions."""
         # TODO put settings in config
+
         self.make_optimization_input(traject)
         start = time.time()
         # set start values:
