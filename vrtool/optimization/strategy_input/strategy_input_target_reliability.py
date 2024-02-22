@@ -4,17 +4,11 @@ from dataclasses import dataclass, field
 from typing import Any
 import numpy as np
 import pandas as pd
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
-from vrtool.optimization.measures.measure_as_input_protocol import (
-    MeasureAsInputProtocol,
-)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 @dataclass
@@ -50,20 +44,9 @@ class OldMappingHelper:
 
     @staticmethod
     def get_section_options(section: SectionAsInput) -> pd.DataFrame:
-        _options_dict: dict[tuple, Any] = {}
+        _options_dict: dict[tuple, Any] = defaultdict(list)
         _years = [*range(section.min_year, section.max_year)]
 
-        _options_dict[("ID", "")] = []
-        _options_dict[("type", "")] = []
-        _options_dict[("class", "")] = []
-        _options_dict[("year", "")] = []
-        _options_dict[("yes/no", "")] = []
-        _options_dict[("dcrest", "")] = []
-        _options_dict[("dberm", "")] = []
-        _options_dict[("beta_target", "")] = []
-        _options_dict[("transition_level", "")] = []
-        _options_dict[("cost", "")] = []
-        _options_dict[("combined_db_index", "")] = []
         for i, _comb in enumerate(section.combined_measures):
             _options_dict[("ID", "")].append(_comb.combined_id)
             _options_dict[("type", "")].append(_comb.combined_measure_type)
