@@ -62,7 +62,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
             # Loop over measurs
             for i, _comb in enumerate(section.combined_measures):
-                _options_dict[("ID", "")].append(_comb.combined_id)
+                _options_dict[("ID", "")].append(_comb.combined_combined_id)
                 _options_dict[("type", "")].append(_comb.combined_measure_type)
                 _options_dict[("class", "")].append(_comb.measure_class)
                 _options_dict[("year", "")].append(_comb.year)

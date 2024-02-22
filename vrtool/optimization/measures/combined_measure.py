@@ -20,65 +20,6 @@ class CombinedMeasure:
     mechanism_year_collection: MechanismPerYearProbabilityCollection
 
     @property
-    def combined_years(self) -> list[int]:
-        """Get the years of the measure."""
-        if not self.secondary:
-            return [self.primary.year]
-        return [self.primary.year, self.secondary.year]
-
-    @property
-    def combined_id(self) -> str:
-        """
-        Gets an `ID` representing this combined measure.
-        When no `secondary` measure is present the `measure_result_id`
-          from the primary will be used.
-        When a `secondary` measure is present then both `measure_result_id`
-        are used joined by the `+` symbol.
-
-        Returns:
-            str: The combined measure's `ID`.
-        """
-        if not self.secondary:
-            return self.primary.measure_result_id
-        return "{}+{}".format(
-            self.primary.measure_result_id, self.secondary.measure_result_id
-        )
-
-    @property
-    def name(self) -> str:
-        """
-        Gets a name representing this combined measure.
-        When no `secondary` measure is present the `measure_type`
-          from the primary will be used.
-        When a `secondary` measure is present then both `measure_type`
-        are used joined by the `+` symbol.
-
-        Returns:
-            str: The combined measure's name.
-        """
-        if not self.secondary:
-            return self.primary.measure_type.name
-        return "{}+{}".format(
-            self.primary.measure_type.name, self.secondary.measure_type.name
-        )
-
-    @property
-    def class_name(self) -> str:
-        """
-        Gets a class name representing this combined measure.
-        When no `secondary` measure is present the `combine_type`
-          from the primary will be used.
-        When a `secondary` measure is present then both `combine_type`
-        are used joined by the `+` symbol.
-
-        Returns:
-            str: The combined measure's class name.
-        """
-        if not self.secondary:
-            return self.primary.combine_type.get_old_name()
-        return "combined"
-
-    @property
     def lcc(self) -> float:
         if self.secondary is not None:
             return self.primary.lcc + self.secondary.lcc
@@ -108,7 +49,7 @@ class CombinedMeasure:
 
     @property
     def year(self) -> int | list[int]:
-        if self.secondary is not None:
+        if self.secondary:
             return [self.primary.year, self.secondary.year]
         return self.primary.year
 
@@ -120,37 +61,34 @@ class CombinedMeasure:
 
     @property
     def yesno(self) -> int | str:
-        if self.primary.measure_type in [
+        _accepted_measure_types = [
             MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
-        ]:
+        ]
+        if self.primary.measure_type in _accepted_measure_types:
             return "yes"
-        if self.secondary is not None and self.secondary.measure_type in [
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
-            MeasureTypeEnum.DIAPHRAGM_WALL,
-            MeasureTypeEnum.STABILITY_SCREEN,
-        ]:
+        if self.secondary and self.secondary.measure_type in _accepted_measure_types:
             return "yes"
         return -999
 
     @property
-    def combined_id(self) -> int | str:
-        if self.secondary is not None:
+    def combined_id(self) -> str:
+        if self.secondary:
             return (
                 f"{self.primary.measure_type.value}+{self.secondary.measure_type.value}"
             )
-        return self.primary.measure_type.value
+        return str(self.primary.measure_type.value)
 
     @property
     def combined_measure_type(self) -> str:
-        if self.secondary is not None:
+        if self.secondary:
             return f"{self.primary.measure_type.get_old_name()}+{self.secondary.measure_type.get_old_name()}"
         return self.primary.measure_type.get_old_name()
 
     @property
     def combined_db_index(self) -> list[int]:
-        if self.secondary is not None:
+        if self.secondary:
             return [self.primary.measure_result_id, self.secondary.measure_result_id]
         return [self.primary.measure_result_id]
 
