@@ -6,8 +6,12 @@ from typing import Any
 import numpy as np
 from pandas import DataFrame as df
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
@@ -18,8 +22,8 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 @dataclass
 class StrategyInputGreedy(StrategyInputProtocol):
-    design_method: str
-    options: dict[str, df]
+    design_method: str = ""
+    options: dict[str, df] = field(default_factory=dict)
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -41,16 +45,83 @@ class StrategyInputGreedy(StrategyInputProtocol):
         """
 
         def _get_section_options(section: SectionAsInput) -> df:
-            _options_dict: dict[tuple, Any]
+            _measure_id_dict: dict[MeasureTypeEnum, tuple[str, str]] = {}
+
+            def _get_measure_id_type(
+                primary_measure: MeasureAsInputProtocol,
+                secondary_measure: MeasureAsInputProtocol | None,
+            ) -> tuple[str, str]:
+                """Get or generate the sequence id for the measure type."""
+                if primary_measure.measure_type not in _measure_id_dict.keys():
+                    # Create new entry
+                    _type_primary = primary_measure.measure_type.get_old_name()
+                    if _measure_id_dict.values():
+                        _id_primary = str(
+                            max([int(v[0]) for v in _measure_id_dict.values()]) + 1
+                        )
+                    else:
+                        _id_primary = "1"
+                    _measure_id_dict[primary_measure.measure_type] = (
+                        _id_primary,
+                        _type_primary,
+                    )
+                else:
+                    _id_primary, _type_primary = _measure_id_dict[
+                        primary_measure.measure_type
+                    ]
+                if secondary_measure:
+                    _id_secondary, _type_secondary = _get_measure_id_type(
+                        secondary_measure, None
+                    )
+                    _id = f"{_id_primary}+{_id_secondary}"
+                    _type = f"{_type_primary}+{_type_secondary}"
+                else:
+                    _id = _id_primary
+                    _type = _type_primary
+                return (_id, _type)
+
+            def _get_measure_class(
+                primary_measure: MeasureAsInputProtocol,
+                secondary_measure: MeasureAsInputProtocol | None,
+            ) -> str:
+                """Get the class of the measure."""
+                _class = primary_measure.combine_type.get_old_name()
+                if secondary_measure:
+                    _class += "+" + secondary_measure.combine_type.get_old_name()
+                return _class
+
+            def _get_measure_year(
+                primary_measure: MeasureAsInputProtocol,
+                secondary_measure: MeasureAsInputProtocol | None,
+            ) -> int | list[int]:
+                """Get the year of the measure."""
+                _year = primary_measure.year
+                if secondary_measure:
+                    _year = [_year, secondary_measure.year]
+                return _year
+
+            _options_dict: dict[tuple, Any] = {}
             for _comb in section.combined_measures:
-                
-            
+                if not _comb.secondary:
+                    _id, _type = _get_measure_id_type(_comb.primary, None)
+                else:
+                    _id, _type = _get_measure_id_type(_comb.primary, _comb.secondary)
+                _options_dict[("id", "")] = _id
+                _options_dict[("type", "")] = _type
+                _options_dict[("class", "")] = _get_measure_class(
+                    _comb.primary, _comb.secondary
+                )
+                _options_dict[("year", "")] = _get_measure_year(
+                    _comb.primary, _comb.secondary
+                )
+            return df(_options_dict)
+
         def _get_options(
             section_measures_input: list[SectionAsInput],
         ) -> dict[str, df]:
             options: dict[str, df] = {}
             for _section in section_measures_input:
-                options[_section] = _get_section_options(_section)
+                options[_section.section_name] = _get_section_options(_section)
             return options
 
         def _get_pf_for_measures(
