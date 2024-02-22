@@ -74,7 +74,7 @@ class RunOptimization(VrToolRunProtocol):
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
         _greedy_strategy.evaluate(
             self.selected_traject,
-            self._solutions_dict,
+            self._section_input_collection,
             splitparams=True,
             setting="cautious",
             f_cautious=1.5,
