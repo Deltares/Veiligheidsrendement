@@ -17,6 +17,7 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 @dataclass
 class StrategyInputGreedy(StrategyInputProtocol):
     design_method: str
+    options: dict[str, np.ndarray]
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -31,7 +32,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
     @classmethod
     def from_section_as_input_collection(
-        cls, section_as_input_collection: list[SectionAsInput]
+        cls, section_measures_input: list[SectionAsInput]
     ) -> StrategyInputGreedy:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
@@ -150,13 +151,13 @@ class StrategyInputGreedy(StrategyInputProtocol):
         _strategy_input = cls()
 
         # Define general parameters
-        _strategy_input._num_sections = len(section_as_input_collection)
-        _strategy_input._max_year = max(s.max_year for s in section_as_input_collection)
+        _strategy_input._num_sections = len(section_measures_input)
+        _strategy_input._max_year = max(s.max_year for s in section_measures_input)
         _strategy_input._max_sg = max(
-            map(len, (s.sg_combinations for s in section_as_input_collection))
+            map(len, (s.sg_combinations for s in section_measures_input))
         )
         _strategy_input._max_sh = max(
-            map(len, (s.sh_combinations for s in section_as_input_collection))
+            map(len, (s.sh_combinations for s in section_measures_input))
         )
         _strategy_input.opt_parameters = {
             "N": _strategy_input._num_sections,
@@ -167,10 +168,10 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
         # Populate probabilities and lifecycle cost datastructures per section(/mechanism)
         mechanisms = set(
-            mech for sect in section_as_input_collection for mech in sect.mechanisms
+            mech for sect in section_measures_input for mech in sect.mechanisms
         )
         _strategy_input.Pf = _get_probabilities(
-            section_as_input_collection,
+            section_measures_input,
             mechanisms,
             _strategy_input._num_sections,
             _strategy_input._max_sh,
@@ -178,7 +179,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
             _strategy_input._max_year,
         )
         _strategy_input.LCCOption = _get_lifecycle_cost(
-            section_as_input_collection,
+            section_measures_input,
             _strategy_input._num_sections,
             _strategy_input._max_sh,
             _strategy_input._max_sg,
@@ -186,11 +187,11 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
         # Decision variables for discounted damage [T,]
         _strategy_input.D = np.array(
-            section_as_input_collection[0].flood_damage
+            section_measures_input[0].flood_damage
             * (
                 1
                 / (
-                    (1 + section_as_input_collection[0].measures[0].discount_rate)
+                    (1 + section_measures_input[0].measures[0].discount_rate)
                     ** np.arange(0, _strategy_input._max_year, 1)
                 )
             )
