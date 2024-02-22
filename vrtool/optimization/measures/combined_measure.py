@@ -17,6 +17,13 @@ class CombinedMeasure:
     mechanism_year_collection: MechanismPerYearProbabilityCollection
 
     @property
+    def combined_years(self) -> list[int]:
+        """Get the years of the measure."""
+        if not self.secondary:
+            return [self.primary.year]
+        return [self.primary.year, self.secondary.year]
+
+    @property
     def combined_id(self) -> str:
         """
         Gets an `ID` representing this combined measure.
@@ -51,6 +58,22 @@ class CombinedMeasure:
         return "{}+{}".format(
             self.primary.measure_type.name, self.secondary.measure_type.name
         )
+
+    @property
+    def class_name(self) -> str:
+        """
+        Gets a class name representing this combined measure.
+        When no `secondary` measure is present the `combine_type`
+          from the primary will be used.
+        When a `secondary` measure is present then both `combine_type`
+        are used joined by the `+` symbol.
+
+        Returns:
+            str: The combined measure's class name.
+        """
+        if not self.secondary:
+            return self.primary.combine_type.get_old_name()
+        return "combined"
 
     @property
     def lcc(self) -> float:
