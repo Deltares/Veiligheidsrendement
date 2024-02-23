@@ -116,8 +116,8 @@ class StrategyBase:
 
             else:
                 sg = "No measure"
-                logging.info("SECTION {}".format(section))
-                logging.info(
+                logging.debug("SECTION {}".format(section))
+                logging.debug(
                     "No measures are taken at this section: sh and sg are: {} and {}".format(
                         sh, sg
                     )
@@ -127,11 +127,11 @@ class StrategyBase:
             sg = self.options_geotechnical[section_order[index[0]]].iloc[index[2] - 1]
 
         if print_measure:
-            logging.info("SECTION {}".format(section))
+            logging.debug("SECTION {}".format(section))
             if isinstance(sh, str):
-                logging.info("There is no measure for height")
+                logging.debug("There is no measure for height")
             else:
-                logging.info(
+                logging.debug(
                     "The measure for height is a {} in year {} with dcrest={} meters of the class {}.".format(
                         sh["type"].values[0],
                         sh["year"].values[0],
@@ -145,11 +145,11 @@ class StrategyBase:
                 or (sg.type.values == "Stability Screen")
                 or (sg.type.values == "Custom")
             ):
-                logging.info(
+                logging.debug(
                     " The geotechnical measure is a {}".format(sg.type.values[0])
                 )
             elif isinstance(sg.type.values[0], list):  # VZG+Soil
-                logging.info(
+                logging.debug(
                     " The geotechnical measure is a {} in year {} with a {} with dberm = {} in year {}".format(
                         sg.type.values[0][0],
                         sg.year.values[0][0],
@@ -159,7 +159,7 @@ class StrategyBase:
                     )
                 )
             elif sg.type.values == "Soil reinforcement":
-                logging.info(
+                logging.debug(
                     " The geotechnical measure is a {} in year {} of class {} with dberm = {}".format(
                         sg.type.values[0],
                         sg.year.values[0],

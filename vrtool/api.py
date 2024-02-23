@@ -246,7 +246,7 @@ class ApiRunWorkflows:
         # Run all steps with one command.
         if not self.vrtool_config.output_directory.is_dir():
             logging.info(
-                "Creating output directories at {}".format(
+                "Aanmaken uitvoerfolders op {}".format(
                     self.vrtool_config.output_directory
                 )
             )
@@ -258,17 +258,18 @@ class ApiRunWorkflows:
                 "results", "investment_steps"
             ).mkdir(parents=True, exist_ok=True)
 
-        logging.info("Start run full model.")
+        logging.info("Start beoordeling & doorrekenen maatregelen.")
 
         # Step 1 + 2. Run assessment through running measures.
         self.run_measures()
 
         # Step 3. Optimization.
+        logging.info("Start stap 3: optimalisatie van maatregelen.")
         clear_optimization_results(self.vrtool_config)
         _ids_to_import = get_all_measure_results_with_supported_investment_years(
             self.vrtool_config
         )
         _optimization_result = self.run_optimization("Basisberekening", _ids_to_import)
 
-        logging.info("Finished run full model.")
+        logging.info("Berekening afgerond.")
         return _optimization_result
