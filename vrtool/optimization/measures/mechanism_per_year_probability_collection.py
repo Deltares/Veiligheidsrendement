@@ -209,7 +209,7 @@ class MechanismPerYearProbabilityCollection:
     ) -> None:
         _years = self.get_years(mechanism)
         for yr in _years:
-            if yr <= investment_year:
+            if yr < investment_year:
                 _nwprob = year_zero_values.get_probability(mechanism, yr)
                 self._replace(mechanism, yr, _nwprob)
 
