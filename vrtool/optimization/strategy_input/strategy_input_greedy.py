@@ -70,7 +70,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
                 _options_dict[("class", "")].append(_comb.sg_combination.measure_class)
                 _options_dict[("year", "")].append(_comb.sg_combination.year)
                 _options_dict[("yes/no", "")].append(_comb.sg_combination.yesno)
-                _options_dict[("dcrest", "")].append(_comb.sg_combination.dcrest)
+                _options_dict[("dcrest", "")].append(_comb.sh_combination.dcrest)
                 _options_dict[("dberm", "")].append(_comb.sg_combination.dberm)
                 _options_dict[("transition_level", "")].append(
                     _comb.sh_combination.transition_level

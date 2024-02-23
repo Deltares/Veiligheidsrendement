@@ -74,7 +74,6 @@ class TestCombineMeasuresController:
                     MechanismPerYear(MechanismEnum.PIPING, 20, 0.6),
                 ]
             ),
-            dcrest=0,
             dberm=0,
         )
 

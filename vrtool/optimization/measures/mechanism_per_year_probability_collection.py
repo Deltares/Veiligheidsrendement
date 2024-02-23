@@ -114,9 +114,13 @@ class MechanismPerYearProbabilityCollection:
         mechanism: MechanismEnum,
         primary: MechanismPerYearProbabilityCollection,
         secondary: MechanismPerYearProbabilityCollection,
+        initial: MechanismPerYearProbabilityCollection,
     ) -> list[MechanismPerYear]:
         """
-        helper routine for combine: combines for one mechanism.
+        Helper routine for combine: combines for one mechanism.
+        If probabilities of primary and initial are equal, only secondary is used.
+        If probabilities of secondary and initial are equal, only primary is used.
+        In all other cases the primary and secondary are combined, using 1 - (1-primary) * (1-secondary).
 
         Args:
             mechanism (MechanismEnum): the mechanism
@@ -130,11 +134,18 @@ class MechanismPerYearProbabilityCollection:
             lambda x: x.mechanism == mechanism, primary.probabilities
         ):
             _prob_second = secondary.get_probability(mechanism, _mech_per_year.year)
-            _nwp = (
-                _mech_per_year.probability
-                + _prob_second
-                - _mech_per_year.probability * _prob_second
-            )
+            _prob_initial = initial.get_probability(mechanism, _mech_per_year.year)
+
+            if _mech_per_year.probability == _prob_initial:
+                _nwp = _prob_second
+            elif _prob_second == _prob_initial:
+                _nwp = _mech_per_year.probability
+            else:  # TODO: correct formula
+                _nwp = (
+                    _mech_per_year.probability
+                    + _prob_second
+                    - _mech_per_year.probability * _prob_second
+                )
             _nw_list.append(MechanismPerYear(mechanism, _mech_per_year.year, _nwp))
         return _nw_list
 
@@ -143,6 +154,7 @@ class MechanismPerYearProbabilityCollection:
         cls,
         primary: MechanismPerYearProbabilityCollection,
         secondary: MechanismPerYearProbabilityCollection,
+        initial: MechanismPerYearProbabilityCollection,
     ) -> MechanismPerYearProbabilityCollection:
         """
         Combines the probabilities in two collections.
@@ -168,7 +180,9 @@ class MechanismPerYearProbabilityCollection:
             _years2 = secondary.get_years(m)
             if _years1 != _years2:
                 raise ValueError("years not equal in combine")
-            _nw_probabilities.extend(cls._combine_probs_for_mech(m, primary, secondary))
+            _nw_probabilities.extend(
+                cls._combine_probs_for_mech(m, primary, secondary, initial)
+            )
         return cls(_nw_probabilities)
 
     def _add_year_mechanism(
@@ -225,7 +239,7 @@ class MechanismPerYearProbabilityCollection:
     ) -> None:
         _years = self.get_years(mechanism)
         for yr in _years:
-            if yr <= investment_year:
+            if yr < investment_year:
                 _nwprob = year_zero_values.get_probability(mechanism, yr)
                 self._replace(mechanism, yr, _nwprob)
 
@@ -235,7 +249,7 @@ class MechanismPerYearProbabilityCollection:
         investment_year: int,
     ):
         """
-        Replace probabilities for years before investment_year (including) with values
+        Replace probabilities for years before investment_year with values
         from the measurement with investment_year = 0.
         Assumes that these years are available.
 
