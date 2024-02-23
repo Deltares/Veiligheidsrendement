@@ -462,6 +462,11 @@ class GreedyStrategy(StrategyProtocol):
         SpentMoney = np.zeros([self.opt_parameters["N"]])
         InitialCostMatrix = copy.deepcopy(self.LCCOption)
         BC_list = []
+        TR_list = [
+                np.sum(np.max(init_overflow_risk, axis=0))
+                + np.sum(np.max(init_revetment_risk, axis=0))
+                + np.sum(init_independent_risk)
+            ]    #list to store the total risk for each step
         Measures_per_section = np.zeros((self.opt_parameters["N"], 2), dtype=np.int32)
         while count < max_count:
             init_risk = (
@@ -638,6 +643,11 @@ class GreedyStrategy(StrategyProtocol):
                     Measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
+                    TR_list.append(
+                                np.sum(np.max(init_overflow_risk, axis=0))
+                                + np.sum(np.max(init_revetment_risk, axis=0))
+                                + np.sum(init_independent_risk)
+                            )
                     logging.info("Single measure in step " + str(count))
                 elif BC_bundleOverflow > BC_bundleRevetment:
                     for j in range(0, self.opt_parameters["N"]):
@@ -671,6 +681,11 @@ class GreedyStrategy(StrategyProtocol):
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
+                            TR_list.append(
+                                np.sum(np.max(init_overflow_risk, axis=0))
+                                + np.sum(np.max(init_revetment_risk, axis=0))
+                                + np.sum(init_independent_risk)
+                            )
                 elif BC_bundleRevetment > np.max(BC):
                     for j in range(0, self.opt_parameters["N"]):
                         if revetment_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -701,8 +716,14 @@ class GreedyStrategy(StrategyProtocol):
                             )
                             self.LCCOption[IndexMeasure] = 1e99
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
+                            
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
+                            TR_list.append(
+                                np.sum(np.max(init_overflow_risk, axis=0))
+                                + np.sum(np.max(init_revetment_risk, axis=0))
+                                + np.sum(init_independent_risk)
+                            )
                     # add the height measures in separate entries in the measure list
 
                     # write them to the measure_list
@@ -718,6 +739,8 @@ class GreedyStrategy(StrategyProtocol):
         logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
         self.measures_taken = measure_list
+        self.total_risk_per_step = TR_list
+        self.probabilities_per_step = Probabilities
         # self.write_greedy_results(
         #     traject, sections, measure_list, BC_list, Probabilities
         # )
