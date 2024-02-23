@@ -102,12 +102,14 @@ class CombinedMeasure:
         cls,
         primary: MeasureAsInputProtocol,
         secondary: MeasureAsInputProtocol | None,
+        initial_assessment: MechanismPerYearProbabilityCollection,
     ) -> CombinedMeasure:
         _mech_year_coll = primary.mechanism_year_collection
         if secondary is not None:
             _mech_year_coll = MechanismPerYearProbabilityCollection.combine(
                 primary.mechanism_year_collection,
                 secondary.mechanism_year_collection,
+                initial_assessment,
             )
 
         return cls(
