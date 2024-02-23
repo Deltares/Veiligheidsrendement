@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 from typing import Type
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -114,7 +115,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                     cost=_cost,
                     year=_time,
                     discount_rate=self.discount_rate,
-                    mechanism_year_collection=_mech_year_coll,
+                    mechanism_year_collection=deepcopy(_mech_year_coll),
                 )
                 | {
                     _param: measure_result.get_parameter_value(_param)
