@@ -236,7 +236,7 @@ class GreedyStrategy(StrategyProtocol):
                 #Overflow must be present. Revetment is optional.
                 current_pf[MechanismEnum.OVERFLOW] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
                 if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
-                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['REVETMENT'].shape[2]))
+                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['REVETMENT'].shape[2]))
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
