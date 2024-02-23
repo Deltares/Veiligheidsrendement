@@ -21,11 +21,11 @@ class StrategyBaseExporter(OrmExporterProtocol):
         )
 
     def export_dom(self, dom_model: StrategyBase) -> None:
-        dims = dom_model.TakenMeasures.values.shape
+        dims = len(dom_model.measures_taken)
         _step_results_section = []
         _step_results_mechanism = []
 
-        for i in range(1, dims[0]):
+        for i in range(1, dims):
             section = dom_model.TakenMeasures.values[i, 0]
             if not any(dom_model.indexCombined2single[section]):
                 logging.warning(

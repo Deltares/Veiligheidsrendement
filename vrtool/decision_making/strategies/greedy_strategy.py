@@ -451,7 +451,7 @@ class GreedyStrategy(StrategyProtocol):
     ):
         """This is the main routine for a greedy evaluation of all solutions."""
         # TODO put settings in config
-
+        self.sections = sections
         start = time.time()
         # set start values:
         self.Cint_g[:, 0] = 1
@@ -748,10 +748,10 @@ class GreedyStrategy(StrategyProtocol):
         # pd.DataFrame([risk_per_step,cost_per_step]).to_csv('GreedyResults_per_step.csv') #useful for debugging
         logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
-
-        self.write_greedy_results(
-            traject, sections, measure_list, BC_list, Probabilities
-        )
+        self.measures_taken = measure_list
+        # self.write_greedy_results(
+        #     traject, sections, measure_list, BC_list, Probabilities
+        # )
 
     def make_solution(self, csv_path, step=False, type="Final"):
         """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.

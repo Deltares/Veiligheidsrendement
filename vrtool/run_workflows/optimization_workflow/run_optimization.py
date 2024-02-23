@@ -82,47 +82,47 @@ class RunOptimization(VrToolRunProtocol):
             BCstop=0.1,
         )
 
-        _greedy_strategy = self._replace_names(_greedy_strategy, self._solutions_dict)
-        _cost_greedy = _greedy_strategy.determine_risk_cost_curve(
-            self.selected_traject.general_info.FloodDamage, None
-        )
+        # _greedy_strategy = self._replace_names(_greedy_strategy, self._solutions_dict)
+        # _cost_greedy = _greedy_strategy.determine_risk_cost_curve(
+        #     self.selected_traject.general_info.FloodDamage, None
+        # )
 
-        _greedy_strategy.write_reliability_to_csv(_results_dir, "Greedy")
-        # write to csv's
-        _greedy_strategy.TakenMeasures.to_csv(
-            _results_dir.joinpath("TakenMeasures_" + _greedy_strategy.type + ".csv")
-        )
-        pd.DataFrame(
-            np.array(
-                [
-                    _cost_greedy["LCC"],
-                    _cost_greedy["TR"],
-                    np.add(_cost_greedy["LCC"], _cost_greedy["TR"]),
-                ]
-            ).T,
-            columns=["LCC", "TR", "TC"],
-        ).to_csv(
-            _results_dir / "TotalCostValues_Greedy.csv",
-            float_format="%.1f",
-        )
-        _greedy_strategy.make_solution(
-            _results_dir.joinpath(
-                "TakenMeasures_Optimal_" + _greedy_strategy.type + ".csv",
-            ),
-            step=_cost_greedy["TC_min"] + 1,
-            type="Optimal",
-        )
-        _greedy_optimization_input.make_solution(
-            _results_dir.joinpath("FinalMeasures_" + _greedy_strategy.type + ".csv"),
-            type="Final",
-        )
-        for j in _greedy_strategy.options:
-            _greedy_strategy.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _greedy_strategy.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
+        # _greedy_strategy.write_reliability_to_csv(_results_dir, "Greedy")
+        # # write to csv's
+        # _greedy_strategy.TakenMeasures.to_csv(
+        #     _results_dir.joinpath("TakenMeasures_" + _greedy_strategy.type + ".csv")
+        # )
+        # pd.DataFrame(
+        #     np.array(
+        #         [
+        #             _cost_greedy["LCC"],
+        #             _cost_greedy["TR"],
+        #             np.add(_cost_greedy["LCC"], _cost_greedy["TR"]),
+        #         ]
+        #     ).T,
+        #     columns=["LCC", "TR", "TC"],
+        # ).to_csv(
+        #     _results_dir / "TotalCostValues_Greedy.csv",
+        #     float_format="%.1f",
+        # )
+        # _greedy_strategy.make_solution(
+        #     _results_dir.joinpath(
+        #         "TakenMeasures_Optimal_" + _greedy_strategy.type + ".csv",
+        #     ),
+        #     step=_cost_greedy["TC_min"] + 1,
+        #     type="Optimal",
+        # )
+        # _greedy_optimization_input.make_solution(
+        #     _results_dir.joinpath("FinalMeasures_" + _greedy_strategy.type + ".csv"),
+        #     type="Final",
+        # )
+        # for j in _greedy_strategy.options:
+        #     _greedy_strategy.options[j].to_csv(
+        #         _results_dir.joinpath(
+        #             j + "_Options_" + _greedy_strategy.type + ".csv",
+        #         ),
+        #         float_format="%.3f",
+        #     )
 
         return _greedy_strategy
 
