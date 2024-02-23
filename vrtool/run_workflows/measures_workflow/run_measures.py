@@ -40,7 +40,6 @@ class RunMeasures(VrToolRunProtocol):
         _results_measures = ResultsMeasures()
         _results_measures.vr_config = self.vr_config
         _results_measures.selected_traject = self.selected_traject
-        #TODO: maybe add tqdm here to generate a progress bar
         _results_measures.solutions_dict.update(
             dict(map(self._get_section_solution, tqdm(self.selected_traject.sections, desc="Aantal doorgerekende dijkvakken: ")))
         )
@@ -50,6 +49,6 @@ class RunMeasures(VrToolRunProtocol):
                 filtering="off", splitparams=True
             )
 
-        logging.info("Bepaling effecten en kosten van maatregelen afgerond.")
+        logging.info("Stap 2: Bepaling effecten en kosten van maatregelen afgerond.")
 
         return _results_measures

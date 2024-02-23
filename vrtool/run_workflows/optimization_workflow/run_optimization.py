@@ -54,7 +54,7 @@ class RunOptimization(VrToolRunProtocol):
             StrategyController: Controller containing the new input
         """
         logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
-        _greedy_optimization = StrategyController(design_method, self.vr_config)
+        _strategy_controller = StrategyController(design_method, self.vr_config)
 
         _strategy_controller.set_investment_year()
         _strategy_controller.combine()
@@ -248,7 +248,7 @@ class RunOptimization(VrToolRunProtocol):
             ]
         )
 
-        logging.info("Bepaling maatregelen op trajectniveau afgerond")
+        logging.info("Stap 3: Bepaling maatregelen op trajectniveau afgerond")
         _results_optimization.selected_traject = self.selected_traject
         _results_optimization.results_solutions = self._solutions_dict
 

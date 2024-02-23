@@ -18,7 +18,7 @@ def cli():
 @cli.command(name="assessment", help="Assesses the model in the given directory.")
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_assessment(**kwargs):
-    logging.info("Starting assessment for files in {0}".format(kwargs["model_directory"]))
+    logging.info("Start beoordeling voor database in {0}".format(kwargs["model_directory"]))
 
     # Get the selected Traject.
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
@@ -27,11 +27,11 @@ def run_step_assessment(**kwargs):
 
 @cli.command(
     name="measures",
-    help="Calculates all measures for all specified mechanisms in the model.",
+    help="Berekening voor betrouwbaarheid en kosten voor alle maatregelen.",
 )
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_step_measures(**kwargs):
-    logging.info("Starting evaluating measures for files in {0}".format(kwargs["model_directory"]))
+    logging.info("Start berekenen betrouwbaarheid en kosten maatregelen voor database in {0}".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
@@ -44,7 +44,7 @@ def run_step_measures(**kwargs):
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 @click.argument("measure_result_ids", type=click.INT, nargs=-1)
 def run_step_optimization(**kwargs):
-    logging.info("Starting optimization for files in {0}".format(kwargs["model_directory"]))
+    logging.info("Start optimalisatie voor bestanden in {0}".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
@@ -56,7 +56,7 @@ def run_step_optimization(**kwargs):
 @cli.command(name="run_full", help="Full run of the model in the given directory.")
 @click.argument("model_directory", type=click.Path(exists=True), nargs=1)
 def run_full(**kwargs):
-    logging.info("Starting full evaluation for files in {0}!".format(kwargs["model_directory"]))
+    logging.info("Start volledige berekening voor bestanden in {0}!".format(kwargs["model_directory"]))
 
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))

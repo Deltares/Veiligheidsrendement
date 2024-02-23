@@ -47,7 +47,7 @@ class SgMeasure(MeasureAsInputProtocol):
             MeasureTypeEnum.SOIL_REINFORCEMENT,
             MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
         ]:
-            logging.info(
+            logging.debug(
                 "Start cost for {} must be always 0. (Attempt to set to {}).".format(
                     self.measure_type, value
                 )

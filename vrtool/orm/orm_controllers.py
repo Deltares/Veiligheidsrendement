@@ -248,7 +248,8 @@ def export_results_measures(result: ResultsMeasures) -> None:
     logging.info("Start export resultaten maatregelen naar database.")
 
     _exporter = SolutionsExporter()
-    for _solution in tqdm(result.solutions_dict.values(), desc="Aantal geexporteerde dijkvakken:",total= len(result.solutions_dict), unit='vak'):
+    for _solution in tqdm(result.solutions_dict.values(), desc="Aantal geexporteerde dijkvakken:",
+                          total= len(result.solutions_dict), unit='vak'):
         _exporter.export_dom(_solution)
     _connected_db.close()
 
@@ -551,7 +552,7 @@ def get_optimization_step_with_lowest_total_cost(
         orm.OptimizationStep: The `OptimizationStep` instance with the lowest *total* cost
     """
     _connected_db = open_database(vrtool_config.input_database_path)
-    logging.info(
+    logging.debug(
         "Openned connection to retrieve 'OptimizationStep' with lowest total cost."
     )
 
@@ -564,7 +565,7 @@ def get_optimization_step_with_lowest_total_cost(
         _results.append((_optimization_step, _as_df, _cost))
 
     _connected_db.close()
-    logging.info(
+    logging.debug(
         "Closed connection after retrieval of lowest total cost 'OptimizationStep'."
     )
 

@@ -35,7 +35,6 @@ class RunSafetyAssessment(VrToolRunProtocol):
             # section.Reliability.Load.NormWaterLevel = pb.getDesignWaterLevel(section.Reliability.Load,selected_traject.GeneralInfo['Pmax'])
 
             # compute reliability in time for each mechanism:
-            # logging.info(section.End)
             for mechanism in self.selected_traject.mechanisms:
                 _mechanism_reliability_collection = _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism

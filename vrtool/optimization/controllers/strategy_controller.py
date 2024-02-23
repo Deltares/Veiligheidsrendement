@@ -49,6 +49,6 @@ class StrategyController:
         """
         Set investment year for all sections
         """
-        logging.info("Voeg configuratie voor investeringsjaren toe aan maatregelen per dijkvak.")
+        logging.info("Toevoegen configuratie voor investeringsjaren toe aan maatregelen per dijkvak.")
         for _section_as_input in tqdm(self._section_measures_input, desc="Aantal dijkvakken: ", unit="dijkvak"):
             _section_as_input.update_measurelist_with_investment_year()

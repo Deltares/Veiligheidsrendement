@@ -147,7 +147,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         ].Input.input.get("d_cover", None)
         if d_cover_input:
             if d_cover_input.size > 1:
-                logging.info("d_cover has more values than 1.")
+                logging.debug("d_cover has more values than 1.")
 
             return max([d_cover_input[0] + 2.0, 9.0])
         else:
