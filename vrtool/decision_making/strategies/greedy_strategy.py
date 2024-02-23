@@ -190,32 +190,30 @@ class GreedyStrategy(StrategyProtocol):
         existing_investments: np.array,
         mechanism: MechanismEnum,
         dim_sh: int,
-        traject: DikeTraject,
-    ):
+        ):
         """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no"""
         # make arrays for section
         sh_section_sorted = np.full((1, dim_sh), 999, dtype=int)
         sg_section = np.full((1, dim_sh), 999, dtype=int)
-        # GeotechnicalOptions = self.options_geotechnical[
-        #     traject.sections[section_no].name
-        # ]
-        # HeightOptions = self.options_height[traject.sections[section_no].name]
+
         # if there is already an investment we ensure that the reliability for none of the mechanisms is lower than the current investment
         if any(existing_investments[section_no, :] > 0):
             # if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
             if existing_investments[section_no, 1] > 0:
+                # note that matrix indices in existing_investments are always 1 higher than the investment id
                 investment_id_sg = (
                     existing_investments[section_no, 1] - 1
-                )  # note that matrix indices in existing_investments are always 1 higher than the investment id
-                # Overflow is always present for a section.
-                #WRONG!
+                )  
+
                 current_pf_stability =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.STABILITY_INNER, np.arange(0,self.Pf['STABILITY_INNER'].shape[2]))
 
                 current_pf_piping =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.PIPING, np.arange(0,self.Pf['PIPING'].shape[2]))
+                
                 #measure_pf_stability 
                 measure_pfs_stability = self.Pf[MechanismEnum.STABILITY_INNER.name][section_no, :, :]
                 #measure_pf_piping
                 measure_pfs_piping = self.Pf[MechanismEnum.PIPING.name][section_no, :, :]
+                
                 #get indices for rows in measure_pfs where measure_pf_stability and measure_pf_piping are smaller or equal to  current_pf_stability and current_pf_piping by comparing the numpy array
                 comparison_geotechnical = np.argwhere(np.all(measure_pfs_stability <= current_pf_stability,axis=1) & np.all(measure_pfs_piping <= current_pf_piping,axis=1)).flatten()
                 #make a mask where geotechnical options are available
@@ -276,8 +274,6 @@ class GreedyStrategy(StrategyProtocol):
                 :,
             ] = 1e99
 
-
-
             # we get a matrix with the LCC values, and get the order of sh measures:
             lcc_subset = life_cycle_cost[section_no, :, comparison_geotechnical].T
             sh_order = np.argsort(np.min(lcc_subset, axis=1))
@@ -317,16 +313,6 @@ class GreedyStrategy(StrategyProtocol):
             mask[available_measures_height] = False
             life_cycle_cost[section_no, mask, :] = 1e99
 
-            
-            # unavailable_measure_indices = available_measures_height.index[
-            #     ~available_measures_height[0]
-            # ]
-            # life_cycle_cost[
-            #     section_no,
-            #     unavailable_measure_indices + 1,
-            #     :,
-            # ] = 1e99
-
             sg_section[0, :] = np.argmin(life_cycle_cost[section_no, :, :], axis=1)
             LCCs = np.min(life_cycle_cost[section_no, :, :], axis=1)
             sh_section_sorted[0, :] = np.argsort(LCCs)
@@ -349,7 +335,6 @@ class GreedyStrategy(StrategyProtocol):
         init_mechanism_risk: np.array,
         existing_investment: list,
         life_cycle_cost: np.array,
-        traject: DikeTraject,
     ):
         """This function bundles the measures for which sections are dependent. It can be used for overflow and revetment"""
         life_cycle_cost = copy.deepcopy(life_cycle_cost)
@@ -386,7 +371,6 @@ class GreedyStrategy(StrategyProtocol):
                 existing_investments,
                 mechanism,
                 life_cycle_cost.shape[1],
-                traject,
             )
 
         # then we bundle the measures by getting the BC for the mechanism under consideration
@@ -410,9 +394,7 @@ class GreedyStrategy(StrategyProtocol):
 
     def evaluate(
         self,
-        traject: DikeTraject,
         sections: list[SectionAsInput],
-        splitparams=False,
         setting="fast",
         BCstop=0.1,
         max_count=150,
@@ -539,7 +521,6 @@ class GreedyStrategy(StrategyProtocol):
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
                 copy.deepcopy(LifeCycleCost),
-                copy.deepcopy(traject),
             )
             # for revetment:
             BC_bundleRevetment = 0.0
@@ -552,7 +533,6 @@ class GreedyStrategy(StrategyProtocol):
                     copy.deepcopy(init_revetment_risk),
                     copy.deepcopy(measure_list),
                     copy.deepcopy(LifeCycleCost),
-                    copy.deepcopy(traject),
                 )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
@@ -724,9 +704,7 @@ class GreedyStrategy(StrategyProtocol):
                                 + np.sum(np.max(init_revetment_risk, axis=0))
                                 + np.sum(init_independent_risk)
                             )
-                    # add the height measures in separate entries in the measure list
 
-                    # write them to the measure_list
                     logging.info("Bundled measures in step " + str(count))
 
             else:  # stop the search
@@ -734,16 +712,12 @@ class GreedyStrategy(StrategyProtocol):
             count += 1
             if count == max_count:
                 pass
-                # Probabilities.append(copy.deepcopy(init_probability))
-        # pd.DataFrame([risk_per_step,cost_per_step]).to_csv('GreedyResults_per_step.csv') #useful for debugging
         logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
         self.measures_taken = measure_list
         self.total_risk_per_step = TR_list
         self.probabilities_per_step = Probabilities
-        # self.write_greedy_results(
-        #     traject, sections, measure_list, BC_list, Probabilities
-        # )
+
 
     def make_solution(self, csv_path, step=False, type="Final"):
         """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
