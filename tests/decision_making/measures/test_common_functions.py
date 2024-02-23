@@ -269,6 +269,7 @@ class TestCommonFunctions:
             measure_parameters={},
             mechanism=MechanismEnum.STABILITY_INNER,
             computation_type="DStability",
+            is_first_year_with_widening=True,
             path_intermediate_stix=_path_intermediate_stix,
             SFincrease=0.2,
             depth_screen=6.0,
