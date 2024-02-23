@@ -1,9 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-import copy
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -137,8 +134,6 @@ class SectionAsInput:
         _initial.add_years(_investment_years)
         for measure in self.measures:
             measure.mechanism_year_collection.add_years(_investment_years)
-
-        for measure in self.measures:
             if measure.year > 0:
                 measure.mechanism_year_collection.replace_values(_initial, measure.year)
 
@@ -146,6 +141,6 @@ class SectionAsInput:
         _investment_years = set()
         for measure in self.measures:
             if measure.year > 0:
+                _investment_years.add(measure.year - 1)
                 _investment_years.add(measure.year)
-                _investment_years.add(measure.year + 1)
         return list(_investment_years)
