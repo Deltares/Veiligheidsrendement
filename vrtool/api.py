@@ -229,7 +229,7 @@ class ApiRunWorkflows:
             create_optimization_run_for_selected_measures(
                 self.vrtool_config,
                 optimization_name,
-                _optimization_input.measure_id_year_list,
+                selected_measures_id_year,
             )
         )
 

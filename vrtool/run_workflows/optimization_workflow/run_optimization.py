@@ -128,6 +128,7 @@ class RunOptimization(VrToolRunProtocol):
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
         # Initalize strategy controller
+        return
         _target_reliability_input = self._get_strategy_input(
             TargetReliabilityStrategy, design_method
         )

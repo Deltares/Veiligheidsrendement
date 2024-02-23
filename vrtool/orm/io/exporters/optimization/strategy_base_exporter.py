@@ -2,6 +2,7 @@ import logging
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.optimization import (
     OptimizationStep,
@@ -20,25 +21,39 @@ class StrategyBaseExporter(OrmExporterProtocol):
             optimization_run_id
         )
 
+    def find_aggregated(self, combinations:list[AggregatedMeasureCombination], measure_sh, measure_sg):
+        for a in combinations:
+            if a.sg_combination == measure_sg and a.sh_combination == measure_sh:
+                return a
+
     def export_dom(self, dom_model: StrategyBase) -> None:
         dims = len(dom_model.measures_taken)
         _step_results_section = []
         _step_results_mechanism = []
 
         for i in range(1, dims):
-            section = dom_model.TakenMeasures.values[i, 0]
-            if not any(dom_model.indexCombined2single[section]):
-                logging.warning(
-                    "Found measure for section without measures; section: " + section
-                )
-                continue
-            measure_id = dom_model.TakenMeasures.values[i, 1]
-            split_measures = dom_model.indexCombined2single[section][measure_id]
-            _total_lcc, _total_risk = dom_model.get_total_lcc_and_risk(i)
-            for single_measure_result_id in split_measures:
+            section = dom_model.measures_taken[i][0]
+            measure_sh_id = dom_model.measures_taken[i][1] - 1
+            measure_sg_id = dom_model.measures_taken[i][2] - 1
+            measure_sh = dom_model.sections[section].sh_combinations[measure_sh_id]
+            measure_sg = dom_model.sections[section].sg_combinations[measure_sg_id]
+            measures = [measure_sh.primary, measure_sg.primary]
+            #test = dom_model.sections[section].aggregated_measure_combinations
+            #test = self.find_aggregated(dom_model.sections[section].aggregated_measure_combinations, measure_sh, measure_sg)
+            if measure_sh.secondary:
+                measures.append(measure_sh.secondary)
+            if measure_sg.secondary:
+                measures.append(measure_sg.secondary)
 
+            #_total_lcc, _total_risk = dom_model.get_total_lcc_and_risk(i)
+            _total_lcc = measure_sh.lcc + measure_sg.lcc
+            _total_risk = -999.0 # TODO
+            for single_measure in measures:
+
+                single_measure_result_id = single_measure.measure_result_id
+                pass
                 _option_selected_measure_result = (
-                    self._get_optimization_selected_measure(single_measure_result_id)
+                    self._get_optimization_selected_measure(single_measure_result_id, single_measure.year)
                 )
                 _created_optimization_step = OptimizationStep.create(
                     step_number=i,
@@ -100,11 +115,12 @@ class StrategyBaseExporter(OrmExporterProtocol):
         )
 
     def _get_optimization_selected_measure(
-        self, single_msr_id: int
+        self, single_msr_id: int, investment_year: int
     ) -> OptimizationSelectedMeasure:
         _opt_selected_measure = (
             self.optimization_run.optimization_run_measure_results.where(
-                OptimizationSelectedMeasure.id == single_msr_id
+                OptimizationSelectedMeasure.measure_result.id == single_msr_id
+                and OptimizationSelectedMeasure.investment_year == investment_year
             ).get_or_none()
         )
         if not _opt_selected_measure:
