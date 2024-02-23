@@ -219,7 +219,7 @@ class MechanismPerYearProbabilityCollection:
         investment_year: int,
     ):
         """
-        Replace probabilities for years before investment_year (including) with values
+        Replace probabilities for years before investment_year with values
         from the measurement with investment_year = 0.
         Assumes that these years are available.
 
