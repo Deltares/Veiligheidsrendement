@@ -75,7 +75,6 @@ class RunOptimization(VrToolRunProtocol):
         _greedy_strategy.evaluate(
             self.selected_traject,
             self._section_input_collection,
-            splitparams=True,
             setting="cautious",
             f_cautious=1.5,
             max_count=600,
