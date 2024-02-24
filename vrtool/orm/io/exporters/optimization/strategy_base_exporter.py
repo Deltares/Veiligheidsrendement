@@ -13,6 +13,7 @@ from vrtool.orm.models.optimization.optimization_run import OptimizationRun
 from vrtool.orm.models.optimization.optimization_selected_measure import (
     OptimizationSelectedMeasure,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class StrategyBaseExporter(OrmExporterProtocol):
@@ -33,25 +34,22 @@ class StrategyBaseExporter(OrmExporterProtocol):
 
         for i in range(1, dims):
             section = dom_model.measures_taken[i][0]
-            measure_sh_id = dom_model.measures_taken[i][1] - 1
-            measure_sg_id = dom_model.measures_taken[i][2] - 1
-            measure_sh = dom_model.sections[section].sh_combinations[measure_sh_id]
-            measure_sg = dom_model.sections[section].sg_combinations[measure_sg_id]
-            measures = [measure_sh.primary, measure_sg.primary]
-            #test = dom_model.sections[section].aggregated_measure_combinations
-            #test = self.find_aggregated(dom_model.sections[section].aggregated_measure_combinations, measure_sh, measure_sg)
-            if measure_sh.secondary:
-                measures.append(measure_sh.secondary)
-            if measure_sg.secondary:
-                measures.append(measure_sg.secondary)
+            _measure_sh_id = dom_model.measures_taken[i][1] - 1
+            _measure_sg_id = dom_model.measures_taken[i][2] - 1
+            _measure_sh = dom_model.sections[section].sh_combinations[_measure_sh_id]
+            _measure_sg = dom_model.sections[section].sg_combinations[_measure_sg_id]
+            #_aggr_msr = self.find_aggregated(dom_model.sections[section].aggregated_measure_combinations, _measure_sh, _measure_sg)
+            _measures = [_measure_sh.primary, _measure_sg.primary]
+            if _measure_sh.secondary:
+                _measures.append(_measure_sh.secondary)
+            if _measure_sg.secondary:
+                _measures.append(_measure_sg.secondary)
 
-            #_total_lcc, _total_risk = dom_model.get_total_lcc_and_risk(i)
-            _total_lcc = measure_sh.lcc + measure_sg.lcc
-            _total_risk = -999.0 # TODO
-            for single_measure in measures:
+            _total_lcc = _measure_sh.lcc + _measure_sg.lcc
+            _total_risk = dom_model.total_risk_per_step[i+1]
+            for single_measure in _measures:
 
                 single_measure_result_id = single_measure.measure_result_id
-                pass
                 _option_selected_measure_result = (
                     self._get_optimization_selected_measure(single_measure_result_id, single_measure.year)
                 )
@@ -62,19 +60,15 @@ class StrategyBaseExporter(OrmExporterProtocol):
                     total_risk=_total_risk,
                 )
 
-                _local_id = self._find_id_in_section(
-                    single_measure_result_id, dom_model.indexCombined2single[section]
-                )
-                beta_section = dom_model.options[section]["Section"].values[_local_id]
-                lcc = dom_model.TakenMeasures.values[i, 2]
-                for j in range(len(dom_model.T)):
-                    t = dom_model.T[j]
-                    beta = self._get_selected_time(t, beta_section)
+                _prob_per_step = dom_model.probabilities_per_step[i+1]
+                lcc = single_measure.lcc
+                for _t in dom_model.T:
+                    _prob_section = self._get_selected_time(section, _t, "SECTION", _prob_per_step)
                     _step_results_section.append(
                         {
                             "optimization_step": _created_optimization_step,
-                            "time": t,
-                            "beta": beta,
+                            "time": _t,
+                            "beta": pf_to_beta(_prob_section),
                             "lcc": lcc,
                         }
                     )
@@ -87,18 +81,14 @@ class StrategyBaseExporter(OrmExporterProtocol):
                     _mechanism_name = MechanismEnum.get_enum(
                         _measure_result_mechanism.mechanism_per_section.mechanism.name
                     ).name
-                    beta_mechanism = dom_model.options[section][_mechanism_name].values[
-                        _local_id
-                    ]
-                    beta = self._get_selected_time(
-                        _measure_result_mechanism.time, beta_mechanism
-                    )
+                    _t = _measure_result_mechanism.time
+                    _prob_mechanism = self._get_selected_time(section, _t, _mechanism_name, _prob_per_step)
                     _step_results_mechanism.append(
                         {
                             "optimization_step": _created_optimization_step,
                             "mechanism_per_section_id": _measure_result_mechanism.mechanism_per_section_id,
                             "time": _measure_result_mechanism.time,
-                            "beta": beta,
+                            "beta": pf_to_beta(_prob_mechanism),
                             "lcc": lcc,
                         }
                     )
@@ -131,8 +121,20 @@ class StrategyBaseExporter(OrmExporterProtocol):
             )
         return _opt_selected_measure
 
-    def _get_selected_time(self, t: int, values: list[float]) -> float:
+    def _get_section_time_value(self, section: int, t: int, values: dict):
+        pt = 1.0
+        for m in values:
+            # fix for t=100 where 99 is the last
+            maxt = values[m].shape[1] - 1
+            _t = min(t, maxt)
+            pt *= 1.0 - values[m][section, _t]
+        return 1.0 - pt
+
+    def _get_selected_time(self, section: int, t: int, mechanism: str, values: dict) -> float:
+        if (mechanism == "SECTION" and not "SECTION" in values):
+            return self._get_section_time_value(section, t, values)
+
         # fix for t=100 where 99 is the last
-        if t < values.shape[0] - 1:
-            return values[t]
-        return values[-1]
+        maxt = values[mechanism].shape[1] - 1
+        _t = min(t, maxt)
+        return values[mechanism][section, _t]
