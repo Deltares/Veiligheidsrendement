@@ -98,7 +98,7 @@ class SectionAsInput:
             set[int]: Unique collection of years
         """
         if not self.measures:
-            return 0
+            return {0}
         # Get the max year for all measures for a random mechanism
         _sample_measure = self.measures[0]
         _sample_mechanism = _sample_measure.get_allowed_mechanisms()[0]
