@@ -34,7 +34,7 @@ class RevetmentImporter(OrmImporterProtocol):
                 _imported_part = _slope_part_importer.import_orm(part)
                 _imported_parts.append(_imported_part)
             except ValueError as import_error:
-                logging.warning(
+                logging.debug(
                     "Part {} won't be imported due to error: {}".format(
                         part.get_id(), import_error
                     )

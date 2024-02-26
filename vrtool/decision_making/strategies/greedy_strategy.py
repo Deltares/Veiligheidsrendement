@@ -127,7 +127,7 @@ class GreedyStrategy(StrategyProtocol):
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk] + 1]
                     == 999
                 ):
-                    logging.info(
+                    logging.debug(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(
                             run_number
                         )
@@ -136,7 +136,7 @@ class GreedyStrategy(StrategyProtocol):
                 else:
                     index_counter[ind_highest_risk] += 1
             else:
-                logging.info(
+                logging.debug(
                     "Bundle quit after {} steps, weakest section has no more available measures".format(
                         run_number
                     )
@@ -190,32 +190,30 @@ class GreedyStrategy(StrategyProtocol):
         existing_investments: np.array,
         mechanism: MechanismEnum,
         dim_sh: int,
-        traject: DikeTraject,
-    ):
+        ):
         """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no"""
         # make arrays for section
         sh_section_sorted = np.full((1, dim_sh), 999, dtype=int)
         sg_section = np.full((1, dim_sh), 999, dtype=int)
-        # GeotechnicalOptions = self.options_geotechnical[
-        #     traject.sections[section_no].name
-        # ]
-        # HeightOptions = self.options_height[traject.sections[section_no].name]
+
         # if there is already an investment we ensure that the reliability for none of the mechanisms is lower than the current investment
         if any(existing_investments[section_no, :] > 0):
             # if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
             if existing_investments[section_no, 1] > 0:
+                # note that matrix indices in existing_investments are always 1 higher than the investment id
                 investment_id_sg = (
                     existing_investments[section_no, 1] - 1
-                )  # note that matrix indices in existing_investments are always 1 higher than the investment id
-                # Overflow is always present for a section.
-                #WRONG!
+                )  
+
                 current_pf_stability =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.STABILITY_INNER, np.arange(0,self.Pf['STABILITY_INNER'].shape[2]))
 
                 current_pf_piping =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.PIPING, np.arange(0,self.Pf['PIPING'].shape[2]))
+                
                 #measure_pf_stability 
                 measure_pfs_stability = self.Pf[MechanismEnum.STABILITY_INNER.name][section_no, :, :]
                 #measure_pf_piping
                 measure_pfs_piping = self.Pf[MechanismEnum.PIPING.name][section_no, :, :]
+                
                 #get indices for rows in measure_pfs where measure_pf_stability and measure_pf_piping are smaller or equal to  current_pf_stability and current_pf_piping by comparing the numpy array
                 comparison_geotechnical = np.argwhere(np.all(measure_pfs_stability <= current_pf_stability,axis=1) & np.all(measure_pfs_piping <= current_pf_piping,axis=1)).flatten()
                 #make a mask where geotechnical options are available
@@ -236,7 +234,7 @@ class GreedyStrategy(StrategyProtocol):
                 #Overflow must be present. Revetment is optional.
                 current_pf[MechanismEnum.OVERFLOW] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
                 if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
-                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['REVETMENT'].shape[2]))
+                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['REVETMENT'].shape[2]))
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
@@ -275,8 +273,6 @@ class GreedyStrategy(StrategyProtocol):
                 mask,
                 :,
             ] = 1e99
-
-
 
             # we get a matrix with the LCC values, and get the order of sh measures:
             lcc_subset = life_cycle_cost[section_no, :, comparison_geotechnical].T
@@ -317,16 +313,6 @@ class GreedyStrategy(StrategyProtocol):
             mask[available_measures_height] = False
             life_cycle_cost[section_no, mask, :] = 1e99
 
-            
-            # unavailable_measure_indices = available_measures_height.index[
-            #     ~available_measures_height[0]
-            # ]
-            # life_cycle_cost[
-            #     section_no,
-            #     unavailable_measure_indices + 1,
-            #     :,
-            # ] = 1e99
-
             sg_section[0, :] = np.argmin(life_cycle_cost[section_no, :, :], axis=1)
             LCCs = np.min(life_cycle_cost[section_no, :, :], axis=1)
             sh_section_sorted[0, :] = np.argsort(LCCs)
@@ -349,7 +335,6 @@ class GreedyStrategy(StrategyProtocol):
         init_mechanism_risk: np.array,
         existing_investment: list,
         life_cycle_cost: np.array,
-        traject: DikeTraject,
     ):
         """This function bundles the measures for which sections are dependent. It can be used for overflow and revetment"""
         life_cycle_cost = copy.deepcopy(life_cycle_cost)
@@ -386,7 +371,6 @@ class GreedyStrategy(StrategyProtocol):
                 existing_investments,
                 mechanism,
                 life_cycle_cost.shape[1],
-                traject,
             )
 
         # then we bundle the measures by getting the BC for the mechanism under consideration
@@ -410,9 +394,7 @@ class GreedyStrategy(StrategyProtocol):
 
     def evaluate(
         self,
-        traject: DikeTraject,
         sections: list[SectionAsInput],
-        splitparams=False,
         setting="fast",
         BCstop=0.1,
         max_count=150,
@@ -539,7 +521,6 @@ class GreedyStrategy(StrategyProtocol):
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
                 copy.deepcopy(LifeCycleCost),
-                copy.deepcopy(traject),
             )
             # for revetment:
             BC_bundleRevetment = 0.0
@@ -552,15 +533,14 @@ class GreedyStrategy(StrategyProtocol):
                     copy.deepcopy(init_revetment_risk),
                     copy.deepcopy(measure_list),
                     copy.deepcopy(LifeCycleCost),
-                    copy.deepcopy(traject),
                 )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
             # 'overflow bundle'
             if np.isnan(np.max(BC)):
                 ids = np.argwhere(np.isnan(BC))
-                logging.warning(
-                    "NaN encountered in benefit-cost ratio matrix. Trying to output the measure for which this happens:"
+                logging.error(
+                    "NaN gevonden in matrix met kosten-batenratio. Uitvoer voor betreffende maatregel wordt gegenereerd."
                 )
                 for i in range(0, ids.shape[0]):
                     error_measure = self.get_measure_from_index(ids[i, :])
@@ -648,7 +628,7 @@ class GreedyStrategy(StrategyProtocol):
                                 + np.sum(np.max(init_revetment_risk, axis=0))
                                 + np.sum(init_independent_risk)
                             )
-                    logging.info("Single measure in step " + str(count))
+                    logging.info("Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC[Index_Best]))
                 elif BC_bundleOverflow > BC_bundleRevetment:
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -686,6 +666,8 @@ class GreedyStrategy(StrategyProtocol):
                                 + np.sum(np.max(init_revetment_risk, axis=0))
                                 + np.sum(init_independent_risk)
                             )
+                    logging.info("Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleOverflow))
+
                 elif BC_bundleRevetment > np.max(BC):
                     for j in range(0, self.opt_parameters["N"]):
                         if revetment_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -724,26 +706,20 @@ class GreedyStrategy(StrategyProtocol):
                                 + np.sum(np.max(init_revetment_risk, axis=0))
                                 + np.sum(init_independent_risk)
                             )
-                    # add the height measures in separate entries in the measure list
 
-                    # write them to the measure_list
-                    logging.info("Bundled measures in step " + str(count))
+                    logging.info("Gebundelde maatregelen voor bekleding in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleRevetment))
 
             else:  # stop the search
                 break
             count += 1
             if count == max_count:
                 pass
-                # Probabilities.append(copy.deepcopy(init_probability))
-        # pd.DataFrame([risk_per_step,cost_per_step]).to_csv('GreedyResults_per_step.csv') #useful for debugging
-        logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
+        logging.info("Totale rekentijd voor veiligheidsrendementoptimalisatie {:.2f} seconden".format(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
         self.measures_taken = measure_list
         self.total_risk_per_step = TR_list
         self.probabilities_per_step = Probabilities
-        # self.write_greedy_results(
-        #     traject, sections, measure_list, BC_list, Probabilities
-        # )
+
 
     def make_solution(self, csv_path, step=False, type="Final"):
         """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
@@ -824,215 +800,6 @@ class GreedyStrategy(StrategyProtocol):
         elif type == "SatisfiedStandard":
             self.SatisfiedStandardSolution = Solution
             self.SatisfiedStandardSolution.to_csv(csv_path)
-
-    def write_greedy_results(
-        self,
-        traject: DikeTraject,
-        sections: list[SectionAsInput],
-        measure_list,
-        BC,
-        Probabilities,
-    ):
-        """This writes the results of a step to a list of dataframes for all steps."""
-        # TODO We need to think about how to include outward reinforcement here. Can we formulate outward reinforcement as a 'dberm'?
-        TakenMeasuresHeaders = [
-            "Section",
-            "option_index",
-            "LCC",
-            "BC",
-            "ID",
-            "name",
-            "year",
-            "yes/no",
-            "dcrest",
-            "dberm",
-            "beta_target",
-            "transition_level",
-        ]
-        sections = []
-        LCC = []
-        LCC2 = []
-        LCC_invested = np.zeros((len(traject.sections)))
-        ID = []
-        dcrest = []
-        dberm = []
-        beta_target = []
-        transition_level = []
-        year = []
-        yes_no = []
-        option_index = []
-        names = []
-        # write the first line:
-        sections.append("")
-        LCC.append(0)
-        ID.append("")
-        dcrest.append("")
-        beta_target.append("")
-        transition_level.append("")
-        year.append("")
-        dberm.append("")
-        yes_no.append("")
-        option_index.append("")
-        names.append("")
-        BC.insert(0, 0)
-        self.MeasureIndices = pd.DataFrame(measure_list)
-        for i in measure_list:
-            sections.append(traject.sections[i[0]].name)
-            LCC.append(
-                np.subtract(self.LCCOption[i], LCC_invested[i[0]])
-            )  # add costs and subtract the money already
-            LCC2.append(self.LCCOption[i])  # add costs
-            # spent
-            LCC_invested[i[0]] += np.subtract(self.LCCOption[i], LCC_invested[i[0]])
-
-            # get the ids
-            ID1 = (
-                self.options_geotechnical[traject.sections[i[0]].name]
-                .iloc[i[2] - 1]["ID"]
-                .item()
-            )
-
-            ID2 = (
-                self.options_height[traject.sections[i[0]].name]
-                .iloc[i[1] - 1]["ID"]
-                .item()
-            )
-
-            if ID1 == ID2:
-                ID.append(ID1)
-            else:
-                raise Exception(
-                    f"ID1 {ID1} and ID2 {ID2} are not the same for the measure at section {traject.sections[i[0]].name}"
-                )
-
-            # get the parameters
-            dcrest.append(
-                self.options_height[traject.sections[i[0]].name]
-                .iloc[i[1] - 1]["dcrest"]
-                .values[0]
-            )
-            beta_target.append(
-                self.options_height[traject.sections[i[0]].name]
-                .iloc[i[1] - 1]["beta_target"]
-                .values[0]
-            )
-            transition_level.append(
-                self.options_height[traject.sections[i[0]].name]
-                .iloc[i[1] - 1]["transition_level"]
-                .values[0]
-            )
-            dberm.append(
-                self.options_geotechnical[traject.sections[i[0]].name]
-                .iloc[i[2] - 1]["dberm"]
-                .values[0]
-            )
-            yes_no.append(
-                self.options_geotechnical[traject.sections[i[0]].name]
-                .iloc[i[2] - 1]["yes/no"]
-                .values[0]
-            )
-            year.append(
-                self.options_geotechnical[traject.sections[i[0]].name]
-                .iloc[i[2] - 1]["year"]
-                .values[0]
-            )
-
-            # get the option_index
-            option_df = self.options[traject.sections[i[0]].name].loc[
-                self.options[traject.sections[i[0]].name]["ID"] == ID[-1]
-            ]
-            if len(option_df) > 1:
-                option_df = (
-                    option_df.loc[
-                        self.options[traject.sections[i[0]].name]["ID"] == ID[-1]
-                    ]
-                    .loc[
-                        self.options[traject.sections[i[0]].name]["dcrest"]
-                        == dcrest[-1]
-                    ]
-                    .loc[
-                        self.options[traject.sections[i[0]].name]["beta_target"]
-                        == beta_target[-1]
-                    ]
-                    .loc[
-                        self.options[traject.sections[i[0]].name]["transition_level"]
-                        == transition_level[-1]
-                    ]
-                    .loc[
-                        self.options[traject.sections[i[0]].name]["dberm"] == dberm[-1]
-                    ]
-                    .loc[
-                        self.options[traject.sections[i[0]].name]["yes/no"]
-                        == yes_no[-1]
-                    ]
-                )
-                if len(option_df) > 1:
-                    # get index of right year
-                    option_i = list(option_df["year"].values).index(year[-1])
-                    option_index.append(option_df.iloc[option_i].name)
-                else:
-                    option_index.append(option_df.index.values[0])
-            else:  # partial measure with no parameter variations
-                option_index.append(
-                    self.options[traject.sections[i[0]].name]
-                    .loc[self.options[traject.sections[i[0]].name]["ID"] == ID[-1]]
-                    .index.values[0]
-                )
-            # get the name
-            try:
-                section_name = "TODO"
-                names.append(section_name)
-            except:
-                names.append("missing")
-
-        self.TakenMeasures = pd.DataFrame(
-            list(
-                zip(
-                    sections,
-                    option_index,
-                    LCC,
-                    BC,
-                    ID,
-                    names,
-                    year,
-                    yes_no,
-                    dcrest,
-                    dberm,
-                    beta_target,
-                    transition_level,
-                )
-            ),
-            columns=TakenMeasuresHeaders,
-        )
-
-        # writing the probabilities to self.Probabilities
-        tgrid = copy.deepcopy(self.T)
-        # make sure it doesnt exceed the data:
-        tgrid[-1] = np.size(Probabilities[0][MechanismEnum.OVERFLOW.name], axis=1) - 1
-        probabilities_columns = ["name", "mechanism"] + tgrid
-        count = 0
-        self.Probabilities = []
-        for i in Probabilities:
-            name = []
-            mech = []
-            probs = []
-            for n in range(0, self.opt_parameters["N"]):
-                for mechanism in self.mechanisms:
-                    name.append(traject.sections[n].name)
-                    mech.append(mechanism.name)
-                    probs.append(i[mechanism.name][n, np.array(tgrid)])
-                    pass
-                name.append(traject.sections[n].name)
-                mech.append("Section")
-                probs.append(np.sum(probs[-3:], axis=0))
-            betas = np.array(pf_to_beta(probs))
-            leftpart = pd.DataFrame(
-                list(zip(name, mech)), columns=probabilities_columns[0:2]
-            )
-            rightpart = pd.DataFrame(betas, columns=tgrid)
-            combined = pd.concat((leftpart, rightpart), axis=1)
-            combined = combined.set_index(["name", "mechanism"])
-            self.Probabilities.append(combined)
 
     def _heightMeasureIsZero(self, traject, i) -> bool:
         """

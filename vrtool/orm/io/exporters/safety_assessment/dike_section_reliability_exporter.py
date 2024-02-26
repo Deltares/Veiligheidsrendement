@@ -35,7 +35,7 @@ class DikeSectionReliabilityExporter(OrmExporterProtocol):
         )
 
     def export_dom(self, dom_model: DikeSection) -> None:
-        logging.info("STARTED exporting Dike Section's initial assessment reliability.")
+        logging.debug("STARTED exporting Dike Section's initial assessment reliability.")
         _section_data = self.get_related_section_data(dom_model)
         MechanismReliabilityCollectionExporter(_section_data).export_dom(
             dom_model.section_reliability
@@ -43,6 +43,6 @@ class DikeSectionReliabilityExporter(OrmExporterProtocol):
         SectionReliabilityExporter(_section_data).export_dom(
             dom_model.section_reliability
         )
-        logging.info(
+        logging.debug(
             "FINISHED exporting Dike Section's initial assessment reliability."
         )

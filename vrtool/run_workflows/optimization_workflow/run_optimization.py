@@ -62,6 +62,7 @@ class RunOptimization(VrToolRunProtocol):
         return _evaluate_input
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyProtocol:
+        logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
         # Initalize strategy controller
         _greedy_optimization_input = self._get_strategy_input(
             GreedyStrategy, design_method
@@ -74,58 +75,18 @@ class RunOptimization(VrToolRunProtocol):
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
         _greedy_strategy.evaluate(
             self._section_input_collection,
-            splitparams=True,
             setting="cautious",
             f_cautious=1.5,
             max_count=600,
             BCstop=0.1,
         )
 
-        # _greedy_strategy = self._replace_names(_greedy_strategy, self._solutions_dict)
-        # _cost_greedy = _greedy_strategy.determine_risk_cost_curve(
-        #     self.selected_traject.general_info.FloodDamage, None
-        # )
-
-        # _greedy_strategy.write_reliability_to_csv(_results_dir, "Greedy")
-        # # write to csv's
-        # _greedy_strategy.TakenMeasures.to_csv(
-        #     _results_dir.joinpath("TakenMeasures_" + _greedy_strategy.type + ".csv")
-        # )
-        # pd.DataFrame(
-        #     np.array(
-        #         [
-        #             _cost_greedy["LCC"],
-        #             _cost_greedy["TR"],
-        #             np.add(_cost_greedy["LCC"], _cost_greedy["TR"]),
-        #         ]
-        #     ).T,
-        #     columns=["LCC", "TR", "TC"],
-        # ).to_csv(
-        #     _results_dir / "TotalCostValues_Greedy.csv",
-        #     float_format="%.1f",
-        # )
-        # _greedy_strategy.make_solution(
-        #     _results_dir.joinpath(
-        #         "TakenMeasures_Optimal_" + _greedy_strategy.type + ".csv",
-        #     ),
-        #     step=_cost_greedy["TC_min"] + 1,
-        #     type="Optimal",
-        # )
-        # _greedy_optimization_input.make_solution(
-        #     _results_dir.joinpath("FinalMeasures_" + _greedy_strategy.type + ".csv"),
-        #     type="Final",
-        # )
-        # for j in _greedy_strategy.options:
-        #     _greedy_strategy.options[j].to_csv(
-        #         _results_dir.joinpath(
-        #             j + "_Options_" + _greedy_strategy.type + ".csv",
-        #         ),
-        #         float_format="%.3f",
-        #     )
-
         return _greedy_strategy
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
+        logging.info(
+            f"Start bepaling referentiemaatregelen op basis van {design_method}."
+        )
         # Initalize strategy controller
         return
         _target_reliability_input = self._get_strategy_input(
@@ -181,7 +142,7 @@ class RunOptimization(VrToolRunProtocol):
         }
 
     def run(self) -> ResultsOptimization:
-        logging.info("Start step 3: Optimization")
+        logging.info("Start stap 3: Bepaling maatregelen op trajectniveau.")
         _results_optimization = ResultsOptimization()
         _results_optimization.vr_config = self.vr_config
         # TODO (VRTOOL-406): Selected traject is not required for exporting a result optimization.
@@ -199,7 +160,7 @@ class RunOptimization(VrToolRunProtocol):
             ]
         )
 
-        logging.info("Finished step 3: Optimization")
+        logging.info("Stap 3: Bepaling maatregelen op trajectniveau afgerond")
 
         return _results_optimization
 
