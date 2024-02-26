@@ -14,6 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sg_sh_measure import SgShMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure import Measure as OrmMeasure
@@ -133,13 +134,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         _imported_measures = []
         if self.valid_parameter(orm_model, "dberm"):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
-
-        if self.valid_parameter(orm_model, "dcrest"):
-            _imported_measures.extend(
-                self._create_measure(
-                    orm_model,
-                    SgMeasure,
-                )
-            )
+        elif self.valid_parameter(orm_model, "dcrest"):
+            _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
+        else:
+            _imported_measures.extend(self._create_measure(orm_model, SgShMeasure))
 
         return _imported_measures

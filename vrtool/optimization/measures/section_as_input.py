@@ -13,6 +13,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sg_sh_measure import SgShMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
@@ -54,6 +55,10 @@ class SectionAsInput:
     @property
     def sg_measures(self) -> list[SgMeasure]:
         return self.get_measures_by_class(SgMeasure)
+
+    @property
+    def sg_sh_measures(self) -> list[SgShMeasure]:
+        return self.get_measures_by_class(SgShMeasure)
 
     def get_combinations_by_class(
         self, measure_class: type[MeasureAsInputProtocol]
