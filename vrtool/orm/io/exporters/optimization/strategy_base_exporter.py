@@ -43,7 +43,11 @@ class StrategyBaseExporter(OrmExporterProtocol):
             
             # get index of aggregate of primary measure:
             _aggregated_primary = [agg_measure for agg_measure in dom_model.sections[section].aggregated_measure_combinations if agg_measure.check_primary_measure_result_id_and_year(_measure_sh.primary,_measure_sg.primary)]
-
+            # select only the first if there are more (the primary measure needs to be identical). We can also add a check TODO
+            if len(_aggregated_primary) > 1:
+                logging.debug(f"More than one aggregated primary measure found for section {dom_model.sections[section].section_name}. Only the first one will be used.")
+                _aggregated_primary = [_aggregated_primary[0]]
+            
             #get ids of secondary measures
             _secondary_measures = [_measure for _measure in [_measure_sh.secondary, _measure_sg.secondary] if _measure is not None]
 
