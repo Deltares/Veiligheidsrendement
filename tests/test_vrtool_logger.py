@@ -168,7 +168,7 @@ class TestVrToolLogger:
         assert _test_handler not in _vrtool_logger.handlers
 
         # 2. Run test.
-        VrToolLogger.add_handler(_test_handler, logging.INFO)
+        VrToolLogger.add_handler(_test_handler, logging.DEBUG)
 
         # 3. Verify expectations.
         _log_lines = _log_file_path.read_text().splitlines()
