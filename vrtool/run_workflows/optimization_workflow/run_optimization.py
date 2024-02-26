@@ -60,6 +60,11 @@ class RunOptimization(VrToolRunProtocol):
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
         logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
+        # Initalize strategy controller
+        _greedy_optimization = self._get_strategy_input(GreedyStrategy)
+
+        # TODO: refactor code:
+
         # Initialize a GreedyStrategy:
         _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
 
