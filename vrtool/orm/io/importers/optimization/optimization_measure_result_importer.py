@@ -134,9 +134,13 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         _imported_measures = []
         if self.valid_parameter(orm_model, "dberm"):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
-        elif self.valid_parameter(orm_model, "dcrest"):
+
+        if self.valid_parameter(orm_model, "dcrest"):
             _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
-        else:
+
+        if not self.valid_parameter(orm_model, "dberm") and not self.valid_parameter(
+            orm_model, "dcrest"
+        ):
             _imported_measures.extend(self._create_measure(orm_model, SgShMeasure))
 
         return _imported_measures
