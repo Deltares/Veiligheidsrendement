@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 from typing import Type
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -13,6 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sg_sh_measure import SgShMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure import Measure as OrmMeasure
@@ -114,7 +116,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                     cost=_cost,
                     year=_time,
                     discount_rate=self.discount_rate,
-                    mechanism_year_collection=_mech_year_coll,
+                    mechanism_year_collection=deepcopy(_mech_year_coll),
                 )
                 | {
                     _param: measure_result.get_parameter_value(_param)
@@ -134,11 +136,11 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
         if self.valid_parameter(orm_model, "dcrest"):
-            _imported_measures.extend(
-                self._create_measure(
-                    orm_model,
-                    SgMeasure,
-                )
-            )
+            _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
+
+        if not self.valid_parameter(orm_model, "dberm") and not self.valid_parameter(
+            orm_model, "dcrest"
+        ):
+            _imported_measures.extend(self._create_measure(orm_model, SgShMeasure))
 
         return _imported_measures

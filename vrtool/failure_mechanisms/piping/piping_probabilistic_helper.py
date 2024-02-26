@@ -80,7 +80,7 @@ class PipingProbabilisticHelper:
         PipingFailureSubmechanism.is_valid(submechanism)
 
         if safety_factor == 0:
-            logging.warning(f'SF for "{submechanism}" is 0')
+            logging.debug(f'SF for "{submechanism}" is 0')
             return 0.5
         elif safety_factor == np.inf:
             return 8

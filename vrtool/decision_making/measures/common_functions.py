@@ -30,6 +30,7 @@ def implement_berm_widening(
     measure_parameters,
     mechanism: MechanismEnum,
     computation_type,
+    is_first_year_with_widening: bool,
     path_intermediate_stix: Path,
     SFincrease=0.2,
     depth_screen: Optional[float] = None,
@@ -42,6 +43,7 @@ def implement_berm_widening(
         measure_parameters (dict): parameters dictionary of the measure
         mechanism (MechanismEnum): mechanism, one of [MechanismEnum.PIPING, MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
         computation_type (str): type of computation for the mechanism
+        is_first_year_with_widening (bool): flag for triggering rerunning stix
         path_intermediate_stix (Path): path to the intermediate stix files
         SFincrease (float): increase in safety factor
         depth_screen (float): depth of the stability screen
@@ -84,13 +86,14 @@ def implement_berm_widening(
 
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
             # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
-            # model, hence RERUN_STIX set to True.
+            # model, hence RERUN_STIX set to True, but only for the investment year.
             berm_input[
                 "STIXNAAM"
             ] = _dstability_berm_widening.create_new_dstability_model(
                 path_intermediate_stix
             )
-            berm_input["RERUN_STIX"] = True
+            if is_first_year_with_widening:
+                berm_input["RERUN_STIX"] = True
 
             return berm_input
 
@@ -354,8 +357,8 @@ def determine_costs(
     ):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
         logging.warning(
-            "Encountered outward reinforcement with inward berm. Cost computation might be inaccurate"
-        )
+            "Buitenwaartse versterking met binnenwaartse berm (dijkvak {}) kan leiden tot onnauwkeurige kostenberekeningen".format(section)
+            )
     if "soil reinforcement" in _measure_type_name:
         if direction == "inward":
             total_cost = (
@@ -392,11 +395,10 @@ def determine_costs(
         if isinstance(housing, pd.DataFrame) and dberm_in > 0.0:
             if dberm_in > housing.size:
                 logging.warning(
-                    "Inwards reinforcement distance exceeds data for housing database at section {}".format(
+                    "Binnenwaartse teenverschuiving is groter dan gegevens voor bebouwing op dijkvak {}".format(
                         section
                     )
                 )
-                # raise Exception('inwards distance exceeds housing database')
                 total_cost += (
                     unit_costs["House removal"]
                     * housing.loc[housing.size]["cumulative"]
@@ -423,7 +425,7 @@ def determine_costs(
     elif _measure_type_name == "stability screen":
         total_cost = unit_costs["Sheetpile"] * depth * length
     else:
-        logging.error("Unknown measure type: {}".format(measure_type))
+        logging.error("Onbekend maatregeltype: {}".format(measure_type))
         total_cost = float("nan")
     return total_cost
 

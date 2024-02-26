@@ -68,9 +68,11 @@ class TestSectionAsInput:
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 None,
+                None,
             ),
             CombinedMeasure.from_input(
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
+                None,
                 None,
             ),
         ]
@@ -222,16 +224,16 @@ class TestSectionAsInput:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
         assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
-        # year 20 for the first measure is an interpolated value copied from the zero measure:
+        # year 19 for the first measure is an interpolated value copied from the zero measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(
-            MechanismEnum.OVERFLOW, _yr1
+            MechanismEnum.OVERFLOW, _yr1 - 1
         )
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        _beta_expected = _prob_zero[0] - _prob_diff * (_yr1 - 1) / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
-        # year 21 for the first measure is an interpolated value from this measure:
-        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1 + 1)
-        _beta_expected = _prob_measure[0] - _prob_diff * (_yr1 + 1) / _END_YEAR
+        # year 20 for the first measure is an interpolated value from this measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1)
+        _beta_expected = _prob_measure[0] - _prob_diff * _yr1 / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # year 50 for the first measure is a copy of the last year
@@ -240,7 +242,7 @@ class TestSectionAsInput:
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with two years:
-        _ref = {0, _yr1, _yr1 + 1, _END_YEAR}
+        _ref = {0, _yr1 - 1, _yr1, _END_YEAR}
         for m in _measures:
             _yrs = m.mechanism_year_collection.get_years(_mechm)
             assert _yrs == _ref
@@ -281,28 +283,28 @@ class TestSectionAsInput:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
         assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
-        # year 20 for the first measure is an interpolated value copied from the zero measure:
+        # year 19 for the first measure is an interpolated value copied from the zero measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1 - 1)
+        _beta_expected = _prob_zero[0] - _prob_diff * (_yr1 - 1) / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
+
+        # year 20 for the first measure is an interpolated value from this measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1)
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        _beta_expected = _prob_measure_a[0] - _prob_diff * _yr1 / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
-        # year 21 for the first measure is an interpolated value from this measure:
-        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1 + 1)
-        _beta_expected = _prob_measure_a[0] - _prob_diff * (_yr1 + 1) / _END_YEAR
+        # year 29 for the second measure is an interpolated value copied from the zero measure:
+        _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2 - 1)
+        _beta_expected = _prob_zero[0] - _prob_diff * (_yr2 - 1) / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
-        # year 30 for the second measure is an interpolated value copied from the zero measure:
+        # year 30 for the second measure is an interpolated value from this measure:
         _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2)
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr2 / _END_YEAR
-        assert pf_to_beta(_pf) == py.approx(_beta_expected)
-
-        # year 31 for the second measure is an interpolated value from this measure:
-        _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2 + 1)
-        _beta_expected = _prob_measure_b[0] - _prob_diff * (_yr2 + 1) / _END_YEAR
+        _beta_expected = _prob_measure_b[0] - _prob_diff * _yr2 / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with four years:
-        _ref = {0, _yr1, _yr1 + 1, _yr2, _yr2 + 1, _END_YEAR}
+        _ref = {0, _yr1 - 1, _yr1, _yr2 - 1, _yr2, _END_YEAR}
         for m in _measures:
             _yrs = m.mechanism_year_collection.get_years(_mechm)
             assert _yrs == _ref

@@ -65,7 +65,7 @@ class CustomMeasure(MeasureProtocol):
             MechanismEnum.OVERFLOW
         )
         if not overflow_reliability_collection:
-            logging.warning(f'Overflow data is not present in section "{section.name}"')
+            logging.debug(f'Overflow data is not present in section "{section.name}"')
 
         else:
             if base_data["kruinhoogte_2075"].values > 0:
@@ -74,7 +74,7 @@ class CustomMeasure(MeasureProtocol):
                 ].Input.input["dhc(t)"]
                 return base_data["kruinhoogte_2075"].values + 50 * annual_dhc
             else:
-                logging.warning("kruinhoogte 2075 is not found.")
+                logging.debug("kruinhoogte 2075 is not found.")
 
         return None
 

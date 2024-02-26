@@ -23,7 +23,6 @@ class SgMeasure(MeasureAsInputProtocol):
     discount_rate: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
-    dcrest: float
     _start_cost: float = 0
 
     @property
@@ -48,7 +47,7 @@ class SgMeasure(MeasureAsInputProtocol):
             MeasureTypeEnum.SOIL_REINFORCEMENT,
             MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
         ]:
-            logging.info(
+            logging.debug(
                 "Start cost for {} must be always 0. (Attempt to set to {}).".format(
                     self.measure_type, value
                 )
@@ -77,7 +76,7 @@ class SgMeasure(MeasureAsInputProtocol):
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:
-        return ["dberm", "dcrest"]
+        return ["dberm"]
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:

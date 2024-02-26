@@ -153,7 +153,7 @@ class DikeSectionImporter(OrmImporterProtocol):
             )
 
         if _imported_initial_assessment.empty:
-            logging.info(
+            logging.debug(
                 "No initial section -  mechanism (reliability) assessment was found."
             )
         else:

@@ -26,12 +26,36 @@ class AggregateCombinationsController:
                 and _sh_comb.primary.measure_type == _sg_comb.primary.measure_type
             )
 
+        def get_aggregated_measure_id(
+            sh_comb: CombinedMeasure, sg_comb: CombinedMeasure
+        ) -> int:
+            # Find the aggregated Sh/Sg measure result id
+            if sh_comb.primary.measure_result_id == sg_comb.primary.measure_result_id:
+                return sh_comb.primary.measure_result_id
+            if sh_comb.primary.dcrest == 0:
+                return sg_comb.primary.measure_result_id
+            if sg_comb.primary.dberm == 0:
+                return sh_comb.primary.measure_result_id
+            return next(
+                (
+                    m.measure_result_id
+                    for m in self._section.sg_sh_measures
+                    if m.dcrest == sh_comb.primary.dcrest
+                    and m.dberm == sg_comb.primary.dberm
+                    and m.measure_type == sh_comb.primary.measure_type
+                ),
+                0,
+            )
+
         def make_aggregate(
             aggregation: tuple[CombinedMeasure, CombinedMeasure]
         ) -> AggregatedMeasureCombination:
             _sh_comb, _sg_comb = aggregation
             return AggregatedMeasureCombination(
-                _sh_comb, _sg_comb, _sh_comb.primary.year
+                _sh_comb,
+                _sg_comb,
+                get_aggregated_measure_id(_sh_comb, _sg_comb),
+                _sh_comb.primary.year,
             )
 
         return list(

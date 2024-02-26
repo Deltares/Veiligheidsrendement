@@ -23,7 +23,6 @@ class TestSgMeasure:
             year=10,
             discount_rate=0.03,
             mechanism_year_collection=None,
-            dcrest=0.3,
             dberm=0.1,
         )
         return _measure
@@ -45,7 +44,6 @@ class TestSgMeasure:
         assert _measure.year == 10
         assert _measure.discount_rate == pytest.approx(0.03)
         assert _measure.mechanism_year_collection is None
-        assert _measure.dcrest == pytest.approx(0.3)
         assert _measure.dberm == pytest.approx(0.1)
         assert _measure.start_cost == pytest.approx(0)
 
@@ -221,7 +219,6 @@ class TestSgMeasure:
         _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
         _combine_type = CombinableTypeEnum.COMBINABLE
         _measure = self._create_sg_measure(_measure_type, _combine_type)
-        _measure.dcrest = dberm_value
         _measure.year = 4
 
         # 2. Run test and verify expectations.
@@ -234,7 +231,6 @@ class TestSgMeasure:
         _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
         _combine_type = CombinableTypeEnum.COMBINABLE
         _measure = self._create_sg_measure(_measure_type, _combine_type)
-        _measure.dcrest = 4.2
         _measure.year = 0
 
         # 2. Run test and verify expectations.

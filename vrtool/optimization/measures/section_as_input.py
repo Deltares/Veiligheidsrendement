@@ -1,9 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-import copy
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -16,6 +13,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sg_sh_measure import SgShMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
@@ -57,6 +55,10 @@ class SectionAsInput:
     @property
     def sg_measures(self) -> list[SgMeasure]:
         return self.get_measures_by_class(SgMeasure)
+
+    @property
+    def sg_sh_measures(self) -> list[SgShMeasure]:
+        return self.get_measures_by_class(SgShMeasure)
 
     def get_combinations_by_class(
         self, measure_class: type[MeasureAsInputProtocol]
@@ -157,8 +159,6 @@ class SectionAsInput:
         _initial.add_years(_investment_years)
         for measure in self.measures:
             measure.mechanism_year_collection.add_years(_investment_years)
-
-        for measure in self.measures:
             if measure.year > 0:
                 measure.mechanism_year_collection.replace_values(_initial, measure.year)
 
@@ -166,6 +166,6 @@ class SectionAsInput:
         _investment_years = set()
         for measure in self.measures:
             if measure.year > 0:
+                _investment_years.add(measure.year - 1)
                 _investment_years.add(measure.year)
-                _investment_years.add(measure.year + 1)
         return list(_investment_years)
