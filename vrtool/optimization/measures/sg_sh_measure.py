@@ -1,5 +1,3 @@
-import logging
-import math
 from dataclasses import dataclass
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
