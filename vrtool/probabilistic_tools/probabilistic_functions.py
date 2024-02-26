@@ -221,12 +221,12 @@ def run_DIRS(
     result = algo.getResult()
     probability = result.getProbabilityEstimate()
     # end = time.time()
-    logging.info(event.getName())
-    logging.info("%15s" % "Pf = ", "{0:.2E}".format(probability))
-    logging.info(
+    logging.debug(event.getName())
+    logging.debug("%15s" % "Pf = ", "{0:.2E}".format(probability))
+    logging.debug(
         "%15s" % "CoV = ", "{0:.2f}".format(result.getCoefficientOfVariation())
     )
-    logging.info("%15s" % "N = ", "{0:.0f}".format(result.getOuterSampling()))
+    logging.debug("%15s" % "N = ", "{0:.0f}".format(result.getOuterSampling()))
     return result, algo
 
 
@@ -243,7 +243,7 @@ def iterative_fc_calculation(
     result_list = []
     P_list = []
     while P > hilim or P < lolim:
-        logging.info("changed start value")
+        logging.debug("changed start value")
         WL = WL - 1 if P > hilim else WL + 1
         marginals[len(marginals) - 1] = ot.Dirac(float(WL))
         dist = ot.ComposedDistribution(marginals)
@@ -268,7 +268,7 @@ def iterative_fc_calculation(
         result_list.append(result)
         wl_list.append(WL)
         P_list.append(P)
-        logging.info(str(count) + " calculations made for fragility curve")
+        logging.debug(str(count) + " calculations made for fragility curve")
     WL = max(wl_list)
     while P < hilim:
         WL += step
@@ -282,7 +282,7 @@ def iterative_fc_calculation(
         result_list.append(result)
         wl_list.append(WL)
         P_list.append(P)
-        logging.info(str(count) + " calculations made for fragility curve")
+        logging.debug(str(count) + " calculations made for fragility curve")
 
     indices = list(np.argsort(wl_list))
     wl_list = [wl_list[i] for i in indices]
