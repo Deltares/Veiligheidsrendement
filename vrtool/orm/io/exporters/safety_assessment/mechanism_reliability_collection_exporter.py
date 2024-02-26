@@ -31,7 +31,7 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         )
 
     def export_dom(self, section_reliability: SectionReliability) -> None:
-        logging.info(
+        logging.debug(
             "STARTED exporting Mechanism's reliability (Beta) over time for section {}".format(
                 self._section_data.section_name
             )
@@ -42,7 +42,7 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
             _section_reliability.loc[_section_reliability.index != "Section"]
         ).iterrows():
             _mechanism = MechanismEnum.get_enum(row_idx)
-            logging.info(f"Exporting reliability for mechanism: '{_mechanism}'.")
+            logging.debug(f"Exporting reliability for mechanism: '{_mechanism}'.")
             _mechanism_per_section = self._get_mechanism_per_section(_mechanism)
             _assessment_list = []
             for time_idx, beta_value in enumerate(mechanism_row):
@@ -55,4 +55,4 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
                 )
             AssessmentMechanismResult.insert_many(_assessment_list).execute()
 
-        logging.info("FINISHED exporting Mechanism's reliability (Beta) over time.")
+        logging.debug("FINISHED exporting Mechanism's reliability (Beta) over time.")

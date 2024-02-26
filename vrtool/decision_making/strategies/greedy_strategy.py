@@ -127,7 +127,7 @@ class GreedyStrategy(StrategyProtocol):
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk] + 1]
                     == 999
                 ):
-                    logging.info(
+                    logging.debug(
                         "Bundle quit after {} steps, weakest section has no more available measures".format(
                             run_number
                         )
@@ -136,7 +136,7 @@ class GreedyStrategy(StrategyProtocol):
                 else:
                     index_counter[ind_highest_risk] += 1
             else:
-                logging.info(
+                logging.debug(
                     "Bundle quit after {} steps, weakest section has no more available measures".format(
                         run_number
                     )
@@ -539,8 +539,8 @@ class GreedyStrategy(StrategyProtocol):
             # 'overflow bundle'
             if np.isnan(np.max(BC)):
                 ids = np.argwhere(np.isnan(BC))
-                logging.warning(
-                    "NaN encountered in benefit-cost ratio matrix. Trying to output the measure for which this happens:"
+                logging.error(
+                    "NaN gevonden in matrix met kosten-batenratio. Uitvoer voor betreffende maatregel wordt gegenereerd."
                 )
                 for i in range(0, ids.shape[0]):
                     error_measure = self.get_measure_from_index(ids[i, :])
@@ -628,7 +628,7 @@ class GreedyStrategy(StrategyProtocol):
                                 + np.sum(np.max(init_revetment_risk, axis=0))
                                 + np.sum(init_independent_risk)
                             )
-                    logging.info("Single measure in step " + str(count))
+                    logging.info("Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC[Index_Best]))
                 elif BC_bundleOverflow > BC_bundleRevetment:
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -666,6 +666,8 @@ class GreedyStrategy(StrategyProtocol):
                                 + np.sum(np.max(init_revetment_risk, axis=0))
                                 + np.sum(init_independent_risk)
                             )
+                    logging.info("Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleOverflow))
+
                 elif BC_bundleRevetment > np.max(BC):
                     for j in range(0, self.opt_parameters["N"]):
                         if revetment_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -705,14 +707,14 @@ class GreedyStrategy(StrategyProtocol):
                                 + np.sum(init_independent_risk)
                             )
 
-                    logging.info("Bundled measures in step " + str(count))
+                    logging.info("Gebundelde maatregelen voor bekleding in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleRevetment))
 
             else:  # stop the search
                 break
             count += 1
             if count == max_count:
                 pass
-        logging.info("Elapsed time for greedy algorithm: " + str(time.time() - start))
+        logging.info("Totale rekentijd voor veiligheidsrendementoptimalisatie {:.2f} seconden".format(time.time() - start))
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
         self.measures_taken = measure_list
         self.total_risk_per_step = TR_list

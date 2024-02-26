@@ -62,6 +62,7 @@ class RunOptimization(VrToolRunProtocol):
         return _evaluate_input
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyProtocol:
+        logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
         # Initalize strategy controller
         _greedy_optimization_input = self._get_strategy_input(
             GreedyStrategy, design_method
@@ -84,6 +85,9 @@ class RunOptimization(VrToolRunProtocol):
         return _greedy_strategy
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
+        logging.info(
+            f"Start bepaling referentiemaatregelen op basis van {design_method}."
+        )
         # Initalize strategy controller
         return
         _target_reliability_input = self._get_strategy_input(
@@ -139,7 +143,7 @@ class RunOptimization(VrToolRunProtocol):
         }
 
     def run(self) -> ResultsOptimization:
-        logging.info("Start step 3: Optimization")
+        logging.info("Start stap 3: Bepaling maatregelen op trajectniveau.")
         _results_optimization = ResultsOptimization()
         _results_optimization.vr_config = self.vr_config
         # TODO (VRTOOL-406): Selected traject is not required for exporting a result optimization.
@@ -157,7 +161,7 @@ class RunOptimization(VrToolRunProtocol):
             ]
         )
 
-        logging.info("Finished step 3: Optimization")
+        logging.info("Stap 3: Bepaling maatregelen op trajectniveau afgerond")
 
         return _results_optimization
 
