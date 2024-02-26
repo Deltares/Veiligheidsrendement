@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pandas as pd
-
+import numpy as np
 from scipy.interpolate import interp1d
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -110,6 +110,10 @@ class MechanismPerYearProbabilityCollection:
         """
         return set(p.year for p in self.probabilities if p.mechanism == mechanism)
 
+    def get_section_probability(self, year: int):
+        """ get the section probability for a given year """
+        list_of_probabilities = [self.get_probability(mechanism, year) for mechanism in self.get_mechanisms()]
+        return 1 - np.subtract(1, list_of_probabilities).prod()
     @staticmethod
     def _combine_probs_for_mech(
         mechanism: MechanismEnum,
