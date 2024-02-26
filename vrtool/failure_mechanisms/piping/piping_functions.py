@@ -21,7 +21,7 @@ def calculate_lsf_heave(r_exit, h, h_exit, d_cover, kwelscherm):
     elif int(kwelscherm) == 0:
         i_c = 0.3
     else:
-        logging.info("The LSF of heave has no clue what to do")
+        logging.debug("The LSF of heave has no clue what to do")
 
     # According to Formula Sander Kapinga,veilighiedsfactor heave
     if r_exit > 0:

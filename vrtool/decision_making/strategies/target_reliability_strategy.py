@@ -169,7 +169,7 @@ class TargetReliabilityStrategy(StrategyBase):
             if len(_possible_measures) == 0:
                 # continue to next section if weakest has no more measures
                 logging.warning(
-                    "Warning: for Target reliability strategy no suitable measures were found for section {}".format(
+                    "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
                         i.name
                     )
                 )
