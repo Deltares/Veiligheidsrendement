@@ -395,7 +395,7 @@ class GreedyStrategy(StrategyProtocol):
             return [], 0
 
     def evaluate(
-        self: GreedyStrategy,
+        self,
         sections: list[SectionAsInput],
         setting="fast",
         BCstop=0.1,
