@@ -169,3 +169,20 @@ class SectionAsInput:
                 _investment_years.add(measure.year - 1)
                 _investment_years.add(measure.year)
         return list(_investment_years)
+
+    def get_combination_idx_for_aggregate(
+        self, aggregate: AggregatedMeasureCombination
+    ) -> tuple[int, int]:
+        """
+        Find the index of the Sg and Sh combination that compose the aggregate.
+
+        Args:
+            aggregate (AggregatedMeasureCombination): The aggregate
+
+        Returns:
+            tuple[int, int]: The index of the Sg and Sh combination in the list of combinations.
+        """
+        return (
+            self.sg_combinations.index(aggregate.sg_combination),
+            self.sh_combinations.index(aggregate.sh_combination),
+        )
