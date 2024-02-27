@@ -11,6 +11,7 @@ from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
     calc_tr,
     implement_option,
+    compute_total_risk,
     make_traject_df,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -114,11 +115,18 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.config = config
         self.OI_horizon = config.OI_horizon
         self.mechanisms = config.mechanisms
-        self._time_periods = config.T
+        self.T = config.T
         self.LE_in_section = config.LE_in_section
 
         # New mappings
         self.options = strategy_input.options
+        self.opt_parameters = strategy_input.opt_parameters
+
+        self.Pf = strategy_input.Pf
+        self.D = strategy_input.D
+        self.RiskGeotechnical = strategy_input.RiskGeotechnical
+        self.RiskOverflow = strategy_input.RiskOverflow
+        self.RiskRevetment = strategy_input.RiskRevetment
         # self._section_as_input_dict = strategy_input.section_as_input_dict
 
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
@@ -194,8 +202,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
         _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
             dike_traject
         )
+
+        #and the risk for each step
         _taken_measures = {}
+        _taken_measures_indices = []
         for _section_idx in section_order:
+            # add probability for this step:
+
             #get the first possible investment year from the aggregated measures
             _section_as_input = sections[_section_idx]
             _invest_year = min([measure.year for measure in _section_as_input.aggregated_measure_combinations])
@@ -220,15 +233,22 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 _lcc = [measure.lcc for measure in _valid_measures]
                 idx = np.argmin(_lcc)
                 _taken_measures[sections[_section_idx].section_name] = _valid_measures[idx]
-        #todo: this currently stores a dict of measures but we need the index of sh and sg combinations, similarly to greedy. 
-        #otherwise we need to build a different exporter.
-        
-        #gather and write the outputs
-        self.measures_taken = _taken_measures #TODO: change to indices
+                measure_idx = sections[_section_idx].get_combination_idx_for_aggregate(_taken_measures[sections[_section_idx].section_name])
+                _taken_measures_indices.append((_section_idx, measure_idx[0]+1, measure_idx[1]+1))
 
-        self.total_risk_per_step = [] #TODO: compute (similar to GreedyStrategy)
-        self.probabilities_per_step = [] #TODO: compute (similar to GreedyStrategy)
+        # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step
+        # First we get, and update the probabilities per step
+        #we need to track probability for each step
+        init_probability = {mech: self.Pf[mech][:,0,:] for mech in self.Pf.keys()}
+        self.probabilities_per_step = [copy.deepcopy(init_probability)]
+        self.total_risk_per_step = [compute_total_risk(self.probabilities_per_step[-1], self.D)]
 
+        for step in range(0, len(_taken_measures)):
+            self.probabilities_per_step.append(copy.deepcopy(self.probabilities_per_step[-1]))
+            self.probabilities_per_step[-1] = implement_option(self.probabilities_per_step[-1], _taken_measures_indices[step], _taken_measures[sections[step].section_name])
+            self.total_risk_per_step.append(compute_total_risk(self.probabilities_per_step[-1], self.D))
+        self.measures_taken = _taken_measures_indices
+        self.sections = sections
         # # Rank sections based on 2075 Section probability
         # beta_horizon = []
         # for _dike_section in dike_traject.sections:

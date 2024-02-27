@@ -32,7 +32,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
         _step_results_section = []
         _step_results_mechanism = []
         _total_lcc = 0
-        for i in range(1, dims):
+        for i in range(0, dims):
             section = dom_model.measures_taken[i][0]
             _measure_sh_id = dom_model.measures_taken[i][1] - 1
             _measure_sg_id = dom_model.measures_taken[i][2] - 1

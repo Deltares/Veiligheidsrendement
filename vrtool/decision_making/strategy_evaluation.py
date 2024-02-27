@@ -11,6 +11,7 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 
 
 # This script combines two sets of measures to a single option
@@ -448,15 +449,36 @@ def calc_life_cycle_risks(
     return TR
 
 
-# this function changes the trajectprobability of a measure is implemented:
-def implement_option(section, traject_probability, new_probability):
-    mechs = np.unique(traject_probability.index.get_level_values("mechanism").values)
-    # change trajectprobability by changing probability for each mechanism
-    for i in mechs:
-        traject_probability.loc[(section, i)] = new_probability[i]
+# this function changes the traject probability of a measure is implemented:
+def implement_option(traject_probability: dict[np.ndarray], 
+                     measure_idx: tuple, 
+                     measure: AggregatedMeasureCombination):
+    t_range = list(traject_probability.values())[0].shape[1] #TODO: this should be made more robust
+    for mechanism_name in traject_probability.keys():
+        if MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
+            traject_probability[mechanism_name][measure_idx[0],:] = measure.sg_combination.mechanism_year_collection.get_probabilities(MechanismEnum.get_enum(mechanism_name), np.arange(0,t_range,1))
     return traject_probability
 
+def compute_annual_failure_probability(traject_probability: dict[np.ndarray]):
+    annual_failure_probability = []
+    for mechanism_name in traject_probability.keys():
+        if MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
+            #1-prod
+            annual_failure_probability.append(1-(1-traject_probability[mechanism_name]).prod(axis=0))
+        elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.REVETMENT]:
+            annual_failure_probability.append(4 * np.max(traject_probability[mechanism_name],axis=0))
+            #4 * maximum
+            pass
+        elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.OVERFLOW]:
+            annual_failure_probability.append(np.max(traject_probability[mechanism_name],axis=0))         
+    
+    return np.sum(annual_failure_probability,axis=0)
+    
 
+def compute_total_risk(traject_probability: dict[np.ndarray],
+                       annual_discounted_damage: np.ndarray[float]):
+    annual_failure_probability = compute_annual_failure_probability(traject_probability)
+    return np.sum(annual_failure_probability * annual_discounted_damage)
 def split_options(
     options: dict[str, pd.DataFrame], available_mechanisms: list[MechanismEnum]
 ) -> tuple[list[dict[str, pd.DataFrame]], list[dict[str, pd.DataFrame]]]:
