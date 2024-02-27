@@ -224,7 +224,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 #if no measures satisfy the requirements, continue to the next section
                 logging.warning(
                     "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
-                        _dike_section.name
+                        _section_as_input.section_name
                     )
                 )
                 continue
