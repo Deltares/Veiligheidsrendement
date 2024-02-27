@@ -31,6 +31,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
         dims = len(dom_model.measures_taken)
         _step_results_section = []
         _step_results_mechanism = []
+        _lcc_per_section = {}
         _total_lcc = 0
         for i in range(0, dims):
             section = dom_model.measures_taken[i][0]
@@ -50,8 +51,8 @@ class StrategyBaseExporter(OrmExporterProtocol):
             
             #get ids of secondary measures
             _secondary_measures = [_measure for _measure in [_measure_sh.secondary, _measure_sg.secondary] if _measure is not None]
-
-            _total_lcc += _measure_sh.lcc + _measure_sg.lcc 
+            _lcc_per_section[section] = _measure_sh.lcc + _measure_sg.lcc 
+            _total_lcc = sum(_lcc_per_section.values())
             _total_risk = dom_model.total_risk_per_step[i+1]
             for single_measure in _aggregated_primary + _secondary_measures:
 
@@ -59,7 +60,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
                     self._get_optimization_selected_measure(single_measure.measure_result_id, single_measure.year)
                 )
                 _created_optimization_step = OptimizationStep.create(
-                    step_number=i,
+                    step_number=i+1,
                     optimization_selected_measure=_option_selected_measure_result,
                     total_lcc=_total_lcc,
                     total_risk=_total_risk,
