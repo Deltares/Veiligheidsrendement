@@ -322,16 +322,16 @@ class TestSectionAsInput:
         # 1. Define test data
         _section = self._get_section_with_combinations()
         _aggregated_measure_combination = AggregatedMeasureCombination(
-            sh_combination=_section.sh_combinations[0],
+            sh_combination=_section.sh_combinations[1],
             sg_combination=_section.sg_combinations[0],
             year=0,
         )
 
         # 2. Run test
-        _sg_idx, _sh_idx = _section.get_combination_for_aggregate(
+        _sg_idx, _sh_idx = _section.get_combination_idx_for_aggregate(
             _aggregated_measure_combination
         )
 
         # 3. Verify expectations
-        assert _sg_idx == 2
-        assert _sh_idx == 0
+        assert _sg_idx == 0
+        assert _sh_idx == 1
