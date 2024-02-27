@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
+from pandas import DataFrame as df
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.decision_making.strategy_evaluation import split_options
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
@@ -16,6 +19,10 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 @dataclass
 class StrategyInputGreedy(StrategyInputProtocol):
+    design_method: str = ""
+    options: dict[str, df] = field(default_factory=dict)
+    options_height: list[dict[str, df]] = field(default_factory=list)
+    options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     opt_parameters: dict[str, int] = field(default_factory=dict)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -29,12 +36,86 @@ class StrategyInputGreedy(StrategyInputProtocol):
     _max_sh: int = 0
 
     @classmethod
-    def from_section_as_input(
-        cls, sections: list[SectionAsInput]
+    def from_section_as_input_collection(
+        cls, section_measures_input: list[SectionAsInput]
     ) -> StrategyInputGreedy:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
+
+        def _get_section_options(section: SectionAsInput) -> df:
+            _options_dict: dict[tuple, Any] = {}
+            _years = [*range(section.min_year, section.max_year)]
+
+            # Initialize dict fields
+            _options_dict[("ID", "")] = []
+            _options_dict[("type", "")] = []
+            _options_dict[("class", "")] = []
+            _options_dict[("year", "")] = []
+            _options_dict[("yes/no", "")] = []
+            _options_dict[("dcrest", "")] = []
+            _options_dict[("dberm", "")] = []
+            _options_dict[("beta_target", "")] = []
+            _options_dict[("transition_level", "")] = []
+            _options_dict[("cost", "")] = []
+            _options_dict[("combined_db_index", "")] = []
+
+            # Loop over measurs
+            for i, _comb in enumerate(section.aggregated_measure_combinations):
+
+                _options_dict[("ID", "")].append(_comb.sg_combination.combined_id)
+                _options_dict[("type", "")].append(
+                    _comb.sg_combination.combined_measure_type
+                )
+                _options_dict[("class", "")].append(_comb.sg_combination.measure_class)
+                _options_dict[("year", "")].append(_comb.sg_combination.year)
+                _options_dict[("yes/no", "")].append(_comb.sg_combination.yesno)
+                _options_dict[("dcrest", "")].append(_comb.sh_combination.dcrest)
+                _options_dict[("dberm", "")].append(_comb.sg_combination.dberm)
+                _options_dict[("transition_level", "")].append(
+                    _comb.sh_combination.transition_level
+                )
+                _options_dict[("beta_target", "")].append(
+                    _comb.sh_combination.beta_target
+                )
+                _options_dict[("cost", "")].append(_comb.lcc)
+                _options_dict[("combined_db_index", "")].append(
+                    _comb.sg_combination.combined_db_index
+                )
+
+                # Get betas for all years (Sh of Sg)
+                for _mech in section.mechanisms:
+                    _betas = _comb.sh_combination.mechanism_year_collection.get_betas(
+                        _mech, _years
+                    )
+                    if len(_betas) == 0:
+                        _betas = (
+                            _comb.sg_combination.mechanism_year_collection.get_betas(
+                                _mech, _years
+                            )
+                        )
+                    for y, _beta in enumerate(_betas):
+                        if (_mech.name, _years[y]) not in _options_dict.keys():
+                            _options_dict[(_mech.name, _years[y])] = np.zeros(
+                                len(section.aggregated_measure_combinations)
+                            )
+                        _options_dict[(_mech.name, _years[y])][i] = _beta
+
+            # Add section for all years
+            for _year in _years:
+                _options_dict[("Section", _year)] = np.zeros(
+                    len(section.aggregated_measure_combinations)
+                )
+
+            return df(_options_dict)
+
+        def _get_options(
+            section_measures_input: list[SectionAsInput],
+        ) -> dict[str, df]:
+            options: dict[str, df] = {}
+            for _section in section_measures_input:
+                options[_section.section_name] = _get_section_options(_section)
+            return options
 
         def _get_pf_for_measures(
             mech: MechanismEnum,
@@ -148,11 +229,22 @@ class StrategyInputGreedy(StrategyInputProtocol):
         # Initialize StrategyInputGreedy
         _strategy_input = cls()
 
+        _strategy_input.options = _get_options(section_measures_input)
+        _strategy_input.options_height, _strategy_input.options_geotechnical = (
+            split_options(
+                _strategy_input.options, list(section_measures_input[0].mechanisms)
+            )
+        )
+
         # Define general parameters
-        _strategy_input._num_sections = len(sections)
-        _strategy_input._max_year = max(s.max_year for s in sections)
-        _strategy_input._max_sg = max(map(len, (s.sg_combinations for s in sections)))
-        _strategy_input._max_sh = max(map(len, (s.sh_combinations for s in sections)))
+        _strategy_input._num_sections = len(section_measures_input)
+        _strategy_input._max_year = max(s.max_year for s in section_measures_input)
+        _strategy_input._max_sg = max(
+            map(len, (s.sg_combinations for s in section_measures_input))
+        )
+        _strategy_input._max_sh = max(
+            map(len, (s.sh_combinations for s in section_measures_input))
+        )
         _strategy_input.opt_parameters = {
             "N": _strategy_input._num_sections,
             "T": _strategy_input._max_year,
@@ -161,9 +253,11 @@ class StrategyInputGreedy(StrategyInputProtocol):
         }
 
         # Populate probabilities and lifecycle cost datastructures per section(/mechanism)
-        mechanisms = set(mech for sect in sections for mech in sect.mechanisms)
+        mechanisms = set(
+            mech for sect in section_measures_input for mech in sect.mechanisms
+        )
         _strategy_input.Pf = _get_probabilities(
-            sections,
+            section_measures_input,
             mechanisms,
             _strategy_input._num_sections,
             _strategy_input._max_sh,
@@ -171,7 +265,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
             _strategy_input._max_year,
         )
         _strategy_input.LCCOption = _get_lifecycle_cost(
-            sections,
+            section_measures_input,
             _strategy_input._num_sections,
             _strategy_input._max_sh,
             _strategy_input._max_sg,
@@ -179,11 +273,11 @@ class StrategyInputGreedy(StrategyInputProtocol):
 
         # Decision variables for discounted damage [T,]
         _strategy_input.D = np.array(
-            sections[0].flood_damage
+            section_measures_input[0].flood_damage
             * (
                 1
                 / (
-                    (1 + sections[0].measures[0].discount_rate)
+                    (1 + section_measures_input[0].measures[0].discount_rate)
                     ** np.arange(0, _strategy_input._max_year, 1)
                 )
             )

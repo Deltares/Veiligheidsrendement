@@ -71,6 +71,7 @@ class TestSectionAsInput:
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 None,
+                None,
             ),
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
@@ -78,6 +79,7 @@ class TestSectionAsInput:
             ),
             CombinedMeasure.from_input(
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
+                None,
                 None,
             ),
         ]

@@ -1,5 +1,4 @@
 import logging
-from typing import Type
 
 from tqdm import tqdm
 
@@ -16,6 +15,9 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
+)
+from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
+    StrategyInputTargetReliability,
 )
 
 
@@ -54,17 +56,19 @@ class StrategyController:
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
 
     def get_evaluate_input(
-        self, strategy_type: Type[StrategyBase]
+        self, strategy_type: type[StrategyBase]
     ) -> StrategyInputProtocol:
         """
         Get the input for the evaluation of the strategy.
         """
         if strategy_type == GreedyStrategy:
-            return StrategyInputGreedy.from_section_as_input(
+            return StrategyInputGreedy.from_section_as_input_collection(
                 self._section_measures_input
             )
         elif strategy_type == TargetReliabilityStrategy:
-            raise NotImplementedError("TargetReliabilityStrategy not implemented yet.")
+            return StrategyInputTargetReliability.from_section_as_input_collection(
+                self._section_measures_input
+            )
         raise ValueError(f"Strategy type {strategy_type} not implemented yet.")
 
     def set_investment_year(self) -> None:
