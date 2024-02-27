@@ -5,6 +5,9 @@ import pytest as py
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.aggregated_measures_combination import (
+    AggregatedMeasureCombination,
+)
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
@@ -67,6 +70,10 @@ class TestSectionAsInput:
         _section.combined_measures = [
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
+                None,
+            ),
+            CombinedMeasure.from_input(
+                MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
                 None,
             ),
             CombinedMeasure.from_input(
@@ -306,3 +313,21 @@ class TestSectionAsInput:
         for m in _measures:
             _yrs = m.mechanism_year_collection.get_years(_mechm)
             assert _yrs == _ref
+
+    def test_get_combination_for_aggregate(self):
+        # 1. Define test data
+        _section = self._get_section_with_combinations()
+        _aggregated_measure_combination = AggregatedMeasureCombination(
+            sh_combination=_section.sh_combinations[0],
+            sg_combination=_section.sg_combinations[0],
+            year=0,
+        )
+
+        # 2. Run test
+        _sg_idx, _sh_idx = _section.get_combination_for_aggregate(
+            _aggregated_measure_combination
+        )
+
+        # 3. Verify expectations
+        assert _sg_idx == 2
+        assert _sh_idx == 0
