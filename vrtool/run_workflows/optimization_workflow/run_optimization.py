@@ -74,56 +74,12 @@ class RunOptimization(VrToolRunProtocol):
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
         _greedy_strategy.evaluate(
-            self.selected_traject,
             self._section_input_collection,
-            splitparams=True,
             setting="cautious",
             f_cautious=1.5,
             max_count=600,
             BCstop=0.1,
         )
-
-        _greedy_strategy = self._replace_names(_greedy_strategy, self._solutions_dict)
-        _cost_greedy = _greedy_strategy.determine_risk_cost_curve(
-            self.selected_traject.general_info.FloodDamage, None
-        )
-
-        _greedy_strategy.write_reliability_to_csv(_results_dir, "Greedy")
-        # write to csv's
-        _greedy_strategy.TakenMeasures.to_csv(
-            _results_dir.joinpath("TakenMeasures_" + _greedy_strategy.type + ".csv")
-        )
-        pd.DataFrame(
-            np.array(
-                [
-                    _cost_greedy["LCC"],
-                    _cost_greedy["TR"],
-                    np.add(_cost_greedy["LCC"], _cost_greedy["TR"]),
-                ]
-            ).T,
-            columns=["LCC", "TR", "TC"],
-        ).to_csv(
-            _results_dir / "TotalCostValues_Greedy.csv",
-            float_format="%.1f",
-        )
-        _greedy_strategy.make_solution(
-            _results_dir.joinpath(
-                "TakenMeasures_Optimal_" + _greedy_strategy.type + ".csv",
-            ),
-            step=_cost_greedy["TC_min"] + 1,
-            type="Optimal",
-        )
-        _greedy_optimization_input.make_solution(
-            _results_dir.joinpath("FinalMeasures_" + _greedy_strategy.type + ".csv"),
-            type="Final",
-        )
-        for j in _greedy_strategy.options:
-            _greedy_strategy.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _greedy_strategy.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
 
         return _greedy_strategy
 
@@ -145,30 +101,30 @@ class RunOptimization(VrToolRunProtocol):
         # self._filter_measures_first_time()
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _target_reliability_based.evaluate(self.selected_traject, splitparams=True)
-        _target_reliability_based.make_solution(
-            _results_dir.joinpath(
-                "FinalMeasures_" + _target_reliability_input.design_method + ".csv",
-            ),
-            type="Final",
-        )
+        _target_reliability_based.evaluate(self._section_input_collection, self.selected_traject, splitparams=True)
+        # _target_reliability_based.make_solution(
+        #     _results_dir.joinpath(
+        #         "FinalMeasures_" + _target_reliability_input.design_method + ".csv",
+        #     ),
+        #     type="Final",
+        # )
 
-        _target_reliability_based = self._replace_names(
-            _target_reliability_based, self._solutions_dict
-        )
-        # write to csv's
-        _target_reliability_based.TakenMeasures.to_csv(
-            _results_dir.joinpath(
-                "TakenMeasures_" + _target_reliability_input.design_method + ".csv",
-            )
-        )
-        for j in _target_reliability_based.options:
-            _target_reliability_based.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _target_reliability_based.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
+        # _target_reliability_based = self._replace_names(
+        #     _target_reliability_based, self._solutions_dict
+        # )
+        # # write to csv's
+        # _target_reliability_based.TakenMeasures.to_csv(
+        #     _results_dir.joinpath(
+        #         "TakenMeasures_" + _target_reliability_input.design_method + ".csv",
+        #     )
+        # )
+        # for j in _target_reliability_based.options:
+        #     _target_reliability_based.options[j].to_csv(
+        #         _results_dir.joinpath(
+        #             j + "_Options_" + _target_reliability_based.type + ".csv",
+        #         ),
+        #         float_format="%.3f",
+        #     )
 
         return _target_reliability_based
 

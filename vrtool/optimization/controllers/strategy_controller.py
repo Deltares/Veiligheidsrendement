@@ -66,7 +66,7 @@ class StrategyController:
                 self._section_measures_input
             )
         elif strategy_type == TargetReliabilityStrategy:
-            return StrategyInputTargetReliability.from_section_as_input_collection(
+            return StrategyInputGreedy.from_section_as_input_collection(
                 self._section_measures_input
             )
         raise ValueError(f"Strategy type {strategy_type} not implemented yet.")

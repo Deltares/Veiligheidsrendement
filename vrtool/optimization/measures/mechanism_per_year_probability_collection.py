@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pandas as pd
-
+import numpy as np
 from scipy.interpolate import interp1d
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -110,6 +110,10 @@ class MechanismPerYearProbabilityCollection:
         """
         return set(p.year for p in self.probabilities if p.mechanism == mechanism)
 
+    def get_section_probability(self, year: int):
+        """ get the section probability for a given year """
+        list_of_probabilities = [self.get_probability(mechanism, year) for mechanism in self.get_mechanisms()]
+        return 1 - np.subtract(1, list_of_probabilities).prod()
     @staticmethod
     def _combine_probs_for_mech(
         mechanism: MechanismEnum,
@@ -141,12 +145,13 @@ class MechanismPerYearProbabilityCollection:
                 _nwp = _prob_second
             elif _prob_second == _prob_initial:
                 _nwp = _mech_per_year.probability
-            else:  # TODO: correct formula
-                _nwp = (
-                    _mech_per_year.probability
-                    + _prob_second
-                    - _mech_per_year.probability * _prob_second
-                )
+            else:  
+                if mechanism != MechanismEnum.PIPING:
+                    raise Exception('This should not happen')
+                # TODO: make exact formula, now it is an approximation that gives very small differences
+                _ratio_improved = _prob_initial/_prob_second # ratio of improvement of secondary over initial (so no measure vs only VZG)
+                _nwp = _mech_per_year.probability/_ratio_improved
+
             _nw_list.append(MechanismPerYear(mechanism, _mech_per_year.year, _nwp))
         return _nw_list
 
