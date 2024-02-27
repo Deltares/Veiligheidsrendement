@@ -2,9 +2,6 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict
 
-import numpy as np
-import pandas as pd
-
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -44,12 +41,6 @@ class RunOptimization(VrToolRunProtocol):
         self._selected_measure_ids = optimization_selected_measure_ids
         self._ids_to_import = optimization_input.measure_id_year_list
 
-    def _get_output_dir(self) -> Path:
-        _results_dir = self.vr_config.output_directory
-        if not _results_dir.exists():
-            _results_dir.mkdir(parents=True)
-        return _results_dir
-
     def _get_strategy_input(
         self, strategy_type: type[StrategyBase], design_method: str
     ) -> StrategyInputProtocol:
@@ -69,8 +60,6 @@ class RunOptimization(VrToolRunProtocol):
         )
 
         _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
-
-        _results_dir = self._get_output_dir()
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
         _greedy_strategy.evaluate(
@@ -95,36 +84,9 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based = TargetReliabilityStrategy(
             _target_reliability_input, self.vr_config
         )
-        _results_dir = self._get_output_dir()
-
-        # filter those measures that are not available at the first available time step
-        # self._filter_measures_first_time()
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _target_reliability_based.evaluate(self._section_input_collection, self.selected_traject, splitparams=True)
-        # _target_reliability_based.make_solution(
-        #     _results_dir.joinpath(
-        #         "FinalMeasures_" + _target_reliability_input.design_method + ".csv",
-        #     ),
-        #     type="Final",
-        # )
-
-        # _target_reliability_based = self._replace_names(
-        #     _target_reliability_based, self._solutions_dict
-        # )
-        # # write to csv's
-        # _target_reliability_based.TakenMeasures.to_csv(
-        #     _results_dir.joinpath(
-        #         "TakenMeasures_" + _target_reliability_input.design_method + ".csv",
-        #     )
-        # )
-        # for j in _target_reliability_based.options:
-        #     _target_reliability_based.options[j].to_csv(
-        #         _results_dir.joinpath(
-        #             j + "_Options_" + _target_reliability_based.type + ".csv",
-        #         ),
-        #         float_format="%.3f",
-        #     )
+        _target_reliability_based.evaluate(self._section_input_collection, self.selected_traject)
 
         return _target_reliability_based
 
@@ -162,49 +124,3 @@ class RunOptimization(VrToolRunProtocol):
         logging.info("Stap 3: Bepaling maatregelen op trajectniveau afgerond")
 
         return _results_optimization
-
-    def _replace_names(
-        self, strategy_case: StrategyBase, solution_case: Solutions
-    ) -> StrategyBase:
-        strategy_case.TakenMeasures = strategy_case.TakenMeasures.reset_index(drop=True)
-        for i in range(1, len(strategy_case.TakenMeasures)):
-            _measure_id = strategy_case.TakenMeasures.iloc[i]["ID"]
-            if isinstance(_measure_id, list):
-                _measure_id = "+".join(_measure_id)
-
-            section = strategy_case.TakenMeasures.iloc[i]["Section"]
-            name = (
-                solution_case[section]
-                .measure_table.loc[
-                    solution_case[section].measure_table["ID"] == _measure_id
-                ]["Name"]
-                .values
-            )
-            strategy_case.TakenMeasures.at[i, "name"] = name
-        return strategy_case
-
-    # def _filter_measures_first_time(self):
-    #     """Filter measures that are not in the first time step that is available for the measure as these should not be included for target reliability strategy"""
-    #     min_dict = {}  # dict to store measure for ids_to_import
-    #     count_dict = {}  # dict to store counter for selected_measure_ids
-    #     run_id = list(self._selected_measure_ids.keys())[0]
-    #     for counter, (id, value) in enumerate(self._ids_to_import):
-    #         if (id not in min_dict) or (value < min_dict[id]):
-    #             min_dict[id] = value
-    #             count_dict[id] = counter
-
-    #     self._ids_to_import = [(id, value) for id, value in min_dict.items()]
-    #     self._selected_measure_ids[run_id] = [
-    #         self._selected_measure_ids[run_id][index] for index in count_dict.values()
-    #     ]
-
-    #     # filter solutions_dict
-    #     for section in self._solutions_dict.keys():
-    #         _min_year = min(self._solutions_dict[section].MeasureData["year"])
-    #         self._solutions_dict[section].MeasureData = (
-    #             self._solutions_dict[section]
-    #             .MeasureData.loc[
-    #                 self._solutions_dict[section].MeasureData["year"] == _min_year
-    #             ]
-    #             .reset_index(drop=True)
-    #         )

@@ -1,24 +1,19 @@
 import copy
 import logging
 import time
-from pathlib import Path
 
 import numpy
 import numpy as np
-import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
-    calc_life_cycle_risks,
     evaluate_risk,
     update_probability,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class GreedyStrategy(StrategyProtocol):
@@ -723,86 +718,6 @@ class GreedyStrategy(StrategyProtocol):
         self.probabilities_per_step = Probabilities
 
 
-    def make_solution(self, csv_path, step=False, type="Final"):
-        """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
-        There are 3 types:
-        FinalSolution: which is the result in the last step of the optimization
-        OptimalSolution: the result with the lowest total cost
-        SatisfiedStandardSolution: the result at which the reliability requirement is met.
-        Note that if type is not Final the step parameter has to be defined."""
-
-        if (type != "Final") and not step:
-            raise Exception(
-                "Error: input for make solution is inconsistent. If type is not Final, step should be provided"
-            )
-
-        if step:
-            AllMeasures = copy.deepcopy(self.TakenMeasures.iloc[0:step])
-        else:
-            AllMeasures = copy.deepcopy(self.TakenMeasures)
-        # sections = np.unique(AllMeasures['Section'][1:])
-        sections = list(self.options.keys())
-        Solution = pd.DataFrame(columns=AllMeasures.columns)
-        Solution = Solution.drop(columns=["option_index", "BC"])
-
-        for section in sections:
-            lines = AllMeasures.loc[AllMeasures["Section"] == section].drop(
-                columns=["option_index", "BC"]
-            )
-            if len(lines) > 1:
-                lcctot = np.sum(lines["LCC"])
-                lines.loc[lines.index.values[-1], "LCC"] = lcctot
-                Solution = pd.concat([Solution, lines[-1:]])
-            elif len(lines) == 0:
-                lines = pd.DataFrame(
-                    np.array(
-                        [
-                            section,
-                            0,
-                            0,
-                            "No measure",
-                            0,
-                            "no",
-                            0.0,
-                            0.0,
-                            -999.0,
-                            -999.0,
-                        ]
-                    ).reshape(1, len(Solution.columns)),
-                    columns=Solution.columns,
-                )
-                Solution = pd.concat([Solution, lines])
-            else:
-                Solution = pd.concat([Solution, lines])
-        colorder = [
-            "ID",
-            "Section",
-            "LCC",
-            "name",
-            "year",
-            "yes/no",
-            "dcrest",
-            "dberm",
-            "transition_level",
-            "beta_target",
-        ]
-        Solution = Solution[colorder]
-        for count, row in Solution.iterrows():
-            if isinstance(row["name"], np.ndarray) and any(row["name"]):  # clean output
-                Solution.loc[count, "name"] = row["name"][0]
-
-        # TODO: writing to csv is obsolete; use results in the database
-        if type == "Final":
-            self.FinalSolution = Solution
-            self.FinalSolution.to_csv(csv_path)
-        elif type == "Optimal":
-            self.OptimalSolution = Solution
-            self.OptimalSolution.to_csv(csv_path)
-            self.OptimalStep = step - 1
-        elif type == "SatisfiedStandard":
-            self.SatisfiedStandardSolution = Solution
-            self.SatisfiedStandardSolution.to_csv(csv_path)
-
     def _heightMeasureIsZero(self, traject, i) -> bool:
         """
         Helper function for write_greedy_results
@@ -821,73 +736,7 @@ class GreedyStrategy(StrategyProtocol):
         dberm = options["dberm"].values[0]
         return dberm == 0.0
 
-    def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
-        """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""
-        if output_path:
-            output_path.mkdir(parents=True, exist_ok=True)
-
-        if not hasattr(self, "TakenMeasures"):
-            raise TypeError("TakenMeasures not found")
-        costs = {}
-        costs["TR"] = []
-        # if (self.type == 'Greedy') or (self.type == 'TC'): #do a loop
-
-        costs["LCC"] = np.cumsum(self.TakenMeasures["LCC"].values)
-        count = 0
-        for i in self.Probabilities:
-            if output_path:
-                costs["TR"].append(
-                    calc_life_cycle_risks(
-                        i,
-                        self.discount_rate,
-                        np.max(self.T),
-                        flood_damage,
-                        dumpPt=output_path.joinpath(
-                            "Greedy_step_" + str(count) + ".csv"
-                        ),
-                    )
-                )
-            else:
-                costs["TR"].append(
-                    calc_life_cycle_risks(
-                        i,
-                        self.discount_rate,
-                        np.max(self.T),
-                        flood_damage,
-                    )
-                )
-            count += 1
-        costs["TC"] = np.add(costs["TR"], costs["LCC"])
-        costs["TC_min"] = np.argmin(costs["TC"])
-        # TODO: We require these "costs" for determining lowest cost step.
-        self.costs = costs
-        return costs
-
     def get_total_lcc_and_risk(
         self, step_number: int
     ) -> tuple[list[float], list[float]]:
         return self.costs["LCC"][step_number], self.costs["TR"][step_number]
-
-    def write_reliability_to_csv(
-        self, input_path: Path, type: str, time_stamps=[0, 25, 50]
-    ) -> None:
-        """Routine to write all the reliability indices in a step of the algorithm to a csv file
-
-        Args:
-            input_path (Path)        : path to input folder
-            type (str)               : strategy type
-            time_stamps (list float) : list of years
-        """
-        # with open(path + '\\ReliabilityLog_' + type + '.csv', 'w') as f:
-        total_reliability = np.zeros((len(self.Probabilities), len(time_stamps)))
-        for i in range(len(self.Probabilities)):
-            name = input_path.joinpath(
-                "ReliabilityLog_" + type + "_Step" + str(i) + ".csv"
-            )
-            self.Probabilities[i].to_csv(path_or_buf=name, header=True)
-            beta_t, p_t = calc_traject_prob(self.Probabilities[i], ts=time_stamps)
-            total_reliability[i, :] = beta_t
-        reliability_df = pd.DataFrame(total_reliability, columns=time_stamps)
-        reliability_df.to_csv(
-            path_or_buf=input_path.joinpath("TrajectReliabilityInTime.csv"), header=True
-        )
