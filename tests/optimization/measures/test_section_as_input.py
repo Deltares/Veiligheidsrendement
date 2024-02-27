@@ -328,13 +328,13 @@ class TestSectionAsInput:
         )
 
         # 2. Run test
-        _sg_idx, _sh_idx = _section.get_combination_idx_for_aggregate(
+        _sh_idx, _sg_idx = _section.get_combination_idx_for_aggregate(
             _aggregated_measure_combination
         )
 
         # 3. Verify expectations
-        assert _sg_idx == 0
         assert _sh_idx == 1
+        assert _sg_idx == 0
 
     def test_get_combination_idx_for_aggregate_fails_if_combination_doesnt_exist(self):
         # 1. Define test data
@@ -351,7 +351,7 @@ class TestSectionAsInput:
 
         # 2. Run test
         with py.raises(ValueError) as exception_error:
-            _sg_idx, _sh_idx = _section.get_combination_idx_for_aggregate(
+            _sh_idx, _sg_idx = _section.get_combination_idx_for_aggregate(
                 _aggregated_measure_combination
             )
 
