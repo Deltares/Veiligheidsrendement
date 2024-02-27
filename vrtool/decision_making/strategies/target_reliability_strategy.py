@@ -244,8 +244,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.total_risk_per_step = [compute_total_risk(self.probabilities_per_step[-1], self.D)]
 
         for step in range(0, len(_taken_measures)):
+            section_id = _taken_measures_indices[step][0]
             self.probabilities_per_step.append(copy.deepcopy(self.probabilities_per_step[-1]))
-            self.probabilities_per_step[-1] = implement_option(self.probabilities_per_step[-1], _taken_measures_indices[step], _taken_measures[sections[step].section_name])
+            self.probabilities_per_step[-1] = implement_option(self.probabilities_per_step[-1], _taken_measures_indices[step], _taken_measures[sections[section_id].section_name])
             self.total_risk_per_step.append(compute_total_risk(self.probabilities_per_step[-1], self.D))
         self.measures_taken = _taken_measures_indices
         self.sections = sections
