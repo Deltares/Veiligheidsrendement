@@ -122,10 +122,14 @@ class TestSectionAsInput:
         _sh_combinations = _section.sh_combinations
 
         # 3. Verify expectations
-        assert len(_sh_combinations) == 1
+        assert len(_sh_combinations) == 2
         assert (
             _sh_combinations[0].primary.measure_type
             == MeasureTypeEnum.SOIL_REINFORCEMENT
+        )
+        assert (
+            _sh_combinations[1].primary.measure_type
+            == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
         )
 
     def test_get_sg_combinations(self):
