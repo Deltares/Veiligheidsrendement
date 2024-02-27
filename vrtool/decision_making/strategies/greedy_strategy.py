@@ -48,7 +48,9 @@ class GreedyStrategy(StrategyProtocol):
         self.mechanisms = config.mechanisms
         self.T = config.T
         self.LE_in_section = config.LE_in_section
-        
+        self.measures_taken = []
+        self.total_risk_per_step = []
+        self.probabilities_per_step = []
 
     def bundling_output(
         self, BC_list, counter_list, sh_array, sg_array, existing_investments
