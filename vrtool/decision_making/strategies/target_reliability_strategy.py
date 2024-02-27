@@ -196,7 +196,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         initial_section_pfs = [section.initial_assessment.get_section_probability(self.OI_horizon) for section in sections]
 
         # Rank sections based on initial probability
-        section_order = np.argsort(initial_section_pfs)
+        section_order = np.flip(np.argsort(initial_section_pfs))
 
         # get the cross-sectional requirements for the dike traject (probability)
         _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
