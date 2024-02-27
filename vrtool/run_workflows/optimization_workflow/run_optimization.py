@@ -89,7 +89,6 @@ class RunOptimization(VrToolRunProtocol):
             f"Start bepaling referentiemaatregelen op basis van {design_method}."
         )
         # Initalize strategy controller
-        return
         _target_reliability_input = self._get_strategy_input(
             TargetReliabilityStrategy, design_method
         )

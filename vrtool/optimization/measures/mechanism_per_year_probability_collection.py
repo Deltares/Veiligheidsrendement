@@ -142,7 +142,7 @@ class MechanismPerYearProbabilityCollection:
                 _nwp = _mech_per_year.probability
             else:  
                 if mechanism != MechanismEnum.PIPING:
-                    raise Exception('This should not happen')
+                    raise ValueError('This should not happen')
                 # TODO: make exact formula, now it is an approximation that gives very small differences
                 _ratio_improved = _prob_initial/_prob_second # ratio of improvement of secondary over initial (so no measure vs only VZG)
                 _nwp = _mech_per_year.probability/_ratio_improved
