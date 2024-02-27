@@ -1,5 +1,6 @@
 import logging
 from abc import abstractmethod
+from typing import Dict
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
