@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-import pytest
+import pytest as py
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -350,10 +350,10 @@ class TestSectionAsInput:
         )
 
         # 2. Run test
-        with pytest.raises(ValueError) as exception_error:
+        with py.raises(ValueError) as exception_error:
             _sg_idx, _sh_idx = _section.get_combination_idx_for_aggregate(
                 _aggregated_measure_combination
             )
 
         # 3. Verify expectations
-        assert str(exception_error.value)[-14:] == "is not in list"
+        assert str(exception_error.value).endswith("is not in list")
