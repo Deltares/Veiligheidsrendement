@@ -39,7 +39,7 @@ class AggregateCombinationsController:
             return next(
                 (
                     m.measure_result_id
-                    for m in self._section.sg_sh_measures
+                    for m in self._section.sh_sg_measures
                     if m.dcrest == sh_comb.primary.dcrest
                     and m.dberm == sg_comb.primary.dberm
                 ),
