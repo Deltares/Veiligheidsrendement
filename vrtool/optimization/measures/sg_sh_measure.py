@@ -13,6 +13,11 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 @dataclass
 class SgShMeasure(MeasureAsInputProtocol):
+    """
+    Class to represent soil measures that have both a crest and berm component.
+    These are used to store the opimization result for the aggregated Sh/Sg combined measures.
+    """
+
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     measure_result_id: int
