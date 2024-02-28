@@ -42,6 +42,7 @@ class AggregateCombinationsController:
                     for m in self._section.sh_sg_measures
                     if m.dcrest == sh_comb.primary.dcrest
                     and m.dberm == sg_comb.primary.dberm
+                    and m.measure_type == sh_comb.primary.measure_type
                 ),
                 0,
             )
