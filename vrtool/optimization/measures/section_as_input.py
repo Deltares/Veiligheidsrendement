@@ -1,9 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-import copy
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -17,6 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 
 
 @dataclass
@@ -57,6 +55,10 @@ class SectionAsInput:
     @property
     def sg_measures(self) -> list[SgMeasure]:
         return self.get_measures_by_class(SgMeasure)
+
+    @property
+    def sh_sg_measures(self) -> list[ShSgMeasure]:
+        return self.get_measures_by_class(ShSgMeasure)
 
     def get_combinations_by_class(
         self, measure_class: type[MeasureAsInputProtocol]
