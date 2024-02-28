@@ -147,7 +147,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         ].Input.input.get("d_cover", None)
         if d_cover_input:
             if d_cover_input.size > 1:
-                logging.info("d_cover has more values than 1.")
+                logging.debug("d_cover has more values than 1.")
 
             return max([d_cover_input[0] + 2.0, 9.0])
         else:
@@ -259,6 +259,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             self.config.t_0,
             self.parameters["year"],
         )
+        is_first_year_with_widening = True
         for (
             year_to_calculate,
             reliability_input,
@@ -279,11 +280,13 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     measure_input=modified_geometry_measure,
                     measure_parameters=self.parameters,
                     mechanism=mechanism,
+                    is_first_year_with_widening=is_first_year_with_widening,
                     computation_type=calc_type,
                     path_intermediate_stix=self.config.output_directory
                     / "intermediate_result",
                     depth_screen=self._get_depth(dike_section),
                 )
+                is_first_year_with_widening = False
             # put them back in the object
             mechanism_reliability_collection.Reliability[
                 year_to_calculate

@@ -277,10 +277,8 @@ def make_traject_df(traject: DikeTraject, cols: list[int]) -> pd.DataFrame:
                 _mechanism_name
                 not in _section.section_reliability.SectionReliability.index
             ):
-                # TODO (VRTOOL-187).
-                # Should we inject nans?
                 # Not all sections include revetment(s), therefore it's skipped.
-                logging.warning(
+                logging.debug(
                     "Section '{}' does not include data for mechanism '{}'.".format(
                         _section.name, _mechanism_name
                     )
@@ -317,7 +315,7 @@ def calc_tr(
     # takenmeasures: object with all measures taken
     # original section: series of probabilities of section, before taking a measure.
     if damage == 1e9:
-        logging.warning("No damage defined.")
+        logging.debug("No damage defined.")
 
     total_risk = []
     dR = []

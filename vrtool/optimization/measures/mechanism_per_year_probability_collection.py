@@ -226,7 +226,7 @@ class MechanismPerYearProbabilityCollection:
     ) -> None:
         _years = self.get_years(mechanism)
         for yr in _years:
-            if yr <= investment_year:
+            if yr < investment_year:
                 _nwprob = year_zero_values.get_probability(mechanism, yr)
                 self._replace(mechanism, yr, _nwprob)
 
@@ -236,7 +236,7 @@ class MechanismPerYearProbabilityCollection:
         investment_year: int,
     ):
         """
-        Replace probabilities for years before investment_year (including) with values
+        Replace probabilities for years before investment_year with values
         from the measurement with investment_year = 0.
         Assumes that these years are available.
 

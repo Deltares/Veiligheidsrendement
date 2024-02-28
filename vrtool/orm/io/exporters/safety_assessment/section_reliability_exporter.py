@@ -13,7 +13,7 @@ class SectionReliabilityExporter(OrmExporterProtocol):
         self._section_data = section_data
 
     def export_dom(self, dom_model: SectionReliability) -> None:
-        logging.info("STARTED exporting Dike Section's reliability (Beta) over time.")
+        logging.debug("STARTED exporting Dike Section's reliability (Beta) over time.")
         _added_assessments = []
         for col_name, beta_value in dom_model.SectionReliability.loc["Section"].items():
             _added_assessments.append(
@@ -24,4 +24,4 @@ class SectionReliabilityExporter(OrmExporterProtocol):
                 )
             )
         AssessmentSectionResult.insert_many(_added_assessments).execute()
-        logging.info("FINISHED exporting Dike Section's reliability (Beta) over time.")
+        logging.debug("FINISHED exporting Dike Section's reliability (Beta) over time.")
