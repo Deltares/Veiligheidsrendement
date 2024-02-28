@@ -95,11 +95,17 @@ class TestCombineMeasuresController:
         _allowed_combinations = {
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL]
         }
+        _initial_assessment = MechanismPerYearProbabilityCollection(
+            [
+                MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.85),
+                MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.75),
+            ]
+        )
         _expected_combinations = len(_measures)
 
         # 2. Run test
         _combinations = CombineMeasuresController.combine_measures(
-            _measures, _allowed_combinations
+            _measures, _allowed_combinations, _initial_assessment
         )
 
         # 3. Verify expectations
@@ -140,11 +146,17 @@ class TestCombineMeasuresController:
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
             CombinableTypeEnum.REVETMENT: [None],
         }
+        _initial_assessment = MechanismPerYearProbabilityCollection(
+            [
+                MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.85),
+                MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.75),
+            ]
+        )
         _expected_combinations = len(_measures) + 1
 
         # 2. Run test
         _combinations = CombineMeasuresController.combine_measures(
-            _measures, _allowed_combinations
+            _measures, _allowed_combinations, _initial_assessment
         )
 
         # 3. Verify expectations
@@ -207,6 +219,12 @@ class TestCombineMeasuresController:
         ]
         _expected_combinations = len(_measures) + 1
         _section.measures = _measures
+        _section.initial_assessment = MechanismPerYearProbabilityCollection(
+            [
+                MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.85),
+                MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.75),
+            ]
+        )
 
         # 2. Run test
         _combine_controller = CombineMeasuresController(_section)
@@ -243,6 +261,12 @@ class TestCombineMeasuresController:
         ]
         _expected_combinations = len(_measures)
         _section.measures = _measures
+        _section.initial_assessment = MechanismPerYearProbabilityCollection(
+            [
+                MechanismPerYear(MechanismEnum.PIPING, 0, 0.65),
+                MechanismPerYear(MechanismEnum.PIPING, 20, 0.55),
+            ]
+        )
 
         # 2. Run test
         _combine_controller = CombineMeasuresController(_section)
