@@ -38,7 +38,7 @@ class SgShMeasure(MeasureAsInputProtocol):
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
-        return False
+        return mechanism in SgShMeasure.get_allowed_mechanisms()
 
     @staticmethod
     def get_allowed_mechanisms() -> list[MechanismEnum]:
