@@ -160,9 +160,8 @@ class TestVrToolLogger:
 
         _test_handler = logging.FileHandler(filename=_log_file_path, mode="a")
         _test_handler.name = "MyFileTestHandler"
-        _expected_log_mssg = (
-            f"Initialized VrTool logger with handler {_test_handler.name}."
-        )
+        _expected_log_mssg = "Test logging message"
+
         _vrtool_logger = logging.getLogger("")
 
         assert _test_handler not in _vrtool_logger.handlers
