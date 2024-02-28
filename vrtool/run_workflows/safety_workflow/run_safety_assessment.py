@@ -26,7 +26,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
 
     def run(self) -> ResultsSafetyAssessment:
         ## STEP 1: SAFETY ASSESSMENT
-        logging.info("Start step 1: safety assessment")
+        logging.info("Start stap 1: beoordeling & projectie veiligheid")
 
         # Loop over sections and do the assessment.
         for _, _section in enumerate(self.selected_traject.sections):
@@ -35,7 +35,6 @@ class RunSafetyAssessment(VrToolRunProtocol):
             # section.Reliability.Load.NormWaterLevel = pb.getDesignWaterLevel(section.Reliability.Load,selected_traject.GeneralInfo['Pmax'])
 
             # compute reliability in time for each mechanism:
-            # logging.info(section.End)
             for mechanism in self.selected_traject.mechanisms:
                 _mechanism_reliability_collection = _section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
@@ -58,7 +57,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
         _results.vr_config = self.vr_config
         _results._write_results_to_file()
 
-        logging.info("Finished step 1: assessment of current situation")
+        logging.info("Stap 1 afgerond.")
 
         return _results
 

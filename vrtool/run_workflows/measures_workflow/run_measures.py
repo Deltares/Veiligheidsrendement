@@ -1,8 +1,7 @@
 from __future__ import annotations
-
 import logging
 from typing import Tuple
-
+from tqdm import tqdm 
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -37,13 +36,12 @@ class RunMeasures(VrToolRunProtocol):
 
     def run(self) -> ResultsMeasures:
         # Get measurements solutions
-        logging.info("Start step 2: evaluation of measures.")
+        logging.info("Start stap 2: bepaling effecten en kosten van maatregelen.")
         _results_measures = ResultsMeasures()
         _results_measures.vr_config = self.vr_config
         _results_measures.selected_traject = self.selected_traject
-
         _results_measures.solutions_dict.update(
-            dict(map(self._get_section_solution, self.selected_traject.sections))
+            dict(map(self._get_section_solution, tqdm(self.selected_traject.sections, desc="Aantal doorgerekende dijkvakken: ")))
         )
 
         for i in self.selected_traject.sections:
@@ -51,6 +49,6 @@ class RunMeasures(VrToolRunProtocol):
                 filtering="off", splitparams=True
             )
 
-        logging.info("Finished step 2: evaluation of measures")
+        logging.info("Stap 2: Bepaling effecten en kosten van maatregelen afgerond.")
 
         return _results_measures

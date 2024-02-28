@@ -128,7 +128,7 @@ class MechanismInput:
                             self.input[data.index[i]] = self.input[data.index[i]] / (
                                 24 * 3600
                             )
-                            logging.info(
+                            logging.debug(
                                 "k-value modified as it was likely m/d and should be m/s"
                             )
                     except:
@@ -136,6 +136,6 @@ class MechanismInput:
                             self.input[data.index[i]] = self.input[data.index[i]] / (
                                 24 * 3600
                             )
-                            logging.info(
+                            logging.debug(
                                 "k-value modified as it was likely m/d and should be m/s"
                             )

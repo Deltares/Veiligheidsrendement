@@ -17,10 +17,10 @@ class MeasureResultCollectionExporter(OrmExporterProtocol):
         self._measure_per_section = measure_per_section
 
     def export_dom(self, dom_model: MeasureResultCollectionProtocol) -> None:
-        logging.info("STARTED exporting measure's result collection.")
+        logging.debug("STARTED exporting measure's result collection.")
         _measure_result_exporter = MeasureResultExporter(self._measure_per_section)
 
         for _result in dom_model.result_collection:
             _measure_result_exporter.export_dom(_result)
 
-        logging.info("FINISHED exporting measure's result collection.")
+        logging.debug("FINISHED exporting measure's result collection.")

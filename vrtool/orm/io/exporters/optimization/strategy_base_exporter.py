@@ -29,7 +29,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
             section = dom_model.TakenMeasures.values[i, 0]
             if not any(dom_model.indexCombined2single[section]):
                 logging.warning(
-                    "Found measure for section without measures; section: " + section
+                    "Maatregel gevonden voor dijkvak zonder maatregelen (dijkvak {})".format(section)
                 )
                 continue
             measure_id = dom_model.TakenMeasures.values[i, 1]

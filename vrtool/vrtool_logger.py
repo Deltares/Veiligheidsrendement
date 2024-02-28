@@ -67,4 +67,4 @@ class VrToolLogger:
         _logger = logging.getLogger("")
         _logger.setLevel(logging_level)
         _logger.addHandler(handler)
-        logging.info(f"Initialized VrTool logger with handler {handler.name}.")
+        logging.debug(f"Initialized VrTool logger with handler {handler.name}.")

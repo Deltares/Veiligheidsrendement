@@ -6,6 +6,7 @@ from typing import Iterator
 
 import pandas as pd
 from peewee import SqliteDatabase
+from tqdm import tqdm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
@@ -157,12 +158,12 @@ def export_results_safety_assessment(result: ResultsSafetyAssessment) -> None:
         result (ResultsSafetyAssessment): Instance containing dike sections' reliability and output database's location.
     """
     _connected_db = open_database(result.vr_config.input_database_path)
-    logging.info("Opened connection to export Dike's section reliability.")
+    logging.debug("Opened connection to export Dike's section reliability.")
     _exporter = DikeSectionReliabilityExporter()
     for _section in result.selected_traject.sections:
         _exporter.export_dom(_section)
     _connected_db.close()
-    logging.info("Closed connection after export for Dike's section reliability.")
+    logging.info("Resultaten beoordeling & projectie geexporteerd naar database.")
 
 
 def clear_assessment_results(config: VrtoolConfig) -> None:
@@ -174,7 +175,7 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
     """
 
     open_database(config.input_database_path)
-    logging.info("Opened connection for clearing initial assessment results.")
+    logging.debug("Opened connection for clearing initial assessment results.")
 
     with vrtool_db.atomic():
         orm.AssessmentMechanismResult.delete().execute()
@@ -182,7 +183,7 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
 
     vrtool_db.close()
 
-    logging.info("Closed connection after clearing initial assessment results.")
+    logging.info("Bestaande beoordelingsresultaten verwijderd.")
 
 
 def clear_measure_results(config: VrtoolConfig) -> None:
@@ -194,7 +195,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     """
 
     open_database(config.input_database_path)
-    logging.info("Opened connection for clearing measure results.")
+    logging.debug("Opened connection for clearing measure results.")
 
     with vrtool_db.atomic():
         orm.MeasureResult.delete().execute()
@@ -205,7 +206,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
 
     vrtool_db.close()
 
-    logging.info("Closed connection after clearing measure results.")
+    logging.info("Bestaande resultaten voor maatregelen verwijderd.")
 
 
 def clear_optimization_results(config: VrtoolConfig) -> None:
@@ -216,7 +217,7 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
         config (VrtoolConfig): Vrtool configuration.
     """
     open_database(config.input_database_path)
-    logging.info("Opened connection for clearing optimization results.")
+    logging.debug("Opened connection for clearing optimization results.")
 
     with vrtool_db.atomic():
         orm.OptimizationRun.delete().execute()
@@ -228,7 +229,7 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
 
     vrtool_db.close()
 
-    logging.info("Closed connection after clearing optimization results.")
+    logging.info("Bestaande optimalisatieresultaten verwijderd.")
 
 
 def export_results_measures(result: ResultsMeasures) -> None:
@@ -241,14 +242,19 @@ def export_results_measures(result: ResultsMeasures) -> None:
 
     _connected_db = open_database(result.vr_config.input_database_path)
 
-    logging.info("Opened connection to export solution.")
+    logging.info("Start export resultaten maatregelen naar database.")
 
     _exporter = SolutionsExporter()
-    for _solution in result.solutions_dict.values():
+    for _solution in tqdm(
+        result.solutions_dict.values(),
+        desc="Aantal geexporteerde dijkvakken:",
+        total=len(result.solutions_dict),
+        unit="vak",
+    ):
         _exporter.export_dom(_solution)
     _connected_db.close()
 
-    logging.info("Closed connection after export solution.")
+    logging.debug("Export van resultaten maatregelen afgerond.")
 
 
 def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[int]:
@@ -461,7 +467,7 @@ def create_optimization_run_for_selected_measures(
     """
 
     with open_database(vr_config.input_database_path).connection_context():
-        logging.info(
+        logging.debug(
             "Opened connection to export optimization run {}.".format(optimization_name)
         )
         _optimization_selected_measure_ids = defaultdict(list)
@@ -508,14 +514,14 @@ def export_results_optimization(
 
     _connected_db = open_database(result.vr_config.input_database_path)
 
-    logging.info("Opened connection to export optimizations.")
+    logging.debug("Opened connection to export optimizations.")
 
     for _run_id, _result_strategy in zip(run_ids, result.results_strategies):
         _exporter = StrategyBaseExporter(_run_id)
         _exporter.export_dom(_result_strategy)
     _connected_db.close()
 
-    logging.info("Closed connection after export optimizations.")
+    logging.info("Resultaten geexporteerd.")
 
 
 def get_optimization_steps(optimization_run_id: int) -> Iterator[orm.OptimizationStep]:
@@ -547,7 +553,7 @@ def get_optimization_step_with_lowest_total_cost(
         orm.OptimizationStep: The `OptimizationStep` instance with the lowest *total* cost
     """
     _connected_db = open_database(vrtool_config.input_database_path)
-    logging.info(
+    logging.debug(
         "Openned connection to retrieve 'OptimizationStep' with lowest total cost."
     )
 
@@ -560,7 +566,7 @@ def get_optimization_step_with_lowest_total_cost(
         _results.append((_optimization_step, _as_df, _cost))
 
     _connected_db.close()
-    logging.info(
+    logging.debug(
         "Closed connection after retrieval of lowest total cost 'OptimizationStep'."
     )
 

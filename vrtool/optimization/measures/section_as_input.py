@@ -159,8 +159,6 @@ class SectionAsInput:
         _initial.add_years(_investment_years)
         for measure in self.measures:
             measure.mechanism_year_collection.add_years(_investment_years)
-
-        for measure in self.measures:
             if measure.year > 0:
                 measure.mechanism_year_collection.replace_values(_initial, measure.year)
 
@@ -168,6 +166,23 @@ class SectionAsInput:
         _investment_years = set()
         for measure in self.measures:
             if measure.year > 0:
+                _investment_years.add(measure.year - 1)
                 _investment_years.add(measure.year)
-                _investment_years.add(measure.year + 1)
         return list(_investment_years)
+
+    def get_combination_idx_for_aggregate(
+        self, aggregate: AggregatedMeasureCombination
+    ) -> tuple[int, int]:
+        """
+        Find the index of the Sh and Sg combination that compose the aggregate.
+
+        Args:
+            aggregate (AggregatedMeasureCombination): The aggregate
+
+        Returns:
+            tuple[int, int]: The index of the Sh and Sg combination in the list of combinations.
+        """
+        return (
+            self.sh_combinations.index(aggregate.sh_combination),
+            self.sg_combinations.index(aggregate.sg_combination),
+        )
