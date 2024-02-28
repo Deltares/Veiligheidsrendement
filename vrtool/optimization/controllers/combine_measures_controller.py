@@ -23,7 +23,7 @@ class CombineMeasuresController:
         allowed_measure_combinations: dict[
             CombinableTypeEnum, list[CombinableTypeEnum | None]
         ],
-        initial_assessment: MechanismPerYearProbabilityCollection = None,
+        initial_assessment: MechanismPerYearProbabilityCollection,
     ) -> list[CombinedMeasure]:
         """
         Create all possible combinations of measures
