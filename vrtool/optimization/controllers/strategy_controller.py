@@ -1,6 +1,4 @@
 import logging
-from typing import Type
-
 from tqdm import tqdm
 
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
