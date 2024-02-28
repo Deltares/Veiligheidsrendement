@@ -33,7 +33,9 @@ class CombinedMeasure:
 
     @property
     def dcrest(self) -> float:
-        return self.primary.dcrest
+        if isinstance(self.primary, ShMeasure):
+            return self.primary.dcrest
+        return -999
 
     @property
     def dberm(self) -> float:
