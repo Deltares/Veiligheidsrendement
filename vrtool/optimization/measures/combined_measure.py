@@ -52,7 +52,6 @@ class CombinedMeasure:
     @property
     def year(self) -> int | list[int]:
         if self.secondary:
-        if self.secondary:
             return [self.primary.year, self.secondary.year]
         return self.primary.year
 

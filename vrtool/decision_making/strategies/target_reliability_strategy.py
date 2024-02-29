@@ -4,14 +4,16 @@ import logging
 import numpy as np
 import pandas as pd
 
+from dataclasses import dataclass
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
     calc_tr,
     implement_option,
     make_traject_df,
 )
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
