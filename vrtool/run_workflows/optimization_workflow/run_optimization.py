@@ -92,30 +92,6 @@ class RunOptimization(VrToolRunProtocol):
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
         _target_reliability_based.evaluate(self.selected_traject, splitparams=True)
-        _target_reliability_based.make_solution(
-            _results_dir.joinpath(
-                "FinalMeasures_" + _target_reliability_input.design_method + ".csv",
-            ),
-            type="Final",
-        )
-
-        _target_reliability_based = self._replace_names(
-            _target_reliability_based, self._solutions_dict
-        )
-        # write to csv's
-        _target_reliability_based.TakenMeasures.to_csv(
-            _results_dir.joinpath(
-                "TakenMeasures_" + _target_reliability_input.design_method + ".csv",
-            )
-        )
-        for j in _target_reliability_based.options:
-            _target_reliability_based.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _target_reliability_based.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
-
         return _target_reliability_based
 
     def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyBase]]:
