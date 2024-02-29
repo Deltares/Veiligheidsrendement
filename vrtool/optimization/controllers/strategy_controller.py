@@ -1,5 +1,4 @@
 import logging
-from typing import Type
 
 from tqdm import tqdm
 
@@ -54,13 +53,13 @@ class StrategyController:
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
 
     def get_evaluate_input(
-        self, strategy_type: Type[StrategyBase]
+        self, strategy_type: type[StrategyBase]
     ) -> StrategyInputProtocol:
         """
         Get the input for the evaluation of the strategy.
         """
         if strategy_type == GreedyStrategy:
-            return StrategyInputGreedy.from_section_as_input(
+            return StrategyInputGreedy.from_section_as_input_collection(
                 self._section_measures_input
             )
         elif strategy_type == TargetReliabilityStrategy:

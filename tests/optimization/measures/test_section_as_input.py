@@ -71,13 +71,16 @@ class TestSectionAsInput:
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 None,
+                None,
             ),
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
                 None,
+                None,
             ),
             CombinedMeasure.from_input(
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
+                None,
                 None,
             ),
         ]
@@ -324,6 +327,7 @@ class TestSectionAsInput:
         _aggregated_measure_combination = AggregatedMeasureCombination(
             sh_combination=_section.sh_combinations[1],
             sg_combination=_section.sg_combinations[0],
+            measure_result_id=1,
             year=0,
         )
 
@@ -342,10 +346,12 @@ class TestSectionAsInput:
         _other_combination = CombinedMeasure.from_input(
             MockShMeasure(MeasureTypeEnum.REVETMENT),
             None,
+            None,
         )
         _aggregated_measure_combination = AggregatedMeasureCombination(
             sh_combination=_other_combination,
             sg_combination=_section.sg_combinations[0],
+            measure_result_id=1,
             year=0,
         )
 

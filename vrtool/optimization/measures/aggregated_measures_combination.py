@@ -7,6 +7,7 @@ from vrtool.optimization.measures.combined_measure import CombinedMeasure
 class AggregatedMeasureCombination:
     sh_combination: CombinedMeasure
     sg_combination: CombinedMeasure
+    measure_result_id: int
     year: int
 
     @property

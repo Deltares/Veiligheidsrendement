@@ -14,6 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 
 
 @dataclass
@@ -55,6 +56,10 @@ class SectionAsInput:
     def sg_measures(self) -> list[SgMeasure]:
         return self.get_measures_by_class(SgMeasure)
 
+    @property
+    def sh_sg_measures(self) -> list[ShSgMeasure]:
+        return self.get_measures_by_class(ShSgMeasure)
+
     def get_combinations_by_class(
         self, measure_class: type[MeasureAsInputProtocol]
     ) -> list[CombinedMeasure]:
@@ -82,6 +87,23 @@ class SectionAsInput:
     def sg_combinations(self) -> list[CombinedMeasure]:
         return self.get_combinations_by_class(SgMeasure)
 
+    def _get_sample_years(self) -> set[int]:
+        """
+        Gets a list of the available years given the assumptions:
+        - We have measure(s).
+        - The first measure has mechanism(s).
+        - The first mechanism has the same year(s) as the rest of mechanism(s) for all measures.
+
+        Returns:
+            set[int]: Unique collection of years
+        """
+        if not self.measures:
+            return 0
+        # Get the max year for all measures for a random mechanism
+        _sample_measure = self.measures[0]
+        _sample_mechanism = _sample_measure.get_allowed_mechanisms()[0]
+        return _sample_measure.mechanism_year_collection.get_years(_sample_mechanism)
+
     @property
     def max_year(self) -> int:
         """
@@ -91,14 +113,17 @@ class SectionAsInput:
         Returns:
             int: The maximum year
         """
-        if not self.measures:
-            return 0
-        # Get the max year for all measures for a random mechanism
-        _sample_measure = self.measures[0]
-        _sample_mechanism = _sample_measure.get_allowed_mechanisms()[0]
-        return max(
-            _sample_measure.mechanism_year_collection.get_years(_sample_mechanism)
-        )
+        return max(self._get_sample_years())
+
+    @property
+    def min_year(self) -> int:
+        """
+        The minimum year for the section.
+
+        Returns:
+            int: The minimum year
+        """
+        return min(self._get_sample_years())
 
     @property
     def mechanisms(self) -> set[MechanismEnum]:

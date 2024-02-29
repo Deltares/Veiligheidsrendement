@@ -2,25 +2,51 @@ import copy
 import logging
 import time
 from pathlib import Path
-from typing import Dict
 
-import numpy
 import numpy as np
 import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
-    calc_life_cycle_risks,
     evaluate_risk,
     update_probability,
 )
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
-class GreedyStrategy(StrategyBase):
+class GreedyStrategy(StrategyProtocol):
+    design_method: str
+
+    def __init__(
+        self, strategy_input: StrategyInputGreedy, config: VrtoolConfig
+    ) -> None:
+        self.design_method = strategy_input.design_method
+        self.options = strategy_input.options
+        self.options_geotechnical = strategy_input.options_geotechnical
+        self.options_height = strategy_input.options_height
+
+        self.opt_parameters = strategy_input.opt_parameters
+        self.Pf = strategy_input.Pf
+        self.LCCOption = strategy_input.LCCOption
+        self.Cint_h = strategy_input.Cint_h
+        self.Cint_g = strategy_input.Cint_g
+        self.D = strategy_input.D
+        self.Dint = strategy_input.Dint
+        self.RiskGeotechnical = strategy_input.RiskGeotechnical
+        self.RiskOverflow = strategy_input.RiskOverflow
+        self.RiskRevetment = strategy_input.RiskRevetment
+
+        self.config = config
+        self.OI_horizon = config.OI_horizon
+        self.mechanisms = config.mechanisms
+        self.T = config.T
+        self.LE_in_section = config.LE_in_section
+
     def bundling_output(
         self, BC_list, counter_list, sh_array, sg_array, existing_investments
     ):
@@ -49,10 +75,10 @@ class GreedyStrategy(StrategyBase):
 
     def bundling_loop(
         self,
-        initial_mechanism_risk: numpy.ndarray,
-        life_cycle_cost: numpy.ndarray,
-        sh_array: numpy.ndarray,
-        sg_array: numpy.ndarray,
+        initial_mechanism_risk: np.ndarray,
+        life_cycle_cost: np.ndarray,
+        sh_array: np.ndarray,
+        sg_array: np.ndarray,
         mechanism: MechanismEnum,
         n_runs: int = 100,
     ):
@@ -413,7 +439,7 @@ class GreedyStrategy(StrategyBase):
     def evaluate(
         self,
         traject: DikeTraject,
-        solutions_dict: Dict[str, Solutions],
+        sections: list[SectionAsInput],
         splitparams=False,
         setting="fast",
         BCstop=0.1,
@@ -423,7 +449,6 @@ class GreedyStrategy(StrategyBase):
         """This is the main routine for a greedy evaluation of all solutions."""
         # TODO put settings in config
 
-        self.make_optimization_input(traject)
         start = time.time()
         # set start values:
         self.Cint_g[:, 0] = 1
@@ -641,7 +666,11 @@ class GreedyStrategy(StrategyBase):
                     Measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
-                    logging.info("Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC[Index_Best]))
+                    logging.info(
+                        "Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(
+                            count, BC[Index_Best]
+                        )
+                    )
                 elif BC_bundleOverflow > BC_bundleRevetment:
                     for j in range(0, self.opt_parameters["N"]):
                         if overflow_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -674,7 +703,11 @@ class GreedyStrategy(StrategyBase):
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
-                    logging.info("Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleOverflow))
+                    logging.info(
+                        "Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(
+                            count, BC_bundleOverflow
+                        )
+                    )
                 elif BC_bundleRevetment > np.max(BC):
                     for j in range(0, self.opt_parameters["N"]):
                         if revetment_bundle_index[j, 0] != Measures_per_section[j, 0]:
@@ -710,8 +743,11 @@ class GreedyStrategy(StrategyBase):
                     # add the height measures in separate entries in the measure list
 
                     # write them to the measure_list
-                    logging.info("Gebundelde maatregelen voor bekleding in optimalisatiestap {} (BC-ratio = {:.2f})".format(count, BC_bundleRevetment))
-
+                    logging.info(
+                        "Gebundelde maatregelen voor bekleding in optimalisatiestap {} (BC-ratio = {:.2f})".format(
+                            count, BC_bundleRevetment
+                        )
+                    )
 
             else:  # stop the search
                 break
@@ -720,17 +756,21 @@ class GreedyStrategy(StrategyBase):
                 pass
                 # Probabilities.append(copy.deepcopy(init_probability))
         # pd.DataFrame([risk_per_step,cost_per_step]).to_csv('GreedyResults_per_step.csv') #useful for debugging
-        logging.info("Totale rekentijd voor veiligheidsrendementoptimalisatie {:.2f} seconden".format(time.time() - start))
+        logging.info(
+            "Totale rekentijd voor veiligheidsrendementoptimalisatie {:.2f} seconden".format(
+                time.time() - start
+            )
+        )
         self.LCCOption = copy.deepcopy(InitialCostMatrix)
 
         self.write_greedy_results(
-            traject, solutions_dict, measure_list, BC_list, Probabilities
+            traject, sections, measure_list, BC_list, Probabilities
         )
 
     def write_greedy_results(
         self,
         traject: DikeTraject,
-        solutions_dict: Dict[str, Solutions],
+        sections: list[SectionAsInput],
         measure_list,
         BC,
         Probabilities,
@@ -882,14 +922,8 @@ class GreedyStrategy(StrategyBase):
                 )
             # get the name
             try:
-                names.append(
-                    solutions_dict[traject.sections[i[0]].name]
-                    .measure_table.loc[
-                        solutions_dict[traject.sections[i[0]].name].measure_table["ID"]
-                        == ID[-1]
-                    ]["Name"]
-                    .values[0]
-                )
+                section_name = "TODO"
+                names.append(section_name)
             except:
                 names.append("missing")
 
@@ -941,66 +975,6 @@ class GreedyStrategy(StrategyBase):
             combined = pd.concat((leftpart, rightpart), axis=1)
             combined = combined.set_index(["name", "mechanism"])
             self.Probabilities.append(combined)
-
-    def _heightMeasureIsZero(self, traject, i) -> bool:
-        """
-        Helper function for write_greedy_results
-        """
-        options = self.options_height[traject.sections[i[0]].name].iloc[i[1] - 1]
-        dcrest = options["dcrest"].values[0]
-        transition_level = options["transition_level"].values[0]
-        beta_target = options["beta_target"].values[0]
-        return dcrest == 0.0 and transition_level == -999.0 and beta_target == -999.0
-
-    def _geotechnicalMeasureIsZero(self, traject, i) -> bool:
-        """
-        Helper function for write_greedy_results
-        """
-        options = self.options_geotechnical[traject.sections[i[0]].name].iloc[i[2] - 1]
-        dberm = options["dberm"].values[0]
-        return dberm == 0.0
-
-    def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
-        """Determines risk-cost curve for greedy approach. Can be used to compare with a Pareto Frontier."""
-        if output_path:
-            output_path.mkdir(parents=True, exist_ok=True)
-
-        if not hasattr(self, "TakenMeasures"):
-            raise TypeError("TakenMeasures not found")
-        costs = {}
-        costs["TR"] = []
-        # if (self.type == 'Greedy') or (self.type == 'TC'): #do a loop
-
-        costs["LCC"] = np.cumsum(self.TakenMeasures["LCC"].values)
-        count = 0
-        for i in self.Probabilities:
-            if output_path:
-                costs["TR"].append(
-                    calc_life_cycle_risks(
-                        i,
-                        self.discount_rate,
-                        np.max(self.T),
-                        flood_damage,
-                        dumpPt=output_path.joinpath(
-                            "Greedy_step_" + str(count) + ".csv"
-                        ),
-                    )
-                )
-            else:
-                costs["TR"].append(
-                    calc_life_cycle_risks(
-                        i,
-                        self.discount_rate,
-                        np.max(self.T),
-                        flood_damage,
-                    )
-                )
-            count += 1
-        costs["TC"] = np.add(costs["TR"], costs["LCC"])
-        costs["TC_min"] = np.argmin(costs["TC"])
-        # TODO: We require these "costs" for determining lowest cost step.
-        self.costs = costs
-        return costs
 
     def get_total_lcc_and_risk(
         self, step_number: int
