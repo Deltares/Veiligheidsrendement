@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Protocol
 
+import numpy as np
 from typing_extensions import runtime_checkable
 
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -21,18 +22,15 @@ class StrategyProtocol(Protocol):
         """
         pass
 
-    def make_solution(self, csv_path, step=False, type="Final"):
-        """This is a routine to write the results for different types of solutions. It provides a dataframe with for each section the final measure.
-        There are 3 types:
-        FinalSolution: which is the result in the last step of the optimization
-        OptimalSolution: the result with the lowest total cost
-        SatisfiedStandardSolution: the result at which the reliability requirement is met.
-        Note that if type is not Final the step parameter has to be defined.
-        """
-        pass
-
-    def determine_risk_cost_curve(self, flood_damage: float, output_path: Path):
-        pass
-
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
+        """
+        _summary_
+        THIS METHOD WILL BE DEPRECATED
+
+        Args:
+            step_number (int): _description_
+
+        Returns:
+            tuple[float, float]: _description_
+        """
         pass
