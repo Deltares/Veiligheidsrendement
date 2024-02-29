@@ -128,14 +128,16 @@ class TargetReliabilityStrategy(StrategyProtocol):
         return float("nan"), float("nan")
 
     @staticmethod
-    def _id_to_name(found_id: str, section_as_input: SectionAsInput):
+    def _id_to_name(
+        found_id: str, section_as_input_dict: dict[str, SectionAsInput]
+    ) -> str:
         """
         Previously in tools. Only used once within this evaluate method.
         """
         return next(
-            c.name
-            for c in section_as_input.combined_measures
-            if c.combined_id == str(found_id)
+            _section_id
+            for _section_id, _section_input in section_as_input_dict.items()
+            if any(c.combined_id == found_id for c in _section_input.combined_measures)
         )
         # return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
         #     "Name"
@@ -251,7 +253,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     > _beta_t[mechanism.name]
                 ]
 
-            if not any(_possible_measures):
+            if len(_possible_measures) == 0:
                 # continue to next section if weakest has no more measures
                 logging.warning(
                     "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
