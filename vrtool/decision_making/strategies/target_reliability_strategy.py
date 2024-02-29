@@ -175,7 +175,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
         # Rank sections based on 2075 Section probability
         beta_horizon = []
-        for i in traject.sections:
+        for _dike_section in dike_traject.sections:
             beta_horizon.append(
                 _dike_section.section_reliability.SectionReliability.loc["Section"][
                     str(self.OI_horizon)
@@ -245,7 +245,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # make PossibleMeasures dataframe
             _possible_measures = copy.deepcopy(_selected_option)
             # filter for mechanisms that are considered
-            for mechanism in traject.mechanisms:
+            for mechanism in dike_traject.mechanisms:
                 _possible_measures = _possible_measures.loc[
                     _selected_option[(mechanism.name, _target_year)]
                     > _beta_t[mechanism.name]
@@ -274,13 +274,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
             option_index = _possible_measures.index[idx]
             # calculate achieved risk reduction & BC ratio compared to base situation
             _r_base, _dr, _t_r = calc_tr(
-                i.name,
+                _dike_section.name,
                 measure,
                 _traject_probability,
-                original_section=_traject_probability.loc[i.name],
+                original_section=_traject_probability.loc[_dike_section.name],
                 discount_rate=self.discount_rate,
-                horizon=cols[-1],
-                damage=traject.general_info.FloodDamage,
+                horizon=self._time_periods[-1],
+                damage=dike_traject.general_info.FloodDamage,
             )
             _bc = _dr / _lcc[idx]
 
@@ -293,7 +293,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 data_opt = pd.DataFrame(
                     [
                         [
-                            i.name,
+                            _dike_section.name,
                             option_index,
                             _lcc[idx],
                             _bc,
@@ -313,7 +313,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 data_opt = pd.DataFrame(
                     [
                         [
-                            i.name,
+                            _dike_section.name,
                             option_index,
                             _lcc[idx],
                             _bc,
@@ -330,7 +330,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures = pd.concat((_taken_measures, data_opt))
             # Calculate new probabilities
             _traject_probability = implement_option(
-                i.name, _traject_probability, measure
+                _dike_section.name, _traject_probability, measure
             )
             _probability_steps.append(copy.deepcopy(_traject_probability))
         self.TakenMeasures = _taken_measures
