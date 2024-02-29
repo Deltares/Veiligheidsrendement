@@ -1,4 +1,5 @@
 import logging
+
 from tqdm import tqdm
 
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
@@ -14,9 +15,6 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
-)
-from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
-    StrategyInputTargetReliability,
 )
 
 
@@ -65,9 +63,7 @@ class StrategyController:
                 self._section_measures_input
             )
         elif strategy_type == TargetReliabilityStrategy:
-            return StrategyInputTargetReliability.from_section_as_input_collection(
-                self._section_measures_input
-            )
+            raise NotImplementedError("TargetReliabilityStrategy not implemented yet.")
         raise ValueError(f"Strategy type {strategy_type} not implemented yet.")
 
     def set_investment_year(self) -> None:

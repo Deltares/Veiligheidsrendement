@@ -71,61 +71,6 @@ class RunOptimization(VrToolRunProtocol):
         # Initialize a GreedyStrategy:
         _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
 
-        _results_dir = self._get_output_dir()
-
-        # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _greedy_strategy.evaluate(
-            self.selected_traject,
-            self._section_input_collection,
-            splitparams=True,
-            setting="cautious",
-            f_cautious=1.5,
-            max_count=600,
-            BCstop=0.1,
-        )
-
-        _greedy_strategy = self._replace_names(_greedy_strategy, self._solutions_dict)
-        _cost_greedy = _greedy_strategy.determine_risk_cost_curve(
-            self.selected_traject.general_info.FloodDamage, None
-        )
-
-        _greedy_strategy.write_reliability_to_csv(_results_dir, "Greedy")
-        # write to csv's
-        _greedy_strategy.TakenMeasures.to_csv(
-            _results_dir.joinpath("TakenMeasures_" + _greedy_strategy.type + ".csv")
-        )
-        pd.DataFrame(
-            np.array(
-                [
-                    _cost_greedy["LCC"],
-                    _cost_greedy["TR"],
-                    np.add(_cost_greedy["LCC"], _cost_greedy["TR"]),
-                ]
-            ).T,
-            columns=["LCC", "TR", "TC"],
-        ).to_csv(
-            _results_dir / "TotalCostValues_Greedy.csv",
-            float_format="%.1f",
-        )
-        _greedy_strategy.make_solution(
-            _results_dir.joinpath(
-                "TakenMeasures_Optimal_" + _greedy_strategy.type + ".csv",
-            ),
-            step=_cost_greedy["TC_min"] + 1,
-            type="Optimal",
-        )
-        _greedy_optimization_input.make_solution(
-            _results_dir.joinpath("FinalMeasures_" + _greedy_strategy.type + ".csv"),
-            type="Final",
-        )
-        for j in _greedy_strategy.options:
-            _greedy_strategy.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _greedy_strategy.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
-
         return _greedy_strategy
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
@@ -227,29 +172,3 @@ class RunOptimization(VrToolRunProtocol):
             )
             strategy_case.TakenMeasures.at[i, "name"] = name
         return strategy_case
-
-    # def _filter_measures_first_time(self):
-    #     """Filter measures that are not in the first time step that is available for the measure as these should not be included for target reliability strategy"""
-    #     min_dict = {}  # dict to store measure for ids_to_import
-    #     count_dict = {}  # dict to store counter for selected_measure_ids
-    #     run_id = list(self._selected_measure_ids.keys())[0]
-    #     for counter, (id, value) in enumerate(self._ids_to_import):
-    #         if (id not in min_dict) or (value < min_dict[id]):
-    #             min_dict[id] = value
-    #             count_dict[id] = counter
-
-    #     self._ids_to_import = [(id, value) for id, value in min_dict.items()]
-    #     self._selected_measure_ids[run_id] = [
-    #         self._selected_measure_ids[run_id][index] for index in count_dict.values()
-    #     ]
-
-    #     # filter solutions_dict
-    #     for section in self._solutions_dict.keys():
-    #         _min_year = min(self._solutions_dict[section].MeasureData["year"])
-    #         self._solutions_dict[section].MeasureData = (
-    #             self._solutions_dict[section]
-    #             .MeasureData.loc[
-    #                 self._solutions_dict[section].MeasureData["year"] == _min_year
-    #             ]
-    #             .reset_index(drop=True)
-    #         )

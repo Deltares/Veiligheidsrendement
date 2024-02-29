@@ -21,19 +21,21 @@ class CombinedMeasure:
 
     @property
     def lcc(self) -> float:
-        if self.secondary is not None:
+        if self.secondary:
             return self.primary.lcc + self.secondary.lcc
         return self.primary.lcc
 
     @property
     def measure_class(self) -> str:
-        if self.secondary is not None:
+        if self.secondary:
             return "combined"
         return self.primary.combine_type.get_old_name()
 
     @property
     def dcrest(self) -> float:
-        return self.primary.dcrest
+        if isinstance(self.primary, ShMeasure):
+            return self.primary.dcrest
+        return -999
 
     @property
     def dberm(self) -> float:
@@ -49,6 +51,7 @@ class CombinedMeasure:
 
     @property
     def year(self) -> int | list[int]:
+        if self.secondary:
         if self.secondary:
             return [self.primary.year, self.secondary.year]
         return self.primary.year
@@ -73,7 +76,7 @@ class CombinedMeasure:
         return -999
 
     @property
-    def combined_id(self) -> str:
+    def combined_id(self) -> int | str:
         if self.secondary:
             return (
                 f"{self.primary.measure_type.value}+{self.secondary.measure_type.value}"
@@ -97,12 +100,14 @@ class CombinedMeasure:
         cls,
         primary: MeasureAsInputProtocol,
         secondary: MeasureAsInputProtocol | None,
+        initial_assessment: MechanismPerYearProbabilityCollection,
     ) -> CombinedMeasure:
         _mech_year_coll = primary.mechanism_year_collection
-        if secondary is not None:
+        if secondary:
             _mech_year_coll = MechanismPerYearProbabilityCollection.combine(
                 primary.mechanism_year_collection,
                 secondary.mechanism_year_collection,
+                initial_assessment,
             )
 
         return cls(

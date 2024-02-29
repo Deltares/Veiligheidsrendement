@@ -1,18 +1,17 @@
 import copy
 import logging
-from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
+from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategy_evaluation import (
     calc_tc,
     calc_tr,
     implement_option,
     make_traject_df,
 )
-from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
@@ -174,7 +173,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
         # Rank sections based on 2075 Section probability
         beta_horizon = []
-        for _dike_section in dike_traject.sections:
+        for i in traject.sections:
             beta_horizon.append(
                 _dike_section.section_reliability.SectionReliability.loc["Section"][
                     str(self.OI_horizon)
@@ -244,13 +243,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # make PossibleMeasures dataframe
             _possible_measures = copy.deepcopy(_selected_option)
             # filter for mechanisms that are considered
-            for mechanism in dike_traject.mechanisms:
+            for mechanism in traject.mechanisms:
                 _possible_measures = _possible_measures.loc[
                     _selected_option[(mechanism.name, _target_year)]
                     > _beta_t[mechanism.name]
                 ]
 
-            if not any(_possible_measures):
+            if len(_possible_measures) == 0:
                 # continue to next section if weakest has no more measures
                 logging.warning(
                     "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
@@ -273,13 +272,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
             option_index = _possible_measures.index[idx]
             # calculate achieved risk reduction & BC ratio compared to base situation
             _r_base, _dr, _t_r = calc_tr(
-                _dike_section.name,
+                i.name,
                 measure,
                 _traject_probability,
-                original_section=_traject_probability.loc[_dike_section.name],
+                original_section=_traject_probability.loc[i.name],
                 discount_rate=self.discount_rate,
-                horizon=self._time_periods[-1],
-                damage=dike_traject.general_info.FloodDamage,
+                horizon=cols[-1],
+                damage=traject.general_info.FloodDamage,
             )
             _bc = _dr / _lcc[idx]
 
@@ -292,7 +291,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 data_opt = pd.DataFrame(
                     [
                         [
-                            _dike_section.name,
+                            i.name,
                             option_index,
                             _lcc[idx],
                             _bc,
@@ -312,7 +311,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 data_opt = pd.DataFrame(
                     [
                         [
-                            _dike_section.name,
+                            i.name,
                             option_index,
                             _lcc[idx],
                             _bc,
@@ -329,7 +328,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures = pd.concat((_taken_measures, data_opt))
             # Calculate new probabilities
             _traject_probability = implement_option(
-                _dike_section.name, _traject_probability, measure
+                i.name, _traject_probability, measure
             )
             _probability_steps.append(copy.deepcopy(_traject_probability))
         self.TakenMeasures = _taken_measures

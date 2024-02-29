@@ -5,6 +5,9 @@ from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
@@ -20,6 +23,7 @@ class CombineMeasuresController:
         allowed_measure_combinations: dict[
             CombinableTypeEnum, list[CombinableTypeEnum | None]
         ],
+        initial_assessment: MechanismPerYearProbabilityCollection,
     ) -> list[CombinedMeasure]:
         """
         Create all possible combinations of measures
@@ -56,7 +60,7 @@ class CombineMeasuresController:
             return _combine_type in _allowed_secondary_combinations
 
         return [
-            CombinedMeasure.from_input(_primary, _secondary)
+            CombinedMeasure.from_input(_primary, _secondary, initial_assessment)
             for (_primary, _secondary) in _prospect_combinations
             if valid_combination(_primary, _secondary)
         ]
@@ -72,12 +76,16 @@ class CombineMeasuresController:
 
         _combined_measures.extend(
             self.combine_measures(
-                self._section.sh_measures, ShMeasure.get_allowed_measure_combinations()
+                self._section.sh_measures,
+                ShMeasure.get_allowed_measure_combinations(),
+                self._section.initial_assessment,
             )
         )
         _combined_measures.extend(
             self.combine_measures(
-                self._section.sg_measures, SgMeasure.get_allowed_measure_combinations()
+                self._section.sg_measures,
+                SgMeasure.get_allowed_measure_combinations(),
+                self._section.initial_assessment,
             )
         )
 

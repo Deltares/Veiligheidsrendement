@@ -183,7 +183,7 @@ class TestSgMeasure:
 
         # 3. Verify expectations
         assert isinstance(_allowed_combinations, dict)
-        assert _allowed_combinations is not None
+        assert _allowed_combinations
 
     @pytest.mark.parametrize(
         "dberm_value",
@@ -219,7 +219,6 @@ class TestSgMeasure:
         _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
         _combine_type = CombinableTypeEnum.COMBINABLE
         _measure = self._create_sg_measure(_measure_type, _combine_type)
-        _measure.dcrest = dberm_value
         _measure.year = 4
 
         # 2. Run test and verify expectations.
@@ -232,7 +231,6 @@ class TestSgMeasure:
         _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
         _combine_type = CombinableTypeEnum.COMBINABLE
         _measure = self._create_sg_measure(_measure_type, _combine_type)
-        _measure.dcrest = 4.2
         _measure.year = 0
 
         # 2. Run test and verify expectations.
