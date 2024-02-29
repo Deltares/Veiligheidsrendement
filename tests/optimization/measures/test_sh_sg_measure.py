@@ -21,7 +21,7 @@ class TestShSgMeasure:
         )
         return _measure
 
-    def test_create_sg_sh_measure(self):
+    def test_create_sh_sg_measure(self):
         # 1. Define input
         _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
         _combine_type = CombinableTypeEnum.COMBINABLE
