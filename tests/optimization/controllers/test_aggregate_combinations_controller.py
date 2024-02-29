@@ -13,12 +13,14 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 
 @dataclass
 class MockSectionAsInput:
+    measure_result_id: int
+
     @property
-    def sh_sg_measures(self, measure_result_id) -> list[MeasureAsInputProtocol]:
+    def sh_sg_measures(self) -> list[MeasureAsInputProtocol]:
         return [
             MockMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=measure_result_id,
+                measure_result_id=self.measure_result_id,
                 year=0,
                 cost=100,
                 dberm=1.0,
@@ -116,21 +118,19 @@ class TestAggregateCombinationsController:
 
     def test_aggregated_measure_id_for_matching_measure_result_id(self):
         # 1. Define input
-        _sh_measure_result_id = 1
         _sh_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
-                measure_result_id=_sh_measure_result_id,
+                measure_result_id=1,
                 year=0,
                 cost=100,
             ),
             None,
         )
-        _sg_measure_result_id = 2
         _sg_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
-                measure_result_id=_sg_measure_result_id,
+                measure_result_id=2,
                 year=0,
                 cost=50,
             ),
@@ -144,26 +144,27 @@ class TestAggregateCombinationsController:
 
         # 3. Verify expectations
         assert len(_aggr_meas_comb) == 1
-        assert _aggr_meas_comb[0].measure_result_id == _sg_measure_result_id
+        assert (
+            _aggr_meas_comb[0].measure_result_id
+            == _sg_combination.primary.measure_result_id
+        )
 
     def test_aggregated_measure_id_returns_sg_for_sh_measure_with_dcrest_0(self):
         # 1. Define input
-        _sh_measure_result_id = 1
         _sh_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=_sh_measure_result_id,
+                measure_result_id=1,
                 year=0,
                 cost=100,
                 dcrest=0.0,
             ),
             None,
         )
-        _sg_measure_result_id = 2
         _sg_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=_sg_measure_result_id,
+                measure_result_id=2,
                 year=0,
                 cost=50,
                 dberm=0.5,
@@ -178,26 +179,27 @@ class TestAggregateCombinationsController:
 
         # 3. Verify expectations
         assert len(_aggr_meas_comb) == 1
-        assert _aggr_meas_comb[0].measure_result_id == _sg_measure_result_id
+        assert (
+            _aggr_meas_comb[0].measure_result_id
+            == _sg_combination.primary.measure_result_id
+        )
 
     def test_aggregated_measure_id_returns_sh_for_sg_measure_with_dberm_0(self):
         # 1. Define input
-        _sh_measure_result_id = 1
         _sh_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=_sh_measure_result_id,
+                measure_result_id=1,
                 year=0,
                 cost=100,
                 dcrest=0.5,
             ),
             None,
         )
-        _sg_measure_result_id = 2
         _sg_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=_sg_measure_result_id,
+                measure_result_id=2,
                 year=0,
                 cost=50,
                 dberm=0.0,
@@ -212,26 +214,27 @@ class TestAggregateCombinationsController:
 
         # 3. Verify expectations
         assert len(_aggr_meas_comb) == 1
-        assert _aggr_meas_comb[0].measure_result_id == _sh_measure_result_id
+        assert (
+            _aggr_meas_comb[0].measure_result_id
+            == _sh_combination.primary.measure_result_id
+        )
 
     def test_aggregated_measure_id_returns_sh_sg(self):
         # 1. Define input
-        _sh_measure_result_id = 1
         _sh_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=_sh_measure_result_id,
+                measure_result_id=1,
                 year=0,
                 cost=100,
                 dcrest=0.5,
             ),
             None,
         )
-        _sg_measure_result_id = 2
         _sg_combination = MockCombinedMeasure(
             MockMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=_sg_measure_result_id,
+                measure_result_id=2,
                 year=0,
                 cost=50,
                 dberm=1.0,
@@ -240,15 +243,15 @@ class TestAggregateCombinationsController:
         )
 
         # 2. Run test
-        _sh_sg_measure_result_id = 3
         _aggr_controller = AggregateCombinationsController(None)
-        _aggr_controller._section = MockSectionAsInput(
-            measure_result_id=_sh_sg_measure_result_id
-        )
+        _aggr_controller._section = MockSectionAsInput(measure_result_id=3)
         _aggr_meas_comb = _aggr_controller._create_aggregates(
             [_sh_combination], [_sg_combination]
         )
 
         # 3. Verify expectations
         assert len(_aggr_meas_comb) == 1
-        assert _aggr_meas_comb[0].measure_result_id == 3
+        assert (
+            _aggr_meas_comb[0].measure_result_id
+            == _aggr_controller._section.measure_result_id
+        )
