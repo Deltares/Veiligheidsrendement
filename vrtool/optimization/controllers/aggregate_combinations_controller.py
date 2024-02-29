@@ -5,6 +5,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 )
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 
 
 class AggregateCombinationsController:
@@ -29,6 +30,13 @@ class AggregateCombinationsController:
         def get_aggregated_measure_id(
             sh_comb: CombinedMeasure, sg_comb: CombinedMeasure
         ) -> int:
+            def is_matching_sh_sg_measure(sh_sg_measure: ShSgMeasure) -> bool:
+                return (
+                    sh_sg_measure.dcrest == sh_comb.primary.dcrest
+                    and sh_sg_measure.dberm == sg_comb.primary.dberm
+                    and sh_sg_measure.measure_type == sh_comb.primary.measure_type
+                )
+
             # Find the aggregated Sh/Sg measure result id
             if sh_comb.primary.measure_result_id == sg_comb.primary.measure_result_id:
                 return sh_comb.primary.measure_result_id
@@ -40,9 +48,7 @@ class AggregateCombinationsController:
                 (
                     m.measure_result_id
                     for m in self._section.sh_sg_measures
-                    if m.dcrest == sh_comb.primary.dcrest
-                    and m.dberm == sg_comb.primary.dberm
-                    and m.measure_type == sh_comb.primary.measure_type
+                    if is_matching_sh_sg_measure(m)
                 ),
                 0,
             )
