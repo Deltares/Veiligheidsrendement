@@ -63,7 +63,7 @@ class StrategyController:
                 self._section_measures_input
             )
         elif strategy_type == TargetReliabilityStrategy:
-            pass
+            raise NotImplementedError("TargetReliabilityStrategy not implemented yet.")
         raise ValueError(f"Strategy type {strategy_type} not implemented yet.")
 
     def set_investment_year(self) -> None:
