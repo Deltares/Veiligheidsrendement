@@ -69,7 +69,7 @@ class CombinedMeasure:
             MeasureTypeEnum.STABILITY_SCREEN,
         ]:
             return "yes"
-        if self.secondary None and self.secondary.measure_type in [
+        if self.secondary and self.secondary.measure_type in [
             MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
