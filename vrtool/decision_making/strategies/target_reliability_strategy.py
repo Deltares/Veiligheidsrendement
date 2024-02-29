@@ -1,10 +1,10 @@
 import copy
 import logging
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 
-from dataclasses import dataclass
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
@@ -251,7 +251,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     > _beta_t[mechanism.name]
                 ]
 
-            if len(_possible_measures) == 0:
+            if not any(_possible_measures):
                 # continue to next section if weakest has no more measures
                 logging.warning(
                     "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
