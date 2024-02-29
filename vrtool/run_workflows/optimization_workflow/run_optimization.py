@@ -70,7 +70,15 @@ class RunOptimization(VrToolRunProtocol):
 
         # Initialize a GreedyStrategy:
         _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
+        _results_dir = self._get_output_dir()
 
+        _greedy_strategy.evaluate(
+            self._section_input_collection,
+            setting="cautious",
+            f_cautious=1.5,
+            max_count=600,
+            BCstop=0.1,
+        )
         return _greedy_strategy
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
