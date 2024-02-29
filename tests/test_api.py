@@ -463,7 +463,7 @@ class TestApiRunWorkflowsAcceptance:
         )
 
         # Overwrite the design method
-        valid_vrtool_config.design_methods = ["TargetReliability"]
+        # valid_vrtool_config.design_methods = ["TargetReliability"]
 
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
