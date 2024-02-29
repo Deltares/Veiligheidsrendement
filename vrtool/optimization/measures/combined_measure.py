@@ -21,13 +21,13 @@ class CombinedMeasure:
 
     @property
     def lcc(self) -> float:
-        if self.secondary is not None:
+        if self.secondary:
             return self.primary.lcc + self.secondary.lcc
         return self.primary.lcc
 
     @property
     def measure_class(self) -> str:
-        if self.secondary is not None:
+        if self.secondary:
             return "combined"
         return self.primary.combine_type.get_old_name()
 
@@ -51,7 +51,7 @@ class CombinedMeasure:
 
     @property
     def year(self) -> int | list[int]:
-        if self.secondary is not None:
+        if self.secondary:
             return [self.primary.year, self.secondary.year]
         return self.primary.year
 
@@ -69,7 +69,7 @@ class CombinedMeasure:
             MeasureTypeEnum.STABILITY_SCREEN,
         ]:
             return "yes"
-        if self.secondary is not None and self.secondary.measure_type in [
+        if self.secondary None and self.secondary.measure_type in [
             MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
@@ -79,7 +79,7 @@ class CombinedMeasure:
 
     @property
     def combined_id(self) -> int | str:
-        if self.secondary is not None:
+        if self.secondary:
             return (
                 f"{self.primary.measure_type.value}+{self.secondary.measure_type.value}"
             )
@@ -87,13 +87,13 @@ class CombinedMeasure:
 
     @property
     def combined_measure_type(self) -> str:
-        if self.secondary is not None:
+        if self.secondary:
             return f"{self.primary.measure_type.get_old_name()}+{self.secondary.measure_type.get_old_name()}"
         return self.primary.measure_type.get_old_name()
 
     @property
     def combined_db_index(self) -> list[int]:
-        if self.secondary is not None:
+        if self.secondary:
             return [self.primary.measure_result_id, self.secondary.measure_result_id]
         return [self.primary.measure_result_id]
 
@@ -105,7 +105,7 @@ class CombinedMeasure:
         initial_assessment: MechanismPerYearProbabilityCollection,
     ) -> CombinedMeasure:
         _mech_year_coll = primary.mechanism_year_collection
-        if secondary is not None:
+        if secondary:
             _mech_year_coll = MechanismPerYearProbabilityCollection.combine(
                 primary.mechanism_year_collection,
                 secondary.mechanism_year_collection,

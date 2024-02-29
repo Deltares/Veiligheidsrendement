@@ -127,7 +127,7 @@ class TestCombineMeasuresController:
                     c
                     for c in _combinations
                     if (
-                        c.secondary is not None
+                        c.secondary
                         and c.secondary.combine_type == CombinableTypeEnum.PARTIAL
                     )
                 ]
@@ -188,7 +188,7 @@ class TestCombineMeasuresController:
                     c
                     for c in _combinations
                     if (
-                        c.secondary is not None
+                        c.secondary
                         and c.secondary.combine_type == CombinableTypeEnum.REVETMENT
                     )
                 ]

@@ -34,7 +34,7 @@ class MockCombinedMeasure:
 
     @property
     def lcc(self) -> float:
-        if self.secondary is not None:
+        if self.secondary:
             return self.primary.lcc + self.secondary.lcc
         return self.primary.lcc
 

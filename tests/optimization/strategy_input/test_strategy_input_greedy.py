@@ -295,7 +295,7 @@ class TestStrategyInputGreedy:
         # 3. Verify expectations
 
         # Probabilities
-        assert _strategy_input.Pf is not None
+        assert _strategy_input.Pf
         assert _strategy_input.Pf[MechanismEnum.OVERFLOW.name].shape == (
             1,
             8,
@@ -321,7 +321,7 @@ class TestStrategyInputGreedy:
         ] == pytest.approx(0.0010)
 
         # Cost
-        assert _strategy_input.LCCOption is not None
+        assert _strategy_input.LCCOption
         assert _strategy_input.LCCOption.shape == (1, 8, 5)
         assert _strategy_input.LCCOption[0, 0, 0] == pytest.approx(0.0)
         assert _strategy_input.LCCOption[0, 1, 1] == pytest.approx(386738.0)

@@ -183,7 +183,7 @@ class TestSgMeasure:
 
         # 3. Verify expectations
         assert isinstance(_allowed_combinations, dict)
-        assert _allowed_combinations is not None
+        assert _allowed_combinations
 
     @pytest.mark.parametrize(
         "dberm_value",
