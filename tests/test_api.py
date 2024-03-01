@@ -332,7 +332,6 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
-        _validator.validate_phased_out_csv_files(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -367,7 +366,6 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
-        _validator.validate_phased_out_csv_files(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -402,7 +400,6 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
-        _validator.validate_phased_out_csv_files(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",

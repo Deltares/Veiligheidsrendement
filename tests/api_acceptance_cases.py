@@ -474,36 +474,6 @@ class RunStepOptimizationValidator(RunStepValidator):
     def get_csv_reference_dir(vrtool_config: VrtoolConfig) -> Path:
         return vrtool_config.input_directory.joinpath("reference")
 
-    def validate_phased_out_csv_files(self, vrtool_config: VrtoolConfig):
-        """
-        This validation is DEPRECATED as, in theory, the database validation should
-        phase out this way of testing. However we keep them until said theory is validated.
-
-        Args:
-            vrtool_config (VrtoolConfig): Configuration containing the input / output paths.
-        """
-        _test_reference_dir = self.get_csv_reference_dir(vrtool_config)
-        files_to_compare = [
-            "TakenMeasures_Doorsnede-eisen.csv",
-            "TakenMeasures_Veiligheidsrendement.csv",
-            "TotalCostValues_Greedy.csv",
-        ]
-        comparison_errors = []
-        for file in files_to_compare:
-            reference = pd.read_csv(
-                _test_reference_dir.joinpath("results", file), index_col=0
-            )
-            result = pd.read_csv(vrtool_config.output_directory / file, index_col=0)
-            try:
-                assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
-            except Exception:
-                comparison_errors.append("{} is different.".format(file))
-        # assert no error message has been registered, else print messages
-        assert not comparison_errors, "errors occured:\n{}".format(
-            "\n".join(comparison_errors)
-        )
-
-
 class RunFullValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         assert RunStepOptimizationValidator.get_csv_reference_dir(
@@ -515,5 +485,4 @@ class RunFullValidator(RunStepValidator):
         # TODO: Remove this validator class if we understand that
         # the optimization validation is enough.
         _optimization_validator = RunStepOptimizationValidator()
-        _optimization_validator.validate_phased_out_csv_files(valid_vrtool_config)
         _optimization_validator.validate_results(valid_vrtool_config)
