@@ -29,6 +29,7 @@ class GreedyStrategy(StrategyProtocol):
         self.options = strategy_input.options
         self.options_geotechnical = strategy_input.options_geotechnical
         self.options_height = strategy_input.options_height
+        self.sections = strategy_input.sections
 
         self.opt_parameters = strategy_input.opt_parameters
         self.Pf = strategy_input.Pf
@@ -45,7 +46,12 @@ class GreedyStrategy(StrategyProtocol):
         self.OI_horizon = config.OI_horizon
         self.mechanisms = config.mechanisms
         self.T = config.T
+        self._time_periods = config.T
         self.LE_in_section = config.LE_in_section
+        
+        self.measures_taken = []
+        self.total_risk_per_step = []
+        self.probabilities_per_step = []
 
     def bundling_output(
         self, BC_list, counter_list, sh_array, sg_array, existing_investments
