@@ -12,6 +12,7 @@ from vrtool.decision_making.strategy_evaluation import (
     calc_tr,
     implement_option,
     make_traject_df,
+    compute_total_risk,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
