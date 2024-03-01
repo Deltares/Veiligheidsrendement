@@ -14,3 +14,21 @@ class AggregatedMeasureCombination:
     @property
     def lcc(self):
         return self.sh_combination.lcc + self.sg_combination.lcc
+
+    def check_primary_measure_result_id_and_year(self, primary_sh: ShMeasure , primary_sg: SgMeasure
+                                                 ) -> bool:
+        """
+        This method checks if the primary measure result id and year of the aggregated measure combination match the primary measure result id and year of the primary measures.
+        
+        Args:
+            primary_sh (ShMeasure): The primary Sh measure of the section
+            primary_sg (SgMeasure): The primary Sg measure of the section
+
+        Returns:
+            bool: True if it matches, False otherwise.
+        
+        """
+        if (self.sh_combination.primary.measure_result_id == primary_sh.measure_result_id) and (self.sg_combination.primary.measure_result_id == primary_sg.measure_result_id):
+            return (self.sh_combination.primary.year == primary_sh.year) and (self.sg_combination.primary.year == primary_sg.year)
+        else:
+            return False
