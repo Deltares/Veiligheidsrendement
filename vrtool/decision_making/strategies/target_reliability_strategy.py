@@ -169,7 +169,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
     def evaluate(
         self,
         dike_traject: DikeTraject,
-        splitparams: bool = False,
     ):
         # Previous approach instead of self._time_periods = config.T:
         # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
