@@ -23,6 +23,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
     options_height: list[dict[str, df]] = field(default_factory=list)
     options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     opt_parameters: dict[str, int] = field(default_factory=dict)
+    sections: list[SectionAsInput] = field(default_factory=list)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
