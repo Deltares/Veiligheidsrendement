@@ -111,17 +111,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
     def __init__(
         self, strategy_input: StrategyInputTargetReliability, config: VrtoolConfig
     ):
-        # Mapping as in previuos `StrategyBase`
-        self.discount_rate = config.discount_rate
-        self.config = config
+        # Necessary config parameters:
         self.OI_horizon = config.OI_horizon
-        self.mechanisms = config.mechanisms
-        self._time_periods = config.T
-        self.LE_in_section = config.LE_in_section
 
         # New mappings
-        self.options = strategy_input.options
-        self._section_as_input_dict = strategy_input.section_as_input_dict
+        self.Pf = strategy_input.Pf
+        self.D = strategy_input.D
+        self.sections = strategy_input.sections
 
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         return float("nan"), float("nan")
