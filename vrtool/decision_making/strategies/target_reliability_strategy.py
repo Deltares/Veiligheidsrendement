@@ -19,43 +19,41 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
     StrategyInputTargetReliability,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
+from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 
 
 @dataclass
 class CrossSectionalRequirements:
-    beta_cs_piping: np.ndarray
-    beta_cs_revetment: np.ndarray
-    beta_cs_stabinner: np.ndarray
-    beta_cs_overflow: np.ndarray
+    pf_cs: dict[MechanismEnum, np.ndarray]
 
     dike_traject_b_piping: float
     dike_traject_b_stability_inner: float
 
     @property
-    def pf_cs_piping(self) -> np.ndarray:
-        return beta_to_pf(self.beta_cs_piping)
+    def beta_cs_piping(self) -> np.ndarray:
+        return pf_to_beta(self.pf_cs[MechanismEnum.PIPING])
 
     @property
-    def pf_cs_stabinner(self) -> np.ndarray:
-        return beta_to_pf(self.beta_cs_stabinner)
+    def beta_cs_stabinner(self) -> np.ndarray:
+        return pf_to_beta(self.pf_cs[MechanismEnum.STABILITY_INNER])
 
     def calculate_beta_t_piping(
         self, dike_section_length: float, le_in_section: bool
     ) -> np.ndarray:
         if not le_in_section:
-            return self.beta_cs_piping
+            return pf_to_beta(self.pf_cs[MechanismEnum.PIPING])
         return pf_to_beta(
-            self.pf_cs_piping * (dike_section_length / self.dike_traject_b_piping)
+            self.pf_cs[MechanismEnum.PIPING] * (dike_section_length / self.dike_traject_b_piping)
         )
 
     def calculate_beta_t_stabinner(
         self, dike_section_length: float, le_in_section: bool
     ) -> np.ndarray:
         if not le_in_section:
-            return self.beta_cs_stabinner
+            return pf_to_beta(self.pf_cs[MechanismEnum.STABILITY_INNER])
         return pf_to_beta(
-            self.pf_cs_stabinner
+            self.pf_cs[MechanismEnum.STABILITY_INNER]
             * (dike_section_length / self.dike_traject_b_stability_inner)
         )
 
@@ -76,29 +74,29 @@ class CrossSectionalRequirements:
         n_revetment = 3
         omegaRevetment = 0.1
 
-        _beta_cs_piping = pf_to_beta(
+        _pf_cs_piping = (
             dike_traject.general_info.Pmax
             * dike_traject.general_info.omegaPiping
             / n_piping
         )
-        _beta_cs_revetment = pf_to_beta(
+        _pf_cs_revetment = (
             dike_traject.general_info.Pmax * omegaRevetment / n_revetment
         )
-        _beta_cs_stabinner = pf_to_beta(
+        _pf_cs_stabinner = (
             dike_traject.general_info.Pmax
             * dike_traject.general_info.omegaStabilityInner
             / n_stab
         )
-        _beta_cs_overflow = pf_to_beta(
+        _pf_cs_overflow = (
             dike_traject.general_info.Pmax
             * dike_traject.general_info.omegaOverflow
             / n_overflow
         )
         return cls(
-            beta_cs_piping=_beta_cs_piping,
-            beta_cs_revetment=_beta_cs_revetment,
-            beta_cs_stabinner=_beta_cs_stabinner,
-            beta_cs_overflow=_beta_cs_overflow,
+            pf_cs = {MechanismEnum.PIPING: _pf_cs_piping,
+                     MechanismEnum.STABILITY_INNER: _pf_cs_stabinner,
+                     MechanismEnum.OVERFLOW: _pf_cs_overflow,
+                     MechanismEnum.REVETMENT: _pf_cs_revetment},
             dike_traject_b_piping=dike_traject.general_info.bPiping,
             dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
         )
@@ -228,6 +226,27 @@ class TargetReliabilityStrategy(StrategyProtocol):
         _probability_steps = [copy.deepcopy(_base_traject_probability)]
         _traject_probability = copy.deepcopy(_base_traject_probability)
 
+        def _check_cross_sectional_requirements(measure: AggregatedMeasureCombination, cross_sectional_requirements, year, mechanisms
+                                                )-> bool:
+            """This function checks if the cross-sectional requirements are met for a given measure and year.
+            If the requirements are not met for any of the mechanisms, the function returns False, otherwise True."""
+            for mechanism in mechanisms:
+                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                    #look in sh, if any mechanism is not satisfied, return a False
+                    if measure.sh_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.pf_cs[mechanism]:
+                        return False
+                elif mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:    
+                    if measure.sg_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.pf_cs[mechanism]:
+                        return False
+            return True
+        
+        # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
+        initial_section_pfs = [section.initial_assessment.get_section_probability(self.OI_horizon) for section in self.sections]
+
+        # Rank sections based on initial probability
+        section_order = np.flip(np.argsort(initial_section_pfs))
+
+        # get the cross-sectional requirements for the dike traject (probability)
         _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
             dike_traject
         )
