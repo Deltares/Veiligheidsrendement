@@ -113,7 +113,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
     ):
         # Necessary config parameters:
         self.OI_horizon = config.OI_horizon
-
+        self._time_periods = config.T
         # New mappings
         self.Pf = strategy_input.Pf
         self.D = strategy_input.D
