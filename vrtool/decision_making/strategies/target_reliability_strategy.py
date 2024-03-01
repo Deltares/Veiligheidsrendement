@@ -122,45 +122,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
     def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
         return float("nan"), float("nan")
 
-    @staticmethod
-    def _id_to_name(
-        found_id: str, section_as_input_dict: dict[str, SectionAsInput]
-    ) -> str:
-        """
-        Previously in tools. Only used once within this evaluate method.
-        """
-        return next(
-            _section_id
-            for _section_id, _section_input in section_as_input_dict.items()
-            if any(c.combined_id == found_id for c in _section_input.combined_measures)
-        )
-        # return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
-        #     "Name"
-        # ].values[0]
-
-    def _get_beta_t_dictionary(
-        self,
-        cross_sectional_requirements: CrossSectionalRequirements,
-        dike_section_length: float,
-    ) -> dict[str, float]:
-        # convert beta_cs to beta_section in order to correctly search self.options[section]
-        # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
-        if self.LE_in_section:
-            logging.warning(
-                "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
-            )
-
-        return {
-            MechanismEnum.PIPING.name: cross_sectional_requirements.calculate_beta_t_piping(
-                dike_section_length, self.LE_in_section
-            ),
-            MechanismEnum.STABILITY_INNER.name: cross_sectional_requirements.calculate_beta_t_stabinner(
-                dike_section_length, self.LE_in_section
-            ),
-            MechanismEnum.OVERFLOW.name: cross_sectional_requirements.beta_cs_overflow,
-            MechanismEnum.REVETMENT.name: cross_sectional_requirements.beta_cs_revetment,
-        }
-
     def evaluate(
         self,
         dike_traject: DikeTraject,
