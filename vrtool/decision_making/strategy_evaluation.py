@@ -456,6 +456,42 @@ def implement_option(section, traject_probability, new_probability):
         traject_probability.loc[(section, i)] = new_probability[i]
     return traject_probability
 
+def compute_annual_failure_probability(traject_probability: dict[np.ndarray]):
+    """Computes the annual failure probability for each mechanism.
+    
+    Args:
+        traject_probability (dict[np.ndarray]): The collection of the section probabilities for each mechanism. The array has dimensions N x T with N the number of sections and T the number of years
+
+    Returns:
+        np.ndarray: The annual failure probability of the traject.
+    """
+    annual_failure_probability = []
+    for mechanism_name in traject_probability.keys():
+        if MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
+            #1-prod
+            annual_failure_probability.append(1-(1-traject_probability[mechanism_name]).prod(axis=0))
+        elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.REVETMENT]:
+            annual_failure_probability.append(4 * np.max(traject_probability[mechanism_name],axis=0))
+            #4 * maximum
+            pass
+        elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.OVERFLOW]:
+            annual_failure_probability.append(np.max(traject_probability[mechanism_name],axis=0))         
+    
+    return np.sum(annual_failure_probability,axis=0)
+
+def compute_total_risk(traject_probability: dict[np.ndarray],
+                       annual_discounted_damage: np.ndarray[float]):
+    """Computes the total risk of the traject.
+
+    Args:
+        traject_probability (dict[np.ndarray]): The collection of the section probabilities for each mechanism. The array has dimensions N x T with N the number of sections and T the number of years
+        annual_discounted_damage (np.ndarray[float]): The annual discounted damage of the traject. The array has dimension T with T the number of years.
+
+    Returns:
+        float: The total risk of the traject.
+    """
+    annual_failure_probability = compute_annual_failure_probability(traject_probability)
+    return np.sum(annual_failure_probability * annual_discounted_damage)
 
 def split_options(
     options: dict[str, pd.DataFrame], available_mechanisms: list[MechanismEnum]
