@@ -49,7 +49,7 @@ class CrossSectionalRequirements:
             self.pf_cs_piping * (dike_section_length / self.dike_traject_b_piping)
         )
 
-    def calculate_beta_t_sabinner(
+    def calculate_beta_t_stabinner(
         self, dike_section_length: float, le_in_section: bool
     ) -> np.ndarray:
         if not le_in_section:
@@ -159,7 +159,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
             MechanismEnum.PIPING.name: cross_sectional_requirements.calculate_beta_t_piping(
                 dike_section_length, self.LE_in_section
             ),
-            MechanismEnum.STABILITY_INNER.name: cross_sectional_requirements.calculate_beta_t_sabinner(
+            MechanismEnum.STABILITY_INNER.name: cross_sectional_requirements.calculate_beta_t_stabinner(
                 dike_section_length, self.LE_in_section
             ),
             MechanismEnum.OVERFLOW.name: cross_sectional_requirements.beta_cs_overflow,

@@ -2,9 +2,6 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict
 
-import numpy as np
-import pandas as pd
-
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -70,7 +67,6 @@ class RunOptimization(VrToolRunProtocol):
 
         # Initialize a GreedyStrategy:
         _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
-        _results_dir = self._get_output_dir()
 
         _greedy_strategy.evaluate(
             self.selected_traject,
@@ -94,7 +90,6 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based = TargetReliabilityStrategy(
             _target_reliability_input, self.vr_config
         )
-        _results_dir = self._get_output_dir()
 
         # filter those measures that are not available at the first available time step
         # self._filter_measures_first_time()
