@@ -228,3 +228,22 @@ class TargetReliabilityStrategy(StrategyProtocol):
             measure_idx = self.sections[_section_idx].get_combination_idx_for_aggregate(_taken_measures[self.sections[_section_idx].section_name])
             _taken_measures_indices.append((_section_idx, measure_idx[0]+1, measure_idx[1]+1))
 
+
+        # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step
+        # First we get, and update the probabilities per step
+        #we need to track probability for each step
+        init_probability = {mech: self.Pf[mech][:,0,:] for mech in self.Pf.keys()}
+        self.probabilities_per_step = [copy.deepcopy(init_probability)]
+        self.total_risk_per_step = [compute_total_risk(self.probabilities_per_step[-1], self.D)]
+
+        for step in range(0, len(_taken_measures)):
+            section_id = _taken_measures_indices[step][0]
+            self.probabilities_per_step.append(copy.deepcopy(self.probabilities_per_step[-1]))
+            self.probabilities_per_step[-1] = implement_option(
+                self.probabilities_per_step[-1], 
+                _taken_measures_indices[step], 
+                _taken_measures[self.sections[section_id].section_name]
+                )
+            self.total_risk_per_step.append(compute_total_risk(self.probabilities_per_step[-1], self.D))
+        
+        self.measures_taken = _taken_measures_indices
