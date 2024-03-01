@@ -45,7 +45,6 @@ class GreedyStrategy(StrategyProtocol):
         self.config = config
         self.OI_horizon = config.OI_horizon
         self.mechanisms = config.mechanisms
-        self.T = config.T
         self._time_periods = config.T
         self.LE_in_section = config.LE_in_section
         
@@ -193,7 +192,6 @@ class GreedyStrategy(StrategyProtocol):
         existing_investments: np.array,
         mechanism: MechanismEnum,
         dim_sh: int,
-        traject: DikeTraject,
     ):
         """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no"""
         # make arrays for section
@@ -338,7 +336,6 @@ class GreedyStrategy(StrategyProtocol):
         init_mechanism_risk: np.array,
         existing_investment: list,
         life_cycle_cost: np.array,
-        traject: DikeTraject,
     ):
         """This function bundles the measures for which sections are dependent. It can be used for overflow and revetment"""
         life_cycle_cost = copy.deepcopy(life_cycle_cost)
@@ -375,7 +372,6 @@ class GreedyStrategy(StrategyProtocol):
                 existing_investments,
                 mechanism,
                 life_cycle_cost.shape[1],
-                traject,
             )
 
         # then we bundle the measures by getting the BC for the mechanism under consideration
@@ -399,13 +395,10 @@ class GreedyStrategy(StrategyProtocol):
 
     def evaluate(
         self,
-        traject: DikeTraject,
-        sections: list[SectionAsInput],
-        splitparams=False,
         setting="fast",
         BCstop=0.1,
-        max_count=150,
-        f_cautious=2,
+        max_count=600,
+        f_cautious=1.5,
     ):
         """This is the main routine for a greedy evaluation of all solutions."""
         # TODO put settings in config
@@ -530,7 +523,6 @@ class GreedyStrategy(StrategyProtocol):
                 copy.deepcopy(init_overflow_risk),
                 copy.deepcopy(measure_list),
                 copy.deepcopy(LifeCycleCost),
-                copy.deepcopy(traject),
             )
             # for revetment:
             BC_bundleRevetment = 0.0
@@ -543,7 +535,6 @@ class GreedyStrategy(StrategyProtocol):
                     copy.deepcopy(init_revetment_risk),
                     copy.deepcopy(measure_list),
                     copy.deepcopy(LifeCycleCost),
-                    copy.deepcopy(traject),
                 )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
