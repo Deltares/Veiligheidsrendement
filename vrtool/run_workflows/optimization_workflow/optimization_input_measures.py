@@ -18,10 +18,12 @@ class OptimizationInputMeasures:
         Returns:
             list[tuple[int, int]]: List of tuples `list[tuple[id, investment_year]]`.
         """
-        return list(
+        return sorted( 
+            list(
             set(
                 (mr.measure_result_id, mr.year)
                 for _section_input in self.section_input_collection
                 for mr in _section_input.measures
             )
+        )
         )
