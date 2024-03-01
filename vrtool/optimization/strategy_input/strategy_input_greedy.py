@@ -50,8 +50,8 @@ class StrategyInputGreedy(StrategyInputProtocol):
                 [m.name for m in SgMeasure.get_allowed_mechanisms()],
             )
 
-        _strategy_input = cls()
-
+        _strategy_input = cls(sections=section_as_input_collection)
+        
         # Define options
         _strategy_input.options = {
             _s.section_name: LegacyMappingHelper.get_section_options(_s)
