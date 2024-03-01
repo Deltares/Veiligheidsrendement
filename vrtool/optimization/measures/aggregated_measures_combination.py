@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
-
+from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sh_measure import ShMeasure
 
 @dataclass
 class AggregatedMeasureCombination:
