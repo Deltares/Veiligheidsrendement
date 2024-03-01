@@ -227,30 +227,4 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[idx]
             measure_idx = self.sections[_section_idx].get_combination_idx_for_aggregate(_taken_measures[self.sections[_section_idx].section_name])
             _taken_measures_indices.append((_section_idx, measure_idx[0]+1, measure_idx[1]+1))
-                )
-            else:
-                data_opt = pd.DataFrame(
-                    [
-                        [
-                            _dike_section.name,
-                            option_index,
-                            _lcc[idx],
-                            _bc,
-                            measure["ID"].values[0],
-                            measure["name"].values[0],
-                            measure["params"].values[0],
-                        ]
-                    ],
-                    columns=_taken_measures.columns,
-                )  # here we evaluate and pick the option that has the
-                # lowest total cost and a BC ratio that is lower than any measure at any other section
 
-            # Add to TakenMeasures
-            _taken_measures = pd.concat((_taken_measures, data_opt))
-            # Calculate new probabilities
-            _traject_probability = implement_option(
-                _dike_section.name, _traject_probability, measure
-            )
-            _probability_steps.append(copy.deepcopy(_traject_probability))
-        self.TakenMeasures = _taken_measures
-        self.Probabilities = _probability_steps
