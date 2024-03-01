@@ -2,9 +2,6 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict
 
-import numpy as np
-import pandas as pd
-
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_base import StrategyBase
@@ -71,6 +68,14 @@ class RunOptimization(VrToolRunProtocol):
         # Initialize a GreedyStrategy:
         _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
 
+        _greedy_strategy.evaluate(
+            self.selected_traject,
+            self._section_input_collection,
+            setting="cautious",
+            f_cautious=1.5,
+            max_count=600,
+            BCstop=0.1,
+        )
         return _greedy_strategy
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
@@ -85,37 +90,12 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based = TargetReliabilityStrategy(
             _target_reliability_input, self.vr_config
         )
-        _results_dir = self._get_output_dir()
 
         # filter those measures that are not available at the first available time step
         # self._filter_measures_first_time()
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
         _target_reliability_based.evaluate(self.selected_traject, splitparams=True)
-        _target_reliability_based.make_solution(
-            _results_dir.joinpath(
-                "FinalMeasures_" + _target_reliability_input.design_method + ".csv",
-            ),
-            type="Final",
-        )
-
-        _target_reliability_based = self._replace_names(
-            _target_reliability_based, self._solutions_dict
-        )
-        # write to csv's
-        _target_reliability_based.TakenMeasures.to_csv(
-            _results_dir.joinpath(
-                "TakenMeasures_" + _target_reliability_input.design_method + ".csv",
-            )
-        )
-        for j in _target_reliability_based.options:
-            _target_reliability_based.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _target_reliability_based.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
-
         return _target_reliability_based
 
     def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyBase]]:

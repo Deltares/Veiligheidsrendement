@@ -63,22 +63,19 @@ class CombinedMeasure:
 
     @property
     def yesno(self) -> int | str:
-        if self.primary.measure_type in [
+        _accepted_measure_types = [
             MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
-        ]:
+        ]
+        if self.primary.measure_type in _accepted_measure_types:
             return "yes"
-        if self.secondary and self.secondary.measure_type in [
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
-            MeasureTypeEnum.DIAPHRAGM_WALL,
-            MeasureTypeEnum.STABILITY_SCREEN,
-        ]:
+        if self.secondary and self.secondary.measure_type in _accepted_measure_types:
             return "yes"
         return -999
 
     @property
-    def combined_id(self) -> int | str:
+    def combined_id(self) -> str:
         if self.secondary:
             return (
                 f"{self.primary.measure_type.value}+{self.secondary.measure_type.value}"

@@ -468,6 +468,8 @@ class GreedyStrategy(StrategyProtocol):
             init_probability[mechanism.name] = np.empty(
                 (self.opt_parameters["N"], self.opt_parameters["T"])
             )
+            if mechanism.name not in self.Pf:
+                continue
             for n in range(0, self.opt_parameters["N"]):
                 init_probability[mechanism.name][n, :] = self.Pf[mechanism.name][
                     n, 0, :
