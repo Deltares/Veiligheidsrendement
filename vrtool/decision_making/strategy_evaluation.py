@@ -11,7 +11,7 @@ from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-
+from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 
 # This script combines two sets of measures to a single option
 def measure_combinations(
@@ -447,13 +447,26 @@ def calc_life_cycle_risks(
     TR = np.sum(risk_t)
     return TR
 
+# this function changes the traject probability of a measure is implemented:
+def implement_option(traject_probability: dict[np.ndarray], 
+                     measure_idx: tuple, 
+                     measure: AggregatedMeasureCombination):
+    """Implements a measure in the traject probability dictionary.
 
-# this function changes the trajectprobability of a measure is implemented:
-def implement_option(section, traject_probability, new_probability):
-    mechs = np.unique(traject_probability.index.get_level_values("mechanism").values)
-    # change trajectprobability by changing probability for each mechanism
-    for i in mechs:
-        traject_probability.loc[(section, i)] = new_probability[i]
+    Args:
+        traject_probability (dict[np.ndarray]): The probabilities for each mechanism. The arrays have dimensions N x T with N the number of sections and T the number of years
+        measure_idx (tuple): The index of the measure to implement (section_index, sh_index, sg_index).
+        measure (AggregatedMeasureCombination): The measure to implement.
+
+
+    Returns:
+        dict[np.ndarray]: The updated traject probability dictionary. where the measure is implemented.
+    """
+    
+    t_range = list(traject_probability.values())[0].shape[1] #TODO: this should be made more robust
+    for mechanism_name in traject_probability.keys():
+        if MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
+            traject_probability[mechanism_name][measure_idx[0],:] = measure.sg_combination.mechanism_year_collection.get_probabilities(MechanismEnum.get_enum(mechanism_name), np.arange(0,t_range,1))
     return traject_probability
 
 def compute_annual_failure_probability(traject_probability: dict[np.ndarray]):
