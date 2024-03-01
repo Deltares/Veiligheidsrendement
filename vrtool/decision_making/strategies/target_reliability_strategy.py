@@ -171,61 +171,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # Previous approach instead of self._time_periods = config.T:
         # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
         # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
-
-        # Rank sections based on 2075 Section probability
-        beta_horizon = []
-        for _dike_section in dike_traject.sections:
-            beta_horizon.append(
-                _dike_section.section_reliability.SectionReliability.loc["Section"][
-                    str(self.OI_horizon)
-                ]
-            )
-
-        section_indices = np.argsort(beta_horizon)
-        measure_cols = ["Section", "option_index", "LCC", "BC"]
-
-        if splitparams:
-            _taken_measures = pd.DataFrame(
-                data=[
-                    [
-                        None,
-                        None,
-                        0,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ]
-                ],
-                columns=measure_cols
-                + [
-                    "ID",
-                    "name",
-                    "year",
-                    "yes/no",
-                    "dcrest",
-                    "dberm",
-                    "beta_target",
-                    "transition_level",
-                ],
-            )
-        else:
-            _taken_measures = pd.DataFrame(
-                data=[[None, None, None, 0, None, None, None]],
-                columns=measure_cols + ["ID", "name", "params"],
-            )
-        # columns (section name and index in self.options[section])
-        # This is actually the `SectionAsInput.initial_assessment`, however we miss
-        # the initial assessment for the section.
-        _base_traject_probability = make_traject_df(dike_traject, self._time_periods)
-        _probability_steps = [copy.deepcopy(_base_traject_probability)]
-        _traject_probability = copy.deepcopy(_base_traject_probability)
-
         def _check_cross_sectional_requirements(measure: AggregatedMeasureCombination, cross_sectional_requirements, year, mechanisms
                                                 )-> bool:
             """This function checks if the cross-sectional requirements are met for a given measure and year.
@@ -250,84 +195,37 @@ class TargetReliabilityStrategy(StrategyProtocol):
         _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
             dike_traject
         )
-        for _section_idx in section_indices:
-            _dike_section = dike_traject.sections[_section_idx]
-            _beta_t = self._get_beta_t_dictionary(
-                _cross_sectional_requirements, _dike_section.Length
-            )
-            # find cheapest design that satisfies betatcs in 50 years from invest year
-            # previously _selected_section_as_input = self.options[_dike_section.name]
-            _selected_section_as_input = self._section_as_input_dict[_dike_section.name]
-            _selected_option = self.options[_dike_section.name]
-            _invest_year = _selected_section_as_input.min_year
-            _target_year = _invest_year + 50
+        #and the risk for each step
+        _taken_measures = {}
+        _taken_measures_indices = []
+        for _section_idx in section_order:
+            # add probability for this step:
 
-            # make PossibleMeasures dataframe
-            _possible_measures = copy.deepcopy(_selected_option)
-            # filter for mechanisms that are considered
-            for mechanism in dike_traject.mechanisms:
-                _possible_measures = _possible_measures.loc[
-                    _selected_option[(mechanism.name, _target_year)]
-                    > _beta_t[mechanism.name]
-                ]
+            #get the first possible investment year from the aggregated measures
+            _section_as_input = self.sections[_section_idx]
+            _invest_year = min([measure.year for measure in _section_as_input.aggregated_measure_combinations])
+            _design_horizon_year = _invest_year + self.OI_horizon
+            #for each aggregate measure check if the cross-sectional requirements are met
+            _satisfied_bool = [_check_cross_sectional_requirements(_measure, _cross_sectional_requirements, _design_horizon_year, _section_as_input.mechanisms) for _measure in _section_as_input.aggregated_measure_combinations]
+            #generate bool for each measure with year in investment year
+            _valid_year_bool = [measure.year == _invest_year for measure in _section_as_input.aggregated_measure_combinations]
 
-            if len(_possible_measures) == 0:
-                # continue to next section if weakest has no more measures
+            #get the measure with the lowest lcc that satisfies both _satisfied_bool and _valid_year_bool
+            _valid_measures = [_measure for _measure, _satisfied, _valid_year in zip(_section_as_input.aggregated_measure_combinations, _satisfied_bool, _valid_year_bool) if _satisfied and _valid_year]
+            if len(_valid_measures) == 0:
+                #if no measures satisfy the requirements, continue to the next section
                 logging.warning(
-                    "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
-                        _dike_section.name
+                                        "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
+                        _section_as_input.section_name
                     )
                 )
                 continue
-            # calculate LCC
-            _lcc = calc_tc(
-                _possible_measures,
-                self.discount_rate,
-                horizon=_selected_section_as_input.max_year,
-                # horizon=_selected_option[MechanismEnum.OVERFLOW.name].columns[-1],
-            )
-
-            # select measure with lowest cost
+            #get measure with lowest lcc from _valid_measures
+            _lcc = [measure.lcc for measure in _valid_measures]
             idx = np.argmin(_lcc)
-
-            measure = _possible_measures.iloc[idx]
-            option_index = _possible_measures.index[idx]
-            # calculate achieved risk reduction & BC ratio compared to base situation
-            _r_base, _dr, _t_r = calc_tr(
-                _dike_section.name,
-                measure,
-                _traject_probability,
-                original_section=_traject_probability.loc[_dike_section.name],
-                discount_rate=self.discount_rate,
-                horizon=self._time_periods[-1],
-                damage=dike_traject.general_info.FloodDamage,
-            )
-            _bc = _dr / _lcc[idx]
-
-            if splitparams:
-                _found_id = measure["ID"].values[0]
-                # TODO: We don't have the names as they were anymore :/
-                # solutions_dict[i.name].measure_table
-                # Which should translate to something like  SectionAsInput.get_measure_name_by_id()
-                name = self._id_to_name(_found_id, self._section_as_input_dict)
-                data_opt = pd.DataFrame(
-                    [
-                        [
-                            _dike_section.name,
-                            option_index,
-                            _lcc[idx],
-                            _bc,
-                            measure["ID"].values[0],
-                            name,
-                            measure["year"].values[0],
-                            measure["yes/no"].values[0],
-                            measure["dcrest"].values[0],
-                            measure["dberm"].values[0],
-                            measure["beta_target"].values[0],
-                            measure["transition_level"].values[0],
-                        ]
-                    ],
-                    columns=_taken_measures.columns,
+            _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[idx]
+            measure_idx = self.sections[_section_idx].get_combination_idx_for_aggregate(_taken_measures[self.sections[_section_idx].section_name])
+            _taken_measures_indices.append((_section_idx, measure_idx[0]+1, measure_idx[1]+1))
                 )
             else:
                 data_opt = pd.DataFrame(
