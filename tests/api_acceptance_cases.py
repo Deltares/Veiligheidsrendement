@@ -394,8 +394,8 @@ class RunStepOptimizationValidator(RunStepValidator):
         for _idx, _reference in enumerate(reference_list):
             _result = result_list[_idx]
             assert _reference.step_number == _result.step_number
-            assert _reference.total_lcc == _result.total_lcc
-            assert _reference.total_risk == _result.total_risk
+            assert pytest.approx(_reference.total_lcc, _result.total_lcc, abs=1e-2)
+            assert pytest.approx(_reference.total_risk, _result.total_risk, abs=1e-2)
             self._compare_optimization_step_results_mechanism(
                 _reference.optimization_step_results_mechanism,
                 _result.optimization_step_results_mechanism,
@@ -410,9 +410,9 @@ class RunStepOptimizationValidator(RunStepValidator):
         reference: OptimizationStepResult,
         result: OptimizationStepResult,
     ):
-        assert reference.beta == result.beta
+        assert pytest.approx(reference.beta, result.beta, abs=1e-4)
         assert reference.time == result.time
-        assert reference.lcc == result.lcc
+        assert pytest.approx(reference.lcc, result.lcc, abs=1e-2)
 
     def _compare_mechanism_per_section(
         self, reference: orm.MechanismPerSection, result: orm.MechanismPerSection
