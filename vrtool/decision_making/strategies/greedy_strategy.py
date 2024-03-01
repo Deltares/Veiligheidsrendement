@@ -200,110 +200,87 @@ class GreedyStrategy(StrategyProtocol):
         sh_section_sorted = np.full((1, dim_sh), 999, dtype=int)
         sg_section = np.full((1, dim_sh), 999, dtype=int)
 
-        GeotechnicalOptions = self.options_geotechnical[
-            traject.sections[section_no].name
-        ]
-        HeightOptions = self.options_height[traject.sections[section_no].name]
         # if there is already an investment we ensure that the reliability for none of the mechanisms is lower than the current investment
         if any(existing_investments[section_no, :] > 0):
             # if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
             if existing_investments[section_no, 1] > 0:
-                investment_id = (
+                # note that matrix indices in existing_investments are always 1 higher than the investment id
+                investment_id_sg = (
                     existing_investments[section_no, 1] - 1
-                )  # note that matrix indices in existing_investments are always 1 higher than the investment id
-                current_investment_geotechnical = GeotechnicalOptions.iloc[
-                    investment_id
-                ]
-                current_investment_stability = current_investment_geotechnical[
-                    MechanismEnum.STABILITY_INNER.name
-                ]
-                current_investment_piping = current_investment_geotechnical[
-                    MechanismEnum.PIPING.name
-                ]
-                # check if all rows in comparison only contain True values
-                comparison_geotechnical = (
-                    GeotechnicalOptions.STABILITY_INNER >= current_investment_stability
-                ) & (GeotechnicalOptions.PIPING >= current_investment_piping)
-                available_measures_geotechnical = comparison_geotechnical.all(
-                    axis=1
-                )  # df indexing, so a False should be added before
+                )  
+
+                current_pf_stability =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.STABILITY_INNER, np.arange(0,self.Pf['STABILITY_INNER'].shape[2]))
+
+                current_pf_piping =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.PIPING, np.arange(0,self.Pf['PIPING'].shape[2]))
+
+                #measure_pf_stability 
+                measure_pfs_stability = self.Pf[MechanismEnum.STABILITY_INNER.name][section_no, :, :]
+                #measure_pf_piping
+                measure_pfs_piping = self.Pf[MechanismEnum.PIPING.name][section_no, :, :]
+
+                #get indices for rows in measure_pfs where measure_pf_stability and measure_pf_piping are smaller or equal to  current_pf_stability and current_pf_piping by comparing the numpy array
+                comparison_geotechnical = np.argwhere(np.all(measure_pfs_stability <= current_pf_stability,axis=1) & np.all(measure_pfs_piping <= current_pf_piping,axis=1)).flatten()
+                #make a mask where geotechnical options are available
+                available_measures_geotechnical = np.zeros(len(measure_pfs_stability), dtype=bool)
+                available_measures_geotechnical[comparison_geotechnical] = True
+
             else:
-                available_measures_geotechnical = pd.Series(
-                    np.ones(len(GeotechnicalOptions), dtype=bool)
-                )
+                #all available
+                available_measures_geotechnical = np.ones(len(measure_pfs_stability), dtype=bool)
 
             # same for HeightOptions
             if existing_investments[section_no, 0] > 0:
-                current_height_investments = {}
-                # exclude rows for height options that are not safer than current
-                _mech_name = MechanismEnum.OVERFLOW.name
-                if _mech_name in HeightOptions.columns:
-                    current_height_investments[_mech_name] = HeightOptions.iloc[
-                        existing_investments[section_no, 0] - 1
-                    ][_mech_name]
-                _mech_name = MechanismEnum.REVETMENT.name
-                if _mech_name in HeightOptions.columns:
-                    current_height_investments[_mech_name] = HeightOptions.iloc[
-                        existing_investments[section_no, 0] - 1
-                    ][_mech_name]
+                current_pf = {}
+                measure_pfs = {}
+                investment_id_sh = existing_investments[section_no, 0] - 1
+                # exclude rows for height options that are not safer than current.
+                #Overflow must be present. Revetment is optional.
+                current_pf[MechanismEnum.OVERFLOW] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
+                if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
+                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['REVETMENT'].shape[2]))
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
-                    comparison_height = (
-                        HeightOptions.OVERFLOW
-                        > current_height_investments[MechanismEnum.OVERFLOW.name]
-                    ).any(axis=1)
-                    if MechanismEnum.REVETMENT.name in HeightOptions.columns:
-                        comparison_height = comparison_height & (
-                            HeightOptions.REVETMENT
-                            >= current_height_investments[MechanismEnum.REVETMENT.name]
-                        ).all(axis=1)
-                elif mechanism == MechanismEnum.REVETMENT:
-                    comparison_height = (
-                        HeightOptions.REVETMENT
-                        > current_height_investments[MechanismEnum.REVETMENT.name]
-                    ).any(axis=1)
-                    if MechanismEnum.OVERFLOW.name in HeightOptions.columns:
-                        comparison_height = comparison_height & (
-                            HeightOptions.OVERFLOW
-                            >= current_height_investments[MechanismEnum.OVERFLOW.name]
-                        ).all(axis=1)
+                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
+                    #get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
+                    if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
+                        #take combination of REVETMENT and OVERFLOW
+                        measure_pfs[MechanismEnum.REVETMENT] = self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :]
+                        comparison_height = np.where(np.all(measure_pfs[MechanismEnum.OVERFLOW] <= current_pf[MechanismEnum.OVERFLOW],axis=1) & np.all(measure_pfs[MechanismEnum.REVETMENT] < current_pf[MechanismEnum.REVETMENT],axis=1))
+                    else:
+                        #only look at OVERFLOW
+                        comparison_height = np.where(np.all(measure_pfs[MechanismEnum.OVERFLOW] < current_pf[MechanismEnum.OVERFLOW],axis=1))
 
+                elif mechanism == MechanismEnum.REVETMENT:
+                    #overflow must be present so slightly different
+                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
+                    measure_pfs[MechanismEnum.REVETMENT] = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
+                    #get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
+                    comparison_height = np.where(np.all(measure_pfs[MechanismEnum.OVERFLOW] <= current_pf[MechanismEnum.OVERFLOW],axis=1) & np.all(measure_pfs[MechanismEnum.REVETMENT] < current_pf[MechanismEnum.REVETMENT],axis=1))
                 else:
                     raise Exception("Unknown mechanism in overflow bundling")
 
                 available_measures_height = comparison_height
+                # now replace the life_cycle_cost for measures that are not in comparison_height with a very high value:
+                # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
+                mask = np.ones(life_cycle_cost.shape[1], dtype=bool)
+                mask[available_measures_height] = False
             else:  # if there is no investment in height, all options are available
-                available_measures_height = pd.Series(
-                    np.ones(len(HeightOptions), dtype=bool)
-                )
+                mask = np.zeros(life_cycle_cost.shape[1], dtype=bool)
 
             # now replace the life_cycle_cost where available_measures_height is False with a very high value:
             # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
             # get index of available_measures_height where `True`
-            if isinstance(available_measures_height, pd.DataFrame):
-                available_measures_height = available_measures_height.squeeze()
-            unavailable_measure_indices = available_measures_height.index[
-                ~available_measures_height
-            ]
             life_cycle_cost[
                 section_no,
-                unavailable_measure_indices + 1,
+                mask,
                 :,
             ] = 1e99
 
-            # next we get the ids for the possible geotechnical measures
-            ids = (
-                available_measures_geotechnical[
-                    available_measures_geotechnical
-                ].index.values
-                + 1
-            )
-
             # we get a matrix with the LCC values, and get the order of sh measures:
-            lcc_subset = life_cycle_cost[section_no, :, ids].T
+            lcc_subset = life_cycle_cost[section_no, :, comparison_geotechnical].T
             sh_order = np.argsort(np.min(lcc_subset, axis=1))
-            sg_section[0, :] = np.array(ids)[np.argmin(lcc_subset, axis=1)][sh_order]
+            sg_section[0, :] = comparison_geotechnical[np.argmin(lcc_subset, axis=1)][sh_order]
             sh_section_sorted[0, :] = sh_order
             sh_section_sorted[0, :] = np.where(
                 np.sort(np.min(lcc_subset, axis=1)) > 1e60, 999, sh_section_sorted[0, :]
@@ -314,52 +291,30 @@ class GreedyStrategy(StrategyProtocol):
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
             if mechanism == MechanismEnum.OVERFLOW:
                 # Overflow is always present for a section.
-                current_reliability_overflow = traject.sections[
-                    section_no
-                ].section_reliability.SectionReliability.loc[mechanism.name]
+                current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
+                measure_pfs = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
+                #get indices for rows in measure_pfs where all measure_pfs are greater than current_reliability_overflow by comparing the numpy array
+                comparison_height = np.where(np.all(measure_pfs < current_pf_overflow,axis=1))
 
-                comparison_height = pd.DataFrame(
-                    (
-                        HeightOptions.OVERFLOW.values
-                        > current_reliability_overflow.values
-                    ).any(axis=1),
-                    index=HeightOptions.index,
-                )
             elif mechanism == MechanismEnum.REVETMENT:
                 try:  # if Revetment has been computed, get it from the assessment:
-                    current_reliability_revetment = traject.sections[
-                        section_no
-                    ].section_reliability.SectionReliability.loc[mechanism.name]
-
-                    comparison_height = pd.DataFrame(
-                        (
-                            HeightOptions.REVETMENT.values
-                            > current_reliability_revetment.values
-                        ).any(axis=1),
-                        index=HeightOptions.index,
-                    )
+                    current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
+                    measure_pfs = self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :]
+                    comparison_height = np.where(np.all(measure_pfs < current_pf_overflow,axis=1))
                 except:
-                    # fill comparison_height with True values
-                    comparison_height = pd.DataFrame(
-                        np.ones(len(HeightOptions), dtype=bool),
-                        index=HeightOptions.index,
-                    )
+                    # all measures are available
+                    comparison_height = np.arange(0, len(self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :]))
 
             else:
                 raise Exception("Unknown mechanism in overflow bundling")
 
             available_measures_height = comparison_height
 
-            # now replace the life_cycle_cost where available_measures_height is False with a very high value:
+            # now replace the life_cycle_cost for measures that are not in comparison_height with a very high value:
             # the reliability for overflow/revetment has to increase so we do not want to pick these measures.
-            unavailable_measure_indices = available_measures_height.index[
-                ~available_measures_height[0]
-            ]
-            life_cycle_cost[
-                section_no,
-                unavailable_measure_indices + 1,
-                :,
-            ] = 1e99
+            mask = np.ones(life_cycle_cost.shape[1], dtype=bool)
+            mask[available_measures_height] = False
+            life_cycle_cost[section_no, mask, :] = 1e99
 
             sg_section[0, :] = np.argmin(life_cycle_cost[section_no, :, :], axis=1)
             LCCs = np.min(life_cycle_cost[section_no, :, :], axis=1)
