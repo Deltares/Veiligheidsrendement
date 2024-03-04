@@ -190,6 +190,8 @@ class TestCombineMeasuresController:
         }
         _initial_assessment = MechanismPerYearProbabilityCollection(
             [
+                MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
+                MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.5),
                 MechanismPerYear(MechanismEnum.REVETMENT, 0, 0.5),
                 MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),
             ]

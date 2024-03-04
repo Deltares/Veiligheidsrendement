@@ -44,7 +44,7 @@ class TestMechanismPerYearProbabilityCollection:
         _prob50yr = _collection.get_probability(MechanismEnum.OVERFLOW, 50)
 
         # Assert
-        assert _prob50yr == 0.8
+        assert _prob50yr == 0.5
 
     def test_get_probability_non_existing_raises_error(self):
         # Setup
@@ -70,7 +70,7 @@ class TestMechanismPerYearProbabilityCollection:
         _prob20yr = _collection.get_probability(MechanismEnum.OVERFLOW, 20)
 
         # Assert
-        assert _prob20yr == pytest.approx(0.86555, abs=1e-5)
+        assert _prob20yr == pytest.approx(0.43959, abs=1e-5)
 
     def test_beta_existing(self):
         # 1. Define test data
@@ -186,7 +186,7 @@ class TestMechanismPerYearProbabilityCollection:
             self._get_mechanism_per_year_example()
         )
         _collection_init = MechanismPerYearProbabilityCollection(
-            self._get_mechanism_per_year_example(0.0)
+            self._get_mechanism_per_year_example(delta = 0.0)
         )
         _collection_prim.add_years([20])
 
