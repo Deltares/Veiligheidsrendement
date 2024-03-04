@@ -10,15 +10,18 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 class TestMechanismPerYearProbabilityCollection:
     def _get_mechanism_per_year_example(
-        self, delta: float = 0.0
+        self, delta_mechanism: [MechanismEnum] = [MechanismEnum.PIPING], delta: float = 0.0
     ) -> list[MechanismPerYear]:
         _prob = []
-        _prob.append(MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.9 + delta))
-        _prob.append(MechanismPerYear(MechanismEnum.OVERFLOW, 50, 0.8 + delta))
-        _prob.append(MechanismPerYear(MechanismEnum.OVERFLOW, 100, 0.7 + delta))
-        _prob.append(MechanismPerYear(MechanismEnum.STABILITY_INNER, 0, 0.85 + delta))
-        _prob.append(MechanismPerYear(MechanismEnum.STABILITY_INNER, 50, 0.75 + delta))
-        _prob.append(MechanismPerYear(MechanismEnum.STABILITY_INNER, 100, 0.65 + delta))
+        for mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]:
+            if mechanism in delta_mechanism:
+                _prob.append(MechanismPerYear(mechanism, 0, 0.5 + delta))
+                _prob.append(MechanismPerYear(mechanism, 50, 0.6 + delta))
+                _prob.append(MechanismPerYear(mechanism, 100, 0.7 + delta))
+            else:
+                _prob.append(MechanismPerYear(mechanism, 0, 0.4))
+                _prob.append(MechanismPerYear(mechanism, 50, 0.5))
+                _prob.append(MechanismPerYear(mechanism, 100, 0.6))
 
         return _prob
 
@@ -139,10 +142,10 @@ class TestMechanismPerYearProbabilityCollection:
     def test_combined_measures(self):
         # Setup
         _collection_prim = MechanismPerYearProbabilityCollection(
-            self._get_mechanism_per_year_example(0.01)
+            self._get_mechanism_per_year_example()
         )
         _collection_sec = MechanismPerYearProbabilityCollection(
-            self._get_mechanism_per_year_example(0.02)
+            self._get_mechanism_per_year_example(delta = 0.076)
         )
         _collection_init = MechanismPerYearProbabilityCollection(
             self._get_mechanism_per_year_example()
@@ -157,22 +160,22 @@ class TestMechanismPerYearProbabilityCollection:
         assert len(_collection_prim.probabilities) == len(_collection_res.probabilities)
         assert _collection_res.get_probability(
             MechanismEnum.STABILITY_INNER, 0
-        ) == pytest.approx(0.9818)
+        ) == pytest.approx(0.4)
         assert _collection_res.get_probability(
             MechanismEnum.STABILITY_INNER, 50
-        ) == pytest.approx(0.9448)
+        ) == pytest.approx(0.5)
         assert _collection_res.get_probability(
             MechanismEnum.STABILITY_INNER, 100
-        ) == pytest.approx(0.8878)
+        ) == pytest.approx(0.6)
         assert _collection_res.get_probability(
-            MechanismEnum.OVERFLOW, 0
-        ) == pytest.approx(0.9928)
+            MechanismEnum.PIPING, 0
+        ) == pytest.approx(0.576)
         assert _collection_res.get_probability(
-            MechanismEnum.OVERFLOW, 50
-        ) == pytest.approx(0.9658)
+            MechanismEnum.PIPING, 50
+        ) == pytest.approx(0.676)
         assert _collection_res.get_probability(
-            MechanismEnum.OVERFLOW, 100
-        ) == pytest.approx(0.9188)
+            MechanismEnum.PIPING, 100
+        ) == pytest.approx(0.776)
 
     def test_combined_measures_different_years(self):
         # Setup

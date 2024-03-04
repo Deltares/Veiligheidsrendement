@@ -23,7 +23,10 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithMeasureResultCollectionMocked,
     validate_measure_result_export,
 )
+from tests.optimization.measures.test_section_as_input import TestSectionAsInput
 from tests.test_api import TestApiReportedBugs
+
+from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -607,95 +610,27 @@ class TestOrmControllers:
             orm.OptimizationSelectedMeasure.create(
                 optimization_run=_optimization_run,
                 measure_result=_measure_result,
-                investment_year=2023,
+                investment_year=0,
             )
-
+        
         # Define strategies.
         class MockedStrategy(StrategyBase):
             def __init__(self, type, config: VrtoolConfig):
-                # First run could just be exporting the index of TakenMeasures.
-                _section_name = (
-                    _measures_input_data.measure_per_section.section.section_name
-                )
-                self.options = {
-                    _section_name: pd.DataFrame(
-                        [
-                            [
-                                1,
-                                np.array([2, 3, 4]),
-                                np.array([2, 3, 4]),
-                                np.array([3, 4, 5]),
-                            ],
-                            [
-                                4,
-                                np.array([5, 6, 7]),
-                                np.array([2, 3, 4]),
-                                np.array([6, 7, 8]),
-                            ],
-                            [
-                                7,
-                                np.array([8, 9, 10]),
-                                np.array([2, 3, 4]),
-                                np.array([9, 10, 11]),
-                            ],
-                        ],
-                        columns=[
-                            "ID",
-                            MechanismEnum.OVERFLOW.name,
-                            MechanismEnum.STABILITY_INNER.name,
-                            "Section",
-                        ],
-                    )
-                }
-                self.options_geotechnical = pd.DataFrame(
-                    list(map(lambda x: x.id, MeasureResultMechanism.select()))
-                )
-                self.options_height = pd.DataFrame(
-                    list(map(lambda x: x.id, MeasureResultSection.select()))
-                )
-                # Measures selected per step
-                self.MeasureIndices = pd.DataFrame(
-                    list(
-                        map(
-                            lambda x: [
-                                x.id,
-                                random.randint(0, len(self.options_geotechnical) - 1),
-                                random.randint(0, len(self.options_height) - 1),
-                            ],
-                            MeasureResult.select(),
-                        )
-                    )
-                )
-                # Has a lot of information already present in measure results.
-                _measures_columns = [
-                    "Section",
-                    "option_in",
-                    "LCC",
-                    "BC",
-                    "ID",
-                    "name",
-                    "yes/no",
-                    "dcrest",
-                    "dberm",
-                    "beta_target",
-                    "transition_level",
-                ]
-                _taken_measure_row1 = [0] * len(
-                    _measures_columns
-                )  # first row is header
-                _taken_measure_row2 = [0] * len(
-                    _measures_columns
-                )  # second row is the first one with values
-                self.TakenMeasures = pd.DataFrame(
-                    [_taken_measure_row1, _taken_measure_row2],
-                    columns=_measures_columns,
-                )  # This is actually OptimizationStep (with extra info).
-                self.TakenMeasures["Section"][1] = _section_name
-                self.TakenMeasures["option_in"][1] = 0
-                self.TakenMeasures["LCC"][1] = 42.24
-                self.indexCombined2single = {}
-                self.indexCombined2single[_section_name] = [[1]]
-                self.T = [0, 20, 100]
+
+                self.sections = [TestSectionAsInput()._get_section_with_combinations()]
+                self.sections[0].aggregated_measure_combinations = [AggregatedMeasureCombination(
+                                sh_combination= self.sections[0].sh_combinations[1],
+                                sg_combination= self.sections[0].sg_combinations[0],
+                                measure_result_id=1,
+                                year=0,
+                            )]
+                self.total_risk_per_step = [1000.,100.]
+                self.probabilities_per_step = [{MechanismEnum.STABILITY_INNER.name: np.linspace(0.1,0.6,100).reshape((100,1)), 
+                                                MechanismEnum.OVERFLOW.name: np.linspace(0.05,0.55,100).reshape((100,1))},
+                                               {MechanismEnum.STABILITY_INNER.name: np.linspace(0.1,0.6,100).reshape((100,1)), 
+                                                MechanismEnum.OVERFLOW.name: np.linspace(0.01,0.1,100).reshape((100,1))}]
+                self.measures_taken = [(0,1,1)]
+                self._time_periods = [0, 20, 100]
 
             def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
                 return 0.42, 0.24
@@ -718,8 +653,8 @@ class TestOrmControllers:
         # 3. Verify expectations.
         assert len(orm.OptimizationStep.select()) == 1
         _optimization_step = orm.OptimizationStep.get()
-        assert _optimization_step.total_lcc == 0.42
-        assert _optimization_step.total_risk == 0.24
+        assert _optimization_step.total_lcc == 84.0
+        assert _optimization_step.total_risk == 100.0
         assert len(orm.OptimizationStepResultMechanism) == 10
         assert len(orm.OptimizationStepResultSection) == 3
 
