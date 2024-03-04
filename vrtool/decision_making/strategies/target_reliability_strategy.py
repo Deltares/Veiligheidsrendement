@@ -17,8 +17,8 @@ from vrtool.decision_making.strategy_evaluation import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
-    StrategyInputTargetReliability,
+from vrtool.optimization.strategy_input.strategy_input import (
+    StrategyInput,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
@@ -109,7 +109,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
     """
 
     def __init__(
-        self, strategy_input: StrategyInputTargetReliability, config: VrtoolConfig
+        self, strategy_input: StrategyInput, config: VrtoolConfig
     ):
         # Necessary config parameters:
         self.OI_horizon = config.OI_horizon

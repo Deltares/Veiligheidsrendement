@@ -12,12 +12,9 @@ from vrtool.optimization.controllers.combine_measures_controller import (
     CombineMeasuresController,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
+from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
-)
-from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
-    StrategyInputTargetReliability,
 )
 
 
@@ -61,12 +58,8 @@ class StrategyController:
         """
         Get the input for the evaluation of the strategy.
         """
-        if strategy_type == GreedyStrategy:
-            return StrategyInputGreedy.from_section_as_input_collection(
-                self._section_measures_input
-            )
-        elif strategy_type == TargetReliabilityStrategy:
-            return StrategyInputGreedy.from_section_as_input_collection(
+        if strategy_type in [GreedyStrategy, TargetReliabilityStrategy]:
+            return StrategyInput.from_section_as_input_collection(
                 self._section_measures_input
             )
         raise ValueError(f"Strategy type {strategy_type} not implemented yet.")
