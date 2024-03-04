@@ -615,7 +615,7 @@ class TestOrmControllers:
         
         # Define strategies.
         class MockedStrategy(StrategyBase):
-            def __init__(self, type, config: VrtoolConfig):
+            def __init__(self):
 
                 self.sections = [TestSectionAsInput()._get_section_with_combinations()]
                 self.sections[0].aggregated_measure_combinations = [AggregatedMeasureCombination(
@@ -632,12 +632,7 @@ class TestOrmControllers:
                 self.measures_taken = [(0,1,1)]
                 self._time_periods = [0, 20, 100]
 
-            def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
-                return 0.42, 0.24
-
-        _test_strategy = MockedStrategy(
-            type=_optimization_type, config=_results_measures.vr_config
-        )
+        _test_strategy = MockedStrategy()
 
         # Define results optimization object.
         _results_optimization = ResultsOptimization()
