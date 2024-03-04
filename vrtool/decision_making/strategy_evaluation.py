@@ -485,8 +485,7 @@ def compute_annual_failure_probability(traject_probability: dict[np.ndarray]):
             annual_failure_probability.append(1-(1-traject_probability[mechanism_name]).prod(axis=0))
         elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.REVETMENT]:
             annual_failure_probability.append(4 * np.max(traject_probability[mechanism_name],axis=0))
-            #4 * maximum
-            pass
+            #4 * maximum. TODO This should be made consistent throughout the code. Issue for next sprint/
         elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.OVERFLOW]:
             annual_failure_probability.append(np.max(traject_probability[mechanism_name],axis=0))         
     
