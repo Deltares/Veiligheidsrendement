@@ -307,7 +307,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases,
         indirect=True,
     )
-    def test_run_step_optimization(
+    def test_run_step_optimization_all_methods(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
@@ -342,8 +342,8 @@ class TestApiRunWorkflowsAcceptance:
     @pytest.mark.parametrize(
         "design_methods",
         [
-            pytest.param(["Doorsnede-eisen"], id="Target Reliability Strategy"),
-            pytest.param(["Veiligheidsrendement"], id="Greedy Strategy"),
+            pytest.param(["Doorsnede-eisen"], id="Target Reliability"),
+            pytest.param(["Veiligheidsrendement"], id="Greedy"),
         ]
     )
     def test_run_step_optimization(
