@@ -10,7 +10,7 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 class TestMechanismPerYearProbabilityCollection:
     def _get_mechanism_per_year_example(
-        self, delta_mechanism: [MechanismEnum] = [MechanismEnum.PIPING], delta: float = 0.0
+        self, delta_mechanism: list[MechanismEnum] = [MechanismEnum.PIPING], delta: float = 0.0
     ) -> list[MechanismPerYear]:
         _prob = []
         for mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]:
