@@ -168,7 +168,7 @@ Although in Python 'private' and 'public' is a vague definition, we often use th
         return _sum
     ```
 
-## Module (file) content
+### Module (file) content
 One file consists of one (and only one) class.
 - As a general rule of thumb, the file containing a class will have the same name (snake case for the file, upper camel case for the class).
 - An auxiliar dataclass might be eventually defined in the same file as the only class using (and referencing) it.
@@ -186,7 +186,16 @@ We prefer using [protocols](https://docs.python.org/3/library/typing.html#typing
 
 ### Do's and dont's
 
-### Dataclasses.
+#### Built-in functions:
+_Yet to be discussed_
+The following code is just a first approach draft, this is not yet approved by the team! 
+
+- map
+- filter
+- zip
+- lambda expression
+
+#### Dataclasses
 
 _Yet to be discussed_
 The following code is just a first approach draft, this is not yet approved by the team! 
@@ -230,7 +239,7 @@ class MyExampleDataclass:
         page.set_margin
 ```
 
-#### Inner functions. 
+#### Inner functions
 An inner function, or a method within a method, can be helpful to reduce code duplicity within a method whilst reusing the variables defined within the parent method's context. When an inner function does not make use of anything from the context it might better be declared as a 'sibling' static method.
 - Do:
 ```python
@@ -274,9 +283,9 @@ _generated_range = example_method(x, y, x > y)
 
 #### Nested loops and if-elses
 
-> Flat is better than nested.
-> Sparse is better than dense.
-> Readability counts.
+> Flat is better than nested.</br>
+> Sparse is better than dense.</br>
+> Readability counts.</br>
 > ["Zen of Python"](https://peps.python.org/pep-0020/#id3) 
 
 Keep nested `for-loops` and `if-else` statements as flat as possible. In order to reduce complexity we encourage extracting, whenever possible said `for-loops` and `if-else` logic into other methods so to improve their readability.
