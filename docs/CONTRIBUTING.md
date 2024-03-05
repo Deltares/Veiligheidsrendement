@@ -138,18 +138,153 @@ After merging a pull-request its related source branch will be deleted from the 
 
 ## Code standards
 
-We base the `vrtool` code standards on:
+In general, we try to adhere to the [Zen of Python](https://peps.python.org/pep-0020/#id3) and [Google convention](https://google.github.io/styleguide/pyguide.html)
 
-- Descriptive modules, files, classes, methods and variable names.
-    - [snake case formatting](https://en.wikipedia.org/wiki/Snake_case) for everything except classes, which will use [upper camel case formatting](https://en.wikipedia.org/wiki/Camel_case) (also known as PascalCase).
-- One file consists of one (and only one) class.
-    - As a general rule of thumb, the file containing a class will have the same name (snake case for the file, upper camel case for the class).
-- Use of [type hinting](https://docs.python.org/3/library/typing.html)
-- Methods contain [google docstrings](https://google.github.io/styleguide/pyguide.html)
-- Code formatting with black and sort. (This is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main` with a [Github workflow](../.github/workflows/normalize_code.yml)).
-    - `poetry run isort . && poetry run black`.
+When we talk about normalization we refer to standardizing how we name, describe, reference and use the following <span ID="items-list">items</span>:
+- a package (folder),
+- a module (file),
+- a class,
+- a method,
+- a parameter,
+- a property,
+- a variable,
 
-These aspects will be looked up during a pull-request review.
+
+Code formatting happens in its majority with a [Github workflow](../.github/workflows/normalize_code.yml)  which is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main`. This can be at any time locally done running the line: `poetry run isort . && poetry run black`.
+
+Our own agreements for `vrtool` code standards are as follows and will be looked up during a pull-request review:
+
+### Naming conventions
+In general we use the following standards:
+- [PascalCase](https://en.wiktionary.org/wiki/Pascal_case#English), for class names.
+- [snake_case](https://en.wikipedia.org/wiki/Snake_case), for the rest.
+
+Although in Python 'private' and 'public' is a vague definition, we often use the underscore symbol `_` to refer to objects that are not meant to be used outside the context where they were defined. For instance:
+- We underscore method's names when they are not meant to be used outisde their container class.
+- In addition, we underscore the variables defined within a method to (visually) differenciate them from the input arguments (parameters):
+    ```python
+    def example_method(param_a: float, param_b: float) -> float:
+        _sum = param_a + param_b
+        return _sum
+    ```
+
+## Module (file) content
+One file consists of one (and only one) class.
+- As a general rule of thumb, the file containing a class will have the same name (snake case for the file, upper camel case for the class).
+- An auxiliar dataclass might be eventually defined in the same file as the only class using (and referencing) it.
+
+### Describing an [item](#items-list)
+- Packages can be further describe with `README.md` files.
+- Modules are described with docstrings using the [google docstring convention](https://gist.github.com/redlotus/3bc387c2591e3e908c9b63b97b11d24e)
+- We prefer explicit over implicit declaration.
+    - Use of [type hinting](https://docs.python.org/3/library/typing.html)
+- Classes are described with docstrings when required, its properties also have descriptive names and have explicit types using [type hints](https://docs.python.org/3/library/typing.html).
+- Methods contain a clear descriptive name, its arguments (parameters) contain [type hints](https://docs.python.org/3/library/typing.html) and in case it is a 'public' method its signature has a description following the [google docstrings](https://google.github.io/styleguide/pyguide.html) formatting.
+
+### Protocols over Base classes.
+We prefer using [protocols](https://docs.python.org/3/library/typing.html#typing.Protocol) over [base classes](https://docs.python.org/3/library/abc.html) (abstract class) to enforce the [Single Responsibility Principle](https://en.wikipedia.org/wiki/Single_responsibility_principle) as much as possible.
+
+### Do's and dont's
+
+### Dataclasses.
+
+_Yet to be discussed_
+The following code is just a first approach draft, this is not yet approved by the team! 
+
+We define [dataclass](https://docs.python.org/3/library/dataclasses.html) when we require a repeating data structure that contains multiple properties potentially with default values. We consider a dataclass responsible only for exposing its own context, therefore not for modifying its own state or the one from other objects.
+
+- Do:
+```python
+from dataclasses import dataclass
+
+@dataclass
+class MyExampleDataclass:
+    page_width: float
+    page_height: float
+    page_margin: float = 0.2
+
+    @property
+    def left_margin(self) -> float:
+        _margin_size = self.page_margin * self.page_width
+        return self.page_width - (_margin_size / 2)
+```
+
+- Don't:
+```python
+from dataclasses import dataclass
+
+@dataclass
+class MyExampleDataclass:
+    page_width: float
+    page_height: float
+    left_margin: float = 0.0
+    page_margin: float = 0.2
+
+    def set_margin(self) -> None:
+        _margin_size = self.page_margin * self.page_width
+        self.left_margin = self.page_width - (_margin_size / 2)
+    
+    @staticmethod
+    def set_page_left_margin(page: MyExampleDataclass, page_margin: float):
+        page.page_margin = page_margin
+        page.set_margin
+```
+
+#### Inner functions. 
+An inner function, or a method within a method, can be helpful to reduce code duplicity within a method whilst reusing the variables defined within the parent method's context. When an inner function does not make use of anything from the context it might better be declared as a 'sibling' static method.
+- Do:
+```python
+def example_method(param_a: float, param_b: float) -> float:
+    def multiply(value: float):
+        return value * param_a
+    return sum([multiply(v) for v in range(0, param_b)])
+```
+- Don't:
+```python
+def example_method(param_a: float, param_b: float) -> float:
+    def multiply(value: float, param_value: float):
+        return value * param_value
+    return sum([multiply(v, param_a) for v in range(0, param_b)])
+```
+
+#### Using flags
+Using flags in a method are discouraged (yet not forbidden), think on creating two different methods for each alternative and having an `if-else` at the caller's level instead.
+- Do:
+```python
+def _get_range(from_value: float, to_value: float) -> list[float]:
+    return range(from_value, to_value)
+def example_method(param_a: float, param_b: float, is_reversed: bool) -> list[float]:
+    return _get_range(param_a, param_b)
+def example_method_reversed(param_a: float, param_b: float, is_reversed: bool) -> list[float]:
+    return _get_range(param_b, param_a)
+x = 4.2
+y = 2.4
+_generated_range = example_method_reversed(x, y) if x > y else example_method(x, y)
+```
+- Don't:
+```python
+def example_method(param_a: float, param_b: float, is_reversed: bool) -> list[float]:
+    if is_reversed:
+        return range(param_b, param_a)
+    return range(param_a, param_b)
+x = 4.2
+y = 2.4
+_generated_range = example_method(x, y, x > y)
+```
+
+#### Nested loops and if-elses
+
+> Flat is better than nested.
+> Sparse is better than dense.
+> Readability counts.
+> ["Zen of Python"](https://peps.python.org/pep-0020/#id3) 
+
+Keep nested `for-loops` and `if-else` statements as flat as possible. In order to reduce complexity we encourage extracting, whenever possible said `for-loops` and `if-else` logic into other methods so to improve their readability.
+- In some cases better algorithmic approaches can improve readability, think of:
+    - Inversion to reduce nesting on `if-elses`
+    - Pre-initialization of variables.
+    - Filtering of collections prior to a loop.
+
 
 ## Adding tests
 
