@@ -307,7 +307,7 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases,
         indirect=True,
     )
-    def test_run_step_optimization_all_methods(
+    def test_run_step_optimization_acceptance_test_case(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
@@ -346,7 +346,7 @@ class TestApiRunWorkflowsAcceptance:
             pytest.param(["Veiligheidsrendement"], id="Greedy"),
         ]
     )
-    def test_run_step_optimization(
+    def test_run_step_optimization_for_given_design_method(
         self, valid_vrtool_config: VrtoolConfig, design_methods: list[str], request: pytest.FixtureRequest
     ):
         # 1. Define test data.

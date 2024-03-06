@@ -1,8 +1,7 @@
 import logging
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
-from vrtool.decision_making.strategies import TargetReliabilityStrategy
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.optimization import (
@@ -28,7 +27,7 @@ class StrategyBaseExporter(OrmExporterProtocol):
             if a.sg_combination == measure_sg and a.sh_combination == measure_sh:
                 return a
 
-    def export_dom(self, dom_model: StrategyBase) -> None:
+    def export_dom(self, dom_model: StrategyProtocol) -> None:
         dims = len(dom_model.measures_taken)
         _step_results_section = []
         _step_results_mechanism = []
