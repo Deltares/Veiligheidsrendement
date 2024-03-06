@@ -447,7 +447,9 @@ class GreedyStrategy(StrategyProtocol):
         InitialCostMatrix = copy.deepcopy(self.LCCOption)
         BC_list = []
         TR_list = [
-                
+                calculate_total_risk(init_overflow_risk, 
+                                             init_revetment_risk, 
+                                             init_independent_risk)
             ]    #list to store the total risk for each step
         Measures_per_section = np.zeros((self.opt_parameters["N"], 2), dtype=np.int32)
         while count < max_count:
