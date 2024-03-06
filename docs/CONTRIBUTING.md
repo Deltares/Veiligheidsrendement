@@ -279,9 +279,9 @@ Using flags in a method is discouraged (yet not forbidden), think on creating tw
 ```python
 def _get_range(from_value: float, to_value: float) -> list[float]:
     return range(from_value, to_value)
-def example_method(param_a: float, param_b: float, is_reversed: bool) -> list[float]:
+def example_method(param_a: float, param_b: float) -> list[float]:
     return _get_range(param_a, param_b)
-def example_method_reversed(param_a: float, param_b: float, is_reversed: bool) -> list[float]:
+def example_method_reversed(param_a: float, param_b: float) -> list[float]:
     return _get_range(param_b, param_a)
 x = 4.2
 y = 2.4
