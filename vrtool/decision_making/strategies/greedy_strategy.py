@@ -207,9 +207,9 @@ class GreedyStrategy(StrategyProtocol):
                     existing_investments[section_no, 1] - 1
                 )  
 
-                current_pf_stability =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.STABILITY_INNER, np.arange(0,self.Pf['STABILITY_INNER'].shape[2]))
+                current_pf_stability =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.STABILITY_INNER, np.arange(0,self.Pf[MechanismEnum.STABILITY_INNER.name].shape[2]))
 
-                current_pf_piping =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.PIPING, np.arange(0,self.Pf['PIPING'].shape[2]))
+                current_pf_piping =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.PIPING, np.arange(0,self.Pf[MechanismEnum.PIPING.name].shape[2]))
 
                 #measure_pf_stability 
                 measure_pfs_stability = self.Pf[MechanismEnum.STABILITY_INNER.name][section_no, :, :]
@@ -233,9 +233,9 @@ class GreedyStrategy(StrategyProtocol):
                 investment_id_sh = existing_investments[section_no, 0] - 1
                 # exclude rows for height options that are not safer than current.
                 #Overflow must be present. Revetment is optional.
-                current_pf[MechanismEnum.OVERFLOW] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
+                current_pf[MechanismEnum.OVERFLOW] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf[MechanismEnum.OVERFLOW.name].shape[2]))
                 if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
-                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['REVETMENT'].shape[2]))
+                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf[MechanismEnum.REVETMENT.name].shape[2]))
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
@@ -289,14 +289,14 @@ class GreedyStrategy(StrategyProtocol):
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
             if mechanism == MechanismEnum.OVERFLOW:
                 # Overflow is always present for a section.
-                current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
+                current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf[MechanismEnum.OVERFLOW.name].shape[2]))
                 measure_pfs = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
                 #get indices for rows in measure_pfs where all measure_pfs are greater than current_reliability_overflow by comparing the numpy array
                 comparison_height = np.where(np.all(measure_pfs < current_pf_overflow,axis=1))
 
             elif mechanism == MechanismEnum.REVETMENT:
                 try:  # if Revetment has been computed, get it from the assessment:
-                    current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf['OVERFLOW'].shape[2]))
+                    current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf[MechanismEnum.OVERFLOW.name].shape[2]))
                     measure_pfs = self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :]
                     comparison_height = np.where(np.all(measure_pfs < current_pf_overflow,axis=1))
                 except:
@@ -393,16 +393,16 @@ class GreedyStrategy(StrategyProtocol):
         else:
             return [], 0
 
-    def evaluate(
-        self,
-        setting="fast",
-        BCstop=0.1,
-        max_count=600,
-        f_cautious=1.5,
-    ):
+    def evaluate(self, 
+                 setting: str ="fast", 
+                 BCstop: float =0.1, 
+                 max_count: int =600, 
+                 f_cautious: float =1.5
+                 ):
         """This is the main routine for a greedy evaluation of all solutions."""
         # TODO put settings in config
-
+        def calculate_total_risk(overflow_risk, revetment_risk, independent_risk):
+            return np.sum(np.max(overflow_risk, axis=0)) + np.sum(np.max(revetment_risk, axis=0)) + np.sum(independent_risk)
         start = time.time()
         # set start values:
         self.Cint_g[:, 0] = 1
@@ -447,17 +447,14 @@ class GreedyStrategy(StrategyProtocol):
         InitialCostMatrix = copy.deepcopy(self.LCCOption)
         BC_list = []
         TR_list = [
-                np.sum(np.max(init_overflow_risk, axis=0))
-                + np.sum(np.max(init_revetment_risk, axis=0))
-                + np.sum(init_independent_risk)
+                
             ]    #list to store the total risk for each step
         Measures_per_section = np.zeros((self.opt_parameters["N"], 2), dtype=np.int32)
         while count < max_count:
-            init_risk = (
-                np.sum(np.max(init_overflow_risk, axis=0))
-                + np.sum(np.max(init_revetment_risk, axis=0))
-                + np.sum(init_independent_risk)
-            )
+            init_risk = calculate_total_risk(init_overflow_risk, 
+                                             init_revetment_risk, 
+                                             init_independent_risk)
+
             risk_per_step.append(init_risk)
             cost_per_step.append(np.sum(SpentMoney))
             # first we compute the BC-ratio for each combination of Sh, Sg, for each section
@@ -500,10 +497,9 @@ class GreedyStrategy(StrategyProtocol):
                                 self.config,
                             )
                             TotalRisk[n, sh, sg] = copy.deepcopy(
-                                np.sum(np.max(new_overflow_risk, axis=0))
-                                + np.sum(np.max(new_revetment_risk, axis=0))
-                                + np.sum(new_geotechnical_risk)
-                            )
+                               calculate_total_risk(new_overflow_risk, 
+                                             new_revetment_risk, 
+                                             new_independent_risk))
                         else:
                             pass
 
@@ -625,10 +621,9 @@ class GreedyStrategy(StrategyProtocol):
                     Measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
-                    TR_list.append(
-                                np.sum(np.max(init_overflow_risk, axis=0))
-                                + np.sum(np.max(init_revetment_risk, axis=0))
-                                + np.sum(init_independent_risk)
+                    TR_list.append(calculate_total_risk(init_overflow_risk, 
+                                             init_revetment_risk, 
+                                             init_independent_risk)
                             )                    
                     logging.info(
                         "Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(
@@ -667,10 +662,9 @@ class GreedyStrategy(StrategyProtocol):
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
-                            TR_list.append(
-                                np.sum(np.max(init_overflow_risk, axis=0))
-                                + np.sum(np.max(init_revetment_risk, axis=0))
-                                + np.sum(init_independent_risk)
+                            TR_list.append(calculate_total_risk(init_overflow_risk, 
+                                             init_revetment_risk, 
+                                             init_independent_risk)
                             )                    
                     logging.info(
                         "Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(
@@ -709,10 +703,9 @@ class GreedyStrategy(StrategyProtocol):
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
-                            TR_list.append(
-                                np.sum(np.max(init_overflow_risk, axis=0))
-                                + np.sum(np.max(init_revetment_risk, axis=0))
-                                + np.sum(init_independent_risk)
+                            TR_list.append(calculate_total_risk(init_overflow_risk, 
+                                             init_revetment_risk, 
+                                             init_independent_risk)
                             )                            
                     # add the height measures in separate entries in the measure list
 
