@@ -69,8 +69,6 @@ class RunOptimization(VrToolRunProtocol):
         _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
 
         _greedy_strategy.evaluate(
-            self.selected_traject,
-            self._section_input_collection,
             setting="cautious",
             f_cautious=1.5,
             max_count=600,
