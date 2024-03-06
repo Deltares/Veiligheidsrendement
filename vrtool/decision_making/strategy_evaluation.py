@@ -448,9 +448,9 @@ def calc_life_cycle_risks(
     return TR
 
 # this function changes the traject probability of a measure is implemented:
-def implement_option(traject_probability: dict[np.ndarray], 
-                     measure_idx: tuple, 
-                     measure: AggregatedMeasureCombination):
+def implement_option(traject_probability: dict[str, np.ndarray], 
+                     measure_idx: tuple[int, int, int], 
+                     measure: AggregatedMeasureCombination) -> dict[str, np.ndarray]:
     """Implements a measure in the traject probability dictionary.
 
     Args:
@@ -483,17 +483,16 @@ def compute_annual_failure_probability(traject_probability: dict[np.ndarray]):
         if MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
             #1-prod
             annual_failure_probability.append(1-(1-traject_probability[mechanism_name]).prod(axis=0))
-        elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.REVETMENT]:
+        elif MechanismEnum.get_enum(mechanism_name) == MechanismEnum.REVETMENT:
             annual_failure_probability.append(4 * np.max(traject_probability[mechanism_name],axis=0))
-            #4 * maximum
-            pass
-        elif MechanismEnum.get_enum(mechanism_name) in [MechanismEnum.OVERFLOW]:
+            #4 * maximum. TODO This should be made consistent throughout the code. Issue for next sprint/
+        elif MechanismEnum.get_enum(mechanism_name) == MechanismEnum.OVERFLOW:
             annual_failure_probability.append(np.max(traject_probability[mechanism_name],axis=0))         
     
     return np.sum(annual_failure_probability,axis=0)
 
 def compute_total_risk(traject_probability: dict[np.ndarray],
-                       annual_discounted_damage: np.ndarray[float]):
+                       annual_discounted_damage: np.ndarray[float]) -> float:
     """Computes the total risk of the traject.
 
     Args:

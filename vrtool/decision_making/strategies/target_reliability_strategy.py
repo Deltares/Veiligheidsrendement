@@ -17,8 +17,8 @@ from vrtool.decision_making.strategy_evaluation import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.strategy_input.strategy_input_target_reliability import (
-    StrategyInputTargetReliability,
+from vrtool.optimization.strategy_input.strategy_input import (
+    StrategyInput,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
@@ -26,40 +26,24 @@ from vrtool.optimization.measures.aggregated_measures_combination import Aggrega
 
 @dataclass
 class CrossSectionalRequirements:
-    pf_cs: dict[MechanismEnum, np.ndarray]
+    cross_sectional_requirement_per_mechanism: dict[MechanismEnum, np.ndarray]
 
     dike_traject_b_piping: float
     dike_traject_b_stability_inner: float
 
-    @property
-    def beta_cs_piping(self) -> np.ndarray:
-        return pf_to_beta(self.pf_cs[MechanismEnum.PIPING])
-
-    @property
-    def beta_cs_stabinner(self) -> np.ndarray:
-        return pf_to_beta(self.pf_cs[MechanismEnum.STABILITY_INNER])
-
-    def calculate_beta_t_piping(
-        self, dike_section_length: float, le_in_section: bool
-    ) -> np.ndarray:
-        if not le_in_section:
-            return pf_to_beta(self.pf_cs[MechanismEnum.PIPING])
-        return pf_to_beta(
-            self.pf_cs[MechanismEnum.PIPING] * (dike_section_length / self.dike_traject_b_piping)
-        )
-
-    def calculate_beta_t_stabinner(
-        self, dike_section_length: float, le_in_section: bool
-    ) -> np.ndarray:
-        if not le_in_section:
-            return pf_to_beta(self.pf_cs[MechanismEnum.STABILITY_INNER])
-        return pf_to_beta(
-            self.pf_cs[MechanismEnum.STABILITY_INNER]
-            * (dike_section_length / self.dike_traject_b_stability_inner)
-        )
-
     @classmethod
     def from_dike_traject(cls, dike_traject: DikeTraject):
+        """Class method to create a CrossSectionalRequirements object from a DikeTraject object. 
+        This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach. 
+        The cross-sectional requirements are calculated for each mechanism and stored in a dictionary with the mechanism as key and the cross-sectional requirements as value.
+        
+        Args:
+            dike_traject (DikeTraject): The DikeTraject object for which the cross-sectional requirements are to be calculated.
+
+        Returns:    
+            CrossSectionalRequirements: The CrossSectionalRequirements object with the cross-sectional requirements for the dike traject.
+            
+        """
         # compute cross sectional requirements
         n_piping = 1 + (
             dike_traject.general_info.aPiping
@@ -94,7 +78,7 @@ class CrossSectionalRequirements:
             / n_overflow
         )
         return cls(
-            pf_cs = {MechanismEnum.PIPING: _pf_cs_piping,
+            cross_sectional_requirement_per_mechanism = {MechanismEnum.PIPING: _pf_cs_piping,
                      MechanismEnum.STABILITY_INNER: _pf_cs_stabinner,
                      MechanismEnum.OVERFLOW: _pf_cs_overflow,
                      MechanismEnum.REVETMENT: _pf_cs_revetment},
@@ -109,7 +93,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
     """
 
     def __init__(
-        self, strategy_input: StrategyInputTargetReliability, config: VrtoolConfig
+        self, strategy_input: StrategyInput, config: VrtoolConfig
     ):
         # Necessary config parameters:
         self.OI_horizon = config.OI_horizon
@@ -129,20 +113,34 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # Previous approach instead of self._time_periods = config.T:
         # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
         # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
-        def _check_cross_sectional_requirements(measure: AggregatedMeasureCombination, cross_sectional_requirements, year, mechanisms
+        def _check_cross_sectional_requirements(measure: AggregatedMeasureCombination, cross_sectional_requirements: CrossSectionalRequirements, year: int, mechanisms: list[MechanismEnum]
                                                 )-> bool:
             """This function checks if the cross-sectional requirements are met for a given measure and year.
             If the requirements are not met for any of the mechanisms, the function returns False, otherwise True."""
             for mechanism in mechanisms:
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                     #look in sh, if any mechanism is not satisfied, return a False
-                    if measure.sh_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.pf_cs[mechanism]:
+                    if measure.sh_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[mechanism]:
                         return False
                 elif mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:    
-                    if measure.sg_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.pf_cs[mechanism]:
+                    if measure.sg_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[mechanism]:
                         return False
             return True
-        
+
+        def get_valid_measures(section_as_input: SectionAsInput, cross_sectional_requirements: CrossSectionalRequirements) -> AggregatedMeasureCombination:  
+            #get the first possible investment year from the aggregated measures
+            _invest_year = min([measure.year for measure in section_as_input.aggregated_measure_combinations])
+            _design_horizon_year = _invest_year + self.OI_horizon
+            
+            #check if the cross-sectional requirements are met for each measure
+            _satisfied_bool = [_check_cross_sectional_requirements(_measure, cross_sectional_requirements, _design_horizon_year, section_as_input.mechanisms) for _measure in section_as_input.aggregated_measure_combinations]
+            
+            #generate bool for each measure with year in investment year
+            _valid_year_bool = [measure.year == _invest_year for measure in section_as_input.aggregated_measure_combinations]
+
+            #get the measures that both have _satisfied_bool and _valid_year_bool
+            return [_measure for _measure, _satisfied, _valid_year in zip(section_as_input.aggregated_measure_combinations, _satisfied_bool, _valid_year_bool) if _satisfied and _valid_year]
+
         # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
         initial_section_pfs = [section.initial_assessment.get_section_probability(self.OI_horizon) for section in self.sections]
 
@@ -161,15 +159,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
             #get the first possible investment year from the aggregated measures
             _section_as_input = self.sections[_section_idx]
-            _invest_year = min([measure.year for measure in _section_as_input.aggregated_measure_combinations])
-            _design_horizon_year = _invest_year + self.OI_horizon
-            #for each aggregate measure check if the cross-sectional requirements are met
-            _satisfied_bool = [_check_cross_sectional_requirements(_measure, _cross_sectional_requirements, _design_horizon_year, _section_as_input.mechanisms) for _measure in _section_as_input.aggregated_measure_combinations]
-            #generate bool for each measure with year in investment year
-            _valid_year_bool = [measure.year == _invest_year for measure in _section_as_input.aggregated_measure_combinations]
+            _valid_measures = get_valid_measures(_section_as_input, _cross_sectional_requirements)
 
-            #get the measure with the lowest lcc that satisfies both _satisfied_bool and _valid_year_bool
-            _valid_measures = [_measure for _measure, _satisfied, _valid_year in zip(_section_as_input.aggregated_measure_combinations, _satisfied_bool, _valid_year_bool) if _satisfied and _valid_year]
             if len(_valid_measures) == 0:
                 #if no measures satisfy the requirements, continue to the next section
                 logging.warning(
@@ -178,6 +169,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     )
                 )
                 continue
+            
             #get measure with lowest lcc from _valid_measures
             _lcc = [measure.lcc for measure in _valid_measures]
             idx = np.argmin(_lcc)

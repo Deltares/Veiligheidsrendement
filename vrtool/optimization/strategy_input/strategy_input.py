@@ -17,7 +17,7 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 @dataclass
-class StrategyInputGreedy(StrategyInputProtocol):
+class StrategyInput(StrategyInputProtocol):
     design_method: str = ""
     options: dict[str, df] = field(default_factory=dict)
     options_height: list[dict[str, df]] = field(default_factory=list)
@@ -38,7 +38,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
     @classmethod
     def from_section_as_input_collection(
         cls, section_as_input_collection: list[SectionAsInput]
-    ) -> StrategyInputGreedy:
+    ) -> StrategyInput:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """

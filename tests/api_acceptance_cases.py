@@ -398,7 +398,7 @@ class RunStepOptimizationValidator(RunStepValidator):
         for _idx, _reference in enumerate(reference_list):
             _result = result_list[_idx]
             assert _reference.step_number == _result.step_number
-            if not _reference.total_lcc == None: #TODO: temporary fix as long as references dont contain cost for TR.
+            if _reference.total_lcc is not None: #TODO: temporary fix as long as references dont contain cost for TR.
                 assert _reference.total_lcc == pytest.approx(_result.total_lcc, abs=1e-2)
                 assert _reference.total_risk == pytest.approx(_result.total_risk, abs=1e-2)
             self._compare_optimization_step_results_mechanism(
@@ -473,7 +473,6 @@ class RunStepOptimizationValidator(RunStepValidator):
     @staticmethod
     def get_csv_reference_dir(vrtool_config: VrtoolConfig) -> Path:
         return vrtool_config.input_directory.joinpath("reference")
-
 
 class RunFullValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):

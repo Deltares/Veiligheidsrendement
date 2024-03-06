@@ -3,6 +3,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
+from operator import itemgetter
 
 @dataclass
 class OptimizationInputMeasures:
@@ -25,5 +26,6 @@ class OptimizationInputMeasures:
                 for _section_input in self.section_input_collection
                 for mr in _section_input.measures
             )
-        )
+        ),
+        key=itemgetter(0,1),
         )

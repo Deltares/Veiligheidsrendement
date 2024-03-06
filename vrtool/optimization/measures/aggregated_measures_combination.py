@@ -30,5 +30,4 @@ class AggregatedMeasureCombination:
         """
         if (self.sh_combination.primary.measure_result_id == primary_sh.measure_result_id) and (self.sg_combination.primary.measure_result_id == primary_sg.measure_result_id):
             return (self.sh_combination.primary.year == primary_sh.year) and (self.sg_combination.primary.year == primary_sg.year)
-        else:
-            return False
+        return False
