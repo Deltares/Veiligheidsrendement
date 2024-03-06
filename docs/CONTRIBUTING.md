@@ -138,7 +138,7 @@ After merging a pull-request its related source branch will be deleted from the 
 
 ## Code standards
 
-In general, we try to adhere to the [Zen of Python](https://peps.python.org/pep-0020/#id3) and [Google convention](https://google.github.io/styleguide/pyguide.html)
+In general, we adhere to the [Zen of Python](https://peps.python.org/pep-0020/#id3) and we use the [Google convention](https://google.github.io/styleguide/pyguide.html) as a base for our coding standards. Those points where we differ from the _Google convention_ are documented below. We consider this document to be a living document, so it is subject to discussion and potential changes.
 
 When we talk about normalization we refer to standardizing how we name, describe, reference and use the following <span ID="items-list">items</span>:
 - a package (folder),
@@ -150,16 +150,18 @@ When we talk about normalization we refer to standardizing how we name, describe
 - a variable,
 
 
-Code formatting happens in its majority with a [Github workflow](../.github/workflows/normalize_code.yml)  which is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main`. This can be at any time locally done running the line: `poetry run isort . && poetry run black`.
+Code formatting happens in its majority with a [Github workflow](../.github/workflows/normalize_code.yml)  which is enforced after each succesful [pull-request merge](#approving-and-merging-a-pull-request) to `main`. This can be at any time locally done running the line: `poetry run isort . && poetry run black .`.
 
 Our own agreements for `vrtool` code standards are as follows and will be looked up during a pull-request review:
 
 ### Naming conventions
+
 In general we use the following standards:
 - [PascalCase](https://en.wiktionary.org/wiki/Pascal_case#English), for class names.
 - [snake_case](https://en.wikipedia.org/wiki/Snake_case), for the rest.
 
 Although in Python 'private' and 'public' is a vague definition, we often use the underscore symbol `_` to refer to objects that are not meant to be used outside the context where they were defined. For instance:
+
 - We underscore method's names when they are not meant to be used outisde their container class.
 - In addition, we underscore the variables defined within a method to (visually) differenciate them from the input arguments (parameters):
     ```python
@@ -169,11 +171,19 @@ Although in Python 'private' and 'public' is a vague definition, we often use th
     ```
 
 ### Module (file) content
-One file consists of one (and only one) class.
-- As a general rule of thumb, the file containing a class will have the same name (snake case for the file, upper camel case for the class).
+
+In general:
+
+- One file consists of one (and only one) class.
+- The file containing a class will have the same name (snake case for the file, upper camel case for the class).
+
+Some exceptions:
+
 - An auxiliar dataclass might be eventually defined in the same file as the only class using (and referencing) it.
+- Test classes may contain mock classes when they are only to be used within said test-file.
 
 ### Describing an [item](#items-list)
+
 - Packages can be further describe with `README.md` files.
 - Modules are described with docstrings using the [google docstring convention](https://gist.github.com/redlotus/3bc387c2591e3e908c9b63b97b11d24e)
 - We prefer explicit over implicit declaration.
@@ -182,11 +192,14 @@ One file consists of one (and only one) class.
 - Methods contain a clear descriptive name, its arguments (parameters) contain [type hints](https://docs.python.org/3/library/typing.html) and in case it is a 'public' method its signature has a description following the [google docstrings](https://google.github.io/styleguide/pyguide.html) formatting.
 
 ### Protocols over Base classes.
+
 We prefer using [protocols](https://docs.python.org/3/library/typing.html#typing.Protocol) over [base classes](https://docs.python.org/3/library/abc.html) (abstract class) to enforce the [Single Responsibility Principle](https://en.wikipedia.org/wiki/Single_responsibility_principle) as much as possible.
 
 ### Do's and dont's
 
+
 #### Built-in functions:
+
 _Yet to be discussed_
 The following code is just a first approach draft, this is not yet approved by the team! 
 
@@ -240,7 +253,9 @@ class MyExampleDataclass:
 ```
 
 #### Inner functions
+
 An inner function, or a method within a method, can be helpful to reduce code duplicity within a method whilst reusing the variables defined within the parent method's context. When an inner function does not make use of anything from the context it might better be declared as a 'sibling' static method.
+
 - Do:
 ```python
 def example_method(param_a: float, param_b: float) -> float:
@@ -257,7 +272,9 @@ def example_method(param_a: float, param_b: float) -> float:
 ```
 
 #### Using flags
-Using flags in a method are discouraged (yet not forbidden), think on creating two different methods for each alternative and having an `if-else` at the caller's level instead.
+
+Using flags in a method is discouraged (yet not forbidden), think on creating two different methods for each alternative and having an `if-else` at the caller's level instead.
+
 - Do:
 ```python
 def _get_range(from_value: float, to_value: float) -> list[float]:
@@ -289,6 +306,7 @@ _generated_range = example_method(x, y, x > y)
 > ["Zen of Python"](https://peps.python.org/pep-0020/#id3) 
 
 Keep nested `for-loops` and `if-else` statements as flat as possible. In order to reduce complexity we encourage extracting, whenever possible said `for-loops` and `if-else` logic into other methods so to improve their readability.
+
 - In some cases better algorithmic approaches can improve readability, think of:
     - Inversion to reduce nesting on `if-elses`
     - Pre-initialization of variables.
