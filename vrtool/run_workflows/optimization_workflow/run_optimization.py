@@ -95,7 +95,7 @@ class RunOptimization(VrToolRunProtocol):
         # self._filter_measures_first_time()
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _target_reliability_based.evaluate(self.selected_traject, splitparams=True)
+        _target_reliability_based.evaluate(self.selected_traject)
         return _target_reliability_based
 
     def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyBase]]:

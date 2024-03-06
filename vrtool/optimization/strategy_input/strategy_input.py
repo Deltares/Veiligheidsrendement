@@ -17,12 +17,13 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 @dataclass
-class StrategyInputGreedy(StrategyInputProtocol):
+class StrategyInput(StrategyInputProtocol):
     design_method: str = ""
     options: dict[str, df] = field(default_factory=dict)
     options_height: list[dict[str, df]] = field(default_factory=list)
     options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     opt_parameters: dict[str, int] = field(default_factory=dict)
+    sections: list[SectionAsInput] = field(default_factory=list)
     Pf: dict[str, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
@@ -37,7 +38,7 @@ class StrategyInputGreedy(StrategyInputProtocol):
     @classmethod
     def from_section_as_input_collection(
         cls, section_as_input_collection: list[SectionAsInput]
-    ) -> StrategyInputGreedy:
+    ) -> StrategyInput:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
@@ -50,8 +51,8 @@ class StrategyInputGreedy(StrategyInputProtocol):
                 [m.name for m in SgMeasure.get_allowed_mechanisms()],
             )
 
-        _strategy_input = cls()
-
+        _strategy_input = cls(sections=section_as_input_collection)
+        
         # Define options
         _strategy_input.options = {
             _s.section_name: LegacyMappingHelper.get_section_options(_s)

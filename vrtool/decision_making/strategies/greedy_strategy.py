@@ -15,7 +15,7 @@ from vrtool.decision_making.strategy_evaluation import (
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.strategy_input.strategy_input_greedy import StrategyInputGreedy
+from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
@@ -23,7 +23,7 @@ class GreedyStrategy(StrategyProtocol):
     design_method: str
 
     def __init__(
-        self, strategy_input: StrategyInputGreedy, config: VrtoolConfig
+        self, strategy_input: StrategyInput, config: VrtoolConfig
     ) -> None:
         self.design_method = strategy_input.design_method
         self.options = strategy_input.options

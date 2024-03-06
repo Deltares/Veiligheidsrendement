@@ -30,7 +30,7 @@ class MockShMeasure(ShMeasure):
     cost: float = 0
     discount_rate: float = 0
     year: int = 0
-    lcc: float = 0
+    lcc: float = 42
     mechanism_year_collection: None = None
     beta_target: float = 0
     transition_level: float = 0
@@ -45,7 +45,7 @@ class MockSgMeasure(SgMeasure):
     cost: float = 0
     discount_rate: float = 0
     year: int = 0
-    lcc: float = 0
+    lcc: float = 42
     mechanism_year_collection: None = None
     dberm: float = 0
     dcrest: float = 0
