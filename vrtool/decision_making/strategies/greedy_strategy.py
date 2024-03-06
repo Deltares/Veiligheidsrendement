@@ -485,7 +485,7 @@ class GreedyStrategy(StrategyProtocol):
                             (
                                 new_overflow_risk,
                                 new_revetment_risk,
-                                new_geotechnical_risk,
+                                new_independent_risk,
                             ) = evaluate_risk(
                                 copy.deepcopy(init_overflow_risk),
                                 copy.deepcopy(init_revetment_risk),
