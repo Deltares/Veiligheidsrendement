@@ -16,7 +16,7 @@ from vrtool.orm.models.optimization.optimization_selected_measure import (
 
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
-class StrategyBaseExporter(OrmExporterProtocol):
+class StrategyExporter(OrmExporterProtocol):
     def __init__(self, optimization_run_id: int) -> None:
         self.optimization_run: OptimizationRun = OptimizationRun.get_by_id(
             optimization_run_id

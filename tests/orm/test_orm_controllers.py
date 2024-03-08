@@ -31,7 +31,7 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -614,7 +614,7 @@ class TestOrmControllers:
             )
         
         # Define strategies.
-        class MockedStrategy(StrategyBase):
+        class MockedStrategy(StrategyProtocol):
             def __init__(self):
 
                 self.sections = [TestSectionAsInput()._get_section_with_combinations()]

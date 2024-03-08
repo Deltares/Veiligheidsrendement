@@ -3,7 +3,7 @@ import logging
 from tqdm import tqdm
 
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.controllers.aggregate_combinations_controller import (
     AggregateCombinationsController,
@@ -53,7 +53,7 @@ class StrategyController:
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
 
     def get_evaluate_input(
-        self, strategy_type: type[StrategyBase]
+        self, strategy_type: type[StrategyProtocol]
     ) -> StrategyInputProtocol:
         """
         Get the input for the evaluation of the strategy.
