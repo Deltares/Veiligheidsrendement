@@ -6,7 +6,6 @@ import numpy as np
 from pandas import DataFrame as df
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.strategy_evaluation import split_options
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.strategy_input.legacy_mapping_helper import LegacyMappingHelper
@@ -52,17 +51,6 @@ class StrategyInput(StrategyInputProtocol):
             )
 
         _strategy_input = cls(sections=section_as_input_collection)
-        
-        # Define options
-        _strategy_input.options = {
-            _s.section_name: LegacyMappingHelper.get_section_options(_s)
-            for _s in section_as_input_collection
-        }
-        _strategy_input.options_height, _strategy_input.options_geotechnical = (
-            split_options(
-                _strategy_input.options, list(section_as_input_collection[0].mechanisms)
-            )
-        )
 
         # Define general parameters
         _strategy_input._num_sections = len(section_as_input_collection)
