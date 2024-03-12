@@ -56,7 +56,7 @@ _vr_config.externals = (
 _vr_config.traject = "41-1"
 _vr_config.design_methods = ["Veiligheidsrendement"]
 
-_vr_config.input_database_name = "41-1_met_weurt.db"
+_vr_config.input_database_name = "41-1_met_weurt_nieuw.db"
 # _vr_config.input_database_name = "41-1_database.db"
 
 api = ApiRunWorkflows(vrtool_config=_vr_config)

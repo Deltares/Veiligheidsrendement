@@ -33,7 +33,6 @@ def modify_kunstwerkmaatregel(results_measures: list[SectionAsInput], structure_
     _costs_list = list(kw_measures['kosten'])
     for _section_measures in results_measures:
         if _section_measures.section_name == structure_name:
-            print('found')
             #modify cost of sh measure to 0. And add the right htkw pf
             for _measure in _section_measures.sh_measures:
                     _measure.cost = 0
@@ -43,6 +42,7 @@ def modify_kunstwerkmaatregel(results_measures: list[SectionAsInput], structure_
             #add the new measures as sg measures
             for count, _measure in enumerate(_section_measures.sg_measures):
                 _measure.cost = _costs_list.pop(0)
+                _measure.start_cost = 0.
                 for _prob_entry in _measure.mechanism_year_collection.probabilities:
                     if _prob_entry.mechanism == MechanismEnum.PIPING:
                         _prob_entry.probability = beta_to_pf(kw_measures.loc[count,'BSKW'])
