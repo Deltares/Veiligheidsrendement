@@ -72,21 +72,20 @@ class CombineMeasuresController:
         Returns:
             list[CombinedMeasure]: List of combined measures.
         """
-        _combined_measures = []
-
-        _combined_measures.extend(
-            self.combine_measures(
-                self._section.sh_measures,
-                ShMeasure.get_allowed_measure_combinations(),
-                self._section.initial_assessment,
-            )
+        _sh_combinations = self.combine_measures(
+            self._section.sh_measures,
+            ShMeasure.get_allowed_measure_combinations(),
+            self._section.initial_assessment,
         )
-        _combined_measures.extend(
-            self.combine_measures(
-                self._section.sg_measures,
-                SgMeasure.get_allowed_measure_combinations(),
-                self._section.initial_assessment,
-            )
-        )
+        for i, _comb in enumerate(_sh_combinations):
+            _comb.combination_idx = i
 
-        return _combined_measures
+        _sg_combinations = self.combine_measures(
+            self._section.sg_measures,
+            SgMeasure.get_allowed_measure_combinations(),
+            self._section.initial_assessment,
+        )
+        for i, _comb in enumerate(_sg_combinations):
+            _comb.combination_idx = i
+
+        return _sh_combinations + _sg_combinations

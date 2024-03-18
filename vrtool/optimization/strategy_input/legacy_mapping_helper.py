@@ -1,10 +1,12 @@
 from collections import defaultdict
 from typing import Any
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
 class LegacyMappingHelper:
@@ -151,11 +153,9 @@ class LegacyMappingHelper:
         for n, _section in enumerate(sections):
             _lcc[n, 0, 0] = 0.0
             for _aggr in _section.aggregated_measure_combinations:
-                _sh_idx = _get_combination_idx(
-                    _aggr.sh_combination, _section.sh_combinations
-                )
-                _sg_idx = _get_combination_idx(
-                    _aggr.sg_combination, _section.sg_combinations
-                )
-                _lcc[n, _sh_idx + 1, _sg_idx + 1] = _aggr.lcc
+                _lcc[
+                    n,
+                    _aggr.sh_combination.combination_idx + 1,
+                    _aggr.sg_combination.combination_idx + 1,
+                ] = _aggr.lcc
         return _lcc
