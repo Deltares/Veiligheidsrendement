@@ -102,7 +102,7 @@ class CombinedMeasure:
         primary: MeasureAsInputProtocol,
         secondary: MeasureAsInputProtocol | None,
         initial_assessment: MechanismPerYearProbabilityCollection,
-        sequence_nr: int = None,
+        sequence_nr: int,
     ) -> CombinedMeasure:
         """
         Create a combined measure from input
@@ -111,7 +111,7 @@ class CombinedMeasure:
             primary (MeasureAsInputProtocol): The primary measure
             secondary (MeasureAsInputProtocol | None): The secondary measure
             initial_assessment (MechanismPerYearProbabilityCollection): The initial assessment
-            sequence_nr (int, optional): The sequence nr of the combination in the list of Sg- or ShCombinations. Defaults to None.
+            sequence_nr (int): The sequence nr of the combination in the list of Sg- or Sh-combinations
 
         Returns:
             CombinedMeasure: The combined measure
