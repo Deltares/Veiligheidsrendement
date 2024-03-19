@@ -41,30 +41,35 @@ class CombineMeasuresController:
         _prospect_combinations = combinations(_list_to_combine, 2)
 
         def valid_combination(
-            primary: MeasureAsInputProtocol | None,
-            secondary: MeasureAsInputProtocol | None,
+            combination: tuple[
+                MeasureAsInputProtocol | None, MeasureAsInputProtocol | None
+            ]
         ) -> bool:
-            if primary is None or (
-                primary.combine_type not in allowed_measure_combinations.keys()
+            _primary, _secondary = combination
+            if _primary is None or (
+                _primary.combine_type not in allowed_measure_combinations.keys()
             ):
                 # Primary measures MIGHT NOT be NONE.
                 return False
 
             _allowed_secondary_combinations = allowed_measure_combinations[
-                primary.combine_type
+                _primary.combine_type
             ]
             # Secondary measures MIGHT be NONE.
             _combine_type = None
-            if isinstance(secondary, MeasureAsInputProtocol):
-                _combine_type = secondary.combine_type
+            if isinstance(_secondary, MeasureAsInputProtocol):
+                _combine_type = _secondary.combine_type
 
             return _combine_type in _allowed_secondary_combinations
 
-        return [
-            CombinedMeasure.from_input(_primary, _secondary, initial_assessment)
-            for (_primary, _secondary) in _prospect_combinations
-            if valid_combination(_primary, _secondary)
+        _combinations = [
+            CombinedMeasure.from_input(_primary, _secondary, initial_assessment, i)
+            for i, (_primary, _secondary) in enumerate(
+                filter(valid_combination, _prospect_combinations)
+            )
         ]
+
+        return _combinations
 
     def combine(self) -> list[CombinedMeasure]:
         """
@@ -73,20 +78,22 @@ class CombineMeasuresController:
         Returns:
             list[CombinedMeasure]: List of combined measures.
         """
-        _sh_combinations = self.combine_measures(
-            self._section.sh_measures,
-            ShMeasure.get_allowed_measure_combinations(),
-            self._section.initial_assessment,
-        )
-        for i, _comb in enumerate(_sh_combinations):
-            _comb.sequence_nr = i
+        _combinations = []
 
-        _sg_combinations = self.combine_measures(
-            self._section.sg_measures,
-            SgMeasure.get_allowed_measure_combinations(),
-            self._section.initial_assessment,
+        _combinations.extend(
+            self.combine_measures(
+                self._section.sh_measures,
+                ShMeasure.get_allowed_measure_combinations(),
+                self._section.initial_assessment,
+            )
         )
-        for i, _comb in enumerate(_sg_combinations):
-            _comb.sequence_nr = i
 
-        return _sh_combinations + _sg_combinations
+        _combinations.extend(
+            self.combine_measures(
+                self._section.sg_measures,
+                SgMeasure.get_allowed_measure_combinations(),
+                self._section.initial_assessment,
+            )
+        )
+
+        return _combinations
