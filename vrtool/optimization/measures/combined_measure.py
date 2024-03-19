@@ -19,7 +19,7 @@ class CombinedMeasure:
     secondary: MeasureAsInputProtocol | None
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     # Legacy index for mapping back to the old structure for evaluate
-    combination_idx: int = None
+    sequence_nr: int = None
 
     @property
     def lcc(self) -> float:
@@ -102,8 +102,20 @@ class CombinedMeasure:
         primary: MeasureAsInputProtocol,
         secondary: MeasureAsInputProtocol | None,
         initial_assessment: MechanismPerYearProbabilityCollection,
-        combination_idx: int = None,
+        sequence_nr: int = None,
     ) -> CombinedMeasure:
+        """
+        Create a combined measure from input
+
+        Args:
+            primary (MeasureAsInputProtocol): The primary measure
+            secondary (MeasureAsInputProtocol | None): The secondary measure
+            initial_assessment (MechanismPerYearProbabilityCollection): The initial assessment
+            sequence_nr (int, optional): The sequence nr of the combination in the list of Sg- or ShCombinations. Defaults to None.
+
+        Returns:
+            CombinedMeasure: The combined measure
+        """
         _mech_year_coll = primary.mechanism_year_collection
         if secondary:
             _mech_year_coll = MechanismPerYearProbabilityCollection.combine(
@@ -116,5 +128,5 @@ class CombinedMeasure:
             primary=primary,
             secondary=secondary,
             mechanism_year_collection=_mech_year_coll,
-            combination_idx=combination_idx,
+            sequence_nr=sequence_nr,
         )

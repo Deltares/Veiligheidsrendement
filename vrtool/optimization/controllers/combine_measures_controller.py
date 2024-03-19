@@ -32,6 +32,7 @@ class CombineMeasuresController:
             measures (list[MeasureAsInputProtocol]): The measures to be combined
             allowed_measure_combinations (dict[ CombinableTypeEnum, list[CombinableTypeEnum  |  None] ]):
                 The allowed combinations of measures
+            initial_assessment (MechanismPerYearProbabilityCollection): The initial assessment
 
         Returns:
             list[CombinedMeasure]: The combined measures
@@ -78,7 +79,7 @@ class CombineMeasuresController:
             self._section.initial_assessment,
         )
         for i, _comb in enumerate(_sh_combinations):
-            _comb.combination_idx = i
+            _comb.sequence_nr = i
 
         _sg_combinations = self.combine_measures(
             self._section.sg_measures,
@@ -86,6 +87,6 @@ class CombineMeasuresController:
             self._section.initial_assessment,
         )
         for i, _comb in enumerate(_sg_combinations):
-            _comb.combination_idx = i
+            _comb.sequence_nr = i
 
         return _sh_combinations + _sg_combinations
