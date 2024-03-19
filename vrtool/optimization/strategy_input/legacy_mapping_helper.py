@@ -132,21 +132,6 @@ class LegacyMappingHelper:
     def get_lifecycle_cost(
         sections: list[SectionAsInput], num_sections: int, max_sh: int, max_sg: int
     ) -> np.ndarray:
-        def _get_combination_idx(
-            comb: CombinedMeasure, combinations: list[CombinedMeasure]
-        ) -> int:
-            """
-            Find the index of the combination in the list of combinations of measures.
-
-            Args:
-                comb (CombinedMeasure): The combination at hand.
-                combinations (list[CombinedMeasure]): LIs of all combined measures.
-
-            Returns:
-                int: Index of the combined measures in the list.
-            """
-            return next((i for i, c in enumerate(combinations) if c == comb), -1)
-
         _lcc: np.ndarray = np.array([])
         _lcc = np.full((num_sections, max_sh + 1, max_sg + 1), 1e99)
 
@@ -155,7 +140,7 @@ class LegacyMappingHelper:
             for _aggr in _section.aggregated_measure_combinations:
                 _lcc[
                     n,
-                    _aggr.sh_combination.combination_idx + 1,
-                    _aggr.sg_combination.combination_idx + 1,
+                    _aggr.sh_combination.sequence_nr + 1,
+                    _aggr.sg_combination.sequence_nr + 1,
                 ] = _aggr.lcc
         return _lcc
