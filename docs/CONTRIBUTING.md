@@ -163,11 +163,11 @@ In general we use the following standards:
 Although in Python 'private' and 'public' is a vague definition, we often use the underscore symbol `_` to refer to objects that are not meant to be used outside the context where they were defined. For instance:
 
 - We underscore method's names when they are not meant to be used outisde their container class.
-- In addition, we underscore the variables defined within a method to (visually) differenciate them from the input arguments (parameters):
+- In addition, we suggest to underscore the variables defined within a method to (visually) differenciate them from the input arguments (parameters):
     ```python
     def example_method(param_a: float, param_b: float) -> float:
-        _sum = param_a + param_b
-        return _sum
+        _sumat = param_a + param_b
+        return _sumat
     ```
 
 ### Module (file) content
@@ -184,36 +184,32 @@ Some exceptions:
 
 ### Describing an [item](#items-list)
 
-- Packages can be further describe with `README.md` files.
+- Packages can be further described with `README.md` files.
 - Modules are described with docstrings using the [google docstring convention](https://gist.github.com/redlotus/3bc387c2591e3e908c9b63b97b11d24e)
 - We prefer explicit over implicit declaration.
     - Use of [type hinting](https://docs.python.org/3/library/typing.html)
-- Classes are described with docstrings when required, its properties also have descriptive names and have explicit types using [type hints](https://docs.python.org/3/library/typing.html).
+- Classes are __always__ described with docstrings, its properties also have descriptive names and have explicit types using [type hints](https://docs.python.org/3/library/typing.html).
 - Methods contain a clear descriptive name, its arguments (parameters) contain [type hints](https://docs.python.org/3/library/typing.html) and in case it is a 'public' method its signature has a description following the [google docstrings](https://google.github.io/styleguide/pyguide.html) formatting.
 
-### Protocols over Base classes.
+### Protocols
 
-We prefer using [protocols](https://docs.python.org/3/library/typing.html#typing.Protocol) over [base classes](https://docs.python.org/3/library/abc.html) (abstract class) to enforce the [Single Responsibility Principle](https://en.wikipedia.org/wiki/Single_responsibility_principle) as much as possible.
+We use [protocols](https://docs.python.org/3/library/typing.html#typing.Protocol) to describe the behavior of classes and enable polymorphism.
 
 ### Do's and dont's
 
 
 #### Built-in functions:
 
-_Yet to be discussed_
-The following code is just a first approach draft, this is not yet approved by the team! 
+We try to use built-in functions when they help us achieve a more readable and/or efficient code. 
 
-- map
-- filter
-- zip
-- lambda expression
+Indeed a complex built-in function is used it is strongly advised to add a comment explaining what this function is doing.
+
+Writing built-in functions should still allow the developer to easily debug the wrapping method.
+
 
 #### Dataclasses
 
-_Yet to be discussed_
-The following code is just a first approach draft, this is not yet approved by the team! 
-
-We define [dataclass](https://docs.python.org/3/library/dataclasses.html) when we require a repeating data structure that contains multiple properties potentially with default values. We consider a dataclass responsible only for exposing its own context, therefore not for modifying its own state or the one from other objects.
+We define a [dataclass](https://docs.python.org/3/library/dataclasses.html) when we require a repeating data structure that contains multiple properties potentially with default values. We consider a dataclass responsible only for exposing its own context, therefore not for modifying its own state or the one from other objects.
 
 - Do:
 ```python
@@ -252,20 +248,47 @@ class MyExampleDataclass:
         page.set_margin
 ```
 
+#### Class methods
+
+Class methods can be used to replace the multiple `__init__` needs that are often present in other languages like `C#`.
+
+It is suggested to adhere to the method naming convention to have a clear understanding on how the object is to be created.
+
+```python
+
+class MyExample:
+
+    def __init__(self):
+        ...
+    
+    @classmethod
+    def from_pandas(cls, pandas_df: pd.DataFrame) -> MyExample:
+        _my_example = cls()
+        ...
+        return _my_example
+
+```
+
 #### Inner functions
 
 An inner function, or a method within a method, can be helpful to reduce code duplicity within a method whilst reusing the variables defined within the parent method's context. When an inner function does not make use of anything from the context it might better be declared as a 'sibling' static method.
 
+- Example:
+```python
+def example_method(param_a: float, param_b: int) -> float:
+    return sum([v * param_a for v in range(0, param_b)])
+```
+
 - Do:
 ```python
-def example_method(param_a: float, param_b: float) -> float:
+def example_method(param_a: float, param_b: int) -> float:
     def multiply(value: float):
         return value * param_a
     return sum([multiply(v) for v in range(0, param_b)])
 ```
 - Don't:
 ```python
-def example_method(param_a: float, param_b: float) -> float:
+def example_method(param_a: float, param_b: int) -> float:
     def multiply(value: float, param_value: float):
         return value * param_value
     return sum([multiply(v, param_a) for v in range(0, param_b)])
@@ -274,6 +297,8 @@ def example_method(param_a: float, param_b: float) -> float:
 #### Using flags
 
 Using flags in a method is discouraged (yet not forbidden), think on creating two different methods for each alternative and having an `if-else` at the caller's level instead.
+
+When the parameter (most times `bool`) is used to determine the workflow of a method then is better not to go for it.
 
 - Do:
 ```python
@@ -287,7 +312,7 @@ x = 4.2
 y = 2.4
 _generated_range = example_method_reversed(x, y) if x > y else example_method(x, y)
 ```
-- Don't:
+- Better do not for new functionalities:
 ```python
 def example_method(param_a: float, param_b: float, is_reversed: bool) -> list[float]:
     if is_reversed:
