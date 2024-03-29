@@ -115,14 +115,17 @@ class LegacyMappingHelper:
             elif _mech == MechanismEnum.REVETMENT:
                 _pf[_mech.name] = np.full((num_sections, max_sh + 1, max_year), 1.0e-18)
             else:
-                _pf[_mech.name] = np.full((num_sections, max_sg + 1, max_year), 1.0)
+                _pf[_mech.name] = np.full((num_sections, max_sg + 1, max_year), 1.0e-18)
 
             # Loop over sections
             for n, _section in enumerate(sections):
-                _probs = _get_pf_for_mech(
-                    _mech, _section, _pf[_mech.name].shape[1:], max_year
-                )
-                _pf[_mech.name][n, 0 : len(_probs), :] = _probs
+                try:
+                    _probs = _get_pf_for_mech(
+                        _mech, _section, _pf[_mech.name].shape[1:], max_year
+                    )
+                    _pf[_mech.name][n, 0 : len(_probs), :] = _probs
+                except:
+                    pass #Mechanism not present at section
 
         return _pf
 
