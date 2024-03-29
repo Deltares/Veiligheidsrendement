@@ -301,7 +301,7 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.skip(reason="Only used for generating new reference databases.")
+    # @pytest.mark.skip(reason="Only used for generating new reference databases.")
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases,
@@ -311,9 +311,7 @@ class TestApiRunWorkflowsAcceptance:
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _new_optimization_name = "test_optimization_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
+        _new_optimization_name = "Basisberekening"
 
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
