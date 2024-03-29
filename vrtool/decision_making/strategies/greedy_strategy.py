@@ -236,6 +236,8 @@ class GreedyStrategy(StrategyProtocol):
                 current_pf[MechanismEnum.OVERFLOW] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf[MechanismEnum.OVERFLOW.name].shape[2]))
                 if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
                     current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf[MechanismEnum.REVETMENT.name].shape[2]))
+                else:
+                    current_pf[MechanismEnum.REVETMENT] = np.zeros(self.Pf[MechanismEnum.REVETMENT.name].shape[2])
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
