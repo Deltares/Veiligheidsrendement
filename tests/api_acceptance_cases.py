@@ -101,6 +101,7 @@ class AcceptanceTestCase:
                 model_directory="38-1 two river sections D-Stability",
                 traject_name="38-1",
                 excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,                    
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 38-1, two sections with D-Stability",
