@@ -193,38 +193,38 @@ class TestStrategyInput:
 
         # Combinations
         _sh_combination_soil_0 = CombinedMeasure.from_input(
-            _sh_measure_soil_0_0, None, _initial_assessment
+            _sh_measure_soil_0_0, None, _initial_assessment, 0
         )
         _sh_combination_soil_20 = CombinedMeasure.from_input(
-            _sh_measure_soil_20_0, None, _initial_assessment
+            _sh_measure_soil_20_0, None, _initial_assessment, 1
         )
         _sh_combination_soil_revetment_0_384 = CombinedMeasure.from_input(
-            _sh_measure_soil_0_0, _sh_measure_revetment_0_384, _initial_assessment
+            _sh_measure_soil_0_0, _sh_measure_revetment_0_384, _initial_assessment, 2
         )
         _sh_combination_soil_revetment_20_384 = CombinedMeasure.from_input(
-            _sh_measure_soil_20_0, _sh_measure_revetment_0_384, _initial_assessment
+            _sh_measure_soil_20_0, _sh_measure_revetment_0_384, _initial_assessment, 3
         )
         _sh_combination_soil_revetment_0_484 = CombinedMeasure.from_input(
-            _sh_measure_soil_0_0, _sh_measure_revetment_0_484, _initial_assessment
+            _sh_measure_soil_0_0, _sh_measure_revetment_0_484, _initial_assessment, 4
         )
         _sh_combination_soil_revetment_20_484 = CombinedMeasure.from_input(
-            _sh_measure_soil_20_0, _sh_measure_revetment_0_484, _initial_assessment
+            _sh_measure_soil_20_0, _sh_measure_revetment_0_484, _initial_assessment, 5
         )
         _sh_combination_diaphragm_0 = CombinedMeasure.from_input(
-            _sh_measure_diaphragm_0, None, _initial_assessment
+            _sh_measure_diaphragm_0, None, _initial_assessment, 6
         )
 
         _sg_combination_soil_0 = CombinedMeasure.from_input(
-            _sg_measure_soil_0_0, None, _initial_assessment
+            _sg_measure_soil_0_0, None, _initial_assessment, 0
         )
         _sg_combination_soil_20 = CombinedMeasure.from_input(
-            _sg_measure_soil_20_0, None, _initial_assessment
+            _sg_measure_soil_20_0, None, _initial_assessment, 1
         )
         _sg_combination_soil_vzg_0 = CombinedMeasure.from_input(
-            _sg_measure_soil_0_0, _sg_measure_vzg_0, _initial_assessment
+            _sg_measure_soil_0_0, _sg_measure_vzg_0, _initial_assessment, 2
         )
         _sg_combination_soil_vzg_20 = CombinedMeasure.from_input(
-            _sg_measure_soil_20_0, _sg_measure_vzg_0, _initial_assessment
+            _sg_measure_soil_20_0, _sg_measure_vzg_0, _initial_assessment, 3
         )
 
         _sections[0].combined_measures = [
@@ -288,9 +288,7 @@ class TestStrategyInput:
         ]
 
         # 2. Run test
-        _strategy_input = StrategyInput.from_section_as_input_collection(
-            _sections
-        )
+        _strategy_input = StrategyInput.from_section_as_input_collection(_sections)
 
         # 3. Verify expectations
 

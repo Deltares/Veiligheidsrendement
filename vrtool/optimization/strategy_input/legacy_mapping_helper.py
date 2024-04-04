@@ -1,10 +1,12 @@
 from collections import defaultdict
 from typing import Any
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
 class LegacyMappingHelper:
@@ -133,32 +135,15 @@ class LegacyMappingHelper:
     def get_lifecycle_cost(
         sections: list[SectionAsInput], num_sections: int, max_sh: int, max_sg: int
     ) -> np.ndarray:
-        def _get_combination_idx(
-            comb: CombinedMeasure, combinations: list[CombinedMeasure]
-        ) -> int:
-            """
-            Find the index of the combination in the list of combinations of measures.
-
-            Args:
-                comb (CombinedMeasure): The combination at hand.
-                combinations (list[CombinedMeasure]): LIs of all combined measures.
-
-            Returns:
-                int: Index of the combined measures in the list.
-            """
-            return next((i for i, c in enumerate(combinations) if c == comb), -1)
-
         _lcc: np.ndarray = np.array([])
         _lcc = np.full((num_sections, max_sh + 1, max_sg + 1), 1e99)
 
         for n, _section in enumerate(sections):
             _lcc[n, 0, 0] = 0.0
             for _aggr in _section.aggregated_measure_combinations:
-                _sh_idx = _get_combination_idx(
-                    _aggr.sh_combination, _section.sh_combinations
-                )
-                _sg_idx = _get_combination_idx(
-                    _aggr.sg_combination, _section.sg_combinations
-                )
-                _lcc[n, _sh_idx + 1, _sg_idx + 1] = _aggr.lcc
+                _lcc[
+                    n,
+                    _aggr.sh_combination.sequence_nr + 1,
+                    _aggr.sg_combination.sequence_nr + 1,
+                ] = _aggr.lcc
         return _lcc
