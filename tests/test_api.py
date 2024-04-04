@@ -502,13 +502,6 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        acceptance_test_cases[5:7],
-        indirect=True,
-    )
-
-
 @pytest.mark.slow
 class TestApiReportedBugs:
     @staticmethod
