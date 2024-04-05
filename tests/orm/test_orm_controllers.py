@@ -1,4 +1,3 @@
-import random
 import shutil
 from pathlib import Path
 from typing import Iterator
@@ -9,7 +8,12 @@ import pytest
 from peewee import SqliteDatabase
 
 import vrtool.orm.models as orm
-from tests import test_data, test_results
+from tests import (
+    get_vrtool_config_test_copy,
+    test_data,
+    test_results,
+    get_copy_of_reference_directory,
+)
 from tests.orm import (
     get_basic_combinable_type,
     get_basic_dike_traject_info,
@@ -26,7 +30,9 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
 from tests.optimization.measures.test_section_as_input import TestSectionAsInput
 from tests.test_api import TestApiReportedBugs
 
-from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
+from vrtool.optimization.measures.aggregated_measures_combination import (
+    AggregatedMeasureCombination,
+)
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -612,24 +618,40 @@ class TestOrmControllers:
                 measure_result=_measure_result,
                 investment_year=0,
             )
-        
+
         # Define strategies.
         class MockedStrategy(StrategyBase):
             def __init__(self):
 
                 self.sections = [TestSectionAsInput()._get_section_with_combinations()]
-                self.sections[0].aggregated_measure_combinations = [AggregatedMeasureCombination(
-                                sh_combination= self.sections[0].sh_combinations[1],
-                                sg_combination= self.sections[0].sg_combinations[0],
-                                measure_result_id=1,
-                                year=0,
-                            )]
-                self.total_risk_per_step = [1000.,100.]
-                self.probabilities_per_step = [{MechanismEnum.STABILITY_INNER.name: np.linspace(0.1,0.6,100).reshape((100,1)), 
-                                                MechanismEnum.OVERFLOW.name: np.linspace(0.05,0.55,100).reshape((100,1))},
-                                               {MechanismEnum.STABILITY_INNER.name: np.linspace(0.1,0.6,100).reshape((100,1)), 
-                                                MechanismEnum.OVERFLOW.name: np.linspace(0.01,0.1,100).reshape((100,1))}]
-                self.measures_taken = [(0,1,1)]
+                self.sections[0].aggregated_measure_combinations = [
+                    AggregatedMeasureCombination(
+                        sh_combination=self.sections[0].sh_combinations[1],
+                        sg_combination=self.sections[0].sg_combinations[0],
+                        measure_result_id=1,
+                        year=0,
+                    )
+                ]
+                self.total_risk_per_step = [1000.0, 100.0]
+                self.probabilities_per_step = [
+                    {
+                        MechanismEnum.STABILITY_INNER.name: np.linspace(
+                            0.1, 0.6, 100
+                        ).reshape((100, 1)),
+                        MechanismEnum.OVERFLOW.name: np.linspace(
+                            0.05, 0.55, 100
+                        ).reshape((100, 1)),
+                    },
+                    {
+                        MechanismEnum.STABILITY_INNER.name: np.linspace(
+                            0.1, 0.6, 100
+                        ).reshape((100, 1)),
+                        MechanismEnum.OVERFLOW.name: np.linspace(
+                            0.01, 0.1, 100
+                        ).reshape((100, 1)),
+                    },
+                ]
+                self.measures_taken = [(0, 1, 1)]
                 self._time_periods = [0, 20, 100]
 
         _test_strategy = MockedStrategy()
@@ -949,11 +971,9 @@ class TestOrmControllers:
     ):
         # 1. Define test data.
         _test_dir_name = "test_stability_multiple_scenarios"
-        _test_case_dir = TestApiReportedBugs.get_copy_of_reference_directory(
-            _test_dir_name
-        )
+        _test_case_dir = get_copy_of_reference_directory(_test_dir_name)
 
-        _vrtool_config = TestApiReportedBugs.get_vrtool_config_test_copy(
+        _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
         assert not any(_vrtool_config.output_directory.glob("*"))

@@ -6,7 +6,14 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests import get_test_results_dir, test_data, test_externals, test_results
+from tests import (
+    get_copy_of_reference_directory,
+    get_test_results_dir,
+    get_vrtool_config_test_copy,
+    test_data,
+    test_externals,
+    test_results,
+)
 from tests.api_acceptance_cases import (
     AcceptanceTestCase,
     RunFullValidator,
@@ -346,7 +353,7 @@ class TestApiRunWorkflowsAcceptance:
         )
         # Only the selected design method for this case:
         valid_vrtool_config.design_methods = ["Doorsnede-eisen"]
-        
+
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
         _validator = RunStepOptimizationValidator()
@@ -376,7 +383,7 @@ class TestApiRunWorkflowsAcceptance:
         )
         # Only the selected design method for this case:
         valid_vrtool_config.design_methods = ["Veiligheidsrendement"]
-        
+
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
         _validator = RunStepOptimizationValidator()
@@ -502,58 +509,9 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
 
+
 @pytest.mark.slow
 class TestApiReportedBugs:
-    @staticmethod
-    def get_copy_of_reference_directory(directory_name: str) -> Path:
-        # Check if reference path exists.
-        _reference_path = test_data.joinpath(directory_name)
-        assert _reference_path.exists()
-
-        # Ensure new path does not exist yet.
-        _new_path = test_results.joinpath(directory_name)
-        if _new_path.exists():
-            shutil.rmtree(_new_path)
-
-        # Copy the reference to new location.
-        shutil.copytree(_reference_path, _new_path)
-        assert _new_path.exists()
-
-        # Return new path location.
-        return _new_path
-
-    @staticmethod
-    def get_vrtool_config_test_copy(config_file: Path, test_name: str) -> VrtoolConfig:
-        """
-        Gets a `VrtoolConfig` with a copy of the database to avoid version issues.
-        """
-        # Create a results directory (ignored by git)
-        _test_results_directory = test_results.joinpath(test_name)
-        if _test_results_directory.exists():
-            shutil.rmtree(_test_results_directory)
-        _test_results_directory.mkdir(parents=True)
-
-        # Get the current configuration
-        _vrtool_config = VrtoolConfig.from_json(config_file)
-
-        # Create a db copy.
-        _new_db_name = "test_{}.db".format(
-            hashlib.shake_128(_test_results_directory.__bytes__()).hexdigest(4)
-        )
-        _new_db_path = _test_results_directory.joinpath(_new_db_name)
-        if _new_db_path.exists():
-            # Somehow it was not removed in the previous test run.
-            _new_db_path.unlink(missing_ok=True)
-
-        shutil.copy(_vrtool_config.input_database_path, _new_db_path)
-
-        # Set new configuration values.
-        _vrtool_config.input_directory = _test_results_directory
-        _vrtool_config.input_database_name = _new_db_name
-        _vrtool_config.output_directory = _test_results_directory.joinpath("output")
-        _vrtool_config.output_directory.mkdir()
-
-        return _vrtool_config
 
     @pytest.mark.parametrize(
         "directory_name",
@@ -572,9 +530,9 @@ class TestApiReportedBugs:
         self, directory_name: str, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _test_case_dir = self.get_copy_of_reference_directory(directory_name)
+        _test_case_dir = get_copy_of_reference_directory(directory_name)
 
-        _vrtool_config = self.get_vrtool_config_test_copy(
+        _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
         assert not any(_vrtool_config.output_directory.glob("*"))
