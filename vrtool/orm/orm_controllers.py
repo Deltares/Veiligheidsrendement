@@ -16,8 +16,8 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
-from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
-    StrategyBaseExporter,
+from vrtool.orm.io.exporters.optimization.strategy_exporter import (
+    StrategyExporter,
 )
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
@@ -506,7 +506,7 @@ def export_results_optimization(
     result: ResultsOptimization, run_ids: list[int]
 ) -> None:
     """
-    Exports the optimization results (`list[StrategyBase]`) to a database.
+    Exports the optimization results (`list[StrategyProtocol]`) to a database.
 
     Args:
         result (ResultsOptimization): result of an optimization run.
@@ -517,7 +517,7 @@ def export_results_optimization(
     logging.debug("Opened connection to export optimizations.")
 
     for _run_id, _result_strategy in zip(run_ids, result.results_strategies):
-        _exporter = StrategyBaseExporter(_run_id)
+        _exporter = StrategyExporter(_run_id)
         _exporter.export_dom(_result_strategy)
     _connected_db.close()
 

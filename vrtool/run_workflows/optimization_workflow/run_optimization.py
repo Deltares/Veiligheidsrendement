@@ -4,7 +4,6 @@ from typing import Callable, Dict
 
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.section_as_input import SectionAsInput
@@ -48,7 +47,7 @@ class RunOptimization(VrToolRunProtocol):
         return _results_dir
 
     def _get_strategy_input(
-        self, strategy_type: type[StrategyBase], design_method: str
+        self, strategy_type: type[StrategyProtocol], design_method: str
     ) -> StrategyInputProtocol:
         _strategy_controller = StrategyController(self._section_input_collection)
         _strategy_controller.set_investment_year()
@@ -76,7 +75,7 @@ class RunOptimization(VrToolRunProtocol):
         )
         return _greedy_strategy
 
-    def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
+    def _get_target_reliability_strategy(self, design_method: str) -> StrategyProtocol:
         logging.info(
             f"Start bepaling referentiemaatregelen op basis van {design_method}."
         )
@@ -96,7 +95,7 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based.evaluate(self.selected_traject)
         return _target_reliability_based
 
-    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyBase]]:
+    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyProtocol]]:
         return {
             "TC": self._get_optimized_greedy_strategy,
             "Total Cost": self._get_optimized_greedy_strategy,
@@ -130,23 +129,3 @@ class RunOptimization(VrToolRunProtocol):
         logging.info("Stap 3: Bepaling maatregelen op trajectniveau afgerond")
 
         return _results_optimization
-
-    def _replace_names(
-        self, strategy_case: StrategyBase, solution_case: Solutions
-    ) -> StrategyBase:
-        strategy_case.TakenMeasures = strategy_case.TakenMeasures.reset_index(drop=True)
-        for i in range(1, len(strategy_case.TakenMeasures)):
-            _measure_id = strategy_case.TakenMeasures.iloc[i]["ID"]
-            if isinstance(_measure_id, list):
-                _measure_id = "+".join(_measure_id)
-
-            section = strategy_case.TakenMeasures.iloc[i]["Section"]
-            name = (
-                solution_case[section]
-                .measure_table.loc[
-                    solution_case[section].measure_table["ID"] == _measure_id
-                ]["Name"]
-                .values
-            )
-            strategy_case.TakenMeasures.at[i, "name"] = name
-        return strategy_case

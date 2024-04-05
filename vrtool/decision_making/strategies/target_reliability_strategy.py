@@ -3,15 +3,11 @@ import logging
 from dataclasses import dataclass
 
 import numpy as np
-import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
-    calc_tc,
-    calc_tr,
     implement_option,
-    make_traject_df,
     compute_total_risk,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -20,7 +16,7 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input import (
     StrategyInput,
 )
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
+
 from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 
 
@@ -102,9 +98,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.Pf = strategy_input.Pf
         self.D = strategy_input.D
         self.sections = strategy_input.sections
-
-    def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
-        return float("nan"), float("nan")
 
     def evaluate(
         self,
