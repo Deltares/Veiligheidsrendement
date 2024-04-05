@@ -28,7 +28,6 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     validate_measure_result_export,
 )
 from tests.optimization.measures.test_section_as_input import TestSectionAsInput
-from tests.test_api import TestApiReportedBugs
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,

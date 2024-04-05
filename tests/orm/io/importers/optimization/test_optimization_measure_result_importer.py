@@ -1,7 +1,6 @@
 import pytest
 
 from tests import get_copy_of_reference_directory, get_vrtool_config_test_copy
-from tests.test_api import TestApiReportedBugs
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
