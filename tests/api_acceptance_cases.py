@@ -7,7 +7,6 @@ from typing import Protocol
 
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
 
 import vrtool.orm.models as orm
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -101,7 +100,7 @@ class AcceptanceTestCase:
                 model_directory="38-1 two river sections D-Stability",
                 traject_name="38-1",
                 excluded_mechanisms=[
-                    MechanismEnum.REVETMENT,                    
+                    MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 38-1, two sections with D-Stability",
@@ -287,7 +286,9 @@ class RunStepOptimizationValidator(RunStepValidator):
 
         _connected_db.close()
 
-    def _get_opt_run(self, database_path: Path, method: str) -> list[orm.OptimizationRun]:
+    def _get_opt_run(
+        self, database_path: Path, method: str
+    ) -> list[orm.OptimizationRun]:
         """
         Gets a list of all existing `OptimizationRun` rows in the database with all the backrefs related to an "optimization" already instantiated ("eager loading").
 
@@ -312,7 +313,7 @@ class RunStepOptimizationValidator(RunStepValidator):
                     orm.OptimizationStep,
                     orm.OptimizationStepResultSection,
                     orm.OptimizationStepResultMechanism,
-                    orm.OptimizationType
+                    orm.OptimizationType,
                 )
                 .join_from(orm.OptimizationRun, orm.OptimizationType)
                 .join_from(orm.OptimizationRun, orm.OptimizationSelectedMeasure)
@@ -331,7 +332,9 @@ class RunStepOptimizationValidator(RunStepValidator):
                     opt_run.optimization_run_measure_results = list(
                         opt_run.optimization_run_measure_results
                     )
-                    for opt_selected_measure in opt_run.optimization_run_measure_results:
+                    for (
+                        opt_selected_measure
+                    ) in opt_run.optimization_run_measure_results:
                         opt_selected_measure.optimization_steps = list(
                             opt_selected_measure.optimization_steps
                         )
@@ -399,9 +402,15 @@ class RunStepOptimizationValidator(RunStepValidator):
         for _idx, _reference in enumerate(reference_list):
             _result = result_list[_idx]
             assert _reference.step_number == _result.step_number
-            if _reference.total_lcc is not None: #TODO: temporary fix as long as references dont contain cost for TR.
-                assert _reference.total_lcc == pytest.approx(_result.total_lcc, abs=1e-2)
-                assert _reference.total_risk == pytest.approx(_result.total_risk, abs=1e-2)
+            if (
+                _reference.total_lcc is not None
+            ):  # TODO: temporary fix as long as references dont contain cost for TR.
+                assert _reference.total_lcc == pytest.approx(
+                    _result.total_lcc, abs=1e-2
+                )
+                assert _reference.total_risk == pytest.approx(
+                    _result.total_risk, abs=1e-2
+                )
             self._compare_optimization_step_results_mechanism(
                 _reference.optimization_step_results_mechanism,
                 _result.optimization_step_results_mechanism,
@@ -418,7 +427,7 @@ class RunStepOptimizationValidator(RunStepValidator):
     ):
         assert reference.beta == pytest.approx(result.beta, abs=1e-4)
         assert reference.time == result.time
-        assert reference.lcc == pytest.approx( result.lcc, abs=1e-2)
+        assert reference.lcc == pytest.approx(result.lcc, abs=1e-2)
 
     def _compare_mechanism_per_section(
         self, reference: orm.MechanismPerSection, result: orm.MechanismPerSection
@@ -458,22 +467,33 @@ class RunStepOptimizationValidator(RunStepValidator):
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Steps for validation.
         # Load optimization runs.
-        _reference_path = _get_database_reference_path(valid_vrtool_config, self._reference_db_suffix)
-        _run_data = {method: (self._get_opt_run(_reference_path, method), self._get_opt_run(valid_vrtool_config.input_database_path, method)) 
-                     for method in valid_vrtool_config.design_methods}
+        _reference_path = _get_database_reference_path(
+            valid_vrtool_config, self._reference_db_suffix
+        )
+        _run_data = {
+            method: (
+                self._get_opt_run(_reference_path, method),
+                self._get_opt_run(valid_vrtool_config.input_database_path, method),
+            )
+            for method in valid_vrtool_config.design_methods
+        }
 
         for method in _run_data.keys():
-            #verify there is an equal number of runs of each type
+            # verify there is an equal number of runs of each type
             assert len(_run_data[method][0]) == len(_run_data[method][1])
 
         # Because the resulting database does not contain the previous results,
         # we can then assume all the values will be in the same exact order.
         for _runs in _run_data.values():
-            [self._compare_optimization_run(_reference_run, _result_run) for _reference_run, _result_run in zip(*_runs)]
+            [
+                self._compare_optimization_run(_reference_run, _result_run)
+                for _reference_run, _result_run in zip(*_runs)
+            ]
 
     @staticmethod
     def get_csv_reference_dir(vrtool_config: VrtoolConfig) -> Path:
         return vrtool_config.input_directory.joinpath("reference")
+
 
 class RunFullValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
