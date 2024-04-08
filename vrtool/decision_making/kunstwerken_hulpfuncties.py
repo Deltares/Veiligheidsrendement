@@ -14,7 +14,6 @@ def modify_kunstwerk_initial_safety(results_measures: list[SectionAsInput], stru
     #modify the section_reliability dataframe
     for section_measures in results_measures:
         if section_measures.section_name == structure_name:
-            print('found')
             for _prob_entry in section_measures.initial_assessment.probabilities:
                 if _prob_entry.mechanism == MechanismEnum.OVERFLOW:
                     _prob_entry.probability = beta_to_pf(kw_safety.loc['HTKW','beta'])
