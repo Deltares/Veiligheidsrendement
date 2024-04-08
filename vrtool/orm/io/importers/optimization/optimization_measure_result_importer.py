@@ -35,17 +35,13 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
     discount_rate: float
     unit_costs: dict
-    investment_years: list[int]
 
-    def __init__(
-        self, vrtool_config: VrtoolConfig, investment_years: list[int]
-    ) -> None:
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
         if not vrtool_config:
             raise ValueError("VrtoolConfig not provided.")
 
         self.discount_rate = vrtool_config.discount_rate
         self.unit_costs = vrtool_config.unit_costs
-        self.investment_years = investment_years
 
     @staticmethod
     def valid_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> bool:
@@ -97,9 +93,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         )
         _measure_concrete_params = measure_as_input_type.get_concrete_parameters()
         _measures_dicts = []
-        for _section_result in measure_result.sections_measure_result.where(
-            OrmMeasureResultSection.time << self.investment_years
-        ):
+        for _section_result in measure_result.sections_measure_result:
             _time = _section_result.time
             _cost = _section_result.cost
             _measures_dicts.append(
@@ -133,11 +127,6 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
         if self.valid_parameter(orm_model, "dcrest"):
-            _imported_measures.extend(
-                self._create_measure(
-                    orm_model,
-                    SgMeasure,
-                )
-            )
+            _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
 
         return _imported_measures
