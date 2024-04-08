@@ -72,16 +72,19 @@ class TestSectionAsInput:
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 None,
                 None,
+                0,
             ),
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
                 None,
                 None,
+                1,
             ),
             CombinedMeasure.from_input(
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
                 None,
                 None,
+                2,
             ),
         ]
         return _section
@@ -344,9 +347,7 @@ class TestSectionAsInput:
         # 1. Define test data
         _section = self._get_section_with_combinations()
         _other_combination = CombinedMeasure.from_input(
-            MockShMeasure(MeasureTypeEnum.REVETMENT),
-            None,
-            None,
+            MockShMeasure(MeasureTypeEnum.REVETMENT), None, None, 0
         )
         _aggregated_measure_combination = AggregatedMeasureCombination(
             sh_combination=_other_combination,
