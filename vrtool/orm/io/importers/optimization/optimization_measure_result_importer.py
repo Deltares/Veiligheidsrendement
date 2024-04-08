@@ -19,9 +19,6 @@ from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_result.measure_result import (
     MeasureResult as OrmMeasureResult,
 )
-from vrtool.orm.models.measure_result.measure_result_section import (
-    MeasureResultSection as OrmMeasureResultSection,
-)
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
