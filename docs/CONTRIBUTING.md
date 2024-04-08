@@ -200,11 +200,11 @@ We use [protocols](https://docs.python.org/3/library/typing.html#typing.Protocol
 
 #### Built-in functions:
 
-We try to use built-in functions when they help us achieve a more readable and/or efficient code. 
+We use built-in functions when they help us achieve more efficient code, with the condition the code remains readable.
 
 In case a complex built-in function is used it is strongly advised to add a comment explaining what this function is doing.
 
-Writing built-in functions should still allow the developer to easily debug the wrapping method.
+Using built-in functions should still allow the developer to easily debug the wrapping method.
 
 
 #### Dataclasses
