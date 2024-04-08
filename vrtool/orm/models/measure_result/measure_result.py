@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from peewee import ForeignKeyField, fn
+from peewee import ForeignKeyField
 
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
