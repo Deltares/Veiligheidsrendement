@@ -5,6 +5,9 @@ import pytest as py
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.aggregated_measures_combination import (
+    AggregatedMeasureCombination,
+)
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
@@ -22,11 +25,12 @@ _mechm = MechanismEnum.OVERFLOW
 @dataclass
 class MockShMeasure(ShMeasure):
     measure_type: MeasureTypeEnum
+    measure_result_id: int = 42
     combine_type: None = None
     cost: float = 0
     discount_rate: float = 0
     year: int = 0
-    lcc: float = 0
+    lcc: float = 42
     mechanism_year_collection: None = None
     beta_target: float = 0
     transition_level: float = 0
@@ -36,11 +40,12 @@ class MockShMeasure(ShMeasure):
 @dataclass
 class MockSgMeasure(SgMeasure):
     measure_type: MeasureTypeEnum
+    measure_result_id: int = 42
     combine_type: None = None
     cost: float = 0
     discount_rate: float = 0
     year: int = 0
-    lcc: float = 0
+    lcc: float = 42
     mechanism_year_collection: None = None
     dberm: float = 0
     dcrest: float = 0
@@ -66,10 +71,20 @@ class TestSectionAsInput:
             CombinedMeasure.from_input(
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 None,
+                None,
+                0,
+            ),
+            CombinedMeasure.from_input(
+                MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
+                None,
+                None,
+                1,
             ),
             CombinedMeasure.from_input(
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
                 None,
+                None,
+                2,
             ),
         ]
         return _section
@@ -113,10 +128,14 @@ class TestSectionAsInput:
         _sh_combinations = _section.sh_combinations
 
         # 3. Verify expectations
-        assert len(_sh_combinations) == 1
+        assert len(_sh_combinations) == 2
         assert (
             _sh_combinations[0].primary.measure_type
             == MeasureTypeEnum.SOIL_REINFORCEMENT
+        )
+        assert (
+            _sh_combinations[1].primary.measure_type
+            == MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
         )
 
     def test_get_sg_combinations(self):
@@ -155,6 +174,7 @@ class TestSectionAsInput:
         _dummy_cost = 999.0
         _dummy_discount_rate = 0.05
         _measure = ShMeasure(
+            42,
             MeasureTypeEnum.REVETMENT,
             CombinableTypeEnum.REVETMENT,
             _dummy_cost,
@@ -219,16 +239,16 @@ class TestSectionAsInput:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
         assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
-        # year 20 for the first measure is an interpolated value copied from the zero measure:
+        # year 19 for the first measure is an interpolated value copied from the zero measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(
-            MechanismEnum.OVERFLOW, _yr1
+            MechanismEnum.OVERFLOW, _yr1 - 1
         )
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        _beta_expected = _prob_zero[0] - _prob_diff * (_yr1 - 1) / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
-        # year 21 for the first measure is an interpolated value from this measure:
-        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1 + 1)
-        _beta_expected = _prob_measure[0] - _prob_diff * (_yr1 + 1) / _END_YEAR
+        # year 20 for the first measure is an interpolated value from this measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1)
+        _beta_expected = _prob_measure[0] - _prob_diff * _yr1 / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # year 50 for the first measure is a copy of the last year
@@ -237,7 +257,7 @@ class TestSectionAsInput:
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with two years:
-        _ref = {0, _yr1, _yr1 + 1, _END_YEAR}
+        _ref = {0, _yr1 - 1, _yr1, _END_YEAR}
         for m in _measures:
             _yrs = m.mechanism_year_collection.get_years(_mechm)
             assert _yrs == _ref
@@ -278,28 +298,69 @@ class TestSectionAsInput:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, 0)
         assert pf_to_beta(_pf) == py.approx(_prob_zero[0])
 
-        # year 20 for the first measure is an interpolated value copied from the zero measure:
+        # year 19 for the first measure is an interpolated value copied from the zero measure:
+        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1 - 1)
+        _beta_expected = _prob_zero[0] - _prob_diff * (_yr1 - 1) / _END_YEAR
+        assert pf_to_beta(_pf) == py.approx(_beta_expected)
+
+        # year 20 for the first measure is an interpolated value from this measure:
         _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1)
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr1 / _END_YEAR
+        _beta_expected = _prob_measure_a[0] - _prob_diff * _yr1 / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
-        # year 21 for the first measure is an interpolated value from this measure:
-        _pf = _measures[0].mechanism_year_collection.get_probability(_mechm, _yr1 + 1)
-        _beta_expected = _prob_measure_a[0] - _prob_diff * (_yr1 + 1) / _END_YEAR
+        # year 29 for the second measure is an interpolated value copied from the zero measure:
+        _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2 - 1)
+        _beta_expected = _prob_zero[0] - _prob_diff * (_yr2 - 1) / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
-        # year 30 for the second measure is an interpolated value copied from the zero measure:
+        # year 30 for the second measure is an interpolated value from this measure:
         _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2)
-        _beta_expected = _prob_zero[0] - _prob_diff * _yr2 / _END_YEAR
-        assert pf_to_beta(_pf) == py.approx(_beta_expected)
-
-        # year 31 for the second measure is an interpolated value from this measure:
-        _pf = _measures[1].mechanism_year_collection.get_probability(_mechm, _yr2 + 1)
-        _beta_expected = _prob_measure_b[0] - _prob_diff * (_yr2 + 1) / _END_YEAR
+        _beta_expected = _prob_measure_b[0] - _prob_diff * _yr2 / _END_YEAR
         assert pf_to_beta(_pf) == py.approx(_beta_expected)
 
         # all measures are extended with four years:
-        _ref = {0, _yr1, _yr1 + 1, _yr2, _yr2 + 1, _END_YEAR}
+        _ref = {0, _yr1 - 1, _yr1, _yr2 - 1, _yr2, _END_YEAR}
         for m in _measures:
             _yrs = m.mechanism_year_collection.get_years(_mechm)
             assert _yrs == _ref
+
+    def test_get_combination_for_aggregate(self):
+        # 1. Define test data
+        _section = self._get_section_with_combinations()
+        _aggregated_measure_combination = AggregatedMeasureCombination(
+            sh_combination=_section.sh_combinations[1],
+            sg_combination=_section.sg_combinations[0],
+            measure_result_id=1,
+            year=0,
+        )
+
+        # 2. Run test
+        _sh_idx, _sg_idx = _section.get_combination_idx_for_aggregate(
+            _aggregated_measure_combination
+        )
+
+        # 3. Verify expectations
+        assert _sh_idx == 1
+        assert _sg_idx == 0
+
+    def test_get_combination_idx_for_aggregate_fails_if_combination_doesnt_exist(self):
+        # 1. Define test data
+        _section = self._get_section_with_combinations()
+        _other_combination = CombinedMeasure.from_input(
+            MockShMeasure(MeasureTypeEnum.REVETMENT), None, None, 0
+        )
+        _aggregated_measure_combination = AggregatedMeasureCombination(
+            sh_combination=_other_combination,
+            sg_combination=_section.sg_combinations[0],
+            measure_result_id=1,
+            year=0,
+        )
+
+        # 2. Run test
+        with py.raises(ValueError) as exception_error:
+            _sh_idx, _sg_idx = _section.get_combination_idx_for_aggregate(
+                _aggregated_measure_combination
+            )
+
+        # 3. Verify expectations
+        assert str(exception_error.value).endswith("is not in list")

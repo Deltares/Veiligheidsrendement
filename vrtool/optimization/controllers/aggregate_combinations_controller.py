@@ -5,6 +5,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 )
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 
 
 class AggregateCombinationsController:
@@ -26,12 +27,41 @@ class AggregateCombinationsController:
                 and _sh_comb.primary.measure_type == _sg_comb.primary.measure_type
             )
 
+        def get_aggregated_measure_id(
+            sh_comb: CombinedMeasure, sg_comb: CombinedMeasure
+        ) -> int:
+            def is_matching_sh_sg_measure(sh_sg_measure: ShSgMeasure) -> bool:
+                return (
+                    sh_sg_measure.dcrest == sh_comb.primary.dcrest
+                    and sh_sg_measure.dberm == sg_comb.primary.dberm
+                    and sh_sg_measure.measure_type == sh_comb.primary.measure_type
+                )
+
+            # Find the aggregated Sh/Sg measure result id
+            if sh_comb.primary.measure_result_id == sg_comb.primary.measure_result_id:
+                return sh_comb.primary.measure_result_id
+            if sh_comb.primary.dcrest == 0:
+                return sg_comb.primary.measure_result_id
+            if sg_comb.primary.dberm == 0:
+                return sh_comb.primary.measure_result_id
+            return next(
+                (
+                    m.measure_result_id
+                    for m in self._section.sh_sg_measures
+                    if is_matching_sh_sg_measure(m)
+                ),
+                0,
+            )
+
         def make_aggregate(
             aggregation: tuple[CombinedMeasure, CombinedMeasure]
         ) -> AggregatedMeasureCombination:
             _sh_comb, _sg_comb = aggregation
             return AggregatedMeasureCombination(
-                _sh_comb, _sg_comb, _sh_comb.primary.year
+                _sh_comb,
+                _sg_comb,
+                get_aggregated_measure_id(_sh_comb, _sg_comb),
+                _sh_comb.primary.year,
             )
 
         return list(

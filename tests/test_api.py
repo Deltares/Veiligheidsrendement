@@ -6,7 +6,14 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests import get_test_results_dir, test_data, test_externals, test_results
+from tests import (
+    get_copy_of_reference_directory,
+    get_test_results_dir,
+    get_vrtool_config_test_copy,
+    test_data,
+    test_externals,
+    test_results,
+)
 from tests.api_acceptance_cases import (
     AcceptanceTestCase,
     RunFullValidator,
@@ -32,7 +39,6 @@ from vrtool.orm.orm_controllers import (
     clear_measure_results,
     clear_optimization_results,
     get_all_measure_results_with_supported_investment_years,
-    import_results_measures_for_optimization,
     open_database,
     vrtool_db,
 )
@@ -302,18 +308,17 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
 
+    @pytest.mark.skip(reason="Only used for generating new reference databases.")
     @pytest.mark.parametrize(
         "valid_vrtool_config",
-        acceptance_test_cases[0:6],
+        acceptance_test_cases,
         indirect=True,
     )
-    def test_run_step_optimization(
+    def test_run_step_optimization_acceptance_test_case(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _new_optimization_name = "test_optimization_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
+        _new_optimization_name = "Basisberekening"
 
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
@@ -333,7 +338,66 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
-        _validator.validate_phased_out_csv_files(valid_vrtool_config)
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases,
+        indirect=True,
+    )
+    def test_run_step_optimization_for_target_reliability(
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _new_optimization_name = "test_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+        # Only the selected design method for this case:
+        valid_vrtool_config.design_methods = ["Doorsnede-eisen"]
+
+        # We reuse existing measure results, but we clear the optimization ones.
+        clear_optimization_results(valid_vrtool_config)
+        _validator = RunStepOptimizationValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
+        # We actually run using ALL the available measure results.
+        _measures_input = get_all_measure_results_with_supported_investment_years(
+            valid_vrtool_config
+        )
+        # 2. Run test.
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
+        # 3. Verify expectations.
+        _validator.validate_results(valid_vrtool_config)
+
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases,
+        indirect=True,
+    )
+    def test_run_step_optimization_for_greedy_optimization(
+        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data.
+        _new_optimization_name = "test_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+        # Only the selected design method for this case:
+        valid_vrtool_config.design_methods = ["Veiligheidsrendement"]
+
+        # We reuse existing measure results, but we clear the optimization ones.
+        clear_optimization_results(valid_vrtool_config)
+        _validator = RunStepOptimizationValidator()
+        _validator.validate_preconditions(valid_vrtool_config)
+        # We actually run using ALL the available measure results.
+        _measures_input = get_all_measure_results_with_supported_investment_years(
+            valid_vrtool_config
+        )
+        # 2. Run test.
+        run_step_optimization(
+            valid_vrtool_config, _new_optimization_name, _measures_input
+        )
+        # 3. Verify expectations.
+        _validator.validate_results(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -445,103 +509,9 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        acceptance_test_cases[5:7],
-        indirect=True,
-    )
-    @pytest.mark.skip(reason="Only used for debugging purposes.")
-    def test_run_step_optimization_given_valid_vrtool_config_new(
-        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
-    ):
-        """
-        This test uses the new optimization run method.
-        TODO: Remove this test if the new optimization method is implemented fully.
-        """
-        # 1. Define test data.
-        _new_optimization_name = "test_optimization_new_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
-
-        # Overwrite the design method
-        valid_vrtool_config.design_methods = ["Veiligheidsrendement_new"]
-
-        # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results(valid_vrtool_config)
-
-        _validator = RunStepOptimizationValidator()
-        _validator.validate_preconditions(valid_vrtool_config)
-
-        # We actually run using ALL the available measure results.
-        _measures_input = get_all_measure_results_with_supported_investment_years(
-            valid_vrtool_config
-        )
-
-        # 2. Run test.
-        with pytest.raises(AttributeError) as exception_error:
-            run_step_optimization(
-                valid_vrtool_config, _new_optimization_name, _measures_input
-            )
-
-        # 3. Verify expectations.
-        assert str(
-            exception_error.value
-            == "'Strategy' object has no attribute 'TakenMeasures'"
-        )
-
 
 @pytest.mark.slow
 class TestApiReportedBugs:
-    @staticmethod
-    def get_copy_of_reference_directory(directory_name: str) -> Path:
-        # Check if reference path exists.
-        _reference_path = test_data.joinpath(directory_name)
-        assert _reference_path.exists()
-
-        # Ensure new path does not exist yet.
-        _new_path = test_results.joinpath(directory_name)
-        if _new_path.exists():
-            shutil.rmtree(_new_path)
-
-        # Copy the reference to new location.
-        shutil.copytree(_reference_path, _new_path)
-        assert _new_path.exists()
-
-        # Return new path location.
-        return _new_path
-
-    @staticmethod
-    def get_vrtool_config_test_copy(config_file: Path, test_name: str) -> VrtoolConfig:
-        """
-        Gets a `VrtoolConfig` with a copy of the database to avoid version issues.
-        """
-        # Create a results directory (ignored by git)
-        _test_results_directory = test_results.joinpath(test_name)
-        if _test_results_directory.exists():
-            shutil.rmtree(_test_results_directory)
-        _test_results_directory.mkdir(parents=True)
-
-        # Get the current configuration
-        _vrtool_config = VrtoolConfig.from_json(config_file)
-
-        # Create a db copy.
-        _new_db_name = "test_{}.db".format(
-            hashlib.shake_128(_test_results_directory.__bytes__()).hexdigest(4)
-        )
-        _new_db_path = _test_results_directory.joinpath(_new_db_name)
-        if _new_db_path.exists():
-            # Somehow it was not removed in the previous test run.
-            _new_db_path.unlink(missing_ok=True)
-
-        shutil.copy(_vrtool_config.input_database_path, _new_db_path)
-
-        # Set new configuration values.
-        _vrtool_config.input_directory = _test_results_directory
-        _vrtool_config.input_database_name = _new_db_name
-        _vrtool_config.output_directory = _test_results_directory.joinpath("output")
-        _vrtool_config.output_directory.mkdir()
-
-        return _vrtool_config
 
     @pytest.mark.parametrize(
         "directory_name",
@@ -560,9 +530,9 @@ class TestApiReportedBugs:
         self, directory_name: str, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _test_case_dir = self.get_copy_of_reference_directory(directory_name)
+        _test_case_dir = get_copy_of_reference_directory(directory_name)
 
-        _vrtool_config = self.get_vrtool_config_test_copy(
+        _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
         assert not any(_vrtool_config.output_directory.glob("*"))

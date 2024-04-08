@@ -1,249 +1,191 @@
 import copy
 import logging
-from typing import Dict
+from dataclasses import dataclass
 
 import numpy as np
-import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import (
-    calc_tc,
-    calc_tr,
     implement_option,
-    make_traject_df,
+    compute_total_risk,
 )
+from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.strategy_input.strategy_input import (
+    StrategyInput,
+)
+
+from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
 
 
-class TargetReliabilityStrategy(StrategyBase):
+@dataclass
+class CrossSectionalRequirements:
+    cross_sectional_requirement_per_mechanism: dict[MechanismEnum, np.ndarray]
+
+    dike_traject_b_piping: float
+    dike_traject_b_stability_inner: float
+
+    @classmethod
+    def from_dike_traject(cls, dike_traject: DikeTraject):
+        """Class method to create a CrossSectionalRequirements object from a DikeTraject object. 
+        This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach. 
+        The cross-sectional requirements are calculated for each mechanism and stored in a dictionary with the mechanism as key and the cross-sectional requirements as value.
+        
+        Args:
+            dike_traject (DikeTraject): The DikeTraject object for which the cross-sectional requirements are to be calculated.
+
+        Returns:    
+            CrossSectionalRequirements: The CrossSectionalRequirements object with the cross-sectional requirements for the dike traject.
+            
+        """
+        # compute cross sectional requirements
+        n_piping = 1 + (
+            dike_traject.general_info.aPiping
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bPiping
+        )
+        n_stab = 1 + (
+            dike_traject.general_info.aStabilityInner
+            * dike_traject.general_info.TrajectLength
+            / dike_traject.general_info.bStabilityInner
+        )
+        n_overflow = 1
+        n_revetment = 3
+        omegaRevetment = 0.1
+
+        _pf_cs_piping = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaPiping
+            / n_piping
+        )
+        _pf_cs_revetment = (
+            dike_traject.general_info.Pmax * omegaRevetment / n_revetment
+        )
+        _pf_cs_stabinner = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaStabilityInner
+            / n_stab
+        )
+        _pf_cs_overflow = (
+            dike_traject.general_info.Pmax
+            * dike_traject.general_info.omegaOverflow
+            / n_overflow
+        )
+        return cls(
+            cross_sectional_requirement_per_mechanism = {MechanismEnum.PIPING: _pf_cs_piping,
+                     MechanismEnum.STABILITY_INNER: _pf_cs_stabinner,
+                     MechanismEnum.OVERFLOW: _pf_cs_overflow,
+                     MechanismEnum.REVETMENT: _pf_cs_revetment},
+            dike_traject_b_piping=dike_traject.general_info.bPiping,
+            dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
+        )
+
+
+class TargetReliabilityStrategy(StrategyProtocol):
     """Subclass for evaluation in accordance with basic OI2014 approach.
-    This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability"""
+    This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
+    """
 
-    def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
-        return float("nan"), float("nan")
+    def __init__(
+        self, strategy_input: StrategyInput, config: VrtoolConfig
+    ):
+        # Necessary config parameters:
+        self.OI_horizon = config.OI_horizon
+        self._time_periods = config.T
+        # New mappings
+        self.Pf = strategy_input.Pf
+        self.D = strategy_input.D
+        self.sections = strategy_input.sections
 
     def evaluate(
         self,
-        traject: DikeTraject,
-        solutions_dict: Dict[str, Solutions],
-        splitparams=False,
+        dike_traject: DikeTraject,
     ):
-        def id_to_name(found_id, measure_table):
-            """
-            Previously in tools. Only used once within this evaluate method.
-            """
-            return measure_table.loc[measure_table["ID"].astype(str) == str(found_id)][
-                "Name"
-            ].values[0]
+        # Previous approach instead of self._time_periods = config.T:
+        # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
+        # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
+        def _check_cross_sectional_requirements(measure: AggregatedMeasureCombination, cross_sectional_requirements: CrossSectionalRequirements, year: int, mechanisms: list[MechanismEnum]
+                                                )-> bool:
+            """This function checks if the cross-sectional requirements are met for a given measure and year.
+            If the requirements are not met for any of the mechanisms, the function returns False, otherwise True."""
+            for mechanism in mechanisms:
+                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                    #look in sh, if any mechanism is not satisfied, return a False
+                    if measure.sh_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[mechanism]:
+                        return False
+                elif mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:    
+                    if measure.sg_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[mechanism]:
+                        return False
+            return True
 
-        cols = list(
-            solutions_dict[list(solutions_dict.keys())[0]]
-            .MeasureData["Section"]
-            .columns.values
-        )
-        # compute cross sectional requirements
-        n_piping = 1 + (
-            traject.general_info.aPiping
-            * traject.general_info.TrajectLength
-            / traject.general_info.bPiping
-        )
-        n_stab = 1 + (
-            traject.general_info.aStabilityInner
-            * traject.general_info.TrajectLength
-            / traject.general_info.bStabilityInner
-        )
-        n_overflow = 1
-        beta_cs_piping = pf_to_beta(
-            traject.general_info.Pmax * traject.general_info.omegaPiping / n_piping
-        )
-        n_revetment = 3
-        omegaRevetment = 0.1
-        beta_cs_revetment = pf_to_beta(
-            traject.general_info.Pmax * omegaRevetment / n_revetment
-        )
-        beta_cs_stabinner = pf_to_beta(
-            traject.general_info.Pmax
-            * traject.general_info.omegaStabilityInner
-            / n_stab
-        )
-        beta_cs_overflow = pf_to_beta(
-            traject.general_info.Pmax * traject.general_info.omegaOverflow / n_overflow
-        )
+        def get_valid_measures(section_as_input: SectionAsInput, cross_sectional_requirements: CrossSectionalRequirements) -> AggregatedMeasureCombination:  
+            #get the first possible investment year from the aggregated measures
+            _invest_year = min([measure.year for measure in section_as_input.aggregated_measure_combinations])
+            _design_horizon_year = _invest_year + self.OI_horizon
+            
+            #check if the cross-sectional requirements are met for each measure
+            _satisfied_bool = [_check_cross_sectional_requirements(_measure, cross_sectional_requirements, _design_horizon_year, section_as_input.mechanisms) for _measure in section_as_input.aggregated_measure_combinations]
+            
+            #generate bool for each measure with year in investment year
+            _valid_year_bool = [measure.year == _invest_year for measure in section_as_input.aggregated_measure_combinations]
 
-        # Rank sections based on 2075 Section probability
-        beta_horizon = []
-        for i in traject.sections:
-            beta_horizon.append(
-                i.section_reliability.SectionReliability.loc["Section"][self.OI_horizon]
-            )
+            #get the measures that both have _satisfied_bool and _valid_year_bool
+            return [_measure for _measure, _satisfied, _valid_year in zip(section_as_input.aggregated_measure_combinations, _satisfied_bool, _valid_year_bool) if _satisfied and _valid_year]
 
-        section_indices = np.argsort(beta_horizon)
-        measure_cols = ["Section", "option_index", "LCC", "BC"]
+        # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
+        initial_section_pfs = [section.initial_assessment.get_section_probability(self.OI_horizon) for section in self.sections]
 
-        if splitparams:
-            _taken_measures = pd.DataFrame(
-                data=[
-                    [
-                        None,
-                        None,
-                        0,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ]
-                ],
-                columns=measure_cols
-                + [
-                    "ID",
-                    "name",
-                    "year",
-                    "yes/no",
-                    "dcrest",
-                    "dberm",
-                    "beta_target",
-                    "transition_level",
-                ],
-            )
-        else:
-            _taken_measures = pd.DataFrame(
-                data=[[None, None, None, 0, None, None, None]],
-                columns=measure_cols + ["ID", "name", "params"],
-            )
-        # columns (section name and index in self.options[section])
-        _base_traject_probability = make_traject_df(traject, cols)
-        _probability_steps = [copy.deepcopy(_base_traject_probability)]
-        _traject_probability = copy.deepcopy(_base_traject_probability)
+        # Rank sections based on initial probability
+        section_order = np.flip(np.argsort(initial_section_pfs))
 
-        for j in section_indices:
-            i = traject.sections[j]
-            # convert beta_cs to beta_section in order to correctly search self.options[section]
-            # TODO THIS IS CURRENTLY INCONSISTENT WITH THE WAY IT IS CALCULATED: it should be coupled to whether the length effect within sections is turned on or not
-            if self.LE_in_section:
+        # get the cross-sectional requirements for the dike traject (probability)
+        _cross_sectional_requirements = CrossSectionalRequirements.from_dike_traject(
+            dike_traject
+        )
+        #and the risk for each step
+        _taken_measures = {}
+        _taken_measures_indices = []
+        for _section_idx in section_order:
+            # add probability for this step:
+
+            #get the first possible investment year from the aggregated measures
+            _section_as_input = self.sections[_section_idx]
+            _valid_measures = get_valid_measures(_section_as_input, _cross_sectional_requirements)
+
+            if len(_valid_measures) == 0:
+                #if no measures satisfy the requirements, continue to the next section
                 logging.warning(
-                    "In evaluate for TargetReliabilityStrategy: THIS CODE ON LENGTH EFFECT WITHIN SECTIONS SHOULD BE TESTED"
-                )
-                _beta_t_piping = pf_to_beta(
-                    beta_to_pf(beta_cs_piping)
-                    * (i.Length / traject.general_info.bPiping)
-                )
-                _beta_t_sabinner = pf_to_beta(
-                    beta_to_pf(beta_cs_stabinner)
-                    * (i.Length / traject.general_info.bStabilityInner)
-                )
-            else:
-                _beta_t_piping = beta_cs_piping
-                _beta_t_sabinner = beta_cs_stabinner
-            _beta_t_overflow = beta_cs_overflow
-            _beta_t_revetment = beta_cs_revetment
-            _beta_t = {
-                MechanismEnum.PIPING.name: _beta_t_piping,
-                MechanismEnum.STABILITY_INNER.name: _beta_t_sabinner,
-                MechanismEnum.OVERFLOW.name: _beta_t_overflow,
-                MechanismEnum.REVETMENT.name: _beta_t_revetment,
-            }
-
-            # find cheapest design that satisfies betatcs in 50 years from invest year
-            _invest_year = self.options[i.name]["year"][0]
-            if isinstance(_invest_year, list):
-                _invest_year = _invest_year[0]
-            _target_year = _invest_year + 50
-
-            # make PossibleMeasures dataframe
-            _possible_measures = copy.deepcopy(self.options[i.name])
-            # filter for mechanisms that are considered
-            for mechanism in traject.mechanisms:
-                _possible_measures = _possible_measures.loc[
-                    self.options[i.name][(mechanism.name, _target_year)]
-                    > _beta_t[mechanism.name]
-                ]
-
-            if len(_possible_measures) == 0:
-                # continue to next section if weakest has no more measures
-                logging.warning(
-                    "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
-                        i.name
+                                        "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
+                        _section_as_input.section_name
                     )
                 )
                 continue
-            # calculate LCC
-            _lcc = calc_tc(
-                _possible_measures,
-                self.discount_rate,
-                horizon=self.options[i.name][MechanismEnum.OVERFLOW.name].columns[-1],
-            )
-
-            # select measure with lowest cost
+            
+            #get measure with lowest lcc from _valid_measures
+            _lcc = [measure.lcc for measure in _valid_measures]
             idx = np.argmin(_lcc)
+            _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[idx]
+            measure_idx = self.sections[_section_idx].get_combination_idx_for_aggregate(_taken_measures[self.sections[_section_idx].section_name])
+            _taken_measures_indices.append((_section_idx, measure_idx[0]+1, measure_idx[1]+1))
 
-            measure = _possible_measures.iloc[idx]
-            option_index = _possible_measures.index[idx]
-            # calculate achieved risk reduction & BC ratio compared to base situation
-            _r_base, _dr, _t_r = calc_tr(
-                i.name,
-                measure,
-                _traject_probability,
-                original_section=_traject_probability.loc[i.name],
-                discount_rate=self.discount_rate,
-                horizon=cols[-1],
-                damage=traject.general_info.FloodDamage,
-            )
-            _bc = _dr / _lcc[idx]
 
-            if splitparams:
-                name = id_to_name(
-                    measure["ID"].values[0], solutions_dict[i.name].measure_table
+        # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step
+        # First we get, and update the probabilities per step
+        #we need to track probability for each step
+        init_probability = {mech: self.Pf[mech][:,0,:] for mech in self.Pf.keys()}
+        self.probabilities_per_step = [copy.deepcopy(init_probability)]
+        self.total_risk_per_step = [compute_total_risk(self.probabilities_per_step[-1], self.D)]
+
+        for step in range(0, len(_taken_measures)):
+            section_id = _taken_measures_indices[step][0]
+            self.probabilities_per_step.append(copy.deepcopy(self.probabilities_per_step[-1]))
+            self.probabilities_per_step[-1] = implement_option(
+                self.probabilities_per_step[-1], 
+                _taken_measures_indices[step], 
+                _taken_measures[self.sections[section_id].section_name]
                 )
-                data_opt = pd.DataFrame(
-                    [
-                        [
-                            i.name,
-                            option_index,
-                            _lcc[idx],
-                            _bc,
-                            measure["ID"].values[0],
-                            name,
-                            measure["year"].values[0],
-                            measure["yes/no"].values[0],
-                            measure["dcrest"].values[0],
-                            measure["dberm"].values[0],
-                            measure["beta_target"].values[0],
-                            measure["transition_level"].values[0],
-                        ]
-                    ],
-                    columns=_taken_measures.columns,
-                )
-            else:
-                data_opt = pd.DataFrame(
-                    [
-                        [
-                            i.name,
-                            option_index,
-                            _lcc[idx],
-                            _bc,
-                            measure["ID"].values[0],
-                            measure["name"].values[0],
-                            measure["params"].values[0],
-                        ]
-                    ],
-                    columns=_taken_measures.columns,
-                )  # here we evaluate and pick the option that has the
-                # lowest total cost and a BC ratio that is lower than any measure at any other section
-
-            # Add to TakenMeasures
-            _taken_measures = pd.concat((_taken_measures, data_opt))
-            # Calculate new probabilities
-            _traject_probability = implement_option(
-                i.name, _traject_probability, measure
-            )
-            _probability_steps.append(copy.deepcopy(_traject_probability))
-        self.TakenMeasures = _taken_measures
-        self.Probabilities = _probability_steps
+            self.total_risk_per_step.append(compute_total_risk(self.probabilities_per_step[-1], self.D))
+        
+        self.measures_taken = _taken_measures_indices
