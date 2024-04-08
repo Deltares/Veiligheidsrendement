@@ -32,7 +32,6 @@ from vrtool.orm.orm_controllers import (
     clear_measure_results,
     clear_optimization_results,
     get_all_measure_results_with_supported_investment_years,
-    import_results_measures_for_optimization,
     open_database,
     vrtool_db,
 )
@@ -65,7 +64,7 @@ def get_list_of_sections_for_measure_ids(
 
 def get_all_measure_results_of_specific_type(
     valid_vrtool_config: VrtoolConfig,
-    measure_name: str,
+    measure_type: MeasureType,
 ) -> list[int]:
     """
     Gets all available measure results (`MeasureResult`) from the database for a specific type of measure
@@ -86,7 +85,7 @@ def get_all_measure_results_of_specific_type(
             .join(orm.Measure)
             .join(orm.MeasureType)
             .where(orm.Measure.year != 20)
-            .where(orm.MeasureType.name == measure_name.get_old_name())
+            .where(orm.MeasureType.name == measure_type.get_old_name())
         )
     # get all ids of _supported_measures
     return [x.get_id() for x in _supported_measures]
