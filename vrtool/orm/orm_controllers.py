@@ -3,10 +3,10 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
-from tqdm import tqdm 
 
 import pandas as pd
 from peewee import SqliteDatabase
+from tqdm import tqdm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.solutions import Solutions
@@ -27,9 +27,6 @@ from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer imp
     SolutionsForMeasureResultsImporter,
 )
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
-from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
-    OptimizationMeasureResultImporter,
-)
 from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
     OptimizationSectionAsInputImporter,
 )
@@ -248,8 +245,12 @@ def export_results_measures(result: ResultsMeasures) -> None:
     logging.info("Start export resultaten maatregelen naar database.")
 
     _exporter = SolutionsExporter()
-    for _solution in tqdm(result.solutions_dict.values(), desc="Aantal geexporteerde dijkvakken:",
-                          total= len(result.solutions_dict), unit='vak'):
+    for _solution in tqdm(
+        result.solutions_dict.values(),
+        desc="Aantal geexporteerde dijkvakken:",
+        total=len(result.solutions_dict),
+        unit="vak",
+    ):
         _exporter.export_dom(_solution)
     _connected_db.close()
 
@@ -494,7 +495,9 @@ def create_optimization_run_for_selected_measures(
             map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
         )
     logging.debug(
-        "Optimalisatierun {} met methode {} aangemaakt in database.".format(optimization_name, _method_type)
+        "Optimalisatierun {} met methode {} aangemaakt in database.".format(
+            optimization_name, _method_type
+        )
     )
     _connected_db.close()
 
