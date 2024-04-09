@@ -18,6 +18,18 @@ from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
 
 class TestStrategyInput:
+
+    def test_initialize_with_required_properties(self):
+        # 1. Define test tata.
+        _required_args = dict(design_method="dummy_method")
+
+        # 2. Run test.
+        _strategy_input = StrategyInput(**_required_args)
+
+        # 3. Verify final expectations.
+        assert isinstance(_strategy_input, StrategyInput)
+        assert _strategy_input.design_method == _required_args["design_method"]
+
     def test_optimization_input(self):
         # 1. Define input
         _design_method = "dummy_method"
