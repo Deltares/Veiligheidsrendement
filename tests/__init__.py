@@ -1,4 +1,7 @@
+import shutil
 from pathlib import Path
+import hashlib
+from vrtool.defaults.vrtool_config import VrtoolConfig
 
 from pytest import FixtureRequest
 
@@ -14,3 +17,63 @@ def get_test_results_dir(request: FixtureRequest) -> Path:
     _test_dir = test_results.joinpath(request.node.originalname)
     _test_dir.mkdir(parents=True, exist_ok=True)
     return _test_dir
+
+
+def get_copy_of_reference_directory(directory_name: str) -> Path:
+    """
+    Gets a copy of the reference directory to avoid locking databases.
+
+    Args:
+        directory_name (str): Name of the subdirectory in the `test_data`.
+
+    Returns:
+        Path: Location of the `directory_name` relative to the `test_data` path.
+    """
+    # Check if reference path exists.
+    _reference_path = test_data.joinpath(directory_name)
+    assert _reference_path.exists()
+
+    # Ensure new path does not exist yet.
+    _new_path = test_results.joinpath(directory_name)
+    if _new_path.exists():
+        shutil.rmtree(_new_path)
+
+    # Copy the reference to new location.
+    shutil.copytree(_reference_path, _new_path)
+    assert _new_path.exists()
+
+    # Return new path location.
+    return _new_path
+
+
+def get_vrtool_config_test_copy(config_file: Path, test_name: str) -> VrtoolConfig:
+    """
+    Gets a `VrtoolConfig` with a copy of the database to avoid version issues.
+    """
+    # Create a results directory (ignored by git)
+    _test_results_directory = test_results.joinpath(test_name)
+    if _test_results_directory.exists():
+        shutil.rmtree(_test_results_directory)
+    _test_results_directory.mkdir(parents=True)
+
+    # Get the current configuration
+    _vrtool_config = VrtoolConfig.from_json(config_file)
+
+    # Create a db copy.
+    _new_db_name = "test_{}.db".format(
+        hashlib.shake_128(_test_results_directory.__bytes__()).hexdigest(4)
+    )
+    _new_db_path = _test_results_directory.joinpath(_new_db_name)
+    if _new_db_path.exists():
+        # Somehow it was not removed in the previous test run.
+        _new_db_path.unlink(missing_ok=True)
+
+    shutil.copy(_vrtool_config.input_database_path, _new_db_path)
+
+    # Set new configuration values.
+    _vrtool_config.input_directory = _test_results_directory
+    _vrtool_config.input_database_name = _new_db_name
+    _vrtool_config.output_directory = _test_results_directory.joinpath("output")
+    _vrtool_config.output_directory.mkdir()
+
+    return _vrtool_config

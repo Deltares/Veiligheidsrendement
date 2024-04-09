@@ -14,6 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 class MeasureAsInputProtocol(Protocol):
     """stores data for measure in optimization"""
 
+    measure_result_id: int
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     cost: float

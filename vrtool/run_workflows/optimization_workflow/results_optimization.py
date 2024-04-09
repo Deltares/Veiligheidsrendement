@@ -2,16 +2,15 @@ from pathlib import Path
 from typing import Dict
 
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.run_workflows.vrtool_run_result_protocol import VrToolRunResultProtocol
 
 
 class ResultsOptimization(VrToolRunResultProtocol):
-    results_strategies: list[StrategyBase]
+    results_strategies: list[StrategyProtocol]
     results_solutions: Dict[str, Solutions]
 
     def __init__(self) -> None:
-        self.results_solutions = {}
         self.results_strategies = []
 
     @property

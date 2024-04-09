@@ -2,14 +2,17 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict
 
-import numpy as np
-import pandas as pd
-
 from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.controllers.strategy_controller import StrategyController
-from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
+from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.strategy_input.strategy_input_protocol import (
+    StrategyInputProtocol,
+)
+from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
+    OptimizationInputMeasures,
+)
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
@@ -17,24 +20,25 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class RunOptimization(VrToolRunProtocol):
+    _section_input_collection: list[SectionAsInput]
+
     def __init__(
         self,
-        results_measures: ResultsMeasures,
+        optimization_input: OptimizationInputMeasures,
         optimization_selected_measure_ids: dict[int, list[int]],
     ) -> None:
-        if not isinstance(results_measures, ResultsMeasures):
+        if not isinstance(optimization_input, OptimizationInputMeasures):
             raise ValueError(
                 "Required valid instance of {} as an argument.".format(
-                    ResultsMeasures.__name__
+                    OptimizationInputMeasures.__name__
                 )
             )
 
-        self.selected_traject = results_measures.selected_traject
-        self.vr_config = results_measures.vr_config
-        self.run_ids = list(optimization_selected_measure_ids.keys())
+        self.selected_traject = optimization_input.selected_traject
+        self.vr_config = optimization_input.vr_config
+        self._section_input_collection = optimization_input.section_input_collection
         self._selected_measure_ids = optimization_selected_measure_ids
-        self._solutions_dict = results_measures.solutions_dict
-        self._ids_to_import = results_measures.ids_to_import
+        self._ids_to_import = optimization_input.measure_id_year_list
 
     def _get_output_dir(self) -> Path:
         _results_dir = self.vr_config.output_directory
@@ -42,192 +46,62 @@ class RunOptimization(VrToolRunProtocol):
             _results_dir.mkdir(parents=True)
         return _results_dir
 
-    def _get_optimized_greedy_strategy_new(self, design_method: str) -> StrategyBase:
-        """
-        Temporary function for VRTOOL-359 to convert legacy input
-        containing Pandas DataFrames to new inputcontaining MeasureAsInputProtocol objects.
-
-        Args:
-            design_method (str): Design method
-
-        Returns:
-            StrategyController: Controller containing the new input
-        """
-        logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
-        _strategy_controller = StrategyController(design_method, self.vr_config)
-
+    def _get_strategy_input(
+        self, strategy_type: type[StrategyProtocol], design_method: str
+    ) -> StrategyInputProtocol:
+        _strategy_controller = StrategyController(self._section_input_collection)
         _strategy_controller.set_investment_year()
         _strategy_controller.combine()
         _strategy_controller.aggregate()
-        _evaluate_input = _strategy_controller.get_evaluate_input()
+        _evaluate_input = _strategy_controller.get_evaluate_input(strategy_type)
+        _evaluate_input.design_method = design_method
+        return _evaluate_input
 
-        _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
-        _greedy_optimization.opt_parameters = _evaluate_input.opt_parameters
-        _greedy_optimization.Pf = _evaluate_input.Pf
-        _greedy_optimization.LCCOption = _evaluate_input.LCCOption
-        _greedy_optimization.D = _evaluate_input.D
-        _greedy_optimization.RiskGeotechnical = _evaluate_input.RiskGeotechnical
-        _greedy_optimization.RiskOverflow = _evaluate_input.RiskOverflow
-        _greedy_optimization.RiskRevetment = _evaluate_input.RiskRevetment
-        _greedy_optimization.Cint_h = _evaluate_input.Cint_h
-        _greedy_optimization.Cint_g = _evaluate_input.Cint_g
-        _greedy_optimization.Dint = _evaluate_input.Dint
-
-        # _greedy_optimization.evaluate(
-        #     self.selected_traject,
-        #     self._solutions_dict,
-        #     splitparams=True,
-        #     setting="cautious",
-        #     f_cautious=1.5,
-        #     max_count=600,
-        #     BCstop=0.1,
-        # )
-
-        return _greedy_optimization
-
-    def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyBase:
+    def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyProtocol:
         logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
+        # Initalize strategy controller
+        _greedy_optimization_input = self._get_strategy_input(
+            GreedyStrategy, design_method
+        )
+
         # Initialize a GreedyStrategy:
-        _greedy_optimization = GreedyStrategy(design_method, self.vr_config)
+        _greedy_strategy = GreedyStrategy(_greedy_optimization_input, self.vr_config)
 
-        _results_dir = self._get_output_dir()
-        _greedy_optimization.set_investment_years(
-            self.selected_traject,
-            self._ids_to_import,
-            self._selected_measure_ids,
-            self._solutions_dict,
-        )
-        # Combine available measures
-        _greedy_optimization.combine(
-            self.selected_traject,
-            self._solutions_dict,
-            filtering="off",
-            splitparams=True,
-        )
-
-        # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _greedy_optimization.evaluate(
-            self.selected_traject,
-            self._solutions_dict,
-            splitparams=True,
+        _greedy_strategy.evaluate(
             setting="cautious",
             f_cautious=1.5,
             max_count=600,
             BCstop=0.1,
         )
+        return _greedy_strategy
 
-        _greedy_optimization = self._replace_names(
-            _greedy_optimization, self._solutions_dict
+    def _get_target_reliability_strategy(self, design_method: str) -> StrategyProtocol:
+        logging.info(
+            f"Start bepaling referentiemaatregelen op basis van {design_method}."
         )
-        _cost_greedy = _greedy_optimization.determine_risk_cost_curve(
-            self.selected_traject.general_info.FloodDamage, None
+        # Initalize strategy controller
+        _target_reliability_input = self._get_strategy_input(
+            TargetReliabilityStrategy, design_method
         )
-
-        _greedy_optimization.write_reliability_to_csv(_results_dir, "Greedy")
-        # write to csv's
-        _greedy_optimization.TakenMeasures.to_csv(
-            _results_dir.joinpath("TakenMeasures_" + _greedy_optimization.type + ".csv")
-        )
-        pd.DataFrame(
-            np.array(
-                [
-                    _cost_greedy["LCC"],
-                    _cost_greedy["TR"],
-                    np.add(_cost_greedy["LCC"], _cost_greedy["TR"]),
-                ]
-            ).T,
-            columns=["LCC", "TR", "TC"],
-        ).to_csv(
-            _results_dir / "TotalCostValues_Greedy.csv",
-            float_format="%.1f",
-        )
-        _greedy_optimization.make_solution(
-            _results_dir.joinpath(
-                "TakenMeasures_Optimal_" + _greedy_optimization.type + ".csv",
-            ),
-            step=_cost_greedy["TC_min"] + 1,
-            type="Optimal",
-        )
-        _greedy_optimization.make_solution(
-            _results_dir.joinpath(
-                "FinalMeasures_" + _greedy_optimization.type + ".csv"
-            ),
-            type="Final",
-        )
-        for j in _greedy_optimization.options:
-            _greedy_optimization.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _greedy_optimization.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
-
-        return _greedy_optimization
-
-    def _get_target_reliability_strategy(self, design_method: str) -> StrategyBase:
-        logging.info(f"Start bepaling referentiemaatregelen op basis van {design_method}.")
         # Initialize a strategy type (i.e combination of objective & constraints)
         _target_reliability_based = TargetReliabilityStrategy(
-            design_method, self.vr_config
+            _target_reliability_input, self.vr_config
         )
-        _results_dir = self._get_output_dir()
 
         # filter those measures that are not available at the first available time step
-        self._filter_measures_first_time()
-
-        _target_reliability_based.set_investment_years(
-            self.selected_traject,
-            self._ids_to_import,
-            self._selected_measure_ids,
-            self._solutions_dict,
-        )
-
-        # Combine available measures
-        _target_reliability_based.combine(
-            self.selected_traject,
-            self._solutions_dict,
-            filtering="off",
-            splitparams=True,
-        )
+        # self._filter_measures_first_time()
 
         # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
-        _target_reliability_based.evaluate(
-            self.selected_traject, self._solutions_dict, splitparams=True
-        )
-        _target_reliability_based.make_solution(
-            _results_dir.joinpath(
-                "FinalMeasures_" + _target_reliability_based.type + ".csv",
-            ),
-            type="Final",
-        )
-
-        _target_reliability_based = self._replace_names(
-            _target_reliability_based, self._solutions_dict
-        )
-        # write to csv's
-        _target_reliability_based.TakenMeasures.to_csv(
-            _results_dir.joinpath(
-                "TakenMeasures_" + _target_reliability_based.type + ".csv",
-            )
-        )
-        for j in _target_reliability_based.options:
-            _target_reliability_based.options[j].to_csv(
-                _results_dir.joinpath(
-                    j + "_Options_" + _target_reliability_based.type + ".csv",
-                ),
-                float_format="%.3f",
-            )
-
+        _target_reliability_based.evaluate(self.selected_traject)
         return _target_reliability_based
 
-    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyBase]]:
+    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyProtocol]]:
         return {
             "TC": self._get_optimized_greedy_strategy,
             "Total Cost": self._get_optimized_greedy_strategy,
             "Optimized": self._get_optimized_greedy_strategy,
             "Greedy": self._get_optimized_greedy_strategy,
             "Veiligheidsrendement": self._get_optimized_greedy_strategy,
-            "Veiligheidsrendement_new": self._get_optimized_greedy_strategy_new,  # temporary fix to use new greedy strategy
             "OI": self._get_target_reliability_strategy,
             "TargetReliability": self._get_target_reliability_strategy,
             "Doorsnede-eisen": self._get_target_reliability_strategy,
@@ -237,6 +111,10 @@ class RunOptimization(VrToolRunProtocol):
         logging.info("Start stap 3: Bepaling maatregelen op trajectniveau.")
         _results_optimization = ResultsOptimization()
         _results_optimization.vr_config = self.vr_config
+        # TODO (VRTOOL-406): Selected traject is not required for exporting a result optimization.
+        # it is, however, required by the `VrToolRunResultProtocol` implemented by
+        # `ResultsOptimization`.
+        _results_optimization.selected_traject = self.selected_traject
 
         ## STEP 3: EVALUATE THE STRATEGIES
         _evaluation_mapping = self._get_evaluation_mapping()
@@ -249,53 +127,5 @@ class RunOptimization(VrToolRunProtocol):
         )
 
         logging.info("Stap 3: Bepaling maatregelen op trajectniveau afgerond")
-        _results_optimization.selected_traject = self.selected_traject
-        _results_optimization.results_solutions = self._solutions_dict
 
         return _results_optimization
-
-    def _replace_names(
-        self, strategy_case: StrategyBase, solution_case: Solutions
-    ) -> StrategyBase:
-        strategy_case.TakenMeasures = strategy_case.TakenMeasures.reset_index(drop=True)
-        for i in range(1, len(strategy_case.TakenMeasures)):
-            _measure_id = strategy_case.TakenMeasures.iloc[i]["ID"]
-            if isinstance(_measure_id, list):
-                _measure_id = "+".join(_measure_id)
-
-            section = strategy_case.TakenMeasures.iloc[i]["Section"]
-            name = (
-                solution_case[section]
-                .measure_table.loc[
-                    solution_case[section].measure_table["ID"] == _measure_id
-                ]["Name"]
-                .values
-            )
-            strategy_case.TakenMeasures.at[i, "name"] = name
-        return strategy_case
-
-    def _filter_measures_first_time(self):
-        """Filter measures that are not in the first time step that is available for the measure as these should not be included for target reliability strategy"""
-        min_dict = {}  # dict to store measure for ids_to_import
-        count_dict = {}  # dict to store counter for selected_measure_ids
-        run_id = list(self._selected_measure_ids.keys())[0]
-        for counter, (id, value) in enumerate(self._ids_to_import):
-            if (id not in min_dict) or (value < min_dict[id]):
-                min_dict[id] = value
-                count_dict[id] = counter
-
-        self._ids_to_import = [(id, value) for id, value in min_dict.items()]
-        self._selected_measure_ids[run_id] = [
-            self._selected_measure_ids[run_id][index] for index in count_dict.values()
-        ]
-
-        # filter solutions_dict
-        for section in self._solutions_dict.keys():
-            _min_year = min(self._solutions_dict[section].MeasureData["year"])
-            self._solutions_dict[section].MeasureData = (
-                self._solutions_dict[section]
-                .MeasureData.loc[
-                    self._solutions_dict[section].MeasureData["year"] == _min_year
-                ]
-                .reset_index(drop=True)
-            )

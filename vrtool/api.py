@@ -16,10 +16,13 @@ from vrtool.orm.orm_controllers import (
     get_all_measure_results_with_supported_investment_years,
     get_dike_traject,
     get_optimization_step_with_lowest_total_cost,
-    import_results_measures,
+    import_results_measures_for_optimization,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.measures_workflow.run_measures import RunMeasures
+from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
+    OptimizationInputMeasures,
+)
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
 )
@@ -214,25 +217,32 @@ class ApiRunWorkflows:
             ResultsOptimization: Optimization results.
         """
         # Create optimization run
-        _results_measures = import_results_measures(
+        _measures_for_optimization = import_results_measures_for_optimization(
             self.vrtool_config, selected_measures_id_year
+        )
+        _optimization_input = OptimizationInputMeasures(
+            self.vrtool_config,
+            get_dike_traject(self.vrtool_config),
+            _measures_for_optimization,
         )
         _optimization_selected_measure_ids = (
             create_optimization_run_for_selected_measures(
                 self.vrtool_config,
                 optimization_name,
-                _results_measures.ids_to_import,
+                _optimization_input.measure_id_year_list,
             )
         )
 
         # Run Optimization.
         _optimization = RunOptimization(
-            _results_measures, _optimization_selected_measure_ids
+            _optimization_input, _optimization_selected_measure_ids
         )
         _optimization_result = _optimization.run()
 
         # Export results
-        export_results_optimization(_optimization_result, _optimization.run_ids)
+        export_results_optimization(
+            _optimization_result, _optimization_selected_measure_ids.keys()
+        )
         return _optimization_result
 
     def run_all(self) -> ResultsOptimization:

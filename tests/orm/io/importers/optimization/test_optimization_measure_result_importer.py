@@ -1,6 +1,6 @@
 import pytest
 
-from tests.test_api import TestApiReportedBugs
+from tests import get_copy_of_reference_directory, get_vrtool_config_test_copy
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -19,11 +19,9 @@ class TestOptimizationMeasureResultImporter:
     ):
         # 1. Define test data.
         _test_dir_name = "test_stability_multiple_scenarios"
-        _test_case_dir = TestApiReportedBugs.get_copy_of_reference_directory(
-            _test_dir_name
-        )
+        _test_case_dir = get_copy_of_reference_directory(_test_dir_name)
 
-        _vrtool_config = TestApiReportedBugs.get_vrtool_config_test_copy(
+        _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
         assert not any(_vrtool_config.output_directory.glob("*"))

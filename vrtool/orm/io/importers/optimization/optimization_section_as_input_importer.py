@@ -62,11 +62,13 @@ class OptimizationSectionAsInputImporter:
             _imported_measures = OptimizationMeasureResultImporter(
                 self.config
             ).import_orm(_measure_result)
+            _section_imported_measures.extend(_imported_measures)
 
             # Update the initial costs dictionary if possible (avoids extra computations later on).
-            for _im in filter(lambda x: x.is_initial_cost_measure, _imported_measures):
+            for _im in filter(
+                lambda x: x.is_initial_cost_measure(), _imported_measures
+            ):
                 _initial_costs_dictionary[type(_im)][_im.measure_type] = _im.cost
-            _section_imported_measures.extend(_imported_measures)
 
         # Update inital costs for all imported measures
         for _im in _section_imported_measures:

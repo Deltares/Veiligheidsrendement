@@ -14,7 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.optimization.measures.strategy_input import StrategyInput
+from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
 
 class TestStrategyInput:
@@ -32,6 +32,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_soil_0_0 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -43,6 +44,7 @@ class TestStrategyInput:
             transition_level=-999,
         )
         _sh_measure_soil_20_0 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -63,6 +65,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_diaphragm_0 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
             combine_type=CombinableTypeEnum.FULL,
             cost=234567,
@@ -83,6 +86,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_revetment_0_384 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.REVETMENT,
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=123456,
@@ -103,6 +107,7 @@ class TestStrategyInput:
             ]
         )
         _sh_measure_revetment_0_484 = ShMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.REVETMENT,
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=223456,
@@ -123,6 +128,7 @@ class TestStrategyInput:
             ]
         )
         _sg_measure_soil_0_0 = SgMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -130,9 +136,9 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
-            dcrest=0,
         )
         _sg_measure_soil_20_0 = SgMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
@@ -140,7 +146,6 @@ class TestStrategyInput:
             year=20,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
-            dcrest=0,
         )
         # - Sg VZG year 0
         _mech_yr_coll_sg_vzg_0 = MechanismPerYearProbabilityCollection(
@@ -152,6 +157,7 @@ class TestStrategyInput:
             ]
         )
         _sg_measure_vzg_0 = SgMeasure(
+            measure_result_id=0,
             measure_type=MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             combine_type=CombinableTypeEnum.PARTIAL,
             cost=1302200,
@@ -159,7 +165,6 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_vzg_0,
             dberm=-999,
-            dcrest=-999,
         )
 
         # Sections
@@ -187,37 +192,41 @@ class TestStrategyInput:
         ]
 
         # Combinations
-        _sh_combination_soil_0 = CombinedMeasure.from_input(_sh_measure_soil_0_0, None)
+        _sh_combination_soil_0 = CombinedMeasure.from_input(
+            _sh_measure_soil_0_0, None, _initial_assessment, 0
+        )
         _sh_combination_soil_20 = CombinedMeasure.from_input(
-            _sh_measure_soil_20_0, None
+            _sh_measure_soil_20_0, None, _initial_assessment, 1
         )
         _sh_combination_soil_revetment_0_384 = CombinedMeasure.from_input(
-            _sh_measure_soil_0_0, _sh_measure_revetment_0_384
+            _sh_measure_soil_0_0, _sh_measure_revetment_0_384, _initial_assessment, 2
         )
         _sh_combination_soil_revetment_20_384 = CombinedMeasure.from_input(
-            _sh_measure_soil_20_0, _sh_measure_revetment_0_384
+            _sh_measure_soil_20_0, _sh_measure_revetment_0_384, _initial_assessment, 3
         )
         _sh_combination_soil_revetment_0_484 = CombinedMeasure.from_input(
-            _sh_measure_soil_0_0, _sh_measure_revetment_0_484
+            _sh_measure_soil_0_0, _sh_measure_revetment_0_484, _initial_assessment, 4
         )
         _sh_combination_soil_revetment_20_484 = CombinedMeasure.from_input(
-            _sh_measure_soil_20_0, _sh_measure_revetment_0_484
+            _sh_measure_soil_20_0, _sh_measure_revetment_0_484, _initial_assessment, 5
         )
         _sh_combination_diaphragm_0 = CombinedMeasure.from_input(
-            _sh_measure_diaphragm_0, None
+            _sh_measure_diaphragm_0, None, _initial_assessment, 6
         )
-        _sh_comb = 5
-        _sg_combination_soil_0 = CombinedMeasure.from_input(_sg_measure_soil_0_0, None)
+
+        _sg_combination_soil_0 = CombinedMeasure.from_input(
+            _sg_measure_soil_0_0, None, _initial_assessment, 0
+        )
         _sg_combination_soil_20 = CombinedMeasure.from_input(
-            _sg_measure_soil_20_0, None
+            _sg_measure_soil_20_0, None, _initial_assessment, 1
         )
         _sg_combination_soil_vzg_0 = CombinedMeasure.from_input(
-            _sg_measure_soil_0_0, _sg_measure_vzg_0
+            _sg_measure_soil_0_0, _sg_measure_vzg_0, _initial_assessment, 2
         )
         _sg_combination_soil_vzg_20 = CombinedMeasure.from_input(
-            _sg_measure_soil_20_0, _sg_measure_vzg_0
+            _sg_measure_soil_20_0, _sg_measure_vzg_0, _initial_assessment, 3
         )
-        _sg_comb = 4
+
         _sections[0].combined_measures = [
             _sh_combination_soil_0,
             _sh_combination_soil_20,
@@ -235,50 +244,56 @@ class TestStrategyInput:
         # Aggregations
         _sections[0].aggregated_measure_combinations = [
             AggregatedMeasureCombination(
-                _sh_combination_soil_0, _sg_combination_soil_0, 0
+                _sh_combination_soil_0, _sg_combination_soil_0, 1, 0
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_0_384, _sg_combination_soil_0, 0
+                _sh_combination_soil_revetment_0_384, _sg_combination_soil_0, 2, 0
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_0_484, _sg_combination_soil_0, 0
+                _sh_combination_soil_revetment_0_484, _sg_combination_soil_0, 3, 0
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_0, _sg_combination_soil_vzg_0, 0
+                _sh_combination_soil_0, _sg_combination_soil_vzg_0, 4, 0
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_0_384, _sg_combination_soil_vzg_0, 0
+                _sh_combination_soil_revetment_0_384, _sg_combination_soil_vzg_0, 5, 0
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_0_484, _sg_combination_soil_vzg_0, 0
+                _sh_combination_soil_revetment_0_484, _sg_combination_soil_vzg_0, 6, 0
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_20, _sg_combination_soil_20, 20
+                _sh_combination_soil_20, _sg_combination_soil_20, 1, 20
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_20_384, _sg_combination_soil_20, 20
+                _sh_combination_soil_revetment_20_384, _sg_combination_soil_20, 2, 20
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_20_484, _sg_combination_soil_20, 20
+                _sh_combination_soil_revetment_20_484, _sg_combination_soil_20, 3, 20
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_20, _sg_combination_soil_vzg_20, 20
+                _sh_combination_soil_20, _sg_combination_soil_vzg_20, 4, 20
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_20_384, _sg_combination_soil_vzg_20, 20
+                _sh_combination_soil_revetment_20_384,
+                _sg_combination_soil_vzg_20,
+                5,
+                20,
             ),
             AggregatedMeasureCombination(
-                _sh_combination_soil_revetment_20_484, _sg_combination_soil_vzg_20, 20
+                _sh_combination_soil_revetment_20_484,
+                _sg_combination_soil_vzg_20,
+                6,
+                20,
             ),
         ]
 
         # 2. Run test
-        _strategy_input = StrategyInput.from_section_as_input(_sections)
+        _strategy_input = StrategyInput.from_section_as_input_collection(_sections)
 
         # 3. Verify expectations
 
         # Probabilities
-        assert _strategy_input.Pf is not None
+        assert _strategy_input.Pf
         assert _strategy_input.Pf[MechanismEnum.OVERFLOW.name].shape == (
             1,
             8,

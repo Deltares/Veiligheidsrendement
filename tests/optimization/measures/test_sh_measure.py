@@ -16,6 +16,7 @@ class TestShMeasure:
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> ShMeasure:
         return ShMeasure(
+            measure_result_id=42,
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=10.5,
@@ -187,7 +188,7 @@ class TestShMeasure:
 
         # 3. Verify expectations
         assert isinstance(_allowed_combinations, dict)
-        assert _allowed_combinations is not None
+        assert _allowed_combinations
 
     @pytest.mark.parametrize(
         "dcrest_value",
