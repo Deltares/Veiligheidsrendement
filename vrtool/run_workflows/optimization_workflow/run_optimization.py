@@ -59,17 +59,11 @@ class RunOptimization(VrToolRunProtocol):
         _strategy_controller.aggregate()
         return _strategy_controller
 
-    def _get_strategy_input(
-        self, strategy_type: type[StrategyProtocol], design_method: str
-    ) -> StrategyInputProtocol:
-        _evaluate_input = self._strategy_controller.get_evaluate_input(strategy_type)
-        _evaluate_input.design_method = design_method
-        return _evaluate_input
-
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyProtocol:
         logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
+
         # Initalize strategy controller
-        _greedy_optimization_input = self._get_strategy_input(
+        _greedy_optimization_input = self._strategy_controller.get_evaluate_input(
             GreedyStrategy, design_method
         )
 
@@ -89,9 +83,10 @@ class RunOptimization(VrToolRunProtocol):
             f"Start bepaling referentiemaatregelen op basis van {design_method}."
         )
         # Initalize strategy controller
-        _target_reliability_input = self._get_strategy_input(
+        _target_reliability_input = self._strategy_controller.get_evaluate_input(
             TargetReliabilityStrategy, design_method
         )
+
         # Initialize a strategy type (i.e combination of objective & constraints)
         _target_reliability_based = TargetReliabilityStrategy(
             _target_reliability_input, self.vr_config
