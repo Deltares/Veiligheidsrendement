@@ -18,9 +18,10 @@ class MeasureResult(OrmBaseModel):
     def section_result(self):
         """
         Gets the `MeasureResultSection` (one-to-one relationship)
+        TODO AKL: is this correct? I think it should be a one-to-many relationship
          for this `MeasureResult.
         """
-        return self.sections_measure_result.get()
+        return self.measure_result_section.get()
 
     def get_parameter_value(self, parameter_name: str) -> float:
         """

@@ -98,7 +98,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         )
         _measure_concrete_params = measure_as_input_type.get_concrete_parameters()
         _measures_dicts = []
-        for _section_result in measure_result.sections_measure_result.where(
+        for _section_result in measure_result.measure_result_section.where(
             OrmMeasureResultSection.time == 0
         ):
             for _year in self.investment_years:
