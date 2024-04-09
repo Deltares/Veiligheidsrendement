@@ -60,7 +60,7 @@ class OptimizationSectionAsInputImporter:
 
         for _measure_result, _investment_years in _measure_results_dict.items():
             _imported_measures = OptimizationMeasureResultImporter(
-                self.config
+                self.config, _investment_years
             ).import_orm(_measure_result)
             _section_imported_measures.extend(_imported_measures)
 

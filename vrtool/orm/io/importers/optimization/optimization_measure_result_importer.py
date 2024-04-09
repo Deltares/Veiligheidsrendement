@@ -20,6 +20,9 @@ from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_result.measure_result import (
     MeasureResult as OrmMeasureResult,
 )
+from vrtool.orm.models.measure_result.measure_result_section import (
+    MeasureResultSection as OrmMeasureResultSection,
+)
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
@@ -33,13 +36,17 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
     discount_rate: float
     unit_costs: dict
+    investment_years: list[int]
 
-    def __init__(self, vrtool_config: VrtoolConfig) -> None:
+    def __init__(
+        self, vrtool_config: VrtoolConfig, investment_years: list[int]
+    ) -> None:
         if not vrtool_config:
             raise ValueError("VrtoolConfig not provided.")
 
         self.discount_rate = vrtool_config.discount_rate
         self.unit_costs = vrtool_config.unit_costs
+        self.investment_years = investment_years
 
     @staticmethod
     def valid_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> bool:
