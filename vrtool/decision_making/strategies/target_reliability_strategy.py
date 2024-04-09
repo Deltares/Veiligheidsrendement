@@ -119,7 +119,17 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     if measure.sg_combination.mechanism_year_collection.get_probability(mechanism,year) > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[mechanism]:
                         return False
             return True
-
+        def _get_failure_probability(measure: AggregatedMeasureCombination, year: int, mechanisms: list[MechanismEnum]
+                                                )-> bool:
+            """TODO"""
+            _pf = 0
+            for mechanism in mechanisms:
+                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                    #look in sh, if any mechanism is not satisfied, return a False
+                    _pf += measure.sh_combination.mechanism_year_collection.get_probability(mechanism,year)
+                elif mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:    
+                    _pf += measure.sg_combination.mechanism_year_collection.get_probability(mechanism,year)
+            return _pf
         def get_valid_measures(section_as_input: SectionAsInput, cross_sectional_requirements: CrossSectionalRequirements) -> AggregatedMeasureCombination:  
             #get the first possible investment year from the aggregated measures
             _invest_year = min([measure.year for measure in section_as_input.aggregated_measure_combinations])
@@ -133,6 +143,30 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
             #get the measures that both have _satisfied_bool and _valid_year_bool
             return [_measure for _measure, _satisfied, _valid_year in zip(section_as_input.aggregated_measure_combinations, _satisfied_bool, _valid_year_bool) if _satisfied and _valid_year]
+
+        def get_best_measure(section_as_input: SectionAsInput, cross_sectional_requirements: CrossSectionalRequirements) -> AggregatedMeasureCombination:
+            #get the first possible investment year from the aggregated measures
+            _invest_year = min([measure.year for measure in section_as_input.aggregated_measure_combinations])
+            _design_horizon_year = _invest_year + self.OI_horizon
+
+            _requirement_met_per_mechanism = {mechanism: _check_cross_sectional_requirements(_measure, cross_sectional_requirements, _design_horizon_year, [mechanism]) for mechanism in section_as_input.mechanisms for _measure in section_as_input.aggregated_measure_combinations}
+            # get the mechanisms in _requirement_met_per_mechanism where values are True
+            _valid_mechanisms = [mechanism for mechanism, value in _requirement_met_per_mechanism.items() if value]
+            # get the measures that are valid for the _valid_mechanisms
+            _satisfied_bool = [_check_cross_sectional_requirements(_measure, cross_sectional_requirements, _design_horizon_year, _valid_mechanisms) for _measure in section_as_input.aggregated_measure_combinations]
+            _valid_year_bool = [measure.year == _invest_year for measure in section_as_input.aggregated_measure_combinations]
+            #list those measures that are valid for the mechanisms and the year
+            _valid_measures = [_measure for _measure, _satisfied, _valid_year in zip(section_as_input.aggregated_measure_combinations, _satisfied_bool, _valid_year_bool) if _satisfied and _valid_year]
+            
+            #get the mechanisms in _requirement_met_per_mechanism where values are False
+            _invalid_mechanisms = [mechanism for mechanism, value in _requirement_met_per_mechanism.items() if not value]
+            #get the failure probabilities for the mechanisms in _invalid_mechanisms for all _valid_measures
+            _failure_probabilities = [_get_failure_probability(_measure, _design_horizon_year, _invalid_mechanisms) for _measure in _valid_measures]
+
+            #get the measure with the lowest failure probability for the mechanisms in _invalid_mechanisms
+            return [_valid_measures[np.argmin(_failure_probabilities)]], _invalid_mechanisms
+
+
 
         # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
         initial_section_pfs = [section.initial_assessment.get_section_probability(self.OI_horizon) for section in self.sections]
@@ -155,13 +189,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _valid_measures = get_valid_measures(_section_as_input, _cross_sectional_requirements)
 
             if len(_valid_measures) == 0:
-                #if no measures satisfy the requirements, continue to the next section
+                #if no measures satisfy the requirements, get the measure that is best for the mechanisms that do not satisfy the requirements
+                _valid_measures, _invalid_mechanisms = get_best_measure(_section_as_input, _cross_sectional_requirements)
+                # make a concatenated string of _invalid_mechanisms
+                _invalid_mechanisms_str = " en ".join([mechanism.name.capitalize() for mechanism in _invalid_mechanisms])
                 logging.warning(
-                                        "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {}. Er wordt geen maatregel uitgevoerd.".format(
-                        _section_as_input.section_name
+                    f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {_section_as_input.section_name}. De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor {_invalid_mechanisms_str}."
                     )
-                )
-                continue
             
             #get measure with lowest lcc from _valid_measures
             _lcc = [measure.lcc for measure in _valid_measures]
