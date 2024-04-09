@@ -98,28 +98,30 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         )
         _measure_concrete_params = measure_as_input_type.get_concrete_parameters()
         _measures_dicts = []
-        for _section_result in measure_result.sections_measure_result:
-            _time = _section_result.time
-            _cost = _section_result.cost
-            _measures_dicts.append(
-                dict(
-                    measure_result_id=measure_result.id,
-                    measure_type=MeasureTypeEnum.get_enum(
-                        measure_result.measure_per_section.measure.measure_type.name
-                    ),
-                    combine_type=CombinableTypeEnum.get_enum(
-                        measure_result.measure_per_section.measure.combinable_type.name
-                    ),
-                    cost=_cost,
-                    year=_time,
-                    discount_rate=self.discount_rate,
-                    mechanism_year_collection=deepcopy(_mech_year_coll),
+        for _section_result in measure_result.sections_measure_result.where(
+            OrmMeasureResultSection.time == 0
+        ):
+            for _year in self.investment_years:
+                _cost = _section_result.cost
+                _measures_dicts.append(
+                    dict(
+                        measure_result_id=measure_result.id,
+                        measure_type=MeasureTypeEnum.get_enum(
+                            measure_result.measure_per_section.measure.measure_type.name
+                        ),
+                        combine_type=CombinableTypeEnum.get_enum(
+                            measure_result.measure_per_section.measure.combinable_type.name
+                        ),
+                        cost=_cost,
+                        year=_year,
+                        discount_rate=self.discount_rate,
+                        mechanism_year_collection=deepcopy(_mech_year_coll),
+                    )
+                    | {
+                        _param: measure_result.get_parameter_value(_param)
+                        for _param in _measure_concrete_params
+                    }
                 )
-                | {
-                    _param: measure_result.get_parameter_value(_param)
-                    for _param in _measure_concrete_params
-                }
-            )
 
         return list(map(lambda x: measure_as_input_type(**x), _measures_dicts))
 
