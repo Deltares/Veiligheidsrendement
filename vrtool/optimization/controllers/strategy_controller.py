@@ -53,14 +53,25 @@ class StrategyController:
             _section.aggregated_measure_combinations = _aggregate_controller.aggregate()
 
     def get_evaluate_input(
-        self, strategy_type: type[StrategyProtocol]
+        self, strategy_type: type[StrategyProtocol], design_method: str
     ) -> StrategyInputProtocol:
         """
-        Get the input for the evaluation of the strategy.
+        Gets the input for the evaluation of the strategy.
+
+        Args:
+            strategy_type (type[StrategyProtocol]): Type of strategy to evaluate.
+            design_method (str): Design method to be used by the strategy.
+
+        Raises:
+            ValueError: For unsupported `StrategyProtocol` instances.
+
+        Returns:
+            StrategyInputProtocol: Concrete instance of a `StrategyInputProtocol`
+            set to the provided `design_method` to be used by the given `strategy_type`
         """
         if strategy_type in [GreedyStrategy, TargetReliabilityStrategy]:
             return StrategyInput.from_section_as_input_collection(
-                self._section_measures_input
+                self._section_measures_input, design_method
             )
         raise ValueError(f"Strategy type {strategy_type} not implemented yet.")
 

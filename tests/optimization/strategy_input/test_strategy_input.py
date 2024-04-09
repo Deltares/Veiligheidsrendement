@@ -20,6 +20,7 @@ from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 class TestStrategyInput:
     def test_optimization_input(self):
         # 1. Define input
+        _design_method = "dummy_method"
 
         # Measures
         # - Sh soil year 0/20
@@ -288,7 +289,9 @@ class TestStrategyInput:
         ]
 
         # 2. Run test
-        _strategy_input = StrategyInput.from_section_as_input_collection(_sections)
+        _strategy_input = StrategyInput.from_section_as_input_collection(
+            _sections, _design_method
+        )
 
         # 3. Verify expectations
 

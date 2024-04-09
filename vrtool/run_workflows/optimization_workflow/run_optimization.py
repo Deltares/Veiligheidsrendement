@@ -20,6 +20,8 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 class RunOptimization(VrToolRunProtocol):
     _strategy_controller: StrategyController
+    _selected_measure_ids: dict[int, list[int]]
+    _ids_to_import: list[tuple[int, int]]
 
     def __init__(
         self,
@@ -47,8 +49,8 @@ class RunOptimization(VrToolRunProtocol):
             _results_dir.mkdir(parents=True)
         return _results_dir
 
-    @staticmethod
     def _get_strategy_controller_with_aggregations(
+        self,
         section_input_collection: list[SectionAsInput],
     ) -> StrategyInputProtocol:
         _strategy_controller = StrategyController(section_input_collection)
