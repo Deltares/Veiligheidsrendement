@@ -101,6 +101,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         for _section_result in measure_result.measure_result_section.where(
             OrmMeasureResultSection.time == 0
         ):
+            # Create a measure for each investment year.
             for _year in self.investment_years:
                 _cost = _section_result.cost
                 _measures_dicts.append(
