@@ -407,7 +407,7 @@ def get_all_measure_results_with_supported_investment_years(
 ) -> list[tuple[int, int]]:
     """
     Gets all available measure results (`MeasureResult`) from the database paired
-    to a valid investment year (all except for 20). TODO AKL: why??? Why not only 0?
+    to a valid investment year (only year 0).
 
     Args:
         valid_vrtool_config (VrtoolConfig):
@@ -422,7 +422,7 @@ def get_all_measure_results_with_supported_investment_years(
         orm.MeasureResult.select()
         .join(orm.MeasurePerSection)
         .join(orm.Measure)
-        .where(orm.Measure.year != 20)
+        .where(orm.Measure.year == 0)
     )
     _connected_db.close()
 
