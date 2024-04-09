@@ -139,6 +139,43 @@ class TestRevetmentMeasure:
         assert_array_almost_equal(_beta_target_vector, _expected_beta_target_vector)
 
     @pytest.mark.parametrize(
+        "min_beta, beta_block, vector_size, computed_vector_size",
+        [
+            pytest.param(0.42, 3.0, 100, 9),
+            pytest.param(2.4, 2.4, 100, 10),
+        ],
+    )
+    def test_get_beta_target_vector_with_beta_block_step_reduced(
+        self, min_beta: float, beta_block: float, vector_size: int, computed_vector_size: int
+    ):
+        """
+        Test automatic scaling of stepsize _get_beta_target_vector 
+
+        Args:
+            min_beta (float): beta from assessment
+            beta_block (float): lowest beta for block revetment
+            vector_size (int): grid dimension
+        """
+        # 1. Define test data.
+        _pmax = 0.0001
+        _max_pf_factor_block = 1000
+        _revetment_measure = RevetmentMeasure()
+        _revetment_measure.parameters["max_pf_factor_block"] = _max_pf_factor_block
+        _revetment_measure.parameters["n_steps_block"] = vector_size
+        _revetment_measure.parameters["transition_level_increase_step"] = 0.25
+
+        # 2. Run test.
+        _beta_target_vector = _revetment_measure._get_beta_target_vector(
+            min_beta, beta_block, _pmax
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_beta_target_vector, list)
+        assert len(_beta_target_vector) == computed_vector_size
+        _step_size = _beta_target_vector[2] - _beta_target_vector[1]
+        assert _step_size == pytest.approx(_revetment_measure.minimal_stepsize, 0.2)
+
+    @pytest.mark.parametrize(
         "min_beta, beta_block, vector_size",
         [
             pytest.param(0.42, 8.0, 4),

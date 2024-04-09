@@ -48,6 +48,13 @@ class RevetmentMeasure(MeasureProtocol):
     def n_steps_block(self) -> int:
         return self.parameters["n_steps_block"]
 
+    @property
+    def minimal_stepsize(self) -> float:
+        """
+        step size for beta
+        """
+        return 0.3
+
     def _get_min_beta_target(self, dike_section: DikeSection) -> float:
         """
         NOTE (VRTOOL-254): Retrieves the Beta value for the first computation year (lowest integer value).
@@ -74,9 +81,11 @@ class RevetmentMeasure(MeasureProtocol):
             _non_zero_msrs = []
         elif beta_block < min_beta + _step:
             _step = (_max_beta - min_beta) / (self.n_steps_block - 1)
-            _non_zero_msrs = np.linspace(min_beta + _step, _max_beta, self.n_steps_block - 1)
+            _nr_of_steps = round ((_max_beta - min_beta) / max(self.minimal_stepsize, _step))
+            _non_zero_msrs = np.linspace(min_beta + _step, _max_beta, _nr_of_steps)
         else:
-            _non_zero_msrs = np.linspace(beta_block, _max_beta, self.n_steps_block - 1)
+            _nr_of_steps = 1 + round ((_max_beta - beta_block) / max(self.minimal_stepsize, _step))
+            _non_zero_msrs = np.linspace(beta_block, _max_beta, _nr_of_steps)
         for msr in _non_zero_msrs:
             beta_vector.append(msr)
         return beta_vector
