@@ -21,13 +21,15 @@ class TestOptimizationMeasureResultImporter:
         _test_dir_name = "test_stability_multiple_scenarios"
         _test_case_dir = get_copy_of_reference_directory(_test_dir_name)
 
+        _investment_years = [0]
+
         _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
         assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
-        _importer = OptimizationMeasureResultImporter(_vrtool_config)
+        _importer = OptimizationMeasureResultImporter(_vrtool_config, _investment_years)
 
         with open_database(_vrtool_config.input_database_path).connection_context():
             _imported_results = _importer.import_orm(OrmMeasureResult.select().get())
