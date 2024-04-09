@@ -21,10 +21,14 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
+    StoneSlopePart,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
 
 
 class RevetmentMeasure(MeasureProtocol):
@@ -54,12 +58,28 @@ class RevetmentMeasure(MeasureProtocol):
         _min_reliability_year = str(
             min(map(int, _mech_reliability_collection.Reliability.keys()))
         )
-        return _mech_reliability_collection.Reliability[_min_reliability_year].Beta
+        beta = _mech_reliability_collection.Reliability[_min_reliability_year].Beta
+        if isinstance(beta, np.ndarray):
+            beta = beta.min()
+        return beta
 
-    def _get_beta_target_vector(self, min_beta: float, p_max: float) -> list[float]:
+    def _get_beta_target_vector(
+        self, min_beta: float, beta_block: float, p_max: float
+    ) -> list[float]:
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
-        _step = (_max_beta - min_beta) / self.n_steps_block
-        return list(np.arange(min_beta, _max_beta, _step))
+        beta_vector = []
+        beta_vector.append(min_beta)
+        _step = (_max_beta - beta_block) / (self.n_steps_block - 2)
+        if beta_block > _max_beta:
+            _non_zero_msrs = []
+        elif beta_block < min_beta + _step:
+            _step = (_max_beta - min_beta) / (self.n_steps_block - 1)
+            _non_zero_msrs = np.linspace(min_beta + _step, _max_beta, self.n_steps_block - 1)
+        else:
+            _non_zero_msrs = np.linspace(beta_block, _max_beta, self.n_steps_block - 1)
+        for msr in _non_zero_msrs:
+            beta_vector.append(msr)
+        return beta_vector
 
     def _get_transition_level_vector(
         self,
@@ -108,6 +128,23 @@ class RevetmentMeasure(MeasureProtocol):
             "revetment_input"
         ]
 
+    def _get_beta_top_layer_thickness(self, slope: StoneSlopePart) -> float:
+        for part in slope.slope_part_relations:
+            if math.isclose(
+                part.top_layer_thickness, slope.top_layer_thickness, abs_tol=1e-4
+            ):
+                return part.beta
+        return None
+
+    def _get_beta_block_revetments(
+        self, slope_parts: list[SlopePartProtocol], transition_level: float
+    ) -> float:
+        for slope in slope_parts:
+            if math.isclose(slope.end_part, transition_level, abs_tol=1e-4):
+                beta = self._get_beta_top_layer_thickness(slope)
+                return beta
+        return None
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -116,9 +153,14 @@ class RevetmentMeasure(MeasureProtocol):
     ):
         _revetment = self._get_revetment(dike_section)
 
+        # 0. Get beta current beta for stone revetment
+        _beta_block = self._get_beta_block_revetments(
+            _revetment.slope_parts, _revetment.current_transition_level
+        )
+
         # 1. Get beta targets.
         _beta_targets = self._get_beta_target_vector(
-            self._get_min_beta_target(dike_section), traject_info.Pmax
+            self._get_min_beta_target(dike_section), _beta_block, traject_info.Pmax
         )
 
         # 2. Get transition levels.

@@ -16,6 +16,7 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class TestRevetmentMeasure:
@@ -38,9 +39,9 @@ class TestRevetmentMeasure:
             measure_year=2025,
         )
         for _idx, _computation_year in enumerate(_computation_years):
-            _mech_reliability_collection.Reliability[
-                str(_computation_year)
-            ].Beta = 0.24 + (0.24 * _idx)
+            _mech_reliability_collection.Reliability[str(_computation_year)].Beta = (
+                0.24 + (0.24 * _idx)
+            )
         _test_dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
             MechanismEnum.REVETMENT
         ] = _mech_reliability_collection
@@ -56,27 +57,123 @@ class TestRevetmentMeasure:
             ].Beta
         )
 
-    def test_get_beta_target_vector(self):
+    @pytest.mark.parametrize(
+        "min_beta, vector_size",
+        [
+            pytest.param(0.42, 4),
+            pytest.param(2.4, 6),
+        ],
+    )
+    def test_get_beta_target_vector(self, min_beta: float, vector_size: int):
+        """
+        Test _get_beta_target_vector with beta_block equal to min_beta
+
+        Args:
+            min_beta (float): beta from assessment
+            vector_size (int): grid dimension
+        """
         # 1. Define test data.
-        _vector_size = 4
-        _min_beta = 0.42
+        _beta_block = min_beta
+        _pmax = 0.0001
+        _max_pf_factor_block = 1000
         _revetment_measure = RevetmentMeasure()
-        _revetment_measure.parameters["max_pf_factor_block"] = 1000
-        _revetment_measure.parameters["n_steps_block"] = _vector_size
+        _revetment_measure.parameters["max_pf_factor_block"] = _max_pf_factor_block
+        _revetment_measure.parameters["n_steps_block"] = vector_size
         _revetment_measure.parameters["transition_level_increase_step"] = 0.25
-        _expected_beta_target_vector = [
-            _min_beta,
-            0.9738885595475857,
-            1.5277771190951714,
-            2.081665678642757,
-        ]
+        _expected_max = pf_to_beta(_pmax / _max_pf_factor_block)
+        _expected_step = (_expected_max - min_beta) / (vector_size - 1)
+        _expected_beta_target_vector = []
+        for i in range(vector_size):
+            _expected_beta_target_vector.append(min_beta + i * _expected_step)
+
         # 2. Run test.
-        _beta_target_vector = _revetment_measure._get_beta_target_vector(_min_beta, 4.2)
+        _beta_target_vector = _revetment_measure._get_beta_target_vector(
+            min_beta, _beta_block, _pmax
+        )
 
         # 3. Verify expectations.
         assert isinstance(_beta_target_vector, list)
-        assert len(_beta_target_vector) == _vector_size
-        assert _beta_target_vector[0] == _min_beta
+        assert len(_beta_target_vector) == vector_size
+        assert_array_almost_equal(_beta_target_vector, _expected_beta_target_vector)
+
+    @pytest.mark.parametrize(
+        "min_beta, beta_block, vector_size",
+        [
+            pytest.param(0.42, 3.0, 4),
+            pytest.param(2.4, 3.5, 6),
+        ],
+    )
+    def test_get_beta_target_vector_with_beta_block(
+        self, min_beta: float, beta_block: float, vector_size: int
+    ):
+        """
+        Test _get_beta_target_vector with beta_block different from min_beta,
+        but smaller than _expected_max (see below)
+
+        Args:
+            min_beta (float): beta from assessment
+            beta_block (float): lowest beta for block revetment
+            vector_size (int): grid dimension
+        """
+        # 1. Define test data.
+        _pmax = 0.0001
+        _max_pf_factor_block = 1000
+        _revetment_measure = RevetmentMeasure()
+        _revetment_measure.parameters["max_pf_factor_block"] = _max_pf_factor_block
+        _revetment_measure.parameters["n_steps_block"] = vector_size
+        _revetment_measure.parameters["transition_level_increase_step"] = 0.25
+        _expected_max = pf_to_beta(_pmax / _max_pf_factor_block)
+        _expected_step = (_expected_max - beta_block) / (vector_size - 2)
+        _expected_beta_target_vector = [min_beta]
+        for i in range(vector_size - 1):
+            _expected_beta_target_vector.append(beta_block + i * _expected_step)
+
+        # 2. Run test.
+        _beta_target_vector = _revetment_measure._get_beta_target_vector(
+            min_beta, beta_block, _pmax
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_beta_target_vector, list)
+        assert len(_beta_target_vector) == vector_size
+        assert_array_almost_equal(_beta_target_vector, _expected_beta_target_vector)
+
+    @pytest.mark.parametrize(
+        "min_beta, beta_block, vector_size",
+        [
+            pytest.param(0.42, 8.0, 4),
+            pytest.param(2.4, 9.0, 6),
+        ],
+    )
+    def test_get_beta_target_vector_with_large_beta_block(
+        self, min_beta: float, beta_block: float, vector_size: int
+    ):
+        """
+        Test _get_beta_target_vector with beta_block different from min_beta,
+        and greater than _expected_max (see below)
+
+        Args:
+            min_beta (float): beta from assessment
+            beta_block (float): lowest beta for block revetment
+            vector_size (int): grid dimension
+        """
+        # 1. Define test data.
+        _pmax = 0.0001
+        _max_pf_factor_block = 1000
+        _revetment_measure = RevetmentMeasure()
+        _revetment_measure.parameters["max_pf_factor_block"] = _max_pf_factor_block
+        _revetment_measure.parameters["n_steps_block"] = vector_size
+        _revetment_measure.parameters["transition_level_increase_step"] = 0.25
+        _expected_beta_target_vector = [min_beta]
+
+        # 2. Run test.
+        _beta_target_vector = _revetment_measure._get_beta_target_vector(
+            min_beta, beta_block, _pmax
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_beta_target_vector, list)
+        assert len(_beta_target_vector) == 1
         assert_array_almost_equal(_beta_target_vector, _expected_beta_target_vector)
 
     @pytest.mark.parametrize(
