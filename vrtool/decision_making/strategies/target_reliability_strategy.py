@@ -146,43 +146,31 @@ class TargetReliabilityStrategy(StrategyProtocol):
         def get_valid_measures(
             section_as_input: SectionAsInput,
             cross_sectional_requirements: CrossSectionalRequirements,
-        ) -> AggregatedMeasureCombination:
+        ) -> list[AggregatedMeasureCombination]:
             # get the first possible investment year from the aggregated measures
             _invest_year = min(
-                [
-                    measure.year
-                    for measure in section_as_input.aggregated_measure_combinations
-                ]
+                measure.year
+                for measure in section_as_input.aggregated_measure_combinations
             )
             _design_horizon_year = _invest_year + self.OI_horizon
 
-            # check if the cross-sectional requirements are met for each measure
-            _satisfied_bool = [
-                _check_cross_sectional_requirements(
+            _valid_measures = []
+            for _measure in section_as_input.aggregated_measure_combinations:
+                # check if the cross-sectional requirements are met for each measure
+                _satisfied_bool = _check_cross_sectional_requirements(
                     _measure,
                     cross_sectional_requirements,
                     _design_horizon_year,
                     section_as_input.mechanisms,
                 )
-                for _measure in section_as_input.aggregated_measure_combinations
-            ]
 
-            # generate bool for each measure with year in investment year
-            _valid_year_bool = [
-                measure.year == _invest_year
-                for measure in section_as_input.aggregated_measure_combinations
-            ]
+                # generate bool for each measure with year in investment year
+                _valid_year_bool = _measure.year == _invest_year
 
-            # get the measures that both have _satisfied_bool and _valid_year_bool
-            return [
-                _measure
-                for _measure, _satisfied, _valid_year in zip(
-                    section_as_input.aggregated_measure_combinations,
-                    _satisfied_bool,
-                    _valid_year_bool,
-                )
-                if _satisfied and _valid_year
-            ]
+                if _satisfied_bool and _valid_year_bool:
+                    _valid_measures.append(_measure)
+
+            return _valid_measures
 
         # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
         initial_section_pfs = [
