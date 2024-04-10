@@ -1,5 +1,6 @@
 import copy
 import math
+import sys
 from itertools import groupby
 
 import numpy as np
@@ -21,6 +22,7 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GrassSlopePart
 from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
     StoneSlopePart,
 )
@@ -138,21 +140,25 @@ class RevetmentMeasure(MeasureProtocol):
         ]
 
     def _get_beta_top_layer_thickness(self, slope: StoneSlopePart) -> float:
+        _min_distance = sys.float_info.max
         for part in slope.slope_part_relations:
-            if math.isclose(
-                part.top_layer_thickness, slope.top_layer_thickness, abs_tol=1e-4
-            ):
-                return part.beta
-        return None
+            _distance = abs(part.top_layer_thickness - slope.top_layer_thickness)
+            if _distance < _min_distance:
+                beta = part.beta
+                _min_distance = _distance
+        return beta
 
     def _get_beta_block_revetments(
         self, slope_parts: list[SlopePartProtocol], transition_level: float
     ) -> float:
+        _min_distance = sys.float_info.max
         for slope in slope_parts:
-            if math.isclose(slope.end_part, transition_level, abs_tol=1e-4):
-                beta = self._get_beta_top_layer_thickness(slope)
-                return beta
-        return None # can happen if there is a gap between slope parts
+            if not isinstance(slope, GrassSlopePart):
+                _distance = abs(transition_level - slope.end_part)
+                if _distance < _min_distance:
+                    beta = self._get_beta_top_layer_thickness(slope)
+                    _min_distance = _distance
+        return beta
 
     def evaluate_measure(
         self,
