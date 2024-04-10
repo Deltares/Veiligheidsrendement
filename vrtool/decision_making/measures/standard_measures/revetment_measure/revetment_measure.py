@@ -152,7 +152,7 @@ class RevetmentMeasure(MeasureProtocol):
             if math.isclose(slope.end_part, transition_level, abs_tol=1e-4):
                 beta = self._get_beta_top_layer_thickness(slope)
                 return beta
-        return None
+        return None # can happen if there is a gap between slope parts
 
     def evaluate_measure(
         self,
@@ -168,9 +168,10 @@ class RevetmentMeasure(MeasureProtocol):
         )
 
         # 1. Get beta targets.
-        _beta_targets = self._get_beta_target_vector(
-            self._get_min_beta_target(dike_section), _beta_block, traject_info.Pmax
-        )
+        _min_beta = self._get_min_beta_target(dike_section)
+        if _beta_block is None:
+            _beta_block = _min_beta
+        _beta_targets = self._get_beta_target_vector(_min_beta, _beta_block, traject_info.Pmax)
 
         # 2. Get transition levels.
         _transition_levels = self._get_transition_level_vector(
