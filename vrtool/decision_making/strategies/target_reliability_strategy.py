@@ -154,23 +154,21 @@ class TargetReliabilityStrategy(StrategyProtocol):
             )
             _design_horizon_year = _invest_year + self.OI_horizon
 
-            _valid_measures = []
-            for _measure in section_as_input.aggregated_measure_combinations:
-                # check if the cross-sectional requirements are met for each measure
-                _satisfied_bool = _check_cross_sectional_requirements(
-                    _measure,
+            def valid_measure(
+                measure_combination: AggregatedMeasureCombination,
+            ) -> bool:
+                if measure_combination.year != _invest_year:
+                    return False
+                return _check_cross_sectional_requirements(
+                    measure_combination,
                     cross_sectional_requirements,
                     _design_horizon_year,
                     section_as_input.mechanisms,
                 )
 
-                # generate bool for each measure with year in investment year
-                _valid_year_bool = _measure.year == _invest_year
-
-                if _satisfied_bool and _valid_year_bool:
-                    _valid_measures.append(_measure)
-
-            return _valid_measures
+            return list(
+                filter(valid_measure, section_as_input.aggregated_measure_combinations)
+            )
 
         # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
         initial_section_pfs = [
