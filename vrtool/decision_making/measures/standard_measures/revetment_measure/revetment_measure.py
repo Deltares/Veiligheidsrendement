@@ -72,22 +72,35 @@ class RevetmentMeasure(MeasureProtocol):
             beta = beta.min()
         return beta
 
-    def _get_beta_target_vector(
-        self, min_beta: float, beta_block: float, p_max: float
-    ) -> list[float]:
+    def _get_beta_max(self, p_max: float) -> float:
+        """
+        get maximum beta for revetment
+
+        Args:
+            p_max (float): target probability for traject
+
+        Returns:
+            float: maximum beta
+        """
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
+        return _max_beta
+
+    def _get_beta_target_vector(self, min_beta: float, max_beta: float) -> list[float]:
+        """
+        get a grid with beta values
+        in principle n_step_block values, but stepsize is at most minimal_stepsize
+
+        Args:
+            min_beta (float): minimal beta value
+            max_beta (float): maximum beta value
+
+        Returns:
+            list[float]: list with grid values
+        """
+        _step = (max_beta - min_beta) / (self.n_steps_block - 1)
+        _nr_of_steps = 1 + round ((max_beta - min_beta) / max(self.minimal_stepsize, _step))
+        _non_zero_msrs = np.linspace(min_beta, max_beta, _nr_of_steps)
         beta_vector = []
-        beta_vector.append(min_beta)
-        _step = (_max_beta - beta_block) / (self.n_steps_block - 2)
-        if beta_block > _max_beta:
-            _non_zero_msrs = []
-        elif beta_block < min_beta + _step:
-            _step = (_max_beta - min_beta) / (self.n_steps_block - 1)
-            _nr_of_steps = round ((_max_beta - min_beta) / max(self.minimal_stepsize, _step))
-            _non_zero_msrs = np.linspace(min_beta + _step, _max_beta, _nr_of_steps)
-        else:
-            _nr_of_steps = 1 + round ((_max_beta - beta_block) / max(self.minimal_stepsize, _step))
-            _non_zero_msrs = np.linspace(beta_block, _max_beta, _nr_of_steps)
         for msr in _non_zero_msrs:
             beta_vector.append(msr)
         return beta_vector
@@ -139,27 +152,6 @@ class RevetmentMeasure(MeasureProtocol):
             "revetment_input"
         ]
 
-    def _get_beta_top_layer_thickness(self, slope: StoneSlopePart) -> float:
-        _min_distance = sys.float_info.max
-        for part in slope.slope_part_relations:
-            _distance = abs(part.top_layer_thickness - slope.top_layer_thickness)
-            if _distance < _min_distance:
-                beta = part.beta
-                _min_distance = _distance
-        return beta
-
-    def _get_beta_block_revetments(
-        self, slope_parts: list[SlopePartProtocol], transition_level: float
-    ) -> float:
-        _min_distance = sys.float_info.max
-        for slope in slope_parts:
-            if not isinstance(slope, GrassSlopePart):
-                _distance = abs(transition_level - slope.end_part)
-                if _distance < _min_distance:
-                    beta = self._get_beta_top_layer_thickness(slope)
-                    _min_distance = _distance
-        return beta
-
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -168,16 +160,10 @@ class RevetmentMeasure(MeasureProtocol):
     ):
         _revetment = self._get_revetment(dike_section)
 
-        # 0. Get beta current beta for stone revetment
-        _beta_block = self._get_beta_block_revetments(
-            _revetment.slope_parts, _revetment.current_transition_level
-        )
-
         # 1. Get beta targets.
         _min_beta = self._get_min_beta_target(dike_section)
-        if _beta_block is None:
-            _beta_block = _min_beta
-        _beta_targets = self._get_beta_target_vector(_min_beta, _beta_block, traject_info.Pmax)
+        _max_beta = self._get_beta_max(traject_info.Pmax)
+        _beta_targets = self._get_beta_target_vector(_min_beta, _max_beta)
 
         # 2. Get transition levels.
         _transition_levels = self._get_transition_level_vector(
