@@ -28,7 +28,7 @@ class SectionReliability:
         pf_mechanisms_time = np.zeros((len(available_mechanisms), len(trange)))
         count = 0
         for mechanism in available_mechanisms:  # mechanisms
-            for j in range(0, len(trange)):
+            for j, _t in enumerate(trange):
                 mechanism_collection = (
                     self.failure_mechanisms.get_mechanism_reliability_collection(
                         mechanism
@@ -37,10 +37,10 @@ class SectionReliability:
 
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                     pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
-                        str(trange[j])
+                        str(_t)
                     ].Pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
-                    pf = mechanism_collection.Reliability[str(trange[j])].Pf
+                    pf = mechanism_collection.Reliability[str(_t)].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1
                     # For StabilityInner:
