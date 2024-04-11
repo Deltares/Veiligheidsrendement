@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict
 
-from vrtool.decision_making.solutions import Solutions
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.controllers.strategy_controller import StrategyController
@@ -20,7 +19,9 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class RunOptimization(VrToolRunProtocol):
-    _section_input_collection: list[SectionAsInput]
+    _strategy_controller: StrategyController
+    _selected_measure_ids: dict[int, list[int]]
+    _ids_to_import: list[tuple[int, int]]
 
     def __init__(
         self,
@@ -36,7 +37,9 @@ class RunOptimization(VrToolRunProtocol):
 
         self.selected_traject = optimization_input.selected_traject
         self.vr_config = optimization_input.vr_config
-        self._section_input_collection = optimization_input.section_input_collection
+        self._strategy_controller = self._get_strategy_controller_with_aggregations(
+            optimization_input.section_input_collection
+        )
         self._selected_measure_ids = optimization_selected_measure_ids
         self._ids_to_import = optimization_input.measure_id_year_list
 
@@ -46,21 +49,21 @@ class RunOptimization(VrToolRunProtocol):
             _results_dir.mkdir(parents=True)
         return _results_dir
 
-    def _get_strategy_input(
-        self, strategy_type: type[StrategyProtocol], design_method: str
+    def _get_strategy_controller_with_aggregations(
+        self,
+        section_input_collection: list[SectionAsInput],
     ) -> StrategyInputProtocol:
-        _strategy_controller = StrategyController(self._section_input_collection)
+        _strategy_controller = StrategyController(section_input_collection)
         _strategy_controller.set_investment_year()
         _strategy_controller.combine()
         _strategy_controller.aggregate()
-        _evaluate_input = _strategy_controller.get_evaluate_input(strategy_type)
-        _evaluate_input.design_method = design_method
-        return _evaluate_input
+        return _strategy_controller
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyProtocol:
         logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
+
         # Initalize strategy controller
-        _greedy_optimization_input = self._get_strategy_input(
+        _greedy_optimization_input = self._strategy_controller.get_evaluate_input(
             GreedyStrategy, design_method
         )
 
@@ -80,9 +83,10 @@ class RunOptimization(VrToolRunProtocol):
             f"Start bepaling referentiemaatregelen op basis van {design_method}."
         )
         # Initalize strategy controller
-        _target_reliability_input = self._get_strategy_input(
+        _target_reliability_input = self._strategy_controller.get_evaluate_input(
             TargetReliabilityStrategy, design_method
         )
+
         # Initialize a strategy type (i.e combination of objective & constraints)
         _target_reliability_based = TargetReliabilityStrategy(
             _target_reliability_input, self.vr_config
