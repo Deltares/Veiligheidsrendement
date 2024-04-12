@@ -77,8 +77,8 @@ class LegacyMappingHelper:
                         _mech, _section, _pf[_mech.name].shape[1:], max_year
                     )
                     _pf[_mech.name][n, 0 : len(_probs), :] = _probs
-                except:
-                    pass #Mechanism not present at section
+                except Exception as e:
+                    pass  # Mechanism not present at section
 
         return _pf
 

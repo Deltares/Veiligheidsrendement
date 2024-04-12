@@ -4,7 +4,7 @@ import numpy as np
 class CombinFunctions:
     @staticmethod
     def combine_probabilities(
-        prob_of_failure: dict[str, np.array], selection
+        prob_of_failure: dict[str, np.array], selection: list[str]
     ) -> np.array:
 
         cnt = 0

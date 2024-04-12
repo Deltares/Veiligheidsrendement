@@ -1,8 +1,12 @@
 import logging
 
+import numpy as np
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
-from vrtool.optimization.measures.aggregated_measures_combination import AggregatedMeasureCombination
+from vrtool.optimization.measures.aggregated_measures_combination import (
+    AggregatedMeasureCombination,
+)
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.optimization import (
     OptimizationStep,
@@ -13,8 +17,8 @@ from vrtool.orm.models.optimization.optimization_run import OptimizationRun
 from vrtool.orm.models.optimization.optimization_selected_measure import (
     OptimizationSelectedMeasure,
 )
-
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
+
 
 class StrategyExporter(OrmExporterProtocol):
     def __init__(self, optimization_run_id: int) -> None:
@@ -22,7 +26,9 @@ class StrategyExporter(OrmExporterProtocol):
             optimization_run_id
         )
 
-    def find_aggregated(self, combinations:list[AggregatedMeasureCombination], measure_sh, measure_sg):
+    def find_aggregated(
+        self, combinations: list[AggregatedMeasureCombination], measure_sh, measure_sg
+    ):
         for a in combinations:
             if a.sg_combination == measure_sg and a.sh_combination == measure_sh:
                 return a
@@ -40,41 +46,58 @@ class StrategyExporter(OrmExporterProtocol):
             _measure_sg_id = dom_model.measures_taken[dim_idx][2] - 1
             _measure_sh = dom_model.sections[section].sh_combinations[_measure_sh_id]
             _measure_sg = dom_model.sections[section].sg_combinations[_measure_sg_id]
-            #_aggr_msr = self.find_aggregated(dom_model.sections[section].aggregated_measure_combinations, _measure_sh, _measure_sg)
+            # _aggr_msr = self.find_aggregated(dom_model.sections[section].aggregated_measure_combinations, _measure_sh, _measure_sg)
             _measures = [_measure_sh.primary, _measure_sg.primary]
 
             # get index of aggregate of primary measure:
-            _aggregated_primary = [agg_measure for agg_measure in dom_model.sections[section].aggregated_measure_combinations if agg_measure.check_primary_measure_result_id_and_year(_measure_sh.primary,_measure_sg.primary)]
+            _aggregated_primary = [
+                agg_measure
+                for agg_measure in dom_model.sections[
+                    section
+                ].aggregated_measure_combinations
+                if agg_measure.check_primary_measure_result_id_and_year(
+                    _measure_sh.primary, _measure_sg.primary
+                )
+            ]
             # select only the first if there are more (the primary measure needs to be identical). We can also add a check TODO
             if any(_aggregated_primary):
-                logging.debug(f"More than one aggregated primary measure found for section {dom_model.sections[section].section_name}. Only the first one will be used.")
+                logging.debug(
+                    f"More than one aggregated primary measure found for section {dom_model.sections[section].section_name}. Only the first one will be used."
+                )
                 _aggregated_primary = [_aggregated_primary[0]]
 
-            #get ids of secondary measures
-            _secondary_measures = [_measure for _measure in [_measure_sh.secondary, _measure_sg.secondary] if _measure is not None]
-            _lcc_per_section[section] = _measure_sh.lcc + _measure_sg.lcc 
+            # get ids of secondary measures
+            _secondary_measures = [
+                _measure
+                for _measure in [_measure_sh.secondary, _measure_sg.secondary]
+                if _measure is not None
+            ]
+            _lcc_per_section[section] = _measure_sh.lcc + _measure_sg.lcc
 
-            #get total_lcc and total_risk values
+            # get total_lcc and total_risk values
             _total_lcc = sum(_lcc_per_section.values())
-            _total_risk = dom_model.total_risk_per_step[dim_idx+1]
+            _total_risk = dom_model.total_risk_per_step[dim_idx + 1]
 
             for single_measure in _secondary_measures + _aggregated_primary:
 
-
                 _option_selected_measure_result = (
-                    self._get_optimization_selected_measure(single_measure.measure_result_id, single_measure.year)
+                    self._get_optimization_selected_measure(
+                        single_measure.measure_result_id, single_measure.year
+                    )
                 )
                 _created_optimization_step = OptimizationStep.create(
-                    step_number=dim_idx+1,
+                    step_number=dim_idx + 1,
                     optimization_selected_measure=_option_selected_measure_result,
                     total_lcc=_total_lcc,
                     total_risk=_total_risk,
                 )
 
-                _prob_per_step = dom_model.probabilities_per_step[dim_idx+1]
+                _prob_per_step = dom_model.probabilities_per_step[dim_idx + 1]
                 lcc = _measure_sh.lcc + _measure_sg.lcc
                 for _t in dom_model._time_periods:
-                    _prob_section = self._get_selected_time(section, _t, "SECTION", _prob_per_step)
+                    _prob_section = self._get_section_time_value(
+                        section, _t, _prob_per_step
+                    )
                     _step_results_section.append(
                         {
                             "optimization_step": _created_optimization_step,
@@ -94,7 +117,9 @@ class StrategyExporter(OrmExporterProtocol):
                         _measure_result_mechanism.mechanism_per_section.mechanism.name
                     ).name
                     _t = _measure_result_mechanism.time
-                    _prob_mechanism = self._get_selected_time(section, _t, _mechanism_name, _prob_per_step)
+                    _prob_mechanism = self._get_selected_time(
+                        section, _t, _mechanism_name, _prob_per_step
+                    )
                     _step_results_mechanism.append(
                         {
                             "optimization_step": _created_optimization_step,
@@ -132,18 +157,26 @@ class StrategyExporter(OrmExporterProtocol):
                 )
             )
         return _opt_selected_measure
-    
-    def _get_section_time_value(self, section: int, t: int, values: dict) -> float:
+
+    def _get_section_time_value(
+        self, section: int, t: int, values: dict[str, np.ndarray]
+    ) -> float:
         pt = 1.0
-        for m in values:
+        for m in values.keys():
             # fix for t=100 where 99 is the last
             maxt = values[m].shape[1] - 1
             _t = min(t, maxt)
             pt *= 1.0 - values[m][section, _t]
         return 1.0 - pt
-    
-    def _get_selected_time(self, section: int, t: int, mechanism: str, values: dict) -> float:
-        if (mechanism == "SECTION" and not "SECTION" in values):
+
+    def _get_selected_time(
+        self,
+        section: int,
+        t: int,
+        mechanism: str,
+        values: dict[str, np.ndarray],
+    ) -> float:
+        if mechanism == "SECTION":
             return self._get_section_time_value(section, t, values)
         maxt = values[mechanism].shape[1] - 1
         _t = min(t, maxt)
