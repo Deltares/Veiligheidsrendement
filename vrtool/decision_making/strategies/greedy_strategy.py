@@ -1,7 +1,6 @@
 import copy
 import logging
 import time
-from pathlib import Path
 
 import numpy as np
 
@@ -426,28 +425,27 @@ class GreedyStrategy(StrategyProtocol):
         self,
         mechanism: MechanismEnum,
         init_mechanism_risk: np.array,
-        existing_investment: list,
+        existing_investment_list: list,
         life_cycle_cost: np.array,
     ):
         """This function bundles the measures for which sections are dependent. It can be used for overflow and revetment"""
         _life_cycle_cost = np.copy(life_cycle_cost)
-
         number_of_sections = np.size(_life_cycle_cost, axis=0)
+
         # first we determine the existing investments and make a n,2 array for options for dependent and independent mechanisms
-        existing_investments = np.zeros(
+        _calculated_investments = np.zeros(
             (np.size(_life_cycle_cost, axis=0), 2), dtype=np.int32
         )
 
-        if any(existing_investment):
-            for _idx, _ in enumerate(existing_investment):
-                # sh
-                existing_investments[existing_investment[_idx][0], 0] = (
-                    existing_investment[_idx][1]
-                )
-                # sg
-                existing_investments[existing_investment[_idx][0], 1] = (
-                    existing_investment[_idx][2]
-                )
+        for _idx, _ in enumerate(existing_investment_list):
+            # sh
+            _calculated_investments[existing_investment_list[_idx][0], 0] = (
+                existing_investment_list[_idx][1]
+            )
+            # sg
+            _calculated_investments[existing_investment_list[_idx][0], 1] = (
+                existing_investment_list[_idx][2]
+            )
 
         # prepare arrays
         sorted_sh = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
@@ -459,7 +457,7 @@ class GreedyStrategy(StrategyProtocol):
             sorted_sh[i, :], sg_indices[i, :] = self.get_sg_sh_indices(
                 i,
                 _life_cycle_cost,
-                existing_investments,
+                _calculated_investments,
                 mechanism,
                 _life_cycle_cost.shape[1],
             )
@@ -477,7 +475,7 @@ class GreedyStrategy(StrategyProtocol):
         # and we generate the required output
         if len(BC_list) > 0:
             BC_out, measure_index = self.bundling_output(
-                BC_list, counter_list, sorted_sh, sg_indices, existing_investments
+                BC_list, counter_list, sorted_sh, sg_indices, _calculated_investments
             )
             return measure_index, BC_out
 
@@ -645,7 +643,7 @@ class GreedyStrategy(StrategyProtocol):
                 MechanismEnum.OVERFLOW,
                 np.copy(_init_overflow_risk_ndarray),
                 copy.deepcopy(measure_list),
-                copy.deepcopy(_life_cycle_cost),
+                np.copy(_life_cycle_cost),
             )
             # for revetment:
             BC_bundleRevetment = 0.0
@@ -657,7 +655,7 @@ class GreedyStrategy(StrategyProtocol):
                     MechanismEnum.REVETMENT,
                     np.copy(_init_revetment_risk_ndarray),
                     copy.deepcopy(measure_list),
-                    copy.deepcopy(_life_cycle_cost),
+                    np.copy(_life_cycle_cost),
                 )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
@@ -728,17 +726,17 @@ class GreedyStrategy(StrategyProtocol):
                     _init_probability_dict = update_probability(
                         _init_probability_dict, self, Index_Best
                     )
-                    _init_independent_risk_ndarray[Index_Best[0], :] = np.copy(
+                    _init_independent_risk_ndarray[Index_Best[0], :] = (
                         self.RiskGeotechnical[Index_Best[0], Index_Best[2], :]
                     )
 
-                    _init_overflow_risk_ndarray[Index_Best[0], :] = np.copy(
-                        self.RiskOverflow[Index_Best[0], Index_Best[1], :]
-                    )
+                    _init_overflow_risk_ndarray[Index_Best[0], :] = self.RiskOverflow[
+                        Index_Best[0], Index_Best[1], :
+                    ]
 
-                    _init_revetment_risk_ndarray[Index_Best[0], :] = np.copy(
-                        self.RiskRevetment[Index_Best[0], Index_Best[1], :]
-                    )
+                    _init_revetment_risk_ndarray[Index_Best[0], :] = self.RiskRevetment[
+                        Index_Best[0], Index_Best[1], :
+                    ]
 
                     # TODO update risks
                     _spent_money[Index_Best[0]] += _life_cycle_cost[Index_Best]
@@ -817,16 +815,14 @@ class GreedyStrategy(StrategyProtocol):
                                 _init_probability_dict, self, IndexMeasure
                             )
                             _init_independent_risk_ndarray[IndexMeasure[0], :] = (
-                                np.copy(
-                                    self.RiskGeotechnical[
-                                        IndexMeasure[0], IndexMeasure[2], :
-                                    ]
-                                )
+                                self.RiskGeotechnical[
+                                    IndexMeasure[0], IndexMeasure[2], :
+                                ]
                             )
-                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = np.copy(
+                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = (
                                 self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
                             )
-                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = np.copy(
+                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = (
                                 self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
                             )
                             _spent_money[IndexMeasure[0]] += _life_cycle_cost[
@@ -860,7 +856,7 @@ class GreedyStrategy(StrategyProtocol):
                 time.time() - start
             )
         )
-        self.LCCOption = np.copy(_initial_cost_matrix)
+        self.LCCOption = _initial_cost_matrix
         self.measures_taken = measure_list
         self.total_risk_per_step = _total_risk_list
         self.probabilities_per_step = _probabilities
