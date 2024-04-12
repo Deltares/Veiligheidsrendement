@@ -30,13 +30,14 @@ def implement_option(
         1
     ]  # TODO: this should be made more robust
     for mechanism_name in traject_probability.keys():
-        if mechanism_name in [
+        _mechanism = MechanismEnum.get_enum(mechanism_name)
+        if _mechanism in [
             MechanismEnum.STABILITY_INNER,
             MechanismEnum.PIPING,
         ]:
             traject_probability[mechanism_name][measure_idx[0], :] = (
                 measure.sg_combination.mechanism_year_collection.get_probabilities(
-                    MechanismEnum.get_enum(mechanism_name), np.arange(0, t_range, 1)
+                    _mechanism, np.arange(0, t_range, 1)
                 )
             )
     return traject_probability

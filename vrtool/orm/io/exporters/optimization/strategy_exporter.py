@@ -162,7 +162,7 @@ class StrategyExporter(OrmExporterProtocol):
         self, section: int, t: int, values: dict[str, np.ndarray]
     ) -> float:
         pt = 1.0
-        for m in values.keys():
+        for m in values:
             # fix for t=100 where 99 is the last
             maxt = values[m].shape[1] - 1
             _t = min(t, maxt)
@@ -176,7 +176,7 @@ class StrategyExporter(OrmExporterProtocol):
         mechanism: str,
         values: dict[str, np.ndarray],
     ) -> float:
-        if mechanism == "SECTION":
+        if mechanism == "SECTION" and section not in values:
             return self._get_section_time_value(section, t, values)
         maxt = values[mechanism].shape[1] - 1
         _t = min(t, maxt)
