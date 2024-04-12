@@ -163,6 +163,28 @@ class RevetmentMeasure(MeasureProtocol):
             "revetment_input"
         ]
 
+    def _get_filtered_measures(self):
+        """
+        remove measures in measures.result_collection that have a worse cost-beta relation
+        than any of the other measures
+        """
+        remove_msrs = []
+        for msr in self.measures.result_collection:
+            remove_msr = False
+            for cmp in self.measures.result_collection:
+                beta_msr = msr.section_reliability.SectionReliability['0']['Section']
+                beta_cmp = cmp.section_reliability.SectionReliability['0']['Section']
+                if msr.cost > cmp.cost and beta_msr < beta_cmp:
+                    remove_msr = True
+            remove_msrs.append(remove_msr)
+
+        filtered_msrs = []
+        for i,remove_msr in enumerate(remove_msrs):
+            if not remove_msr:
+                filtered_msrs.append(self.measures.result_collection[i])
+
+        self.measures.result_collection = filtered_msrs
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -212,6 +234,8 @@ class RevetmentMeasure(MeasureProtocol):
                     transition_grouping,
                 )
                 self.measures.result_collection.append(_beta_target_results)
+
+        self._get_filtered_measures()
 
     def _get_grouped_intermediate_results(
         self, ungrouped_measures: list[RevetmentMeasureResult]
