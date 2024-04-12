@@ -274,22 +274,33 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 for measure in _section_as_input.aggregated_measure_combinations
             ]
         )
-        _design_horizon_year = _invest_year
+        _design_horizon_year = _invest_year + self.OI_horizon
 
-        _requirement_met_per_mechanism = {
-            mechanism: self.check_cross_sectional_requirements(
-                section_idx,
-                _measure_idx,
-                cross_sectional_requirements,
-                _design_horizon_year,
-                [mechanism],
+        # for each mechanism we check if the cross-sectional requirements are met
+        # initialize a dictionary
+        _requirement_met_per_mechanism = dict(
+            zip(
+                _section_as_input.mechanisms,
+                [False] * len(_section_as_input.mechanisms),
             )
-            for mechanism in _section_as_input.mechanisms
+        )
+
+        # loop over all mechanisms and check if the requirements are met. Once they are met, set the value to True and break the loop
+        for mechanism in _section_as_input.mechanisms:
             for _measure_idx, _ in enumerate(
                 _section_as_input.aggregated_measure_combinations
-            )
-        }
-        # get the mechanisms in _requirement_met_per_mechanism where values are True
+            ):
+                if self.check_cross_sectional_requirements(
+                    section_idx,
+                    _measure_idx,
+                    cross_sectional_requirements,
+                    _design_horizon_year,
+                    [mechanism],
+                ):
+                    _requirement_met_per_mechanism[mechanism] = True
+                    break
+
+        # next we get the mechanisms in _requirement_met_per_mechanism where values are True
         _valid_mechanisms = [
             mechanism
             for mechanism, value in _requirement_met_per_mechanism.items()
@@ -299,9 +310,12 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # get the measures that are valid for the _valid_mechanisms
         _valid_measures = [
             _measure
-            for _measure_idx, _measure in _section_as_input.aggregated_measure_combinations
+            for _measure_idx, _measure in enumerate(
+                _section_as_input.aggregated_measure_combinations
+            )
             if self.check_measure_validity(
                 _measure_idx,
+                section_idx,
                 _valid_mechanisms,
                 cross_sectional_requirements,
                 _invest_year,
@@ -318,9 +332,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # get the failure probabilities for the mechanisms in _invalid_mechanisms for all _valid_measures
         _failure_probabilities = [
             self._get_failure_probability_of_invalid_mechanisms(
-                _measure, _design_horizon_year, _invalid_mechanisms
+                section_idx, _measure_idx, _design_horizon_year, _invalid_mechanisms
             )
-            for _measure in _valid_measures
+            for _measure_idx, _ in enumerate(_valid_measures)
         ]
 
         # get the measure with the lowest failure probability for the mechanisms in _invalid_mechanisms
@@ -376,7 +390,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     [mechanism.name.capitalize() for mechanism in _invalid_mechanisms]
                 )
                 logging.warning(
-                    f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {_section_as_input.section_name}. De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor {_invalid_mechanisms_str}."
+                    f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {self.sections[_section_idx].section_name}. De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor {_invalid_mechanisms_str}."
                 )
 
             # get measure with lowest lcc from _valid_measures
