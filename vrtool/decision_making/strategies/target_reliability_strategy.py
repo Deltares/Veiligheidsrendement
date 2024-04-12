@@ -108,7 +108,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # Previous approach instead of self._time_periods = config.T:
         # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
         # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
-        def _check_cross_sectional_requirements(
+        def check_cross_sectional_requirements(
             measure: AggregatedMeasureCombination,
             cross_sectional_requirements: CrossSectionalRequirements,
             year: int,
@@ -156,7 +156,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
             # check if the cross-sectional requirements are met for each measure
             _satisfied_bool = [
-                _check_cross_sectional_requirements(
+                check_cross_sectional_requirements(
                     _measure,
                     cross_sectional_requirements,
                     _design_horizon_year,

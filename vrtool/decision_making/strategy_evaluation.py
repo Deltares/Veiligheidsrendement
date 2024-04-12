@@ -47,7 +47,7 @@ def compute_annual_failure_probability(traject_probability: dict[str, np.ndarray
     """Computes the annual failure probability for each mechanism.
 
     Args:
-        traject_probability (dict[np.ndarray]): The collection of the section probabilities for each mechanism.
+        traject_probability (dict[str, np.ndarray]): The collection of the section probabilities for each mechanism.
             The array has dimensions N x T with N the number of sections and T the number of years
 
     Returns:
