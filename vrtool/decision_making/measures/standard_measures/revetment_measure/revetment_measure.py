@@ -68,8 +68,6 @@ class RevetmentMeasure(MeasureProtocol):
             min(map(int, _mech_reliability_collection.Reliability.keys()))
         )
         beta = _mech_reliability_collection.Reliability[_min_reliability_year].Beta
-        if isinstance(beta, np.ndarray):
-            beta = beta.min()
         return beta
 
     def _get_beta_max(self, p_max: float) -> float:
@@ -85,7 +83,7 @@ class RevetmentMeasure(MeasureProtocol):
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
         return _max_beta
 
-    def _get_beta_target_vector(self, min_beta: float, max_beta: float) -> list[float]:
+    def _get_beta_target_vector(self, min_beta: float, max_beta: float) -> np.ndarray[float]:
         """
         get a grid with beta values
         in principle n_step_block values, but stepsize is at most minimal_stepsize
@@ -99,11 +97,7 @@ class RevetmentMeasure(MeasureProtocol):
         """
         _step = (max_beta - min_beta) / (self.n_steps_block - 1)
         _nr_of_steps = 1 + round ((max_beta - min_beta) / max(self.minimal_stepsize, _step))
-        _non_zero_msrs = np.linspace(min_beta, max_beta, _nr_of_steps)
-        beta_vector = []
-        for msr in _non_zero_msrs:
-            beta_vector.append(msr)
-        return beta_vector
+        return np.linspace(min_beta, max_beta, _nr_of_steps)
 
     def _get_transition_level_vector(
         self,
@@ -226,7 +220,7 @@ class RevetmentMeasure(MeasureProtocol):
         self,
         dike_section: DikeSection,
         revetment: RevetmentDataClass,
-        beta_targets: list[float],
+        beta_targets: np.ndarray[float],
         transition_levels: list[float],
         config_years: list[int],
     ) -> list[RevetmentMeasureResult]:

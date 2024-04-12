@@ -1,6 +1,7 @@
 from random import shuffle
 
 import pytest
+import numpy as np
 from numpy.testing import assert_array_almost_equal
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -107,7 +108,7 @@ class TestRevetmentMeasure:
         _beta_target_vector = _revetment_measure._get_beta_target_vector(min_beta, _max_beta)
 
         # 3. Verify expectations.
-        assert isinstance(_beta_target_vector, list)
+        assert isinstance(_beta_target_vector, np.ndarray)
         assert len(_beta_target_vector) == vector_size
         assert_array_almost_equal(_beta_target_vector, _expected_beta_target_vector)
 
@@ -126,7 +127,6 @@ class TestRevetmentMeasure:
 
         Args:
             min_beta (float): beta from assessment
-            vector_size (int): input grid dimension
             computed_vector_size (int): reduced grid dimension
         """
         # 1. Define test data.
@@ -142,7 +142,7 @@ class TestRevetmentMeasure:
         _beta_target_vector = _revetment_measure._get_beta_target_vector(min_beta, _max_beta)
 
         # 3. Verify expectations.
-        assert isinstance(_beta_target_vector, list)
+        assert isinstance(_beta_target_vector, np.ndarray)
         assert len(_beta_target_vector) == computed_vector_size
         _step_size = _beta_target_vector[2] - _beta_target_vector[1]
         assert _step_size == pytest.approx(_revetment_measure.minimal_stepsize, 0.2)
