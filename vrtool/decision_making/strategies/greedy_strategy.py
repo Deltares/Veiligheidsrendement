@@ -472,7 +472,7 @@ class GreedyStrategy(StrategyProtocol):
         )
 
         # and we generate the required output
-        if len(BC_list) > 0:
+        if any(BC_list):
             BC_out, measure_index = self.bundling_output(
                 BC_list, counter_list, sorted_sh, sg_indices, _calculated_investments
             )
@@ -639,7 +639,7 @@ class GreedyStrategy(StrategyProtocol):
                 MechanismEnum.OVERFLOW,
                 _init_overflow_risk_ndarray,
                 copy.deepcopy(measure_list),
-                np.copy(_life_cycle_cost),
+                _life_cycle_cost,
             )
             # for revetment:
             BC_bundleRevetment = 0.0
@@ -651,7 +651,7 @@ class GreedyStrategy(StrategyProtocol):
                     MechanismEnum.REVETMENT,
                     _init_revetment_risk_ndarray,
                     copy.deepcopy(measure_list),
-                    np.copy(_life_cycle_cost),
+                    _life_cycle_cost,
                 )
 
             # then in the selection of the measure we make a if-elif split with either the normal routine or an
