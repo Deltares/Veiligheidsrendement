@@ -99,6 +99,233 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.D = strategy_input.D
         self.sections = strategy_input.sections
 
+    def check_cross_sectional_requirements(
+        self,
+        section_idx: int,
+        measure_idx: int,
+        cross_sectional_requirements: CrossSectionalRequirements,
+        year: int,
+        mechanisms: list[MechanismEnum],
+    ) -> bool:
+        """This function checks if the cross-sectional requirements are met for a given measure and year.
+        If the requirements are not met for any of the mechanisms, the function returns False, otherwise True.
+        """
+        _measure = self.sections[section_idx].aggregated_measure_combinations[
+            measure_idx
+        ]
+
+        for _mechanism in mechanisms:
+            if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                # look in sh, if any mechanism is not satisfied, return a False
+                if (
+                    _measure.sh_combination.mechanism_year_collection.get_probability(
+                        _mechanism, year
+                    )
+                    > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
+                        _mechanism
+                    ]
+                ):
+                    return False
+            elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
+                if (
+                    _measure.sg_combination.mechanism_year_collection.get_probability(
+                        _mechanism, year
+                    )
+                    > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
+                        _mechanism
+                    ]
+                ):
+                    return False
+        return True
+
+    def _get_failure_probability_of_invalid_mechanisms(
+        self,
+        section_idx: int,
+        measure_idx: int,
+        year: int,
+        mechanisms: list[MechanismEnum],
+    ) -> bool:
+        """This function gets the failure probabilities of the mechanisms that are not satisfied by the measure and returns the total failure probability.
+
+        Args:
+            measure (AggregatedMeasureCombination): The measure for which the failure probability is to be calculated.
+            year (int): The year for which the failure probability is to be calculated.
+            mechanisms (list[MechanismEnum]): The mechanisms for which the failure probability is to be calculated.
+
+            Returns:
+                float: The total failure probability for the mechanisms that are not satisfied by the measure.
+        """
+        _measure = self.sections[section_idx].aggregated_measure_combinations[
+            measure_idx
+        ]
+        _p_nonf = 1
+        for _mechanism in mechanisms:
+            if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                # look in sh, if any mechanism is not satisfied, return a False
+                _p_nonf = (
+                    _p_nonf
+                    * _measure.sh_combination.mechanism_year_collection.get_probability(
+                        _mechanism, year
+                    )
+                )
+            elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
+                _p_nonf = (
+                    _p_nonf
+                    * _measure.sg_combination.mechanism_year_collection.get_probability(
+                        _mechanism, year
+                    )
+                )
+        return 1 - _p_nonf
+
+    def check_measure_validity(
+        self,
+        measure_idx: int,
+        section_idx: int,
+        mechanisms: list[MechanismEnum],
+        cross_sectional_requirements: CrossSectionalRequirements,
+        investment_year: int,
+        design_year: int,
+    ) -> bool:
+        """Check if the measure combination is valid for the mechanisms given as input.
+
+        Args:
+            measure_combination (AggregatedMeasureCombination): The measure combination to check.
+            mechanisms (list[MechanismEnum]): The mechanisms to check the measure combination for.
+            cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
+            investment_year (int): The investment year for the measure combination.
+            design_year (int): The design year for the measure combination.
+
+            Returns:
+                bool: True if the measure combination is valid for the mechanisms, False otherwise.
+        """
+        _measure_combination = self.sections[
+            section_idx
+        ].aggregated_measure_combinations[measure_idx]
+        if _measure_combination.year != investment_year:
+            return False
+        return self.check_cross_sectional_requirements(
+            section_idx,
+            measure_idx,
+            cross_sectional_requirements,
+            design_year,
+            mechanisms,
+        )
+
+    def get_valid_measures_for_section(
+        self,
+        section_idx: float,
+        cross_sectional_requirements: CrossSectionalRequirements,
+    ) -> AggregatedMeasureCombination:
+        """Get the measures that satisfy the cross-sectional requirements for the mechanisms.
+
+        Args:
+            section_as_input (SectionAsInput): The SectionAsInput object for which the valid measures are to be found.
+            cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
+
+        Returns:
+            list[AggregatedMeasureCombination]: The list of valid measures for the mechanisms.
+        """
+        # get the first possible investment year from the aggregated measures
+        _section_as_input = self.sections[section_idx]
+        _invest_year = min(
+            [
+                measure.year
+                for measure in _section_as_input.aggregated_measure_combinations
+            ]
+        )
+        _design_horizon_year = _invest_year + self.OI_horizon
+
+        _valid_measures = [
+            _measure
+            for measure_idx, _measure in enumerate(
+                _section_as_input.aggregated_measure_combinations
+            )
+            if self.check_measure_validity(
+                measure_idx,
+                section_idx,
+                _section_as_input.mechanisms,
+                cross_sectional_requirements,
+                _invest_year,
+                _design_horizon_year,
+            )
+        ]
+
+        return _valid_measures
+
+    def get_best_measure_for_section(
+        self,
+        section_idx: int,
+        cross_sectional_requirements: CrossSectionalRequirements,
+    ) -> AggregatedMeasureCombination:
+        """Get the measure with the lowest failure probability for the mechanisms that do not satisfy the cross-sectional requirements.
+
+        Args:
+            section_as_input (SectionAsInput): The SectionAsInput object for which the best measure is to be found.
+            cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
+
+        Returns:
+            list[AggregatedMeasureCombination]: The list of best measures for the mechanisms that do not satisfy the cross-sectional requirements.
+        """
+        _section_as_input = self.sections[section_idx]
+        # get the first possible investment year from the aggregated measures
+        _invest_year = min(
+            [
+                measure.year
+                for measure in _section_as_input.aggregated_measure_combinations
+            ]
+        )
+        _design_horizon_year = _invest_year
+
+        _requirement_met_per_mechanism = {
+            mechanism: self.check_cross_sectional_requirements(
+                section_idx,
+                _measure_idx,
+                cross_sectional_requirements,
+                _design_horizon_year,
+                [mechanism],
+            )
+            for mechanism in _section_as_input.mechanisms
+            for _measure_idx, _ in enumerate(
+                _section_as_input.aggregated_measure_combinations
+            )
+        }
+        # get the mechanisms in _requirement_met_per_mechanism where values are True
+        _valid_mechanisms = [
+            mechanism
+            for mechanism, value in _requirement_met_per_mechanism.items()
+            if value
+        ]
+
+        # get the measures that are valid for the _valid_mechanisms
+        _valid_measures = [
+            _measure
+            for _measure_idx, _measure in _section_as_input.aggregated_measure_combinations
+            if self.check_measure_validity(
+                _measure_idx,
+                _valid_mechanisms,
+                cross_sectional_requirements,
+                _invest_year,
+                _design_horizon_year,
+            )
+        ]
+
+        # get the mechanisms in _requirement_met_per_mechanism where values are False
+        _invalid_mechanisms = [
+            mechanism
+            for mechanism, value in _requirement_met_per_mechanism.items()
+            if not value
+        ]
+        # get the failure probabilities for the mechanisms in _invalid_mechanisms for all _valid_measures
+        _failure_probabilities = [
+            self._get_failure_probability_of_invalid_mechanisms(
+                _measure, _design_horizon_year, _invalid_mechanisms
+            )
+            for _measure in _valid_measures
+        ]
+
+        # get the measure with the lowest failure probability for the mechanisms in _invalid_mechanisms
+        return [_valid_measures[np.argmin(_failure_probabilities)]], _invalid_mechanisms
+
     def evaluate(
         self,
         dike_traject: DikeTraject,
@@ -112,213 +339,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
         Args:
             dike_traject (DikeTraject): The DikeTraject object for which the strategy is to be evaluated.
         """
-
-        # Previous approach instead of self._time_periods = config.T:
-        # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
-        # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
-        def _check_cross_sectional_requirements(
-            measure: AggregatedMeasureCombination,
-            cross_sectional_requirements: CrossSectionalRequirements,
-            year: int,
-            mechanisms: list[MechanismEnum],
-        ) -> bool:
-            """This function checks if the cross-sectional requirements are met for a given measure and year.
-            If the requirements are not met for any of the mechanisms, the function returns False, otherwise True.
-            """
-            for mechanism in mechanisms:
-                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
-                    # look in sh, if any mechanism is not satisfied, return a False
-                    if (
-                        measure.sh_combination.mechanism_year_collection.get_probability(
-                            mechanism, year
-                        )
-                        > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
-                            mechanism
-                        ]
-                    ):
-                        return False
-                elif mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
-                    if (
-                        measure.sg_combination.mechanism_year_collection.get_probability(
-                            mechanism, year
-                        )
-                        > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
-                            mechanism
-                        ]
-                    ):
-                        return False
-            return True
-
-        def _get_failure_probability_of_invalid_mechanisms(
-            measure: AggregatedMeasureCombination,
-            year: int,
-            mechanisms: list[MechanismEnum],
-        ) -> bool:
-            """This function gets the failure probabilities of the mechanisms that are not satisfied by the measure and returns the total failure probability.
-
-            Args:
-                measure (AggregatedMeasureCombination): The measure for which the failure probability is to be calculated.
-                year (int): The year for which the failure probability is to be calculated.
-                mechanisms (list[MechanismEnum]): The mechanisms for which the failure probability is to be calculated.
-
-                Returns:
-                    float: The total failure probability for the mechanisms that are not satisfied by the measure.
-            """
-            _p_nonf = 1
-            for mechanism in mechanisms:
-                if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
-                    # look in sh, if any mechanism is not satisfied, return a False
-                    _p_nonf = (
-                        _p_nonf
-                        * measure.sh_combination.mechanism_year_collection.get_probability(
-                            mechanism, year
-                        )
-                    )
-                elif mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
-                    _p_nonf = (
-                        _p_nonf
-                        * measure.sg_combination.mechanism_year_collection.get_probability(
-                            mechanism, year
-                        )
-                    )
-            return 1 - _p_nonf
-
-        def check_measure_validity(
-            measure_combination: AggregatedMeasureCombination,
-            mechanisms: list[MechanismEnum],
-            cross_sectional_requirements: CrossSectionalRequirements,
-            investment_year: int,
-            design_year: int,
-        ) -> bool:
-            """Check if the measure combination is valid for the mechanisms given as input.
-
-            Args:
-                measure_combination (AggregatedMeasureCombination): The measure combination to check.
-                mechanisms (list[MechanismEnum]): The mechanisms to check the measure combination for.
-                cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
-                investment_year (int): The investment year for the measure combination.
-                design_year (int): The design year for the measure combination.
-
-                Returns:
-                    bool: True if the measure combination is valid for the mechanisms, False otherwise.
-            """
-            if measure_combination.year != investment_year:
-                return False
-            return _check_cross_sectional_requirements(
-                measure_combination,
-                cross_sectional_requirements,
-                design_year,
-                mechanisms,
-            )
-
-        def get_valid_measures(
-            section_as_input: SectionAsInput,
-            cross_sectional_requirements: CrossSectionalRequirements,
-        ) -> AggregatedMeasureCombination:
-            """Get the measures that satisfy the cross-sectional requirements for the mechanisms.
-
-            Args:
-                section_as_input (SectionAsInput): The SectionAsInput object for which the valid measures are to be found.
-                cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
-
-            Returns:
-                list[AggregatedMeasureCombination]: The list of valid measures for the mechanisms.
-            """
-            # get the first possible investment year from the aggregated measures
-            _invest_year = min(
-                [
-                    measure.year
-                    for measure in section_as_input.aggregated_measure_combinations
-                ]
-            )
-            _design_horizon_year = _invest_year + self.OI_horizon
-
-            _valid_measures = [
-                measure
-                for measure in section_as_input.aggregated_measure_combinations
-                if check_measure_validity(
-                    measure,
-                    section_as_input.mechanisms,
-                    cross_sectional_requirements,
-                    _invest_year,
-                    _design_horizon_year,
-                )
-            ]
-
-            return _valid_measures
-
-        def get_best_measure(
-            section_as_input: SectionAsInput,
-            cross_sectional_requirements: CrossSectionalRequirements,
-        ) -> AggregatedMeasureCombination:
-            """Get the measure with the lowest failure probability for the mechanisms that do not satisfy the cross-sectional requirements.
-
-            Args:
-                section_as_input (SectionAsInput): The SectionAsInput object for which the best measure is to be found.
-                cross_sectional_requirements (CrossSectionalRequirements): The cross-sectional requirements for the dike traject.
-
-            Returns:
-                list[AggregatedMeasureCombination]: The list of best measures for the mechanisms that do not satisfy the cross-sectional requirements.
-            """
-
-            # get the first possible investment year from the aggregated measures
-            _invest_year = min(
-                [
-                    measure.year
-                    for measure in section_as_input.aggregated_measure_combinations
-                ]
-            )
-            _design_horizon_year = _invest_year + self.OI_horizon
-
-            _requirement_met_per_mechanism = {
-                mechanism: _check_cross_sectional_requirements(
-                    _measure,
-                    cross_sectional_requirements,
-                    _design_horizon_year,
-                    [mechanism],
-                )
-                for mechanism in section_as_input.mechanisms
-                for _measure in section_as_input.aggregated_measure_combinations
-            }
-            # get the mechanisms in _requirement_met_per_mechanism where values are True
-            _valid_mechanisms = [
-                mechanism
-                for mechanism, value in _requirement_met_per_mechanism.items()
-                if value
-            ]
-
-            # get the measures that are valid for the _valid_mechanisms
-            _valid_measures = [
-                measure
-                for measure in section_as_input.aggregated_measure_combinations
-                if check_measure_validity(
-                    measure,
-                    _valid_mechanisms,
-                    cross_sectional_requirements,
-                    _invest_year,
-                    _design_horizon_year,
-                )
-            ]
-
-            # get the mechanisms in _requirement_met_per_mechanism where values are False
-            _invalid_mechanisms = [
-                mechanism
-                for mechanism, value in _requirement_met_per_mechanism.items()
-                if not value
-            ]
-            # get the failure probabilities for the mechanisms in _invalid_mechanisms for all _valid_measures
-            _failure_probabilities = [
-                _get_failure_probability_of_invalid_mechanisms(
-                    _measure, _design_horizon_year, _invalid_mechanisms
-                )
-                for _measure in _valid_measures
-            ]
-
-            # get the measure with the lowest failure probability for the mechanisms in _invalid_mechanisms
-            return [
-                _valid_measures[np.argmin(_failure_probabilities)]
-            ], _invalid_mechanisms
-
         # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
         initial_section_pfs = [
             section.initial_assessment.get_section_probability(self.OI_horizon)
@@ -339,15 +359,17 @@ class TargetReliabilityStrategy(StrategyProtocol):
             # add probability for this step:
 
             # get the first possible investment year from the aggregated measures
-            _section_as_input = self.sections[_section_idx]
-            _valid_measures = get_valid_measures(
-                _section_as_input, _cross_sectional_requirements
+            _valid_measures = self.get_valid_measures_for_section(
+                _section_idx, _cross_sectional_requirements
             )
 
             if len(_valid_measures) == 0:
                 # if no measures satisfy the requirements, get the measure that is best for the mechanisms that do not satisfy the requirements
-                _valid_measures, _invalid_mechanisms = get_best_measure(
-                    _section_as_input, _cross_sectional_requirements
+                _valid_measures, _invalid_mechanisms = (
+                    self.get_best_measure_for_section(
+                        _section_idx,
+                        _cross_sectional_requirements,
+                    )
                 )
                 # make a concatenated string of _invalid_mechanisms
                 _invalid_mechanisms_str = " en ".join(
