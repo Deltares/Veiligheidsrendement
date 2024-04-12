@@ -17,7 +17,7 @@ def implement_option(
     """Implements a measure in the traject probability dictionary.
 
     Args:
-        traject_probability (dict[np.ndarray]): The probabilities for each mechanism. The arrays have dimensions N x T with N the number of sections and T the number of years
+        traject_probability (str, dict[np.ndarray]): The probabilities for each mechanism. The arrays have dimensions N x T with N the number of sections and T the number of years
         measure_idx (tuple): The index of the measure to implement (section_index, sh_index, sg_index).
         measure (AggregatedMeasureCombination): The measure to implement.
 
@@ -47,7 +47,7 @@ def compute_annual_failure_probability(traject_probability: dict[str, np.ndarray
     """Computes the annual failure probability for each mechanism.
 
     Args:
-        traject_probability (dict[str, np.ndarray]): The collection of the section probabilities for each mechanism.
+        traject_probability (dict[str, np.ndarray]): The collection of the traject probabilities for each mechanism.
             The array has dimensions N x T with N the number of sections and T the number of years
 
     Returns:
@@ -84,7 +84,7 @@ def compute_total_risk(
     """Computes the total risk of the traject.
 
     Args:
-        traject_probability (dict[np.ndarray]): The collection of the section probabilities for each mechanism.
+        traject_probability (dict[str, np.ndarray]): The collection of the traject probabilities for each mechanism.
             The array has dimensions N x T with N the number of sections and T the number of years.
         annual_discounted_damage (np.ndarray[float]): The annual discounted damage of the traject.
             The array has dimension T with T the number of years.

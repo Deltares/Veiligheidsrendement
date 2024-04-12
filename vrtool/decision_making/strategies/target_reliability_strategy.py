@@ -99,7 +99,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.sections = strategy_input.sections
         self.probabilities_per_step: list = []
         self.total_risk_per_step: list = []
-        self.measures_taken = []
+        self.measures_taken: list = []
 
     def evaluate(
         self,
