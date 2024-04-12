@@ -344,45 +344,25 @@ class TestApiRunWorkflowsAcceptance:
         acceptance_test_cases,
         indirect=True,
     )
-    def test_run_step_optimization_for_target_reliability(
-        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
-    ):
-        # 1. Define test data.
-        _new_optimization_name = "test_optimization_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
-        )
-        # Only the selected design method for this case:
-        valid_vrtool_config.design_methods = ["Doorsnede-eisen"]
-
-        # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results(valid_vrtool_config)
-        _validator = RunStepOptimizationValidator()
-        _validator.validate_preconditions(valid_vrtool_config)
-        # We actually run using ALL the available measure results.
-        _measures_input = get_all_measure_results_with_supported_investment_years(
-            valid_vrtool_config
-        )
-        # 2. Run test.
-        run_step_optimization(
-            valid_vrtool_config, _new_optimization_name, _measures_input
-        )
-        # 3. Verify expectations.
-        _validator.validate_results(valid_vrtool_config)
-
     @pytest.mark.parametrize(
-        "valid_vrtool_config",
-        acceptance_test_cases,
-        indirect=True,
+        "design_method",
+        [
+            pytest.param("Veiligheidsrendement", id="[GREEDY]"),
+            pytest.param("Doorsnede-eisen", id="[TARGET RELIABILITY]"),
+        ],
     )
-    def test_run_step_optimization_for_greedy_optimization(
-        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+    def test_run_step_optimization_for_optimization(
+        self,
+        valid_vrtool_config: VrtoolConfig,
+        design_method: str,
+        request: pytest.FixtureRequest,
     ):
         # 1. Define test data.
         _new_optimization_name = "test_optimization_{}".format(
             request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
         )
         # Only the selected design method for this case:
-        valid_vrtool_config.design_methods = ["Veiligheidsrendement"]
+        valid_vrtool_config.design_methods = [design_method]
 
         # We reuse existing measure results, but we clear the optimization ones.
         clear_optimization_results(valid_vrtool_config)
