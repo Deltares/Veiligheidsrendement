@@ -64,9 +64,8 @@ class GreedyStrategy(StrategyProtocol):
             .reshape((2, no_of_sections))
             .T.astype(np.int32)
         )
-        BC_out = np.max(BC_list)
 
-        return BC_out, measure_index
+        return np.max(BC_list), measure_index
 
     def bundling_loop(
         self,
@@ -421,7 +420,7 @@ class GreedyStrategy(StrategyProtocol):
 
         return sh_section_sorted, sg_section
 
-    def bundling_of_measures(
+    def _bundling_of_measures(
         self,
         mechanism: MechanismEnum,
         init_mechanism_risk: np.array,
@@ -493,6 +492,41 @@ class GreedyStrategy(StrategyProtocol):
             + np.sum(independent_risk)
         )
 
+    def _set_initial_probabilities(
+        self,
+    ) -> tuple[dict, np.ndarray, np.ndarray, np.ndarray]:
+        def get_nt_array() -> np.array:
+            return np.zeros((self.opt_parameters["N"], self.opt_parameters["T"]))
+
+        init_probability = {}
+
+        init_overflow_risk = get_nt_array()
+        init_revetment_risk = get_nt_array()
+        init_independent_risk = get_nt_array()
+
+        for mechanism in self.mechanisms:
+            init_probability[mechanism.name] = np.empty(
+                (self.opt_parameters["N"], self.opt_parameters["T"])
+            )
+            if mechanism.name not in self.Pf:
+                continue
+            for n in range(0, self.opt_parameters["N"]):
+                init_probability[mechanism.name][n, :] = self.Pf[mechanism.name][
+                    n, 0, :
+                ]
+                if mechanism == MechanismEnum.OVERFLOW:
+                    init_overflow_risk[n, :] = self.RiskOverflow[n, 0, :]
+                elif mechanism == MechanismEnum.REVETMENT:
+                    init_revetment_risk[n, :] = self.RiskRevetment[n, 0, :]
+                else:
+                    init_independent_risk[n, :] = self.RiskGeotechnical[n, 0, :]
+        return (
+            init_probability,
+            init_overflow_risk,
+            init_revetment_risk,
+            init_independent_risk,
+        )
+
     def evaluate(
         self,
         setting: str = "fast",
@@ -501,42 +535,6 @@ class GreedyStrategy(StrategyProtocol):
         f_cautious: float = 1.5,
     ):
         """This is the main routine for a greedy evaluation of all solutions."""
-
-        def set_initial_probabilities() -> (
-            tuple[dict, np.ndarray, np.ndarray, np.ndarray]
-        ):
-            def get_nt_array() -> np.array:
-                return np.zeros((self.opt_parameters["N"], self.opt_parameters["T"]))
-
-            init_probability = {}
-
-            init_overflow_risk = get_nt_array()
-            init_revetment_risk = get_nt_array()
-            init_independent_risk = get_nt_array()
-
-            for mechanism in self.mechanisms:
-                init_probability[mechanism.name] = np.empty(
-                    (self.opt_parameters["N"], self.opt_parameters["T"])
-                )
-                if mechanism.name not in self.Pf:
-                    continue
-                for n in range(0, self.opt_parameters["N"]):
-                    init_probability[mechanism.name][n, :] = self.Pf[mechanism.name][
-                        n, 0, :
-                    ]
-                    if mechanism == MechanismEnum.OVERFLOW:
-                        init_overflow_risk[n, :] = self.RiskOverflow[n, 0, :]
-                    elif mechanism == MechanismEnum.REVETMENT:
-                        init_revetment_risk[n, :] = self.RiskRevetment[n, 0, :]
-                    else:
-                        init_independent_risk[n, :] = self.RiskGeotechnical[n, 0, :]
-            return (
-                init_probability,
-                init_overflow_risk,
-                init_revetment_risk,
-                init_independent_risk,
-            )
-
         start = time.time()
 
         # set start values:
@@ -549,7 +547,7 @@ class GreedyStrategy(StrategyProtocol):
             _init_overflow_risk_ndarray,
             _init_revetment_risk_ndarray,
             _init_independent_risk_ndarray,
-        ) = set_initial_probabilities()
+        ) = self._set_initial_probabilities()
 
         measure_list = []
         _probabilities = [copy.deepcopy(_init_probability_dict)]
@@ -625,8 +623,6 @@ class GreedyStrategy(StrategyProtocol):
                                 new_revetment_risk,
                                 new_independent_risk,
                             )
-                        else:
-                            pass
 
             # do not go back:
             _life_cycle_cost = np.where(_life_cycle_cost <= 0, 1e99, _life_cycle_cost)
@@ -639,9 +635,9 @@ class GreedyStrategy(StrategyProtocol):
 
             # for overflow:
             BC_bundleOverflow = 0
-            (overflow_bundle_index, BC_bundleOverflow) = self.bundling_of_measures(
+            (overflow_bundle_index, BC_bundleOverflow) = self._bundling_of_measures(
                 MechanismEnum.OVERFLOW,
-                np.copy(_init_overflow_risk_ndarray),
+                _init_overflow_risk_ndarray,
                 copy.deepcopy(measure_list),
                 np.copy(_life_cycle_cost),
             )
@@ -651,9 +647,9 @@ class GreedyStrategy(StrategyProtocol):
                 (
                     revetment_bundle_index,
                     BC_bundleRevetment,
-                ) = self.bundling_of_measures(
+                ) = self._bundling_of_measures(
                     MechanismEnum.REVETMENT,
-                    np.copy(_init_revetment_risk_ndarray),
+                    _init_revetment_risk_ndarray,
                     copy.deepcopy(measure_list),
                     np.copy(_life_cycle_cost),
                 )
