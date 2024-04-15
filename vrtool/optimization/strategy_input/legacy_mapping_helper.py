@@ -1,8 +1,6 @@
-from collections import defaultdict
-from typing import Any
+import logging
 
 import numpy as np
-import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
@@ -77,8 +75,12 @@ class LegacyMappingHelper:
                         _mech, _section, _pf[_mech.name].shape[1:], max_year
                     )
                     _pf[_mech.name][n, 0 : len(_probs), :] = _probs
-                except Exception as e:
-                    pass  # Mechanism not present at section
+                except KeyError:
+                    logging.warning(
+                        "Mechanism %s not present for section %s.",
+                        _mech.name,
+                        _section.section_name,
+                    )
 
         return _pf
 
