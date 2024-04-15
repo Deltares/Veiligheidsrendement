@@ -33,7 +33,7 @@ class MeasureResultImporter(OrmImporterProtocol):
         """
         _columns = []
         _section_reliability_dict = defaultdict(list)
-        for _smr in measure_result.sections_measure_result.order_by(
+        for _smr in measure_result.measure_result_section.order_by(
             MeasureResultSection.time.asc()
         ):
             _columns.append(str(_smr.time))
@@ -52,9 +52,9 @@ class MeasureResultImporter(OrmImporterProtocol):
 
     def import_orm(self, measure_result: OrmBaseModel) -> dict:
         _cost = float("nan")
-        if any(measure_result.sections_measure_result):
+        if any(measure_result.measure_result_section):
             # The measure cost has the same value regardless of the time.
-            _cost = measure_result.sections_measure_result[0].cost
+            _cost = measure_result.measure_result_section[0].cost
         _section_reliability = SectionReliability()
         _section_reliability.SectionReliability = self.import_measure_reliability_df(
             measure_result

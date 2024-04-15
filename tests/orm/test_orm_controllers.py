@@ -9,11 +9,12 @@ from peewee import SqliteDatabase
 
 import vrtool.orm.models as orm
 from tests import (
+    get_copy_of_reference_directory,
     get_vrtool_config_test_copy,
     test_data,
     test_results,
-    get_copy_of_reference_directory,
 )
+from tests.optimization.measures.test_section_as_input import TestSectionAsInput
 from tests.orm import (
     get_basic_combinable_type,
     get_basic_dike_traject_info,
@@ -26,11 +27,6 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithListOfDictMocked,
     MeasureWithMeasureResultCollectionMocked,
     validate_measure_result_export,
-)
-from tests.optimization.measures.test_section_as_input import TestSectionAsInput
-
-from vrtool.optimization.measures.aggregated_measures_combination import (
-    AggregatedMeasureCombination,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -47,12 +43,11 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.optimization.measures.aggregated_measures_combination import (
+    AggregatedMeasureCombination,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result.measure_result_mechanism import (
-    MeasureResultMechanism,
-)
-from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
@@ -554,7 +549,7 @@ class TestOrmControllers:
             for mr in orm.MeasureResult.select().limit(_measure_result_selection)
         ]
         _return_value = create_optimization_run_for_selected_measures(
-            _results_measures.vr_config, _measure_result_ids, _optimization_run_name
+            _results_measures.vr_config, _optimization_run_name, _measure_result_ids
         )
 
         # 3. Verify expectations.
