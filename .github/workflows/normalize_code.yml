@@ -18,9 +18,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          # token: "${{ secrets.GITHUB_TOKEN }}"
+          token: ${{ secrets.PAT }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -57,8 +58,9 @@ jobs:
         run: |
           poetry run isort .
           poetry run black .
-          git config --global user.name '${{ github.actor }}'
-          git config --global user.email '${{ github.actor }}@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
-          git checkout $GITHUB_HEAD_REF
-          git commit -am "chore: autoformat isort & black" && git push || true
+
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with: 
+          commit_message: "chore: autoformat isort & black"
+          push_options: --force
