@@ -7,7 +7,7 @@ import numpy as np
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategy_output.mechanism_probabilities import (
     MechanismProbabilities,
-
+)
 
 
 @dataclass
