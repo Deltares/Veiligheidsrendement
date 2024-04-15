@@ -371,7 +371,7 @@ In addition, integration and system tests are highly encouraged.
 
 To create a test, follow the [vrtool code standards](#code-standards) and divide your test following the principles of _"Given an initial situation, When something happens, Then expectation is met".
 
-This can be represented both in the test method name and in its content and although its entirely up to the contributor we advise following a pattern such as:
+This can be represented in the content and/or the name, but its entirely up to the contributor. Please keep in mind that the test name should remain short yet comprehensive. An example could be:
 ```python
 def given_valid_input_when_run_assessment_then_succeeds(self):
     # 1. Given / Define initial expectations.
