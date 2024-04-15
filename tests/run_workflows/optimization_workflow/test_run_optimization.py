@@ -1,10 +1,10 @@
 import pytest
+
 from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-
 from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
     OptimizationInputMeasures,
 )

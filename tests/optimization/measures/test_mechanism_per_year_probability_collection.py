@@ -10,10 +10,16 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 class TestMechanismPerYearProbabilityCollection:
     def _get_mechanism_per_year_example(
-        self, delta_mechanism: list[MechanismEnum] = [MechanismEnum.PIPING], delta: float = 0.0
+        self,
+        delta_mechanism: list[MechanismEnum] = [MechanismEnum.PIPING],
+        delta: float = 0.0,
     ) -> list[MechanismPerYear]:
         _prob = []
-        for mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]:
+        for mechanism in [
+            MechanismEnum.PIPING,
+            MechanismEnum.OVERFLOW,
+            MechanismEnum.STABILITY_INNER,
+        ]:
             if mechanism in delta_mechanism:
                 _prob.append(MechanismPerYear(mechanism, 0, 0.5 + delta))
                 _prob.append(MechanismPerYear(mechanism, 50, 0.6 + delta))
@@ -145,7 +151,7 @@ class TestMechanismPerYearProbabilityCollection:
             self._get_mechanism_per_year_example()
         )
         _collection_sec = MechanismPerYearProbabilityCollection(
-            self._get_mechanism_per_year_example(delta = 0.076)
+            self._get_mechanism_per_year_example(delta=0.076)
         )
         _collection_init = MechanismPerYearProbabilityCollection(
             self._get_mechanism_per_year_example()
@@ -186,7 +192,7 @@ class TestMechanismPerYearProbabilityCollection:
             self._get_mechanism_per_year_example()
         )
         _collection_init = MechanismPerYearProbabilityCollection(
-            self._get_mechanism_per_year_example(delta = 0.0)
+            self._get_mechanism_per_year_example(delta=0.0)
         )
         _collection_prim.add_years([20])
 
