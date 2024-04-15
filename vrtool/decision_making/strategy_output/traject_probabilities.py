@@ -7,8 +7,7 @@ import numpy as np
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategy_output.mechanism_probabilities import (
     MechanismProbabilities,
-)
-from vrtool.optimization.strategy_input.strategy_input import StrategyInput
+
 
 
 @dataclass
@@ -30,6 +29,19 @@ class TrajectProbabilities:
         sh_idx: int,
         sg_idx: int,
     ) -> TrajectProbabilities:
+        """
+        Create a TrajectProbabilities object from a strategy input for a specific measure.
+
+        Args:
+            Pf (dict[str, np.ndarray]): Probabilities of failure for each mechanism.
+            D (np.ndarray): Damage costs for each year.
+            mechanisms (list[MechanismEnum]): Mechanisms to consider.
+            sh_idx (int): Index of the Sh-measure in the strategy input.
+            sg_idx (int): Index of the Sg-measure in the strategy input.
+
+        Returns:
+            TrajectProbabilities: _description_
+        """
         _traject_prob = cls()
         _traject_prob.mechanisms = mechanisms
         for _mech in mechanisms:
