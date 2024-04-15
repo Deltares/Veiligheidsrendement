@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from peewee import ForeignKeyField, fn
+from peewee import ForeignKeyField
 
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
@@ -18,9 +18,10 @@ class MeasureResult(OrmBaseModel):
     def section_result(self):
         """
         Gets the `MeasureResultSection` (one-to-one relationship)
+        TODO AKL: is this correct? I think it should be a one-to-many relationship
          for this `MeasureResult.
         """
-        return self.sections_measure_result.get()
+        return self.measure_result_section.get()
 
     def get_parameter_value(self, parameter_name: str) -> float:
         """

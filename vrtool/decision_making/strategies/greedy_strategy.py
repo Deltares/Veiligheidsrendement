@@ -6,10 +6,7 @@ import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
-from vrtool.decision_making.strategy_evaluation import (
-    evaluate_risk,
-    update_probability,
-)
+from vrtool.decision_making.strategy_evaluation import evaluate_risk, update_probability
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 

@@ -10,7 +10,6 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
 class LegacyMappingHelper:
-
     @staticmethod
     def get_probabilities(
         sections: list[SectionAsInput],
@@ -20,7 +19,6 @@ class LegacyMappingHelper:
         max_sg: int,
         max_year: int,
     ) -> dict[str, np.ndarray]:
-
         def _get_pf_for_measures(
             mech: MechanismEnum,
             combinations: list[CombinedMeasure],
@@ -77,7 +75,7 @@ class LegacyMappingHelper:
                         _mech, _section, _pf[_mech.name].shape[1:], max_year
                     )
                     _pf[_mech.name][n, 0 : len(_probs), :] = _probs
-                except Exception as e:
+                except:
                     pass  # Mechanism not present at section
 
         return _pf

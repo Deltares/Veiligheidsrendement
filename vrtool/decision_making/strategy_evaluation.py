@@ -3,9 +3,59 @@ import numpy as np
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_traject import DikeTraject, calc_traject_prob
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+
+
+def calc_life_cycle_risks(
+    base0,
+    discount_rate: float,
+    horizon,
+    damage,
+    change=None,
+    section=None,
+    datatype="DataFrame",
+    ts=None,
+    mechs=False,
+    option=None,
+    dumpPt=False,
+):
+    base = copy.deepcopy(base0)
+    if datatype == "DataFrame":
+        mechs = np.unique(base.index.get_level_values("mechanism").values)
+        if isinstance(change, pd.Series):
+            for i in mechs:
+                # This is not very efficient. Could be improved.
+                base.loc[(section, i)] = change.loc[i]
+        else:
+            pass
+
+        beta_t, p_t = calc_traject_prob(base, horizon=horizon)
+    elif datatype == "Array":
+        if isinstance(change, dict):
+            for i in mechs:
+                base[i][section] = change[i][option]
+        else:
+            pass
+        if not (isinstance(ts, np.ndarray) or isinstance(ts, list)):
+            ts = np.array(range(0, horizon))
+        if not isinstance(mechs, np.ndarray):
+            mechs = np.array(list(base.keys()))
+        beta_t, p_t = calc_traject_prob(
+            base, horizon=horizon, datatype="Arrays", ts=ts, mechs=mechs
+        )
+
+    # trange = np.arange(0, horizon + 1, 1)
+    trange = np.arange(0, horizon, 1)
+    _d_t = damage / (1 + discount_rate) ** trange
+    risk_t = p_t * _d_t
+    if dumpPt:
+        np.savetxt(dumpPt, p_t, delimiter=",")
+    TR = np.sum(risk_t)
+    return TR
 
 
 # this function changes the traject probability of a measure is implemented:
