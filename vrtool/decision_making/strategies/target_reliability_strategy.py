@@ -15,7 +15,6 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
 
