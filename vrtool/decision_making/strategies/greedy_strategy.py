@@ -275,7 +275,7 @@ class GreedyStrategy(StrategyProtocol):
                         current_pf[MechanismEnum.REVETMENT] = np.zeros(
                             self.Pf[MechanismEnum.REVETMENT.name].shape[2]
                         )
-                    except:  # case where no revetment is present at any section
+                    except KeyError:  # case where no revetment is present at any section
                         pass
 
                 # check if all rows in comparison only contain True values
