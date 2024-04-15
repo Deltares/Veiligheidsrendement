@@ -23,8 +23,8 @@ class TrajectProbabilities:
     @classmethod
     def from_strategy_input(
         cls,
-        Pf: dict[str, np.ndarray],
-        D: np.ndarray,
+        prob_failure: dict[str, np.ndarray],
+        damage: np.ndarray,
         mechanisms: list[MechanismEnum],
         sh_idx: int,
         sg_idx: int,
@@ -48,12 +48,12 @@ class TrajectProbabilities:
             _traject_prob.mechanism_prob.append(
                 MechanismProbabilities.from_strategy_input(
                     _mech,
-                    Pf[_mech.name],
+                    prob_failure[_mech.name],
                     sh_idx=sh_idx,
                     sg_idx=sg_idx,
                 )
             )
-        _traject_prob.annual_damage = D.tolist()
+        _traject_prob.annual_damage = damage.tolist()
         return _traject_prob
 
     def get_total_risk(self) -> float:

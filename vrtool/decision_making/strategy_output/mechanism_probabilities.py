@@ -23,9 +23,9 @@ class MechanismProbabilities:
     def from_strategy_input(
         cls,
         mechanism: MechanismEnum,
-        mechanism_prob: np.ndarray = None,
-        sh_idx: int = None,
-        sg_idx: int = None,
+        mechanism_prob: np.ndarray,
+        sh_idx: int,
+        sg_idx: int,
     ) -> MechanismProbabilities:
         _mechanism_prob = cls(mechanism=mechanism)
         # Filter out the probabilities based on the given measure index
