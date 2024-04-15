@@ -18,3 +18,6 @@ class SectionYearProbabilities:
         _section_year_prob = cls()
         _section_year_prob.year_probabilities = probabilities.tolist()
         return _section_year_prob
+
+    def get_probability(self) -> float:
+        return max(self.year_probabilities)

@@ -40,5 +40,6 @@ class MechanismProbabilities:
         )
         return _mechanism_prob
 
-    def get_probabilities(self) -> list[float]:
-        return [0]
+    def get_probability(self) -> float:
+        if self.mechanism == MechanismEnum.OVERFLOW:
+            return max(map(lambda x: x.get_probability(), self.section_probabilities))

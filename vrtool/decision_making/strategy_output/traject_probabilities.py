@@ -67,7 +67,8 @@ class TrajectProbabilities:
         Returns:
             float: Total risk for the traject.
         """
-        return 0
+
+        return sum(map(lambda x: x.get_probability(), self.mechanism_prob))
         # np.sum(np.max(overflow_risk, axis=0))
         #         + np.sum(np.max(revetment_risk, axis=0))
         #         + np.sum(independent_risk)
