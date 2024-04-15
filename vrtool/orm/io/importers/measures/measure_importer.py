@@ -9,6 +9,9 @@ from vrtool.decision_making.measures import (
     VerticalGeotextileMeasure,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.standard_measures.wall_measures.selfretaining_sheetpile_measure import (
+    SelfretainingSheetpileMeasure,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.custom_measure import CustomMeasure as OrmCustomMeasure
@@ -60,12 +63,12 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.parameters["max_inward"] = orm_measure.max_inward_reinforcement
         _measure.parameters["year"] = orm_measure.measure.year
         _measure.parameters["P_solution"] = orm_measure.prob_of_solution_failure
-        _measure.parameters[
-            "Pf_solution"
-        ] = orm_measure.failure_probability_with_solution
-        _measure.parameters[
-            "transition_level_increase_step"
-        ] = orm_measure.transition_level_increase_step
+        _measure.parameters["Pf_solution"] = (
+            orm_measure.failure_probability_with_solution
+        )
+        _measure.parameters["transition_level_increase_step"] = (
+            orm_measure.transition_level_increase_step
+        )
         _measure.parameters["max_pf_factor_block"] = orm_measure.max_pf_factor_block
         _measure.parameters["n_steps_block"] = orm_measure.n_steps_block
         _measure.parameters["ID"] = orm_measure.get_id()
@@ -94,6 +97,7 @@ class MeasureImporter(OrmImporterProtocol):
             "soil reinforcement": SoilReinforcementMeasure,
             "soil reinforcement with stability screen": SoilReinforcementMeasure,
             "diaphragm wall": DiaphragmWallMeasure,
+            "selfretaining sheetpile measure": SelfretainingSheetpileMeasure,
             "stability screen": StabilityScreenMeasure,
             "vertical geotextile": VerticalGeotextileMeasure,
             "revetment": RevetmentMeasure,

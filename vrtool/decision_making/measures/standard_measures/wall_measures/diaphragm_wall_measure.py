@@ -18,7 +18,15 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class DiaphragmWallMeasure(MeasureProtocol):
-    # type == 'Diaphragm Wall':
+    def _calculate_measure_costs(self, dike_section: DikeSection) -> float:
+        return determine_costs(
+            self.parameters,
+            self.parameters["Type"],
+            dike_section.Length,
+            self.parameters.get("Depth", float("nan")),
+            self.unit_costs,
+        )
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -26,19 +34,12 @@ class DiaphragmWallMeasure(MeasureProtocol):
         preserve_slope: bool = False,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        _measure_type = self.parameters["Type"]
         # StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
         # It is assumed that the diaphragm wall is extendable after that.
         # Only 1 parameterized version with a lifetime of 100 years
         self.measures = {}
         self.measures["DiaphragmWall"] = "yes"
-        self.measures["Cost"] = determine_costs(
-            self.parameters,
-            _measure_type,
-            dike_section.Length,
-            self.parameters.get("Depth", float("nan")),
-            self.unit_costs,
-        )
+        self.measures["Cost"] = self._calculate_measure_costs(dike_section)
         self.measures["Reliability"] = self._get_configured_section_reliability(
             dike_section, traject_info
         )
