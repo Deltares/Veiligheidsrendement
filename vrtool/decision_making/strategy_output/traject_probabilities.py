@@ -40,7 +40,7 @@ class TrajectProbabilities:
             sg_idx (int): Index of the Sg-measure in the strategy input.
 
         Returns:
-            TrajectProbabilities: _description_
+            TrajectProbabilities: Probabilities for all mechanisms for all sections of a dike traject.
         """
         _traject_prob = cls()
         _traject_prob.mechanisms = mechanisms
@@ -57,6 +57,12 @@ class TrajectProbabilities:
         return _traject_prob
 
     def get_total_risk(self) -> float:
+        """
+        Get the total risk for the traject over all mechanisms.
+
+        Returns:
+            float: Total risk for the traject.
+        """
         return 0
         # np.sum(np.max(overflow_risk, axis=0))
         #         + np.sum(np.max(revetment_risk, axis=0))
@@ -67,6 +73,16 @@ class TrajectProbabilities:
         mechanism_prob: list[MechanismProbabilities],
         selection: list[MechanismEnum],
     ) -> list[float]:
+        """
+        Calculate the combined probability of failure for a selection of mechanisms.
+
+        Args:
+            mechanism_prob (list[MechanismProbabilities]): Probabilities of failure for each mechanism.
+            selection (list[MechanismEnum]): Mechanisms to consider.
+
+        Returns:
+            list[float]: TODO
+        """
         for m, _mechanism in enumerate(
             _mech_prob.mechanism for _mech_prob in mechanism_prob
         ):
