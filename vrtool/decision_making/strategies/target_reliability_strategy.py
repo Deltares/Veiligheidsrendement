@@ -16,9 +16,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.strategy_input.strategy_input import (
-    StrategyInput,
-)
+from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
 
 @dataclass
@@ -108,7 +106,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # Previous approach instead of self._time_periods = config.T:
         # _first_section_solution = solutions_dict[list(solutions_dict.keys())[0]]
         # cols = list(_first_section_solution.MeasureData["Section"].columns.values)
-        def check_cross_sectional_requirements(
+        def _check_cross_sectional_requirements(
             measure: AggregatedMeasureCombination,
             cross_sectional_requirements: CrossSectionalRequirements,
             year: int,
@@ -119,6 +117,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
             """
             for mechanism in mechanisms:
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
+                    # add year to the mechanism_year_collection (if not present yet)
+                    measure.sh_combination.mechanism_year_collection.add_years([year])
                     # look in sh, if any mechanism is not satisfied, return a False
                     if (
                         measure.sh_combination.mechanism_year_collection.get_probability(
@@ -130,6 +130,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     ):
                         return False
                 elif mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
+                    # add year to the mechanism_year_collection (if not present yet)
+                    measure.sg_combination.mechanism_year_collection.add_years([year])
+                    # look in sg, if any mechanism is not satisfied, return a False
                     if (
                         measure.sg_combination.mechanism_year_collection.get_probability(
                             mechanism, year
@@ -147,40 +150,26 @@ class TargetReliabilityStrategy(StrategyProtocol):
         ) -> list[AggregatedMeasureCombination]:
             # get the first possible investment year from the aggregated measures
             _invest_year = min(
-                [
-                    measure.year
-                    for measure in section_as_input.aggregated_measure_combinations
-                ]
+                measure.year
+                for measure in section_as_input.aggregated_measure_combinations
             )
             _design_horizon_year = _invest_year + self.OI_horizon
 
-            # check if the cross-sectional requirements are met for each measure
-            _satisfied_bool = [
-                check_cross_sectional_requirements(
-                    _measure,
+            def valid_measure(
+                measure_combination: AggregatedMeasureCombination,
+            ) -> bool:
+                if measure_combination.year != _invest_year:
+                    return False
+                return _check_cross_sectional_requirements(
+                    measure_combination,
                     cross_sectional_requirements,
                     _design_horizon_year,
                     section_as_input.mechanisms,
                 )
-                for _measure in section_as_input.aggregated_measure_combinations
-            ]
 
-            # generate bool for each measure with year in investment year
-            _valid_year_bool = [
-                measure.year == _invest_year
-                for measure in section_as_input.aggregated_measure_combinations
-            ]
-
-            # get the measures that both have _satisfied_bool and _valid_year_bool
-            return [
-                _measure
-                for _measure, _satisfied, _valid_year in zip(
-                    section_as_input.aggregated_measure_combinations,
-                    _satisfied_bool,
-                    _valid_year_bool,
-                )
-                if _satisfied and _valid_year
-            ]
+            return list(
+                filter(valid_measure, section_as_input.aggregated_measure_combinations)
+            )
 
         # Get initial failure probabilities at design horizon. #TODO think about what year is to be used here.
         initial_section_pfs = [
