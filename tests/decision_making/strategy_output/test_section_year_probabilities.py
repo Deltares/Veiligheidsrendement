@@ -1,3 +1,18 @@
+import numpy as np
+
+from vrtool.decision_making.strategy_output.section_year_probabilities import (
+    SectionYearProbabilities,
+)
+
+
 class TestSectionYearProbabilities:
-    def test_initialize_from_section_input(self):
-        pass
+    def test_initialize_from_strategy_input(self):
+        # 1. Define test data
+        _probabilities = np.array([0.1, 0.2, 0.3, 0.4])
+
+        # 2. Run test
+        _syp = SectionYearProbabilities.from_strategy_input(_probabilities)
+
+        # 3. Verify expectations
+        assert isinstance(_syp, SectionYearProbabilities)
+        assert _syp.year_probabilities == _probabilities.tolist()
