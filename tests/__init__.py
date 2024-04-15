@@ -1,9 +1,10 @@
 import hashlib
 import shutil
+from pathlib import Path
+
+from pytest import FixtureRequest
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from pathlib import Path
-from pytest import FixtureRequest
 
 test_data = Path(__file__).parent / "test_data"
 test_results = Path(__file__).parent / "test_results"
