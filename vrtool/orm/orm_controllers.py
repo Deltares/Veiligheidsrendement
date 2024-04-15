@@ -17,9 +17,7 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
-from vrtool.orm.io.exporters.optimization.strategy_exporter import (
-    StrategyExporter,
-)
+from vrtool.orm.io.exporters.optimization.strategy_exporter import StrategyExporter
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )

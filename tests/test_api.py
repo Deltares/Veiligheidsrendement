@@ -504,7 +504,6 @@ class TestApiRunWorkflowsAcceptance:
 
 @pytest.mark.slow
 class TestApiReportedBugs:
-
     @pytest.mark.parametrize(
         "directory_name",
         [
