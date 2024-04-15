@@ -8,7 +8,6 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
 class LegacyMappingHelper:
-
     @staticmethod
     def get_probabilities(
         sections: list[SectionAsInput],
@@ -18,7 +17,6 @@ class LegacyMappingHelper:
         max_sg: int,
         max_year: int,
     ) -> dict[str, np.ndarray]:
-
         def _get_pf_for_measures(
             mech: MechanismEnum,
             combinations: list[CombinedMeasure],

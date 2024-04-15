@@ -8,7 +8,6 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 )
 
 
-# this function changes the traject probability of a measure is implemented:
 def implement_option(
     traject_probability: dict[str, np.ndarray],
     measure_idx: tuple[int, int, int],
