@@ -357,8 +357,10 @@ def determine_costs(
     ):
         # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
         logging.warning(
-            "Buitenwaartse versterking met binnenwaartse berm (dijkvak {}) kan leiden tot onnauwkeurige kostenberekeningen".format(section)
+            "Buitenwaartse versterking met binnenwaartse berm (dijkvak {}) kan leiden tot onnauwkeurige kostenberekeningen".format(
+                section
             )
+        )
     if "soil reinforcement" in _measure_type_name:
         if direction == "inward":
             total_cost = (

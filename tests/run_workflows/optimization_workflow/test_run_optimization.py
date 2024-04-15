@@ -1,9 +1,10 @@
 import pytest
+
+from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-
 from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
     OptimizationInputMeasures,
 )
@@ -48,10 +49,7 @@ class TestRunOptimization:
         assert isinstance(_run, VrToolRunProtocol)
         assert _run.vr_config == _opt_input_measures.vr_config
         assert _run.selected_traject == _opt_input_measures.selected_traject
-        assert (
-            _run._section_input_collection
-            == _opt_input_measures.section_input_collection
-        )
+        assert isinstance(_run._strategy_controller, StrategyController)
         assert _run._selected_measure_ids == _optimization_selected_measure_ids
         assert _run._ids_to_import == [
             (_mocked_measure.measure_result_id, _mocked_measure.year)

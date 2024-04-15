@@ -17,7 +17,7 @@ from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 @dataclass
 class StrategyInput(StrategyInputProtocol):
-    design_method: str = ""
+    design_method: str
     options: dict[str, df] = field(default_factory=dict)
     options_height: list[dict[str, df]] = field(default_factory=list)
     options_geotechnical: list[dict[str, df]] = field(default_factory=list)
@@ -36,7 +36,7 @@ class StrategyInput(StrategyInputProtocol):
 
     @classmethod
     def from_section_as_input_collection(
-        cls, section_as_input_collection: list[SectionAsInput]
+        cls, section_as_input_collection: list[SectionAsInput], design_method: str
     ) -> StrategyInput:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
@@ -50,7 +50,9 @@ class StrategyInput(StrategyInputProtocol):
                 [m.name for m in SgMeasure.get_allowed_mechanisms()],
             )
 
-        _strategy_input = cls(sections=section_as_input_collection)
+        _strategy_input = cls(
+            design_method=design_method, sections=section_as_input_collection
+        )
 
         # Define general parameters
         _strategy_input._num_sections = len(section_as_input_collection)

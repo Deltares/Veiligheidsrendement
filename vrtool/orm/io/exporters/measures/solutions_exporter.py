@@ -73,4 +73,6 @@ class SolutionsExporter(OrmExporterProtocol):
                 measure.parameters["ID"],
             )
             MeasureExporter(_measure_per_section).export_dom(measure)
-        logging.debug("Exported measures for section {}.".format(dom_model.section_name))
+        logging.debug(
+            "Exported measures for section {}.".format(dom_model.section_name)
+        )
