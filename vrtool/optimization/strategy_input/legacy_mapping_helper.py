@@ -26,9 +26,12 @@ class LegacyMappingHelper:
             _probs = np.zeros(dims)
             # Add other measures
             for m, _meas in enumerate(combinations):
-                _probs[m, :] = _meas.mechanism_year_collection.get_probabilities(
+                _probabilities = _meas.mechanism_year_collection.get_probabilities(
                     mech, list(range(max_year))
                 )
+                if not _probabilities:
+                    return np.array([])
+                _probs[m, :] = _probabilities
             return _probs
 
         def _get_pf_for_mech(
@@ -52,6 +55,8 @@ class LegacyMappingHelper:
                 )
             else:
                 raise ValueError("Mechanism not allowed")
+            if _probs.size == 0:
+                return np.array(_initial_probs)[None, :]
             # Concatenate both probabilities
             return np.concatenate((np.array(_initial_probs)[None, :], _probs), axis=0)
 
@@ -72,6 +77,8 @@ class LegacyMappingHelper:
                     _probs = _get_pf_for_mech(
                         _mech, _section, _pf[_mech.name].shape[1:], max_year
                     )
+                    if _probs.size == 0:
+                        continue
                     _pf[_mech.name][n, 0 : len(_probs), :] = _probs
                 except KeyError:
                     logging.warning(
