@@ -31,7 +31,7 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum as MeasureType
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm import models as orm
 from vrtool.orm.orm_controllers import (
@@ -71,7 +71,7 @@ def get_list_of_sections_for_measure_ids(
 
 def get_all_measure_results_of_specific_type(
     valid_vrtool_config: VrtoolConfig,
-    measure_name: str,
+    measure_type: MeasureTypeEnum,
 ) -> list[int]:
     """
     Gets all available measure results (`MeasureResult`) from the database for a specific type of measure
@@ -92,7 +92,7 @@ def get_all_measure_results_of_specific_type(
             .join(orm.Measure)
             .join(orm.MeasureType)
             .where(orm.Measure.year != 20)
-            .where(orm.MeasureType.name == measure_name.get_old_name())
+            .where(orm.MeasureType.name == measure_type.get_old_name())
         )
     # get all ids of _supported_measures
     return [x.get_id() for x in _supported_measures]
@@ -413,9 +413,9 @@ class TestApiRunWorkflowsAcceptance:
         _measure_ids = [
             get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
             for measure_type in [
-                MeasureType.SOIL_REINFORCEMENT,
-                MeasureType.REVETMENT,
-                MeasureType.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                MeasureTypeEnum.REVETMENT,
+                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             ]
         ]
         # flatten list of _measure_ids
@@ -453,9 +453,9 @@ class TestApiRunWorkflowsAcceptance:
         _measure_ids = [
             get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
             for measure_type in [
-                MeasureType.SOIL_REINFORCEMENT,
-                MeasureType.REVETMENT,
-                MeasureType.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                MeasureTypeEnum.REVETMENT,
+                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             ]
         ]
         # flatten list of _measure_ids and sort
