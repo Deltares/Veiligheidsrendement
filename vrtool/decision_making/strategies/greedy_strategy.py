@@ -7,21 +7,15 @@ import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
-from vrtool.decision_making.strategy_evaluation import (
-    evaluate_risk,
-    update_probability,
-)
+from vrtool.decision_making.strategy_evaluation import evaluate_risk, update_probability
 from vrtool.defaults.vrtool_config import VrtoolConfig
-
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
 
 class GreedyStrategy(StrategyProtocol):
     design_method: str
 
-    def __init__(
-        self, strategy_input: StrategyInput, config: VrtoolConfig
-    ) -> None:
+    def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig) -> None:
         self.design_method = strategy_input.design_method
         self.options = strategy_input.options
         self.options_geotechnical = strategy_input.options_geotechnical
@@ -44,7 +38,7 @@ class GreedyStrategy(StrategyProtocol):
         self.mechanisms = config.mechanisms
         self._time_periods = config.T
         self.LE_in_section = config.LE_in_section
-        
+
         self.measures_taken = []
         self.total_risk_per_step = []
         self.probabilities_per_step = []
@@ -200,28 +194,53 @@ class GreedyStrategy(StrategyProtocol):
             # if there is a GeotechnicalOption in place, we need to filter the options based on the current investment
             if existing_investments[section_no, 1] > 0:
                 # note that matrix indices in existing_investments are always 1 higher than the investment id
-                investment_id_sg = (
-                    existing_investments[section_no, 1] - 1
-                )  
+                investment_id_sg = existing_investments[section_no, 1] - 1
 
-                current_pf_stability =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.STABILITY_INNER, np.arange(0,self.Pf[MechanismEnum.STABILITY_INNER.name].shape[2]))
+                current_pf_stability = (
+                    self.sections[section_no]
+                    .sg_combinations[investment_id_sg]
+                    .mechanism_year_collection.get_probabilities(
+                        MechanismEnum.STABILITY_INNER,
+                        np.arange(
+                            0, self.Pf[MechanismEnum.STABILITY_INNER.name].shape[2]
+                        ),
+                    )
+                )
 
-                current_pf_piping =  self.sections[section_no].sg_combinations[investment_id_sg].mechanism_year_collection.get_probabilities(MechanismEnum.PIPING, np.arange(0,self.Pf[MechanismEnum.PIPING.name].shape[2]))
+                current_pf_piping = (
+                    self.sections[section_no]
+                    .sg_combinations[investment_id_sg]
+                    .mechanism_year_collection.get_probabilities(
+                        MechanismEnum.PIPING,
+                        np.arange(0, self.Pf[MechanismEnum.PIPING.name].shape[2]),
+                    )
+                )
 
-                #measure_pf_stability 
-                measure_pfs_stability = self.Pf[MechanismEnum.STABILITY_INNER.name][section_no, :, :]
-                #measure_pf_piping
-                measure_pfs_piping = self.Pf[MechanismEnum.PIPING.name][section_no, :, :]
+                # measure_pf_stability
+                measure_pfs_stability = self.Pf[MechanismEnum.STABILITY_INNER.name][
+                    section_no, :, :
+                ]
+                # measure_pf_piping
+                measure_pfs_piping = self.Pf[MechanismEnum.PIPING.name][
+                    section_no, :, :
+                ]
 
-                #get indices for rows in measure_pfs where measure_pf_stability and measure_pf_piping are smaller or equal to  current_pf_stability and current_pf_piping by comparing the numpy array
-                comparison_geotechnical = np.argwhere(np.all(measure_pfs_stability <= current_pf_stability,axis=1) & np.all(measure_pfs_piping <= current_pf_piping,axis=1)).flatten()
-                #make a mask where geotechnical options are available
-                available_measures_geotechnical = np.zeros(len(measure_pfs_stability), dtype=bool)
+                # get indices for rows in measure_pfs where measure_pf_stability and measure_pf_piping are smaller or equal to  current_pf_stability and current_pf_piping by comparing the numpy array
+                comparison_geotechnical = np.argwhere(
+                    np.all(measure_pfs_stability <= current_pf_stability, axis=1)
+                    & np.all(measure_pfs_piping <= current_pf_piping, axis=1)
+                ).flatten()
+                # make a mask where geotechnical options are available
+                available_measures_geotechnical = np.zeros(
+                    len(measure_pfs_stability), dtype=bool
+                )
                 available_measures_geotechnical[comparison_geotechnical] = True
 
             else:
-                #all available
-                available_measures_geotechnical = np.ones(len(measure_pfs_stability), dtype=bool)
+                # all available
+                available_measures_geotechnical = np.ones(
+                    len(measure_pfs_stability), dtype=bool
+                )
 
             # same for HeightOptions
             if existing_investments[section_no, 0] > 0:
@@ -229,34 +248,94 @@ class GreedyStrategy(StrategyProtocol):
                 measure_pfs = {}
                 investment_id_sh = existing_investments[section_no, 0] - 1
                 # exclude rows for height options that are not safer than current.
-                #Overflow must be present. Revetment is optional.
-                current_pf[MechanismEnum.OVERFLOW] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf[MechanismEnum.OVERFLOW.name].shape[2]))
-                if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
-                    current_pf[MechanismEnum.REVETMENT] = self.sections[section_no].sh_combinations[investment_id_sh].mechanism_year_collection.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf[MechanismEnum.REVETMENT.name].shape[2]))
+                # Overflow must be present. Revetment is optional.
+                current_pf[MechanismEnum.OVERFLOW] = (
+                    self.sections[section_no]
+                    .sh_combinations[investment_id_sh]
+                    .mechanism_year_collection.get_probabilities(
+                        MechanismEnum.OVERFLOW,
+                        np.arange(0, self.Pf[MechanismEnum.OVERFLOW.name].shape[2]),
+                    )
+                )
+                if (
+                    MechanismEnum.REVETMENT
+                    in self.sections[section_no].initial_assessment.get_mechanisms()
+                ):
+                    current_pf[MechanismEnum.REVETMENT] = (
+                        self.sections[section_no]
+                        .sh_combinations[investment_id_sh]
+                        .mechanism_year_collection.get_probabilities(
+                            MechanismEnum.REVETMENT,
+                            np.arange(
+                                0, self.Pf[MechanismEnum.REVETMENT.name].shape[2]
+                            ),
+                        )
+                    )
                 else:
-                    try: #case where some sections have revetments and some don't. Then we need to have 0's in the current_pf
-                        current_pf[MechanismEnum.REVETMENT] = np.zeros(self.Pf[MechanismEnum.REVETMENT.name].shape[2])
-                    except: #case where no revetment is present at any section
+                    try:  # case where some sections have revetments and some don't. Then we need to have 0's in the current_pf
+                        current_pf[MechanismEnum.REVETMENT] = np.zeros(
+                            self.Pf[MechanismEnum.REVETMENT.name].shape[2]
+                        )
+                    except:  # case where no revetment is present at any section
                         pass
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
-                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
-                    #get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
-                    if MechanismEnum.REVETMENT in self.sections[section_no].initial_assessment.get_mechanisms():
-                        #take combination of REVETMENT and OVERFLOW
-                        measure_pfs[MechanismEnum.REVETMENT] = self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :]
-                        comparison_height = np.where(np.all(measure_pfs[MechanismEnum.OVERFLOW] <= current_pf[MechanismEnum.OVERFLOW],axis=1) & np.all(measure_pfs[MechanismEnum.REVETMENT] < current_pf[MechanismEnum.REVETMENT],axis=1))
+                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[
+                        MechanismEnum.OVERFLOW.name
+                    ][section_no, :, :]
+                    # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
+                    if (
+                        MechanismEnum.REVETMENT
+                        in self.sections[section_no].initial_assessment.get_mechanisms()
+                    ):
+                        # take combination of REVETMENT and OVERFLOW
+                        measure_pfs[MechanismEnum.REVETMENT] = self.Pf[
+                            MechanismEnum.REVETMENT.name
+                        ][section_no, :, :]
+                        comparison_height = np.where(
+                            np.all(
+                                measure_pfs[MechanismEnum.OVERFLOW]
+                                <= current_pf[MechanismEnum.OVERFLOW],
+                                axis=1,
+                            )
+                            & np.all(
+                                measure_pfs[MechanismEnum.REVETMENT]
+                                < current_pf[MechanismEnum.REVETMENT],
+                                axis=1,
+                            )
+                        )
                     else:
-                        #only look at OVERFLOW
-                        comparison_height = np.where(np.all(measure_pfs[MechanismEnum.OVERFLOW] < current_pf[MechanismEnum.OVERFLOW],axis=1))
+                        # only look at OVERFLOW
+                        comparison_height = np.where(
+                            np.all(
+                                measure_pfs[MechanismEnum.OVERFLOW]
+                                < current_pf[MechanismEnum.OVERFLOW],
+                                axis=1,
+                            )
+                        )
 
                 elif mechanism == MechanismEnum.REVETMENT:
-                    #overflow must be present so slightly different
-                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
-                    measure_pfs[MechanismEnum.REVETMENT] = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
-                    #get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
-                    comparison_height = np.where(np.all(measure_pfs[MechanismEnum.OVERFLOW] <= current_pf[MechanismEnum.OVERFLOW],axis=1) & np.all(measure_pfs[MechanismEnum.REVETMENT] < current_pf[MechanismEnum.REVETMENT],axis=1))
+                    # overflow must be present so slightly different
+                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[
+                        MechanismEnum.OVERFLOW.name
+                    ][section_no, :, :]
+                    measure_pfs[MechanismEnum.REVETMENT] = self.Pf[
+                        MechanismEnum.OVERFLOW.name
+                    ][section_no, :, :]
+                    # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
+                    comparison_height = np.where(
+                        np.all(
+                            measure_pfs[MechanismEnum.OVERFLOW]
+                            <= current_pf[MechanismEnum.OVERFLOW],
+                            axis=1,
+                        )
+                        & np.all(
+                            measure_pfs[MechanismEnum.REVETMENT]
+                            < current_pf[MechanismEnum.REVETMENT],
+                            axis=1,
+                        )
+                    )
                 else:
                     raise Exception("Unknown mechanism in overflow bundling")
 
@@ -280,7 +359,9 @@ class GreedyStrategy(StrategyProtocol):
             # we get a matrix with the LCC values, and get the order of sh measures:
             lcc_subset = life_cycle_cost[section_no, :, comparison_geotechnical].T
             sh_order = np.argsort(np.min(lcc_subset, axis=1))
-            sg_section[0, :] = comparison_geotechnical[np.argmin(lcc_subset, axis=1)][sh_order]
+            sg_section[0, :] = comparison_geotechnical[np.argmin(lcc_subset, axis=1)][
+                sh_order
+            ]
             sh_section_sorted[0, :] = sh_order
             sh_section_sorted[0, :] = np.where(
                 np.sort(np.min(lcc_subset, axis=1)) > 1e60, 999, sh_section_sorted[0, :]
@@ -291,19 +372,37 @@ class GreedyStrategy(StrategyProtocol):
             # filter based on current reliability for Overflow or Revetment to make sure only improvements are included in the list
             if mechanism == MechanismEnum.OVERFLOW:
                 # Overflow is always present for a section.
-                current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.OVERFLOW, np.arange(0,self.Pf[MechanismEnum.OVERFLOW.name].shape[2]))
+                current_pf_overflow = self.sections[
+                    section_no
+                ].initial_assessment.get_probabilities(
+                    MechanismEnum.OVERFLOW,
+                    np.arange(0, self.Pf[MechanismEnum.OVERFLOW.name].shape[2]),
+                )
                 measure_pfs = self.Pf[MechanismEnum.OVERFLOW.name][section_no, :, :]
-                #get indices for rows in measure_pfs where all measure_pfs are greater than current_reliability_overflow by comparing the numpy array
-                comparison_height = np.where(np.all(measure_pfs < current_pf_overflow,axis=1))
+                # get indices for rows in measure_pfs where all measure_pfs are greater than current_reliability_overflow by comparing the numpy array
+                comparison_height = np.where(
+                    np.all(measure_pfs < current_pf_overflow, axis=1)
+                )
 
             elif mechanism == MechanismEnum.REVETMENT:
                 try:  # if Revetment has been computed, get it from the assessment:
-                    current_pf_overflow = self.sections[section_no].initial_assessment.get_probabilities(MechanismEnum.REVETMENT, np.arange(0,self.Pf[MechanismEnum.OVERFLOW.name].shape[2]))
-                    measure_pfs = self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :]
-                    comparison_height = np.where(np.all(measure_pfs < current_pf_overflow,axis=1))
+                    current_pf_overflow = self.sections[
+                        section_no
+                    ].initial_assessment.get_probabilities(
+                        MechanismEnum.REVETMENT,
+                        np.arange(0, self.Pf[MechanismEnum.OVERFLOW.name].shape[2]),
+                    )
+                    measure_pfs = self.Pf[MechanismEnum.REVETMENT.name][
+                        section_no, :, :
+                    ]
+                    comparison_height = np.where(
+                        np.all(measure_pfs < current_pf_overflow, axis=1)
+                    )
                 except:
                     # all measures are available
-                    comparison_height = np.arange(0, len(self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :]))
+                    comparison_height = np.arange(
+                        0, len(self.Pf[MechanismEnum.REVETMENT.name][section_no, :, :])
+                    )
 
             else:
                 raise Exception("Unknown mechanism in overflow bundling")
@@ -395,16 +494,22 @@ class GreedyStrategy(StrategyProtocol):
         else:
             return [], 0
 
-    def evaluate(self, 
-                 setting: str ="fast", 
-                 BCstop: float =0.1, 
-                 max_count: int =600, 
-                 f_cautious: float =1.5
-                 ):
+    def evaluate(
+        self,
+        setting: str = "fast",
+        BCstop: float = 0.1,
+        max_count: int = 600,
+        f_cautious: float = 1.5,
+    ):
         """This is the main routine for a greedy evaluation of all solutions."""
         # TODO put settings in config
         def calculate_total_risk(overflow_risk, revetment_risk, independent_risk):
-            return np.sum(np.max(overflow_risk, axis=0)) + np.sum(np.max(revetment_risk, axis=0)) + np.sum(independent_risk)
+            return (
+                np.sum(np.max(overflow_risk, axis=0))
+                + np.sum(np.max(revetment_risk, axis=0))
+                + np.sum(independent_risk)
+            )
+
         start = time.time()
         # set start values:
         self.Cint_g[:, 0] = 1
@@ -449,15 +554,15 @@ class GreedyStrategy(StrategyProtocol):
         InitialCostMatrix = copy.deepcopy(self.LCCOption)
         BC_list = []
         TR_list = [
-                calculate_total_risk(init_overflow_risk, 
-                                             init_revetment_risk, 
-                                             init_independent_risk)
-            ]    #list to store the total risk for each step
+            calculate_total_risk(
+                init_overflow_risk, init_revetment_risk, init_independent_risk
+            )
+        ]  # list to store the total risk for each step
         Measures_per_section = np.zeros((self.opt_parameters["N"], 2), dtype=np.int32)
         while count < max_count:
-            init_risk = calculate_total_risk(init_overflow_risk, 
-                                             init_revetment_risk, 
-                                             init_independent_risk)
+            init_risk = calculate_total_risk(
+                init_overflow_risk, init_revetment_risk, init_independent_risk
+            )
 
             risk_per_step.append(init_risk)
             cost_per_step.append(np.sum(SpentMoney))
@@ -501,9 +606,12 @@ class GreedyStrategy(StrategyProtocol):
                                 self.config,
                             )
                             TotalRisk[n, sh, sg] = copy.deepcopy(
-                               calculate_total_risk(new_overflow_risk, 
-                                             new_revetment_risk, 
-                                             new_independent_risk))
+                                calculate_total_risk(
+                                    new_overflow_risk,
+                                    new_revetment_risk,
+                                    new_independent_risk,
+                                )
+                            )
                         else:
                             pass
 
@@ -625,10 +733,13 @@ class GreedyStrategy(StrategyProtocol):
                     Measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     Measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     Probabilities.append(copy.deepcopy(init_probability))
-                    TR_list.append(calculate_total_risk(init_overflow_risk, 
-                                             init_revetment_risk, 
-                                             init_independent_risk)
-                            )                    
+                    TR_list.append(
+                        calculate_total_risk(
+                            init_overflow_risk,
+                            init_revetment_risk,
+                            init_independent_risk,
+                        )
+                    )
                     logging.info(
                         "Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(
                             count, BC[Index_Best]
@@ -666,10 +777,13 @@ class GreedyStrategy(StrategyProtocol):
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
-                            TR_list.append(calculate_total_risk(init_overflow_risk, 
-                                             init_revetment_risk, 
-                                             init_independent_risk)
-                            )                    
+                            TR_list.append(
+                                calculate_total_risk(
+                                    init_overflow_risk,
+                                    init_revetment_risk,
+                                    init_independent_risk,
+                                )
+                            )
                     logging.info(
                         "Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(
                             count, BC_bundleOverflow
@@ -707,10 +821,13 @@ class GreedyStrategy(StrategyProtocol):
                             Measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             Probabilities.append(copy.deepcopy(init_probability))
-                            TR_list.append(calculate_total_risk(init_overflow_risk, 
-                                             init_revetment_risk, 
-                                             init_independent_risk)
-                            )                            
+                            TR_list.append(
+                                calculate_total_risk(
+                                    init_overflow_risk,
+                                    init_revetment_risk,
+                                    init_independent_risk,
+                                )
+                            )
                     # add the height measures in separate entries in the measure list
 
                     # write them to the measure_list
@@ -736,5 +853,3 @@ class GreedyStrategy(StrategyProtocol):
         self.measures_taken = measure_list
         self.total_risk_per_step = TR_list
         self.probabilities_per_step = Probabilities
-
-

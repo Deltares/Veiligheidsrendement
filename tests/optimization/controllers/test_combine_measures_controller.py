@@ -32,9 +32,9 @@ class MockMeasureHeight(MeasureAsInputProtocol):
             MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.5),
             MechanismPerYear(MechanismEnum.REVETMENT, 0, 0.5),
             MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),
-
         ]
     )
+
 
 @dataclass
 class MockMeasureGeotechnical(MeasureAsInputProtocol):
@@ -47,6 +47,7 @@ class MockMeasureGeotechnical(MeasureAsInputProtocol):
             MechanismPerYear(MechanismEnum.PIPING, 20, 0.5),
         ]
     )
+
 
 class TestCombineMeasuresController:
     def _create_sh_measure(
@@ -65,13 +66,14 @@ class TestCombineMeasuresController:
                     MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.1),
                     MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.2),
                     MechanismPerYear(MechanismEnum.REVETMENT, 0, 0.5),
-                    MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),                    
+                    MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),
                 ]
             ),
             beta_target=0,
             transition_level=0,
             dcrest=0,
         )
+
     def _create_revetment_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> ShMeasure:
@@ -88,13 +90,14 @@ class TestCombineMeasuresController:
                     MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
                     MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.5),
                     MechanismPerYear(MechanismEnum.REVETMENT, 0, 0.1),
-                    MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.2),                    
+                    MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.2),
                 ]
             ),
             beta_target=0,
             transition_level=0,
             dcrest=0,
         )
+
     def _create_sg_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
     ) -> SgMeasure:
@@ -261,14 +264,16 @@ class TestCombineMeasuresController:
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
             ),
         ]
-        _expected_combinations = len(_measures) + 1 #2x combinable, 1x full, 2x combinable with revetment, 1x full with revetment
+        _expected_combinations = (
+            len(_measures) + 1
+        )  # 2x combinable, 1x full, 2x combinable with revetment, 1x full with revetment
         _section.measures = _measures
         _section.initial_assessment = MechanismPerYearProbabilityCollection(
             [
                 MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
                 MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.5),
                 MechanismPerYear(MechanismEnum.REVETMENT, 0, 0.5),
-                MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),                
+                MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),
             ]
         )
 
@@ -305,7 +310,9 @@ class TestCombineMeasuresController:
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
             ),
         ]
-        _expected_combinations = len(_measures) #2x combinable soil + 1x full soil + 2x combinable with partial
+        _expected_combinations = len(
+            _measures
+        )  # 2x combinable soil + 1x full soil + 2x combinable with partial
         _section.measures = _measures
         _section.initial_assessment = MechanismPerYearProbabilityCollection(
             [

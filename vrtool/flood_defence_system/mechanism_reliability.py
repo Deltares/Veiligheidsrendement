@@ -169,9 +169,7 @@ class MechanismReliability:
         mechanism_input: MechanismInput,
     ) -> FailureMechanismCalculatorProtocol:
         if mechanism != MechanismEnum.STABILITY_INNER:
-            raise ValueError(
-                f"Unknown computation type DStability for {mechanism}"
-            )
+            raise ValueError(f"Unknown computation type DStability for {mechanism}")
 
         _wrapper = DStabilityWrapper(
             stix_path=Path(mechanism_input.input.get("STIXNAAM", "")),

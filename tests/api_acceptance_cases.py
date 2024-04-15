@@ -404,7 +404,7 @@ class RunStepOptimizationValidator(RunStepValidator):
             assert _reference.step_number == _result.step_number
             if (
                 _reference.total_lcc is not None
-            ):  # TODO: temporary fix as long as references dont contain cost for TR.
+            ):  # TODO: temporary fix as long as references don't contain cost for TR.
                 assert _reference.total_lcc == pytest.approx(
                     _result.total_lcc, abs=1e-2
                 )
