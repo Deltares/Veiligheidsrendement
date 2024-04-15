@@ -67,13 +67,13 @@ def implement_option(
     """Implements a measure in the traject probability dictionary.
 
     Args:
-        traject_probability (str, dict[np.ndarray]): The probabilities for each mechanism. The arrays have dimensions N x T with N the number of sections and T the number of years
+        traject_probability (dict[str, np.ndarray]): The probabilities for each mechanism. The arrays have dimensions N x T with N the number of sections and T the number of years
         measure_idx (tuple): The index of the measure to implement (section_index, sh_index, sg_index).
         measure (AggregatedMeasureCombination): The measure to implement.
 
 
     Returns:
-        dict[np.ndarray]: The updated traject probability dictionary. where the measure is implemented.
+        dict[str, np.ndarray]: The updated traject probability dictionary. where the measure is implemented.
     """
 
     t_range = list(traject_probability.values())[0].shape[
