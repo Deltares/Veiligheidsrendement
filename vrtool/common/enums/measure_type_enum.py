@@ -7,8 +7,9 @@ class MeasureTypeEnum(VrtoolEnum):
     STABILITY_SCREEN = 3
     VERTICAL_GEOTEXTILE = 4
     DIAPHRAGM_WALL = 5
-    REVETMENT = 6
-    CUSTOM = 7
+    SELFRETAINING_SHEETPILE = 6
+    REVETMENT = 7
+    CUSTOM = 8
     INVALID = 99
 
     # TODO: delete this method after rationalizing the testdata (VRTOOL-296)
