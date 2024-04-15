@@ -10,5 +10,4 @@ class TestResultsOptimization:
 
         assert isinstance(_results, ResultsOptimization)
         assert isinstance(_results, VrToolRunResultProtocol)
-        assert _results.results_solutions == {}
         assert _results.results_strategies == []

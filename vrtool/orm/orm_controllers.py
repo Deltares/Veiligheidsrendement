@@ -3,12 +3,13 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
-from tqdm import tqdm 
 
 import pandas as pd
 from peewee import SqliteDatabase
+from tqdm import tqdm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -16,9 +17,7 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
-from vrtool.orm.io.exporters.optimization.strategy_base_exporter import (
-    StrategyBaseExporter,
-)
+from vrtool.orm.io.exporters.optimization.strategy_exporter import StrategyExporter
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
@@ -27,9 +26,6 @@ from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer imp
     SolutionsForMeasureResultsImporter,
 )
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
-from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
-    OptimizationMeasureResultImporter,
-)
 from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
     OptimizationSectionAsInputImporter,
 )
@@ -248,8 +244,12 @@ def export_results_measures(result: ResultsMeasures) -> None:
     logging.info("Start export resultaten maatregelen naar database.")
 
     _exporter = SolutionsExporter()
-    for _solution in tqdm(result.solutions_dict.values(), desc="Aantal geexporteerde dijkvakken:",
-                          total= len(result.solutions_dict), unit='vak'):
+    for _solution in tqdm(
+        result.solutions_dict.values(),
+        desc="Aantal geexporteerde dijkvakken:",
+        total=len(result.solutions_dict),
+        unit="vak",
+    ):
         _exporter.export_dom(_solution)
     _connected_db.close()
 
@@ -405,7 +405,7 @@ def get_all_measure_results_with_supported_investment_years(
 ) -> list[tuple[int, int]]:
     """
     Gets all available measure results (`MeasureResult`) from the database paired
-    to a valid investment year (all except for 20).
+    to a valid investment year (only year 0).
 
     Args:
         valid_vrtool_config (VrtoolConfig):
@@ -420,7 +420,7 @@ def get_all_measure_results_with_supported_investment_years(
         orm.MeasureResult.select()
         .join(orm.MeasurePerSection)
         .join(orm.Measure)
-        .where(orm.Measure.year != 20)
+        .where(orm.Measure.year == 0)
     )
     _connected_db.close()
 
@@ -428,9 +428,9 @@ def get_all_measure_results_with_supported_investment_years(
     for _measure_result in _supported_measures:
         # All will get at least year 0.
         _measure_result_with_year_list.append((_measure_result.get_id(), 0))
-        if (
-            "Soil reinforcement"
-            in _measure_result.measure_per_section.measure.measure_type.name
+        if _measure_result.measure_per_section.measure.measure_type.name in (
+            MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name(),
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.get_old_name(),
         ):
             # For those of type "Soil reinforcement" we also add year 20.
             _measure_result_with_year_list.append((_measure_result.get_id(), 20))
@@ -447,7 +447,7 @@ def _normalize_optimization_run_name(
 def create_optimization_run_for_selected_measures(
     vr_config: VrtoolConfig,
     optimization_name: str,
-    selected_measure_result_ids: list[tuple[int, int]],
+    selected_measure_results_year: list[tuple[int, int]],
 ) -> dict[int, list[int]]:
     """
     Imports all the selected `MeasureResult` entries and creates an `OptimizationRun`
@@ -459,44 +459,44 @@ def create_optimization_run_for_selected_measures(
     Args:
         vr_config (VrtoolConfig): Configuration containing optimization methods and discount rate to be used.
         optimization_name (str): name to give to an optimization run.
-        selected_measure_result_ids (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
+        selected_measure_results_year (list[tuple[int, int]]): list of `MeasureResult` id's in the database including their respective investment year.
 
     Returns:
         dict[int, list[int]: A dictionary mapping each selected measure to an optimization run.
     """
 
-    _connected_db = open_database(vr_config.input_database_path)
-    logging.debug(
-        "Opened connection to export optimization run {}.".format(optimization_name)
+    with open_database(vr_config.input_database_path).connection_context():
+        logging.debug(
+            "Opened connection to export optimization run {}.".format(optimization_name)
+        )
+        _optimization_selected_measure_ids = defaultdict(list)
+        for _method_type in vr_config.design_methods:
+            _optimization_type, _ = orm.OptimizationType.get_or_create(
+                name=_method_type.upper()
+            )
+            _optimization_run = orm.OptimizationRun.create(
+                name=_normalize_optimization_run_name(optimization_name, _method_type),
+                discount_rate=vr_config.discount_rate,
+                optimization_type=_optimization_type,
+            )
+            orm.OptimizationSelectedMeasure.insert_many(
+                [
+                    dict(
+                        optimization_run=_optimization_run,
+                        measure_result=orm.MeasureResult.get_by_id(_measure_id[0]),
+                        investment_year=_measure_id[1],
+                    )
+                    for _measure_id in selected_measure_results_year
+                ]
+            ).execute()
+            # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
+            _optimization_selected_measure_ids[_optimization_run.id] = list(
+                map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
+            )
+
+    logging.info(
+        "Closed connection after export optimization run {}.".format(optimization_name)
     )
-    _optimization_selected_measure_ids = {}
-    for _method_type in vr_config.design_methods:
-        _optimization_type, _ = orm.OptimizationType.get_or_create(
-            name=_method_type.upper()
-        )
-        _optimization_run = orm.OptimizationRun.create(
-            name=_normalize_optimization_run_name(optimization_name, _method_type),
-            discount_rate=vr_config.discount_rate,
-            optimization_type=_optimization_type,
-        )
-        orm.OptimizationSelectedMeasure.insert_many(
-            [
-                dict(
-                    optimization_run=_optimization_run,
-                    measure_result=orm.MeasureResult.get_by_id(_measure_id[0]),
-                    investment_year=_measure_id[1],
-                )
-                for _measure_id in selected_measure_result_ids
-            ]
-        ).execute()
-        # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
-        _optimization_selected_measure_ids[_optimization_run.id] = list(
-            map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
-        )
-    logging.debug(
-        "Optimalisatierun {} met methode {} aangemaakt in database.".format(optimization_name, _method_type)
-    )
-    _connected_db.close()
 
     return _optimization_selected_measure_ids
 
@@ -505,7 +505,7 @@ def export_results_optimization(
     result: ResultsOptimization, run_ids: list[int]
 ) -> None:
     """
-    Exports the optimization results (`list[StrategyBase]`) to a database.
+    Exports the optimization results (`list[StrategyProtocol]`) to a database.
 
     Args:
         result (ResultsOptimization): result of an optimization run.
@@ -515,9 +515,9 @@ def export_results_optimization(
 
     logging.debug("Opened connection to export optimizations.")
 
-    for i in range(len(result.results_strategies)):
-        _exporter = StrategyBaseExporter(run_ids[i])
-        _exporter.export_dom(result.results_strategies[i])
+    for _run_id, _result_strategy in zip(run_ids, result.results_strategies):
+        _exporter = StrategyExporter(_run_id)
+        _exporter.export_dom(_result_strategy)
     _connected_db.close()
 
     logging.info("Resultaten geexporteerd.")

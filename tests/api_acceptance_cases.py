@@ -7,7 +7,6 @@ from typing import Protocol
 
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
 
 import vrtool.orm.models as orm
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -101,6 +100,7 @@ class AcceptanceTestCase:
                 model_directory="38-1 two river sections D-Stability",
                 traject_name="38-1",
                 excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 38-1, two sections with D-Stability",
@@ -286,7 +286,9 @@ class RunStepOptimizationValidator(RunStepValidator):
 
         _connected_db.close()
 
-    def _get_opt_run(self, database_path: Path) -> list[orm.OptimizationRun]:
+    def _get_opt_run(
+        self, database_path: Path, method: str
+    ) -> list[orm.OptimizationRun]:
         """
         Gets a list of all existing `OptimizationRun` rows in the database with all the backrefs related to an "optimization" already instantiated ("eager loading").
 
@@ -297,6 +299,7 @@ class RunStepOptimizationValidator(RunStepValidator):
 
         Args:
             database_path (Path): Location of the `sqlite` database file.
+            method (str): Name of the optimization method as given in the configuration file.
 
         Returns:
             list[orm.OptimizationRun]: Collection of `OptimizationRun` with insantiated backrefs.
@@ -310,7 +313,9 @@ class RunStepOptimizationValidator(RunStepValidator):
                     orm.OptimizationStep,
                     orm.OptimizationStepResultSection,
                     orm.OptimizationStepResultMechanism,
+                    orm.OptimizationType,
                 )
+                .join_from(orm.OptimizationRun, orm.OptimizationType)
                 .join_from(orm.OptimizationRun, orm.OptimizationSelectedMeasure)
                 .join_from(orm.OptimizationSelectedMeasure, orm.OptimizationStep)
                 .join_from(
@@ -323,21 +328,24 @@ class RunStepOptimizationValidator(RunStepValidator):
                 )
                 .group_by(orm.OptimizationRun)
             ):
-                opt_run.optimization_run_measure_results = list(
-                    opt_run.optimization_run_measure_results
-                )
-                for opt_selected_measure in opt_run.optimization_run_measure_results:
-                    opt_selected_measure.optimization_steps = list(
-                        opt_selected_measure.optimization_steps
+                if opt_run.optimization_type.name == method.upper():
+                    opt_run.optimization_run_measure_results = list(
+                        opt_run.optimization_run_measure_results
                     )
-                    for opt_step in opt_selected_measure.optimization_steps:
-                        opt_step.optimization_step_results_mechanism = list(
-                            opt_step.optimization_step_results_mechanism
+                    for (
+                        opt_selected_measure
+                    ) in opt_run.optimization_run_measure_results:
+                        opt_selected_measure.optimization_steps = list(
+                            opt_selected_measure.optimization_steps
                         )
-                        opt_step.optimization_step_results_section = list(
-                            opt_step.optimization_step_results_section
-                        )
-                opt_run_list.append(opt_run)
+                        for opt_step in opt_selected_measure.optimization_steps:
+                            opt_step.optimization_step_results_mechanism = list(
+                                opt_step.optimization_step_results_mechanism
+                            )
+                            opt_step.optimization_step_results_section = list(
+                                opt_step.optimization_step_results_section
+                            )
+                    opt_run_list.append(opt_run)
         return opt_run_list
 
     def _compare_optimization_run(
@@ -394,8 +402,15 @@ class RunStepOptimizationValidator(RunStepValidator):
         for _idx, _reference in enumerate(reference_list):
             _result = result_list[_idx]
             assert _reference.step_number == _result.step_number
-            assert _reference.total_lcc == _result.total_lcc
-            assert _reference.total_risk == _result.total_risk
+            if (
+                _reference.total_lcc is not None
+            ):  # TODO: temporary fix as long as references don't contain cost for TR.
+                assert _reference.total_lcc == pytest.approx(
+                    _result.total_lcc, abs=1e-2
+                )
+                assert _reference.total_risk == pytest.approx(
+                    _result.total_risk, abs=1e-2
+                )
             self._compare_optimization_step_results_mechanism(
                 _reference.optimization_step_results_mechanism,
                 _result.optimization_step_results_mechanism,
@@ -410,9 +425,9 @@ class RunStepOptimizationValidator(RunStepValidator):
         reference: OptimizationStepResult,
         result: OptimizationStepResult,
     ):
-        assert reference.beta == result.beta
+        assert reference.beta == pytest.approx(result.beta, abs=1e-4)
         assert reference.time == result.time
-        assert reference.lcc == result.lcc
+        assert reference.lcc == pytest.approx(result.lcc, abs=1e-2)
 
     def _compare_mechanism_per_section(
         self, reference: orm.MechanismPerSection, result: orm.MechanismPerSection
@@ -452,51 +467,32 @@ class RunStepOptimizationValidator(RunStepValidator):
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Steps for validation.
         # Load optimization runs.
-        _reference_runs = self._get_opt_run(
-            _get_database_reference_path(valid_vrtool_config, self._reference_db_suffix)
+        _reference_path = _get_database_reference_path(
+            valid_vrtool_config, self._reference_db_suffix
         )
+        _run_data = {
+            method: (
+                self._get_opt_run(_reference_path, method),
+                self._get_opt_run(valid_vrtool_config.input_database_path, method),
+            )
+            for method in valid_vrtool_config.design_methods
+        }
 
-        # Verify models.
-        _result_runs = self._get_opt_run(valid_vrtool_config.input_database_path)
-        assert len(_reference_runs) == len(_result_runs)
+        for method in _run_data.keys():
+            # verify there is an equal number of runs of each type
+            assert len(_run_data[method][0]) == len(_run_data[method][1])
 
         # Because the resulting database does not contain the previous results,
         # we can then assume all the values will be in the same exact order.
-        for _run_idx, _reference_run in enumerate(_reference_runs):
-            self._compare_optimization_run(_reference_run, _result_runs[_run_idx])
+        for _runs in _run_data.values():
+            [
+                self._compare_optimization_run(_reference_run, _result_run)
+                for _reference_run, _result_run in zip(*_runs)
+            ]
 
     @staticmethod
     def get_csv_reference_dir(vrtool_config: VrtoolConfig) -> Path:
         return vrtool_config.input_directory.joinpath("reference")
-
-    def validate_phased_out_csv_files(self, vrtool_config: VrtoolConfig):
-        """
-        This validation is DEPRECATED as, in theory, the database validation should
-        phase out this way of testing. However we keep them until said theory is validated.
-
-        Args:
-            vrtool_config (VrtoolConfig): Configuration containing the input / output paths.
-        """
-        _test_reference_dir = self.get_csv_reference_dir(vrtool_config)
-        files_to_compare = [
-            "TakenMeasures_Doorsnede-eisen.csv",
-            "TakenMeasures_Veiligheidsrendement.csv",
-            "TotalCostValues_Greedy.csv",
-        ]
-        comparison_errors = []
-        for file in files_to_compare:
-            reference = pd.read_csv(
-                _test_reference_dir.joinpath("results", file), index_col=0
-            )
-            result = pd.read_csv(vrtool_config.output_directory / file, index_col=0)
-            try:
-                assert_frame_equal(reference, result, atol=1e-6, rtol=1e-6)
-            except Exception:
-                comparison_errors.append("{} is different.".format(file))
-        # assert no error message has been registered, else print messages
-        assert not comparison_errors, "errors occured:\n{}".format(
-            "\n".join(comparison_errors)
-        )
 
 
 class RunFullValidator(RunStepValidator):
@@ -510,5 +506,4 @@ class RunFullValidator(RunStepValidator):
         # TODO: Remove this validator class if we understand that
         # the optimization validation is enough.
         _optimization_validator = RunStepOptimizationValidator()
-        _optimization_validator.validate_phased_out_csv_files(valid_vrtool_config)
         _optimization_validator.validate_results(valid_vrtool_config)

@@ -1,4 +1,3 @@
-import random
 import shutil
 from pathlib import Path
 from typing import Iterator
@@ -9,7 +8,13 @@ import pytest
 from peewee import SqliteDatabase
 
 import vrtool.orm.models as orm
-from tests import test_data, test_results
+from tests import (
+    get_copy_of_reference_directory,
+    get_vrtool_config_test_copy,
+    test_data,
+    test_results,
+)
+from tests.optimization.measures.test_section_as_input import TestSectionAsInput
 from tests.orm import (
     get_basic_combinable_type,
     get_basic_dike_traject_info,
@@ -23,12 +28,11 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithMeasureResultCollectionMocked,
     validate_measure_result_export,
 )
-from tests.test_api import TestApiReportedBugs
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
-from vrtool.decision_making.strategies.strategy_base import StrategyBase
+from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -39,12 +43,11 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.optimization.measures.aggregated_measures_combination import (
+    AggregatedMeasureCombination,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.models.measure_result import MeasureResult
-from vrtool.orm.models.measure_result.measure_result_mechanism import (
-    MeasureResultMechanism,
-)
-from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     clear_assessment_results,
@@ -57,6 +60,7 @@ from vrtool.orm.orm_controllers import (
     get_dike_section_solutions,
     get_dike_traject,
     get_exported_measure_result_ids,
+    import_results_measures,
     import_results_measures_for_optimization,
     initialize_database,
     open_database,
@@ -545,7 +549,7 @@ class TestOrmControllers:
             for mr in orm.MeasureResult.select().limit(_measure_result_selection)
         ]
         _return_value = create_optimization_run_for_selected_measures(
-            _results_measures.vr_config, _measure_result_ids, _optimization_run_name
+            _results_measures.vr_config, _optimization_run_name, _measure_result_ids
         )
 
         # 3. Verify expectations.
@@ -606,102 +610,45 @@ class TestOrmControllers:
             orm.OptimizationSelectedMeasure.create(
                 optimization_run=_optimization_run,
                 measure_result=_measure_result,
-                investment_year=2023,
+                investment_year=0,
             )
 
         # Define strategies.
-        class MockedStrategy(StrategyBase):
-            def __init__(self, type, config: VrtoolConfig):
-                # First run could just be exporting the index of TakenMeasures.
-                _section_name = (
-                    _measures_input_data.measure_per_section.section.section_name
-                )
-                self.options = {
-                    _section_name: pd.DataFrame(
-                        [
-                            [
-                                1,
-                                np.array([2, 3, 4]),
-                                np.array([2, 3, 4]),
-                                np.array([3, 4, 5]),
-                            ],
-                            [
-                                4,
-                                np.array([5, 6, 7]),
-                                np.array([2, 3, 4]),
-                                np.array([6, 7, 8]),
-                            ],
-                            [
-                                7,
-                                np.array([8, 9, 10]),
-                                np.array([2, 3, 4]),
-                                np.array([9, 10, 11]),
-                            ],
-                        ],
-                        columns=[
-                            "ID",
-                            MechanismEnum.OVERFLOW.name,
-                            MechanismEnum.STABILITY_INNER.name,
-                            "Section",
-                        ],
+        class MockedStrategy(StrategyProtocol):
+            def __init__(self):
+
+                self.sections = [TestSectionAsInput()._get_section_with_combinations()]
+                self.sections[0].aggregated_measure_combinations = [
+                    AggregatedMeasureCombination(
+                        sh_combination=self.sections[0].sh_combinations[1],
+                        sg_combination=self.sections[0].sg_combinations[0],
+                        measure_result_id=1,
+                        year=0,
                     )
-                }
-                self.options_geotechnical = pd.DataFrame(
-                    list(map(lambda x: x.id, MeasureResultMechanism.select()))
-                )
-                self.options_height = pd.DataFrame(
-                    list(map(lambda x: x.id, MeasureResultSection.select()))
-                )
-                # Measures selected per step
-                self.MeasureIndices = pd.DataFrame(
-                    list(
-                        map(
-                            lambda x: [
-                                x.id,
-                                random.randint(0, len(self.options_geotechnical) - 1),
-                                random.randint(0, len(self.options_height) - 1),
-                            ],
-                            MeasureResult.select(),
-                        )
-                    )
-                )
-                # Has a lot of information already present in measure results.
-                _measures_columns = [
-                    "Section",
-                    "option_in",
-                    "LCC",
-                    "BC",
-                    "ID",
-                    "name",
-                    "yes/no",
-                    "dcrest",
-                    "dberm",
-                    "beta_target",
-                    "transition_level",
                 ]
-                _taken_measure_row1 = [0] * len(
-                    _measures_columns
-                )  # first row is header
-                _taken_measure_row2 = [0] * len(
-                    _measures_columns
-                )  # second row is the first one with values
-                self.TakenMeasures = pd.DataFrame(
-                    [_taken_measure_row1, _taken_measure_row2],
-                    columns=_measures_columns,
-                )  # This is actually OptimizationStep (with extra info).
-                self.TakenMeasures["Section"][1] = _section_name
-                self.TakenMeasures["option_in"][1] = 0
-                self.TakenMeasures["LCC"][1] = 42.24
-                self.indexCombined2single = {}
-                self.indexCombined2single[_section_name] = [[1]]
-                self.T = [0, 20, 100]
+                self.total_risk_per_step = [1000.0, 100.0]
+                self.probabilities_per_step = [
+                    {
+                        MechanismEnum.STABILITY_INNER.name: np.linspace(
+                            0.1, 0.6, 100
+                        ).reshape((100, 1)),
+                        MechanismEnum.OVERFLOW.name: np.linspace(
+                            0.05, 0.55, 100
+                        ).reshape((100, 1)),
+                    },
+                    {
+                        MechanismEnum.STABILITY_INNER.name: np.linspace(
+                            0.1, 0.6, 100
+                        ).reshape((100, 1)),
+                        MechanismEnum.OVERFLOW.name: np.linspace(
+                            0.01, 0.1, 100
+                        ).reshape((100, 1)),
+                    },
+                ]
+                self.measures_taken = [(0, 1, 1)]
+                self._time_periods = [0, 20, 100]
 
-            def get_total_lcc_and_risk(self, step_number: int) -> tuple[float, float]:
-                return 0.42, 0.24
-
-        _test_strategy = MockedStrategy(
-            type=_optimization_type, config=_results_measures.vr_config
-        )
+        _test_strategy = MockedStrategy()
 
         # Define results optimization object.
         _results_optimization = ResultsOptimization()
@@ -709,7 +656,6 @@ class TestOrmControllers:
         _results_optimization.selected_traject = (
             _measures_input_data.domain_dike_section.TrajectInfo.traject_name
         )
-        _results_optimization.results_solutions = _results_measures.solutions_dict
         _results_optimization.results_strategies = [_test_strategy]
 
         # 2. Run test.
@@ -718,8 +664,8 @@ class TestOrmControllers:
         # 3. Verify expectations.
         assert len(orm.OptimizationStep.select()) == 1
         _optimization_step = orm.OptimizationStep.get()
-        assert _optimization_step.total_lcc == 0.42
-        assert _optimization_step.total_risk == 0.24
+        assert _optimization_step.total_lcc == 84.0
+        assert _optimization_step.total_risk == 100.0
         assert len(orm.OptimizationStepResultMechanism) == 10
         assert len(orm.OptimizationStepResultSection) == 3
 
@@ -1019,19 +965,19 @@ class TestOrmControllers:
     ):
         # 1. Define test data.
         _test_dir_name = "test_stability_multiple_scenarios"
-        _test_case_dir = TestApiReportedBugs.get_copy_of_reference_directory(
-            _test_dir_name
-        )
+        _test_case_dir = get_copy_of_reference_directory(_test_dir_name)
 
-        _vrtool_config = TestApiReportedBugs.get_vrtool_config_test_copy(
+        _vrtool_config = get_vrtool_config_test_copy(
             _test_case_dir.joinpath("config.json"), request.node.name
         )
         assert not any(_vrtool_config.output_directory.glob("*"))
 
         # 2. Run test.
         with open_database(_vrtool_config.input_database_path).connection_context():
+            _measures_to_import = [(omr.id, 0) for omr in MeasureResult.select()]
+            _result = import_results_measures(_vrtool_config, _measures_to_import)
             _imported_data = import_results_measures_for_optimization(
-                _vrtool_config, [(omr.id, 0) for omr in MeasureResult.select()]
+                _vrtool_config, _measures_to_import
             )
 
         # 3. Verify final expectations.

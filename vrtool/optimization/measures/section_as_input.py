@@ -1,9 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-import copy
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -17,6 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 
 
 @dataclass
@@ -31,9 +29,9 @@ class SectionAsInput:
     combined_measures: list[CombinedMeasure] = field(
         default_factory=list[CombinedMeasure]
     )  # TODO do we need this in SectionAsInput or can it be volatile?
-    aggregated_measure_combinations: Optional[list[AggregatedMeasureCombination]] = (
-        field(default_factory=list[AggregatedMeasureCombination])
-    )
+    aggregated_measure_combinations: Optional[
+        list[AggregatedMeasureCombination]
+    ] = field(default_factory=list[AggregatedMeasureCombination])
 
     def get_measures_by_class(
         self,
@@ -57,6 +55,10 @@ class SectionAsInput:
     @property
     def sg_measures(self) -> list[SgMeasure]:
         return self.get_measures_by_class(SgMeasure)
+
+    @property
+    def sh_sg_measures(self) -> list[ShSgMeasure]:
+        return self.get_measures_by_class(ShSgMeasure)
 
     def get_combinations_by_class(
         self, measure_class: type[MeasureAsInputProtocol]
@@ -85,6 +87,23 @@ class SectionAsInput:
     def sg_combinations(self) -> list[CombinedMeasure]:
         return self.get_combinations_by_class(SgMeasure)
 
+    def _get_sample_years(self) -> set[int]:
+        """
+        Gets a list of the available years given the assumptions:
+        - We have measure(s).
+        - The first measure has mechanism(s).
+        - The first mechanism has the same year(s) as the rest of mechanism(s) for all measures.
+
+        Returns:
+            set[int]: Unique collection of years
+        """
+        if not self.measures:
+            return {0}
+        # Get the max year for all measures for a random mechanism
+        _sample_measure = self.measures[0]
+        _sample_mechanism = _sample_measure.get_allowed_mechanisms()[0]
+        return _sample_measure.mechanism_year_collection.get_years(_sample_mechanism)
+
     @property
     def max_year(self) -> int:
         """
@@ -94,14 +113,17 @@ class SectionAsInput:
         Returns:
             int: The maximum year
         """
-        if not self.measures:
-            return 0
-        # Get the max year for all measures for a random mechanism
-        _sample_measure = self.measures[0]
-        _sample_mechanism = _sample_measure.get_allowed_mechanisms()[0]
-        return max(
-            _sample_measure.mechanism_year_collection.get_years(_sample_mechanism)
-        )
+        return max(self._get_sample_years())
+
+    @property
+    def min_year(self) -> int:
+        """
+        The minimum year for the section.
+
+        Returns:
+            int: The minimum year
+        """
+        return min(self._get_sample_years())
 
     @property
     def mechanisms(self) -> set[MechanismEnum]:
@@ -137,8 +159,6 @@ class SectionAsInput:
         _initial.add_years(_investment_years)
         for measure in self.measures:
             measure.mechanism_year_collection.add_years(_investment_years)
-
-        for measure in self.measures:
             if measure.year > 0:
                 measure.mechanism_year_collection.replace_values(_initial, measure.year)
 
@@ -146,6 +166,23 @@ class SectionAsInput:
         _investment_years = set()
         for measure in self.measures:
             if measure.year > 0:
+                _investment_years.add(measure.year - 1)
                 _investment_years.add(measure.year)
-                _investment_years.add(measure.year + 1)
         return list(_investment_years)
+
+    def get_combination_idx_for_aggregate(
+        self, aggregate: AggregatedMeasureCombination
+    ) -> tuple[int, int]:
+        """
+        Find the index of the Sh and Sg combination that compose the aggregate.
+
+        Args:
+            aggregate (AggregatedMeasureCombination): The aggregate
+
+        Returns:
+            tuple[int, int]: The index of the Sh and Sg combination in the list of combinations.
+        """
+        return (
+            self.sh_combinations.index(aggregate.sh_combination),
+            self.sg_combinations.index(aggregate.sg_combination),
+        )

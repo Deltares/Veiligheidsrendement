@@ -1,5 +1,5 @@
 import math
-from typing import Type
+from copy import deepcopy
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -14,6 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_result.measure_result import (
@@ -89,7 +90,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
     def _create_measure(
         self,
         measure_result: OrmMeasureResult,
-        measure_as_input_type: Type[MeasureAsInputProtocol],
+        measure_as_input_type: type[MeasureAsInputProtocol],
     ) -> list[MeasureAsInputProtocol]:
         _mech_year_coll = self._get_mechanism_year_collection(
             measure_result.measure_result_mechanisms,
@@ -97,29 +98,31 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         )
         _measure_concrete_params = measure_as_input_type.get_concrete_parameters()
         _measures_dicts = []
-        for _section_result in measure_result.sections_measure_result.where(
-            OrmMeasureResultSection.time << self.investment_years
+        for _section_result in measure_result.measure_result_section.where(
+            OrmMeasureResultSection.time == 0
         ):
-            _time = _section_result.time
-            _cost = _section_result.cost
-            _measures_dicts.append(
-                dict(
-                    measure_type=MeasureTypeEnum.get_enum(
-                        measure_result.measure_per_section.measure.measure_type.name
-                    ),
-                    combine_type=CombinableTypeEnum.get_enum(
-                        measure_result.measure_per_section.measure.combinable_type.name
-                    ),
-                    cost=_cost,
-                    year=_time,
-                    discount_rate=self.discount_rate,
-                    mechanism_year_collection=_mech_year_coll,
+            # Create a measure for each investment year (VRTOOL-431).
+            for _year in self.investment_years:
+                _cost = _section_result.cost
+                _measures_dicts.append(
+                    dict(
+                        measure_result_id=measure_result.id,
+                        measure_type=MeasureTypeEnum.get_enum(
+                            measure_result.measure_per_section.measure.measure_type.name
+                        ),
+                        combine_type=CombinableTypeEnum.get_enum(
+                            measure_result.measure_per_section.measure.combinable_type.name
+                        ),
+                        cost=_cost,
+                        year=_year,
+                        discount_rate=self.discount_rate,
+                        mechanism_year_collection=deepcopy(_mech_year_coll),
+                    )
+                    | {
+                        _param: measure_result.get_parameter_value(_param)
+                        for _param in _measure_concrete_params
+                    }
                 )
-                | {
-                    _param: measure_result.get_parameter_value(_param)
-                    for _param in _measure_concrete_params
-                }
-            )
 
         return list(map(lambda x: measure_as_input_type(**x), _measures_dicts))
 
@@ -133,11 +136,11 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
         if self.valid_parameter(orm_model, "dcrest"):
-            _imported_measures.extend(
-                self._create_measure(
-                    orm_model,
-                    SgMeasure,
-                )
-            )
+            _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
+
+        if not self.valid_parameter(orm_model, "dberm") and not self.valid_parameter(
+            orm_model, "dcrest"
+        ):
+            _imported_measures.extend(self._create_measure(orm_model, ShSgMeasure))
 
         return _imported_measures
