@@ -53,8 +53,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Autoformat code if the check fails
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         run: |
           poetry run isort .
           poetry run black .
