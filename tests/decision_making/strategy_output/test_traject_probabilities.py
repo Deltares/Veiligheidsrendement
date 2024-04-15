@@ -18,7 +18,6 @@ class TestTrajectProbabilities:
         _prob_failure_dict = {
             MechanismEnum.OVERFLOW.name: _mechanism_probabilities,
             MechanismEnum.REVETMENT.name: _mechanism_probabilities,
-            MechanismEnum.STABILITY_INNER.name: _mechanism_probabilities,
             MechanismEnum.PIPING.name: _mechanism_probabilities,
             MechanismEnum.INVALID.name: _mechanism_probabilities,
         }
@@ -27,7 +26,6 @@ class TestTrajectProbabilities:
             MechanismEnum.OVERFLOW,
             MechanismEnum.REVETMENT,
             MechanismEnum.STABILITY_INNER,
-            MechanismEnum.PIPING,
         ]
         _sh_idx = 0
         _sg_idx = 1
@@ -40,5 +38,5 @@ class TestTrajectProbabilities:
         # 3. Verify expectations
         assert isinstance(_tp, TrajectProbabilities)
         assert _tp.mechanisms == _mechanisms
-        assert len(_tp.mechanism_prob) == 4
+        assert len(_tp.mechanism_prob) == 2
         assert _tp.annual_damage == _damage_list.tolist()

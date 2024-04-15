@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -45,6 +46,9 @@ class TrajectProbabilities:
         _traject_prob = cls()
         _traject_prob.mechanisms = mechanisms
         for _mech in mechanisms:
+            if not _mech.name in prob_failure:
+                logging.warning(f"Mechanism {_mech.name} not in prob_failure")
+                continue
             _traject_prob.mechanism_prob.append(
                 MechanismProbabilities.from_strategy_input(
                     _mech,
