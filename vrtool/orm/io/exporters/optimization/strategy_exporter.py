@@ -18,16 +18,12 @@ from vrtool.orm.models.optimization.optimization_selected_measure import (
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
-
 class StrategyExporter(OrmExporterProtocol):
     def __init__(self, optimization_run_id: int) -> None:
         self.optimization_run: OptimizationRun = OptimizationRun.get_by_id(
             optimization_run_id
         )
 
-    def find_aggregated(
-        self, combinations: list[AggregatedMeasureCombination], measure_sh, measure_sg
-    ):
     def find_aggregated(
         self, combinations: list[AggregatedMeasureCombination], measure_sh, measure_sg
     ):
@@ -82,9 +78,6 @@ class StrategyExporter(OrmExporterProtocol):
             for single_measure in _secondary_measures + _aggregated_primary:
 
                 _option_selected_measure_result = (
-                    self._get_optimization_selected_measure(
-                        single_measure.measure_result_id, single_measure.year
-                    )
                     self._get_optimization_selected_measure(
                         single_measure.measure_result_id, single_measure.year
                     )
