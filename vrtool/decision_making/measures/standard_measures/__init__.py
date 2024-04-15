@@ -4,6 +4,9 @@ from vrtool.decision_making.measures.standard_measures.diaphragm_wall_measure im
 from vrtool.decision_making.measures.standard_measures.revetment_measure import (
     RevetmentMeasure,
 )
+from vrtool.decision_making.measures.standard_measures.selfretaining_sheetpile_measure import (
+    SelfRetainingSheetpileMeasure,
+)
 from vrtool.decision_making.measures.standard_measures.soil_reinforcement_measure import (
     SoilReinforcementMeasure,
 )
