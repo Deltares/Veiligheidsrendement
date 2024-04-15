@@ -57,6 +57,13 @@ class RevetmentMeasure(MeasureProtocol):
         """
         return 0.3
 
+    @property
+    def margin_min_max_beta(self) -> float:
+        """
+        margin at which min_beta is seen as equal to max_beta,
+        """
+        return 0.1
+
     def _get_min_beta_target(self, dike_section: DikeSection) -> float:
         """
         NOTE (VRTOOL-254): Retrieves the Beta value for the first computation year (lowest integer value).
@@ -93,10 +100,14 @@ class RevetmentMeasure(MeasureProtocol):
             max_beta (float): maximum beta value
 
         Returns:
-            list[float]: list with grid values
+            np.ndarray[float]: list with grid values
         """
-        _step = (max_beta - min_beta) / (self.n_steps_block - 1)
-        _nr_of_steps = 1 + round ((max_beta - min_beta) / max(self.minimal_stepsize, _step))
+        _stepsize = (max_beta - min_beta) / (self.n_steps_block - 1)
+        _minimal_nr_of_steps = 2
+        if max_beta <= min_beta + self.margin_min_max_beta:
+            _minimal_nr_of_steps = 1
+        _nr_of_steps = 1 + round ((max_beta - min_beta) / max(self.minimal_stepsize, _stepsize))
+        _nr_of_steps = max(_minimal_nr_of_steps, _nr_of_steps)
         return np.linspace(min_beta, max_beta, _nr_of_steps)
 
     def _get_transition_level_vector(

@@ -117,6 +117,9 @@ class TestRevetmentMeasure:
         [
             pytest.param(0.42, 100, 17),
             pytest.param(2.4,  100, 10),
+            pytest.param(7.0,    4,  1),
+            pytest.param(5.11,   4,  1),
+            pytest.param(5.05,   4,  2),
         ],
     )
     def test_get_beta_target_vector_with_reduced_step(
@@ -144,8 +147,16 @@ class TestRevetmentMeasure:
         # 3. Verify expectations.
         assert isinstance(_beta_target_vector, np.ndarray)
         assert len(_beta_target_vector) == computed_vector_size
-        _step_size = _beta_target_vector[2] - _beta_target_vector[1]
-        assert _step_size == pytest.approx(_revetment_measure.minimal_stepsize, 0.2)
+        if computed_vector_size > 2:
+            _step_size = _beta_target_vector[1] - _beta_target_vector[0]
+            assert _step_size == pytest.approx(_revetment_measure.minimal_stepsize, 0.2)
+        elif computed_vector_size == 2:
+            _step_size = _beta_target_vector[1] - _beta_target_vector[0]
+            assert _beta_target_vector[0] == pytest.approx(min_beta, 1e-12)
+            assert _beta_target_vector[1] == pytest.approx(_max_beta, 1e-12)
+            assert _step_size >= _revetment_measure.margin_min_max_beta
+        else:
+            assert _beta_target_vector[0] == pytest.approx(min_beta, 1e-12)
 
     @pytest.mark.parametrize(
         "revetment_parameters, expected_result",
