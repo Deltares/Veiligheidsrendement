@@ -437,13 +437,13 @@ class GreedyStrategy(StrategyProtocol):
 
         for _idx, _ in enumerate(existing_investment_list):
             # sh
-            _calculated_investments[existing_investment_list[_idx][0], 0] = (
-                existing_investment_list[_idx][1]
-            )
+            _calculated_investments[
+                existing_investment_list[_idx][0], 0
+            ] = existing_investment_list[_idx][1]
             # sg
-            _calculated_investments[existing_investment_list[_idx][0], 1] = (
-                existing_investment_list[_idx][2]
-            )
+            _calculated_investments[
+                existing_investment_list[_idx][0], 1
+            ] = existing_investment_list[_idx][2]
 
         # prepare arrays
         sorted_sh = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
@@ -721,9 +721,9 @@ class GreedyStrategy(StrategyProtocol):
                     _init_probability_dict = update_probability(
                         _init_probability_dict, self, Index_Best
                     )
-                    _init_independent_risk_ndarray[Index_Best[0], :] = (
-                        self.RiskGeotechnical[Index_Best[0], Index_Best[2], :]
-                    )
+                    _init_independent_risk_ndarray[
+                        Index_Best[0], :
+                    ] = self.RiskGeotechnical[Index_Best[0], Index_Best[2], :]
 
                     _init_overflow_risk_ndarray[Index_Best[0], :] = self.RiskOverflow[
                         Index_Best[0], Index_Best[1], :
@@ -765,17 +765,17 @@ class GreedyStrategy(StrategyProtocol):
                             _init_probability_dict = update_probability(
                                 _init_probability_dict, self, IndexMeasure
                             )
-                            _init_independent_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskGeotechnical[
-                                    IndexMeasure[0], IndexMeasure[2], :
-                                ]
-                            )
-                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
-                            )
-                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
-                            )
+                            _init_independent_risk_ndarray[
+                                IndexMeasure[0], :
+                            ] = self.RiskGeotechnical[
+                                IndexMeasure[0], IndexMeasure[2], :
+                            ]
+                            _init_overflow_risk_ndarray[
+                                IndexMeasure[0], :
+                            ] = self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            _init_revetment_risk_ndarray[
+                                IndexMeasure[0], :
+                            ] = self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
                             _spent_money[IndexMeasure[0]] += _life_cycle_cost[
                                 IndexMeasure
                             ]
@@ -809,17 +809,17 @@ class GreedyStrategy(StrategyProtocol):
                             _init_probability_dict = update_probability(
                                 _init_probability_dict, self, IndexMeasure
                             )
-                            _init_independent_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskGeotechnical[
-                                    IndexMeasure[0], IndexMeasure[2], :
-                                ]
-                            )
-                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
-                            )
-                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
-                            )
+                            _init_independent_risk_ndarray[
+                                IndexMeasure[0], :
+                            ] = self.RiskGeotechnical[
+                                IndexMeasure[0], IndexMeasure[2], :
+                            ]
+                            _init_overflow_risk_ndarray[
+                                IndexMeasure[0], :
+                            ] = self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            _init_revetment_risk_ndarray[
+                                IndexMeasure[0], :
+                            ] = self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
                             _spent_money[IndexMeasure[0]] += _life_cycle_cost[
                                 IndexMeasure
                             ]
