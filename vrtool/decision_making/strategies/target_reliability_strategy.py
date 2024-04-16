@@ -1,7 +1,7 @@
 import copy
 import logging
 from dataclasses import dataclass
-
+from collections import defaultdict
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -265,21 +265,14 @@ class TargetReliabilityStrategy(StrategyProtocol):
         _section_as_input = self.sections[section_idx]
         # get the first possible investment year from the aggregated measures
         _invest_year = min(
-            [
-                measure.year
-                for measure in _section_as_input.aggregated_measure_combinations
-            ]
+            measure.year
+            for measure in _section_as_input.aggregated_measure_combinations
         )
         _design_horizon_year = _invest_year + self.OI_horizon
 
         # for each mechanism we check if the cross-sectional requirements are met
         # initialize a dictionary
-        _requirement_met_per_mechanism = dict(
-            zip(
-                _section_as_input.mechanisms,
-                [False] * len(_section_as_input.mechanisms),
-            )
-        )
+        _requirement_met_per_mechanism = defaultdict(lambda: False)
 
         # loop over all mechanisms and check if the requirements are met. Once they are met, set the value to True and break the loop
         for mechanism in _section_as_input.mechanisms:
@@ -295,6 +288,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 ):
                     _requirement_met_per_mechanism[mechanism] = True
                     break
+            _requirement_met_per_mechanism[mechanism]
 
         # next we get the mechanisms in _requirement_met_per_mechanism where values are True
         _valid_mechanisms = [
