@@ -1,5 +1,6 @@
 import copy
 import math
+import sys
 from itertools import groupby
 
 import numpy as np
@@ -21,10 +22,15 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
+from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GrassSlopePart
+from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
+    StoneSlopePart,
+)
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
+from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
 
 
 class RevetmentMeasure(MeasureProtocol):
@@ -44,6 +50,20 @@ class RevetmentMeasure(MeasureProtocol):
     def n_steps_block(self) -> int:
         return self.parameters["n_steps_block"]
 
+    @property
+    def minimal_stepsize(self) -> float:
+        """
+        step size for beta
+        """
+        return 0.3
+
+    @property
+    def margin_min_max_beta(self) -> float:
+        """
+        margin at which min_beta is seen as equal to max_beta,
+        """
+        return 0.1
+
     def _get_min_beta_target(self, dike_section: DikeSection) -> float:
         """
         NOTE (VRTOOL-254): Retrieves the Beta value for the first computation year (lowest integer value).
@@ -54,12 +74,41 @@ class RevetmentMeasure(MeasureProtocol):
         _min_reliability_year = str(
             min(map(int, _mech_reliability_collection.Reliability.keys()))
         )
-        return _mech_reliability_collection.Reliability[_min_reliability_year].Beta
+        beta = _mech_reliability_collection.Reliability[_min_reliability_year].Beta
+        return beta
 
-    def _get_beta_target_vector(self, min_beta: float, p_max: float) -> list[float]:
+    def _get_beta_max(self, p_max: float) -> float:
+        """
+        get maximum beta for revetment
+
+        Args:
+            p_max (float): target probability for traject
+
+        Returns:
+            float: maximum beta
+        """
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
-        _step = (_max_beta - min_beta) / self.n_steps_block
-        return list(np.arange(min_beta, _max_beta, _step))
+        return _max_beta
+
+    def _get_beta_target_vector(self, min_beta: float, max_beta: float) -> np.ndarray[float]:
+        """
+        get a grid with beta values
+        in principle n_step_block values, but stepsize is at most minimal_stepsize
+
+        Args:
+            min_beta (float): minimal beta value
+            max_beta (float): maximum beta value
+
+        Returns:
+            np.ndarray[float]: list with grid values
+        """
+        _stepsize = (max_beta - min_beta) / (self.n_steps_block - 1)
+        _minimal_nr_of_steps = 2
+        if max_beta <= min_beta + self.margin_min_max_beta:
+            _minimal_nr_of_steps = 1
+        _nr_of_steps = 1 + round ((max_beta - min_beta) / max(self.minimal_stepsize, _stepsize))
+        _nr_of_steps = max(_minimal_nr_of_steps, _nr_of_steps)
+        return np.linspace(min_beta, max_beta, _nr_of_steps)
 
     def _get_transition_level_vector(
         self,
@@ -117,9 +166,9 @@ class RevetmentMeasure(MeasureProtocol):
         _revetment = self._get_revetment(dike_section)
 
         # 1. Get beta targets.
-        _beta_targets = self._get_beta_target_vector(
-            self._get_min_beta_target(dike_section), traject_info.Pmax
-        )
+        _min_beta = self._get_min_beta_target(dike_section)
+        _max_beta = self._get_beta_max(traject_info.Pmax)
+        _beta_targets = self._get_beta_target_vector(_min_beta, _max_beta)
 
         # 2. Get transition levels.
         _transition_levels = self._get_transition_level_vector(
@@ -182,7 +231,7 @@ class RevetmentMeasure(MeasureProtocol):
         self,
         dike_section: DikeSection,
         revetment: RevetmentDataClass,
-        beta_targets: list[float],
+        beta_targets: np.ndarray[float],
         transition_levels: list[float],
         config_years: list[int],
     ) -> list[RevetmentMeasureResult]:
