@@ -40,6 +40,15 @@ class MechanismProbabilities:
         )
         return _mechanism_prob
 
-    def get_probability(self) -> float:
-        if self.mechanism == MechanismEnum.OVERFLOW:
-            return max(map(lambda x: x.get_probability(), self.section_probabilities))
+    def get_probabilities(self) -> np.ndarray:
+        if self.mechanism in (MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT):
+            return np.max(
+                list(map(lambda x: x.get_probabilities(), self.section_probabilities)),
+                axis=0,
+            )
+        if self.mechanism in (MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING):
+            return np.sum(
+                list(map(lambda x: x.get_probabilities(), self.section_probabilities)),
+                axis=0,
+            )
+        return np.array([])

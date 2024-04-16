@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -11,13 +11,11 @@ class SectionYearProbabilities:
     Class to store the probabilities per year for a section.
     """
 
-    year_probabilities: list[float] = field(default_factory=list)
+    probabilities: np.ndarray = np.array([])
 
     @classmethod
     def from_strategy_input(cls, probabilities: np.ndarray) -> SectionYearProbabilities:
-        _section_year_prob = cls()
-        _section_year_prob.year_probabilities = probabilities.tolist()
-        return _section_year_prob
+        return cls(probabilities=probabilities)
 
-    def get_probability(self) -> float:
-        return max(self.year_probabilities)
+    def get_probabilities(self) -> np.ndarray:
+        return self.probabilities

@@ -15,4 +15,16 @@ class TestSectionYearProbabilities:
 
         # 3. Verify expectations
         assert isinstance(_syp, SectionYearProbabilities)
-        assert _syp.year_probabilities == _probabilities.tolist()
+        assert np.array_equal(_syp.probabilities, _probabilities)
+
+    def test_get_probabilities(self):
+        # 1. Define test data
+        _probabilities = np.array([0.1, 0.2, 0.3, 0.4])
+        _syp = SectionYearProbabilities(probabilities=_probabilities)
+
+        # 2. Run test
+        _result = _syp.get_probabilities()
+
+        # 3. Verify expectations
+        assert isinstance(_result, np.ndarray)
+        assert np.array_equal(_result, _probabilities)

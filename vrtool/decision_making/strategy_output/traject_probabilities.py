@@ -17,9 +17,8 @@ class TrajectProbabilities:
     Class to store the probabilities of a trajectory.
     """
 
-    mechanisms: list[MechanismEnum] = field(default_factory=list)
-    mechanism_prob: list[MechanismProbabilities] = field(default_factory=list)
-    annual_damage: list[float] = field(default_factory=list)
+    mechanism_probabilities: list[MechanismProbabilities] = field(default_factory=list)
+    annual_damage: np.ndarray = np.array([])
 
     @classmethod
     def from_strategy_input(
@@ -44,12 +43,11 @@ class TrajectProbabilities:
             TrajectProbabilities: Probabilities for all mechanisms for all sections of a dike traject.
         """
         _traject_prob = cls()
-        _traject_prob.mechanisms = mechanisms
         for _mech in mechanisms:
             if not _mech.name in prob_failure:
                 logging.warning(f"Mechanism {_mech.name} not in prob_failure")
                 continue
-            _traject_prob.mechanism_prob.append(
+            _traject_prob.mechanism_probabilities.append(
                 MechanismProbabilities.from_strategy_input(
                     _mech,
                     prob_failure[_mech.name],
@@ -57,8 +55,34 @@ class TrajectProbabilities:
                     sg_idx=sg_idx,
                 )
             )
-        _traject_prob.annual_damage = damage.tolist()
+        _traject_prob.annual_damage = damage
         return _traject_prob
+
+    @property
+    def mechanisms(self) -> list[MechanismEnum]:
+        return [mech.mechanism for mech in self.mechanism_probabilities]
+
+    @property
+    def overflow_probabilities(self) -> np.ndarray:
+        return next(
+            _mech.get_probabilities()
+            for _mech in self.mechanism_probabilities
+            if _mech.mechanism == MechanismEnum.OVERFLOW
+        )
+
+    @property
+    def revetment_probabilities(self) -> np.ndarray:
+        return next(
+            _mech.get_probabilities()
+            for _mech in self.mechanism_probabilities
+            if _mech.mechanism == MechanismEnum.REVETMENT
+        )
+
+    @property
+    def independent_probabilities(self) -> np.ndarray:
+        return self.combine_probabilities(
+            [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
+        )
 
     def get_total_risk(self) -> float:
         """
@@ -68,29 +92,33 @@ class TrajectProbabilities:
             float: Total risk for the traject.
         """
 
-        return sum(map(lambda x: x.get_probability(), self.mechanism_prob))
-        # np.sum(np.max(overflow_risk, axis=0))
-        #         + np.sum(np.max(revetment_risk, axis=0))
-        #         + np.sum(independent_risk)
+        return np.sum(
+            self.annual_damage
+            * (
+                self.overflow_probabilities
+                + self.revetment_probabilities
+                + self.independent_probabilities
+            )
+        )
 
     def combine_probabilities(
         self,
-        mechanism_prob: list[MechanismProbabilities],
         selection: list[MechanismEnum],
-    ) -> list[float]:
+    ) -> np.ndarray:
         """
         Calculate the combined probability of failure for a selection of mechanisms.
 
         Args:
-            mechanism_prob (list[MechanismProbabilities]): Probabilities of failure for each mechanism.
             selection (list[MechanismEnum]): Mechanisms to consider.
 
         Returns:
-            list[float]: TODO
+            np.ndarray: The combined probability of failure for the selected mechanisms.
         """
-        for m, _mechanism in enumerate(
-            _mech_prob.mechanism for _mech_prob in mechanism_prob
-        ):
-            if _mechanism in selection:
-                pass
-        return 0
+        _combined_probabilities = np.ones_like(self.annual_damage)
+        for _mechanism_probabilities in self.mechanism_probabilities:
+            if _mechanism_probabilities.mechanism in selection:
+                _combined_probabilities = np.multiply(
+                    _combined_probabilities,
+                    1 - _mechanism_probabilities.get_probabilities(),
+                )
+        return 1 - _combined_probabilities
