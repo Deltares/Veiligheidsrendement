@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -70,7 +72,6 @@ class StrategyExporter(OrmExporterProtocol):
             ]
             _lcc_per_section[_section] = _measure_sh.lcc + _measure_sg.lcc
 
-            # get total_lcc and total_risk values
             # get total_lcc and total_risk values
             _total_lcc = sum(_lcc_per_section.values())
             _total_risk = strategy_run.total_risk_per_step[_measure_idx + 1]
@@ -155,7 +156,9 @@ class StrategyExporter(OrmExporterProtocol):
             )
         return _opt_selected_measure
 
-    def _get_section_time_value(self, section: int, t: int, values: dict) -> float:
+    def _get_section_time_value(
+        self, section: int, t: int, values: dict[str, np.ndarray]
+    ) -> float:
         pt = 1.0
         for m in values:
             # fix for t=100 where 99 is the last
@@ -165,9 +168,9 @@ class StrategyExporter(OrmExporterProtocol):
         return 1.0 - pt
 
     def _get_selected_time(
-        self, section: int, t: int, mechanism: str, values: dict
+        self, section: int, t: int, mechanism: str, values: dict[str, np.ndarray]
     ) -> float:
-        if mechanism == "SECTION" and not "SECTION" in values:
+        if mechanism == "SECTION" and "SECTION" not in values:
             return self._get_section_time_value(section, t, values)
         maxt = values[mechanism].shape[1] - 1
         _t = min(t, maxt)

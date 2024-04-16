@@ -87,6 +87,15 @@ class TargetReliabilityStrategy(StrategyProtocol):
     This ensures that for a certain time horizon, each section satisfies the cross-sectional target reliability
     """
 
+    OI_horizon: int
+    _time_periods: list[int]
+    Pf: dict[str, np.ndarray]
+    D: np.ndarray
+    sections: list[SectionAsInput]
+    probabilities_per_step: list[float]
+    total_risk_per_step: list[float]
+    measures_taken: list[tuple[int, int, int]]
+
     def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig):
         # Necessary config parameters:
         self.OI_horizon = config.OI_horizon
@@ -95,6 +104,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.Pf = strategy_input.Pf
         self.D = strategy_input.D
         self.sections = strategy_input.sections
+        self.probabilities_per_step = []
+        self.total_risk_per_step = []
+        self.measures_taken = []
 
     def evaluate(
         self,

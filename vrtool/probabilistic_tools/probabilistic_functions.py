@@ -362,7 +362,6 @@ def add_load_char_vals(
             # this is only for piping and stability. For overflow it should be extended with use of the HBN factor
             input["dh"] = load.dist_change * year
         else:
-            p = 0.5
             dh = np.array(load.dist_change.computeQuantile(p_dh))[0]
             input["dh"] = dh * year
     else:
@@ -374,8 +373,10 @@ def add_load_char_vals(
 ## THESE ARE FASTER FORMULAS FOR CONVERTING BETA TO PROB AND VICE VERSA
 
 
-def beta_to_pf(beta):
+def beta_to_pf(beta: float | list[float]) -> float | list[float]:
     # alternative: use scipy
+    if isinstance(beta, list):
+        return norm.cdf([-_element for _element in beta]).tolist()
     return norm.cdf(-beta)
 
 

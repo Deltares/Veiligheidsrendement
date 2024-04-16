@@ -69,7 +69,10 @@ class MechanismPerYearProbabilityCollection:
         Returns:
             list[float]: List of probabilities
         """
-        return beta_to_pf(self.get_betas(mechanism, years))
+        _betas = self.get_betas(mechanism, years)
+        if not _betas:
+            return []
+        return beta_to_pf(_betas)
 
     def get_betas(self, mechanism: MechanismEnum, years: list[int]) -> list[float]:
         """
@@ -87,7 +90,7 @@ class MechanismPerYearProbabilityCollection:
         if not _years:
             return []
         _betas = list(map(lambda x: self.get_beta(mechanism, x), _years))
-        return interp1d(_years, _betas, fill_value="extrapolate")(years)
+        return interp1d(_years, _betas, fill_value="extrapolate")(years).tolist()
 
     def get_mechanisms(self) -> set[MechanismEnum]:
         """
@@ -223,7 +226,11 @@ class MechanismPerYearProbabilityCollection:
                 _years.append(p.year)
                 _betas.append(p.beta)
 
-        _beta_interp = interp1d(_years, _betas, fill_value="extrapolate")(added_years)
+        _beta_interp = interp1d(_years, _betas, fill_value="extrapolate")(
+            added_years
+        ).tolist()
+        if not _beta_interp:
+            return
         for i, _year in enumerate(added_years):
             if _year not in _years:
                 _mech_per_year = MechanismPerYear(

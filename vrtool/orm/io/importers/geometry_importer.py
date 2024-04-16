@@ -1,3 +1,5 @@
+from typing import Any
+
 import pandas as pd
 
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -16,7 +18,7 @@ class GeometryImporter(OrmImporterProtocol):
 
         return geometry
 
-    def _to_dict(self, point: ProfilePoint) -> dict[str, any]:
+    def _to_dict(self, point: ProfilePoint) -> dict[str, Any]:
         return {
             "type": point.profile_point_type.name,
             "x": point.x_coordinate,
