@@ -148,5 +148,5 @@ class StrategyInput(StrategyInputProtocol):
 
     @property
     def Dint(self) -> np.ndarray:
-        # Decision variables for weakest overflow section with dims [N,Sh]
+        # Decision variables for weakest overflow section with dims [N, Sh]
         return np.zeros((self._num_sections, self._max_sh))

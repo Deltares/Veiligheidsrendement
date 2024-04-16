@@ -31,7 +31,7 @@ from vrtool.api import (
     run_step_measures,
     run_step_optimization,
 )
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum as MeasureType
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm import models as orm
 from vrtool.orm.orm_controllers import (
@@ -71,7 +71,7 @@ def get_list_of_sections_for_measure_ids(
 
 def get_all_measure_results_of_specific_type(
     valid_vrtool_config: VrtoolConfig,
-    measure_name: str,
+    measure_type: MeasureTypeEnum,
 ) -> list[int]:
     """
     Gets all available measure results (`MeasureResult`) from the database for a specific type of measure
@@ -92,7 +92,7 @@ def get_all_measure_results_of_specific_type(
             .join(orm.Measure)
             .join(orm.MeasureType)
             .where(orm.Measure.year != 20)
-            .where(orm.MeasureType.name == measure_name.get_old_name())
+            .where(orm.MeasureType.name == measure_type.get_old_name())
         )
     # get all ids of _supported_measures
     return [x.get_id() for x in _supported_measures]
@@ -339,6 +339,34 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
 
+    def _run_step_optimization_for_strategy(
+        self,
+        vrtool_config: VrtoolConfig,
+        design_method: str,
+        request: pytest.FixtureRequest,
+    ):
+        # 1. Define test data.
+        _new_optimization_name = "test_optimization_{}".format(
+            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        )
+        # Only the selected design method for this case:
+        vrtool_config.design_methods = [design_method]
+
+        # We reuse existing measure results, but we clear the optimization ones.
+        clear_optimization_results(vrtool_config)
+        _validator = RunStepOptimizationValidator()
+        _validator.validate_preconditions(vrtool_config)
+        # We actually run using ALL the available measure results.
+        _measures_input = get_all_measure_results_with_supported_investment_years(
+            vrtool_config
+        )
+
+        # 2. Run test.
+        run_step_optimization(vrtool_config, _new_optimization_name, _measures_input)
+
+        # 3. Verify expectations.
+        _validator.validate_results(vrtool_config)
+
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases,
@@ -347,27 +375,9 @@ class TestApiRunWorkflowsAcceptance:
     def test_run_step_optimization_for_target_reliability(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
-        # 1. Define test data.
-        _new_optimization_name = "test_optimization_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        self._run_step_optimization_for_strategy(
+            valid_vrtool_config, "Doorsnede-eisen", request
         )
-        # Only the selected design method for this case:
-        valid_vrtool_config.design_methods = ["Doorsnede-eisen"]
-
-        # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results(valid_vrtool_config)
-        _validator = RunStepOptimizationValidator()
-        _validator.validate_preconditions(valid_vrtool_config)
-        # We actually run using ALL the available measure results.
-        _measures_input = get_all_measure_results_with_supported_investment_years(
-            valid_vrtool_config
-        )
-        # 2. Run test.
-        run_step_optimization(
-            valid_vrtool_config, _new_optimization_name, _measures_input
-        )
-        # 3. Verify expectations.
-        _validator.validate_results(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -377,27 +387,9 @@ class TestApiRunWorkflowsAcceptance:
     def test_run_step_optimization_for_greedy_optimization(
         self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
     ):
-        # 1. Define test data.
-        _new_optimization_name = "test_optimization_{}".format(
-            request.node.callspec.id.replace(" ", "_").replace(",", "").lower()
+        self._run_step_optimization_for_strategy(
+            valid_vrtool_config, "Veiligheidsrendement", request
         )
-        # Only the selected design method for this case:
-        valid_vrtool_config.design_methods = ["Veiligheidsrendement"]
-
-        # We reuse existing measure results, but we clear the optimization ones.
-        clear_optimization_results(valid_vrtool_config)
-        _validator = RunStepOptimizationValidator()
-        _validator.validate_preconditions(valid_vrtool_config)
-        # We actually run using ALL the available measure results.
-        _measures_input = get_all_measure_results_with_supported_investment_years(
-            valid_vrtool_config
-        )
-        # 2. Run test.
-        run_step_optimization(
-            valid_vrtool_config, _new_optimization_name, _measures_input
-        )
-        # 3. Verify expectations.
-        _validator.validate_results(valid_vrtool_config)
 
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -421,9 +413,9 @@ class TestApiRunWorkflowsAcceptance:
         _measure_ids = [
             get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
             for measure_type in [
-                MeasureType.SOIL_REINFORCEMENT,
-                MeasureType.REVETMENT,
-                MeasureType.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                MeasureTypeEnum.REVETMENT,
+                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             ]
         ]
         # flatten list of _measure_ids
@@ -461,9 +453,9 @@ class TestApiRunWorkflowsAcceptance:
         _measure_ids = [
             get_all_measure_results_of_specific_type(valid_vrtool_config, measure_type)
             for measure_type in [
-                MeasureType.SOIL_REINFORCEMENT,
-                MeasureType.REVETMENT,
-                MeasureType.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                MeasureTypeEnum.REVETMENT,
+                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
             ]
         ]
         # flatten list of _measure_ids and sort
@@ -512,7 +504,6 @@ class TestApiRunWorkflowsAcceptance:
 
 @pytest.mark.slow
 class TestApiReportedBugs:
-
     @pytest.mark.parametrize(
         "directory_name",
         [

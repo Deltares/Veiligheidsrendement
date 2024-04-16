@@ -1,14 +1,11 @@
 import logging
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Callable
 
 from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.strategy_input.strategy_input_protocol import (
-    StrategyInputProtocol,
-)
 from vrtool.run_workflows.optimization_workflow.optimization_input_measures import (
     OptimizationInputMeasures,
 )
@@ -52,7 +49,7 @@ class RunOptimization(VrToolRunProtocol):
     def _get_strategy_controller_with_aggregations(
         self,
         section_input_collection: list[SectionAsInput],
-    ) -> StrategyInputProtocol:
+    ) -> StrategyController:
         _strategy_controller = StrategyController(section_input_collection)
         _strategy_controller.set_investment_year()
         _strategy_controller.combine()
@@ -99,7 +96,7 @@ class RunOptimization(VrToolRunProtocol):
         _target_reliability_based.evaluate(self.selected_traject)
         return _target_reliability_based
 
-    def _get_evaluation_mapping(self) -> Dict[str, Callable[[str], StrategyProtocol]]:
+    def _get_evaluation_mapping(self) -> dict[str, Callable[[str], StrategyProtocol]]:
         return {
             "TC": self._get_optimized_greedy_strategy,
             "Total Cost": self._get_optimized_greedy_strategy,

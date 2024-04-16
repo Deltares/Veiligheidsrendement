@@ -12,11 +12,13 @@ class FailureMechanismCollection:
     def __init__(self) -> None:
         self._failure_mechanisms = {}
 
-    def get_available_mechanisms(self) -> set[MechanismEnum]:
+    def get_available_mechanisms(
+        self,
+    ) -> dict[MechanismEnum, MechanismReliabilityCollection]:
         """Gets the available failure mechanisms.
 
         Returns:
-            set[MechanismEnum]: A collection with all the available failure mechanisms.
+            dict[MechanismEnum, MechanismReliabilityCollection]: A collection with all the available failure mechanisms.
         """
         return self._failure_mechanisms
 

@@ -1,8 +1,6 @@
-from collections import defaultdict
-from typing import Any
+import logging
 
 import numpy as np
-import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
@@ -10,7 +8,6 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
 class LegacyMappingHelper:
-
     @staticmethod
     def get_probabilities(
         sections: list[SectionAsInput],
@@ -20,7 +17,6 @@ class LegacyMappingHelper:
         max_sg: int,
         max_year: int,
     ) -> dict[str, np.ndarray]:
-
         def _get_pf_for_measures(
             mech: MechanismEnum,
             combinations: list[CombinedMeasure],
@@ -30,9 +26,12 @@ class LegacyMappingHelper:
             _probs = np.zeros(dims)
             # Add other measures
             for m, _meas in enumerate(combinations):
-                _probs[m, :] = _meas.mechanism_year_collection.get_probabilities(
+                _probabilities = _meas.mechanism_year_collection.get_probabilities(
                     mech, list(range(max_year))
                 )
+                if not _probabilities:
+                    return np.array([])
+                _probs[m, :] = _probabilities
             return _probs
 
         def _get_pf_for_mech(
@@ -56,6 +55,8 @@ class LegacyMappingHelper:
                 )
             else:
                 raise ValueError("Mechanism not allowed")
+            if _probs.size == 0:
+                return np.array(_initial_probs)[None, :]
             # Concatenate both probabilities
             return np.concatenate((np.array(_initial_probs)[None, :], _probs), axis=0)
 
@@ -76,9 +77,15 @@ class LegacyMappingHelper:
                     _probs = _get_pf_for_mech(
                         _mech, _section, _pf[_mech.name].shape[1:], max_year
                     )
+                    if _probs.size == 0:
+                        continue
                     _pf[_mech.name][n, 0 : len(_probs), :] = _probs
-                except:
-                    pass #Mechanism not present at section
+                except KeyError:
+                    logging.warning(
+                        "Mechanism %s not present for section %s.",
+                        _mech.name,
+                        _section.section_name,
+                    )
 
         return _pf
 

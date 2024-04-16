@@ -21,26 +21,26 @@ class SectionReliability:
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
-        available_mechanisms = self.failure_mechanisms.get_available_mechanisms()
-        calculation_years = self.failure_mechanisms.get_calculation_years()
+        _available_mechanisms = self.failure_mechanisms.get_available_mechanisms()
+        _calculation_years = self.failure_mechanisms.get_calculation_years()
 
-        trange = [int(i) for i in calculation_years]
-        pf_mechanisms_time = np.zeros((len(available_mechanisms), len(trange)))
-        count = 0
-        for mechanism in available_mechanisms:  # mechanisms
-            for j in range(0, len(trange)):
-                mechanism_collection = (
+        _t_range = [int(_year_str) for _year_str in _calculation_years]
+        _pf_mechanisms_time = np.zeros((len(_available_mechanisms), len(_t_range)))
+        _count = 0
+        for mechanism in _available_mechanisms:  # mechanisms
+            for _range_idx, _range_val in enumerate(_t_range):
+                _mechanism_collection = (
                     self.failure_mechanisms.get_mechanism_reliability_collection(
                         mechanism
                     )
                 )
 
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
-                    pf_mechanisms_time[count, j] = mechanism_collection.Reliability[
-                        str(trange[j])
-                    ].Pf
+                    _pf_mechanisms_time[
+                        _count, _range_idx
+                    ] = _mechanism_collection.Reliability[str(_range_val)].Pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
-                    pf = mechanism_collection.Reliability[str(trange[j])].Pf
+                    pf = _mechanism_collection.Reliability[str(_range_val)].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1
                     # For StabilityInner:
@@ -53,19 +53,21 @@ class SectionReliability:
                     # pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N,1./100)
 
                     # pf_mechanisms_time[count,j] = min(1 - (1 - pf) ** N,1./100)
-                    pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N, 1.0 / 2)
-            count += 1
+                    _pf_mechanisms_time[_count, _range_idx] = min(
+                        1 - (1 - pf) ** N, 1.0 / 2
+                    )
+            _count += 1
 
         # Do we want beta or failure probability? Preferably beta as output
-        beta_mech_time = pd.DataFrame(
-            pb_functions.pf_to_beta(pf_mechanisms_time),
-            columns=calculation_years,
-            index=list(map(str, available_mechanisms)),
+        _beta_mech_time = pd.DataFrame(
+            pb_functions.pf_to_beta(_pf_mechanisms_time),
+            columns=_calculation_years,
+            index=list(map(str, _available_mechanisms)),
         )
-        beta_time = pd.DataFrame(
-            [pb_functions.pf_to_beta(np.sum(pf_mechanisms_time, axis=0))],
-            columns=calculation_years,
+        _beta_time = pd.DataFrame(
+            [pb_functions.pf_to_beta(np.sum(_pf_mechanisms_time, axis=0))],
+            columns=_calculation_years,
             index=["Section"],
         )
-        self.SectionReliability = pd.concat((beta_mech_time, beta_time))
+        self.SectionReliability = pd.concat((_beta_mech_time, _beta_time))
         # TODO add output as probability so we dont have to switch using scipystats all the time.
