@@ -1,7 +1,7 @@
 from random import shuffle
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -40,9 +40,9 @@ class TestRevetmentMeasure:
             measure_year=2025,
         )
         for _idx, _computation_year in enumerate(_computation_years):
-            _mech_reliability_collection.Reliability[str(_computation_year)].Beta = (
-                0.24 + (0.24 * _idx)
-            )
+            _mech_reliability_collection.Reliability[
+                str(_computation_year)
+            ].Beta = 0.24 + (0.24 * _idx)
         _test_dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
             MechanismEnum.REVETMENT
         ] = _mech_reliability_collection
@@ -105,7 +105,9 @@ class TestRevetmentMeasure:
 
         # 2. Run test.
         _max_beta = _revetment_measure._get_beta_max(_pmax)
-        _beta_target_vector = _revetment_measure._get_beta_target_vector(min_beta, _max_beta)
+        _beta_target_vector = _revetment_measure._get_beta_target_vector(
+            min_beta, _max_beta
+        )
 
         # 3. Verify expectations.
         assert isinstance(_beta_target_vector, np.ndarray)
@@ -116,17 +118,17 @@ class TestRevetmentMeasure:
         "min_beta, vector_size, computed_vector_size",
         [
             pytest.param(0.42, 100, 17),
-            pytest.param(2.4,  100, 10),
-            pytest.param(7.0,    4,  1),
-            pytest.param(5.11,   4,  1),
-            pytest.param(5.05,   4,  2),
+            pytest.param(2.4, 100, 10),
+            pytest.param(7.0, 4, 1),
+            pytest.param(5.11, 4, 1),
+            pytest.param(5.05, 4, 2),
         ],
     )
     def test_get_beta_target_vector_with_reduced_step(
         self, min_beta: float, vector_size: int, computed_vector_size: int
     ):
         """
-        Test automatic scaling of stepsize _get_beta_target_vector 
+        Test automatic scaling of stepsize _get_beta_target_vector
 
         Args:
             min_beta (float): beta from assessment
@@ -142,7 +144,9 @@ class TestRevetmentMeasure:
 
         # 2. Run test.
         _max_beta = _revetment_measure._get_beta_max(_pmax)
-        _beta_target_vector = _revetment_measure._get_beta_target_vector(min_beta, _max_beta)
+        _beta_target_vector = _revetment_measure._get_beta_target_vector(
+            min_beta, _max_beta
+        )
 
         # 3. Verify expectations.
         assert isinstance(_beta_target_vector, np.ndarray)

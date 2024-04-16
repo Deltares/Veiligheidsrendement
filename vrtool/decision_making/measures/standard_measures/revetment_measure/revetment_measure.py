@@ -22,7 +22,10 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure.revetme
 )
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.revetment_data_class import RevetmentDataClass
-from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import GrassSlopePart
+from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
+from vrtool.failure_mechanisms.revetment.slope_part.grass_slope_part import (
+    GrassSlopePart,
+)
 from vrtool.failure_mechanisms.revetment.slope_part.stone_slope_part import (
     StoneSlopePart,
 )
@@ -30,7 +33,6 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
-from vrtool.failure_mechanisms.revetment.slope_part import SlopePartProtocol
 
 
 class RevetmentMeasure(MeasureProtocol):
@@ -90,7 +92,9 @@ class RevetmentMeasure(MeasureProtocol):
         _max_beta = pf_to_beta(p_max / self.max_pf_factor_block)
         return _max_beta
 
-    def _get_beta_target_vector(self, min_beta: float, max_beta: float) -> np.ndarray[float]:
+    def _get_beta_target_vector(
+        self, min_beta: float, max_beta: float
+    ) -> np.ndarray[float]:
         """
         get a grid with beta values
         in principle n_step_block values, but stepsize is at most minimal_stepsize
@@ -106,7 +110,9 @@ class RevetmentMeasure(MeasureProtocol):
         _minimal_nr_of_steps = 2
         if max_beta <= min_beta + self.margin_min_max_beta:
             _minimal_nr_of_steps = 1
-        _nr_of_steps = 1 + round ((max_beta - min_beta) / max(self.minimal_stepsize, _stepsize))
+        _nr_of_steps = 1 + round(
+            (max_beta - min_beta) / max(self.minimal_stepsize, _stepsize)
+        )
         _nr_of_steps = max(_minimal_nr_of_steps, _nr_of_steps)
         return np.linspace(min_beta, max_beta, _nr_of_steps)
 
