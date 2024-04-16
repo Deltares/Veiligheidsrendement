@@ -20,7 +20,6 @@ jobs:
       - name: Check out
         uses: actions/checkout@v4
         with:
-          # token: ${{ secrets.GITHUB_TOKEN }}
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
