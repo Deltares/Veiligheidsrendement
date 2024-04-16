@@ -100,7 +100,6 @@ class GreedyStrategy(StrategyProtocol):
 
         counter_list = []  # used to store the bundle indices
         BC_list = []  # used to store BC for each bundle
-        highest_risk_section_indices = []  # used to store index of weakest section
 
         # initialize overflow risk
         new_mechanism_risk = np.copy(initial_mechanism_risk)
@@ -158,11 +157,10 @@ class GreedyStrategy(StrategyProtocol):
                 BC_list.append(0.0)
             else:
                 BC_list.append(BC)
-            highest_risk_section_indices.append(ind_highest_risk)
 
             counter_list.append(np.copy(index_counter))
 
-        return BC_list, counter_list, highest_risk_section_indices
+        return BC_list, counter_list
 
     def get_sg_sh_indices(
         self,
@@ -447,7 +445,6 @@ class GreedyStrategy(StrategyProtocol):
 
         # prepare arrays
         sorted_sh = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
-        LCC_values = np.zeros((_life_cycle_cost.shape[0],))
         sg_indices = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
 
         # then we loop over sections to get indices of those measures that are available
@@ -461,7 +458,7 @@ class GreedyStrategy(StrategyProtocol):
             )
 
         # then we bundle the measures by getting the BC for the mechanism under consideration
-        BC_list, counter_list, weak_list = self.bundling_loop(
+        BC_list, counter_list = self.bundling_loop(
             init_mechanism_risk,
             _life_cycle_cost,
             sorted_sh,
