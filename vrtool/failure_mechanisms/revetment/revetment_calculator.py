@@ -27,6 +27,7 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
     def calculate(self, year: int) -> tuple[float, float]:
         _given_years = self._revetment.get_available_years()
         _beta_per_year = []
+        _beta_stone_per_year = []
         for given_year in _given_years:
             _stone_revetment_beta = []
             _grass_revetment_beta = np.nan
@@ -55,11 +56,17 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
                     _stone_revetment_beta, _grass_revetment_beta
                 )
             )
-
-        self._revetment.set_beta_stone(np.nanmin(_stone_revetment_beta))
+            _beta_stone_per_year.append(np.nanmin(_stone_revetment_beta))
 
         if len(_given_years) == 1:
+            self._revetment.set_beta_stone(_stone_revetment_beta[0])
             return _beta_per_year[0], beta_to_pf(_beta_per_year[0])
+
+        _interpolate_beta_stone = interp1d(
+            _given_years, _beta_stone_per_year, fill_value=("extrapolate")
+        )
+        _calculated_beta_stone = _interpolate_beta_stone(self._initial_year + year)
+        self._revetment.set_beta_stone(np.nanmin(_calculated_beta_stone))
 
         _interpolate_beta = interp1d(
             _given_years, _beta_per_year, fill_value=("extrapolate")

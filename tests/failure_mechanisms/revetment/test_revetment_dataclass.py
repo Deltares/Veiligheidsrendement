@@ -115,3 +115,14 @@ class TestRevetmentDataClass:
         assert str(
             value_error.value
         ) == "No values found below the threshold {}".format(_threshold)
+
+    def test_beta_stone(self):
+        """
+        test the setter for beta stone
+        """
+
+        # 1. Define test data.
+        revetments = RevetmentDataClass()
+        revetments.set_beta_stone(3.4)
+
+        assert revetments.beta_stone == 3.4

@@ -14,21 +14,21 @@ class TestRevetmentCalculatorAssessment:
                 2025,
                 [2025],
                 0,
-                [3.6112402089287357, 0.00015236812335053454],
+                [3.6112402089287357, 0.00015236812335053454, 3.61204721],
                 id="2025_0",
             ),
             pytest.param(
                 2100,
                 [2100],
                 0,
-                [3.617047156851664, 0.00014899151576941146],
+                [3.617047156851664, 0.00014899151576941146, 3.61885515],
                 id="2100_0",
             ),
             pytest.param(
                 2050,
                 [2025, 2100],
                 0,
-                [3.6131758582363784, 0.0001512347051563111],
+                [3.6131758582363784, 0.0001512347051563111, 3.614316518765318],
                 id="2050_0",
             ),
         ],
@@ -49,3 +49,4 @@ class TestRevetmentCalculatorAssessment:
 
         assert beta == pytest.approx(ref_values[0], rel=1e-8)
         assert pf == pytest.approx(ref_values[1], 1e-8)
+        assert revetment.beta_stone == pytest.approx(ref_values[2], rel=1e-8)
