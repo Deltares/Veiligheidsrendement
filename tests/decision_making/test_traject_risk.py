@@ -57,13 +57,13 @@ class TestTrajectRisk:
         )
         assert np.array_equal(_tr.annual_damage, _annual_damage)
 
-    def test_get_initial_probabilities(self):
+    def test_get_initial_probabilities_copy(self):
         # 1. Define test data
         _tr = self._get_traject_risk()
         _mechanism = _MECHANISMS[0]
 
         # 2. Run test
-        _init_probs_dict = _tr.get_initial_probabilities(
+        _init_probs_dict = _tr.get_initial_probabilities_copy(
             [_mechanism, MechanismEnum.INVALID]
         )
 
@@ -71,6 +71,10 @@ class TestTrajectRisk:
         assert isinstance(_init_probs_dict, dict)
         assert len(_init_probs_dict) == 2
         assert _mechanism.name in _init_probs_dict
+        assert np.array_equal(
+            _init_probs_dict[_mechanism.name],
+            _tr.probability_of_failure[_mechanism][:, 0, :],
+        )
 
     @pytest.mark.parametrize(
         "mechanism, result",

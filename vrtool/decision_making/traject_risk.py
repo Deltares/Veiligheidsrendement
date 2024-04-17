@@ -36,7 +36,7 @@ class TrajectRisk:
             return 0
         return self.probability_of_failure[self.mechanisms[0]].shape[2]
 
-    def get_initial_probabilities(
+    def get_initial_probabilities_copy(
         self, mechanisms: list[MechanismEnum]
     ) -> dict[str, np.ndarray]:
         """
@@ -51,7 +51,9 @@ class TrajectRisk:
         """
         _init_probabilities = {}
         for _mech in mechanisms:
-            _init_probabilities[_mech.name] = self._get_mechanism_probabilities(_mech)
+            _init_probabilities[_mech.name] = np.copy(
+                self._get_mechanism_probabilities(_mech)
+            )
         return _init_probabilities
 
     def get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:

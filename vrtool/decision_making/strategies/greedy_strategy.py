@@ -492,7 +492,7 @@ class GreedyStrategy(StrategyProtocol):
 
         measure_list = []
         _probabilities = [
-            copy.deepcopy(self.traject_risk.get_initial_probabilities(self.mechanisms))
+            self.traject_risk.get_initial_probabilities_copy(self.mechanisms)
         ]
 
         risk_per_step = []
@@ -645,11 +645,7 @@ class GreedyStrategy(StrategyProtocol):
                     self.LCCOption[Index_Best] = 1e99
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
-                    _probabilities.append(
-                        copy.deepcopy(
-                            self.traject_risk.get_initial_probabilities(self.mechanisms)
-                        )
-                    )
+                    _probabilities.append(self.traject_risk.get_initial_probabilities_copy(self.mechanisms))
                     _total_risk_list.append(self.traject_risk.get_total_risk())
 
                     logging.info(
@@ -679,13 +675,7 @@ class GreedyStrategy(StrategyProtocol):
                             self.LCCOption[IndexMeasure] = 1e99
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
-                            _probabilities.append(
-                                copy.deepcopy(
-                                    self.traject_risk.get_initial_probabilities(
-                                        self.mechanisms
-                                    )
-                                )
-                            )
+                            _probabilities.append(self.traject_risk.get_initial_probabilities_copy(self.mechanisms))
                             _total_risk_list.append(self.traject_risk.get_total_risk())
 
                     logging.info(
@@ -715,13 +705,7 @@ class GreedyStrategy(StrategyProtocol):
                             self.LCCOption[IndexMeasure] = 1e99
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
-                            _probabilities.append(
-                                copy.deepcopy(
-                                    self.traject_risk.get_initial_probabilities(
-                                        self.mechanisms
-                                    )
-                                )
-                            )
+                            _probabilities.append(self.traject_risk.get_initial_probabilities_copy(self.mechanisms))
                             _total_risk_list.append(self.traject_risk.get_total_risk())
 
                     logging.info(
