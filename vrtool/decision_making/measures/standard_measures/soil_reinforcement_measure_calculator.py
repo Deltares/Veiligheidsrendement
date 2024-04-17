@@ -102,6 +102,10 @@ class SoilReinforcementMeasureCalculator:
             # No costs to calculate.
             return 0.0
 
+        if self.dberm_in == 0 and self.dcrest == 0:
+            # VRTOOL-390
+            return 0.0
+
         if self.dberm_in > self.housing.size:
             logging.warning(
                 "Binnenwaartse teenverschuiving is groter dan gegevens voor bebouwing op dijkvak {}".format(
