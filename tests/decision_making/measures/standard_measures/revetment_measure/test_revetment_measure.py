@@ -29,37 +29,6 @@ class TestRevetmentMeasure:
         assert isinstance(_revetment_measure, RevetmentMeasure)
         assert isinstance(_revetment_measure, MeasureProtocol)
 
-    def test_get_min_beta_target(self):
-        # 1. Define test data.
-        _test_dike_section = DikeSection()
-        _computation_years = [0, 2, 6, 20]
-        shuffle(_computation_years)
-        _mech_reliability_collection = MechanismReliabilityCollection(
-            mechanism=MechanismEnum.REVETMENT,
-            computation_type="nvt",
-            computation_years=_computation_years,
-            t_0=0,
-            measure_year=2025,
-        )
-        for _idx, _computation_year in enumerate(_computation_years):
-            _mech_reliability_collection.Reliability[
-                str(_computation_year)
-            ].Beta = 0.24 + (0.24 * _idx)
-        _test_dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
-            MechanismEnum.REVETMENT
-        ] = _mech_reliability_collection
-
-        # 2. Run test
-        _min_beta = RevetmentMeasure()._get_min_beta_target(_test_dike_section)
-
-        # 3. Verify expectations.
-        assert (
-            _min_beta
-            == _mech_reliability_collection.Reliability[
-                str(min(_computation_years))
-            ].Beta
-        )
-
     def test_get_beta_max(self):
         """
         test for the method _get_beta_max

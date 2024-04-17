@@ -17,6 +17,7 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 class RevetmentDataClass:
     slope_parts: list[SlopePartProtocol] = field(default_factory=lambda: [])
     grass_relations: list[RelationGrassRevetment] = field(default_factory=lambda: [])
+    beta_stone: float = -999.0
 
     @property
     def current_transition_level(self) -> float:
@@ -76,3 +77,12 @@ class RevetmentDataClass:
             return list(given_years_stone)
 
         raise ValueError("Years for grass and stone differ.")
+
+    def set_beta_stone(self, beta:float):
+        """
+        setter for beta_stone
+
+        Args:
+            beta (float): the calculated beta_stone
+        """
+        self.beta_stone = beta

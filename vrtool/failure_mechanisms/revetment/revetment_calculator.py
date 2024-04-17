@@ -56,6 +56,8 @@ class RevetmentCalculator(FailureMechanismCalculatorProtocol):
                 )
             )
 
+        self._revetment.set_beta_stone(np.nanmin(_stone_revetment_beta))
+
         if len(_given_years) == 1:
             return _beta_per_year[0], beta_to_pf(_beta_per_year[0])
 
