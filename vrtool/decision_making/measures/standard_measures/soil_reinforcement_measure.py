@@ -1,5 +1,4 @@
 import copy
-import logging
 
 import numpy as np
 
@@ -31,8 +30,6 @@ class SoilReinforcementMeasure(MeasureProtocol):
     ):
         # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        # Measure.__init__(self,inputs)
-        # self. parameters = measure.parameters
         _measure_type = self.parameters["Type"]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
@@ -46,24 +43,6 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["dcrest"] = modified_measure.d_crest
             _modified_measure["dberm"] = modified_measure.d_berm
             _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
-
-            # TODO: The following commented code will phase out the current state.
-            # apply during a readability issue please :)
-            # Define the dictionary outside `get_measure_data` to avoid extra running costs.
-            # _measure_unit_costs = MeasureUnitCosts.from_unknown_dict(self.unit_costs)
-            # _modified_measure["Cost"] = SoilReinforcementMeasureCalculator(
-            #     section_name=dike_section.name,
-            #     unit_costs=_measure_unit_costs,
-            #     length=dike_section.Length,
-            #     depth=self.parameters.get("Depth", float("nan")),
-            #     dcrest=modified_measure.d_crest,
-            #     dberm_in=modified_measure.d_house,
-            #     housing=dike_section.houses,
-            #     area_extra=modified_measure.area_extra,
-            #     area_excavated=modified_measure.area_excavated,
-            #     direction=DirectionEnum.get_enum(self.parameters["Direction"]),
-            # ).calculate_total_cost()
-
             _modified_measure["Cost"] = determine_costs(
                 self.parameters,
                 _measure_type,
