@@ -65,17 +65,23 @@ class TrajectProbabilities:
     @property
     def overflow_probabilities(self) -> np.ndarray:
         return next(
-            _mech.get_probabilities()
-            for _mech in self.mechanism_probabilities
-            if _mech.mechanism == MechanismEnum.OVERFLOW
+            (
+                _mech.get_probabilities()
+                for _mech in self.mechanism_probabilities
+                if _mech.mechanism == MechanismEnum.OVERFLOW
+            ),
+            np.zeros_like(self.annual_damage),
         )
 
     @property
     def revetment_probabilities(self) -> np.ndarray:
         return next(
-            _mech.get_probabilities()
-            for _mech in self.mechanism_probabilities
-            if _mech.mechanism == MechanismEnum.REVETMENT
+            (
+                _mech.get_probabilities()
+                for _mech in self.mechanism_probabilities
+                if _mech.mechanism == MechanismEnum.REVETMENT
+            ),
+            np.zeros_like(self.annual_damage),
         )
 
     @property
@@ -84,14 +90,8 @@ class TrajectProbabilities:
             [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
         )
 
-    def get_total_risk(self) -> float:
-        """
-        Get the total risk for the traject over all mechanisms.
-
-        Returns:
-            float: Total risk for the traject.
-        """
-
+    @property
+    def total_risk(self) -> float:
         return np.sum(
             self.annual_damage
             * (
