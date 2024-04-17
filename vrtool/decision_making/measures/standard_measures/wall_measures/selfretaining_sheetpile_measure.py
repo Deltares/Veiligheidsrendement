@@ -1,7 +1,6 @@
 import logging
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.measures.common_functions import get_stability_inner_depth
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_wall_measure import (
     DiaphragmWallMeasure,
@@ -64,10 +63,10 @@ class SelfretainingSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
             float: min `h_exit` value.
         """
         _h_exit_input = self._get_piping_reliability_collection(dike_section, "h_exit")
-        if not _h_exit_input:
-            return dike_section.crest_height - 3
 
         # Assume we get a list
+        if not _h_exit_input:
+            return dike_section.crest_height - 3
         return min(_h_exit_input)
 
     def _calculate_measure_costs(self, dike_section: DikeSection) -> float:
