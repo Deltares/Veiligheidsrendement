@@ -22,6 +22,7 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
     calculate_reliability,
     calculate_safety_factor,
 )
+from vrtool.flood_defence_system.dike_section import DikeSection
 
 
 def implement_berm_widening(
@@ -87,10 +88,10 @@ def implement_berm_widening(
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
             # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
             # model, hence RERUN_STIX set to True, but only for the investment year.
-            berm_input[
-                "STIXNAAM"
-            ] = _dstability_berm_widening.create_new_dstability_model(
-                path_intermediate_stix
+            berm_input["STIXNAAM"] = (
+                _dstability_berm_widening.create_new_dstability_model(
+                    path_intermediate_stix
+                )
             )
             if is_first_year_with_widening:
                 berm_input["RERUN_STIX"] = True
@@ -121,24 +122,24 @@ def implement_berm_widening(
                 measure_input["dberm"] * berm_input["dbeta/dberm"]
             )
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input[
-                    "beta_2025"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2025"]
+                berm_input["beta_2025"] = (
+                    calculate_stability_inner_reliability_with_safety_screen(
+                        berm_input["beta_2025"]
+                    )
                 )
-                berm_input[
-                    "beta_2075"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2075"]
+                berm_input["beta_2075"] = (
+                    calculate_stability_inner_reliability_with_safety_screen(
+                        berm_input["beta_2075"]
+                    )
                 )
         elif "beta" in berm_input:
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
             berm_input["beta"] = berm_input["beta"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input[
-                    "beta"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta"]
+                berm_input["beta"] = (
+                    calculate_stability_inner_reliability_with_safety_screen(
+                        berm_input["beta"]
+                    )
                 )
         else:
             raise NotImplementedError(
@@ -464,3 +465,35 @@ def probabilistic_design(
             return h_crest
         else:
             raise Exception("Unknown calculation type for {}".format(mechanism))
+
+
+def get_stability_inner_depth(dike_section: DikeSection) -> float:
+    """Gets the depth for the stability screen application.
+
+    Args:
+        dike_section (DikeSection): The section to retrieve the depth from.
+
+    Raises:
+        ValueError: Raised when there is no stability inner failure mechanism present.
+
+    Returns:
+        float: The depth to be used for the stability screen calculation.
+    """
+    stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+        MechanismEnum.STABILITY_INNER
+    )
+    if not stability_inner_reliability_collection:
+        error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
+        logging.error(error_message)
+        raise ValueError(error_message)
+
+    d_cover_input = stability_inner_reliability_collection.Reliability[
+        "0"
+    ].Input.input.get("d_cover", None)
+    if d_cover_input:
+        if d_cover_input.size > 1:
+            logging.debug("d_cover has more values than 1.")
+
+        return max([d_cover_input[0] + 2.0, 9.0])
+
+    return 9.0

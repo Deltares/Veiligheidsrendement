@@ -1,6 +1,7 @@
 import logging
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.decision_making.measures.common_functions import get_stability_inner_depth
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_wall_measure import (
     DiaphragmWallMeasure,
@@ -28,29 +29,7 @@ class SelfretainingSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
         """
         _maaiveld = 0.42
         _h_dike = dike_section.crest_height - _maaiveld
-        _d_cover = self._get_d_cover(dike_section)
+        _d_cover = get_stability_inner_depth(dike_section)
         _length_sheetpile = min((_h_dike + _d_cover) * 3, 20)
         _l_section = dike_section.Length
         return self._selfretaining_sheetpile_cost * _length_sheetpile * _l_section
-
-    def _get_d_cover(self, dike_section: DikeSection) -> float:
-        """
-        Extract from `soil_reinforcement_measure._get_depth`.
-        """
-        _stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum.STABILITY_INNER
-        )
-        if not _stability_inner_reliability_collection:
-            error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
-            logging.error(error_message)
-            raise ValueError(error_message)
-
-        d_cover_input = _stability_inner_reliability_collection.Reliability[
-            "0"
-        ].Input.input.get("d_cover", None)
-        if d_cover_input:
-            if d_cover_input.size > 1:
-                logging.debug("d_cover has more values than 1.")
-
-            return max([d_cover_input[0] + 2.0, 9.0])
-        return 9.0

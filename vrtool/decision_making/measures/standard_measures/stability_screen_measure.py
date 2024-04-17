@@ -1,12 +1,14 @@
 import copy
-import logging
 from pathlib import Path
 
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.measures.common_functions import determine_costs
+from vrtool.decision_making.measures.common_functions import (
+    determine_costs,
+    get_stability_inner_depth,
+)
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
@@ -51,33 +53,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         self.measures["Reliability"].calculate_section_reliability()
 
     def _get_depth(self, dike_section: DikeSection) -> float:
-        """Gets the depth for the stability screen application.
-        Args:
-            dike_section (DikeSection): The section to retrieve the depth from.
-        Raises:
-            ValueError: Raised when there is no stability inner failure mechanism present.
-        Returns:
-            float: The depth to be used for the stability screen calculation.
-        """
-        stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum.STABILITY_INNER
-        )
-        if not stability_inner_reliability_collection:
-            error_message = f'No StabilityInner present for stability screen measure at section "{dike_section.name}".'
-            logging.error(error_message)
-            raise ValueError(error_message)
-
-        d_cover_input = stability_inner_reliability_collection.Reliability[
-            "0"
-        ].Input.input.get("d_cover", None)
-        if d_cover_input:
-            if d_cover_input.size > 1:
-                logging.info("d_cover has more values than 1.")
-
-            return max([d_cover_input[0] + 2.0, 9.0])
-        else:
-            # TODO remove shaky assumption on depth
-            return 9.0
+        return get_stability_inner_depth(dike_section)
 
     def _get_configured_section_reliability(
         self,
@@ -120,14 +96,14 @@ class StabilityScreenMeasure(MeasureProtocol):
         )
 
         for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
-                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism
+            mechanism_reliability_collection.Reliability[year_to_calculate].Input = (
+                copy.deepcopy(
+                    dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                        mechanism
+                    )
+                    .Reliability[year_to_calculate]
+                    .Input
                 )
-                .Reliability[year_to_calculate]
-                .Input
             )
 
             mechanism_reliability = mechanism_reliability_collection.Reliability[
