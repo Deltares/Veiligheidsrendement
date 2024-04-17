@@ -59,10 +59,11 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 length=dike_section.Length,
                 depth=self.parameters.get("Depth", float("nan")),
                 dcrest=modified_measure.d_crest,
-                dberm_in=modified_measure.d_house,
+                dberm_in=int(modified_measure.d_house),
                 housing=dike_section.houses,
                 area_extra=modified_measure.area_extra,
                 area_excavated=modified_measure.area_excavated,
+                with_stability_screen=_modified_measure["StabilityScreen"].lower().strip() == "yes",
                 direction=DirectionEnum.get_enum(self.parameters["Direction"]),
             ).calculate_total_cost()
 

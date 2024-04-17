@@ -25,6 +25,8 @@ class MeasureUnitCosts:
 
     # Optionals
     sheetpile: float = float("nan")
+    diaphragm_wall: float = float("nan")
+    vertical_geotextile: float = float("nan")
 
     @classmethod
     def from_unknown_dict(cls, unknown_dict: dict):
@@ -43,7 +45,7 @@ class SoilReinforcementMeasureCalculator:
     length: float
     depth: float
     dcrest: float
-    dberm_in: float
+    dberm_in: int
     area_extra: float
     area_excavated: float
     with_stability_screen: bool = False
@@ -81,7 +83,7 @@ class SoilReinforcementMeasureCalculator:
         return total_cost
 
     def _calculate_direction_costs(self) -> float:
-        if (self.direction == DirectionEnum.OUTWARD) and (self.dberm_in > 0.0):
+        if (self.direction == DirectionEnum.OUTWARD) and (self.dberm_in > 0):
             # as we only use unit costs for outward reinforcement, and these are typically lower, the computation might be incorrect (too low).
             logging.warning(
                 "Buitenwaartse versterking met binnenwaartse berm (dijkvak {}) kan leiden tot onnauwkeurige kostenberekeningen".format(
@@ -96,7 +98,7 @@ class SoilReinforcementMeasureCalculator:
         raise ValueError("Invalid direction: {}".format(self.direction))
 
     def _calculate_housing_costs(self) -> float:
-        if self.dberm_in <= 0.0:
+        if self.dberm_in <= 0:
             # No costs to calculate.
             return 0.0
 
