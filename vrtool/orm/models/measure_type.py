@@ -11,6 +11,7 @@ class MeasureType(OrmBaseModel):
         * Soil reinforcement with stability screen
         * Vertical Geotextile
         * Diaphragm wall
+        * Self-retaining sheetpile (Selfretaining sheetpile)
     """
 
     name = CharField(unique=True)
