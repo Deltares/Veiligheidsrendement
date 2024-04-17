@@ -69,7 +69,35 @@ class TestTrajectRisk:
         # 3. Verify expectations
         assert isinstance(_init_probs_dict, dict)
 
-    def test_get_initial_total_risk(self):
+    @pytest.mark.parametrize(
+        "mechanism, result",
+        [
+            pytest.param(MechanismEnum.OVERFLOW, 10.0, id="Overflow"),
+            pytest.param(MechanismEnum.REVETMENT, 10.0, id="Revetment"),
+        ],
+    )
+    def test_get_mechanism_risk(self, mechanism: MechanismEnum, result: float):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+
+        # 2. Run test
+        _mech_risk = _tr.get_mechanism_risk(mechanism)
+
+        # 3. Verify expectations
+        assert np.sum(_mech_risk) == pytest.approx(result)
+
+    def test_get_independent_risk(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _measure = (0, 1, 1)
+
+        # 2. Run test
+        _independent_risk = _tr.get_independent_risk(_measure)
+
+        # 3. Verify expectations
+        assert np.sum(_independent_risk) == pytest.approx(11.75)
+
+    def test_get_total_risk(self):
         # 1. Define test data
         _tr = self._get_traject_risk()
 
@@ -82,7 +110,6 @@ class TestTrajectRisk:
     @pytest.mark.parametrize(
         "measure, result",
         [
-            pytest.param(None, 26.475, id="Initial"),
             pytest.param((0, 0, 0), 26.475, id="No measure"),
             pytest.param((0, 1, 0), 26.475, id="Sh section 0"),
             pytest.param((0, 0, 1), 23.75, id="Sg section 0"),
