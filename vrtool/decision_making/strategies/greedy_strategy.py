@@ -6,7 +6,6 @@ import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
-from vrtool.decision_making.strategy_evaluation import evaluate_risk, update_probability
 from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
@@ -27,9 +26,7 @@ class GreedyStrategy(StrategyProtocol):
         self.LCCOption = strategy_input.LCCOption
         self.Cint_h = strategy_input.Cint_h
         self.Cint_g = strategy_input.Cint_g
-        self.D = strategy_input.D  # REMOVE
         self.Dint = strategy_input.Dint
-        self.RiskGeotechnical = strategy_input.RiskGeotechnical  # REMOVE
         self.RiskOverflow = strategy_input.RiskOverflow  # REMOVE
         self.RiskRevetment = strategy_input.RiskRevetment  # REMOVE
 
@@ -479,28 +476,6 @@ class GreedyStrategy(StrategyProtocol):
 
         return [], 0
 
-    def _calculate_total_risk(
-        self,
-        overflow_risk: np.ndarray,
-        revetment_risk: np.ndarray,
-        independent_risk: np.ndarray,
-    ) -> float:  # REMOVE
-        return (
-            np.sum(np.max(overflow_risk, axis=0))
-            + np.sum(np.max(revetment_risk, axis=0))
-            + np.sum(independent_risk)
-        )
-
-    def _set_initial_probabilities(
-        self,
-    ) -> tuple[dict, np.ndarray, np.ndarray, np.ndarray]:  # REMOVE
-        return (
-            self.traject_risk.get_initial_probabilities(self.mechanisms),
-            self.traject_risk.get_mechanism_risk(MechanismEnum.OVERFLOW, None),
-            self.traject_risk.get_mechanism_risk(MechanismEnum.REVETMENT, None),
-            self.traject_risk.get_independent_risk(None),
-        )
-
     def evaluate(
         self,
         setting: str = "fast",
@@ -515,16 +490,10 @@ class GreedyStrategy(StrategyProtocol):
         self.Cint_g[:, 0] = 1
         self.Cint_h[:, 0] = 1
 
-        # Set initial probabilities
-        (
-            _init_probability_dict,
-            _init_overflow_risk_ndarray,
-            _init_revetment_risk_ndarray,
-            _init_independent_risk_ndarray,
-        ) = self._set_initial_probabilities()
-
         measure_list = []
-        _probabilities = [copy.deepcopy(_init_probability_dict)]  # REMOVE
+        _probabilities = [
+            copy.deepcopy(self.traject_risk.get_initial_probabilities(self.mechanisms))
+        ]
 
         risk_per_step = []
         cost_per_step = [0]
@@ -589,7 +558,7 @@ class GreedyStrategy(StrategyProtocol):
             BC_bundleOverflow = 0
             (overflow_bundle_index, BC_bundleOverflow) = self._bundling_of_measures(
                 MechanismEnum.OVERFLOW,
-                _init_overflow_risk_ndarray,
+                self.traject_risk.get_mechanism_risk(MechanismEnum.OVERFLOW),
                 copy.deepcopy(measure_list),
                 _life_cycle_cost,
             )
@@ -601,7 +570,7 @@ class GreedyStrategy(StrategyProtocol):
                     BC_bundleRevetment,
                 ) = self._bundling_of_measures(
                     MechanismEnum.REVETMENT,
-                    _init_revetment_risk_ndarray,
+                    self.traject_risk.get_mechanism_risk(MechanismEnum.REVETMENT),
                     copy.deepcopy(measure_list),
                     _life_cycle_cost,
                 )
@@ -630,9 +599,7 @@ class GreedyStrategy(StrategyProtocol):
                     if setting == "robust":
                         measure_list.append(Index_Best)
                         # update init_probability
-                        _init_probability_dict = update_probability(
-                            _init_probability_dict, self, Index_Best
-                        )
+                        self.traject_risk.update_probabilities_for_measure(Index_Best)
 
                     elif (setting == "fast") or (setting == "cautious"):
                         BC_sections = np.empty((self.opt_parameters["N"]))
@@ -671,34 +638,20 @@ class GreedyStrategy(StrategyProtocol):
                         else:
                             measure_list.append(Index_Best)
                     BC_list.append(BC[Index_Best])
-                    _init_probability_dict = update_probability(
-                        _init_probability_dict, self, Index_Best
-                    )
-                    _init_independent_risk_ndarray[Index_Best[0], :] = (
-                        self.RiskGeotechnical[Index_Best[0], Index_Best[2], :]
-                    )
-
-                    _init_overflow_risk_ndarray[Index_Best[0], :] = self.RiskOverflow[
-                        Index_Best[0], Index_Best[1], :
-                    ]
-
-                    _init_revetment_risk_ndarray[Index_Best[0], :] = self.RiskRevetment[
-                        Index_Best[0], Index_Best[1], :
-                    ]
+                    self.traject_risk.update_probabilities_for_measure(Index_Best)
 
                     # TODO update risks
                     _spent_money[Index_Best[0]] += _life_cycle_cost[Index_Best]
                     self.LCCOption[Index_Best] = 1e99
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
-                    _probabilities.append(copy.deepcopy(_init_probability_dict))
-                    _total_risk_list.append(
-                        self._calculate_total_risk(
-                            _init_overflow_risk_ndarray,
-                            _init_revetment_risk_ndarray,
-                            _init_independent_risk_ndarray,
+                    _probabilities.append(
+                        copy.deepcopy(
+                            self.traject_risk.get_initial_probabilities(self.mechanisms)
                         )
                     )
+                    _total_risk_list.append(self.traject_risk.get_total_risk())
+
                     logging.info(
                         "Enkele maatregel in optimalisatiestap {} (BC-ratio = {:.2f})".format(
                             _count, BC[Index_Best]
@@ -715,34 +668,26 @@ class GreedyStrategy(StrategyProtocol):
 
                             measure_list.append(IndexMeasure)
                             BC_list.append(BC_bundleOverflow)
-                            _init_probability_dict = update_probability(
-                                _init_probability_dict, self, IndexMeasure
+
+                            self.traject_risk.update_probabilities_for_measure(
+                                IndexMeasure
                             )
-                            _init_independent_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskGeotechnical[
-                                    IndexMeasure[0], IndexMeasure[2], :
-                                ]
-                            )
-                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
-                            )
-                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
-                            )
+
                             _spent_money[IndexMeasure[0]] += _life_cycle_cost[
                                 IndexMeasure
                             ]
                             self.LCCOption[IndexMeasure] = 1e99
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
-                            _probabilities.append(copy.deepcopy(_init_probability_dict))
-                            _total_risk_list.append(
-                                self._calculate_total_risk(
-                                    _init_overflow_risk_ndarray,
-                                    _init_revetment_risk_ndarray,
-                                    _init_independent_risk_ndarray,
+                            _probabilities.append(
+                                copy.deepcopy(
+                                    self.traject_risk.get_initial_probabilities(
+                                        self.mechanisms
+                                    )
                                 )
                             )
+                            _total_risk_list.append(self.traject_risk.get_total_risk())
+
                     logging.info(
                         "Gebundelde maatregelen voor overslag in optimalisatiestap {} (BC-ratio = {:.2f})".format(
                             _count, BC_bundleOverflow
@@ -759,37 +704,26 @@ class GreedyStrategy(StrategyProtocol):
 
                             measure_list.append(IndexMeasure)
                             BC_list.append(BC_bundleRevetment)
-                            _init_probability_dict = update_probability(
-                                _init_probability_dict, self, IndexMeasure
+
+                            self.traject_risk.update_probabilities_for_measure(
+                                IndexMeasure
                             )
-                            _init_independent_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskGeotechnical[
-                                    IndexMeasure[0], IndexMeasure[2], :
-                                ]
-                            )
-                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
-                            )
-                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = (
-                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
-                            )
+
                             _spent_money[IndexMeasure[0]] += _life_cycle_cost[
                                 IndexMeasure
                             ]
                             self.LCCOption[IndexMeasure] = 1e99
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
-                            _probabilities.append(copy.deepcopy(_init_probability_dict))
-                            _total_risk_list.append(
-                                self._calculate_total_risk(
-                                    _init_overflow_risk_ndarray,
-                                    _init_revetment_risk_ndarray,
-                                    _init_independent_risk_ndarray,
+                            _probabilities.append(
+                                copy.deepcopy(
+                                    self.traject_risk.get_initial_probabilities(
+                                        self.mechanisms
+                                    )
                                 )
                             )
-                    # add the height measures in separate entries in the measure list
+                            _total_risk_list.append(self.traject_risk.get_total_risk())
 
-                    # write them to the measure_list
                     logging.info(
                         "Gebundelde maatregelen voor bekleding in optimalisatiestap {} (BC-ratio = {:.2f})".format(
                             _count, BC_bundleRevetment

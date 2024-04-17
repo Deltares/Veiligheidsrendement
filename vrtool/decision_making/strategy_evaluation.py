@@ -1,8 +1,6 @@
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
-from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
@@ -93,37 +91,3 @@ def compute_total_risk(
     """
     annual_failure_probability = compute_annual_failure_probability(traject_probability)
     return np.sum(annual_failure_probability * annual_discounted_damage)
-
-
-def evaluate_risk(
-    init_overflow_risk: np.ndarray,
-    init_revetment_risk: np.ndarray,
-    init_geo_risk: np.ndarray,
-    strategy: StrategyProtocol,
-    n: int,
-    sh: int,
-    sg: int,
-    config: VrtoolConfig,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    for mechanism in config.mechanisms:
-        if mechanism == MechanismEnum.OVERFLOW:
-            init_overflow_risk[n, :] = strategy.RiskOverflow[n, sh, :]
-        elif mechanism == MechanismEnum.REVETMENT:
-            init_revetment_risk[n, :] = strategy.RiskRevetment[n, sh, :]
-        else:
-            init_geo_risk[n, :] = strategy.RiskGeotechnical[n, sg, :]
-    return init_overflow_risk, init_revetment_risk, init_geo_risk
-
-
-def update_probability(
-    init_probability: dict[str, np.ndarray],
-    strategy: StrategyProtocol,
-    index: tuple[int, int, int],
-):
-    """index = [n,sh,sg]"""
-    for i in init_probability:
-        if i in [MechanismEnum.OVERFLOW.name, MechanismEnum.REVETMENT.name]:
-            init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[1], :]
-        else:
-            init_probability[i][index[0], :] = strategy.Pf[i][index[0], index[2], :]
-    return init_probability
