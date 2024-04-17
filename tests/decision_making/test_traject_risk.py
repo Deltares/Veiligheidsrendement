@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.strategy_output.traject_risk import TrajectRisk
+from vrtool.decision_making.traject_risk import TrajectRisk
 
 _MECHANISMS = [
     MechanismEnum.OVERFLOW,
