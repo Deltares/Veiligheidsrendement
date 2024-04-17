@@ -22,7 +22,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         preserve_slope: bool = False,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        type = self.parameters["Type"]
+        _measure_type = self.parameters["Type"]
 
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years
@@ -30,7 +30,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         self.measures["VZG"] = "yes"
         self.measures["Cost"] = determine_costs(
             self.parameters,
-            type,
+            _measure_type,
             dike_section.Length,
             self.parameters.get("Depth", float("nan")),
             self.unit_costs,
@@ -74,14 +74,14 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         )
 
         for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
-                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism
+            mechanism_reliability_collection.Reliability[year_to_calculate].Input = (
+                copy.deepcopy(
+                    dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                        mechanism
+                    )
+                    .Reliability[year_to_calculate]
+                    .Input
                 )
-                .Reliability[year_to_calculate]
-                .Input
             )
 
             mechanism_reliability = mechanism_reliability_collection.Reliability[

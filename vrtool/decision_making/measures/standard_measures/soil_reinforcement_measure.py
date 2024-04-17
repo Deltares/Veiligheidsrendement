@@ -4,6 +4,7 @@ import logging
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.direction_enum import DirectionEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
@@ -14,6 +15,10 @@ from vrtool.decision_making.measures.common_functions import (
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.modified_dike_geometry_measure_input import (
     ModifiedDikeGeometryMeasureInput,
+)
+from vrtool.decision_making.measures.standard_measures.soil_reinforcement_measure_calculator import (
+    MeasureUnitCosts,
+    SoilReinforcementMeasureCalculator,
 )
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -33,9 +38,10 @@ class SoilReinforcementMeasure(MeasureProtocol):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
         # self. parameters = measure.parameters
-        type = self.parameters["Type"]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
+
+        _measure_unit_costs = MeasureUnitCosts.from_unknown_dict(self.unit_costs)
 
         def get_measure_data(
             modified_measure: ModifiedDikeGeometryMeasureInput,
@@ -46,20 +52,20 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["dcrest"] = modified_measure.d_crest
             _modified_measure["dberm"] = modified_measure.d_berm
             _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
-            _modified_measure["Cost"] = determine_costs(
-                self.parameters,
-                type,
-                dike_section.Length,
-                self.parameters.get("Depth", float("nan")),
-                self.unit_costs,
+
+            _modified_measure["Cost"] = SoilReinforcementMeasureCalculator(
+                section_name=dike_section.name,
+                unit_costs=_measure_unit_costs,
+                length=dike_section.Length,
+                depth=self.parameters.get("Depth", float("nan")),
                 dcrest=modified_measure.d_crest,
-                dberm_in=int(modified_measure.d_house),
+                dberm_in=modified_measure.d_house,
                 housing=dike_section.houses,
                 area_extra=modified_measure.area_extra,
                 area_excavated=modified_measure.area_excavated,
-                direction=self.parameters["Direction"],
-                section=dike_section.name,
-            )
+                direction=DirectionEnum.get_enum(self.parameters["Direction"]),
+            ).calculate_total_cost()
+
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _modified_measure
             )
