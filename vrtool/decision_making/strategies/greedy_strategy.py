@@ -7,6 +7,7 @@ import numpy as np
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.strategy_evaluation import evaluate_risk, update_probability
+from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.strategy_input.strategy_input import StrategyInput
 
@@ -22,15 +23,17 @@ class GreedyStrategy(StrategyProtocol):
         self.sections = strategy_input.sections
 
         self.opt_parameters = strategy_input.opt_parameters
-        self.Pf = strategy_input.Pf
+        self.Pf = strategy_input.Pf  # REMOVE
         self.LCCOption = strategy_input.LCCOption
         self.Cint_h = strategy_input.Cint_h
         self.Cint_g = strategy_input.Cint_g
-        self.D = strategy_input.D
+        self.D = strategy_input.D  # REMOVE
         self.Dint = strategy_input.Dint
-        self.RiskGeotechnical = strategy_input.RiskGeotechnical
-        self.RiskOverflow = strategy_input.RiskOverflow
-        self.RiskRevetment = strategy_input.RiskRevetment
+        self.RiskGeotechnical = strategy_input.RiskGeotechnical  # REMOVE
+        self.RiskOverflow = strategy_input.RiskOverflow  # REMOVE
+        self.RiskRevetment = strategy_input.RiskRevetment  # REMOVE
+
+        self.traject_risk = TrajectRisk(self.Pf, self.D)
 
         self.config = config
         self.OI_horizon = config.OI_horizon
@@ -481,7 +484,7 @@ class GreedyStrategy(StrategyProtocol):
         overflow_risk: np.ndarray,
         revetment_risk: np.ndarray,
         independent_risk: np.ndarray,
-    ) -> float:
+    ) -> float:  # REMOVE
         return (
             np.sum(np.max(overflow_risk, axis=0))
             + np.sum(np.max(revetment_risk, axis=0))
@@ -490,37 +493,12 @@ class GreedyStrategy(StrategyProtocol):
 
     def _set_initial_probabilities(
         self,
-    ) -> tuple[dict, np.ndarray, np.ndarray, np.ndarray]:
-        def get_nt_array() -> np.array:
-            return np.zeros((self.opt_parameters["N"], self.opt_parameters["T"]))
-
-        init_probability = {}
-
-        init_overflow_risk = get_nt_array()
-        init_revetment_risk = get_nt_array()
-        init_independent_risk = get_nt_array()
-
-        for mechanism in self.mechanisms:
-            init_probability[mechanism.name] = np.empty(
-                (self.opt_parameters["N"], self.opt_parameters["T"])
-            )
-            if mechanism.name not in self.Pf:
-                continue
-            for n in range(0, self.opt_parameters["N"]):
-                init_probability[mechanism.name][n, :] = self.Pf[mechanism.name][
-                    n, 0, :
-                ]
-                if mechanism == MechanismEnum.OVERFLOW:
-                    init_overflow_risk[n, :] = self.RiskOverflow[n, 0, :]
-                elif mechanism == MechanismEnum.REVETMENT:
-                    init_revetment_risk[n, :] = self.RiskRevetment[n, 0, :]
-                else:
-                    init_independent_risk[n, :] = self.RiskGeotechnical[n, 0, :]
+    ) -> tuple[dict, np.ndarray, np.ndarray, np.ndarray]:  # REMOVE
         return (
-            init_probability,
-            init_overflow_risk,
-            init_revetment_risk,
-            init_independent_risk,
+            self.traject_risk.get_initial_probabilities(self.mechanisms),
+            self.traject_risk.get_mechanism_risk(MechanismEnum.OVERFLOW, None),
+            self.traject_risk.get_mechanism_risk(MechanismEnum.REVETMENT, None),
+            self.traject_risk.get_independent_risk(None),
         )
 
     def evaluate(
@@ -546,7 +524,7 @@ class GreedyStrategy(StrategyProtocol):
         ) = self._set_initial_probabilities()
 
         measure_list = []
-        _probabilities = [copy.deepcopy(_init_probability_dict)]
+        _probabilities = [copy.deepcopy(_init_probability_dict)]  # REMOVE
 
         risk_per_step = []
         cost_per_step = [0]
@@ -558,20 +536,11 @@ class GreedyStrategy(StrategyProtocol):
         BC_list = []
 
         # list to store the total risk for each step
-        _total_risk_list = [
-            self._calculate_total_risk(
-                _init_overflow_risk_ndarray,
-                _init_revetment_risk_ndarray,
-                _init_independent_risk_ndarray,
-            )
-        ]
+        _total_risk_list = [self.traject_risk.get_total_risk()]
+
         _measures_per_section = np.zeros((self.opt_parameters["N"], 2), dtype=np.int32)
         for _count in range(0, max_count):
-            init_risk = self._calculate_total_risk(
-                _init_overflow_risk_ndarray,
-                _init_revetment_risk_ndarray,
-                _init_independent_risk_ndarray,
-            )
+            init_risk = self.traject_risk.get_total_risk()
 
             risk_per_step.append(init_risk)
             cost_per_step.append(np.sum(_spent_money))
@@ -596,29 +565,16 @@ class GreedyStrategy(StrategyProtocol):
                 # for each section, start from index 1 to prevent putting inf in top left cell
                 for sg in range(1, self.opt_parameters["Sg"]):
                     for sh in range(0, self.opt_parameters["Sh"]):
-                        if self.LCCOption[n, sh, sg] < 1e20:
-                            _life_cycle_cost[n, sh, sg] = np.subtract(
-                                self.LCCOption[n, sh, sg], _spent_money[n]
-                            )
-                            (
-                                new_overflow_risk,
-                                new_revetment_risk,
-                                new_independent_risk,
-                            ) = evaluate_risk(
-                                np.copy(_init_overflow_risk_ndarray),
-                                np.copy(_init_revetment_risk_ndarray),
-                                np.copy(_init_independent_risk_ndarray),
-                                self,
-                                n,
-                                sh,
-                                sg,
-                                self.config,
-                            )
-                            _total_risk[n, sh, sg] = self._calculate_total_risk(
-                                new_overflow_risk,
-                                new_revetment_risk,
-                                new_independent_risk,
-                            )
+                        if self.LCCOption[n, sh, sg] >= 1e20:
+                            continue
+
+                        _life_cycle_cost[n, sh, sg] = np.subtract(
+                            self.LCCOption[n, sh, sg], _spent_money[n]
+                        )
+
+                        _total_risk[n, sh, sg] = (
+                            self.traject_risk.get_total_risk_for_measure((n, sh, sg))
+                        )
 
             # do not go back:
             _life_cycle_cost = np.where(_life_cycle_cost <= 0, 1e99, _life_cycle_cost)
