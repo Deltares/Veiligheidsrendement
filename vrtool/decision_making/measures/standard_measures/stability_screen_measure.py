@@ -26,7 +26,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class StabilityScreenMeasure(MeasureProtocol):
-    # type == 'Stability Screen':
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,

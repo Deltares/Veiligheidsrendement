@@ -117,7 +117,7 @@ class SoilReinforcementMeasureCalculator:
             * self.housing.loc[self.dberm_in]["cumulative"]
         )
 
-    def calculate_total_cost(self):
+    def calculate_total_cost(self) -> float:
 
         _direction_costs = self._calculate_direction_costs()
         _housing_costs = self._calculate_housing_costs()
