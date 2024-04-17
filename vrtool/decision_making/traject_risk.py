@@ -51,14 +51,7 @@ class TrajectRisk:
         """
         _init_probabilities = {}
         for _mech in mechanisms:
-            if _mech not in self.probability_of_failure.keys():
-                _init_probabilities[_mech.name] = np.zeros(
-                    [self.num_sections, self.num_years]
-                )
-                continue
-            _init_probabilities[_mech.name] = self.probability_of_failure[_mech][
-                :, 0, :
-            ]
+            _init_probabilities[_mech.name] = self._get_mechanism_probabilities(_mech)
         return _init_probabilities
 
     def get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:
@@ -69,7 +62,7 @@ class TrajectRisk:
 
     def _get_mechanism_probabilities(self, mechanism: MechanismEnum) -> np.ndarray:
         if mechanism not in self.probability_of_failure:
-            return np.empty([self.num_sections, self.num_years])
+            return np.zeros([self.num_sections, self.num_years])
         return self.probability_of_failure[mechanism][:, 0, :]
 
     def _get_independent_probabilities(self) -> np.ndarray:
