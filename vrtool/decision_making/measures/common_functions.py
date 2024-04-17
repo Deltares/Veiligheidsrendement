@@ -87,10 +87,10 @@ def implement_berm_widening(
             #  Update the name of the stix file in the mechanism input dictionary, this is the stix that will be used
             # by the calculator later on. In this case, we need to force the wrapper to recalculate the DStability
             # model, hence RERUN_STIX set to True, but only for the investment year.
-            berm_input[
-                "STIXNAAM"
-            ] = _dstability_berm_widening.create_new_dstability_model(
-                path_intermediate_stix
+            berm_input["STIXNAAM"] = (
+                _dstability_berm_widening.create_new_dstability_model(
+                    path_intermediate_stix
+                )
             )
             if is_first_year_with_widening:
                 berm_input["RERUN_STIX"] = True
@@ -121,24 +121,24 @@ def implement_berm_widening(
                 measure_input["dberm"] * berm_input["dbeta/dberm"]
             )
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input[
-                    "beta_2025"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2025"]
+                berm_input["beta_2025"] = (
+                    calculate_stability_inner_reliability_with_safety_screen(
+                        berm_input["beta_2025"]
+                    )
                 )
-                berm_input[
-                    "beta_2075"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2075"]
+                berm_input["beta_2075"] = (
+                    calculate_stability_inner_reliability_with_safety_screen(
+                        berm_input["beta_2075"]
+                    )
                 )
         elif "beta" in berm_input:
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
             berm_input["beta"] = berm_input["beta"] + (0.13 * measure_input["dberm"])
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input[
-                    "beta"
-                ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta"]
+                berm_input["beta"] = (
+                    calculate_stability_inner_reliability_with_safety_screen(
+                        berm_input["beta"]
+                    )
                 )
         else:
             raise NotImplementedError(
@@ -361,6 +361,12 @@ def determine_costs(
                 section
             )
         )
+
+    if _measure_type_name == "soil reinforcement":
+        if int(dberm_in) == 0 and dcrest == 0.0:
+            # VRTOOL-390
+            return 0.0
+
     if "soil reinforcement" in _measure_type_name:
         if direction == "inward":
             total_cost = (

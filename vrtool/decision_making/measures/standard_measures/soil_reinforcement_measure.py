@@ -71,8 +71,6 @@ class SoilReinforcementMeasure(MeasureProtocol):
             dike_section
         )
         self.measures = list(map(get_measure_data, modified_dike_geometry_measures))
-        # VRTOOL-390
-        self.measures[0]["Cost"] = 0.0
 
     def _get_crest_range(self) -> np.ndarray:
         crest_step = self.crest_step
