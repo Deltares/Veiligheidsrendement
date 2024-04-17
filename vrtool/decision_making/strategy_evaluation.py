@@ -16,13 +16,13 @@ def implement_option(
     """Implements a measure in the traject probability dictionary.
 
     Args:
-        traject_probability (str, dict[np.ndarray]): The probabilities for each mechanism. The arrays have dimensions N x T with N the number of sections and T the number of years
+        traject_probability (dict[str, np.ndarray]): The probabilities for each mechanism. The arrays have dimensions N x T with N the number of sections and T the number of years
         measure_idx (tuple): The index of the measure to implement (section_index, sh_index, sg_index).
         measure (AggregatedMeasureCombination): The measure to implement.
 
 
     Returns:
-        dict[np.ndarray]: The updated traject probability dictionary. where the measure is implemented.
+        dict[str, np.ndarray]: The updated traject probability dictionary. where the measure is implemented.
     """
 
     t_range = list(traject_probability.values())[0].shape[
@@ -34,10 +34,10 @@ def implement_option(
             MechanismEnum.STABILITY_INNER,
             MechanismEnum.PIPING,
         ]:
-            traject_probability[mechanism_name][
-                measure_idx[0], :
-            ] = measure.sg_combination.mechanism_year_collection.get_probabilities(
-                _mechanism, np.arange(0, t_range, 1)
+            traject_probability[mechanism_name][measure_idx[0], :] = (
+                measure.sg_combination.mechanism_year_collection.get_probabilities(
+                    _mechanism, np.arange(0, t_range, 1)
+                )
             )
     return traject_probability
 

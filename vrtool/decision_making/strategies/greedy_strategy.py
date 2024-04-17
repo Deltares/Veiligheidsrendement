@@ -100,7 +100,6 @@ class GreedyStrategy(StrategyProtocol):
 
         counter_list = []  # used to store the bundle indices
         BC_list = []  # used to store BC for each bundle
-        highest_risk_section_indices = []  # used to store index of weakest section
 
         # initialize overflow risk
         new_mechanism_risk = np.copy(initial_mechanism_risk)
@@ -158,11 +157,10 @@ class GreedyStrategy(StrategyProtocol):
                 BC_list.append(0.0)
             else:
                 BC_list.append(BC)
-            highest_risk_section_indices.append(ind_highest_risk)
 
             counter_list.append(np.copy(index_counter))
 
-        return BC_list, counter_list, highest_risk_section_indices
+        return BC_list, counter_list
 
     def get_sg_sh_indices(
         self,
@@ -437,17 +435,16 @@ class GreedyStrategy(StrategyProtocol):
 
         for _idx, _ in enumerate(existing_investment_list):
             # sh
-            _calculated_investments[
-                existing_investment_list[_idx][0], 0
-            ] = existing_investment_list[_idx][1]
+            _calculated_investments[existing_investment_list[_idx][0], 0] = (
+                existing_investment_list[_idx][1]
+            )
             # sg
-            _calculated_investments[
-                existing_investment_list[_idx][0], 1
-            ] = existing_investment_list[_idx][2]
+            _calculated_investments[existing_investment_list[_idx][0], 1] = (
+                existing_investment_list[_idx][2]
+            )
 
         # prepare arrays
         sorted_sh = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
-        LCC_values = np.zeros((_life_cycle_cost.shape[0],))
         sg_indices = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
 
         # then we loop over sections to get indices of those measures that are available
@@ -461,7 +458,7 @@ class GreedyStrategy(StrategyProtocol):
             )
 
         # then we bundle the measures by getting the BC for the mechanism under consideration
-        BC_list, counter_list, weak_list = self.bundling_loop(
+        BC_list, counter_list = self.bundling_loop(
             init_mechanism_risk,
             _life_cycle_cost,
             sorted_sh,
@@ -721,9 +718,9 @@ class GreedyStrategy(StrategyProtocol):
                     _init_probability_dict = update_probability(
                         _init_probability_dict, self, Index_Best
                     )
-                    _init_independent_risk_ndarray[
-                        Index_Best[0], :
-                    ] = self.RiskGeotechnical[Index_Best[0], Index_Best[2], :]
+                    _init_independent_risk_ndarray[Index_Best[0], :] = (
+                        self.RiskGeotechnical[Index_Best[0], Index_Best[2], :]
+                    )
 
                     _init_overflow_risk_ndarray[Index_Best[0], :] = self.RiskOverflow[
                         Index_Best[0], Index_Best[1], :
@@ -765,17 +762,17 @@ class GreedyStrategy(StrategyProtocol):
                             _init_probability_dict = update_probability(
                                 _init_probability_dict, self, IndexMeasure
                             )
-                            _init_independent_risk_ndarray[
-                                IndexMeasure[0], :
-                            ] = self.RiskGeotechnical[
-                                IndexMeasure[0], IndexMeasure[2], :
-                            ]
-                            _init_overflow_risk_ndarray[
-                                IndexMeasure[0], :
-                            ] = self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
-                            _init_revetment_risk_ndarray[
-                                IndexMeasure[0], :
-                            ] = self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
+                            _init_independent_risk_ndarray[IndexMeasure[0], :] = (
+                                self.RiskGeotechnical[
+                                    IndexMeasure[0], IndexMeasure[2], :
+                                ]
+                            )
+                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = (
+                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            )
+                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = (
+                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
+                            )
                             _spent_money[IndexMeasure[0]] += _life_cycle_cost[
                                 IndexMeasure
                             ]
@@ -809,17 +806,17 @@ class GreedyStrategy(StrategyProtocol):
                             _init_probability_dict = update_probability(
                                 _init_probability_dict, self, IndexMeasure
                             )
-                            _init_independent_risk_ndarray[
-                                IndexMeasure[0], :
-                            ] = self.RiskGeotechnical[
-                                IndexMeasure[0], IndexMeasure[2], :
-                            ]
-                            _init_overflow_risk_ndarray[
-                                IndexMeasure[0], :
-                            ] = self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
-                            _init_revetment_risk_ndarray[
-                                IndexMeasure[0], :
-                            ] = self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
+                            _init_independent_risk_ndarray[IndexMeasure[0], :] = (
+                                self.RiskGeotechnical[
+                                    IndexMeasure[0], IndexMeasure[2], :
+                                ]
+                            )
+                            _init_overflow_risk_ndarray[IndexMeasure[0], :] = (
+                                self.RiskOverflow[IndexMeasure[0], IndexMeasure[1], :]
+                            )
+                            _init_revetment_risk_ndarray[IndexMeasure[0], :] = (
+                                self.RiskRevetment[IndexMeasure[0], IndexMeasure[1], :]
+                            )
                             _spent_money[IndexMeasure[0]] += _life_cycle_cost[
                                 IndexMeasure
                             ]
