@@ -11,7 +11,6 @@ Explain how you addressed the resolution of the related issue, what choices you 
 
 ### Checklist
 - [ ] Tests are either added or updated.
-- [ ] Code is formatted using our custom `black` and `isort` definitions.
 - [ ] Branch is up to date with `main`.
 - [ ] Updated documentation if needed.
 
