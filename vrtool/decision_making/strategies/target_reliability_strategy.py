@@ -1,7 +1,8 @@
 import copy
 import logging
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
+
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -373,11 +374,12 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
             if len(_valid_measures) == 0:
                 # if no measures satisfy the requirements, get the measure that is best for the mechanisms that do not satisfy the requirements
-                _valid_measures, _invalid_mechanisms = (
-                    self.get_best_measure_for_section(
-                        _section_idx,
-                        _cross_sectional_requirements,
-                    )
+                (
+                    _valid_measures,
+                    _invalid_mechanisms,
+                ) = self.get_best_measure_for_section(
+                    _section_idx,
+                    _cross_sectional_requirements,
                 )
                 # make a concatenated string of _invalid_mechanisms
                 _invalid_mechanisms_str = " en ".join(
