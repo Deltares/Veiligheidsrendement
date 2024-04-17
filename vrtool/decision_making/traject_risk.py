@@ -38,7 +38,7 @@ class TrajectRisk:
 
     def get_initial_probabilities(
         self, mechanisms: list[MechanismEnum]
-    ) -> dict[MechanismEnum, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """
         Get the initial probabilities of failure for a list of mechanisms.
         If a mechanism is not present in the traject, the probabilities are set to zero.
@@ -52,11 +52,13 @@ class TrajectRisk:
         _init_probabilities = {}
         for _mech in mechanisms:
             if _mech not in self.probability_of_failure.keys():
-                _init_probabilities[_mech] = np.zeros(
+                _init_probabilities[_mech.name] = np.zeros(
                     [self.num_sections, self.num_years]
                 )
                 continue
-            _init_probabilities[_mech] = self.probability_of_failure[_mech][:, 0, :]
+            _init_probabilities[_mech.name] = self.probability_of_failure[_mech][
+                :, 0, :
+            ]
         return _init_probabilities
 
     def get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:
@@ -181,3 +183,22 @@ class TrajectRisk:
                     _mech_prob = self._get_mechanism_probabilities(_mechanism)
                 _combined_probabilities = _combined_probabilities * (1 - _mech_prob)
         return 1 - _combined_probabilities
+
+    def update_probabilities_for_measure(self, measure: tuple[int, int, int]) -> None:
+        """
+        Update the probabilities of failure for the initial situation after applying a measure.
+
+        Args:
+            measure (tuple[int, int, int]): The section, Sh and Sg measure to apply.
+        """
+        _section = measure[0]
+        for _mech in self.mechanisms:
+            if _mech in ShMeasure.get_allowed_mechanisms():
+                _measure = measure[1]
+            elif _mech in SgMeasure.get_allowed_mechanisms():
+                _measure = measure[2]
+            else:
+                return
+            self.probability_of_failure[_mech][_section, 0, :] = (
+                self.probability_of_failure[_mech][_section, _measure, :]
+            )

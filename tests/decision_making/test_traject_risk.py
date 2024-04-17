@@ -60,14 +60,17 @@ class TestTrajectRisk:
     def test_get_initial_probabilities(self):
         # 1. Define test data
         _tr = self._get_traject_risk()
+        _mechanism = _MECHANISMS[0]
 
         # 2. Run test
         _init_probs_dict = _tr.get_initial_probabilities(
-            [_MECHANISMS[0].name, MechanismEnum.INVALID.name]
+            [_mechanism, MechanismEnum.INVALID]
         )
 
         # 3. Verify expectations
         assert isinstance(_init_probs_dict, dict)
+        assert len(_init_probs_dict) == 2
+        assert _mechanism.name in _init_probs_dict
 
     @pytest.mark.parametrize(
         "mechanism, result",
