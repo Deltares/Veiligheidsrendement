@@ -13,7 +13,7 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
 
-dike_section_cases = [
+valid_dike_section_cases = [
     dict(
         crest_height=9.98,
         section_length=397,
@@ -30,21 +30,15 @@ dike_section_cases = [
             h_exit=[3.012, 3.012, 3.012],
         ),
     ),
-    dict(
-        crest_height=9.98,
-        section_length=397,
-        piping_properties=dict(
-            not_a_valid_dict=[4.2, 2.4, 42],
-        ),
-    ),
-    dict(
-        crest_height=9.93,
-        section_length=286,
-        piping_properties=dict(
-            not_a_valid_dict=[4.2, 2.4, 42],
-        ),
-    ),
 ]
+
+
+def make_case_invalid(dike_section_case: dict) -> dict:
+    dike_section_case["piping_properties"] = dict(invalid_values=[4.2, 2.4, 42])
+    return dike_section_case
+
+
+invalid_dike_section_cases = list(map(make_case_invalid, valid_dike_section_cases))
 
 
 class TestSelfretainingSheetpileMeasure:
@@ -95,8 +89,8 @@ class TestSelfretainingSheetpileMeasure:
     @pytest.mark.parametrize(
         "indirect_dike_section",
         [
-            pytest.param(dike_section_cases[0], id="Section 1"),
-            pytest.param(dike_section_cases[1], id="Section 2"),
+            pytest.param(valid_dike_section_cases[0], id="Section 1"),
+            pytest.param(valid_dike_section_cases[1], id="Section 2"),
         ],
         indirect=True,
     )
@@ -113,8 +107,8 @@ class TestSelfretainingSheetpileMeasure:
     @pytest.mark.parametrize(
         "indirect_dike_section",
         [
-            pytest.param(dike_section_cases[2], id="Section 1 - invalid"),
-            pytest.param(dike_section_cases[3], id="Section 2 - invalid"),
+            pytest.param(invalid_dike_section_cases[0], id="Section 1 - invalid"),
+            pytest.param(invalid_dike_section_cases[1], id="Section 2 - invalid"),
         ],
         indirect=True,
     )
@@ -133,8 +127,8 @@ class TestSelfretainingSheetpileMeasure:
     @pytest.mark.parametrize(
         "indirect_dike_section",
         [
-            pytest.param(dike_section_cases[0], id="Section 1"),
-            pytest.param(dike_section_cases[1], id="Section 2"),
+            pytest.param(valid_dike_section_cases[0], id="Section 1"),
+            pytest.param(valid_dike_section_cases[1], id="Section 2"),
         ],
         indirect=True,
     )
@@ -151,8 +145,8 @@ class TestSelfretainingSheetpileMeasure:
     @pytest.mark.parametrize(
         "indirect_dike_section",
         [
-            pytest.param(dike_section_cases[2], id="Section 1 - invalid"),
-            pytest.param(dike_section_cases[3], id="Section 2 - invalid"),
+            pytest.param(invalid_dike_section_cases[0], id="Section 1 - invalid"),
+            pytest.param(invalid_dike_section_cases[1], id="Section 2 - invalid"),
         ],
         indirect=True,
     )
@@ -172,12 +166,12 @@ class TestSelfretainingSheetpileMeasure:
         "indirect_dike_section, expected_cost",
         [
             pytest.param(
-                dike_section_cases[0],
+                valid_dike_section_cases[0],
                 8734000,
                 id="Section 1",
             ),
             pytest.param(
-                dike_section_cases[1],
+                valid_dike_section_cases[1],
                 6292000,
                 id="Section 2",
             ),
@@ -190,11 +184,11 @@ class TestSelfretainingSheetpileMeasure:
         expected_cost: float,
     ):
         """
-        The parameters used for this test relate to the exact same content of the
-        database  being used in the acceptance test case:
+        The parameters used for this test relate to the exact same content and results
+        of the database being used in the acceptance test case:
         Traject 38-1, two river sections with selfretaining sheetpile [VRTOOL-344]]
 
-        Therefore, this test only validates in a "fast" way the calculation of costs
+        Thus, this test focuses on only validating the measure costs in a "fast" way,
         instead of having to run the whole `run_measures` step.
         """
 
