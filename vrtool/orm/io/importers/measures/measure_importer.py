@@ -97,7 +97,7 @@ class MeasureImporter(OrmImporterProtocol):
             "soil reinforcement": SoilReinforcementMeasure,
             "soil reinforcement with stability screen": SoilReinforcementMeasure,
             "diaphragm wall": DiaphragmWallMeasure,
-            "selfretaining sheetpile measure": SelfretainingSheetpileMeasure,
+            "selfretaining sheetpile": SelfretainingSheetpileMeasure,
             "stability screen": StabilityScreenMeasure,
             "vertical geotextile": VerticalGeotextileMeasure,
             "revetment": RevetmentMeasure,
