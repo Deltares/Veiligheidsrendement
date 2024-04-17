@@ -89,13 +89,12 @@ class TestTrajectRisk:
     def test_get_independent_risk(self):
         # 1. Define test data
         _tr = self._get_traject_risk()
-        _measure = (0, 1, 1)
 
         # 2. Run test
-        _independent_risk = _tr.get_independent_risk(_measure)
+        _independent_risk = _tr.get_independent_risk()
 
         # 3. Verify expectations
-        assert np.sum(_independent_risk) == pytest.approx(11.75)
+        assert np.sum(_independent_risk) == pytest.approx(14.475)
 
     def test_get_total_risk(self):
         # 1. Define test data

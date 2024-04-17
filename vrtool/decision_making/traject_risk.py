@@ -62,10 +62,8 @@ class TrajectRisk:
     def get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:
         return self.annual_damage * self._get_mechanism_probabilities(mechanism)
 
-    def get_independent_risk(self, measure: tuple[int, int, int]) -> np.ndarray:
-        return self.annual_damage * self._get_independent_probabilities_for_measure(
-            measure
-        )
+    def get_independent_risk(self) -> np.ndarray:
+        return self.annual_damage * self._get_independent_probabilities()
 
     def _get_mechanism_probabilities(self, mechanism: MechanismEnum) -> np.ndarray:
         if mechanism not in self.probability_of_failure:
