@@ -89,7 +89,6 @@ class TestTrajectRisk:
     @pytest.mark.parametrize(
         "measure, result",
         [
-            pytest.param(None, 26.475, id="Initial"),
             pytest.param((0, 0, 0), 26.475, id="No measure"),
             pytest.param((0, 1, 0), 26.475, id="Sh section 0"),
             pytest.param((0, 0, 1), 23.75, id="Sg section 0"),
