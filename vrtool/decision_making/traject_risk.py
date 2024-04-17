@@ -1,5 +1,3 @@
-from dataclasses import dataclass, field
-
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -7,16 +5,20 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
-@dataclass
 class TrajectRisk:
     """
     Class to calculate the risk of a traject, depending on the applied measure.
     """
 
-    probability_of_failure: dict[MechanismEnum, np.ndarray] = field(
-        default_factory=dict
-    )
+    probability_of_failure: dict[MechanismEnum, np.ndarray] = {}
     annual_damage: np.ndarray = np.array([], dtype=float)
+
+    def __init__(self, Pf: dict[str, np.ndarray], D: np.ndarray):
+        self.probability_of_failure = {
+            MechanismEnum.get_enum(_mech): np.array(_mech_probs, dtype=float)
+            for _mech, _mech_probs in Pf.items()
+        }
+        self.annual_damage = D
 
     @property
     def mechanisms(self) -> list[MechanismEnum]:
@@ -53,14 +55,21 @@ class TrajectRisk:
             _init_probabilities[_mech] = self.probability_of_failure[_mech][:, 0, :]
         return _init_probabilities
 
-    def _get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:
-        return self.annual_damage * self._get_mechanism_probabilities(mechanism, None)
+    def get_mechanism_risk(
+        self, mechanism: MechanismEnum, measure: tuple[int, int, int] | None
+    ) -> np.ndarray:
+        return self.annual_damage * self._get_mechanism_probabilities(
+            mechanism, measure
+        )
+
+    def get_independent_risk(self, measure: tuple[int, int, int] | None) -> np.ndarray:
+        return self.annual_damage * self._get_independent_probabilities(measure)
 
     def _get_mechanism_probabilities(
         self, mechanism: MechanismEnum, measure: tuple[int, int, int] | None
     ) -> np.ndarray:
         if mechanism not in self.probability_of_failure:
-            return np.empty([self.num_sections, self.num_years])
+            return np.zeros([self.num_sections, self.num_years])
         if not measure:
             return self.probability_of_failure[mechanism][:, 0, :]
         _sections = list(range(self.num_sections))
@@ -86,7 +95,7 @@ class TrajectRisk:
             [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING], measure
         )
 
-    def get_initial_total_risk(self) -> float:
+    def get_total_risk(self) -> float:
         """
         Calculate the total risk for the initial situation.
         The first Sh and Sg measure are used to calculate this.
