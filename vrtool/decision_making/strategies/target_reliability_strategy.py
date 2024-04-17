@@ -114,9 +114,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
             if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                 # look in sh, if any mechanism is not satisfied, return a False
                 if (
-                    _measure.sh_combination.mechanism_year_collection.get_probability(
-                        _mechanism, year
-                    )
+                    _measure.sh_combination.mechanism_year_collection.get_probabilities(
+                        _mechanism, [year]
+                    )[0]
                     > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
                         _mechanism
                     ]
@@ -124,9 +124,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     return False
             elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
                 if (
-                    _measure.sg_combination.mechanism_year_collection.get_probability(
-                        _mechanism, year
-                    )
+                    _measure.sg_combination.mechanism_year_collection.get_probabilities(
+                        _mechanism, [year]
+                    )[0]
                     > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
                         _mechanism
                     ]
@@ -160,16 +160,20 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 # look in sh, if any mechanism is not satisfied, return a False
                 _p_nonf = (
                     _p_nonf
-                    * _measure.sh_combination.mechanism_year_collection.get_probability(
-                        _mechanism, year
-                    )
+                    * _measure.sh_combination.mechanism_year_collection.get_probabilities(
+                        _mechanism, [year]
+                    )[
+                        0
+                    ]
                 )
             elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
                 _p_nonf = (
                     _p_nonf
-                    * _measure.sg_combination.mechanism_year_collection.get_probability(
-                        _mechanism, year
-                    )
+                    * _measure.sg_combination.mechanism_year_collection.get_probabilities(
+                        _mechanism, [year]
+                    )[
+                        0
+                    ]
                 )
         return 1 - _p_nonf
 
