@@ -22,6 +22,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class SoilReinforcementMeasure(MeasureProtocol):
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -32,7 +33,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         # Measure.__init__(self,inputs)
         # self. parameters = measure.parameters
-        type = self.parameters["Type"]
+        _measure_type = self.parameters["Type"]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
 
@@ -47,7 +48,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
             _modified_measure["Cost"] = determine_costs(
                 self.parameters,
-                type,
+                _measure_type,
                 dike_section.Length,
                 self.parameters.get("Depth", float("nan")),
                 self.unit_costs,
@@ -70,6 +71,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
             dike_section
         )
         self.measures = list(map(get_measure_data, modified_dike_geometry_measures))
+        # VRTOOL-390
+        self.measures[0]["Cost"] = 0.0
 
     def _get_crest_range(self) -> np.ndarray:
         crest_step = self.crest_step
@@ -288,9 +291,9 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 )
                 is_first_year_with_widening = False
             # put them back in the object
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = reliability_input
+            mechanism_reliability_collection.Reliability[year_to_calculate].Input = (
+                reliability_input
+            )
 
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
