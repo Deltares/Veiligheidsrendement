@@ -34,8 +34,9 @@ valid_dike_section_cases = [
 
 
 def make_case_invalid(dike_section_case: dict) -> dict:
-    dike_section_case["piping_properties"] = dict(invalid_values=[4.2, 2.4, 42])
-    return dike_section_case
+    _new_dict = dike_section_case | dict()
+    _new_dict["piping_properties"] = dict(invalid_values=[4.2, 2.4, 42])
+    return _new_dict
 
 
 invalid_dike_section_cases = list(map(make_case_invalid, valid_dike_section_cases))
