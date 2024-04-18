@@ -24,9 +24,9 @@ class GreedyStrategy(StrategyProtocol):
         self.opt_parameters = strategy_input.opt_parameters
         self.Pf = strategy_input.Pf  # REMOVE
         self.LCCOption = strategy_input.LCCOption
-        self.Cint_h = strategy_input.Cint_h
-        self.Cint_g = strategy_input.Cint_g
-        self.Dint = strategy_input.Dint
+        self.Cint_h = strategy_input.Cint_h  # REMOVE
+        self.Cint_g = strategy_input.Cint_g  # REMOVE
+        self.Dint = strategy_input.Dint  # REMOVE
         self.RiskOverflow = strategy_input.RiskOverflow  # REMOVE
         self.RiskRevetment = strategy_input.RiskRevetment  # REMOVE
 
@@ -645,7 +645,11 @@ class GreedyStrategy(StrategyProtocol):
                     self.LCCOption[Index_Best] = 1e99
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
-                    _probabilities.append(self.traject_risk.get_initial_probabilities_copy(self.mechanisms))
+                    _probabilities.append(
+                        self.traject_risk.get_initial_probabilities_copy(
+                            self.mechanisms
+                        )
+                    )
                     _total_risk_list.append(self.traject_risk.get_total_risk())
 
                     logging.info(
@@ -675,7 +679,11 @@ class GreedyStrategy(StrategyProtocol):
                             self.LCCOption[IndexMeasure] = 1e99
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
-                            _probabilities.append(self.traject_risk.get_initial_probabilities_copy(self.mechanisms))
+                            _probabilities.append(
+                                self.traject_risk.get_initial_probabilities_copy(
+                                    self.mechanisms
+                                )
+                            )
                             _total_risk_list.append(self.traject_risk.get_total_risk())
 
                     logging.info(
@@ -705,7 +713,11 @@ class GreedyStrategy(StrategyProtocol):
                             self.LCCOption[IndexMeasure] = 1e99
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
-                            _probabilities.append(self.traject_risk.get_initial_probabilities_copy(self.mechanisms))
+                            _probabilities.append(
+                                self.traject_risk.get_initial_probabilities_copy(
+                                    self.mechanisms
+                                )
+                            )
                             _total_risk_list.append(self.traject_risk.get_total_risk())
 
                     logging.info(
