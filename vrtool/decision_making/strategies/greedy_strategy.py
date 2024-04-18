@@ -30,7 +30,7 @@ class GreedyStrategy(StrategyProtocol):
         self.RiskOverflow = strategy_input.RiskOverflow  # REMOVE
         self.RiskRevetment = strategy_input.RiskRevetment  # REMOVE
 
-        self.traject_risk = TrajectRisk(self.Pf, self.D)
+        self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
 
         self.config = config
         self.OI_horizon = config.OI_horizon
