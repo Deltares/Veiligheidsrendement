@@ -17,14 +17,6 @@ class TrajectRisk:
         self._probability_of_failure = Pf
         self._annual_damage = D
 
-    def __init__(self, Pf: dict[str, np.ndarray], D: np.ndarray):
-
-        self.probability_of_failure = {
-            MechanismEnum.get_enum(_mech): np.array(_mech_probs, dtype=float)
-            for _mech, _mech_probs in Pf.items()
-        }
-        self.annual_damage = D
-
     @property
     def mechanisms(self) -> list[MechanismEnum]:
         return list(self._probability_of_failure.keys())
