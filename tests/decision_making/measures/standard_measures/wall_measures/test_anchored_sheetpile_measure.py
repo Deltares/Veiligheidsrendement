@@ -68,7 +68,7 @@ class TestAnchoredSheetpileMeasure:
         assert isinstance(_measure, MeasureProtocol)
 
     @pytest.fixture
-    def indirect_dike_section(self, request: pytest.FixtureRequest) -> DikeSection:
+    def indirect_dike_section(self, request: pytest.FixtureRequest) -> DikeSection:  # type: ignore
         _dike_section_properties = request.param
 
         # Define dike section
