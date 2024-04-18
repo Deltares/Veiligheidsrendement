@@ -29,10 +29,9 @@ class SelfretainingSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
             MechanismEnum.PIPING
         )
         if not piping_reliability_collection:
-            # TODO: better error message.
             error_message = f'No Piping present for selfretaining sheetpile measure section "{dike_section.name}".'
             logging.error(error_message)
-            raise ValueError(error_message)
+            return []
 
         return list(
             piping_reliability_collection.Reliability["0"].Input.input.get(variable, [])
