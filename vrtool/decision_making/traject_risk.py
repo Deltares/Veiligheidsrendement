@@ -10,34 +10,34 @@ class TrajectRisk:
     Class to calculate the risk of a traject, depending on the applied measure.
     """
 
-    probability_of_failure: dict[MechanismEnum, np.ndarray] = {}
-    annual_damage: np.ndarray = np.array([], dtype=float)
+    _probability_of_failure: dict[MechanismEnum, np.ndarray] = {}
+    _annual_damage: np.ndarray = np.array([], dtype=float)
 
     def __init__(self, Pf: dict[MechanismEnum, np.ndarray], D: np.ndarray):
-        self.probability_of_failure = Pf
-        self.annual_damage = D
+        self._probability_of_failure = Pf
+        self._annual_damage = D
 
     @property
     def mechanisms(self) -> list[MechanismEnum]:
-        return list(self.probability_of_failure.keys())
+        return list(self._probability_of_failure.keys())
 
     @property
     def num_sections(self) -> int:
         if not self.mechanisms:
             return 0
-        return self.probability_of_failure[self.mechanisms[0]].shape[0]
+        return self._probability_of_failure[self.mechanisms[0]].shape[0]
 
     @property
     def num_measures(self) -> int:
         if not self.mechanisms:
             return 0
-        return self.probability_of_failure[self.mechanisms[0]].shape[1]
+        return self._probability_of_failure[self.mechanisms[0]].shape[1]
 
     @property
     def num_years(self) -> int:
         if not self.mechanisms:
             return 0
-        return self.probability_of_failure[self.mechanisms[0]].shape[2]
+        return self._probability_of_failure[self.mechanisms[0]].shape[2]
 
     def get_initial_probabilities_copy(
         self, mechanisms: list[MechanismEnum]
@@ -72,9 +72,9 @@ class TrajectRisk:
             np.ndarray: The probabilities of failure for the section [Sh/Sg, t].
                         (zeros if the mechanism is not present in the traject)
         """
-        if mechanism not in self.probability_of_failure:
+        if mechanism not in self._probability_of_failure:
             return np.zeros([self.num_measures, self.num_years])
-        return self.probability_of_failure[mechanism][section, :, :]
+        return self._probability_of_failure[mechanism][section, :, :]
 
     def get_measure_probabilities(
         self, measure: tuple[int, int, int], mechanism: MechanismEnum
@@ -93,7 +93,7 @@ class TrajectRisk:
             np.ndarray: The probabilities of failure for the measure [t].
                         (zeros if the mechanism is not present in the traject)
         """
-        if mechanism not in self.probability_of_failure:
+        if mechanism not in self._probability_of_failure:
             return np.zeros([self.num_sections, self.num_years])
         _section = measure[0]
         if mechanism in ShMeasure.get_allowed_mechanisms():
@@ -102,7 +102,7 @@ class TrajectRisk:
             _measure = measure[2]
         else:
             raise ValueError(f"Mechanism {mechanism} not in allowed mechanisms")
-        return self.probability_of_failure[mechanism][_section, _measure, :]
+        return self._probability_of_failure[mechanism][_section, _measure, :]
 
     def get_measure_risk(
         self, measure: tuple[int, int, int], mechanism: MechanismEnum
@@ -121,7 +121,7 @@ class TrajectRisk:
             np.ndarray: The calculated risks for the measure [t].
                         (zeros if the mechanism is not present in the traject)
         """
-        return self.annual_damage * self.get_measure_probabilities(measure, mechanism)
+        return self._annual_damage * self.get_measure_probabilities(measure, mechanism)
 
     def get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:
         """
@@ -133,7 +133,7 @@ class TrajectRisk:
         Returns:
             np.ndarray: The calculated risks for the mechanism [N, t].
         """
-        return self.annual_damage * self._get_mechanism_probabilities(mechanism)
+        return self._annual_damage * self._get_mechanism_probabilities(mechanism)
 
     def get_independent_risk(self) -> np.ndarray:
         """
@@ -145,7 +145,7 @@ class TrajectRisk:
         Returns:
             np.ndarray: The calculated independent risks [N, t].
         """
-        return self.annual_damage * self._get_independent_probabilities()
+        return self._annual_damage * self._get_independent_probabilities()
 
     def _get_mechanism_probabilities(self, mechanism: MechanismEnum) -> np.ndarray:
         """
@@ -158,9 +158,9 @@ class TrajectRisk:
             np.ndarray: The probabilities of failure for the mechanism [N, t].
                         (zeros if the mechanism is not present in the traject)
         """
-        if mechanism not in self.probability_of_failure:
+        if mechanism not in self._probability_of_failure:
             return np.zeros([self.num_sections, self.num_years])
-        return self.probability_of_failure[mechanism][:, 0, :]
+        return self._probability_of_failure[mechanism][:, 0, :]
 
     def _get_independent_probabilities(self) -> np.ndarray:  # [N, t]
         return self._combine_probabilities(
@@ -176,7 +176,7 @@ class TrajectRisk:
             float: The total risk for the traject.
         """
         return np.sum(
-            self.annual_damage
+            self._annual_damage
             * (
                 np.max(
                     self._get_mechanism_probabilities(MechanismEnum.OVERFLOW),
@@ -208,7 +208,7 @@ class TrajectRisk:
             np.ndarray: The probabilities of failure for the mechanism after applying the measure [N, t].
                         (zeros if the mechanism is not present in the traject)
         """
-        if mechanism not in self.probability_of_failure:
+        if mechanism not in self._probability_of_failure:
             return np.zeros([self.num_sections, self.num_years])
         _sections = list(range(self.num_sections))
         _section = measure[0]
@@ -221,8 +221,8 @@ class TrajectRisk:
         _sections.remove(measure[0])
         return np.row_stack(
             (
-                self.probability_of_failure[mechanism][_section, _measure, :],
-                self.probability_of_failure[mechanism][_sections[:], 0, :],
+                self._probability_of_failure[mechanism][_section, _measure, :],
+                self._probability_of_failure[mechanism][_sections[:], 0, :],
             )
         )
 
@@ -254,7 +254,7 @@ class TrajectRisk:
             float: The total risk for the section after applying the measure.
         """
         return np.sum(
-            self.annual_damage
+            self._annual_damage
             * (
                 np.max(
                     self._get_mechanism_probabilities_for_measure(
@@ -286,10 +286,10 @@ class TrajectRisk:
         Returns:
             np.ndarray: The combined probability of failure for the selected mechanisms [N, t].
         """
-        _combined_probabilities = np.ones(self.annual_damage.shape)
+        _combined_probabilities = np.ones(self._annual_damage.shape)
 
         for _mechanism in selection:
-            if _mechanism in self.probability_of_failure.keys():
+            if _mechanism in self._probability_of_failure.keys():
                 if measure:
                     _mech_prob = self._get_mechanism_probabilities_for_measure(
                         _mechanism, measure
@@ -315,6 +315,6 @@ class TrajectRisk:
                 _measure = measure[2]
             else:
                 return
-            self.probability_of_failure[_mech][_section, 0, :] = (
-                self.probability_of_failure[_mech][_section, _measure, :]
+            self._probability_of_failure[_mech][_section, 0, :] = (
+                self._probability_of_failure[_mech][_section, _measure, :]
             )
