@@ -14,6 +14,7 @@ _MECHANISMS = [
 
 class TestTrajectRisk:
     def _get_traject_risk(self) -> TrajectRisk:
+
         _initial_probabilities = [0.2, 0.3, 0.4, 0.5]
         _section1_probabilities = [
             _initial_probabilities,
