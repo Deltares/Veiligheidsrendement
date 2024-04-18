@@ -64,7 +64,7 @@ class TestTrajectRisk:
         _mechanism = _MECHANISMS[0]
 
         # 2. Run test
-        _init_probs_dict = _tr.get_initial_probabilities(
+        _init_probs_dict = _tr.get_initial_probabilities_copy(
             [_mechanism, MechanismEnum.INVALID]
         )
 
