@@ -17,6 +17,14 @@ class TrajectRisk:
         self._probability_of_failure = Pf
         self._annual_damage = D
 
+    def __init__(self, Pf: dict[str, np.ndarray], D: np.ndarray):
+
+        self.probability_of_failure = {
+            MechanismEnum.get_enum(_mech): np.array(_mech_probs, dtype=float)
+            for _mech, _mech_probs in Pf.items()
+        }
+        self.annual_damage = D
+
     @property
     def mechanisms(self) -> list[MechanismEnum]:
         return list(self._probability_of_failure.keys())
@@ -63,9 +71,9 @@ class TrajectRisk:
 
     def get_initial_probabilities_copy(
         self, mechanisms: list[MechanismEnum]
-    ) -> dict[MechanismEnum, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """
-        Get the initial probabilities of failure for a list of mechanisms.
+        Get a copy of the initial probabilities of failure for a list of mechanisms.
         If a mechanism is not present in the traject, the probabilities are set to zero.
 
         Args:
@@ -270,7 +278,7 @@ class TrajectRisk:
         Calculate the total risk for a section after applying a measure on that section.
 
         Args:
-            measure (tuple[int, int, int]): The section, Sh and Sg measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
 
         Returns:
             float: The total risk for the section after applying the measure.
