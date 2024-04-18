@@ -75,6 +75,49 @@ class TestTrajectRisk:
             _tr.probability_of_failure[_mechanism][:, 0, :],
         )
 
+    def test_get_section_probabilities(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _mechanism = _MECHANISMS[0]
+        _section = 1
+
+        # 2. Run test
+        _section_probs = _tr.get_section_probabilities(_section, _mechanism)
+
+        # 3. Verify expectations
+        assert isinstance(_section_probs, np.ndarray)
+        assert _section_probs.shape == (3, 4)
+        assert np.sum(_section_probs) == pytest.approx(5.32)
+
+    def test_get_measure_probabilities(self):
+        # 1. Define test data
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _measure = (0, 0, 0)
+        _mechanism = _MECHANISMS[0]
+
+        # 2. Run test
+        _measure_probs = _tr.get_measure_probabilities(_measure, _mechanism)
+
+        # 3. Verify expectations
+        assert isinstance(_measure_probs, np.ndarray)
+        assert _measure_probs.shape == (4,)
+        assert np.sum(_measure_probs) == pytest.approx(1.4)
+
+    def test_get_measure_risk(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _measure = (0, 0, 0)
+        _mechanism = _MECHANISMS[0]
+
+        # 2. Run test
+        _measure_risk = _tr.get_measure_risk(_measure, _mechanism)
+
+        # 3. Verify expectations
+        assert isinstance(_measure_risk, np.ndarray)
+        assert _measure_risk.shape == (4,)
+        assert np.sum(_measure_risk) == pytest.approx(4.0)
+
     @pytest.mark.parametrize(
         "mechanism, result",
         [
