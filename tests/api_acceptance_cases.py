@@ -42,7 +42,7 @@ def _get_database_reference_path(
 @dataclass
 class AcceptanceTestCase:
     case_name: str
-    model_directory: Path
+    model_directory: str
     traject_name: str
     excluded_mechanisms: list[MechanismEnum] = field(
         default_factory=lambda: [
