@@ -31,7 +31,29 @@ class TrajectRisk:
     def num_measures(self) -> int:
         if not self.mechanisms:
             return 0
-        return self._probability_of_failure[self.mechanisms[0]].shape[1]
+        return max(
+            self._probability_of_failure[_mech].shape[1] for _mech in self.mechanisms
+        )
+
+    @property
+    def num_sh_measures(self) -> int:
+        if not self.mechanisms:
+            return 0
+        return max(
+            self._probability_of_failure[_mech].shape[1]
+            for _mech in self.mechanisms
+            if _mech in ShMeasure.get_allowed_mechanisms()
+        )
+
+    @property
+    def num_sg_measures(self) -> int:
+        if not self.mechanisms:
+            return 0
+        return max(
+            self._probability_of_failure[_mech].shape[1]
+            for _mech in self.mechanisms
+            if _mech in SgMeasure.get_allowed_mechanisms()
+        )
 
     @property
     def num_years(self) -> int:

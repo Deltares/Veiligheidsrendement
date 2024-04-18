@@ -345,6 +345,3 @@ class TestStrategyInput:
 
         # Other structures
         assert _strategy_input.D.shape == (50,)
-        assert _strategy_input.RiskGeotechnical.shape == (1, 5, 50)
-        assert _strategy_input.RiskOverflow.shape == (1, 8, 50)
-        assert _strategy_input.RiskRevetment.shape == (1, 8, 50)
