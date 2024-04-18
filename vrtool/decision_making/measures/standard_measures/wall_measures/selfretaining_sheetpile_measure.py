@@ -40,7 +40,7 @@ class SelfretainingSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
     def _get_dcover(self, dike_section: DikeSection) -> float:
         """
         VRTOOL-344 Because potentially there are multiple values for `d_cover`,
-        one per scenario, we will just take the most extreme one.
+        one per scenario, we will just take the most extreme one (greatest value).
 
         Returns:
             float: max `d_cover` value.
@@ -55,8 +55,8 @@ class SelfretainingSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
 
     def _get_maaiveld(self, dike_section: DikeSection) -> float:
         """
-        VRTOOL-344 Because potentially there are multiple values for `d_cover`,
-        one per scenario, we will just take the most extreme one.
+        VRTOOL-344 Because potentially there are multiple values for `h_exit`,
+        one per scenario, we will just take the most extreme one (lowest value).
 
         Returns:
             float: min `h_exit` value.
