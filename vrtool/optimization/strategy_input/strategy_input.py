@@ -7,12 +7,10 @@ from pandas import DataFrame as df
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.strategy_input.legacy_mapping_helper import LegacyMappingHelper
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
 )
-from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 @dataclass
@@ -79,4 +77,5 @@ class StrategyInput(StrategyInputProtocol):
             )
         )
 
+        return _strategy_input
         return _strategy_input
