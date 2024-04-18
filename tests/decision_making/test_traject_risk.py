@@ -14,6 +14,7 @@ _MECHANISMS = [
 
 class TestTrajectRisk:
     def _get_traject_risk(self) -> TrajectRisk:
+
         _initial_probabilities = [0.2, 0.3, 0.4, 0.5]
         _section1_probabilities = [
             _initial_probabilities,
@@ -26,62 +27,89 @@ class TestTrajectRisk:
             [p * 1.2 for p in _initial_probabilities],
         ]
         _probability_of_failure = {
-            _mechanism: np.array([_section1_probabilities, _section2_probabilities])
+            _mechanism.name: np.array(
+                [_section1_probabilities, _section2_probabilities]
+            )
             for _mechanism in _MECHANISMS
         }
         _annual_damage = np.array([1.0, 2.0, 3.0, 4.0])
-        return TrajectRisk(
-            probability_of_failure=_probability_of_failure, annual_damage=_annual_damage
-        )
+        return TrajectRisk(_probability_of_failure, _annual_damage)
 
     def test_initialize(self):
-        # 1./2. Run test / Define test data
-        _tr = TrajectRisk()
-
-        # 3. Verify expectations
-        assert isinstance(_tr, TrajectRisk)
-
-    def test_initialize_with_data(self):
         # 1. Define test data
         _measure_probabilities = [0.1, 0.2, 0.3, 0.4]
         _section_probabilities = [_measure_probabilities, _measure_probabilities]
 
         _probability_of_failure = {
-            MechanismEnum.OVERFLOW: np.array(
+            MechanismEnum.OVERFLOW.name: np.array(
                 [_section_probabilities],
             )
         }
         _annual_damage = np.array([1.0, 2.0, 3.0, 4.0])
 
         # 2. Run test
-        _tr = TrajectRisk(
-            probability_of_failure=_probability_of_failure,
-            annual_damage=_annual_damage,
-        )
+        _tr = TrajectRisk(_probability_of_failure, _annual_damage)
 
         # 3. Verify expectations
         assert isinstance(_tr, TrajectRisk)
-        assert np.array_equal(_tr.probability_of_failure, _probability_of_failure)
+        assert np.array_equal(
+            _tr.probability_of_failure[MechanismEnum.OVERFLOW],
+            _probability_of_failure[MechanismEnum.OVERFLOW.name],
+        )
         assert np.array_equal(_tr.annual_damage, _annual_damage)
 
-    def test_get_initial_probabilities(self):
+    def test_get_initial_probabilities_copy(self):
         # 1. Define test data
         _tr = self._get_traject_risk()
+        _mechanism = _MECHANISMS[0]
 
         # 2. Run test
-        _init_probs_dict = _tr.get_initial_probabilities(
-            [_MECHANISMS[0], MechanismEnum.INVALID]
+        _init_probs_dict = _tr.get_initial_probabilities_copy(
+            [_mechanism, MechanismEnum.INVALID]
         )
 
         # 3. Verify expectations
         assert isinstance(_init_probs_dict, dict)
+        assert len(_init_probs_dict) == 2
+        assert _mechanism.name in _init_probs_dict
+        assert np.array_equal(
+            _init_probs_dict[_mechanism.name],
+            _tr.probability_of_failure[_mechanism][:, 0, :],
+        )
 
-    def test_get_initial_total_risk(self):
+    @pytest.mark.parametrize(
+        "mechanism, result",
+        [
+            pytest.param(MechanismEnum.OVERFLOW, 10.0, id="Overflow"),
+            pytest.param(MechanismEnum.REVETMENT, 10.0, id="Revetment"),
+        ],
+    )
+    def test_get_mechanism_risk(self, mechanism: MechanismEnum, result: float):
         # 1. Define test data
         _tr = self._get_traject_risk()
 
         # 2. Run test
-        _init_risk = _tr.get_initial_total_risk()
+        _mech_risk = _tr.get_mechanism_risk(mechanism)
+
+        # 3. Verify expectations
+        assert np.sum(_mech_risk) == pytest.approx(result)
+
+    def test_get_independent_risk(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+
+        # 2. Run test
+        _independent_risk = _tr.get_independent_risk()
+
+        # 3. Verify expectations
+        assert np.sum(_independent_risk) == pytest.approx(14.475)
+
+    def test_get_total_risk(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+
+        # 2. Run test
+        _init_risk = _tr.get_total_risk()
 
         # 3. Verify expectations
         assert _init_risk == pytest.approx(26.475)
