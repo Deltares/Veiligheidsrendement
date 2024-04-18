@@ -1,10 +1,12 @@
 import numpy as np
 
+from vrtool.common.enums.mechanism_enum import MechanismEnum
+
 
 class CombinFunctions:
     @staticmethod
     def combine_probabilities(
-        prob_of_failure: dict[str, np.array], selection: list[str]
+        prob_of_failure: dict[MechanismEnum, np.array], selection: list[MechanismEnum]
     ) -> np.array:
 
         cnt = 0

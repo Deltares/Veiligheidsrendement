@@ -13,9 +13,9 @@ class TrajectRisk:
     probability_of_failure: dict[MechanismEnum, np.ndarray] = {}
     annual_damage: np.ndarray = np.array([], dtype=float)
 
-    def __init__(self, Pf: dict[str, np.ndarray], D: np.ndarray):
+    def __init__(self, Pf: dict[MechanismEnum, np.ndarray], D: np.ndarray):
         self.probability_of_failure = {
-            MechanismEnum.get_enum(_mech): np.array(_mech_probs, dtype=float)
+            _mech: np.array(_mech_probs, dtype=float)
             for _mech, _mech_probs in Pf.items()
         }
         self.annual_damage = D
@@ -38,7 +38,7 @@ class TrajectRisk:
 
     def get_initial_probabilities_copy(
         self, mechanisms: list[MechanismEnum]
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[MechanismEnum, np.ndarray]:
         """
         Get the initial probabilities of failure for a list of mechanisms.
         If a mechanism is not present in the traject, the probabilities are set to zero.
@@ -51,7 +51,7 @@ class TrajectRisk:
         """
         _init_probabilities = {}
         for _mech in mechanisms:
-            _init_probabilities[_mech.name] = np.copy(
+            _init_probabilities[_mech] = np.copy(
                 self._get_mechanism_probabilities(_mech)
             )
         return _init_probabilities

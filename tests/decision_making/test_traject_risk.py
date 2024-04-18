@@ -26,9 +26,7 @@ class TestTrajectRisk:
             [p * 1.2 for p in _initial_probabilities],
         ]
         _probability_of_failure = {
-            _mechanism.name: np.array(
-                [_section1_probabilities, _section2_probabilities]
-            )
+            _mechanism: np.array([_section1_probabilities, _section2_probabilities])
             for _mechanism in _MECHANISMS
         }
         _annual_damage = np.array([1.0, 2.0, 3.0, 4.0])
@@ -40,7 +38,7 @@ class TestTrajectRisk:
         _section_probabilities = [_measure_probabilities, _measure_probabilities]
 
         _probability_of_failure = {
-            MechanismEnum.OVERFLOW.name: np.array(
+            MechanismEnum.OVERFLOW: np.array(
                 [_section_probabilities],
             )
         }
@@ -53,7 +51,7 @@ class TestTrajectRisk:
         assert isinstance(_tr, TrajectRisk)
         assert np.array_equal(
             _tr.probability_of_failure[MechanismEnum.OVERFLOW],
-            _probability_of_failure[MechanismEnum.OVERFLOW.name],
+            _probability_of_failure[MechanismEnum.OVERFLOW],
         )
         assert np.array_equal(_tr.annual_damage, _annual_damage)
 
@@ -70,9 +68,9 @@ class TestTrajectRisk:
         # 3. Verify expectations
         assert isinstance(_init_probs_dict, dict)
         assert len(_init_probs_dict) == 2
-        assert _mechanism.name in _init_probs_dict
+        assert _mechanism in _init_probs_dict
         assert np.array_equal(
-            _init_probs_dict[_mechanism.name],
+            _init_probs_dict[_mechanism],
             _tr.probability_of_failure[_mechanism][:, 0, :],
         )
 

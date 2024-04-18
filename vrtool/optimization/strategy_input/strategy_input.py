@@ -23,7 +23,7 @@ class StrategyInput(StrategyInputProtocol):
     options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     opt_parameters: dict[str, int] = field(default_factory=dict)
     sections: list[SectionAsInput] = field(default_factory=list)
-    Pf: dict[str, np.ndarray] = field(default_factory=dict)
+    Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
     RiskGeotechnical: np.ndarray = np.array([])
@@ -43,11 +43,11 @@ class StrategyInput(StrategyInputProtocol):
         """
 
         def _get_independent_probability_of_failure(
-            probability_of_failure_lookup: dict[str, np.array]
+            probability_of_failure_lookup: dict[MechanismEnum, np.array]
         ) -> np.array:
             return CombinFunctions.combine_probabilities(
                 probability_of_failure_lookup,
-                [m.name for m in SgMeasure.get_allowed_mechanisms()],
+                SgMeasure.get_allowed_mechanisms(),
             )
 
         _strategy_input = cls(
@@ -111,7 +111,7 @@ class StrategyInput(StrategyInputProtocol):
         )
 
         _strategy_input.RiskOverflow = _strategy_input.Pf[
-            MechanismEnum.OVERFLOW.name
+            MechanismEnum.OVERFLOW
         ] * np.tile(
             _strategy_input.D.T,
             (_strategy_input._num_sections, _strategy_input._max_sh + 1, 1),
@@ -120,7 +120,7 @@ class StrategyInput(StrategyInputProtocol):
         # - for revetment
         if MechanismEnum.REVETMENT in mechanisms:
             _strategy_input.RiskRevetment = _strategy_input.Pf[
-                MechanismEnum.REVETMENT.name
+                MechanismEnum.REVETMENT
             ] * np.tile(
                 _strategy_input.D.T,
                 (_strategy_input._num_sections, _strategy_input._max_sh + 1, 1),
