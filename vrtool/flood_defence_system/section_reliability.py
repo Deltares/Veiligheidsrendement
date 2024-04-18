@@ -36,9 +36,9 @@ class SectionReliability:
                 )
 
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
-                    _pf_mechanisms_time[_count, _range_idx] = (
-                        _mechanism_collection.Reliability[str(_range_val)].Pf
-                    )
+                    _pf_mechanisms_time[
+                        _count, _range_idx
+                    ] = _mechanism_collection.Reliability[str(_range_val)].Pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     pf = _mechanism_collection.Reliability[str(_range_val)].Pf
                     # underneath one can choose whether to upscale within sections or not:

@@ -32,10 +32,10 @@ def implement_option(
             MechanismEnum.STABILITY_INNER,
             MechanismEnum.PIPING,
         ]:
-            traject_probability[mechanism_name][measure_idx[0], :] = (
-                measure.sg_combination.mechanism_year_collection.get_probabilities(
-                    _mechanism, np.arange(0, t_range, 1)
-                )
+            traject_probability[mechanism_name][
+                measure_idx[0], :
+            ] = measure.sg_combination.mechanism_year_collection.get_probabilities(
+                _mechanism, np.arange(0, t_range, 1)
             )
     return traject_probability
 

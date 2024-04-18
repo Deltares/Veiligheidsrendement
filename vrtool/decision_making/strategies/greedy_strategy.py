@@ -435,13 +435,13 @@ class GreedyStrategy(StrategyProtocol):
 
         for _idx, _ in enumerate(existing_investment_list):
             # sh
-            _calculated_investments[existing_investment_list[_idx][0], 0] = (
-                existing_investment_list[_idx][1]
-            )
+            _calculated_investments[
+                existing_investment_list[_idx][0], 0
+            ] = existing_investment_list[_idx][1]
             # sg
-            _calculated_investments[existing_investment_list[_idx][0], 1] = (
-                existing_investment_list[_idx][2]
-            )
+            _calculated_investments[
+                existing_investment_list[_idx][0], 1
+            ] = existing_investment_list[_idx][2]
 
         # prepare arrays
         sorted_sh = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
@@ -541,9 +541,9 @@ class GreedyStrategy(StrategyProtocol):
                             self.LCCOption[n, sh, sg], _spent_money[n]
                         )
 
-                        _total_risk[n, sh, sg] = (
-                            self.traject_risk.get_total_risk_for_measure((n, sh, sg))
-                        )
+                        _total_risk[
+                            n, sh, sg
+                        ] = self.traject_risk.get_total_risk_for_measure((n, sh, sg))
 
             # do not go back:
             _life_cycle_cost = np.where(_life_cycle_cost <= 0, 1e99, _life_cycle_cost)
