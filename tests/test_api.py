@@ -315,7 +315,7 @@ class TestApiRunWorkflowsAcceptance:
         indirect=True,
     )
     def test_run_step_optimization_acceptance_test_case(
-        self, valid_vrtool_config: VrtoolConfig, request: pytest.FixtureRequest
+        self, valid_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
         _new_optimization_name = "Basisberekening"
