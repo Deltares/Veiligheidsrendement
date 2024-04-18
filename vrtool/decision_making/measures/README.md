@@ -8,7 +8,7 @@ We differenciate between two types of measures:
 
 - Standard measures, predefined set of measures which we support and have explicit logic for. They are contained within the submodule `standard_measures` and consist of:
     - Diaphragm wall (`DiaphragmWallMeasure`),
-    - Selfretaining sheetpile (`SelfretainingSheetpileMeasure`), a subtype from `DiaphragmWallMeasure`,
+    - Anchored sheetpile (`AnchoredSheetpileMeasure`), a subtype from `DiaphragmWallMeasure`,
     - Soil reinforcement (`SoilReinforcementMeasure`),
     - Stability screen (`StabilityScreenMeasure`),
     - Vertical geotextile measure (`VerticalGeotextileMeasure`),

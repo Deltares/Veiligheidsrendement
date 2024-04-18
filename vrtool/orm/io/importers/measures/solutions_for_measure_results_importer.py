@@ -23,9 +23,6 @@ from vrtool.decision_making.measures.standard_measures.vertical_geotextile_measu
 from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_wall_measure import (
     DiaphragmWallMeasure,
 )
-from vrtool.decision_making.measures.standard_measures.wall_measures.selfretaining_sheetpile_measure import (
-    SelfretainingSheetpileMeasure,
-)
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -88,9 +85,9 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
             logging.error("Only first record will be set as for the measures.")
 
         measure.measures = _imported_results[0]
-        if isinstance(measure, DiaphragmWallMeasure) or isinstance(
-            measure, SelfretainingSheetpileMeasure
-        ):
+        if isinstance(measure, DiaphragmWallMeasure):
+            # NOTE: This check also includes `AnchoredSheetpileMeasure`
+            # as it implements the `DiaphragmWallMeasure`
             measure.measures["DiaphragmWall"] = "yes"
         elif isinstance(measure, VerticalGeotextileMeasure):
             measure.measures["VZG"] = "yes"
