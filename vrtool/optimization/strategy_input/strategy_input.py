@@ -34,14 +34,6 @@ class StrategyInput(StrategyInputProtocol):
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
 
-        def _get_independent_probability_of_failure(
-            probability_of_failure_lookup: dict[MechanismEnum, np.array]
-        ) -> np.array:
-            return CombinFunctions.combine_probabilities(
-                probability_of_failure_lookup,
-                SgMeasure.get_allowed_mechanisms(),
-            )
-
         _strategy_input = cls(
             design_method=design_method, sections=section_as_input_collection
         )
