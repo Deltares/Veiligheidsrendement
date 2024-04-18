@@ -491,9 +491,7 @@ class GreedyStrategy(StrategyProtocol):
         self.Cint_h[:, 0] = 1
 
         measure_list = []
-        _probabilities = [
-            self.traject_risk.get_initial_probabilities_copy(self.mechanisms)
-        ]
+        _probabilities = [self.traject_risk.get_initial_probabilities(self.mechanisms)]
 
         risk_per_step = []
         cost_per_step = [0]
@@ -646,9 +644,7 @@ class GreedyStrategy(StrategyProtocol):
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     _probabilities.append(
-                        self.traject_risk.get_initial_probabilities_copy(
-                            self.mechanisms
-                        )
+                        self.traject_risk.get_initial_probabilities(self.mechanisms)
                     )
                     _total_risk_list.append(self.traject_risk.get_total_risk())
 
@@ -680,7 +676,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities(
                                     self.mechanisms
                                 )
                             )
@@ -714,7 +710,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities(
                                     self.mechanisms
                                 )
                             )
