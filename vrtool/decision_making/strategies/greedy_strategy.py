@@ -24,9 +24,6 @@ class GreedyStrategy(StrategyProtocol):
         self.opt_parameters = strategy_input.opt_parameters
         self.Pf = strategy_input.Pf  # REMOVE
         self.LCCOption = strategy_input.LCCOption
-        self.Cint_h = strategy_input.Cint_h  # REMOVE
-        self.Cint_g = strategy_input.Cint_g  # REMOVE
-        self.Dint = strategy_input.Dint  # REMOVE
         self.RiskOverflow = strategy_input.RiskOverflow  # REMOVE
         self.RiskRevetment = strategy_input.RiskRevetment  # REMOVE
 
@@ -132,8 +129,18 @@ class GreedyStrategy(StrategyProtocol):
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
                     :,
                 ]
+                a = self.traject_risk.get_mechanism_risk(MechanismEnum.OVERFLOW)[
+                    ind_highest_risk,
+                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
+                    :,
+                ]
             elif mechanism == MechanismEnum.REVETMENT:
                 new_mechanism_risk[ind_highest_risk, :] = self.RiskRevetment[
+                    ind_highest_risk,
+                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
+                    :,
+                ]
+                a = self.traject_risk.probability_of_failure[MechanismEnum.REVETMENT][
                     ind_highest_risk,
                     sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
                     :,
@@ -478,11 +485,7 @@ class GreedyStrategy(StrategyProtocol):
         """This is the main routine for a greedy evaluation of all solutions."""
         start = time.time()
 
-        # set start values:
-        self.Cint_g[:, 0] = 1
-        self.Cint_h[:, 0] = 1
-
-        measure_list = []
+        measure_list: list[tuple[int, int, int]] = []
         _probabilities = [
             self.traject_risk.get_initial_probabilities_copy(self.mechanisms)
         ]

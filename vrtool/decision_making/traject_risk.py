@@ -14,10 +14,7 @@ class TrajectRisk:
     annual_damage: np.ndarray = np.array([], dtype=float)
 
     def __init__(self, Pf: dict[MechanismEnum, np.ndarray], D: np.ndarray):
-        self.probability_of_failure = {
-            _mech: np.array(_mech_probs, dtype=float)
-            for _mech, _mech_probs in Pf.items()
-        }
+        self.probability_of_failure = Pf
         self.annual_damage = D
 
     @property
@@ -47,7 +44,7 @@ class TrajectRisk:
             mechanisms (list[MechanismEnum]): List of mechanisms to get the initial probabilities for.
 
         Returns:
-            dict[MechanismEnum, np.ndarray]: The initial probabilities of failure for the mechanisms.
+            dict[MechanismEnum, np.ndarray]: The initial probabilities of failure for the mechanisms [N, Sh/Sg, t].
         """
         _init_probabilities = {}
         for _mech in mechanisms:
@@ -57,17 +54,37 @@ class TrajectRisk:
         return _init_probabilities
 
     def get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:
+        """
+        Get the risks for a specific mechanism for a traject, based on the initial probabilities.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to get the risk for.
+
+        Returns:
+            np.ndarray: The calculated risks for the mechanism [N, t].
+        """
         return self.annual_damage * self._get_mechanism_probabilities(mechanism)
 
     def get_independent_risk(self) -> np.ndarray:
+        """
+        Get the independent risks for a traject, based on the initial probabilities.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to get the risk for.
+
+        Returns:
+            np.ndarray: The calculated independent risks [N, t].
+        """
         return self.annual_damage * self._get_independent_probabilities()
 
-    def _get_mechanism_probabilities(self, mechanism: MechanismEnum) -> np.ndarray:
+    def _get_mechanism_probabilities(
+        self, mechanism: MechanismEnum
+    ) -> np.ndarray:  # [N, t]
         if mechanism not in self.probability_of_failure:
             return np.zeros([self.num_sections, self.num_years])
         return self.probability_of_failure[mechanism][:, 0, :]
 
-    def _get_independent_probabilities(self) -> np.ndarray:
+    def _get_independent_probabilities(self) -> np.ndarray:  # [N, t]
         return self._combine_probabilities(
             [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING], None
         )
@@ -97,7 +114,7 @@ class TrajectRisk:
 
     def _get_mechanism_probabilities_for_measure(
         self, mechanism: MechanismEnum, measure: tuple[int, int, int]
-    ) -> np.ndarray:
+    ) -> np.ndarray:  # [N, t]
         if mechanism not in self.probability_of_failure:
             return np.zeros([self.num_sections, self.num_years])
         _sections = list(range(self.num_sections))
@@ -118,7 +135,7 @@ class TrajectRisk:
 
     def _get_independent_probabilities_for_measure(
         self, measure: tuple[int, int, int]
-    ) -> np.ndarray:
+    ) -> np.ndarray:  # [N, t]
         return self._combine_probabilities(
             [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING], measure
         )
@@ -164,7 +181,7 @@ class TrajectRisk:
             selection (list[MechanismEnum]): Mechanisms to consider.
 
         Returns:
-            np.ndarray: The combined probability of failure for the selected mechanisms.
+            np.ndarray: The combined probability of failure for the selected mechanisms [N, t].
         """
         _combined_probabilities = np.ones(self.annual_damage.shape)
 
@@ -181,7 +198,8 @@ class TrajectRisk:
 
     def update_probabilities_for_measure(self, measure: tuple[int, int, int]) -> None:
         """
-        Update the probabilities of failure for the initial situation after applying a measure.
+        Update the probabilities of failure for the initial situation after applying a measure
+        by copying the measure possibilities to the initial situation.
 
         Args:
             measure (tuple[int, int, int]): The section, Sh and Sg measure to apply.

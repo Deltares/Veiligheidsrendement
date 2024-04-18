@@ -26,9 +26,6 @@ class StrategyInput(StrategyInputProtocol):
     Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
-    RiskGeotechnical: np.ndarray = np.array([])
-    RiskOverflow: np.ndarray = np.array([])
-    RiskRevetment: np.ndarray = np.array([])
     _num_sections: int = 0
     _max_year: int = 0
     _max_sg: int = 0
@@ -135,18 +132,3 @@ class StrategyInput(StrategyInputProtocol):
             )
 
         return _strategy_input
-
-    @property
-    def Cint_h(self) -> np.ndarray:
-        # Decision variables for executed options [N, Sh]
-        return np.zeros((self._num_sections, self._max_sh))
-
-    @property
-    def Cint_g(self) -> np.ndarray:
-        # Decision variables for executed options [N, Sg]
-        return np.zeros((self._num_sections, self._max_sg))
-
-    @property
-    def Dint(self) -> np.ndarray:
-        # Decision variables for weakest overflow section with dims [N, Sh]
-        return np.zeros((self._num_sections, self._max_sh))
