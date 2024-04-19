@@ -377,7 +377,7 @@ class GreedyStrategy(StrategyProtocol):
                     current_pf_overflow = self.sections[
                         section_no
                     ].initial_assessment.get_probabilities(
-                        MechanismEnum.OVERFLOW,
+                        MechanismEnum.REVETMENT,
                         np.arange(0, self.traject_risk.num_years),
                     )
                     measure_pfs = self.traject_risk.get_section_probabilities(
