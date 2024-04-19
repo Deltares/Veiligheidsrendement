@@ -9,6 +9,8 @@ from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure import (
     RevetmentMeasure,
 )
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import RevetmentMeasureResultCollection
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_section_reliability import RevetmentMeasureSectionReliability
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
@@ -17,6 +19,7 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
@@ -26,37 +29,6 @@ class TestRevetmentMeasure:
         _revetment_measure = RevetmentMeasure()
         assert isinstance(_revetment_measure, RevetmentMeasure)
         assert isinstance(_revetment_measure, MeasureProtocol)
-
-    def test_get_min_beta_target(self):
-        # 1. Define test data.
-        _test_dike_section = DikeSection()
-        _computation_years = [0, 2, 6, 20]
-        shuffle(_computation_years)
-        _mech_reliability_collection = MechanismReliabilityCollection(
-            mechanism=MechanismEnum.REVETMENT,
-            computation_type="nvt",
-            computation_years=_computation_years,
-            t_0=0,
-            measure_year=2025,
-        )
-        for _idx, _computation_year in enumerate(_computation_years):
-            _mech_reliability_collection.Reliability[
-                str(_computation_year)
-            ].Beta = 0.24 + (0.24 * _idx)
-        _test_dike_section.section_reliability.failure_mechanisms._failure_mechanisms[
-            MechanismEnum.REVETMENT
-        ] = _mech_reliability_collection
-
-        # 2. Run test
-        _min_beta = RevetmentMeasure()._get_min_beta_target(_test_dike_section)
-
-        # 3. Verify expectations.
-        assert (
-            _min_beta
-            == _mech_reliability_collection.Reliability[
-                str(min(_computation_years))
-            ].Beta
-        )
 
     def test_get_beta_max(self):
         """
@@ -240,3 +212,54 @@ class TestRevetmentMeasure:
         assert _transition_level_vector[0] == _current_transition_level
         assert _transition_level_vector[-1] == _max_transition_level
         assert_array_almost_equal(_transition_level_vector, expected_result)
+
+    def _get_revetment_measure_result(self, cost: float, beta: float) -> RevetmentMeasureSectionReliability:
+        """
+        returns a RevetmentMeasureSectionReliability
+
+        Args:
+            cost (float): the cost of this measure
+            beta (float): the resulting beta of this measure
+
+        Returns:
+            RevetmentMeasureSectionReliability: the measure result
+        """
+        class MockedSectionReliability(SectionReliability):
+            """
+            test class to get a section reliability
+            """
+            def __init__(self):
+                self.SectionReliability = { "0": {"Section": beta}}
+
+        _msr = RevetmentMeasureSectionReliability()
+        _msr.cost = cost
+        _msr.section_reliability = MockedSectionReliability()
+        return _msr
+
+    def test_filtering_keep_all(self):
+        """
+        test the filtering of revetment measures with a situation that no measure is filtered
+        """
+        msr = RevetmentMeasure()
+        msr.measures = RevetmentMeasureResultCollection()
+        msr.measures.result_collection.append(self._get_revetment_measure_result(23.0, 3.0))
+        msr.measures.result_collection.append(self._get_revetment_measure_result(24.0, 3.1))
+        msr.measures.result_collection.append(self._get_revetment_measure_result(25.0, 3.2))
+        msr.measures.result_collection.append(self._get_revetment_measure_result(26.0, 3.3))
+        msr._get_filtered_measures()
+        assert len(msr.measures.result_collection) == 4
+
+    def test_filtering_removed_two(self):
+        """
+        test the filtering of revetment measures with a situation where two measures are filtered away
+        """
+        msr = RevetmentMeasure()
+        msr.measures = RevetmentMeasureResultCollection()
+        msr.measures.result_collection.append(self._get_revetment_measure_result(23.1, 3.0))
+        msr.measures.result_collection.append(self._get_revetment_measure_result(24.0, 2.9))
+        msr.measures.result_collection.append(self._get_revetment_measure_result(25.0, 3.2))
+        msr.measures.result_collection.append(self._get_revetment_measure_result(26.0, 3.3))
+        # now add one that lower cost and higher beta than the first two:
+        msr.measures.result_collection.append(self._get_revetment_measure_result(23.0, 3.1))
+        msr._get_filtered_measures()
+        assert len(msr.measures.result_collection) == 3
