@@ -14,7 +14,7 @@ class StrategyProtocol(Protocol):
     time_periods: list[int]
     measures_taken: list[tuple[int, int, int]]
     total_risk_per_step: list[float]
-    probabilities_per_step: dict[MechanismEnum, np.ndarray]
+    probabilities_per_step: list[dict[MechanismEnum, np.ndarray]]
 
     def evaluate(self, *args, **kwargs):
         """
