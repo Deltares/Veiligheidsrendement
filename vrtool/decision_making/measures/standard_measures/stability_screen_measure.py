@@ -94,36 +94,31 @@ class StabilityScreenMeasure(MeasureProtocol):
             mechanism, calc_type, self.config.T, self.config.t_0, 0
         )
 
-        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
+        for _year_to_calculate, _collection in mechanism_reliability_collection.Reliability.items():
+            _collection.Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
-                .Reliability[year_to_calculate]
+                .Reliability[_year_to_calculate]
                 .Input
             )
 
-            mechanism_reliability = mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ]
             dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                 mechanism
             ).Reliability[
-                year_to_calculate
+                _year_to_calculate
             ]
-            if float(year_to_calculate) >= self.parameters["year"]:
+            if float(_year_to_calculate) >= self.parameters["year"]:
                 if mechanism == MechanismEnum.STABILITY_INNER:
                     self._configure_stability_inner(
-                        mechanism_reliability,
-                        year_to_calculate,
+                        _collection,
+                        _year_to_calculate,
                         dike_section,
                         safety_factor_increase,
                     )
                 if mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW]:
                     self._copy_results(
-                        mechanism_reliability, dike_section_mechanism_reliability
+                        _collection, dike_section_mechanism_reliability
                     )  # No influence
 
         mechanism_reliability_collection.generate_LCR_profile(
@@ -143,7 +138,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         mechanism_reliability: MechanismReliability,
         year_to_calculate: str,
         dike_section: DikeSection,
-        SFincrease: float = 0.2,
+        safety_factor_increase: float = 0.2,
     ) -> None:
         _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][
             1
@@ -177,7 +172,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             _dstability_wrapper.save_dstability_model(_export_path)
             _dstability_wrapper.rerun_stix()
 
-            # Calculate reliaiblity
+            # Calculate reliability
             mechanism_reliability_input["beta"] = calculate_reliability(
                 np.array([_dstability_wrapper.get_safety_factor()])
             )
@@ -185,8 +180,8 @@ class StabilityScreenMeasure(MeasureProtocol):
         elif _calc_type == "SIMPLE":
             if int(year_to_calculate) >= self.parameters["year"]:
                 if "SF_2025" in mechanism_reliability_input:
-                    mechanism_reliability_input["SF_2025"] += SFincrease
-                    mechanism_reliability_input["SF_2075"] += SFincrease
+                    mechanism_reliability_input["SF_2025"] += safety_factor_increase
+                    mechanism_reliability_input["SF_2075"] += safety_factor_increase
                 elif "beta_2025" in mechanism_reliability.Input.input:
                     # convert to SF and back:
                     mechanism_reliability_input["beta_2025"] = calculate_reliability(
@@ -194,7 +189,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta_2025"]
                             ),
-                            SFincrease,
+                            safety_factor_increase,
                         )
                     )
                     mechanism_reliability_input["beta_2075"] = calculate_reliability(
@@ -202,7 +197,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta_2075"]
                             ),
-                            SFincrease,
+                            safety_factor_increase,
                         )
                     )
                 else:
@@ -211,6 +206,6 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta"]
                             ),
-                            SFincrease,
+                            safety_factor_increase,
                         )
                     )
