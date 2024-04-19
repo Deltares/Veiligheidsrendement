@@ -9,8 +9,12 @@ from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.revetment_measure import (
     RevetmentMeasure,
 )
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import RevetmentMeasureResultCollection
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_section_reliability import RevetmentMeasureSectionReliability
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
+    RevetmentMeasureResultCollection,
+)
+from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_section_reliability import (
+    RevetmentMeasureSectionReliability,
+)
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
 )
@@ -213,7 +217,9 @@ class TestRevetmentMeasure:
         assert _transition_level_vector[-1] == _max_transition_level
         assert_array_almost_equal(_transition_level_vector, expected_result)
 
-    def _get_revetment_measure_result(self, cost: float, beta: float) -> RevetmentMeasureSectionReliability:
+    def _get_revetment_measure_result(
+        self, cost: float, beta: float
+    ) -> RevetmentMeasureSectionReliability:
         """
         returns a RevetmentMeasureSectionReliability
 
@@ -224,12 +230,14 @@ class TestRevetmentMeasure:
         Returns:
             RevetmentMeasureSectionReliability: the measure result
         """
+
         class MockedSectionReliability(SectionReliability):
             """
             test class to get a section reliability
             """
+
             def __init__(self):
-                self.SectionReliability = { "0": {"Section": beta}}
+                self.SectionReliability = {"0": {"Section": beta}}
 
         _msr = RevetmentMeasureSectionReliability()
         _msr.cost = cost
@@ -242,10 +250,18 @@ class TestRevetmentMeasure:
         """
         msr = RevetmentMeasure()
         msr.measures = RevetmentMeasureResultCollection()
-        msr.measures.result_collection.append(self._get_revetment_measure_result(23.0, 3.0))
-        msr.measures.result_collection.append(self._get_revetment_measure_result(24.0, 3.1))
-        msr.measures.result_collection.append(self._get_revetment_measure_result(25.0, 3.2))
-        msr.measures.result_collection.append(self._get_revetment_measure_result(26.0, 3.3))
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.0, 3.0)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(24.0, 3.1)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(25.0, 3.2)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(26.0, 3.3)
+        )
         msr._get_filtered_measures()
         assert len(msr.measures.result_collection) == 4
 
@@ -255,11 +271,21 @@ class TestRevetmentMeasure:
         """
         msr = RevetmentMeasure()
         msr.measures = RevetmentMeasureResultCollection()
-        msr.measures.result_collection.append(self._get_revetment_measure_result(23.1, 3.0))
-        msr.measures.result_collection.append(self._get_revetment_measure_result(24.0, 2.9))
-        msr.measures.result_collection.append(self._get_revetment_measure_result(25.0, 3.2))
-        msr.measures.result_collection.append(self._get_revetment_measure_result(26.0, 3.3))
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.1, 3.0)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(24.0, 2.9)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(25.0, 3.2)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(26.0, 3.3)
+        )
         # now add one that lower cost and higher beta than the first two:
-        msr.measures.result_collection.append(self._get_revetment_measure_result(23.0, 3.1))
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.0, 3.1)
+        )
         msr._get_filtered_measures()
         assert len(msr.measures.result_collection) == 3
