@@ -91,7 +91,6 @@ class TestTrajectRisk:
 
     def test_get_measure_probabilities(self):
         # 1. Define test data
-        # 1. Define test data
         _tr = self._get_traject_risk()
         _measure = (0, 0, 0)
         _mechanism = _MECHANISMS[0]

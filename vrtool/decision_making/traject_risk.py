@@ -136,9 +136,6 @@ class TrajectRisk:
             measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to get the risks for.
             mechanism (MechanismEnum): The mechanism to get the risk for.
 
-        Raises:
-            ValueError: The mechanism is not in the allowed mechanisms.
-
         Returns:
             np.ndarray: The calculated risks for the measure [t].
                         (zeros if the mechanism is not present in the traject)
