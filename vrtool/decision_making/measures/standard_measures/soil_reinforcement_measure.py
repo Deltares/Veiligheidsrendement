@@ -257,9 +257,9 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 )
                 is_first_year_with_widening = False
             # put them back in the object
-            mechanism_reliability_collection.Reliability[year_to_calculate].Input = (
-                reliability_input
-            )
+            mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ].Input = reliability_input
 
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,

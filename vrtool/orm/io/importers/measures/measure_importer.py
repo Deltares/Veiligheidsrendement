@@ -63,12 +63,12 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.parameters["max_inward"] = orm_measure.max_inward_reinforcement
         _measure.parameters["year"] = orm_measure.measure.year
         _measure.parameters["P_solution"] = orm_measure.prob_of_solution_failure
-        _measure.parameters["Pf_solution"] = (
-            orm_measure.failure_probability_with_solution
-        )
-        _measure.parameters["transition_level_increase_step"] = (
-            orm_measure.transition_level_increase_step
-        )
+        _measure.parameters[
+            "Pf_solution"
+        ] = orm_measure.failure_probability_with_solution
+        _measure.parameters[
+            "transition_level_increase_step"
+        ] = orm_measure.transition_level_increase_step
         _measure.parameters["max_pf_factor_block"] = orm_measure.max_pf_factor_block
         _measure.parameters["n_steps_block"] = orm_measure.n_steps_block
         _measure.parameters["ID"] = orm_measure.get_id()

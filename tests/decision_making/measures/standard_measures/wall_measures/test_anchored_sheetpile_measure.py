@@ -57,7 +57,6 @@ invalid_dike_section_cases = list(map(make_case_invalid, valid_dike_section_case
 
 
 class TestAnchoredSheetpileMeasure:
-
     def test_initialize(self):
         # 1. Run test.
         _measure = AnchoredSheetpileMeasure()
@@ -92,9 +91,9 @@ class TestAnchoredSheetpileMeasure:
         )
 
         # We only need to define year 0
-        _custom_reliability_collection.Reliability["0"].Input.input = (
-            _custom_section.piping_properties
-        )
+        _custom_reliability_collection.Reliability[
+            "0"
+        ].Input.input = _custom_section.piping_properties
         _custom_section.section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
             _custom_reliability_collection
         )

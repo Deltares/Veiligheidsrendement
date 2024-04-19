@@ -26,7 +26,6 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class StabilityScreenMeasure(MeasureProtocol):
-
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -96,14 +95,14 @@ class StabilityScreenMeasure(MeasureProtocol):
         )
 
         for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[year_to_calculate].Input = (
-                copy.deepcopy(
-                    dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                        mechanism
-                    )
-                    .Reliability[year_to_calculate]
-                    .Input
+            mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ].Input = copy.deepcopy(
+                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                    mechanism
                 )
+                .Reliability[year_to_calculate]
+                .Input
             )
 
             mechanism_reliability = mechanism_reliability_collection.Reliability[
