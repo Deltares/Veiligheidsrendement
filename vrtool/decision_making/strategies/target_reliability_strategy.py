@@ -95,6 +95,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # New mappings
         self.D = strategy_input.D
         self.sections = strategy_input.sections
+        self.probabilities_per_step = []
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
 
@@ -412,9 +413,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 self.traject_risk.mechanisms
             )
         ]
-        self.total_risk_per_step = [
-            compute_total_risk(self.probabilities_per_step[-1], self.D)
-        ]
+        self.total_risk_per_step = [self.traject_risk.get_total_risk_TR()]
 
         for step in range(0, len(_taken_measures)):
             section_id = _taken_measures_indices[step][0]

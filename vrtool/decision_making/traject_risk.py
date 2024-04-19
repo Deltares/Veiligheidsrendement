@@ -209,6 +209,51 @@ class TrajectRisk:
             )
         )
 
+    def _get_mechanism_probabilities_product(
+        self, mechanism: MechanismEnum
+    ) -> np.ndarray:
+        """
+        Calculate the product of the probabilities of non-failure for a mechanism.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to calculate the product for.
+
+        Returns:
+            np.ndarray: The traject probability of non-failure for the mechanism [t].
+        """
+        if mechanism not in self._probability_of_failure:
+            return np.ones(self.num_years)
+        return np.prod(1 - self._get_mechanism_probabilities(mechanism), axis=0)
+
+    def get_total_risk_TR(self) -> float:
+        """
+        Calculate the total risk for the initial situation.
+        This method is used for the TR calculation and will be merged with the get_total_risk method.
+
+        Returns:
+            float: The total risk for the traject.
+        """
+        return np.sum(
+            self._annual_damage
+            * (
+                np.max(
+                    self._get_mechanism_probabilities(MechanismEnum.OVERFLOW),
+                    axis=0,
+                )
+                + 4
+                * np.max(
+                    self._get_mechanism_probabilities(MechanismEnum.REVETMENT),
+                    axis=0,
+                )
+                + 1
+                - self._get_mechanism_probabilities_product(
+                    MechanismEnum.STABILITY_INNER
+                )
+                + 1
+                - self._get_mechanism_probabilities_product(MechanismEnum.PIPING)
+            )
+        )
+
     def _get_mechanism_probabilities_for_measure(
         self, mechanism: MechanismEnum, measure: tuple[int, int, int]
     ) -> np.ndarray:
@@ -334,6 +379,6 @@ class TrajectRisk:
                 _measure = measure[2]
             else:
                 return
-            self._probability_of_failure[_mech][
-                _section, 0, :
-            ] = self._probability_of_failure[_mech][_section, _measure, :]
+            self._probability_of_failure[_mech][_section, 0, :] = (
+                self._probability_of_failure[_mech][_section, _measure, :]
+            )

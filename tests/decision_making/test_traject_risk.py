@@ -144,7 +144,17 @@ class TestTrajectRisk:
         # 3. Verify expectations
         assert np.sum(_independent_risk) == pytest.approx(14.475)
 
-    def test_get_total_risk(self):
+    def test_get_total_risk_TR(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+
+        # 2. Run test
+        _init_risk = _tr.get_total_risk_TR()
+
+        # 3. Verify expectations
+        assert _init_risk == pytest.approx(26.475)
+    
+        def test_get_total_risk(self):
         # 1. Define test data
         _tr = self._get_traject_risk()
 
