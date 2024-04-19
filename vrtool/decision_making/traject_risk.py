@@ -228,7 +228,7 @@ class TrajectRisk:
     def get_total_risk_TR(self) -> float:
         """
         Calculate the total risk for the initial situation.
-        This method is used for the TR calculation and will be merged with the get_total_risk method.
+        This method is used for the TR calculation and will be merged with the get_total_risk method (VRTOOL-437).
 
         Returns:
             float: The total risk for the traject.
@@ -378,7 +378,28 @@ class TrajectRisk:
             elif _mech in SgMeasure.get_allowed_mechanisms():
                 _measure = measure[2]
             else:
-                return
+                continue
+            self._probability_of_failure[_mech][_section, 0, :] = (
+                self._probability_of_failure[_mech][_section, _measure, :]
+            )
+
+    def update_probabilities_for_measure_TR(
+        self, measure: tuple[int, int, int]
+    ) -> None:
+        """
+        Update the probabilities of failure for the initial situation after applying a measure
+        by copying the measure possibilities to the initial situation.
+        Only Sg mechanisms are considered.
+        This method is used for the TR calculation.
+
+        Args:
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
+        """
+        _section = measure[0]
+        for _mech in self.mechanisms:
+            if _mech not in SgMeasure.get_allowed_mechanisms():
+                continue
+            _measure = measure[2]
             self._probability_of_failure[_mech][_section, 0, :] = (
                 self._probability_of_failure[_mech][_section, _measure, :]
             )
