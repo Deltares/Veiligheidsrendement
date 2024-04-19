@@ -27,7 +27,9 @@ class TestTrajectRisk:
             [p * 1.2 for p in _initial_probabilities],
         ]
         _probability_of_failure = {
-            _mechanism: np.array([_section1_probabilities, _section2_probabilities])
+            _mechanism.name: np.array(
+                [_section1_probabilities, _section2_probabilities]
+            )
             for _mechanism in _MECHANISMS
         }
         _annual_damage = np.array([1.0, 2.0, 3.0, 4.0])
@@ -39,7 +41,7 @@ class TestTrajectRisk:
         _section_probabilities = [_measure_probabilities, _measure_probabilities]
 
         _probability_of_failure = {
-            MechanismEnum.OVERFLOW: np.array(
+            MechanismEnum.OVERFLOW.name: np.array(
                 [_section_probabilities],
             )
         }

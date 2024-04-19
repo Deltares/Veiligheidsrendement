@@ -38,16 +38,16 @@ class TrajectRisk:
 
     def get_initial_probabilities_copy(
         self, mechanisms: list[MechanismEnum]
-    ) -> dict[MechanismEnum, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """
-        Get the initial probabilities of failure for a list of mechanisms.
+        Get a copy of the initial probabilities of failure for a list of mechanisms.
         If a mechanism is not present in the traject, the probabilities are set to zero.
 
         Args:
             mechanisms (list[MechanismEnum]): List of mechanisms to get the initial probabilities for.
 
         Returns:
-            dict[MechanismEnum, np.ndarray]: The initial probabilities of failure for the mechanisms.
+            dict[str, np.ndarray]: The initial probabilities of failure for the mechanisms.
         """
         _init_probabilities = {}
         for _mech in mechanisms:
@@ -128,7 +128,7 @@ class TrajectRisk:
         Calculate the total risk for a section after applying a measure on that section.
 
         Args:
-            measure (tuple[int, int, int]): The section, Sh and Sg measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
 
         Returns:
             float: The total risk for the section after applying the measure.
