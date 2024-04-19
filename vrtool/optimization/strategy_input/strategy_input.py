@@ -26,10 +26,6 @@ class StrategyInput(StrategyInputProtocol):
     Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
-    _num_sections: int = 0
-    _max_year: int = 0
-    _max_sg: int = 0
-    _max_sh: int = 0
 
     @classmethod
     def from_section_as_input_collection(
@@ -52,19 +48,19 @@ class StrategyInput(StrategyInputProtocol):
         )
 
         # Define general parameters
-        _strategy_input._num_sections = len(section_as_input_collection)
-        _strategy_input._max_year = max(s.max_year for s in section_as_input_collection)
-        _strategy_input._max_sg = max(
+        _num_sections = len(section_as_input_collection)
+        _max_year = max(s.max_year for s in section_as_input_collection)
+        _max_sg = max(
             map(len, (s.sg_combinations for s in section_as_input_collection))
         )
-        _strategy_input._max_sh = max(
+        _max_sh = max(
             map(len, (s.sh_combinations for s in section_as_input_collection))
         )
         _strategy_input.opt_parameters = {
-            "N": _strategy_input._num_sections,
-            "T": _strategy_input._max_year,
-            "Sg": _strategy_input._max_sg + 1,
-            "Sh": _strategy_input._max_sh + 1,
+            "N": _num_sections,
+            "T": _max_year,
+            "Sg": _max_sg + 1,
+            "Sh": _max_sh + 1,
         }
 
         # Populate probabilities and lifecycle cost datastructures per section(/mechanism)
@@ -74,16 +70,16 @@ class StrategyInput(StrategyInputProtocol):
         _strategy_input.Pf = LegacyMappingHelper.get_probabilities(
             section_as_input_collection,
             mechanisms,
-            _strategy_input._num_sections,
-            _strategy_input._max_sh,
-            _strategy_input._max_sg,
-            _strategy_input._max_year,
+            _num_sections,
+            _max_sh,
+            _max_sg,
+            _max_year,
         )
         _strategy_input.LCCOption = LegacyMappingHelper.get_lifecycle_cost(
             section_as_input_collection,
-            _strategy_input._num_sections,
-            _strategy_input._max_sh,
-            _strategy_input._max_sg,
+            _num_sections,
+            _max_sh,
+            _max_sg,
         )
 
         # Decision variables for discounted damage [T,]
@@ -93,7 +89,7 @@ class StrategyInput(StrategyInputProtocol):
                 1
                 / (
                     (1 + section_as_input_collection[0].measures[0].discount_rate)
-                    ** np.arange(0, _strategy_input._max_year, 1)
+                    ** np.arange(0, _max_year, 1)
                 )
             )
         )
