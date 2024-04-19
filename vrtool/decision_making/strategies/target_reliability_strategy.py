@@ -294,7 +294,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 ):
                     _requirement_met_per_mechanism[mechanism] = True
                     break
-            _requirement_met_per_mechanism[mechanism]
 
         # next we get the mechanisms in _requirement_met_per_mechanism where values are True
         _valid_mechanisms = [
