@@ -77,12 +77,3 @@ class RevetmentDataClass:
             return list(given_years_stone)
 
         raise ValueError("Years for grass and stone differ.")
-
-    def set_beta_stone(self, beta:float):
-        """
-        setter for beta_stone
-
-        Args:
-            beta (float): the calculated beta_stone
-        """
-        self.beta_stone = beta
