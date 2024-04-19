@@ -344,10 +344,4 @@ class TestStrategyInput:
         assert _strategy_input.LCCOption[0, 4, 4] == pytest.approx(1639783.4538)
 
         # Other structures
-        assert _strategy_input.Cint_h.shape == (1, 7)
-        assert _strategy_input.Cint_g.shape == (1, 4)
-        assert _strategy_input.Dint.shape == (1, 7)
         assert _strategy_input.D.shape == (50,)
-        assert _strategy_input.RiskGeotechnical.shape == (1, 5, 50)
-        assert _strategy_input.RiskOverflow.shape == (1, 8, 50)
-        assert _strategy_input.RiskRevetment.shape == (1, 8, 50)

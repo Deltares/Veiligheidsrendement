@@ -24,11 +24,6 @@ class GreedyStrategy(StrategyProtocol):
         self.opt_parameters = strategy_input.opt_parameters
         self.Pf = strategy_input.Pf  # REMOVE
         self.LCCOption = strategy_input.LCCOption
-        self.Cint_h = strategy_input.Cint_h  # REMOVE
-        self.Cint_g = strategy_input.Cint_g  # REMOVE
-        self.Dint = strategy_input.Dint  # REMOVE
-        self.RiskOverflow = strategy_input.RiskOverflow  # REMOVE
-        self.RiskRevetment = strategy_input.RiskRevetment  # REMOVE
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
 
@@ -126,18 +121,21 @@ class GreedyStrategy(StrategyProtocol):
 
             index_counter[ind_highest_risk] += 1
             # insert next cheapest measure from sorted list into mechanism_risk, then compute the LCC value and BC
+            _measure = (
+                ind_highest_risk,
+                sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
+                sg_array[ind_highest_risk, index_counter[ind_highest_risk]],
+            )
             if mechanism == MechanismEnum.OVERFLOW:
-                new_mechanism_risk[ind_highest_risk, :] = self.RiskOverflow[
-                    ind_highest_risk,
-                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
-                    :,
-                ]
+                new_mechanism_risk[ind_highest_risk, :] = (
+                    self.traject_risk.get_measure_risk(_measure, MechanismEnum.OVERFLOW)
+                )
             elif mechanism == MechanismEnum.REVETMENT:
-                new_mechanism_risk[ind_highest_risk, :] = self.RiskRevetment[
-                    ind_highest_risk,
-                    sh_array[ind_highest_risk, index_counter[ind_highest_risk]],
-                    :,
-                ]
+                new_mechanism_risk[ind_highest_risk, :] = (
+                    self.traject_risk.get_measure_risk(
+                        _measure, MechanismEnum.REVETMENT
+                    )
+                )
             else:
                 raise ValueError("Mechanism {} not recognized".format(mechanism))
 
@@ -187,7 +185,7 @@ class GreedyStrategy(StrategyProtocol):
                     .sg_combinations[investment_id_sg]
                     .mechanism_year_collection.get_probabilities(
                         MechanismEnum.STABILITY_INNER,
-                        np.arange(0, self.Pf[MechanismEnum.STABILITY_INNER].shape[2]),
+                        np.arange(0, self.traject_risk.num_years),
                     )
                 )
 
@@ -196,7 +194,7 @@ class GreedyStrategy(StrategyProtocol):
                     .sg_combinations[investment_id_sg]
                     .mechanism_year_collection.get_probabilities(
                         MechanismEnum.PIPING,
-                        np.arange(0, self.Pf[MechanismEnum.PIPING].shape[2]),
+                        np.arange(0, self.traject_risk.num_years),
                     )
                 )
 
@@ -236,7 +234,7 @@ class GreedyStrategy(StrategyProtocol):
                     .sh_combinations[investment_id_sh]
                     .mechanism_year_collection.get_probabilities(
                         MechanismEnum.OVERFLOW,
-                        np.arange(0, self.Pf[MechanismEnum.OVERFLOW].shape[2]),
+                        np.arange(0, self.traject_risk.num_years),
                     )
                 )
                 if (
@@ -248,13 +246,13 @@ class GreedyStrategy(StrategyProtocol):
                         .sh_combinations[investment_id_sh]
                         .mechanism_year_collection.get_probabilities(
                             MechanismEnum.REVETMENT,
-                            np.arange(0, self.Pf[MechanismEnum.REVETMENT].shape[2]),
+                            np.arange(0, self.traject_risk.num_years),
                         )
                     )
                 else:
                     try:  # case where some sections have revetments and some don't. Then we need to have 0's in the current_pf
                         current_pf[MechanismEnum.REVETMENT] = np.zeros(
-                            self.Pf[MechanismEnum.REVETMENT].shape[2]
+                            self.traject_risk.num_years
                         )
                     except:  # case where no revetment is present at any section
                         pass
@@ -356,7 +354,7 @@ class GreedyStrategy(StrategyProtocol):
                     section_no
                 ].initial_assessment.get_probabilities(
                     MechanismEnum.OVERFLOW,
-                    np.arange(0, self.Pf[MechanismEnum.OVERFLOW].shape[2]),
+                    np.arange(0, self.traject_risk.num_years),
                 )
                 measure_pfs = self.Pf[MechanismEnum.OVERFLOW][section_no, :, :]
                 # get indices for rows in measure_pfs where all measure_pfs are greater than current_reliability_overflow by comparing the numpy array
@@ -370,7 +368,7 @@ class GreedyStrategy(StrategyProtocol):
                         section_no
                     ].initial_assessment.get_probabilities(
                         MechanismEnum.REVETMENT,
-                        np.arange(0, self.Pf[MechanismEnum.OVERFLOW].shape[2]),
+                        np.arange(0, self.traject_risk.num_years),
                     )
                     measure_pfs = self.Pf[MechanismEnum.REVETMENT][section_no, :, :]
                     comparison_height = np.where(
@@ -477,10 +475,6 @@ class GreedyStrategy(StrategyProtocol):
     ):
         """This is the main routine for a greedy evaluation of all solutions."""
         start = time.time()
-
-        # set start values:
-        self.Cint_g[:, 0] = 1
-        self.Cint_h[:, 0] = 1
 
         measure_list = []
         _probabilities = [

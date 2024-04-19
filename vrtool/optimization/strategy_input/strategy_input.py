@@ -26,9 +26,6 @@ class StrategyInput(StrategyInputProtocol):
     Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
     D: np.ndarray = np.array([])
-    RiskGeotechnical: np.ndarray = np.array([])
-    RiskOverflow: np.ndarray = np.array([])
-    RiskRevetment: np.ndarray = np.array([])
     _num_sections: int = 0
     _max_year: int = 0
     _max_sg: int = 0
@@ -101,52 +98,4 @@ class StrategyInput(StrategyInputProtocol):
             )
         )
 
-        # Calculate expected damage
-        # - for overflow//piping/slope stability
-        _strategy_input.RiskGeotechnical = _get_independent_probability_of_failure(
-            _strategy_input.Pf
-        ) * np.tile(
-            _strategy_input.D.T,
-            (_strategy_input._num_sections, _strategy_input._max_sg + 1, 1),
-        )
-
-        _strategy_input.RiskOverflow = _strategy_input.Pf[
-            MechanismEnum.OVERFLOW
-        ] * np.tile(
-            _strategy_input.D.T,
-            (_strategy_input._num_sections, _strategy_input._max_sh + 1, 1),
-        )
-
-        # - for revetment
-        if MechanismEnum.REVETMENT in mechanisms:
-            _strategy_input.RiskRevetment = _strategy_input.Pf[
-                MechanismEnum.REVETMENT
-            ] * np.tile(
-                _strategy_input.D.T,
-                (_strategy_input._num_sections, _strategy_input._max_sh + 1, 1),
-            )
-        else:
-            _strategy_input.RiskRevetment = np.zeros(
-                (
-                    _strategy_input._num_sections,
-                    _strategy_input._max_sh + 1,
-                    _strategy_input._max_year,
-                )
-            )
-
         return _strategy_input
-
-    @property
-    def Cint_h(self) -> np.ndarray:
-        # Decision variables for executed options [N, Sh]
-        return np.zeros((self._num_sections, self._max_sh))
-
-    @property
-    def Cint_g(self) -> np.ndarray:
-        # Decision variables for executed options [N, Sg]
-        return np.zeros((self._num_sections, self._max_sg))
-
-    @property
-    def Dint(self) -> np.ndarray:
-        # Decision variables for weakest overflow section with dims [N, Sh]
-        return np.zeros((self._num_sections, self._max_sh))
