@@ -19,6 +19,7 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
     MechanismReliabilityCollection,
 )
+from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
@@ -223,19 +224,16 @@ class TestRevetmentMeasure:
         Returns:
             RevetmentMeasureSectionReliability: the measure result
         """
-        class MockedSectionReliability:
+        class MockedSectionReliability(SectionReliability):
             """
             test class to get a section reliability
             """
             def __init__(self):
-                self.SectionReliability = {}
+                self.SectionReliability = { "0": {"Section": beta}}
 
         _msr = RevetmentMeasureSectionReliability()
         _msr.cost = cost
-
         _msr.section_reliability = MockedSectionReliability()
-        _msr.section_reliability.SectionReliability["0"] = {}
-        _msr.section_reliability.SectionReliability["0"]["Section"] = beta
         return _msr
 
     def test_filtering_keep_all(self):
