@@ -22,7 +22,6 @@ class GreedyStrategy(StrategyProtocol):
         self.sections = strategy_input.sections
 
         self.opt_parameters = strategy_input.opt_parameters
-        self.Pf = strategy_input.Pf  # REMOVE
         self.LCCOption = strategy_input.LCCOption
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
@@ -199,11 +198,14 @@ class GreedyStrategy(StrategyProtocol):
                 )
 
                 # measure_pf_stability
-                measure_pfs_stability = self.Pf[MechanismEnum.STABILITY_INNER][
-                    section_no, :, :
-                ]
+                measure_pfs_stability = self.traject_risk.get_section_probabilities(
+                    section_no, MechanismEnum.STABILITY_INNER
+                )
+
                 # measure_pf_piping
-                measure_pfs_piping = self.Pf[MechanismEnum.PIPING][section_no, :, :]
+                measure_pfs_piping = self.traject_risk.get_section_probabilities(
+                    section_no, MechanismEnum.PIPING
+                )
 
                 # get indices for rows in measure_pfs where measure_pf_stability and measure_pf_piping are smaller or equal to  current_pf_stability and current_pf_piping by comparing the numpy array
                 comparison_geotechnical = np.argwhere(
@@ -259,18 +261,22 @@ class GreedyStrategy(StrategyProtocol):
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
-                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[
-                        MechanismEnum.OVERFLOW
-                    ][section_no, :, :]
+                    measure_pfs[MechanismEnum.OVERFLOW] = (
+                        self.traject_risk.get_section_probabilities(
+                            section_no, MechanismEnum.OVERFLOW
+                        )
+                    )
                     # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
                     if (
                         MechanismEnum.REVETMENT
                         in self.sections[section_no].initial_assessment.get_mechanisms()
                     ):
                         # take combination of REVETMENT and OVERFLOW
-                        measure_pfs[MechanismEnum.REVETMENT] = self.Pf[
-                            MechanismEnum.REVETMENT
-                        ][section_no, :, :]
+                        measure_pfs[MechanismEnum.REVETMENT] = (
+                            self.traject_risk.get_section_probabilities(
+                                section_no, MechanismEnum.REVETMENT
+                            )
+                        )
                         comparison_height = np.where(
                             np.all(
                                 measure_pfs[MechanismEnum.OVERFLOW]
@@ -295,12 +301,16 @@ class GreedyStrategy(StrategyProtocol):
 
                 elif mechanism == MechanismEnum.REVETMENT:
                     # overflow must be present so slightly different
-                    measure_pfs[MechanismEnum.OVERFLOW] = self.Pf[
-                        MechanismEnum.OVERFLOW
-                    ][section_no, :, :]
-                    measure_pfs[MechanismEnum.REVETMENT] = self.Pf[
-                        MechanismEnum.OVERFLOW
-                    ][section_no, :, :]
+                    measure_pfs[MechanismEnum.OVERFLOW] = (
+                        self.traject_risk.get_section_probabilities(
+                            section_no, MechanismEnum.OVERFLOW
+                        )
+                    )
+                    measure_pfs[MechanismEnum.REVETMENT] = (
+                        self.traject_risk.get_section_probabilities(
+                            section_no, MechanismEnum.OVERFLOW
+                        )
+                    )
                     # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
                     comparison_height = np.where(
                         np.all(
@@ -356,7 +366,9 @@ class GreedyStrategy(StrategyProtocol):
                     MechanismEnum.OVERFLOW,
                     np.arange(0, self.traject_risk.num_years),
                 )
-                measure_pfs = self.Pf[MechanismEnum.OVERFLOW][section_no, :, :]
+                measure_pfs = self.traject_risk.get_section_probabilities(
+                    section_no, MechanismEnum.OVERFLOW
+                )
                 # get indices for rows in measure_pfs where all measure_pfs are greater than current_reliability_overflow by comparing the numpy array
                 comparison_height = np.where(
                     np.all(measure_pfs < current_pf_overflow, axis=1)
@@ -370,15 +382,15 @@ class GreedyStrategy(StrategyProtocol):
                         MechanismEnum.REVETMENT,
                         np.arange(0, self.traject_risk.num_years),
                     )
-                    measure_pfs = self.Pf[MechanismEnum.REVETMENT][section_no, :, :]
+                    measure_pfs = self.traject_risk.get_section_probabilities(
+                        section_no, MechanismEnum.REVETMENT
+                    )
                     comparison_height = np.where(
                         np.all(measure_pfs < current_pf_overflow, axis=1)
                     )
                 except:
                     # all measures are available
-                    comparison_height = np.arange(
-                        0, len(self.Pf[MechanismEnum.REVETMENT][section_no, :, :])
-                    )
+                    comparison_height = np.arange(0, self.traject_risk.num_sh_measures)
 
             else:
                 raise Exception("Unknown mechanism in overflow bundling")
