@@ -51,10 +51,10 @@ class TestTrajectRisk:
         # 3. Verify expectations
         assert isinstance(_tr, TrajectRisk)
         assert np.array_equal(
-            _tr.probability_of_failure[MechanismEnum.OVERFLOW],
+            _tr._probability_of_failure[MechanismEnum.OVERFLOW],
             _probability_of_failure[MechanismEnum.OVERFLOW],
         )
-        assert np.array_equal(_tr.annual_damage, _annual_damage)
+        assert np.array_equal(_tr._annual_damage, _annual_damage)
 
     def test_get_initial_probabilities_copy(self):
         # 1. Define test data
@@ -72,7 +72,7 @@ class TestTrajectRisk:
         assert _mechanism in _init_probs_dict
         assert np.array_equal(
             _init_probs_dict[_mechanism],
-            _tr.probability_of_failure[_mechanism][:, 0, :],
+            _tr._probability_of_failure[_mechanism][:, 0, :],
         )
 
     def test_get_section_probabilities(self):
