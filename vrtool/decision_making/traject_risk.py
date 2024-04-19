@@ -31,6 +31,34 @@ class TrajectRisk:
         return self.probability_of_failure[self.mechanisms[0]].shape[0]
 
     @property
+    def num_measures(self) -> int:
+        if not self.mechanisms:
+            return 0
+        return max(
+            self.probability_of_failure[_mech].shape[1] for _mech in self.mechanisms
+        )
+
+    @property
+    def num_sh_measures(self) -> int:
+        if not self.mechanisms:
+            return 0
+        return max(
+            self.probability_of_failure[_mech].shape[1]
+            for _mech in self.mechanisms
+            if _mech in ShMeasure.get_allowed_mechanisms()
+        )
+
+    @property
+    def num_sg_measures(self) -> int:
+        if not self.mechanisms:
+            return 0
+        return max(
+            self.probability_of_failure[_mech].shape[1]
+            for _mech in self.mechanisms
+            if _mech in SgMeasure.get_allowed_mechanisms()
+        )
+
+    @property
     def num_years(self) -> int:
         if not self.mechanisms:
             return 0
@@ -38,7 +66,7 @@ class TrajectRisk:
 
     def get_initial_probabilities_copy(
         self, mechanisms: list[MechanismEnum]
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[MechanismEnum, np.ndarray]:
         """
         Get a copy of the initial probabilities of failure for a list of mechanisms.
         If a mechanism is not present in the traject, the probabilities are set to zero.
@@ -47,7 +75,7 @@ class TrajectRisk:
             mechanisms (list[MechanismEnum]): List of mechanisms to get the initial probabilities for.
 
         Returns:
-            dict[str, np.ndarray]: The initial probabilities of failure for the mechanisms.
+            dict[MechanismEnum, np.ndarray]: The initial probabilities of failure for the mechanisms.
         """
         _init_probabilities = {}
         for _mech in mechanisms:
@@ -56,13 +84,105 @@ class TrajectRisk:
             )
         return _init_probabilities
 
+    def get_section_probabilities(
+        self, section: int, mechanism: MechanismEnum
+    ) -> np.ndarray:
+        """
+        Get the probabilities of failure for a section for a mechanism.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to get the probabilities for.
+
+        Returns:
+            np.ndarray: The probabilities of failure for the section [Sh/Sg, t].
+                        (zeros if the mechanism is not present in the traject)
+        """
+        if mechanism not in self.probability_of_failure:
+            return np.zeros([self.num_measures, self.num_years])
+        return self.probability_of_failure[mechanism][section, :, :]
+
+    def get_measure_probabilities(
+        self, measure: tuple[int, int, int], mechanism: MechanismEnum
+    ) -> np.ndarray:
+        """
+        Get the probabilities of failure for a mechanism for a specific measure.
+
+        Args:
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to get the probabilities for.
+            mechanism (MechanismEnum): The mechanism to get the probabilities for.
+
+        Raises:
+            ValueError: The mechanism is not in the allowed mechanisms.
+
+        Returns:
+            np.ndarray: The probabilities of failure for the measure [t].
+                        (zeros if the mechanism is not present in the traject)
+        """
+        if mechanism not in self.probability_of_failure:
+            return np.zeros([self.num_sections, self.num_years])
+        _section = measure[0]
+        if mechanism in ShMeasure.get_allowed_mechanisms():
+            _measure = measure[1]
+        elif mechanism in SgMeasure.get_allowed_mechanisms():
+            _measure = measure[2]
+        else:
+            raise ValueError(f"Mechanism {mechanism} not in allowed mechanisms")
+        return self.probability_of_failure[mechanism][_section, _measure, :]
+
+    def get_measure_risk(
+        self, measure: tuple[int, int, int], mechanism: MechanismEnum
+    ) -> np.ndarray:
+        """
+        Get the risks for a mechanism for a specific measure.
+
+        Args:
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to get the risks for.
+            mechanism (MechanismEnum): The mechanism to get the risk for.
+
+        Raises:
+            ValueError: The mechanism is not in the allowed mechanisms.
+
+        Returns:
+            np.ndarray: The calculated risks for the measure [t].
+                        (zeros if the mechanism is not present in the traject)
+        """
+        return self.annual_damage * self.get_measure_probabilities(measure, mechanism)
+
     def get_mechanism_risk(self, mechanism: MechanismEnum) -> np.ndarray:
+        """
+        Get the risks for a specific mechanism for a traject, based on the initial probabilities.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to get the risk for.
+
+        Returns:
+            np.ndarray: The calculated risks for the mechanism [N, t].
+        """
         return self.annual_damage * self._get_mechanism_probabilities(mechanism)
 
     def get_independent_risk(self) -> np.ndarray:
+        """
+        Get the independent risks for a traject, based on the initial probabilities.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to get the risk for.
+
+        Returns:
+            np.ndarray: The calculated independent risks [N, t].
+        """
         return self.annual_damage * self._get_independent_probabilities()
 
     def _get_mechanism_probabilities(self, mechanism: MechanismEnum) -> np.ndarray:
+        """
+        Get the probabilities of failure for a mechanism based on the initial probabilities.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to get the probabilities for.
+
+        Returns:
+            np.ndarray: The probabilities of failure for the mechanism [N, t].
+                        (zeros if the mechanism is not present in the traject)
+        """
         if mechanism not in self.probability_of_failure:
             return np.zeros([self.num_sections, self.num_years])
         return self.probability_of_failure[mechanism][:, 0, :]
@@ -98,6 +218,21 @@ class TrajectRisk:
     def _get_mechanism_probabilities_for_measure(
         self, mechanism: MechanismEnum, measure: tuple[int, int, int]
     ) -> np.ndarray:
+        """
+        Get the probabilities of failure for a mechanism after applying a measure.
+        Note: the measure is not applied yet, thus the initial probalities remain the same.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to get the probabilities for.
+            measure (tuple[int, int, int]): The measure to apply.
+
+        Raises:
+            ValueError: The mechanism is not in the allowed mechanisms.
+
+        Returns:
+            np.ndarray: The probabilities of failure for the mechanism after applying the measure [N, t].
+                        (zeros if the mechanism is not present in the traject)
+        """
         if mechanism not in self.probability_of_failure:
             return np.zeros([self.num_sections, self.num_years])
         _sections = list(range(self.num_sections))
@@ -119,6 +254,16 @@ class TrajectRisk:
     def _get_independent_probabilities_for_measure(
         self, measure: tuple[int, int, int]
     ) -> np.ndarray:
+        """
+        Get the independent probabilities of failure applying a measure.
+        Note: the measure is not applied yet, thus the initial probalities remain the same.
+
+        Args:
+            measure (tuple[int, int, int]): The measure to apply.
+
+        Returns:
+            np.ndarray: The independent probabilities of failure after applying the measure [N, t].
+        """
         return self._combine_probabilities(
             [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING], measure
         )
@@ -184,7 +329,7 @@ class TrajectRisk:
         Update the probabilities of failure for the initial situation after applying a measure.
 
         Args:
-            measure (tuple[int, int, int]): The section, Sh and Sg measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
         """
         _section = measure[0]
         for _mech in self.mechanisms:
