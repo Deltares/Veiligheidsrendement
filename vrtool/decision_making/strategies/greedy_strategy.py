@@ -521,14 +521,7 @@ class GreedyStrategy(StrategyProtocol):
                 ],
                 1e99,
             )
-            _total_risk = np.full(
-                [
-                    self.traject_risk.num_sections,
-                    self.traject_risk.num_sh_measures,
-                    self.traject_risk.num_sg_measures,
-                ],
-                init_risk,
-            )
+            _total_risk = np.full(_life_cycle_cost.shape, init_risk)
             for n in range(0, self.traject_risk.num_sections):
                 # for each section, start from index 1 to prevent putting inf in top left cell
                 for sg in range(1, self.traject_risk.num_sg_measures):
