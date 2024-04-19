@@ -191,7 +191,7 @@ def calculate_z_uplift(z_input, mode: str = "Prob"):
         return g_u, dh_u, dhc_u
 
 
-def calculate_z_heave(inp, mode: str = "Prob"):
+def calculate_z_heave(inp: dict, mode: str = "Prob"):
     # if it is a dictionary: split according to names
     if isinstance(inp, dict):
         d_cover = inp["d_cover"]

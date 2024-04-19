@@ -2,9 +2,6 @@ import itertools
 import logging
 
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.diaphragm_wall_measure import (
-    DiaphragmWallMeasure,
-)
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure import (
     RevetmentMeasure,
 )
@@ -23,10 +20,12 @@ from vrtool.decision_making.measures.standard_measures.stability_screen_measure 
 from vrtool.decision_making.measures.standard_measures.vertical_geotextile_measure import (
     VerticalGeotextileMeasure,
 )
+from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_wall_measure import (
+    DiaphragmWallMeasure,
+)
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.measures.measure_result_importer import (
     MeasureResultImporter,
@@ -87,6 +86,8 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
 
         measure.measures = _imported_results[0]
         if isinstance(measure, DiaphragmWallMeasure):
+            # NOTE: This check also includes `AnchoredSheetpileMeasure`
+            # as it implements the `DiaphragmWallMeasure`
             measure.measures["DiaphragmWall"] = "yes"
         elif isinstance(measure, VerticalGeotextileMeasure):
             measure.measures["VZG"] = "yes"
