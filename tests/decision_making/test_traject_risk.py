@@ -27,9 +27,7 @@ class TestTrajectRisk:
             [p * 1.2 for p in _initial_probabilities],
         ]
         _probability_of_failure = {
-            _mechanism.name: np.array(
-                [_section1_probabilities, _section2_probabilities]
-            )
+            _mechanism: np.array([_section1_probabilities, _section2_probabilities])
             for _mechanism in _MECHANISMS
         }
         _annual_damage = np.array([1.0, 2.0, 3.0, 4.0])
@@ -41,7 +39,7 @@ class TestTrajectRisk:
         _section_probabilities = [_measure_probabilities, _measure_probabilities]
 
         _probability_of_failure = {
-            MechanismEnum.OVERFLOW.name: np.array(
+            MechanismEnum.OVERFLOW: np.array(
                 [_section_probabilities],
             )
         }
@@ -53,10 +51,10 @@ class TestTrajectRisk:
         # 3. Verify expectations
         assert isinstance(_tr, TrajectRisk)
         assert np.array_equal(
-            _tr.probability_of_failure[MechanismEnum.OVERFLOW],
-            _probability_of_failure[MechanismEnum.OVERFLOW.name],
+            _tr._probability_of_failure[MechanismEnum.OVERFLOW],
+            _probability_of_failure[MechanismEnum.OVERFLOW],
         )
-        assert np.array_equal(_tr.annual_damage, _annual_damage)
+        assert np.array_equal(_tr._annual_damage, _annual_damage)
 
     def test_get_initial_probabilities_copy(self):
         # 1. Define test data
@@ -71,11 +69,53 @@ class TestTrajectRisk:
         # 3. Verify expectations
         assert isinstance(_init_probs_dict, dict)
         assert len(_init_probs_dict) == 2
-        assert _mechanism.name in _init_probs_dict
+        assert _mechanism in _init_probs_dict
         assert np.array_equal(
-            _init_probs_dict[_mechanism.name],
-            _tr.probability_of_failure[_mechanism][:, 0, :],
+            _init_probs_dict[_mechanism],
+            _tr._probability_of_failure[_mechanism][:, 0, :],
         )
+
+    def test_get_section_probabilities(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _mechanism = _MECHANISMS[0]
+        _section = 1
+
+        # 2. Run test
+        _section_probs = _tr.get_section_probabilities(_section, _mechanism)
+
+        # 3. Verify expectations
+        assert isinstance(_section_probs, np.ndarray)
+        assert _section_probs.shape == (3, 4)
+        assert np.sum(_section_probs) == pytest.approx(5.32)
+
+    def test_get_measure_probabilities(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _measure = (0, 0, 0)
+        _mechanism = _MECHANISMS[0]
+
+        # 2. Run test
+        _measure_probs = _tr.get_measure_probabilities(_measure, _mechanism)
+
+        # 3. Verify expectations
+        assert isinstance(_measure_probs, np.ndarray)
+        assert _measure_probs.shape == (4,)
+        assert np.sum(_measure_probs) == pytest.approx(1.4)
+
+    def test_get_measure_risk(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _measure = (0, 0, 0)
+        _mechanism = _MECHANISMS[0]
+
+        # 2. Run test
+        _measure_risk = _tr.get_measure_risk(_measure, _mechanism)
+
+        # 3. Verify expectations
+        assert isinstance(_measure_risk, np.ndarray)
+        assert _measure_risk.shape == (4,)
+        assert np.sum(_measure_risk) == pytest.approx(4.0)
 
     @pytest.mark.parametrize(
         "mechanism, result",
@@ -135,3 +175,16 @@ class TestTrajectRisk:
 
         # 3. Verify expectations
         assert _measure_risk == pytest.approx(result)
+
+    def test_update_probabilities_for_measure(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+        _measure_risk = _tr.get_total_risk()
+        assert _measure_risk == pytest.approx(26.475)
+
+        # 2. Run test
+        _tr.update_probabilities_for_measure((1, 1, 0))
+        _measure_risk_updated = _tr.get_total_risk()
+
+        # 3. Verify expectations
+        assert _measure_risk_updated == pytest.approx(23.275)

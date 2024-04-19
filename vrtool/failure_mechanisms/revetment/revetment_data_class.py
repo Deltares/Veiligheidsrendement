@@ -17,6 +17,7 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 class RevetmentDataClass:
     slope_parts: list[SlopePartProtocol] = field(default_factory=lambda: [])
     grass_relations: list[RelationGrassRevetment] = field(default_factory=lambda: [])
+    beta_stone: float = -999.0
 
     @property
     def current_transition_level(self) -> float:
