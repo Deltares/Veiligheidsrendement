@@ -9,6 +9,9 @@ from vrtool.decision_making.measures import (
     VerticalGeotextileMeasure,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
+from vrtool.decision_making.measures.standard_measures.wall_measures.anchored_sheetpile_measure import (
+    AnchoredSheetpileMeasure,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.custom_measure import CustomMeasure as OrmCustomMeasure
@@ -94,6 +97,7 @@ class MeasureImporter(OrmImporterProtocol):
             "soil reinforcement": SoilReinforcementMeasure,
             "soil reinforcement with stability screen": SoilReinforcementMeasure,
             "diaphragm wall": DiaphragmWallMeasure,
+            "anchored sheetpile": AnchoredSheetpileMeasure,
             "stability screen": StabilityScreenMeasure,
             "vertical geotextile": VerticalGeotextileMeasure,
             "revetment": RevetmentMeasure,

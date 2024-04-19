@@ -18,7 +18,9 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class DiaphragmWallMeasure(MeasureProtocol):
-    # type == 'Diaphragm Wall':
+    def _calculate_measure_costs(self, dike_section: DikeSection) -> float:
+        return self.unit_costs["Diaphragm wall"] * dike_section.Length
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -26,23 +28,15 @@ class DiaphragmWallMeasure(MeasureProtocol):
         preserve_slope: bool = False,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        type = self.parameters["Type"]
         # StabilityInner and Piping reduced to 0, height is ok for overflow until 2125 (free of charge, also if there is a large height deficit).
         # It is assumed that the diaphragm wall is extendable after that.
         # Only 1 parameterized version with a lifetime of 100 years
         self.measures = {}
         self.measures["DiaphragmWall"] = "yes"
-        self.measures["Cost"] = determine_costs(
-            self.parameters,
-            type,
-            dike_section.Length,
-            self.parameters.get("Depth", float("nan")),
-            self.unit_costs,
-        )
+        self.measures["Cost"] = self._calculate_measure_costs(dike_section)
         self.measures["Reliability"] = self._get_configured_section_reliability(
             dike_section, traject_info
         )
-        self.measures["Reliability"].calculate_section_reliability()
 
     def _get_configured_section_reliability(
         self, dike_section: DikeSection, traject_info: DikeTrajectInfo
@@ -63,6 +57,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 mechanism_reliability_collection
             )
 
+        section_reliability.calculate_section_reliability()
         return section_reliability
 
     def _get_configured_mechanism_reliability_collection(
@@ -76,10 +71,11 @@ class DiaphragmWallMeasure(MeasureProtocol):
             mechanism, calc_type, self.config.T, self.config.t_0, 0
         )
 
-        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
+        for (
+            year_to_calculate,
+            _mechanism_reliability,
+        ) in mechanism_reliability_collection.Reliability.items():
+            _mechanism_reliability.Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
@@ -87,16 +83,13 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 .Input
             )
 
-            mechanism_reliability = mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ]
             if float(year_to_calculate) >= self.parameters["year"]:
                 if mechanism == MechanismEnum.OVERFLOW:
                     self._configure_overflow(
-                        mechanism_reliability, traject_info, dike_section
+                        _mechanism_reliability, traject_info, dike_section
                     )
                 if mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
-                    self._configure_piping_or_stability_inner(mechanism_reliability)
+                    self._configure_piping_or_stability_inner(_mechanism_reliability)
 
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
@@ -111,7 +104,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
         traject_info: DikeTrajectInfo,
         dike_section: DikeSection,
     ) -> None:
-        Pt = traject_info.Pmax * traject_info.omegaOverflow
+        _probability_overflow = traject_info.Pmax * traject_info.omegaOverflow
 
         mechanism_input = mechanism_reliability.Input.input
         if mechanism_reliability.mechanism_type == "Simple":
@@ -119,7 +112,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 hc = probabilistic_design(
                     "h_crest",
                     mechanism_input,
-                    p_t=Pt,
+                    p_t=_probability_overflow,
                     t_0=self.t_0,
                     horizon=self.parameters["year"] + 100,
                     load_change=dike_section.HBNRise_factor * dike_section.YearlyWLRise,
@@ -129,20 +122,20 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 hc = probabilistic_design(
                     "h_crest",
                     mechanism_input,
-                    p_t=Pt,
+                    p_t=_probability_overflow,
                     t_0=self.t_0,
                     horizon=self.parameters["year"] + 100,
-                    load_change=None,
+                    load_change=float("nan"),
                     mechanism=MechanismEnum.OVERFLOW,
                 )
         else:
             hc = probabilistic_design(
                 "h_crest",
                 mechanism_input,
-                p_t=Pt,
+                p_t=_probability_overflow,
                 t_0=self.t_0,
                 horizon=self.parameters["year"] + 100,
-                load_change=None,
+                load_change=float("nan"),
                 type="HRING",
                 mechanism=MechanismEnum.OVERFLOW,
             )

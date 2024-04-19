@@ -1,5 +1,4 @@
 import copy
-import logging
 
 import numpy as np
 
@@ -8,6 +7,7 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     determine_new_geometry,
+    get_stability_inner_depth,
     implement_berm_widening,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -30,9 +30,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
     ):
         # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        # Measure.__init__(self,inputs)
-        # self. parameters = measure.parameters
-        type = self.parameters["Type"]
+        _measure_type = self.parameters["Type"]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
 
@@ -47,7 +45,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
             _modified_measure["Cost"] = determine_costs(
                 self.parameters,
-                type,
+                _measure_type,
                 dike_section.Length,
                 self.parameters.get("Depth", float("nan")),
                 self.unit_costs,
@@ -123,36 +121,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             raise Exception("unkown direction")
 
     def _get_depth(self, dike_section: DikeSection) -> float:
-        """Gets the depth for the stability screen application.
-
-        Args:
-            dike_section (DikeSection): The section to retrieve the depth from.
-
-        Raises:
-            ValueError: Raised when there is no stability inner failure mechanism present.
-
-        Returns:
-            float: The depth to be used for the stability screen calculation.
-        """
-        stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-            MechanismEnum.STABILITY_INNER
-        )
-        if not stability_inner_reliability_collection:
-            error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
-            logging.error(error_message)
-            raise ValueError(error_message)
-
-        d_cover_input = stability_inner_reliability_collection.Reliability[
-            "0"
-        ].Input.input.get("d_cover", None)
-        if d_cover_input:
-            if d_cover_input.size > 1:
-                logging.debug("d_cover has more values than 1.")
-
-            return max([d_cover_input[0] + 2.0, 9.0])
-        else:
-            # TODO remove shaky assumption on depth
-            return 9.0
+        return get_stability_inner_depth(dike_section)
 
     def _get_modified_dike_geometry_measures(
         self,

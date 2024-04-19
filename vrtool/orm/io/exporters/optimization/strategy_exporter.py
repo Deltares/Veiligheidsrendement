@@ -93,8 +93,8 @@ class StrategyExporter(OrmExporterProtocol):
                 _prob_per_step = strategy_run.probabilities_per_step[_measure_idx + 1]
                 lcc = _measure_sh.lcc + _measure_sg.lcc
                 for _t in strategy_run._time_periods:
-                    _prob_section = self._get_selected_time(
-                        _section, _t, "SECTION", _prob_per_step
+                    _prob_section = self._get_section_time_value(
+                        _section, _t, _prob_per_step
                     )
                     _step_results_section.append(
                         {

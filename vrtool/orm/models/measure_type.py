@@ -11,6 +11,7 @@ class MeasureType(OrmBaseModel):
         * Soil reinforcement with stability screen
         * Vertical Geotextile
         * Diaphragm wall
+        * Anchored sheetpile
     """
 
     name = CharField(unique=True)
