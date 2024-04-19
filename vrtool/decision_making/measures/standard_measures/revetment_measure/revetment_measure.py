@@ -349,7 +349,7 @@ class RevetmentMeasure(MeasureProtocol):
         mechanism: MechanismEnum,
         calc_type: str,
         revetment_measure_results: list[RevetmentMeasureResult],
-    ) -> dict[str, MechanismReliability]:
+    ) -> dict[MechanismEnum, MechanismReliability]:
         class RevetmentMeasureMechanismReliability(MechanismReliability):
             def calculate_reliability(
                 self,

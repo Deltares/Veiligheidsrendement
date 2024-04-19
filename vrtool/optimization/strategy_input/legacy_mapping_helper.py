@@ -16,7 +16,7 @@ class LegacyMappingHelper:
         max_sh: int,
         max_sg: int,
         max_year: int,
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[MechanismEnum, np.ndarray]:
         def _get_pf_for_measures(
             mech: MechanismEnum,
             combinations: list[CombinedMeasure],
@@ -60,26 +60,26 @@ class LegacyMappingHelper:
             # Concatenate both probabilities
             return np.concatenate((np.array(_initial_probs)[None, :], _probs), axis=0)
 
-        _pf: dict[str, np.ndarray] = {}
+        _pf: dict[MechanismEnum, np.ndarray] = {}
 
         for _mech in mechanisms:
             # Initialize datastructure:
             if _mech == MechanismEnum.OVERFLOW:
-                _pf[_mech.name] = np.full((num_sections, max_sh + 1, max_year), 1.0)
+                _pf[_mech] = np.full((num_sections, max_sh + 1, max_year), 1.0)
             elif _mech == MechanismEnum.REVETMENT:
-                _pf[_mech.name] = np.full((num_sections, max_sh + 1, max_year), 1.0e-18)
+                _pf[_mech] = np.full((num_sections, max_sh + 1, max_year), 1.0e-18)
             else:
-                _pf[_mech.name] = np.full((num_sections, max_sg + 1, max_year), 1.0e-18)
+                _pf[_mech] = np.full((num_sections, max_sg + 1, max_year), 1.0e-18)
 
             # Loop over sections
             for n, _section in enumerate(sections):
                 try:
                     _probs = _get_pf_for_mech(
-                        _mech, _section, _pf[_mech.name].shape[1:], max_year
+                        _mech, _section, _pf[_mech].shape[1:], max_year
                     )
                     if _probs.size == 0:
                         continue
-                    _pf[_mech.name][n, 0 : len(_probs), :] = _probs
+                    _pf[_mech][n, 0 : len(_probs), :] = _probs
                 except KeyError:
                     logging.warning(
                         "Mechanism %s not present for section %s.",

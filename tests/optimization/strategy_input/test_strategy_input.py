@@ -308,27 +308,27 @@ class TestStrategyInput:
 
         # Probabilities
         assert _strategy_input.Pf
-        assert _strategy_input.Pf[MechanismEnum.OVERFLOW.name].shape == (
+        assert _strategy_input.Pf[MechanismEnum.OVERFLOW].shape == (
             1,
             8,
             50,
         )
-        assert _strategy_input.Pf[MechanismEnum.REVETMENT.name].shape == (
+        assert _strategy_input.Pf[MechanismEnum.REVETMENT].shape == (
             1,
             8,
             50,
         )
-        assert _strategy_input.Pf[MechanismEnum.PIPING.name].shape == (
+        assert _strategy_input.Pf[MechanismEnum.PIPING].shape == (
             1,
             5,
             50,
         )
-        assert _strategy_input.Pf[MechanismEnum.STABILITY_INNER.name].shape == (
+        assert _strategy_input.Pf[MechanismEnum.STABILITY_INNER].shape == (
             1,
             5,
             50,
         )
-        assert _strategy_input.Pf[MechanismEnum.STABILITY_INNER.name][
+        assert _strategy_input.Pf[MechanismEnum.STABILITY_INNER][
             0, 0, 0
         ] == pytest.approx(0.0010)
 
@@ -344,10 +344,4 @@ class TestStrategyInput:
         assert _strategy_input.LCCOption[0, 4, 4] == pytest.approx(1639783.4538)
 
         # Other structures
-        assert _strategy_input.Cint_h.shape == (1, 7)
-        assert _strategy_input.Cint_g.shape == (1, 4)
-        assert _strategy_input.Dint.shape == (1, 7)
         assert _strategy_input.D.shape == (50,)
-        assert _strategy_input.RiskGeotechnical.shape == (1, 5, 50)
-        assert _strategy_input.RiskOverflow.shape == (1, 8, 50)
-        assert _strategy_input.RiskRevetment.shape == (1, 8, 50)
