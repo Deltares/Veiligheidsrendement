@@ -11,6 +11,7 @@ from vrtool.decision_making.strategy_evaluation import (
     compute_total_risk,
     implement_option,
 )
+from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -92,9 +93,10 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.OI_horizon = config.OI_horizon
         self.time_periods = config.T
         # New mappings
-        self.Pf = strategy_input.Pf
         self.D = strategy_input.D
         self.sections = strategy_input.sections
+
+        self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
 
     def check_cross_sectional_requirements(
         self,
@@ -405,8 +407,11 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step
         # First we get, and update the probabilities per step
         # we need to track probability for each step
-        init_probability = {mech: self.Pf[mech][:, 0, :] for mech in self.Pf.keys()}
-        self.probabilities_per_step = [copy.deepcopy(init_probability)]
+        self.probabilities_per_step = [
+            self.traject_risk.get_initial_probabilities_copy(
+                self.traject_risk.mechanisms
+            )
+        ]
         self.total_risk_per_step = [
             compute_total_risk(self.probabilities_per_step[-1], self.D)
         ]
