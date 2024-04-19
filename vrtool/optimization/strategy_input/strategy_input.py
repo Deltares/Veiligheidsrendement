@@ -21,8 +21,8 @@ class StrategyInput(StrategyInputProtocol):
     options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     sections: list[SectionAsInput] = field(default_factory=list)
     Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
-    LCCOption: np.ndarray = np.array([], dtype=float)
-    D: np.ndarray = np.array([], dtype=float)
+    LCCOption: np.ndarray = np.array([])
+    D: np.ndarray = np.array([])
 
     @classmethod
     def from_section_as_input_collection(

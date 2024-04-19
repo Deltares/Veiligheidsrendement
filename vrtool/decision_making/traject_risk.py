@@ -63,7 +63,7 @@ class TrajectRisk:
 
     def get_initial_probabilities_copy(
         self, mechanisms: list[MechanismEnum]
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[MechanismEnum, np.ndarray]:
         """
         Get a copy of the initial probabilities of failure for a list of mechanisms.
         If a mechanism is not present in the traject, the probabilities are set to zero.
@@ -105,7 +105,7 @@ class TrajectRisk:
         Get the probabilities of failure for a mechanism for a specific measure.
 
         Args:
-            measure (tuple[int, int, int]): The measure to get the probabilities for.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to get the probabilities for.
             mechanism (MechanismEnum): The mechanism to get the probabilities for.
 
         Raises:
@@ -133,7 +133,7 @@ class TrajectRisk:
         Get the risks for a mechanism for a specific measure.
 
         Args:
-            measure (tuple[int, int, int]): The measure to get the risks for.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to get the risks for.
             mechanism (MechanismEnum): The mechanism to get the risk for.
 
         Raises:
@@ -221,7 +221,7 @@ class TrajectRisk:
 
         Args:
             mechanism (MechanismEnum): The mechanism to get the probabilities for.
-            measure (tuple[int, int, int]): The measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
 
         Raises:
             ValueError: The mechanism is not in the allowed mechanisms.
@@ -256,7 +256,7 @@ class TrajectRisk:
         Note: the measure is not applied yet, thus the initial probalities remain the same.
 
         Args:
-            measure (tuple[int, int, int]): The measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
 
         Returns:
             np.ndarray: The independent probabilities of failure after applying the measure [N, t].
@@ -327,7 +327,7 @@ class TrajectRisk:
         by copying the measure possibilities to the initial situation.
 
         Args:
-            measure (tuple[int, int, int]): The section, Sh and Sg measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
         """
         _section = measure[0]
         for _mech in self.mechanisms:
