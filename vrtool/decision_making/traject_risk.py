@@ -14,10 +14,7 @@ class TrajectRisk:
     _annual_damage: np.ndarray = np.array([], dtype=float)
 
     def __init__(self, Pf: dict[MechanismEnum, np.ndarray], D: np.ndarray):
-        self._probability_of_failure = {
-            _mech: np.array(_mech_probs, dtype=float)
-            for _mech, _mech_probs in Pf.items()
-        }
+        self._probability_of_failure = Pf
         self._annual_damage = D
 
     @property
@@ -75,7 +72,7 @@ class TrajectRisk:
             mechanisms (list[MechanismEnum]): List of mechanisms to get the initial probabilities for.
 
         Returns:
-            dict[MechanismEnum, np.ndarray]: The initial probabilities of failure for the mechanisms.
+            dict[MechanismEnum, np.ndarray]: The initial probabilities of failure for the mechanisms [N, Sh/Sg, t].
         """
         _init_probabilities = {}
         for _mech in mechanisms:
@@ -187,7 +184,7 @@ class TrajectRisk:
             return np.zeros([self.num_sections, self.num_years])
         return self._probability_of_failure[mechanism][:, 0, :]
 
-    def _get_independent_probabilities(self) -> np.ndarray:
+    def _get_independent_probabilities(self) -> np.ndarray:  # [N, t]
         return self._combine_probabilities(
             [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING], None
         )
@@ -224,7 +221,7 @@ class TrajectRisk:
 
         Args:
             mechanism (MechanismEnum): The mechanism to get the probabilities for.
-            measure (tuple[int, int, int]): The measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
 
         Raises:
             ValueError: The mechanism is not in the allowed mechanisms.
@@ -259,7 +256,7 @@ class TrajectRisk:
         Note: the measure is not applied yet, thus the initial probalities remain the same.
 
         Args:
-            measure (tuple[int, int, int]): The measure to apply.
+            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
 
         Returns:
             np.ndarray: The independent probabilities of failure after applying the measure [N, t].
@@ -309,7 +306,7 @@ class TrajectRisk:
             selection (list[MechanismEnum]): Mechanisms to consider.
 
         Returns:
-            np.ndarray: The combined probability of failure for the selected mechanisms.
+            np.ndarray: The combined probability of failure for the selected mechanisms [N, t].
         """
         _combined_probabilities = np.ones(self._annual_damage.shape)
 
@@ -326,7 +323,8 @@ class TrajectRisk:
 
     def update_probabilities_for_measure(self, measure: tuple[int, int, int]) -> None:
         """
-        Update the probabilities of failure for the initial situation after applying a measure.
+        Update the probabilities of failure for the initial situation after applying a measure
+        by copying the measure possibilities to the initial situation.
 
         Args:
             measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
