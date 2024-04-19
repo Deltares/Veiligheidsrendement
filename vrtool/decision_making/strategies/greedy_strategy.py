@@ -200,7 +200,6 @@ class GreedyStrategy(StrategyProtocol):
                 measure_pfs_stability = self.traject_risk.get_section_probabilities(
                     section_no, MechanismEnum.STABILITY_INNER
                 )
-
                 # measure_pf_piping
                 measure_pfs_piping = self.traject_risk.get_section_probabilities(
                     section_no, MechanismEnum.PIPING
@@ -487,7 +486,7 @@ class GreedyStrategy(StrategyProtocol):
         """This is the main routine for a greedy evaluation of all solutions."""
         start = time.time()
 
-        measure_list = []
+        measure_list: list[tuple[int, int, int]] = []
         _probabilities = [
             self.traject_risk.get_initial_probabilities_copy(self.mechanisms)
         ]
