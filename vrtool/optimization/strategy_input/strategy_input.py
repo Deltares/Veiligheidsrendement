@@ -21,7 +21,6 @@ class StrategyInput(StrategyInputProtocol):
     options: dict[str, df] = field(default_factory=dict)
     options_height: list[dict[str, df]] = field(default_factory=list)
     options_geotechnical: list[dict[str, df]] = field(default_factory=list)
-    opt_parameters: dict[str, int] = field(default_factory=dict)
     sections: list[SectionAsInput] = field(default_factory=list)
     Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -56,12 +55,6 @@ class StrategyInput(StrategyInputProtocol):
         _max_sh = max(
             map(len, (s.sh_combinations for s in section_as_input_collection))
         )
-        _strategy_input.opt_parameters = {
-            "N": _num_sections,
-            "T": _max_year,
-            "Sg": _max_sg + 1,
-            "Sh": _max_sh + 1,
-        }
 
         # Populate probabilities and lifecycle cost datastructures per section(/mechanism)
         mechanisms = set(

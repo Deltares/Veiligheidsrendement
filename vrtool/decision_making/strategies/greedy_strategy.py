@@ -21,7 +21,6 @@ class GreedyStrategy(StrategyProtocol):
         self.options_height = strategy_input.options_height
         self.sections = strategy_input.sections
 
-        self.opt_parameters = strategy_input.opt_parameters
         self.LCCOption = strategy_input.LCCOption
 
         self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
@@ -497,7 +496,7 @@ class GreedyStrategy(StrategyProtocol):
         cost_per_step = [0]
 
         # TODO: add existing investments
-        _spent_money = np.zeros([self.opt_parameters["N"]])
+        _spent_money = np.zeros(self.traject_risk.num_sections)
         _initial_cost_matrix = np.copy(self.LCCOption)
 
         BC_list = []
@@ -505,7 +504,9 @@ class GreedyStrategy(StrategyProtocol):
         # list to store the total risk for each step
         _total_risk_list = [self.traject_risk.get_total_risk()]
 
-        _measures_per_section = np.zeros((self.opt_parameters["N"], 2), dtype=np.int32)
+        _measures_per_section = np.zeros(
+            (self.traject_risk.num_sections, 2), dtype=np.int32
+        )
         for _count in range(0, max_count):
             init_risk = self.traject_risk.get_total_risk()
 
@@ -514,24 +515,24 @@ class GreedyStrategy(StrategyProtocol):
             # first we compute the BC-ratio for each combination of Sh, Sg, for each section
             _life_cycle_cost = np.full(
                 [
-                    self.opt_parameters["N"],
-                    self.opt_parameters["Sh"],
-                    self.opt_parameters["Sg"],
+                    self.traject_risk.num_sections,
+                    self.traject_risk.num_sh_measures,
+                    self.traject_risk.num_sg_measures,
                 ],
                 1e99,
             )
             _total_risk = np.full(
                 [
-                    self.opt_parameters["N"],
-                    self.opt_parameters["Sh"],
-                    self.opt_parameters["Sg"],
+                    self.traject_risk.num_sections,
+                    self.traject_risk.num_sh_measures,
+                    self.traject_risk.num_sg_measures,
                 ],
                 init_risk,
             )
-            for n in range(0, self.opt_parameters["N"]):
+            for n in range(0, self.traject_risk.num_sections):
                 # for each section, start from index 1 to prevent putting inf in top left cell
-                for sg in range(1, self.opt_parameters["Sg"]):
-                    for sh in range(0, self.opt_parameters["Sh"]):
+                for sg in range(1, self.traject_risk.num_sg_measures):
+                    for sh in range(0, self.traject_risk.num_sh_measures):
                         if self.LCCOption[n, sh, sg] >= 1e20:
                             continue
 
@@ -600,9 +601,9 @@ class GreedyStrategy(StrategyProtocol):
                         self.traject_risk.update_probabilities_for_measure(Index_Best)
 
                     elif (setting == "fast") or (setting == "cautious"):
-                        BC_sections = np.empty((self.opt_parameters["N"]))
+                        BC_sections = np.empty(self.traject_risk.num_sections)
                         # find best measure for each section
-                        for n in range(0, self.opt_parameters["N"]):
+                        for n in range(0, self.traject_risk.num_sections):
                             BC_sections[n] = np.max(BC[n, :, :])
                         if len(BC_sections) > 2:
                             BC_second = -np.partition(-BC_sections, 2)[1]
@@ -656,7 +657,7 @@ class GreedyStrategy(StrategyProtocol):
                         )
                     )
                 elif BC_bundleOverflow > BC_bundleRevetment:
-                    for j in range(0, self.opt_parameters["N"]):
+                    for j in range(0, self.traject_risk.num_sections):
                         if overflow_bundle_index[j, 0] != _measures_per_section[j, 0]:
                             IndexMeasure = (
                                 j,
@@ -690,7 +691,7 @@ class GreedyStrategy(StrategyProtocol):
                         )
                     )
                 elif BC_bundleRevetment > np.max(BC):
-                    for j in range(0, self.opt_parameters["N"]):
+                    for j in range(0, self.traject_risk.num_sections):
                         if revetment_bundle_index[j, 0] != _measures_per_section[j, 0]:
                             IndexMeasure = (
                                 j,
