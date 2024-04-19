@@ -7,12 +7,10 @@ from pandas import DataFrame as df
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.strategy_input.legacy_mapping_helper import LegacyMappingHelper
 from vrtool.optimization.strategy_input.strategy_input_protocol import (
     StrategyInputProtocol,
 )
-from vrtool.probabilistic_tools.combin_functions import CombinFunctions
 
 
 @dataclass
@@ -33,14 +31,6 @@ class StrategyInput(StrategyInputProtocol):
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
         """
-
-        def _get_independent_probability_of_failure(
-            probability_of_failure_lookup: dict[MechanismEnum, np.array]
-        ) -> np.array:
-            return CombinFunctions.combine_probabilities(
-                probability_of_failure_lookup,
-                SgMeasure.get_allowed_mechanisms(),
-            )
 
         _strategy_input = cls(
             design_method=design_method, sections=section_as_input_collection
