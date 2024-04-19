@@ -192,7 +192,7 @@ class TrajectRisk:
     def get_total_risk(self) -> float:
         """
         Calculate the total risk for the initial situation.
-        The first Sh and Sg measure are used to calculate this.
+        The initial Sh and Sg measures are used to calculate this.
 
         Returns:
             float: The total risk for the traject.
