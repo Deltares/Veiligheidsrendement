@@ -203,6 +203,47 @@ class TrajectRisk:
             )
         )
 
+    def _get_mechanism_probabilities_product(
+        self, mechanism: MechanismEnum
+    ) -> np.ndarray:
+        """
+        Calculate the product of the probabilities of non-failure for a mechanism.
+
+        Args:
+            mechanism (MechanismEnum): The mechanism to calculate the product for.
+
+        Returns:
+            np.ndarray: The traject probability of non-failure for the mechanism [t].
+        """
+        if mechanism not in self._probability_of_failure:
+            return np.ones(self.num_years)
+        return np.prod(1 - self._get_mechanism_probabilities(mechanism), axis=0)
+
+    def get_total_risk_TR(self) -> float:
+        """
+        Calculate the total risk for the initial situation.
+        This method is used for the TR calculation and will be merged with the get_total_risk method (VRTOOL-437).
+
+        Returns:
+            float: The total risk for the traject.
+        """
+
+        def get_probabilities_maximum(mechanism: MechanismEnum) -> np.ndarray:
+            return np.max(self._get_mechanism_probabilities(mechanism), axis=0)
+
+        def get_probabilities_of_non_failure(mechanism: MechanismEnum) -> np.ndarray:
+            return 1 - self._get_mechanism_probabilities_product(mechanism)
+
+        return np.sum(
+            self._annual_damage
+            * (
+                get_probabilities_maximum(MechanismEnum.OVERFLOW)
+                + 4 * get_probabilities_maximum(MechanismEnum.REVETMENT)
+                + get_probabilities_of_non_failure(MechanismEnum.STABILITY_INNER)
+                + get_probabilities_of_non_failure(MechanismEnum.PIPING)
+            )
+        )
+
     def _get_mechanism_probabilities_for_measure(
         self, mechanism: MechanismEnum, measure: tuple[int, int, int]
     ) -> np.ndarray:
