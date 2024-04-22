@@ -42,7 +42,7 @@ def _get_database_reference_path(
 @dataclass
 class AcceptanceTestCase:
     case_name: str
-    model_directory: Path
+    model_directory: str
     traject_name: str
     excluded_mechanisms: list[MechanismEnum] = field(
         default_factory=lambda: [
@@ -104,6 +104,15 @@ class AcceptanceTestCase:
                     MechanismEnum.HYDRAULIC_STRUCTURES,
                 ],
                 case_name="Traject 38-1, two sections with D-Stability",
+            ),
+            AcceptanceTestCase(
+                model_directory="38-1 two river sections anchored sheetpile",
+                traject_name="38-1",
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+                case_name="Traject 38-1, two river sections with anchored sheetpile [VRTOOL-344]",
             ),
         ]
 

@@ -22,6 +22,7 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
     calculate_reliability,
     calculate_safety_factor,
 )
+from vrtool.flood_defence_system.dike_section import DikeSection
 
 
 def implement_berm_widening(
@@ -470,3 +471,35 @@ def probabilistic_design(
             return h_crest
         else:
             raise Exception("Unknown calculation type for {}".format(mechanism))
+
+
+def get_stability_inner_depth(dike_section: DikeSection) -> float:
+    """Gets the depth for the stability screen application.
+
+    Args:
+        dike_section (DikeSection): The section to retrieve the depth from.
+
+    Raises:
+        ValueError: Raised when there is no stability inner failure mechanism present.
+
+    Returns:
+        float: The depth to be used for the stability screen calculation.
+    """
+    stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+        MechanismEnum.STABILITY_INNER
+    )
+    if not stability_inner_reliability_collection:
+        error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
+        logging.error(error_message)
+        raise ValueError(error_message)
+
+    d_cover_input = stability_inner_reliability_collection.Reliability[
+        "0"
+    ].Input.input.get("d_cover", None)
+    if d_cover_input:
+        if d_cover_input.size > 1:
+            logging.debug("d_cover has more values than 1.")
+
+        return max([d_cover_input[0] + 2.0, 9.0])
+
+    return 9.0

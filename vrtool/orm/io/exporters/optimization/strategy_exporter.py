@@ -92,7 +92,7 @@ class StrategyExporter(OrmExporterProtocol):
 
                 _prob_per_step = strategy_run.probabilities_per_step[_measure_idx + 1]
                 lcc = _measure_sh.lcc + _measure_sg.lcc
-                for _t in strategy_run._time_periods:
+                for _t in strategy_run.time_periods:
                     _prob_section = self._get_section_time_value(
                         _section, _t, _prob_per_step
                     )
@@ -111,12 +111,12 @@ class StrategyExporter(OrmExporterProtocol):
                 ) in (
                     _option_selected_measure_result.measure_result.measure_result_mechanisms
                 ):
-                    _mechanism_name = MechanismEnum.get_enum(
+                    _mechanism = MechanismEnum.get_enum(
                         _measure_result_mechanism.mechanism_per_section.mechanism.name
-                    ).name
+                    )
                     _t = _measure_result_mechanism.time
                     _prob_mechanism = self._get_selected_time(
-                        _section, _t, _mechanism_name, _prob_per_step
+                        _section, _t, _mechanism, _prob_per_step
                     )
                     _step_results_mechanism.append(
                         {
@@ -157,7 +157,7 @@ class StrategyExporter(OrmExporterProtocol):
         return _opt_selected_measure
 
     def _get_section_time_value(
-        self, section: int, t: int, values: dict[str, np.ndarray]
+        self, section: int, t: int, values: dict[MechanismEnum, np.ndarray]
     ) -> float:
         pt = 1.0
         for m in values:
@@ -168,10 +168,12 @@ class StrategyExporter(OrmExporterProtocol):
         return 1.0 - pt
 
     def _get_selected_time(
-        self, section: int, t: int, mechanism: str, values: dict[str, np.ndarray]
+        self,
+        section: int,
+        t: int,
+        mechanism: MechanismEnum,
+        values: dict[MechanismEnum, np.ndarray],
     ) -> float:
-        if mechanism == "SECTION" and "SECTION" not in values:
-            return self._get_section_time_value(section, t, values)
         maxt = values[mechanism].shape[1] - 1
         _t = min(t, maxt)
         return values[mechanism][section, _t]

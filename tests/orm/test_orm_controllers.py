@@ -629,24 +629,24 @@ class TestOrmControllers:
                 self.total_risk_per_step = [1000.0, 100.0]
                 self.probabilities_per_step = [
                     {
-                        MechanismEnum.STABILITY_INNER.name: np.linspace(
+                        MechanismEnum.STABILITY_INNER: np.linspace(
                             0.1, 0.6, 100
                         ).reshape((100, 1)),
-                        MechanismEnum.OVERFLOW.name: np.linspace(
-                            0.05, 0.55, 100
-                        ).reshape((100, 1)),
+                        MechanismEnum.OVERFLOW: np.linspace(0.05, 0.55, 100).reshape(
+                            (100, 1)
+                        ),
                     },
                     {
-                        MechanismEnum.STABILITY_INNER.name: np.linspace(
+                        MechanismEnum.STABILITY_INNER: np.linspace(
                             0.1, 0.6, 100
                         ).reshape((100, 1)),
-                        MechanismEnum.OVERFLOW.name: np.linspace(
-                            0.01, 0.1, 100
-                        ).reshape((100, 1)),
+                        MechanismEnum.OVERFLOW: np.linspace(0.01, 0.1, 100).reshape(
+                            (100, 1)
+                        ),
                     },
                 ]
                 self.measures_taken = [(0, 1, 1)]
-                self._time_periods = [0, 20, 100]
+                self.time_periods = [0, 20, 100]
 
         _test_strategy = MockedStrategy()
 

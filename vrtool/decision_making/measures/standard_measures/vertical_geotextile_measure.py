@@ -4,7 +4,6 @@ import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.decision_making.measures.common_functions import determine_costs
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
@@ -22,24 +21,16 @@ class VerticalGeotextileMeasure(MeasureProtocol):
         preserve_slope: bool = False,
     ):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        type = self.parameters["Type"]
-
         # No influence on overflow and stability
         # Only 1 parameterized version with a lifetime of 50 years
         self.measures = {}
         self.measures["VZG"] = "yes"
-        self.measures["Cost"] = determine_costs(
-            self.parameters,
-            type,
-            dike_section.Length,
-            self.parameters.get("Depth", float("nan")),
-            self.unit_costs,
+        self.measures["Cost"] = (
+            self.unit_costs["Vertical Geotextile"] * dike_section.Length
         )
-
         self.measures["Reliability"] = self._get_configured_section_reliability(
             dike_section, traject_info
         )
-        self.measures["Reliability"].calculate_section_reliability()
 
     def _get_configured_section_reliability(
         self, dike_section: DikeSection, traject_info: DikeTrajectInfo
@@ -60,6 +51,7 @@ class VerticalGeotextileMeasure(MeasureProtocol):
                 mechanism_reliability_collection
             )
 
+        section_reliability.calculate_section_reliability()
         return section_reliability
 
     def _get_configured_mechanism_reliability_collection(
@@ -73,34 +65,32 @@ class VerticalGeotextileMeasure(MeasureProtocol):
             mechanism, calc_type, self.config.T, self.config.t_0, 0
         )
 
-        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
+        for (
+            _year_to_calculate,
+            _mechanism_reliability,
+        ) in mechanism_reliability_collection.Reliability.items():
+            _mechanism_reliability.Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
-                .Reliability[year_to_calculate]
+                .Reliability[_year_to_calculate]
                 .Input
             )
 
-            mechanism_reliability = mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ]
             dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                 mechanism
             ).Reliability[
-                year_to_calculate
+                _year_to_calculate
             ]
             if mechanism == MechanismEnum.PIPING:
                 self._configure_piping(
-                    mechanism_reliability,
-                    year_to_calculate,
+                    _mechanism_reliability,
+                    _year_to_calculate,
                     dike_section_mechanism_reliability,
                 )
             if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]:
                 self._copy_results(
-                    mechanism_reliability, dike_section_mechanism_reliability
+                    _mechanism_reliability, dike_section_mechanism_reliability
                 )
 
         mechanism_reliability_collection.generate_LCR_profile(

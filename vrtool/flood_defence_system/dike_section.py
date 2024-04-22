@@ -90,7 +90,7 @@ class DikeSection:
         # Read general data from sheet in standardized xlsx file
         df = pd.read_excel(section_filepath, sheet_name=None)
 
-        for name, sheet_data in df.items():
+        for name in df.keys():
             if name == sheet_name:
                 data = df[name].set_index(list(df[name])[0])
                 self.mechanism_data = {}

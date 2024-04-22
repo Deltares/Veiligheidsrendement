@@ -1,6 +1,3 @@
-from vrtool.decision_making.measures.standard_measures.diaphragm_wall_measure import (
-    DiaphragmWallMeasure,
-)
 from vrtool.decision_making.measures.standard_measures.revetment_measure import (
     RevetmentMeasure,
 )
@@ -12,4 +9,10 @@ from vrtool.decision_making.measures.standard_measures.stability_screen_measure 
 )
 from vrtool.decision_making.measures.standard_measures.vertical_geotextile_measure import (
     VerticalGeotextileMeasure,
+)
+from vrtool.decision_making.measures.standard_measures.wall_measures.anchored_sheetpile_measure import (
+    AnchoredSheetpileMeasure,
+)
+from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_wall_measure import (
+    DiaphragmWallMeasure,
 )
