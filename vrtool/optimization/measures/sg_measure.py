@@ -27,8 +27,15 @@ class SgMeasure(MeasureAsInputProtocol):
 
     @property
     def lcc(self) -> float:
+        """
+        Value for the `life-cycle-cost` of this measure.
+        When the `dberm` is the "initial" value (`0`),
+        the cost will be computed as `0`.
+
+        Returns:
+            float: The calculated lcc.
+        """
         if self.dberm == 0:
-            # VRTOOL-390
             return 0
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 

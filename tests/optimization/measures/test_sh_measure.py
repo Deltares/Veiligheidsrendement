@@ -50,6 +50,47 @@ class TestShMeasure:
         assert _measure.dcrest == pytest.approx(0.1)
         assert _measure.start_cost == pytest.approx(0)
 
+    @pytest.mark.parametrize("dcrest_value", [pytest.param(0), pytest.param(-999)])
+    def test_given_dcrest_0_lcc_returns_0(self, dcrest_value: float):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sh_measure = self._create_sh_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sh_measure.dcrest = dcrest_value
+
+        # 2. Run test.
+        _result = _sh_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result == 0
+
+    @pytest.mark.parametrize(
+        "dcrest_value",
+        [pytest.param(-10, id="Lesser than 0"), pytest.param(10, id="Greater than 0")],
+    )
+    def test_given_dcrest_else_than_0_lcc_doesnot_return_0(self, dcrest_value: float):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sh_measure = self._create_sh_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sh_measure.dcrest = dcrest_value
+
+        # 2. Run test.
+        _result = _sh_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result != 0
+
     @pytest.mark.parametrize(
         "measure_type",
         [

@@ -45,6 +45,46 @@ class TestSgMeasure:
         assert _measure.dberm == pytest.approx(0.1)
         assert _measure.start_cost == pytest.approx(0)
 
+    def test_given_dberm_0_lcc_returns_0(self):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sg_measure = self._create_sg_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sg_measure.dberm = 0
+
+        # 2. Run test.
+        _result = _sg_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result == 0
+
+    @pytest.mark.parametrize(
+        "dberm_value",
+        [pytest.param(-10, id="Lesser than 0"), pytest.param(10, id="Greater than 0")],
+    )
+    def test_given_dberm_else_than_0_lcc_doesnot_return_0(self, dberm_value: float):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sg_measure = self._create_sg_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sg_measure.dberm = dberm_value
+
+        # 2. Run test.
+        _result = _sg_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result != 0
+
     @pytest.mark.parametrize(
         "measure_type",
         [

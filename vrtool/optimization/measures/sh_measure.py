@@ -29,8 +29,15 @@ class ShMeasure(MeasureAsInputProtocol):
 
     @property
     def lcc(self) -> float:
+        """
+        Value for the `life-cycle-cost` of this measure.
+        When the `dcrest` is the "initial" value (`0` or `-999`),
+        the cost will be computed as `0`.
+
+        Returns:
+            float: The calculated lcc.
+        """
         if self.dcrest in [0, -999]:
-            # VRTOOL-390
             return 0
 
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
