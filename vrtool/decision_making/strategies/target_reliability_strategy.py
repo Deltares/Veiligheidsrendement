@@ -395,9 +395,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[
                 idx
             ]
-            measure_idx = self.sections[_section_idx].get_combination_idx_for_aggregate(
-                _taken_measures[self.sections[_section_idx].section_name]
-            )
+            measure_idx = _taken_measures[
+                self.sections[_section_idx].section_name
+            ].get_combination_idx()
             _taken_measures_indices.append(
                 (_section_idx, measure_idx[0] + 1, measure_idx[1] + 1)
             )
