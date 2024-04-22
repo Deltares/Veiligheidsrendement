@@ -233,11 +233,11 @@ class TrajectRisk:
         Returns:
             float: The total risk for the traject.
         """
-        def get_probabilities_of_non_failure(mechanism: MechanismEnum) -> np.ndarray:
-            return np.prod(1 - self._get_mechanism_probabilities(mechanism), axis=0)
-        
         def get_probabilities_maximum(mechanism: MechanismEnum) -> np.ndarray:
             return np.max(self._get_mechanism_probabilities(mechanism), axis=0)
+        
+        def get_probabilities_of_non_failure(mechanism: MechanismEnum) -> np.ndarray:
+            return 1 - self._get_mechanism_probabilities(mechanism)
         
         return np.sum(
             self._annual_damage
