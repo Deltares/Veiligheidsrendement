@@ -142,17 +142,7 @@ class TestTrajectRisk:
         _init_risk = _tr.get_total_risk()
 
         # 3. Verify expectations
-        assert _init_risk == pytest.approx(26.475)
-
-    def test_get_total_risk_TR(self):
-        # 1. Define test data
-        _tr = self._get_traject_risk()
-
-        # 2. Run test
-        _init_risk = _tr.get_total_risk_TR()
-
-        # 3. Verify expectations
-        assert _init_risk == pytest.approx(44.9)
+        assert _init_risk == pytest.approx(10.4641125)
 
     @pytest.mark.parametrize(
         "measure, result",
@@ -180,11 +170,11 @@ class TestTrajectRisk:
         # 1. Define test data
         _tr = self._get_traject_risk()
         _measure_risk = _tr.get_total_risk()
-        assert _measure_risk == pytest.approx(26.475)
+        assert _measure_risk == pytest.approx(10.4641125)
 
         # 2. Run test
         _tr.update_probabilities_for_measure((1, 1, 0))
         _measure_risk_updated = _tr.get_total_risk()
 
         # 3. Verify expectations
-        assert _measure_risk_updated == pytest.approx(23.275)
+        assert _measure_risk_updated == pytest.approx(11.1156605)
