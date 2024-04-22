@@ -73,9 +73,14 @@ class ShMeasure(MeasureAsInputProtocol):
             or self.measure_type != previous_measure.measure_type
         ):
             if self.year == 0 and self.dcrest in [0, -999]:
-                self.start_cost = self.cost
+                # VRTOOL-390
+                self.start_cost = 0
                 return
             raise (ValueError("First measure of type isn't zero-version"))
+        if previous_measure.year == 0 and previous_measure.cost == 0:
+            # VRTOOL-390
+            self.start_cost = self.cost
+            return
         self.start_cost = previous_measure.start_cost
 
     @staticmethod

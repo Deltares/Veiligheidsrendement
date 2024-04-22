@@ -159,7 +159,7 @@ def implement_berm_widening(
 
 def calculate_area(geometry):
     polypoints = []
-    for label, points in geometry.iterrows():
+    for _, points in geometry.iterrows():
         polypoints.append((points.x, points.z))
     polygonXZ = Polygon(polypoints)
     areaPol = Polygon(polygonXZ).area

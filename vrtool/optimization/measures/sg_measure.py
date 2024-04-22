@@ -64,14 +64,20 @@ class SgMeasure(MeasureAsInputProtocol):
             MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
         ]:
             return
+        
         if (
             previous_measure is None
             or self.measure_type != previous_measure.measure_type
         ):
             if self.year == 0 and self.dberm == 0:
-                self.start_cost = self.cost
+                # VRTOOL-390
+                self.start_cost = 0
                 return
             raise (ValueError("First measure of type isn't zero-version"))
+        if previous_measure.year == 0 and previous_measure.cost == 0:
+            # VRTOOL-390
+            self.start_cost = self.cost
+            return
         self.start_cost = previous_measure.start_cost
 
     @staticmethod
