@@ -108,52 +108,6 @@ class TestSgMeasure:
         # 3. Verify expectations
         assert _lcc == pytest.approx(3.720469)
 
-    def test_set_start_cost_when_no_previous_measure(self):
-        # 1. Define input
-        _measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
-        )
-        _measure.year = 0
-        _measure.dberm = 0
-        _previous_measure = None
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.cost
-
-    def test_set_start_cost_when_previous_measure_is_equal(self):
-        # 1. Define input
-        _measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
-        )
-        _previous_measure = copy.deepcopy(_measure)
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _previous_measure.start_cost
-
-    def test_set_start_cost_when_previous_measure_is_different(self):
-        # 1. Define input
-        _measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
-        )
-        _measure.year = 0
-        _measure.dberm = 0
-        _previous_measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            CombinableTypeEnum.FULL,
-        )
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.start_cost
-
     @pytest.mark.parametrize(
         "mechanism, expected",
         [

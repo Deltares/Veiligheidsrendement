@@ -363,11 +363,6 @@ def determine_costs(
             )
         )
 
-    if _measure_type_name == "soil reinforcement":
-        if int(dberm_in) == 0 and dcrest == 0.0:
-            # VRTOOL-390
-            return 0.0
-
     if "soil reinforcement" in _measure_type_name:
         if direction == "inward":
             total_cost = (

@@ -113,52 +113,6 @@ class TestShMeasure:
         # 3. Verify expectations
         assert _lcc == pytest.approx(3.720469)
 
-    def test_set_start_cost_when_no_previous_measure(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _measure.year = 0
-        _measure.dcrest = -999
-        _previous_measure = None
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.cost
-
-    def test_set_start_cost_when_previous_measure_is_equal(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _previous_measure = copy.deepcopy(_measure)
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _previous_measure.start_cost
-
-    def test_set_start_cost_when_previous_measure_is_different(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _measure.year = 0
-        _measure.dcrest = -999
-        _previous_measure = self._create_sh_measure(
-            MeasureTypeEnum.STABILITY_SCREEN,
-            CombinableTypeEnum.FULL,
-        )
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.start_cost
-
     @pytest.mark.parametrize(
         "mechanism, expected",
         [

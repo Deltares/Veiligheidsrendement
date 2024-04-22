@@ -27,6 +27,9 @@ class SgMeasure(MeasureAsInputProtocol):
 
     @property
     def lcc(self) -> float:
+        if self.cost == 0:
+            # VRTOOL-390
+            return self.cost
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
     @property
@@ -54,31 +57,6 @@ class SgMeasure(MeasureAsInputProtocol):
             )
             value = 0
         self._start_cost = value
-
-    def set_start_cost(
-        self,
-        previous_measure: MeasureAsInputProtocol | None,
-    ):
-        if self.measure_type not in [
-            MeasureTypeEnum.SOIL_REINFORCEMENT,
-            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-        ]:
-            return
-        
-        if (
-            previous_measure is None
-            or self.measure_type != previous_measure.measure_type
-        ):
-            if self.year == 0 and self.dberm == 0:
-                # VRTOOL-390
-                self.start_cost = 0
-                return
-            raise (ValueError("First measure of type isn't zero-version"))
-        if previous_measure.year == 0 and previous_measure.cost == 0:
-            # VRTOOL-390
-            self.start_cost = self.cost
-            return
-        self.start_cost = previous_measure.start_cost
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:
