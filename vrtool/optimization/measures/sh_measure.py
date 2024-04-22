@@ -29,9 +29,9 @@ class ShMeasure(MeasureAsInputProtocol):
 
     @property
     def lcc(self) -> float:
-        if self.cost:
+        if self.dcrest in [0, -999]:
             # VRTOOL-390
-            return self.cost
+            return 0
 
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 

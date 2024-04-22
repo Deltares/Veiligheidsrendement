@@ -27,9 +27,9 @@ class SgMeasure(MeasureAsInputProtocol):
 
     @property
     def lcc(self) -> float:
-        if self.cost == 0:
+        if self.dberm == 0:
             # VRTOOL-390
-            return self.cost
+            return 0
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
     @property
