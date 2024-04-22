@@ -62,7 +62,7 @@ class TestTrajectRisk:
         _mechanism = _MECHANISMS[0]
 
         # 2. Run test
-        _init_probs_dict = _tr.get_initial_probabilities_copy(
+        _init_probs_dict = _tr.get_initial_probabilities_dict(
             [_mechanism, MechanismEnum.INVALID]
         )
 
@@ -153,6 +153,16 @@ class TestTrajectRisk:
 
         # 3. Verify expectations
         assert _init_risk == pytest.approx(26.475)
+
+    def test_get_total_risk_TR(self):
+        # 1. Define test data
+        _tr = self._get_traject_risk()
+
+        # 2. Run test
+        _init_risk = _tr.get_total_risk_TR()
+
+        # 3. Verify expectations
+        assert _init_risk == pytest.approx(44.9)
 
     @pytest.mark.parametrize(
         "measure, result",

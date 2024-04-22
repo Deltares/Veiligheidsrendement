@@ -36,8 +36,13 @@ class GreedyStrategy(StrategyProtocol):
         self.probabilities_per_step = []
 
     def bundling_output(
-        self, BC_list, counter_list, sh_array, sg_array, existing_investments
-    ):
+        self,
+        BC_list: list[float],
+        counter_list: np.ndarray,
+        sh_array: np.ndarray,
+        sg_array: np.ndarray,
+        existing_investments: np.ndarray,
+    ) -> tuple[float, np.ndarray]:
         no_of_sections = sh_array.shape[0]
         maximum_BC_index = np.array(BC_list).argmax()
         optimal_counter_combination = counter_list[maximum_BC_index]
@@ -68,7 +73,7 @@ class GreedyStrategy(StrategyProtocol):
         sg_array: np.ndarray,
         mechanism: MechanismEnum,
         n_runs: int = 100,
-    ):
+    ) -> tuple[list[float], list[np.ndarray]]:
         """
         Bundles measures for dependent mechanisms (overflow or revetment) and returns the optimal bundling combination.
         It only looks at risk reduction for dependent mechanism considered, not for the other mechanisms.
@@ -125,14 +130,14 @@ class GreedyStrategy(StrategyProtocol):
                 sg_array[ind_highest_risk, index_counter[ind_highest_risk]],
             )
             if mechanism == MechanismEnum.OVERFLOW:
-                new_mechanism_risk[
-                    ind_highest_risk, :
-                ] = self.traject_risk.get_measure_risk(_measure, MechanismEnum.OVERFLOW)
+                new_mechanism_risk[ind_highest_risk, :] = (
+                    self.traject_risk.get_measure_risk(_measure, MechanismEnum.OVERFLOW)
+                )
             elif mechanism == MechanismEnum.REVETMENT:
-                new_mechanism_risk[
-                    ind_highest_risk, :
-                ] = self.traject_risk.get_measure_risk(
-                    _measure, MechanismEnum.REVETMENT
+                new_mechanism_risk[ind_highest_risk, :] = (
+                    self.traject_risk.get_measure_risk(
+                        _measure, MechanismEnum.REVETMENT
+                    )
                 )
             else:
                 raise ValueError("Mechanism {} not recognized".format(mechanism))
@@ -165,7 +170,7 @@ class GreedyStrategy(StrategyProtocol):
         existing_investments: np.array,
         mechanism: MechanismEnum,
         dim_sh: int,
-    ):
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no"""
         # make arrays for section
         sh_section_sorted = np.full((1, dim_sh), 999, dtype=int)
@@ -259,10 +264,10 @@ class GreedyStrategy(StrategyProtocol):
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
-                    measure_pfs[
-                        MechanismEnum.OVERFLOW
-                    ] = self.traject_risk.get_section_probabilities(
-                        section_no, MechanismEnum.OVERFLOW
+                    measure_pfs[MechanismEnum.OVERFLOW] = (
+                        self.traject_risk.get_section_probabilities(
+                            section_no, MechanismEnum.OVERFLOW
+                        )
                     )
                     # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
                     if (
@@ -270,10 +275,10 @@ class GreedyStrategy(StrategyProtocol):
                         in self.sections[section_no].initial_assessment.get_mechanisms()
                     ):
                         # take combination of REVETMENT and OVERFLOW
-                        measure_pfs[
-                            MechanismEnum.REVETMENT
-                        ] = self.traject_risk.get_section_probabilities(
-                            section_no, MechanismEnum.REVETMENT
+                        measure_pfs[MechanismEnum.REVETMENT] = (
+                            self.traject_risk.get_section_probabilities(
+                                section_no, MechanismEnum.REVETMENT
+                            )
                         )
                         comparison_height = np.where(
                             np.all(
@@ -299,15 +304,15 @@ class GreedyStrategy(StrategyProtocol):
 
                 elif mechanism == MechanismEnum.REVETMENT:
                     # overflow must be present so slightly different
-                    measure_pfs[
-                        MechanismEnum.OVERFLOW
-                    ] = self.traject_risk.get_section_probabilities(
-                        section_no, MechanismEnum.OVERFLOW
+                    measure_pfs[MechanismEnum.OVERFLOW] = (
+                        self.traject_risk.get_section_probabilities(
+                            section_no, MechanismEnum.OVERFLOW
+                        )
                     )
-                    measure_pfs[
-                        MechanismEnum.REVETMENT
-                    ] = self.traject_risk.get_section_probabilities(
-                        section_no, MechanismEnum.OVERFLOW
+                    measure_pfs[MechanismEnum.REVETMENT] = (
+                        self.traject_risk.get_section_probabilities(
+                            section_no, MechanismEnum.OVERFLOW
+                        )
                     )
                     # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
                     comparison_height = np.where(
@@ -435,13 +440,13 @@ class GreedyStrategy(StrategyProtocol):
 
         for _idx, _ in enumerate(existing_investment_list):
             # sh
-            _calculated_investments[
-                existing_investment_list[_idx][0], 0
-            ] = existing_investment_list[_idx][1]
+            _calculated_investments[existing_investment_list[_idx][0], 0] = (
+                existing_investment_list[_idx][1]
+            )
             # sg
-            _calculated_investments[
-                existing_investment_list[_idx][0], 1
-            ] = existing_investment_list[_idx][2]
+            _calculated_investments[existing_investment_list[_idx][0], 1] = (
+                existing_investment_list[_idx][2]
+            )
 
         # prepare arrays
         sorted_sh = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
@@ -488,7 +493,7 @@ class GreedyStrategy(StrategyProtocol):
 
         measure_list: list[tuple[int, int, int]] = []
         _probabilities = [
-            self.traject_risk.get_initial_probabilities_copy(self.mechanisms)
+            self.traject_risk.get_initial_probabilities_dict(self.mechanisms)
         ]
 
         risk_per_step = []
@@ -532,9 +537,9 @@ class GreedyStrategy(StrategyProtocol):
                             self.LCCOption[n, sh, sg], _spent_money[n]
                         )
 
-                        _total_risk[
-                            n, sh, sg
-                        ] = self.traject_risk.get_total_risk_for_measure((n, sh, sg))
+                        _total_risk[n, sh, sg] = (
+                            self.traject_risk.get_total_risk_for_measure((n, sh, sg))
+                        )
 
             # do not go back:
             _life_cycle_cost = np.where(_life_cycle_cost <= 0, 1e99, _life_cycle_cost)
@@ -637,7 +642,7 @@ class GreedyStrategy(StrategyProtocol):
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     _probabilities.append(
-                        self.traject_risk.get_initial_probabilities_copy(
+                        self.traject_risk.get_initial_probabilities_dict(
                             self.mechanisms
                         )
                     )
@@ -671,7 +676,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities_dict(
                                     self.mechanisms
                                 )
                             )
@@ -705,7 +710,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities_dict(
                                     self.mechanisms
                                 )
                             )
