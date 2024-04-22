@@ -406,7 +406,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         # First we get and update the probabilities per step
         # we need to track probability for each step
         self.probabilities_per_step = [
-            self.traject_risk.get_initial_probabilities_copy(
+            self.traject_risk.get_initial_probabilities_dict(
                 self.traject_risk.mechanisms
             )
         ]
@@ -417,7 +417,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 _taken_measures_indices[step]
             )
             self.probabilities_per_step.append(
-                self.traject_risk.get_initial_probabilities_copy(
+                self.traject_risk.get_initial_probabilities_dict(
                     self.traject_risk.mechanisms
                 )
             )

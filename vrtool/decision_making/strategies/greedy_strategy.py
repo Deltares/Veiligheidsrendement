@@ -493,7 +493,7 @@ class GreedyStrategy(StrategyProtocol):
 
         measure_list: list[tuple[int, int, int]] = []
         _probabilities = [
-            self.traject_risk.get_initial_probabilities_copy(self.mechanisms)
+            self.traject_risk.get_initial_probabilities_dict(self.mechanisms)
         ]
 
         risk_per_step = []
@@ -642,7 +642,7 @@ class GreedyStrategy(StrategyProtocol):
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     _probabilities.append(
-                        self.traject_risk.get_initial_probabilities_copy(
+                        self.traject_risk.get_initial_probabilities_dict(
                             self.mechanisms
                         )
                     )
@@ -676,7 +676,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities_dict(
                                     self.mechanisms
                                 )
                             )
@@ -710,7 +710,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities_dict(
                                     self.mechanisms
                                 )
                             )

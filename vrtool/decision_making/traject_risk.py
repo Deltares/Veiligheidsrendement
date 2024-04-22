@@ -61,7 +61,7 @@ class TrajectRisk:
             return 0
         return self._probability_of_failure[self.mechanisms[0]].shape[2]
 
-    def get_initial_probabilities_copy(
+    def get_initial_probabilities_dict(
         self, mechanisms: list[MechanismEnum]
     ) -> dict[MechanismEnum, np.ndarray]:
         """
@@ -233,24 +233,19 @@ class TrajectRisk:
         Returns:
             float: The total risk for the traject.
         """
+        def get_probabilities_of_non_failure(mechanism: MechanismEnum) -> np.ndarray:
+            return np.prod(1 - self._get_mechanism_probabilities(mechanism), axis=0)
+        
+        def get_probabilities_maximum(mechanism: MechanismEnum) -> np.ndarray:
+            return np.max(self._get_mechanism_probabilities(mechanism), axis=0)
+        
         return np.sum(
             self._annual_damage
             * (
-                np.max(
-                    self._get_mechanism_probabilities(MechanismEnum.OVERFLOW),
-                    axis=0,
-                )
-                + 4
-                * np.max(
-                    self._get_mechanism_probabilities(MechanismEnum.REVETMENT),
-                    axis=0,
-                )
-                + 1
-                - self._get_mechanism_probabilities_product(
-                    MechanismEnum.STABILITY_INNER
-                )
-                + 1
-                - self._get_mechanism_probabilities_product(MechanismEnum.PIPING)
+                get_probabilities_maximum(MechanismEnum.OVERFLOW)
+                + 4 * get_probabilities_maximum(MechanismEnum.REVETMENT)
+                + get_probabilities_of_non_failure(MechanismEnum.STABILITY_INNER)
+                + get_probabilities_of_non_failure(MechanismEnum.PIPING)
             )
         )
 
@@ -396,10 +391,10 @@ class TrajectRisk:
             measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
         """
         _section = measure[0]
+        _measure = measure[2]
         for _mech in self.mechanisms:
             if _mech not in SgMeasure.get_allowed_mechanisms():
                 continue
-            _measure = measure[2]
             self._probability_of_failure[_mech][_section, 0, :] = (
                 self._probability_of_failure[_mech][_section, _measure, :]
             )
