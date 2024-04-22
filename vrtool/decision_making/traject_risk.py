@@ -233,12 +233,13 @@ class TrajectRisk:
         Returns:
             float: The total risk for the traject.
         """
+
         def get_probabilities_maximum(mechanism: MechanismEnum) -> np.ndarray:
             return np.max(self._get_mechanism_probabilities(mechanism), axis=0)
-        
+
         def get_probabilities_of_non_failure(mechanism: MechanismEnum) -> np.ndarray:
             return 1 - self._get_mechanism_probabilities_product(mechanism)
-        
+
         return np.sum(
             self._annual_damage
             * (
@@ -374,9 +375,9 @@ class TrajectRisk:
                 _measure = measure[2]
             else:
                 continue
-            self._probability_of_failure[_mech][_section, 0, :] = (
-                self._probability_of_failure[_mech][_section, _measure, :]
-            )
+            self._probability_of_failure[_mech][
+                _section, 0, :
+            ] = self._probability_of_failure[_mech][_section, _measure, :]
 
     def update_probabilities_for_measure_TR(
         self, measure: tuple[int, int, int]
@@ -395,6 +396,6 @@ class TrajectRisk:
         for _mech in self.mechanisms:
             if _mech not in SgMeasure.get_allowed_mechanisms():
                 continue
-            self._probability_of_failure[_mech][_section, 0, :] = (
-                self._probability_of_failure[_mech][_section, _measure, :]
-            )
+            self._probability_of_failure[_mech][
+                _section, 0, :
+            ] = self._probability_of_failure[_mech][_section, _measure, :]
