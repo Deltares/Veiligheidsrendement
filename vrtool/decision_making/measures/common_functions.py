@@ -159,7 +159,7 @@ def implement_berm_widening(
 
 def calculate_area(geometry):
     polypoints = []
-    for label, points in geometry.iterrows():
+    for _, points in geometry.iterrows():
         polypoints.append((points.x, points.z))
     polygonXZ = Polygon(polypoints)
     areaPol = Polygon(polygonXZ).area
@@ -362,6 +362,7 @@ def determine_costs(
                 section
             )
         )
+
     if "soil reinforcement" in _measure_type_name:
         if direction == "inward":
             total_cost = (

@@ -1,5 +1,0 @@
-,Section,option_index,LCC,BC,ID,name,year,yes/no,dcrest,dberm,beta_target,transition_level
-0,,,0.0,,,,,,,,,
-1,WsNoo_Stab_015400_016200,2681,12627022.866781507,[],8+6+11,['Grondversterking binnenwaarts+Verticaal Zanddicht Geotextiel+Aanpassing bekleding'],"[0, 0, 0]",yes,1.75,30.0,3.924192142846635,7.93
-2,WsNoo_Stab_012000_014100,171,10546178.86093549,[],3+1,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.75,0.0,-999.0,-999.0
-3,WsNoo_Stab_014100_014700,17,2243297.5516615957,[],1,['Grondversterking binnenwaarts'],0,-999,0.5,5.0,-999.0,-999.0
