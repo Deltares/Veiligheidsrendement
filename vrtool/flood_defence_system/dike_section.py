@@ -21,6 +21,8 @@ class DikeSection:
     Length: float
     houses: pd.DataFrame
     with_measures: bool
+    cover_layer_thickness: float
+    pleistocene_level: float
 
     def __init__(self) -> None:
         self.mechanism_data = {}
@@ -32,3 +34,4 @@ class DikeSection:
         self.InitialGeometry = None
         self.houses = None
         self.with_measures = True
+        self.cover_layer_thickness = float("nan")
