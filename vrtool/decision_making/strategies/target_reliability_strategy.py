@@ -159,18 +159,18 @@ class TargetReliabilityStrategy(StrategyProtocol):
         for _mechanism in mechanisms:
             if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                 # look in sh, if any mechanism is not satisfied, return a False
-                _p_nonf = (
-                    _p_nonf
-                    * _measure.sh_combination.mechanism_year_collection.get_probabilities(
+                _p_nonf *= (
+                    1
+                    - _measure.sh_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[
                         0
                     ]
                 )
             elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
-                _p_nonf = (
-                    _p_nonf
-                    * _measure.sg_combination.mechanism_year_collection.get_probabilities(
+                _p_nonf *= (
+                    1
+                    - _measure.sg_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[
                         0
