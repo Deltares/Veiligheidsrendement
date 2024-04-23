@@ -11,7 +11,7 @@ We differenciate between two types of measures:
     - Anchored sheetpile (`AnchoredSheetpileMeasure`), a subtype of `DiaphragmWallMeasure`,
     - Soil reinforcement (`SoilReinforcementMeasure`),
     - Stability screen (`StabilityScreenMeasure`),
-    - Vertical piping solution measure (`VerticalPipingSolutionMeasure`), this measure is internally (not exposed via the `MeasureTypeEnum`) into:
+    - Vertical piping solution measure (`VerticalPipingSolutionMeasure`), this measure is internally (not exposed via the `MeasureTypeEnum`) divided depending on the `cover_layer_thickness` value into:
         - __Course Sand Barrier__ (Dutch abbreviation: __GZB__) - `CourseSandBarrierMeasureCalculator`,
         - __Vertical Geotextile__ (Dutch abbreviation: __VZG__) - `VerticalGeotextileMeasureCalculator`,
         - __Heavescreen__ - `HeavescreenMeasureCalculator`,
