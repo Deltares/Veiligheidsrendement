@@ -7,7 +7,7 @@ from vrtool.decision_making.measures.standard_measures import (
     RevetmentMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
-    VerticalGeotextileMeasure,
+    VerticalPipingMeasureBase,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
     RevetmentMeasureResultCollection,
@@ -81,7 +81,7 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
             # NOTE: This check also includes `AnchoredSheetpileMeasure`
             # as it implements the `DiaphragmWallMeasure`
             measure.measures["DiaphragmWall"] = "yes"
-        elif isinstance(measure, VerticalGeotextileMeasure):
+        elif isinstance(measure, VerticalPipingMeasureBase):
             measure.measures["VZG"] = "yes"
         elif isinstance(measure, StabilityScreenMeasure):
             measure.measures["Stability Screen"] = "yes"
