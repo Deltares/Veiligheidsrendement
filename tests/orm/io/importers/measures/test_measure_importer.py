@@ -10,7 +10,7 @@ from vrtool.decision_making.measures import (
     DiaphragmWallMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
-    VerticalPipingMeasureBase,
+    VerticalPipingSolution,
 )
 from vrtool.decision_making.measures.custom_measure import CustomMeasure
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -124,7 +124,7 @@ class TestMeasureImporter:
             ),
             pytest.param(
                 "Vertical Geotextile",
-                VerticalPipingMeasureBase,
+                VerticalPipingSolution,
                 id="Vertical Geotextile measure.",
             ),
             pytest.param("Revetment", RevetmentMeasure, id="Revetment measure"),

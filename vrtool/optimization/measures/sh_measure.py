@@ -57,7 +57,7 @@ class ShMeasure(MeasureAsInputProtocol):
     @start_cost.setter
     def start_cost(self, value: float):
         if self.measure_type not in [
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+            MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
         ]:

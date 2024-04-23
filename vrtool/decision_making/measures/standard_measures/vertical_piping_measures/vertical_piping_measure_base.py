@@ -1,19 +1,46 @@
-import copy
-
-import numpy as np
-
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
-from vrtool.flood_defence_system.mechanism_reliability_collection import (
-    MechanismReliabilityCollection,
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.course_sand_barrier_measure_calculator import (
+    CourseSandBarrierMeasureCalculator,
 )
-from vrtool.flood_defence_system.section_reliability import SectionReliability
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.heavescreen_measure_calculator import (
+    HeavescreenMeasureCalculator,
+)
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.vertical_geotextile_measure_calculator import (
+    VerticalGeotextileMeasureCalculator,
+)
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.vertical_piping_measure_calculator_protocol import (
+    VerticalPipingMeasureCalculatorProtocol,
+)
+from vrtool.flood_defence_system.dike_section import DikeSection
 
 
-class VerticalPipingMeasureBase(MeasureProtocol):
+class VerticalPipingSolution(MeasureProtocol):
+    def _get_calculator(
+        self, traject_info: DikeTrajectInfo, dike_section: DikeSection
+    ) -> VerticalPipingMeasureCalculatorProtocol:
+        _d_cover = 4.2
+
+        if _d_cover < 2:
+            return CourseSandBarrierMeasureCalculator.from_measure_section_traject(
+                self, dike_section, traject_info
+            )
+        elif _d_cover >= 2 and _d_cover < 4:
+            return VerticalGeotextileMeasureCalculator.from_measure_section_traject(
+                self, dike_section, traject_info
+            )
+        elif _d_cover >= 4 and _d_cover < 6:
+            return HeavescreenMeasureCalculator.from_measure_section_traject(
+                self, dike_section, traject_info
+            )
+        elif _d_cover > 6:
+            # TODO: When `d_cover > 6m` the probability of piping should be assumed minimal
+            raise ValueError(
+                "No vertical piping measure calculator found when `d_cover` is `{}`.".format(
+                    _d_cover
+                )
+            )
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -25,97 +52,12 @@ class VerticalPipingMeasureBase(MeasureProtocol):
         # Only 1 parameterized version with a lifetime of 50 years
         self.measures = {}
         self.measures["VZG"] = "yes"
-        self.measures["Cost"] = (
-            self.unit_costs["Vertical Geotextile"] * dike_section.Length
-        )
-        self.measures["Reliability"] = self._get_configured_section_reliability(
-            dike_section, traject_info
-        )
-
-    def _get_configured_section_reliability(
-        self, dike_section: DikeSection, traject_info: DikeTrajectInfo
-    ) -> SectionReliability:
-        section_reliability = SectionReliability()
-
-        mechanisms = (
-            dike_section.section_reliability.failure_mechanisms.get_available_mechanisms()
-        )
-        for mechanism in mechanisms:
-            calc_type = dike_section.mechanism_data[mechanism][0][1]
-            mechanism_reliability_collection = (
-                self._get_configured_mechanism_reliability_collection(
-                    mechanism, calc_type, dike_section, traject_info
-                )
-            )
-            section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
-                mechanism_reliability_collection
-            )
-
-        section_reliability.calculate_section_reliability()
-        return section_reliability
-
-    def _get_configured_mechanism_reliability_collection(
-        self,
-        mechanism: MechanismEnum,
-        calc_type: str,
-        dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-    ) -> MechanismReliabilityCollection:
-        mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism, calc_type, self.config.T, self.config.t_0, 0
-        )
-
-        for (
-            _year_to_calculate,
-            _mechanism_reliability,
-        ) in mechanism_reliability_collection.Reliability.items():
-            _mechanism_reliability.Input = copy.deepcopy(
-                dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                    mechanism
-                )
-                .Reliability[_year_to_calculate]
-                .Input
-            )
-
-            dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-                mechanism
-            ).Reliability[
-                _year_to_calculate
-            ]
-            if mechanism == MechanismEnum.PIPING:
-                self._configure_piping(
-                    _mechanism_reliability,
-                    _year_to_calculate,
-                    dike_section_mechanism_reliability,
-                )
-            if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]:
-                self._copy_results(
-                    _mechanism_reliability, dike_section_mechanism_reliability
-                )
-
-        mechanism_reliability_collection.generate_LCR_profile(
-            dike_section.section_reliability.load,
-            traject_info=traject_info,
-        )
-
-        return mechanism_reliability_collection
-
-    def _copy_results(
-        self, target: MechanismReliability, source_input: MechanismReliability
-    ) -> None:
-        target.Input = copy.deepcopy(source_input.Input)
-
-    def _configure_piping(
-        self,
-        mechanism_reliability: MechanismReliability,
-        year_to_calculate: str,
-        dike_section_piping_reliability: MechanismReliability,
-    ) -> None:
-        if int(year_to_calculate) < self.parameters["year"]:
-            self._copy_results(mechanism_reliability, dike_section_piping_reliability)
-
-        mechanism_reliability.Input.input["elimination"] = "yes"
-        mechanism_reliability.Input.input["pf_elim"] = self.parameters["P_solution"]
-        mechanism_reliability.Input.input["pf_with_elim"] = np.min(
-            [self.parameters["Pf_solution"], 1.0e-16]
-        )
+        # self.measures["Cost"] = (
+        #     self.unit_costs["Vertical Geotextile"] * dike_section.Length
+        # )
+        # self.measures["Reliability"] = self._get_configured_section_reliability(
+        #     dike_section, traject_info
+        # )
+        _calculator = self._get_calculator(traject_info, dike_section)
+        self.measures["Cost"] = _calculator.calculate_cost(self.unit_costs)
+        self.measures["Reliability"] = _calculator.calculate_reliability()

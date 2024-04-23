@@ -415,7 +415,7 @@ class TestApiRunWorkflowsAcceptance:
             for measure_type in [
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 MeasureTypeEnum.REVETMENT,
-                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             ]
         ]
         # flatten list of _measure_ids
@@ -455,7 +455,7 @@ class TestApiRunWorkflowsAcceptance:
             for measure_type in [
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 MeasureTypeEnum.REVETMENT,
-                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             ]
         ]
         # flatten list of _measure_ids and sort

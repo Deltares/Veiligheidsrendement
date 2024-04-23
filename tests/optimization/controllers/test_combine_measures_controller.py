@@ -258,7 +258,7 @@ class TestCombineMeasuresController:
                 CombinableTypeEnum.FULL,
             ),
             self._create_sh_measure(
-                MeasureTypeEnum.VERTICAL_GEOTEXTILE, CombinableTypeEnum.PARTIAL
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION, CombinableTypeEnum.PARTIAL
             ),
             self._create_revetment_measure(
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT
@@ -304,7 +304,7 @@ class TestCombineMeasuresController:
                 CombinableTypeEnum.FULL,
             ),
             self._create_sg_measure(
-                MeasureTypeEnum.VERTICAL_GEOTEXTILE, CombinableTypeEnum.PARTIAL
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION, CombinableTypeEnum.PARTIAL
             ),
             self._create_sg_measure(
                 MeasureTypeEnum.REVETMENT, CombinableTypeEnum.REVETMENT

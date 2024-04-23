@@ -98,7 +98,7 @@ class TestShMeasure:
             for mt in MeasureTypeEnum
             if mt
             not in [
-                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
                 MeasureTypeEnum.DIAPHRAGM_WALL,
                 MeasureTypeEnum.STABILITY_SCREEN,
             ]
@@ -121,7 +121,7 @@ class TestShMeasure:
     @pytest.mark.parametrize(
         "measure_type",
         [
-            pytest.param(MeasureTypeEnum.VERTICAL_GEOTEXTILE),
+            pytest.param(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
             pytest.param(MeasureTypeEnum.DIAPHRAGM_WALL),
             pytest.param(MeasureTypeEnum.STABILITY_SCREEN),
         ],
