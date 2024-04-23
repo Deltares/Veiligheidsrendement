@@ -323,35 +323,3 @@ class TestSectionAsInput:
         for m in _measures:
             _yrs = m.mechanism_year_collection.get_years(_mechm)
             assert _yrs == _ref
-
-    def test_get_combination_for_aggregate(self):
-        # 1. Define test data
-        _section = self._get_section_with_combinations()
-        _aggregated_measure_combination = AggregatedMeasureCombination(sh_combination=_section.sh_combinations[1],sg_combination=_section.sg_combinations[0],measure_result_id=1,year=0)
-
-        # 2. Run test
-        _sh_idx, _sg_idx = _aggregated_measure_combination.get_combination_idx() # TODO move this test
-
-        # 3. Verify expectations
-        assert _sh_idx == 1
-        assert _sg_idx == 0
-
-    def test_get_combination_idx_for_aggregate_fails_if_combination_doesnt_exist(self):
-        # 1. Define test data
-        _section = self._get_section_with_combinations()
-        _other_combination = CombinedMeasure.from_input(
-            MockShMeasure(MeasureTypeEnum.REVETMENT), None, None, 0
-        )
-        _aggregated_measure_combination = AggregatedMeasureCombination(
-            sh_combination=_other_combination,
-            sg_combination=_section.sg_combinations[0],
-            measure_result_id=1,
-            year=0,
-        )
-
-        # 2. Run test
-        with py.raises(ValueError) as exception_error:
-            _sh_idx, _sg_idx = _aggregated_measure_combination.get_combination_idx() # TODO move this test
-
-        # 3. Verify expectations
-        assert str(exception_error.value).endswith("is not in list")
