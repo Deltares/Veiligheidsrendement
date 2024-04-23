@@ -165,6 +165,12 @@ class RevetmentMeasure(MeasureProtocol):
         ]
 
     def _compare_costs(self, costs_first: float, costs_second: float) -> int:
+        """
+        compare two costs
+
+        Returns:
+            int: 0 if the costs are equal; +1 if the first is higher otherwise -1
+        """
         if math.isclose(costs_first, costs_second, rel_tol=self.tol_abs_beta_in_filtering):
             return 0
         elif costs_first > costs_second:
@@ -173,6 +179,12 @@ class RevetmentMeasure(MeasureProtocol):
             return -1
 
     def _compare_betas(self, beta_first: float, beta_second: float) -> int:
+        """
+        compare two betas
+
+        Returns:
+            int: 0 if the betas are equal; +1 if the first is higher otherwise -1
+        """
         if math.isclose(beta_first, beta_second, abs_tol=self.tol_abs_beta_in_filtering):
             return 0
         elif beta_first > beta_second:
@@ -184,8 +196,9 @@ class RevetmentMeasure(MeasureProtocol):
         """
         remove measures in measures.result_collection that have a worse cost-beta relation
         than any of the other measures
+        also remove measures with (almost) the same cost and beta as an earlier measure
         """
-        remove_msrs = []
+        filtered_msrs = []
         for i, msr in enumerate(self.measures.result_collection):
             remove_msr = False
             if msr.cost > 0:
@@ -200,12 +213,8 @@ class RevetmentMeasure(MeasureProtocol):
                         remove_msr = remove_msr or j < i
                     elif cmp_costs >= 0 and cmp_betas <= 0:
                         remove_msr = True
-            remove_msrs.append(remove_msr)
-
-        filtered_msrs = []
-        for i, remove_msr in enumerate(remove_msrs):
             if not remove_msr:
-                filtered_msrs.append(self.measures.result_collection[i])
+                filtered_msrs.append(msr)
 
         self.measures.result_collection = filtered_msrs
 
