@@ -1,6 +1,6 @@
-# Vertical piping solutions
+# Vertical piping measures
 
-The vertical piping solution is dependent on the thickness of the cover layer, d_cover.
+The vertical piping (measure) solution is dependent on the thickness of the cover layer, d_cover.
 
 Depending on the depth of the cover layer a variation three different vertical piping solutions are possible, each solution has the same effect on piping, but each has a different cost:
 
