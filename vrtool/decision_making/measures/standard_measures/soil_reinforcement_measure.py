@@ -22,6 +22,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class SoilReinforcementMeasure(MeasureProtocol):
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -30,6 +31,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
     ):
         # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
+        # Measure.__init__(self,inputs)
+        # self. parameters = measure.parameters
         _measure_type = self.parameters["Type"]
         if self.parameters["StabilityScreen"] == "yes":
             self.parameters["Depth"] = self._get_depth(dike_section)
@@ -257,9 +260,9 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 )
                 is_first_year_with_widening = False
             # put them back in the object
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = reliability_input
+            mechanism_reliability_collection.Reliability[year_to_calculate].Input = (
+                reliability_input
+            )
 
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
