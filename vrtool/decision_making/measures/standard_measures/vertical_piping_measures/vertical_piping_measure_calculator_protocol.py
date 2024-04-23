@@ -10,15 +10,6 @@ class VerticalPipingMeasureCalculatorProtocol(Protocol):
     traject_info: DikeTrajectInfo
     dike_section: DikeSection
 
-    def is_valid(self) -> bool:
-        """
-        Validates whether the current state of this calculator fulfills
-         the requirements to generate costs or reliability.
-
-        Returns:
-            bool: Calculator is in a valid state.
-        """
-
     def calculate_cost(self, unit_costs: dict[str, float]) -> float:
         """
         Calculates the costs associated to applying a specific

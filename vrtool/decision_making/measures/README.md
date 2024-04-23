@@ -11,7 +11,10 @@ We differenciate between two types of measures:
     - Anchored sheetpile (`AnchoredSheetpileMeasure`), a subtype of `DiaphragmWallMeasure`,
     - Soil reinforcement (`SoilReinforcementMeasure`),
     - Stability screen (`StabilityScreenMeasure`),
-    - Vertical piping solution measure (`VerticalGeotextileMeasureBeasure`),
+    - Vertical piping solution measure (`VerticalPipingSolutionMeasure`), this measure is internally (not exposed via the `MeasureTypeEnum`) into:
+        - TODO
+        - TODO
+        - TODO
     - Revetment measure (`RevetmentMeasure`)
 
 - Custom measure, any measure not explicitely defined by us which can be addded to an assessment.

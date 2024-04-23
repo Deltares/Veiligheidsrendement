@@ -15,7 +15,7 @@ from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.
 from vrtool.flood_defence_system.dike_section import DikeSection
 
 
-class VerticalPipingSolution(MeasureProtocol):
+class VerticalPipingSolutionMeasure(MeasureProtocol):
     def _get_calculator(
         self, traject_info: DikeTrajectInfo, dike_section: DikeSection
     ) -> VerticalPipingMeasureCalculatorProtocol:
