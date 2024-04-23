@@ -1,5 +1,0 @@
-,Section,option_index,LCC,BC,ID,name,year,yes/no,dcrest,dberm,beta_target,transition_level
-0,,,0.0,0.0,,,,,,,,
-1,7,10,2618076.05,2641.628556159631,2,['Grondversterking met stabiliteitsscherm'],0,-999,0.0,5.0,-999,-999
-2,8,333,3871725.958253825,499.14533709116773,6+4,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.5,15.0,-999,-999
-3,8,335,1543525.8823999995,0.2750758292291205,6+4,['Verticaal Zanddicht Geotextiel+Grondversterking binnenwaarts'],"[0, 0]",yes,0.5,20.0,-999,-999
