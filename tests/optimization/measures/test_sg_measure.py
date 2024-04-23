@@ -45,7 +45,8 @@ class TestSgMeasure:
         assert _measure.dberm == pytest.approx(0.1)
         assert _measure.start_cost == pytest.approx(0)
 
-    def test_given_dberm_0_lcc_returns_0(self):
+    @pytest.mark.parametrize("dberm_value", [pytest.param(0), pytest.param(-999)])
+    def test_given_dberm_0_lcc_returns_0(self, dberm_value: float):
         """
         Test related to issue VRTOOL-390
         """
@@ -55,7 +56,7 @@ class TestSgMeasure:
         _sg_measure = self._create_sg_measure(
             MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
         )
-        _sg_measure.dberm = 0
+        _sg_measure.dberm = dberm_value
 
         # 2. Run test.
         _result = _sg_measure.lcc
@@ -65,7 +66,7 @@ class TestSgMeasure:
 
     @pytest.mark.parametrize(
         "dberm_value",
-        [pytest.param(-10, id="Lesser than 0"), pytest.param(10, id="Greater than 0")],
+        [pytest.param(-10, id="Smaller than 0"), pytest.param(10, id="Greater than 0")],
     )
     def test_given_dberm_else_than_0_lcc_doesnot_return_0(self, dberm_value: float):
         """

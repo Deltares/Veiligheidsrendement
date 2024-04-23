@@ -29,13 +29,13 @@ class SgMeasure(MeasureAsInputProtocol):
     def lcc(self) -> float:
         """
         Value for the `life-cycle-cost` of this measure.
-        When the `dberm` is the "initial" value (`0`),
+        When the `dberm` is the "initial" value (`0`, `-999`),
         the cost will be computed as `0`.
 
         Returns:
             float: The calculated lcc.
         """
-        if self.dberm == 0:
+        if self.dberm in [0, -999]:
             return 0
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 

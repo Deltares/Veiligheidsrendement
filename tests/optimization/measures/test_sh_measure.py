@@ -71,7 +71,7 @@ class TestShMeasure:
 
     @pytest.mark.parametrize(
         "dcrest_value",
-        [pytest.param(-10, id="Lesser than 0"), pytest.param(10, id="Greater than 0")],
+        [pytest.param(-10, id="Smaller than 0"), pytest.param(10, id="Greater than 0")],
     )
     def test_given_dcrest_else_than_0_lcc_doesnot_return_0(self, dcrest_value: float):
         """
