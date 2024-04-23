@@ -1,6 +1,6 @@
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.vertical_piping_measure_calculator_factory import (
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_calculators.vertical_piping_measure_calculator_factory import (
     VerticalPipingMeasureCalculatorFactory,
 )
 from vrtool.flood_defence_system.dike_section import DikeSection
