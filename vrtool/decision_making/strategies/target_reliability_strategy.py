@@ -413,7 +413,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.total_risk_per_step = [self.traject_risk.get_total_risk()]
 
         for step in range(0, len(_taken_measures)):
-            self.traject_risk.update_probabilities_for_measure_TR(
+            self.traject_risk.update_probabilities_for_measure(
                 _taken_measures_indices[step]
             )
             self.probabilities_per_step.append(
