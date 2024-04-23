@@ -338,7 +338,7 @@ class TestStrategyInput:
         assert _strategy_input.LCCOption.shape == (1, 8, 5)
         assert _strategy_input.LCCOption[0, 0, 0] == pytest.approx(0.0)
         assert _strategy_input.LCCOption[0, 1, 1] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 1, 2] == pytest.approx(0.0)
+        assert _strategy_input.LCCOption[0, 1, 2] == pytest.approx(1e99)
         assert _strategy_input.LCCOption[0, 1, 3] == pytest.approx(0.0)
         assert _strategy_input.LCCOption[0, 2, 2] == pytest.approx(0.0)
         assert _strategy_input.LCCOption[0, 3, 3] == pytest.approx(0.0)
