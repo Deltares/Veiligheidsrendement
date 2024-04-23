@@ -7,7 +7,7 @@ from vrtool.decision_making.measures.standard_measures.soil_reinforcement_measur
 from vrtool.decision_making.measures.standard_measures.stability_screen_measure import (
     StabilityScreenMeasure,
 )
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.vertical_piping_measure_base import (
+from vrtool.decision_making.measures.standard_measures.vertical_piping_solution_measure import (
     VerticalPipingSolutionMeasure,
 )
 from vrtool.decision_making.measures.standard_measures.wall_measures.anchored_sheetpile_measure import (

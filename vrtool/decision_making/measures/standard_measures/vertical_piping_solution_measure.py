@@ -1,15 +1,9 @@
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.course_sand_barrier_measure_calculator import (
+from vrtool.decision_making.measures.standard_measures.vertical_piping_measures import (
     CourseSandBarrierMeasureCalculator,
-)
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.heavescreen_measure_calculator import (
     HeavescreenMeasureCalculator,
-)
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.vertical_geotextile_measure_calculator import (
     VerticalGeotextileMeasureCalculator,
-)
-from vrtool.decision_making.measures.standard_measures.vertical_piping_measures.vertical_piping_measure_calculator_protocol import (
     VerticalPipingMeasureCalculatorProtocol,
 )
 from vrtool.flood_defence_system.dike_section import DikeSection
