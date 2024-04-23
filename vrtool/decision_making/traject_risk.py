@@ -154,18 +154,6 @@ class TrajectRisk:
         """
         return self._annual_damage * self._get_mechanism_probabilities(mechanism)
 
-    def get_independent_risk(self) -> np.ndarray:
-        """
-        Get the independent risks for a traject, based on the initial probabilities.
-
-        Args:
-            mechanism (MechanismEnum): The mechanism to get the risk for.
-
-        Returns:
-            np.ndarray: The calculated independent risks [N, t].
-        """
-        return self._annual_damage * self._get_independent_probabilities()
-
     def _get_mechanism_probabilities(self, mechanism: MechanismEnum) -> np.ndarray:
         """
         Get the probabilities of failure for a mechanism based on the initial probabilities.
@@ -181,31 +169,38 @@ class TrajectRisk:
             return np.zeros([self.num_sections, self.num_years])
         return self._probability_of_failure[mechanism][:, 0, :]
 
-    def _get_independent_probabilities(self) -> np.ndarray:  # [N, t]
-        return self._combine_probabilities(
-            [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING], None
-        )
-
     def get_total_risk(self) -> float:
         """
         Calculate the total risk for the initial situation.
         The initial Sh and Sg measures are used to calculate this.
+        Mechanisms OVERFLOW and REVETMENT are considered to be dependent.
+        Mechanisms STABILITY_INNER and PIPING are considered to be independent.
 
         Returns:
             float: The total risk for the traject.
         """
+
+        def get_non_failure_probabilities_maximum(
+            mechanism: MechanismEnum,
+        ) -> np.ndarray:  # [t]
+            return 1 - np.max(self._get_mechanism_probabilities(mechanism), axis=0)
+
+        def get_independent_non_failure_probabilities(
+            mechanisms: list[MechanismEnum],
+        ) -> np.ndarray:  # [t]
+            return 1 - np.sum(self._combine_probabilities(mechanisms, None), axis=0)
+
         return np.sum(
             self._annual_damage
             * (
-                np.max(
-                    self._get_mechanism_probabilities(MechanismEnum.OVERFLOW),
-                    axis=0,
+                1
+                - (
+                    get_non_failure_probabilities_maximum(MechanismEnum.OVERFLOW)
+                    * get_non_failure_probabilities_maximum(MechanismEnum.REVETMENT)
+                    * get_independent_non_failure_probabilities(
+                        [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]
+                    )
                 )
-                + np.max(
-                    self._get_mechanism_probabilities(MechanismEnum.REVETMENT),
-                    axis=0,
-                )
-                + np.sum(self._get_independent_probabilities(), axis=0)
             )
         )
 
@@ -224,31 +219,6 @@ class TrajectRisk:
         if mechanism not in self._probability_of_failure:
             return np.ones(self.num_years)
         return np.prod(1 - self._get_mechanism_probabilities(mechanism), axis=0)
-
-    def get_total_risk_TR(self) -> float:
-        """
-        Calculate the total risk for the initial situation.
-        This method is used for the TR calculation and will be merged with the get_total_risk method (VRTOOL-437).
-
-        Returns:
-            float: The total risk for the traject.
-        """
-
-        def get_probabilities_maximum(mechanism: MechanismEnum) -> np.ndarray:
-            return np.max(self._get_mechanism_probabilities(mechanism), axis=0)
-
-        def get_probabilities_of_non_failure(mechanism: MechanismEnum) -> np.ndarray:
-            return 1 - self._get_mechanism_probabilities_product(mechanism)
-
-        return np.sum(
-            self._annual_damage
-            * (
-                get_probabilities_maximum(MechanismEnum.OVERFLOW)
-                + 4 * get_probabilities_maximum(MechanismEnum.REVETMENT)
-                + get_probabilities_of_non_failure(MechanismEnum.STABILITY_INNER)
-                + get_probabilities_of_non_failure(MechanismEnum.PIPING)
-            )
-        )
 
     def _get_mechanism_probabilities_for_measure(
         self, mechanism: MechanismEnum, measure: tuple[int, int, int]
