@@ -16,9 +16,6 @@ class GreedyStrategy(StrategyProtocol):
 
     def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig) -> None:
         self.design_method = strategy_input.design_method
-        self.options = strategy_input.options
-        self.options_geotechnical = strategy_input.options_geotechnical
-        self.options_height = strategy_input.options_height
         self.sections = strategy_input.sections
 
         self.LCCOption = strategy_input.LCCOption

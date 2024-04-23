@@ -16,9 +16,6 @@ from vrtool.optimization.strategy_input.strategy_input_protocol import (
 @dataclass
 class StrategyInput(StrategyInputProtocol):
     design_method: str
-    options: dict[str, df] = field(default_factory=dict)
-    options_height: list[dict[str, df]] = field(default_factory=list)
-    options_geotechnical: list[dict[str, df]] = field(default_factory=list)
     sections: list[SectionAsInput] = field(default_factory=list)
     Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
     LCCOption: np.ndarray = np.array([])
@@ -30,6 +27,9 @@ class StrategyInput(StrategyInputProtocol):
     ) -> StrategyInput:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
+        Future improvements (VRTOOL-480):
+        * Create a TrajectRisk object instead of Pf and D
+        * Don't use sections anymore, but use the TrajectRisk object only
         """
 
         _strategy_input = cls(
