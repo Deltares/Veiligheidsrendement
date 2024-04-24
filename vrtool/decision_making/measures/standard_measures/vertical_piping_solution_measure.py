@@ -18,12 +18,6 @@ class VerticalPipingSolutionMeasure(MeasureProtocol):
         # Only 1 parameterized version with a lifetime of 50 years
         self.measures = {}
         self.measures["VZG"] = "yes"
-        # self.measures["Cost"] = (
-        #     self.unit_costs["Vertical Geotextile"] * dike_section.Length
-        # )
-        # self.measures["Reliability"] = self._get_configured_section_reliability(
-        #     dike_section, traject_info
-        # )
         _calculator = VerticalPipingMeasureCalculatorFactory.get_calculator(
             traject_info, dike_section, self
         )

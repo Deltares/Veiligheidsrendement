@@ -36,9 +36,22 @@ class VerticalPipingMeasureCalculatorBase:
         _calculator.reliability_years = measure.config.T
         _calculator.computation_year_start = measure.config.t_0
         _calculator.measure_year = measure.parameters["year"]
-        _calculator.measure_p_solution = measure.parameters["P_solution"]
+        _calculator.measure_p_solution = (
+            measure.parameters["P_solution"] * _calculator.pf_piping_reduction_factor
+        )
         _calculator.measure_pf_solution = measure.parameters["Pf_solution"]
         return _calculator
+
+    @property
+    def pf_piping_reduction_factor(self) -> float:
+        """
+        Gets the default reduction factor for `pf_piping` ( `P_solution` ).
+        This property can be overriden when inheriting from this class.
+
+        Returns:
+            float: reduction value.
+        """
+        return 1
 
     def _get_configured_section_reliability(self) -> SectionReliability:
         section_reliability = SectionReliability()
@@ -59,6 +72,11 @@ class VerticalPipingMeasureCalculatorBase:
 
         section_reliability.calculate_section_reliability()
         return section_reliability
+
+    def _copy_results(
+        self, target: MechanismReliability, source_input: MechanismReliability
+    ) -> None:
+        target.Input = copy.deepcopy(source_input.Input)
 
     def _get_configured_mechanism_reliability_collection(
         self,
@@ -103,11 +121,6 @@ class VerticalPipingMeasureCalculatorBase:
         )
 
         return mechanism_reliability_collection
-
-    def _copy_results(
-        self, target: MechanismReliability, source_input: MechanismReliability
-    ) -> None:
-        target.Input = copy.deepcopy(source_input.Input)
 
     def _configure_piping(
         self,

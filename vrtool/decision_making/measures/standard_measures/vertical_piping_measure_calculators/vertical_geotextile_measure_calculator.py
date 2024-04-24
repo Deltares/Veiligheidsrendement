@@ -11,6 +11,10 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 class VerticalGeotextileMeasureCalculator(
     VerticalPipingMeasureCalculatorBase, VerticalPipingMeasureCalculatorProtocol
 ):
+    @property
+    def pf_piping_reduction_factor(self) -> float:
+        return 1000
+
     def calculate_cost(self, unit_costs: MeasureUnitCosts) -> float:
         return unit_costs.vertical_geotextile * self.dike_section.Length
 

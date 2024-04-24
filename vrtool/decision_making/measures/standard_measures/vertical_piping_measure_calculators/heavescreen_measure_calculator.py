@@ -11,8 +11,13 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 class HeavescreenMeasureCalculator(
     VerticalPipingMeasureCalculatorBase, VerticalPipingMeasureCalculatorProtocol
 ):
+    @property
+    def pf_piping_reduction_factor(self) -> float:
+        return 1000
+
     def calculate_cost(self, unit_costs: MeasureUnitCosts) -> float:
-        return unit_costs.heavescreen * self.dike_section.Length
+        _vertical_length = self.dike_section.cover_layer_thickness + 6
+        return unit_costs.heavescreen * _vertical_length * self.dike_section.Length
 
     def calculate_reliability(self) -> SectionReliability:
         return self._get_configured_section_reliability()

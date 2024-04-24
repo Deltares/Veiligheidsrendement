@@ -29,7 +29,7 @@ class MeasureUnitCosts:
     sheetpile: float = float("nan")
     diaphragm_wall: float = float("nan")
     vertical_geotextile: float = float("nan")
-    course_sandbarrier: float = float("nan")
+    course_sand_barrier: float = float("nan")
     heavescreen: float = float("nan")
 
     @classmethod

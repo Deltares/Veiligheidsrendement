@@ -8,15 +8,17 @@ from vrtool.decision_making.measures.standard_measures.vertical_piping_measure_c
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class CourseSandBarrierMeasureCalculator(
+class FallbackMeasureCalculator(
     VerticalPipingMeasureCalculatorBase, VerticalPipingMeasureCalculatorProtocol
 ):
-    @property
-    def pf_piping_reduction_factor(self) -> float:
-        return 1000
+    """
+    This calculator is meant to be used when `dcover > 6`.
+    We then assume minimal costs as the piping probability is minimal.
+    """
 
     def calculate_cost(self, unit_costs: MeasureUnitCosts) -> float:
-        return unit_costs.course_sand_barrier * self.dike_section.Length
+        return 0
 
     def calculate_reliability(self) -> SectionReliability:
+        # TODO
         return self._get_configured_section_reliability()
