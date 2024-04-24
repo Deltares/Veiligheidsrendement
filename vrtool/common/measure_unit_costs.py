@@ -29,6 +29,8 @@ class MeasureUnitCosts:
     sheetpile: float = float("nan")
     diaphragm_wall: float = float("nan")
     vertical_geotextile: float = float("nan")
+    course_sandbarrier: float = float("nan")
+    heavescreen: float = float("nan")
 
     @classmethod
     def from_unformatted_dict(cls, unformatted_dict: dict):

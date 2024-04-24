@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
 )
@@ -20,7 +21,7 @@ class MeasureProtocol(Protocol):
     crest_step: float
     berm_step: list[int]
     t_0: int
-    unit_costs: dict
+    unit_costs: MeasureUnitCosts
     input_directory: Path
     measures: Union[list, dict, MeasureResultCollectionProtocol]
 

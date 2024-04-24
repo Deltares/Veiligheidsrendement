@@ -4,6 +4,7 @@ from copy import deepcopy
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
@@ -35,7 +36,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
     """
 
     discount_rate: float
-    unit_costs: dict
+    unit_costs: MeasureUnitCosts
     investment_years: list[int]
 
     def __init__(

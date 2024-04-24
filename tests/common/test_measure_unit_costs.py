@@ -1,3 +1,4 @@
+import dataclasses
 from math import isnan
 
 import pytest
@@ -5,33 +6,35 @@ import pytest
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.defaults import default_unit_costs_csv
 
-_expected_keys = [
-    "Inward starting costs",
-    "Inward added volume",
-    "Outward added volume",
-    "Outward reused volume",
-    "Outward reuse factor",
-    "Outward compensation factor",
-    "Outward removed volume",
-    "Road renewal",
-    "House removal",
-]
+
+def get_required_unformatted_field_names() -> list[str]:
+    """
+    Define expected keys based on fields without a default value.
+    """
+    return [
+        _field.name.capitalize().replace("_", " ")
+        for _field in dataclasses.fields(MeasureUnitCosts)
+        if _field.default == dataclasses.MISSING
+    ]
 
 
 class TestMeasureUnitCosts:
     @pytest.fixture
-    def valid_unformatted_dict(self) -> dict:
-        return {k: 4.2 for k in _expected_keys}
+    def required_unformatted_field_names(self) -> list[str]:
+        return get_required_unformatted_field_names()
+
+    @pytest.fixture
+    def valid_unformatted_dict(
+        self, required_unformatted_field_names: list[str]
+    ) -> dict:
+        return {k: 4.2 for k in required_unformatted_field_names}
 
     def test_initialize_from_unformatted_dict(self, valid_unformatted_dict: dict):
-        # 1. Define test data.
-        assert len(valid_unformatted_dict.keys()) == len(_expected_keys)
-        assert set(valid_unformatted_dict.keys()) == set(_expected_keys)
+        # 1. Run test
 
-        # 2. Run test.
         _unit_costs = MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
 
-        # 3. Verify final expectations.
+        # 2. Verify final expectations.
         assert isinstance(_unit_costs, MeasureUnitCosts)
 
         # Inward costs
@@ -58,9 +61,6 @@ class TestMeasureUnitCosts:
         self, valid_unformatted_dict: dict
     ):
         # 1. Define test data.
-        assert len(valid_unformatted_dict.keys()) == len(_expected_keys)
-        assert set(valid_unformatted_dict.keys()) == set(_expected_keys)
-
         _extra_key = "Dummy Key"
         assert _extra_key not in valid_unformatted_dict
 
@@ -78,12 +78,19 @@ class TestMeasureUnitCosts:
 
     @pytest.mark.parametrize(
         "excluded_key",
-        [pytest.param(_key, id="Without '{}'".format(_key)) for _key in _expected_keys],
+        [
+            pytest.param(_field, id="Excluding {}".format(_field))
+            for _field in get_required_unformatted_field_names()
+        ],
     )
-    def test_initialize_without_required_key_raises_error(self, excluded_key: str):
+    def test_initialize_without_required_key_raises_error(
+        self, excluded_key: str, required_unformatted_field_names: list[str]
+    ):
         # 1. Define test data.
-        assert excluded_key in _expected_keys
-        _unformatted_dict = {k: 4.2 for k in _expected_keys if k != excluded_key}
+        assert excluded_key in required_unformatted_field_names
+        _unformatted_dict = {
+            k: 4.2 for k in required_unformatted_field_names if k != excluded_key
+        }
 
         # 2. Run test.
         with pytest.raises(TypeError) as exc_err:
