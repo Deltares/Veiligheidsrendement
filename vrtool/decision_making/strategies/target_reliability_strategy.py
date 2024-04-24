@@ -159,18 +159,18 @@ class TargetReliabilityStrategy(StrategyProtocol):
         for _mechanism in mechanisms:
             if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                 # look in sh, if any mechanism is not satisfied, return a False
-                _p_nonf = (
-                    _p_nonf
-                    * _measure.sh_combination.mechanism_year_collection.get_probabilities(
+                _p_nonf *= (
+                    1
+                    - _measure.sh_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[
                         0
                     ]
                 )
             elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
-                _p_nonf = (
-                    _p_nonf
-                    * _measure.sg_combination.mechanism_year_collection.get_probabilities(
+                _p_nonf *= (
+                    1
+                    - _measure.sg_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[
                         0
@@ -413,7 +413,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.total_risk_per_step = [self.traject_risk.get_total_risk()]
 
         for step in range(0, len(_taken_measures)):
-            self.traject_risk.update_probabilities_for_measure_TR(
+            self.traject_risk.update_probabilities_for_measure(
                 _taken_measures_indices[step]
             )
             self.probabilities_per_step.append(
