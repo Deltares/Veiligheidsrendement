@@ -27,22 +27,37 @@ class MeasureUnitCosts:
     vertical_geotextile: float = float("nan")
 
     @classmethod
-    def from_unknown_dict(cls, unknown_dict: dict):
+    def from_unformatted_dict(cls, unformatted_dict: dict):
+        """
+        Generates a `MeasureUnitCosts` by formatting the keys of the provided
+        dictionary into an expected field name.
+
+        Args:
+            unformatted_dict (dict): Dictionary containing the unformatted field names.
+
+        Returns:
+            MeasureUnitCosts: Resulting mapped instance.
+        """
         return cls(
             **{
                 key.strip().lower().replace(" ", "_"): value
-                for key, value in unknown_dict.items()
+                for key, value in unformatted_dict.items()
             }
         )
 
     @classmethod
     def from_csv_file(cls, csv_file: Path):
         """
-        Returns the _default_ unit costs read from the default csv file, with columns: 'Description', 'Cost' and 'Unit'.
+        Generates a `MeasureUnitCosts` instance from a `csv_file` with the columns: 'Description', 'Cost' and 'Unit'.
+
         Raises:
-            FileNotFoundError: When the default "unit_costs.csv" file is not found.
+            FileNotFoundError: When the provided `csv_file` is not found.
+
+        Args:
+            csv_file (Path): `*.csv` file
+
         Returns:
-            dict: Unit costs dictionary.
+            MeasureUnitCosts: Resulting mapped instance.
         """
         if not csv_file.is_file():
             raise FileNotFoundError(
@@ -52,4 +67,10 @@ class MeasureUnitCosts:
         _unit_cost_dict = {}
         for _, _series in _unit_cost_data.iterrows():
             _unit_cost_dict[_series["Description"]] = _series["Cost"]
-        return MeasureUnitCosts.from_unknown_dict(_unit_cost_dict)
+
+        # Create the dataclass by formatting the dictionary keys
+        # into the expected field names.
+        # This could be extracted (if needed) into a separate class method
+        # such as `def from_unformatted_dict(cls, unformatted_dict: dict)`
+        # Then you would do here simply a `return cls.from_unformatted_dict(_unit_cost_dict)`
+        return

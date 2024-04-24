@@ -9,34 +9,10 @@ import pytest
 from tests import test_data, test_results
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
-from vrtool.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
+from vrtool.defaults.vrtool_config import VrtoolConfig
 
 
 class TestVrtoolConfig:
-    def test_load_default_unit_costs(self):
-        # 1. Define test data.
-        _expected_keys = [
-            "Inward starting costs",
-            "Inward added volume",
-            "Outward added volume",
-            "Outward reused volume",
-            "Outward reuse factor",
-            "Outward compensation factor",
-            "Outward removed volume",
-            "Road renewal",
-            "Sheetpile",
-            "Diaphragm wall",
-            "Vertical Geotextile",
-            "House removal",
-        ]
-
-        # 2. Run test.
-        _unit_costs_data = _load_default_unit_costs()
-
-        # 3. Verify expectations.
-        assert isinstance(_unit_costs_data, MeasureUnitCosts)
-        assert not (any(set(_expected_keys) - set(_unit_costs_data.__dict__.keys())))
-
     def test_init_vrtool_config_default_values(self):
         # 1. Define test data.
         _expected_keys = [
