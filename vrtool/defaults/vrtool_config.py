@@ -8,10 +8,11 @@ from typing import Optional, Union
 import pandas as pd
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.defaults import default_unit_costs_csv
 
 
-def _load_default_unit_costs() -> dict:
+def _load_default_unit_costs() -> MeasureUnitCosts:
     """
     Returns the _default_ unit costs read from the default csv file, with columns: 'Description', 'Cost' and 'Unit'.
     Raises:
@@ -27,7 +28,7 @@ def _load_default_unit_costs() -> dict:
     unit_cost = {}
     for _, _series in _unit_cost_data.iterrows():
         unit_cost[_series["Description"]] = _series["Cost"]
-    return unit_cost
+    return MeasureUnitCosts.from_unknown_dict(unit_cost)
 
 
 @dataclass
@@ -80,7 +81,7 @@ class VrtoolConfig:
         default_factory=lambda: ["Veiligheidsrendement", "Doorsnede-eisen"]
     )
 
-    unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
+    unit_costs: MeasureUnitCosts = field(default_factory=_load_default_unit_costs)
 
     @property
     def input_database_path(self) -> None | Path:

@@ -8,6 +8,7 @@ import pytest
 
 from tests import test_data, test_results
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.defaults.vrtool_config import VrtoolConfig, _load_default_unit_costs
 
 
@@ -33,8 +34,8 @@ class TestVrtoolConfig:
         _unit_costs_data = _load_default_unit_costs()
 
         # 3. Verify expectations.
-        assert isinstance(_unit_costs_data, dict)
-        assert not (any(set(_expected_keys) - set(_unit_costs_data.keys())))
+        assert isinstance(_unit_costs_data, MeasureUnitCosts)
+        assert not (any(set(_expected_keys) - set(_unit_costs_data.__dict__.keys())))
 
     def test_init_vrtool_config_default_values(self):
         # 1. Define test data.
@@ -96,8 +97,7 @@ class TestVrtoolConfig:
         assert _config.f_cautious == pytest.approx(1.5)
         assert _config.discount_rate == pytest.approx(0.03)
         assert _config.design_methods == ["Veiligheidsrendement", "Doorsnede-eisen"]
-        assert isinstance(_config.unit_costs, dict)
-        assert any(_config.unit_costs.items())
+        assert isinstance(_config.unit_costs, MeasureUnitCosts)
 
     def test_export(self, request: pytest.FixtureRequest):
         # 1. Define test data.
