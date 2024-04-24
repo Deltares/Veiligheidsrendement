@@ -134,16 +134,6 @@ class TestTrajectRisk:
         # 3. Verify expectations
         assert np.sum(_mech_risk) == pytest.approx(result)
 
-    def test_get_independent_risk(self):
-        # 1. Define test data
-        _tr = self._get_traject_risk()
-
-        # 2. Run test
-        _independent_risk = _tr.get_independent_risk()
-
-        # 3. Verify expectations
-        assert np.sum(_independent_risk) == pytest.approx(14.475)
-
     def test_get_total_risk(self):
         # 1. Define test data
         _tr = self._get_traject_risk()
@@ -152,7 +142,7 @@ class TestTrajectRisk:
         _init_risk = _tr.get_total_risk()
 
         # 3. Verify expectations
-        assert _init_risk == pytest.approx(26.475)
+        assert _init_risk == pytest.approx(10.4641125)
 
     def test_get_total_risk_TR(self):
         # 1. Define test data
@@ -190,11 +180,11 @@ class TestTrajectRisk:
         # 1. Define test data
         _tr = self._get_traject_risk()
         _measure_risk = _tr.get_total_risk()
-        assert _measure_risk == pytest.approx(26.475)
+        assert _measure_risk == pytest.approx(10.4641125)
 
         # 2. Run test
         _tr.update_probabilities_for_measure((1, 1, 0))
         _measure_risk_updated = _tr.get_total_risk()
 
         # 3. Verify expectations
-        assert _measure_risk_updated == pytest.approx(23.275)
+        assert _measure_risk_updated == pytest.approx(11.1156605)

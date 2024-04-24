@@ -3,8 +3,6 @@ from pathlib import Path
 
 import openturns as ot
 
-from vrtool.probabilistic_tools.hydra_ring_scripts import design_table_openturns
-
 
 class LoadInput:
     # class to store load data
@@ -17,21 +15,6 @@ class LoadInput:
             self.load_type = "HRING"
         elif "YearlyWLRise" in section_fields:
             self.load_type = "SAFE"
-
-    def set_HRING_input(self, folder: Path, section_attributes: dict, gridpoints=1000):
-        years = os.listdir(folder)
-        self.distribution = {}
-        for year in years:
-            self.distribution[year] = design_table_openturns(
-                folder.joinpath(
-                    year, "{}.txt".format(section_attributes["Load_{}".format(year)])
-                ),
-                gridpoints=gridpoints,
-            )
-
-    def set_fromDesignTable(self, filelocation: Path, gridpoints: int = 1000):
-        # Load is given by exceedence probability-water level table from Hydra-Ring
-        self.distribution = design_table_openturns(filelocation, gridpoints=gridpoints)
 
     def set_annual_change(
         self, change_type: str = "determinist", parameters: list[float] = [0]
