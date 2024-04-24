@@ -11,7 +11,6 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 
 
 class TestAggregatedMeasuresCombination:
-
     @dataclass
     class MockCombinedMeasure:
         primary: MeasureAsInputProtocol = None
@@ -39,47 +38,23 @@ class TestAggregatedMeasuresCombination:
         assert isinstance(_amc, AggregatedMeasureCombination)
 
     @pytest.mark.parametrize(
-        "sh_meas_id, sh_prim_id, sh_id_match",
+        "sh_meas_id, sh_meas_year, sg_meas_id, sg_meas_year, expected",
         [
-            pytest.param(1, 1, True, id="Sh id match"),
-            pytest.param(1, 2, False, id="Sh id don't match"),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "sh_meas_year, sh_prim_year, sh_year_match",
-        [
-            pytest.param(1, 1, True, id="Sh year match"),
-            pytest.param(1, 2, False, id="Sh year don't match"),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "sg_meas_id, sg_prim_id, sg_id_match",
-        [
-            pytest.param(1, 1, True, id="Sg id match"),
-            pytest.param(1, 2, False, id="Sg id don't match"),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "sg_meas_year, sg_prim_year, sg_year_match",
-        [
-            pytest.param(1, 1, True, id="Sg year match"),
-            pytest.param(1, 2, False, id="Sg year don't match"),
+            pytest.param(1, 1, 1, 1, True, id="Sh/Sg id and year match"),
+            pytest.param(2, 1, 1, 1, False, id="Sh id doesn't match"),
+            pytest.param(1, 2, 1, 1, False, id="Sh year doesn't match"),
+            pytest.param(1, 1, 2, 1, False, id="Sg id doesn't match"),
+            pytest.param(1, 1, 1, 2, False, id="Sg year doesn't match"),
+            pytest.param(2, 2, 2, 2, False, id="Sh/Sg id and year don't match"),
         ],
     )
     def test_check_primary_measure_result_id_and_year(
         self,
         sh_meas_id: int,
-        sh_prim_id: int,
-        sh_id_match: bool,
         sh_meas_year: int,
-        sh_prim_year: int,
-        sh_year_match: bool,
         sg_meas_id: int,
-        sg_prim_id: int,
-        sg_id_match: bool,
         sg_meas_year: int,
-        sg_prim_year: int,
-        sg_year_match: bool,
+        expected: bool,
     ):
         # 1. Define test data
         _sh_meas = self.MockMeasure(measure_result_id=sh_meas_id, year=sh_meas_year)
@@ -92,8 +67,10 @@ class TestAggregatedMeasuresCombination:
             measure_result_id=0,
             year=0,
         )
-        _prim_sh = self.MockMeasure(measure_result_id=sh_prim_id, year=sh_prim_year)
-        _prim_sg = self.MockMeasure(measure_result_id=sg_prim_id, year=sg_prim_year)
+        _prim_id = 1
+        _prim_year = 1
+        _prim_sh = self.MockMeasure(measure_result_id=_prim_id, year=_prim_year)
+        _prim_sg = self.MockMeasure(measure_result_id=_prim_id, year=_prim_year)
 
         # 2. Run test
         _result = _amc.check_primary_measure_result_id_and_year(
@@ -103,9 +80,7 @@ class TestAggregatedMeasuresCombination:
 
         # 3. Verify expectations
         assert isinstance(_result, bool)
-        assert _result == (
-            sh_id_match and sh_year_match and sg_id_match and sg_year_match
-        )
+        assert _result == expected
 
     def test_get_combination_idx(self):
         # 1. Define test data
