@@ -171,7 +171,9 @@ class RevetmentMeasure(MeasureProtocol):
         Returns:
             int: 0 if the costs are equal; +1 if the first is higher otherwise -1
         """
-        if math.isclose(costs_first, costs_second, rel_tol=self.tol_abs_beta_in_filtering):
+        if math.isclose(
+            costs_first, costs_second, rel_tol=self.tol_abs_beta_in_filtering
+        ):
             return 0
         elif costs_first > costs_second:
             return 1
@@ -185,7 +187,9 @@ class RevetmentMeasure(MeasureProtocol):
         Returns:
             int: 0 if the betas are equal; +1 if the first is higher otherwise -1
         """
-        if math.isclose(beta_first, beta_second, abs_tol=self.tol_abs_beta_in_filtering):
+        if math.isclose(
+            beta_first, beta_second, abs_tol=self.tol_abs_beta_in_filtering
+        ):
             return 0
         elif beta_first > beta_second:
             return 1
@@ -205,8 +209,12 @@ class RevetmentMeasure(MeasureProtocol):
                 for j, cmp in enumerate(self.measures.result_collection):
                     if i == j:
                         continue
-                    beta_msr = msr.section_reliability.SectionReliability["0"]["Section"]
-                    beta_cmp = cmp.section_reliability.SectionReliability["0"]["Section"]
+                    beta_msr = msr.section_reliability.SectionReliability["0"][
+                        "Section"
+                    ]
+                    beta_cmp = cmp.section_reliability.SectionReliability["0"][
+                        "Section"
+                    ]
                     cmp_betas = self._compare_betas(beta_msr, beta_cmp)
                     cmp_costs = self._compare_costs(msr.cost, cmp.cost)
                     if cmp_costs == 0 and cmp_betas == 0:

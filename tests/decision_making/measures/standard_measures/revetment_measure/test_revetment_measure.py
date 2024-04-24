@@ -320,7 +320,7 @@ class TestRevetmentMeasure:
             self._get_revetment_measure_result(23.1, 3.0 + 0.9 * _tol_beta)
         )
         msr.measures.result_collection.append(
-            self._get_revetment_measure_result(23.1 * (1 + 0.9* _tol_costs), 3.0)
+            self._get_revetment_measure_result(23.1 * (1 + 0.9 * _tol_costs), 3.0)
         )
         msr._get_filtered_measures()
         assert len(msr.measures.result_collection) == 1
