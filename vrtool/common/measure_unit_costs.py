@@ -6,6 +6,10 @@ from pandas import read_csv
 
 @dataclass
 class MeasureUnitCosts:
+    """
+    Dataclass to represent the contents of a / the `unit_costs.csv` file.
+    """
+
     # Inward costs
     inward_added_volume: float
     inward_starting_costs: float
@@ -68,9 +72,4 @@ class MeasureUnitCosts:
         for _, _series in _unit_cost_data.iterrows():
             _unit_cost_dict[_series["Description"]] = _series["Cost"]
 
-        # Create the dataclass by formatting the dictionary keys
-        # into the expected field names.
-        # This could be extracted (if needed) into a separate class method
-        # such as `def from_unformatted_dict(cls, unformatted_dict: dict)`
-        # Then you would do here simply a `return cls.from_unformatted_dict(_unit_cost_dict)`
-        return
+        return cls.from_unformatted_dict(_unit_cost_dict)
