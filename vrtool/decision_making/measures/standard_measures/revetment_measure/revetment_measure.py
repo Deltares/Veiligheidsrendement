@@ -62,9 +62,23 @@ class RevetmentMeasure(MeasureProtocol):
     @property
     def margin_min_max_beta(self) -> float:
         """
-        margin at which min_beta is seen as equal to max_beta,
+        margin at which min_beta is seen as equal to max_beta.
         """
         return 0.1
+
+    @property
+    def tol_abs_beta_in_filtering(self) -> float:
+        """
+        absolute margin at which two betas are seen as equal in filtering.
+        """
+        return 1e-2
+
+    @property
+    def tol_rel_costs_in_filtering(self) -> float:
+        """
+        relative margin at which two costs are seen as equal to filtering.
+        """
+        return 1e-3
 
     def _get_beta_max(self, p_max: float) -> float:
         """
@@ -150,25 +164,57 @@ class RevetmentMeasure(MeasureProtocol):
             "revetment_input"
         ]
 
+    def _compare_costs(self, costs_first: float, costs_second: float) -> int:
+        """
+        compare two costs
+
+        Returns:
+            int: 0 if the costs are equal; +1 if the first is higher otherwise -1
+        """
+        if math.isclose(costs_first, costs_second, rel_tol=self.tol_abs_beta_in_filtering):
+            return 0
+        elif costs_first > costs_second:
+            return 1
+        else:
+            return -1
+
+    def _compare_betas(self, beta_first: float, beta_second: float) -> int:
+        """
+        compare two betas
+
+        Returns:
+            int: 0 if the betas are equal; +1 if the first is higher otherwise -1
+        """
+        if math.isclose(beta_first, beta_second, abs_tol=self.tol_abs_beta_in_filtering):
+            return 0
+        elif beta_first > beta_second:
+            return 1
+        else:
+            return -1
+
     def _get_filtered_measures(self):
         """
         remove measures in measures.result_collection that have a worse cost-beta relation
         than any of the other measures
+        also remove measures with (almost) the same cost and beta as an earlier measure
         """
-        remove_msrs = []
-        for msr in self.measures.result_collection:
-            remove_msr = False
-            for cmp in self.measures.result_collection:
-                beta_msr = msr.section_reliability.SectionReliability["0"]["Section"]
-                beta_cmp = cmp.section_reliability.SectionReliability["0"]["Section"]
-                if msr.cost > cmp.cost and beta_msr < beta_cmp:
-                    remove_msr = True
-            remove_msrs.append(remove_msr)
-
         filtered_msrs = []
-        for i, remove_msr in enumerate(remove_msrs):
+        for i, msr in enumerate(self.measures.result_collection):
+            remove_msr = False
+            if msr.cost > 0:
+                for j, cmp in enumerate(self.measures.result_collection):
+                    if i == j:
+                        continue
+                    beta_msr = msr.section_reliability.SectionReliability["0"]["Section"]
+                    beta_cmp = cmp.section_reliability.SectionReliability["0"]["Section"]
+                    cmp_betas = self._compare_betas(beta_msr, beta_cmp)
+                    cmp_costs = self._compare_costs(msr.cost, cmp.cost)
+                    if cmp_costs == 0 and cmp_betas == 0:
+                        remove_msr = remove_msr or j < i
+                    elif cmp_costs >= 0 and cmp_betas <= 0:
+                        remove_msr = True
             if not remove_msr:
-                filtered_msrs.append(self.measures.result_collection[i])
+                filtered_msrs.append(msr)
 
         self.measures.result_collection = filtered_msrs
 

@@ -289,3 +289,38 @@ class TestRevetmentMeasure:
         )
         msr._get_filtered_measures()
         assert len(msr.measures.result_collection) == 3
+
+    def test_filtering_two_equal_measures(self):
+        """
+        test the filtering of revetment measures with two equal measures
+        """
+        msr = RevetmentMeasure()
+        msr.measures = RevetmentMeasureResultCollection()
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.1, 3.0)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.1, 3.0)
+        )
+        msr._get_filtered_measures()
+        assert len(msr.measures.result_collection) == 1
+
+    def test_filtering_three_almost_equal_measures(self):
+        """
+        test the filtering of revetment measures with three almost equal measures
+        """
+        msr = RevetmentMeasure()
+        _tol_beta = msr.tol_abs_beta_in_filtering
+        _tol_costs = msr.tol_rel_costs_in_filtering
+        msr.measures = RevetmentMeasureResultCollection()
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.1, 3.0)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.1, 3.0 + 0.9 * _tol_beta)
+        )
+        msr.measures.result_collection.append(
+            self._get_revetment_measure_result(23.1 * (1 + 0.9* _tol_costs), 3.0)
+        )
+        msr._get_filtered_measures()
+        assert len(msr.measures.result_collection) == 1
