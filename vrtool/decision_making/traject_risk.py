@@ -348,24 +348,3 @@ class TrajectRisk:
             self._probability_of_failure[_mech][
                 _section, 0, :
             ] = self._probability_of_failure[_mech][_section, _measure, :]
-
-    def update_probabilities_for_measure_TR(
-        self, measure: tuple[int, int, int]
-    ) -> None:
-        """
-        Update the probabilities of failure for the initial situation after applying a measure
-        by copying the measure possibilities to the initial situation.
-        Only Sg mechanisms are considered.
-        This method is used for the TR calculation.
-
-        Args:
-            measure (tuple[int, int, int]): The indices of the section, Sh and Sg measure to apply.
-        """
-        _section = measure[0]
-        _measure = measure[2]
-        for _mech in self.mechanisms:
-            if _mech not in SgMeasure.get_allowed_mechanisms():
-                continue
-            self._probability_of_failure[_mech][
-                _section, 0, :
-            ] = self._probability_of_failure[_mech][_section, _measure, :]
