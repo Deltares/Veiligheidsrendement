@@ -422,7 +422,7 @@ def determine_costs(
             total_cost += unit_costs.road_renewal * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
-    elif _measure_type_name == "vertical geotextile":
+    elif _measure_type_name == "vertical piping solution":
         total_cost = unit_costs.vertical_geotextile * length
     elif _measure_type_name == "diaphragm wall":
         total_cost = unit_costs.diaphragm_wall * length

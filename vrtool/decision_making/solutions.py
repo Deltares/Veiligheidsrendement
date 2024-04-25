@@ -141,7 +141,7 @@ class Solutions:
             elif isinstance(measure.measures, dict):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 ID = str(measure.parameters["ID"])
-                if _normalized_measure_type == "vertical geotextile":
+                if _normalized_measure_type == "vertical piping solution":
                     designvars = measure.measures["VZG"]
 
                 if _normalized_measure_type == "diaphragm wall":

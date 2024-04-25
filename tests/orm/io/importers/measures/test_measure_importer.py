@@ -136,9 +136,9 @@ class TestMeasureImporter:
                 id="Stability Screen measure.",
             ),
             pytest.param(
-                "Vertical Geotextile",
+                "Vertical Piping Solution",
                 VerticalPipingSolutionMeasure,
-                id="Vertical Geotextile measure.",
+                id="Vertical Piping Solution measure.",
             ),
             pytest.param("Revetment", RevetmentMeasure, id="Revetment measure"),
         ],
