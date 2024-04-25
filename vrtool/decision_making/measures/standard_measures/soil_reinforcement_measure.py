@@ -132,9 +132,6 @@ class SoilReinforcementMeasure(MeasureProtocol):
             return np.array([3.0,  6.0])
         return np.array([float("nan")])
 
-    def _get_depth(self, dike_section: DikeSection) -> float:
-        return get_stability_inner_depth(dike_section)
-
     def _get_modified_dike_geometry_measures(
         self,
         dike_section: DikeSection,
@@ -259,6 +256,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             )
             # Adapt inputs for reliability calculation, but only after year of implementation.
             if float(year_to_calculate) >= self.parameters["year"]:
+                _depth_screen = dike_section.cover_layer_thickness + modified_geometry_measure["l_stab_screen"]
                 reliability_input.input = implement_berm_widening(
                     berm_input=reliability_input.input,
                     measure_input=modified_geometry_measure,
@@ -268,7 +266,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     computation_type=calc_type,
                     path_intermediate_stix=self.config.output_directory
                     / "intermediate_result",
-                    depth_screen=self._get_depth(dike_section),
+                    depth_screen=_depth_screen,
                 )
                 is_first_year_with_widening = False
             # put them back in the object

@@ -40,6 +40,7 @@ class DikeSection:
         self.InitialGeometry = None
         self.houses = None
         self.with_measures = True
+        self.cover_layer_thickness = float("nan")
 
     @classmethod
     def get_dike_sections_from_vr_config(

@@ -1,5 +1,6 @@
 import copy
 import logging
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -59,11 +60,18 @@ def implement_berm_widening(
         return calculate_reliability(
             np.add(
                 calculate_safety_factor(reliability),
-                SFincrease,
+                _safety_factor_increase,
             )
         )
 
-    SFincrease = 0.2 * measure_input["l_stab_screen"] / 3.0
+    def _get_safety_factor_increase(l_stab_screen: float) -> float:
+        _default_safety_factor = 0.2
+        _small_stab_screen = 3.0
+        if math.isnan(l_stab_screen):
+            return _default_safety_factor
+        return _default_safety_factor * l_stab_screen / _small_stab_screen
+
+    _safety_factor_increase = _get_safety_factor_increase(measure_input["l_stab_screen"])
 
     # this function implements a berm widening based on the relevant inputs
     if mechanism == MechanismEnum.OVERFLOW:
@@ -111,8 +119,8 @@ def implement_berm_widening(
                     measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input["sf_2025"] += SFincrease
-                berm_input["sf_2075"] += SFincrease
+                berm_input["sf_2025"] += _safety_factor_increase
+                berm_input["sf_2075"] += _safety_factor_increase
         # For betas as input
         elif "beta_2025" in berm_input:
             berm_input["beta_2025"] = berm_input["beta_2025"] + (

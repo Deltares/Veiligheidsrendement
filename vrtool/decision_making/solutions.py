@@ -78,6 +78,7 @@ class Solutions:
                     "dberm",
                     "beta_target",
                     "transition_level",
+                    "l_stab_screen",
                     "cost",
                 ],
                 name="base",
@@ -104,10 +105,18 @@ class Solutions:
                         "soil reinforcement",
                         "soil reinforcement with stability screen",
                     ]:
-                        designvars = (
-                            measure.measures[j]["dcrest"],
-                            measure.measures[j]["dberm"],
-                        )
+                        if (measure.parameters["StabilityScreen"] == "yes"):
+                            designvars = (
+                                measure.measures[j]["dcrest"],
+                                measure.measures[j]["dberm"],
+                                measure.measures[j]["l_stab_screen"],
+                            )
+                        else:
+                            designvars = (
+                                measure.measures[j]["dcrest"],
+                                measure.measures[j]["dberm"],
+                                -999,
+                            )
 
                     cost = measure.measures[j]["Cost"]
                     measure_in.append(str(measure.parameters["ID"]))
@@ -120,6 +129,7 @@ class Solutions:
                         measure_in.append(designvars[1])
                         measure_in.append(-999)
                         measure_in.append(-999)
+                        measure_in.append(designvars[2])
                     else:
                         measure_in.append(designvars)
                     measure_in.append(cost)
