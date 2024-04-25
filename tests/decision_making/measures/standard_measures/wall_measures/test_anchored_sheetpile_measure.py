@@ -10,22 +10,28 @@ from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_w
     DiaphragmWallMeasure,
 )
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.flood_defence_system.mechanism_reliability_collection import (
-    MechanismReliabilityCollection,
-)
 
 valid_dike_section_cases = [
     dict(
         crest_height=9.98,
         section_length=397,
+        Initialgeometry=pd.DataFrame.from_dict(
+            {"BIT": 3.444}, columns=["z"], orient="index"
+        ),
     ),
     dict(
         crest_height=9.93,
         section_length=286,
+        Initialgeometry=pd.DataFrame.from_dict(
+            {"BIT": 3.913}, columns=["z"], orient="index"
+        ),
     ),
     dict(
-        crest_height=9,
+        crest_height=4.0,
         section_length=397,
+        Initialgeometry=pd.DataFrame.from_dict(
+            {"BIT": 3.444}, columns=["z"], orient="index"
+        ),
     ),
 ]
 
@@ -51,19 +57,8 @@ class TestAnchoredSheetpileMeasure:
         _custom_section = CustomDikeSection()
         _custom_section.crest_height = _dike_section_properties["crest_height"]
         _custom_section.cover_layer_thickness = 7.0
-        _custom_section.InitialGeometry = pd.DataFrame.from_dict(
-            {"BIT": 3.444}, columns=["z"], orient="index"
-        )  # 3.913 for section 2
+        _custom_section.InitialGeometry = _dike_section_properties["Initialgeometry"]
         _custom_section.Length = _dike_section_properties["section_length"]
-
-        # Create custom MechanismReliabilityCollection
-        _custom_reliability_collection = MechanismReliabilityCollection(
-            mechanism=MechanismEnum.PIPING,
-            computation_type="TEST",
-            computation_years=[0],
-            t_0=0,
-            measure_year=0,
-        )
 
         return _custom_section
 
