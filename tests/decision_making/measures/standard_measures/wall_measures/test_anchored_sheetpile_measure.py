@@ -52,7 +52,7 @@ class TestAnchoredSheetpileMeasure:
         _custom_section.crest_height = _dike_section_properties["crest_height"]
         _custom_section.cover_layer_thickness = 7.0
         _custom_section.InitialGeometry = pd.DataFrame.from_dict(
-            {"BIT": {"z": 3.444}}
+            {"BIT": 3.444}, columns=["z"], orient="index"
         )  # 3.913 for section 2
         _custom_section.Length = _dike_section_properties["section_length"]
 
@@ -70,17 +70,9 @@ class TestAnchoredSheetpileMeasure:
     @pytest.mark.parametrize(
         "indirect_dike_section, expected_cost",
         [
-            pytest.param(
-                valid_dike_section_cases[0],
-                8734000,
-                id="Section 1",
-            ),
-            pytest.param(
-                valid_dike_section_cases[1],
-                6292000,
-                id="Section 2",
-            ),
-            pytest.param(valid_dike_section_cases[2], 6943530, id="Section 3"),
+            pytest.param(valid_dike_section_cases[0], 8734000, id="Section 1"),
+            pytest.param(valid_dike_section_cases[1], 6292000, id="Section 2"),
+            pytest.param(valid_dike_section_cases[2], 8734000, id="Section 3"),
         ],
         indirect=["indirect_dike_section"],
     )
