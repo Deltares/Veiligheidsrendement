@@ -16,9 +16,19 @@ class FallbackMeasureCalculator(
     We then assume minimal costs as the piping probability is minimal.
     """
 
+    @property
+    def pf_piping_reduction_factor(self) -> float:
+        """
+        Gets the default reduction factor for `pf_piping` ( `P_solution` ).
+        This property can be overriden when inheriting from this class.
+
+        Returns:
+            float: reduction value.
+        """
+        return 1
+
     def calculate_cost(self, unit_costs: MeasureUnitCosts) -> float:
         return 0
 
     def calculate_reliability(self) -> SectionReliability:
-        # TODO
         return self._get_configured_section_reliability()

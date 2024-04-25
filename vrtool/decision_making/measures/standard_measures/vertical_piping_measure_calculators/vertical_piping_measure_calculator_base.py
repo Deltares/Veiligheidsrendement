@@ -1,6 +1,5 @@
 import copy
-
-import numpy as np
+from abc import ABC, abstractmethod
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -13,36 +12,23 @@ from vrtool.flood_defence_system.mechanism_reliability_collection import (
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
-class VerticalPipingMeasureCalculatorBase:
+class VerticalPipingMeasureCalculatorBase(ABC):
+    """
+    Abstract class to represent the basic inheritance of all the `VerticalPipingMeasureCalculatorProtocol`
+    concrete classes as, for now, they all share almost the same logic.
+
+    __DO NOT__ start adding `if-else` statements based on reflection. When needed, please define other base classes or move
+    the logic to the corresponding concrete class via inheritance and overriding of methods.
+    """
 
     traject_info: DikeTrajectInfo
     dike_section: DikeSection
     reliability_years: list[int]
     computation_year_start: int
     measure_year: int
-    measure_p_solution: float
-    measure_pf_solution: float
-
-    @classmethod
-    def from_measure_section_traject(
-        cls,
-        measure: MeasureProtocol,
-        dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-    ):
-        _calculator = cls()
-        _calculator.traject_info = traject_info
-        _calculator.dike_section = dike_section
-        _calculator.reliability_years = measure.config.T
-        _calculator.computation_year_start = measure.config.t_0
-        _calculator.measure_year = measure.parameters["year"]
-        _calculator.measure_p_solution = (
-            measure.parameters["P_solution"] * _calculator.pf_piping_reduction_factor
-        )
-        _calculator.measure_pf_solution = measure.parameters["Pf_solution"]
-        return _calculator
 
     @property
+    @abstractmethod
     def pf_piping_reduction_factor(self) -> float:
         """
         Gets the default reduction factor for `pf_piping` ( `P_solution` ).
@@ -51,7 +37,33 @@ class VerticalPipingMeasureCalculatorBase:
         Returns:
             float: reduction value.
         """
-        return 1
+
+    @classmethod
+    def from_measure_section_traject(
+        cls,
+        measure: MeasureProtocol,
+        dike_section: DikeSection,
+        traject_info: DikeTrajectInfo,
+    ):
+        """
+        Initializes a concrete instance of `VerticalPipingMeasureCalculatorBase`
+        with its arguments already
+
+        Args:
+            measure (MeasureProtocol): Measure to be applied to the dike's section.
+            dike_section (DikeSection):  Dike section properties.
+            traject_info (DikeTrajectInfo): Dike traject in which the dike section takes place.
+
+        Returns:
+            VerticalPipingMeasureCalculatorBase: Concrete instance of a `VerticalPipingMeasureCalculatorBase`.
+        """
+        _calculator = cls()
+        _calculator.traject_info = traject_info
+        _calculator.dike_section = dike_section
+        _calculator.reliability_years = measure.config.T
+        _calculator.computation_year_start = measure.config.t_0
+        _calculator.measure_year = measure.parameters["year"]
+        return _calculator
 
     def _get_configured_section_reliability(self) -> SectionReliability:
         section_reliability = SectionReliability()
@@ -131,8 +143,6 @@ class VerticalPipingMeasureCalculatorBase:
         if int(year_to_calculate) < self.measure_year:
             self._copy_results(mechanism_reliability, dike_section_piping_reliability)
 
-        mechanism_reliability.Input.input["elimination"] = "yes"
-        mechanism_reliability.Input.input["pf_elim"] = self.measure_p_solution
-        mechanism_reliability.Input.input["pf_with_elim"] = np.min(
-            [self.measure_pf_solution, 1.0e-16]
-        )
+        mechanism_reliability.Input.input[
+            "piping_reduction_factor"
+        ] = self.pf_piping_reduction_factor
