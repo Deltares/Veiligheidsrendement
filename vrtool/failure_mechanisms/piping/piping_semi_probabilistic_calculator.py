@@ -68,7 +68,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         self, scenario_beta: float, mechanism_input_dict: dict
     ) -> float:
         # TODO [VRTOOL-343, VRTOOL-489]:
-        # `pf_elim`, `pf_with_elim` and `pf_elim` are deprecated.
+        # `pf_elim` and `pf_with_elim` are deprecated.
         # To remove them we need to update the logic in `diaprahgm_wall_measure.py`
         # and `stability_inner_simple_input.py` and likely all related tests.
         # Once that logic is removed we can streamline this method without `if-else`
