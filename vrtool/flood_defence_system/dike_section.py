@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pandas as pd
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
@@ -15,6 +13,7 @@ class DikeSection:
     """
 
     crest_height: float
+    cover_layer_thickness: float
     mechanism_data: dict[MechanismEnum, tuple[str, str]]
     section_reliability: SectionReliability
     TrajectInfo: DikeTrajectInfo
@@ -31,6 +30,7 @@ class DikeSection:
         self.name = ""
         self.Length = float("nan")
         self.crest_height = float("nan")
+        self.cover_layer_thickness = float("nan")
         self.InitialGeometry = None
         self.houses = None
         self.with_measures = True
