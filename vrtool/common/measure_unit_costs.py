@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, fields
 from pathlib import Path
 
 from pandas import read_csv
@@ -44,12 +45,23 @@ class MeasureUnitCosts:
         Returns:
             MeasureUnitCosts: Resulting mapped instance.
         """
-        return cls(
-            **{
-                key.strip().lower().replace(" ", "_"): value
-                for key, value in unformatted_dict.items()
-            }
-        )
+
+        def normalize_key_name(key_name: str) -> str:
+            return key_name.strip().lower().replace(" ", "_")
+
+        _existing_fields = [_field.name for _field in fields(cls)]
+        _normalized_dict = {}
+
+        for key, value in unformatted_dict.items():
+            _normalized_key = normalize_key_name(key)
+            if _normalized_key not in _existing_fields:
+                logging.warning(
+                    "Measure {%s} is not internally defined and won't be imported.", key
+                )
+                continue
+            _normalized_dict[_normalized_key] = value
+
+        return cls(**_normalized_dict)
 
     @classmethod
     def from_csv_file(cls, csv_file: Path):

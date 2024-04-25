@@ -57,7 +57,7 @@ class TestMeasureUnitCosts:
         assert isnan(_unit_costs.diaphragm_wall)
         assert isnan(_unit_costs.vertical_geotextile)
 
-    def test_initialize_with_extra_keys_raises_error(
+    def test_initialize_with_extra_keys_only_logs_error(
         self, valid_unformatted_dict: dict
     ):
         # 1. Define test data.
@@ -66,15 +66,17 @@ class TestMeasureUnitCosts:
 
         valid_unformatted_dict[_extra_key] = 4.2
 
+        import logging
+
+        _logger = logging.getLogger("")
+        _logger.addHandler()
+
         # 2. Run test.
-        with pytest.raises(TypeError) as exc_err:
-            MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
+        _unit_costs = MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
 
         # 3. Verify expectations.
-        _expected_error = (
-            "MeasureUnitCosts.__init__() got an unexpected keyword argument 'dummy_key'"
-        )
-        assert str(exc_err.value) == _expected_error
+        assert isinstance(_unit_costs, MeasureUnitCosts)
+        assert _extra_key not in _unit_costs.__dict__.keys()
 
     @pytest.mark.parametrize(
         "excluded_key",
