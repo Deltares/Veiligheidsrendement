@@ -41,3 +41,13 @@ class AggregatedMeasureCombination:
                 self.sg_combination.primary.year == primary_sg.year
             )
         return False
+
+    def get_combination_idx(self) -> tuple[int, int]:
+        """
+        Find the index of the Sh and Sg combination that compose the aggregate.
+
+        Returns:
+            tuple[int, int]: The index of the Sh and Sg combination in the list of combinations.
+
+        """
+        return (self.sh_combination.sequence_nr, self.sg_combination.sequence_nr)

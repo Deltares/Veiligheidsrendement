@@ -113,7 +113,7 @@ class MechanismPerYearProbabilityCollection:
         """
         return set(p.year for p in self.probabilities if p.mechanism == mechanism)
 
-    def get_section_probability(self, year: int):
+    def get_section_probability(self, year: int) -> float:
         """
         get the section probability for a given year for all mechanisms present
 

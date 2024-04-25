@@ -28,12 +28,12 @@ from vrtool.orm.models.section_data import SectionData
 
 class DikeSectionImporter(OrmImporterProtocol):
     input_directory: Path
-    selected_mechanisms: list[str]
+    selected_mechanisms: list[MechanismEnum]
     computation_years: list[int]
     t_0: int
     externals: Path
 
-    def __init__(self, vrtool_config: VrtoolConfig) -> DikeSectionImporter:
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
         if not vrtool_config:
             raise ValueError("VrtoolConfig not provided.")
 
