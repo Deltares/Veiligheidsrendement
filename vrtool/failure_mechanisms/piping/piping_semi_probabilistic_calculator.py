@@ -64,7 +64,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         self._initial_year = initial_year
         self._probabilistic_helper = PipingProbabilisticHelper(traject_info)
 
-    def _get_scenario_pf(
+    def _get_scenario_pf_beta(
         self, scenario_beta: float, mechanism_input_dict: dict
     ) -> float:
         # TODO [VRTOOL-343, VRTOOL-489]:
@@ -73,12 +73,12 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
         # and `stability_inner_simple_input.py` and likely all related tests.
         # Once that logic is removed we can streamline this method without `if-else`
         if "piping_reduction_factor" in mechanism_input_dict:
-            _calculated_beta = (
+            _probability_of_failure = (
                 beta_to_pf(scenario_beta)
                 / mechanism_input_dict["piping_reduction_factor"]
             )
         else:
-            _calculated_beta = np.max(
+            _probability_of_failure = np.max(
                 [
                     np.min(
                         [
@@ -91,7 +91,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                     beta_to_pf(8.0),
                 ]
             )
-        return np.min([pf_to_beta(_calculated_beta), 8.0])
+        return np.min([pf_to_beta(_probability_of_failure), 8.0])
 
     def calculate(self, year: float) -> tuple[float, float]:
         # First calculate the SF without gamma for the three submechanisms
@@ -152,7 +152,7 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                         ]
                     )
 
-                    scenario_result["Pf"][scenario] = self._get_scenario_pf(
+                    scenario_result["Pf"][scenario] = self._get_scenario_pf_beta(
                         scenario_beta, self._mechanism_input.input
                     )
 
