@@ -127,14 +127,14 @@ class GreedyStrategy(StrategyProtocol):
                 sg_array[ind_highest_risk, index_counter[ind_highest_risk]],
             )
             if mechanism == MechanismEnum.OVERFLOW:
-                new_mechanism_risk[ind_highest_risk, :] = (
-                    self.traject_risk.get_measure_risk(_measure, MechanismEnum.OVERFLOW)
-                )
+                new_mechanism_risk[
+                    ind_highest_risk, :
+                ] = self.traject_risk.get_measure_risk(_measure, MechanismEnum.OVERFLOW)
             elif mechanism == MechanismEnum.REVETMENT:
-                new_mechanism_risk[ind_highest_risk, :] = (
-                    self.traject_risk.get_measure_risk(
-                        _measure, MechanismEnum.REVETMENT
-                    )
+                new_mechanism_risk[
+                    ind_highest_risk, :
+                ] = self.traject_risk.get_measure_risk(
+                    _measure, MechanismEnum.REVETMENT
                 )
             else:
                 raise ValueError("Mechanism {} not recognized".format(mechanism))
@@ -261,10 +261,10 @@ class GreedyStrategy(StrategyProtocol):
 
                 # check if all rows in comparison only contain True values
                 if mechanism == MechanismEnum.OVERFLOW:
-                    measure_pfs[MechanismEnum.OVERFLOW] = (
-                        self.traject_risk.get_section_probabilities(
-                            section_no, MechanismEnum.OVERFLOW
-                        )
+                    measure_pfs[
+                        MechanismEnum.OVERFLOW
+                    ] = self.traject_risk.get_section_probabilities(
+                        section_no, MechanismEnum.OVERFLOW
                     )
                     # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
                     if (
@@ -272,10 +272,10 @@ class GreedyStrategy(StrategyProtocol):
                         in self.sections[section_no].initial_assessment.get_mechanisms()
                     ):
                         # take combination of REVETMENT and OVERFLOW
-                        measure_pfs[MechanismEnum.REVETMENT] = (
-                            self.traject_risk.get_section_probabilities(
-                                section_no, MechanismEnum.REVETMENT
-                            )
+                        measure_pfs[
+                            MechanismEnum.REVETMENT
+                        ] = self.traject_risk.get_section_probabilities(
+                            section_no, MechanismEnum.REVETMENT
                         )
                         comparison_height = np.where(
                             np.all(
@@ -301,15 +301,15 @@ class GreedyStrategy(StrategyProtocol):
 
                 elif mechanism == MechanismEnum.REVETMENT:
                     # overflow must be present so slightly different
-                    measure_pfs[MechanismEnum.OVERFLOW] = (
-                        self.traject_risk.get_section_probabilities(
-                            section_no, MechanismEnum.OVERFLOW
-                        )
+                    measure_pfs[
+                        MechanismEnum.OVERFLOW
+                    ] = self.traject_risk.get_section_probabilities(
+                        section_no, MechanismEnum.OVERFLOW
                     )
-                    measure_pfs[MechanismEnum.REVETMENT] = (
-                        self.traject_risk.get_section_probabilities(
-                            section_no, MechanismEnum.OVERFLOW
-                        )
+                    measure_pfs[
+                        MechanismEnum.REVETMENT
+                    ] = self.traject_risk.get_section_probabilities(
+                        section_no, MechanismEnum.OVERFLOW
                     )
                     # get indices for rows in measure_pfs where all measure_pfs are greater than current_pf by comparing the numpy array
                     comparison_height = np.where(
@@ -437,13 +437,13 @@ class GreedyStrategy(StrategyProtocol):
 
         for _idx, _ in enumerate(existing_investment_list):
             # sh
-            _calculated_investments[existing_investment_list[_idx][0], 0] = (
-                existing_investment_list[_idx][1]
-            )
+            _calculated_investments[
+                existing_investment_list[_idx][0], 0
+            ] = existing_investment_list[_idx][1]
             # sg
-            _calculated_investments[existing_investment_list[_idx][0], 1] = (
-                existing_investment_list[_idx][2]
-            )
+            _calculated_investments[
+                existing_investment_list[_idx][0], 1
+            ] = existing_investment_list[_idx][2]
 
         # prepare arrays
         sorted_sh = np.full(tuple(_life_cycle_cost.shape[0:2]), 999, dtype=int)
@@ -534,9 +534,9 @@ class GreedyStrategy(StrategyProtocol):
                             self.LCCOption[n, sh, sg], _spent_money[n]
                         )
 
-                        _total_risk[n, sh, sg] = (
-                            self.traject_risk.get_total_risk_for_measure((n, sh, sg))
-                        )
+                        _total_risk[
+                            n, sh, sg
+                        ] = self.traject_risk.get_total_risk_for_measure((n, sh, sg))
 
             # do not go back:
             _life_cycle_cost = np.where(_life_cycle_cost <= 0, 1e99, _life_cycle_cost)
