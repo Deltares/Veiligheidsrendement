@@ -24,13 +24,14 @@ class AnchoredSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
     def _calculate_measure_costs(self, dike_section: DikeSection) -> float:
         """
         Overriden method as it is the only difference with the `DiaphragmWallMeasure`.
+        Length of sheetpile should be between 10 and 20 meters.
         """
         _h_dike = (
             dike_section.crest_height - dike_section.InitialGeometry.loc["BIT"]["z"]
         )
         _d_cover = dike_section.cover_layer_thickness
 
-        _length_sheetpile = min((_h_dike + _d_cover) * 3, 20)
+        _length_sheetpile = max(min((_h_dike + _d_cover) * 3, 20), 10)
         _l_section = dike_section.Length
         logging.info("Calculating anchored sheetpile measure costs:")
         logging.info(
