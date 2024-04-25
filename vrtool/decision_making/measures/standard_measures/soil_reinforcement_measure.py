@@ -31,8 +31,6 @@ class SoilReinforcementMeasure(MeasureProtocol):
         # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         _measure_type = self.parameters["Type"]
-        if self.parameters["StabilityScreen"] == "yes":
-            self.parameters["Depth"] = self._get_depth(dike_section)
 
         def get_measure_data(
             modified_measure: ModifiedDikeGeometryMeasureInput,
@@ -43,11 +41,12 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["dcrest"] = modified_measure.d_crest
             _modified_measure["dberm"] = modified_measure.d_berm
             _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
+            _modified_measure["l_stab_screen"] = modified_measure.l_stab_screen
             _modified_measure["Cost"] = determine_costs(
                 self.parameters,
                 _measure_type,
                 dike_section.Length,
-                self.parameters.get("Depth", float("nan")),
+                dike_section.cover_layer_thickness + modified_measure.l_stab_screen,
                 self.unit_costs,
                 dcrest=modified_measure.d_crest,
                 dberm_in=int(modified_measure.d_house),
@@ -118,7 +117,20 @@ class SoilReinforcementMeasure(MeasureProtocol):
                     np.int_(1 + (self.parameters["max_inward"] / berm_step)),
                 )
         else:
-            raise Exception("unkown direction")
+            raise ValueError("unknown direction")
+
+    def _get_l_stab_range(self) -> np.ndarray:
+        """
+        Generates the range of the length of the stability screen,
+        relative to the cover thickness
+
+        Returns:
+            np.ndarray: list with range for lengths for stability screen;
+            without a stability screen a nan is returned
+        """
+        if self.parameters["StabilityScreen"] == "yes":
+            return np.array([3.0,  6.0])
+        return np.array([float("nan")])
 
     def _get_depth(self, dike_section: DikeSection) -> float:
         return get_stability_inner_depth(dike_section)
@@ -129,11 +141,13 @@ class SoilReinforcementMeasure(MeasureProtocol):
     ) -> list[ModifiedDikeGeometryMeasureInput]:
         crest_range = self._get_crest_range()
         berm_range = self._get_berm_range()
+        l_stab_screen_range = self._get_l_stab_range()
 
         dike_modifications = [
-            (modified_crest, modified_berm)
+            (modified_crest, modified_berm, modified_l_stab_screen)
             for modified_crest in crest_range
             for modified_berm in berm_range
+            for modified_l_stab_screen in l_stab_screen_range
         ]
 
         inputs = []
@@ -148,6 +162,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 "area_extra": modified_geometry_properties[1],
                 "area_excavated": modified_geometry_properties[2],
                 "d_house": modified_geometry_properties[3],
+                "l_stab_screen": dike_modification[2],
                 "id": self.parameters["ID"],
             }
 

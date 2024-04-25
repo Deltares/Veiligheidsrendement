@@ -33,7 +33,6 @@ def implement_berm_widening(
     computation_type,
     is_first_year_with_widening: bool,
     path_intermediate_stix: Path,
-    SFincrease=0.2,
     depth_screen: Optional[float] = None,
 ):
     """
@@ -46,7 +45,6 @@ def implement_berm_widening(
         computation_type (str): type of computation for the mechanism
         is_first_year_with_widening (bool): flag for triggering rerunning stix
         path_intermediate_stix (Path): path to the intermediate stix files
-        SFincrease (float): increase in safety factor
         depth_screen (float): depth of the stability screen
 
     Returns:
@@ -64,6 +62,8 @@ def implement_berm_widening(
                 SFincrease,
             )
         )
+
+    SFincrease = 0.2 * measure_input["l_stab_screen"] / 3.0
 
     # this function implements a berm widening based on the relevant inputs
     if mechanism == MechanismEnum.OVERFLOW:

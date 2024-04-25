@@ -13,6 +13,7 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
     implement_berm_widening,
+    determine_costs,
 )
 
 _measure_input = {
@@ -44,6 +45,7 @@ _measure_input = {
     "dberm": 0,
     "id": 1,
     "StabilityScreen": "yes",
+    "l_stab_screen": 3.0,
 }
 
 _geometry_cases = {
@@ -271,7 +273,6 @@ class TestCommonFunctions:
             computation_type="DStability",
             is_first_year_with_widening=True,
             path_intermediate_stix=_path_intermediate_stix,
-            SFincrease=0.2,
             depth_screen=6.0,
         )
 
@@ -288,3 +289,21 @@ class TestCommonFunctions:
         assert (
             len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
         )
+
+    def test_determine_costs(self):
+        """
+        test the cost calculation of a stability screen
+        """
+        _parameters = {}
+        _measure_type = "Stability screen"
+        _length = 100.0
+        _depth = 3.0
+        _unit_costs = {"Sheetpile": 2345.6}
+        _costs = determine_costs(
+            _parameters,
+            _measure_type,
+            _length,
+            _depth,
+            _unit_costs,
+        )
+        assert _costs == pytest.approx(703680.0)
