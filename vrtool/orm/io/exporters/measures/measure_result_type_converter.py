@@ -1,3 +1,4 @@
+import math
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
     MeasureResultProtocol,
@@ -19,12 +20,12 @@ def filter_supported_parameters_dict(parameters_dict: dict) -> dict:
         dict: Dictionary containing only **supported** parameters for **converted**
         `MeasureResultProtocol` instances.
     """
-    _supported_parameters = ["dberm", "dcrest"]
+    _supported_parameters = ["dberm", "dcrest", "l_stab_screen"]
     return dict(
         [
             (k, v)
             for k, v in parameters_dict.items()
-            if k.lower() in _supported_parameters
+            if k.lower() in _supported_parameters and not math.isnan(v)
         ]
     )
 

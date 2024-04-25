@@ -56,6 +56,11 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
                 _res_dict["dcrest"] = _res_dict["imported_parameters"]["dcrest"]
                 _res_dict["dberm"] = _res_dict["imported_parameters"]["dberm"]
                 _res_dict["StabilityScreen"] = measure.parameters["StabilityScreen"]
+                if measure.parameters["StabilityScreen"] == "yes":
+                    if "l_stab_screen" in measure.parameters:
+                        _res_dict["l_stab_screen"] = measure.parameters["l_stab_screen"]
+                    else:
+                        _res_dict["l_stab_screen"] = 3.0
             measure.measures = _imported_results
             return
 

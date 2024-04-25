@@ -105,7 +105,7 @@ class Solutions:
                         "soil reinforcement",
                         "soil reinforcement with stability screen",
                     ]:
-                        if (measure.parameters["StabilityScreen"] == "yes"):
+                        if measure.parameters["StabilityScreen"] == "yes":
                             designvars = (
                                 measure.measures[j]["dcrest"],
                                 measure.measures[j]["dberm"],
