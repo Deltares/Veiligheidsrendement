@@ -14,7 +14,6 @@ class CourseSandBarrierMeasureCalculator(
     """
     Applied when `cover_layer_thickness <2m`.
     * It reduces the `pf_piping` with a factor `1000`.
-    * It has a price of `1700€/m`.
     """
 
     @property

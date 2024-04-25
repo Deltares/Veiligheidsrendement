@@ -5,6 +5,7 @@ from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class TestPipingSemiProbabilisticCalculator:
@@ -106,7 +107,7 @@ class TestPipingSemiProbabilisticCalculator:
         }
         return _beta, _mechanism_input_dict
 
-    def test_get_scenario_pf_beta_with_piping_reduction_factor(
+    def test_get_scenario_pf_with_piping_reduction_factor(
         self,
         _get_scenario_pf_args: tuple[float, dict],
         valid_piping_calculator: PipingSemiProbabilisticCalculator,
@@ -116,14 +117,14 @@ class TestPipingSemiProbabilisticCalculator:
         assert "piping_reduction_factor" in _mechanism_input_dict
 
         # 2. Run test.
-        _computed_beta = valid_piping_calculator._get_scenario_pf_beta(
+        _computed_pf = valid_piping_calculator._get_scenario_pf(
             _beta, _mechanism_input_dict
         )
 
         # 3. Verify expectations.
-        assert _computed_beta == pytest.approx(5.5618, rel=1e-4)
+        assert _computed_pf == pytest.approx(1.3345e-08, rel=1e-4)
 
-    def test_get_scenario_pf_beta_without_piping_reduction_factor(
+    def test_get_scenario_pf_without_piping_reduction_factor(
         self,
         _get_scenario_pf_args: tuple[float, dict],
         valid_piping_calculator: PipingSemiProbabilisticCalculator,
@@ -134,9 +135,10 @@ class TestPipingSemiProbabilisticCalculator:
             _mechanism_input_dict.pop("piping_reduction_factor")
 
         # 2. Run test.
-        _computed_beta = valid_piping_calculator._get_scenario_pf_beta(
+        _computed_pf = valid_piping_calculator._get_scenario_pf(
             _beta, _mechanism_input_dict
         )
 
         # 3. Verify expectations.
-        assert _computed_beta == pytest.approx(_beta, rel=1e-4)
+        _expected_pf = beta_to_pf(_beta)
+        assert _computed_pf == pytest.approx(_expected_pf, rel=1e-4)

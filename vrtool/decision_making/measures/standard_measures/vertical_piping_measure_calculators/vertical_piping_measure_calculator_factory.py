@@ -48,6 +48,12 @@ class VerticalPipingMeasureCalculatorFactory:
             ):
                 raise TypeError(f"Not supported `d_cover` value ({_d_cover})")
 
+            # Select calculator based on `d_cover` criteria.
+            # No fallback or default option is needed as we consider anything
+            # greater than 4 a `HeavescreenMeasure`.
+            # This removes the initial requirement of an extra calculator for
+            # `d_cover >= 6`.
+
             if _d_cover < 2:
                 return CourseSandBarrierMeasureCalculator
             elif _d_cover >= 2 and _d_cover < 4:

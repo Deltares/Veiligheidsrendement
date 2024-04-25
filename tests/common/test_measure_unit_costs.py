@@ -57,7 +57,7 @@ class TestMeasureUnitCosts:
         assert isnan(_unit_costs.diaphragm_wall)
         assert isnan(_unit_costs.vertical_geotextile)
 
-    def test_initialize_with_extra_keys_only_logs_error(
+    def test_initialize_with_extra_keys_only_logs_warning(
         self, valid_unformatted_dict: dict
     ):
         # 1. Define test data.

@@ -14,8 +14,9 @@ class HeavescreenMeasureCalculator(
     """
     Applied when `4m < cover_layer_thickness`.
     * It reduces the `pf_piping` with a factor `1000`.
-    * The unit cost is assumed to be lower than that from the unanchored sheetpile: `400€/m2`.
-        * The price is expressed per m2, so we need to calculate the vertical length of the screen.
+    * The unit cost:
+        * It is assumed to be lower than that from the unanchored sheetpile.
+        * It is expressed per m2, so we need to calculate the vertical length of the screen.
         * The assumption is that it should go 6m below the cover_layer, so `l_screen = cover_layer_thickness + 6m`.
     """
 

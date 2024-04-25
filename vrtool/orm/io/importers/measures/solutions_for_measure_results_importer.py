@@ -82,7 +82,7 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
             # as it implements the `DiaphragmWallMeasure`
             measure.measures["DiaphragmWall"] = "yes"
         elif isinstance(measure, VerticalPipingSolutionMeasure):
-            # TODO: These checks seemed to be depracted.
+            # TODO: These checks seemed to be deprecated.
             measure.measures["VZG"] = "yes"
         elif isinstance(measure, StabilityScreenMeasure):
             measure.measures["Stability Screen"] = "yes"
