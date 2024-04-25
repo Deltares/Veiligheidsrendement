@@ -173,8 +173,10 @@ class TrajectRisk:
         """
         Calculate the total risk for the initial situation.
         The initial Sh and Sg measures are used to calculate this.
-        Mechanisms OVERFLOW and REVETMENT are considered to be dependent.
-        Mechanisms STABILITY_INNER and PIPING are considered to be independent.
+
+        The total probability is calculated by subtracting the product of the probabilities of non-failure from 1:
+        - for dependent mechanisms (OVERFLOW and REVETMENT) the maximum probability of failure per sections is taken.
+        - for independent mechanisms (STABILITY_INNER and PIPING) the sum of the independent probabilities of failure for all sections is taken.
 
         Returns:
             float: The total risk for the traject.
