@@ -288,6 +288,7 @@ class TestOrmControllers:
         _dike_section = DikeSection()
         _dike_section.name = "01A"
         _dike_section.Length = 359.0
+        _dike_section.cover_layer_thickness = 42
 
         # Stability Inner
         _water_load_input = LoadInput([])
