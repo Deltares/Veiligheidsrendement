@@ -11,6 +11,12 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 class VerticalGeotextileMeasureCalculator(
     VerticalPipingMeasureCalculatorBase, VerticalPipingMeasureCalculatorProtocol
 ):
+    """
+    Applied when `2m <= cover_layer_thickness < 4m`.
+    * It reduces the `pf_piping` with a factor `1000`.
+    * It has a price of `1700€/m`.
+    """
+
     @property
     def pf_piping_reduction_factor(self) -> float:
         return 1000

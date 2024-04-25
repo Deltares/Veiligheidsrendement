@@ -11,6 +11,12 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 class CourseSandBarrierMeasureCalculator(
     VerticalPipingMeasureCalculatorBase, VerticalPipingMeasureCalculatorProtocol
 ):
+    """
+    Applied when `cover_layer_thickness <2m`.
+    * It reduces the `pf_piping` with a factor `1000`.
+    * It has a price of `1700€/m`.
+    """
+
     @property
     def pf_piping_reduction_factor(self) -> float:
         return 1000
