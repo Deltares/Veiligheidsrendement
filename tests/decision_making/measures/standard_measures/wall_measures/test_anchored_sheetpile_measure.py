@@ -1,7 +1,6 @@
 import pandas as pd
 import pytest
 
-from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.wall_measures.anchored_sheetpile_measure import (
     AnchoredSheetpileMeasure,
@@ -18,20 +17,23 @@ valid_dike_section_cases = [
         Initialgeometry=pd.DataFrame.from_dict(
             {"BIT": 3.444}, columns=["z"], orient="index"
         ),
+        cover_layer_thickness=7.0,
     ),
     dict(
-        crest_height=9.93,
+        crest_height=6.93,
         section_length=286,
         Initialgeometry=pd.DataFrame.from_dict(
             {"BIT": 3.913}, columns=["z"], orient="index"
         ),
+        cover_layer_thickness=3.0,
     ),
     dict(
-        crest_height=4.0,
+        crest_height=7.90,
         section_length=397,
         Initialgeometry=pd.DataFrame.from_dict(
-            {"BIT": 3.444}, columns=["z"], orient="index"
+            {"BIT": 6.0}, columns=["z"], orient="index"
         ),
+        cover_layer_thickness=1.0,
     ),
 ]
 
@@ -56,7 +58,9 @@ class TestAnchoredSheetpileMeasure:
 
         _custom_section = CustomDikeSection()
         _custom_section.crest_height = _dike_section_properties["crest_height"]
-        _custom_section.cover_layer_thickness = 7.0
+        _custom_section.cover_layer_thickness = _dike_section_properties[
+            "cover_layer_thickness"
+        ]
         _custom_section.InitialGeometry = _dike_section_properties["Initialgeometry"]
         _custom_section.Length = _dike_section_properties["section_length"]
 
@@ -65,9 +69,15 @@ class TestAnchoredSheetpileMeasure:
     @pytest.mark.parametrize(
         "indirect_dike_section, expected_cost",
         [
-            pytest.param(valid_dike_section_cases[0], 8734000, id="Section 1"),
-            pytest.param(valid_dike_section_cases[1], 6292000, id="Section 2"),
-            pytest.param(valid_dike_section_cases[2], 8734000, id="Section 3"),
+            pytest.param(
+                valid_dike_section_cases[0], 8734000, id="Section 1 (length > 20)"
+            ),
+            pytest.param(
+                valid_dike_section_cases[1], 5678844.6, id="Section 2 (length < 20)"
+            ),
+            pytest.param(
+                valid_dike_section_cases[2], 4367000, id="Section 3 (length < 10)"
+            ),
         ],
         indirect=["indirect_dike_section"],
     )
