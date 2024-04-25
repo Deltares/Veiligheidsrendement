@@ -25,7 +25,9 @@ class AnchoredSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
         """
         Overriden method as it is the only difference with the `DiaphragmWallMeasure`.
         """
-        _h_dike = dike_section.crest_height - dike_section.InitialGeometry["BIT"]["z"]
+        _h_dike = (
+            dike_section.crest_height - dike_section.InitialGeometry.loc["BIT"]["z"]
+        )
         _d_cover = dike_section.cover_layer_thickness
 
         _length_sheetpile = min((_h_dike + _d_cover) * 3, 20)
