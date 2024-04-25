@@ -66,11 +66,6 @@ class TestMeasureUnitCosts:
 
         valid_unformatted_dict[_extra_key] = 4.2
 
-        import logging
-
-        _logger = logging.getLogger("")
-        _logger.addHandler()
-
         # 2. Run test.
         _unit_costs = MeasureUnitCosts.from_unformatted_dict(valid_unformatted_dict)
 
