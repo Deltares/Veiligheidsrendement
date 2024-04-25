@@ -28,6 +28,7 @@ class DikeSection:
     Length: float
     houses: pd.DataFrame
     with_measures: bool
+    cover_layer_thickness: float
 
     def __init__(self) -> None:
         self.mechanism_data = {}
