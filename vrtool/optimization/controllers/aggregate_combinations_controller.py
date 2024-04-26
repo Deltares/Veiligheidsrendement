@@ -20,7 +20,7 @@ class AggregateCombinationsController:
         def primaries_match(
             aggregation: tuple[CombinedMeasure, CombinedMeasure]
         ) -> bool:
-            # Check if the primary measures in both commbinations match
+            # Check if the primary measures in both combinations match
             _sh_comb, _sg_comb = aggregation
             return (
                 _sh_comb.primary.year == _sg_comb.primary.year

@@ -71,7 +71,7 @@ class SgMeasure(MeasureAsInputProtocol):
             if self.year == 0 and self.dberm == 0:
                 self.start_cost = self.cost
                 return
-            raise (ValueError("First measure of type isn't zero-version"))
+            raise ValueError("First measure of type isn't zero-version")
         self.start_cost = previous_measure.start_cost
 
     @staticmethod

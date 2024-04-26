@@ -400,7 +400,7 @@ def determine_costs(
             )
 
         else:
-            raise Exception("invalid direction")
+            raise ValueError("invalid direction")
 
         # add costs for housing
         if isinstance(housing, pd.DataFrame) and dberm_in > 0.0:
