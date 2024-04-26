@@ -185,7 +185,7 @@ class RunStepMeasuresValidator(RunStepValidator):
         {
             "section_id":
                 "measure_id":
-                    "frozenset[measure_result_with_params]": reliability
+                    { "frozenset[measure_result_with_params]": reliability }
         }
         """
 
@@ -196,6 +196,7 @@ class RunStepMeasuresValidator(RunStepValidator):
         ) -> dict[str, dict[tuple, pd.DataFrame]]:
             _connected_db = open_database(vrtool_db)
             _m_reliabilities = defaultdict(dict)
+            _m_costs = defaultdict(list)
             for _measure_result in orm.MeasureResult.select():
                 _measure_per_section = _measure_result.measure_per_section
                 _reliability_df = MeasureResultImporter.import_measure_reliability_df(
@@ -205,15 +206,11 @@ class RunStepMeasuresValidator(RunStepValidator):
                     (mrp.name, mrp.value)
                     for mrp in _measure_result.measure_result_parameters
                 )
-                if (
-                    _available_parameters
-                    in _m_reliabilities[
-                        (
-                            _measure_per_section.measure.name,
-                            _measure_per_section.section.section_name,
-                        )
-                    ].keys()
-                ):
+                _dict_key = (
+                    _measure_per_section.measure.name,
+                    _measure_per_section.section.section_name,
+                )
+                if _available_parameters in _m_reliabilities[_dict_key].keys():
                     _keys_values = [f"{k}={v}" for k, v in _available_parameters]
                     _as_string = ", ".join(_keys_values)
                     pytest.fail(
@@ -221,24 +218,50 @@ class RunStepMeasuresValidator(RunStepValidator):
                             _as_string
                         )
                     )
-                _m_reliabilities[
-                    (
-                        _measure_per_section.measure.name,
-                        _measure_per_section.section.section_name,
+                _m_reliabilities[_dict_key][_available_parameters] = _reliability_df
+                _m_costs[_dict_key] = list(
+                    sorted(
+                        (
+                            (_mrs.beta, _mrs.time, _mrs.cost)
+                            for _mrs in _measure_result.measure_result_section
+                        ),
+                        key=lambda btc: btc[1],
                     )
-                ][_available_parameters] = _reliability_df
+                )
             _connected_db.close()
-            return _m_reliabilities
+            return _m_reliabilities, _m_costs
 
-        _result_assessment = load_measures_reliabilities(
+        _result_assessment, _result_costs = load_measures_reliabilities(
             valid_vrtool_config.input_database_path
         )
-        _reference_assessment = load_measures_reliabilities(_reference_database_path)
+        _reference_assessment, _reference_costs = load_measures_reliabilities(
+            _reference_database_path
+        )
 
         assert any(
             _reference_assessment.items()
         ), "No reference assessments were loaded."
+
         _errors = []
+
+        # Check costs
+        if len(_reference_costs) != len(_result_costs):
+            _errors.append(
+                "Not the same length of reference costs ({}) and result costs ({})".format(
+                    len(_reference_costs), len(_result_costs)
+                )
+            )
+        for _ref_key, _ref_costs in _reference_costs.items():
+            _res_costs = _result_costs.get(_ref_key, list())
+            if _ref_costs != _res_costs:
+                _key_name = "-".join(_ref_key)
+                _ref_costs_str = ", ".join(_ref_costs)
+                _res_costs_str = ", ".join(_res_costs)
+                _errors.append(
+                    f"Difference on costs for ({_key_name}), reference: ({_ref_costs_str}), results: ({_res_costs_str})"
+                )
+
+        # Check reliability
         for _ref_key, _ref_section_measure_dict in _reference_assessment.items():
             # Iterate over each dictionary entry,
             # which represents ALL the measure results (the values)
