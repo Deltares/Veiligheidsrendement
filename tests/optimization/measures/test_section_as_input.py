@@ -61,7 +61,7 @@ class TestSectionAsInput:
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 MockShMeasure(MeasureTypeEnum.REVETMENT),
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
-                MockSgMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE),
+                MockSgMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
             ],
         )
 
@@ -117,7 +117,8 @@ class TestSectionAsInput:
             for x in _sg_measures
         )
         assert any(
-            x.measure_type == MeasureTypeEnum.VERTICAL_GEOTEXTILE for x in _sg_measures
+            x.measure_type == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION
+            for x in _sg_measures
         )
 
     def test_get_sh_combinations(self):

@@ -2,26 +2,18 @@ import itertools
 import logging
 
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
-from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure import (
+from vrtool.decision_making.measures.standard_measures import (
+    DiaphragmWallMeasure,
     RevetmentMeasure,
+    SoilReinforcementMeasure,
+    StabilityScreenMeasure,
+    VerticalPipingSolutionMeasure,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_result_collection import (
     RevetmentMeasureResultCollection,
 )
 from vrtool.decision_making.measures.standard_measures.revetment_measure.revetment_measure_section_reliability import (
     RevetmentMeasureSectionReliability,
-)
-from vrtool.decision_making.measures.standard_measures.soil_reinforcement_measure import (
-    SoilReinforcementMeasure,
-)
-from vrtool.decision_making.measures.standard_measures.stability_screen_measure import (
-    StabilityScreenMeasure,
-)
-from vrtool.decision_making.measures.standard_measures.vertical_geotextile_measure import (
-    VerticalGeotextileMeasure,
-)
-from vrtool.decision_making.measures.standard_measures.wall_measures.diaphragm_wall_measure import (
-    DiaphragmWallMeasure,
 )
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -89,7 +81,8 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
             # NOTE: This check also includes `AnchoredSheetpileMeasure`
             # as it implements the `DiaphragmWallMeasure`
             measure.measures["DiaphragmWall"] = "yes"
-        elif isinstance(measure, VerticalGeotextileMeasure):
+        elif isinstance(measure, VerticalPipingSolutionMeasure):
+            # TODO: These checks seemed to be deprecated.
             measure.measures["VZG"] = "yes"
         elif isinstance(measure, StabilityScreenMeasure):
             measure.measures["Stability Screen"] = "yes"

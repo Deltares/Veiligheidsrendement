@@ -5,29 +5,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Union
 
-import pandas as pd
-
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.defaults import default_unit_costs_csv
-
-
-def _load_default_unit_costs() -> dict:
-    """
-    Returns the _default_ unit costs read from the default csv file, with columns: 'Description', 'Cost' and 'Unit'.
-    Raises:
-        FileNotFoundError: When the default "unit_costs.csv" file is not found.
-    Returns:
-        dict: Unit costs dictionary.
-    """
-    if not default_unit_costs_csv.is_file():
-        raise FileNotFoundError(
-            "Default unit costs file not found at {}.".format(default_unit_costs_csv)
-        )
-    _unit_cost_data = pd.read_csv(str(default_unit_costs_csv), encoding="latin_1")
-    unit_cost = {}
-    for _, _series in _unit_cost_data.iterrows():
-        unit_cost[_series["Description"]] = _series["Cost"]
-    return unit_cost
 
 
 @dataclass
@@ -80,7 +60,9 @@ class VrtoolConfig:
         default_factory=lambda: ["Veiligheidsrendement", "Doorsnede-eisen"]
     )
 
-    unit_costs: dict = field(default_factory=lambda: _load_default_unit_costs())
+    unit_costs: MeasureUnitCosts = field(
+        default_factory=lambda: MeasureUnitCosts.from_csv_file(default_unit_costs_csv)
+    )
 
     @property
     def input_database_path(self) -> None | Path:

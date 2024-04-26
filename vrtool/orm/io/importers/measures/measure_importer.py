@@ -1,12 +1,13 @@
 from typing import Type
 
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures import (
     CustomMeasure,
     DiaphragmWallMeasure,
     RevetmentMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
-    VerticalGeotextileMeasure,
+    VerticalPipingSolutionMeasure,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures.wall_measures.anchored_sheetpile_measure import (
@@ -24,7 +25,7 @@ class MeasureImporter(OrmImporterProtocol):
     _config: VrtoolConfig
     berm_step: list[int]
     t_0: int
-    unit_costs: dict
+    unit_costs: MeasureUnitCosts
 
     def __init__(self, vrtool_config: VrtoolConfig) -> None:
         if not vrtool_config:
@@ -99,7 +100,7 @@ class MeasureImporter(OrmImporterProtocol):
             "diaphragm wall": DiaphragmWallMeasure,
             "anchored sheetpile": AnchoredSheetpileMeasure,
             "stability screen": StabilityScreenMeasure,
-            "vertical geotextile": VerticalGeotextileMeasure,
+            "vertical piping solution": VerticalPipingSolutionMeasure,
             "revetment": RevetmentMeasure,
         }
 

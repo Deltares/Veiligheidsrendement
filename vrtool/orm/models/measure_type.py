@@ -9,7 +9,7 @@ class MeasureType(OrmBaseModel):
         * Soil reinforcement
         * Stability screen
         * Soil reinforcement with stability screen
-        * Vertical Geotextile
+        * Vertical Piping Solution
         * Diaphragm wall
         * Anchored sheetpile
     """

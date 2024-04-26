@@ -6,11 +6,12 @@ from peewee import SqliteDatabase
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
 from vrtool.common.enums import MechanismEnum
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures import (
     DiaphragmWallMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
-    VerticalGeotextileMeasure,
+    VerticalPipingSolutionMeasure,
 )
 from vrtool.decision_making.measures.custom_measure import CustomMeasure
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -80,7 +81,19 @@ class TestMeasureImporter:
         _vr_config.output_directory = test_results
         _vr_config.berm_step = 4.2
         _vr_config.t_0 = 42
-        _vr_config.unit_costs = {"lorem ipsum": 123}
+        _vr_config.unit_costs = MeasureUnitCosts(
+            **dict(
+                inward_added_volume=float("nan"),
+                inward_starting_costs=float("nan"),
+                outward_reuse_factor=float("nan"),
+                outward_removed_volume=float("nan"),
+                outward_reused_volume=float("nan"),
+                outward_added_volume=float("nan"),
+                outward_compensation_factor=float("nan"),
+                house_removal=float("nan"),
+                road_renewal=float("nan"),
+            )
+        )
         return _vr_config
 
     def test_initialize(self, valid_config: VrtoolConfig):
@@ -123,9 +136,9 @@ class TestMeasureImporter:
                 id="Stability Screen measure.",
             ),
             pytest.param(
-                "Vertical Geotextile",
-                VerticalGeotextileMeasure,
-                id="Vertical Geotextile measure.",
+                "Vertical Piping Solution",
+                VerticalPipingSolutionMeasure,
+                id="Vertical Piping Solution measure.",
             ),
             pytest.param("Revetment", RevetmentMeasure, id="Revetment measure"),
         ],
@@ -204,7 +217,8 @@ class TestMeasureImporter:
         assert measure_base.config == valid_config
         assert measure_base.berm_step == 4.2
         assert measure_base.t_0 == 42
-        assert measure_base.unit_costs == {"lorem ipsum": 123}
+        assert isinstance(measure_base.unit_costs, MeasureUnitCosts)
+        assert measure_base.unit_costs == valid_config.unit_costs
 
     def test_import_orm_with_unknown_standard_measure_raises_error(
         self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase

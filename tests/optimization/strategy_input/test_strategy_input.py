@@ -171,7 +171,7 @@ class TestStrategyInput:
         )
         _sg_measure_vzg_0 = SgMeasure(
             measure_result_id=0,
-            measure_type=MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+            measure_type=MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             combine_type=CombinableTypeEnum.PARTIAL,
             cost=1302200,
             discount_rate=0.03,

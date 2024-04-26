@@ -16,7 +16,7 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 class DiaphragmWallMeasure(MeasureProtocol):
     def _calculate_measure_costs(self, dike_section: DikeSection) -> float:
-        return self.unit_costs["Diaphragm wall"] * dike_section.Length
+        return self.unit_costs.diaphragm_wall * dike_section.Length
 
     def evaluate_measure(
         self,
