@@ -162,6 +162,8 @@ def implement_berm_widening(
         berm_input["l_achter"] = (berm_input["l_achter"] - measure_input["dberm"]).clip(
             0
         )
+        if measure_parameters["StabilityScreen"] == "yes":
+            berm_input["sf_factor"] = 10 ** (1.0 + measure_input["l_stab_screen"] / 3.0)
     return berm_input
 
 
