@@ -255,8 +255,17 @@ class RunStepMeasuresValidator(RunStepValidator):
             _res_costs = _result_costs.get(_ref_key, list())
             if _ref_costs != _res_costs:
                 _key_name = "-".join(_ref_key)
-                _ref_costs_str = ", ".join(_ref_costs)
-                _res_costs_str = ", ".join(_res_costs)
+
+                def _cost_to_str(cost_collection: list[tuple]) -> str:
+                    return ", ".join(
+                        [
+                            "({}, {}, {})".format(_beta, _year, _cost)
+                            for (_beta, _year, _cost) in cost_collection
+                        ]
+                    )
+
+                _ref_costs_str = _cost_to_str(_ref_costs)
+                _res_costs_str = _cost_to_str(_res_costs)
                 _errors.append(
                     f"Difference on costs for ({_key_name}), reference: ({_ref_costs_str}), results: ({_res_costs_str})"
                 )
