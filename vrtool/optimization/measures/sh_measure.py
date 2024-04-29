@@ -29,6 +29,17 @@ class ShMeasure(MeasureAsInputProtocol):
 
     @property
     def lcc(self) -> float:
+        """
+        Value for the `life-cycle-cost` of this measure.
+        When the `dcrest` is the "initial" value (`0` or `-999`),
+        the cost will be computed as `0`.
+
+        Returns:
+            float: The calculated lcc.
+        """
+        if self.dcrest in [0, -999]:
+            return 0
+
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
     @property
@@ -46,7 +57,7 @@ class ShMeasure(MeasureAsInputProtocol):
     @start_cost.setter
     def start_cost(self, value: float):
         if self.measure_type not in [
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+            MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
         ]:
@@ -57,26 +68,6 @@ class ShMeasure(MeasureAsInputProtocol):
             )
             value = 0
         self._start_cost = value
-
-    def set_start_cost(
-        self,
-        previous_measure: MeasureAsInputProtocol | None,
-    ):
-        if self.measure_type not in [
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
-            MeasureTypeEnum.DIAPHRAGM_WALL,
-            MeasureTypeEnum.STABILITY_SCREEN,
-        ]:
-            return
-        if (
-            previous_measure is None
-            or self.measure_type != previous_measure.measure_type
-        ):
-            if self.year == 0 and self.dcrest in [0, -999]:
-                self.start_cost = self.cost
-                return
-            raise ValueError("First measure of type isn't zero-version")
-        self.start_cost = previous_measure.start_cost
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:

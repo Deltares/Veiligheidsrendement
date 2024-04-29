@@ -50,6 +50,47 @@ class TestShMeasure:
         assert _measure.dcrest == pytest.approx(0.1)
         assert _measure.start_cost == pytest.approx(0)
 
+    @pytest.mark.parametrize("dcrest_value", [pytest.param(0), pytest.param(-999)])
+    def test_given_dcrest_0_lcc_returns_0(self, dcrest_value: float):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sh_measure = self._create_sh_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sh_measure.dcrest = dcrest_value
+
+        # 2. Run test.
+        _result = _sh_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result == 0
+
+    @pytest.mark.parametrize(
+        "dcrest_value",
+        [pytest.param(-10, id="Smaller than 0"), pytest.param(10, id="Greater than 0")],
+    )
+    def test_given_dcrest_else_than_0_lcc_doesnot_return_0(self, dcrest_value: float):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sh_measure = self._create_sh_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sh_measure.dcrest = dcrest_value
+
+        # 2. Run test.
+        _result = _sh_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result != 0
+
     @pytest.mark.parametrize(
         "measure_type",
         [
@@ -57,7 +98,7 @@ class TestShMeasure:
             for mt in MeasureTypeEnum
             if mt
             not in [
-                MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
                 MeasureTypeEnum.DIAPHRAGM_WALL,
                 MeasureTypeEnum.STABILITY_SCREEN,
             ]
@@ -80,7 +121,7 @@ class TestShMeasure:
     @pytest.mark.parametrize(
         "measure_type",
         [
-            pytest.param(MeasureTypeEnum.VERTICAL_GEOTEXTILE),
+            pytest.param(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
             pytest.param(MeasureTypeEnum.DIAPHRAGM_WALL),
             pytest.param(MeasureTypeEnum.STABILITY_SCREEN),
         ],
@@ -112,52 +153,6 @@ class TestShMeasure:
 
         # 3. Verify expectations
         assert _lcc == pytest.approx(3.720469)
-
-    def test_set_start_cost_when_no_previous_measure(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _measure.year = 0
-        _measure.dcrest = -999
-        _previous_measure = None
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.cost
-
-    def test_set_start_cost_when_previous_measure_is_equal(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _previous_measure = copy.deepcopy(_measure)
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _previous_measure.start_cost
-
-    def test_set_start_cost_when_previous_measure_is_different(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _measure.year = 0
-        _measure.dcrest = -999
-        _previous_measure = self._create_sh_measure(
-            MeasureTypeEnum.STABILITY_SCREEN,
-            CombinableTypeEnum.FULL,
-        )
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.start_cost
 
     @pytest.mark.parametrize(
         "mechanism, expected",

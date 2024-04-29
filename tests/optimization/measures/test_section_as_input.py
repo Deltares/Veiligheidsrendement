@@ -61,7 +61,7 @@ class TestSectionAsInput:
                 MockShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
                 MockShMeasure(MeasureTypeEnum.REVETMENT),
                 MockSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN),
-                MockSgMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE),
+                MockSgMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
             ],
         )
 
@@ -117,7 +117,8 @@ class TestSectionAsInput:
             for x in _sg_measures
         )
         assert any(
-            x.measure_type == MeasureTypeEnum.VERTICAL_GEOTEXTILE for x in _sg_measures
+            x.measure_type == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION
+            for x in _sg_measures
         )
 
     def test_get_sh_combinations(self):
@@ -323,44 +324,3 @@ class TestSectionAsInput:
         for m in _measures:
             _yrs = m.mechanism_year_collection.get_years(_mechm)
             assert _yrs == _ref
-
-    def test_get_combination_for_aggregate(self):
-        # 1. Define test data
-        _section = self._get_section_with_combinations()
-        _aggregated_measure_combination = AggregatedMeasureCombination(
-            sh_combination=_section.sh_combinations[1],
-            sg_combination=_section.sg_combinations[0],
-            measure_result_id=1,
-            year=0,
-        )
-
-        # 2. Run test
-        _sh_idx, _sg_idx = _section.get_combination_idx_for_aggregate(
-            _aggregated_measure_combination
-        )
-
-        # 3. Verify expectations
-        assert _sh_idx == 1
-        assert _sg_idx == 0
-
-    def test_get_combination_idx_for_aggregate_fails_if_combination_doesnt_exist(self):
-        # 1. Define test data
-        _section = self._get_section_with_combinations()
-        _other_combination = CombinedMeasure.from_input(
-            MockShMeasure(MeasureTypeEnum.REVETMENT), None, None, 0
-        )
-        _aggregated_measure_combination = AggregatedMeasureCombination(
-            sh_combination=_other_combination,
-            sg_combination=_section.sg_combinations[0],
-            measure_result_id=1,
-            year=0,
-        )
-
-        # 2. Run test
-        with py.raises(ValueError) as exception_error:
-            _sh_idx, _sg_idx = _section.get_combination_idx_for_aggregate(
-                _aggregated_measure_combination
-            )
-
-        # 3. Verify expectations
-        assert str(exception_error.value).endswith("is not in list")

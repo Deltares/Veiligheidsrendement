@@ -9,6 +9,7 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures.berm_widening_dstability import (
     BermWideningDStability,
 )
@@ -190,7 +191,7 @@ def sf_factor_piping(length: float) -> float:
 
 def calculate_area(geometry):
     polypoints = []
-    for label, points in geometry.iterrows():
+    for _, points in geometry.iterrows():
         polypoints.append((points.x, points.z))
     polygonXZ = Polygon(polypoints)
     areaPol = Polygon(polygonXZ).area
@@ -370,7 +371,7 @@ def determine_new_geometry(
 def determine_costs(
     measure_type: str,
     length: float,
-    unit_costs: dict,
+    unit_costs: MeasureUnitCosts,
     dcrest: float = 0.0,
     dberm_in: float = 0.0,
     housing: bool = False,
@@ -394,32 +395,33 @@ def determine_costs(
                 section
             )
         )
+
     if "soil reinforcement" in _measure_type_name:
         if direction == "inward":
             total_cost = (
-                unit_costs["Inward added volume"] * area_extra * length
-                + unit_costs["Inward starting costs"] * length
+                unit_costs.inward_added_volume * area_extra * length
+                + unit_costs.inward_starting_costs * length
             )
         elif direction == "outward":
             volume_excavated = area_excavated * length
             volume_extra = area_extra * length
-            reusable_volume = unit_costs["Outward reuse factor"] * volume_excavated
+            reusable_volume = unit_costs.outward_reuse_factor * volume_excavated
             # excavate and remove part of existing profile:
-            total_cost = unit_costs["Outward removed volume"] * (
+            total_cost = unit_costs.outward_removed_volume * (
                 volume_excavated - reusable_volume
             )
 
             # apply reusable volume
-            total_cost += unit_costs["Outward reused volume"] * reusable_volume
+            total_cost += unit_costs.outward_reused_volume * reusable_volume
             remaining_volume = volume_extra - reusable_volume
 
             # add additional soil:
-            total_cost += unit_costs["Outward added volume"] * remaining_volume
+            total_cost += unit_costs.outward_added_volume * remaining_volume
 
             # compensate:
             total_cost += (
-                unit_costs["Outward removed volume"]
-                * unit_costs["Outward compensation factor"]
+                unit_costs.outward_removed_volume
+                * unit_costs.outward_compensation_factor
                 * volume_extra
             )
 
@@ -435,23 +437,22 @@ def determine_costs(
                     )
                 )
                 total_cost += (
-                    unit_costs["House removal"]
-                    * housing.loc[housing.size]["cumulative"]
+                    unit_costs.house_removal * housing.loc[housing.size]["cumulative"]
                 )
             else:
                 total_cost += (
-                    unit_costs["House removal"]
+                    unit_costs.house_removal
                     * housing.loc[float(dberm_in)]["cumulative"]
                 )
 
         if dcrest > 0.0:
-            total_cost += unit_costs["Road renewal"] * length
+            total_cost += unit_costs.road_renewal * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
-    elif _measure_type_name == "vertical geotextile":
-        total_cost = unit_costs["Vertical Geotextile"] * length
+    elif _measure_type_name == "vertical piping solution":
+        total_cost = unit_costs.vertical_geotextile * length
     elif _measure_type_name == "diaphragm wall":
-        total_cost = unit_costs["Diaphragm wall"] * length
+        total_cost = unit_costs.diaphragm_wall * length
     else:
         logging.error("Onbekend maatregeltype: {}".format(measure_type))
         total_cost = float("nan")

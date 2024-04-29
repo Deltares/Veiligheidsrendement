@@ -66,7 +66,7 @@ class CombinedMeasure:
     @property
     def yesno(self) -> int | str:
         _accepted_measure_types = [
-            MeasureTypeEnum.VERTICAL_GEOTEXTILE,
+            MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
         ]

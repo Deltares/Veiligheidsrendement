@@ -16,9 +16,6 @@ class GreedyStrategy(StrategyProtocol):
 
     def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig) -> None:
         self.design_method = strategy_input.design_method
-        self.options = strategy_input.options
-        self.options_geotechnical = strategy_input.options_geotechnical
-        self.options_height = strategy_input.options_height
         self.sections = strategy_input.sections
 
         self.LCCOption = strategy_input.LCCOption
@@ -36,8 +33,13 @@ class GreedyStrategy(StrategyProtocol):
         self.probabilities_per_step = []
 
     def bundling_output(
-        self, BC_list, counter_list, sh_array, sg_array, existing_investments
-    ):
+        self,
+        BC_list: list[float],
+        counter_list: np.ndarray,
+        sh_array: np.ndarray,
+        sg_array: np.ndarray,
+        existing_investments: np.ndarray,
+    ) -> tuple[float, np.ndarray]:
         no_of_sections = sh_array.shape[0]
         maximum_BC_index = np.array(BC_list).argmax()
         optimal_counter_combination = counter_list[maximum_BC_index]
@@ -68,7 +70,7 @@ class GreedyStrategy(StrategyProtocol):
         sg_array: np.ndarray,
         mechanism: MechanismEnum,
         n_runs: int = 100,
-    ):
+    ) -> tuple[list[float], list[np.ndarray]]:
         """
         Bundles measures for dependent mechanisms (overflow or revetment) and returns the optimal bundling combination.
         It only looks at risk reduction for dependent mechanism considered, not for the other mechanisms.
@@ -165,7 +167,7 @@ class GreedyStrategy(StrategyProtocol):
         existing_investments: np.array,
         mechanism: MechanismEnum,
         dim_sh: int,
-    ):
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Subroutine for overflow bundling that gets the correct indices for sh and sg for measures at a given section_no"""
         # make arrays for section
         sh_section_sorted = np.full((1, dim_sh), 999, dtype=int)
@@ -488,7 +490,7 @@ class GreedyStrategy(StrategyProtocol):
 
         measure_list: list[tuple[int, int, int]] = []
         _probabilities = [
-            self.traject_risk.get_initial_probabilities_copy(self.mechanisms)
+            self.traject_risk.get_initial_probabilities_dict(self.mechanisms)
         ]
 
         risk_per_step = []
@@ -637,7 +639,7 @@ class GreedyStrategy(StrategyProtocol):
                     _measures_per_section[Index_Best[0], 0] = Index_Best[1]
                     _measures_per_section[Index_Best[0], 1] = Index_Best[2]
                     _probabilities.append(
-                        self.traject_risk.get_initial_probabilities_copy(
+                        self.traject_risk.get_initial_probabilities_dict(
                             self.mechanisms
                         )
                     )
@@ -671,7 +673,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities_dict(
                                     self.mechanisms
                                 )
                             )
@@ -705,7 +707,7 @@ class GreedyStrategy(StrategyProtocol):
                             _measures_per_section[IndexMeasure[0], 0] = IndexMeasure[1]
                             # no update of geotechnical risk needed
                             _probabilities.append(
-                                self.traject_risk.get_initial_probabilities_copy(
+                                self.traject_risk.get_initial_probabilities_dict(
                                     self.mechanisms
                                 )
                             )

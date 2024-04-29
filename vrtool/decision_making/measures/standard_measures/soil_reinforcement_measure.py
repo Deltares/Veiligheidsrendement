@@ -30,6 +30,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
     ):
         # def evaluateMeasure(self, DikeSection, TrajectInfo, preserve_slope=False):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
+        # Measure.__init__(self,inputs)
+        # self. parameters = measure.parameters
         _measure_type = self.parameters["Type"]
 
         def get_measure_data(

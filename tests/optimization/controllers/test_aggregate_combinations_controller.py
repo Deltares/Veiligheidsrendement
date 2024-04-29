@@ -64,7 +64,7 @@ class TestAggregateCombinationsController:
         )
         _sg_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 3, 0, 50),
-            MockMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE, 4, 0, 100),
+            MockMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION, 4, 0, 100),
         )
 
         # 2. Run test
@@ -86,7 +86,7 @@ class TestAggregateCombinationsController:
         )
         _sg_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 3, 20, 50),
-            MockMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE, 4, 0, 100),
+            MockMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION, 4, 0, 100),
         )
 
         # 2. Run test
@@ -105,7 +105,7 @@ class TestAggregateCombinationsController:
         )
         _sg_combination = MockCombinedMeasure(
             MockMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 3, 0, 50),
-            MockMeasure(MeasureTypeEnum.VERTICAL_GEOTEXTILE, 4, 0, 100),
+            MockMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION, 4, 0, 100),
         )
 
         # 2. Run test

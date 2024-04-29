@@ -1,7 +1,7 @@
 [![Python 3.10](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3109/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Deltares_Veiligheidsrendement&metric=alert_status&token=483801771f090b3ceb93ef315f0332003a075970)](https://sonarcloud.io/summary/new_code?id=Deltares_Veiligheidsrendement)
-![TeamCity build status](https://dpcbuild.deltares.nl/app/rest/builds/buildType:id:Vrtool_RunAcceptanceTests_RunPytest/statusIcon.svg)
+![TeamCity build status](https://dpcbuild.deltares.nl/app/rest/builds/buildType:id:VrtoolSuite_CoreContinuousDelivery_RunAllTestsInParallelNoCoverageNoProfiling/statusIcon.svg)
 
 # Veiligheidsrendement #
 

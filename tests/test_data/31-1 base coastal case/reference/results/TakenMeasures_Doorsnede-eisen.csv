@@ -1,6 +1,0 @@
-,Section,option_index,LCC,BC,ID,name,year,yes/no,dcrest,dberm,beta_target,transition_level
-0,,,0.0,,,,,,,,,
-1,WsNoo_Stab_015400_016200,535,28946703.020062428,[],2+3,['Zelfkerende constructie+Aanpassing bekleding'],"[0, 0]",yes,-999.0,-999.0,3.924192142846635,7.93
-2,WsNoo_Stab_011600_012000,746,2931846.3960901885,[],1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.5,0.0,3.5107421874992593,7.88
-3,WsNoo_Stab_012000_014100,40,71798999.99999997,[],2,['Zelfkerende constructie'],0,yes,-999.0,-999.0,-999.0,-999.0
-4,WsNoo_Stab_014100_014700,325,2931889.8367185798,[],1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.5,5.0,5.019531249538552,7.019999999999998

@@ -1,5 +1,3 @@
-import copy
-
 import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -46,6 +44,47 @@ class TestSgMeasure:
         assert _measure.mechanism_year_collection is None
         assert _measure.dberm == pytest.approx(0.1)
         assert _measure.start_cost == pytest.approx(0)
+
+    @pytest.mark.parametrize("dberm_value", [pytest.param(0), pytest.param(-999)])
+    def test_given_dberm_0_lcc_returns_0(self, dberm_value: float):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sg_measure = self._create_sg_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sg_measure.dberm = dberm_value
+
+        # 2. Run test.
+        _result = _sg_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result == 0
+
+    @pytest.mark.parametrize(
+        "dberm_value",
+        [pytest.param(-10, id="Smaller than 0"), pytest.param(10, id="Greater than 0")],
+    )
+    def test_given_dberm_else_than_0_lcc_doesnot_return_0(self, dberm_value: float):
+        """
+        Test related to issue VRTOOL-390
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sg_measure = self._create_sg_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sg_measure.dberm = dberm_value
+
+        # 2. Run test.
+        _result = _sg_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result != 0
 
     @pytest.mark.parametrize(
         "measure_type",
@@ -107,52 +146,6 @@ class TestSgMeasure:
 
         # 3. Verify expectations
         assert _lcc == pytest.approx(3.720469)
-
-    def test_set_start_cost_when_no_previous_measure(self):
-        # 1. Define input
-        _measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
-        )
-        _measure.year = 0
-        _measure.dberm = 0
-        _previous_measure = None
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.cost
-
-    def test_set_start_cost_when_previous_measure_is_equal(self):
-        # 1. Define input
-        _measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
-        )
-        _previous_measure = copy.deepcopy(_measure)
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _previous_measure.start_cost
-
-    def test_set_start_cost_when_previous_measure_is_different(self):
-        # 1. Define input
-        _measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
-        )
-        _measure.year = 0
-        _measure.dberm = 0
-        _previous_measure = self._create_sg_measure(
-            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            CombinableTypeEnum.FULL,
-        )
-
-        # 2. Run test
-        _measure.set_start_cost(_previous_measure)
-
-        # 3. Verify expectations
-        assert _measure.start_cost == _measure.start_cost
 
     @pytest.mark.parametrize(
         "mechanism, expected",

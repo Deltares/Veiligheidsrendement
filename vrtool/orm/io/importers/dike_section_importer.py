@@ -28,12 +28,12 @@ from vrtool.orm.models.section_data import SectionData
 
 class DikeSectionImporter(OrmImporterProtocol):
     input_directory: Path
-    selected_mechanisms: list[str]
+    selected_mechanisms: list[MechanismEnum]
     computation_years: list[int]
     t_0: int
     externals: Path
 
-    def __init__(self, vrtool_config: VrtoolConfig) -> DikeSectionImporter:
+    def __init__(self, vrtool_config: VrtoolConfig) -> None:
         if not vrtool_config:
             raise ValueError("VrtoolConfig not provided.")
 
@@ -175,5 +175,6 @@ class DikeSectionImporter(OrmImporterProtocol):
         _dike_section.Length = orm_model.section_length
         _dike_section.crest_height = orm_model.crest_height
         _dike_section.cover_layer_thickness = orm_model.cover_layer_thickness
+        _dike_section.pleistocene_level = orm_model.pleistocene_level
 
         return _dike_section

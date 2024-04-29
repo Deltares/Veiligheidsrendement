@@ -1,4 +1,5 @@
-import copy
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
@@ -7,10 +8,7 @@ import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
-from vrtool.decision_making.strategy_evaluation import (
-    compute_total_risk,
-    implement_option,
-)
+from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -27,7 +25,7 @@ class CrossSectionalRequirements:
     dike_traject_b_stability_inner: float
 
     @classmethod
-    def from_dike_traject(cls, dike_traject: DikeTraject):
+    def from_dike_traject(cls, dike_traject: DikeTraject) -> CrossSectionalRequirements:
         """Class method to create a CrossSectionalRequirements object from a DikeTraject object.
         This method calculates the cross-sectional requirements for the dike traject based on the OI2014 approach.
         The cross-sectional requirements are calculated for each mechanism and stored in a dictionary with the mechanism as key and the cross-sectional requirements as value.
@@ -88,13 +86,15 @@ class TargetReliabilityStrategy(StrategyProtocol):
     """
 
     def __init__(self, strategy_input: StrategyInput, config: VrtoolConfig):
-        # Necessary config parameters:
         self.OI_horizon = config.OI_horizon
         self.time_periods = config.T
-        # New mappings
-        self.Pf = strategy_input.Pf
-        self.D = strategy_input.D
         self.sections = strategy_input.sections
+
+        self.traject_risk = TrajectRisk(strategy_input.Pf, strategy_input.D)
+
+        self.measures_taken = []
+        self.total_risk_per_step = []
+        self.probabilities_per_step = []
 
     def check_cross_sectional_requirements(
         self,
@@ -141,7 +141,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         measure_idx: int,
         year: int,
         mechanisms: list[MechanismEnum],
-    ) -> bool:
+    ) -> float:
         """This function gets the failure probabilities of the mechanisms that are not satisfied by the measure and returns the total failure probability.
 
         Args:
@@ -152,25 +152,25 @@ class TargetReliabilityStrategy(StrategyProtocol):
             Returns:
                 float: The total failure probability for the mechanisms that are not satisfied by the measure.
         """
+        _p_nonf: float = 1
         _measure = self.sections[section_idx].aggregated_measure_combinations[
             measure_idx
         ]
-        _p_nonf = 1
         for _mechanism in mechanisms:
             if _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
                 # look in sh, if any mechanism is not satisfied, return a False
-                _p_nonf = (
-                    _p_nonf
-                    * _measure.sh_combination.mechanism_year_collection.get_probabilities(
+                _p_nonf *= (
+                    1
+                    - _measure.sh_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[
                         0
                     ]
                 )
             elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
-                _p_nonf = (
-                    _p_nonf
-                    * _measure.sg_combination.mechanism_year_collection.get_probabilities(
+                _p_nonf *= (
+                    1
+                    - _measure.sg_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[
                         0
@@ -214,9 +214,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
     def get_valid_measures_for_section(
         self,
-        section_idx: float,
+        section_idx: int,
         cross_sectional_requirements: CrossSectionalRequirements,
-    ) -> AggregatedMeasureCombination:
+    ) -> list[AggregatedMeasureCombination]:
         """Get the measures that satisfy the cross-sectional requirements for the mechanisms.
 
         Args:
@@ -257,7 +257,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self,
         section_idx: int,
         cross_sectional_requirements: CrossSectionalRequirements,
-    ) -> AggregatedMeasureCombination:
+    ) -> tuple[list[AggregatedMeasureCombination], list[MechanismEnum]]:
         """Get the measure with the lowest failure probability for the mechanisms that do not satisfy the cross-sectional requirements.
 
         Args:
@@ -266,6 +266,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
 
         Returns:
             list[AggregatedMeasureCombination]: The list of best measures for the mechanisms that do not satisfy the cross-sectional requirements.
+            list[MechanismEnum]: The list of mechanisms that do not satisfy the cross-sectional requirements.
         """
         _section_as_input = self.sections[section_idx]
         # get the first possible investment year from the aggregated measures
@@ -293,7 +294,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 ):
                     _requirement_met_per_mechanism[mechanism] = True
                     break
-            _requirement_met_per_mechanism[mechanism]
 
         # next we get the mechanisms in _requirement_met_per_mechanism where values are True
         _valid_mechanisms = [
@@ -338,7 +338,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
     def evaluate(
         self,
         dike_traject: DikeTraject,
-    ):
+    ) -> None:
         """Evaluate the strategy for the given dike traject.
         This evaluates the target reliability of different measures.
         The general idea is that for a given design horizon the cross-sectional requirements are met for each section.
@@ -395,34 +395,32 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[
                 idx
             ]
-            measure_idx = self.sections[_section_idx].get_combination_idx_for_aggregate(
-                _taken_measures[self.sections[_section_idx].section_name]
-            )
+            measure_idx = _taken_measures[
+                self.sections[_section_idx].section_name
+            ].get_combination_idx()
             _taken_measures_indices.append(
                 (_section_idx, measure_idx[0] + 1, measure_idx[1] + 1)
             )
 
         # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step
-        # First we get, and update the probabilities per step
+        # First we get and update the probabilities per step
         # we need to track probability for each step
-        init_probability = {mech: self.Pf[mech][:, 0, :] for mech in self.Pf.keys()}
-        self.probabilities_per_step = [copy.deepcopy(init_probability)]
-        self.total_risk_per_step = [
-            compute_total_risk(self.probabilities_per_step[-1], self.D)
+        self.probabilities_per_step = [
+            self.traject_risk.get_initial_probabilities_dict(
+                self.traject_risk.mechanisms
+            )
         ]
+        self.total_risk_per_step = [self.traject_risk.get_total_risk()]
 
         for step in range(0, len(_taken_measures)):
-            section_id = _taken_measures_indices[step][0]
+            self.traject_risk.update_probabilities_for_measure(
+                _taken_measures_indices[step]
+            )
             self.probabilities_per_step.append(
-                copy.deepcopy(self.probabilities_per_step[-1])
+                self.traject_risk.get_initial_probabilities_dict(
+                    self.traject_risk.mechanisms
+                )
             )
-            self.probabilities_per_step[-1] = implement_option(
-                self.probabilities_per_step[-1],
-                _taken_measures_indices[step],
-                _taken_measures[self.sections[section_id].section_name],
-            )
-            self.total_risk_per_step.append(
-                compute_total_risk(self.probabilities_per_step[-1], self.D)
-            )
+            self.total_risk_per_step.append(self.traject_risk.get_total_risk())
 
         self.measures_taken = _taken_measures_indices

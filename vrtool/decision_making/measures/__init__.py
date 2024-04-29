@@ -5,5 +5,5 @@ from vrtool.decision_making.measures.standard_measures import (
     RevetmentMeasure,
     SoilReinforcementMeasure,
     StabilityScreenMeasure,
-    VerticalGeotextileMeasure,
+    VerticalPipingSolutionMeasure,
 )
