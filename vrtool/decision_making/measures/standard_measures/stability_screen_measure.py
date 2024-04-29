@@ -36,7 +36,6 @@ class StabilityScreenMeasure(MeasureProtocol):
         self.measures = []
         _measure_type = self.parameters["Type"]
         for length in _lengths_stab_screen:
-            _safety_factor_increase = 0.2 * length / 3.0
             _modified_measure = {}
             _modified_measure["Stability Screen"] = "yes"
             _modified_measure["l_stab_screen"] = length
@@ -49,8 +48,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             )
 
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
-                dike_section, traject_info, _safety_factor_increase,
-                dike_section.cover_layer_thickness + length, length
+                dike_section, traject_info, length
             )
             _modified_measure["Reliability"].calculate_section_reliability()
             self.measures.append(_modified_measure)
@@ -59,8 +57,6 @@ class StabilityScreenMeasure(MeasureProtocol):
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        safety_factor_increase: float,
-        depth_screen: float,
         length: float
     ) -> SectionReliability:
         section_reliability = SectionReliability()
@@ -76,8 +72,6 @@ class StabilityScreenMeasure(MeasureProtocol):
                     calc_type,
                     dike_section,
                     traject_info,
-                    safety_factor_increase,
-                    depth_screen,
                     length
                 )
             )
@@ -93,8 +87,6 @@ class StabilityScreenMeasure(MeasureProtocol):
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        safety_factor_increase: float,
-        depth_screen: float,
         length: float
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
@@ -121,8 +113,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                         _collection,
                         _year_to_calculate,
                         dike_section,
-                        safety_factor_increase,
-                        depth_screen
+                        length
                     )
                 elif mechanism == MechanismEnum.PIPING:
                     self._copy_results(
@@ -130,7 +121,6 @@ class StabilityScreenMeasure(MeasureProtocol):
                     )
                     _sf_factor_piping = 10 ** (1.0 + length / 3.0)
                     dike_section_mechanism_reliability.Input["sf_factor"] = _sf_factor_piping
-
                 elif mechanism == MechanismEnum.OVERFLOW:
                     self._copy_results(
                         _collection, dike_section_mechanism_reliability
@@ -148,19 +138,32 @@ class StabilityScreenMeasure(MeasureProtocol):
     ) -> None:
         target.Input = copy.deepcopy(source_input.Input)
 
+    def _get_safety_factor_increase(self, length: float) -> float:
+        """
+        get the safety factor for stability that now depends on the length of the stability screen
+
+        Args:
+            length (float): length of the screen (without cover layer thickness)
+
+        Returns:
+            float: safe factor increase; 0.2 for 3m and 0.4 for 6m
+        """
+        return 0.2 * length / 3.0
+
     def _configure_stability_inner(
         self,
         mechanism_reliability: MechanismReliability,
         year_to_calculate: str,
         dike_section: DikeSection,
-        safety_factor_increase: float,
-        depth_screen: float
+        length: float
     ) -> None:
         _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][
             1
         ].upper()
 
         mechanism_reliability_input = mechanism_reliability.Input.input
+        _safety_factor_increase = self._get_safety_factor_increase(length)
+        _depth_screen = dike_section.cover_layer_thickness + length
         if _calc_type == "DSTABILITY":
             # Add screen to model
             _dstability_wrapper = DStabilityWrapper(
@@ -169,7 +172,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             )
             _inner_toe = dike_section.InitialGeometry.loc["BIT"]
             _dstability_wrapper.add_stability_screen(
-                bottom_screen=_inner_toe.z - depth_screen, location=_inner_toe.x
+                bottom_screen=_inner_toe.z - _depth_screen, location=_inner_toe.x
             )
 
             # Save and run new model
@@ -195,8 +198,8 @@ class StabilityScreenMeasure(MeasureProtocol):
         elif _calc_type == "SIMPLE":
             if int(year_to_calculate) >= self.parameters["year"]:
                 if "SF_2025" in mechanism_reliability_input:
-                    mechanism_reliability_input["SF_2025"] += safety_factor_increase
-                    mechanism_reliability_input["SF_2075"] += safety_factor_increase
+                    mechanism_reliability_input["SF_2025"] += _safety_factor_increase
+                    mechanism_reliability_input["SF_2075"] += _safety_factor_increase
                 elif "beta_2025" in mechanism_reliability.Input.input:
                     # convert to SF and back:
                     mechanism_reliability_input["beta_2025"] = calculate_reliability(
@@ -204,7 +207,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta_2025"]
                             ),
-                            safety_factor_increase,
+                            _safety_factor_increase,
                         )
                     )
                     mechanism_reliability_input["beta_2075"] = calculate_reliability(
@@ -212,7 +215,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta_2075"]
                             ),
-                            safety_factor_increase,
+                            _safety_factor_increase,
                         )
                     )
                 else:
@@ -221,6 +224,6 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta"]
                             ),
-                            safety_factor_increase,
+                            _safety_factor_increase,
                         )
                     )
