@@ -12,8 +12,10 @@ from tests import test_data, test_externals, test_results
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
+    get_safety_factor_increase,
     implement_berm_widening,
     determine_costs,
+    sf_factor_piping,
 )
 
 _measure_input = {
@@ -307,3 +309,29 @@ class TestCommonFunctions:
             _unit_costs,
         )
         assert _costs == pytest.approx(703680.0)
+
+    @pytest.mark.parametrize("length, expected",
+        [
+            pytest.param(3.0, 0.2),
+            pytest.param(6.0, 0.4),
+        ],
+    )
+    def test_get_safety_factor_increase(self, length: float, expected: float):
+        """
+        test for get_safety_factor_increase
+        """
+        _result = get_safety_factor_increase(length)
+        assert _result == pytest.approx(expected)
+
+    @pytest.mark.parametrize("length, expected",
+        [
+            pytest.param(3.0, 100.0),
+            pytest.param(6.0, 1000.0),
+        ],
+    )
+    def test_sf_factor_piping(self, length: float, expected: float):
+        """
+        test for sf_factor_piping
+        """
+        _result = sf_factor_piping(length)
+        assert _result == pytest.approx(expected)
