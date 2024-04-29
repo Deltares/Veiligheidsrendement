@@ -50,7 +50,7 @@ class StabilityScreenMeasure(MeasureProtocol):
 
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _safety_factor_increase,
-                dike_section.cover_layer_thickness + length
+                dike_section.cover_layer_thickness + length, length
             )
             _modified_measure["Reliability"].calculate_section_reliability()
             self.measures.append(_modified_measure)
@@ -60,7 +60,8 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         safety_factor_increase: float,
-        depth_screen: float
+        depth_screen: float,
+        length: float
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
@@ -76,7 +77,8 @@ class StabilityScreenMeasure(MeasureProtocol):
                     dike_section,
                     traject_info,
                     safety_factor_increase,
-                    depth_screen
+                    depth_screen,
+                    length
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -92,7 +94,8 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         safety_factor_increase: float,
-        depth_screen: float
+        depth_screen: float,
+        length: float
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism, calc_type, self.config.T, self.config.t_0, 0
@@ -121,7 +124,14 @@ class StabilityScreenMeasure(MeasureProtocol):
                         safety_factor_increase,
                         depth_screen
                     )
-                if mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW]:
+                elif mechanism == MechanismEnum.PIPING:
+                    self._copy_results(
+                        _collection, dike_section_mechanism_reliability
+                    )
+                    _sf_factor_piping = 10 ** (1.0 + length / 3.0)
+                    dike_section_mechanism_reliability.Input["sf_factor"] = _sf_factor_piping
+
+                elif mechanism == MechanismEnum.OVERFLOW:
                     self._copy_results(
                         _collection, dike_section_mechanism_reliability
                     )  # No influence
