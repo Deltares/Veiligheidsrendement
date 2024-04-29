@@ -1,4 +1,5 @@
 import copy
+from itertools import product
 
 import numpy as np
 
@@ -139,12 +140,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
         berm_range = self._get_berm_range()
         l_stab_screen_range = self._get_l_stab_range()
 
-        dike_modifications = [
-            (modified_crest, modified_berm, modified_l_stab_screen)
-            for modified_crest in crest_range
-            for modified_berm in berm_range
-            for modified_l_stab_screen in l_stab_screen_range
-        ]
+        dike_modifications = list(product(crest_range, berm_range, l_stab_screen_range))
 
         inputs = []
         for dike_modification in dike_modifications:
