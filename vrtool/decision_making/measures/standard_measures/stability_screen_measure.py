@@ -40,7 +40,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             _modified_measure["Stability Screen"] = "yes"
             _modified_measure["l_stab_screen"] = length
             _depth = dike_section.cover_layer_thickness + length
-            _modified_measure["Cost"] = self.unit_costs["Sheetpile"] * _depth * dike_section.Length
+            _modified_measure["Cost"] = self.unit_costs.sheetpile * _depth * dike_section.Length
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, length
             )

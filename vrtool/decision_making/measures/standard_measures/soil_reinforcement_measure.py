@@ -58,7 +58,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             )
             if (_modified_measure["StabilityScreen"] == "yes"):
                 _depth = dike_section.cover_layer_thickness + modified_measure.l_stab_screen
-                _modified_measure["Cost"] += self.unit_costs["Sheetpile"] * _depth * dike_section.Length
+                _modified_measure["Cost"] += self.unit_costs.sheetpile * _depth * dike_section.Length
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _modified_measure
             )
