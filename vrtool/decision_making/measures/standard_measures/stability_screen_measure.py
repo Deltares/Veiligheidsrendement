@@ -7,7 +7,6 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
-    get_stability_inner_depth,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
@@ -31,34 +30,37 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
-        safety_factor_increase: float = 0.2,
-    ):
+    ) -> None:
         # To be added: year property to distinguish the same measure in year 2025 and 2045
+        _lengths_stab_screen = [3.0, 6.0]
+        self.measures = []
         _measure_type = self.parameters["Type"]
-        self.measures = {}
-        self.measures["Stability Screen"] = "yes"
-        self.parameters["Depth"] = self._get_depth(dike_section)
-        self.measures["Cost"] = determine_costs(
-            self.parameters,
-            _measure_type,
-            dike_section.Length,
-            self.parameters["Depth"],
-            self.unit_costs,
-        )
+        for length in _lengths_stab_screen:
+            _safety_factor_increase = 0.2 * length / 3.0
+            _modified_measure = {}
+            _modified_measure["Stability Screen"] = "yes"
+            _modified_measure["l_stab_screen"] = length
+            _modified_measure["Cost"] = determine_costs(
+                self.parameters,
+                _measure_type,
+                dike_section.Length,
+                dike_section.cover_layer_thickness + length,
+                self.unit_costs,
+            )
 
-        self.measures["Reliability"] = self._get_configured_section_reliability(
-            dike_section, traject_info, safety_factor_increase
-        )
-        self.measures["Reliability"].calculate_section_reliability()
-
-    def _get_depth(self, dike_section: DikeSection) -> float:
-        return get_stability_inner_depth(dike_section)
+            _modified_measure["Reliability"] = self._get_configured_section_reliability(
+                dike_section, traject_info, _safety_factor_increase,
+                dike_section.cover_layer_thickness + length
+            )
+            _modified_measure["Reliability"].calculate_section_reliability()
+            self.measures.append(_modified_measure)
 
     def _get_configured_section_reliability(
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         safety_factor_increase: float,
+        depth_screen: float
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
@@ -74,6 +76,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                     dike_section,
                     traject_info,
                     safety_factor_increase,
+                    depth_screen
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -89,6 +92,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         safety_factor_increase: float,
+        depth_screen: float
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism, calc_type, self.config.T, self.config.t_0, 0
@@ -115,6 +119,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                         _year_to_calculate,
                         dike_section,
                         safety_factor_increase,
+                        depth_screen
                     )
                 if mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW]:
                     self._copy_results(
@@ -138,7 +143,8 @@ class StabilityScreenMeasure(MeasureProtocol):
         mechanism_reliability: MechanismReliability,
         year_to_calculate: str,
         dike_section: DikeSection,
-        safety_factor_increase: float = 0.2,
+        safety_factor_increase: float,
+        depth_screen: float
     ) -> None:
         _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][
             1
@@ -151,10 +157,9 @@ class StabilityScreenMeasure(MeasureProtocol):
                 Path(mechanism_reliability_input["STIXNAAM"]),
                 Path(mechanism_reliability_input["DStability_exe_path"]),
             )
-            _depth_screen = self._get_depth(dike_section)
             _inner_toe = dike_section.InitialGeometry.loc["BIT"]
             _dstability_wrapper.add_stability_screen(
-                bottom_screen=_inner_toe.z - _depth_screen, location=_inner_toe.x
+                bottom_screen=_inner_toe.z - depth_screen, location=_inner_toe.x
             )
 
             # Save and run new model
@@ -163,7 +168,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                 self.config.output_directory
                 / "intermediate_result"
                 / _dstability_wrapper.stix_path.with_stem(
-                    _original_name + f"_stability_screen"
+                    _original_name + "_stability_screen"
                 ).name
             )
 

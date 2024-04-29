@@ -7,7 +7,6 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
     determine_new_geometry,
-    get_stability_inner_depth,
     implement_berm_widening,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
