@@ -1,3 +1,34 @@
+## v0.2.0 (2024-04-29)
+
+### Feat
+
+- Correct implement logic tr [VRTOOL-481] (#277)
+- Update cost function for soil reinforcement with 0 dimensions VRTOOL-390 (#273)
+- VRTOOL-344 add self retaining sheetpile logic (#266)
+- VRTOOL-454 create new classes (#261)
+- Vrtool 444/poc if measures dont meet cross sectional requirement (#254)
+- VRTOOL-439 improve performance of greedy evaluate routine (#257)
+- VRTOOL-435 separate preparation of optimization input from evaluate (#252)
+- VRTOOL-406 replace optimization logic with new components (#223)
+- Extended importer to include the initial assessment results for all mechanisms of the given section
+- Added logic to import the measure results for optimization
+- Added logic to import parameter values related to multiple computation scenarios.
+
+### Fix
+
+- vrtool-431 avoid failure on setting different investment years (#251)
+- change path for measure import test
+- fixed incorrect string for if-else.
+- update wrong reference & traject  & add reference for filtered cases
+- return empty list rather than None to be consistent with comment and avoid crash
+- Corrected `get_failure_probability_from_scenarios` to use beta instead of `probability_of_failure` as the latter remains constant
+- copy probabilities from zero measure (not year 0)
+- We do a math 'isclose' comparison of maximum transition level and threshold
+- Fixed logic in stability_inner_functions, adapted tests
+- Corrected generation of transition level vector so that it includes the last element
+- Adapted `calculate_reliability` as it was not working correctly with arrays of more than one item
+- Corrected logic for creation of input object and beta calculation
+
 ## v0.1.3 (2023-12-01)
 
 ### Fix
