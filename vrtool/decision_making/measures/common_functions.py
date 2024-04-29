@@ -368,10 +368,8 @@ def determine_new_geometry(
 
 # Script to determine the costs of a reinforcement:
 def determine_costs(
-    parameters,
     measure_type: str,
     length: float,
-    depth: float,
     unit_costs: dict,
     dcrest: float = 0.0,
     dberm_in: float = 0.0,
@@ -381,6 +379,9 @@ def determine_costs(
     direction: bool = False,
     section: str = "",
 ) -> float:
+    """
+    Determine costs, mainly for soil reinforcement
+    """
     _measure_type_name = measure_type.lower().strip()
     if (
         (_measure_type_name == "soil reinforcement")
@@ -443,11 +444,6 @@ def determine_costs(
                     * housing.loc[float(dberm_in)]["cumulative"]
                 )
 
-        # add costs for stability screen
-        # TODO: only passing parameters because of this.
-        if parameters["StabilityScreen"] == "yes":
-            total_cost += unit_costs["Sheetpile"] * depth * length
-
         if dcrest > 0.0:
             total_cost += unit_costs["Road renewal"] * length
 
@@ -456,8 +452,6 @@ def determine_costs(
         total_cost = unit_costs["Vertical Geotextile"] * length
     elif _measure_type_name == "diaphragm wall":
         total_cost = unit_costs["Diaphragm wall"] * length
-    elif _measure_type_name == "stability screen":
-        total_cost = unit_costs["Sheetpile"] * depth * length
     else:
         logging.error("Onbekend maatregeltype: {}".format(measure_type))
         total_cost = float("nan")

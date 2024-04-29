@@ -14,7 +14,6 @@ from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
     get_safety_factor_increase,
     implement_berm_widening,
-    determine_costs,
     sf_factor_piping,
 )
 
@@ -291,24 +290,6 @@ class TestCommonFunctions:
         assert (
             len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
         )
-
-    def test_determine_costs(self):
-        """
-        test the cost calculation of a stability screen
-        """
-        _parameters = {}
-        _measure_type = "Stability screen"
-        _length = 100.0
-        _depth = 3.0
-        _unit_costs = {"Sheetpile": 2345.6}
-        _costs = determine_costs(
-            _parameters,
-            _measure_type,
-            _length,
-            _depth,
-            _unit_costs,
-        )
-        assert _costs == pytest.approx(703680.0)
 
     @pytest.mark.parametrize("length, expected",
         [

@@ -6,7 +6,6 @@ import numpy as np
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
-    determine_costs,
     sf_factor_piping,
     get_safety_factor_increase,
 )
@@ -36,19 +35,12 @@ class StabilityScreenMeasure(MeasureProtocol):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         _lengths_stab_screen = [3.0, 6.0]
         self.measures = []
-        _measure_type = self.parameters["Type"]
         for length in _lengths_stab_screen:
             _modified_measure = {}
             _modified_measure["Stability Screen"] = "yes"
             _modified_measure["l_stab_screen"] = length
-            _modified_measure["Cost"] = determine_costs(
-                self.parameters,
-                _measure_type,
-                dike_section.Length,
-                dike_section.cover_layer_thickness + length,
-                self.unit_costs,
-            )
-
+            _depth = dike_section.cover_layer_thickness + length
+            _modified_measure["Cost"] = self.unit_costs["Sheetpile"] * _depth * dike_section.Length
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, length
             )

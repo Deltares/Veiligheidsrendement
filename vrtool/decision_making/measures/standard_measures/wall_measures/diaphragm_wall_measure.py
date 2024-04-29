@@ -5,7 +5,6 @@ import numpy as np
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
-    determine_costs,
     probabilistic_design,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol

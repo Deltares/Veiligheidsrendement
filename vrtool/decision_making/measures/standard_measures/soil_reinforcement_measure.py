@@ -43,10 +43,8 @@ class SoilReinforcementMeasure(MeasureProtocol):
             _modified_measure["StabilityScreen"] = self.parameters["StabilityScreen"]
             _modified_measure["l_stab_screen"] = modified_measure.l_stab_screen
             _modified_measure["Cost"] = determine_costs(
-                self.parameters,
                 _measure_type,
                 dike_section.Length,
-                dike_section.cover_layer_thickness + modified_measure.l_stab_screen,
                 self.unit_costs,
                 dcrest=modified_measure.d_crest,
                 dberm_in=int(modified_measure.d_house),
@@ -56,6 +54,9 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 direction=self.parameters["Direction"],
                 section=dike_section.name,
             )
+            if (_modified_measure["StabilityScreen"] == "yes"):
+                _depth = dike_section.cover_layer_thickness + modified_measure.l_stab_screen
+                _modified_measure["Cost"] += self.unit_costs["Sheetpile"] * _depth * dike_section.Length
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _modified_measure
             )
