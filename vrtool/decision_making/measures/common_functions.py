@@ -64,14 +64,7 @@ def implement_berm_widening(
             )
         )
 
-    def _get_safety_factor_increase(l_stab_screen: float) -> float:
-        _default_safety_factor = 0.2
-        _small_stab_screen = 3.0
-        if math.isnan(l_stab_screen):
-            return _default_safety_factor
-        return _default_safety_factor * l_stab_screen / _small_stab_screen
-
-    _safety_factor_increase = _get_safety_factor_increase(measure_input["l_stab_screen"])
+    _safety_factor_increase = get_safety_factor_increase(measure_input["l_stab_screen"])
 
     # this function implements a berm widening based on the relevant inputs
     if mechanism == MechanismEnum.OVERFLOW:
@@ -163,9 +156,37 @@ def implement_berm_widening(
             0
         )
         if measure_parameters["StabilityScreen"] == "yes":
-            berm_input["sf_factor"] = 10 ** (1.0 + measure_input["l_stab_screen"] / 3.0)
+            berm_input["sf_factor"] = sf_factor_piping(measure_input["l_stab_screen"])
     return berm_input
 
+def get_safety_factor_increase(l_stab_screen: float) -> float:
+    """
+    get the safety factor for stability that now depends on the length of the stability screen
+
+    Args:
+        l_stab_screen (float): length of the screen (without cover layer thickness)
+
+    Returns:
+        float: safe factor increase; 0.2 for 3m and 0.4 for 6m
+    """
+    _default_safety_factor = 0.2
+    _small_stab_screen = 3.0
+    if math.isnan(l_stab_screen):
+        return _default_safety_factor
+    return _default_safety_factor * l_stab_screen / _small_stab_screen
+
+def sf_factor_piping(length: float) -> float:
+    """
+    get the safe reduction factor for the probability of piping
+
+    Args:
+        length (float): length of the screen (without cover layer thickness)
+
+    Returns:
+        float: the safe reduction factor: 100 for 3m; 1000 for 6m
+    """
+    _small_stab_screen = 3.0
+    return 10 ** (1.0 + length / _small_stab_screen)
 
 def calculate_area(geometry):
     polypoints = []

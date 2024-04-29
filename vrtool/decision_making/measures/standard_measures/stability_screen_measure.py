@@ -7,6 +7,8 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_costs,
+    sf_factor_piping,
+    get_safety_factor_increase,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
@@ -119,8 +121,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                     self._copy_results(
                         _collection, dike_section_mechanism_reliability
                     )
-                    _sf_factor_piping = 10 ** (1.0 + length / 3.0)
-                    dike_section_mechanism_reliability.Input["sf_factor"] = _sf_factor_piping
+                    dike_section_mechanism_reliability.Input["sf_factor"] = sf_factor_piping(length)
                 elif mechanism == MechanismEnum.OVERFLOW:
                     self._copy_results(
                         _collection, dike_section_mechanism_reliability
@@ -138,18 +139,6 @@ class StabilityScreenMeasure(MeasureProtocol):
     ) -> None:
         target.Input = copy.deepcopy(source_input.Input)
 
-    def _get_safety_factor_increase(self, length: float) -> float:
-        """
-        get the safety factor for stability that now depends on the length of the stability screen
-
-        Args:
-            length (float): length of the screen (without cover layer thickness)
-
-        Returns:
-            float: safe factor increase; 0.2 for 3m and 0.4 for 6m
-        """
-        return 0.2 * length / 3.0
-
     def _configure_stability_inner(
         self,
         mechanism_reliability: MechanismReliability,
@@ -162,7 +151,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         ].upper()
 
         mechanism_reliability_input = mechanism_reliability.Input.input
-        _safety_factor_increase = self._get_safety_factor_increase(length)
+        _safety_factor_increase = get_safety_factor_increase(length)
         _depth_screen = dike_section.cover_layer_thickness + length
         if _calc_type == "DSTABILITY":
             # Add screen to model
