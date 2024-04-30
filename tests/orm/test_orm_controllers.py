@@ -29,6 +29,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     validate_measure_result_export,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
@@ -998,21 +999,28 @@ class TestOrmControllers:
 class TestCustomMeasures:
     @pytest.fixture
     def custom_measure_overflow_list(self) -> list[dict]:
-        def create_dummy_dict(*args) -> dict:
+        def create_dummy_dict(
+            measure_name: str,
+            measure_year: int,
+            measure_cost: float,
+            measure_beta: float,
+        ) -> dict:
             return dict(
-                MEASURE_NAME=args[0],
-                COMBINABLE_TYPE=args[1],
-                SECTION_NAME=args[2],
-                MECHANISM_NAME=args[3],
-                INVESTMENT_YEAR=args[4],
-                COST=args[5],
-                BETA=args[6],
+                MEASURE_NAME=measure_name,
+                COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+                # Only section 01A is available in the test db.
+                SECTION_NAME="01A",
+                # Only OVERFLOW is available in the test db.
+                MECHANISM_NAME=MechanismEnum.OVERFLOW.name,
+                INVESTMENT_YEAR=measure_year,
+                COST=measure_cost,
+                BETA=measure_beta,
             )
 
         return [
-            create_dummy_dict("ROCKS", "FULL", "01A", "OVERFLOW", 2023, 42.00, 2.4),
-            # create_dummy_dict("ROCKS", "FULL", "01A", "OVERFLOW", 2023, 24.00, 4.2),
-            create_dummy_dict("TREES", "FULL", "01A", "OVERFLOW", 2023, 23.12, 3.0),
+            create_dummy_dict("ROCKS", 2023, 42.00, 2.4),
+            # create_dummy_dict("ROCKS", 2023, 24.00, 4.2),
+            create_dummy_dict("TREES", 2023, 23.12, 3.0),
         ]
 
     @pytest.fixture
