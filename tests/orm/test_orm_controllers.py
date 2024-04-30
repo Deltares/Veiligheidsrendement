@@ -229,18 +229,20 @@ class TestOrmControllers:
     @pytest.fixture
     def database_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
-        _db_name = "with_valid_data.db"
+        _test_db = test_data.joinpath("test_db", "with_valid_data.db")
 
+        _output_directory = test_results.joinpath(request.node.name)
+        if _output_directory.exists():
+            shutil.rmtree(_vrtool_config.output_directory)
+
+        # Generate a custom `VrtoolConfig`
         _vrtool_config = VrtoolConfig(
-            input_directory=(test_data / "test_db"),
-            input_database_name=_db_name,
+            input_directory=_test_db.parent,
+            input_database_name=_test_db.name,
             traject="38-1",
+            output_directory=_output_directory,
         )
         assert _vrtool_config.input_database_path.is_file()
-
-        _vrtool_config.output_directory = test_results.joinpath(request.node.name)
-        if _vrtool_config.output_directory.exists():
-            shutil.rmtree(_vrtool_config.output_directory)
 
         yield _vrtool_config
 
@@ -992,6 +994,8 @@ class TestOrmControllers:
             for _imp_data in _imported_data
         )
 
+
+class TestCustomMeasures:
     @pytest.fixture
     def custom_measure_overflow_list(self) -> list[dict]:
         def create_dummy_dict(*args) -> dict:
@@ -1011,15 +1015,42 @@ class TestOrmControllers:
             create_dummy_dict("TREES", "FULL", "01A", "OVERFLOW", 2023, 23.12, 3.0),
         ]
 
+    @pytest.fixture
+    def editable_db_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
+        # 1. Define test data.
+        _test_db = test_data.joinpath("test_db", "with_valid_data.db")
+
+        _output_directory = test_results.joinpath(request.node.name)
+        if _output_directory.exists():
+            shutil.rmtree(_output_directory)
+
+        _output_directory.mkdir(parents=True)
+
+        # Create a copy of the database to avoid locking it
+        # or corrupting its data.
+        _copy_db = _output_directory.joinpath("vrtool_input_data.db")
+        shutil.copyfile(_test_db, _copy_db)
+
+        # Generate a custom `VrtoolConfig`
+        _vrtool_config = VrtoolConfig(
+            input_directory=_copy_db.parent,
+            input_database_name=_copy_db.name,
+            traject="38-1",
+            output_directory=_output_directory,
+        )
+        assert _vrtool_config.input_database_path.is_file()
+
+        yield _vrtool_config
+
     def test_add_custom_measures(
         self,
         custom_measure_overflow_list: list[dict],
-        database_vrtool_config: VrtoolConfig,
+        editable_db_vrtool_config: VrtoolConfig,
     ):
         # 1. Run test
         _added_measures = add_custom_measures(
-            database_vrtool_config, custom_measure_overflow_list
+            editable_db_vrtool_config, custom_measure_overflow_list
         )
 
         # 3. Verify expectations
-        assert any(_added_measures)
+        assert len(_added_measures) == len(custom_measure_overflow_list)
