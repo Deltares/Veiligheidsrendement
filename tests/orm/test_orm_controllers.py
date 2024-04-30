@@ -50,6 +50,7 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
+    add_custom_measures,
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
@@ -990,3 +991,35 @@ class TestOrmControllers:
             )
             for _imp_data in _imported_data
         )
+
+    @pytest.fixture
+    def custom_measure_overflow_list(self) -> list[dict]:
+        def create_dummy_dict(*args) -> dict:
+            return dict(
+                MEASURE_NAME=args[0],
+                COMBINABLE_TYPE=args[1],
+                SECTION_NAME=args[2],
+                MECHANISM_NAME=args[3],
+                INVESTMENT_YEAR=args[4],
+                COST=args[5],
+                BETA=args[6],
+            )
+
+        return [
+            create_dummy_dict("ROCKS", "FULL", "01A", "OVERFLOW", 2023, 42.00, 2.4),
+            # create_dummy_dict("ROCKS", "FULL", "01A", "OVERFLOW", 2023, 24.00, 4.2),
+            create_dummy_dict("TREES", "FULL", "01A", "OVERFLOW", 2023, 23.12, 3.0),
+        ]
+
+    def test_add_custom_measures(
+        self,
+        custom_measure_overflow_list: list[dict],
+        database_vrtool_config: VrtoolConfig,
+    ):
+        # 1. Run test
+        _added_measures = add_custom_measures(
+            database_vrtool_config, custom_measure_overflow_list
+        )
+
+        # 3. Verify expectations
+        assert any(_added_measures)

@@ -1,6 +1,7 @@
 import itertools
 import logging
 from collections import defaultdict
+from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
 
@@ -9,7 +10,9 @@ from peewee import SqliteDatabase
 from tqdm import tqdm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -570,3 +573,136 @@ def get_optimization_step_with_lowest_total_cost(
     )
 
     return min(_results, key=lambda results_tuple: results_tuple[2])
+
+
+def add_custom_measures(
+    vrtool_config: VrtoolConfig, custom_measures: list[dict]
+) -> list[orm.CustomMeasure]:
+    """
+    Maps the provided list of dictionaries, ( with keys `MEASURE_NAME`,
+    `COMBINABLE_TYPE`, `SECTION_NAME`, `MECHANISM_NAME`, `INVESTMENT_YEAR`,
+     `COST`, `BETA`), into a `CustomMeasure` and all the related
+    (required) other tables such as `Measure` or `MeasureResult`.
+
+    Args:
+        custom_measures (list[dict]): List of dictionaries, each one representing a
+        `CustomMeasure`.
+
+    Returns:
+        list[orm.CustomMeasure]: list with id's of the created custom measures.
+    """
+    # 1. The list of dictionaries should be grouped by the `MEASURE_NAME` key.
+    # We assume that all custom measures with the same name also have the same
+    # `COMBINABLE_TYPE` and `INVESTMENT_YEAR`
+    _exported_measures = []
+
+    with open_database(vrtool_config.input_database_path).connection_context():
+
+        # 2. We iterate over the different `MEASURE_NAME` collections.
+        for _measure_unique_keys, _grouped_custom_measures in itertools.groupby(
+            custom_measures,
+            key=itemgetter(
+                "MEASURE_NAME", "COMBINABLE_TYPE", "INVESTMENT_YEAR", "SECTION_NAME"
+            ),
+        ):
+            _measure_name = _measure_unique_keys[0]
+            _combinable_type_enum = CombinableTypeEnum.get_enum(_measure_unique_keys[1])
+            _investment_year = int(_measure_unique_keys[2])
+            _section_name = _measure_unique_keys[3]
+
+            # Create the measure and as many `CustomMeasures` as required.
+            _new_measure, _measure_created = orm.Measure.get_or_create(
+                name=_measure_name,
+                year=_investment_year,
+                measure_type=orm.MeasureType.get_or_create(
+                    name=str(MeasureTypeEnum.CUSTOM)
+                )[0],
+                combinable_type=orm.CombinableType.get_or_create(
+                    name=str(_combinable_type_enum)
+                )[0],
+            )
+            if not _measure_created:
+                logging.warning(
+                    "Found existing %s measure, custom measures will be updated based on the new entries.",
+                    _measure_name,
+                )
+            _added_custom_measures = defaultdict()
+            for _custom_measure in _grouped_custom_measures:
+                _mechanism_enum = MechanismEnum.get_enum(
+                    _custom_measure["MECHANISM_NAME"]
+                )
+                # This is not the most efficient way, but it guarantees previous custom measures
+                # remain in place.
+                _new_custom_measure, _ = orm.CustomMeasure.get_or_create(
+                    measure=_new_measure,
+                    mechanism=orm.Mechanism.get(name=_mechanism_enum.get_old_name()),
+                    cost=_custom_measure["COST"],
+                    beta=_custom_measure["BETA"],
+                    year=_investment_year,
+                )
+                _added_custom_measures[_mechanism_enum] = _new_custom_measure
+                _exported_measures.append(_new_custom_measure)
+
+            # 3. Once the `Measure` and the `CustomMeasure` entries for the `MEASURE_NAME`
+            # are created, we proceed to create the related entries in `MEASURE_RESULT`.
+
+            # Add entry to `MeasurePerSection`
+            _new_measure_per_section = orm.MeasurePerSection.create(
+                section=orm.SectionData.get(section_name=_section_name),
+                measure=_new_measure,
+            )
+
+            # Add MeasureResult
+            _new_measure_result = orm.MeasureResult.create(
+                measure_per_section=_new_measure_per_section
+            )
+
+            # Add MeasureResultSection
+            _t_values = vrtool_config.T
+            _measure_result_section_to_add = []
+            for _t in _t_values:
+                _measure_result_section_to_add.append(
+                    dict(
+                        measure_result_id=_new_measure_result.id,
+                        time=_t,
+                        beta=4.2,
+                        cost=4.2,
+                    )
+                )
+            orm.MeasureResultSection.insert_many(
+                _measure_result_section_to_add
+            ).execute()
+
+            # Add MeasureResultMechanism
+            _measure_result_mechanism_to_add = []
+            for (
+                _mechanism_per_section
+            ) in _new_measure_per_section.section.mechanisms_per_section:
+                _betas_per_time: list[tuple[float, int]] = []
+                if _mechanism_per_section in _added_custom_measures:
+                    _betas_per_time = itertools.product(
+                        _t_values, _added_custom_measures[_mechanism_per_section].beta
+                    )
+                else:
+                    _betas_per_time = [
+                        (_amr.time, _amr.beta)
+                        for _amr in _mechanism_per_section.assessment_mechanism_results
+                    ]
+                for _t, _beta in _betas_per_time:
+                    _measure_result_mechanism_to_add.append(
+                        dict(
+                            measure_result=_new_measure_result,
+                            mechanism_per_section=_mechanism_per_section,
+                            time=_t,
+                            beta=_beta,
+                        )
+                    )
+            orm.MeasureResultMechanism.insert_many(
+                _measure_result_mechanism_to_add
+            ).execute()
+
+        # Add new entries to
+
+    # 4. Return the list of generated custom measures.
+    # (This step could be replaced with returning a new dataclass type.)
+    return _exported_measures
