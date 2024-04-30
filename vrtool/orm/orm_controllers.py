@@ -585,6 +585,7 @@ def add_custom_measures(
     (required) other tables such as `Measure` or `MeasureResult`.
 
     Args:
+        vrtool_config (VrtoolConfig): Configuration to be used for this tool.
         custom_measures (list[dict]): List of dictionaries, each one representing a
         `CustomMeasure`.
 
@@ -626,7 +627,7 @@ def add_custom_measures(
                     "Found existing %s measure, custom measures will be updated based on the new entries.",
                     _measure_name,
                 )
-            _added_custom_measures = defaultdict()
+            _added_custom_measures = dict()
             for _custom_measure in _grouped_custom_measures:
                 _mechanism_enum = MechanismEnum.get_enum(
                     _custom_measure["MECHANISM_NAME"]
@@ -640,7 +641,9 @@ def add_custom_measures(
                     beta=_custom_measure["BETA"],
                     year=_investment_year,
                 )
-                _added_custom_measures[_mechanism_enum] = _new_custom_measure
+                _added_custom_measures[
+                    _new_custom_measure.mechanism
+                ] = _new_custom_measure
                 _exported_measures.append(_new_custom_measure)
 
             # 3. Once the `Measure` and the `CustomMeasure` entries for the `MEASURE_NAME`
@@ -659,18 +662,16 @@ def add_custom_measures(
 
             # Add MeasureResultSection
             _t_values = vrtool_config.T
-            _measure_result_section_to_add = []
-            for _t in _t_values:
-                _measure_result_section_to_add.append(
+            orm.MeasureResultSection.insert_many(
+                [
                     dict(
                         measure_result_id=_new_measure_result.id,
                         time=_t,
-                        beta=4.2,
-                        cost=4.2,
+                        beta=-1,  # TODO
+                        cost=-1,  # TODO
                     )
-                )
-            orm.MeasureResultSection.insert_many(
-                _measure_result_section_to_add
+                    for _t in _t_values
+                ]
             ).execute()
 
             # Add MeasureResultMechanism
@@ -679,9 +680,10 @@ def add_custom_measures(
                 _mechanism_per_section
             ) in _new_measure_per_section.section.mechanisms_per_section:
                 _betas_per_time: list[tuple[float, int]] = []
-                if _mechanism_per_section in _added_custom_measures:
+                if _mechanism_per_section.mechanism in _added_custom_measures:
                     _betas_per_time = itertools.product(
-                        _t_values, _added_custom_measures[_mechanism_per_section].beta
+                        _t_values,
+                        [_added_custom_measures[_mechanism_per_section.mechanism].beta],
                     )
                 else:
                     _betas_per_time = [
@@ -700,8 +702,6 @@ def add_custom_measures(
             orm.MeasureResultMechanism.insert_many(
                 _measure_result_mechanism_to_add
             ).execute()
-
-        # Add new entries to
 
     # 4. Return the list of generated custom measures.
     # (This step could be replaced with returning a new dataclass type.)

@@ -1062,3 +1062,8 @@ class TestCustomMeasures:
 
         # 3. Verify expectations
         assert len(_added_measures) == len(custom_measure_overflow_list)
+        with open_database(editable_db_vrtool_config.input_database_path):
+            assert any(orm.MeasureResult.select())
+            assert any(orm.MeasureResultMechanism.select())
+            assert any(orm.MeasureResultSection.select())
+        pytest.fail(reason="TODO: Check betas and costs are as expected.")
