@@ -33,7 +33,7 @@ def apply_database_migration(db_filepath: str, sql_filepath: str):
     _from_version, _to_version = tuple(
         map(format_version, _migration_filepath.stem.split("__to__"))
     )
-    print(f"Migrating database {db_filepath}, [{_from_version} --> {_to_version}]")
+    print(f"Migrating [{_from_version} --> {_to_version}] database file: {db_filepath}")
     for _command in _sql_commands:
         # This will skip and report errors
         # For example, if the tables do not yet exist, this will skip over
@@ -44,7 +44,7 @@ def apply_database_migration(db_filepath: str, sql_filepath: str):
             print("Command skipped: ", error_mssg)
 
 
-def migrate_databases_in_dir(migration_dir: str, migration_file: str):
+def migrate_databases_in_dir(database_dir: str, sql_file: str):
     """
     Migrates all existing databases in the given directory (and subdirectories)
     with the provided migration file.
@@ -52,12 +52,12 @@ def migrate_databases_in_dir(migration_dir: str, migration_file: str):
     Can be run with `poetry run migrate_db_dir`
 
     Args:
-        migration_dir (str): Directory containing the databases to migrate.
-        migration_file (str): SQL file with migration statements.
+        database_dir (str): Directory containing the databases to migrate.
+        sql_file (str): SQL file with migration statements.
     """
-    _migration_dirpath = Path(migration_dir)
-    for _db_to_migrate in _migration_dirpath.rglob(".db"):
-        apply_database_migration(str(_db_to_migrate), migration_file)
+    _migration_dirpath = Path(database_dir)
+    for _db_to_migrate in _migration_dirpath.rglob("*.db"):
+        apply_database_migration(str(_db_to_migrate), sql_file)
 
 
 def migrate_test_databases():
@@ -70,11 +70,15 @@ def migrate_test_databases():
     # Fetch the SQL script.
     _scripts_dir = Path(__file__).parent
     _migration_file = _scripts_dir.joinpath("v0_2_0__to__v0_3_0.sql")
-    assert _migration_file.exists()
+    assert _migration_file.exists(), "No migration file found."
 
     # Fetch the tests directory.
     _tests_dir = _scripts_dir.parent.joinpath("tests")
-    assert _tests_dir.exists()
+    assert _tests_dir.exists(), "No tests directory found."
 
     # Apply migration.
-    migrate_databases_in_dir(str(_scripts_dir), str(_migration_file))
+    migrate_databases_in_dir(str(_tests_dir), str(_migration_file))
+
+
+if __name__ == "__main__":
+    migrate_test_databases()
