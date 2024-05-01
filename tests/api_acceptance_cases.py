@@ -193,10 +193,12 @@ class RunStepMeasuresValidator(RunStepValidator):
 
         def load_measures_reliabilities(
             vrtool_db: Path,
-        ) -> dict[str, dict[tuple, pd.DataFrame]]:
+        ) -> tuple[
+            dict[str, dict[tuple, pd.DataFrame]], dict[str, tuple[float, int, float]]
+        ]:
             _connected_db = open_database(vrtool_db)
             _m_reliabilities = defaultdict(dict)
-            _m_costs = defaultdict(list)
+            _m_beta_time_cost = defaultdict(list)
             for _measure_result in orm.MeasureResult.select():
                 _measure_per_section = _measure_result.measure_per_section
                 _reliability_df = MeasureResultImporter.import_measure_reliability_df(
@@ -219,7 +221,7 @@ class RunStepMeasuresValidator(RunStepValidator):
                         )
                     )
                 _m_reliabilities[_dict_key][_available_parameters] = _reliability_df
-                _m_costs[_dict_key] = list(
+                _m_beta_time_cost[_dict_key] = list(
                     sorted(
                         (
                             (_mrs.beta, _mrs.time, _mrs.cost)
@@ -229,12 +231,12 @@ class RunStepMeasuresValidator(RunStepValidator):
                     )
                 )
             _connected_db.close()
-            return _m_reliabilities, _m_costs
+            return _m_reliabilities, _m_beta_time_cost
 
-        _result_assessment, _result_costs = load_measures_reliabilities(
+        _result_assessment, _result_beta_time_costs = load_measures_reliabilities(
             valid_vrtool_config.input_database_path
         )
-        _reference_assessment, _reference_costs = load_measures_reliabilities(
+        _reference_assessment, _reference_beta_time_costs = load_measures_reliabilities(
             _reference_database_path
         )
 
@@ -245,18 +247,18 @@ class RunStepMeasuresValidator(RunStepValidator):
         _errors = []
 
         # Check costs
-        if len(_reference_costs) != len(_result_costs):
+        if len(_reference_beta_time_costs) != len(_result_beta_time_costs):
             _errors.append(
                 "Not the same length of reference costs ({}) and result costs ({})".format(
-                    len(_reference_costs), len(_result_costs)
+                    len(_reference_beta_time_costs), len(_result_beta_time_costs)
                 )
             )
-        for _ref_key, _ref_costs in _reference_costs.items():
-            _res_costs = _result_costs.get(_ref_key, list())
-            if _ref_costs != _res_costs:
+        for _ref_key, _ref_beta_time_costs in _reference_beta_time_costs.items():
+            _res_beta_time_costs = _result_beta_time_costs.get(_ref_key, list())
+            if _ref_beta_time_costs != _res_beta_time_costs:
                 _key_name = "-".join(_ref_key)
 
-                def _cost_to_str(cost_collection: list[tuple]) -> str:
+                def beta_year_cost_to_str(cost_collection: list[tuple]) -> str:
                     return ", ".join(
                         [
                             "({}, {}, {})".format(_beta, _year, _cost)
@@ -264,8 +266,8 @@ class RunStepMeasuresValidator(RunStepValidator):
                         ]
                     )
 
-                _ref_costs_str = _cost_to_str(_ref_costs)
-                _res_costs_str = _cost_to_str(_res_costs)
+                _ref_costs_str = beta_year_cost_to_str(_ref_beta_time_costs)
+                _res_costs_str = beta_year_cost_to_str(_res_beta_time_costs)
                 _errors.append(
                     f"Difference on costs for ({_key_name}), reference: ({_ref_costs_str}), results: ({_res_costs_str})"
                 )
