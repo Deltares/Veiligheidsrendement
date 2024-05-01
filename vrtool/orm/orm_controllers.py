@@ -468,7 +468,7 @@ def create_optimization_run_for_selected_measures(
         dict[int, list[int]: A dictionary mapping each selected measure to an optimization run.
     """
 
-    with open_database(vr_config.input_database_path).connection_context():
+    with open_database(vr_config.input_database_path) as _db:
         logging.debug(
             "Opened connection to export optimization run {}.".format(optimization_name)
         )
@@ -477,7 +477,7 @@ def create_optimization_run_for_selected_measures(
             _optimization_type, _ = orm.OptimizationType.get_or_create(
                 name=_method_type.upper()
             )
-            _optimization_run = orm.OptimizationRun.create(
+            _optimization_run: orm.OptimizationRun = orm.OptimizationRun.create(
                 name=_normalize_optimization_run_name(optimization_name, _method_type),
                 discount_rate=vr_config.discount_rate,
                 optimization_type=_optimization_type,
@@ -491,14 +491,14 @@ def create_optimization_run_for_selected_measures(
                     )
                     for _measure_id in selected_measure_results_year
                 ]
-            ).execute()
+            ).execute(_db)
             # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
             _optimization_selected_measure_ids[_optimization_run.id] = list(
                 map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
             )
 
     logging.info(
-        "Closed connection after export optimization run {}.".format(optimization_name)
+        "Closed connection after export optimization run %s.", optimization_name
     )
 
     return _optimization_selected_measure_ids
@@ -597,7 +597,7 @@ def add_custom_measures(
     # `COMBINABLE_TYPE` and `INVESTMENT_YEAR`
     _exported_measures = []
 
-    with open_database(vrtool_config.input_database_path).connection_context():
+    with open_database(vrtool_config.input_database_path) as _db:
 
         # 2. We iterate over the different `MEASURE_NAME` collections.
         for _measure_unique_keys, _grouped_custom_measures in itertools.groupby(
@@ -629,14 +629,16 @@ def add_custom_measures(
                 )
             _added_custom_measures = dict()
             for _custom_measure in _grouped_custom_measures:
-                _mechanism_enum = MechanismEnum.get_enum(
-                    _custom_measure["MECHANISM_NAME"]
+                _mechanism_name = orm.Mechanism.get(
+                    name=MechanismEnum.get_enum(
+                        _custom_measure["MECHANISM_NAME"]
+                    ).get_old_name()
                 )
                 # This is not the most efficient way, but it guarantees previous custom measures
                 # remain in place.
                 _new_custom_measure, _ = orm.CustomMeasure.get_or_create(
                     measure=_new_measure,
-                    mechanism=orm.Mechanism.get(name=_mechanism_enum.get_old_name()),
+                    mechanism=_mechanism_name,
                     cost=_custom_measure["COST"],
                     beta=_custom_measure["BETA"],
                     year=_investment_year,
@@ -656,7 +658,7 @@ def add_custom_measures(
             )
 
             # Add MeasureResult
-            _new_measure_result = orm.MeasureResult.create(
+            _new_measure_result: orm.MeasureResult = orm.MeasureResult.create(
                 measure_per_section=_new_measure_per_section
             )
 
@@ -665,14 +667,14 @@ def add_custom_measures(
             orm.MeasureResultSection.insert_many(
                 [
                     dict(
-                        measure_result_id=_new_measure_result.id,
+                        measure_result_id=_new_measure_result.get_id(),
                         time=_t,
                         beta=-1,  # TODO
                         cost=-1,  # TODO
                     )
                     for _t in _t_values
                 ]
-            ).execute()
+            ).execute(_db)
 
             # Add MeasureResultMechanism
             _measure_result_mechanism_to_add = []
@@ -701,7 +703,7 @@ def add_custom_measures(
                     )
             orm.MeasureResultMechanism.insert_many(
                 _measure_result_mechanism_to_add
-            ).execute()
+            ).execute(_db)
 
     # 4. Return the list of generated custom measures.
     # (This step could be replaced with returning a new dataclass type.)

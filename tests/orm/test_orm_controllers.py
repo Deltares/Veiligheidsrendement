@@ -1,11 +1,13 @@
+import itertools
 import shutil
+from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
 
 import numpy as np
 import pandas as pd
 import pytest
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, fn
 
 import vrtool.orm.models as orm
 from tests import (
@@ -998,9 +1000,10 @@ class TestOrmControllers:
 
 class TestCustomMeasures:
     @pytest.fixture
-    def custom_measure_overflow_list(self) -> list[dict]:
+    def custom_measure_list(self) -> list[dict]:
         def create_dummy_dict(
             measure_name: str,
+            measure_mechanism: MechanismEnum,
             measure_year: int,
             measure_cost: float,
             measure_beta: float,
@@ -1008,25 +1011,24 @@ class TestCustomMeasures:
             return dict(
                 MEASURE_NAME=measure_name,
                 COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
-                # Only section 01A is available in the test db.
-                SECTION_NAME="01A",
-                # Only OVERFLOW is available in the test db.
-                MECHANISM_NAME=MechanismEnum.OVERFLOW.name,
+                # Only section `7` is available in the `for_custom_measures.db`.
+                SECTION_NAME="7",
+                MECHANISM_NAME=measure_mechanism.name,
                 INVESTMENT_YEAR=measure_year,
                 COST=measure_cost,
                 BETA=measure_beta,
             )
 
         return [
-            create_dummy_dict("ROCKS", 2023, 42.00, 2.4),
-            # create_dummy_dict("ROCKS", 2023, 24.00, 4.2),
-            create_dummy_dict("TREES", 2023, 23.12, 3.0),
+            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 2023, 42.00, 2.4),
+            create_dummy_dict("ROCKS", MechanismEnum.PIPING, 2023, 24.00, 4.2),
+            create_dummy_dict("TREES", MechanismEnum.OVERFLOW, 2023, 23.12, 3.0),
         ]
 
     @pytest.fixture
     def editable_db_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
-        _test_db = test_data.joinpath("test_db", "with_valid_data.db")
+        _test_db = test_data.joinpath("test_db", "for_custom_measures.db")
 
         _output_directory = test_results.joinpath(request.node.name)
         if _output_directory.exists():
@@ -1052,18 +1054,108 @@ class TestCustomMeasures:
 
     def test_add_custom_measures(
         self,
-        custom_measure_overflow_list: list[dict],
+        custom_measure_list: list[dict],
         editable_db_vrtool_config: VrtoolConfig,
     ):
-        # 1. Run test
+        # 1. Verify initial expectations.
+        _custom_measures_grouped = list(
+            (key, list(group))
+            for key, group in itertools.groupby(
+                custom_measure_list,
+                key=itemgetter(
+                    "MEASURE_NAME", "COMBINABLE_TYPE", "INVESTMENT_YEAR", "SECTION_NAME"
+                ),
+            )
+        )
+        _initial_measures = 0
+        _initial_custom_measures = 0
+        with open_database(editable_db_vrtool_config.input_database_path) as _db:
+            orm.MeasureResult.delete().execute(_db)
+            orm.MeasureResultMechanism.delete().execute(_db)
+            orm.MeasureResultSection.delete().execute(_db)
+            assert any(orm.MeasureResult.select()) is False
+            assert any(orm.MeasureResultMechanism.select()) is False
+            assert any(orm.MeasureResultSection.select()) is False
+            _initial_measures += len(orm.Measure.select())
+            _initial_custom_measures += len(orm.CustomMeasure.select())
+
+        # 2. Run test
         _added_measures = add_custom_measures(
-            editable_db_vrtool_config, custom_measure_overflow_list
+            editable_db_vrtool_config, custom_measure_list
         )
 
-        # 3. Verify expectations
-        assert len(_added_measures) == len(custom_measure_overflow_list)
-        with open_database(editable_db_vrtool_config.input_database_path):
-            assert any(orm.MeasureResult.select())
-            assert any(orm.MeasureResultMechanism.select())
-            assert any(orm.MeasureResultSection.select())
-        pytest.fail(reason="TODO: Check betas and costs are as expected.")
+        # 3. Verify final expectations
+        assert len(_added_measures) == len(custom_measure_list)
+        with open_database(editable_db_vrtool_config.input_database_path) as _db:
+            # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
+            # entries have been created.
+            assert len(orm.Measure.select()) == _initial_measures + len(
+                _custom_measures_grouped
+            )
+            assert len(orm.CustomMeasure.select()) == _initial_custom_measures + len(
+                custom_measure_list
+            )
+
+            for _keys_group, _cm_list in _custom_measures_grouped:
+                _custom_mechanisms = {
+                    _cm["MECHANISM_NAME"]: _cm for _cm in list(_cm_list)
+                }
+                _found_measure = (
+                    orm.MeasureResult.select()
+                    .join_from(orm.MeasureResult, orm.MeasurePerSection)
+                    .join_from(orm.MeasurePerSection, orm.SectionData)
+                    .join_from(orm.MeasurePerSection, orm.Measure)
+                    .join_from(orm.Measure, orm.CombinableType)
+                    .where(
+                        (fn.Upper(orm.Measure.name) == _keys_group[0])
+                        & (fn.Upper(orm.CombinableType.name) == _keys_group[1])
+                        & (orm.Measure.year == _keys_group[2])
+                        & (fn.Upper(orm.SectionData.section_name) == _keys_group[3])
+                    )
+                ).get()
+                assert isinstance(
+                    _found_measure, orm.MeasureResult
+                ), "No Measure was found for {}".format(_keys_group[0])
+
+                # Validate the corresponding `orm.MeasureresultSection`
+                # Verify the corresponding number of entries exist.
+                assert len(_found_measure.measure_result_section) == len(
+                    editable_db_vrtool_config.T
+                )
+                for _t in editable_db_vrtool_config.T:
+                    _mrs = (
+                        orm.MeasureResultSection.select()
+                        .where(
+                            (orm.MeasureResultSection.measure_result == _found_measure)
+                            & (orm.MeasureResultSection.time == _t)
+                        )
+                        .get_or_none()
+                    )
+                    assert isinstance(_mrs, orm.MeasureResultSection)
+                    # TODO: These values are not yet correctly calculated.
+                    assert _mrs.beta == -1
+                    assert _mrs.cost == -1
+
+                # Validate the corresponding `orm.MeasureResultMechanism`
+                # Verify the corresponding number of entries exist.
+                assert len(_found_measure.measure_result_mechanisms) == len(
+                    editable_db_vrtool_config.T
+                ) * len(
+                    _found_measure.measure_per_section.section.mechanisms_per_section
+                )
+                for _mrm in _found_measure.measure_result_mechanisms:
+                    _mechanism_key = _mrm.mechanism_per_section.mechanism.name.upper()
+                    if _mechanism_key in _custom_mechanisms:
+                        assert _mrm.beta == _custom_mechanisms[_mechanism_key]["BETA"]
+                    else:
+                        _found_assessment = _mrm.mechanism_per_section.assessment_mechanism_results.where(
+                            (orm.AssessmentMechanismResult.time == _mrm.time)
+                            & (
+                                orm.AssessmentMechanismResult.mechanism_per_section
+                                == _mrm.mechanism_per_section
+                            )
+                        ).get_or_none()
+                        assert isinstance(
+                            _found_assessment, orm.AssessmentMechanismResult
+                        )
+                        assert _mrm.beta == _found_assessment.beta
