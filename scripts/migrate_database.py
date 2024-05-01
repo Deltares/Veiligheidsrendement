@@ -49,6 +49,8 @@ def migrate_databases_in_dir(migration_dir: str, migration_file: str):
     Migrates all existing databases in the given directory (and subdirectories)
     with the provided migration file.
 
+    Can be run with `poetry run migrate_db_dir`
+
     Args:
         migration_dir (str): Directory containing the databases to migrate.
         migration_file (str): SQL file with migration statements.
