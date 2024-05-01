@@ -63,7 +63,7 @@ def migrate_test_databases():
     Migrates all existing test databases (in the `tests` directory) with
     the latest available migration file.
 
-    Can be run with `poetry run migrate_all_test_db`
+    Can be run with `poetry run migrate_test_db`
     """
     # Fetch the SQL script.
     _scripts_dir = Path(__file__).parent
