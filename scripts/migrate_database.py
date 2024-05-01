@@ -1,7 +1,6 @@
 # Inspired by https://stackoverflow.com/a/19473206
 import sqlite3
 from pathlib import Path
-from sqlite3 import OperationalError
 
 
 def apply_database_migration(db_filepath: str, sql_filepath: str):
@@ -16,16 +15,8 @@ def apply_database_migration(db_filepath: str, sql_filepath: str):
         migration_file (str): Migration file to apply (`*.sql`)
 
     """
-    # Open and read the file as a single buffer
     _migration_filepath = Path(sql_filepath)
-    _sql_file = _migration_filepath.read_text()
-    _db_connection = sqlite3.connect(db_filepath)
-    _db_cursor = _db_connection.cursor()
 
-    # all SQL commands (split on ';')
-    _sql_commands = _sql_file.split(";")
-
-    # Execute every command from the input file
     # Show which migration will be done, expected format `v0_2_0__to__v0_3_0.sql`
     def format_version(version_value: str) -> str:
         return version_value.replace("_", ".")
@@ -33,15 +24,11 @@ def apply_database_migration(db_filepath: str, sql_filepath: str):
     _from_version, _to_version = tuple(
         map(format_version, _migration_filepath.stem.split("__to__"))
     )
-    print(f"Migrating [{_from_version} --> {_to_version}] database file: {db_filepath}")
-    for _command in _sql_commands:
-        # This will skip and report errors
-        # For example, if the tables do not yet exist, this will skip over
-        # the DROP TABLE commands
-        try:
-            _db_cursor.execute(_command)
-        except OperationalError as error_mssg:
-            print("Command skipped: ", error_mssg)
+    print(f"Migrating database file [{_from_version} to {_to_version}]: {db_filepath}")
+
+    # Open and read the file as a single buffer
+    with sqlite3.connect(db_filepath) as _db_connection:
+        _db_connection.executescript(_migration_filepath.read_text(encoding="utf-8"))
 
 
 def migrate_databases_in_dir(database_dir: str, sql_file: str):

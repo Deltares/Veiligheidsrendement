@@ -27,8 +27,6 @@ classifiers = [
 packages = [{include="vrtool"},]
 
 [tool.poetry.scripts]
-migrate_db = "scripts.migrate_database:migrate_db"
-migrate_db_dir = "scripts.migrate_database:migrate_databases_in_dir"
 migrate_test_db = "scripts.migrate_database:migrate_test_databases"
 
 [tool.poetry.dependencies]
