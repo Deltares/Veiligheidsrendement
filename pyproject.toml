@@ -1,17 +1,17 @@
 [tool.poetry]
 name = "vrtool"
 version = "0.2.0"
-description = ""
+description = "veiligheidsrendement tool (core and orm)"
 authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
 maintainers = [
   "Carles S. Soriano Pérez <carles.sorianoperez@deltares.nl>",
-  "Dennis Tang <dennis.tang@deltares.nl>",
   "Edwin Spee <edwin.spee@deltares.nl>",
+  "Ardt Klapwijk <ardt.klapwijk@deltares.nl>",
   "Stephan Rikkert <stephan.rikkert@deltares.nl>",
 ]
 readme = "README.md"
 repository = "https://github.com/Deltares/veiligheidsrendement"
-packages = [{include="vrtool"},]
+documentation = "https://deltares-research.github.io/VrtoolDocumentation/"
 keywords = ["civil-engineering", "dikes", "flood-defence", "deltares"]
 classifiers = [
   'Programming Language :: Python :: 3',
@@ -24,6 +24,12 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Physics',
   'Topic :: Scientific/Engineering :: Hydrology',
 ]
+packages = [{include="vrtool"},]
+
+[tool.poetry.scripts]
+migrate_db = "scripts.migrate_database:migrate_db"
+migrate_db_dir = "scripts.migrate_database:migrate_databases_in_dir"
+migrate_test_db = "scripts.migrate_database:migrate_test_databases"
 
 [tool.poetry.dependencies]
 python = "^3.9, <3.11"
