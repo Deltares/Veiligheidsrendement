@@ -1014,15 +1014,15 @@ class TestCustomMeasures:
                 # Only section `7` is available in the `for_custom_measures.db`.
                 SECTION_NAME="7",
                 MECHANISM_NAME=measure_mechanism.name,
-                INVESTMENT_YEAR=measure_year,
+                TIME=measure_year,
                 COST=measure_cost,
                 BETA=measure_beta,
             )
 
         return [
-            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 2023, 42.00, 2.4),
-            create_dummy_dict("ROCKS", MechanismEnum.PIPING, 2023, 24.00, 4.2),
-            create_dummy_dict("TREES", MechanismEnum.OVERFLOW, 2023, 23.12, 3.0),
+            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 20, 42.00, 2.4),
+            create_dummy_dict("ROCKS", MechanismEnum.PIPING, 20, 24.00, 4.2),
+            create_dummy_dict("TREES", MechanismEnum.OVERFLOW, 20, 23.12, 3.0),
         ]
 
     @pytest.fixture
@@ -1063,7 +1063,7 @@ class TestCustomMeasures:
             for key, group in itertools.groupby(
                 custom_measure_list,
                 key=itemgetter(
-                    "MEASURE_NAME", "COMBINABLE_TYPE", "INVESTMENT_YEAR", "SECTION_NAME"
+                    "MEASURE_NAME", "COMBINABLE_TYPE", "TIME", "SECTION_NAME"
                 ),
             )
         )

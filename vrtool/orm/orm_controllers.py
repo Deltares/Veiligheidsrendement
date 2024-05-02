@@ -580,7 +580,7 @@ def add_custom_measures(
 ) -> list[orm.CustomMeasure]:
     """
     Maps the provided list of dictionaries, ( with keys `MEASURE_NAME`,
-    `COMBINABLE_TYPE`, `SECTION_NAME`, `MECHANISM_NAME`, `INVESTMENT_YEAR`,
+    `COMBINABLE_TYPE`, `SECTION_NAME`, `MECHANISM_NAME`, `TIME`,
      `COST`, `BETA`), into a `CustomMeasure` and all the related
     (required) other tables such as `Measure` or `MeasureResult`.
 
@@ -594,26 +594,23 @@ def add_custom_measures(
     """
     # 1. The list of dictionaries should be grouped by the `MEASURE_NAME` key.
     # We assume that all custom measures with the same name also have the same
-    # `COMBINABLE_TYPE` and `INVESTMENT_YEAR`
+    # `COMBINABLE_TYPE` and `TIME`
     _exported_measures = []
 
     with open_database(vrtool_config.input_database_path) as _db:
 
         # 2. We iterate over the different `MEASURE_NAME` collections.
+        _measure_result_mechanism_to_add = []
         for _measure_unique_keys, _grouped_custom_measures in itertools.groupby(
             custom_measures,
-            key=itemgetter(
-                "MEASURE_NAME", "COMBINABLE_TYPE", "INVESTMENT_YEAR", "SECTION_NAME"
-            ),
+            key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
         ):
             _measure_name = _measure_unique_keys[0]
-            _investment_year = int(_measure_unique_keys[2])
-            _section_name = _measure_unique_keys[3]
+            _section_name = _measure_unique_keys[2]
 
             # Create the measure and as many `CustomMeasures` as required.
             _new_measure, _measure_created = orm.Measure.get_or_create(
                 name=_measure_name,
-                year=_investment_year,
                 measure_type=orm.MeasureType.get_or_create(name=MeasureTypeEnum.CUSTOM)[
                     0
                 ],
@@ -629,7 +626,21 @@ def add_custom_measures(
                     "Found existing %s measure, custom measures will be updated based on the new entries.",
                     _measure_name,
                 )
-            _added_custom_measures = dict()
+
+            # Add entry to `MeasurePerSection`
+            _new_measure_per_section = orm.MeasurePerSection.create(
+                section=orm.SectionData.get(section_name=_section_name),
+                measure=_new_measure,
+            )
+
+            # Add MeasureResult
+            _new_measure_result: orm.MeasureResult = orm.MeasureResult.create(
+                measure_per_section=_new_measure_per_section
+            )
+
+            _added_custom_measures: dict[int, dict[orm.Mechanism, float]] = defaultdict(
+                dict
+            )
             for _custom_measure in _grouped_custom_measures:
                 _mechanism_found = (
                     orm.Mechanism.select()
@@ -648,66 +659,59 @@ def add_custom_measures(
                     mechanism=_mechanism_found,
                     cost=_custom_measure["COST"],
                     beta=_custom_measure["BETA"],
-                    year=_investment_year,
+                    year=_custom_measure["TIME"],
                 )
-                _added_custom_measures[
-                    _new_custom_measure.mechanism
-                ] = _new_custom_measure
                 _exported_measures.append(_new_custom_measure)
+                _added_custom_measures[_new_custom_measure.year][
+                    _mechanism_found
+                ] = _new_custom_measure.beta
 
             # 3. Once the `Measure` and the `CustomMeasure` entries for the `MEASURE_NAME`
             # are created, we proceed to create the related entries in `MEASURE_RESULT`.
 
-            # Add entry to `MeasurePerSection`
-            _new_measure_per_section = orm.MeasurePerSection.create(
-                section=orm.SectionData.get(section_name=_section_name),
-                measure=_new_measure,
-            )
+            # Add `MeasureResultSection`
+            # TODO
 
-            # Add MeasureResult
-            _new_measure_result: orm.MeasureResult = orm.MeasureResult.create(
-                measure_per_section=_new_measure_per_section
-            )
+            # Add `MeasureResultMechanism`` for custom measures with and without defined mechanism.
 
-            # Add MeasureResultSection
-            _t_values = vrtool_config.T
-            orm.MeasureResultSection.insert_many(
-                [
-                    dict(
-                        measure_result_id=_new_measure_result.get_id(),
-                        time=_t,
-                        beta=-1,  # TODO
-                        cost=-1,  # TODO
-                    )
-                    for _t in _t_values
-                ]
-            ).execute(_db)
-
-            # Add MeasureResultMechanism
-            _measure_result_mechanism_to_add = []
             for (
-                _mechanism_per_section
-            ) in _new_measure_per_section.section.mechanisms_per_section:
-                _betas_per_time: list[tuple[float, int]] = []
-                if _mechanism_per_section.mechanism in _added_custom_measures:
-                    _betas_per_time = itertools.product(
-                        _t_values,
-                        [_added_custom_measures[_mechanism_per_section.mechanism].beta],
-                    )
-                else:
-                    _betas_per_time = [
-                        (_amr.time, _amr.beta)
-                        for _amr in _mechanism_per_section.assessment_mechanism_results
-                    ]
-                for _t, _beta in _betas_per_time:
+                _year,
+                _added_cm_mechanism_year_beta,
+            ) in _added_custom_measures.items():
+                for (
+                    _mechanism_per_section
+                ) in _new_measure_per_section.section.mechanisms_per_section:
+
+                    def get_beta_from_assessment_result() -> float:
+                        return (
+                            _mechanism_per_section.assessment_mechanism_results.where(
+                                orm.AssessmentMechanismResult.time == _year
+                            )
+                            .get()
+                            .beta
+                        )
+
+                    def get_beta() -> float:
+                        if (
+                            _mechanism_per_section.mechanism
+                            not in _added_cm_mechanism_year_beta
+                        ):
+                            return get_beta_from_assessment_result()
+                        # Apparently doing `dict.get(key, fallback)` will also evaluate the fallback.
+                        # therefore adding extra computation time that we want to avoid.
+                        return _added_cm_mechanism_year_beta[
+                            _mechanism_per_section.mechanism
+                        ]
+
                     _measure_result_mechanism_to_add.append(
                         dict(
                             measure_result=_new_measure_result,
                             mechanism_per_section=_mechanism_per_section,
-                            time=_t,
-                            beta=_beta,
+                            time=_year,
+                            beta=get_beta(),
                         )
                     )
+
             orm.MeasureResultMechanism.insert_many(
                 _measure_result_mechanism_to_add
             ).execute(_db)
