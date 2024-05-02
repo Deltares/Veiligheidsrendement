@@ -308,7 +308,8 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.skip(reason="Only used for generating new reference databases.")
+    @pytest.mark.skip(reason="Only used for generating new optimization databases.")
+    @pytest.mark.regenerate_test_db
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases,
@@ -317,6 +318,10 @@ class TestApiRunWorkflowsAcceptance:
     def test_run_step_optimization_acceptance_test_case(
         self, valid_vrtool_config: VrtoolConfig
     ):
+        """
+        You can run this test from command line with:
+        `pytest -m "regenerate_test_db" --no-skips`
+        """
         # 1. Define test data.
         _new_optimization_name = "Basisberekening"
 
@@ -500,6 +505,21 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
+
+    @pytest.mark.skip(reason="Only used for generating new reference databases.")
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases,
+        indirect=True,
+    )
+    @pytest.mark.regenerate_test_db
+    def test_run_full_to_generate_results(self, valid_vrtool_config: VrtoolConfig):
+        """
+        This test is only meant to regenerate the references for the large test cases.
+        You can run this test from command line with:
+        `pytest -m "regenerate_test_db" --no-skips`
+        """
+        run_full(valid_vrtool_config)
 
 
 @pytest.mark.slow
