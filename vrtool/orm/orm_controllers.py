@@ -681,9 +681,6 @@ def add_custom_measures(
             # 3. Once the `Measure` and the `CustomMeasure` entries for the `MEASURE_NAME`
             # are created, we proceed to create the related entries in `MEASURE_RESULT`.
 
-            # Add `MeasureResultSection`
-            # TODO
-
             # Add `MeasureResultMechanism`` for custom measures with and without defined mechanism.
             for (
                 _year,
@@ -722,6 +719,8 @@ def add_custom_measures(
                             beta=_mechanism_beta,
                         )
                     )
+
+                # Add `MeasureResultSection` data.
                 _measure_result_section_to_add.append(
                     dict(
                         measure_result=_new_measure_result,
@@ -734,12 +733,13 @@ def add_custom_measures(
                     )
                 )
 
-            orm.MeasureResultSection.insert_many(
-                _measure_result_section_to_add
-            ).execute(_db)
-            orm.MeasureResultMechanism.insert_many(
-                _measure_result_mechanism_to_add
-            ).execute(_db)
+        # Insert bulk (more efficient) the dictionaries we just created.
+        orm.MeasureResultSection.insert_many(_measure_result_section_to_add).execute(
+            _db
+        )
+        orm.MeasureResultMechanism.insert_many(
+            _measure_result_mechanism_to_add
+        ).execute(_db)
 
     # 4. Return the list of generated custom measures.
     # (This step could be replaced with returning a new dataclass type.)

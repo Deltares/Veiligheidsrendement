@@ -1020,9 +1020,9 @@ class TestCustomMeasures:
             )
 
         return [
-            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 20, 42.00, 2.4),
+            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 20, 50.00, 2.4),
             create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 50, 50.00, 2.4),
-            create_dummy_dict("ROCKS", MechanismEnum.PIPING, 20, 24.00, 4.2),
+            create_dummy_dict("ROCKS", MechanismEnum.PIPING, 20, 50.00, 4.2),
             create_dummy_dict("TREES", MechanismEnum.OVERFLOW, 20, 23.12, 3.0),
         ]
 
@@ -1096,18 +1096,9 @@ class TestCustomMeasures:
             )
 
             for _keys_group, _cm_list in _custom_measures_grouped:
-
                 _different_times = list(set(_cm["TIME"] for _cm in _cm_list))
-                # _different_mechs = list(set(_cm["MECHANISM_NAME"] for _cm in _cm_list))
-                _total_mechs = len(
-                    orm.MechanismPerSection.select()
-                    .join_from(orm.MechanismPerSection, orm.SectionData)
-                    .where(fn.Upper(orm.SectionData.section_name) == _keys_group[2])
-                )
-                _expected_measure_result_mechs = len(_different_times) * _total_mechs
-
-                # There should
-                _found_measure_results = list(
+                # There should only be one `MeasureResult` for each `CustomMeasure`
+                _fm_result = (
                     orm.MeasureResult.select()
                     .join_from(orm.MeasureResult, orm.MeasurePerSection)
                     .join_from(orm.MeasurePerSection, orm.SectionData)
@@ -1118,11 +1109,12 @@ class TestCustomMeasures:
                         & (fn.Upper(orm.CombinableType.name) == _keys_group[1])
                         & (fn.Upper(orm.SectionData.section_name) == _keys_group[2])
                     )
-                )
-                assert len(_found_measure_results) == 1
-                _fm_result = _found_measure_results[0]
+                ).get()
                 assert isinstance(_fm_result, orm.MeasureResult)
 
+                # Verify `MeasureResultSection` entries,
+                # one per different provided `TIME`.
+                assert len(_fm_result.measure_result_section) == len(_different_times)
                 for _fm_result_section in _fm_result.measure_result_section:
                     # Costs are the same for a given measure.
                     _cost = next(
@@ -1133,5 +1125,36 @@ class TestCustomMeasures:
                     assert _fm_result_section.cost == _cost
                     assert _fm_result_section.beta > 0
 
-                # Validate the corresponding `orm.MeasureresultSection`
-                # Verify the corresponding number of entries exist.
+                # Verify `MeasureResultMechanism` entries,
+                # one per different provided `TIME` and mechanisms in `MechanismPerSection`.
+                _total_mechs = len(
+                    orm.MechanismPerSection.select()
+                    .join_from(orm.MechanismPerSection, orm.SectionData)
+                    .where(fn.Upper(orm.SectionData.section_name) == _keys_group[2])
+                )
+                assert (
+                    len(_fm_result.measure_result_mechanisms)
+                    == len(_different_times) * _total_mechs
+                )
+                for _fm_result_mechanism in _fm_result.measure_result_mechanisms:
+                    _cm_mechanism_beta = next(
+                        (
+                            _cm["BETA"]
+                            for _cm in _cm_list
+                            if _cm["MECHANISM_NAME"]
+                            == _fm_result_mechanism.mechanism_per_section.mechanism.name.upper()
+                            and _cm["TIME"] == _fm_result_mechanism.time
+                        ),
+                        None,
+                    )
+                    if _cm_mechanism_beta is None:
+                        # Then it gets the beta from the `AssessmentMechanismResult`.
+                        _cm_mechanism_beta = (
+                            _fm_result_mechanism.mechanism_per_section.assessment_mechanism_results.where(
+                                orm.AssessmentMechanismResult.time
+                                == _fm_result_mechanism.time
+                            )
+                            .get()
+                            .beta
+                        )
+                    assert _fm_result_mechanism.beta == _cm_mechanism_beta
