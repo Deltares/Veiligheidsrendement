@@ -646,7 +646,7 @@ def add_custom_measures(
             )
 
             # Add MeasureResult
-            _new_measure_result: orm.MeasureResult = orm.MeasureResult.create(
+            _new_measure_result, _ = orm.MeasureResult.get_or_create(
                 measure_per_section=_new_measure_per_section
             )
 

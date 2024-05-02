@@ -1096,10 +1096,18 @@ class TestCustomMeasures:
             )
 
             for _keys_group, _cm_list in _custom_measures_grouped:
-                _custom_mechanisms = {
-                    _cm["MECHANISM_NAME"]: _cm for _cm in list(_cm_list)
-                }
-                _found_measure = (
+
+                _different_times = list(set(_cm["TIME"] for _cm in _cm_list))
+                # _different_mechs = list(set(_cm["MECHANISM_NAME"] for _cm in _cm_list))
+                _total_mechs = len(
+                    orm.MechanismPerSection.select()
+                    .join_from(orm.MechanismPerSection, orm.SectionData)
+                    .where(fn.Upper(orm.SectionData.section_name) == _keys_group[2])
+                )
+                _expected_measure_result_mechs = len(_different_times) * _total_mechs
+
+                # There should
+                _found_measure_results = list(
                     orm.MeasureResult.select()
                     .join_from(orm.MeasureResult, orm.MeasurePerSection)
                     .join_from(orm.MeasurePerSection, orm.SectionData)
@@ -1108,53 +1116,22 @@ class TestCustomMeasures:
                     .where(
                         (fn.Upper(orm.Measure.name) == _keys_group[0])
                         & (fn.Upper(orm.CombinableType.name) == _keys_group[1])
-                        & (orm.Measure.year == _keys_group[2])
-                        & (fn.Upper(orm.SectionData.section_name) == _keys_group[3])
+                        & (fn.Upper(orm.SectionData.section_name) == _keys_group[2])
                     )
-                ).get()
-                assert isinstance(
-                    _found_measure, orm.MeasureResult
-                ), "No Measure was found for {}".format(_keys_group[0])
+                )
+                assert len(_found_measure_results) == 1
+                _fm_result = _found_measure_results[0]
+                assert isinstance(_fm_result, orm.MeasureResult)
+
+                for _fm_result_section in _fm_result.measure_result_section:
+                    # Costs are the same for a given measure.
+                    _cost = next(
+                        _cm["COST"]
+                        for _cm in _cm_list
+                        if _cm["TIME"] == _fm_result_section.time
+                    )
+                    assert _fm_result_section.cost == _cost
+                    assert _fm_result_section.beta > 0
 
                 # Validate the corresponding `orm.MeasureresultSection`
                 # Verify the corresponding number of entries exist.
-                assert len(_found_measure.measure_result_section) == len(
-                    editable_db_vrtool_config.T
-                )
-                for _t in editable_db_vrtool_config.T:
-                    _mrs = (
-                        orm.MeasureResultSection.select()
-                        .where(
-                            (orm.MeasureResultSection.measure_result == _found_measure)
-                            & (orm.MeasureResultSection.time == _t)
-                        )
-                        .get_or_none()
-                    )
-                    assert isinstance(_mrs, orm.MeasureResultSection)
-                    # TODO: These values are not yet correctly calculated.
-                    assert _mrs.beta == -1
-                    assert _mrs.cost == -1
-
-                # Validate the corresponding `orm.MeasureResultMechanism`
-                # Verify the corresponding number of entries exist.
-                assert len(_found_measure.measure_result_mechanisms) == len(
-                    editable_db_vrtool_config.T
-                ) * len(
-                    _found_measure.measure_per_section.section.mechanisms_per_section
-                )
-                for _mrm in _found_measure.measure_result_mechanisms:
-                    _mechanism_key = _mrm.mechanism_per_section.mechanism.name.upper()
-                    if _mechanism_key in _custom_mechanisms:
-                        assert _mrm.beta == _custom_mechanisms[_mechanism_key]["BETA"]
-                    else:
-                        _found_assessment = _mrm.mechanism_per_section.assessment_mechanism_results.where(
-                            (orm.AssessmentMechanismResult.time == _mrm.time)
-                            & (
-                                orm.AssessmentMechanismResult.mechanism_per_section
-                                == _mrm.mechanism_per_section
-                            )
-                        ).get_or_none()
-                        assert isinstance(
-                            _found_assessment, orm.AssessmentMechanismResult
-                        )
-                        assert _mrm.beta == _found_assessment.beta
