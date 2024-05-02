@@ -1062,9 +1062,7 @@ class TestCustomMeasures:
             (key, list(group))
             for key, group in itertools.groupby(
                 custom_measure_list,
-                key=itemgetter(
-                    "MEASURE_NAME", "COMBINABLE_TYPE", "TIME", "SECTION_NAME"
-                ),
+                key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
             )
         )
         _initial_measures = 0

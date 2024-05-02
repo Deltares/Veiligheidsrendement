@@ -5,6 +5,7 @@ from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
 
+import numpy as np
 import pandas as pd
 from peewee import SqliteDatabase, fn
 from tqdm import tqdm
@@ -601,6 +602,7 @@ def add_custom_measures(
 
         # 2. We iterate over the different `MEASURE_NAME` collections.
         _measure_result_mechanism_to_add = []
+        _measure_result_section_to_add = []
         for _measure_unique_keys, _grouped_custom_measures in itertools.groupby(
             custom_measures,
             key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
@@ -673,11 +675,11 @@ def add_custom_measures(
             # TODO
 
             # Add `MeasureResultMechanism`` for custom measures with and without defined mechanism.
-
             for (
                 _year,
                 _added_cm_mechanism_year_beta,
             ) in _added_custom_measures.items():
+                _section_beta = 1
                 for (
                     _mechanism_per_section
                 ) in _new_measure_per_section.section.mechanisms_per_section:
@@ -703,15 +705,26 @@ def add_custom_measures(
                             _mechanism_per_section.mechanism
                         ]
 
+                    _mechanism_beta = get_beta()
+                    _section_beta *= 1 - _mechanism_beta
                     _measure_result_mechanism_to_add.append(
                         dict(
                             measure_result=_new_measure_result,
                             mechanism_per_section=_mechanism_per_section,
                             time=_year,
-                            beta=get_beta(),
+                            beta=_mechanism_beta,
                         )
                     )
+                _measure_result_section_to_add.append(
+                    dict(
+                        measure_result=_new_measure_result,
+                        time=_year,
+                        beta=_section_beta,
+                        cost=float("nan"),
+                    )
+                )
 
+            orm.MeasureResultSection.insert_many(_measure_result_section_to_add)
             orm.MeasureResultMechanism.insert_many(
                 _measure_result_mechanism_to_add
             ).execute(_db)
