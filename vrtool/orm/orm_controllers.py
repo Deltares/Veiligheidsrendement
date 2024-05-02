@@ -207,6 +207,29 @@ def clear_measure_results(config: VrtoolConfig) -> None:
 
     logging.info("Bestaande resultaten voor maatregelen verwijderd.")
 
+def safe_clear_custom_measure_results(config: VrtoolConfig) -> None:
+    """
+    Clears all the custom measure results from the database that are not used
+    in the optimization
+
+    Args:
+        config (VrtoolConfig): Vrtool configuration
+    """
+
+    open_database(config.input_database_path)
+    logging.debug("Opened connection for clearing custom measure results.")
+
+    # get the measure ids that are in use in the optimization
+    measure_ids = set()
+    for result in orm.OptimizationStep.select():
+        measure_ids.add(result.optimization_selected_measure.measure_result.measure_per_section.measure_id)
+
+    with vrtool_db.atomic():
+        orm.CustomMeasure.delete().where(orm.CustomMeasure.measure_id not in measure_ids).execute()
+
+    vrtool_db.close()
+
+    logging.info("Bestaande resultaten voor aangepaste maatregelen verwijderd.")
 
 def clear_optimization_results(config: VrtoolConfig) -> None:
     """
