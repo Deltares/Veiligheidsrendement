@@ -734,7 +734,9 @@ def add_custom_measures(
                     )
                 )
 
-            orm.MeasureResultSection.insert_many(_measure_result_section_to_add)
+            orm.MeasureResultSection.insert_many(
+                _measure_result_section_to_add
+            ).execute(_db)
             orm.MeasureResultMechanism.insert_many(
                 _measure_result_mechanism_to_add
             ).execute(_db)
