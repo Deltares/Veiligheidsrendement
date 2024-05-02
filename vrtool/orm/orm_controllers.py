@@ -729,9 +729,8 @@ def add_custom_measures(
                         beta=combine_custom_mechanism_values_to_section(
                             _section_mechanism_betas
                         ),
-                        cost=combine_custom_mechanism_values_to_section(
-                            _section_mechanism_costs
-                        ),
+                        # Costs should be identical
+                        cost=_section_mechanism_costs[0],
                     )
                 )
 

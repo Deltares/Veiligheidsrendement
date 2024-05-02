@@ -1021,6 +1021,7 @@ class TestCustomMeasures:
 
         return [
             create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 20, 42.00, 2.4),
+            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 50, 50.00, 2.4),
             create_dummy_dict("ROCKS", MechanismEnum.PIPING, 20, 24.00, 4.2),
             create_dummy_dict("TREES", MechanismEnum.OVERFLOW, 20, 23.12, 3.0),
         ]
