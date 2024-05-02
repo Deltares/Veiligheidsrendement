@@ -64,7 +64,6 @@ from vrtool.orm.orm_controllers import (
     import_results_measures_for_optimization,
     initialize_database,
     open_database,
-    safe_clear_custom_measure_results,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -757,23 +756,6 @@ class TestOrmControllers:
         assert not any(orm.OptimizationStep.select())
         assert not any(orm.OptimizationStepResultMechanism.select())
         assert not any(orm.OptimizationStepResultSection.select())
-
-    def test_safe_clear_custom_measure_results(
-        self, export_database: SqliteDatabase
-    ):
-        # 1. Define test data.
-        self._generate_optimization_results(export_database)
-
-        # 2. Run test.
-        _db_path = Path(export_database.database)
-        _vrtool_config = VrtoolConfig(
-            input_directory=_db_path.parent,
-            input_database_name=_db_path.name,
-        )
-        safe_clear_custom_measure_results(_vrtool_config)
-
-        # 3. Verify expectations.
-        assert not any(orm.CustomMeasure.select())
 
     def _generate_measure_results(self, db_connection: SqliteDatabase):
         db_connection.connect()
