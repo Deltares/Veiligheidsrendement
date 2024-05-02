@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Iterator
 
 import pandas as pd
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, fn
 from tqdm import tqdm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
@@ -607,7 +607,6 @@ def add_custom_measures(
             ),
         ):
             _measure_name = _measure_unique_keys[0]
-            _combinable_type_enum = CombinableTypeEnum.get_enum(_measure_unique_keys[1])
             _investment_year = int(_measure_unique_keys[2])
             _section_name = _measure_unique_keys[3]
 
@@ -615,12 +614,15 @@ def add_custom_measures(
             _new_measure, _measure_created = orm.Measure.get_or_create(
                 name=_measure_name,
                 year=_investment_year,
-                measure_type=orm.MeasureType.get_or_create(
-                    name=str(MeasureTypeEnum.CUSTOM)
-                )[0],
-                combinable_type=orm.CombinableType.get_or_create(
-                    name=str(_combinable_type_enum)
-                )[0],
+                measure_type=orm.MeasureType.get_or_create(name=MeasureTypeEnum.CUSTOM)[
+                    0
+                ],
+                combinable_type=orm.CombinableType.select()
+                .where(
+                    fn.upper(orm.CombinableType.name)
+                    == str(CombinableTypeEnum.get_enum(_measure_unique_keys[1]))
+                )
+                .get(),
             )
             if not _measure_created:
                 logging.warning(
@@ -629,16 +631,21 @@ def add_custom_measures(
                 )
             _added_custom_measures = dict()
             for _custom_measure in _grouped_custom_measures:
-                _mechanism_name = orm.Mechanism.get(
-                    name=MechanismEnum.get_enum(
-                        _custom_measure["MECHANISM_NAME"]
-                    ).get_old_name()
+                _mechanism_found = (
+                    orm.Mechanism.select()
+                    .where(
+                        fn.upper(orm.Mechanism.name)
+                        == str(
+                            MechanismEnum.get_enum(_custom_measure["MECHANISM_NAME"])
+                        )
+                    )
+                    .get()
                 )
                 # This is not the most efficient way, but it guarantees previous custom measures
                 # remain in place.
                 _new_custom_measure, _ = orm.CustomMeasure.get_or_create(
                     measure=_new_measure,
-                    mechanism=_mechanism_name,
+                    mechanism=_mechanism_found,
                     cost=_custom_measure["COST"],
                     beta=_custom_measure["BETA"],
                     year=_investment_year,
