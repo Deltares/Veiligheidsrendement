@@ -593,6 +593,16 @@ def add_custom_measures(
     Returns:
         list[orm.CustomMeasure]: list with id's of the created custom measures.
     """
+
+    def combine_custom_mechanism_values_to_section(
+        mechanism_values: list[float],
+    ) -> float:
+        def correct_value(value: float) -> float:
+            return 1 - value
+
+        _product = np.prod(list(map(correct_value, mechanism_values)))
+        return 1 - _product
+
     # 1. The list of dictionaries should be grouped by the `MEASURE_NAME` key.
     # We assume that all custom measures with the same name also have the same
     # `COMBINABLE_TYPE` and `TIME`
@@ -640,9 +650,9 @@ def add_custom_measures(
                 measure_per_section=_new_measure_per_section
             )
 
-            _added_custom_measures: dict[int, dict[orm.Mechanism, float]] = defaultdict(
-                dict
-            )
+            _added_custom_measures: dict[
+                int, dict[orm.Mechanism, orm.CustomMeasure]
+            ] = defaultdict(dict)
             for _custom_measure in _grouped_custom_measures:
                 _mechanism_found = (
                     orm.Mechanism.select()
@@ -666,7 +676,7 @@ def add_custom_measures(
                 _exported_measures.append(_new_custom_measure)
                 _added_custom_measures[_new_custom_measure.year][
                     _mechanism_found
-                ] = _new_custom_measure.beta
+                ] = _new_custom_measure
 
             # 3. Once the `Measure` and the `CustomMeasure` entries for the `MEASURE_NAME`
             # are created, we proceed to create the related entries in `MEASURE_RESULT`.
@@ -679,34 +689,31 @@ def add_custom_measures(
                 _year,
                 _added_cm_mechanism_year_beta,
             ) in _added_custom_measures.items():
-                _section_beta = 1
+                _section_mechanism_betas = []
+                _section_mechanism_costs = []
                 for (
                     _mechanism_per_section
                 ) in _new_measure_per_section.section.mechanisms_per_section:
 
-                    def get_beta_from_assessment_result() -> float:
-                        return (
-                            _mechanism_per_section.assessment_mechanism_results.where(
-                                orm.AssessmentMechanismResult.time == _year
-                            )
-                            .get()
-                            .beta
-                        )
-
-                    def get_beta() -> float:
+                    def get_beta_cost() -> tuple[float, float]:
                         if (
                             _mechanism_per_section.mechanism
-                            not in _added_cm_mechanism_year_beta
+                            in _added_cm_mechanism_year_beta
                         ):
-                            return get_beta_from_assessment_result()
-                        # Apparently doing `dict.get(key, fallback)` will also evaluate the fallback.
-                        # therefore adding extra computation time that we want to avoid.
-                        return _added_cm_mechanism_year_beta[
-                            _mechanism_per_section.mechanism
-                        ]
+                            _custom_measure = _added_cm_mechanism_year_beta[
+                                _mechanism_per_section.mechanism
+                            ]
+                            return _custom_measure.beta, _custom_measure.cost
+                        _assessment_result = (
+                            _mechanism_per_section.assessment_mechanism_results.where(
+                                orm.AssessmentMechanismResult.time == _year
+                            ).get()
+                        )
+                        return _assessment_result.beta, 0
 
-                    _mechanism_beta = get_beta()
-                    _section_beta *= 1 - _mechanism_beta
+                    _mechanism_beta, _mechanism_cost = get_beta_cost()
+                    _section_mechanism_betas.append(_mechanism_beta)
+                    _section_mechanism_costs.append(_mechanism_cost)
                     _measure_result_mechanism_to_add.append(
                         dict(
                             measure_result=_new_measure_result,
@@ -719,8 +726,12 @@ def add_custom_measures(
                     dict(
                         measure_result=_new_measure_result,
                         time=_year,
-                        beta=_section_beta,
-                        cost=float("nan"),
+                        beta=combine_custom_mechanism_values_to_section(
+                            _section_mechanism_betas
+                        ),
+                        cost=combine_custom_mechanism_values_to_section(
+                            _section_mechanism_costs
+                        ),
                     )
                 )
 
