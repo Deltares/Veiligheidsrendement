@@ -223,35 +223,54 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
         """
         _measure_result_mechanism_to_add = []
         _measure_result_section_to_add = []
-        for (
-            _year,
-            _added_cm_mechanism_year_beta,
-        ) in custom_measures_by_year.items():
-            _section_mechanism_betas = []
-            _section_mechanism_costs = []
-            for (
-                _mechanism_per_section
-            ) in measure_per_section.section.mechanisms_per_section:
 
-                (
-                    _mechanism_beta,
-                    _mechanism_cost,
-                ) = self._get_beta_cost_for_custom_measure_section(
-                    _mechanism_per_section, _added_cm_mechanism_year_beta, _year
-                )
-                _section_mechanism_betas.append(_mechanism_beta)
-                _section_mechanism_costs.append(_mechanism_cost)
-                _measure_result_mechanism_to_add.append(
+        # TODO: This should be the argument being given.
+        _invertedcmb = defaultdict(dict)
+        for _year, _mechanism_measures in custom_measures_by_year.items():
+            for _mechanism, _measures in _mechanism_measures.items():
+                _invertedcmb[_mechanism][_year] = _measures
+
+        _mechanism_result_to_add = []
+        _section_betas = defaultdict(list)
+        _section_cost = 0
+        for (
+            _mechanism_per_section
+        ) in measure_per_section.section.mechanisms_per_section:
+            _beta_per_year_dict = {
+                _amr.time: _amr.beta
+                for _amr in _mechanism_per_section.assessment_mechanism_results
+            }
+            assert sorted(_beta_per_year_dict.keys()) == sorted(
+                self._years_of_reliability
+            )
+            if _mechanism_per_section.mechanism in _invertedcmb.keys():
+                for _year, _custom_measure in sorted(
+                    _invertedcmb[_mechanism_per_section.mechanism].items()
+                ):
+                    # Cost is  supposed to be the same for all CustomMeasures
+                    # with the same MeasurePerSection
+                    # (only expected change in time)
+                    _section_cost = _custom_measure.cost
+
+                    # Replace the values for years that match.
+                    # Because it's sorted we can simply replace the rest of the values.
+                    for _assessment_year in _beta_per_year_dict.keys():
+                        if _year <= _assessment_year:
+                            _beta_per_year_dict[_assessment_year] = _custom_measure.beta
+
+            # Add values to collection.
+            for _amr_time, _amr_beta in _beta_per_year_dict.items():
+                _section_betas[_amr_time].append(_amr_beta)
+                _mechanism_result_to_add.append(
                     dict(
                         measure_result=measure_result,
                         mechanism_per_section=_mechanism_per_section,
-                        time=_year,
-                        beta=_mechanism_beta,
+                        time=_amr_time,
+                        beta=_amr_beta,
                     )
                 )
-
-            # Add `MeasureResultSection` data.
-            _measure_result_section_to_add.append(
+        _measure_result_section_to_add.extend(
+            [
                 dict(
                     measure_result=measure_result,
                     time=_year,
@@ -259,7 +278,10 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                         _section_mechanism_betas
                     ),
                     # Costs should be identical
-                    cost=_section_mechanism_costs[0],
+                    cost=_section_cost,
                 )
-            )
+                for _year, _section_mechanism_betas in _section_betas.items()
+            ]
+        )
+
         return _measure_result_section_to_add, _measure_result_mechanism_to_add
