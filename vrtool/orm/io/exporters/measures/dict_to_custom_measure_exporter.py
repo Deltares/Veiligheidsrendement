@@ -29,9 +29,13 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 
 class DictListToCustomMeasureExporter(OrmExporterProtocol):
     _db: SqliteDatabase
+    _years_of_reliability: list[int]
 
-    def __init__(self, db_context: SqliteDatabase) -> None:
+    def __init__(
+        self, db_context: SqliteDatabase, years_of_reliability: list[int]
+    ) -> None:
         self._db = db_context
+        self._years_of_reliability = years_of_reliability
 
     @staticmethod
     def get_interpolated_beta_from_assessment(
@@ -60,13 +64,24 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
 
         return float(interp1d(_times, _betas, fill_value=("extrapolate"))(year))
 
-    def _combine_custom_mechanism_values_to_section(
-        self,
+    @staticmethod
+    def combine_custom_mechanism_values_to_section(
         mechanism_beta_values: list[float],
     ) -> float:
         """
+        Combines the beta values of different mechanisms  for the same
+        computation time to generate the related  `MeasureResultSection.beta`
+        value.
+
         This method belongs in a "future" dataclass representing the
         CsvCustomMeasure File-Object-Model
+
+        Args:
+            mechanism_beta_values (list[float]):
+                List of `MeasureResultMechanism.beta` values.
+
+        Returns:
+            float: The calculated `MeasureResultSection.beta` value.
         """
 
         def exceedance_probability_swap(value: float) -> float:
@@ -240,7 +255,7 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                 dict(
                     measure_result=measure_result,
                     time=_year,
-                    beta=self._combine_custom_mechanism_values_to_section(
+                    beta=self.combine_custom_mechanism_values_to_section(
                         _section_mechanism_betas
                     ),
                     # Costs should be identical

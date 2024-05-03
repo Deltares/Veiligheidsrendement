@@ -1116,19 +1116,11 @@ class TestCustomMeasures:
                         "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 20,
+                        "TIME": _t,
                         "COST": 1000,
                         "BETA": 6.6,
-                    },
-                    {
-                        "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01A",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 40,
-                        "COST": 1000,
-                        "BETA": 6.6,
-                    },
+                    }
+                    for _t in [20, 40]
                 ],
                 id="Workflow 1: SAME measure, ONLY DIFFERENT time NOT present IN ASSESSMENT",
             ),
@@ -1136,22 +1128,14 @@ class TestCustomMeasures:
                 [
                     {
                         "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
                         "TIME": 25,
                         "COST": 1000,
                         "BETA": 6.6,
-                    },
-                    {
-                        "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01B",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 25,
-                        "COST": 1000,
-                        "BETA": 6.6,
-                    },
+                        "SECTION_NAME": _section_name,
+                    }
+                    for _section_name in ["01A", "01B"]
                 ],
                 id="Workflow 2a: SAME measure, ONLY DIFFERENT section",
             ),
