@@ -24,6 +24,7 @@ from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
+from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class DictListToCustomMeasureExporter(OrmExporterProtocol):
@@ -34,18 +35,18 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
 
     def _combine_custom_mechanism_values_to_section(
         self,
-        mechanism_values: list[float],
+        mechanism_beta_values: list[float],
     ) -> float:
         """
         This method belongs in a "future" dataclass representing the
-        CsvCustomMeasure FOM
+        CsvCustomMeasure File-Object-Model
         """
 
-        def correct_value(value: float) -> float:
-            return 1 - value
+        def exceedance_probability_swap(value: float) -> float:
+            return 1 - beta_to_pf(value)
 
-        _product = prod(list(map(correct_value, mechanism_values)))
-        return 1 - _product
+        _product = prod(list(map(exceedance_probability_swap, mechanism_beta_values)))
+        return pf_to_beta(1 - _product)
 
     def export_dom(self, dom_model: list[dict]) -> list[CustomMeasure]:
         _measure_result_mechanism_to_add = []
@@ -152,8 +153,11 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
         custom_mechanism_collection: dict,
         year: int,
     ):
-        # Needs to be checked like this otherwise instead of `dict.get(key, fallback)`
-        # otherwise it evaluates the fallback option (if it's a method it's extra cost).
+        # We verify whether the mechanism exists in our collection
+        # directly instead of `dict.get(key, fallback)`
+        # otherwise it evaluates the fallback option
+        # which in our case would be an sql query (or a method),
+        # either way implying extra computational cost.
         if mechanism_per_section.mechanism in custom_mechanism_collection:
             _custom_measure = custom_mechanism_collection[
                 mechanism_per_section.mechanism
