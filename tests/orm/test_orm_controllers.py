@@ -1126,7 +1126,7 @@ class TestCustomMeasures:
                         "BETA": 6.6,
                     },
                 ],
-                id="Workflow 1: SAME measure, ONLY DIFFERENT time",
+                id="Workflow 1: SAME measure, ONLY DIFFERENT time NOT present IN ASSESSMENT",
             ),
             pytest.param(
                 [
