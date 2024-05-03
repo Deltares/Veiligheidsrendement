@@ -7,8 +7,8 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import (
+    get_clean_test_results_dir,
     get_copy_of_reference_directory,
-    get_test_results_dir,
     get_vrtool_config_test_copy,
     test_data,
     test_externals,
@@ -220,12 +220,7 @@ class TestApiRunWorkflowsAcceptance:
         _test_input_directory = Path.joinpath(test_data, _test_case.model_directory)
         assert _test_input_directory.exists()
 
-        _test_results_directory = get_test_results_dir(request).joinpath(
-            _test_case.case_name
-        )
-        if _test_results_directory.exists():
-            shutil.rmtree(_test_results_directory)
-        _test_results_directory.mkdir(parents=True)
+        _test_results_directory = get_clean_test_results_dir(request)
 
         # Define the VrtoolConfig
         _test_config = VrtoolConfig()

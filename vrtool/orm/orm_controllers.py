@@ -16,6 +16,9 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
+from vrtool.orm.io.exporters.measures.dict_to_custom_measure_exporter import (
+    DictListToCustomMeasureExporter,
+)
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.optimization.strategy_exporter import StrategyExporter
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
@@ -465,7 +468,7 @@ def create_optimization_run_for_selected_measures(
         dict[int, list[int]: A dictionary mapping each selected measure to an optimization run.
     """
 
-    with open_database(vr_config.input_database_path).connection_context():
+    with open_database(vr_config.input_database_path) as _db:
         logging.debug(
             "Opened connection to export optimization run {}.".format(optimization_name)
         )
@@ -474,7 +477,7 @@ def create_optimization_run_for_selected_measures(
             _optimization_type, _ = orm.OptimizationType.get_or_create(
                 name=_method_type.upper()
             )
-            _optimization_run = orm.OptimizationRun.create(
+            _optimization_run: orm.OptimizationRun = orm.OptimizationRun.create(
                 name=_normalize_optimization_run_name(optimization_name, _method_type),
                 discount_rate=vr_config.discount_rate,
                 optimization_type=_optimization_type,
@@ -488,14 +491,14 @@ def create_optimization_run_for_selected_measures(
                     )
                     for _measure_id in selected_measure_results_year
                 ]
-            ).execute()
+            ).execute(_db)
             # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
             _optimization_selected_measure_ids[_optimization_run.id] = list(
                 map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
             )
 
     logging.info(
-        "Closed connection after export optimization run {}.".format(optimization_name)
+        "Closed connection after export optimization run %s.", optimization_name
     )
 
     return _optimization_selected_measure_ids
@@ -570,3 +573,36 @@ def get_optimization_step_with_lowest_total_cost(
     )
 
     return min(_results, key=lambda results_tuple: results_tuple[2])
+
+
+def add_custom_measures(
+    vrtool_config: VrtoolConfig, custom_measures: list[dict]
+) -> list[orm.CustomMeasure]:
+    """
+    Maps the provided list of dictionaries, ( with keys `MEASURE_NAME`,
+    `COMBINABLE_TYPE`, `SECTION_NAME`, `MECHANISM_NAME`, `TIME`,
+     `COST`, `BETA`), into a `CustomMeasure` and all the related
+    (required) other tables such as `Measure` or `MeasureResult`.
+
+    Args:
+        vrtool_config (VrtoolConfig): Configuration to be used for this tool.
+        custom_measures (list[dict]): List of dictionaries, each one representing a
+        `CustomMeasure`.
+
+    Returns:
+        list[orm.CustomMeasure]: list with id's of the created custom measures.
+    """
+
+    # 1. The list of dictionaries should be grouped by the `MEASURE_NAME` key.
+    # We assume that all custom measures with the same name also have the same
+    # `COMBINABLE_TYPE` and `TIME`
+    _exported_measures = []
+
+    with open_database(vrtool_config.input_database_path) as _db:
+        _exported_measures = DictListToCustomMeasureExporter(_db).export_dom(
+            custom_measures
+        )
+
+    # 4. Return the list of generated custom measures.
+    # (This step could be replaced with returning a new dataclass type.)
+    return _exported_measures
