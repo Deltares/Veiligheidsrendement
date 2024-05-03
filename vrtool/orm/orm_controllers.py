@@ -180,8 +180,8 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
     logging.debug("Opened connection for clearing initial assessment results.")
 
     with vrtool_db.atomic():
-        orm.AssessmentMechanismResult.delete().execute()
-        orm.AssessmentSectionResult.delete().execute()
+        orm.AssessmentMechanismResult.delete().execute(vrtool_db)
+        orm.AssessmentSectionResult.delete().execute(vrtool_db)
 
     vrtool_db.close()
 
@@ -200,11 +200,11 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     logging.debug("Opened connection for clearing measure results.")
 
     with vrtool_db.atomic():
-        orm.MeasureResult.delete().execute()
+        orm.MeasureResult.delete().execute(vrtool_db)
         # This table should be cleared 'on cascade'.
-        orm.MeasureResultParameter.delete().execute()
-        orm.MeasureResultSection.delete().execute()
-        orm.MeasureResultMechanism.delete().execute()
+        orm.MeasureResultParameter.delete().execute(vrtool_db)
+        orm.MeasureResultSection.delete().execute(vrtool_db)
+        orm.MeasureResultMechanism.delete().execute(vrtool_db)
 
     vrtool_db.close()
 
@@ -222,12 +222,12 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
     logging.debug("Opened connection for clearing optimization results.")
 
     with vrtool_db.atomic():
-        orm.OptimizationRun.delete().execute()
+        orm.OptimizationRun.delete().execute(vrtool_db)
         # These tables should be cleared 'on cascade'.
-        orm.OptimizationSelectedMeasure.delete().execute()
-        orm.OptimizationStep.delete().execute()
-        orm.OptimizationStepResultMechanism.delete().execute()
-        orm.OptimizationStepResultSection.delete().execute()
+        orm.OptimizationSelectedMeasure.delete().execute(vrtool_db)
+        orm.OptimizationStep.delete().execute(vrtool_db)
+        orm.OptimizationStepResultMechanism.delete().execute(vrtool_db)
+        orm.OptimizationStepResultSection.delete().execute(vrtool_db)
 
     vrtool_db.close()
 

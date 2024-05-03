@@ -1000,6 +1000,9 @@ class TestOrmControllers:
 
 
 class TestCustomMeasures:
+
+    _database_ref_dir = test_data.joinpath("38-1 custom measures")
+
     def _get_custom_measure_dict(
         self,
         measure_name: str,
@@ -1040,14 +1043,12 @@ class TestCustomMeasures:
     @pytest.fixture
     def editable_db_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
-        _test_db = test_data.joinpath(
-            "38-1 custom measures", "without_custom_measures.db"
-        )
+        _test_db = self._database_ref_dir.joinpath("without_custom_measures.db")
         _output_directory = get_clean_test_results_dir(request)
 
         # Create a copy of the database to avoid locking it
         # or corrupting its data.
-        _copy_db = _output_directory.joinpath("vrtool_input_data.db")
+        _copy_db = _output_directory.joinpath("vrtool_input.db")
         shutil.copyfile(_test_db, _copy_db)
 
         # Generate a custom `VrtoolConfig`
@@ -1298,3 +1299,31 @@ class TestCustomMeasures:
                             .beta
                         )
                     assert _fm_result_mechanism.beta == _cm_mechanism_beta
+
+    @pytest.mark.slow
+    def test_import_result_measures_with_custom_measures(self):
+        """
+        This test is based on the exported database from
+        `test_add_custom_measures[Integration test]`.
+        In this test we ONLY focus on verifying whether the `CustomMeasure` and its
+        `MeasureResults` are correctly imported.
+        """
+        # 1. Define test data.
+        _test_db = self._database_ref_dir.joinpath("vrtool_input.db")
+        _vrtool_config = VrtoolConfig(
+            input_directory=_test_db.parent,
+            input_database_name=_test_db.name,
+            traject="38-1",
+        )
+        assert _vrtool_config.input_database_path.is_file()
+
+        # Controled values, we use a fix database for this test.
+        # These are the id's for the meausre results for the existing
+        # CustomMeasure entries.
+        _custom_measures_ids = [(1, 20), (1, 50), (2, 20)]
+
+        # 2. Run test.
+        _measures = import_results_measures(_vrtool_config, _custom_measures_ids)
+
+        # 3. Verify expectations.
+        assert isinstance(_measures, ResultsMeasures)
