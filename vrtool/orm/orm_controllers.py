@@ -220,12 +220,23 @@ def safe_clear_custom_measure_results(config: VrtoolConfig) -> None:
     logging.debug("Opened connection for clearing custom measure results.")
 
     # get the measure ids that are in use in the optimization
-    measure_ids = set()
+    cm_ids = set()
+    for row in orm.CustomMeasure.select():
+        cm_ids.add(row.measure.id)
+
+    measure_ids_in_optimization = set()
+    cm_results_to_keep = []
     for result in orm.OptimizationStep.select():
-        measure_ids.add(result.optimization_selected_measure.measure_result.measure_per_section.measure_id)
+        _measure_id = result.optimization_selected_measure.measure_result.measure_per_section.measure_id
+        measure_ids_in_optimization.add(_measure_id)
+        if (_measure_id in cm_ids):
+            _measure_result_id = result.optimization_selected_measure.measure_result.id
+            cm_results_to_keep.append(_measure_result_id)
 
     with vrtool_db.atomic():
-        orm.CustomMeasure.delete().where(orm.CustomMeasure.measure_id not in measure_ids).execute()
+        orm.CustomMeasure.delete().where(orm.CustomMeasure.measure_id not in measure_ids_in_optimization).execute()
+        orm.MeasureResult.delete().where(orm.MeasureResult.measure_per_section.measure.id in cm_ids
+                                     and orm.MeasureResult.id not in cm_results_to_keep).execute()
 
     vrtool_db.close()
 
