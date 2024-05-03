@@ -100,28 +100,32 @@ class Solutions:
                 for j, _measure in enumerate(measure.measures):
                     measure_in = []
                     reliability_in = []
+                    _design_vars = []
                     if _normalized_measure_type in [
                         "soil reinforcement",
                         "soil reinforcement with stability screen",
                     ]:
-                        designvars = (
+                        _design_vars = [
                             measure.measures[j]["dcrest"],
                             measure.measures[j]["dberm"],
-                        )
+                        ]
+                    elif _normalized_measure_type == "custom":
+                        _design_vars = [1.0]
 
                     cost = measure.measures[j]["Cost"]
                     measure_in.append(str(measure.parameters["ID"]))
                     measure_in.append(_measure_type)
                     measure_in.append(measure.parameters["Class"])
                     measure_in.append(measure.parameters["year"])
+
                     if splitparams:
                         measure_in.append(-999)
-                        measure_in.append(designvars[0])
-                        measure_in.append(designvars[1])
+                        for _design_var in _design_vars:
+                            measure_in.append(_design_var)
                         measure_in.append(-999)
                         measure_in.append(-999)
                     else:
-                        measure_in.append(designvars)
+                        measure_in.append(_design_vars)
                     measure_in.append(cost)
 
                     betas = measure.measures[j]["Reliability"].SectionReliability
@@ -142,16 +146,16 @@ class Solutions:
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 ID = str(measure.parameters["ID"])
                 if _normalized_measure_type == "vertical piping solution":
-                    designvars = measure.measures["VZG"]
+                    _design_vars = measure.measures["VZG"]
 
                 if _normalized_measure_type == "diaphragm wall":
-                    designvars = measure.measures["DiaphragmWall"]
+                    _design_vars = measure.measures["DiaphragmWall"]
 
                 if _normalized_measure_type == "revetment":
-                    designvars = measure.measures["Revetment"]
+                    _design_vars = measure.measures["Revetment"]
 
                 if _normalized_measure_type == "custom":
-                    designvars = 1.0  ##TODO check
+                    _design_vars = 1.0  ##TODO check
 
                 measure_class = measure.parameters["Class"]
                 year = measure.parameters["year"]
@@ -163,7 +167,7 @@ class Solutions:
                             _measure_type,
                             measure_class,
                             year,
-                            designvars,
+                            _design_vars,
                             -999,
                             -999,
                             -999,
@@ -178,7 +182,7 @@ class Solutions:
                             _measure_type,
                             measure_class,
                             year,
-                            designvars,
+                            _design_vars,
                             cost,
                         ]
                     )
