@@ -11,6 +11,7 @@ from peewee import SqliteDatabase, fn
 
 import vrtool.orm.models as orm
 from tests import (
+    get_clean_test_results_dir,
     get_copy_of_reference_directory,
     get_vrtool_config_test_copy,
     test_data,
@@ -999,43 +1000,50 @@ class TestOrmControllers:
 
 
 class TestCustomMeasures:
+    def _get_custom_measure_dict(
+        self,
+        measure_name: str,
+        measure_section: str,
+        measure_mechanism: MechanismEnum,
+        measure_year: int,
+        measure_cost: float,
+        measure_beta: float,
+    ) -> dict:
+        return dict(
+            MEASURE_NAME=measure_name,
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            SECTION_NAME=measure_section,
+            MECHANISM_NAME=measure_mechanism.name,
+            TIME=measure_year,
+            COST=measure_cost,
+            BETA=measure_beta,
+        )
+
     @pytest.fixture
     def custom_measure_list(self) -> list[dict]:
-        def create_dummy_dict(
-            measure_name: str,
-            measure_mechanism: MechanismEnum,
-            measure_year: int,
-            measure_cost: float,
-            measure_beta: float,
-        ) -> dict:
-            return dict(
-                MEASURE_NAME=measure_name,
-                COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
-                # Only section `7` is available in the `for_custom_measures.db`.
-                SECTION_NAME="7",
-                MECHANISM_NAME=measure_mechanism.name,
-                TIME=measure_year,
-                COST=measure_cost,
-                BETA=measure_beta,
-            )
-
+        # Only section `7` is available in the `for_custom_measures.db`.
         return [
-            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 20, 50.00, 2.4),
-            create_dummy_dict("ROCKS", MechanismEnum.OVERFLOW, 50, 50.00, 2.4),
-            create_dummy_dict("ROCKS", MechanismEnum.PIPING, 20, 50.00, 4.2),
-            create_dummy_dict("TREES", MechanismEnum.OVERFLOW, 20, 23.12, 3.0),
+            self._get_custom_measure_dict(
+                "ROCKS", "01A", MechanismEnum.OVERFLOW, 20, 50.00, 2.4
+            ),
+            self._get_custom_measure_dict(
+                "ROCKS", "01A", MechanismEnum.OVERFLOW, 50, 50.00, 2.4
+            ),
+            self._get_custom_measure_dict(
+                "ROCKS", "01A", MechanismEnum.PIPING, 20, 50.00, 4.2
+            ),
+            self._get_custom_measure_dict(
+                "TREES", "01A", MechanismEnum.OVERFLOW, 20, 23.12, 3.0
+            ),
         ]
 
     @pytest.fixture
     def editable_db_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
-        _test_db = test_data.joinpath("test_db", "for_custom_measures.db")
-
-        _output_directory = test_results.joinpath(request.node.name)
-        if _output_directory.exists():
-            shutil.rmtree(_output_directory)
-
-        _output_directory.mkdir(parents=True)
+        _test_db = test_data.joinpath(
+            "38-1 custom measures", "without_custom_measures.db"
+        )
+        _output_directory = get_clean_test_results_dir(request)
 
         # Create a copy of the database to avoid locking it
         # or corrupting its data.
@@ -1053,21 +1061,153 @@ class TestCustomMeasures:
 
         yield _vrtool_config
 
+    @pytest.mark.parametrize(
+        "custom_measure_dict_list",
+        [
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 20,
+                        "COST": 50.0,
+                        "BETA": 2.4,
+                    },
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 50,
+                        "COST": 50.0,
+                        "BETA": 2.4,
+                    },
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.PIPING.name,
+                        "TIME": 20,
+                        "COST": 50.0,
+                        "BETA": 4.2,
+                    },
+                    {
+                        "MEASURE_NAME": "TREES",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 20,
+                        "COST": 23.12,
+                        "BETA": 3.0,
+                    },
+                ],
+                id="Integration test",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 20,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "SECTION_NAME": "01A",
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 40,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                ],
+                id="Workflow 1: SAME measure, ONLY DIFFERENT time",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01B",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                ],
+                id="Workflow 2a: SAME measure, ONLY DIFFERENT section",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "SECTION_NAME": "01A",
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "SECTION_NAME": "01B",
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 2000,
+                        "BETA": 5.0,
+                    },
+                ],
+                id="Workflow 2b: SAME measure, DIFFERENT section, cost and beta",
+            ),
+        ],
+    )
     def test_add_custom_measures(
         self,
-        custom_measure_list: list[dict],
+        custom_measure_dict_list: list[dict],
         editable_db_vrtool_config: VrtoolConfig,
     ):
-        # 1. Verify initial expectations.
+        """
+        Integration test to verify adding new entries to the `orm.CustomMeasure`
+        and related tables under different workflows.
+        """
+        # Auxiliar methods for validations.
+        def get_custom_measure_dict_hash(cm_dict: dict) -> str:
+            # Useful to compare uniqueness of a dictionary.
+            _dummy_dict = dict() | cm_dict
+            # The only key that does not need to be the same is the section name.
+            _dummy_dict.pop("SECTION_NAME")
+            return str(_dummy_dict)
+
+        # 1. Define initial expectations.
         _custom_measures_grouped = list(
             (key, list(group))
             for key, group in itertools.groupby(
-                custom_measure_list,
+                custom_measure_dict_list,
                 key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
             )
         )
-        _initial_measures = 0
-        _initial_custom_measures = 0
+
+        _expected_total_measures = len(
+            set(_cm[0][0] for _cm in _custom_measures_grouped)
+        )
+        _expected_total_custom_measures = len(
+            set(map(get_custom_measure_dict_hash, custom_measure_dict_list))
+        )
         with open_database(editable_db_vrtool_config.input_database_path) as _db:
             orm.MeasureResult.delete().execute(_db)
             orm.MeasureResultMechanism.delete().execute(_db)
@@ -1075,25 +1215,22 @@ class TestCustomMeasures:
             assert any(orm.MeasureResult.select()) is False
             assert any(orm.MeasureResultMechanism.select()) is False
             assert any(orm.MeasureResultSection.select()) is False
-            _initial_measures += len(orm.Measure.select())
-            _initial_custom_measures += len(orm.CustomMeasure.select())
+            _expected_total_measures += len(orm.Measure.select())
+            _expected_total_custom_measures += len(orm.CustomMeasure.select())
 
         # 2. Run test
         _added_measures = add_custom_measures(
-            editable_db_vrtool_config, custom_measure_list
+            editable_db_vrtool_config, custom_measure_dict_list
         )
 
         # 3. Verify final expectations
-        assert len(_added_measures) == len(custom_measure_list)
+        assert len(_added_measures) == len(custom_measure_dict_list)
+
         with open_database(editable_db_vrtool_config.input_database_path) as _db:
             # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
             # entries have been created.
-            assert len(orm.Measure.select()) == _initial_measures + len(
-                _custom_measures_grouped
-            )
-            assert len(orm.CustomMeasure.select()) == _initial_custom_measures + len(
-                custom_measure_list
-            )
+            assert len(orm.Measure.select()) == _expected_total_measures
+            assert len(orm.CustomMeasure.select()) == _expected_total_custom_measures
 
             for _keys_group, _cm_list in _custom_measures_grouped:
                 _different_times = list(set(_cm["TIME"] for _cm in _cm_list))
@@ -1105,7 +1242,7 @@ class TestCustomMeasures:
                     .join_from(orm.MeasurePerSection, orm.Measure)
                     .join_from(orm.Measure, orm.CombinableType)
                     .where(
-                        (fn.Upper(orm.Measure.name) == _keys_group[0])
+                        (orm.Measure.name == _keys_group[0])
                         & (fn.Upper(orm.CombinableType.name) == _keys_group[1])
                         & (fn.Upper(orm.SectionData.section_name) == _keys_group[2])
                     )

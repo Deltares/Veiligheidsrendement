@@ -14,8 +14,32 @@ if not test_results.is_dir():
     test_results.mkdir(parents=True)
 
 
-def get_test_results_dir(request: FixtureRequest) -> Path:
+def get_clean_test_results_dir(request: FixtureRequest) -> Path:
+    """
+    Gets a new results directory considering the test name and "cases".
+    When the results directory exists it gets removed to prevent data
+    from becoming corrupted.
+
+    Args:
+        request (FixtureRequest): Contains information of the test name and cases.
+
+    Returns:
+        Path: Generated directory where results can be exported.
+    """
     _test_dir = test_results.joinpath(request.node.originalname)
+
+    if hasattr(request.node, "callspec"):
+        # It's a parametrized test:
+        _normalized_case = (
+            request.node.callspec.id.replace(":", "__")
+            .replace(",", "__")
+            .replace(" ", "_")
+        )
+        _test_dir = _test_dir.joinpath(_normalized_case)
+
+    if _test_dir.exists():
+        shutil.rmtree(_test_dir)
+
     _test_dir.mkdir(parents=True, exist_ok=True)
     return _test_dir
 

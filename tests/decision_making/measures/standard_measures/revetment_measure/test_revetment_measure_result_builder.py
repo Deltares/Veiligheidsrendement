@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from tests import get_test_results_dir, test_data, test_results
+from tests import get_clean_test_results_dir, test_data, test_results
 from tests.failure_mechanisms.revetment.json_files_to_revetment_dataclass_reader import (
     JsonFilesToRevetmentDataClassReader,
 )
@@ -383,8 +383,9 @@ class TestRevetmentMeasureResultBuilder:
         assert any(_results)
 
         # 4. Output results.
-        _output_file = get_test_results_dir(request).joinpath("measures_matrix.csv")
-        _output_file.unlink(missing_ok=True)
+        _output_file = get_clean_test_results_dir(request).joinpath(
+            "measures_matrix.csv"
+        )
         self._output_to_csv(_output_file, _results)
         assert _output_file.exists()
         assert len(_output_file.read_text().splitlines()) == len(_results) + 1
