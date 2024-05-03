@@ -38,13 +38,13 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
     ) -> float:
         """
         This method belongs in a "future" dataclass representing the
-        CsvCustomMeasure FOM
+        CsvCustomMeasure File-Object-Model
         """
 
-        def correct_value(value: float) -> float:
+        def exceedance_probability_swap(value: float) -> float:
             return 1 - value
 
-        _product = prod(list(map(correct_value, mechanism_values)))
+        _product = prod(list(map(exceedance_probability_swap, mechanism_values)))
         return 1 - _product
 
     def export_dom(self, dom_model: list[dict]) -> list[CustomMeasure]:
@@ -152,8 +152,11 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
         custom_mechanism_collection: dict,
         year: int,
     ):
-        # Needs to be checked like this otherwise instead of `dict.get(key, fallback)`
-        # otherwise it evaluates the fallback option (if it's a method it's extra cost).
+        # We verify whether the mechanism exists in our collection
+        # directly instead of `dict.get(key, fallback)`
+        # otherwise it evaluates the fallback option
+        # which in our case would be an sql query (or a method),
+        # either way implying extra computational cost.
         if mechanism_per_section.mechanism in custom_mechanism_collection:
             _custom_measure = custom_mechanism_collection[
                 mechanism_per_section.mechanism
