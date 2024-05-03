@@ -1,25 +1,24 @@
 import itertools
 import logging
 from collections import defaultdict
-from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
 
-import numpy as np
 import pandas as pd
-from peewee import SqliteDatabase, fn
+from peewee import SqliteDatabase
 from tqdm import tqdm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
-from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
+from vrtool.orm.io.exporters.measures.dict_to_custom_measure_exporter import (
+    DictListToCustomMeasureExporter,
+)
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.optimization.strategy_exporter import StrategyExporter
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
@@ -594,152 +593,15 @@ def add_custom_measures(
         list[orm.CustomMeasure]: list with id's of the created custom measures.
     """
 
-    def combine_custom_mechanism_values_to_section(
-        mechanism_values: list[float],
-    ) -> float:
-        def correct_value(value: float) -> float:
-            return 1 - value
-
-        _product = np.prod(list(map(correct_value, mechanism_values)))
-        return 1 - _product
-
     # 1. The list of dictionaries should be grouped by the `MEASURE_NAME` key.
     # We assume that all custom measures with the same name also have the same
     # `COMBINABLE_TYPE` and `TIME`
     _exported_measures = []
 
     with open_database(vrtool_config.input_database_path) as _db:
-
-        # 2. We iterate over the different `MEASURE_NAME` collections.
-        _measure_result_mechanism_to_add = []
-        _measure_result_section_to_add = []
-        for _measure_unique_keys, _grouped_custom_measures in itertools.groupby(
-            custom_measures,
-            key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
-        ):
-            _measure_name = _measure_unique_keys[0]
-            _section_name = _measure_unique_keys[2]
-
-            # Create the measure and as many `CustomMeasures` as required.
-            _new_measure, _measure_created = orm.Measure.get_or_create(
-                name=_measure_name,
-                measure_type=orm.MeasureType.get_or_create(name=MeasureTypeEnum.CUSTOM)[
-                    0
-                ],
-                combinable_type=orm.CombinableType.select()
-                .where(
-                    fn.upper(orm.CombinableType.name)
-                    == str(CombinableTypeEnum.get_enum(_measure_unique_keys[1]))
-                )
-                .get(),
-            )
-            if not _measure_created:
-                logging.warning(
-                    "Found existing %s measure, custom measures will be updated based on the new entries.",
-                    _measure_name,
-                )
-
-            # Add entry to `MeasurePerSection`
-            _new_measure_per_section = orm.MeasurePerSection.create(
-                section=orm.SectionData.get(section_name=_section_name),
-                measure=_new_measure,
-            )
-
-            # Add MeasureResult
-            _new_measure_result, _ = orm.MeasureResult.get_or_create(
-                measure_per_section=_new_measure_per_section
-            )
-
-            _added_custom_measures: dict[
-                int, dict[orm.Mechanism, orm.CustomMeasure]
-            ] = defaultdict(dict)
-            for _custom_measure in _grouped_custom_measures:
-                _mechanism_found = (
-                    orm.Mechanism.select()
-                    .where(
-                        fn.upper(orm.Mechanism.name)
-                        == str(
-                            MechanismEnum.get_enum(_custom_measure["MECHANISM_NAME"])
-                        )
-                    )
-                    .get()
-                )
-                # This is not the most efficient way, but it guarantees previous custom measures
-                # remain in place.
-                _new_custom_measure, _ = orm.CustomMeasure.get_or_create(
-                    measure=_new_measure,
-                    mechanism=_mechanism_found,
-                    cost=_custom_measure["COST"],
-                    beta=_custom_measure["BETA"],
-                    year=_custom_measure["TIME"],
-                )
-                _exported_measures.append(_new_custom_measure)
-                _added_custom_measures[_new_custom_measure.year][
-                    _mechanism_found
-                ] = _new_custom_measure
-
-            # 3. Once the `Measure` and the `CustomMeasure` entries for the `MEASURE_NAME`
-            # are created, we proceed to create the related entries in `MEASURE_RESULT`.
-
-            # Add `MeasureResultMechanism`` for custom measures with and without defined mechanism.
-            for (
-                _year,
-                _added_cm_mechanism_year_beta,
-            ) in _added_custom_measures.items():
-                _section_mechanism_betas = []
-                _section_mechanism_costs = []
-                for (
-                    _mechanism_per_section
-                ) in _new_measure_per_section.section.mechanisms_per_section:
-
-                    def get_beta_cost() -> tuple[float, float]:
-                        if (
-                            _mechanism_per_section.mechanism
-                            in _added_cm_mechanism_year_beta
-                        ):
-                            _custom_measure = _added_cm_mechanism_year_beta[
-                                _mechanism_per_section.mechanism
-                            ]
-                            return _custom_measure.beta, _custom_measure.cost
-                        _assessment_result = (
-                            _mechanism_per_section.assessment_mechanism_results.where(
-                                orm.AssessmentMechanismResult.time == _year
-                            ).get()
-                        )
-                        return _assessment_result.beta, 0
-
-                    _mechanism_beta, _mechanism_cost = get_beta_cost()
-                    _section_mechanism_betas.append(_mechanism_beta)
-                    _section_mechanism_costs.append(_mechanism_cost)
-                    _measure_result_mechanism_to_add.append(
-                        dict(
-                            measure_result=_new_measure_result,
-                            mechanism_per_section=_mechanism_per_section,
-                            time=_year,
-                            beta=_mechanism_beta,
-                        )
-                    )
-
-                # Add `MeasureResultSection` data.
-                _measure_result_section_to_add.append(
-                    dict(
-                        measure_result=_new_measure_result,
-                        time=_year,
-                        beta=combine_custom_mechanism_values_to_section(
-                            _section_mechanism_betas
-                        ),
-                        # Costs should be identical
-                        cost=_section_mechanism_costs[0],
-                    )
-                )
-
-        # Insert bulk (more efficient) the dictionaries we just created.
-        orm.MeasureResultSection.insert_many(_measure_result_section_to_add).execute(
-            _db
+        _exported_measures = DictListToCustomMeasureExporter(_db).export_dom(
+            custom_measures
         )
-        orm.MeasureResultMechanism.insert_many(
-            _measure_result_mechanism_to_add
-        ).execute(_db)
 
     # 4. Return the list of generated custom measures.
     # (This step could be replaced with returning a new dataclass type.)

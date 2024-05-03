@@ -1118,8 +1118,8 @@ class TestCustomMeasures:
                     },
                     {
                         "MEASURE_NAME": "rocky 2",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
                         "TIME": 40,
                         "COST": 1000,
@@ -1155,8 +1155,8 @@ class TestCustomMeasures:
                 [
                     {
                         "MEASURE_NAME": "rocky 2",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
                         "TIME": 25,
                         "COST": 1000,
@@ -1164,8 +1164,8 @@ class TestCustomMeasures:
                     },
                     {
                         "MEASURE_NAME": "rocky 2",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "SECTION_NAME": "01B",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
                         "TIME": 25,
                         "COST": 2000,
@@ -1203,7 +1203,7 @@ class TestCustomMeasures:
         )
 
         _expected_total_measures = len(
-            set(_cm[0][0] for _cm in _custom_measures_grouped)
+            set(_cm[0][0] + _cm[0][1] for _cm in _custom_measures_grouped)
         )
         _expected_total_custom_measures = len(
             set(map(get_custom_measure_dict_hash, custom_measure_dict_list))

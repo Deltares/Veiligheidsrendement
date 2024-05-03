@@ -1,0 +1,179 @@
+import itertools
+import logging
+from collections import defaultdict
+from operator import itemgetter
+
+from numpy import prod
+from peewee import SqliteDatabase, fn
+
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.combinable_type import CombinableType
+from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_per_section import MeasurePerSection
+from vrtool.orm.models.measure_result.measure_result import MeasureResult
+from vrtool.orm.models.measure_result.measure_result_mechanism import (
+    MeasureResultMechanism,
+)
+from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
+from vrtool.orm.models.measure_type import MeasureType
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.section_data import SectionData
+
+
+class DictListToCustomMeasureExporter(OrmExporterProtocol):
+    _db: SqliteDatabase
+
+    def __init__(self, db_context: SqliteDatabase) -> None:
+        self._db = db_context
+
+    def _combine_custom_mechanism_values_to_section(
+        self,
+        mechanism_values: list[float],
+    ) -> float:
+        """
+        This method belongs in a "future" dataclass representing the
+        CsvCustomMeasure FOM
+        """
+
+        def correct_value(value: float) -> float:
+            return 1 - value
+
+        _product = prod(list(map(correct_value, mechanism_values)))
+        return 1 - _product
+
+    def export_dom(self, dom_model: list[dict]) -> list[CustomMeasure]:
+        _measure_result_mechanism_to_add = []
+        _measure_result_section_to_add = []
+        _exported_measures = []
+        for _measure_unique_keys, _grouped_custom_measures in itertools.groupby(
+            dom_model,
+            key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
+        ):
+            _measure_name = _measure_unique_keys[0]
+            _section_name = _measure_unique_keys[2]
+
+            # Create the measure and as many `CustomMeasures` as required.
+            _new_measure, _measure_created = Measure.get_or_create(
+                name=_measure_name,
+                measure_type=MeasureType.get_or_create(name=MeasureTypeEnum.CUSTOM)[0],
+                combinable_type=CombinableType.select()
+                .where(
+                    fn.upper(CombinableType.name)
+                    == str(CombinableTypeEnum.get_enum(_measure_unique_keys[1]))
+                )
+                .get(),
+            )
+            if not _measure_created:
+                logging.warning(
+                    "Found existing %s measure, custom measures could be updated based on the new entries.",
+                    _measure_name,
+                )
+
+            # Add entry to `MeasurePerSection`
+            _new_measure_per_section, _ = MeasurePerSection.get_or_create(
+                section=SectionData.get(section_name=_section_name),
+                measure=_new_measure,
+            )
+
+            # Add MeasureResult
+            _new_measure_result, _ = MeasureResult.get_or_create(
+                measure_per_section=_new_measure_per_section
+            )
+
+            _added_custom_measures: dict[
+                int, dict[Mechanism, CustomMeasure]
+            ] = defaultdict(dict)
+            for _custom_measure in _grouped_custom_measures:
+                _mechanism_found = (
+                    Mechanism.select()
+                    .where(
+                        fn.upper(Mechanism.name)
+                        == str(
+                            MechanismEnum.get_enum(_custom_measure["MECHANISM_NAME"])
+                        )
+                    )
+                    .get()
+                )
+                # This is not the most efficient way, but it guarantees previous custom measures
+                # remain in place.
+                _new_custom_measure, _ = CustomMeasure.get_or_create(
+                    measure=_new_measure,
+                    mechanism=_mechanism_found,
+                    cost=_custom_measure["COST"],
+                    beta=_custom_measure["BETA"],
+                    year=_custom_measure["TIME"],
+                )
+                _exported_measures.append(_new_custom_measure)
+                _added_custom_measures[_new_custom_measure.year][
+                    _mechanism_found
+                ] = _new_custom_measure
+
+            # 3. Once the `Measure` and the `CustomMeasure` entries for the `MEASURE_NAME`
+            # are created, we proceed to create the related entries in `MEASURE_RESULT`.
+
+            # Add `MeasureResultMechanism`` for custom measures with and without defined mechanism.
+            for (
+                _year,
+                _added_cm_mechanism_year_beta,
+            ) in _added_custom_measures.items():
+                _section_mechanism_betas = []
+                _section_mechanism_costs = []
+                for (
+                    _mechanism_per_section
+                ) in _new_measure_per_section.section.mechanisms_per_section:
+
+                    def get_beta_cost() -> tuple[float, float]:
+                        if (
+                            _mechanism_per_section.mechanism
+                            in _added_cm_mechanism_year_beta
+                        ):
+                            _custom_measure = _added_cm_mechanism_year_beta[
+                                _mechanism_per_section.mechanism
+                            ]
+                            return _custom_measure.beta, _custom_measure.cost
+                        _assessment_result = (
+                            _mechanism_per_section.assessment_mechanism_results.where(
+                                AssessmentMechanismResult.time == _year
+                            ).get()
+                        )
+                        return _assessment_result.beta, 0
+
+                    _mechanism_beta, _mechanism_cost = get_beta_cost()
+                    _section_mechanism_betas.append(_mechanism_beta)
+                    _section_mechanism_costs.append(_mechanism_cost)
+                    _measure_result_mechanism_to_add.append(
+                        dict(
+                            measure_result=_new_measure_result,
+                            mechanism_per_section=_mechanism_per_section,
+                            time=_year,
+                            beta=_mechanism_beta,
+                        )
+                    )
+
+                # Add `MeasureResultSection` data.
+                _measure_result_section_to_add.append(
+                    dict(
+                        measure_result=_new_measure_result,
+                        time=_year,
+                        beta=self._combine_custom_mechanism_values_to_section(
+                            _section_mechanism_betas
+                        ),
+                        # Costs should be identical
+                        cost=_section_mechanism_costs[0],
+                    )
+                )
+
+        # Insert bulk (more efficient) the dictionaries we just created.
+        MeasureResultSection.insert_many(_measure_result_section_to_add).execute(
+            self._db
+        )
+        MeasureResultMechanism.insert_many(_measure_result_mechanism_to_add).execute(
+            self._db
+        )
+
+        return _exported_measures
