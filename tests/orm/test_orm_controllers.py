@@ -1127,6 +1127,9 @@ class TestCustomMeasures:
                     },
                 ],
                 id="Workflow 1: SAME measure, ONLY DIFFERENT time NOT present IN ASSESSMENT",
+                marks=pytest.mark.skip(
+                    reason="VRTOOL-506 this workflow has an uncertainty."
+                ),
             ),
             pytest.param(
                 [
