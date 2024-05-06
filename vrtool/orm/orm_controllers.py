@@ -470,7 +470,7 @@ def create_optimization_run_for_selected_measures(
 
     with open_database(vr_config.input_database_path) as _db:
         logging.debug(
-            "Opened connection to export optimization run {}.".format(optimization_name)
+            "Opened connection to export optimization run %s.", optimization_name
         )
         _optimization_selected_measure_ids = defaultdict(list)
         for _method_type in vr_config.design_methods:
@@ -493,7 +493,7 @@ def create_optimization_run_for_selected_measures(
                 ]
             ).execute(_db)
             # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
-            _optimization_selected_measure_ids[_optimization_run.id] = list(
+            _optimization_selected_measure_ids[_optimization_run.get_id()] = list(
                 map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
             )
 
