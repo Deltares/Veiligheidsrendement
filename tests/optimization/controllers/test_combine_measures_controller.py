@@ -118,6 +118,7 @@ class TestCombineMeasuresController:
                 ]
             ),
             dberm=0,
+            l_stab_screen=float("nan"),
         )
 
     def _create_section(self) -> SectionAsInput:

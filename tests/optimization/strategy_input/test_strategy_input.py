@@ -149,6 +149,7 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
+            l_stab_screen=float("nan"),
         )
         _sg_measure_soil_20_0 = SgMeasure(
             measure_result_id=0,
@@ -159,6 +160,7 @@ class TestStrategyInput:
             year=20,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
+            l_stab_screen=float("nan"),
         )
         # - Sg VZG year 0
         _mech_yr_coll_sg_vzg_0 = MechanismPerYearProbabilityCollection(
@@ -178,6 +180,7 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_vzg_0,
             dberm=-999,
+            l_stab_screen=float("nan"),
         )
 
         # Sections
