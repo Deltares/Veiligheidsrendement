@@ -1080,10 +1080,10 @@ class TestCustomMeasures:
                         "BETA": _beta,
                     }
                     for (_t, _beta) in zip(
-                        [0, 19, 20, 25, 50, 75, 100], np.linspace(8, 2, num=6)
+                        [0, 19, 20, 25, 50, 75, 100], np.linspace(8, 2, num=7)
                     )
                 ],
-                id="MVP, measure with all required Time",
+                id="MVP test, measure with all required Time",
             ),
             pytest.param(
                 [
@@ -1317,7 +1317,7 @@ class TestCustomMeasures:
     def test_import_result_measures_with_custom_measures(self):
         """
         This test is based on the exported database from
-        `test_add_custom_measures[Integration test]`.
+        `test_add_custom_measures[MVP test]`.
         In this test we ONLY focus on verifying whether the `CustomMeasure` and its
         `MeasureResults` are correctly imported.
         """
@@ -1333,7 +1333,7 @@ class TestCustomMeasures:
         # Controled values, we use a fix database for this test.
         # These are the id's for the meausre results for the existing
         # CustomMeasure entries.
-        _custom_measures_ids = [(1, 20), (1, 50), (2, 20)]
+        _custom_measures_ids = [(1, _year) for _year in _vrtool_config.T]
 
         # 2. Run test.
         _measures = import_results_measures(_vrtool_config, _custom_measures_ids)
