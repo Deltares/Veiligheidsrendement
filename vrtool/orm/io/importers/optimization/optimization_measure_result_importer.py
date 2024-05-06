@@ -133,10 +133,15 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
         _imported_measures = []
+        chk = self.valid_parameter(orm_model, "l_stab_screen")
+        chk2 = orm_model.get_parameter_value("l_stab_screen")
+
         if self.valid_parameter(orm_model, "dberm"):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
         if self.valid_parameter(orm_model, "dcrest"):
+            _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
+        elif not math.isnan(chk2):
             _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
 
         if not self.valid_parameter(orm_model, "dberm") and not self.valid_parameter(
