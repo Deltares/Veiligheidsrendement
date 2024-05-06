@@ -39,33 +39,6 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
         self._reliability_years = reliability_years
 
     @staticmethod
-    def get_interpolated_beta_from_assessment(
-        mechanism_per_section: MechanismPerSection, year: int
-    ) -> float:
-        """
-        Interpolates the values found in
-        `MechanismPerSection.assessment_mechanism_results`
-        with the provided year.
-
-        Required by VRTOOL-506: Custom measure with T not present in assessment.
-
-        Args:
-            mechanism_per_section (MechanismPerSection): Table with assessments.
-            year (int): Year to interpolate.
-
-        Returns:
-            float: The interpolated value.
-        """
-        _times, _betas = zip(
-            *(
-                (_amr.time, _amr.beta)
-                for _amr in mechanism_per_section.assessment_mechanism_results
-            )
-        )
-
-        return float(interp1d(_times, _betas, fill_value=("extrapolate"))(year))
-
-    @staticmethod
     def combine_custom_mechanism_values_to_section(
         mechanism_beta_values: list[float],
     ) -> float:
@@ -189,28 +162,6 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                 _mechanism_found
             ] = _new_custom_measure
         return _custom_measures, _custom_measures_by_year
-
-    def _get_beta_cost_for_custom_measure_section(
-        self,
-        mechanism_per_section: MechanismPerSection,
-        custom_mechanism_collection: dict,
-        year: int,
-    ) -> tuple[float, float]:
-        # We verify whether the mechanism exists in our collection
-        # directly instead of `dict.get(key, fallback)`
-        # otherwise it evaluates the fallback option
-        # which in our case would be an sql query (or a method),
-        # either way implying extra computational cost.
-        if mechanism_per_section.mechanism in custom_mechanism_collection:
-            _custom_measure = custom_mechanism_collection[
-                mechanism_per_section.mechanism
-            ]
-            return _custom_measure.beta, _custom_measure.cost
-
-        return (
-            self.get_interpolated_beta_from_assessment(mechanism_per_section, year),
-            0,
-        )
 
     def _get_measure_result_section_and_mechanism(
         self,
