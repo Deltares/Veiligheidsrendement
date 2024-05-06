@@ -51,6 +51,9 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.orm.io.exporters.measures.dict_to_custom_measure_exporter import (
+    DictListToCustomMeasureExporter,
+)
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
@@ -1127,9 +1130,6 @@ class TestCustomMeasures:
                     },
                 ],
                 id="Workflow 1: SAME measure, ONLY DIFFERENT time NOT present IN ASSESSMENT",
-                marks=pytest.mark.skip(
-                    reason="VRTOOL-506 this workflow has an uncertainty."
-                ),
             ),
             pytest.param(
                 [
@@ -1289,12 +1289,8 @@ class TestCustomMeasures:
                     )
                     if _cm_mechanism_beta is None:
                         # Then it gets the beta from the `AssessmentMechanismResult`.
-                        _cm_mechanism_beta = (
-                            _fm_result_mechanism.mechanism_per_section.assessment_mechanism_results.where(
-                                orm.AssessmentMechanismResult.time
-                                == _fm_result_mechanism.time
-                            )
-                            .get()
-                            .beta
+                        _cm_mechanism_beta = DictListToCustomMeasureExporter.get_interpolated_beta_from_assessment(
+                            _fm_result_mechanism.mechanism_per_section,
+                            _fm_result_mechanism.time,
                         )
                     assert _fm_result_mechanism.beta == _cm_mechanism_beta

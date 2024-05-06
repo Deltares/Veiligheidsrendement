@@ -3,14 +3,14 @@ import logging
 from collections import defaultdict
 from operator import itemgetter
 
-from numpy import prod
+from numpy import nanmax, prod
 from peewee import SqliteDatabase, fn
+from scipy.interpolate import interp1d
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.custom_measure import CustomMeasure
 from vrtool.orm.models.measure import Measure
@@ -32,6 +32,33 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
 
     def __init__(self, db_context: SqliteDatabase) -> None:
         self._db = db_context
+
+    @staticmethod
+    def get_interpolated_beta_from_assessment(
+        mechanism_per_section: MechanismPerSection, year: int
+    ) -> float:
+        """
+        Interpolates the values found in
+        `MechanismPerSection.assessment_mechanism_results`
+        with the provided year.
+
+        Required by VRTOOL-506: Custom measure with T not present in assessment.
+
+        Args:
+            mechanism_per_section (MechanismPerSection): Table with assessments.
+            year (int): Year to interpolate.
+
+        Returns:
+            float: The interpolated value.
+        """
+        _times, _betas = zip(
+            *(
+                (_amr.time, _amr.beta)
+                for _amr in mechanism_per_section.assessment_mechanism_results
+            )
+        )
+
+        return float(interp1d(_times, _betas, fill_value=("extrapolate"))(year))
 
     def _combine_custom_mechanism_values_to_section(
         self,
@@ -152,7 +179,7 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
         mechanism_per_section: MechanismPerSection,
         custom_mechanism_collection: dict,
         year: int,
-    ):
+    ) -> tuple[float, float]:
         # We verify whether the mechanism exists in our collection
         # directly instead of `dict.get(key, fallback)`
         # otherwise it evaluates the fallback option
@@ -163,10 +190,11 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                 mechanism_per_section.mechanism
             ]
             return _custom_measure.beta, _custom_measure.cost
-        _assessment_result = mechanism_per_section.assessment_mechanism_results.where(
-            AssessmentMechanismResult.time == year
-        ).get()
-        return _assessment_result.beta, 0
+
+        return (
+            self.get_interpolated_beta_from_assessment(mechanism_per_section, year),
+            float("nan"),
+        )
 
     def _get_measure_result_section_and_mechanism(
         self,
@@ -216,7 +244,9 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                         _section_mechanism_betas
                     ),
                     # Costs should be identical
-                    cost=_section_mechanism_costs[0],
+                    # Get the maximum in case the first one was extracted from
+                    # `AssessmentMechanismResult` as  `float("nan")`.
+                    cost=nanmax(_section_mechanism_costs),
                 )
             )
         return _measure_result_section_to_add, _measure_result_mechanism_to_add
