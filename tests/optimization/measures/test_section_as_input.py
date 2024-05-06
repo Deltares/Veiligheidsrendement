@@ -49,6 +49,7 @@ class MockSgMeasure(SgMeasure):
     mechanism_year_collection: None = None
     dberm: float = 0
     dcrest: float = 0
+    l_stab_screen: float = float("nan")
 
 
 class TestSectionAsInput:
