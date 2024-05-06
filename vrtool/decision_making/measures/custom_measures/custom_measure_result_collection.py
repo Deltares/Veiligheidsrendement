@@ -15,6 +15,8 @@ class CustomMeasureResultCollection(MeasureResultCollectionProtocol):
     def get_measure_output_values(
         self, split_params: bool, beta_columns: list[str]
     ) -> tuple[list, list]:
+        if not self.result_collection:
+            return ([], [])
         return zip(
             *(
                 _bt.get_measure_output_values(split_params, beta_columns)
