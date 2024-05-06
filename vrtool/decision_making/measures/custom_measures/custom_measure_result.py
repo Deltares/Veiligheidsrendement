@@ -55,6 +55,9 @@ class CustomMeasureResult(MeasureResultProtocol):
         self, split_params: bool, beta_columns: list[str]
     ) -> tuple[list, list]:
         _input_measure = self._get_input_vector(split_params)
+        if not beta_columns:
+            return _input_measure, []
+
         _output_betas = (
             concatenate(list(map(self._get_beta_values_for_mechanism, beta_columns)))
             .ravel()
