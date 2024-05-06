@@ -17,9 +17,11 @@ class CustomMeasureResultCollection(MeasureResultCollectionProtocol):
     ) -> tuple[list, list]:
         if not self.result_collection:
             return ([], [])
-        return zip(
-            *(
-                _bt.get_measure_output_values(split_params, beta_columns)
-                for _bt in self.result_collection
+        return tuple(
+            zip(
+                *(
+                    _bt.get_measure_output_values(split_params, beta_columns)
+                    for _bt in self.result_collection
+                )
             )
         )
