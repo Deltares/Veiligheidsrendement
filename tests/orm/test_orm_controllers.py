@@ -1306,6 +1306,7 @@ class TestCustomMeasures:
         # 1. Define test data.
         _test_db = self._database_ref_dir.joinpath("vrtool_input.db")
         _measures_section_id = "01A"
+        _custom_measure_cost = 50.0
         _traject = "38-1"
         _vrtool_config = VrtoolConfig(
             input_directory=_test_db.parent,
@@ -1368,6 +1369,6 @@ class TestCustomMeasures:
 
         # Verify costs
         assert all(
-            _solution_dict.MeasureData["cost"][_t] == _beta
-            for (_t, _beta) in _time_beta_tuples
+            _solution_dict.MeasureData["cost"][_t] == _custom_measure_cost
+            for (_, _t) in _custom_measures_ids
         )
