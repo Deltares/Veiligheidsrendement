@@ -29,9 +29,13 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to
 
 class DictListToCustomMeasureExporter(OrmExporterProtocol):
     _db: SqliteDatabase
+    _reliability_years: list[int]
 
-    def __init__(self, db_context: SqliteDatabase) -> None:
+    def __init__(
+        self, db_context: SqliteDatabase, reliability_years: list[int]
+    ) -> None:
         self._db = db_context
+        self._reliability_years = reliability_years
 
     def _combine_custom_mechanism_values_to_section(
         self,
