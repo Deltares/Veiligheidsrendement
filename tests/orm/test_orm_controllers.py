@@ -1026,24 +1026,6 @@ class TestCustomMeasures:
         )
 
     @pytest.fixture
-    def custom_measure_list(self) -> list[dict]:
-        # Only section `7` is available in the `for_custom_measures.db`.
-        return [
-            self._get_custom_measure_dict(
-                "ROCKS", "01A", MechanismEnum.OVERFLOW, 20, 50.00, 2.4
-            ),
-            self._get_custom_measure_dict(
-                "ROCKS", "01A", MechanismEnum.OVERFLOW, 50, 50.00, 2.4
-            ),
-            self._get_custom_measure_dict(
-                "ROCKS", "01A", MechanismEnum.PIPING, 20, 50.00, 4.2
-            ),
-            self._get_custom_measure_dict(
-                "TREES", "01A", MechanismEnum.OVERFLOW, 20, 23.12, 3.0
-            ),
-        ]
-
-    @pytest.fixture
     def editable_db_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
         _test_db = self._database_ref_dir.joinpath("without_custom_measures.db")
@@ -1335,7 +1317,7 @@ class TestCustomMeasures:
         # Controled values, we use a fix database for this test.
         # These are the id's for the meausre results for the existing
         # CustomMeasure entries.
-        _custom_measures_ids = [(1, _year) for _year in _vrtool_config.T]
+        _custom_measures_ids = [(1, 0)]
 
         # 2. Run test.
         _measures = import_results_measures(_vrtool_config, _custom_measures_ids)
@@ -1349,9 +1331,7 @@ class TestCustomMeasures:
         _solution_dict = _measures.solutions_dict[_measures_section_id]
         assert isinstance(_solution_dict, Solutions)
         assert _solution_dict.config == _vrtool_config
-
-        _computation_years = list(list(zip(*_custom_measures_ids))[1])
-        assert _solution_dict.T == _computation_years
+        assert _solution_dict.T == _vrtool_config.T
 
         # Verify dataframe
         assert isinstance(_solution_dict.MeasureData, pd.DataFrame)
@@ -1359,8 +1339,35 @@ class TestCustomMeasures:
 
         assert any(_solution_dict.mechanisms)
         assert all(
-            _computation_years
-            == list(_solution_dict.MeasureData[_mechanism.name].columns)
+            list(_solution_dict.MeasureData[_mechanism.name].columns)
+            == _vrtool_config.T
             for _mechanism in _solution_dict.mechanisms
         )
-        assert _computation_years == list(_solution_dict.MeasureData["Section"].columns)
+        assert list(_solution_dict.MeasureData["Section"].columns) == _vrtool_config.T
+
+        # We should have as many entries as tuples in `_custom_measures_ids`
+        assert len(_solution_dict.MeasureData.index) == len(_custom_measures_ids)
+
+        def verify_row_values(
+            value_collection: pd.Series, expected_value: bool
+        ) -> bool:
+            return all(
+                value_collection[_idx] == expected_value
+                for _idx in range(0, len(_custom_measures_ids))
+            )
+
+        # Verify betas
+        _overflow_mechanism = _solution_dict.MeasureData[MechanismEnum.OVERFLOW.name]
+
+        # This is the same as `test_add_custom_measures[MVP test]`
+        _time_beta_tuples = list(zip(_vrtool_config.T, np.linspace(8, 2, num=7)))
+        assert all(
+            verify_row_values(_overflow_mechanism[_t], _beta)
+            for (_t, _beta) in _time_beta_tuples
+        )
+
+        # Verify costs
+        assert all(
+            _solution_dict.MeasureData["cost"][_t] == _beta
+            for (_t, _beta) in _time_beta_tuples
+        )
