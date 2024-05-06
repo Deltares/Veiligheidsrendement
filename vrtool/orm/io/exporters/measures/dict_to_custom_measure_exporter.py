@@ -193,7 +193,7 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
 
         return (
             self.get_interpolated_beta_from_assessment(mechanism_per_section, year),
-            0,
+            float("nan"),
         )
 
     def _get_measure_result_section_and_mechanism(
@@ -244,7 +244,9 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                         _section_mechanism_betas
                     ),
                     # Costs should be identical
-                    cost=_section_mechanism_costs[0],
+                    # Get the maximum in case the first one was extracted from
+                    # `AssessmentMechanismResult` as  `float("nan")`.
+                    cost=max(_section_mechanism_costs),
                 )
             )
         return _measure_result_section_to_add, _measure_result_mechanism_to_add
