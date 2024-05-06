@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from operator import itemgetter
 
-from numpy import prod
+from numpy import nanmax, prod
 from peewee import SqliteDatabase, fn
 from scipy.interpolate import interp1d
 
@@ -246,7 +246,7 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                     # Costs should be identical
                     # Get the maximum in case the first one was extracted from
                     # `AssessmentMechanismResult` as  `float("nan")`.
-                    cost=max(_section_mechanism_costs),
+                    cost=nanmax(_section_mechanism_costs),
                 )
             )
         return _measure_result_section_to_add, _measure_result_mechanism_to_add
