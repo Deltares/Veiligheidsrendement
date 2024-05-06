@@ -1323,10 +1323,12 @@ class TestCustomMeasures:
         """
         # 1. Define test data.
         _test_db = self._database_ref_dir.joinpath("vrtool_input.db")
+        _measures_section_id = "01A"
+        _traject = "38-1"
         _vrtool_config = VrtoolConfig(
             input_directory=_test_db.parent,
             input_database_name=_test_db.name,
-            traject="38-1",
+            traject=_traject,
         )
         assert _vrtool_config.input_database_path.is_file()
 
@@ -1340,3 +1342,25 @@ class TestCustomMeasures:
 
         # 3. Verify expectations.
         assert isinstance(_measures, ResultsMeasures)
+        assert _measures.ids_to_import == _custom_measures_ids
+
+        # Verify Solutions object.
+        assert _measures_section_id in _measures.solutions_dict
+        _solution_dict = _measures.solutions_dict[_measures_section_id]
+        assert isinstance(_solution_dict, Solutions)
+        assert _solution_dict.config == _vrtool_config
+
+        _computation_years = list(list(zip(*_custom_measures_ids))[1])
+        assert _solution_dict.T == _computation_years
+
+        # Verify dataframe
+        assert isinstance(_solution_dict.MeasureData, pd.DataFrame)
+        assert all("CUSTOM" == _type for _type in _solution_dict.MeasureData["type"])
+
+        assert any(_solution_dict.mechanisms)
+        assert all(
+            _computation_years
+            == list(_solution_dict.MeasureData[_mechanism.name].columns)
+            for _mechanism in _solution_dict.mechanisms
+        )
+        assert _computation_years == list(_solution_dict.MeasureData["Section"].columns)
