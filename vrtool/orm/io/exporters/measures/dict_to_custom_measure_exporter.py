@@ -1,5 +1,6 @@
 import itertools
 import logging
+import math
 from collections import defaultdict
 from operator import itemgetter
 
@@ -230,9 +231,23 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
             for _mechanism, _measures in _mechanism_measures.items():
                 _invertedcmb[_mechanism][_year] = _measures
 
-        _mechanism_result_to_add = []
         _section_betas = defaultdict(list)
-        _section_cost = 0
+        _section_cost = next(
+            (
+                _measure.cost
+                for _mech_dict in _invertedcmb.values()
+                for _measure in _mech_dict.values()
+            ),
+            float("nan"),
+        )
+        if math.isnan(_section_cost):
+            # Cost is  supposed to be the same for all CustomMeasures
+            # with the same MeasurePerSection (only expected change in time)
+            logging.warning(
+                "No cost was found for results related to measure %s and section %s",
+                measure_per_section.measure.name,
+                measure_per_section.section.section_name,
+            )
         for (
             _mechanism_per_section
         ) in measure_per_section.section.mechanisms_per_section:
@@ -250,11 +265,6 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                 for _year, _custom_measure in sorted(
                     _invertedcmb[_mechanism_per_section.mechanism].items()
                 ):
-                    # Cost is  supposed to be the same for all CustomMeasures
-                    # with the same MeasurePerSection
-                    # (only expected change in time)
-                    _section_cost = _custom_measure.cost
-
                     # Replace the values for years that match.
                     # Because it's sorted we can simply replace the rest of the values.
                     for _assessment_year in _beta_per_year_dict.keys():
@@ -264,7 +274,7 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
             # Add values to collection.
             for _amr_time, _amr_beta in _beta_per_year_dict.items():
                 _section_betas[_amr_time].append(_amr_beta)
-                _mechanism_result_to_add.append(
+                _measure_result_mechanism_to_add.append(
                     dict(
                         measure_result=measure_result,
                         mechanism_per_section=_mechanism_per_section,

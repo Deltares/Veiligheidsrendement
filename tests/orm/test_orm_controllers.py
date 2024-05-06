@@ -1,4 +1,5 @@
 import itertools
+import math
 import shutil
 from operator import itemgetter
 from pathlib import Path
@@ -1236,7 +1237,6 @@ class TestCustomMeasures:
             assert len(orm.CustomMeasure.select()) == _expected_total_custom_measures
 
             for _keys_group, _cm_list in _custom_measures_grouped:
-                _different_times = list(set(_cm["TIME"] for _cm in _cm_list))
                 # There should only be one `MeasureResult` for each `CustomMeasure`
                 _fm_result = (
                     orm.MeasureResult.select()
@@ -1254,15 +1254,20 @@ class TestCustomMeasures:
 
                 # Verify `MeasureResultSection` entries,
                 # one per different provided `TIME`.
-                assert len(_fm_result.measure_result_section) == len(_different_times)
-                for _fm_result_section in _fm_result.measure_result_section:
-                    # Costs are the same for a given measure.
-                    _cost = next(
+                assert len(_fm_result.measure_result_section) == len(
+                    editable_db_vrtool_config.T
+                )
+                # Costs are the same for a given measure.
+                _expected_cost = next(
+                    (
                         _cm["COST"]
                         for _cm in _cm_list
-                        if _cm["TIME"] == _fm_result_section.time
-                    )
-                    assert _fm_result_section.cost == _cost
+                        if _cm["MEASURE_NAME"] == _keys_group[0]
+                    ),
+                    float("nan"),
+                )
+                for _fm_result_section in _fm_result.measure_result_section:
+                    assert _fm_result_section.cost == _expected_cost
                     assert _fm_result_section.beta > 0
 
                 # Verify `MeasureResultMechanism` entries,
@@ -1274,10 +1279,25 @@ class TestCustomMeasures:
                 )
                 assert (
                     len(_fm_result.measure_result_mechanisms)
-                    == len(_different_times) * _total_mechs
+                    == len(editable_db_vrtool_config.T) * _total_mechs
                 )
-                for _fm_result_mechanism in _fm_result.measure_result_mechanisms:
-                    _cm_mechanism_beta = next(
+                _last_beta_used = float("nan")
+                for (
+                    _fm_result_mechanism
+                ) in _fm_result.measure_result_mechanisms.order_by(
+                    orm.MeasureResultMechanism.mechanism_per_section,
+                    orm.MeasureResultMechanism.time,
+                ):
+                    if _fm_result_mechanism.time == 0:
+                        _last_beta_used = float("nan")
+
+                    # This comparison is basically how we generate data in
+                    # `_get_measure_result_section_and_mechanism`
+                    _beta_per_year_dict = {
+                        _amr.time: _amr.beta
+                        for _amr in _fm_result_mechanism.mechanism_per_section.assessment_mechanism_results
+                    }
+                    _last_beta_used = next(
                         (
                             _cm["BETA"]
                             for _cm in _cm_list
@@ -1285,12 +1305,13 @@ class TestCustomMeasures:
                             == _fm_result_mechanism.mechanism_per_section.mechanism.name.upper()
                             and _cm["TIME"] == _fm_result_mechanism.time
                         ),
-                        None,
+                        _last_beta_used,
                     )
-                    if _cm_mechanism_beta is None:
+                    if math.isnan(_last_beta_used):
                         # Then it gets the beta from the `AssessmentMechanismResult`.
-                        _cm_mechanism_beta = DictListToCustomMeasureExporter.get_interpolated_beta_from_assessment(
-                            _fm_result_mechanism.mechanism_per_section,
-                            _fm_result_mechanism.time,
+                        assert (
+                            _fm_result_mechanism.beta
+                            == _beta_per_year_dict[_fm_result_mechanism.time]
                         )
-                    assert _fm_result_mechanism.beta == _cm_mechanism_beta
+                    else:
+                        assert _fm_result_mechanism.beta == _last_beta_used
