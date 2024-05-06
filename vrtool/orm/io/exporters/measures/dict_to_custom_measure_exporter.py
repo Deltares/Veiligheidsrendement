@@ -6,7 +6,6 @@ from operator import itemgetter
 
 from numpy import prod
 from peewee import SqliteDatabase, fn
-from scipy.interpolate import interp1d
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -23,7 +22,6 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
@@ -105,7 +103,7 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
 
             (
                 _retrieved_custom_measures,
-                _custom_measures_by_year,
+                _custom_measures_by_mechanism,
             ) = self._get_custom_measures(_grouped_custom_measures, _new_measure)
             _exported_measures.extend(_retrieved_custom_measures)
 
@@ -114,7 +112,9 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                 _mr_sections,
                 _mr_mechanisms,
             ) = self._get_measure_result_section_and_mechanism(
-                _custom_measures_by_year, _new_measure_result, _new_measure_per_section
+                _custom_measures_by_mechanism,
+                _new_measure_result,
+                _new_measure_per_section,
             )
             _measure_result_section_to_add.extend(_mr_sections)
             _measure_result_mechanism_to_add.extend(_mr_mechanisms)
@@ -131,8 +131,8 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
 
     def _get_custom_measures(
         self, custom_measure_list_dict: list[dict], parent_measure: Measure
-    ) -> tuple[list[CustomMeasure], dict[int, dict[Mechanism, CustomMeasure]]]:
-        _custom_measures_by_year = defaultdict(dict)
+    ) -> tuple[list[CustomMeasure], dict[Mechanism, dict[int, CustomMeasure]]]:
+        _custom_measures_by_mechanism = defaultdict(dict)
         _custom_measures = []
         for _custom_measure in custom_measure_list_dict:
             _mechanism_found = (
@@ -158,14 +158,14 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                     parent_measure.name,
                 )
             _custom_measures.append(_new_custom_measure)
-            _custom_measures_by_year[_new_custom_measure.year][
-                _mechanism_found
+            _custom_measures_by_mechanism[_mechanism_found][
+                _new_custom_measure.year
             ] = _new_custom_measure
-        return _custom_measures, _custom_measures_by_year
+        return _custom_measures, _custom_measures_by_mechanism
 
     def _get_measure_result_section_and_mechanism(
         self,
-        custom_measures_by_year: dict[int, dict],
+        custom_measures_by_mechanism: dict[Mechanism, dict[int, CustomMeasure]],
         measure_result: MeasureResult,
         measure_per_section: MeasurePerSection,
     ) -> tuple[list[dict], list[dict]]:
@@ -176,29 +176,29 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
         _measure_result_mechanism_to_add = []
         _measure_result_section_to_add = []
 
-        # TODO: This should be the argument being given.
-        _invertedcmb = defaultdict(dict)
-        for _year, _mechanism_measures in custom_measures_by_year.items():
-            for _mechanism, _measures in _mechanism_measures.items():
-                _invertedcmb[_mechanism][_year] = _measures
+        def get_section_cost() -> float:
+            _section_cost = next(
+                (
+                    _measure.cost
+                    for _mech_dict in custom_measures_by_mechanism.values()
+                    for _measure in _mech_dict.values()
+                ),
+                float("nan"),
+            )
+            if math.isnan(_section_cost):
+                # Cost is  supposed to be the same for all CustomMeasures
+                # with the same MeasurePerSection (only expected change in time)
+                logging.warning(
+                    "No cost was found for results related to measure %s and section %s",
+                    measure_per_section.measure.name,
+                    measure_per_section.section.section_name,
+                )
+            return _section_cost
 
         _section_betas = defaultdict(list)
-        _section_cost = next(
-            (
-                _measure.cost
-                for _mech_dict in _invertedcmb.values()
-                for _measure in _mech_dict.values()
-            ),
-            float("nan"),
-        )
-        if math.isnan(_section_cost):
-            # Cost is  supposed to be the same for all CustomMeasures
-            # with the same MeasurePerSection (only expected change in time)
-            logging.warning(
-                "No cost was found for results related to measure %s and section %s",
-                measure_per_section.measure.name,
-                measure_per_section.section.section_name,
-            )
+        # Costs should be identical
+        _section_cost = get_section_cost()
+
         for (
             _mechanism_per_section
         ) in measure_per_section.section.mechanisms_per_section:
@@ -212,9 +212,11 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                 raise ValueError(
                     f"Export not possible as the assessment years ({_assessment_years_str}) do not much the provided reliability years ({_reliability_years_str})."
                 )
-            if _mechanism_per_section.mechanism in _invertedcmb.keys():
+            if _mechanism_per_section.mechanism in custom_measures_by_mechanism.keys():
                 for _year, _custom_measure in sorted(
-                    _invertedcmb[_mechanism_per_section.mechanism].items()
+                    custom_measures_by_mechanism[
+                        _mechanism_per_section.mechanism
+                    ].items()
                 ):
                     # Replace the values for years that match.
                     # Because it's sorted we can simply replace the rest of the values.
@@ -241,7 +243,6 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
                     beta=self.combine_custom_mechanism_values_to_section(
                         _section_mechanism_betas
                     ),
-                    # Costs should be identical
                     cost=_section_cost,
                 )
                 for _year, _section_mechanism_betas in _section_betas.items()
