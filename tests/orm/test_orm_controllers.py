@@ -1075,6 +1075,23 @@ class TestCustomMeasures:
                         "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "COST": 50.0,
+                        "TIME": _t,
+                        "BETA": _beta,
+                    }
+                    for (_t, _beta) in zip(
+                        [0, 19, 20, 25, 50, 75, 100], np.linspace(8, 2, num=6)
+                    )
+                ],
+                id="MVP, measure with all required Time",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
                         "TIME": 20,
                         "COST": 50.0,
                         "BETA": 2.4,
