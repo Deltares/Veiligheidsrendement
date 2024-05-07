@@ -27,6 +27,6 @@ class GenericFailureMechanismCalculator(FailureMechanismCalculatorProtocol):
             self._mechanism_input.beta_grid,
             fill_value="extrapolate",
         )
-        beta = np.float32(betat(year))
+        beta = float(betat(year))
 
-        return [beta, beta_to_pf(beta)]
+        return (beta, beta_to_pf(beta))
