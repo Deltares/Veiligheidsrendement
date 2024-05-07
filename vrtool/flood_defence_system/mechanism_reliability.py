@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -87,8 +86,8 @@ class MechanismReliability:
         self,
         mechanism: MechanismEnum,
         traject_info: DikeTrajectInfo,
-        strength: Optional[MechanismInput],
-        load: Optional[LoadInput],
+        strength: MechanismInput,
+        load: LoadInput,
     ) -> FailureMechanismCalculatorProtocol:
         _normalized_type = self.mechanism_type.lower().strip()
 
