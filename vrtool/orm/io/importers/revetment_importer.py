@@ -1,5 +1,6 @@
 import logging
 
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
     RelationGrassRevetment,
@@ -82,7 +83,7 @@ class RevetmentImporter(OrmImporterProtocol):
                 f"Actual transition level higher than maximum transition level of grass revetment relations for scenario {orm_model.scenario_name}."
             )
 
-        mechanism_input = MechanismInput("Revetment")
+        mechanism_input = MechanismInput(MechanismEnum.REVETMENT)
         mechanism_input.input["revetment_input"] = revetment_input
 
         return mechanism_input
