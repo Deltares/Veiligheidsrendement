@@ -62,11 +62,11 @@ class MechanismReliabilityCollection:
         if not load:
             raise ValueError("A {} is required.".format(LoadInput.__name__))
 
-        for i in self.Reliability.keys():
+        for i, _reliability in self.Reliability.items():
             self.Reliability[i].calculate_reliability(
-                self.Reliability[i].Input,
+                _reliability.Input,
                 load,
                 self.mechanism,
-                float(i),
+                int(i),
                 traject_info,
             )
