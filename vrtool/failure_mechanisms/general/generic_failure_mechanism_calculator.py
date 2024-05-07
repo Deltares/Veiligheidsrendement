@@ -1,5 +1,4 @@
-import numpy as np
-from scipy import interpolate
+from scipy.interpolate import interp1d
 
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
@@ -22,7 +21,7 @@ class GenericFailureMechanismCalculator(FailureMechanismCalculatorProtocol):
         self._mechanism_input = mechanism_input
 
     def calculate(self, year: int) -> tuple[float, float]:
-        betat = interpolate.interp1d(
+        betat = interp1d(
             self._mechanism_input.time_grid,
             self._mechanism_input.beta_grid,
             fill_value="extrapolate",
