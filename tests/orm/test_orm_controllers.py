@@ -1315,7 +1315,7 @@ class TestCustomMeasures:
         )
         assert _vrtool_config.input_database_path.is_file()
 
-        # Controled values, we use a fix database for this test.
+        # Controlled values, we use a fix database for this test.
         # These are the id's for the meausre results for the existing
         # CustomMeasure entries.
         _custom_measures_ids = [(1, 0)]
