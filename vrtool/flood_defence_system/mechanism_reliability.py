@@ -33,8 +33,9 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_d_stability_calcu
 
 
 class MechanismReliability:
+    Input: MechanismInput
     Pf: float
-    Beta: np.ndarray
+    Beta: float
 
     # This class contains evaluations of the reliability for a mechanism in a given year.
     def __init__(
@@ -80,7 +81,6 @@ class MechanismReliability:
         calculator = self._get_failure_mechanism_calculator(
             mechanism, traject_info, strength, load
         )
-
         self.Beta, self.Pf = calculator.calculate(year)
 
     def _get_failure_mechanism_calculator(
