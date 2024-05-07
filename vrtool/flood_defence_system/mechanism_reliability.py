@@ -74,7 +74,7 @@ class MechanismReliability:
         strength: MechanismInput,
         load: LoadInput,
         mechanism: MechanismEnum,
-        year: float,
+        year: int,
         traject_info: DikeTrajectInfo,
     ):
         calculator = self._get_failure_mechanism_calculator(
