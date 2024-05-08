@@ -295,7 +295,7 @@ def import_results_measures(
     config: VrtoolConfig, results_ids_to_import: list[tuple[int, int]]
 ) -> ResultsMeasures:
     """
-    Imports results masures from a database into a `ResultsMeasure` instance.
+    Imports results measures from a database into a `ResultsMeasure` instance.
 
     Args:
         config (VrtoolConfig): Configuration containing database path.
