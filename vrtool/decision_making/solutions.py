@@ -118,6 +118,7 @@ class Solutions:
                             _design_vars = (
                                 measure.measures[j]["dcrest"],
                                 measure.measures[j]["dberm"],
+                                -999.0,
                             )
 
                     cost = measure.measures[j]["Cost"]
