@@ -67,6 +67,7 @@ class CustomMeasure(MeasureProtocol):
                 .Input
             )
 
+            # TODO VRTOOL-505: this code doesn't work yet
             mechanism_reliability = mechanism_reliability_collection.Reliability[
                 year_to_calculate
             ]
