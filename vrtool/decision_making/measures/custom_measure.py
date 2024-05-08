@@ -1,4 +1,5 @@
 import copy
+from typing import Any
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -12,6 +13,8 @@ from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
 class CustomMeasure(MeasureProtocol):
+    measures: dict[str, Any]
+
     def evaluate_measure(
         self,
         dike_section: DikeSection,
@@ -49,40 +52,42 @@ class CustomMeasure(MeasureProtocol):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
     ) -> MechanismReliabilityCollection:
-        _mechanism_reliability_collection = MechanismReliabilityCollection(
-            mechanism, "", self.config.T, self.config.t_0, 0
+        mechanism_reliability_collection = MechanismReliabilityCollection(
+            mechanism, "DirectInput", self.config.T, self.config.t_0, 0
         )
 
-        for (
-            _year,
-            _reliability,
-        ) in _mechanism_reliability_collection.Reliability.items():
-            _reliability.Input = copy.deepcopy(
+        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
+            mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ].Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
-                .Reliability[_year]
+                .Reliability[year_to_calculate]
                 .Input
             )
 
+            mechanism_reliability = mechanism_reliability_collection.Reliability[
+                year_to_calculate
+            ]
             dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                 mechanism
             ).Reliability[
-                _year
+                year_to_calculate
             ]
             if True is False:
                 pass  # TODO: use custom measure to influence mechanism reliability
             else:
                 self._copy_results(
-                    _reliability, dike_section_mechanism_reliability
+                    mechanism_reliability, dike_section_mechanism_reliability
                 )  # No influence
 
-        _mechanism_reliability_collection.generate_LCR_profile(
+        mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
             traject_info=traject_info,
         )
 
-        return _mechanism_reliability_collection
+        return mechanism_reliability_collection
 
     def _copy_results(
         self, target: MechanismReliability, source_input: MechanismReliability
