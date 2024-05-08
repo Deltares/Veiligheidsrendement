@@ -1350,7 +1350,7 @@ class TestCustomMeasures:
 
         # Verify dataframe
         assert isinstance(_solution_dict.MeasureData, pd.DataFrame)
-        assert all("CUSTOM" == _type for _type in _solution_dict.MeasureData["type"])
+        assert all("Custom" == _type for _type in _solution_dict.MeasureData["type"])
 
         assert any(_solution_dict.mechanisms)
         assert all(
@@ -1379,7 +1379,7 @@ class TestCustomMeasures:
 
         # This is the same as `test_add_custom_measures[MVP test]`
         _time_beta_tuples = list(
-            zip(vrtool_config_for_custom_measures_db.T, np.linspace(8, 2, num=7))
+            zip(vrtool_config_for_custom_measures_db.T, np.linspace(7, 4, num=7))
         )
         assert all(
             verify_row_values(_overflow_mechanism[_t], _beta)
@@ -1441,5 +1441,5 @@ class TestCustomMeasures:
                 )
                 assert (
                     _selected_measure.measure_result.measure_per_section.measure.measure_type.name
-                    == MeasureTypeEnum.CUSTOM.name
+                    == MeasureTypeEnum.CUSTOM.get_old_name()
                 )
