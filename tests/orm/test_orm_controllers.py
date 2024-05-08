@@ -33,6 +33,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
@@ -1026,9 +1027,12 @@ class TestCustomMeasures:
         )
 
     @pytest.fixture
-    def editable_db_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
+    def vrtool_config_for_custom_measures_db(
+        self, request: pytest.FixtureRequest
+    ) -> VrtoolConfig:
         # 1. Define test data.
-        _test_db = self._database_ref_dir.joinpath("without_custom_measures.db")
+        _db_name = request.param
+        _test_db = self._database_ref_dir.joinpath(_db_name)
         _output_directory = get_clean_test_results_dir(request)
 
         # Create a copy of the database to avoid locking it
@@ -1045,8 +1049,13 @@ class TestCustomMeasures:
         )
         assert _vrtool_config.input_database_path.is_file()
 
-        yield _vrtool_config
+        return _vrtool_config
 
+    @pytest.mark.parametrize(
+        "vrtool_config_for_custom_measures_db",
+        [pytest.param("without_custom_measures.db")],
+        indirect=True,
+    )
     @pytest.mark.parametrize(
         "custom_measure_dict_list",
         [
@@ -1062,7 +1071,7 @@ class TestCustomMeasures:
                         "BETA": _beta,
                     }
                     for (_t, _beta) in zip(
-                        [0, 19, 20, 25, 50, 75, 100], np.linspace(8, 2, num=7)
+                        [0, 19, 20, 25, 50, 75, 100], np.linspace(7, 4, num=7)
                     )
                 ],
                 id="MVP test, measure with all required Time",
@@ -1182,7 +1191,7 @@ class TestCustomMeasures:
     def test_add_custom_measures(
         self,
         custom_measure_dict_list: list[dict],
-        editable_db_vrtool_config: VrtoolConfig,
+        vrtool_config_for_custom_measures_db: VrtoolConfig,
     ):
         """
         Integration test to verify adding new entries to the `orm.CustomMeasure`
@@ -1211,7 +1220,9 @@ class TestCustomMeasures:
         _expected_total_custom_measures = len(
             set(map(get_custom_measure_dict_hash, custom_measure_dict_list))
         )
-        with open_database(editable_db_vrtool_config.input_database_path) as _db:
+        with open_database(
+            vrtool_config_for_custom_measures_db.input_database_path
+        ) as _db:
             orm.MeasureResult.delete().execute(_db)
             orm.MeasureResultMechanism.delete().execute(_db)
             orm.MeasureResultSection.delete().execute(_db)
@@ -1223,13 +1234,15 @@ class TestCustomMeasures:
 
         # 2. Run test
         _added_measures = add_custom_measures(
-            editable_db_vrtool_config, custom_measure_dict_list
+            vrtool_config_for_custom_measures_db, custom_measure_dict_list
         )
 
         # 3. Verify final expectations
         assert len(_added_measures) == len(custom_measure_dict_list)
 
-        with open_database(editable_db_vrtool_config.input_database_path) as _db:
+        with open_database(
+            vrtool_config_for_custom_measures_db.input_database_path
+        ) as _db:
             # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
             # entries have been created.
             assert len(orm.Measure.select()) == _expected_total_measures
@@ -1296,7 +1309,14 @@ class TestCustomMeasures:
                     assert _fm_result_mechanism.beta == _cm_mechanism_beta
 
     @pytest.mark.slow
-    def test_import_result_measures_with_custom_measures(self):
+    @pytest.mark.parametrize(
+        "vrtool_config_for_custom_measures_db",
+        [pytest.param("vrtool_input.db")],
+        indirect=True,
+    )
+    def test_import_result_measures_with_custom_measures(
+        self, vrtool_config_for_custom_measures_db: VrtoolConfig
+    ):
         """
         This test is based on the exported database from
         `test_add_custom_measures[MVP test]`.
@@ -1304,24 +1324,18 @@ class TestCustomMeasures:
         `MeasureResults` are correctly imported.
         """
         # 1. Define test data.
-        _test_db = self._database_ref_dir.joinpath("vrtool_input.db")
         _measures_section_id = "01A"
         _custom_measure_cost = 50.0
-        _traject = "38-1"
-        _vrtool_config = VrtoolConfig(
-            input_directory=_test_db.parent,
-            input_database_name=_test_db.name,
-            traject=_traject,
-        )
-        assert _vrtool_config.input_database_path.is_file()
 
-        # Controlled values, we use a fix database for this test.
+        # Controled values, we use a fix database for this test.
         # These are the id's for the meausre results for the existing
         # CustomMeasure entries.
         _custom_measures_ids = [(1, 0)]
 
         # 2. Run test.
-        _measures = import_results_measures(_vrtool_config, _custom_measures_ids)
+        _measures = import_results_measures(
+            vrtool_config_for_custom_measures_db, _custom_measures_ids
+        )
 
         # 3. Verify expectations.
         assert isinstance(_measures, ResultsMeasures)
@@ -1331,20 +1345,23 @@ class TestCustomMeasures:
         assert _measures_section_id in _measures.solutions_dict
         _solution_dict = _measures.solutions_dict[_measures_section_id]
         assert isinstance(_solution_dict, Solutions)
-        assert _solution_dict.config == _vrtool_config
-        assert _solution_dict.T == _vrtool_config.T
+        assert _solution_dict.config == vrtool_config_for_custom_measures_db
+        assert _solution_dict.T == vrtool_config_for_custom_measures_db.T
 
         # Verify dataframe
         assert isinstance(_solution_dict.MeasureData, pd.DataFrame)
-        assert all("CUSTOM" == _type for _type in _solution_dict.MeasureData["type"])
+        assert all("Custom" == _type for _type in _solution_dict.MeasureData["type"])
 
         assert any(_solution_dict.mechanisms)
         assert all(
             list(_solution_dict.MeasureData[_mechanism.name].columns)
-            == _vrtool_config.T
+            == vrtool_config_for_custom_measures_db.T
             for _mechanism in _solution_dict.mechanisms
         )
-        assert list(_solution_dict.MeasureData["Section"].columns) == _vrtool_config.T
+        assert (
+            list(_solution_dict.MeasureData["Section"].columns)
+            == vrtool_config_for_custom_measures_db.T
+        )
 
         # We should have as many entries as tuples in `_custom_measures_ids`
         assert len(_solution_dict.MeasureData.index) == len(_custom_measures_ids)
@@ -1361,7 +1378,9 @@ class TestCustomMeasures:
         _overflow_mechanism = _solution_dict.MeasureData[MechanismEnum.OVERFLOW.name]
 
         # This is the same as `test_add_custom_measures[MVP test]`
-        _time_beta_tuples = list(zip(_vrtool_config.T, np.linspace(8, 2, num=7)))
+        _time_beta_tuples = list(
+            zip(vrtool_config_for_custom_measures_db.T, np.linspace(7, 4, num=7))
+        )
         assert all(
             verify_row_values(_overflow_mechanism[_t], _beta)
             for (_t, _beta) in _time_beta_tuples
@@ -1372,3 +1391,62 @@ class TestCustomMeasures:
             _solution_dict.MeasureData["cost"][_t] == _custom_measure_cost
             for (_, _t) in _custom_measures_ids
         )
+
+    @pytest.mark.parametrize(
+        "vrtool_config_for_custom_measures_db",
+        [pytest.param("vrtool_input.db", id="DB with Custom Measures")],
+        indirect=True,
+    )
+    @pytest.mark.slow
+    def test_run_optimization_with_custom_measures(
+        self, vrtool_config_for_custom_measures_db: VrtoolConfig
+    ):
+        """
+        This test is based on the exported database from
+        `test_add_custom_measures[MVP test]`.
+        We set therefore the known measure results as `_selected_measure_year`.
+
+        For now we only focus on making sure the optimization RUNS.
+        """
+
+        # 1. Define test data.
+        _optimization_name = "OptimizationWithCustomMeasures"
+        _selected_measure_year = [(1, 0)]
+
+        with open_database(
+            vrtool_config_for_custom_measures_db.input_database_path
+        ) as _db:
+            orm.OptimizationRun.delete().execute(_db)
+            orm.OptimizationSelectedMeasure.delete().execute(_db)
+            orm.OptimizationStep.delete().execute(_db)
+            orm.OptimizationStepResultMechanism.delete().execute(_db)
+            orm.OptimizationStepResultSection.delete().execute(_db)
+            assert any(orm.OptimizationRun.select()) is False
+            assert any(orm.OptimizationSelectedMeasure.select()) is False
+            assert any(orm.OptimizationStep.select()) is False
+            assert any(orm.OptimizationStepResultMechanism.select()) is False
+            assert any(orm.OptimizationStepResultSection.select()) is False
+
+        # 2. Run test.
+        _measure_to_run_dict = create_optimization_run_for_selected_measures(
+            vrtool_config_for_custom_measures_db,
+            _optimization_name,
+            _selected_measure_year,
+        )
+
+        # 3. Verify expectations.
+        _expected_runs = len(vrtool_config_for_custom_measures_db.design_methods)
+        assert len(_measure_to_run_dict) == _expected_runs
+
+        with open_database(vrtool_config_for_custom_measures_db.input_database_path):
+            assert len(orm.OptimizationRun.select()) == _expected_runs
+            for _opt_run in orm.OptimizationRun.select():
+                assert _opt_run.discount_rate == 0.03
+                assert len(_opt_run.optimization_run_measure_results) == 1
+                _selected_measure: orm.OptimizationSelectedMeasure = (
+                    _opt_run.optimization_run_measure_results.get()
+                )
+                assert (
+                    _selected_measure.measure_result.measure_per_section.measure.measure_type.name
+                    == MeasureTypeEnum.CUSTOM.get_old_name()
+                )

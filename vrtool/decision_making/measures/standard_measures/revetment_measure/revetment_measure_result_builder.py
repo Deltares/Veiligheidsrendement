@@ -1,4 +1,3 @@
-import math
 from math import isnan
 
 import numpy as np

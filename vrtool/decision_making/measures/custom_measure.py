@@ -1,9 +1,4 @@
 import copy
-import logging
-from typing import Optional
-
-import numpy as np
-import pandas as pd
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -69,10 +64,11 @@ class CustomMeasure(MeasureProtocol):
                 ]
             )
 
+            # TODO VRTOOL-505: this code doesn't work yet
             mechanism_reliability = mechanism_reliability_collection.Reliability[
                 year_to_calculate
             ]
-            if np.int_(year_to_calculate) >= self.parameters["year"]:
+            if int(year_to_calculate) >= self.parameters["year"]:
                 if mechanism == MechanismEnum.OVERFLOW:
                     self._configure_overflow(mechanism_reliability)
                 elif mechanism == MechanismEnum.PIPING:
