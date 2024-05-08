@@ -1,17 +1,17 @@
 [tool.poetry]
 name = "vrtool"
 version = "0.2.0"
-description = ""
+description = "veiligheidsrendement tool (core and orm)"
 authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
 maintainers = [
   "Carles S. Soriano Pérez <carles.sorianoperez@deltares.nl>",
-  "Dennis Tang <dennis.tang@deltares.nl>",
   "Edwin Spee <edwin.spee@deltares.nl>",
+  "Ardt Klapwijk <ardt.klapwijk@deltares.nl>",
   "Stephan Rikkert <stephan.rikkert@deltares.nl>",
 ]
 readme = "README.md"
 repository = "https://github.com/Deltares/veiligheidsrendement"
-packages = [{include="vrtool"},]
+documentation = "https://deltares-research.github.io/VrtoolDocumentation/"
 keywords = ["civil-engineering", "dikes", "flood-defence", "deltares"]
 classifiers = [
   'Programming Language :: Python :: 3',
@@ -24,6 +24,10 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Physics',
   'Topic :: Scientific/Engineering :: Hydrology',
 ]
+packages = [{include="vrtool"},]
+
+[tool.poetry.scripts]
+migrate_test_db = "scripts.migrate_database:migrate_test_databases"
 
 [tool.poetry.dependencies]
 python = "^3.9, <3.11"
@@ -86,6 +90,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "regenerate_test_db: tests which simply generate new database references (select with `-m \"regenerate_test_db\" --no-skip`)",
     "externals: marks tests that require of external binaries (deselect with '-m \"not externals\"')",
 ]
 

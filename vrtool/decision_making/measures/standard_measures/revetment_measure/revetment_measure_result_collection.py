@@ -20,9 +20,11 @@ class RevetmentMeasureResultCollection(MeasureResultCollectionProtocol):
     def get_measure_output_values(
         self, split_params: bool, beta_columns: list[str]
     ) -> tuple[list, list]:
-        return zip(
-            *(
-                _bt.get_measure_output_values(split_params, beta_columns)
-                for _bt in self.result_collection
+        return tuple(
+            zip(
+                *(
+                    _bt.get_measure_output_values(split_params, beta_columns)
+                    for _bt in self.result_collection
+                )
             )
         )

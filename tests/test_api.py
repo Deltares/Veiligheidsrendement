@@ -7,8 +7,8 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests import (
+    get_clean_test_results_dir,
     get_copy_of_reference_directory,
-    get_test_results_dir,
     get_vrtool_config_test_copy,
     test_data,
     test_externals,
@@ -220,12 +220,7 @@ class TestApiRunWorkflowsAcceptance:
         _test_input_directory = Path.joinpath(test_data, _test_case.model_directory)
         assert _test_input_directory.exists()
 
-        _test_results_directory = get_test_results_dir(request).joinpath(
-            _test_case.case_name
-        )
-        if _test_results_directory.exists():
-            shutil.rmtree(_test_results_directory)
-        _test_results_directory.mkdir(parents=True)
+        _test_results_directory = get_clean_test_results_dir(request)
 
         # Define the VrtoolConfig
         _test_config = VrtoolConfig()
@@ -308,7 +303,8 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.skip(reason="Only used for generating new reference databases.")
+    @pytest.mark.skip(reason="Only used for generating new optimization databases.")
+    @pytest.mark.regenerate_test_db
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases,
@@ -317,6 +313,10 @@ class TestApiRunWorkflowsAcceptance:
     def test_run_step_optimization_acceptance_test_case(
         self, valid_vrtool_config: VrtoolConfig
     ):
+        """
+        You can run this test from command line with:
+        `pytest -m "regenerate_test_db" --no-skips`
+        """
         # 1. Define test data.
         _new_optimization_name = "Basisberekening"
 
@@ -500,6 +500,21 @@ class TestApiRunWorkflowsAcceptance:
 
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
+
+    @pytest.mark.skip(reason="Only used for generating new reference databases.")
+    @pytest.mark.parametrize(
+        "valid_vrtool_config",
+        acceptance_test_cases,
+        indirect=True,
+    )
+    @pytest.mark.regenerate_test_db
+    def test_run_full_to_generate_results(self, valid_vrtool_config: VrtoolConfig):
+        """
+        This test is only meant to regenerate the references for the large test cases.
+        You can run this test from command line with:
+        `pytest -m "regenerate_test_db" --no-skips`
+        """
+        run_full(valid_vrtool_config)
 
 
 @pytest.mark.slow

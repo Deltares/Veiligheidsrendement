@@ -80,6 +80,7 @@ class MeasureImporter(OrmImporterProtocol):
         _measure = CustomMeasure()
         self._set_base_values(_measure)
         _measure.measures = {}
+        _measure.parameters["Type"] = orm_measure.measure.measure_type.name
         _measure.measures["Cost"] = orm_measure.cost
         _measure.measures["Reliability"] = orm_measure.beta
         _measure.parameters["year"] = orm_measure.year

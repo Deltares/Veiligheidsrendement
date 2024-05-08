@@ -1,6 +1,13 @@
 import itertools
 import logging
 
+from vrtool.decision_making.measures.custom_measure import CustomMeasure
+from vrtool.decision_making.measures.custom_measures.custom_measure_result import (
+    CustomMeasureResult,
+)
+from vrtool.decision_making.measures.custom_measures.custom_measure_result_collection import (
+    CustomMeasureResultCollection,
+)
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.standard_measures import (
     DiaphragmWallMeasure,
@@ -74,6 +81,20 @@ class SolutionsForMeasureResultsImporter(OrmImporterProtocol):
                 _converted_measure.combinable_type = measure.parameters["Class"]
                 _converted_measure.measure_year = measure.parameters["year"]
                 _measure_collection.result_collection.append(_converted_measure)
+            measure.measures = _measure_collection
+            return
+
+        if isinstance(measure, CustomMeasure):
+            _measure_collection = CustomMeasureResultCollection()
+            for _imported_measure in _imported_results:
+                _cm_result = CustomMeasureResult()
+                _cm_result.cost = _imported_measure["Cost"]
+                _cm_result.measure_id = _imported_measure["measure_id"]
+                _cm_result.reinforcement_type = measure.parameters["Type"]
+                _cm_result.combinable_type = measure.parameters["Class"]
+                _cm_result.measure_year = measure.parameters["year"]
+                _cm_result.section_reliability = _imported_measure["Reliability"]
+                _measure_collection.result_collection.append(_cm_result)
             measure.measures = _measure_collection
             return
 

@@ -1,14 +1,17 @@
+import itertools
 import shutil
+from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
 
 import numpy as np
 import pandas as pd
 import pytest
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, fn
 
 import vrtool.orm.models as orm
 from tests import (
+    get_clean_test_results_dir,
     get_copy_of_reference_directory,
     get_vrtool_config_test_copy,
     test_data,
@@ -29,6 +32,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     validate_measure_result_export,
 )
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
@@ -47,9 +51,13 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.orm.io.exporters.measures.dict_to_custom_measure_exporter import (
+    DictListToCustomMeasureExporter,
+)
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
+    add_custom_measures,
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
@@ -228,18 +236,20 @@ class TestOrmControllers:
     @pytest.fixture
     def database_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
         # 1. Define test data.
-        _db_name = "with_valid_data.db"
+        _test_db = test_data.joinpath("test_db", "with_valid_data.db")
 
+        _output_directory = test_results.joinpath(request.node.name)
+        if _output_directory.exists():
+            shutil.rmtree(_vrtool_config.output_directory)
+
+        # Generate a custom `VrtoolConfig`
         _vrtool_config = VrtoolConfig(
-            input_directory=(test_data / "test_db"),
-            input_database_name=_db_name,
+            input_directory=_test_db.parent,
+            input_database_name=_test_db.name,
             traject="38-1",
+            output_directory=_output_directory,
         )
         assert _vrtool_config.input_database_path.is_file()
-
-        _vrtool_config.output_directory = test_results.joinpath(request.node.name)
-        if _vrtool_config.output_directory.exists():
-            shutil.rmtree(_vrtool_config.output_directory)
 
         yield _vrtool_config
 
@@ -989,4 +999,376 @@ class TestOrmControllers:
                 and any(_imp_data.initial_assessment.probabilities)
             )
             for _imp_data in _imported_data
+        )
+
+
+class TestCustomMeasures:
+
+    _database_ref_dir = test_data.joinpath("38-1 custom measures")
+
+    def _get_custom_measure_dict(
+        self,
+        measure_name: str,
+        measure_section: str,
+        measure_mechanism: MechanismEnum,
+        measure_year: int,
+        measure_cost: float,
+        measure_beta: float,
+    ) -> dict:
+        return dict(
+            MEASURE_NAME=measure_name,
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            SECTION_NAME=measure_section,
+            MECHANISM_NAME=measure_mechanism.name,
+            TIME=measure_year,
+            COST=measure_cost,
+            BETA=measure_beta,
+        )
+
+    @pytest.fixture
+    def editable_db_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
+        # 1. Define test data.
+        _test_db = self._database_ref_dir.joinpath("without_custom_measures.db")
+        _output_directory = get_clean_test_results_dir(request)
+
+        # Create a copy of the database to avoid locking it
+        # or corrupting its data.
+        _copy_db = _output_directory.joinpath("vrtool_input.db")
+        shutil.copyfile(_test_db, _copy_db)
+
+        # Generate a custom `VrtoolConfig`
+        _vrtool_config = VrtoolConfig(
+            input_directory=_copy_db.parent,
+            input_database_name=_copy_db.name,
+            traject="38-1",
+            output_directory=_output_directory,
+        )
+        assert _vrtool_config.input_database_path.is_file()
+
+        yield _vrtool_config
+
+    @pytest.mark.parametrize(
+        "custom_measure_dict_list",
+        [
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "COST": 50.0,
+                        "TIME": _t,
+                        "BETA": _beta,
+                    }
+                    for (_t, _beta) in zip(
+                        [0, 19, 20, 25, 50, 75, 100], np.linspace(8, 2, num=7)
+                    )
+                ],
+                id="MVP test, measure with all required Time",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 20,
+                        "COST": 50.0,
+                        "BETA": 2.4,
+                    },
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 50,
+                        "COST": 50.0,
+                        "BETA": 2.4,
+                    },
+                    {
+                        "MEASURE_NAME": "ROCKS",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.PIPING.name,
+                        "TIME": 20,
+                        "COST": 50.0,
+                        "BETA": 4.2,
+                    },
+                    {
+                        "MEASURE_NAME": "TREES",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 20,
+                        "COST": 23.12,
+                        "BETA": 3.0,
+                    },
+                ],
+                id="Integration test",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 20,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 40,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                ],
+                id="Workflow 1: SAME measure, ONLY DIFFERENT time NOT present IN ASSESSMENT",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01B",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                ],
+                id="Workflow 2a: SAME measure, ONLY DIFFERENT section",
+            ),
+            pytest.param(
+                [
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01A",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 1000,
+                        "BETA": 6.6,
+                    },
+                    {
+                        "MEASURE_NAME": "rocky 2",
+                        "SECTION_NAME": "01B",
+                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
+                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "TIME": 25,
+                        "COST": 2000,
+                        "BETA": 5.0,
+                    },
+                ],
+                id="Workflow 2b: SAME measure, DIFFERENT section, cost and beta",
+            ),
+        ],
+    )
+    def test_add_custom_measures(
+        self,
+        custom_measure_dict_list: list[dict],
+        editable_db_vrtool_config: VrtoolConfig,
+    ):
+        """
+        Integration test to verify adding new entries to the `orm.CustomMeasure`
+        and related tables under different workflows.
+        """
+        # Auxiliar methods for validations.
+        def get_custom_measure_dict_hash(cm_dict: dict) -> str:
+            # Useful to compare uniqueness of a dictionary.
+            _dummy_dict = dict() | cm_dict
+            # The only key that does not need to be the same is the section name.
+            _dummy_dict.pop("SECTION_NAME")
+            return str(_dummy_dict)
+
+        # 1. Define initial expectations.
+        _custom_measures_grouped = list(
+            (key, list(group))
+            for key, group in itertools.groupby(
+                custom_measure_dict_list,
+                key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
+            )
+        )
+
+        _expected_total_measures = len(
+            set(_cm[0][0] + _cm[0][1] for _cm in _custom_measures_grouped)
+        )
+        _expected_total_custom_measures = len(
+            set(map(get_custom_measure_dict_hash, custom_measure_dict_list))
+        )
+        with open_database(editable_db_vrtool_config.input_database_path) as _db:
+            orm.MeasureResult.delete().execute(_db)
+            orm.MeasureResultMechanism.delete().execute(_db)
+            orm.MeasureResultSection.delete().execute(_db)
+            assert any(orm.MeasureResult.select()) is False
+            assert any(orm.MeasureResultMechanism.select()) is False
+            assert any(orm.MeasureResultSection.select()) is False
+            _expected_total_measures += len(orm.Measure.select())
+            _expected_total_custom_measures += len(orm.CustomMeasure.select())
+
+        # 2. Run test
+        _added_measures = add_custom_measures(
+            editable_db_vrtool_config, custom_measure_dict_list
+        )
+
+        # 3. Verify final expectations
+        assert len(_added_measures) == len(custom_measure_dict_list)
+
+        with open_database(editable_db_vrtool_config.input_database_path) as _db:
+            # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
+            # entries have been created.
+            assert len(orm.Measure.select()) == _expected_total_measures
+            assert len(orm.CustomMeasure.select()) == _expected_total_custom_measures
+
+            for _keys_group, _cm_list in _custom_measures_grouped:
+                _different_times = list(set(_cm["TIME"] for _cm in _cm_list))
+                # There should only be one `MeasureResult` for each `CustomMeasure`
+                _fm_result = (
+                    orm.MeasureResult.select()
+                    .join_from(orm.MeasureResult, orm.MeasurePerSection)
+                    .join_from(orm.MeasurePerSection, orm.SectionData)
+                    .join_from(orm.MeasurePerSection, orm.Measure)
+                    .join_from(orm.Measure, orm.CombinableType)
+                    .where(
+                        (orm.Measure.name == _keys_group[0])
+                        & (fn.Upper(orm.CombinableType.name) == _keys_group[1])
+                        & (fn.Upper(orm.SectionData.section_name) == _keys_group[2])
+                    )
+                ).get()
+                assert isinstance(_fm_result, orm.MeasureResult)
+
+                # Verify `MeasureResultSection` entries,
+                # one per different provided `TIME`.
+                assert len(_fm_result.measure_result_section) == len(_different_times)
+                for _fm_result_section in _fm_result.measure_result_section:
+                    # Costs are the same for a given measure.
+                    _cost = next(
+                        _cm["COST"]
+                        for _cm in _cm_list
+                        if _cm["TIME"] == _fm_result_section.time
+                    )
+                    assert _fm_result_section.cost == _cost
+                    assert _fm_result_section.beta > 0
+
+                # Verify `MeasureResultMechanism` entries,
+                # one per different provided `TIME` and mechanisms in `MechanismPerSection`.
+                _total_mechs = len(
+                    orm.MechanismPerSection.select()
+                    .join_from(orm.MechanismPerSection, orm.SectionData)
+                    .where(fn.Upper(orm.SectionData.section_name) == _keys_group[2])
+                )
+                assert (
+                    len(_fm_result.measure_result_mechanisms)
+                    == len(_different_times) * _total_mechs
+                )
+                for _fm_result_mechanism in _fm_result.measure_result_mechanisms:
+                    _cm_mechanism_beta = next(
+                        (
+                            _cm["BETA"]
+                            for _cm in _cm_list
+                            if _cm["MECHANISM_NAME"]
+                            == _fm_result_mechanism.mechanism_per_section.mechanism.name.upper()
+                            and _cm["TIME"] == _fm_result_mechanism.time
+                        ),
+                        None,
+                    )
+                    if _cm_mechanism_beta is None:
+                        # Then it gets the beta from the `AssessmentMechanismResult`.
+                        _cm_mechanism_beta = DictListToCustomMeasureExporter.get_interpolated_beta_from_assessment(
+                            _fm_result_mechanism.mechanism_per_section,
+                            _fm_result_mechanism.time,
+                        )
+                    assert _fm_result_mechanism.beta == _cm_mechanism_beta
+
+    @pytest.mark.slow
+    def test_import_result_measures_with_custom_measures(self):
+        """
+        This test is based on the exported database from
+        `test_add_custom_measures[MVP test]`.
+        In this test we ONLY focus on verifying whether the `CustomMeasure` and its
+        `MeasureResults` are correctly imported.
+        """
+        # 1. Define test data.
+        _test_db = self._database_ref_dir.joinpath("vrtool_input.db")
+        _measures_section_id = "01A"
+        _custom_measure_cost = 50.0
+        _traject = "38-1"
+        _vrtool_config = VrtoolConfig(
+            input_directory=_test_db.parent,
+            input_database_name=_test_db.name,
+            traject=_traject,
+        )
+        assert _vrtool_config.input_database_path.is_file()
+
+        # Controlled values, we use a fix database for this test.
+        # These are the id's for the meausre results for the existing
+        # CustomMeasure entries.
+        _custom_measures_ids = [(1, 0)]
+
+        # 2. Run test.
+        _measures = import_results_measures(_vrtool_config, _custom_measures_ids)
+
+        # 3. Verify expectations.
+        assert isinstance(_measures, ResultsMeasures)
+        assert _measures.ids_to_import == _custom_measures_ids
+
+        # Verify Solutions object.
+        assert _measures_section_id in _measures.solutions_dict
+        _solution_dict = _measures.solutions_dict[_measures_section_id]
+        assert isinstance(_solution_dict, Solutions)
+        assert _solution_dict.config == _vrtool_config
+        assert _solution_dict.T == _vrtool_config.T
+
+        # Verify dataframe
+        assert isinstance(_solution_dict.MeasureData, pd.DataFrame)
+        assert all("CUSTOM" == _type for _type in _solution_dict.MeasureData["type"])
+
+        assert any(_solution_dict.mechanisms)
+        assert all(
+            list(_solution_dict.MeasureData[_mechanism.name].columns)
+            == _vrtool_config.T
+            for _mechanism in _solution_dict.mechanisms
+        )
+        assert list(_solution_dict.MeasureData["Section"].columns) == _vrtool_config.T
+
+        # We should have as many entries as tuples in `_custom_measures_ids`
+        assert len(_solution_dict.MeasureData.index) == len(_custom_measures_ids)
+
+        def verify_row_values(
+            value_collection: pd.Series, expected_value: bool
+        ) -> bool:
+            return all(
+                value_collection[_idx] == expected_value
+                for _idx in range(0, len(_custom_measures_ids))
+            )
+
+        # Verify betas
+        _overflow_mechanism = _solution_dict.MeasureData[MechanismEnum.OVERFLOW.name]
+
+        # This is the same as `test_add_custom_measures[MVP test]`
+        _time_beta_tuples = list(zip(_vrtool_config.T, np.linspace(8, 2, num=7)))
+        assert all(
+            verify_row_values(_overflow_mechanism[_t], _beta)
+            for (_t, _beta) in _time_beta_tuples
+        )
+
+        # Verify costs
+        assert all(
+            _solution_dict.MeasureData["cost"][_t] == _custom_measure_cost
+            for (_, _t) in _custom_measures_ids
         )
