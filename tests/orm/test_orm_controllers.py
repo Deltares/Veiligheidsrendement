@@ -1413,12 +1413,14 @@ class TestCustomMeasures:
         _optimization_name = "OptimizationWithCustomMeasures"
         _selected_measure_year = [(1, 0)]
 
-        with open_database(vrtool_config_for_custom_measures_db.input_database_path):
-            orm.OptimizationRun.truncate_table(cascade=True) # TODO: why does cascading not work?
-            orm.OptimizationSelectedMeasure.truncate_table()
-            orm.OptimizationStep.truncate_table()
-            orm.OptimizationStepResultMechanism.truncate_table()
-            orm.OptimizationStepResultSection.truncate_table()
+        with open_database(
+            vrtool_config_for_custom_measures_db.input_database_path
+        ) as _db:
+            orm.OptimizationRun.delete().execute(_db)
+            orm.OptimizationSelectedMeasure.delete().execute(_db)
+            orm.OptimizationStep.delete().execute(_db)
+            orm.OptimizationStepResultMechanism.delete().execute(_db)
+            orm.OptimizationStepResultSection.delete().execute(_db)
             assert any(orm.OptimizationRun.select()) is False
             assert any(orm.OptimizationSelectedMeasure.select()) is False
             assert any(orm.OptimizationStep.select()) is False
