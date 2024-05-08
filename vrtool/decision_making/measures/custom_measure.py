@@ -49,66 +49,42 @@ class CustomMeasure(MeasureProtocol):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
     ) -> MechanismReliabilityCollection:
-        mechanism_reliability_collection = MechanismReliabilityCollection(
+        _mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism, "", self.config.T, self.config.t_0, 0
         )
 
-        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ] = copy.deepcopy(
+        for (
+            _year,
+            _reliability,
+        ) in _mechanism_reliability_collection.Reliability.items():
+            _reliability.Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
-                ).Reliability[
-                    year_to_calculate
-                ]
+                )
+                .Reliability[_year]
+                .Input
             )
 
-            # TODO VRTOOL-505: this code doesn't work yet
-            mechanism_reliability = mechanism_reliability_collection.Reliability[
-                year_to_calculate
+            dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
+                mechanism
+            ).Reliability[
+                _year
             ]
-            if int(year_to_calculate) >= self.parameters["year"]:
-                if mechanism == MechanismEnum.OVERFLOW:
-                    self._configure_overflow(mechanism_reliability)
-                elif mechanism == MechanismEnum.PIPING:
-                    self._configure_piping(mechanism_reliability)
-                else:
-                    self._configure_other(mechanism_reliability, mechanism)
+            if True is False:
+                pass  # TODO: use custom measure to influence mechanism reliability
+            else:
+                self._copy_results(
+                    _reliability, dike_section_mechanism_reliability
+                )  # No influence
 
-        mechanism_reliability_collection.generate_LCR_profile(
+        _mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
             traject_info=traject_info,
         )
 
-        return mechanism_reliability_collection
+        return _mechanism_reliability_collection
 
-    def _configure_overflow(self, mechanism_reliability: MechanismReliability) -> None:
-        if self.parameters["h_crest_new"] != None:
-            # type = simple
-            mechanism_reliability.Input.input["h_crest"] = self.parameters[
-                "h_crest_new"
-            ]
-
-        # change crest
-
-    def _configure_piping(self, mechanism_reliability: MechanismReliability) -> None:
-        mechanism_reliability.Input.input["Lvoor"] += self.parameters["L_added"].values
-        # change Lvoor
-
-    def _configure_other(
-        self, mechanism_reliability: MechanismReliability, mechanism: MechanismEnum
+    def _copy_results(
+        self, target: MechanismReliability, source_input: MechanismReliability
     ) -> None:
-        # Direct input: remove existing inputs and replace with beta
-        mechanism_reliability.mechanism_type = "DirectInput"
-        mechanism_reliability.Input.input = {}
-        mechanism_reliability.Input.input["beta"] = {}
-
-        for _reliability_input in self.reliability_data[mechanism.name]:
-            # only read non-nan values:
-            if not np.isnan(
-                self.reliability_data[mechanism.name, _reliability_input].values[0]
-            ):
-                mechanism_reliability.Input.input["beta"][
-                    _reliability_input - self.t_0
-                ] = self.reliability_data[mechanism.name, _reliability_input].values[0]
+        target.Input = copy.deepcopy(source_input.Input)
