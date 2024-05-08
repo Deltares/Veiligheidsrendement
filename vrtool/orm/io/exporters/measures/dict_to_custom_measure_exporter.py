@@ -89,7 +89,9 @@ class DictListToCustomMeasureExporter(OrmExporterProtocol):
             # Create the measure and as many `CustomMeasures` as required.
             _new_measure, _measure_created = Measure.get_or_create(
                 name=_measure_name,
-                measure_type=MeasureType.get_or_create(name=MeasureTypeEnum.CUSTOM)[0],
+                measure_type=MeasureType.get_or_create(
+                    name=MeasureTypeEnum.CUSTOM.get_old_name()
+                )[0],
                 combinable_type=CombinableType.select()
                 .where(
                     fn.upper(CombinableType.name)
