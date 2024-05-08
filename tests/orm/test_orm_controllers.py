@@ -1071,7 +1071,7 @@ class TestCustomMeasures:
                         "BETA": _beta,
                     }
                     for (_t, _beta) in zip(
-                        [0, 19, 20, 25, 50, 75, 100], np.linspace(8, 2, num=7)
+                        [0, 19, 20, 25, 50, 75, 100], np.linspace(7, 4, num=7)
                     )
                 ],
                 id="MVP test, measure with all required Time",
