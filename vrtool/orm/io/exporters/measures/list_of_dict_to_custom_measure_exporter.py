@@ -3,15 +3,15 @@ import logging
 from collections import defaultdict
 from operator import itemgetter
 
-from numpy import nanmax, prod
 from peewee import SqliteDatabase, fn
-from scipy.interpolate import interp1d
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
+    CustomMeasureTimeBetaCalculator,
+)
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
-from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.custom_measure import CustomMeasure
 from vrtool.orm.models.measure import Measure
@@ -23,9 +23,7 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
 class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
@@ -37,37 +35,6 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 f"Database context ({SqliteDatabase.__name__}) required for export."
             )
         self._db = db_context
-
-    @staticmethod
-    def get_interpolated_beta_for_custom_measure(
-        custom_values: list[tuple[int, float]], computation_periods: list[int]
-    ) -> dict[int, float]:
-        if len(custom_values) == 1:
-            # If only one value is provided (0), then the rest are constant already
-            return {_t: custom_values[0][1] for _t in computation_periods}
-
-        _times, _betas = zip(*custom_values)
-        _interpolate_function = interp1d(
-            _times, _betas, fill_value=custom_values[-1][1]
-        )
-        return {
-            _year: float(_interpolate_function(_year)) for _year in computation_periods
-        }
-
-    def _combine_custom_mechanism_values_to_section(
-        self,
-        mechanism_beta_values: list[float],
-    ) -> float:
-        """
-        This method belongs in a "future" dataclass representing the
-        CsvCustomMeasure File-Object-Model
-        """
-
-        def exceedance_probability_swap(value: float) -> float:
-            return 1 - beta_to_pf(value)
-
-        _product = prod(list(map(exceedance_probability_swap, mechanism_beta_values)))
-        return pf_to_beta(1 - _product)
 
     def _get_grouped_dictionaries_by_measure(
         self, custom_measures: list[dict]
@@ -134,20 +101,15 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 measure_per_section=_new_measure_per_section
             )
 
-            (_retrieved_custom_measures) = self._get_custom_measures(
+            _retrieved_custom_measures = self._get_custom_measures(
                 _grouped_custom_measures, _new_measure
             )
             _exported_measures.extend(_retrieved_custom_measures)
 
-            # Add the related entries in `MEASURE_RESULT`.
-            (
-                _mr_sections,
-                _mr_mechanisms,
-            ) = self._get_measure_result_section_and_mechanism(
-                _retrieved_custom_measures,
-                _new_measure_result,
-                _new_measure_per_section,
-            )
+            # Calculate the related entries in `MEASURE_RESULT`.
+            (_mr_sections, _mr_mechanisms,) = CustomMeasureTimeBetaCalculator(
+                _new_measure_per_section, _retrieved_custom_measures
+            ).calculate(_new_measure_result)
             _measure_result_section_to_add.extend(_mr_sections)
             _measure_result_mechanism_to_add.extend(_mr_mechanisms)
 
@@ -190,113 +152,3 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 )
             _custom_measures.append(_new_custom_measure)
         return _custom_measures
-
-    def _get_beta_cost_for_custom_measure_section(
-        self,
-        mechanism_per_section: MechanismPerSection,
-        custom_mechanism_collection: dict,
-        year: int,
-    ) -> tuple[float, float]:
-        # We verify whether the mechanism exists in our collection
-        # directly instead of `dict.get(key, fallback)`
-        # otherwise it evaluates the fallback option
-        # which in our case would be an sql query (or a method),
-        # either way implying extra computational cost.
-        if mechanism_per_section.mechanism in custom_mechanism_collection:
-            _custom_measure = custom_mechanism_collection[
-                mechanism_per_section.mechanism
-            ]
-            return _custom_measure.beta, _custom_measure.cost
-
-        return (
-            self.get_interpolated_beta_from_assessment(mechanism_per_section, year),
-            float("nan"),
-        )
-
-    def _get_mechanisms_interpolated_betas(
-        self,
-        custom_measures: list[CustomMeasure],
-        measure_per_section: MeasurePerSection,
-    ) -> dict[Mechanism, dict[int, float]]:
-        _custom_mechanism_betas = dict()
-        for _mechanism, _custom_measures_group in itertools.groupby(
-            custom_measures, key=lambda x: x.mechanism
-        ):
-            _time_betas = [(_cm.year, _cm.beta) for _cm in _custom_measures_group]
-            _mechanism_per_section = (
-                measure_per_section.section.mechanisms_per_section.where(
-                    MechanismPerSection.mechanism == _mechanism
-                ).get()
-            )
-            _available_times = list(
-                sorted(
-                    _amr.time
-                    for _amr in _mechanism_per_section.assessment_mechanism_results.select(
-                        AssessmentMechanismResult.time
-                    ).distinct()
-                )
-            )
-            _interpolated_betas_dict = self.get_interpolated_beta_for_custom_measure(
-                _time_betas, _available_times
-            )
-            _custom_mechanism_betas[_mechanism] = _interpolated_betas_dict
-        return _custom_mechanism_betas
-
-    def _get_measure_result_section_and_mechanism(
-        self,
-        custom_measures: list[CustomMeasure],
-        measure_result: MeasureResult,
-        measure_per_section: MeasurePerSection,
-    ) -> tuple[list[dict], list[dict]]:
-        """
-        - Add `MeasureResultMechanism` for custom measures with and without defined mechanism.
-        - Add the `MeasureResultSection` definition with all known data per `time`.
-        """
-        _measure_result_mechanism_to_add = []
-        _measure_result_section_to_add = []
-        _custom_mechanism_betas = self._get_mechanisms_interpolated_betas(
-            custom_measures, measure_per_section
-        )
-        _cost = next((_cm for _cm in custom_measures), float("nan"))
-        for (
-            _mechanism_per_section
-        ) in measure_per_section.section.mechanisms_per_section:
-            _fallback_value = []
-            if _mechanism_per_section.mechanism not in _custom_mechanism_betas:
-                _fallback_value = {
-                    _amr.time: _amr.beta
-                    for _amr in _mechanism_per_section.assessment_mechanism_results
-                }
-            _measure_result_mechanism_to_add.extend(
-                [
-                    dict(
-                        measure_result=measure_result,
-                        mechanism_per_section=_mechanism_per_section,
-                        time=_cm_year,
-                        beta=_cm_beta,
-                    )
-                    for _cm_year, _cm_beta in _custom_mechanism_betas.get(
-                        _mechanism_per_section.mechanism, _fallback_value
-                    ).items()
-                ]
-            )
-
-        # Add `MeasureResultSection` data.
-        for _year, _mrm_by_year in itertools.groupby(
-            sorted(_measure_result_mechanism_to_add, key=lambda x: x["time"]),
-            key=lambda x: x["time"],
-        ):
-            _measure_result_section_to_add.append(
-                dict(
-                    measure_result=measure_result,
-                    time=_year,
-                    beta=self._combine_custom_mechanism_values_to_section(
-                        [_mrm["beta"] for _mrm in _mrm_by_year]
-                    ),
-                    # Costs should be identical
-                    # Get the maximum in case the first one was extracted from
-                    # `AssessmentMechanismResult` as  `float("nan")`.
-                    cost=_cost,
-                )
-            )
-        return _measure_result_section_to_add, _measure_result_mechanism_to_add
