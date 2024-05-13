@@ -52,7 +52,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.orm.io.exporters.measures.dict_to_custom_measure_exporter import (
+from vrtool.orm.io.exporters.measures.dict_list_to_custom_measure_exporter import (
     DictListToCustomMeasureExporter,
 )
 from vrtool.orm.models.measure_result import MeasureResult
