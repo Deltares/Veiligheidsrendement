@@ -16,7 +16,7 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
-from vrtool.orm.io.exporters.measures.ListOfDictToCustomMeasureExporter import (
+from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
     ListOfDictToCustomMeasureExporter,
 )
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
