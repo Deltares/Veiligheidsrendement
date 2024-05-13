@@ -25,9 +25,6 @@ from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter
     DikeSectionReliabilityExporter,
 )
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer import (
-    SolutionsForMeasureResultsImporter,
-)
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
     OptimizationSectionAsInputImporter,
