@@ -1,5 +1,6 @@
 from typing import Type
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures import (
     CustomMeasure,
@@ -76,29 +77,6 @@ class MeasureImporter(OrmImporterProtocol):
 
         return _measure
 
-    def _import_custom_measure(self, orm_measure: OrmCustomMeasure) -> CustomMeasure:
-        """
-        Note this parses only the first custom measure record of a measure,
-        while a measure can have multiple custom measure records that form a logical custom measure.
-        """
-
-        _measure = CustomMeasure()
-        self._set_base_values(_measure)
-        _measure.measures = {}
-        _measure.parameters["Type"] = orm_measure.measure.measure_type.name
-        _measure.measures["Cost"] = orm_measure.cost
-        _measure.measures["Reliability"] = orm_measure.beta
-        _measure.parameters["year"] = orm_measure.year
-
-        for _measure_parameter in orm_measure.custom_parameters:
-            _measure.parameters[_measure_parameter.parameter] = _measure_parameter.value
-
-        _measure.parameters["Class"] = orm_measure.measure.combinable_type.name
-        _measure.parameters["Name"] = orm_measure.measure.name
-        _measure.parameters["ID"] = orm_measure.get_id()
-
-        return _measure
-
     def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureProtocol:
         _mapping_types = {
             "soil reinforcement": SoilReinforcementMeasure,
@@ -127,7 +105,9 @@ class MeasureImporter(OrmImporterProtocol):
         if not orm_model:
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
-        _measure_type = orm_model.measure_type.name.lower()
-        if _measure_type == "custom":
-            return self._import_custom_measure(orm_model.custom_measures.select().get())
+        _measure_type = orm_model.measure_type.name
+        if _measure_type == MeasureTypeEnum.CUSTOM.get_old_name():
+            raise NotImplementedError(
+                "Custom measures are not supported by this importer."
+            )
         return self._import_standard_measure(orm_model.standard_measure.select().get())

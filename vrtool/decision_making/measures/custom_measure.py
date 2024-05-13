@@ -1,3 +1,5 @@
+import logging
+
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -14,3 +16,4 @@ class CustomMeasure(MeasureProtocol):
         As for a custom measure the measure results are already created during import,
         this method will not do anything.
         """
+        logging.warning("Custom measures don't need to be evaluated.")
