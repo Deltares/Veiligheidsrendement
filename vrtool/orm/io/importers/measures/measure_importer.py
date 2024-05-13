@@ -77,6 +77,11 @@ class MeasureImporter(OrmImporterProtocol):
         return _measure
 
     def _import_custom_measure(self, orm_measure: OrmCustomMeasure) -> CustomMeasure:
+        """
+        Note this parses only the first custom measure record of a measure,
+        while a measure can have multiple custom measure records that form a logical custom measure.
+        """
+
         _measure = CustomMeasure()
         self._set_base_values(_measure)
         _measure.measures = {}
