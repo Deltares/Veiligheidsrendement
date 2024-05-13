@@ -71,7 +71,10 @@ class CustomMeasureTimeBetaCalculator:
 
         _times, _betas = zip(*custom_values)
         _interpolate_function = interp1d(
-            _times, _betas, fill_value=custom_values[-1][1]
+            _times,
+            _betas,
+            fill_value=(custom_values[0][1], custom_values[-1][1]),
+            bounds_error=False,
         )
         return {
             _year: float(_interpolate_function(_year)) for _year in computation_periods

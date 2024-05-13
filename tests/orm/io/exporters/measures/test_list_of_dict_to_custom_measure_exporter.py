@@ -176,3 +176,28 @@ class TestListOfDictToCustomMeasureExporter:
                         f"No MeasureResultMechanism exported for t = {_t_period}"
                     )
                 assert _found_result.beta == _expected_beta
+
+    def test_given_multiple_custom_measures_the_last_is_constant_over_time(
+        self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
+    ):
+        # 1. Define test data.
+        _selected_mechanism = MechanismEnum.OVERFLOW.name
+        _initial_time_betas = [(0, 4.2), (7, 2.4)]
+        _expected_values = ...  # interpolate
+        _custom_measure_base_dict = dict(
+            MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            MECHANISM_NAME=_selected_mechanism,
+            SECTION_NAME="01A",
+            COST=211223,
+        )
+        _list_of_dict = [
+            _custom_measure_base_dict | dict(TIME=_time, BETA=_beta)
+            for _time, _beta in _initial_time_betas
+        ]
+
+        # 2. Run test.
+        _exported_measures = exporter_with_valid_db.export_dom(_list_of_dict)
+
+        # 3. Verify expectations.
+        assert len(_exported_measures) == 2
