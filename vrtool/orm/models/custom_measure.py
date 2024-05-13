@@ -7,7 +7,7 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 class CustomMeasure(OrmBaseModel):
     """
-    A custom measure is defined by a set of records that share the same measure_id.
+    A (logical) custom measure is defined by a set of records that share the same measure_id.
     """
 
     measure = ForeignKeyField(Measure, backref="custom_measures")
