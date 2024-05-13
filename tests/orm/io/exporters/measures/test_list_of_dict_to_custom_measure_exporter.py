@@ -3,15 +3,21 @@ from pathlib import Path
 from typing import Iterator
 
 import pytest
-from peewee import SqliteDatabase
 
 from tests import get_clean_test_results_dir, test_data
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
     ListOfDictToCustomMeasureExporter,
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.measure_result.measure_result_mechanism import (
+    MeasureResultMechanism,
+)
+from vrtool.orm.orm_controllers import initialize_database
 
 
 class TestListOfDictToCustomMeasureExporter:
@@ -43,12 +49,11 @@ class TestListOfDictToCustomMeasureExporter:
         self, request: pytest.FixtureRequest
     ) -> Iterator[ListOfDictToCustomMeasureExporter]:
         # 1. Define test data.
-        _db_name = request.param
+        _db_name = "without_custom_measures.db"
         _db_copy = self._get_db_copy(self._database_ref_dir.joinpath(_db_name), request)
 
         # Stablish connection
-        _test_db_context = SqliteDatabase(_db_copy)
-        _test_db_context.connect()
+        _test_db_context = initialize_database(_db_copy)
 
         # Yield item to tests.
         yield ListOfDictToCustomMeasureExporter(_test_db_context)
@@ -56,11 +61,6 @@ class TestListOfDictToCustomMeasureExporter:
         # Close connection
         _test_db_context.close()
 
-    @pytest.mark.parametrize(
-        "exporter_with_valid_db",
-        [pytest.param("without_custom_measures.db")],
-        indirect=True,
-    )
     def test_initialize_with_db_context(
         self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
     ):
@@ -68,11 +68,6 @@ class TestListOfDictToCustomMeasureExporter:
         assert isinstance(exporter_with_valid_db, ListOfDictToCustomMeasureExporter)
         assert isinstance(exporter_with_valid_db, OrmExporterProtocol)
 
-    @pytest.mark.parametrize(
-        "exporter_with_valid_db",
-        [pytest.param("without_custom_measures.db")],
-        indirect=True,
-    )
     def test_export_dom_without_t0_value(
         self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
     ):
@@ -102,11 +97,6 @@ class TestListOfDictToCustomMeasureExporter:
             _error_mssg in str(exc_err.value) for _error_mssg in _expected_error_mssgs
         )
 
-    @pytest.mark.parametrize(
-        "exporter_with_valid_db",
-        [pytest.param("without_custom_measures.db")],
-        indirect=True,
-    )
     def test_export_dom_with_t0_value_for_only_one_custom_measure(
         self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
     ):
@@ -118,7 +108,7 @@ class TestListOfDictToCustomMeasureExporter:
                 SECTION_NAME="DummySection",
                 TIME=_t,
             )
-            for _t in range(0, 10, 2)
+            for _t in range(1, 10, 2)
         ]
         _invalid_dict = dict(
             MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
@@ -139,3 +129,49 @@ class TestListOfDictToCustomMeasureExporter:
 
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error_mssg
+
+    def test_given_only_t0_the_rest_is_constant_over_time(
+        self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
+    ):
+        # 1. Define test data.
+        _selected_mechanism = MechanismEnum.OVERFLOW.name
+        _custom_measure_dict = dict(
+            MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            MECHANISM_NAME=_selected_mechanism,
+            SECTION_NAME="01A",
+            TIME=0,
+            BETA=2.4,
+            COST=211223,
+        )
+        _list_of_dict = [_custom_measure_dict]
+
+        # 2. Run test.
+        _exported_measures = exporter_with_valid_db.export_dom(_list_of_dict)
+
+        # 3. Verify expectations.
+        assert len(_exported_measures) == 1
+        for _em in _exported_measures:
+            assert isinstance(_em, CustomMeasure)
+            assert _em.beta == 2.4
+            assert _em.year == 0
+            # We should only have one MeasurePerSection,
+            # In any case, this is not the test to check said constraint.
+            _measure_result = (
+                _em.measure.sections_per_measure.get().measure_per_section_result.get()
+            )
+            _available_t_periods = list(
+                x.time
+                for x in _em.mechanism.sections_per_mechanism.get()
+                .assessment_mechanism_results.select(AssessmentMechanismResult.time)
+                .distinct()
+            )
+            for _t_period in _available_t_periods:
+                _found_result = _measure_result.measure_result_mechanisms.where(
+                    MeasureResultMechanism.time == _t_period
+                ).get_or_none()
+                if _found_result is None:
+                    pytest.fail(
+                        f"No MeasureResultMechanism exported for t = {_t_period}"
+                    )
+                assert _found_result.beta == 2.4

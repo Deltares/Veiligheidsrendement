@@ -82,18 +82,16 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     def _get_grouped_dictionaries_by_measure(
         self, custom_measures: list[dict]
     ) -> dict[tuple[str, str, str], list[dict]]:
-        _grouped_dictionaries = dict(
-            itertools.groupby(
-                custom_measures,
-                key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
-            )
-        )
-
         # Unfortunately we need to check whether all groups contain a custom measure
         # for t=0, which makes the code less efficient.
         _missing_t0_measures = []
-        for _measure_keys, _grouped_custom_measures in _grouped_dictionaries.items():
-            if not any(gm["TIME"] == 0 for gm in _grouped_custom_measures):
+        _grouped_by_measure = defaultdict(list)
+        for _measure_keys, _grouped_custom_measures in itertools.groupby(
+            custom_measures,
+            key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
+        ):
+            _grouped_by_measure[_measure_keys] = list(_grouped_custom_measures)
+            if not any(gm["TIME"] == 0 for gm in _grouped_by_measure[_measure_keys]):
                 _missing_t0_measures.append(
                     f"Missing t0 beta value for Custom Measure {_measure_keys[0]} - {_measure_keys[1]} - {_measure_keys[2]}"
                 )
@@ -103,7 +101,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 f"It was not possible to export the custom measures to the database, detailed error:\n{_missing_t0_measures_str}"
             )
 
-        return _grouped_dictionaries
+        return _grouped_by_measure
 
     def export_dom(self, dom_model: list[dict]) -> list[CustomMeasure]:
         _measure_result_mechanism_to_add = []
@@ -112,7 +110,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
         for (
             _measure_unique_keys,
             _grouped_custom_measures,
-        ) in self._get_grouped_dictionaries_by_measure(dom_model):
+        ) in self._get_grouped_dictionaries_by_measure(dom_model).items():
             _measure_name = _measure_unique_keys[0]
             _section_name = _measure_unique_keys[2]
 
