@@ -135,13 +135,14 @@ class TestListOfDictToCustomMeasureExporter:
     ):
         # 1. Define test data.
         _selected_mechanism = MechanismEnum.OVERFLOW.name
+        _expected_beta = 2.4
         _custom_measure_dict = dict(
             MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
             COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
             MECHANISM_NAME=_selected_mechanism,
             SECTION_NAME="01A",
             TIME=0,
-            BETA=2.4,
+            BETA=_expected_beta,
             COST=211223,
         )
         _list_of_dict = [_custom_measure_dict]
@@ -153,7 +154,7 @@ class TestListOfDictToCustomMeasureExporter:
         assert len(_exported_measures) == 1
         for _em in _exported_measures:
             assert isinstance(_em, CustomMeasure)
-            assert _em.beta == 2.4
+            assert _em.beta == _expected_beta
             assert _em.year == 0
             # We should only have one MeasurePerSection,
             # In any case, this is not the test to check said constraint.
@@ -174,4 +175,4 @@ class TestListOfDictToCustomMeasureExporter:
                     pytest.fail(
                         f"No MeasureResultMechanism exported for t = {_t_period}"
                     )
-                assert _found_result.beta == 2.4
+                assert _found_result.beta == _expected_beta
