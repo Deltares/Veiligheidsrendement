@@ -1,3 +1,4 @@
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -6,6 +7,7 @@ from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
+from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.section_data import SectionData
 
@@ -70,8 +72,12 @@ class SolutionsImporter(OrmImporterProtocol):
         _solutions.measures = self._import_measures(
             list(
                 OrmMeasure.select()
-                .join(MeasurePerSection)
-                .where(orm_model.id == MeasurePerSection.section_id)
+                .join_from(OrmMeasure, MeasurePerSection)
+                .join_from(OrmMeasure, MeasureType)
+                .where(
+                    (MeasurePerSection.section == orm_model)
+                    & (MeasureType.name != MeasureTypeEnum.CUSTOM.get_old_name())
+                )
             )
         )
         self.set_solution_measure_table(_solutions)

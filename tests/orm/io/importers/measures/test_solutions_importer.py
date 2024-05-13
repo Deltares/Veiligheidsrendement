@@ -163,4 +163,5 @@ class TestSolutionsImporter:
         assert _imported_solution.config == valid_config
         assert _imported_solution.T == valid_config.T
         assert _imported_solution.mechanisms == valid_config.mechanisms
-        assert len(_imported_solution.measures) == 2
+        assert len(_imported_solution.measures) == 1
+        assert _imported_solution.measures[0].parameters["Type"] == "Soil reinforcement"
