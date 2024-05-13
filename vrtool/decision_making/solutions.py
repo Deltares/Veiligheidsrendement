@@ -52,9 +52,7 @@ class Solutions:
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures.
         """
         for measure in self.measures:
-            measure.evaluate_measure(
-                dike_section, traject_info, preserve_slope=preserve_slope
-            )
+            measure.evaluate_measure(dike_section, traject_info, preserve_slope)
 
     def solutions_to_dataframe(
         self, filtering: bool = False, splitparams: bool = False
