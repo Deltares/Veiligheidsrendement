@@ -53,7 +53,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.io.exporters.measures.dict_list_to_custom_measure_exporter import (
-    DictListToCustomMeasureExporter,
+    ListOfDictToCustomMeasureExporter,
 )
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
@@ -1302,7 +1302,7 @@ class TestCustomMeasures:
                     )
                     if _cm_mechanism_beta is None:
                         # Then it gets the beta from the `AssessmentMechanismResult`.
-                        _cm_mechanism_beta = DictListToCustomMeasureExporter.get_interpolated_beta_from_assessment(
+                        _cm_mechanism_beta = ListOfDictToCustomMeasureExporter.get_interpolated_beta_from_assessment(
                             _fm_result_mechanism.mechanism_per_section,
                             _fm_result_mechanism.time,
                         )

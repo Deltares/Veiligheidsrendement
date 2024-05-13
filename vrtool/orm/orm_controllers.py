@@ -17,7 +17,7 @@ from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
 from vrtool.orm.io.exporters.measures.dict_list_to_custom_measure_exporter import (
-    DictListToCustomMeasureExporter,
+    ListOfDictToCustomMeasureExporter,
 )
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.optimization.strategy_exporter import StrategyExporter
@@ -599,7 +599,7 @@ def add_custom_measures(
     _exported_measures = []
 
     with open_database(vrtool_config.input_database_path) as _db:
-        _exported_measures = DictListToCustomMeasureExporter(_db).export_dom(
+        _exported_measures = ListOfDictToCustomMeasureExporter(_db).export_dom(
             custom_measures
         )
 

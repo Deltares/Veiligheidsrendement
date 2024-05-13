@@ -27,7 +27,7 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf, pf_to_beta
 
 
-class DictListToCustomMeasureExporter(OrmExporterProtocol):
+class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     _db: SqliteDatabase
 
     def __init__(self, db_context: SqliteDatabase) -> None:
