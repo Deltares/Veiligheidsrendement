@@ -1,5 +1,6 @@
 import itertools
 import shutil
+from collections import defaultdict
 from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
@@ -52,9 +53,13 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
+    CustomMeasureTimeBetaCalculator,
+)
 from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
     ListOfDictToCustomMeasureExporter,
 )
+from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
@@ -1206,6 +1211,7 @@ class TestCustomMeasures:
             return str(_dummy_dict)
 
         # 1. Define initial expectations.
+        _known_computation_periods = [0, 19, 20, 25, 50, 75, 100]
         _custom_measures_grouped = list(
             (key, list(group))
             for key, group in itertools.groupby(
@@ -1249,7 +1255,8 @@ class TestCustomMeasures:
             assert len(orm.CustomMeasure.select()) == _expected_total_custom_measures
 
             for _keys_group, _cm_list in _custom_measures_grouped:
-                _different_times = list(set(_cm["TIME"] for _cm in _cm_list))
+                _different_times = list(sorted(set(_cm["TIME"] for _cm in _cm_list)))
+
                 # There should only be one `MeasureResult` for each `CustomMeasure`
                 _fm_result = (
                     orm.MeasureResult.select()
@@ -1289,24 +1296,38 @@ class TestCustomMeasures:
                     len(_fm_result.measure_result_mechanisms)
                     == len(_different_times) * _total_mechs
                 )
-                for _fm_result_mechanism in _fm_result.measure_result_mechanisms:
-                    _cm_mechanism_beta = next(
-                        (
-                            _cm["BETA"]
-                            for _cm in _cm_list
-                            if _cm["MECHANISM_NAME"]
-                            == _fm_result_mechanism.mechanism_per_section.mechanism.name.upper()
-                            and _cm["TIME"] == _fm_result_mechanism.time
-                        ),
-                        None,
+
+                # Define expected values
+                _expected_mechanism_values = dict()
+                for _mechanism_name, _mechanism_dicts in itertools.groupby(
+                    _cm_list, key=itemgetter("MECHANISM_NAME")
+                ):
+                    _mechanism_dicts_list = list(_mechanism_dicts)
+                    _time_beta_tuples = [
+                        (_cm["TIME"], _cm["BETA"]) for _cm in _mechanism_dicts_list
+                    ]
+                    _expected_mechanism_values[
+                        _mechanism_name
+                    ] = CustomMeasureTimeBetaCalculator.get_interpolated_time_beta_collection(
+                        _time_beta_tuples, _known_computation_periods
                     )
-                    if _cm_mechanism_beta is None:
-                        # Then it gets the beta from the `AssessmentMechanismResult`.
-                        _cm_mechanism_beta = ListOfDictToCustomMeasureExporter.get_interpolated_beta_from_assessment(
-                            _fm_result_mechanism.mechanism_per_section,
-                            _fm_result_mechanism.time,
+
+                for _fm_result_mechanism in _fm_result.measure_result_mechanisms:
+                    _mechanism_name = (
+                        _fm_result_mechanism.mechanism_per_section.mechanism.name.upper()
+                    )
+                    if _mechanism_name in _expected_mechanism_values:
+                        assert (
+                            _fm_result_mechanism.beta
+                            == _expected_mechanism_values[_mechanism_name][
+                                _fm_result_mechanism.time
+                            ]
                         )
-                    assert _fm_result_mechanism.beta == _cm_mechanism_beta
+                    else:
+                        _assessment = _fm_result_mechanism.mechanism_per_section.assessment_mechanism_results.where(
+                            AssessmentMechanismResult.time == _fm_result_mechanism.time
+                        ).get()
+                        assert _fm_result_mechanism.beta == pytest.approx(_assessment.beta, rel=1e-6)
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
