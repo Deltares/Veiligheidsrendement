@@ -1,11 +1,10 @@
-import itertools
 import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
 
 import pandas as pd
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, fn
 from tqdm import tqdm
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
@@ -537,3 +536,18 @@ def add_custom_measures(
     # 4. Return the list of generated custom measures.
     # (This step could be replaced with returning a new dataclass type.)
     return _exported_measures
+
+
+def brute_clear_custom_measure_results(vrtool_config: VrtoolConfig):
+    """
+    Removes all the `MeasureResult` entries related to *ALL* `CustomMeasure` entries
+    even if they have already been linked in an `OptimizationRun` table.
+
+    Args:
+        vrtool_config (VrtoolConfig): Configuration to be used for this workflow.
+    """
+
+    with open_database(vrtool_config.input_database_path) as _db:
+        orm.Measure.where(
+            orm.Measure.measure_type_name == MeasureTypeEnum.CUSTOM.name
+        ).execute(_db)

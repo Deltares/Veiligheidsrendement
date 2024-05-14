@@ -10,8 +10,10 @@ class CustomMeasure(OrmBaseModel):
     A (logical) custom measure is defined by a set of records that share the same measure_id.
     """
 
-    measure = ForeignKeyField(Measure, backref="custom_measures")
-    mechanism = ForeignKeyField(Mechanism, backref="custom_measures")
+    measure = ForeignKeyField(Measure, backref="custom_measures", on_delete="CASCADE")
+    mechanism = ForeignKeyField(
+        Mechanism, backref="custom_measures", on_delete="CASCADE"
+    )
     cost = FloatField(default=float("nan"), null=True)
     beta = FloatField(default=float("nan"), null=True)
     year = IntegerField()

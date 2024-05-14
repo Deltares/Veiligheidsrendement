@@ -14,8 +14,10 @@ class Measure(OrmBaseModel):
     This should be defined as an abstract class.
     """
 
-    measure_type = ForeignKeyField(MeasureType, backref="measures")
-    combinable_type = ForeignKeyField(CombinableType, backref="measures")
+    measure_type = ForeignKeyField(MeasureType, backref="measures", on_delete="CASCADE")
+    combinable_type = ForeignKeyField(
+        CombinableType, backref="measures", on_delete="CASCADE"
+    )
     name = CharField(max_length=_max_char_length)
     year = IntegerField(default=2025)
 

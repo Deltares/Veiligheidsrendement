@@ -8,20 +8,24 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 class MeasureResult(OrmBaseModel):
     measure_per_section = ForeignKeyField(
-        MeasurePerSection, backref="measure_per_section_result"
+        MeasurePerSection,
+        backref="measure_per_section_result",
+        unique=True,
+        on_delete="CASCADE",
     )
 
     class Meta:
         table_name = _get_table_name(__qualname__)
 
     @property
-    def section_result(self):
+    def measure_type_name(self) -> str:
         """
-        Gets the `MeasureResultSection` (one-to-one relationship)
-        TODO AKL: is this correct? I think it should be a one-to-many relationship
-         for this `MeasureResult.
+        Returns the name of the related `MeasureType` table entry.
+
+        Returns:
+            str: The name in capital letters.
         """
-        return self.measure_result_section.get()
+        return self.measure_per_section.measure.measure_type.name.upper()
 
     def get_parameter_value(self, parameter_name: str) -> float:
         """

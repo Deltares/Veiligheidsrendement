@@ -9,7 +9,9 @@ from vrtool.orm.models.orm_base_model import (
 
 
 class StandardMeasure(OrmBaseModel):
-    measure = ForeignKeyField(Measure, backref="standard_measure", unique=True)
+    measure = ForeignKeyField(
+        Measure, backref="standard_measure", unique=True, on_delete="CASCADE"
+    )
     max_inward_reinforcement = IntegerField(default=50)
     max_outward_reinforcement = IntegerField(default=0)
     direction = CharField(default="Inward", max_length=_max_char_length)
