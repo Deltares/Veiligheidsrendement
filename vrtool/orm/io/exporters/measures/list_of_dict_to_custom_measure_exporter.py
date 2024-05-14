@@ -27,6 +27,20 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
+    """
+    Exports a list of dictionaries representing a `CustomMeasure` entry
+    so that it also generates all related entries for the tables `Measure`,
+    `MeasurePerSection`, `MeasureResult`, `MeasureResultSection` and
+    `MeasureResultMechanism`.
+
+    Constraints:
+        - All `CustomMeasure` dictionaries require at least an entry for t=0.
+        - If more than one value is provided, derive values for intermediate times
+        based on interpolation for values between the given values.
+        - When a computation time is larger than any provided `t` value,
+        then the last `t` given beta value for said `t` becomes a constant.
+    """
+
     _db: SqliteDatabase
 
     def __init__(self, db_context: SqliteDatabase) -> None:
@@ -35,30 +49,6 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 f"Database context ({SqliteDatabase.__name__}) required for export."
             )
         self._db = db_context
-
-    def _get_grouped_dictionaries_by_measure(
-        self, custom_measures: list[dict]
-    ) -> dict[tuple[str, str, str], list[dict]]:
-        # Unfortunately we need to check whether all groups contain a custom measure
-        # for t=0, which makes the code less efficient.
-        _missing_t0_measures = []
-        _grouped_by_measure = defaultdict(list)
-        for _measure_keys, _grouped_custom_measures in itertools.groupby(
-            custom_measures,
-            key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
-        ):
-            _grouped_by_measure[_measure_keys] = list(_grouped_custom_measures)
-            if not any(gm["TIME"] == 0 for gm in _grouped_by_measure[_measure_keys]):
-                _missing_t0_measures.append(
-                    f"Missing t0 beta value for Custom Measure {_measure_keys[0]} - {_measure_keys[1]} - {_measure_keys[2]}"
-                )
-        if any(_missing_t0_measures):
-            _missing_t0_measures_str = "\n".join(_missing_t0_measures)
-            raise ValueError(
-                f"It was not possible to export the custom measures to the database, detailed error:\n{_missing_t0_measures_str}"
-            )
-
-        return _grouped_by_measure
 
     def export_dom(self, dom_model: list[dict]) -> list[CustomMeasure]:
         _measure_result_mechanism_to_add = []
@@ -122,6 +112,30 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
         )
 
         return _exported_measures
+
+    def _get_grouped_dictionaries_by_measure(
+        self, custom_measures: list[dict]
+    ) -> dict[tuple[str, str, str], list[dict]]:
+        # Unfortunately we need to check whether all groups contain a custom measure
+        # for t=0, which makes the code less efficient.
+        _missing_t0_measures = []
+        _grouped_by_measure = defaultdict(list)
+        for _measure_keys, _grouped_custom_measures in itertools.groupby(
+            custom_measures,
+            key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
+        ):
+            _grouped_by_measure[_measure_keys] = list(_grouped_custom_measures)
+            if not any(gm["TIME"] == 0 for gm in _grouped_by_measure[_measure_keys]):
+                _missing_t0_measures.append(
+                    f"Missing t0 beta value for Custom Measure {_measure_keys[0]} - {_measure_keys[1]} - {_measure_keys[2]}"
+                )
+        if any(_missing_t0_measures):
+            _missing_t0_measures_str = "\n".join(_missing_t0_measures)
+            raise ValueError(
+                f"It was not possible to export the custom measures to the database, detailed error:\n{_missing_t0_measures_str}"
+            )
+
+        return _grouped_by_measure
 
     def _get_custom_measures(
         self, custom_measure_list_dict: list[dict], parent_measure: Measure
