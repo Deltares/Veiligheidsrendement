@@ -8,3 +8,435 @@ DROP INDEX "custommeasure_measure_id";
 CREATE INDEX "custommeasure_measure_id" ON "CustomMeasure" (
 	"measure_id"
 );
+
+-- Changes required for VRTOOL-496
+-- CustomMeasure
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT * FROM CustomMeasure;
+DROP TABLE CustomMeasure;
+
+CREATE TABLE CustomMeasure (
+    id           INTEGER NOT NULL
+                         PRIMARY KEY,
+    measure_id   INTEGER NOT NULL,
+    mechanism_id INTEGER NOT NULL,
+    cost         REAL,
+    beta         REAL,
+    year         INTEGER NOT NULL,
+    FOREIGN KEY (
+        measure_id
+    )
+    REFERENCES Measure (id) ON DELETE CASCADE,
+    FOREIGN KEY (
+        mechanism_id
+    )
+    REFERENCES Mechanism (id) ON DELETE CASCADE
+);
+
+INSERT INTO CustomMeasure (
+                              id,
+                              measure_id,
+                              mechanism_id,
+                              cost,
+                              beta,
+                              year
+                          )
+                          SELECT id,
+                                 measure_id,
+                                 mechanism_id,
+                                 cost,
+                                 beta,
+                                 year
+                            FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+CREATE INDEX custommeasure_measure_id ON CustomMeasure (
+    "measure_id"
+);
+CREATE INDEX custommeasure_mechanism_id ON CustomMeasure (
+    "mechanism_id"
+);
+PRAGMA foreign_keys = 1;
+
+-- Measure
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT * FROM Measure;
+DROP TABLE Measure;
+CREATE TABLE Measure (
+    id                 INTEGER       NOT NULL
+                                     PRIMARY KEY,
+    measure_type_id    INTEGER       NOT NULL,
+    combinable_type_id INTEGER       NOT NULL,
+    name               VARCHAR (128) NOT NULL,
+    year               INTEGER       NOT NULL,
+    FOREIGN KEY (
+        measure_type_id
+    )
+    REFERENCES MeasureType (id) ON DELETE CASCADE,
+    FOREIGN KEY (
+        combinable_type_id
+    )
+    REFERENCES CombinableType (id) ON DELETE CASCADE
+);
+
+INSERT INTO Measure (
+                        id,
+                        measure_type_id,
+                        combinable_type_id,
+                        name,
+                        year
+                    )
+                    SELECT id,
+                           measure_type_id,
+                           combinable_type_id,
+                           name,
+                           year
+                      FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+CREATE INDEX measure_combinable_type_id ON Measure (
+    "combinable_type_id"
+);
+CREATE INDEX measure_measure_type_id ON Measure (
+    "measure_type_id"
+);
+PRAGMA foreign_keys = 1;
+
+-- MeasurePerSection
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM MeasurePerSection;
+
+DROP TABLE MeasurePerSection;
+
+CREATE TABLE MeasurePerSection (
+    id         INTEGER NOT NULL
+                       PRIMARY KEY,
+    section_id INTEGER NOT NULL,
+    measure_id INTEGER NOT NULL,
+    FOREIGN KEY (
+        section_id
+    )
+    REFERENCES SectionData (id) ON DELETE CASCADE,
+    FOREIGN KEY (
+        measure_id
+    )
+    REFERENCES Measure (id) ON DELETE CASCADE
+);
+
+INSERT INTO MeasurePerSection (
+                                  id,
+                                  section_id,
+                                  measure_id
+                              )
+                              SELECT id,
+                                     section_id,
+                                     measure_id
+                                FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX measurepersection_measure_id ON MeasurePerSection (
+    "measure_id"
+);
+
+CREATE INDEX measurepersection_section_id ON MeasurePerSection (
+    "section_id"
+);
+
+PRAGMA foreign_keys = 1;
+
+-- MeasureResult
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM MeasureResult;
+
+DROP TABLE MeasureResult;
+
+CREATE TABLE MeasureResult (
+    id                     INTEGER NOT NULL
+                                   PRIMARY KEY,
+    measure_per_section_id INTEGER NOT NULL,
+    FOREIGN KEY (
+        measure_per_section_id
+    )
+    REFERENCES MeasurePerSection (id) ON DELETE CASCADE
+);
+
+INSERT INTO MeasureResult (
+                              id,
+                              measure_per_section_id
+                          )
+                          SELECT id,
+                                 measure_per_section_id
+                            FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX measureresult_measure_per_section_id ON MeasureResult (
+    "measure_per_section_id"
+);
+
+PRAGMA foreign_keys = 1;
+
+
+
+-- MeasureResultMechanism
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM MeasureResultMechanism;
+
+DROP TABLE MeasureResultMechanism;
+
+CREATE TABLE MeasureResultMechanism (
+    id                       INTEGER NOT NULL
+                                     PRIMARY KEY,
+    measure_result_id        INTEGER NOT NULL,
+    mechanism_per_section_id INTEGER NOT NULL,
+    beta                     REAL    NOT NULL,
+    time                     INTEGER NOT NULL,
+    FOREIGN KEY (
+        measure_result_id
+    )
+    REFERENCES MeasureResult (id) ON DELETE CASCADE,
+    FOREIGN KEY (
+        mechanism_per_section_id
+    )
+    REFERENCES MechanismPerSection (id) ON DELETE CASCADE
+);
+
+INSERT INTO MeasureResultMechanism (
+                                       id,
+                                       measure_result_id,
+                                       mechanism_per_section_id,
+                                       beta,
+                                       time
+                                   )
+                                   SELECT id,
+                                          measure_result_id,
+                                          mechanism_per_section_id,
+                                          beta,
+                                          time
+                                     FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX measureresultmechanism_measure_result_id ON MeasureResultMechanism (
+    "measure_result_id"
+);
+
+CREATE INDEX measureresultmechanism_mechanism_per_section_id ON MeasureResultMechanism (
+    "mechanism_per_section_id"
+);
+
+PRAGMA foreign_keys = 1;
+
+-- MeasureResultSection
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM MeasureResultSection;
+
+DROP TABLE MeasureResultSection;
+
+CREATE TABLE MeasureResultSection (
+    id                INTEGER NOT NULL
+                              PRIMARY KEY,
+    measure_result_id INTEGER NOT NULL,
+    beta              REAL    NOT NULL,
+    time              INTEGER NOT NULL,
+    cost              REAL    NOT NULL,
+    FOREIGN KEY (
+        measure_result_id
+    )
+    REFERENCES MeasureResult (id) ON DELETE CASCADE
+);
+
+INSERT INTO MeasureResultSection (
+                                     id,
+                                     measure_result_id,
+                                     beta,
+                                     time,
+                                     cost
+                                 )
+                                 SELECT id,
+                                        measure_result_id,
+                                        beta,
+                                        time,
+                                        cost
+                                   FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX measureresultsection_measure_result_id ON MeasureResultSection (
+    "measure_result_id"
+);
+
+PRAGMA foreign_keys = 1;
+
+-- OptimizationRun
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM OptimizationRun;
+
+DROP TABLE OptimizationRun;
+
+CREATE TABLE OptimizationRun (
+    id                   INTEGER       NOT NULL
+                                       PRIMARY KEY,
+    name                 VARCHAR (128) NOT NULL,
+    discount_rate        REAL          NOT NULL,
+    optimization_type_id INTEGER       NOT NULL,
+    FOREIGN KEY (
+        optimization_type_id
+    )
+    REFERENCES OptimizationType (id) ON DELETE CASCADE
+);
+
+INSERT INTO OptimizationRun (
+                                id,
+                                name,
+                                discount_rate,
+                                optimization_type_id
+                            )
+                            SELECT id,
+                                   name,
+                                   discount_rate,
+                                   optimization_type_id
+                              FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE UNIQUE INDEX optimizationrun_name ON OptimizationRun (
+    "name"
+);
+
+CREATE INDEX optimizationrun_optimization_type_id ON OptimizationRun (
+    "optimization_type_id"
+);
+
+PRAGMA foreign_keys = 1;
+
+-- OptimizationSelectedMeasure
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM OptimizationSelectedMeasure;
+
+DROP TABLE OptimizationSelectedMeasure;
+
+CREATE TABLE OptimizationSelectedMeasure (
+    id                  INTEGER NOT NULL
+                                PRIMARY KEY,
+    optimization_run_id INTEGER NOT NULL,
+    measure_result_id   INTEGER NOT NULL,
+    investment_year     INTEGER NOT NULL,
+    FOREIGN KEY (
+        optimization_run_id
+    )
+    REFERENCES OptimizationRun (id) ON DELETE CASCADE,
+    FOREIGN KEY (
+        measure_result_id
+    )
+    REFERENCES MeasureResult (id) ON DELETE CASCADE
+);
+
+INSERT INTO OptimizationSelectedMeasure (
+                                            id,
+                                            optimization_run_id,
+                                            measure_result_id,
+                                            investment_year
+                                        )
+                                        SELECT id,
+                                               optimization_run_id,
+                                               measure_result_id,
+                                               investment_year
+                                          FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX optimizationselectedmeasure_measure_result_id ON OptimizationSelectedMeasure (
+    "measure_result_id"
+);
+
+CREATE INDEX optimizationselectedmeasure_optimization_run_id ON OptimizationSelectedMeasure (
+    "optimization_run_id"
+);
+
+PRAGMA foreign_keys = 1;
+
+-- StandardMeasure
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM StandardMeasure;
+
+DROP TABLE StandardMeasure;
+
+CREATE TABLE StandardMeasure (
+    id                                INTEGER       NOT NULL
+                                                    PRIMARY KEY,
+    measure_id                        INTEGER       NOT NULL,
+    max_inward_reinforcement          INTEGER       NOT NULL,
+    max_outward_reinforcement         INTEGER       NOT NULL,
+    direction                         VARCHAR (128) NOT NULL,
+    crest_step                        REAL          NOT NULL,
+    max_crest_increase                REAL          NOT NULL,
+    stability_screen                  INTEGER       NOT NULL,
+    prob_of_solution_failure          REAL          NOT NULL,
+    failure_probability_with_solution REAL          NOT NULL,
+    stability_screen_s_f_increase     REAL          NOT NULL,
+    transition_level_increase_step    REAL          NOT NULL,
+    max_pf_factor_block               REAL          NOT NULL,
+    n_steps_block                     INTEGER       NOT NULL,
+    FOREIGN KEY (
+        measure_id
+    )
+    REFERENCES Measure (id) ON DELETE CASCADE
+);
+
+INSERT INTO StandardMeasure (
+                                id,
+                                measure_id,
+                                max_inward_reinforcement,
+                                max_outward_reinforcement,
+                                direction,
+                                crest_step,
+                                max_crest_increase,
+                                stability_screen,
+                                prob_of_solution_failure,
+                                failure_probability_with_solution,
+                                stability_screen_s_f_increase,
+                                transition_level_increase_step,
+                                max_pf_factor_block,
+                                n_steps_block
+                            )
+                            SELECT id,
+                                   measure_id,
+                                   max_inward_reinforcement,
+                                   max_outward_reinforcement,
+                                   direction,
+                                   crest_step,
+                                   max_crest_increase,
+                                   stability_screen,
+                                   prob_of_solution_failure,
+                                   failure_probability_with_solution,
+                                   stability_screen_s_f_increase,
+                                   transition_level_increase_step,
+                                   max_pf_factor_block,
+                                   n_steps_block
+                              FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE UNIQUE INDEX standardmeasure_measure_id ON StandardMeasure (
+    "measure_id"
+);
+
+PRAGMA foreign_keys = 1;

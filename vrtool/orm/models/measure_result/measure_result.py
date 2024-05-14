@@ -10,7 +10,6 @@ class MeasureResult(OrmBaseModel):
     measure_per_section = ForeignKeyField(
         MeasurePerSection,
         backref="measure_per_section_result",
-        unique=True,
         on_delete="CASCADE",
     )
 
