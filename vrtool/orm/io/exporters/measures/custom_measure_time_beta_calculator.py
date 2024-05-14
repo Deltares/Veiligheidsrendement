@@ -110,6 +110,18 @@ class CustomMeasureTimeBetaCalculator:
         return pf_to_beta(1 - _product)
 
     def calculate(self, measure_result: MeasureResult) -> tuple[list[dict], list[dict]]:
+        """
+        Calculates the `time-beta` collections (`list[dict]`) for the
+        `MeasureResultSection` and `MeasureResultMechanism` tables.
+
+        Args:
+            measure_result (MeasureResult): Foreign key to use in the collections.
+
+        Returns:
+            tuple[list[dict], list[dict]]: The first list contains dictionaries that
+            can be directly used to create entries in the `MeasureResultSection` table,
+              the second one does the same for the `MeasureResultMechanism` table.
+        """
         _measure_result_time_beta_collection = (
             self._assessment_time_beta_collection | self._custom_time_beta_collection
         )
