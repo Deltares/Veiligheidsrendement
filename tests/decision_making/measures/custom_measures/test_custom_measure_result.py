@@ -80,6 +80,7 @@ class TestCustomMeasureResult:
             -999,
             -999,
             -999,
+            -999,
             valid_custom_measure_result.cost,
         ]
 
