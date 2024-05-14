@@ -65,7 +65,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             _new_measure, _measure_created = Measure.get_or_create(
                 name=_measure_name,
                 measure_type=MeasureType.get_or_create(
-                    name=MeasureTypeEnum.CUSTOM.get_old_name()
+                    name=MeasureTypeEnum.CUSTOM.legacy_name
                 )[0],
                 combinable_type=CombinableType.select()
                 .where(
