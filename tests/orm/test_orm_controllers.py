@@ -1009,8 +1009,9 @@ class TestOrmControllers:
 
 
 class TestCustomMeasures:
-
-    _database_ref_dir = test_data.joinpath("38-1 custom measures")
+    """
+    This test class mostly covers integration tests for `CustomMeasure` workflows.
+    """
 
     def _get_custom_measure_dict(
         self,
@@ -1041,7 +1042,8 @@ class TestCustomMeasures:
             _db_name = request.param
         else:
             _db_name = _marker.args[0]
-        _test_db = self._database_ref_dir.joinpath(_db_name)
+
+        _test_db = test_data.joinpath("38-1 custom measures", _db_name)
         _output_directory = get_clean_test_results_dir(request)
 
         # Create a copy of the database to avoid locking it
