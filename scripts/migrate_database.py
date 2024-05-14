@@ -30,13 +30,16 @@ class MigrateDb:
         _from_version, _to_version = tuple(
             map(format_version, sql_filepath.stem.split("__to__"))
         )
-        print(
-            f"Migrating database file [{_from_version} to {_to_version}]: {db_filepath}"
-        )
 
         # Open and read the file as a single buffer
-        with sqlite3.connect(db_filepath) as _db_connection:
-            _db_connection.executescript(sql_filepath.read_text(encoding="utf-8"))
+        try:
+            with sqlite3.connect(db_filepath) as _db_connection:
+                print(
+                    f"Migrating database file [{_from_version} to {_to_version}]: {db_filepath}"
+                )
+                _db_connection.executescript(sql_filepath.read_text(encoding="utf-8"))
+        except Exception as _err:
+            print(f"Error during migration of {db_filepath}, details: {_err}")
 
     def migrate_databases_in_dir(self, database_dir: Path, sql_file: Path):
         """
@@ -90,7 +93,7 @@ def migrate_test_databases():
     assert _migration_file.exists(), "No migration file found."
 
     # Fetch the tests directory.
-    _tests_dir = _scripts_dir.parent.joinpath("tests")
+    _tests_dir = _scripts_dir.parent.joinpath("tests", "test_data")
     assert _tests_dir.exists(), "No tests directory found."
 
     # Apply migration.
