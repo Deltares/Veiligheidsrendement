@@ -277,7 +277,7 @@ class MechanismPerYearProbabilityCollection:
     ):
         """
         Replace probabilities for years before investment_year with values
-        from the measurement with investment_year = 0.
+        from the measure with investment_year = 0.
         Assumes that these years are available.
 
         Args:

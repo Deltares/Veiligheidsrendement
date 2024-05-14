@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Tuple
 
 from tqdm import tqdm
 
@@ -31,14 +30,14 @@ class RunMeasures(VrToolRunProtocol):
     def _get_section_solution(
         self,
         selected_section: DikeSection,
-    ) -> Tuple[str, Solutions]:
+    ) -> tuple[str, Solutions]:
         _solution = get_dike_section_solutions(
             self.vr_config, selected_section, self.selected_traject.general_info
         )
         return selected_section.name, _solution
 
     def run(self) -> ResultsMeasures:
-        # Get measurements solutions
+        # Get measures solutions
         logging.info("Start stap 2: bepaling effecten en kosten van maatregelen.")
         _results_measures = ResultsMeasures()
         _results_measures.vr_config = self.vr_config
@@ -57,7 +56,7 @@ class RunMeasures(VrToolRunProtocol):
 
         for i in self.selected_traject.sections:
             _results_measures.solutions_dict[i.name].solutions_to_dataframe(
-                filtering="off", splitparams=True
+                filtering=False, splitparams=True
             )
 
         logging.info("Stap 2: Bepaling effecten en kosten van maatregelen afgerond.")

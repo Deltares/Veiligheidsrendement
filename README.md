@@ -62,8 +62,8 @@ python -m vrtool {desired_run} {MODEL_DIRECTORY}
 ```
 The run options are:
 - `assessment`: Runs a validation of the model in the given MODEL_DIRECTORY.
-- `measures`: Runs measurements of all specified mechanisms in the model.
-- `optimization`: Runs an optimization of the model including the previous measures run.
+- `measures`: Calculates the effect of the provided measures on all specified mechanisms in the model.
+- `optimization`: Runs an optimization of the model based on the previous measures run.
 - `run_full`: Runs all the steps above sequentially.
 
 The arguments are:

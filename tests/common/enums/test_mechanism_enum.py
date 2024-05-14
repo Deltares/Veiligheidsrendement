@@ -51,7 +51,7 @@ class TestMechanismEnum:
         _mechanism = MechanismEnum.get_enum(enum_name)
 
         # 2. Call
-        _mechanism_name = _mechanism.get_old_name()
+        _mechanism_name = _mechanism.legacy_name
 
         # 3. Assert
         assert _mechanism_name == expected

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
@@ -52,9 +53,7 @@ class Solutions:
         It also gathers those measures for which availability is set to 0 and removes these from the list of measures.
         """
         for measure in self.measures:
-            measure.evaluate_measure(
-                dike_section, traject_info, preserve_slope=preserve_slope
-            )
+            measure.evaluate_measure(dike_section, traject_info, preserve_slope)
 
     def solutions_to_dataframe(
         self, filtering: bool = False, splitparams: bool = False
@@ -93,7 +92,6 @@ class Solutions:
 
         for measure in self.measures:
             _measure_type = measure.parameters["Type"]
-            _normalized_measure_type = _measure_type.lower().strip()
             if isinstance(measure.measures, list):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 # if it is a list of measures (for soil reinforcement): write each entry of the list to the dataframe
@@ -101,15 +99,15 @@ class Solutions:
                     measure_in = []
                     reliability_in = []
                     _design_vars = []
-                    if _normalized_measure_type in [
-                        "soil reinforcement",
-                        "soil reinforcement with stability screen",
+                    if _measure_type in [
+                        MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
+                        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
                     ]:
                         _design_vars = [
                             measure.measures[j]["dcrest"],
                             measure.measures[j]["dberm"],
                         ]
-                    elif _normalized_measure_type == "custom":
+                    elif _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
                         _design_vars = [1.0]
 
                     cost = measure.measures[j]["Cost"]
@@ -145,16 +143,16 @@ class Solutions:
             elif isinstance(measure.measures, dict):
                 # TODO: Deprecated, implement MeasureResultCollectionProtocol for these measures!
                 ID = str(measure.parameters["ID"])
-                if _normalized_measure_type == "vertical piping solution":
+                if (
+                    _measure_type
+                    == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.legacy_name
+                ):
                     _design_vars = measure.measures["VZG"]
-
-                if _normalized_measure_type == "diaphragm wall":
+                elif _measure_type == MeasureTypeEnum.DIAPHRAGM_WALL.legacy_name:
                     _design_vars = measure.measures["DiaphragmWall"]
-
-                if _normalized_measure_type == "revetment":
+                elif _measure_type == MeasureTypeEnum.REVETMENT.legacy_name:
                     _design_vars = measure.measures["Revetment"]
-
-                if _normalized_measure_type == "custom":
+                elif _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
                     _design_vars = 1.0  ##TODO check
 
                 measure_class = measure.parameters["Class"]

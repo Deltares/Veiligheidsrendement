@@ -69,7 +69,6 @@ from vrtool.orm.orm_controllers import (
     get_dike_section_solutions,
     get_dike_traject,
     get_exported_measure_result_ids,
-    import_results_measures,
     import_results_measures_for_optimization,
     initialize_database,
     open_database,
@@ -987,7 +986,6 @@ class TestOrmControllers:
         # 2. Run test.
         with open_database(_vrtool_config.input_database_path).connection_context():
             _measures_to_import = [(omr.id, 0) for omr in MeasureResult.select()]
-            _result = import_results_measures(_vrtool_config, _measures_to_import)
             _imported_data = import_results_measures_for_optimization(
                 _vrtool_config, _measures_to_import
             )
@@ -1333,64 +1331,36 @@ class TestCustomMeasures:
         _custom_measures_ids = [(1, 0)]
 
         # 2. Run test.
-        _measures = import_results_measures(
+        _imported_data = import_results_measures_for_optimization(
             vrtool_config_for_custom_measures_db, _custom_measures_ids
         )
 
         # 3. Verify expectations.
-        assert isinstance(_measures, ResultsMeasures)
-        assert _measures.ids_to_import == _custom_measures_ids
+        assert isinstance(_imported_data, list)
+        assert len(_imported_data) == 1
+        assert isinstance(_imported_data[0], SectionAsInput)
+        assert _imported_data[0].section_name == _measures_section_id
 
-        # Verify Solutions object.
-        assert _measures_section_id in _measures.solutions_dict
-        _solution_dict = _measures.solutions_dict[_measures_section_id]
-        assert isinstance(_solution_dict, Solutions)
-        assert _solution_dict.config == vrtool_config_for_custom_measures_db
-        assert _solution_dict.T == vrtool_config_for_custom_measures_db.T
-
-        # Verify dataframe
-        assert isinstance(_solution_dict.MeasureData, pd.DataFrame)
-        assert all("Custom" == _type for _type in _solution_dict.MeasureData["type"])
-
-        assert any(_solution_dict.mechanisms)
-        assert all(
-            list(_solution_dict.MeasureData[_mechanism.name].columns)
-            == vrtool_config_for_custom_measures_db.T
-            for _mechanism in _solution_dict.mechanisms
+        _meas_ids = list(
+            set((x.measure_result_id, x.year) for x in _imported_data[0].measures)
         )
-        assert (
-            list(_solution_dict.MeasureData["Section"].columns)
-            == vrtool_config_for_custom_measures_db.T
+        assert _meas_ids == _custom_measures_ids
+        assert len(_imported_data[0].sh_measures) == 1
+        assert _imported_data[0].sh_measures[0].measure_type == MeasureTypeEnum.CUSTOM
+
+        # Verify betas (This is the same as `test_add_custom_measures[MVP test]`)
+        _years = vrtool_config_for_custom_measures_db.T
+        _expected_betas = np.linspace(7, 4, num=7)
+
+        _overflow_betas = (
+            _imported_data[0]
+            .sh_measures[0]
+            .mechanism_year_collection.get_betas(MechanismEnum.OVERFLOW, _years)
         )
-
-        # We should have as many entries as tuples in `_custom_measures_ids`
-        assert len(_solution_dict.MeasureData.index) == len(_custom_measures_ids)
-
-        def verify_row_values(
-            value_collection: pd.Series, expected_value: bool
-        ) -> bool:
-            return all(
-                value_collection[_idx] == expected_value
-                for _idx in range(0, len(_custom_measures_ids))
-            )
-
-        # Verify betas
-        _overflow_mechanism = _solution_dict.MeasureData[MechanismEnum.OVERFLOW.name]
-
-        # This is the same as `test_add_custom_measures[MVP test]`
-        _time_beta_tuples = list(
-            zip(vrtool_config_for_custom_measures_db.T, np.linspace(7, 4, num=7))
-        )
-        assert all(
-            verify_row_values(_overflow_mechanism[_t], _beta)
-            for (_t, _beta) in _time_beta_tuples
-        )
+        assert _overflow_betas == pytest.approx(_expected_betas)
 
         # Verify costs
-        assert all(
-            _solution_dict.MeasureData["cost"][_t] == _custom_measure_cost
-            for (_, _t) in _custom_measures_ids
-        )
+        assert _imported_data[0].sh_measures[0].cost == _custom_measure_cost
 
     @pytest.mark.parametrize(
         "vrtool_config_for_custom_measures_db",
@@ -1448,5 +1418,5 @@ class TestCustomMeasures:
                 )
                 assert (
                     _selected_measure.measure_result.measure_per_section.measure.measure_type.name
-                    == MeasureTypeEnum.CUSTOM.get_old_name()
+                    == MeasureTypeEnum.CUSTOM.legacy_name
                 )
