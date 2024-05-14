@@ -365,8 +365,8 @@ def determine_costs(
         )
 
     if measure_type in (
-        MeasureTypeEnum.SOIL_REINFORCEMENT,
-        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+        MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name(),
+        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.get_old_name(),
     ):
         if direction == "inward":
             total_cost = (
