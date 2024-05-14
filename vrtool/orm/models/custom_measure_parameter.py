@@ -9,7 +9,9 @@ from vrtool.orm.models.orm_base_model import (
 
 
 class CustomMeasureParameter(OrmBaseModel):
-    custom_measure = ForeignKeyField(CustomMeasure, backref="custom_parameters")
+    custom_measure = ForeignKeyField(
+        CustomMeasure, backref="custom_parameters", on_delete="CASCADE"
+    )
     parameter = CharField(max_length=_max_char_length)
     value = FloatField()
 
