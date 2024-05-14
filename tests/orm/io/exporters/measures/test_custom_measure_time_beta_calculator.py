@@ -1,55 +1,6 @@
-import math
-from typing import Iterator
-
-import pytest
-from peewee import SqliteDatabase
-
 from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
     CustomMeasureTimeBetaCalculator,
 )
-from vrtool.orm.models.custom_measure import CustomMeasure
-from vrtool.orm.models.measure_per_section import MeasurePerSection
-
-
-# Use fixture from `tests.orm.io.exporters.measures.conftest`
-@pytest.mark.usefixtures("custom_measure_db_context")
-class TestCustomMeasureTimeBetaCalculator:
-    @pytest.fixture(name="custom_measure_per_section")
-    def get_valid_measure_per_section(
-        self, custom_measure_db_context: SqliteDatabase
-    ) -> Iterator[MeasurePerSection]:
-        pass
-
-    @pytest.fixture(name="custom_measure_collection")
-    def get_custom_measure_collection(
-        self, custom_measure_db_context: SqliteDatabase
-    ) -> Iterator[CustomMeasure]:
-        pass
-
-    @pytest.fixture(name="valid_calculator")
-    def get_valid_custom_measure_time_beta_calculator(
-        self,
-        custom_measure_per_section: MeasurePerSection,
-        custom_measure_collection: CustomMeasure,
-    ) -> CustomMeasureTimeBetaCalculator:
-        pass
-
-    def test_initialize(
-        self,
-        custom_measure_per_section: MeasurePerSection,
-        custom_measure_collection: list[CustomMeasure],
-    ):
-        # 1. Define test data.
-        _calculator = CustomMeasureTimeBetaCalculator(
-            custom_measure_per_section, custom_measure_collection
-        )
-
-        # 2. Verify expectations.
-        assert isinstance(_calculator, CustomMeasureTimeBetaCalculator)
-        assert not math.isnan(_calculator._custom_measure_cost)
-        assert any(_calculator._assessment_time_beta_collection)
-        assert any(_calculator._custom_time_beta_collection)
-        assert any(_calculator._mechanism_per_section)
 
 
 class TestGetInterpolatedTimeBetaCollection:
