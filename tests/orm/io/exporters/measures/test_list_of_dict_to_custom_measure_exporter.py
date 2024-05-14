@@ -134,60 +134,23 @@ class TestListOfDictToCustomMeasureExporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error_mssg
 
-    def test_given_only_t0_the_rest_is_constant_over_time(
-        self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
-    ):
-        # 1. Define test data.
-        _selected_mechanism = MechanismEnum.OVERFLOW.name
-        _expected_beta = 2.4
-        _custom_measure_dict = dict(
-            MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
-            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
-            MECHANISM_NAME=_selected_mechanism,
-            SECTION_NAME="01A",
-            TIME=0,
-            BETA=_expected_beta,
-            COST=211223,
-        )
-        _list_of_dict = [_custom_measure_dict]
-
-        # 2. Run test.
-        _exported_measures = exporter_with_valid_db.export_dom(_list_of_dict)
-
-        # 3. Verify expectations.
-        assert len(_exported_measures) == 1
-        for _em in _exported_measures:
-            assert isinstance(_em, CustomMeasure)
-            assert _em.beta == _expected_beta
-            assert _em.year == 0
-            # We should only have one MeasurePerSection,
-            # In any case, this is not the test to check said constraint.
-            _measure_result = (
-                _em.measure.sections_per_measure.get().measure_per_section_result.get()
-            )
-            _available_t_periods = list(
-                x.time
-                for x in _em.mechanism.sections_per_mechanism.get()
-                .assessment_mechanism_results.select(AssessmentMechanismResult.time)
-                .distinct()
-            )
-            for _t_period in _available_t_periods:
-                _found_result = _measure_result.measure_result_mechanisms.where(
-                    MeasureResultMechanism.time == _t_period
-                ).get_or_none()
-                if _found_result is None:
-                    pytest.fail(
-                        f"No MeasureResultMechanism exported for t = {_t_period}"
-                    )
-                assert _found_result.beta == _expected_beta
-
+    @pytest.mark.parametrize(
+        "time_beta_tuples",
+        [
+            pytest.param([(0, 2.4)], id="ONE custom measure, constant from t=0"),
+            pytest.param(
+                [(0, 4.2), (27, 2.4)], id="TWO custom measures, constant from t=27"
+            ),
+        ],
+    )
     def test_given_multiple_custom_measures_the_last_is_constant_over_time(
-        self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
+        self,
+        time_beta_tuples: list[tuple[int, float]],
+        exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
     ):
         # 1. Define test data.
         _known_computation_periods = [0, 19, 20, 25, 50, 75, 100]
         _selected_mechanism = MechanismEnum.OVERFLOW.name
-        _initial_time_betas = [(0, 4.2), (27, 2.4)]
         _measure_cost = 211223
         _custom_measure_base_dict = dict(
             MEASURE_NAME="ROCKS",
@@ -198,13 +161,13 @@ class TestListOfDictToCustomMeasureExporter:
         )
         _list_of_dict = [
             _custom_measure_base_dict | dict(TIME=_time, BETA=_beta)
-            for _time, _beta in _initial_time_betas
+            for _time, _beta in time_beta_tuples
         ]
 
         # Define expected values
         _expected_betas = (
             CustomMeasureTimeBetaCalculator.get_interpolated_time_beta_collection(
-                _initial_time_betas, _known_computation_periods
+                time_beta_tuples, _known_computation_periods
             )
         )
 
@@ -212,12 +175,12 @@ class TestListOfDictToCustomMeasureExporter:
         _exported_measures = exporter_with_valid_db.export_dom(_list_of_dict)
 
         # 3. Verify expectations.
-        assert len(_exported_measures) == 2
+        assert len(_exported_measures) == len(time_beta_tuples)
         for _idx, _exported_measure in enumerate(_exported_measures):
             assert isinstance(_exported_measure, CustomMeasure)
             assert _exported_measure.mechanism.name.upper() == _selected_mechanism
             assert _exported_measure.cost == _measure_cost
-            _expected_time_beta = _initial_time_betas[_idx]
+            _expected_time_beta = time_beta_tuples[_idx]
             assert _exported_measure.year == _expected_time_beta[0]
             assert _exported_measure.beta == _expected_time_beta[1]
 
