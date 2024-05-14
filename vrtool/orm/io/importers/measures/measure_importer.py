@@ -79,18 +79,16 @@ class MeasureImporter(OrmImporterProtocol):
 
     def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureProtocol:
         _mapping_types = {
-            "soil reinforcement": SoilReinforcementMeasure,
-            "soil reinforcement with stability screen": SoilReinforcementMeasure,
-            "diaphragm wall": DiaphragmWallMeasure,
-            "anchored sheetpile": AnchoredSheetpileMeasure,
-            "stability screen": StabilityScreenMeasure,
-            "vertical piping solution": VerticalPipingSolutionMeasure,
-            "revetment": RevetmentMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name(): SoilReinforcementMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.get_old_name(): SoilReinforcementMeasure,
+            MeasureTypeEnum.DIAPHRAGM_WALL.get_old_name(): DiaphragmWallMeasure,
+            MeasureTypeEnum.ANCHORED_SHEETPILE.get_old_name(): AnchoredSheetpileMeasure,
+            MeasureTypeEnum.STABILITY_SCREEN.get_old_name(): StabilityScreenMeasure,
+            MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.get_old_name(): VerticalPipingSolutionMeasure,
+            MeasureTypeEnum.REVETMENT.get_old_name(): RevetmentMeasure,
         }
 
-        _found_type = _mapping_types.get(
-            orm_measure.measure.measure_type.name.lower().strip(), None
-        )
+        _found_type = _mapping_types.get(orm_measure.measure.measure_type.name, None)
         if not _found_type:
             raise NotImplementedError(
                 "No import available for {}.".format(

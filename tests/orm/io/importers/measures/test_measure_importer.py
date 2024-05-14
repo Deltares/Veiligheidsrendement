@@ -128,7 +128,7 @@ class TestMeasureImporter:
                 id="Soil Reinforcement measure.",
             ),
             pytest.param(
-                "Diaphragm wall", DiaphragmWallMeasure, id="Diaphragm Wall measure."
+                "Diaphragm Wall", DiaphragmWallMeasure, id="Diaphragm Wall measure."
             ),
             pytest.param(
                 "Stability Screen",

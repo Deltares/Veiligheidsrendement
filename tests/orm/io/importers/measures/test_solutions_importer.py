@@ -9,6 +9,7 @@ from tests.orm.io.importers.measures.test_measure_importer import (
     _set_custom_measure,
     _set_standard_measure,
 )
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -164,4 +165,7 @@ class TestSolutionsImporter:
         assert _imported_solution.T == valid_config.T
         assert _imported_solution.mechanisms == valid_config.mechanisms
         assert len(_imported_solution.measures) == 1
-        assert _imported_solution.measures[0].parameters["Type"] == "Soil reinforcement"
+        assert (
+            _imported_solution.measures[0].parameters["Type"]
+            == MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name()
+        )

@@ -16,4 +16,4 @@ class CustomMeasure(MeasureProtocol):
         As for a custom measure the measure results are already created during import,
         this method will not do anything.
         """
-        logging.warning("Custom measures don't need to be evaluated.")
+        logging.warning("Custom measures don't need to be evaluated for now.")
