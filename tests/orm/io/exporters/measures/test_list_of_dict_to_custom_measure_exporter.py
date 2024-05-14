@@ -8,6 +8,9 @@ from tests import get_clean_test_results_dir, test_data
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
+    CustomMeasureTimeBetaCalculator,
+)
 from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
     ListOfDictToCustomMeasureExporter,
 )
@@ -17,6 +20,7 @@ from vrtool.orm.models.custom_measure import CustomMeasure
 from vrtool.orm.models.measure_result.measure_result_mechanism import (
     MeasureResultMechanism,
 )
+from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.orm_controllers import initialize_database
 
 
@@ -181,23 +185,78 @@ class TestListOfDictToCustomMeasureExporter:
         self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
     ):
         # 1. Define test data.
+        _known_computation_periods = [0, 19, 20, 25, 50, 75, 100]
         _selected_mechanism = MechanismEnum.OVERFLOW.name
-        _initial_time_betas = [(0, 4.2), (7, 2.4)]
-        _expected_values = ...  # interpolate
+        _initial_time_betas = [(0, 4.2), (27, 2.4)]
+        _measure_cost = 211223
         _custom_measure_base_dict = dict(
-            MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
+            MEASURE_NAME="ROCKS",
             COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
             MECHANISM_NAME=_selected_mechanism,
             SECTION_NAME="01A",
-            COST=211223,
+            COST=_measure_cost,
         )
         _list_of_dict = [
             _custom_measure_base_dict | dict(TIME=_time, BETA=_beta)
             for _time, _beta in _initial_time_betas
         ]
 
+        # Define expected values
+        _expected_betas = (
+            CustomMeasureTimeBetaCalculator.get_interpolated_time_beta_collection(
+                _initial_time_betas, _known_computation_periods
+            )
+        )
+
         # 2. Run test.
         _exported_measures = exporter_with_valid_db.export_dom(_list_of_dict)
 
         # 3. Verify expectations.
         assert len(_exported_measures) == 2
+        for _idx, _exported_measure in enumerate(_exported_measures):
+            assert isinstance(_exported_measure, CustomMeasure)
+            assert _exported_measure.mechanism.name.upper() == _selected_mechanism
+            assert _exported_measure.cost == _measure_cost
+            _expected_time_beta = _initial_time_betas[_idx]
+            assert _exported_measure.year == _expected_time_beta[0]
+            assert _exported_measure.beta == _expected_time_beta[1]
+
+        # Get the generated `MeasureResult`
+        assert (
+            len(set(_em.measure for _em in _exported_measures)) == 1
+        ), "Not all exported `Custom Measures` belong to the same `Measure`."
+
+        _measure_result = (
+            _exported_measures[0]
+            .measure.sections_per_measure.get()
+            .measure_per_section_result.get()
+        )
+
+        # Verify all created `MeasureResultMechanism` and `MeasureResultSection`
+        for _mr_mechanism in _measure_result.measure_result_mechanisms:
+            if (
+                _mr_mechanism.mechanism_per_section.mechanism.name.upper()
+                != _selected_mechanism
+            ):
+                # When the mechanism was not in our `CustomMeasure` then we expect
+                # the value from the assessment.
+                _assessment = _mr_mechanism.mechanism_per_section.assessment_mechanism_results.where(
+                    AssessmentMechanismResult.time == _mr_mechanism.time
+                ).get()
+                assert _mr_mechanism.beta == _assessment.beta
+            else:
+                assert _mr_mechanism.time in _expected_betas
+                assert _mr_mechanism.beta == _expected_betas[_mr_mechanism.time]
+
+            _measure_result_section = (
+                MeasureResultSection.select()
+                .where(
+                    (
+                        MeasureResultSection.measure_result
+                        == _mr_mechanism.measure_result
+                    )
+                    & (MeasureResultSection.time == _mr_mechanism.time)
+                )
+                .get()
+            )
+            assert _measure_result_section.cost == _measure_cost
