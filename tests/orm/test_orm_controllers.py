@@ -59,6 +59,7 @@ from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     add_custom_measures,
+    brute_clear_custom_measure_results,
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
@@ -1420,3 +1421,28 @@ class TestCustomMeasures:
                     _selected_measure.measure_result.measure_per_section.measure.measure_type.name
                     == MeasureTypeEnum.CUSTOM.legacy_name
                 )
+
+    @pytest.mark.parametrize(
+        "vrtool_config_for_custom_measures_db",
+        [pytest.param("vrtool_input.db", id="DB with Custom Measures")],
+        indirect=True,
+    )
+    def test_brute_clear_custom_measure_results(
+        self, vrtool_config_for_custom_measures_db: VrtoolConfig
+    ):
+        def any_custom_measure_results() -> bool:
+            return any(
+                _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+                for _mr in orm.MeasureResult.select()
+            )
+
+        # 1. Define test data.
+        with open_database(vrtool_config_for_custom_measures_db.input_database_path):
+            assert any_custom_measure_results() is True
+
+        # 2. Run test.
+        brute_clear_custom_measure_results(vrtool_config_for_custom_measures_db)
+
+        # 3. Verify expectations.
+        with open_database(vrtool_config_for_custom_measures_db.input_database_path):
+            assert any_custom_measure_results() is False
