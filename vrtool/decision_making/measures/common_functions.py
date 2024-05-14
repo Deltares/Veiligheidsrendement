@@ -353,7 +353,7 @@ def determine_costs(
     section: str = "",
 ) -> float:
     if (
-        (measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name())
+        (measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name)
         and (direction == "outward")
         and (dberm_in > 0.0)
     ):
@@ -365,8 +365,8 @@ def determine_costs(
         )
 
     if measure_type in (
-        MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name(),
-        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.get_old_name(),
+        MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
+        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
     ):
         if direction == "inward":
             total_cost = (
@@ -425,11 +425,11 @@ def determine_costs(
             total_cost += unit_costs.road_renewal * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
-    elif measure_type == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.get_old_name():
+    elif measure_type == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.legacy_name:
         total_cost = unit_costs.vertical_geotextile * length
-    elif measure_type == MeasureTypeEnum.DIAPHRAGM_WALL.get_old_name():
+    elif measure_type == MeasureTypeEnum.DIAPHRAGM_WALL.legacy_name:
         total_cost = unit_costs.diaphragm_wall * length
-    elif measure_type == MeasureTypeEnum.STABILITY_SCREEN.get_old_name():
+    elif measure_type == MeasureTypeEnum.STABILITY_SCREEN.legacy_name:
         total_cost = unit_costs.sheetpile * depth * length
     else:
         logging.error("Onbekend maatregeltype: {}".format(measure_type))

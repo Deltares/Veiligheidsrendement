@@ -167,5 +167,5 @@ class TestSolutionsImporter:
         assert len(_imported_solution.measures) == 1
         assert (
             _imported_solution.measures[0].parameters["Type"]
-            == MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name()
+            == MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name
         )

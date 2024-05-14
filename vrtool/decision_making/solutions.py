@@ -100,14 +100,14 @@ class Solutions:
                     reliability_in = []
                     _design_vars = []
                     if _measure_type in [
-                        MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name(),
-                        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.get_old_name(),
+                        MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
+                        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
                     ]:
                         _design_vars = [
                             measure.measures[j]["dcrest"],
                             measure.measures[j]["dberm"],
                         ]
-                    elif _measure_type == MeasureTypeEnum.CUSTOM.get_old_name():
+                    elif _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
                         _design_vars = [1.0]
 
                     cost = measure.measures[j]["Cost"]
@@ -145,14 +145,14 @@ class Solutions:
                 ID = str(measure.parameters["ID"])
                 if (
                     _measure_type
-                    == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.get_old_name()
+                    == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.legacy_name
                 ):
                     _design_vars = measure.measures["VZG"]
-                elif _measure_type == MeasureTypeEnum.DIAPHRAGM_WALL.get_old_name():
+                elif _measure_type == MeasureTypeEnum.DIAPHRAGM_WALL.legacy_name:
                     _design_vars = measure.measures["DiaphragmWall"]
-                elif _measure_type == MeasureTypeEnum.REVETMENT.get_old_name():
+                elif _measure_type == MeasureTypeEnum.REVETMENT.legacy_name:
                     _design_vars = measure.measures["Revetment"]
-                elif _measure_type == MeasureTypeEnum.CUSTOM.get_old_name():
+                elif _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
                     _design_vars = 1.0  ##TODO check
 
                 measure_class = measure.parameters["Class"]
