@@ -1084,38 +1084,27 @@ class TestCustomMeasures:
             pytest.param(
                 [
                     {
-                        "MEASURE_NAME": "ROCKS",
                         "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 20,
-                        "COST": 50.0,
-                        "BETA": 2.4,
-                    },
-                    {
                         "MEASURE_NAME": "ROCKS",
+                        "COST": 50.0,
+                        "MECHANISM_NAME": _mechanism_enum.name,
+                        "TIME": _time,
+                        "BETA": _beta,
+                    }
+                    for _time, _beta, _mechanism_enum in [
+                        (0, 4.2, MechanismEnum.OVERFLOW),
+                        (50, 2.4, MechanismEnum.OVERFLOW),
+                        (0, 4.2, MechanismEnum.PIPING),
+                    ]
+                ]
+                + [
+                    {
                         "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 50,
-                        "COST": 50.0,
-                        "BETA": 2.4,
-                    },
-                    {
-                        "MEASURE_NAME": "ROCKS",
-                        "SECTION_NAME": "01A",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.PIPING.name,
-                        "TIME": 20,
-                        "COST": 50.0,
-                        "BETA": 4.2,
-                    },
-                    {
                         "MEASURE_NAME": "TREES",
-                        "SECTION_NAME": "01A",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 20,
+                        "TIME": 0,
                         "COST": 23.12,
                         "BETA": 3.0,
                     },
@@ -1129,42 +1118,26 @@ class TestCustomMeasures:
                         "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 20,
                         "COST": 1000,
                         "BETA": 6.6,
-                    },
-                    {
-                        "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01A",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 40,
-                        "COST": 1000,
-                        "BETA": 6.6,
-                    },
+                        "TIME": _time,
+                    }
+                    for _time in [0, 40]
                 ],
                 id="Workflow 1: SAME measure, ONLY DIFFERENT time NOT present IN ASSESSMENT",
             ),
             pytest.param(
                 [
                     {
+                        "SECTION_NAME": _section_name,
                         "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
                         "TIME": 25,
                         "COST": 1000,
                         "BETA": 6.6,
-                    },
-                    {
-                        "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01B",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 25,
-                        "COST": 1000,
-                        "BETA": 6.6,
-                    },
+                    }
+                    for _section_name in ["01A", "01B"]
                 ],
                 id="Workflow 2a: SAME measure, ONLY DIFFERENT section",
             ),
@@ -1172,22 +1145,17 @@ class TestCustomMeasures:
                 [
                     {
                         "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
                         "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 25,
-                        "COST": 1000,
-                        "BETA": 6.6,
-                    },
-                    {
-                        "MEASURE_NAME": "rocky 2",
-                        "SECTION_NAME": "01B",
-                        "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
-                        "TIME": 25,
-                        "COST": 2000,
-                        "BETA": 5.0,
-                    },
+                        "TIME": 0,
+                        "SECTION_NAME": _section_name,
+                        "COST": _cost,
+                        "BETA": _beta,
+                    }
+                    for _section_name, _cost, _beta in [
+                        ("01A", 1000, 6.6),
+                        ("01B", 2000, 5.0),
+                    ]
                 ],
                 id="Workflow 2b: SAME measure, DIFFERENT section, cost and beta",
             ),
@@ -1255,8 +1223,6 @@ class TestCustomMeasures:
             assert len(orm.CustomMeasure.select()) == _expected_total_custom_measures
 
             for _keys_group, _cm_list in _custom_measures_grouped:
-                _different_times = list(sorted(set(_cm["TIME"] for _cm in _cm_list)))
-
                 # There should only be one `MeasureResult` for each `CustomMeasure`
                 _fm_result = (
                     orm.MeasureResult.select()
@@ -1274,15 +1240,12 @@ class TestCustomMeasures:
 
                 # Verify `MeasureResultSection` entries,
                 # one per different provided `TIME`.
-                assert len(_fm_result.measure_result_section) == len(_different_times)
+                assert len(_fm_result.measure_result_section) == len(
+                    _known_computation_periods
+                )
                 for _fm_result_section in _fm_result.measure_result_section:
                     # Costs are the same for a given measure.
-                    _cost = next(
-                        _cm["COST"]
-                        for _cm in _cm_list
-                        if _cm["TIME"] == _fm_result_section.time
-                    )
-                    assert _fm_result_section.cost == _cost
+                    assert _fm_result_section.cost == _cm_list[0]["COST"]
                     assert _fm_result_section.beta > 0
 
                 # Verify `MeasureResultMechanism` entries,
@@ -1292,9 +1255,8 @@ class TestCustomMeasures:
                     .join_from(orm.MechanismPerSection, orm.SectionData)
                     .where(fn.Upper(orm.SectionData.section_name) == _keys_group[2])
                 )
-                assert (
-                    len(_fm_result.measure_result_mechanisms)
-                    == len(_different_times) * _total_mechs
+                assert len(_fm_result.measure_result_mechanisms) == _total_mechs * len(
+                    _known_computation_periods
                 )
 
                 # Define expected values
@@ -1327,7 +1289,9 @@ class TestCustomMeasures:
                         _assessment = _fm_result_mechanism.mechanism_per_section.assessment_mechanism_results.where(
                             AssessmentMechanismResult.time == _fm_result_mechanism.time
                         ).get()
-                        assert _fm_result_mechanism.beta == pytest.approx(_assessment.beta, rel=1e-6)
+                        assert _fm_result_mechanism.beta == pytest.approx(
+                            _assessment.beta, rel=1e-6
+                        )
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
