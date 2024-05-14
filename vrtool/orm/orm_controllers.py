@@ -548,9 +548,10 @@ def brute_clear_custom_measure_results(vrtool_config: VrtoolConfig):
     """
 
     with open_database(vrtool_config.input_database_path) as _db:
-        _custom_measures = list(
-            orm.Measure.select()
+        _custom_measure_ids = list(
+            _m.get_id()
+            for _m in orm.Measure.select()
             .join_from(orm.Measure, orm.MeasureType)
             .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
         )
-        orm.Measure.delete().where(orm.Measure in _custom_measures).execute(_db)
+        orm.Measure.delete().where(orm.Measure.id.in_(_custom_measure_ids)).execute(_db)
