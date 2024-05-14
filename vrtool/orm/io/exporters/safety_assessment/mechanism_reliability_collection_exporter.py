@@ -19,7 +19,7 @@ class MechanismReliabilityCollectionExporter(OrmExporterProtocol):
         self, mechanism: MechanismEnum
     ) -> MechanismPerSection:
         _mech_inst = Mechanism.get_or_none(
-            Mechanism.name << [mechanism.name, mechanism.get_old_name()]
+            Mechanism.name << [mechanism.name, mechanism.legacy_name]
         )
 
         if not _mech_inst:

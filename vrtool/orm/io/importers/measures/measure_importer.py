@@ -1,5 +1,6 @@
 from typing import Type
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures import (
     CustomMeasure,
@@ -76,38 +77,18 @@ class MeasureImporter(OrmImporterProtocol):
 
         return _measure
 
-    def _import_custom_measure(self, orm_measure: OrmCustomMeasure) -> CustomMeasure:
-        _measure = CustomMeasure()
-        self._set_base_values(_measure)
-        _measure.measures = {}
-        _measure.parameters["Type"] = orm_measure.measure.measure_type.name
-        _measure.measures["Cost"] = orm_measure.cost
-        _measure.measures["Reliability"] = orm_measure.beta
-        _measure.parameters["year"] = orm_measure.year
-
-        for _measure_parameter in orm_measure.custom_parameters:
-            _measure.parameters[_measure_parameter.parameter] = _measure_parameter.value
-
-        _measure.parameters["Class"] = orm_measure.measure.combinable_type.name
-        _measure.parameters["Name"] = orm_measure.measure.name
-        _measure.parameters["ID"] = orm_measure.get_id()
-
-        return _measure
-
     def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureProtocol:
         _mapping_types = {
-            "soil reinforcement": SoilReinforcementMeasure,
-            "soil reinforcement with stability screen": SoilReinforcementMeasure,
-            "diaphragm wall": DiaphragmWallMeasure,
-            "anchored sheetpile": AnchoredSheetpileMeasure,
-            "stability screen": StabilityScreenMeasure,
-            "vertical piping solution": VerticalPipingSolutionMeasure,
-            "revetment": RevetmentMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name: SoilReinforcementMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name: SoilReinforcementMeasure,
+            MeasureTypeEnum.DIAPHRAGM_WALL.legacy_name: DiaphragmWallMeasure,
+            MeasureTypeEnum.ANCHORED_SHEETPILE.legacy_name: AnchoredSheetpileMeasure,
+            MeasureTypeEnum.STABILITY_SCREEN.legacy_name: StabilityScreenMeasure,
+            MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.legacy_name: VerticalPipingSolutionMeasure,
+            MeasureTypeEnum.REVETMENT.legacy_name: RevetmentMeasure,
         }
 
-        _found_type = _mapping_types.get(
-            orm_measure.measure.measure_type.name.lower().strip(), None
-        )
+        _found_type = _mapping_types.get(orm_measure.measure.measure_type.name, None)
         if not _found_type:
             raise NotImplementedError(
                 "No import available for {}.".format(
@@ -122,7 +103,9 @@ class MeasureImporter(OrmImporterProtocol):
         if not orm_model:
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
-        _measure_type = orm_model.measure_type.name.lower()
-        if _measure_type == "custom":
-            return self._import_custom_measure(orm_model.custom_measures.select().get())
+        _measure_type = orm_model.measure_type.name
+        if _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
+            raise NotImplementedError(
+                "Custom measures are not supported by this importer."
+            )
         return self._import_standard_measure(orm_model.standard_measure.select().get())

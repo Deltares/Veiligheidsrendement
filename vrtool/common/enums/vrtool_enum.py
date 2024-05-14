@@ -8,8 +8,9 @@ class VrtoolEnum(Enum):
     def __str__(self) -> str:
         return self.name
 
-    # TODO: delete this method after rationalizing the testdata (VRTOOL-296)
-    def get_old_name(self) -> str:
+    # TODO: delete this property after rationalizing the testdata (VRTOOL-296)
+    @property
+    def legacy_name(self) -> str:
         """Get name according to old naming convention (CamelCase)"""
         return self.name.lower().title().replace("_", "")
 

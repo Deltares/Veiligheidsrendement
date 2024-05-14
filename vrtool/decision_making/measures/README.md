@@ -17,4 +17,4 @@ We differenciate between two types of measures:
         - __Heavescreen__ - `HeavescreenMeasureCalculator`,
     - Revetment measure (`RevetmentMeasure`)
 
-- Custom measure, any measure not explicitely defined by us which can be addded to an assessment.
+- Custom measure, any measure not explicitely defined by us which can be addded to an assessment. The evaluation of these measures is implicitly done during the import of these measures, so the `evaluate_measure` will not do anything.

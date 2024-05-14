@@ -92,7 +92,7 @@ def get_all_measure_results_of_specific_type(
             .join(orm.Measure)
             .join(orm.MeasureType)
             .where(orm.Measure.year != 20)
-            .where(orm.MeasureType.name == measure_type.get_old_name())
+            .where(orm.MeasureType.name == measure_type.legacy_name)
         )
     # get all ids of _supported_measures
     return [x.get_id() for x in _supported_measures]

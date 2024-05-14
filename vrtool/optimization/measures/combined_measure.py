@@ -31,7 +31,7 @@ class CombinedMeasure:
     def measure_class(self) -> str:
         if self.secondary:
             return "combined"
-        return self.primary.combine_type.get_old_name()
+        return self.primary.combine_type.legacy_name
 
     @property
     def dcrest(self) -> float:
@@ -87,8 +87,8 @@ class CombinedMeasure:
     @property
     def combined_measure_type(self) -> str:
         if self.secondary:
-            return f"{self.primary.measure_type.get_old_name()}+{self.secondary.measure_type.get_old_name()}"
-        return self.primary.measure_type.get_old_name()
+            return f"{self.primary.measure_type.legacy_name}+{self.secondary.measure_type.legacy_name}"
+        return self.primary.measure_type.legacy_name
 
     @property
     def combined_db_index(self) -> list[int]:

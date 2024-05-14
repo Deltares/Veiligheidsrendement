@@ -6,9 +6,12 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 
 class CustomMeasure(OrmBaseModel):
-    # TODO: Rename to custom_measure as it's a 0.1 cardinality.
+    """
+    A (logical) custom measure is defined by a set of records that share the same measure_id.
+    """
+
     measure = ForeignKeyField(Measure, backref="custom_measures")
-    mechanism = ForeignKeyField(Mechanism, backref="measures")
+    mechanism = ForeignKeyField(Mechanism, backref="custom_measures")
     cost = FloatField(default=float("nan"), null=True)
     beta = FloatField(default=float("nan"), null=True)
     year = IntegerField()

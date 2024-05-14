@@ -128,7 +128,7 @@ class TestMeasureImporter:
                 id="Soil Reinforcement measure.",
             ),
             pytest.param(
-                "Diaphragm wall", DiaphragmWallMeasure, id="Diaphragm Wall measure."
+                "Diaphragm Wall", DiaphragmWallMeasure, id="Diaphragm Wall measure."
             ),
             pytest.param(
                 "Stability Screen",
@@ -186,7 +186,7 @@ class TestMeasureImporter:
             == _orm_measure.standard_measure[0].get_id()
         )
 
-    def test_import_custom_measure(
+    def test_import_custom_measure_raises(
         self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase
     ):
         # 1. Define test data.
@@ -197,18 +197,8 @@ class TestMeasureImporter:
         )
 
         # 2. Run test.
-        _imported_measure = _importer.import_orm(_orm_measure)
-
-        # 3. Verify expectations.
-        assert isinstance(_imported_measure, CustomMeasure)
-        self._validate_measure_base_values(_imported_measure, valid_config)
-        assert _imported_measure.measures["Cost"] == 1234.56
-        assert _imported_measure.measures["Reliability"] == 42.24
-        assert _imported_measure.parameters["year"] == 2023
-        assert _imported_measure.parameters["DummyParameter"] == 24.42
-        assert _imported_measure.parameters["ID"] == 1
-        assert _imported_measure.parameters["Name"] == "Test Measure"
-        assert _imported_measure.parameters["Class"] == "combinable"
+        with pytest.raises(NotImplementedError) as _exc_err:
+            _imported_measure = _importer.import_orm(_orm_measure)
 
     def _validate_measure_base_values(
         self, measure_base: MeasureProtocol, valid_config: VrtoolConfig

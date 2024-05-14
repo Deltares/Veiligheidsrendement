@@ -66,7 +66,7 @@ def migrate_db(db_filepath: str, sql_filepath: str):
 
 @cli.command(
     name="migrate_db_dir",
-    help="Applies all SQL statements from a migration file to the provided database file.",
+    help="Applies all SQL statements from a migration file to the provided database files in a directory.",
 )
 @click.argument("database_dir", type=click.Path(exists=True), nargs=1)
 @click.argument("sql_file", type=click.Path(exists=True), nargs=1)
