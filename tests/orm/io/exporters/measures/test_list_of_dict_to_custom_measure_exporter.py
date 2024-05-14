@@ -1,10 +1,6 @@
-import shutil
-from pathlib import Path
-from typing import Iterator
-
 import pytest
+from peewee import SqliteDatabase
 
-from tests import get_clean_test_results_dir, test_data
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -17,16 +13,10 @@ from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter im
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.custom_measure import CustomMeasure
-from vrtool.orm.models.measure_result.measure_result_mechanism import (
-    MeasureResultMechanism,
-)
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
-from vrtool.orm.orm_controllers import initialize_database
 
 
 class TestListOfDictToCustomMeasureExporter:
-    _database_ref_dir = test_data.joinpath("38-1 custom measures")
-
     def test_initialize_without_db_context_raises_error(self):
         # 1. Define test data.
         _expected_error_mssg = "Database context (SqliteDatabase) required for export."
@@ -38,32 +28,13 @@ class TestListOfDictToCustomMeasureExporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error_mssg
 
-    def _get_db_copy(self, reference_db: Path, request: pytest.FixtureRequest) -> Path:
-        # Creates a copy of the database to avoid locking it
-        # or corrupting its data.
-        _output_directory = get_clean_test_results_dir(request)
-        _copy_db = _output_directory.joinpath("vrtool_input.db")
-        shutil.copyfile(reference_db, _copy_db)
-        assert _copy_db.is_file()
-
-        return _copy_db
-
+    # Use fixture from `tests.orm.io.exporters.measures.conftest`
+    @pytest.mark.usefixtures("custom_measure_db_context")
     @pytest.fixture(name="exporter_with_valid_db")
-    def get_valid_exporter_with_db_context(
-        self, request: pytest.FixtureRequest
-    ) -> Iterator[ListOfDictToCustomMeasureExporter]:
-        # 1. Define test data.
-        _db_name = "without_custom_measures.db"
-        _db_copy = self._get_db_copy(self._database_ref_dir.joinpath(_db_name), request)
-
-        # Stablish connection
-        _test_db_context = initialize_database(_db_copy)
-
-        # Yield item to tests.
-        yield ListOfDictToCustomMeasureExporter(_test_db_context)
-
-        # Close connection
-        _test_db_context.close()
+    def get_valid_custom_measure_exporter_with_db(
+        self, custom_measure_db_context: SqliteDatabase
+    ):
+        yield ListOfDictToCustomMeasureExporter(custom_measure_db_context)
 
     def test_initialize_with_db_context(
         self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
