@@ -15,6 +15,9 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 @dataclass
 class SgMeasure(MeasureAsInputProtocol):
+    """
+    Class to represent measures that do not have a crest component.
+    """
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     measure_result_id: int

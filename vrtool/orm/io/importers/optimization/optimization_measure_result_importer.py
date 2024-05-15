@@ -137,13 +137,10 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         if self.valid_parameter(orm_model, "dberm"):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
-        if (self.valid_parameter(orm_model, "dcrest") or
-           not math.isnan(orm_model.get_parameter_value("l_stab_screen"))):
+        if self.valid_parameter(orm_model, "dcrest"):
             _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
 
-        if not self.valid_parameter(orm_model, "dberm") and not self.valid_parameter(
-            orm_model, "dcrest"
-        ):
+        if not _imported_measures:
             _imported_measures.extend(self._create_measure(orm_model, ShSgMeasure))
 
         return _imported_measures
