@@ -1,6 +1,5 @@
 import itertools
 import shutil
-from collections import defaultdict
 from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
@@ -55,9 +54,6 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
     CustomMeasureTimeBetaCalculator,
-)
-from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
-    ListOfDictToCustomMeasureExporter,
 )
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.measure_result import MeasureResult
