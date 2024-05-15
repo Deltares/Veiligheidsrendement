@@ -77,7 +77,7 @@ CREATE TABLE CustomMeasureParameter (
     FOREIGN KEY (
         custom_measure_id
     )
-    REFERENCES CustomMeasure (id) 
+    REFERENCES CustomMeasure (id) ON DELETE CASCADE
 );
 
 INSERT INTO CustomMeasureParameter (
