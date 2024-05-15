@@ -76,7 +76,7 @@ class SolutionsImporter(OrmImporterProtocol):
                 .join_from(OrmMeasure, MeasureType)
                 .where(
                     (MeasurePerSection.section == orm_model)
-                    & (MeasureType.name != MeasureTypeEnum.CUSTOM.get_old_name())
+                    & (MeasureType.name != MeasureTypeEnum.CUSTOM.legacy_name)
                 )
             )
         )

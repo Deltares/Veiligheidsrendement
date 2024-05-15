@@ -363,8 +363,8 @@ def get_all_measure_results_with_supported_investment_years(
         # All will get at least year 0.
         _measure_result_with_year_list.append((_measure_result.get_id(), 0))
         if _measure_result.measure_per_section.measure.measure_type.name in (
-            MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name(),
-            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.get_old_name(),
+            MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
         ):
             # For those of type "Soil reinforcement" we also add year 20.
             _measure_result_with_year_list.append((_measure_result.get_id(), 20))

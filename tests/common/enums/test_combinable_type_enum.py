@@ -47,7 +47,7 @@ class TestCombinableTypeEnum:
         _combinable_type = CombinableTypeEnum.get_enum(enum_name)
 
         # 2. Call
-        _combinable_type_name = _combinable_type.get_old_name()
+        _combinable_type_name = _combinable_type.legacy_name
 
         # 3. Assert
         assert _combinable_type_name == expected

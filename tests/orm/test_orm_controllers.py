@@ -1443,5 +1443,5 @@ class TestCustomMeasures:
                 )
                 assert (
                     _selected_measure.measure_result.measure_per_section.measure.measure_type.name
-                    == MeasureTypeEnum.CUSTOM.get_old_name()
+                    == MeasureTypeEnum.CUSTOM.legacy_name
                 )

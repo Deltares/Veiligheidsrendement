@@ -51,7 +51,7 @@ class TestMeasureTypeEnum:
         _measure_type = MeasureTypeEnum.get_enum(enum_name)
 
         # 2. Call
-        _measure_type_name = _measure_type.get_old_name()
+        _measure_type_name = _measure_type.legacy_name
 
         # 3. Assert
         assert _measure_type_name == expected

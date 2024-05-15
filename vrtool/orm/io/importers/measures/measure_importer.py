@@ -79,18 +79,16 @@ class MeasureImporter(OrmImporterProtocol):
 
     def _import_standard_measure(self, orm_measure: StandardMeasure) -> MeasureProtocol:
         _mapping_types = {
-            "soil reinforcement": SoilReinforcementMeasure,
-            "soil reinforcement with stability screen": SoilReinforcementMeasure,
-            "diaphragm wall": DiaphragmWallMeasure,
-            "anchored sheetpile": AnchoredSheetpileMeasure,
-            "stability screen": StabilityScreenMeasure,
-            "vertical piping solution": VerticalPipingSolutionMeasure,
-            "revetment": RevetmentMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name: SoilReinforcementMeasure,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name: SoilReinforcementMeasure,
+            MeasureTypeEnum.DIAPHRAGM_WALL.legacy_name: DiaphragmWallMeasure,
+            MeasureTypeEnum.ANCHORED_SHEETPILE.legacy_name: AnchoredSheetpileMeasure,
+            MeasureTypeEnum.STABILITY_SCREEN.legacy_name: StabilityScreenMeasure,
+            MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.legacy_name: VerticalPipingSolutionMeasure,
+            MeasureTypeEnum.REVETMENT.legacy_name: RevetmentMeasure,
         }
 
-        _found_type = _mapping_types.get(
-            orm_measure.measure.measure_type.name.lower().strip(), None
-        )
+        _found_type = _mapping_types.get(orm_measure.measure.measure_type.name, None)
         if not _found_type:
             raise NotImplementedError(
                 "No import available for {}.".format(
@@ -106,7 +104,7 @@ class MeasureImporter(OrmImporterProtocol):
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
         _measure_type = orm_model.measure_type.name
-        if _measure_type == MeasureTypeEnum.CUSTOM.get_old_name():
+        if _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
             raise NotImplementedError(
                 "Custom measures are not supported by this importer."
             )
