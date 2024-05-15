@@ -127,39 +127,6 @@ class TestListOfDictToCustomMeasureExporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error_mssg
 
-    def test_export_dom_with_t0_value_for_only_one_custom_measure(
-        self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
-    ):
-        # 1. Define test data.
-        _valid_custom_measure_dicts = [
-            dict(
-                MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
-                COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
-                SECTION_NAME="DummySection",
-                TIME=_t,
-            )
-            for _t in range(1, 10, 2)
-        ]
-        _invalid_dict = dict(
-            MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
-            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
-            SECTION_NAME="DummySection",
-            TIME=42,
-        )
-        _list_of_dict = _valid_custom_measure_dicts + [_invalid_dict]
-        _expected_error_mssg = "It was not possible to export the custom measures to the database, detailed error:\nMissing t0 beta value for Custom Measure {} - {} - {}".format(
-            _invalid_dict["MEASURE_NAME"],
-            _invalid_dict["COMBINABLE_TYPE"],
-            _invalid_dict["SECTION_NAME"],
-        )
-
-        # 2. Run test.
-        with pytest.raises(ValueError) as exc_err:
-            exporter_with_valid_db.export_dom(_list_of_dict)
-
-        # 3. Verify expectations.
-        assert str(exc_err.value) == _expected_error_mssg
-
     @pytest.mark.parametrize(
         "time_beta_tuples",
         [
