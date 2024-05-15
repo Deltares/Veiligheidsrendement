@@ -563,3 +563,10 @@ CREATE UNIQUE INDEX standardmeasure_measure_id ON StandardMeasure (
 );
 
 PRAGMA foreign_keys = 1;
+
+-- General pragma changes
+PRAGMA journal_mode = "WAL";
+PRAGMA cache_size = -64000;
+PRAGMA foreign_keys = 1;
+PRAGMA ignore_check_constraints = 0;
+PRAGMA synchronous = 0;
