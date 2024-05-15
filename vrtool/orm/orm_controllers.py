@@ -193,7 +193,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     with open_database(config.input_database_path) as _db:
         logging.debug("Opened connection for clearing measure results.")
 
-        _custom_measure_result_ids = list(
+        _standard_measure_result_ids = list(
             _mr.get_id()
             for _mr in orm.MeasureResult.select()
             .join_from(orm.MeasureResult, orm.MeasurePerSection)
@@ -203,7 +203,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
         )
 
     orm.MeasureResult.delete().where(
-        orm.MeasureResult.id.in_(_custom_measure_result_ids)
+        orm.MeasureResult.id.in_(_standard_measure_result_ids)
     ).execute(_db)
 
     logging.info("Bestaande resultaten voor maatregelen verwijderd.")
