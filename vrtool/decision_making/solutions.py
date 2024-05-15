@@ -104,9 +104,7 @@ class Solutions:
                         MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
                         MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
                     ]:
-                        if _normalized_measure_type == "custom":
-                            _design_vars = [1.0]
-                        elif measure.parameters["StabilityScreen"] == "yes":
+                        if measure.parameters["StabilityScreen"] == "yes":
                             _design_vars = (
                                 measure.measures[j]["dcrest"],
                                 measure.measures[j]["dberm"],
