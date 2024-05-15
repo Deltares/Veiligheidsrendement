@@ -1397,7 +1397,7 @@ class TestCustomMeasures:
 
     @pytest.mark.fixture_database("vrtool_input.db")
     def test_brute_clear_custom_measure_results(
-        self, vrtool_config_for_custom_measures_db: VrtoolConfig
+        self, custom_measures_vrtool_config: VrtoolConfig
     ):
         def any_custom_measure_results() -> bool:
             return any(
@@ -1406,12 +1406,56 @@ class TestCustomMeasures:
             )
 
         # 1. Define test data.
-        with open_database(vrtool_config_for_custom_measures_db.input_database_path):
+        _measure_that_remains_name = "NotACustomMeasure"
+        with open_database(custom_measures_vrtool_config.input_database_path):
             assert any_custom_measure_results() is True
+            # Create additional measure results to regular mesures.
+            assert (
+                orm.Measure.get_or_none(orm.Measure.name == _measure_that_remains_name)
+                is None
+            )
+            _measure_that_remains = orm.Measure.create(
+                name=_measure_that_remains_name,
+                year=2021,
+                combinable_type=orm.CombinableType.get(),
+                measure_type=orm.MeasureType.get(
+                    fn.upper(orm.MeasureType.name) != MeasureTypeEnum.CUSTOM.name
+                ),
+            )
+            _created_measure_x_section = orm.MeasurePerSection.create(
+                measure=_measure_that_remains,
+                section=orm.SectionData.get(orm.SectionData.section_name == "01A"),
+            )
+            _created_measure_result = orm.MeasureResult.create(
+                measure_per_section=_created_measure_x_section
+            )
+            orm.MeasureResultSection.create(
+                measure_result=_created_measure_result, beta=42, time=13, cost=24.42
+            )
+            orm.MeasureResultMechanism.create(
+                measure_result=_created_measure_result,
+                mechanism_per_section=_created_measure_x_section.section.mechanisms_per_section[
+                    0
+                ],
+                time=13,
+                beta=24.42,
+            )
 
         # 2. Run test.
-        brute_clear_custom_measure_results(vrtool_config_for_custom_measures_db)
+        brute_clear_custom_measure_results(custom_measures_vrtool_config)
 
         # 3. Verify expectations.
-        with open_database(vrtool_config_for_custom_measures_db.input_database_path):
+        with open_database(custom_measures_vrtool_config.input_database_path):
             assert any_custom_measure_results() is False
+            _measure_that_remains = orm.Measure.get_or_none(
+                orm.Measure.name == _measure_that_remains_name
+            )
+            assert isinstance(_measure_that_remains, orm.Measure)
+            assert len(_measure_that_remains.sections_per_measure) == 1
+
+            _measure_x_section = _measure_that_remains.sections_per_measure[0]
+            assert len(_measure_x_section.measure_per_section_result) == 1
+
+            _measure_result = _measure_x_section.measure_per_section_result[0]
+            assert len(_measure_result.measure_result_section) == 1
+            assert len(_measure_result.measure_result_mechanisms) == 1
