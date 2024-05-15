@@ -186,24 +186,24 @@ class RunStepMeasuresValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
 
-        _standard_measure_result_ids = list(
+        _custom_measure_result_ids = list(
             _mr.get_id()
             for _mr in orm.MeasureResult.select()
             .join_from(orm.MeasureResult, orm.MeasurePerSection)
             .join_from(orm.MeasurePerSection, orm.Measure)
             .join_from(orm.Measure, orm.MeasureType)
-            .where(fn.upper(orm.MeasureType.name) != MeasureTypeEnum.CUSTOM.name)
+            .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
         )
 
         assert not any(
             orm.MeasureResult.select().where(
-                orm.MeasureResult.id.not_in(_standard_measure_result_ids)
+                orm.MeasureResult.id.not_in(_custom_measure_result_ids)
             )
         )
         assert not any(
             orm.MeasureResultParameter.select().where(
                 orm.MeasureResultParameter.measure_result_id.not_in(
-                    _standard_measure_result_ids
+                    _custom_measure_result_ids
                 )
             )
         )
