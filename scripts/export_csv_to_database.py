@@ -21,9 +21,6 @@ def cli():
 @click.argument("database_file", type=click.Path(exists=True), nargs=1)
 @click.argument("csv_file", type=click.Path(exists=True), nargs=1)
 def export_csv_to_database(database_file: str, csv_file: str):
-    #     pass
-
-    # def my_method(database_file, csv_file):
     """
     Can be run with `python export_csv_to_database database_file csv_file`
     """
@@ -33,10 +30,5 @@ def export_csv_to_database(database_file: str, csv_file: str):
     ListOfDictToCustomMeasureExporter(_db).export_dom(_csv_custom_measures)
 
 
-# _files_dir = Path(__file__).parent.joinpath("example_csv_to_db")
-# my_method(
-#     str(_files_dir.joinpath("vrtool_input.db")),
-#     str(_files_dir.joinpath("custom_measures.csv")),
-# )
 if __name__ == "__main__":
     export_csv_to_database()
