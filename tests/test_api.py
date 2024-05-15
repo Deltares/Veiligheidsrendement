@@ -79,7 +79,7 @@ def get_all_measure_results_of_specific_type(
     Args:
         valid_vrtool_config (VrtoolConfig):
             Configuration contanining database connection details.
-        measure_type_name (str): Name of the measure type to get the results for
+        measure_type (MeasureTypeEnum): The measure type to get the results for
 
     Returns:
         list[tuple[int, int]]: List of measure result - investment year pairs.
