@@ -30,7 +30,7 @@ class TestGetInterpolatedTimeBetaCollection:
         _max_time = 6
         _step = 2
         _custom_values = [(0, _max_beta), (_max_time, _constant_value)]
-        _computation_periods = list(range(0, _max_beta + (3 * _step), _step))
+        _computation_periods = list(range(0, _max_time + (3 * _step), _step))
 
         _expected_values = dict()
         for _idx, _t in enumerate(_computation_periods):

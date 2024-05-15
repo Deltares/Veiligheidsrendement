@@ -28,8 +28,6 @@ class TestListOfDictToCustomMeasureExporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error_mssg
 
-    # Use fixture from `tests.orm.io.exporters.measures.conftest`
-    @pytest.mark.usefixtures("custom_measure_db_context")
     @pytest.fixture(name="exporter_with_valid_db")
     def get_valid_custom_measure_exporter_with_db(
         self, custom_measure_db_context: SqliteDatabase

@@ -34,7 +34,8 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     `MeasureResultMechanism`.
 
     Constraints:
-        - All `CustomMeasure` dictionaries require at least an entry for t=0.
+        - All `CustomMeasure` dictionaries require at least an entry for t=0 for
+        each provided measure/mechanism.
         - If more than one value is provided, derive values for intermediate times
         based on interpolation for values between the given values.
         - When a computation time is larger than any provided `t` value,
@@ -70,7 +71,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 combinable_type=CombinableType.select()
                 .where(
                     fn.upper(CombinableType.name)
-                    == str(CombinableTypeEnum.get_enum(_measure_unique_keys[1]))
+                    == CombinableTypeEnum.get_enum(_measure_unique_keys[1]).name
                 )
                 .get(),
             )
@@ -79,6 +80,12 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                     "Found existing %s measure, custom measures could be updated based on the new entries.",
                     _measure_name,
                 )
+
+            # Add entries to `CustomMeasure`
+            _retrieved_custom_measures = self._get_custom_measures(
+                _grouped_custom_measures, _new_measure
+            )
+            _exported_measures.extend(_retrieved_custom_measures)
 
             # Add entry to `MeasurePerSection`
             _new_measure_per_section, _ = MeasurePerSection.get_or_create(
@@ -90,11 +97,6 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             _new_measure_result, _ = MeasureResult.get_or_create(
                 measure_per_section=_new_measure_per_section
             )
-
-            _retrieved_custom_measures = self._get_custom_measures(
-                _grouped_custom_measures, _new_measure
-            )
-            _exported_measures.extend(_retrieved_custom_measures)
 
             # Calculate the related entries in `MEASURE_RESULT`.
             (_mr_sections, _mr_mechanisms,) = CustomMeasureTimeBetaCalculator(
@@ -146,7 +148,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 Mechanism.select()
                 .where(
                     fn.upper(Mechanism.name)
-                    == str(MechanismEnum.get_enum(_custom_measure["MECHANISM_NAME"]))
+                    == MechanismEnum.get_enum(_custom_measure["MECHANISM_NAME"]).name
                 )
                 .get()
             )
