@@ -118,14 +118,14 @@ def get_basic_computation_scenario() -> ComputationScenario:
     )
 
 
-def get_basic_measure_type() -> MeasureType:
+def get_basic_measure_type(name: str = "TestMeasureType") -> MeasureType:
     """
     Gets a basic measure type entity.
 
     Returns:
         MeasureType: The created measure type entity in the database.
     """
-    return MeasureType.create(name="TestMeasureType")
+    return MeasureType.create(name=name)
 
 
 def get_basic_combinable_type() -> CombinableType:
