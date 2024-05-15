@@ -52,7 +52,7 @@ class CustomMeasureTimeBetaCalculator:
 
     def _set_custom_time_beta_collection(self, custom_measures: list[CustomMeasure]):
         for _mechanism, _custom_measures_group in itertools.groupby(
-            sorted(custom_measures, key=lambda x: x.mechanism),
+            sorted(custom_measures, key=lambda x: x.mechanism.name),
             key=lambda x: x.mechanism,
         ):
             _time_betas = [(_cm.year, _cm.beta) for _cm in _custom_measures_group]
