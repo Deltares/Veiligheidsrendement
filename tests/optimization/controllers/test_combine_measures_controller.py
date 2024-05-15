@@ -72,6 +72,7 @@ class TestCombineMeasuresController:
             beta_target=0,
             transition_level=0,
             dcrest=0,
+            l_stab_screen=float("nan"),
         )
 
     def _create_revetment_measure(
@@ -96,6 +97,7 @@ class TestCombineMeasuresController:
             beta_target=0,
             transition_level=0,
             dcrest=0,
+            l_stab_screen=float("nan"),
         )
 
     def _create_sg_measure(

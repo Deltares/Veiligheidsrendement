@@ -5,9 +5,6 @@ import pytest as py
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.aggregated_measures_combination import (
-    AggregatedMeasureCombination,
-)
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
@@ -186,6 +183,7 @@ class TestSectionAsInput:
             revetment_params[0],
             revetment_params[1],
             revetment_params[2],
+            float("nan"),
         )
         return _measure
 

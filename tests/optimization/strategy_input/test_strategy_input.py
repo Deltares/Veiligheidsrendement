@@ -53,6 +53,7 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
             dcrest=0,
+            l_stab_screen=float("nan"),
             beta_target=-999,
             transition_level=-999,
         )
@@ -65,6 +66,7 @@ class TestStrategyInput:
             year=20,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
             dcrest=0,
+            l_stab_screen=float("nan"),
             beta_target=-999,
             transition_level=-999,
         )
@@ -86,6 +88,7 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_diaphragm_0,
             dcrest=-999,
+            l_stab_screen=float("nan"),
             beta_target=-999,
             transition_level=-999,
         )
@@ -107,6 +110,7 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_384,
             dcrest=-999,
+            l_stab_screen=float("nan"),
             beta_target=4.648,
             transition_level=3.84,
         )
@@ -128,6 +132,7 @@ class TestStrategyInput:
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_484,
             dcrest=-999,
+            l_stab_screen=float("nan"),
             beta_target=4.648,
             transition_level=4.84,
         )
