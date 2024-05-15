@@ -470,7 +470,7 @@ CREATE TABLE OptimizationStep (
     FOREIGN KEY (
         optimization_selected_measure_id
     )
-    REFERENCES OptimizationSelectedMeasure (id) ON DELETE NO ACTION
+    REFERENCES OptimizationSelectedMeasure (id) ON DELETE CASCADE
 );
 
 INSERT INTO OptimizationStep (
