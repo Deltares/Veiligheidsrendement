@@ -184,16 +184,17 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
 
 def clear_measure_results(config: VrtoolConfig) -> None:
     """
-    Clears all the measure results from the database
+    Clears all the measure results from the database.
+    Results for custom measures are not removed.
 
     Args:
         config (VrtoolConfig): Vrtool configuration
     """
 
     with open_database(config.input_database_path) as _db:
-        logging.debug("Opened connection for clearing measure results.")
+        logging.debug("Opened connection for clearing standard measure results.")
 
-        _standard_measure_result_ids = list(
+        _custom_measure_result_ids = list(
             _mr.get_id()
             for _mr in orm.MeasureResult.select()
             .join_from(orm.MeasureResult, orm.MeasurePerSection)
@@ -203,7 +204,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
         )
 
     orm.MeasureResult.delete().where(
-        orm.MeasureResult.id.in_(_standard_measure_result_ids)
+        orm.MeasureResult.id.not_in(_custom_measure_result_ids)
     ).execute(_db)
 
     logging.info("Bestaande resultaten voor maatregelen verwijderd.")
