@@ -41,23 +41,50 @@ class TestListOfDictToCustomMeasureExporter:
         assert isinstance(exporter_with_valid_db, ListOfDictToCustomMeasureExporter)
         assert isinstance(exporter_with_valid_db, OrmExporterProtocol)
 
-    def test_export_dom_without_t0_value(
-        self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
+    @pytest.mark.parametrize(
+        "custom_measure_entries",
+        [
+            pytest.param(
+                [dict(TIME=42)],
+                id="ONE Measure with ONE Custom Measure WITHOUT t=0",
+            ),
+            pytest.param(
+                [dict(MECHANISM_NAME="MechanismWithT0", TIME=42), dict()],
+                id="ONE Measure with TWO Custom Measures, ONE WITHOUT t=0",
+            ),
+            pytest.param(
+                [dict(MEASURE_NAME="MeasureWithT0", TIME=42), dict()],
+                id="TWO Measures with ONE Custom Measures each, ONE WITHOUT t=0",
+            ),
+        ],
+    )
+    def test_export_dom_without_t0_value_raises(
+        self,
+        custom_measure_entries: list[dict],
+        exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
     ):
+        """
+        This test mostly targets the inner exception of the protected method
+        `_get_grouped_dictionaries_by_measure`. Therefore you may expect some
+        concessions or simplifications in the data definition.
+        """
         # 1. Define test data.
-        _custom_measure_dict = dict(
+        _base_custom_measure_dict = dict(
+            SECTION_NAME="DummySection",
             MEASURE_NAME=MeasureTypeEnum.SOIL_REINFORCEMENT.name,
             COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
-            SECTION_NAME="DummySection",
-            TIME=42,
+            MECHANISM_NAME=MechanismEnum.PIPING.name,
+            TIME=0,
         )
-        _list_of_dict = [_custom_measure_dict]
+        _list_of_dict = [
+            _base_custom_measure_dict | _de for _de in custom_measure_entries
+        ]
         _expected_error_mssgs = [
             "It was not possible to export the custom measures to the database, detailed error:",
             "Missing t0 beta value for Custom Measure {} - {} - {}".format(
-                _custom_measure_dict["MEASURE_NAME"],
-                _custom_measure_dict["COMBINABLE_TYPE"],
-                _custom_measure_dict["SECTION_NAME"],
+                _base_custom_measure_dict["MEASURE_NAME"],
+                _base_custom_measure_dict["COMBINABLE_TYPE"],
+                _base_custom_measure_dict["SECTION_NAME"],
             ),
         ]
 
