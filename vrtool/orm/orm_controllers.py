@@ -200,7 +200,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
             .join_from(orm.MeasureResult, orm.MeasurePerSection)
             .join_from(orm.MeasurePerSection, orm.Measure)
             .join_from(orm.Measure, orm.MeasureType)
-            .where(fn.upper(orm.MeasureType.name) != MeasureTypeEnum.CUSTOM.name)
+            .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
         )
 
     orm.MeasureResult.delete().where(
