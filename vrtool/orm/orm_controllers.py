@@ -172,14 +172,12 @@ def clear_assessment_results(config: VrtoolConfig) -> None:
         config (VrtoolConfig): Vrtool configuration
     """
 
-    open_database(config.input_database_path)
-    logging.debug("Opened connection for clearing initial assessment results.")
+    with open_database(config.input_database_path) as _db:
+        logging.debug("Opened connection for clearing initial assessment results.")
 
-    with vrtool_db.atomic():
-        orm.AssessmentMechanismResult.delete().execute(vrtool_db)
-        orm.AssessmentSectionResult.delete().execute(vrtool_db)
-
-    vrtool_db.close()
+        with vrtool_db.atomic():
+            orm.AssessmentMechanismResult.delete().execute(_db)
+            orm.AssessmentSectionResult.delete().execute(_db)
 
     logging.info("Bestaande beoordelingsresultaten verwijderd.")
 
@@ -192,13 +190,21 @@ def clear_measure_results(config: VrtoolConfig) -> None:
         config (VrtoolConfig): Vrtool configuration
     """
 
-    open_database(config.input_database_path)
-    logging.debug("Opened connection for clearing measure results.")
+    with open_database(config.input_database_path) as _db:
+        logging.debug("Opened connection for clearing measure results.")
 
-    with vrtool_db.atomic():
-        orm.MeasureResult.delete().execute(vrtool_db)
+        _custom_measure_result_ids = list(
+            _mr.get_id()
+            for _mr in orm.MeasureResult.select()
+            .join_from(orm.MeasureResult, orm.MeasurePerSection)
+            .join_from(orm.MeasurePerSection, orm.Measure)
+            .join_from(orm.Measure, orm.MeasureType)
+            .where(fn.upper(orm.MeasureType.name) != MeasureTypeEnum.CUSTOM.name)
+        )
 
-    vrtool_db.close()
+    orm.MeasureResult.delete().where(
+        orm.MeasureResult.id.in_(_custom_measure_result_ids)
+    ).execute(_db)
 
     logging.info("Bestaande resultaten voor maatregelen verwijderd.")
 
@@ -210,13 +216,10 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
     Args:
         config (VrtoolConfig): Vrtool configuration.
     """
-    open_database(config.input_database_path)
-    logging.debug("Opened connection for clearing optimization results.")
+    with open_database(config.input_database_path) as _db:
+        logging.debug("Opened connection for clearing optimization results.")
 
-    with vrtool_db.atomic():
-        orm.OptimizationRun.delete().execute(vrtool_db)
-
-    vrtool_db.close()
+        orm.OptimizationRun.delete().execute(_db)
 
     logging.info("Bestaande optimalisatieresultaten verwijderd.")
 
