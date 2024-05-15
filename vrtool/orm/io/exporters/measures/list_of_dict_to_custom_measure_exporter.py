@@ -160,7 +160,9 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 Mechanism.select()
                 .where(
                     fn.upper(Mechanism.name)
-                    == MechanismEnum.get_enum(_custom_measure["MECHANISM_NAME"]).name
+                    == MechanismEnum.get_enum(
+                        _custom_measure["MECHANISM_NAME"]
+                    ).legacy_name.upper()
                 )
                 .get()
             )
