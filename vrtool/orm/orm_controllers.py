@@ -197,10 +197,6 @@ def clear_measure_results(config: VrtoolConfig) -> None:
 
     with vrtool_db.atomic():
         orm.MeasureResult.delete().execute(vrtool_db)
-        # This table should be cleared 'on cascade'.
-        orm.MeasureResultParameter.delete().execute(vrtool_db)
-        orm.MeasureResultSection.delete().execute(vrtool_db)
-        orm.MeasureResultMechanism.delete().execute(vrtool_db)
 
     vrtool_db.close()
 
@@ -219,11 +215,6 @@ def clear_optimization_results(config: VrtoolConfig) -> None:
 
     with vrtool_db.atomic():
         orm.OptimizationRun.delete().execute(vrtool_db)
-        # These tables should be cleared 'on cascade'.
-        orm.OptimizationSelectedMeasure.delete().execute(vrtool_db)
-        orm.OptimizationStep.delete().execute(vrtool_db)
-        orm.OptimizationStepResultMechanism.delete().execute(vrtool_db)
-        orm.OptimizationStepResultSection.delete().execute(vrtool_db)
 
     vrtool_db.close()
 
