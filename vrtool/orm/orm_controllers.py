@@ -203,9 +203,9 @@ def clear_measure_results(config: VrtoolConfig) -> None:
             .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
         )
 
-    orm.MeasureResult.delete().where(
-        orm.MeasureResult.id.not_in(_custom_measure_result_ids)
-    ).execute(_db)
+        orm.MeasureResult.delete().where(
+            orm.MeasureResult.id.not_in(_custom_measure_result_ids)
+        ).execute(_db)
 
     logging.info("Bestaande resultaten voor maatregelen verwijderd.")
 
