@@ -60,6 +60,46 @@ CREATE INDEX custommeasure_mechanism_id ON CustomMeasure (
 );
 PRAGMA foreign_keys = 1;
 
+-- CustomMeasureParameter
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM CustomMeasureParameter;
+
+DROP TABLE CustomMeasureParameter;
+
+CREATE TABLE CustomMeasureParameter (
+    id                INTEGER       NOT NULL
+                                    PRIMARY KEY,
+    custom_measure_id INTEGER       NOT NULL,
+    parameter         VARCHAR (128) NOT NULL,
+    value             REAL          NOT NULL,
+    FOREIGN KEY (
+        custom_measure_id
+    )
+    REFERENCES CustomMeasure (id) ON DELETE CASCADE
+);
+
+INSERT INTO CustomMeasureParameter (
+                                       id,
+                                       custom_measure_id,
+                                       parameter,
+                                       value
+                                   )
+                                   SELECT id,
+                                          custom_measure_id,
+                                          parameter,
+                                          value
+                                     FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX custommeasureparameter_custom_measure_id ON CustomMeasureParameter (
+    "custom_measure_id"
+);
+
+PRAGMA foreign_keys = 1;
+
 -- Measure
 PRAGMA foreign_keys = 0;
 
@@ -184,8 +224,6 @@ CREATE INDEX measureresult_measure_per_section_id ON MeasureResult (
 
 PRAGMA foreign_keys = 1;
 
-
-
 -- MeasureResultMechanism
 PRAGMA foreign_keys = 0;
 
@@ -275,6 +313,46 @@ INSERT INTO MeasureResultSection (
 DROP TABLE sqlitestudio_temp_table;
 
 CREATE INDEX measureresultsection_measure_result_id ON MeasureResultSection (
+    "measure_result_id"
+);
+
+PRAGMA foreign_keys = 1;
+
+-- MeasureResultParameter
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM MeasureResultParameter;
+
+DROP TABLE MeasureResultParameter;
+
+CREATE TABLE MeasureResultParameter (
+    id                INTEGER       NOT NULL
+                                    PRIMARY KEY,
+    name              VARCHAR (128) NOT NULL,
+    value             REAL          NOT NULL,
+    measure_result_id INTEGER       NOT NULL,
+    FOREIGN KEY (
+        measure_result_id
+    )
+    REFERENCES MeasureResult (id) ON DELETE CASCADE
+);
+
+INSERT INTO MeasureResultParameter (
+                                       id,
+                                       name,
+                                       value,
+                                       measure_result_id
+                                   )
+                                   SELECT id,
+                                          name,
+                                          value,
+                                          measure_result_id
+                                     FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX measureresultparameter_measure_result_id ON MeasureResultParameter (
     "measure_result_id"
 );
 
@@ -372,6 +450,50 @@ CREATE INDEX optimizationselectedmeasure_optimization_run_id ON OptimizationSele
 
 PRAGMA foreign_keys = 1;
 
+-- OptimizationStep
+
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM OptimizationStep;
+
+DROP TABLE OptimizationStep;
+
+CREATE TABLE OptimizationStep (
+    id                               INTEGER NOT NULL
+                                             PRIMARY KEY,
+    optimization_selected_measure_id INTEGER NOT NULL,
+    step_number                      INTEGER NOT NULL,
+    total_lcc                        REAL,
+    total_risk                       REAL,
+    FOREIGN KEY (
+        optimization_selected_measure_id
+    )
+    REFERENCES OptimizationSelectedMeasure (id) ON DELETE CASCADE
+);
+
+INSERT INTO OptimizationStep (
+                                 id,
+                                 optimization_selected_measure_id,
+                                 step_number,
+                                 total_lcc,
+                                 total_risk
+                             )
+                             SELECT id,
+                                    optimization_selected_measure_id,
+                                    step_number,
+                                    total_lcc,
+                                    total_risk
+                               FROM sqlitestudio_temp_table;
+
+DROP TABLE sqlitestudio_temp_table;
+
+CREATE INDEX optimizationstep_optimization_selected_measure_id ON OptimizationStep (
+    "optimization_selected_measure_id"
+);
+
+PRAGMA foreign_keys = 1;
+
 -- StandardMeasure
 PRAGMA foreign_keys = 0;
 
@@ -441,3 +563,10 @@ CREATE UNIQUE INDEX standardmeasure_measure_id ON StandardMeasure (
 );
 
 PRAGMA foreign_keys = 1;
+
+-- General pragma changes
+PRAGMA journal_mode = "WAL";
+PRAGMA cache_size = -64000;
+PRAGMA foreign_keys = 1;
+PRAGMA ignore_check_constraints = 0;
+PRAGMA synchronous = 0;
