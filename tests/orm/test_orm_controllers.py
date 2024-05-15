@@ -1395,11 +1395,7 @@ class TestCustomMeasures:
                     == MeasureTypeEnum.CUSTOM.legacy_name
                 )
 
-    @pytest.mark.parametrize(
-        "vrtool_config_for_custom_measures_db",
-        [pytest.param("vrtool_input.db", id="DB with Custom Measures")],
-        indirect=True,
-    )
+    @pytest.mark.fixture_database("vrtool_input.db")
     def test_brute_clear_custom_measure_results(
         self, vrtool_config_for_custom_measures_db: VrtoolConfig
     ):
