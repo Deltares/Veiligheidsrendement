@@ -35,7 +35,7 @@ class MockShMeasure(ShMeasure):
     beta_target: float = 0
     transition_level: float = 0
     dcrest: float = 0
-
+    l_stab_screen: float = float("nan")
 
 @dataclass
 class MockSgMeasure(SgMeasure):
