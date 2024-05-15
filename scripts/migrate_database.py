@@ -90,7 +90,7 @@ def migrate_test_databases():
     assert _migration_file.exists(), "No migration file found."
 
     # Fetch the tests directory.
-    _tests_dir = _scripts_dir.parent.joinpath("tests")
+    _tests_dir = _scripts_dir.parent.joinpath("tests", "test_data")
     assert _tests_dir.exists(), "No tests directory found."
 
     # Apply migration.
