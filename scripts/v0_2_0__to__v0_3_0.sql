@@ -71,8 +71,7 @@ DROP TABLE CustomMeasureParameter;
 CREATE TABLE CustomMeasureParameter (
     id                INTEGER       NOT NULL
                                     PRIMARY KEY,
-    custom_measure_id INTEGER       NOT NULL
-                                    REFERENCES CustomMeasure (id) ON DELETE CASCADE,
+    custom_measure_id INTEGER       NOT NULL,
     parameter         VARCHAR (128) NOT NULL,
     value             REAL          NOT NULL,
     FOREIGN KEY (
