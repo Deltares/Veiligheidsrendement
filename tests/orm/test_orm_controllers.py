@@ -749,6 +749,26 @@ class TestOrmControllers:
         assert not any(orm.MeasureResultSection.select())
         assert not any(orm.MeasureResultMechanism.select())
 
+    def test_clear_measure_result_does_not_clear_custom_results(
+        self, export_database: SqliteDatabase
+    ):
+        # Setup
+        self._generate_measure_results(export_database, "Custom")
+
+        # Call
+        _db_path = Path(export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
+        )
+        clear_measure_results(_vrtool_config)
+
+        # Assert
+        assert any(orm.MeasureResult.select())
+        assert any(orm.MeasureResultParameter.select())
+        assert any(orm.MeasureResultSection.select())
+        assert any(orm.MeasureResultMechanism.select())
+
     def test_clear_optimization_results_clears_all_results(
         self, export_database: SqliteDatabase
     ):
@@ -769,26 +789,6 @@ class TestOrmControllers:
         assert not any(orm.OptimizationStep.select())
         assert not any(orm.OptimizationStepResultMechanism.select())
         assert not any(orm.OptimizationStepResultSection.select())
-
-    def test_clear_measure_result_does_not_clear_custom_results(
-        self, export_database: SqliteDatabase
-    ):
-        # Setup
-        self._generate_measure_results(export_database, "Custom")
-
-        # Call
-        _db_path = Path(export_database.database)
-        _vrtool_config = VrtoolConfig(
-            input_directory=_db_path.parent,
-            input_database_name=_db_path.name,
-        )
-        clear_measure_results(_vrtool_config)
-
-        # Assert
-        assert any(orm.MeasureResult.select())
-        assert any(orm.MeasureResultParameter.select())
-        assert any(orm.MeasureResultSection.select())
-        assert any(orm.MeasureResultMechanism.select())
 
     def _generate_measure_results(
         self, db_connection: SqliteDatabase, measure_type_name: str = "TestMeasureType"
