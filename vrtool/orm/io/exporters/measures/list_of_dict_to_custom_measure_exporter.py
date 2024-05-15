@@ -122,15 +122,24 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
         # for t=0, which makes the code less efficient.
         _missing_t0_measures = []
         _grouped_by_measure = defaultdict(list)
+        _measure_key_grouping = itemgetter(
+            "MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"
+        )
+        _mechanism_key_grouping = itemgetter("MECHANISM_NAME")
         for _measure_keys, _grouped_custom_measures in itertools.groupby(
-            custom_measures,
-            key=itemgetter("MEASURE_NAME", "COMBINABLE_TYPE", "SECTION_NAME"),
+            sorted(custom_measures, key=_measure_key_grouping),
+            key=_measure_key_grouping,
         ):
             _grouped_by_measure[_measure_keys] = list(_grouped_custom_measures)
-            if not any(gm["TIME"] == 0 for gm in _grouped_by_measure[_measure_keys]):
-                _missing_t0_measures.append(
-                    f"Missing t0 beta value for Custom Measure {_measure_keys[0]} - {_measure_keys[1]} - {_measure_keys[2]}"
-                )
+            for _mechanism_key, _grouped_by_mechanism in itertools.groupby(
+                sorted(_grouped_by_measure[_measure_keys], key=_mechanism_key_grouping),
+                key=_mechanism_key_grouping,
+            ):
+                if not any(gm["TIME"] == 0 for gm in _grouped_by_mechanism):
+                    _measure_keys_str = " - ".join(_measure_keys + (_mechanism_key,))
+                    _missing_t0_measures.append(
+                        f"Missing t0 beta value for Custom Measure {_measure_keys_str}"
+                    )
         if any(_missing_t0_measures):
             _missing_t0_measures_str = "\n".join(_missing_t0_measures)
             raise ValueError(

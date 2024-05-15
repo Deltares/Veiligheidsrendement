@@ -1,3 +1,6 @@
+import itertools
+from operator import itemgetter
+
 import pytest
 from peewee import SqliteDatabase
 
@@ -49,12 +52,20 @@ class TestListOfDictToCustomMeasureExporter:
                 id="ONE Measure with ONE Custom Measure WITHOUT t=0",
             ),
             pytest.param(
-                [dict(MECHANISM_NAME="MechanismWithT0", TIME=42), dict()],
+                [dict(MECHANISM_NAME="MechanismWithoutT0", TIME=42), dict()],
                 id="ONE Measure with TWO Custom Measures, ONE WITHOUT t=0",
             ),
             pytest.param(
-                [dict(MEASURE_NAME="MeasureWithT0", TIME=42), dict()],
+                [dict(MECHANISM_NAME="MechanismWithoutT0", TIME=42), dict(TIME=24)],
+                id="ONE Measure with TWO Custom Measures, BOTH WITHOUT t=0",
+            ),
+            pytest.param(
+                [dict(MEASURE_NAME="MeasureWithoutT0", TIME=42), dict()],
                 id="TWO Measures with ONE Custom Measures each, ONE WITHOUT t=0",
+            ),
+            pytest.param(
+                [dict(MEASURE_NAME="MeasureWithoutT0", TIME=42), dict(TIME=24)],
+                id="TWO Measures with ONE Custom Measures each, BOTH WITHOUT t=0",
             ),
         ],
     )
@@ -79,23 +90,42 @@ class TestListOfDictToCustomMeasureExporter:
         _list_of_dict = [
             _base_custom_measure_dict | _de for _de in custom_measure_entries
         ]
-        _expected_error_mssgs = [
-            "It was not possible to export the custom measures to the database, detailed error:",
-            "Missing t0 beta value for Custom Measure {} - {} - {}".format(
-                _base_custom_measure_dict["MEASURE_NAME"],
-                _base_custom_measure_dict["COMBINABLE_TYPE"],
-                _base_custom_measure_dict["SECTION_NAME"],
-            ),
-        ]
+
+        _group_by_custom_measure = itemgetter(
+            "MEASURE_NAME", "SECTION_NAME", "MECHANISM_NAME"
+        )
+        _cm_without_t0 = []
+        for _, _cm_grouped_dicts in itertools.groupby(
+            sorted(_list_of_dict, key=_group_by_custom_measure),
+            key=_group_by_custom_measure,
+        ):
+            _list_cm_grouped_dicts = list(_cm_grouped_dicts)
+            if not any(_cm_dict["TIME"] == 0 for _cm_dict in _list_cm_grouped_dicts):
+                _cm_without_t0.append(_list_cm_grouped_dicts[0])
+
+        assert any(
+            _cm_without_t0
+        ), "All custom measures contain a t0 value, invalid test data."
+
+        def get_custom_measure_error(custom_measure_dict: dict) -> str:
+            return "Missing t0 beta value for Custom Measure {} - {} - {} - {}".format(
+                custom_measure_dict["MEASURE_NAME"],
+                custom_measure_dict["COMBINABLE_TYPE"],
+                custom_measure_dict["SECTION_NAME"],
+                custom_measure_dict["MECHANISM_NAME"],
+            )
+
+        _expected_error_mssg = (
+            "It was not possible to export the custom measures to the database, detailed error:\n"
+            + "\n".join(get_custom_measure_error(_cm) for _cm in _cm_without_t0)
+        )
 
         # 2. Run test.
         with pytest.raises(ValueError) as exc_err:
             exporter_with_valid_db.export_dom(_list_of_dict)
 
         # 3. Verify expectations.
-        assert all(
-            _error_mssg in str(exc_err.value) for _error_mssg in _expected_error_mssgs
-        )
+        assert str(exc_err.value) == _expected_error_mssg
 
     def test_export_dom_with_t0_value_for_only_one_custom_measure(
         self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
