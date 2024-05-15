@@ -16,8 +16,8 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm import models as orm
-from vrtool.orm.io.exporters.measures.dict_to_custom_measure_exporter import (
-    DictListToCustomMeasureExporter,
+from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
+    ListOfDictToCustomMeasureExporter,
 )
 from vrtool.orm.io.exporters.measures.solutions_exporter import SolutionsExporter
 from vrtool.orm.io.exporters.optimization.strategy_exporter import StrategyExporter
@@ -25,9 +25,6 @@ from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter
     DikeSectionReliabilityExporter,
 )
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.measures.solutions_for_measure_results_importer import (
-    SolutionsForMeasureResultsImporter,
-)
 from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
     OptimizationSectionAsInputImporter,
@@ -291,72 +288,6 @@ def get_exported_measure_result_ids(result_measures: ResultsMeasures) -> list[in
     return _result_measure_ids
 
 
-def import_results_measures(
-    config: VrtoolConfig, results_ids_to_import: list[tuple[int, int]]
-) -> ResultsMeasures:
-    """
-    Imports results masures from a database into a `ResultsMeasure` instance.
-
-    Args:
-        config (VrtoolConfig): Configuration containing database path.
-        results_ids_to_import (list[tuple[int, int]]): List of measure results' IDs. including their respective investment year.
-
-    Returns:
-        ResultsMeasures: Instance hosting all the required measures' results.
-    """
-    _dike_traject = get_dike_traject(config)
-    open_database(config.input_database_path)
-
-    _solutions_dict = dict()
-
-    _mr_list = [
-        (orm.MeasureResult.get_by_id(_result_tuple[0]), _result_tuple[1])
-        for _result_tuple in results_ids_to_import
-    ]
-    _grouped_by_section = [
-        (_section, list(_grouped_measure_results))
-        for _section, _grouped_measure_results in itertools.groupby(
-            _mr_list, lambda x: x[0].measure_per_section.section
-        )
-    ]
-    # If there are non_unique sections, we will have to combine the results.
-    # get the first entries of the tuples in _grouped_by_section
-    _grouped_by_section_unique = defaultdict(list)
-    for key, value in _grouped_by_section:
-        _grouped_by_section_unique[key].extend(value)
-    _grouped_by_section_unique = list(_grouped_by_section_unique.items())
-
-    # Import a solution per section:
-    for _section, _selected_measure_year_results in _grouped_by_section_unique:
-        _selected_measure_id, _selected_measure_year = zip(
-            *_selected_measure_year_results
-        )
-        # Import measures into solution
-        _mapped_section = next(
-            _ds for _ds in _dike_traject.sections if _ds.name == _section.section_name
-        )
-        _imported_solution = SolutionsForMeasureResultsImporter(
-            config,
-            _mapped_section,
-        ).import_orm(_selected_measure_id)
-        _solutions_dict[_section.section_name] = _imported_solution
-        # NOTE: This is an "implicit" filter of which years will be imported
-        # based on the input "investment_year".
-        _solutions_dict[_section.section_name].MeasureData[
-            "year"
-        ] = _selected_measure_year
-    _dike_traject.set_probabilities()
-    vrtool_db.close()
-
-    _results_measures = ResultsMeasures()
-    _results_measures.solutions_dict = _solutions_dict
-    _results_measures.selected_traject = _dike_traject
-    _results_measures.vr_config = config
-    _results_measures.ids_to_import = results_ids_to_import
-
-    return _results_measures
-
-
 def import_results_measures_for_optimization(
     config: VrtoolConfig, results_ids_to_import: list[tuple[int, int]]
 ) -> list[SectionAsInput]:
@@ -432,8 +363,8 @@ def get_all_measure_results_with_supported_investment_years(
         # All will get at least year 0.
         _measure_result_with_year_list.append((_measure_result.get_id(), 0))
         if _measure_result.measure_per_section.measure.measure_type.name in (
-            MeasureTypeEnum.SOIL_REINFORCEMENT.get_old_name(),
-            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.get_old_name(),
+            MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
+            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
         ):
             # For those of type "Soil reinforcement" we also add year 20.
             _measure_result_with_year_list.append((_measure_result.get_id(), 20))
@@ -470,7 +401,7 @@ def create_optimization_run_for_selected_measures(
 
     with open_database(vr_config.input_database_path) as _db:
         logging.debug(
-            "Opened connection to export optimization run {}.".format(optimization_name)
+            "Opened connection to export optimization run %s.", optimization_name
         )
         _optimization_selected_measure_ids = defaultdict(list)
         for _method_type in vr_config.design_methods:
@@ -493,7 +424,7 @@ def create_optimization_run_for_selected_measures(
                 ]
             ).execute(_db)
             # from orm.OptimizationSelectedMeasure get all ids where optimization_run_id = _optimization_run.id
-            _optimization_selected_measure_ids[_optimization_run.id] = list(
+            _optimization_selected_measure_ids[_optimization_run.get_id()] = list(
                 map(lambda x: x.id, _optimization_run.optimization_run_measure_results)
             )
 
@@ -599,7 +530,7 @@ def add_custom_measures(
     _exported_measures = []
 
     with open_database(vrtool_config.input_database_path) as _db:
-        _exported_measures = DictListToCustomMeasureExporter(_db).export_dom(
+        _exported_measures = ListOfDictToCustomMeasureExporter(_db).export_dom(
             custom_measures
         )
 

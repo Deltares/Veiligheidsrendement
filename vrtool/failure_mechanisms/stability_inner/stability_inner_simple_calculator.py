@@ -87,4 +87,4 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
             )
             beta = pf_to_beta(failure_probability)
 
-        return [beta, beta_to_pf(beta)]
+        return (beta, beta_to_pf(beta))

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures.berm_widening_dstability import (
@@ -385,7 +386,7 @@ def determine_costs(
     """
     _measure_type_name = measure_type.lower().strip()
     if (
-        (_measure_type_name == "soil reinforcement")
+        (measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name)
         and (direction == "outward")
         and (dberm_in > 0.0)
     ):
@@ -396,7 +397,10 @@ def determine_costs(
             )
         )
 
-    if "soil reinforcement" in _measure_type_name:
+    if measure_type in (
+        MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
+        MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
+    ):
         if direction == "inward":
             total_cost = (
                 unit_costs.inward_added_volume * area_extra * length
@@ -449,9 +453,9 @@ def determine_costs(
             total_cost += unit_costs.road_renewal * length
 
         # x = map(int, self.parameters['house_removal'].split(';'))
-    elif _measure_type_name == "vertical piping solution":
+    elif measure_type == MeasureTypeEnum.VERTICAL_PIPING_SOLUTION.legacy_name:
         total_cost = unit_costs.vertical_geotextile * length
-    elif _measure_type_name == "diaphragm wall":
+    elif measure_type == MeasureTypeEnum.DIAPHRAGM_WALL.legacy_name:
         total_cost = unit_costs.diaphragm_wall * length
     else:
         logging.error("Onbekend maatregeltype: {}".format(measure_type))

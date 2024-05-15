@@ -8,7 +8,8 @@ class CombinableTypeEnum(VrtoolEnum):
     REVETMENT = 4
     INVALID = 99
 
-    # TODO: delete this method after rationalizing the testdata (VRTOOL-296)
-    def get_old_name(self) -> str:
+    # TODO: delete this property after rationalizing the testdata (VRTOOL-296)
+    @property
+    def legacy_name(self) -> str:
         """Get name according to old naming convention"""
         return self.name.lower()

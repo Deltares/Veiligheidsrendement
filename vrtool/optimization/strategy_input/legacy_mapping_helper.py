@@ -17,6 +17,22 @@ class LegacyMappingHelper:
         max_sg: int,
         max_year: int,
     ) -> dict[MechanismEnum, np.ndarray]:
+        """
+        Get the probabilities of failure for all measure combinations for all sections.
+
+        Args:
+            sections (list[SectionAsInput]): List of sections data.
+            mechanisms (set[MechanismEnum]): Set of mechanisms.
+            num_sections (int): Number of sections.
+            max_sh (int): Maximum number of Sh combinations of all sections.
+            max_sg (int): Maximum number of Sg combinations of all sections.
+            max_year (int): Maximum year of all sections.
+
+        Returns:
+            dict[MechanismEnum, np.ndarray]: Probabilities of failure (N, Sh, Sg, year)
+                per mechanism for each aggregated Sh/Sg measure combination.
+        """
+
         def _get_pf_for_measures(
             mech: MechanismEnum,
             combinations: list[CombinedMeasure],
@@ -93,6 +109,18 @@ class LegacyMappingHelper:
     def get_lifecycle_cost(
         sections: list[SectionAsInput], num_sections: int, max_sh: int, max_sg: int
     ) -> np.ndarray:
+        """
+        Get the lifecycle costs for all measure combinations for all sections.
+
+        Args:
+            sections (list[SectionAsInput]): List of sections data.
+            num_sections (int): Number of sections.
+            max_sh (int): Maximum number of Sh combinations of all sections.
+            max_sg (int): Maximum number of Sg combinations of all sections.
+
+        Returns:
+            np.ndarray: Lifecycle cost per section for each aggregated Sh/Sg measure combination (N, Sh, Sg).
+        """
         _lcc: np.ndarray = np.array([])
         _lcc = np.full((num_sections, max_sh + 1, max_sg + 1), 1e99)
 

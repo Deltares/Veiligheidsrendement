@@ -16,7 +16,7 @@ class MechanismReliabilityCollection:
         mechanism: MechanismEnum,
         computation_type: str,
         computation_years: list[int],
-        t_0: float,
+        t_0: int,
         measure_year: int,
     ):
         """Creates a new instance of the MechanismReliabilityCollection
@@ -62,11 +62,11 @@ class MechanismReliabilityCollection:
         if not load:
             raise ValueError("A {} is required.".format(LoadInput.__name__))
 
-        for i in self.Reliability.keys():
-            self.Reliability[i].calculate_reliability(
-                self.Reliability[i].Input,
+        for _year, _reliability in self.Reliability.items():
+            self.Reliability[_year].calculate_reliability(
+                _reliability.Input,
                 load,
                 self.mechanism,
-                float(i),
+                int(_year),
                 traject_info,
             )
