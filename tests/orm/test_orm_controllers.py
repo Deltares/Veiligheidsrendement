@@ -1213,6 +1213,7 @@ class TestCustomMeasures:
 
         # 3. Verify final expectations
         assert len(_added_measures) == len(custom_measure_dict_list)
+        assert all(_am.measure.year == 0 for _am in _added_measures)
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
@@ -1336,7 +1337,7 @@ class TestCustomMeasures:
         _overflow_betas = (
             _imported_data[0]
             .sh_measures[0]
-            .mechanism_year_collection.get_betas(MechanismEnum.OVERFLOW, _years)
+            .mechanism_year_collection.get_betas(MechanismEnum.PIPING, _years)
         )
         assert _overflow_betas == pytest.approx(_expected_betas)
 

@@ -68,6 +68,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 measure_type=MeasureType.get_or_create(
                     name=MeasureTypeEnum.CUSTOM.legacy_name
                 )[0],
+                year=0,
                 combinable_type=CombinableType.select()
                 .where(
                     fn.upper(CombinableType.name)
@@ -162,7 +163,9 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 Mechanism.select()
                 .where(
                     fn.upper(Mechanism.name)
-                    == MechanismEnum.get_enum(_custom_measure["MECHANISM_NAME"]).name
+                    == MechanismEnum.get_enum(
+                        _custom_measure["MECHANISM_NAME"]
+                    ).legacy_name.upper()
                 )
                 .get()
             )
