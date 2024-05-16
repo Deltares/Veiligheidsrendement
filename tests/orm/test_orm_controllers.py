@@ -1011,6 +1011,8 @@ class TestCustomMeasures:
     This test class mostly covers integration tests for `CustomMeasure` workflows.
     """
 
+    _custom_measures_test_dir = test_data.joinpath("38-1 custom measures")
+
     def _get_custom_measure_dict(
         self,
         measure_name: str,
@@ -1041,7 +1043,7 @@ class TestCustomMeasures:
         else:
             _db_name = _marker.args[0]
 
-        _test_db = test_data.joinpath("38-1 custom measures", _db_name)
+        _test_db = self._custom_measures_test_dir.joinpath(_db_name)
         _output_directory = get_clean_test_results_dir(request)
 
         # Create a copy of the database to avoid locking it
@@ -1393,3 +1395,21 @@ class TestCustomMeasures:
                     _selected_measure.measure_result.measure_per_section.measure.measure_type.name
                     == MeasureTypeEnum.CUSTOM.legacy_name
                 )
+
+    @pytest.mark.fixture_database("without_custom_measures.db")
+    def test_add_custom_measures_without_t0_from_csv_raises(
+        self, custom_measures_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        _csv_data = self._custom_measures_test_dir.joinpath(
+            "custom_measures_without_t0.csv"
+        )
+        _csv_list_of_dict = pd.read_csv(_csv_data, delimiter=";").to_dict("records")
+        _expected_error = "Missing t0 beta value for Custom Measure"
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            add_custom_measures(custom_measures_vrtool_config, _csv_list_of_dict)
+
+        # 3. Verify expectations.
+        assert _expected_error in str(exc_err.value)

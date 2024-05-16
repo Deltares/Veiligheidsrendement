@@ -57,7 +57,7 @@ class RunOptimization(VrToolRunProtocol):
         return _strategy_controller
 
     def _get_optimized_greedy_strategy(self, design_method: str) -> StrategyProtocol:
-        logging.info(f"Start optimalisatie van maatregelen voor {design_method}.")
+        logging.info("Start optimalisatie van maatregelen voor %s.", design_method)
 
         # Initalize strategy controller
         _greedy_optimization_input = self._strategy_controller.get_evaluate_input(
@@ -77,7 +77,7 @@ class RunOptimization(VrToolRunProtocol):
 
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyProtocol:
         logging.info(
-            f"Start bepaling referentiemaatregelen op basis van {design_method}."
+            "Start bepaling referentiemaatregelen op basis van %s.", design_method
         )
         # Initalize strategy controller
         _target_reliability_input = self._strategy_controller.get_evaluate_input(
