@@ -14,6 +14,7 @@ class TestModifiedDikeGeometryOutput:
         d_house = 3.3
         d_crest = 4.4
         d_berm = 5.5
+        l_stab_screen = 3.0
 
         measure_input = {
             "modified_geometry": new_geometry,
@@ -22,6 +23,7 @@ class TestModifiedDikeGeometryOutput:
             "d_house": d_house,
             "d_crest": d_crest,
             "d_berm": d_berm,
+            "l_stab_screen": l_stab_screen,
             "id": 1,
         }
 

@@ -1,3 +1,4 @@
+import math
 from itertools import product
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -20,7 +21,7 @@ class AggregateCombinationsController:
         def primaries_match(
             aggregation: tuple[CombinedMeasure, CombinedMeasure]
         ) -> bool:
-            # Check if the primary measures in both commbinations match
+            # Check if the primary measures in both combinations match
             _sh_comb, _sg_comb = aggregation
             return (
                 _sh_comb.primary.year == _sg_comb.primary.year
@@ -30,10 +31,18 @@ class AggregateCombinationsController:
         def get_aggregated_measure_id(
             sh_comb: CombinedMeasure, sg_comb: CombinedMeasure
         ) -> int:
+            def is_matching_stab_length(sh_sg_length: float, sg_comb_length: float):
+                if math.isnan(sh_sg_length) and math.isnan(sg_comb_length):
+                    return True
+                return sh_sg_length == sg_comb_length
+
             def is_matching_sh_sg_measure(sh_sg_measure: ShSgMeasure) -> bool:
                 return (
                     sh_sg_measure.dcrest == sh_comb.primary.dcrest
                     and sh_sg_measure.dberm == sg_comb.primary.dberm
+                    and is_matching_stab_length(
+                        sh_sg_measure.l_stab_screen, sg_comb.primary.l_stab_screen
+                    )
                     and sh_sg_measure.measure_type == sh_comb.primary.measure_type
                 )
 

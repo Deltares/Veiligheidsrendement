@@ -15,6 +15,10 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 @dataclass
 class ShMeasure(MeasureAsInputProtocol):
+    """
+    Class to represent measures that do not have a berm component.
+    """
+
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     measure_result_id: int
@@ -25,20 +29,21 @@ class ShMeasure(MeasureAsInputProtocol):
     beta_target: float
     transition_level: float
     dcrest: float
+    l_stab_screen: float
     _start_cost: float = 0
 
     @property
     def lcc(self) -> float:
         """
         Value for the `life-cycle-cost` of this measure.
-        When the `dcrest` is the "initial" value (`0` or `-999`),
+        When the `dcrest` is the "initial" value (`0` or `-999`) and there is no stability screen,
         the cost will be computed as `0`.
 
         Returns:
             float: The calculated lcc.
         """
         if self.measure_type != MeasureTypeEnum.CUSTOM:
-            if self.dcrest in [0, -999]:
+            if self.dcrest in [0, -999] and math.isnan(self.l_stab_screen):
                 return 0
 
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
@@ -72,7 +77,7 @@ class ShMeasure(MeasureAsInputProtocol):
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:
-        return ["beta_target", "transition_level", "dcrest"]
+        return ["beta_target", "transition_level", "dcrest", "l_stab_screen"]
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -95,4 +100,6 @@ class ShMeasure(MeasureAsInputProtocol):
         if self.year != 0:
             return False
 
-        return math.isclose(self.dcrest, 0) or math.isnan(self.dcrest)
+        return math.isnan(self.l_stab_screen) and (
+            math.isclose(self.dcrest, 0) or math.isnan(self.dcrest)
+        )

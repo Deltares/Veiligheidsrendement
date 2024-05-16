@@ -186,6 +186,11 @@ class PipingSemiProbabilisticCalculator(FailureMechanismCalculatorProtocol):
                 beta_to_pf(8.0),
             ]
         )
+
+        # apply sf_factor (from stability screen):
+        if "sf_factor" in self._mechanism_input.input.keys():
+            failure_probability /= self._mechanism_input.input["sf_factor"]
+
         beta = np.min([pf_to_beta(failure_probability), 8])
 
         return [beta, failure_probability]

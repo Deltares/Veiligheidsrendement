@@ -15,4 +15,5 @@ class ModifiedDikeGeometryMeasureInput:
     d_house: float
     d_berm: float
     d_crest: float
+    l_stab_screen: float
     id: int
