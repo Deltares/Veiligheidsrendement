@@ -1327,22 +1327,28 @@ class TestCustomMeasures:
             set((x.measure_result_id, x.year) for x in _imported_data[0].measures)
         )
         assert _meas_ids == _custom_measures_ids
-        assert len(_imported_data[0].sh_measures) == 1
-        assert _imported_data[0].sh_measures[0].measure_type == MeasureTypeEnum.CUSTOM
 
-        # Verify betas (This is the same as `test_add_custom_measures[MVP test]`)
+        assert len(_imported_data[0].measures) == 2
+
         _years = custom_measures_vrtool_config.T
         _expected_betas = np.linspace(7, 4, num=7)
 
-        _overflow_betas = (
-            _imported_data[0]
-            .sh_measures[0]
-            .mechanism_year_collection.get_betas(MechanismEnum.PIPING, _years)
-        )
-        assert _overflow_betas == pytest.approx(_expected_betas)
+        # Verify each imported measure
+        for _measure in _imported_data[0].measures:
+            assert _measure.measure_type == MeasureTypeEnum.CUSTOM
+            assert _measure.combine_type == CombinableTypeEnum.FULL
+            assert _measure.start_cost == 0
+            assert _measure.cost == _custom_measure_cost
+            assert _measure.lcc == _custom_measure_cost
+            assert _measure.discount_rate == 0.03
+            assert _measure.year == 0
+            assert _measure.measure_result_id == 1
 
-        # Verify costs
-        assert _imported_data[0].sh_measures[0].cost == _custom_measure_cost
+            # Verify betas
+            _overflow_betas = _measure.mechanism_year_collection.get_betas(
+                MechanismEnum.PIPING, _years
+            )
+            assert _overflow_betas == pytest.approx(_expected_betas)
 
     @pytest.mark.slow
     @pytest.mark.fixture_database("vrtool_input.db")
