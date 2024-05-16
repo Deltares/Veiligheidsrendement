@@ -15,7 +15,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 class ShSgMeasure(MeasureAsInputProtocol):
     """
     Class to represent soil measures that have both a crest and berm component.
-    These are used to store the opimization result for the aggregated Sh/Sg combined measures.
+    These are used to store the optimization result for the aggregated Sh/Sg combined measures.
     """
 
     measure_type: MeasureTypeEnum
@@ -23,6 +23,7 @@ class ShSgMeasure(MeasureAsInputProtocol):
     measure_result_id: int
     dcrest: float
     dberm: float
+    l_stab_screen: float
     cost: float = 0
     discount_rate: float = 0
     year: int = 0
@@ -34,7 +35,7 @@ class ShSgMeasure(MeasureAsInputProtocol):
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:
-        return ["dberm", "dcrest"]
+        return ["dberm", "dcrest", "l_stab_screen"]
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:

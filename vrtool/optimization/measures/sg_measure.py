@@ -15,6 +15,10 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 @dataclass
 class SgMeasure(MeasureAsInputProtocol):
+    """
+    Class to represent measures that do not have a crest component.
+    """
+
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     measure_result_id: int
@@ -23,19 +27,20 @@ class SgMeasure(MeasureAsInputProtocol):
     discount_rate: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
+    l_stab_screen: float
     _start_cost: float = 0
 
     @property
     def lcc(self) -> float:
         """
         Value for the `life-cycle-cost` of this measure.
-        When the `dberm` is the "initial" value (`0`, `-999`),
+        When the `dberm` is the "initial" value (`0`, `-999`) and there is no stability screen,
         the cost will be computed as `0`.
 
         Returns:
             float: The calculated lcc.
         """
-        if self.dberm in [0, -999]:
+        if self.dberm in [0, -999] and math.isnan(self.l_stab_screen):
             return 0
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
@@ -67,7 +72,7 @@ class SgMeasure(MeasureAsInputProtocol):
 
     @staticmethod
     def get_concrete_parameters() -> list[str]:
-        return ["dberm"]
+        return ["dberm", "l_stab_screen"]
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -90,4 +95,6 @@ class SgMeasure(MeasureAsInputProtocol):
         if self.year != 0:
             return False
 
-        return math.isclose(self.dberm, 0) or math.isnan(self.dberm)
+        return math.isnan(self.l_stab_screen) and (
+            math.isclose(self.dberm, 0) or math.isnan(self.dberm)
+        )

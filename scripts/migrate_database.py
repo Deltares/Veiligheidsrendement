@@ -62,7 +62,7 @@ class MigrateDb:
 @click.argument("sql_filepath", type=click.Path(exists=True), nargs=1)
 def migrate_db(db_filepath: str, sql_filepath: str):
     """
-    Can be run with `python -m migrate_db db_filepath sql_filepath`
+    Can be run with `python migrate_database.py migrate_db db_filepath sql_filepath`
     """
     MigrateDb().migrate_single_db(Path(db_filepath), Path(sql_filepath))
 
@@ -75,7 +75,7 @@ def migrate_db(db_filepath: str, sql_filepath: str):
 @click.argument("sql_file", type=click.Path(exists=True), nargs=1)
 def migrate_databases_in_dir(database_dir: str, sql_file: str):
     """
-    Can be run with `python -m migrate_db_dir database_dir sql_file`
+    Can be run with `python migrate_database.py migrate_db_dir database_dir sql_file`
     """
     MigrateDb().migrate_databases_in_dir(Path(database_dir), Path(sql_file))
 

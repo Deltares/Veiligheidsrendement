@@ -70,7 +70,7 @@ class OptimizationSectionAsInputImporter:
             ):
                 _initial_costs_dictionary[type(_im)][_im.measure_type] = _im.cost
 
-        # Update inital costs for all imported measures
+        # Update initial costs for all imported measures
         for _im in _section_imported_measures:
             _im.start_cost = _initial_costs_dictionary[type(_im)][_im.measure_type]
 

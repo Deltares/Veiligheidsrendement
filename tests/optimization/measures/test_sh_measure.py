@@ -26,6 +26,7 @@ class TestShMeasure:
             beta_target=1.1,
             transition_level=0.5,
             dcrest=0.1,
+            l_stab_screen=float("nan"),
         )
 
     def test_create_sh_measure(self):

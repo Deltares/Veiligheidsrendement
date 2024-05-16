@@ -22,6 +22,7 @@ class TestSgMeasure:
             discount_rate=0.03,
             mechanism_year_collection=None,
             dberm=0.1,
+            l_stab_screen=float("nan"),
         )
         return _measure
 

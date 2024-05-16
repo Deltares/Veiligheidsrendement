@@ -18,6 +18,7 @@ class TestShSgMeasure:
             combine_type=combinable_type,
             dberm=0.1,
             dcrest=0.5,
+            l_stab_screen=float("nan"),
         )
         return _measure
 

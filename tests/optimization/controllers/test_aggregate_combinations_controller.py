@@ -49,6 +49,7 @@ class MockMeasure(MeasureAsInputProtocol):
     cost: float
     dcrest: float = 0
     dberm: float = 0
+    l_stab_screen = float("nan")
 
     @property
     def lcc(self) -> float:
