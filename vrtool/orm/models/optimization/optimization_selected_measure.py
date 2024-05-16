@@ -15,7 +15,7 @@ class OptimizationSelectedMeasure(OrmBaseModel):
         OptimizationRun, backref="optimization_run_measure_results", on_delete="CASCADE"
     )
     measure_result = ForeignKeyField(
-        MeasureResult, backref="measure_result_optimization_runs"
+        MeasureResult, backref="measure_result_optimization_runs", on_delete="CASCADE"
     )
     investment_year = IntegerField()
 

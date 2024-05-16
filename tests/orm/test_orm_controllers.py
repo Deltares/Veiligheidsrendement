@@ -1,6 +1,5 @@
 import itertools
 import shutil
-from collections import defaultdict
 from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
@@ -56,14 +55,12 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
     CustomMeasureTimeBetaCalculator,
 )
-from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
-    ListOfDictToCustomMeasureExporter,
-)
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     add_custom_measures,
+    brute_clear_custom_measure,
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
@@ -115,7 +112,10 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
-    mechanism_data = [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
+    mechanism_data = [
+        MechanismEnum.OVERFLOW.legacy_name,
+        MechanismEnum.STABILITY_INNER.legacy_name,
+    ]
     buildings_data = [
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
@@ -168,8 +168,8 @@ class TestOrmControllers:
         )
         _dike_section.save()
 
-        for _m_dict in DummyModelsData.mechanism_data:
-            _mech_inst = orm.Mechanism.create(**_m_dict)
+        for _mech_name in DummyModelsData.mechanism_data:
+            _mech_inst = orm.Mechanism.create(name=_mech_name)
             _mech_inst.save()
             _mechanism_section = orm.MechanismPerSection.create(
                 mechanism=_mech_inst, section=_dike_section
@@ -751,6 +751,27 @@ class TestOrmControllers:
         assert not any(orm.MeasureResultSection.select())
         assert not any(orm.MeasureResultMechanism.select())
 
+    def test_clear_measure_result_does_not_clear_custom_results(
+        self, export_database: SqliteDatabase
+    ):
+        # Setup
+        assert not any(orm.MeasureResult.select())
+        self._generate_measure_results(export_database, "Custom")
+
+        # Call
+        _db_path = Path(export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
+        )
+        clear_measure_results(_vrtool_config)
+
+        # Assert
+        assert any(orm.MeasureResult.select())
+        assert any(orm.MeasureResultParameter.select())
+        assert any(orm.MeasureResultSection.select())
+        assert any(orm.MeasureResultMechanism.select())
+
     def test_clear_optimization_results_clears_all_results(
         self, export_database: SqliteDatabase
     ):
@@ -772,11 +793,14 @@ class TestOrmControllers:
         assert not any(orm.OptimizationStepResultMechanism.select())
         assert not any(orm.OptimizationStepResultSection.select())
 
-    def _generate_measure_results(self, db_connection: SqliteDatabase):
-        db_connection.connect()
+    def _generate_measure_results(
+        self, db_connection: SqliteDatabase, measure_type_name: str = "TestMeasureType"
+    ):
+        if db_connection.is_closed():
+            db_connection.connect()
         traject_info = get_basic_dike_traject_info()
 
-        _measure_type = get_basic_measure_type()
+        _measure_type = get_basic_measure_type(measure_type_name)
         _combinable_type = get_basic_combinable_type()
         _measures = [
             self._create_measure(_measure_type, _combinable_type, "measure 1"),
@@ -1422,3 +1446,85 @@ class TestCustomMeasures:
 
         # 3. Verify expectations.
         assert _expected_error in str(exc_err.value)
+
+    @pytest.mark.fixture_database("vrtool_input.db")
+    def test_brute_clear_custom_measure_results(
+        self, custom_measures_vrtool_config: VrtoolConfig
+    ):
+        def get_custom_measure_result_ids() -> list[int]:
+            return list(
+                _mr.get_id()
+                for _mr in orm.MeasureResult.select()
+                if _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+            )
+
+        def get_existing_optimization_custom_measure(
+            existing_measure_results: list[int],
+        ) -> bool:
+            return any(
+                _osm.measure_result_id in existing_measure_results
+                for _osm in orm.OptimizationSelectedMeasure.select()
+            )
+
+        # 1. Define test data.
+        _measure_that_remains_name = "NotACustomMeasure"
+        _measure_result_ids = []
+        with open_database(custom_measures_vrtool_config.input_database_path):
+            _measure_result_ids = get_custom_measure_result_ids()
+            assert any(_measure_result_ids)
+            assert get_existing_optimization_custom_measure(_measure_result_ids)
+            # Create additional measure results to regular mesures.
+            assert (
+                orm.Measure.get_or_none(orm.Measure.name == _measure_that_remains_name)
+                is None
+            )
+            _measure_that_remains = orm.Measure.create(
+                name=_measure_that_remains_name,
+                year=2021,
+                combinable_type=orm.CombinableType.get(),
+                measure_type=orm.MeasureType.get(
+                    fn.upper(orm.MeasureType.name) != MeasureTypeEnum.CUSTOM.name
+                ),
+            )
+            _created_measure_x_section = orm.MeasurePerSection.create(
+                measure=_measure_that_remains,
+                section=orm.SectionData.get(orm.SectionData.section_name == "01A"),
+            )
+            _created_measure_result = orm.MeasureResult.create(
+                measure_per_section=_created_measure_x_section
+            )
+            orm.MeasureResultSection.create(
+                measure_result=_created_measure_result, beta=42, time=13, cost=24.42
+            )
+            orm.MeasureResultMechanism.create(
+                measure_result=_created_measure_result,
+                mechanism_per_section=_created_measure_x_section.section.mechanisms_per_section[
+                    0
+                ],
+                time=13,
+                beta=24.42,
+            )
+
+        # 2. Run test.
+        brute_clear_custom_measure(custom_measures_vrtool_config)
+
+        # 3. Verify expectations.
+        with open_database(custom_measures_vrtool_config.input_database_path):
+            assert any(get_custom_measure_result_ids()) is False
+            assert any(_measure_result_ids), "The values have been deleted."
+            assert (
+                get_existing_optimization_custom_measure(_measure_result_ids) is False
+            )
+
+            _measure_that_remains = orm.Measure.get_or_none(
+                orm.Measure.name == _measure_that_remains_name
+            )
+            assert isinstance(_measure_that_remains, orm.Measure)
+            assert len(_measure_that_remains.sections_per_measure) == 1
+
+            _measure_x_section = _measure_that_remains.sections_per_measure[0]
+            assert len(_measure_x_section.measure_per_section_result) == 1
+
+            _measure_result = _measure_x_section.measure_per_section_result[0]
+            assert len(_measure_result.measure_result_section) == 1
+            assert len(_measure_result.measure_result_mechanisms) == 1

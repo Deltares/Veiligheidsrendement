@@ -11,7 +11,9 @@ from vrtool.orm.models.orm_base_model import (
 class OptimizationRun(OrmBaseModel):
     name = CharField(max_length=_max_char_length, unique=True)
     discount_rate = FloatField()
-    optimization_type = ForeignKeyField(OptimizationType, backref="optimization_runs")
+    optimization_type = ForeignKeyField(
+        OptimizationType, backref="optimization_runs", on_delete="CASCADE"
+    )
 
     class Meta:
         table_name = _get_table_name(__qualname__)
