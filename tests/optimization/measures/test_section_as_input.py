@@ -34,6 +34,7 @@ class MockShMeasure(ShMeasure):
     dcrest: float = 0
     l_stab_screen: float = float("nan")
 
+
 @dataclass
 class MockSgMeasure(SgMeasure):
     measure_type: MeasureTypeEnum

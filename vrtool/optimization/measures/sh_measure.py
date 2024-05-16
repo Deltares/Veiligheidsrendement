@@ -18,6 +18,7 @@ class ShMeasure(MeasureAsInputProtocol):
     """
     Class to represent measures that do not have a berm component.
     """
+
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     measure_result_id: int
@@ -98,4 +99,6 @@ class ShMeasure(MeasureAsInputProtocol):
         if self.year != 0:
             return False
 
-        return math.isnan(self.l_stab_screen) and (math.isclose(self.dcrest, 0) or math.isnan(self.dcrest))
+        return math.isnan(self.l_stab_screen) and (
+            math.isclose(self.dcrest, 0) or math.isnan(self.dcrest)
+        )

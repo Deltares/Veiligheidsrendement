@@ -291,7 +291,8 @@ class TestCommonFunctions:
             len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
         )
 
-    @pytest.mark.parametrize("length, expected",
+    @pytest.mark.parametrize(
+        "length, expected",
         [
             pytest.param(3.0, 0.2),
             pytest.param(6.0, 0.4),
@@ -304,7 +305,8 @@ class TestCommonFunctions:
         _result = get_safety_factor_increase(length)
         assert _result == pytest.approx(expected)
 
-    @pytest.mark.parametrize("length, expected",
+    @pytest.mark.parametrize(
+        "length, expected",
         [
             pytest.param(3.0, 100.0),
             pytest.param(6.0, 1000.0),

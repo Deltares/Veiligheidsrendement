@@ -1,4 +1,5 @@
 import math
+
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultCollectionProtocol,
     MeasureResultProtocol,

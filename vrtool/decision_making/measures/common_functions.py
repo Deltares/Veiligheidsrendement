@@ -161,6 +161,7 @@ def implement_berm_widening(
             berm_input["sf_factor"] = sf_factor_piping(measure_input["l_stab_screen"])
     return berm_input
 
+
 def get_safety_factor_increase(l_stab_screen: float) -> float:
     """
     get the safety factor for stability that now depends on the length of the stability screen
@@ -177,6 +178,7 @@ def get_safety_factor_increase(l_stab_screen: float) -> float:
         return _default_safety_factor
     return _default_safety_factor * l_stab_screen / _small_stab_screen
 
+
 def sf_factor_piping(length: float) -> float:
     """
     get the safe reduction factor for the probability of piping
@@ -189,6 +191,7 @@ def sf_factor_piping(length: float) -> float:
     """
     _small_stab_screen_length = 3.0
     return 10 ** (1.0 + length / _small_stab_screen_length)
+
 
 def calculate_area(geometry):
     polypoints = []

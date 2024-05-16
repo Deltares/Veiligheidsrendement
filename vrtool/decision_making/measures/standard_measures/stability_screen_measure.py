@@ -6,8 +6,8 @@ import numpy as np
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
-    sf_factor_piping,
     get_safety_factor_increase,
+    sf_factor_piping,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
@@ -40,7 +40,9 @@ class StabilityScreenMeasure(MeasureProtocol):
             _modified_measure["Stability Screen"] = "yes"
             _modified_measure["l_stab_screen"] = _length
             _depth = dike_section.cover_layer_thickness + _length
-            _modified_measure["Cost"] = self.unit_costs.sheetpile * _depth * dike_section.Length
+            _modified_measure["Cost"] = (
+                self.unit_costs.sheetpile * _depth * dike_section.Length
+            )
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _length
             )
@@ -48,10 +50,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             self.measures.append(_modified_measure)
 
     def _get_configured_section_reliability(
-        self,
-        dike_section: DikeSection,
-        traject_info: DikeTrajectInfo,
-        length: float
+        self, dike_section: DikeSection, traject_info: DikeTrajectInfo, length: float
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
@@ -62,11 +61,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             calc_type = dike_section.mechanism_data[mechanism][0][1]
             mechanism_reliability_collection = (
                 self._get_configured_mechanism_reliability_collection(
-                    mechanism,
-                    calc_type,
-                    dike_section,
-                    traject_info,
-                    length
+                    mechanism, calc_type, dike_section, traject_info, length
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -81,13 +76,16 @@ class StabilityScreenMeasure(MeasureProtocol):
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        length: float
+        length: float,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism, calc_type, self.config.T, self.config.t_0, 0
         )
 
-        for _year_to_calculate, _collection in mechanism_reliability_collection.Reliability.items():
+        for (
+            _year_to_calculate,
+            _collection,
+        ) in mechanism_reliability_collection.Reliability.items():
             _collection.Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
@@ -104,16 +102,13 @@ class StabilityScreenMeasure(MeasureProtocol):
             if float(_year_to_calculate) >= self.parameters["year"]:
                 if mechanism == MechanismEnum.STABILITY_INNER:
                     self._configure_stability_inner(
-                        _collection,
-                        _year_to_calculate,
-                        dike_section,
-                        length
+                        _collection, _year_to_calculate, dike_section, length
                     )
                 elif mechanism == MechanismEnum.PIPING:
-                    self._copy_results(
-                        _collection, dike_section_mechanism_reliability
-                    )
-                    dike_section_mechanism_reliability.Input.input["sf_factor"] = sf_factor_piping(length)
+                    self._copy_results(_collection, dike_section_mechanism_reliability)
+                    dike_section_mechanism_reliability.Input.input[
+                        "sf_factor"
+                    ] = sf_factor_piping(length)
                 elif mechanism == MechanismEnum.OVERFLOW:
                     self._copy_results(
                         _collection, dike_section_mechanism_reliability
@@ -136,7 +131,7 @@ class StabilityScreenMeasure(MeasureProtocol):
         mechanism_reliability: MechanismReliability,
         year_to_calculate: str,
         dike_section: DikeSection,
-        length: float
+        length: float,
     ) -> None:
         _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][
             1

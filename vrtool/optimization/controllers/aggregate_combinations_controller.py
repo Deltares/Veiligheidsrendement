@@ -1,5 +1,5 @@
-from itertools import product
 import math
+from itertools import product
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
@@ -40,7 +40,9 @@ class AggregateCombinationsController:
                 return (
                     sh_sg_measure.dcrest == sh_comb.primary.dcrest
                     and sh_sg_measure.dberm == sg_comb.primary.dberm
-                    and is_matching_stab_length(sh_sg_measure.l_stab_screen, sg_comb.primary.l_stab_screen)
+                    and is_matching_stab_length(
+                        sh_sg_measure.l_stab_screen, sg_comb.primary.l_stab_screen
+                    )
                     and sh_sg_measure.measure_type == sh_comb.primary.measure_type
                 )
 

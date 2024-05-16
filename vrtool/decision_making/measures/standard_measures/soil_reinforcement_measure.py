@@ -57,8 +57,12 @@ class SoilReinforcementMeasure(MeasureProtocol):
                 section=dike_section.name,
             )
             if _modified_measure["StabilityScreen"] == "yes":
-                _depth = dike_section.cover_layer_thickness + modified_measure.l_stab_screen
-                _modified_measure["Cost"] += self.unit_costs.sheetpile * _depth * dike_section.Length
+                _depth = (
+                    dike_section.cover_layer_thickness + modified_measure.l_stab_screen
+                )
+                _modified_measure["Cost"] += (
+                    self.unit_costs.sheetpile * _depth * dike_section.Length
+                )
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _modified_measure
             )
@@ -132,7 +136,7 @@ class SoilReinforcementMeasure(MeasureProtocol):
             without a stability screen a nan is returned
         """
         if self.parameters["StabilityScreen"] == "yes":
-            return np.array([3.0,  6.0])
+            return np.array([3.0, 6.0])
         return np.array([float("nan")])
 
     def _get_modified_dike_geometry_measures(
@@ -254,7 +258,10 @@ class SoilReinforcementMeasure(MeasureProtocol):
             )
             # Adapt inputs for reliability calculation, but only after year of implementation.
             if float(year_to_calculate) >= self.parameters["year"]:
-                _depth_screen = dike_section.cover_layer_thickness + modified_geometry_measure["l_stab_screen"]
+                _depth_screen = (
+                    dike_section.cover_layer_thickness
+                    + modified_geometry_measure["l_stab_screen"]
+                )
                 reliability_input.input = implement_berm_widening(
                     berm_input=reliability_input.input,
                     measure_input=modified_geometry_measure,
