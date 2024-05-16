@@ -1,5 +1,3 @@
-import copy
-
 import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -60,7 +58,7 @@ class TestShMeasure:
         # Measure and combinable type do not really matter,
         # but we are forced to set a value.
         _sh_measure = self._create_sh_measure(
-            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+            MeasureTypeEnum.STABILITY_SCREEN, CombinableTypeEnum.COMBINABLE
         )
         _sh_measure.dcrest = dcrest_value
 
@@ -69,6 +67,24 @@ class TestShMeasure:
 
         # 3. Verify final expectations.
         assert _result == 0
+
+    def test_given_custom_measure_without_dcrest_returns_cost(self):
+        """
+        Test related to issue VRTOOL-501
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sh_measure = self._create_sh_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sh_measure.dcrest = 0
+
+        # 2. Run test.
+        _result = _sh_measure.lcc
+
+        # 3. Verify expectations
+        assert _result > 0
 
     @pytest.mark.parametrize(
         "dcrest_value",

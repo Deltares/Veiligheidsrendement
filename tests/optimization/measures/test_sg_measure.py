@@ -55,7 +55,7 @@ class TestSgMeasure:
         # Measure and combinable type do not really matter,
         # but we are forced to set a value.
         _sg_measure = self._create_sg_measure(
-            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
         )
         _sg_measure.dberm = dberm_value
 
@@ -77,7 +77,7 @@ class TestSgMeasure:
         # Measure and combinable type do not really matter,
         # but we are forced to set a value.
         _sg_measure = self._create_sg_measure(
-            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
         )
         _sg_measure.dberm = dberm_value
 
@@ -86,6 +86,24 @@ class TestSgMeasure:
 
         # 3. Verify final expectations.
         assert _result != 0
+
+    def test_given_custom_measure_without_dberm_returns_cost(self):
+        """
+        Test related to issue VRTOOL-501
+        """
+        # 1. Define test data.
+        # Measure and combinable type do not really matter,
+        # but we are forced to set a value.
+        _sg_measure = self._create_sg_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
+        )
+        _sg_measure.dberm = 0
+
+        # 2. Run test.
+        _result = _sg_measure.lcc
+
+        # 3. Verify final expectations.
+        assert _result > 0
 
     @pytest.mark.parametrize(
         "measure_type",
