@@ -79,7 +79,7 @@ def get_all_measure_results_of_specific_type(
     Args:
         valid_vrtool_config (VrtoolConfig):
             Configuration contanining database connection details.
-        measure_type_name (str): Name of the measure type to get the results for
+        measure_type (MeasureTypeEnum): The measure type to get the results for
 
     Returns:
         list[tuple[int, int]]: List of measure result - investment year pairs.
@@ -303,7 +303,9 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.skip(reason="Only used for generating new optimization databases.")
+    @pytest.mark.skip(
+        reason="Only used for generating new optimization databases. Run with the --no-skip option."
+    )
     @pytest.mark.regenerate_test_db
     @pytest.mark.parametrize(
         "valid_vrtool_config",
@@ -501,7 +503,9 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.skip(reason="Only used for generating new reference databases.")
+    @pytest.mark.skip(
+        reason="Only used for generating new reference databases. Run with the --no-skip option."
+    )
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases,
