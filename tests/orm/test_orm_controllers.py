@@ -1071,7 +1071,7 @@ class TestCustomMeasures:
                         "MEASURE_NAME": "ROCKS",
                         "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "MECHANISM_NAME": MechanismEnum.PIPING.name,
                         "COST": 50.0,
                         "TIME": _t,
                         "BETA": _beta,
