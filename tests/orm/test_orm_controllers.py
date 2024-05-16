@@ -1,6 +1,5 @@
 import itertools
 import shutil
-from collections import defaultdict
 from operator import itemgetter
 from pathlib import Path
 from typing import Iterator
@@ -55,9 +54,6 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
     CustomMeasureTimeBetaCalculator,
-)
-from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter import (
-    ListOfDictToCustomMeasureExporter,
 )
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.measure_result import MeasureResult
@@ -116,7 +112,10 @@ class DummyModelsData:
         cover_layer_thickness=3.0,
         pleistocene_level=4.0,
     )
-    mechanism_data = [MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
+    mechanism_data = [
+        MechanismEnum.OVERFLOW.legacy_name,
+        MechanismEnum.STABILITY_INNER.legacy_name,
+    ]
     buildings_data = [
         dict(distance_from_toe=24, number_of_buildings=2),
         dict(distance_from_toe=42, number_of_buildings=1),
@@ -169,8 +168,8 @@ class TestOrmControllers:
         )
         _dike_section.save()
 
-        for _m_dict in DummyModelsData.mechanism_data:
-            _mech_inst = orm.Mechanism.create(**_m_dict)
+        for _mech_name in DummyModelsData.mechanism_data:
+            _mech_inst = orm.Mechanism.create(name=_mech_name)
             _mech_inst.save()
             _mechanism_section = orm.MechanismPerSection.create(
                 mechanism=_mech_inst, section=_dike_section
@@ -752,6 +751,27 @@ class TestOrmControllers:
         assert not any(orm.MeasureResultSection.select())
         assert not any(orm.MeasureResultMechanism.select())
 
+    def test_clear_measure_result_does_not_clear_custom_results(
+        self, export_database: SqliteDatabase
+    ):
+        # Setup
+        assert not any(orm.MeasureResult.select())
+        self._generate_measure_results(export_database, "Custom")
+
+        # Call
+        _db_path = Path(export_database.database)
+        _vrtool_config = VrtoolConfig(
+            input_directory=_db_path.parent,
+            input_database_name=_db_path.name,
+        )
+        clear_measure_results(_vrtool_config)
+
+        # Assert
+        assert any(orm.MeasureResult.select())
+        assert any(orm.MeasureResultParameter.select())
+        assert any(orm.MeasureResultSection.select())
+        assert any(orm.MeasureResultMechanism.select())
+
     def test_clear_optimization_results_clears_all_results(
         self, export_database: SqliteDatabase
     ):
@@ -773,11 +793,14 @@ class TestOrmControllers:
         assert not any(orm.OptimizationStepResultMechanism.select())
         assert not any(orm.OptimizationStepResultSection.select())
 
-    def _generate_measure_results(self, db_connection: SqliteDatabase):
-        db_connection.connect()
+    def _generate_measure_results(
+        self, db_connection: SqliteDatabase, measure_type_name: str = "TestMeasureType"
+    ):
+        if db_connection.is_closed():
+            db_connection.connect()
         traject_info = get_basic_dike_traject_info()
 
-        _measure_type = get_basic_measure_type()
+        _measure_type = get_basic_measure_type(measure_type_name)
         _combinable_type = get_basic_combinable_type()
         _measures = [
             self._create_measure(_measure_type, _combinable_type, "measure 1"),

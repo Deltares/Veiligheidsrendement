@@ -7,8 +7,10 @@ from typing import Protocol
 
 import pandas as pd
 import pytest
+from peewee import fn
 
 import vrtool.orm.models as orm
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
@@ -183,8 +185,28 @@ class RunStepAssessmentValidator(RunStepValidator):
 class RunStepMeasuresValidator(RunStepValidator):
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
-        assert not any(orm.MeasureResult.select())
-        assert not any(orm.MeasureResultParameter.select())
+
+        _custom_measure_result_ids = list(
+            _mr.get_id()
+            for _mr in orm.MeasureResult.select()
+            .join_from(orm.MeasureResult, orm.MeasurePerSection)
+            .join_from(orm.MeasurePerSection, orm.Measure)
+            .join_from(orm.Measure, orm.MeasureType)
+            .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
+        )
+
+        assert not any(
+            orm.MeasureResult.select().where(
+                orm.MeasureResult.id.not_in(_custom_measure_result_ids)
+            )
+        )
+        assert not any(
+            orm.MeasureResultParameter.select().where(
+                orm.MeasureResultParameter.measure_result_id.not_in(
+                    _custom_measure_result_ids
+                )
+            )
+        )
 
         if not _connected_db.is_closed():
             _connected_db.close()
