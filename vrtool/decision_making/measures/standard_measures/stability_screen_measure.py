@@ -6,8 +6,8 @@ import numpy as np
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
-    determine_costs,
-    get_stability_inner_depth,
+    sf_factor_piping,
+    get_safety_factor_increase,
 )
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
@@ -31,34 +31,27 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         preserve_slope: bool = False,
-        safety_factor_increase: float = 0.2,
-    ):
+    ) -> None:
         # To be added: year property to distinguish the same measure in year 2025 and 2045
-        _measure_type = self.parameters["Type"]
-        self.measures = {}
-        self.measures["Stability Screen"] = "yes"
-        self.parameters["Depth"] = self._get_depth(dike_section)
-        self.measures["Cost"] = determine_costs(
-            self.parameters,
-            _measure_type,
-            dike_section.Length,
-            self.parameters["Depth"],
-            self.unit_costs,
-        )
-
-        self.measures["Reliability"] = self._get_configured_section_reliability(
-            dike_section, traject_info, safety_factor_increase
-        )
-        self.measures["Reliability"].calculate_section_reliability()
-
-    def _get_depth(self, dike_section: DikeSection) -> float:
-        return get_stability_inner_depth(dike_section)
+        _lengths_stab_screen = [3.0, 6.0]
+        self.measures = []
+        for _length in _lengths_stab_screen:
+            _modified_measure = {}
+            _modified_measure["Stability Screen"] = "yes"
+            _modified_measure["l_stab_screen"] = _length
+            _depth = dike_section.cover_layer_thickness + _length
+            _modified_measure["Cost"] = self.unit_costs.sheetpile * _depth * dike_section.Length
+            _modified_measure["Reliability"] = self._get_configured_section_reliability(
+                dike_section, traject_info, _length
+            )
+            _modified_measure["Reliability"].calculate_section_reliability()
+            self.measures.append(_modified_measure)
 
     def _get_configured_section_reliability(
         self,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        safety_factor_increase: float,
+        length: float
     ) -> SectionReliability:
         section_reliability = SectionReliability()
 
@@ -73,7 +66,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                     calc_type,
                     dike_section,
                     traject_info,
-                    safety_factor_increase,
+                    length
                 )
             )
             section_reliability.failure_mechanisms.add_failure_mechanism_reliability_collection(
@@ -88,42 +81,42 @@ class StabilityScreenMeasure(MeasureProtocol):
         calc_type: str,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
-        safety_factor_increase: float,
+        length: float
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism, calc_type, self.config.T, self.config.t_0, 0
         )
 
-        for year_to_calculate in mechanism_reliability_collection.Reliability.keys():
-            mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ].Input = copy.deepcopy(
+        for _year_to_calculate, _collection in mechanism_reliability_collection.Reliability.items():
+            _collection.Input = copy.deepcopy(
                 dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                     mechanism
                 )
-                .Reliability[year_to_calculate]
+                .Reliability[_year_to_calculate]
                 .Input
             )
 
-            mechanism_reliability = mechanism_reliability_collection.Reliability[
-                year_to_calculate
-            ]
             dike_section_mechanism_reliability = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
                 mechanism
             ).Reliability[
-                year_to_calculate
+                _year_to_calculate
             ]
-            if float(year_to_calculate) >= self.parameters["year"]:
+            if float(_year_to_calculate) >= self.parameters["year"]:
                 if mechanism == MechanismEnum.STABILITY_INNER:
                     self._configure_stability_inner(
-                        mechanism_reliability,
-                        year_to_calculate,
+                        _collection,
+                        _year_to_calculate,
                         dike_section,
-                        safety_factor_increase,
+                        length
                     )
-                if mechanism in [MechanismEnum.PIPING, MechanismEnum.OVERFLOW]:
+                elif mechanism == MechanismEnum.PIPING:
                     self._copy_results(
-                        mechanism_reliability, dike_section_mechanism_reliability
+                        _collection, dike_section_mechanism_reliability
+                    )
+                    dike_section_mechanism_reliability.Input.input["sf_factor"] = sf_factor_piping(length)
+                elif mechanism == MechanismEnum.OVERFLOW:
+                    self._copy_results(
+                        _collection, dike_section_mechanism_reliability
                     )  # No influence
 
         mechanism_reliability_collection.generate_LCR_profile(
@@ -143,20 +136,21 @@ class StabilityScreenMeasure(MeasureProtocol):
         mechanism_reliability: MechanismReliability,
         year_to_calculate: str,
         dike_section: DikeSection,
-        SFincrease: float = 0.2,
+        length: float
     ) -> None:
         _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][
             1
         ].upper()
 
         mechanism_reliability_input = mechanism_reliability.Input.input
+        _safety_factor_increase = get_safety_factor_increase(length)
+        _depth_screen = dike_section.cover_layer_thickness + length
         if _calc_type == "DSTABILITY":
             # Add screen to model
             _dstability_wrapper = DStabilityWrapper(
                 Path(mechanism_reliability_input["STIXNAAM"]),
                 Path(mechanism_reliability_input["DStability_exe_path"]),
             )
-            _depth_screen = self._get_depth(dike_section)
             _inner_toe = dike_section.InitialGeometry.loc["BIT"]
             _dstability_wrapper.add_stability_screen(
                 bottom_screen=_inner_toe.z - _depth_screen, location=_inner_toe.x
@@ -168,7 +162,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                 self.config.output_directory
                 / "intermediate_result"
                 / _dstability_wrapper.stix_path.with_stem(
-                    _original_name + f"_stability_screen"
+                    _original_name + "_stability_screen"
                 ).name
             )
 
@@ -177,7 +171,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             _dstability_wrapper.save_dstability_model(_export_path)
             _dstability_wrapper.rerun_stix()
 
-            # Calculate reliaiblity
+            # Calculate reliability
             mechanism_reliability_input["beta"] = calculate_reliability(
                 np.array([_dstability_wrapper.get_safety_factor()])
             )
@@ -185,8 +179,8 @@ class StabilityScreenMeasure(MeasureProtocol):
         elif _calc_type == "SIMPLE":
             if int(year_to_calculate) >= self.parameters["year"]:
                 if "SF_2025" in mechanism_reliability_input:
-                    mechanism_reliability_input["SF_2025"] += SFincrease
-                    mechanism_reliability_input["SF_2075"] += SFincrease
+                    mechanism_reliability_input["SF_2025"] += _safety_factor_increase
+                    mechanism_reliability_input["SF_2075"] += _safety_factor_increase
                 elif "beta_2025" in mechanism_reliability.Input.input:
                     # convert to SF and back:
                     mechanism_reliability_input["beta_2025"] = calculate_reliability(
@@ -194,7 +188,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta_2025"]
                             ),
-                            SFincrease,
+                            _safety_factor_increase,
                         )
                     )
                     mechanism_reliability_input["beta_2075"] = calculate_reliability(
@@ -202,7 +196,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta_2075"]
                             ),
-                            SFincrease,
+                            _safety_factor_increase,
                         )
                     )
                 else:
@@ -211,6 +205,6 @@ class StabilityScreenMeasure(MeasureProtocol):
                             calculate_safety_factor(
                                 mechanism_reliability_input["beta"]
                             ),
-                            SFincrease,
+                            _safety_factor_increase,
                         )
                     )

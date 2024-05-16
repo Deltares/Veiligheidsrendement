@@ -133,15 +133,14 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             raise ValueError(f"No valid value given for {OrmMeasure.__name__}.")
 
         _imported_measures = []
+
         if self.valid_parameter(orm_model, "dberm"):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
         if self.valid_parameter(orm_model, "dcrest"):
             _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
 
-        if not self.valid_parameter(orm_model, "dberm") and not self.valid_parameter(
-            orm_model, "dcrest"
-        ):
+        if not _imported_measures:
             _imported_measures.extend(self._create_measure(orm_model, ShSgMeasure))
 
         return _imported_measures

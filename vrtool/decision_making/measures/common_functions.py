@@ -1,5 +1,6 @@
 import copy
 import logging
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -35,7 +36,6 @@ def implement_berm_widening(
     computation_type,
     is_first_year_with_widening: bool,
     path_intermediate_stix: Path,
-    SFincrease=0.2,
     depth_screen: Optional[float] = None,
 ):
     """
@@ -48,7 +48,6 @@ def implement_berm_widening(
         computation_type (str): type of computation for the mechanism
         is_first_year_with_widening (bool): flag for triggering rerunning stix
         path_intermediate_stix (Path): path to the intermediate stix files
-        SFincrease (float): increase in safety factor
         depth_screen (float): depth of the stability screen
 
     Returns:
@@ -57,15 +56,17 @@ def implement_berm_widening(
     """
 
     def calculate_stability_inner_reliability_with_safety_screen(
-        reliability: np.ndarray,
+        reliability: np.ndarray, safety_factor_increase: float
     ):
         # convert to SF and back:
         return calculate_reliability(
             np.add(
                 calculate_safety_factor(reliability),
-                SFincrease,
+                safety_factor_increase,
             )
         )
+
+    _safety_factor_increase = get_safety_factor_increase(measure_input["l_stab_screen"])
 
     # this function implements a berm widening based on the relevant inputs
     if mechanism == MechanismEnum.OVERFLOW:
@@ -113,8 +114,8 @@ def implement_berm_widening(
                     measure_input["dberm"] * berm_input["dSF/dberm"]
                 )
             if measure_parameters["StabilityScreen"] == "yes":
-                berm_input["sf_2025"] += SFincrease
-                berm_input["sf_2075"] += SFincrease
+                berm_input["sf_2025"] += _safety_factor_increase
+                berm_input["sf_2075"] += _safety_factor_increase
         # For betas as input
         elif "beta_2025" in berm_input:
             berm_input["beta_2025"] = berm_input["beta_2025"] + (
@@ -127,12 +128,12 @@ def implement_berm_widening(
                 berm_input[
                     "beta_2025"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2025"]
+                    berm_input["beta_2025"], _safety_factor_increase
                 )
                 berm_input[
                     "beta_2075"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2075"]
+                    berm_input["beta_2075"], _safety_factor_increase
                 )
         elif "beta" in berm_input:
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
@@ -141,7 +142,7 @@ def implement_berm_widening(
                 berm_input[
                     "beta"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta"]
+                    berm_input["beta"], _safety_factor_increase
                 )
         else:
             raise NotImplementedError(
@@ -156,8 +157,38 @@ def implement_berm_widening(
         berm_input["l_achter"] = (berm_input["l_achter"] - measure_input["dberm"]).clip(
             0
         )
+        if measure_parameters["StabilityScreen"] == "yes":
+            berm_input["sf_factor"] = sf_factor_piping(measure_input["l_stab_screen"])
     return berm_input
 
+def get_safety_factor_increase(l_stab_screen: float) -> float:
+    """
+    get the safety factor for stability that now depends on the length of the stability screen
+
+    Args:
+        l_stab_screen (float): length of the screen (without cover layer thickness)
+
+    Returns:
+        float: safe factor increase; 0.2 for 3m and 0.4 for 6m
+    """
+    _default_safety_factor = 0.2
+    _small_stab_screen = 3.0
+    if math.isnan(l_stab_screen):
+        return _default_safety_factor
+    return _default_safety_factor * l_stab_screen / _small_stab_screen
+
+def sf_factor_piping(length: float) -> float:
+    """
+    get the safe reduction factor for the probability of piping
+
+    Args:
+        length (float): length of the screen (without cover layer thickness)
+
+    Returns:
+        float: the safe reduction factor: 100 for 3m; 1000 for 6m
+    """
+    _small_stab_screen_length = 3.0
+    return 10 ** (1.0 + length / _small_stab_screen_length)
 
 def calculate_area(geometry):
     polypoints = []
@@ -339,10 +370,8 @@ def determine_new_geometry(
 
 # Script to determine the costs of a reinforcement:
 def determine_costs(
-    parameters,
     measure_type: str,
     length: float,
-    depth: float,
     unit_costs: MeasureUnitCosts,
     dcrest: float = 0.0,
     dberm_in: float = 0.0,
@@ -352,6 +381,9 @@ def determine_costs(
     direction: bool = False,
     section: str = "",
 ) -> float:
+    """
+    Determine costs, mainly for soil reinforcement
+    """
     if (
         (measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name)
         and (direction == "outward")
@@ -397,7 +429,7 @@ def determine_costs(
             )
 
         else:
-            raise Exception("invalid direction")
+            raise ValueError("invalid direction")
 
         # add costs for housing
         if isinstance(housing, pd.DataFrame) and dberm_in > 0.0:
@@ -416,11 +448,6 @@ def determine_costs(
                     * housing.loc[float(dberm_in)]["cumulative"]
                 )
 
-        # add costs for stability screen
-        # TODO: only passing parameters because of this.
-        if parameters["StabilityScreen"] == "yes":
-            total_cost += unit_costs.sheetpile * depth * length
-
         if dcrest > 0.0:
             total_cost += unit_costs.road_renewal * length
 
@@ -429,8 +456,6 @@ def determine_costs(
         total_cost = unit_costs.vertical_geotextile * length
     elif measure_type == MeasureTypeEnum.DIAPHRAGM_WALL.legacy_name:
         total_cost = unit_costs.diaphragm_wall * length
-    elif measure_type == MeasureTypeEnum.STABILITY_SCREEN.legacy_name:
-        total_cost = unit_costs.sheetpile * depth * length
     else:
         logging.error("Onbekend maatregeltype: {}".format(measure_type))
         total_cost = float("nan")
@@ -468,36 +493,4 @@ def probabilistic_design(
             )
             return h_crest
         else:
-            raise Exception("Unknown calculation type for {}".format(mechanism))
-
-
-def get_stability_inner_depth(dike_section: DikeSection) -> float:
-    """Gets the depth for the stability screen application.
-
-    Args:
-        dike_section (DikeSection): The section to retrieve the depth from.
-
-    Raises:
-        ValueError: Raised when there is no stability inner failure mechanism present.
-
-    Returns:
-        float: The depth to be used for the stability screen calculation.
-    """
-    stability_inner_reliability_collection = dike_section.section_reliability.failure_mechanisms.get_mechanism_reliability_collection(
-        MechanismEnum.STABILITY_INNER
-    )
-    if not stability_inner_reliability_collection:
-        error_message = f'No StabilityInner present for soil reinforcement measure with stability screen at section "{dike_section.name}".'
-        logging.error(error_message)
-        raise ValueError(error_message)
-
-    d_cover_input = stability_inner_reliability_collection.Reliability[
-        "0"
-    ].Input.input.get("d_cover", None)
-    if d_cover_input:
-        if d_cover_input.size > 1:
-            logging.debug("d_cover has more values than 1.")
-
-        return max([d_cover_input[0] + 2.0, 9.0])
-
-    return 9.0
+            raise ValueError("Unknown calculation type for {}".format(mechanism))

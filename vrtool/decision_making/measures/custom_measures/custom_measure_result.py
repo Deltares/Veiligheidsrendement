@@ -41,6 +41,7 @@ class CustomMeasureResult(MeasureResultProtocol):
             -999,  # dberm column
             -999,  # beta_target,
             -999,  # transition_level,
+            -999,  # l_stab_screen,
             self.cost,
         ]
 

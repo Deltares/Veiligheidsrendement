@@ -77,6 +77,7 @@ class Solutions:
                     "dberm",
                     "beta_target",
                     "transition_level",
+                    "l_stab_screen",
                     "cost",
                 ],
                 name="base",
@@ -103,12 +104,18 @@ class Solutions:
                         MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name,
                         MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN.legacy_name,
                     ]:
-                        _design_vars = [
-                            measure.measures[j]["dcrest"],
-                            measure.measures[j]["dberm"],
-                        ]
-                    elif _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
-                        _design_vars = [1.0]
+                        if measure.parameters["StabilityScreen"] == "yes":
+                            _design_vars = (
+                                measure.measures[j]["dcrest"],
+                                measure.measures[j]["dberm"],
+                                measure.measures[j]["l_stab_screen"],
+                            )
+                        else:
+                            _design_vars = (
+                                measure.measures[j]["dcrest"],
+                                measure.measures[j]["dberm"],
+                                -999.0,
+                            )
 
                     cost = measure.measures[j]["Cost"]
                     measure_in.append(str(measure.parameters["ID"]))
