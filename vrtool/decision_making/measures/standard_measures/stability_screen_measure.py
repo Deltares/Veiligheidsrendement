@@ -35,14 +35,14 @@ class StabilityScreenMeasure(MeasureProtocol):
         # To be added: year property to distinguish the same measure in year 2025 and 2045
         _lengths_stab_screen = [3.0, 6.0]
         self.measures = []
-        for length in _lengths_stab_screen:
+        for _length in _lengths_stab_screen:
             _modified_measure = {}
             _modified_measure["Stability Screen"] = "yes"
-            _modified_measure["l_stab_screen"] = length
-            _depth = dike_section.cover_layer_thickness + length
+            _modified_measure["l_stab_screen"] = _length
+            _depth = dike_section.cover_layer_thickness + _length
             _modified_measure["Cost"] = self.unit_costs.sheetpile * _depth * dike_section.Length
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
-                dike_section, traject_info, length
+                dike_section, traject_info, _length
             )
             _modified_measure["Reliability"].calculate_section_reliability()
             self.measures.append(_modified_measure)

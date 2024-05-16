@@ -56,13 +56,13 @@ def implement_berm_widening(
     """
 
     def calculate_stability_inner_reliability_with_safety_screen(
-        reliability: np.ndarray,
+        reliability: np.ndarray, safety_factor_increase: float
     ):
         # convert to SF and back:
         return calculate_reliability(
             np.add(
                 calculate_safety_factor(reliability),
-                _safety_factor_increase,
+                safety_factor_increase,
             )
         )
 
@@ -128,12 +128,12 @@ def implement_berm_widening(
                 berm_input[
                     "beta_2025"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2025"]
+                    berm_input["beta_2025"], _safety_factor_increase
                 )
                 berm_input[
                     "beta_2075"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta_2075"]
+                    berm_input["beta_2075"], _safety_factor_increase
                 )
         elif "beta" in berm_input:
             # TODO remove hard-coded parameter. Should be read from input sheet (the 0.13 in the code)
@@ -142,7 +142,7 @@ def implement_berm_widening(
                 berm_input[
                     "beta"
                 ] = calculate_stability_inner_reliability_with_safety_screen(
-                    berm_input["beta"]
+                    berm_input["beta"], _safety_factor_increase
                 )
         else:
             raise NotImplementedError(
@@ -187,8 +187,8 @@ def sf_factor_piping(length: float) -> float:
     Returns:
         float: the safe reduction factor: 100 for 3m; 1000 for 6m
     """
-    _small_stab_screen = 3.0
-    return 10 ** (1.0 + length / _small_stab_screen)
+    _small_stab_screen_length = 3.0
+    return 10 ** (1.0 + length / _small_stab_screen_length)
 
 def calculate_area(geometry):
     polypoints = []
@@ -384,7 +384,6 @@ def determine_costs(
     """
     Determine costs, mainly for soil reinforcement
     """
-    _measure_type_name = measure_type.lower().strip()
     if (
         (measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name)
         and (direction == "outward")
