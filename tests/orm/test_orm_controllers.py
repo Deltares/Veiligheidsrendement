@@ -60,7 +60,7 @@ from vrtool.orm.models.measure_result import MeasureResult
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     add_custom_measures,
-    brute_clear_custom_measure_results,
+    brute_clear_custom_measure,
     clear_assessment_results,
     clear_measure_results,
     clear_optimization_results,
@@ -1422,16 +1422,28 @@ class TestCustomMeasures:
     def test_brute_clear_custom_measure_results(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
-        def any_custom_measure_results() -> bool:
-            return any(
-                _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+        def get_custom_measure_result_ids() -> list[int]:
+            return list(
+                _mr.get_id()
                 for _mr in orm.MeasureResult.select()
+                if _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+            )
+
+        def get_existing_optimization_custom_measure(
+            existing_measure_results: list[int],
+        ) -> bool:
+            return any(
+                _osm.measure_result_id in existing_measure_results
+                for _osm in orm.OptimizationSelectedMeasure.select()
             )
 
         # 1. Define test data.
         _measure_that_remains_name = "NotACustomMeasure"
+        _measure_result_ids = []
         with open_database(custom_measures_vrtool_config.input_database_path):
-            assert any_custom_measure_results() is True
+            _measure_result_ids = get_custom_measure_result_ids()
+            assert any(_measure_result_ids)
+            assert get_existing_optimization_custom_measure(_measure_result_ids)
             # Create additional measure results to regular mesures.
             assert (
                 orm.Measure.get_or_none(orm.Measure.name == _measure_that_remains_name)
@@ -1465,11 +1477,16 @@ class TestCustomMeasures:
             )
 
         # 2. Run test.
-        brute_clear_custom_measure_results(custom_measures_vrtool_config)
+        brute_clear_custom_measure(custom_measures_vrtool_config)
 
         # 3. Verify expectations.
         with open_database(custom_measures_vrtool_config.input_database_path):
-            assert any_custom_measure_results() is False
+            assert any(get_custom_measure_result_ids()) is False
+            assert any(_measure_result_ids), "The values have been deleted."
+            assert (
+                get_existing_optimization_custom_measure(_measure_result_ids) is False
+            )
+
             _measure_that_remains = orm.Measure.get_or_none(
                 orm.Measure.name == _measure_that_remains_name
             )

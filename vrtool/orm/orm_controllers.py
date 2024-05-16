@@ -533,9 +533,10 @@ def add_custom_measures(
     return _exported_measures
 
 
-def brute_clear_custom_measure_results(vrtool_config: VrtoolConfig):
+def brute_clear_custom_measure(vrtool_config: VrtoolConfig):
     """
-    Removes all the `MeasureResult` entries related to *ALL* `CustomMeasure` entries
+    Removes all the `Measure` of type `MeasureTypeEnum.CUSTOM` and their
+    `MeasureResult` entries related to *ALL* `CustomMeasure` entries
     even if they have already been linked in an `OptimizationRun` table.
 
     Args:
