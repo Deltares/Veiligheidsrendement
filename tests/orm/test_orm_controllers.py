@@ -755,6 +755,7 @@ class TestOrmControllers:
         self, export_database: SqliteDatabase
     ):
         # Setup
+        assert not any(orm.MeasureResult.select())
         self._generate_measure_results(export_database, "Custom")
 
         # Call
@@ -795,7 +796,8 @@ class TestOrmControllers:
     def _generate_measure_results(
         self, db_connection: SqliteDatabase, measure_type_name: str = "TestMeasureType"
     ):
-        db_connection.connect()
+        if db_connection.is_closed():
+            db_connection.connect()
         traject_info = get_basic_dike_traject_info()
 
         _measure_type = get_basic_measure_type(measure_type_name)
