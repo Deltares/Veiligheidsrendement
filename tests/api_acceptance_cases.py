@@ -123,6 +123,33 @@ class AcceptanceTestCase:
                 ],
                 case_name="Custom Measures, MVP",
             ),
+            AcceptanceTestCase(
+                model_directory="38-1 custom measures high betas low costs",
+                traject_name="38-1",
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+                case_name="Traject 38-1, custom measures with high betas and low costs",
+            ),
+            AcceptanceTestCase(
+                model_directory="38-1 custom measures low betas high costs",
+                traject_name="38-1",
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+                case_name="Traject 38-1, custom measures with low betas and high costs",
+            ),
+            AcceptanceTestCase(
+                model_directory="38-1 custom measures real cases",
+                traject_name="38-1",
+                excluded_mechanisms=[
+                    MechanismEnum.REVETMENT,
+                    MechanismEnum.HYDRAULIC_STRUCTURES,
+                ],
+                case_name="Traject 38-1, custom measures with real cases",
+            ),
         ]
 
 
