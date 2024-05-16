@@ -1344,8 +1344,10 @@ class TestCustomMeasures:
             assert _measure.year == 0
             assert _measure.measure_result_id == 1
 
-            # Verify betas
-            _overflow_betas = _measure.mechanism_year_collection.get_betas(
+        # Verify betas for `sg_measure` as `MechanismEnum.PIPING` is only
+        # compatible for `sg_measures`
+        for _sg_measure in _imported_data[0].sg_measures:
+            _overflow_betas = _sg_measure.mechanism_year_collection.get_betas(
                 MechanismEnum.PIPING, _years
             )
             assert _overflow_betas == pytest.approx(_expected_betas)
