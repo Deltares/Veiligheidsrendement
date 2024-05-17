@@ -92,6 +92,14 @@ class SgMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.FULL: [None],
         }
 
+    @staticmethod
+    def is_combinable_type_allowed(combinable_type: CombinableTypeEnum) -> bool:
+        return combinable_type in [
+            CombinableTypeEnum.FULL,
+            CombinableTypeEnum.COMBINABLE,
+            CombinableTypeEnum.PARTIAL,
+        ]
+
     def is_initial_cost_measure(self) -> bool:
         if self.year != 0:
             return False
