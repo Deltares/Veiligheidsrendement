@@ -565,7 +565,7 @@ CREATE UNIQUE INDEX standardmeasure_measure_id ON StandardMeasure (
 PRAGMA foreign_keys = 1;
 
 -- Changes required from VRTOOL-514
-CREATE TABLE CustomMeasurePerMeasurePerSection (
+CREATE TABLE IF NOT EXISTS CustomMeasurePerMeasurePerSection (
     id                     INTEGER NOT NULL
                                    PRIMARY KEY,
     measure_per_section_id INTEGER NOT NULL,
