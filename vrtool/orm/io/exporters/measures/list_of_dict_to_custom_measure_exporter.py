@@ -14,6 +14,9 @@ from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.custom_measure_per_measure_per_section import (
+    CustomMeasurePerMeasurePerSection,
+)
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -104,6 +107,16 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 _grouped_custom_measures, _new_measure
             )
             _exported_measures.extend(_retrieved_custom_measures)
+
+            # Add entries to `CustomMeasurePerMeasurePerSection`
+            CustomMeasurePerMeasurePerSection.insert_many(
+                [
+                    dict(
+                        measure_per_section=_new_measure_per_section, custom_measure=_cm
+                    )
+                    for _cm in _retrieved_custom_measures
+                ]
+            )
 
             # Add MeasureResult
             _new_measure_result, _ = MeasureResult.get_or_create(

@@ -564,6 +564,23 @@ CREATE UNIQUE INDEX standardmeasure_measure_id ON StandardMeasure (
 
 PRAGMA foreign_keys = 1;
 
+-- Changes required from VRTOOL-514
+CREATE TABLE CustomMeasurePerMeasurePerSection (
+    id                     INTEGER NOT NULL
+                                   PRIMARY KEY,
+    measure_per_section_id INTEGER NOT NULL,
+    custom_measure_id      INTEGER NOT NULL,
+    FOREIGN KEY (
+        measure_per_section_id
+    )
+    REFERENCES MeasurePerSection (id) ON DELETE CASCADE,
+    FOREIGN KEY (
+        custom_measure_id
+    )
+    REFERENCES CustomMeasure (id) ON DELETE CASCADE
+);
+
+
 -- General pragma changes
 PRAGMA journal_mode = "WAL";
 PRAGMA cache_size = -64000;
