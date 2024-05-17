@@ -42,8 +42,9 @@ class ShMeasure(MeasureAsInputProtocol):
         Returns:
             float: The calculated lcc.
         """
-        if self.dcrest in [0, -999] and math.isnan(self.l_stab_screen):
-            return 0
+        if self.measure_type != MeasureTypeEnum.CUSTOM:
+            if self.dcrest in [0, -999] and math.isnan(self.l_stab_screen):
+                return 0
 
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 

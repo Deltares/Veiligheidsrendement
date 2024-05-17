@@ -1035,6 +1035,8 @@ class TestCustomMeasures:
     This test class mostly covers integration tests for `CustomMeasure` workflows.
     """
 
+    _custom_measures_test_dir = test_data.joinpath("38-1 custom measures")
+
     def _get_custom_measure_dict(
         self,
         measure_name: str,
@@ -1065,7 +1067,7 @@ class TestCustomMeasures:
         else:
             _db_name = _marker.args[0]
 
-        _test_db = test_data.joinpath("38-1 custom measures", _db_name)
+        _test_db = self._custom_measures_test_dir.joinpath(_db_name)
         _output_directory = get_clean_test_results_dir(request)
 
         # Create a copy of the database to avoid locking it
@@ -1093,7 +1095,7 @@ class TestCustomMeasures:
                         "MEASURE_NAME": "ROCKS",
                         "SECTION_NAME": "01A",
                         "COMBINABLE_TYPE": CombinableTypeEnum.FULL.name,
-                        "MECHANISM_NAME": MechanismEnum.OVERFLOW.name,
+                        "MECHANISM_NAME": MechanismEnum.PIPING.name,
                         "COST": 50.0,
                         "TIME": _t,
                         "BETA": _beta,
@@ -1235,6 +1237,7 @@ class TestCustomMeasures:
 
         # 3. Verify final expectations
         assert len(_added_measures) == len(custom_measure_dict_list)
+        assert all(_am.measure.year == 0 for _am in _added_measures)
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
@@ -1348,22 +1351,30 @@ class TestCustomMeasures:
             set((x.measure_result_id, x.year) for x in _imported_data[0].measures)
         )
         assert _meas_ids == _custom_measures_ids
-        assert len(_imported_data[0].sh_measures) == 1
-        assert _imported_data[0].sh_measures[0].measure_type == MeasureTypeEnum.CUSTOM
 
-        # Verify betas (This is the same as `test_add_custom_measures[MVP test]`)
+        assert len(_imported_data[0].measures) == 2
+
         _years = custom_measures_vrtool_config.T
         _expected_betas = np.linspace(7, 4, num=7)
 
-        _overflow_betas = (
-            _imported_data[0]
-            .sh_measures[0]
-            .mechanism_year_collection.get_betas(MechanismEnum.OVERFLOW, _years)
-        )
-        assert _overflow_betas == pytest.approx(_expected_betas)
+        # Verify each imported measure
+        for _measure in _imported_data[0].measures:
+            assert _measure.measure_type == MeasureTypeEnum.CUSTOM
+            assert _measure.combine_type == CombinableTypeEnum.FULL
+            assert _measure.start_cost == 0
+            assert _measure.cost == _custom_measure_cost
+            assert _measure.lcc == _custom_measure_cost
+            assert _measure.discount_rate == 0.03
+            assert _measure.year == 0
+            assert _measure.measure_result_id == 1
 
-        # Verify costs
-        assert _imported_data[0].sh_measures[0].cost == _custom_measure_cost
+        # Verify betas for `sg_measure` as `MechanismEnum.PIPING` is only
+        # compatible for `sg_measures`
+        for _sg_measure in _imported_data[0].sg_measures:
+            _overflow_betas = _sg_measure.mechanism_year_collection.get_betas(
+                MechanismEnum.PIPING, _years
+            )
+            assert _overflow_betas == pytest.approx(_expected_betas)
 
     @pytest.mark.slow
     @pytest.mark.fixture_database("vrtool_input.db")
@@ -1417,6 +1428,24 @@ class TestCustomMeasures:
                     _selected_measure.measure_result.measure_per_section.measure.measure_type.name
                     == MeasureTypeEnum.CUSTOM.legacy_name
                 )
+
+    @pytest.mark.fixture_database("without_custom_measures.db")
+    def test_add_custom_measures_without_t0_from_csv_raises(
+        self, custom_measures_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        _csv_data = self._custom_measures_test_dir.joinpath(
+            "custom_measures_without_t0.csv"
+        )
+        _csv_list_of_dict = pd.read_csv(_csv_data, delimiter=";").to_dict("records")
+        _expected_error = "Missing t0 beta value for Custom Measure"
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            add_custom_measures(custom_measures_vrtool_config, _csv_list_of_dict)
+
+        # 3. Verify expectations.
+        assert _expected_error in str(exc_err.value)
 
     @pytest.mark.fixture_database("vrtool_input.db")
     def test_brute_clear_custom_measure_results(

@@ -68,6 +68,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 measure_type=MeasureType.get_or_create(
                     name=MeasureTypeEnum.CUSTOM.legacy_name
                 )[0],
+                year=0,
                 combinable_type=CombinableType.select()
                 .where(
                     fn.upper(CombinableType.name)
@@ -139,7 +140,9 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 _grouped_by_measure[_measure_keys], "MECHANISM_NAME"
             ):
                 if not any(gm["TIME"] == 0 for gm in _grouped_by_mechanism):
-                    _measure_keys_str = " - ".join(_measure_keys + (_mechanism_key,))
+                    _measure_keys_str = " - ".join(
+                        list(map(str, _measure_keys)) + [_mechanism_key]
+                    )
                     _missing_t0_measures.append(
                         f"Missing t0 beta value for Custom Measure {_measure_keys_str}"
                     )
