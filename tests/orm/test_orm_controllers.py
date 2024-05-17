@@ -1320,10 +1320,15 @@ class TestCustomMeasures:
     def test_only_one_measure_added_when_same_measure_per_section(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
+        def get_current_measure_result_ids_in_db() -> list[int]:
+            return list(sorted([_mr.get_id() for _mr in orm.MeasureResult.select()]))
+
         # 1. Define test data.
         _measure_name = "ROCKS"
         _section_name = "01A"
         _custom_measures = []
+        _existing_results_per_measure_ids = []
+
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             _rocks_measure = orm.Measure.get_or_none(orm.Measure.name == _measure_name)
             assert isinstance(_rocks_measure, orm.Measure)
@@ -1336,6 +1341,7 @@ class TestCustomMeasures:
                 None,
             )
             assert isinstance(_measure_per_section, orm.MeasurePerSection)
+            _existing_results_per_measure_ids = get_current_measure_result_ids_in_db()
 
             # Add custom measure
             _custom_measures.append(
@@ -1357,6 +1363,12 @@ class TestCustomMeasures:
 
         # 3. Verify expectations.
         assert not any(_added_custom_measures)
+
+        with open_database(custom_measures_vrtool_config.input_database_path):
+            assert (
+                _existing_results_per_measure_ids
+                == get_current_measure_result_ids_in_db()
+            )
 
     @pytest.mark.slow
     @pytest.mark.fixture_database("vrtool_input.db")
