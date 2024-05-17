@@ -116,7 +116,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                     )
                     for _cm in _retrieved_custom_measures
                 ]
-            )
+            ).execute(self._db)
 
             # Add MeasureResult
             _new_measure_result, _ = MeasureResult.get_or_create(

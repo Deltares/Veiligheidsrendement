@@ -16,6 +16,9 @@ from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter im
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.custom_measure_per_measure_per_section import (
+    CustomMeasurePerMeasurePerSection,
+)
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 
 
@@ -216,3 +219,93 @@ class TestListOfDictToCustomMeasureExporter:
                 .get()
             )
             assert _measure_result_section.cost == _measure_cost
+
+    @pytest.mark.parametrize(
+        "custom_measure_dict_collection, expected_created_custom_measures",
+        [
+            pytest.param(
+                [
+                    dict(SECTION_NAME="01A"),
+                    dict(SECTION_NAME="01B"),
+                ],
+                1,
+                id="ONE custom measure, DIFFERENT SECTIONS",
+            ),
+            pytest.param(
+                [
+                    dict(SECTION_NAME="01A", COST=2312),
+                    dict(SECTION_NAME="01B", COST=2021),
+                ],
+                2,
+                id="TWO custom measures, DIFFERENT SECTION AND COSTS",
+            ),
+            pytest.param(
+                [
+                    dict(SECTION_NAME="01A", BETA=24),
+                    dict(SECTION_NAME="01B", BETA=10),
+                ],
+                2,
+                id="TWO custom measures, DIFFERENT SECTION AND BETAS",
+            ),
+        ],
+    )
+    def test_export_two_custom_measures_with_different_section(
+        self,
+        custom_measure_dict_collection: list[dict],
+        expected_created_custom_measures: int,
+        exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
+    ):
+        # 1. Define test data.
+        _custom_measure_base_dict = dict(
+            MEASURE_NAME="ROCKS",
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            MECHANISM_NAME=MechanismEnum.OVERFLOW.name,
+            COST=42,
+            TIME=0,
+            BETA=8,
+        )
+        _list_of_dict = [
+            _custom_measure_base_dict | _custom_measure_dict
+            for _custom_measure_dict in custom_measure_dict_collection
+        ]
+
+        assert not any(CustomMeasure.select())
+        assert not any(CustomMeasurePerMeasurePerSection.select())
+
+        # 2. Run test.
+        _exported_custom_measures = exporter_with_valid_db.export_dom(_list_of_dict)
+
+        # 3. Verify expectations.
+        assert len(_exported_custom_measures) == 2
+        # If only the section is given as different, then they will gather into
+        # the same custom measure
+        _unique_retrieved_custom_measures = list(set(_exported_custom_measures))
+        assert (
+            len(_unique_retrieved_custom_measures) == expected_created_custom_measures
+        )
+
+        for _ucm_idx, _unique_custom_measure in enumerate(
+            _unique_retrieved_custom_measures
+        ):
+            if expected_created_custom_measures == 1:
+                assert len(
+                    _unique_custom_measure.measure_per_sections_custom_measures
+                ) == len(custom_measure_dict_collection)
+            else:
+                assert (
+                    len(_unique_custom_measure.measure_per_sections_custom_measures)
+                    == 1
+                )
+
+            for _idx, _cm_x_msx in enumerate(
+                _unique_custom_measure.measure_per_sections_custom_measures
+            ):
+                # We assume the creation order matches the available sections list.
+                assert (
+                    _cm_x_msx.measure_per_section.section.section_name
+                    == custom_measure_dict_collection[_idx + _ucm_idx]["SECTION_NAME"]
+                )
+                assert (
+                    _unique_custom_measure.measure
+                    == _cm_x_msx.measure_per_section.measure
+                )
