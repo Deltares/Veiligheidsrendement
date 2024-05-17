@@ -89,7 +89,7 @@ class TestSgMeasure:
 
     def test_given_custom_measure_without_dberm_returns_cost(self):
         """
-        Test related to issue VRTOOL-501
+        Test related to issue VRTOOL-510
         """
         # 1. Define test data.
         # Measure and combinable type do not really matter,
