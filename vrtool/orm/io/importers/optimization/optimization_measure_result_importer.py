@@ -134,10 +134,16 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
         _imported_measures = []
 
-        if self.valid_parameter(orm_model, "dberm"):
+        _combinable_type = CombinableTypeEnum.get_enum(orm_model.combinable_type_name)
+
+        if self.valid_parameter(
+            orm_model, "dberm"
+        ) and ShMeasure.is_combinable_type_allowed(_combinable_type):
             _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
 
-        if self.valid_parameter(orm_model, "dcrest"):
+        if self.valid_parameter(
+            orm_model, "dcrest"
+        ) and SgMeasure.is_combinable_type_allowed(_combinable_type):
             _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
 
         if not _imported_measures:

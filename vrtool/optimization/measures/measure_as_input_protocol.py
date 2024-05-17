@@ -85,3 +85,18 @@ class MeasureAsInputProtocol(Protocol):
                 `None` means no secondary measure is needed
         """
         pass
+
+    @staticmethod
+    def is_combinable_type_allowed(combinable_type: CombinableTypeEnum) -> bool:
+        """
+        Verifies whether the given combinable type can be created as an instance
+        of this `MeasureAsInputProtocol` type.
+
+        Args:
+            combinable_type (CombinableTypeEnum): Combinable type to be checked.
+
+        Returns:
+            bool: This combinable type can be represented as this
+            `MeasureAsInputProtocol` instance.
+        """
+        pass
