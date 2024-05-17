@@ -21,11 +21,16 @@ class AggregateCombinationsController:
         def primaries_match(
             aggregation: tuple[CombinedMeasure, CombinedMeasure]
         ) -> bool:
+            def is_matching_stab_length(sh_sg_length: float, sg_comb_length: float):
+                if math.isnan(sh_sg_length) or math.isnan(sg_comb_length):
+                    return True
+                return sh_sg_length == sg_comb_length
             # Check if the primary measures in both combinations match
             _sh_comb, _sg_comb = aggregation
             return (
                 _sh_comb.primary.year == _sg_comb.primary.year
                 and _sh_comb.primary.measure_type == _sg_comb.primary.measure_type
+                and is_matching_stab_length(_sh_comb.primary.l_stab_screen, _sg_comb.primary.l_stab_screen)
             )
 
         def get_aggregated_measure_id(
