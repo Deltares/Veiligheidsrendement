@@ -78,21 +78,32 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
             if not _measure_created:
                 logging.warning(
-                    "Found existing %s measure, custom measures could be updated based on the new entries.",
+                    "Maatregel %s gevonden, custom maatregelen worden geupdated met nieuwe data.",
                     _measure_name,
                 )
+
+            # Add entry to `MeasurePerSection`
+            (
+                _new_measure_per_section,
+                _measure_per_section_created,
+            ) = MeasurePerSection.get_or_create(
+                section=SectionData.get(section_name=_section_name),
+                measure=_new_measure,
+            )
+
+            if not _measure_per_section_created:
+                logging.warning(
+                    "Maatregel %s bestaat al in de database voor sectie %s, maatregel wordt niet toegevoegd. Hernoem de maatregel om te kunnen toevoegen.",
+                    _measure_name,
+                    _section_name,
+                )
+                continue
 
             # Add entries to `CustomMeasure`
             _retrieved_custom_measures = self._get_custom_measures(
                 _grouped_custom_measures, _new_measure
             )
             _exported_measures.extend(_retrieved_custom_measures)
-
-            # Add entry to `MeasurePerSection`
-            _new_measure_per_section, _ = MeasurePerSection.get_or_create(
-                section=SectionData.get(section_name=_section_name),
-                measure=_new_measure,
-            )
 
             # Add MeasureResult
             _new_measure_result, _ = MeasureResult.get_or_create(
