@@ -74,6 +74,7 @@ from vrtool.orm.orm_controllers import (
     import_results_measures_for_optimization,
     initialize_database,
     open_database,
+    safe_clear_custom_measure,
 )
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -1448,7 +1449,99 @@ class TestCustomMeasures:
         assert _expected_error in str(exc_err.value)
 
     @pytest.mark.fixture_database("vrtool_input.db")
-    def test_brute_clear_custom_measure_results(
+    def test_safe_clear_custom_measure(
+        self, custom_measures_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        def get_custom_measure_result_ids() -> list[int]:
+            return list(
+                _mr.get_id()
+                for _mr in orm.MeasureResult.select()
+                if _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+            )
+
+        def get_existing_optimization_custom_measure(
+            existing_measure_results: list[int],
+        ) -> bool:
+            return any(
+                _osm.measure_result_id in existing_measure_results
+                for _osm in orm.OptimizationSelectedMeasure.select()
+            )
+
+        def check_measure_existence(measure_name: str) -> bool:
+            return orm.Measure.get_or_none(orm.Measure.name == measure_name) is not None
+
+        def add_measure_to_database(
+            measure_name: str, measure_type: MeasureTypeEnum
+        ) -> int:
+            assert check_measure_existence(measure_name) is False
+            _measure_that_remains = orm.Measure.create(
+                name=measure_name,
+                year=2021,
+                combinable_type=orm.CombinableType.get(),
+                measure_type=orm.MeasureType.get(
+                    orm.MeasureType.name == measure_type.legacy_name
+                ),
+            )
+            _created_measure_x_section = orm.MeasurePerSection.create(
+                measure=_measure_that_remains,
+                section=orm.SectionData.get(orm.SectionData.section_name == "01A"),
+            )
+            _created_measure_result = orm.MeasureResult.create(
+                measure_per_section=_created_measure_x_section
+            )
+            orm.MeasureResultSection.create(
+                measure_result=_created_measure_result, beta=42, time=13, cost=24.42
+            )
+            orm.MeasureResultMechanism.create(
+                measure_result=_created_measure_result,
+                mechanism_per_section=_created_measure_x_section.section.mechanisms_per_section[
+                    0
+                ],
+                time=13,
+                beta=24.42,
+            )
+            return _created_measure_result.get_id()
+
+        # 1. Define test data.
+        _standard_measure_that_remains_name = "NotACustomMeasure"
+        _custom_measure_that_doesnt_remain_name = "CustomMeasureThatDoesntRemain"
+        _custom_measure_result_ids = []
+        with open_database(custom_measures_vrtool_config.input_database_path):
+            _custom_measure_result_ids = get_custom_measure_result_ids()
+            assert any(_custom_measure_result_ids)
+            assert get_existing_optimization_custom_measure(_custom_measure_result_ids)
+            # Create additional measure results for standard and custom measures.
+            _ = add_measure_to_database(
+                _standard_measure_that_remains_name, MeasureTypeEnum.SOIL_REINFORCEMENT
+            )
+            _custom_measure_result_ids.append(
+                add_measure_to_database(
+                    _custom_measure_that_doesnt_remain_name, MeasureTypeEnum.CUSTOM
+                )
+            )
+            assert len(get_custom_measure_result_ids()) == len(
+                _custom_measure_result_ids
+            )
+
+        # 2. Run test.
+        safe_clear_custom_measure(custom_measures_vrtool_config)
+
+        # 3. Verify expectations.
+        with open_database(custom_measures_vrtool_config.input_database_path):
+            _ids = get_custom_measure_result_ids()
+            assert len(_ids) == 1
+            assert _custom_measure_result_ids[0] == _ids[0]
+            assert get_existing_optimization_custom_measure(_ids)
+
+            assert check_measure_existence(_standard_measure_that_remains_name)
+            assert (
+                check_measure_existence(_custom_measure_that_doesnt_remain_name)
+                is False
+            )
+
+    @pytest.mark.fixture_database("vrtool_input.db")
+    def test_brute_clear_custom_measure(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
         def get_custom_measure_result_ids() -> list[int]:
@@ -1473,7 +1566,7 @@ class TestCustomMeasures:
             _measure_result_ids = get_custom_measure_result_ids()
             assert any(_measure_result_ids)
             assert get_existing_optimization_custom_measure(_measure_result_ids)
-            # Create additional measure results to regular mesures.
+            # Create additional measure results to standard measures.
             assert (
                 orm.Measure.get_or_none(orm.Measure.name == _measure_that_remains_name)
                 is None
