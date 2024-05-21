@@ -13,8 +13,8 @@ from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
-from vrtool.orm.models.custom_measure_details import CustomMeasureDetail
-from vrtool.orm.models.custom_measure_per_measure_per_section import (
+from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
+from vrtool.orm.models.custom_measure_detail_per_section import (
     CustomMeasureDetailPerSection,
 )
 from vrtool.orm.models.measure import Measure

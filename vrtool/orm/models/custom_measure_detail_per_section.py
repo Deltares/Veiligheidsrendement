@@ -1,6 +1,6 @@
 from peewee import ForeignKeyField
 
-from vrtool.orm.models.custom_measure_details import CustomMeasureDetail
+from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
