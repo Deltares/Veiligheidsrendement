@@ -185,13 +185,14 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     """
     Clears all the measure results from the database.
     Results for custom measures are not removed.
+    Optimization related results for all measures are removed.
 
     Args:
         config (VrtoolConfig): Vrtool configuration
     """
 
     with open_database(config.input_database_path) as _db:
-        logging.debug("Opened connection for clearing standard measure results.")
+        logging.debug("Opened connection for clearing measure results.")
 
         _custom_measure_result_ids = list(
             _mr.get_id()
@@ -207,6 +208,8 @@ def clear_measure_results(config: VrtoolConfig) -> None:
         ).execute(_db)
 
     logging.info("Bestaande resultaten voor maatregelen verwijderd.")
+
+    clear_optimization_results(config)
 
 
 def clear_optimization_results(config: VrtoolConfig) -> None:
@@ -530,6 +533,44 @@ def add_custom_measures(
     # 4. Return the list of generated custom measures.
     # (This step could be replaced with returning a new dataclass type.)
     return _exported_measures
+
+
+def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
+    """
+    Removes all the `Measure` of type `MeasureTypeEnum.CUSTOM` and their
+    `MeasureResult` entries, given they don't have optimization results
+    in `OptimizationStep` table.
+
+    Args:
+        vrtool_config (VrtoolConfig): Configuration to be used for this workflow.
+    """
+
+    with open_database(vrtool_config.input_database_path) as _db:
+        # Workaround to get all the `MeasureResult` entries that are linked to an `OptimizationRun`
+        _measure_results_with_optimization_run_ids = list(
+            _mr.get_id()
+            for _mr in orm.MeasureResult.select().join_from(
+                orm.MeasureResult, orm.OptimizationSelectedMeasure
+            )
+        )
+        _custom_measures_without_optimization_run_ids = list(
+            _m.get_id()
+            for _m in orm.Measure.select()
+            .join_from(orm.Measure, orm.MeasureType)
+            .join_from(orm.Measure, orm.MeasurePerSection)
+            .join_from(orm.MeasurePerSection, orm.MeasureResult)
+            .where(
+                (fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
+                & (
+                    orm.MeasureResult.id.not_in(
+                        _measure_results_with_optimization_run_ids
+                    )
+                )
+            )
+        )
+        orm.Measure.delete().where(
+            orm.Measure.id.in_(_custom_measures_without_optimization_run_ids)
+        ).execute(_db)
 
 
 def brute_clear_custom_measure(vrtool_config: VrtoolConfig):
