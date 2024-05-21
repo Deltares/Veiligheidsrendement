@@ -61,44 +61,7 @@ CREATE INDEX custommeasure_mechanism_id ON CustomMeasure (
 PRAGMA foreign_keys = 1;
 
 -- CustomMeasureParameter
-PRAGMA foreign_keys = 0;
-
-CREATE TABLE sqlitestudio_temp_table AS SELECT *
-                                          FROM CustomMeasureParameter;
-
 DROP TABLE CustomMeasureParameter;
-
-CREATE TABLE CustomMeasureParameter (
-    id                INTEGER       NOT NULL
-                                    PRIMARY KEY,
-    custom_measure_id INTEGER       NOT NULL,
-    parameter         VARCHAR (128) NOT NULL,
-    value             REAL          NOT NULL,
-    FOREIGN KEY (
-        custom_measure_id
-    )
-    REFERENCES CustomMeasure (id) ON DELETE CASCADE
-);
-
-INSERT INTO CustomMeasureParameter (
-                                       id,
-                                       custom_measure_id,
-                                       parameter,
-                                       value
-                                   )
-                                   SELECT id,
-                                          custom_measure_id,
-                                          parameter,
-                                          value
-                                     FROM sqlitestudio_temp_table;
-
-DROP TABLE sqlitestudio_temp_table;
-
-CREATE INDEX custommeasureparameter_custom_measure_id ON CustomMeasureParameter (
-    "custom_measure_id"
-);
-
-PRAGMA foreign_keys = 1;
 
 -- Measure
 PRAGMA foreign_keys = 0;
@@ -565,9 +528,6 @@ CREATE UNIQUE INDEX standardmeasure_measure_id ON StandardMeasure (
 PRAGMA foreign_keys = 1;
 
 -- Changes required from VRTOOL-514
-DROP TABLE CustomMeasureParameter;
-
-DROP TABLE IF EXISTS CustomMeasurePerMeasurePerSection;
 
 -- Renaming of `CustomMeasure` to `CustomMeasureDetail`
 PRAGMA foreign_keys = 0;
@@ -605,7 +565,17 @@ INSERT INTO CustomMeasureDetail (
                                        beta,
                                        year
                                   FROM CustomMeasure;
+DROP TABLE CustomMeasure;
 
+CREATE INDEX custommeasuredetail_measure_id ON CustomMeasureDetail (
+    "measure_id"
+);
+
+CREATE INDEX custommeasuredetail_mechanism_id ON CustomMeasureDetail (
+    "mechanism_id"
+);
+
+-- Create new table `CustomMeasureDetailPerSection`
 CREATE TABLE CustomMeasureDetailPerSection (
     id                     INTEGER NOT NULL
                                    PRIMARY KEY,
@@ -619,16 +589,6 @@ CREATE TABLE CustomMeasureDetailPerSection (
         custom_measure_detail_id
     )
     REFERENCES CustomMeasureDetail (id) ON DELETE CASCADE
-);
-
-DROP TABLE CustomMeasure;
-
-CREATE INDEX custommeasure_measure_id ON CustomMeasureDetail (
-    "measure_id"
-);
-
-CREATE INDEX custommeasure_mechanism_id ON CustomMeasureDetail (
-    "mechanism_id"
 );
 
 PRAGMA foreign_keys = 1;
