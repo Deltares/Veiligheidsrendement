@@ -98,7 +98,7 @@ class TestSolutionsExporter:
     ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
-        _measure_per_section_id = _measure_per_section.id
+        _measure_per_section_id = _measure_per_section.get_id()
         _measure = _measure_per_section.measure
         _section_data = _measure_per_section.section
         _traject = _measure_per_section.section.dike_traject

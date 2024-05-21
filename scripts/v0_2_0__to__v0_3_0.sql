@@ -567,6 +567,8 @@ PRAGMA foreign_keys = 1;
 -- Changes required from VRTOOL-514
 DROP TABLE CustomMeasureParameter;
 
+DROP TABLE IF EXISTS CustomMeasurePerMeasurePerSection;
+
 -- Renaming of `CustomMeasure` to `CustomMeasureDetail`
 PRAGMA foreign_keys = 0;
 
