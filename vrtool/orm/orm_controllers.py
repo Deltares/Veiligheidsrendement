@@ -77,7 +77,6 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.DikeTrajectInfo,
             orm.SupportingFile,
             orm.MeasurePerSection,
-            orm.CustomMeasureParameter,
             orm.SlopePart,
             orm.BlockRevetmentRelation,
             orm.GrassRevetmentRelation,
