@@ -21,10 +21,28 @@ class MeasureResult(OrmBaseModel):
         """
         Returns the name of the related `MeasureType` table entry.
 
+        !DESIGN DECISION!: We return a string rather than an enum
+        to prevent the `vrtool.orm.models` to import / have knowledge
+        over datastructures present outside said subproject.
+
         Returns:
             str: The name in capital letters.
         """
         return self.measure_per_section.measure.measure_type.name.upper()
+
+    @property
+    def combinable_type_name(self) -> str:
+        """
+        Returns the name of the related `CombinableType` table entry.
+
+        !DESIGN DECISION!: We return a string rather than an enum
+        to prevent the `vrtool.orm.models` to import / have knowledge
+        over datastructures present outside said subproject.
+
+        Returns:
+            str: The name in capital letters.
+        """
+        return self.measure_per_section.measure.combinable_type.name.upper()
 
     def get_parameter_value(self, parameter_name: str) -> float:
         """
