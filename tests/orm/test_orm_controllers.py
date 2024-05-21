@@ -1543,14 +1543,15 @@ class TestCustomMeasureDetail:
             return orm.Measure.get_or_none(orm.Measure.name == measure_name) is not None
 
         def add_measure_to_database(
-            measure_name: str, measure_type: MeasureTypeEnum
+            measure_name: str, section_name: str, measure_type: MeasureTypeEnum
         ) -> int:
-            _section_name = "01A"
-            assert check_measure_existence(measure_name) is False
-            _measure_that_remains = orm.Measure.create(
+            _full_combinable = orm.CombinableType.get(
+                orm.CombinableType.name == CombinableTypeEnum.FULL.legacy_name
+            )
+            _measure_that_remains, _created = orm.Measure.get_or_create(
                 name=measure_name,
-                year=2021,
-                combinable_type=orm.CombinableType.get(),
+                year=0,
+                combinable_type=_full_combinable,
                 measure_type=orm.MeasureType.get(
                     orm.MeasureType.name == measure_type.legacy_name
                 ),
@@ -1558,20 +1559,39 @@ class TestCustomMeasureDetail:
             _created_measure_x_section = orm.MeasurePerSection.create(
                 measure=_measure_that_remains,
                 section=orm.SectionData.get(
-                    orm.SectionData.section_name == _section_name
+                    orm.SectionData.section_name == section_name
                 ),
             )
+            _selected_mechanism_x_section = (
+                _created_measure_x_section.section.mechanisms_per_section[0]
+            )
+
+            if measure_type == MeasureTypeEnum.CUSTOM:
+                assert (
+                    _created is False
+                ), "We are trying to test by appending to an existing custom measure"
+                _custom_measure_detail = orm.CustomMeasureDetail.create(
+                    measure=_measure_that_remains,
+                    mechanism=_selected_mechanism_x_section.mechanism,
+                    year=0,
+                    cost=42,
+                    beta=4.2,
+                )
+                orm.CustomMeasureDetailPerSection.create(
+                    measure_per_section=_created_measure_x_section,
+                    custom_measure_detail=_custom_measure_detail,
+                )
+
             _created_measure_result = orm.MeasureResult.create(
                 measure_per_section=_created_measure_x_section
             )
+
             orm.MeasureResultSection.create(
                 measure_result=_created_measure_result, beta=42, time=13, cost=24.42
             )
             orm.MeasureResultMechanism.create(
                 measure_result=_created_measure_result,
-                mechanism_per_section=_created_measure_x_section.section.mechanisms_per_section[
-                    0
-                ],
+                mechanism_per_section=_selected_mechanism_x_section,
                 time=13,
                 beta=24.42,
             )
@@ -1579,7 +1599,7 @@ class TestCustomMeasureDetail:
 
         # 1. Define test data.
         _standard_measure_that_remains_name = "NotACustomMeasure"
-        _custom_measure_that_doesnt_remain_name = "CustomMeasureThatDoesntRemain"
+        _custom_measure_that_doesnt_remain_name = "ROCKS"
         _custom_measure_result_ids = []
         with open_database(custom_measures_vrtool_config.input_database_path):
             _custom_measure_result_ids = get_custom_measure_result_ids()
@@ -1587,11 +1607,15 @@ class TestCustomMeasureDetail:
             assert get_existing_optimization_custom_measure(_custom_measure_result_ids)
             # Create additional measure results for standard and custom measures.
             _ = add_measure_to_database(
-                _standard_measure_that_remains_name, MeasureTypeEnum.SOIL_REINFORCEMENT
+                _standard_measure_that_remains_name,
+                "01A",
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
             )
             _custom_measure_result_ids.append(
                 add_measure_to_database(
-                    _custom_measure_that_doesnt_remain_name, MeasureTypeEnum.CUSTOM
+                    _custom_measure_that_doesnt_remain_name,
+                    "01B",
+                    MeasureTypeEnum.CUSTOM,
                 )
             )
             assert len(get_custom_measure_result_ids()) == len(

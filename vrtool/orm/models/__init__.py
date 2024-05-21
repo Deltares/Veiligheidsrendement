@@ -10,6 +10,9 @@ from vrtool.orm.models.computation_scenario_parameter import (
 )
 from vrtool.orm.models.computation_type import ComputationType
 from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
+from vrtool.orm.models.custom_measure_detail_per_section import (
+    CustomMeasureDetailPerSection,
+)
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.measure import Measure
