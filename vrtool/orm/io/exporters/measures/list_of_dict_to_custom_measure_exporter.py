@@ -102,30 +102,31 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 )
                 continue
 
-            # Add entries to `CustomMeasure`
-            _retrieved_custom_measures = self._get_custom_measures(
+            # Add entries to `CustomMeasureDetail`
+            _retrieved_custom_measure_details = self._get_custom_measure_details(
                 _grouped_custom_measures, _new_measure
             )
-            _exported_measures.extend(_retrieved_custom_measures)
+            _exported_measures.extend(_retrieved_custom_measure_details)
 
-            # Add entries to `CustomMeasurePerMeasurePerSection`
+            # Add entries to `CustomMeasureDetailPerSection`
             CustomMeasureDetailPerSection.insert_many(
                 [
                     dict(
-                        measure_per_section=_new_measure_per_section, custom_measure=_cm
+                        measure_per_section=_new_measure_per_section,
+                        custom_measure_detail=_cm_detail,
                     )
-                    for _cm in _retrieved_custom_measures
+                    for _cm_detail in _retrieved_custom_measure_details
                 ]
             ).execute(self._db)
 
-            # Add MeasureResult
+            # Add `MeasureResult``
             _new_measure_result, _ = MeasureResult.get_or_create(
                 measure_per_section=_new_measure_per_section
             )
 
-            # Calculate the related entries in `MEASURE_RESULT`.
+            # Calculate the related entries in `MeasureResult`.
             (_mr_sections, _mr_mechanisms,) = CustomMeasureTimeBetaCalculator(
-                _new_measure_per_section, _retrieved_custom_measures
+                _new_measure_per_section, _retrieved_custom_measure_details
             ).calculate(_new_measure_result)
             _measure_result_section_to_add.extend(_mr_sections)
             _measure_result_mechanism_to_add.extend(_mr_mechanisms)
@@ -178,7 +179,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
 
         return _grouped_by_measure
 
-    def _get_custom_measures(
+    def _get_custom_measure_details(
         self, custom_measure_list_dict: list[dict], parent_measure: Measure
     ) -> list[CustomMeasureDetail]:
         _custom_measures = []
