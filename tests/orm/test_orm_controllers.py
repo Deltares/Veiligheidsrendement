@@ -736,7 +736,7 @@ class TestOrmControllers:
         self, export_database: SqliteDatabase
     ):
         # Setup
-        self._generate_measure_results(export_database)
+        self._generate_optimization_results(export_database)
 
         # Call
         _db_path = Path(export_database.database)
@@ -751,13 +751,18 @@ class TestOrmControllers:
         assert not any(orm.MeasureResultParameter.select())
         assert not any(orm.MeasureResultSection.select())
         assert not any(orm.MeasureResultMechanism.select())
+        assert not any(orm.OptimizationRun.select())
+        assert not any(orm.OptimizationSelectedMeasure.select())
+        assert not any(orm.OptimizationStep.select())
+        assert not any(orm.OptimizationStepResultMechanism.select())
+        assert not any(orm.OptimizationStepResultSection.select())
 
     def test_clear_measure_result_does_not_clear_custom_results(
         self, export_database: SqliteDatabase
     ):
         # Setup
         assert not any(orm.MeasureResult.select())
-        self._generate_measure_results(export_database, "Custom")
+        self._generate_optimization_results(export_database, "Custom")
 
         # Call
         _db_path = Path(export_database.database)
@@ -768,10 +773,17 @@ class TestOrmControllers:
         clear_measure_results(_vrtool_config)
 
         # Assert
+        # - Custom results should still be present.
         assert any(orm.MeasureResult.select())
         assert any(orm.MeasureResultParameter.select())
         assert any(orm.MeasureResultSection.select())
         assert any(orm.MeasureResultMechanism.select())
+        # - All optimization results should be cleared.
+        assert not any(orm.OptimizationRun.select())
+        assert not any(orm.OptimizationSelectedMeasure.select())
+        assert not any(orm.OptimizationStep.select())
+        assert not any(orm.OptimizationStepResultMechanism.select())
+        assert not any(orm.OptimizationStepResultSection.select())
 
     def test_clear_optimization_results_clears_all_results(
         self, export_database: SqliteDatabase
@@ -821,8 +833,10 @@ class TestOrmControllers:
         assert any(orm.MeasureResultSection.select())
         assert any(orm.MeasureResultMechanism.select())
 
-    def _generate_optimization_results(self, db_connection: SqliteDatabase):
-        self._generate_measure_results(db_connection)
+    def _generate_optimization_results(
+        self, db_connection: SqliteDatabase, measure_type_name: str = "TestMeasureType"
+    ):
+        self._generate_measure_results(db_connection, measure_type_name)
         if db_connection.is_closed():
             # It could happen it has not been closed.
             db_connection.connect()
