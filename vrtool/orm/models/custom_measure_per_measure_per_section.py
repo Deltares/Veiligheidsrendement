@@ -1,6 +1,6 @@
 from peewee import ForeignKeyField
 
-from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.custom_measure import CustomMeasureDetails
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
@@ -12,7 +12,7 @@ class CustomMeasurePerMeasurePerSection(OrmBaseModel):
         on_delete="CASCADE",
     )
     custom_measure = ForeignKeyField(
-        CustomMeasure,
+        CustomMeasureDetails,
         backref="measure_per_sections_custom_measures",
         on_delete="CASCADE",
     )

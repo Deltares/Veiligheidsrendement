@@ -1228,7 +1228,7 @@ class TestCustomMeasures:
             assert any(orm.MeasureResultMechanism.select()) is False
             assert any(orm.MeasureResultSection.select()) is False
             _expected_total_measures += len(orm.Measure.select())
-            _expected_total_custom_measures += len(orm.CustomMeasure.select())
+            _expected_total_custom_measures += len(orm.CustomMeasureDetails.select())
 
         # 2. Run test
         _added_measures = add_custom_measures(
@@ -1243,7 +1243,10 @@ class TestCustomMeasures:
             # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
             # entries have been created.
             assert len(orm.Measure.select()) == _expected_total_measures
-            assert len(orm.CustomMeasure.select()) == _expected_total_custom_measures
+            assert (
+                len(orm.CustomMeasureDetails.select())
+                == _expected_total_custom_measures
+            )
 
             for _keys_group, _cm_list in _custom_measures_grouped:
                 # There should only be one `MeasureResult` for each `CustomMeasure`

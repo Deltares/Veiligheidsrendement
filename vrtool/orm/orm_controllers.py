@@ -73,7 +73,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.CombinableType,
             orm.Measure,
             orm.StandardMeasure,
-            orm.CustomMeasure,
+            orm.CustomMeasureDetails,
             orm.DikeTrajectInfo,
             orm.SupportingFile,
             orm.MeasurePerSection,
@@ -502,7 +502,7 @@ def get_optimization_step_with_lowest_total_cost(
 
 def add_custom_measures(
     vrtool_config: VrtoolConfig, custom_measures: list[dict]
-) -> list[orm.CustomMeasure]:
+) -> list[orm.CustomMeasureDetails]:
     """
     Maps the provided list of dictionaries, ( with keys `MEASURE_NAME`,
     `COMBINABLE_TYPE`, `SECTION_NAME`, `MECHANISM_NAME`, `TIME`,
