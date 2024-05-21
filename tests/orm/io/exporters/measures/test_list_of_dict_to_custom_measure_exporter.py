@@ -15,7 +15,7 @@ from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter im
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
-from vrtool.orm.models.custom_measure import CustomMeasureDetails
+from vrtool.orm.models.custom_measure_details import CustomMeasureDetails
 from vrtool.orm.models.custom_measure_per_measure_per_section import (
     CustomMeasurePerMeasurePerSection,
 )

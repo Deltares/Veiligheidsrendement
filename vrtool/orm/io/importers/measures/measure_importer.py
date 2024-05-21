@@ -3,7 +3,6 @@ from typing import Type
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures import (
-    CustomMeasure,
     DiaphragmWallMeasure,
     RevetmentMeasure,
     SoilReinforcementMeasure,
@@ -16,7 +15,9 @@ from vrtool.decision_making.measures.standard_measures.wall_measures.anchored_sh
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.custom_measure import CustomMeasureDetails as OrmCustomMeasure
+from vrtool.orm.models.custom_measure_details import (
+    CustomMeasureDetails as OrmCustomMeasure,
+)
 from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.standard_measure import StandardMeasure
 

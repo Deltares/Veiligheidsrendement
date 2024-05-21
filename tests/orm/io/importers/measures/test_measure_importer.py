@@ -21,7 +21,9 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
-from vrtool.orm.models.custom_measure import CustomMeasureDetails as OrmCustomMeasure
+from vrtool.orm.models.custom_measure_details import (
+    CustomMeasureDetails as OrmCustomMeasure,
+)
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism

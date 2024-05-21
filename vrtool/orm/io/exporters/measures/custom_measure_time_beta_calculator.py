@@ -4,7 +4,7 @@ from collections import defaultdict
 from numpy import prod
 from scipy.interpolate import interp1d
 
-from vrtool.orm.models.custom_measure import CustomMeasureDetails
+from vrtool.orm.models.custom_measure_details import CustomMeasureDetails
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.mechanism import Mechanism
