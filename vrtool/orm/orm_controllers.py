@@ -186,6 +186,7 @@ def clear_measure_results(config: VrtoolConfig) -> None:
     """
     Clears all the measure results from the database.
     Results for custom measures are not removed.
+    Optimization related results for all measures are removed.
 
     Args:
         config (VrtoolConfig): Vrtool configuration
