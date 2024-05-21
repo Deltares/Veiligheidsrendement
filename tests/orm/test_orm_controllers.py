@@ -1523,6 +1523,12 @@ class TestCustomMeasureDetail:
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
+        def get_rocks_custom_measure_details() -> list[orm.CustomMeasureDetail]:
+            return orm.CustomMeasureDetail.select().where(
+                orm.CustomMeasureDetail.measure.name
+                == _custom_measure_that_remains_name
+            )
+
         def get_custom_measure_result_ids() -> list[int]:
             return list(
                 _mr.get_id()
@@ -1567,20 +1573,18 @@ class TestCustomMeasureDetail:
             )
 
             if measure_type == MeasureTypeEnum.CUSTOM:
-                assert (
-                    _created is False
-                ), "We are trying to test by appending to an existing custom measure"
-                _custom_measure_detail = orm.CustomMeasureDetail.create(
-                    measure=_measure_that_remains,
-                    mechanism=_selected_mechanism_x_section.mechanism,
-                    year=0,
-                    cost=42,
-                    beta=4.2,
-                )
-                orm.CustomMeasureDetailPerSection.create(
-                    measure_per_section=_created_measure_x_section,
-                    custom_measure_detail=_custom_measure_detail,
-                )
+                for _idx in range(0, 2):
+                    _custom_measure_detail = orm.CustomMeasureDetail.create(
+                        measure=_measure_that_remains,
+                        mechanism=_selected_mechanism_x_section.mechanism,
+                        year=_idx,
+                        cost=42,
+                        beta=4.2,
+                    )
+                    orm.CustomMeasureDetailPerSection.create(
+                        measure_per_section=_created_measure_x_section,
+                        custom_measure_detail=_custom_measure_detail,
+                    )
 
             _created_measure_result = orm.MeasureResult.create(
                 measure_per_section=_created_measure_x_section
@@ -1599,10 +1603,16 @@ class TestCustomMeasureDetail:
 
         # 1. Define test data.
         _standard_measure_that_remains_name = "NotACustomMeasure"
-        _custom_measure_that_doesnt_remain_name = "ROCKS"
+        _custom_measure_that_doesnt_remain_name = "BANANAS"
+        _custom_measure_that_remains_name = "ROCKS"
+        _original_rocks_custom_measure_details_length = 7
         _custom_measure_result_ids = []
         with open_database(custom_measures_vrtool_config.input_database_path):
             _custom_measure_result_ids = get_custom_measure_result_ids()
+            assert (
+                get_rocks_custom_measure_details()
+                == _original_rocks_custom_measure_details_length
+            )
             assert any(_custom_measure_result_ids)
             assert get_existing_optimization_custom_measure(_custom_measure_result_ids)
             # Create additional measure results for standard and custom measures.
@@ -1611,15 +1621,26 @@ class TestCustomMeasureDetail:
                 "01A",
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
             )
-            _custom_measure_result_ids.append(
-                add_measure_to_database(
-                    _custom_measure_that_doesnt_remain_name,
-                    "01B",
-                    MeasureTypeEnum.CUSTOM,
-                )
+            _custom_measure_result_ids.extend(
+                [
+                    add_measure_to_database(
+                        _custom_measure_that_remains_name,
+                        "01B",
+                        MeasureTypeEnum.CUSTOM,
+                    ),
+                    add_measure_to_database(
+                        _custom_measure_that_doesnt_remain_name,
+                        "01A",
+                        MeasureTypeEnum.CUSTOM,
+                    ),
+                ]
             )
             assert len(get_custom_measure_result_ids()) == len(
                 _custom_measure_result_ids
+            )
+            assert (
+                get_rocks_custom_measure_details()
+                == _original_rocks_custom_measure_details_length + 2
             )
 
         # 2. Run test.
@@ -1633,6 +1654,11 @@ class TestCustomMeasureDetail:
             assert get_existing_optimization_custom_measure(_ids)
 
             assert check_measure_existence(_standard_measure_that_remains_name)
+            assert check_measure_existence(_custom_measure_that_remains_name)
+            assert (
+                get_rocks_custom_measure_details()
+                == _original_rocks_custom_measure_details_length
+            )
             assert (
                 check_measure_existence(_custom_measure_that_doesnt_remain_name)
                 is False
