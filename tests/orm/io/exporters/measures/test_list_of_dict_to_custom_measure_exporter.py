@@ -287,18 +287,18 @@ class TestListOfDictToCustomMeasureExporter:
         for _ucm_idx, _unique_custom_measure in enumerate(
             _unique_retrieved_custom_measures
         ):
-            if expected_created_custom_measures == 1:
-                assert len(
-                    _unique_custom_measure.measure_per_sections_custom_measures
-                ) == len(custom_measure_dict_collection)
-            else:
-                assert (
-                    len(_unique_custom_measure.measure_per_sections_custom_measures)
-                    == 1
-                )
+            _generated_cm_detail_x_section = len(
+                _unique_custom_measure.sections_per_custom_measure_detail
+            )
+
+            assert (
+                _generated_cm_detail_x_section == len(custom_measure_dict_collection)
+                if expected_created_custom_measures == 1
+                else 1
+            )
 
             for _idx, _cm_x_msx in enumerate(
-                _unique_custom_measure.measure_per_sections_custom_measures
+                _unique_custom_measure.sections_per_custom_measure_detail
             ):
                 # We assume the creation order matches the available sections list.
                 assert (
