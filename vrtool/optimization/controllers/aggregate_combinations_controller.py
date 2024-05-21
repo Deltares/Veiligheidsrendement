@@ -21,10 +21,10 @@ class AggregateCombinationsController:
         def primaries_match(
             aggregation: tuple[CombinedMeasure, CombinedMeasure]
         ) -> bool:
-            def is_matching_stab_length(sh_sg_length: float, sg_comb_length: float):
-                if math.isnan(sh_sg_length) or math.isnan(sg_comb_length):
+            def is_matching_stab_length(sh_comb_length: float, sg_comb_length: float):
+                if math.isnan(sh_comb_length) or math.isnan(sg_comb_length):
                     return True
-                return sh_sg_length == sg_comb_length
+                return sh_comb_length == sg_comb_length
             # Check if the primary measures in both combinations match
             _sh_comb, _sg_comb = aggregation
             return (
