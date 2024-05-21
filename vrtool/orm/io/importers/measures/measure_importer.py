@@ -16,7 +16,7 @@ from vrtool.decision_making.measures.standard_measures.wall_measures.anchored_sh
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.custom_measure_details import (
-    CustomMeasureDetails as OrmCustomMeasure,
+    CustomMeasureDetail as OrmCustomMeasure,
 )
 from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.standard_measure import StandardMeasure

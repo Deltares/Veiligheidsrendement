@@ -15,9 +15,9 @@ from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter im
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
-from vrtool.orm.models.custom_measure_details import CustomMeasureDetails
+from vrtool.orm.models.custom_measure_details import CustomMeasureDetail
 from vrtool.orm.models.custom_measure_per_measure_per_section import (
-    CustomMeasurePerMeasurePerSection,
+    CustomMeasureDetailPerSection,
 )
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 
@@ -173,7 +173,7 @@ class TestListOfDictToCustomMeasureExporter:
         # 3. Verify expectations.
         assert len(_exported_measures) == len(time_beta_tuples)
         for _idx, _exported_measure in enumerate(_exported_measures):
-            assert isinstance(_exported_measure, CustomMeasureDetails)
+            assert isinstance(_exported_measure, CustomMeasureDetail)
             assert _exported_measure.mechanism.name.upper() == _selected_mechanism
             assert _exported_measure.cost == _measure_cost
             _expected_time_beta = time_beta_tuples[_idx]
@@ -269,8 +269,8 @@ class TestListOfDictToCustomMeasureExporter:
             for _custom_measure_dict in custom_measure_dict_collection
         ]
 
-        assert not any(CustomMeasureDetails.select())
-        assert not any(CustomMeasurePerMeasurePerSection.select())
+        assert not any(CustomMeasureDetail.select())
+        assert not any(CustomMeasureDetailPerSection.select())
 
         # 2. Run test.
         _exported_custom_measures = exporter_with_valid_db.export_dom(_list_of_dict)

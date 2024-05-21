@@ -5,9 +5,10 @@ from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 
-class CustomMeasureDetails(OrmBaseModel):
+class CustomMeasureDetail(OrmBaseModel):
     """
     A (logical) custom measure is defined by a set of records that share the same measure_id.
+    These are represented as a `CustomMeasureDetail`.
     """
 
     measure = ForeignKeyField(

@@ -13,9 +13,9 @@ from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
-from vrtool.orm.models.custom_measure_details import CustomMeasureDetails
+from vrtool.orm.models.custom_measure_details import CustomMeasureDetail
 from vrtool.orm.models.custom_measure_per_measure_per_section import (
-    CustomMeasurePerMeasurePerSection,
+    CustomMeasureDetailPerSection,
 )
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
@@ -54,7 +54,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
         self._db = db_context
 
-    def export_dom(self, dom_model: list[dict]) -> list[CustomMeasureDetails]:
+    def export_dom(self, dom_model: list[dict]) -> list[CustomMeasureDetail]:
         _measure_result_mechanism_to_add = []
         _measure_result_section_to_add = []
         _exported_measures = []
@@ -109,7 +109,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             _exported_measures.extend(_retrieved_custom_measures)
 
             # Add entries to `CustomMeasurePerMeasurePerSection`
-            CustomMeasurePerMeasurePerSection.insert_many(
+            CustomMeasureDetailPerSection.insert_many(
                 [
                     dict(
                         measure_per_section=_new_measure_per_section, custom_measure=_cm
@@ -180,7 +180,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
 
     def _get_custom_measures(
         self, custom_measure_list_dict: list[dict], parent_measure: Measure
-    ) -> list[CustomMeasureDetails]:
+    ) -> list[CustomMeasureDetail]:
         _custom_measures = []
         for _custom_measure in custom_measure_list_dict:
             _mechanism_found = (
@@ -195,7 +195,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
             # This is not the most efficient way, but it guarantees previous custom measures
             # remain in place.
-            _new_custom_measure, _is_new = CustomMeasureDetails.get_or_create(
+            _new_custom_measure, _is_new = CustomMeasureDetail.get_or_create(
                 measure=parent_measure,
                 mechanism=_mechanism_found,
                 cost=_custom_measure["COST"],

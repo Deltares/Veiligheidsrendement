@@ -9,7 +9,7 @@ from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
 from vrtool.orm.models.computation_type import ComputationType
-from vrtool.orm.models.custom_measure_details import CustomMeasureDetails
+from vrtool.orm.models.custom_measure_details import CustomMeasureDetail
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.measure import Measure
