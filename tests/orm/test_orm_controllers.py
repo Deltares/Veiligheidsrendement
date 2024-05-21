@@ -1045,9 +1045,9 @@ class TestOrmControllers:
         )
 
 
-class TestCustomMeasures:
+class TestCustomMeasureDetail:
     """
-    This test class mostly covers integration tests for `CustomMeasure` workflows.
+    This test class mostly covers integration tests for `CustomMeasureDetail` workflows.
     """
 
     _custom_measures_test_dir = test_data.joinpath("38-1 custom measures")
@@ -1208,7 +1208,7 @@ class TestCustomMeasures:
         custom_measures_vrtool_config: VrtoolConfig,
     ):
         """
-        Integration test to verify adding new entries to the `orm.CustomMeasure`
+        Integration test to verify adding new entries to the `orm.CustomMeasureDetail`
         and related tables under different workflows.
         """
         # Auxiliar methods for validations.
@@ -1255,7 +1255,7 @@ class TestCustomMeasures:
         assert all(_am.measure.year == 0 for _am in _added_measures)
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
-            # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
+            # Verify the expected amount of `orm.Measure` and `orm.CustomMeasureDetail`
             # entries have been created.
             assert len(orm.Measure.select()) == _expected_total_measures
             assert (
@@ -1263,7 +1263,7 @@ class TestCustomMeasures:
             )
 
             for _keys_group, _cm_list in _custom_measures_grouped:
-                # There should only be one `MeasureResult` for each `CustomMeasure`
+                # There should only be one `MeasureResult` for each `CustomMeasureDetail`
                 _fm_result = (
                     orm.MeasureResult.select()
                     .join_from(orm.MeasureResult, orm.MeasurePerSection)
@@ -1395,7 +1395,7 @@ class TestCustomMeasures:
         """
         This test is based on the exported database from
         `test_add_custom_measures[MVP test]`.
-        In this test we ONLY focus on verifying whether the `CustomMeasure` and its
+        In this test we ONLY focus on verifying whether the `CustomMeasureDetail` and its
         `MeasureResults` are correctly imported.
         """
         # 1. Define test data.
@@ -1404,12 +1404,12 @@ class TestCustomMeasures:
 
         # Controled values, we use a fix database for this test.
         # These are the id's for the meausre results for the existing
-        # CustomMeasure entries.
-        _custom_measures_ids = [(1, 0)]
+        # `CustomMeasureDetail` entries.
+        _custom_measure_detail_ids = [(1, 0)]
 
         # 2. Run test.
         _imported_data = import_results_measures_for_optimization(
-            custom_measures_vrtool_config, _custom_measures_ids
+            custom_measures_vrtool_config, _custom_measure_detail_ids
         )
 
         # 3. Verify expectations.
@@ -1421,7 +1421,7 @@ class TestCustomMeasures:
         _meas_ids = list(
             set((x.measure_result_id, x.year) for x in _imported_data[0].measures)
         )
-        assert _meas_ids == _custom_measures_ids
+        assert _meas_ids == _custom_measure_detail_ids
 
         assert len(_imported_data[0].measures) == 2
 

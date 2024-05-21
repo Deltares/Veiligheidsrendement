@@ -31,13 +31,13 @@ from vrtool.orm.models.section_data import SectionData
 
 class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     """
-    Exports a list of dictionaries representing a `CustomMeasure` entry
+    Exports a list of dictionaries representing a `CustomMeasureDetail` entry
     so that it also generates all related entries for the tables `Measure`,
     `MeasurePerSection`, `MeasureResult`, `MeasureResultSection` and
     `MeasureResultMechanism`.
 
     Constraints:
-        - All `CustomMeasure` dictionaries require at least an entry for t=0 for
+        - All `CustomMeasureDetail` dictionaries require at least an entry for t=0 for
         each provided measure/mechanism.
         - If more than one value is provided, derive values for intermediate times
         based on interpolation for values between the given values.
@@ -205,7 +205,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
             if not _is_new:
                 logging.info(
-                    "An existing `CustomMeasure` was found for %s, no new entry will be created",
+                    "An existing `CustomMeasureDetail` was found for %s, no new entry will be created",
                     parent_measure.name,
                 )
             _custom_measures.append(_new_custom_measure)

@@ -197,7 +197,7 @@ class TestListOfDictToCustomMeasureExporter:
                 _mr_mechanism.mechanism_per_section.mechanism.name.upper()
                 != _selected_mechanism
             ):
-                # When the mechanism was not in our `CustomMeasure` then we expect
+                # When the mechanism was not in our `CustomMeasureDetail` then we expect
                 # the value from the assessment.
                 _assessment = _mr_mechanism.mechanism_per_section.assessment_mechanism_results.where(
                     AssessmentMechanismResult.time == _mr_mechanism.time

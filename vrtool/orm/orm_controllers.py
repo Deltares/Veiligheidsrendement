@@ -503,21 +503,21 @@ def get_optimization_step_with_lowest_total_cost(
 
 
 def add_custom_measures(
-    vrtool_config: VrtoolConfig, custom_measures: list[dict]
+    vrtool_config: VrtoolConfig, custom_measure_details: list[dict]
 ) -> list[orm.CustomMeasureDetail]:
     """
     Maps the provided list of dictionaries, ( with keys `MEASURE_NAME`,
     `COMBINABLE_TYPE`, `SECTION_NAME`, `MECHANISM_NAME`, `TIME`,
-     `COST`, `BETA`), into a `CustomMeasure` and all the related
+     `COST`, `BETA`), into a `CustomMeasureDetail` and all the related
     (required) other tables such as `Measure` or `MeasureResult`.
 
     Args:
         vrtool_config (VrtoolConfig): Configuration to be used for this tool.
-        custom_measures (list[dict]): List of dictionaries, each one representing a
-        `CustomMeasure`.
+        custom_measure_details (list[dict]): List of dictionaries, each one representing a
+        `CustomMeasureDetail`.
 
     Returns:
-        list[orm.CustomMeasure]: list with id's of the created custom measures.
+        list[orm.CustomMeasureDetail]: list with id's of the created custom measures.
     """
 
     # 1. The list of dictionaries should be grouped by the `MEASURE_NAME` key.
@@ -576,7 +576,7 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
 def brute_clear_custom_measure(vrtool_config: VrtoolConfig):
     """
     Removes all the `Measure` of type `MeasureTypeEnum.CUSTOM` and their
-    `MeasureResult` entries related to *ALL* `CustomMeasure` entries
+    `MeasureResult` entries related to *ALL* `CustomMeasureDetail` entries
     even if they have already been linked in an `OptimizationRun` table.
 
     Args:
