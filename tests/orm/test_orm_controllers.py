@@ -1511,7 +1511,8 @@ class TestCustomMeasures:
             return list(
                 _mr.get_id()
                 for _mr in orm.MeasureResult.select()
-                if _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+                if MeasureTypeEnum.get_enum(_mr.measure_type_name)
+                == MeasureTypeEnum.CUSTOM
             )
 
         def get_existing_optimization_custom_measure(
@@ -1528,6 +1529,7 @@ class TestCustomMeasures:
         def add_measure_to_database(
             measure_name: str, measure_type: MeasureTypeEnum
         ) -> int:
+            _section_name = "01A"
             assert check_measure_existence(measure_name) is False
             _measure_that_remains = orm.Measure.create(
                 name=measure_name,
@@ -1539,7 +1541,9 @@ class TestCustomMeasures:
             )
             _created_measure_x_section = orm.MeasurePerSection.create(
                 measure=_measure_that_remains,
-                section=orm.SectionData.get(orm.SectionData.section_name == "01A"),
+                section=orm.SectionData.get(
+                    orm.SectionData.section_name == _section_name
+                ),
             )
             _created_measure_result = orm.MeasureResult.create(
                 measure_per_section=_created_measure_x_section
@@ -1614,6 +1618,7 @@ class TestCustomMeasures:
             )
 
         # 1. Define test data.
+        _section_name = "01A"
         _measure_that_remains_name = "NotACustomMeasure"
         _measure_result_ids = []
         with open_database(custom_measures_vrtool_config.input_database_path):
@@ -1635,7 +1640,9 @@ class TestCustomMeasures:
             )
             _created_measure_x_section = orm.MeasurePerSection.create(
                 measure=_measure_that_remains,
-                section=orm.SectionData.get(orm.SectionData.section_name == "01A"),
+                section=orm.SectionData.get(
+                    orm.SectionData.section_name == _section_name
+                ),
             )
             _created_measure_result = orm.MeasureResult.create(
                 measure_per_section=_created_measure_x_section
