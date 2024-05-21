@@ -56,6 +56,28 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
         self._db = db_context
 
+    # def _get_unique_measure(
+    #     self, measure_name: str, combinable_name: str, section_name: str
+    # ) -> Measure:
+    #     _measure_query = dict(
+    #         name=measure_name,
+    #         measure_type=MeasureType.get_or_create(
+    #             name=MeasureTypeEnum.CUSTOM.legacy_name
+    #         )[0],
+    #         year=0,
+    #         combinable_type=CombinableType.select()
+    #         .where(
+    #             (
+    #                 fn.upper(CombinableType.name)
+    #                 == CombinableTypeEnum.get_enum(combinable_name).name
+    #             )
+    #         )
+    #         .get(),
+    #     )
+    #     if isinstance(Measure.select().where(Measure.name == measure_name).get_or_none(), Measure):
+    #         return None
+    #     return Measure.create(**_measure_query)
+
     def export_dom(self, dom_model: list[dict]) -> list[CustomMeasure]:
         _measure_result_mechanism_to_add = []
         _measure_result_section_to_add = []
@@ -68,41 +90,52 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             _section_name = _measure_unique_keys[2]
 
             # Create the measure and as many `CustomMeasures` as required.
-            _new_measure, _measure_created = Measure.get_or_create(
-                name=_measure_name,
-                measure_type=MeasureType.get_or_create(
-                    name=MeasureTypeEnum.CUSTOM.legacy_name
-                )[0],
-                year=0,
-                combinable_type=CombinableType.select()
+            _combinable_type = (
+                CombinableType.select()
                 .where(
-                    fn.upper(CombinableType.name)
-                    == CombinableTypeEnum.get_enum(_measure_unique_keys[1]).name
+                    (
+                        fn.upper(CombinableType.name)
+                        == CombinableTypeEnum.get_enum(_measure_unique_keys[1]).name
+                    )
                 )
-                .get(),
+                .get()
             )
-            if not _measure_created:
-                logging.warning(
-                    "Maatregel %s gevonden, custom maatregelen worden geupdated met nieuwe data.",
-                    _measure_name,
-                )
-
-            # Add entry to `MeasurePerSection`
-            (
-                _new_measure_per_section,
-                _measure_per_section_created,
-            ) = MeasurePerSection.get_or_create(
-                section=SectionData.get(section_name=_section_name),
-                measure=_new_measure,
+            _custom_measure_type, _ = MeasureType.get_or_create(
+                name=MeasureTypeEnum.CUSTOM.legacy_name
             )
 
-            if not _measure_per_section_created:
+            # Check if there is already an entry for `Measure` and `MeasurePerSection`.
+            if any(
+                MeasurePerSection.select()
+                .join_from(MeasurePerSection, Measure)
+                .join_from(MeasurePerSection, SectionData)
+                .where(
+                    (Measure.name == _measure_name)
+                    & (Measure.combinable_type == _combinable_type)
+                    & (Measure.measure_type == _custom_measure_type)
+                    & (SectionData.section_name == _section_name)
+                )
+            ):
                 logging.warning(
                     "Maatregel %s bestaat al in de database voor sectie %s, maatregel wordt niet toegevoegd. Hernoem de maatregel om te kunnen toevoegen.",
                     _measure_name,
                     _section_name,
                 )
                 continue
+
+            # Add entry to `Measure`
+            _new_measure = Measure.create(
+                name=_measure_name,
+                measure_type=_custom_measure_type,
+                year=0,
+                combinable_type=_combinable_type,
+            )
+
+            # Add entry to `MeasurePerSection`
+            _new_measure_per_section = MeasurePerSection.create(
+                section=SectionData.get(section_name=_section_name),
+                measure=_new_measure,
+            )
 
             # Add entries to `CustomMeasure`
             _retrieved_custom_measures = self._get_custom_measures(

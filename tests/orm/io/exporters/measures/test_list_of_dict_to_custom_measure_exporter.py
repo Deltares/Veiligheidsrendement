@@ -19,6 +19,7 @@ from vrtool.orm.models.custom_measure import CustomMeasure
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
+from vrtool.orm.models.section_data import SectionData
 
 
 class TestListOfDictToCustomMeasureExporter:
@@ -252,9 +253,12 @@ class TestListOfDictToCustomMeasureExporter:
             MeasurePerSection
         ]:
             return list(
-                MeasurePerSection.select().where(
-                    (MeasurePerSection.measure.name == _measure_name)
-                    & (MeasurePerSection.section.section_name in _section_names)
+                MeasurePerSection.select()
+                .join_from(MeasurePerSection, Measure)
+                .join_from(MeasurePerSection, SectionData)
+                .where(
+                    (Measure.name == _measure_name)
+                    & (SectionData.section_name in _section_names)
                 )
             )
 
@@ -268,14 +272,15 @@ class TestListOfDictToCustomMeasureExporter:
         assert len(_custom_measures) == _expected_new_measures
 
         assert len(measures_with_custom_measure_name()) == _expected_new_measures
-        assert (
-            len(measures_per_section_with_custom_measure_and_section())
-            == _expected_new_measures
+        _custom_measures_per_section = (
+            measures_per_section_with_custom_measure_and_section()
         )
+        assert len(_custom_measures_per_section) == _expected_new_measures
 
         _custom_measures_measures = list(set(_cm.measure for _cm in _custom_measures))
         assert len(_custom_measures_measures) == _expected_new_measures
         for _m in _custom_measures_measures:
             assert _m.name == _measure_name
             assert len(_m.sections_per_measure) == 1
-            assert _m.sections_per_measure[0].section.section_name in _section_names
+            _idx = _custom_measures_per_section.index(_m.sections_per_measure[0])
+            assert _custom_measures_per_section.pop(_idx) is not None
