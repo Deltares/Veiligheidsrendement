@@ -209,6 +209,8 @@ def clear_measure_results(config: VrtoolConfig) -> None:
 
     logging.info("Bestaande resultaten voor maatregelen verwijderd.")
 
+    clear_optimization_results(config)
+
 
 def clear_optimization_results(config: VrtoolConfig) -> None:
     """
