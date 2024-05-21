@@ -565,20 +565,72 @@ CREATE UNIQUE INDEX standardmeasure_measure_id ON StandardMeasure (
 PRAGMA foreign_keys = 1;
 
 -- Changes required from VRTOOL-514
-CREATE TABLE IF NOT EXISTS CustomMeasurePerMeasurePerSection (
+DROP TABLE CustomMeasureParameter;
+
+-- Renaming of `CustomMeasure` to `CustomMeasureDetail`
+PRAGMA foreign_keys = 0;
+
+CREATE TABLE CustomMeasureDetail (
+    id           INTEGER NOT NULL
+                         PRIMARY KEY,
+    measure_id   INTEGER NOT NULL,
+    mechanism_id INTEGER NOT NULL,
+    cost         REAL,
+    beta         REAL,
+    year         INTEGER NOT NULL,
+    FOREIGN KEY (
+        measure_id
+    )
+    REFERENCES Measure (id) ON DELETE CASCADE,
+    FOREIGN KEY (
+        mechanism_id
+    )
+    REFERENCES Mechanism (id) ON DELETE CASCADE
+);
+
+INSERT INTO CustomMeasureDetail (
+                                    id,
+                                    measure_id,
+                                    mechanism_id,
+                                    cost,
+                                    beta,
+                                    year
+                                )
+                                SELECT id,
+                                       measure_id,
+                                       mechanism_id,
+                                       cost,
+                                       beta,
+                                       year
+                                  FROM CustomMeasure;
+
+CREATE TABLE CustomMeasureDetailPerSection (
     id                     INTEGER NOT NULL
                                    PRIMARY KEY,
     measure_per_section_id INTEGER NOT NULL,
-    custom_measure_id      INTEGER NOT NULL,
+    custom_measure_detail_id      INTEGER NOT NULL,
     FOREIGN KEY (
         measure_per_section_id
     )
     REFERENCES MeasurePerSection (id) ON DELETE CASCADE,
     FOREIGN KEY (
-        custom_measure_id
+        custom_measure_detail_id
     )
-    REFERENCES CustomMeasure (id) ON DELETE CASCADE
+    REFERENCES CustomMeasureDetail (id) ON DELETE CASCADE
 );
+
+DROP TABLE CustomMeasure;
+
+CREATE INDEX custommeasure_measure_id ON CustomMeasureDetail (
+    "measure_id"
+);
+
+CREATE INDEX custommeasure_mechanism_id ON CustomMeasureDetail (
+    "mechanism_id"
+);
+
+PRAGMA foreign_keys = 1;
+
 
 
 -- General pragma changes
