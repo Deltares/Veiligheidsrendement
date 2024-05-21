@@ -16,6 +16,8 @@ from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter im
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
 from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 
 
@@ -216,3 +218,64 @@ class TestListOfDictToCustomMeasureExporter:
                 .get()
             )
             assert _measure_result_section.cost == _measure_cost
+
+    def test_export_dom_for_different_sections_creates_different_measures(
+        self,
+        exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
+    ):
+        """
+        This test mostly targets the inner exception of the protected method
+        `_get_grouped_dictionaries_by_measure`. Therefore you may expect some
+        concessions or simplifications in the data definition.
+        """
+        # 1. Define test data.
+        _section_names = ["01A", "01B"]
+        _measure_name = "ROCKS"
+        _base_custom_measure_dict = dict(
+            MEASURE_NAME=_measure_name,
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            MECHANISM_NAME=MechanismEnum.PIPING.name,
+            COST=400,
+            BETA=6,
+            TIME=0,
+        )
+        _list_of_dict = [
+            _base_custom_measure_dict | dict(SECTION_NAME=_s_name)
+            for _s_name in _section_names
+        ]
+        _expected_new_measures = 2
+
+        def measures_with_custom_measure_name() -> list[Measure]:
+            return list(Measure.select().where(Measure.name == _measure_name))
+
+        def measures_per_section_with_custom_measure_and_section() -> list[
+            MeasurePerSection
+        ]:
+            return list(
+                MeasurePerSection.select().where(
+                    (MeasurePerSection.measure.name == _measure_name)
+                    & (MeasurePerSection.section.section_name in _section_names)
+                )
+            )
+
+        assert any(measures_with_custom_measure_name()) is False
+        assert any(measures_per_section_with_custom_measure_and_section()) is False
+
+        # 2. Run test.
+        _custom_measures = exporter_with_valid_db.export_dom(_list_of_dict)
+
+        # 3. Verify expectations.
+        assert len(_custom_measures) == _expected_new_measures
+
+        assert len(measures_with_custom_measure_name()) == _expected_new_measures
+        assert (
+            len(measures_per_section_with_custom_measure_and_section())
+            == _expected_new_measures
+        )
+
+        _custom_measures_measures = list(set(_cm.measure for _cm in _custom_measures))
+        assert len(_custom_measures_measures) == _expected_new_measures
+        for _m in _custom_measures_measures:
+            assert _m.name == _measure_name
+            assert len(_m.sections_per_measure) == 1
+            assert _m.sections_per_measure[0].section.section_name in _section_names

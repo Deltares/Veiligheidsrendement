@@ -36,6 +36,11 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     Constraints:
         - All `CustomMeasure` dictionaries require at least an entry for t=0 for
         each provided measure/mechanism.
+        - `CustomMeasure` are grouped by `MeasurePerSection`,
+            - if the measure name has already been used for a given section name,
+            then it does not get exported.
+            - otherwise it creates a new `Measure` entry where to relate all
+            `CustomMeasure` entries.
         - If more than one value is provided, derive values for intermediate times
         based on interpolation for values between the given values.
         - When a computation time is larger than any provided `t` value,
