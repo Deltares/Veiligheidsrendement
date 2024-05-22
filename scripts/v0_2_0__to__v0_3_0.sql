@@ -533,13 +533,15 @@ PRAGMA foreign_keys = 1;
 PRAGMA foreign_keys = 0;
 
 CREATE TABLE CustomMeasureDetail (
-    id           INTEGER NOT NULL
-                         PRIMARY KEY,
-    measure_id   INTEGER NOT NULL,
-    mechanism_id INTEGER NOT NULL,
-    cost         REAL,
-    beta         REAL,
-    year         INTEGER NOT NULL,
+    id                     INTEGER NOT NULL
+                                   PRIMARY KEY,
+    measure_id             INTEGER NOT NULL,
+    mechanism_id           INTEGER NOT NULL,
+    measure_per_section_id INTEGER REFERENCES MeasurePerSection (id) ON DELETE CASCADE
+                                   NOT NULL,
+    cost                   REAL,
+    beta                   REAL,
+    year                   INTEGER NOT NULL,
     FOREIGN KEY (
         measure_id
     )
@@ -564,36 +566,20 @@ INSERT INTO CustomMeasureDetail (
                                        cost,
                                        beta,
                                        year
-                                  FROM CustomMeasure;
+                                  FROM sqlitestudio_temp_table;
 DROP TABLE CustomMeasure;
 
 CREATE INDEX custommeasuredetail_measure_id ON CustomMeasureDetail (
     "measure_id"
 );
 
+CREATE INDEX custommeasuredetail_measure_per_section_id ON CustomMeasureDetail (
+    "measure_per_section_id"
+);
+
 CREATE INDEX custommeasuredetail_mechanism_id ON CustomMeasureDetail (
     "mechanism_id"
 );
-
--- Create new table `CustomMeasureDetailPerSection`
-CREATE TABLE CustomMeasureDetailPerSection (
-    id                     INTEGER NOT NULL
-                                   PRIMARY KEY,
-    measure_per_section_id INTEGER NOT NULL,
-    custom_measure_detail_id      INTEGER NOT NULL,
-    FOREIGN KEY (
-        measure_per_section_id
-    )
-    REFERENCES MeasurePerSection (id) ON DELETE CASCADE,
-    FOREIGN KEY (
-        custom_measure_detail_id
-    )
-    REFERENCES CustomMeasureDetail (id) ON DELETE CASCADE
-);
-
-PRAGMA foreign_keys = 1;
-
-
 
 -- General pragma changes
 PRAGMA journal_mode = "WAL";
