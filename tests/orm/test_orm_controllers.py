@@ -1232,9 +1232,7 @@ class TestCustomMeasureDetail:
         _expected_total_measures = len(
             set(_cm[0][0] + _cm[0][1] for _cm in _custom_measures_grouped)
         )
-        _expected_total_custom_measures = len(
-            set(map(get_custom_measure_dict_hash, custom_measure_dict_list))
-        )
+        _expected_total_custom_measure_details = len(custom_measure_dict_list)
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.MeasureResult.delete().execute(_db)
             orm.MeasureResultMechanism.delete().execute(_db)
@@ -1243,7 +1241,9 @@ class TestCustomMeasureDetail:
             assert any(orm.MeasureResultMechanism.select()) is False
             assert any(orm.MeasureResultSection.select()) is False
             _expected_total_measures += len(orm.Measure.select())
-            _expected_total_custom_measures += len(orm.CustomMeasureDetail.select())
+            _expected_total_custom_measure_details += len(
+                orm.CustomMeasureDetail.select()
+            )
 
         # 2. Run test
         _added_measures = add_custom_measures(
@@ -1259,7 +1259,8 @@ class TestCustomMeasureDetail:
             # entries have been created.
             assert len(orm.Measure.select()) == _expected_total_measures
             assert (
-                len(orm.CustomMeasureDetail.select()) == _expected_total_custom_measures
+                len(orm.CustomMeasureDetail.select())
+                == _expected_total_custom_measure_details
             )
 
             for _keys_group, _cm_list in _custom_measures_grouped:
@@ -1580,10 +1581,6 @@ class TestCustomMeasureDetail:
                         year=_idx,
                         cost=42,
                         beta=4.2,
-                    )
-                    orm.CustomMeasureDetailPerSection.create(
-                        measure_per_section=_created_measure_x_section,
-                        custom_measure_detail=_custom_measure_detail,
                     )
 
             _created_measure_result = orm.MeasureResult.create(

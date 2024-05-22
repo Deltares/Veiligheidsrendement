@@ -1,6 +1,7 @@
 from peewee import FloatField, ForeignKeyField, IntegerField
 
 from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
@@ -13,6 +14,9 @@ class CustomMeasureDetail(OrmBaseModel):
 
     measure = ForeignKeyField(
         Measure, backref="custom_measure_details", on_delete="CASCADE"
+    )
+    measure_per_section = ForeignKeyField(
+        MeasurePerSection, backref="custom_measure_details", on_delete="CASCADE"
     )
     mechanism = ForeignKeyField(
         Mechanism, backref="custom_measure_details", on_delete="CASCADE"
