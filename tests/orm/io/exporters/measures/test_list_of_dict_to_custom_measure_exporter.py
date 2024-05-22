@@ -48,7 +48,7 @@ class TestListOfDictToCustomMeasureExporter:
         assert isinstance(exporter_with_valid_db, OrmExporterProtocol)
 
     @pytest.mark.parametrize(
-        "custom_measure_entries",
+        "custom_measure_detail_entries",
         [
             pytest.param(
                 [dict(TIME=42)],
@@ -74,7 +74,7 @@ class TestListOfDictToCustomMeasureExporter:
     )
     def test_export_dom_without_t0_value_raises(
         self,
-        custom_measure_entries: list[dict],
+        custom_measure_detail_entries: list[dict],
         exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
     ):
         """
@@ -91,7 +91,7 @@ class TestListOfDictToCustomMeasureExporter:
             TIME=0,
         )
         _list_of_dict = [
-            _base_custom_measure_dict | _de for _de in custom_measure_entries
+            _base_custom_measure_dict | _de for _de in custom_measure_detail_entries
         ]
 
         _group_by_custom_measure = itemgetter(
@@ -139,7 +139,7 @@ class TestListOfDictToCustomMeasureExporter:
             ),
         ],
     )
-    def test_given_multiple_custom_measures_the_last_is_constant_over_time(
+    def test_given_multiple_custom_measure_details_the_last_is_constant_over_time(
         self,
         time_beta_tuples: list[tuple[int, float]],
         exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
@@ -221,7 +221,7 @@ class TestListOfDictToCustomMeasureExporter:
             assert _measure_result_section.cost == _measure_cost
 
     @pytest.mark.parametrize(
-        "custom_measure_dict_collection, expected_created_custom_measures",
+        "custom_measure_dict_collection, expected_created_custom_measure_details",
         [
             pytest.param(
                 [
@@ -252,7 +252,7 @@ class TestListOfDictToCustomMeasureExporter:
     def test_export_two_custom_measures_with_different_section(
         self,
         custom_measure_dict_collection: list[dict],
-        expected_created_custom_measures: int,
+        expected_created_custom_measure_details: int,
         exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
     ):
         # 1. Define test data.
@@ -273,39 +273,44 @@ class TestListOfDictToCustomMeasureExporter:
         assert not any(CustomMeasureDetailPerSection.select())
 
         # 2. Run test.
-        _exported_custom_measures = exporter_with_valid_db.export_dom(_list_of_dict)
-
-        # 3. Verify expectations.
-        assert len(_exported_custom_measures) == 2
-        # If only the section is given as different, then they will gather into
-        # the same custom measure
-        _unique_retrieved_custom_measures = list(set(_exported_custom_measures))
-        assert (
-            len(_unique_retrieved_custom_measures) == expected_created_custom_measures
+        _exported_custom_measure_details = exporter_with_valid_db.export_dom(
+            _list_of_dict
         )
 
-        for _ucm_idx, _unique_custom_measure in enumerate(
-            _unique_retrieved_custom_measures
+        # 3. Verify expectations.
+        assert len(_exported_custom_measure_details) == 2
+        # If only the section is given as different, then they will gather into
+        # the same custom measure
+        _unique_retrieved_custom_measure_details = list(
+            set(_exported_custom_measure_details)
+        )
+        assert (
+            len(_unique_retrieved_custom_measure_details)
+            == expected_created_custom_measure_details
+        )
+
+        for _ucmd_idx, _unique_custom_measure_detail in enumerate(
+            _unique_retrieved_custom_measure_details
         ):
             _generated_cm_detail_x_section = len(
-                _unique_custom_measure.sections_per_custom_measure_detail
+                _unique_custom_measure_detail.sections_per_custom_measure_detail
             )
 
             assert (
                 _generated_cm_detail_x_section == len(custom_measure_dict_collection)
-                if expected_created_custom_measures == 1
+                if expected_created_custom_measure_details == 1
                 else 1
             )
 
-            for _idx, _cm_x_msx in enumerate(
-                _unique_custom_measure.sections_per_custom_measure_detail
+            for _idx, _cmd_x_msx in enumerate(
+                _unique_custom_measure_detail.sections_per_custom_measure_detail
             ):
                 # We assume the creation order matches the available sections list.
                 assert (
-                    _cm_x_msx.measure_per_section.section.section_name
-                    == custom_measure_dict_collection[_idx + _ucm_idx]["SECTION_NAME"]
+                    _cmd_x_msx.measure_per_section.section.section_name
+                    == custom_measure_dict_collection[_idx + _ucmd_idx]["SECTION_NAME"]
                 )
                 assert (
-                    _unique_custom_measure.measure
-                    == _cm_x_msx.measure_per_section.measure
+                    _unique_custom_measure_detail.measure
+                    == _cmd_x_msx.measure_per_section.measure
                 )

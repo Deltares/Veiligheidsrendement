@@ -556,8 +556,11 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
 
         _custom_measure_details_to_remove, _mxs_to_remove = zip(
             *[
-                (_cm_detail.get_id(), _cm_detail.measure_per_section.get_id())
-                for _cm_detail in orm.CustomMeasureDetailPerSection.select().where(
+                (
+                    _cm_detail_per_section.custom_measure_detail.get_id(),
+                    _cm_detail_per_section.measure_per_section.get_id(),
+                )
+                for _cm_detail_per_section in orm.CustomMeasureDetailPerSection.select().where(
                     orm.CustomMeasureDetailPerSection.measure_per_section.not_in(
                         _measure_result_sections_with_optimization_run
                     )
