@@ -57,7 +57,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     def export_dom(self, dom_model: list[dict]) -> list[CustomMeasureDetail]:
         _measure_result_mechanism_to_add = []
         _measure_result_section_to_add = []
-        _exported_measures = []
+        _exported_measure_details = []
         for (
             _measure_unique_keys,
             _grouped_custom_measures,
@@ -106,7 +106,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             _retrieved_custom_measure_details = self._get_custom_measure_details(
                 _grouped_custom_measures, _new_measure
             )
-            _exported_measures.extend(_retrieved_custom_measure_details)
+            _exported_measure_details.extend(_retrieved_custom_measure_details)
 
             # Add entries to `CustomMeasureDetailPerSection`
             CustomMeasureDetailPerSection.insert_many(
@@ -119,7 +119,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 ]
             ).execute(self._db)
 
-            # Add `MeasureResult``
+            # Add `MeasureResult`
             _new_measure_result, _ = MeasureResult.get_or_create(
                 measure_per_section=_new_measure_per_section
             )
@@ -139,7 +139,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             self._db
         )
 
-        return _exported_measures
+        return _exported_measure_details
 
     def _get_dict_sorted_by(
         self, item_collection: list[dict], *keys_to_group_by: tuple

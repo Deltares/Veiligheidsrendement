@@ -21,9 +21,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
-from vrtool.orm.models.custom_measure_detail import (
-    CustomMeasureDetail as OrmCustomMeasure,
-)
+from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
@@ -46,7 +44,7 @@ def _set_standard_measure(measure: Measure) -> None:
 
 def _set_custom_measure(measure: Measure) -> None:
     _mech_inst = Mechanism.create(name=MechanismEnum.INVALID.name)
-    OrmCustomMeasure.create(
+    CustomMeasureDetail.create(
         measure=measure,
         mechanism=_mech_inst,
         cost=1234.56,
