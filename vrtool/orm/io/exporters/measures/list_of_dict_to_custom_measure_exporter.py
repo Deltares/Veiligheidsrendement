@@ -13,7 +13,10 @@ from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
-from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
+from vrtool.orm.models.custom_measure_detail_per_section import (
+    CustomMeasureDetailPerSection,
+)
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -28,13 +31,13 @@ from vrtool.orm.models.section_data import SectionData
 
 class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     """
-    Exports a list of dictionaries representing a `CustomMeasure` entry
+    Exports a list of dictionaries representing a `CustomMeasureDetail` entry
     so that it also generates all related entries for the tables `Measure`,
     `MeasurePerSection`, `MeasureResult`, `MeasureResultSection` and
     `MeasureResultMechanism`.
 
     Constraints:
-        - All `CustomMeasure` dictionaries require at least an entry for t=0 for
+        - All `CustomMeasureDetail` dictionaries require at least an entry for t=0 for
         each provided measure/mechanism.
         - If more than one value is provided, derive values for intermediate times
         based on interpolation for values between the given values.
@@ -51,10 +54,10 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
         self._db = db_context
 
-    def export_dom(self, dom_model: list[dict]) -> list[CustomMeasure]:
+    def export_dom(self, dom_model: list[dict]) -> list[CustomMeasureDetail]:
         _measure_result_mechanism_to_add = []
         _measure_result_section_to_add = []
-        _exported_measures = []
+        _exported_measure_details = []
         for (
             _measure_unique_keys,
             _grouped_custom_measures,
@@ -99,20 +102,31 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 )
                 continue
 
-            # Add entries to `CustomMeasure`
-            _retrieved_custom_measures = self._get_custom_measures(
+            # Add entries to `CustomMeasureDetail`
+            _retrieved_custom_measure_details = self._get_custom_measure_details(
                 _grouped_custom_measures, _new_measure
             )
-            _exported_measures.extend(_retrieved_custom_measures)
+            _exported_measure_details.extend(_retrieved_custom_measure_details)
 
-            # Add MeasureResult
+            # Add entries to `CustomMeasureDetailPerSection`
+            CustomMeasureDetailPerSection.insert_many(
+                [
+                    dict(
+                        measure_per_section=_new_measure_per_section,
+                        custom_measure_detail=_cm_detail,
+                    )
+                    for _cm_detail in _retrieved_custom_measure_details
+                ]
+            ).execute(self._db)
+
+            # Add `MeasureResult`
             _new_measure_result, _ = MeasureResult.get_or_create(
                 measure_per_section=_new_measure_per_section
             )
 
-            # Calculate the related entries in `MEASURE_RESULT`.
+            # Calculate the related entries in `MeasureResult`.
             (_mr_sections, _mr_mechanisms,) = CustomMeasureTimeBetaCalculator(
-                _new_measure_per_section, _retrieved_custom_measures
+                _new_measure_per_section, _retrieved_custom_measure_details
             ).calculate(_new_measure_result)
             _measure_result_section_to_add.extend(_mr_sections)
             _measure_result_mechanism_to_add.extend(_mr_mechanisms)
@@ -125,7 +139,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             self._db
         )
 
-        return _exported_measures
+        return _exported_measure_details
 
     def _get_dict_sorted_by(
         self, item_collection: list[dict], *keys_to_group_by: tuple
@@ -165,9 +179,9 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
 
         return _grouped_by_measure
 
-    def _get_custom_measures(
+    def _get_custom_measure_details(
         self, custom_measure_list_dict: list[dict], parent_measure: Measure
-    ) -> list[CustomMeasure]:
+    ) -> list[CustomMeasureDetail]:
         _custom_measures = []
         for _custom_measure in custom_measure_list_dict:
             _mechanism_found = (
@@ -182,7 +196,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
             # This is not the most efficient way, but it guarantees previous custom measures
             # remain in place.
-            _new_custom_measure, _is_new = CustomMeasure.get_or_create(
+            _new_custom_measure, _is_new = CustomMeasureDetail.get_or_create(
                 measure=parent_measure,
                 mechanism=_mechanism_found,
                 cost=_custom_measure["COST"],
@@ -191,7 +205,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             )
             if not _is_new:
                 logging.info(
-                    "An existing `CustomMeasure` was found for %s, no new entry will be created",
+                    "An existing `CustomMeasureDetail` was found for %s, no new entry will be created",
                     parent_measure.name,
                 )
             _custom_measures.append(_new_custom_measure)

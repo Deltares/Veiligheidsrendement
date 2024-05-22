@@ -73,11 +73,10 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.CombinableType,
             orm.Measure,
             orm.StandardMeasure,
-            orm.CustomMeasure,
+            orm.CustomMeasureDetail,
             orm.DikeTrajectInfo,
             orm.SupportingFile,
             orm.MeasurePerSection,
-            orm.CustomMeasureParameter,
             orm.SlopePart,
             orm.BlockRevetmentRelation,
             orm.GrassRevetmentRelation,
@@ -504,21 +503,21 @@ def get_optimization_step_with_lowest_total_cost(
 
 
 def add_custom_measures(
-    vrtool_config: VrtoolConfig, custom_measures: list[dict]
-) -> list[orm.CustomMeasure]:
+    vrtool_config: VrtoolConfig, custom_measure_details: list[dict]
+) -> list[orm.CustomMeasureDetail]:
     """
     Maps the provided list of dictionaries, ( with keys `MEASURE_NAME`,
     `COMBINABLE_TYPE`, `SECTION_NAME`, `MECHANISM_NAME`, `TIME`,
-     `COST`, `BETA`), into a `CustomMeasure` and all the related
+     `COST`, `BETA`), into a `CustomMeasureDetail` and all the related
     (required) other tables such as `Measure` or `MeasureResult`.
 
     Args:
         vrtool_config (VrtoolConfig): Configuration to be used for this tool.
-        custom_measures (list[dict]): List of dictionaries, each one representing a
-        `CustomMeasure`.
+        custom_measure_details (list[dict]): List of dictionaries, each one representing a
+        `CustomMeasureDetail`.
 
     Returns:
-        list[orm.CustomMeasure]: list with id's of the created custom measures.
+        list[orm.CustomMeasureDetail]: list with id's of the created custom measures.
     """
 
     # 1. The list of dictionaries should be grouped by the `MEASURE_NAME` key.
@@ -528,7 +527,7 @@ def add_custom_measures(
 
     with open_database(vrtool_config.input_database_path) as _db:
         _exported_measures = ListOfDictToCustomMeasureExporter(_db).export_dom(
-            custom_measures
+            custom_measure_details
         )
 
     # 4. Return the list of generated custom measures.
@@ -548,36 +547,48 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
 
     with open_database(vrtool_config.input_database_path) as _db:
         # Workaround to get all the `MeasureResult` entries that are linked to an `OptimizationRun`
-        _measure_results_with_optimization_run_ids = list(
-            _mr.get_id()
-            for _mr in orm.MeasureResult.select().join_from(
-                orm.MeasureResult, orm.OptimizationSelectedMeasure
-            )
+        _measure_result_sections_with_optimization_run = list(
+            _mr.measure_per_section
+            for _mr in orm.MeasureResult.select()
+            .join_from(orm.MeasureResult, orm.OptimizationSelectedMeasure)
+            .distinct()
         )
-        _custom_measures_without_optimization_run_ids = list(
-            _m.get_id()
-            for _m in orm.Measure.select()
-            .join_from(orm.Measure, orm.MeasureType)
-            .join_from(orm.Measure, orm.MeasurePerSection)
-            .join_from(orm.MeasurePerSection, orm.MeasureResult)
-            .where(
-                (fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
-                & (
-                    orm.MeasureResult.id.not_in(
-                        _measure_results_with_optimization_run_ids
+
+        _custom_measure_details_to_remove, _mxs_to_remove = zip(
+            *[
+                (
+                    _cm_detail_per_section.custom_measure_detail.get_id(),
+                    _cm_detail_per_section.measure_per_section.get_id(),
+                )
+                for _cm_detail_per_section in orm.CustomMeasureDetailPerSection.select().where(
+                    orm.CustomMeasureDetailPerSection.measure_per_section.not_in(
+                        _measure_result_sections_with_optimization_run
                     )
                 )
-            )
+            ]
         )
-        orm.Measure.delete().where(
-            orm.Measure.id.in_(_custom_measures_without_optimization_run_ids)
-        ).execute(_db)
+
+        # Remove by id's to avoid getting `NonExistent` errors.
+        for _detail_to_remove_id in set(_custom_measure_details_to_remove):
+            orm.CustomMeasureDetail.delete_by_id(_detail_to_remove_id)
+        for _measure_x_section_id in set(_mxs_to_remove):
+            # Required to cascade and remove the measure result
+            orm.MeasurePerSection.delete_by_id(_measure_x_section_id)
+
+        # Last, but not least, remove the "Custom" measures without details.
+        for _custom_measure in (
+            orm.Measure.select()
+            .join_from(orm.Measure, orm.MeasureType)
+            .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
+        ):
+            if not _custom_measure.custom_measure_details:
+                _custom_measure.delete_instance()
 
 
 def brute_clear_custom_measure(vrtool_config: VrtoolConfig):
     """
     Removes all the `Measure` of type `MeasureTypeEnum.CUSTOM` and their
-    `MeasureResult` entries related to *ALL* `CustomMeasure` entries
+    `MeasureResult` entries related to *ALL* `CustomMeasureDetail` entries
     even if they have already been linked in an `OptimizationRun` table.
 
     Args:
