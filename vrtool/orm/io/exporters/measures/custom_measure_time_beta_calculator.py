@@ -4,7 +4,7 @@ from collections import defaultdict
 from numpy import prod
 from scipy.interpolate import interp1d
 
-from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.mechanism import Mechanism
@@ -28,7 +28,7 @@ class CustomMeasureTimeBetaCalculator:
     def __init__(
         self,
         measure_per_section: MeasurePerSection,
-        custom_measures: list[CustomMeasure],
+        custom_measures: list[CustomMeasureDetail],
     ) -> None:
         self._assessment_time_beta_collection = defaultdict(dict)
         self._custom_time_beta_collection = dict()
@@ -50,7 +50,9 @@ class CustomMeasureTimeBetaCalculator:
                 _amr.time: _amr.beta for _amr in _mps.assessment_mechanism_results
             }
 
-    def _set_custom_time_beta_collection(self, custom_measures: list[CustomMeasure]):
+    def _set_custom_time_beta_collection(
+        self, custom_measures: list[CustomMeasureDetail]
+    ):
         for _mechanism, _custom_measures_group in itertools.groupby(
             sorted(custom_measures, key=lambda x: x.mechanism.name),
             key=lambda x: x.mechanism,

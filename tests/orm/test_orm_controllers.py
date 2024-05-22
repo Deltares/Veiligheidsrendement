@@ -1045,9 +1045,9 @@ class TestOrmControllers:
         )
 
 
-class TestCustomMeasures:
+class TestCustomMeasureDetail:
     """
-    This test class mostly covers integration tests for `CustomMeasure` workflows.
+    This test class mostly covers integration tests for `CustomMeasureDetail` workflows.
     """
 
     _custom_measures_test_dir = test_data.joinpath("38-1 custom measures")
@@ -1208,7 +1208,7 @@ class TestCustomMeasures:
         custom_measures_vrtool_config: VrtoolConfig,
     ):
         """
-        Integration test to verify adding new entries to the `orm.CustomMeasure`
+        Integration test to verify adding new entries to the `orm.CustomMeasureDetail`
         and related tables under different workflows.
         """
         # Auxiliar methods for validations.
@@ -1232,9 +1232,7 @@ class TestCustomMeasures:
         _expected_total_measures = len(
             set(_cm[0][0] + _cm[0][1] for _cm in _custom_measures_grouped)
         )
-        _expected_total_custom_measures = len(
-            set(map(get_custom_measure_dict_hash, custom_measure_dict_list))
-        )
+        _expected_total_custom_measure_details = len(custom_measure_dict_list)
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.MeasureResult.delete().execute(_db)
             orm.MeasureResultMechanism.delete().execute(_db)
@@ -1243,7 +1241,9 @@ class TestCustomMeasures:
             assert any(orm.MeasureResultMechanism.select()) is False
             assert any(orm.MeasureResultSection.select()) is False
             _expected_total_measures += len(orm.Measure.select())
-            _expected_total_custom_measures += len(orm.CustomMeasure.select())
+            _expected_total_custom_measure_details += len(
+                orm.CustomMeasureDetail.select()
+            )
 
         # 2. Run test
         _added_measures = add_custom_measures(
@@ -1255,13 +1255,16 @@ class TestCustomMeasures:
         assert all(_am.measure.year == 0 for _am in _added_measures)
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
-            # Verify the expected amount of `orm.Measure` and `orm.CustomMeasure`
+            # Verify the expected amount of `orm.Measure` and `orm.CustomMeasureDetail`
             # entries have been created.
             assert len(orm.Measure.select()) == _expected_total_measures
-            assert len(orm.CustomMeasure.select()) == _expected_total_custom_measures
+            assert (
+                len(orm.CustomMeasureDetail.select())
+                == _expected_total_custom_measure_details
+            )
 
             for _keys_group, _cm_list in _custom_measures_grouped:
-                # There should only be one `MeasureResult` for each `CustomMeasure`
+                # There should only be one `MeasureResult` for each `CustomMeasureDetail`
                 _fm_result = (
                     orm.MeasureResult.select()
                     .join_from(orm.MeasureResult, orm.MeasurePerSection)
@@ -1393,7 +1396,7 @@ class TestCustomMeasures:
         """
         This test is based on the exported database from
         `test_add_custom_measures[MVP test]`.
-        In this test we ONLY focus on verifying whether the `CustomMeasure` and its
+        In this test we ONLY focus on verifying whether the `CustomMeasureDetail` and its
         `MeasureResults` are correctly imported.
         """
         # 1. Define test data.
@@ -1402,12 +1405,12 @@ class TestCustomMeasures:
 
         # Controled values, we use a fix database for this test.
         # These are the id's for the meausre results for the existing
-        # CustomMeasure entries.
-        _custom_measures_ids = [(1, 0)]
+        # `CustomMeasureDetail` entries.
+        _custom_measure_detail_ids = [(1, 0)]
 
         # 2. Run test.
         _imported_data = import_results_measures_for_optimization(
-            custom_measures_vrtool_config, _custom_measures_ids
+            custom_measures_vrtool_config, _custom_measure_detail_ids
         )
 
         # 3. Verify expectations.
@@ -1419,7 +1422,7 @@ class TestCustomMeasures:
         _meas_ids = list(
             set((x.measure_result_id, x.year) for x in _imported_data[0].measures)
         )
-        assert _meas_ids == _custom_measures_ids
+        assert _meas_ids == _custom_measure_detail_ids
 
         assert len(_imported_data[0].measures) == 2
 
@@ -1521,6 +1524,12 @@ class TestCustomMeasures:
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
+        def get_rocks_custom_measure_details() -> list[orm.CustomMeasureDetail]:
+            return orm.CustomMeasureDetail.select().where(
+                orm.CustomMeasureDetail.measure.name
+                == _custom_measure_that_remains_name
+            )
+
         def get_custom_measure_result_ids() -> list[int]:
             return list(
                 _mr.get_id()
@@ -1541,14 +1550,15 @@ class TestCustomMeasures:
             return orm.Measure.get_or_none(orm.Measure.name == measure_name) is not None
 
         def add_measure_to_database(
-            measure_name: str, measure_type: MeasureTypeEnum
+            measure_name: str, section_name: str, measure_type: MeasureTypeEnum
         ) -> int:
-            _section_name = "01A"
-            assert check_measure_existence(measure_name) is False
-            _measure_that_remains = orm.Measure.create(
+            _full_combinable = orm.CombinableType.get(
+                orm.CombinableType.name == CombinableTypeEnum.FULL.legacy_name
+            )
+            _measure_that_remains, _created = orm.Measure.get_or_create(
                 name=measure_name,
-                year=2021,
-                combinable_type=orm.CombinableType.get(),
+                year=0,
+                combinable_type=_full_combinable,
                 measure_type=orm.MeasureType.get(
                     orm.MeasureType.name == measure_type.legacy_name
                 ),
@@ -1556,20 +1566,33 @@ class TestCustomMeasures:
             _created_measure_x_section = orm.MeasurePerSection.create(
                 measure=_measure_that_remains,
                 section=orm.SectionData.get(
-                    orm.SectionData.section_name == _section_name
+                    orm.SectionData.section_name == section_name
                 ),
             )
+            _selected_mechanism_x_section = (
+                _created_measure_x_section.section.mechanisms_per_section[0]
+            )
+
+            if measure_type == MeasureTypeEnum.CUSTOM:
+                for _idx in range(0, 2):
+                    _custom_measure_detail = orm.CustomMeasureDetail.create(
+                        measure=_measure_that_remains,
+                        mechanism=_selected_mechanism_x_section.mechanism,
+                        year=_idx,
+                        cost=42,
+                        beta=4.2,
+                    )
+
             _created_measure_result = orm.MeasureResult.create(
                 measure_per_section=_created_measure_x_section
             )
+
             orm.MeasureResultSection.create(
                 measure_result=_created_measure_result, beta=42, time=13, cost=24.42
             )
             orm.MeasureResultMechanism.create(
                 measure_result=_created_measure_result,
-                mechanism_per_section=_created_measure_x_section.section.mechanisms_per_section[
-                    0
-                ],
+                mechanism_per_section=_selected_mechanism_x_section,
                 time=13,
                 beta=24.42,
             )
@@ -1577,23 +1600,44 @@ class TestCustomMeasures:
 
         # 1. Define test data.
         _standard_measure_that_remains_name = "NotACustomMeasure"
-        _custom_measure_that_doesnt_remain_name = "CustomMeasureThatDoesntRemain"
+        _custom_measure_that_doesnt_remain_name = "BANANAS"
+        _custom_measure_that_remains_name = "ROCKS"
+        _original_rocks_custom_measure_details_length = 7
         _custom_measure_result_ids = []
         with open_database(custom_measures_vrtool_config.input_database_path):
             _custom_measure_result_ids = get_custom_measure_result_ids()
+            assert (
+                get_rocks_custom_measure_details()
+                == _original_rocks_custom_measure_details_length
+            )
             assert any(_custom_measure_result_ids)
             assert get_existing_optimization_custom_measure(_custom_measure_result_ids)
             # Create additional measure results for standard and custom measures.
             _ = add_measure_to_database(
-                _standard_measure_that_remains_name, MeasureTypeEnum.SOIL_REINFORCEMENT
+                _standard_measure_that_remains_name,
+                "01A",
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
             )
-            _custom_measure_result_ids.append(
-                add_measure_to_database(
-                    _custom_measure_that_doesnt_remain_name, MeasureTypeEnum.CUSTOM
-                )
+            _custom_measure_result_ids.extend(
+                [
+                    add_measure_to_database(
+                        _custom_measure_that_remains_name,
+                        "01B",
+                        MeasureTypeEnum.CUSTOM,
+                    ),
+                    add_measure_to_database(
+                        _custom_measure_that_doesnt_remain_name,
+                        "01A",
+                        MeasureTypeEnum.CUSTOM,
+                    ),
+                ]
             )
             assert len(get_custom_measure_result_ids()) == len(
                 _custom_measure_result_ids
+            )
+            assert (
+                get_rocks_custom_measure_details()
+                == _original_rocks_custom_measure_details_length + 2
             )
 
         # 2. Run test.
@@ -1607,6 +1651,11 @@ class TestCustomMeasures:
             assert get_existing_optimization_custom_measure(_ids)
 
             assert check_measure_existence(_standard_measure_that_remains_name)
+            assert check_measure_existence(_custom_measure_that_remains_name)
+            assert (
+                get_rocks_custom_measure_details()
+                == _original_rocks_custom_measure_details_length
+            )
             assert (
                 check_measure_existence(_custom_measure_that_doesnt_remain_name)
                 is False

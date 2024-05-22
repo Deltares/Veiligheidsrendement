@@ -15,7 +15,7 @@ from vrtool.orm.io.exporters.measures.list_of_dict_to_custom_measure_exporter im
 )
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
-from vrtool.orm.models.custom_measure import CustomMeasure
+from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 
 
@@ -31,21 +31,24 @@ class TestListOfDictToCustomMeasureExporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error_mssg
 
-    @pytest.fixture(name="exporter_with_valid_db")
+    @pytest.fixture(name="exporter_with_db_without_custom_measures")
     def get_valid_custom_measure_exporter_with_db(
         self, custom_measure_db_context: SqliteDatabase
     ):
         yield ListOfDictToCustomMeasureExporter(custom_measure_db_context)
 
     def test_initialize_with_db_context(
-        self, exporter_with_valid_db: ListOfDictToCustomMeasureExporter
+        self,
+        exporter_with_db_without_custom_measures: ListOfDictToCustomMeasureExporter,
     ):
         # 1. Verify expectations.
-        assert isinstance(exporter_with_valid_db, ListOfDictToCustomMeasureExporter)
-        assert isinstance(exporter_with_valid_db, OrmExporterProtocol)
+        assert isinstance(
+            exporter_with_db_without_custom_measures, ListOfDictToCustomMeasureExporter
+        )
+        assert isinstance(exporter_with_db_without_custom_measures, OrmExporterProtocol)
 
     @pytest.mark.parametrize(
-        "custom_measure_entries",
+        "custom_measure_detail_entries",
         [
             pytest.param(
                 [dict(TIME=42)],
@@ -71,8 +74,8 @@ class TestListOfDictToCustomMeasureExporter:
     )
     def test_export_dom_without_t0_value_raises(
         self,
-        custom_measure_entries: list[dict],
-        exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
+        custom_measure_detail_entries: list[dict],
+        exporter_with_db_without_custom_measures: ListOfDictToCustomMeasureExporter,
     ):
         """
         This test mostly targets the inner exception of the protected method
@@ -88,7 +91,7 @@ class TestListOfDictToCustomMeasureExporter:
             TIME=0,
         )
         _list_of_dict = [
-            _base_custom_measure_dict | _de for _de in custom_measure_entries
+            _base_custom_measure_dict | _de for _de in custom_measure_detail_entries
         ]
 
         _group_by_custom_measure = itemgetter(
@@ -122,7 +125,7 @@ class TestListOfDictToCustomMeasureExporter:
 
         # 2. Run test.
         with pytest.raises(ValueError) as exc_err:
-            exporter_with_valid_db.export_dom(_list_of_dict)
+            exporter_with_db_without_custom_measures.export_dom(_list_of_dict)
 
         # 3. Verify expectations.
         assert str(exc_err.value) == _expected_error_mssg
@@ -136,10 +139,10 @@ class TestListOfDictToCustomMeasureExporter:
             ),
         ],
     )
-    def test_given_multiple_custom_measures_the_last_is_constant_over_time(
+    def test_given_multiple_custom_measure_details_the_last_is_constant_over_time(
         self,
         time_beta_tuples: list[tuple[int, float]],
-        exporter_with_valid_db: ListOfDictToCustomMeasureExporter,
+        exporter_with_db_without_custom_measures: ListOfDictToCustomMeasureExporter,
     ):
         # 1. Define test data.
         _known_computation_periods = [0, 19, 20, 25, 50, 75, 100]
@@ -165,12 +168,14 @@ class TestListOfDictToCustomMeasureExporter:
         )
 
         # 2. Run test.
-        _exported_measures = exporter_with_valid_db.export_dom(_list_of_dict)
+        _exported_measures = exporter_with_db_without_custom_measures.export_dom(
+            _list_of_dict
+        )
 
         # 3. Verify expectations.
         assert len(_exported_measures) == len(time_beta_tuples)
         for _idx, _exported_measure in enumerate(_exported_measures):
-            assert isinstance(_exported_measure, CustomMeasure)
+            assert isinstance(_exported_measure, CustomMeasureDetail)
             assert _exported_measure.mechanism.name.upper() == _selected_mechanism
             assert _exported_measure.cost == _measure_cost
             _expected_time_beta = time_beta_tuples[_idx]
@@ -194,7 +199,7 @@ class TestListOfDictToCustomMeasureExporter:
                 _mr_mechanism.mechanism_per_section.mechanism.name.upper()
                 != _selected_mechanism
             ):
-                # When the mechanism was not in our `CustomMeasure` then we expect
+                # When the mechanism was not in our `CustomMeasureDetail` then we expect
                 # the value from the assessment.
                 _assessment = _mr_mechanism.mechanism_per_section.assessment_mechanism_results.where(
                     AssessmentMechanismResult.time == _mr_mechanism.time
@@ -216,3 +221,75 @@ class TestListOfDictToCustomMeasureExporter:
                 .get()
             )
             assert _measure_result_section.cost == _measure_cost
+
+    @pytest.mark.parametrize(
+        "custom_measure_dict_collection",
+        [
+            pytest.param(
+                [
+                    dict(SECTION_NAME="01A"),
+                    dict(SECTION_NAME="01B"),
+                ],
+                id="ONE custom measure, DIFFERENT SECTIONS",
+            ),
+            pytest.param(
+                [
+                    dict(SECTION_NAME="01A", COST=2312),
+                    dict(SECTION_NAME="01B", COST=2021),
+                ],
+                id="TWO custom measures, DIFFERENT SECTION AND COSTS",
+            ),
+            pytest.param(
+                [
+                    dict(SECTION_NAME="01A", BETA=24),
+                    dict(SECTION_NAME="01B", BETA=10),
+                ],
+                id="TWO custom measures, DIFFERENT SECTION AND BETAS",
+            ),
+        ],
+    )
+    def test_export_two_custom_measures_with_different_section(
+        self,
+        custom_measure_dict_collection: list[dict],
+        exporter_with_db_without_custom_measures: ListOfDictToCustomMeasureExporter,
+    ):
+        # 1. Define test data.
+        _custom_measure_base_dict = dict(
+            MEASURE_NAME="ROCKS",
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            MECHANISM_NAME=MechanismEnum.OVERFLOW.name,
+            COST=42,
+            TIME=0,
+            BETA=8,
+        )
+        _list_of_dict = [
+            _custom_measure_base_dict | _custom_measure_dict
+            for _custom_measure_dict in custom_measure_dict_collection
+        ]
+
+        assert not any(CustomMeasureDetail.select())
+
+        # 2. Run test.
+        _exported_custom_measure_details = (
+            exporter_with_db_without_custom_measures.export_dom(_list_of_dict)
+        )
+
+        # 3. Verify expectations.
+        assert len(_exported_custom_measure_details) == len(_list_of_dict)
+
+        def get_matching_dictionary(
+            custom_measure_detail: CustomMeasureDetail,
+        ) -> bool:
+            for _idx, _dict in enumerate(_list_of_dict):
+                if (
+                    custom_measure_detail.measure_per_section.section.section_name
+                    != _dict["SECTION_NAME"]
+                ):
+                    continue
+                return _idx
+            return -1
+
+        for _unique_custom_measure_detail in _exported_custom_measure_details:
+            _found_dict_idx = get_matching_dictionary(_unique_custom_measure_detail)
+            assert _found_dict_idx >= 0, "Custom measure detailed not created."
+            _list_of_dict.pop(_found_dict_idx)
