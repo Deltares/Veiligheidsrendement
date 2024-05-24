@@ -530,10 +530,8 @@ PRAGMA foreign_keys = 1;
 -- Changes required from VRTOOL-514
 
 -- Renaming of `CustomMeasure` to `CustomMeasureDetail`
+-- And changing `mechanism_id` foreign key to `mechanism_per_section_id`.
 PRAGMA foreign_keys = 0;
-CREATE TABLE sqlitestudio_temp_table AS SELECT *
-                                          FROM CustomMeasure;
-
 CREATE TABLE CustomMeasureDetail (
     id                     INTEGER NOT NULL
                                    PRIMARY KEY,
@@ -567,7 +565,7 @@ INSERT INTO CustomMeasureDetail (
                                        cost,
                                        beta,
                                        year
-                                  FROM sqlitestudio_temp_table;
+                                  FROM CustomMeasure;
 DROP TABLE CustomMeasure;
 
 CREATE INDEX custommeasuredetail_measure_id ON CustomMeasureDetail (
