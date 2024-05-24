@@ -2,24 +2,23 @@ from peewee import FloatField, ForeignKeyField, IntegerField
 
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
-from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 
 class CustomMeasureDetail(OrmBaseModel):
     """
-    A (logical) custom measure is defined by a set of records that share the same measure_id.
+    A (logical) custom measure is defined by a set of records that share the same `measure_id`
+    and `section_id`. We can derive the `section_id` from the `mechanism_per_section_id`
+    foreign key.
     These are represented as a `CustomMeasureDetail`.
     """
 
     measure = ForeignKeyField(
         Measure, backref="custom_measure_details", on_delete="CASCADE"
     )
-    measure_per_section = ForeignKeyField(
-        MeasurePerSection, backref="custom_measure_details", on_delete="CASCADE"
-    )
-    mechanism = ForeignKeyField(
-        Mechanism, backref="custom_measure_details", on_delete="CASCADE"
+    mechanism_per_section = ForeignKeyField(
+        MechanismPerSection, backref="custom_measure_details", on_delete="CASCADE"
     )
     cost = FloatField(default=float("nan"), null=True)
     beta = FloatField(default=float("nan"), null=True)
@@ -27,3 +26,11 @@ class CustomMeasureDetail(OrmBaseModel):
 
     class Meta:
         table_name = _get_table_name(__qualname__)
+
+    @property
+    def measure_per_section(self) -> MeasurePerSection | None:
+        _section = self.mechanism_per_section.section
+        for _mxs in self.measure.sections_per_measure:
+            if _mxs.section == _section:
+                return _mxs
+        return None

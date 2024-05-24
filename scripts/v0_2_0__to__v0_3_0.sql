@@ -61,7 +61,7 @@ CREATE INDEX custommeasure_mechanism_id ON CustomMeasure (
 PRAGMA foreign_keys = 1;
 
 -- CustomMeasureParameter
-DROP TABLE CustomMeasureParameter;
+DROP TABLE IF EXISTS CustomMeasureParameter;
 
 -- Measure
 PRAGMA foreign_keys = 0;
@@ -536,8 +536,7 @@ CREATE TABLE CustomMeasureDetail (
     id                     INTEGER NOT NULL
                                    PRIMARY KEY,
     measure_id             INTEGER NOT NULL,
-    mechanism_id           INTEGER NOT NULL,
-    measure_per_section_id INTEGER REFERENCES MeasurePerSection (id) ON DELETE CASCADE
+    mechanism_per_section_id INTEGER NOT NULL
                                    NOT NULL,
     cost                   REAL,
     beta                   REAL,
@@ -547,15 +546,15 @@ CREATE TABLE CustomMeasureDetail (
     )
     REFERENCES Measure (id) ON DELETE CASCADE,
     FOREIGN KEY (
-        mechanism_id
+        mechanism_per_section_id
     )
-    REFERENCES Mechanism (id) ON DELETE CASCADE
+    REFERENCES MechanismPerSection (id) ON DELETE CASCADE
 );
 
 INSERT INTO CustomMeasureDetail (
                                     id,
                                     measure_id,
-                                    mechanism_id,
+                                    mechanism_per_section_id,
                                     cost,
                                     beta,
                                     year
@@ -573,13 +572,10 @@ CREATE INDEX custommeasuredetail_measure_id ON CustomMeasureDetail (
     "measure_id"
 );
 
-CREATE INDEX custommeasuredetail_measure_per_section_id ON CustomMeasureDetail (
-    "measure_per_section_id"
+CREATE INDEX custommeasuredetail_mechanism_per_section_id ON CustomMeasureDetail (
+    "mechanism_per_section_id"
 );
 
-CREATE INDEX custommeasuredetail_mechanism_id ON CustomMeasureDetail (
-    "mechanism_id"
-);
 
 -- General pragma changes
 PRAGMA journal_mode = "WAL";

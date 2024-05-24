@@ -23,6 +23,7 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -101,7 +102,9 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
 
             # Add entries to `CustomMeasureDetail`
             _retrieved_custom_measure_details = self._get_custom_measure_details(
-                _grouped_custom_measures, _new_measure, _retrieved_measure_per_section
+                _grouped_custom_measures,
+                _new_measure,
+                _retrieved_measure_per_section.section,
             )
             _exported_measure_details.extend(_retrieved_custom_measure_details)
 
@@ -169,17 +172,20 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
         self,
         custom_measure_list_dict: list[dict],
         parent_measure: Measure,
-        measure_per_section: MeasurePerSection,
+        section_for_measure: SectionData,
     ) -> list[CustomMeasureDetail]:
         _custom_measures = []
         for _custom_measure in custom_measure_list_dict:
-            _mechanism_found = (
-                Mechanism.select()
+            _mechanism_per_section_found = (
+                MechanismPerSection.select()
                 .where(
-                    fn.upper(Mechanism.name)
-                    == MechanismEnum.get_enum(
-                        _custom_measure["MECHANISM_NAME"]
-                    ).legacy_name.upper()
+                    (
+                        fn.upper(Mechanism.name)
+                        == MechanismEnum.get_enum(
+                            _custom_measure["MECHANISM_NAME"]
+                        ).legacy_name.upper()
+                    )
+                    & (MechanismPerSection.section == section_for_measure)
                 )
                 .get()
             )
@@ -187,8 +193,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
             # remain in place.
             _new_custom_measure, _is_new = CustomMeasureDetail.get_or_create(
                 measure=parent_measure,
-                mechanism=_mechanism_found,
-                measure_per_section=measure_per_section,
+                mechanism_per_section=_mechanism_per_section_found,
                 cost=_custom_measure["COST"],
                 beta=_custom_measure["BETA"],
                 year=_custom_measure["TIME"],
