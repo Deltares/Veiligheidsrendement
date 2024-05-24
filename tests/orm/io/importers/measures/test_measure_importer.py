@@ -5,10 +5,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
-from tests.orm.io.importers.measures.conftest import (
-    get_valid_measure,
-    set_standard_measure,
-)
+from tests.orm.io.importers.measures.conftest import get_valid_measure
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
@@ -25,6 +22,7 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure import 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
+from vrtool.orm.models.section_data import SectionData
 
 
 class TestMeasureImporter:
@@ -142,21 +140,24 @@ class TestMeasureImporter:
             == _orm_measure.standard_measure[0].get_id()
         )
 
+    @pytest.mark.usefixtures("valid_section_data_without_measures")
     def test_import_custom_measure_raises(
-        self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase
+        self,
+        valid_config: VrtoolConfig,
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
         _orm_measure = get_valid_measure(
             MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
         )
+        _expected_error = "Custom measures are not supported by this importer."
 
         # 2. Run test.
         with pytest.raises(NotImplementedError) as _exc_err:
             _importer.import_orm(_orm_measure)
 
         # 3. Verify expectations.
-        assert str(_exc_err.value) == ""
+        assert str(_exc_err.value) == _expected_error
 
     def _validate_measure_base_values(
         self, measure_base: MeasureProtocol, valid_config: VrtoolConfig
