@@ -4,7 +4,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
-from tests.orm.io.importers.measures.test_measure_importer import (
+from tests.orm.io.importers.measures.conftest import (
     _get_valid_measure,
     _set_custom_measure,
     _set_standard_measure,

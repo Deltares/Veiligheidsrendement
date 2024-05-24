@@ -142,8 +142,8 @@ class DikeSectionImporter(OrmImporterProtocol):
         )
 
         for _mechanism_data in _mechanism_collection:
-            if _mechanism_data.mechanism_name in _imported_initial_assessment.index:
-                _mech_name = MechanismEnum.get_enum(_mechanism_data.mechanism_name).name
+            if _mechanism_data.mechanism.name in _imported_initial_assessment.index:
+                _mech_name = MechanismEnum.get_enum(_mechanism_data.mechanism.name).name
                 for _reliability_t, _beta in _imported_initial_assessment.loc[
                     _mech_name
                 ].items():

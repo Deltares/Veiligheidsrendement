@@ -47,7 +47,7 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
                 f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        mechanism = MechanismEnum.get_enum(orm_model.mechanism_name)
+        mechanism = MechanismEnum.get_enum(orm_model.mechanism.name)
 
         # Assume computation type is the same accross the computation scenarios
         computation_scenarios = orm_model.computation_scenarios.select()

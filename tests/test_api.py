@@ -503,9 +503,9 @@ class TestApiRunWorkflowsAcceptance:
         # 3. Verify final expectations.
         _validator.validate_results(valid_vrtool_config)
 
-    @pytest.mark.skip(
-        reason="Only used for generating new reference databases. Run with the --no-skip option."
-    )
+    # @pytest.mark.skip(
+    #     reason="Only used for generating new reference databases. Run with the --no-skip option."
+    # )
     @pytest.mark.parametrize(
         "valid_vrtool_config",
         acceptance_test_cases,
