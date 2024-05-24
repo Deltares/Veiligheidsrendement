@@ -11,3 +11,13 @@ class MechanismPerSection(OrmBaseModel):
 
     class Meta:
         table_name = _get_table_name(__qualname__)
+
+    @property
+    def mechanism_name(self) -> str:
+        """
+        Retrieves the mechanism's name in capital letters.
+
+        Returns:
+            str: The mechanism's name in capital letters.
+        """
+        return self.mechanism.name.upper()

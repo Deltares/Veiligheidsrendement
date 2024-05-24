@@ -74,7 +74,7 @@ class DikeSectionImporter(OrmImporterProtocol):
                 )
             ):
                 _mech_name = MechanismEnum.get_enum(
-                    _amr.mechanism_per_section.mechanism.name
+                    _amr.mechanism_per_section.mechanism_name
                 ).name
                 _section_reliability_dict[_mech_name].append(_amr.beta)
         return pd.DataFrame.from_dict(
@@ -104,7 +104,7 @@ class DikeSectionImporter(OrmImporterProtocol):
                 logging.error(
                     "No computation scenarios available for Section {} - Mechanism: {}".format(
                         _mechanism_per_section.section.section_name,
-                        _mechanism_per_section.mechanism.name,
+                        _mechanism_per_section.mechanism_name,
                     )
                 )
             else:
@@ -119,7 +119,7 @@ class DikeSectionImporter(OrmImporterProtocol):
             _available_cs = []
             for _cs in _mechanism_per_section.computation_scenarios:
                 _available_cs.append((_cs.scenario_name, _cs.computation_type.name))
-            _mechanism = MechanismEnum.get_enum(_mechanism_per_section.mechanism.name)
+            _mechanism = MechanismEnum.get_enum(_mechanism_per_section.mechanism_name)
             _mechanism_data[_mechanism] = _available_cs
         return _mechanism_data
 
@@ -142,8 +142,8 @@ class DikeSectionImporter(OrmImporterProtocol):
         )
 
         for _mechanism_data in _mechanism_collection:
-            if _mechanism_data.mechanism.name in _imported_initial_assessment.index:
-                _mech_name = MechanismEnum.get_enum(_mechanism_data.mechanism.name).name
+            if _mechanism_data.mechanism_name in _imported_initial_assessment.index:
+                _mech_name = MechanismEnum.get_enum(_mechanism_data.mechanism_name).name
                 for _reliability_t, _beta in _imported_initial_assessment.loc[
                     _mech_name
                 ].items():

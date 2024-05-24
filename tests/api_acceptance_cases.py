@@ -534,7 +534,7 @@ class RunStepOptimizationValidator(RunStepValidator):
         self, reference: orm.MechanismPerSection, result: orm.MechanismPerSection
     ):
         assert reference.section.section_name == result.section.section_name
-        assert reference.mechanism.name == result.mechanism.name
+        assert reference.mechanism_name == result.mechanism_name
 
     def _compare_optimization_step_results_mechanism(
         self,

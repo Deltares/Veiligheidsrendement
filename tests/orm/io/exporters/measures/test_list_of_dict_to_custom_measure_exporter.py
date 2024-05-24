@@ -176,7 +176,10 @@ class TestListOfDictToCustomMeasureExporter:
         assert len(_exported_measures) == len(time_beta_tuples)
         for _idx, _exported_measure in enumerate(_exported_measures):
             assert isinstance(_exported_measure, CustomMeasureDetail)
-            assert _exported_measure.mechanism.name.upper() == _selected_mechanism
+            assert (
+                _exported_measure.mechanism_per_section.mechanism_name.upper()
+                == _selected_mechanism
+            )
             assert _exported_measure.cost == _measure_cost
             _expected_time_beta = time_beta_tuples[_idx]
             assert _exported_measure.year == _expected_time_beta[0]
@@ -196,7 +199,7 @@ class TestListOfDictToCustomMeasureExporter:
         # Verify all created `MeasureResultMechanism` and `MeasureResultSection`
         for _mr_mechanism in _measure_result.measure_result_mechanisms:
             if (
-                _mr_mechanism.mechanism_per_section.mechanism.name.upper()
+                _mr_mechanism.mechanism_per_section.mechanism_name.upper()
                 != _selected_mechanism
             ):
                 # When the mechanism was not in our `CustomMeasureDetail` then we expect

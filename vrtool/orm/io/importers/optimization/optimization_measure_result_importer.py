@@ -74,7 +74,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         _mech_collection = MechanismPerYearProbabilityCollection([])
         for _mech_result in mechanism_measure_results:
             _mech_enum = MechanismEnum.get_enum(
-                _mech_result.mechanism_per_section.mechanism.name
+                _mech_result.mechanism_per_section.mechanism_name
             )
             if _mech_enum not in allowed_mechanisms:
                 continue

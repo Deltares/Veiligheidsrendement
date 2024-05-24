@@ -29,7 +29,7 @@ class OptimizationSectionAsInputImporter:
     ) -> MechanismPerYearProbabilityCollection:
         _mech_collection = MechanismPerYearProbabilityCollection([])
         for _ms in section_data.mechanisms_per_section:
-            _mech_enum = MechanismEnum.get_enum(_ms.mechanism.name)
+            _mech_enum = MechanismEnum.get_enum(_ms.mechanism_name)
             for _amr in _ms.assessment_mechanism_results:
                 _mech_collection.probabilities.append(
                     MechanismPerYear(

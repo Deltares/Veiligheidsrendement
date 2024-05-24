@@ -112,7 +112,7 @@ class StrategyExporter(OrmExporterProtocol):
                     _option_selected_measure_result.measure_result.measure_result_mechanisms
                 ):
                     _mechanism = MechanismEnum.get_enum(
-                        _measure_result_mechanism.mechanism_per_section.mechanism.name
+                        _measure_result_mechanism.mechanism_per_section.mechanism_name
                     )
                     _t = _measure_result_mechanism.time
                     _prob_mechanism = self._get_selected_time(

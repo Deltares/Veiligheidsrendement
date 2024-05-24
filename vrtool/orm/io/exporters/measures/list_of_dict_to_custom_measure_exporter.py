@@ -176,15 +176,20 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     ) -> list[CustomMeasureDetail]:
         _custom_measures = []
         for _custom_measure in custom_measure_list_dict:
+            _mechanism = (
+                Mechanism.select()
+                .where(
+                    fn.upper(Mechanism.name)
+                    == MechanismEnum.get_enum(
+                        _custom_measure["MECHANISM_NAME"]
+                    ).legacy_name.upper()
+                )
+                .get()
+            )
             _mechanism_per_section_found = (
                 MechanismPerSection.select()
                 .where(
-                    (
-                        fn.upper(Mechanism.name)
-                        == MechanismEnum.get_enum(
-                            _custom_measure["MECHANISM_NAME"]
-                        ).legacy_name.upper()
-                    )
+                    (MechanismPerSection.mechanism == _mechanism)
                     & (MechanismPerSection.section == section_for_measure)
                 )
                 .get()
