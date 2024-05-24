@@ -42,7 +42,7 @@ class MeasureResultImporter(OrmImporterProtocol):
                 MeasureResultMechanism.time == _smr.time
             ):
                 _mech_name = MechanismEnum.get_enum(
-                    _mrm.mechanism_per_section.mechanism_name
+                    _mrm.mechanism_per_section.mechanism.name
                 ).name
                 _section_reliability_dict[_mech_name].append(_mrm.beta)
 
