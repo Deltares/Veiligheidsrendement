@@ -35,7 +35,7 @@ class OptimizationStepImporter(OrmImporterProtocol):
                 OptimizationStepResultMechanism.time == _osrs.time
             ):
                 _mech_name = MechanismEnum.get_enum(
-                    _osrm.mechanism_per_section.mechanism_name
+                    _osrm.mechanism_per_section.mechanism.name
                 ).name
                 _step_result_dict[_mech_name].append(_osrm.beta)
 

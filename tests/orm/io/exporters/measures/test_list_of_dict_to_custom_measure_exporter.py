@@ -177,7 +177,7 @@ class TestListOfDictToCustomMeasureExporter:
         for _idx, _exported_measure in enumerate(_exported_measures):
             assert isinstance(_exported_measure, CustomMeasureDetail)
             assert (
-                _exported_measure.mechanism_per_section.mechanism_name.upper()
+                _exported_measure.mechanism_per_section.mechanism_name
                 == _selected_mechanism
             )
             assert _exported_measure.cost == _measure_cost
@@ -199,7 +199,7 @@ class TestListOfDictToCustomMeasureExporter:
         # Verify all created `MeasureResultMechanism` and `MeasureResultSection`
         for _mr_mechanism in _measure_result.measure_result_mechanisms:
             if (
-                _mr_mechanism.mechanism_per_section.mechanism_name.upper()
+                _mr_mechanism.mechanism_per_section.mechanism_name
                 != _selected_mechanism
             ):
                 # When the mechanism was not in our `CustomMeasureDetail` then we expect

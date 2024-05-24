@@ -1317,7 +1317,7 @@ class TestCustomMeasureDetail:
 
                 for _fm_result_mechanism in _fm_result.measure_result_mechanisms:
                     _mechanism_name = (
-                        _fm_result_mechanism.mechanism_per_section.mechanism_name.upper()
+                        _fm_result_mechanism.mechanism_per_section.mechanism_name
                     )
                     if _mechanism_name in _expected_mechanism_values:
                         assert (
