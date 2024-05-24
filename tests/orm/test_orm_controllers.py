@@ -1577,7 +1577,7 @@ class TestCustomMeasureDetail:
                 for _idx in range(0, 2):
                     _custom_measure_detail = orm.CustomMeasureDetail.create(
                         measure=_measure_that_remains,
-                        mechanism=_selected_mechanism_x_section.mechanism,
+                        mechanism_per_section=_selected_mechanism_x_section,
                         year=_idx,
                         cost=42,
                         beta=4.2,

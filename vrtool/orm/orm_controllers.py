@@ -570,7 +570,6 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
             # By deleting the `MeasureResult` we cascade and delete as well:
             # `MeasureResult`, and related
             # `OptimizationSelectedMeasure`, and related
-            # `CustomMeasureDetail`
             _mr.delete_instance()
 
         # Last, but not least, remove the "Custom" measures without details.
@@ -579,6 +578,17 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
             .join_from(orm.Measure, orm.MeasureType)
             .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
         ):
+            for _custom_measure_detail in _custom_measure.custom_measure_details:
+                _section = _custom_measure_detail.mechanism_per_section.section
+                # Delete custom measures without a related `MeasurePerSection`.
+                if not any(
+                    orm.MeasurePerSection.select().where(
+                        (orm.MeasurePerSection.measure == _custom_measure)
+                        & orm.MeasurePerSection.section
+                        == _section
+                    )
+                ):
+                    _custom_measure_detail.delete_instance()
             if not _custom_measure.custom_measure_details:
                 _custom_measure.delete_instance()
 
