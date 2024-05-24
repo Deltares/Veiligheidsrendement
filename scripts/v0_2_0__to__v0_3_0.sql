@@ -531,6 +531,8 @@ PRAGMA foreign_keys = 1;
 
 -- Renaming of `CustomMeasure` to `CustomMeasureDetail`
 PRAGMA foreign_keys = 0;
+CREATE TABLE sqlitestudio_temp_table AS SELECT *
+                                          FROM CustomMeasure;
 
 CREATE TABLE CustomMeasureDetail (
     id                     INTEGER NOT NULL
