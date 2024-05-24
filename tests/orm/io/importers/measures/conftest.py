@@ -1,6 +1,6 @@
-from typing import Callable
-
 from vrtool.common.enums import MechanismEnum
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
 from vrtool.orm.models.measure import Measure
@@ -12,7 +12,7 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.standard_measure import StandardMeasure
 
 
-def _set_standard_measure(measure: Measure) -> None:
+def set_standard_measure(measure: Measure) -> None:
     StandardMeasure.create(
         measure=measure,
         crest_step=4.2,
@@ -26,7 +26,7 @@ def _set_standard_measure(measure: Measure) -> None:
     )
 
 
-def _set_custom_measure(measure: Measure) -> None:
+def set_custom_measure(measure: Measure) -> None:
     _mech_inst = Mechanism.create(name=MechanismEnum.INVALID.name)
     _measure_per_section, _ = MeasurePerSection.get_or_create(
         measure=measure, section=SectionData.get()
@@ -43,16 +43,20 @@ def _set_custom_measure(measure: Measure) -> None:
     )
 
 
-def _get_valid_measure(
-    measure_type: str, combinable_type: str, set_measure: Callable
+def get_valid_measure(
+    measure_type: MeasureTypeEnum,
+    combinable_type: CombinableTypeEnum,
 ) -> Measure:
-    _measure_type = MeasureType.create(name=measure_type)
-    _combinable_type = CombinableType.create(name=combinable_type)
+    _measure_type = MeasureType.create(name=measure_type.legacy_name)
+    _combinable_type = CombinableType.create(name=combinable_type.name)
     _measure = Measure.create(
         measure_type=_measure_type,
         combinable_type=_combinable_type,
         name="Test Measure",
         year=2023,
     )
-    set_measure(_measure)
+    if measure_type == MeasureTypeEnum.CUSTOM:
+        set_custom_measure(_measure)
+    else:
+        set_standard_measure(_measure)
     return _measure

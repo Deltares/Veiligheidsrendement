@@ -6,10 +6,11 @@ from peewee import SqliteDatabase
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
 from tests.orm.io.importers.measures.conftest import (
-    _get_valid_measure,
-    _set_custom_measure,
-    _set_standard_measure,
+    get_valid_measure,
+    set_standard_measure,
 )
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.decision_making.measures import (
     DiaphragmWallMeasure,
@@ -76,47 +77,49 @@ class TestMeasureImporter:
         "measure_type, expected_type",
         [
             pytest.param(
-                "Soil reinforcement",
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
                 SoilReinforcementMeasure,
                 id="Soil Reinforcement measure.",
             ),
             pytest.param(
-                "Diaphragm Wall", DiaphragmWallMeasure, id="Diaphragm Wall measure."
+                MeasureTypeEnum.DIAPHRAGM_WALL,
+                DiaphragmWallMeasure,
+                id="Diaphragm Wall measure.",
             ),
             pytest.param(
-                "Stability Screen",
+                MeasureTypeEnum.STABILITY_SCREEN,
                 StabilityScreenMeasure,
                 id="Stability Screen measure.",
             ),
             pytest.param(
-                "Vertical Piping Solution",
+                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
                 VerticalPipingSolutionMeasure,
                 id="Vertical Piping Solution measure.",
             ),
-            pytest.param("Revetment", RevetmentMeasure, id="Revetment measure"),
+            pytest.param(
+                MeasureTypeEnum.REVETMENT, RevetmentMeasure, id="Revetment measure"
+            ),
         ],
     )
     @pytest.mark.parametrize(
         "combinable_type",
         [
-            pytest.param("combinable"),
-            pytest.param("partial"),
-            pytest.param("full"),
+            pytest.param(CombinableTypeEnum.COMBINABLE),
+            pytest.param(CombinableTypeEnum.PARTIAL),
+            pytest.param(CombinableTypeEnum.FULL),
         ],
     )
     def test_import_orm_with_standard_measure(
         self,
-        measure_type: str,
-        combinable_type: str,
+        measure_type: MeasureTypeEnum,
+        combinable_type: CombinableTypeEnum,
         expected_type: Type[MeasureProtocol],
         valid_config: VrtoolConfig,
         empty_db_fixture: SqliteDatabase,
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _orm_measure = _get_valid_measure(
-            measure_type, combinable_type, _set_standard_measure
-        )
+        _orm_measure = get_valid_measure(measure_type, combinable_type)
 
         # 2. Run test.
         _imported_measure = _importer.import_orm(_orm_measure)
@@ -124,7 +127,7 @@ class TestMeasureImporter:
         # 3. Verify final expectations.
         assert isinstance(_imported_measure, expected_type)
         self._validate_measure_base_values(_imported_measure, valid_config)
-        assert _imported_measure.parameters["Type"] == measure_type
+        assert _imported_measure.parameters["Type"] == measure_type.legacy_name
         assert _imported_measure.parameters["Direction"] == "onwards"
         assert _imported_measure.parameters["StabilityScreen"] == "no"
         assert _imported_measure.parameters["dcrest_min"] == 0
@@ -144,14 +147,16 @@ class TestMeasureImporter:
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _measure_type_name = "Custom"
-        _orm_measure = _get_valid_measure(
-            _measure_type_name, "combinable", _set_custom_measure
+        _orm_measure = get_valid_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
         )
 
         # 2. Run test.
         with pytest.raises(NotImplementedError) as _exc_err:
-            _imported_measure = _importer.import_orm(_orm_measure)
+            _importer.import_orm(_orm_measure)
+
+        # 3. Verify expectations.
+        assert str(_exc_err.value) == ""
 
     def _validate_measure_base_values(
         self, measure_base: MeasureProtocol, valid_config: VrtoolConfig
@@ -168,14 +173,15 @@ class TestMeasureImporter:
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _measure_type_name = "Not a valid measure"
-        _orm_measure = _get_valid_measure(
-            _measure_type_name, "combinable", _set_standard_measure
-        )
+        _measure_type = MeasureTypeEnum.INVALID
+        _orm_measure = get_valid_measure(_measure_type, CombinableTypeEnum.COMBINABLE)
 
         # 2. Run test.
         with pytest.raises(NotImplementedError) as exc_err:
             _importer.import_orm(_orm_measure)
 
         # 3. Verify expectations.
-        assert str(exc_err.value) == f"No import available for {_measure_type_name}."
+        assert (
+            str(exc_err.value)
+            == f"No import available for {_measure_type.legacy_name}."
+        )
