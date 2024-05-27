@@ -31,6 +31,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithMeasureResultCollectionMocked,
     validate_measure_result_export,
 )
+from vrtool.api import ApiRunWorkflows
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -68,6 +69,7 @@ from vrtool.orm.orm_controllers import (
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
+    get_all_measure_results_with_supported_investment_years,
     get_dike_section_solutions,
     get_dike_traject,
     get_exported_measure_result_ids,
@@ -1745,3 +1747,36 @@ class TestCustomMeasureDetail:
             _measure_result = _measure_x_section.measure_per_section_result[0]
             assert len(_measure_result.measure_result_section) == 1
             assert len(_measure_result.measure_result_mechanisms) == 1
+
+    @pytest.mark.slow
+    @pytest.mark.fixture_database("with_aggregated_measures.db")
+    def test_with_aggregated_measures_exports_optimization(
+        self, custom_measures_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        _optimization_name = "OptimizationWithAggregatedCustomMeasures"
+        custom_measures_vrtool_config.traject = "16-1"
+
+        with open_database(custom_measures_vrtool_config.input_database_path) as _db:
+            orm.OptimizationRun.delete().execute(_db)
+            orm.OptimizationSelectedMeasure.delete().execute(_db)
+            orm.OptimizationStep.delete().execute(_db)
+            orm.OptimizationStepResultMechanism.delete().execute(_db)
+            orm.OptimizationStepResultSection.delete().execute(_db)
+            assert any(orm.OptimizationRun.select()) is False
+            assert any(orm.OptimizationSelectedMeasure.select()) is False
+            assert any(orm.OptimizationStep.select()) is False
+            assert any(orm.OptimizationStepResultMechanism.select()) is False
+            assert any(orm.OptimizationStepResultSection.select()) is False
+
+        # 2. Run test.
+        clear_optimization_results(custom_measures_vrtool_config)
+        _all_measure_results = get_all_measure_results_with_supported_investment_years(
+            custom_measures_vrtool_config
+        )
+        _results = ApiRunWorkflows(custom_measures_vrtool_config).run_optimization(
+            _optimization_name, _all_measure_results
+        )
+
+        # 3. Verify expectations.
+        assert _results is not None
