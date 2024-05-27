@@ -536,8 +536,7 @@ CREATE TABLE CustomMeasureDetail (
     id                     INTEGER NOT NULL
                                    PRIMARY KEY,
     measure_id             INTEGER NOT NULL,
-    mechanism_per_section_id INTEGER NOT NULL
-                                   NOT NULL,
+    mechanism_per_section_id INTEGER NOT NULL,
     cost                   REAL,
     beta                   REAL,
     year                   INTEGER NOT NULL,

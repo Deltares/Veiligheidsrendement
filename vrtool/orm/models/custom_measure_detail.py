@@ -8,9 +8,9 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 class CustomMeasureDetail(OrmBaseModel):
     """
-    A (logical) custom measure is defined by a set of records that share the same `measure_id`
-    and `section_id`. We can derive the `section_id` from the `mechanism_per_section_id`
-    foreign key.
+    A (logical) custom measure is defined by a set of records that share the same
+    `measure_id` and `combinable_type_id`.
+    We can derive the `section_id` from the `mechanism_per_section_id` foreign key.
     These are represented as a `CustomMeasureDetail`.
     """
 
@@ -29,8 +29,15 @@ class CustomMeasureDetail(OrmBaseModel):
 
     @property
     def measure_per_section(self) -> MeasurePerSection | None:
-        _section = self.mechanism_per_section.section
-        for _mxs in self.measure.sections_per_measure:
-            if _mxs.section == _section:
-                return _mxs
-        return None
+        """
+        Gets the related `MeasurePerSection` orm object as the parent
+        `Measure` object could be related to different `SectionData`.
+
+        Returns:
+            MeasurePerSection | None: The relation where this
+            `CustomMeasureDetail` is applied.
+        """
+        return MeasurePerSection.get_or_none(
+            (MeasurePerSection.measure == self.measure)
+            & (MeasurePerSection.section == self.mechanism_per_section.section)
+        )

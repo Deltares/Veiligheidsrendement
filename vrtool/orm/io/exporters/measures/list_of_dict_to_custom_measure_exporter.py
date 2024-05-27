@@ -186,14 +186,19 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 )
                 .get()
             )
-            _mechanism_per_section_found = (
-                MechanismPerSection.select()
-                .where(
-                    (MechanismPerSection.mechanism == _mechanism)
-                    & (MechanismPerSection.section == section_for_measure)
-                )
-                .get()
+            _mechanism_per_section_found = MechanismPerSection.get_or_none(
+                (MechanismPerSection.mechanism == _mechanism)
+                & (MechanismPerSection.section == section_for_measure)
             )
+            if _mechanism_per_section_found is None:
+                # TODO: Untested
+                logging.error(
+                    "Mechanism %s bestaat niet voor sectie %s",
+                    _mechanism.name,
+                    section_for_measure.section_name,
+                )
+                continue
+
             # This is not the most efficient way, but it guarantees previous custom measures
             # remain in place.
             _new_custom_measure, _is_new = CustomMeasureDetail.get_or_create(

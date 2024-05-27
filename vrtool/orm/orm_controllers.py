@@ -545,9 +545,9 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
         vrtool_config (VrtoolConfig): Configuration to be used for this workflow.
     """
 
-    with open_database(vrtool_config.input_database_path) as _db:
+    with open_database(vrtool_config.input_database_path):
 
-        def get_deletable_custom_measure_per_section(
+        def is_deletable_custom_measure_per_section(
             measure_per_section: orm.MeasurePerSection,
         ) -> bool:
             if (
@@ -564,13 +564,13 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
             _measure_result = measure_per_section.measure_per_section_result[0]
             return any(_measure_result.measure_result_optimization_runs) is False
 
-        for _mr in filter(
-            get_deletable_custom_measure_per_section, orm.MeasurePerSection.select()
+        for _cm_x_s in filter(
+            is_deletable_custom_measure_per_section, orm.MeasurePerSection.select()
         ):
             # By deleting the `MeasureResult` we cascade and delete as well:
             # `MeasureResult`, and related
             # `OptimizationSelectedMeasure`, and related
-            _mr.delete_instance()
+            _cm_x_s.delete_instance()
 
         # Last, but not least, remove the "Custom" measures without details.
         for _custom_measure in (
@@ -580,16 +580,16 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
         ):
             for _custom_measure_detail in _custom_measure.custom_measure_details:
                 _section = _custom_measure_detail.mechanism_per_section.section
-                # Delete custom measures without a related `MeasurePerSection`.
+                # Delete custom measures details without a related `MeasurePerSection`.
                 if not any(
                     orm.MeasurePerSection.select().where(
                         (orm.MeasurePerSection.measure == _custom_measure)
-                        & orm.MeasurePerSection.section
-                        == _section
+                        & (orm.MeasurePerSection.section == _section)
                     )
                 ):
                     _custom_measure_detail.delete_instance()
             if not _custom_measure.custom_measure_details:
+                # Subsequently delete (custom) measures without custom measure details.
                 _custom_measure.delete_instance()
 
 

@@ -39,6 +39,10 @@ def get_valid_measure(
     measure_type: MeasureTypeEnum,
     combinable_type: CombinableTypeEnum,
 ) -> Measure:
+    """
+    Creates a basic measure within a Vrtool database context.
+    TODO: This method should be a fixture.
+    """
     _measure_type = MeasureType.create(name=measure_type.legacy_name)
     _combinable_type = CombinableType.create(name=combinable_type.name)
     _measure = Measure.create(
