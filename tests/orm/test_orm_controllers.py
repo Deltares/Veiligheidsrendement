@@ -383,7 +383,7 @@ class TestOrmControllers:
 
         # Dike Section and Dike Traject.
         _mech_name = MechanismEnum.get_enum(
-            _test_mechanism_per_section.mechanism.name
+            _test_mechanism_per_section.mechanism_name
         ).name
         _reliability_df = pd.DataFrame(
             [4.2, 2.4],
@@ -1232,9 +1232,7 @@ class TestCustomMeasureDetail:
         _expected_total_measures = len(
             set(_cm[0][0] + _cm[0][1] for _cm in _custom_measures_grouped)
         )
-        _expected_total_custom_measures = len(
-            set(map(get_custom_measure_dict_hash, custom_measure_dict_list))
-        )
+        _expected_total_custom_measure_details = len(custom_measure_dict_list)
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.MeasureResult.delete().execute(_db)
             orm.MeasureResultMechanism.delete().execute(_db)
@@ -1243,7 +1241,9 @@ class TestCustomMeasureDetail:
             assert any(orm.MeasureResultMechanism.select()) is False
             assert any(orm.MeasureResultSection.select()) is False
             _expected_total_measures += len(orm.Measure.select())
-            _expected_total_custom_measures += len(orm.CustomMeasureDetail.select())
+            _expected_total_custom_measure_details += len(
+                orm.CustomMeasureDetail.select()
+            )
 
         # 2. Run test
         _added_measures = add_custom_measures(
@@ -1259,7 +1259,8 @@ class TestCustomMeasureDetail:
             # entries have been created.
             assert len(orm.Measure.select()) == _expected_total_measures
             assert (
-                len(orm.CustomMeasureDetail.select()) == _expected_total_custom_measures
+                len(orm.CustomMeasureDetail.select())
+                == _expected_total_custom_measure_details
             )
 
             for _keys_group, _cm_list in _custom_measures_grouped:
@@ -1316,7 +1317,7 @@ class TestCustomMeasureDetail:
 
                 for _fm_result_mechanism in _fm_result.measure_result_mechanisms:
                     _mechanism_name = (
-                        _fm_result_mechanism.mechanism_per_section.mechanism.name.upper()
+                        _fm_result_mechanism.mechanism_per_section.mechanism_name
                     )
                     if _mechanism_name in _expected_mechanism_values:
                         assert (
@@ -1576,14 +1577,10 @@ class TestCustomMeasureDetail:
                 for _idx in range(0, 2):
                     _custom_measure_detail = orm.CustomMeasureDetail.create(
                         measure=_measure_that_remains,
-                        mechanism=_selected_mechanism_x_section.mechanism,
+                        mechanism_per_section=_selected_mechanism_x_section,
                         year=_idx,
                         cost=42,
                         beta=4.2,
-                    )
-                    orm.CustomMeasureDetailPerSection.create(
-                        measure_per_section=_created_measure_x_section,
-                        custom_measure_detail=_custom_measure_detail,
                     )
 
             _created_measure_result = orm.MeasureResult.create(

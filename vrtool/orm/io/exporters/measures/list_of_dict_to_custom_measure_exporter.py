@@ -14,9 +14,6 @@ from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.custom_measure_detail import CustomMeasureDetail
-from vrtool.orm.models.custom_measure_detail_per_section import (
-    CustomMeasureDetailPerSection,
-)
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result import MeasureResult
@@ -26,6 +23,7 @@ from vrtool.orm.models.measure_result.measure_result_mechanism import (
 from vrtool.orm.models.measure_result.measure_result_section import MeasureResultSection
 from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
 
 
@@ -87,7 +85,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
 
             # Add entry to `MeasurePerSection`
             (
-                _new_measure_per_section,
+                _retrieved_measure_per_section,
                 _measure_per_section_created,
             ) = MeasurePerSection.get_or_create(
                 section=SectionData.get(section_name=_section_name),
@@ -104,29 +102,20 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
 
             # Add entries to `CustomMeasureDetail`
             _retrieved_custom_measure_details = self._get_custom_measure_details(
-                _grouped_custom_measures, _new_measure
+                _grouped_custom_measures,
+                _new_measure,
+                _retrieved_measure_per_section.section,
             )
             _exported_measure_details.extend(_retrieved_custom_measure_details)
 
-            # Add entries to `CustomMeasureDetailPerSection`
-            CustomMeasureDetailPerSection.insert_many(
-                [
-                    dict(
-                        measure_per_section=_new_measure_per_section,
-                        custom_measure_detail=_cm_detail,
-                    )
-                    for _cm_detail in _retrieved_custom_measure_details
-                ]
-            ).execute(self._db)
-
             # Add `MeasureResult`
             _new_measure_result, _ = MeasureResult.get_or_create(
-                measure_per_section=_new_measure_per_section
+                measure_per_section=_retrieved_measure_per_section
             )
 
             # Calculate the related entries in `MeasureResult`.
             (_mr_sections, _mr_mechanisms,) = CustomMeasureTimeBetaCalculator(
-                _new_measure_per_section, _retrieved_custom_measure_details
+                _retrieved_measure_per_section, _retrieved_custom_measure_details
             ).calculate(_new_measure_result)
             _measure_result_section_to_add.extend(_mr_sections)
             _measure_result_mechanism_to_add.extend(_mr_mechanisms)
@@ -180,25 +169,42 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
         return _grouped_by_measure
 
     def _get_custom_measure_details(
-        self, custom_measure_list_dict: list[dict], parent_measure: Measure
+        self,
+        custom_measure_list_dict: list[dict],
+        parent_measure: Measure,
+        section_for_measure: SectionData,
     ) -> list[CustomMeasureDetail]:
         _custom_measures = []
         for _custom_measure in custom_measure_list_dict:
-            _mechanism_found = (
-                Mechanism.select()
-                .where(
-                    fn.upper(Mechanism.name)
-                    == MechanismEnum.get_enum(
-                        _custom_measure["MECHANISM_NAME"]
-                    ).legacy_name.upper()
+            _mechanism_name = MechanismEnum.get_enum(
+                _custom_measure["MECHANISM_NAME"]
+            ).legacy_name
+            _mechanism_per_section_found = MechanismPerSection.get_or_none(
+                (MechanismPerSection.section == section_for_measure)
+                & (
+                    MechanismPerSection.mechanism
+                    == Mechanism.get_or_none(
+                        fn.upper(Mechanism.name) == _mechanism_name.upper()
+                    )
                 )
-                .get()
             )
+            if (
+                _mechanism_per_section_found is None
+                or _mechanism_per_section_found.mechanism is None
+            ):
+                # TODO: Untested
+                logging.error(
+                    "Mechanism %s bestaat niet voor sectie %s",
+                    _custom_measure["MECHANISM_NAME"],
+                    section_for_measure.section_name,
+                )
+                continue
+
             # This is not the most efficient way, but it guarantees previous custom measures
             # remain in place.
             _new_custom_measure, _is_new = CustomMeasureDetail.get_or_create(
                 measure=parent_measure,
-                mechanism=_mechanism_found,
+                mechanism_per_section=_mechanism_per_section_found,
                 cost=_custom_measure["COST"],
                 beta=_custom_measure["BETA"],
                 year=_custom_measure["TIME"],

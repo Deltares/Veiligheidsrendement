@@ -545,35 +545,32 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
         vrtool_config (VrtoolConfig): Configuration to be used for this workflow.
     """
 
-    with open_database(vrtool_config.input_database_path) as _db:
-        # Workaround to get all the `MeasureResult` entries that are linked to an `OptimizationRun`
-        _measure_result_sections_with_optimization_run = list(
-            _mr.measure_per_section
-            for _mr in orm.MeasureResult.select()
-            .join_from(orm.MeasureResult, orm.OptimizationSelectedMeasure)
-            .distinct()
-        )
+    with open_database(vrtool_config.input_database_path):
 
-        _custom_measure_details_to_remove, _mxs_to_remove = zip(
-            *[
-                (
-                    _cm_detail_per_section.custom_measure_detail.get_id(),
-                    _cm_detail_per_section.measure_per_section.get_id(),
-                )
-                for _cm_detail_per_section in orm.CustomMeasureDetailPerSection.select().where(
-                    orm.CustomMeasureDetailPerSection.measure_per_section.not_in(
-                        _measure_result_sections_with_optimization_run
-                    )
-                )
-            ]
-        )
+        def is_deletable_custom_measure_per_section(
+            measure_per_section: orm.MeasurePerSection,
+        ) -> bool:
+            if (
+                MeasureTypeEnum.get_enum(measure_per_section.measure.measure_type.name)
+                != MeasureTypeEnum.CUSTOM
+            ):
+                return False
 
-        # Remove by id's to avoid getting `NonExistent` errors.
-        for _detail_to_remove_id in set(_custom_measure_details_to_remove):
-            orm.CustomMeasureDetail.delete_by_id(_detail_to_remove_id)
-        for _measure_x_section_id in set(_mxs_to_remove):
-            # Required to cascade and remove the measure result
-            orm.MeasurePerSection.delete_by_id(_measure_x_section_id)
+            if not any(measure_per_section.measure_per_section_result):
+                # No need to keep an unused measure per section for a custom measure.
+                return True
+
+            # This relationship is always 1 (at least for a "Custom" measure).
+            _measure_result = measure_per_section.measure_per_section_result[0]
+            return any(_measure_result.measure_result_optimization_runs) is False
+
+        for _cm_x_s in filter(
+            is_deletable_custom_measure_per_section, orm.MeasurePerSection.select()
+        ):
+            # By deleting the `MeasureResult` we cascade and delete as well:
+            # `MeasureResult`, and related
+            # `OptimizationSelectedMeasure`, and related
+            _cm_x_s.delete_instance()
 
         # Last, but not least, remove the "Custom" measures without details.
         for _custom_measure in (
@@ -581,7 +578,18 @@ def safe_clear_custom_measure(vrtool_config: VrtoolConfig):
             .join_from(orm.Measure, orm.MeasureType)
             .where(fn.upper(orm.MeasureType.name) == MeasureTypeEnum.CUSTOM.name)
         ):
+            for _custom_measure_detail in _custom_measure.custom_measure_details:
+                _section = _custom_measure_detail.mechanism_per_section.section
+                # Delete custom measures details without a related `MeasurePerSection`.
+                if not any(
+                    orm.MeasurePerSection.select().where(
+                        (orm.MeasurePerSection.measure == _custom_measure)
+                        & (orm.MeasurePerSection.section == _section)
+                    )
+                ):
+                    _custom_measure_detail.delete_instance()
             if not _custom_measure.custom_measure_details:
+                # Subsequently delete (custom) measures without custom measure details.
                 _custom_measure.delete_instance()
 
 

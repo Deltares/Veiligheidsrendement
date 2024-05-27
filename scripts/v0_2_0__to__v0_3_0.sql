@@ -61,7 +61,7 @@ CREATE INDEX custommeasure_mechanism_id ON CustomMeasure (
 PRAGMA foreign_keys = 1;
 
 -- CustomMeasureParameter
-DROP TABLE CustomMeasureParameter;
+DROP TABLE IF EXISTS CustomMeasureParameter;
 
 -- Measure
 PRAGMA foreign_keys = 0;
@@ -530,30 +530,30 @@ PRAGMA foreign_keys = 1;
 -- Changes required from VRTOOL-514
 
 -- Renaming of `CustomMeasure` to `CustomMeasureDetail`
+-- And changing `mechanism_id` foreign key to `mechanism_per_section_id`.
 PRAGMA foreign_keys = 0;
-
 CREATE TABLE CustomMeasureDetail (
-    id           INTEGER NOT NULL
-                         PRIMARY KEY,
-    measure_id   INTEGER NOT NULL,
-    mechanism_id INTEGER NOT NULL,
-    cost         REAL,
-    beta         REAL,
-    year         INTEGER NOT NULL,
+    id                     INTEGER NOT NULL
+                                   PRIMARY KEY,
+    measure_id             INTEGER NOT NULL,
+    mechanism_per_section_id INTEGER NOT NULL,
+    cost                   REAL,
+    beta                   REAL,
+    year                   INTEGER NOT NULL,
     FOREIGN KEY (
         measure_id
     )
     REFERENCES Measure (id) ON DELETE CASCADE,
     FOREIGN KEY (
-        mechanism_id
+        mechanism_per_section_id
     )
-    REFERENCES Mechanism (id) ON DELETE CASCADE
+    REFERENCES MechanismPerSection (id) ON DELETE CASCADE
 );
 
 INSERT INTO CustomMeasureDetail (
                                     id,
                                     measure_id,
-                                    mechanism_id,
+                                    mechanism_per_section_id,
                                     cost,
                                     beta,
                                     year
@@ -571,28 +571,9 @@ CREATE INDEX custommeasuredetail_measure_id ON CustomMeasureDetail (
     "measure_id"
 );
 
-CREATE INDEX custommeasuredetail_mechanism_id ON CustomMeasureDetail (
-    "mechanism_id"
+CREATE INDEX custommeasuredetail_mechanism_per_section_id ON CustomMeasureDetail (
+    "mechanism_per_section_id"
 );
-
--- Create new table `CustomMeasureDetailPerSection`
-CREATE TABLE CustomMeasureDetailPerSection (
-    id                     INTEGER NOT NULL
-                                   PRIMARY KEY,
-    measure_per_section_id INTEGER NOT NULL,
-    custom_measure_detail_id      INTEGER NOT NULL,
-    FOREIGN KEY (
-        measure_per_section_id
-    )
-    REFERENCES MeasurePerSection (id) ON DELETE CASCADE,
-    FOREIGN KEY (
-        custom_measure_detail_id
-    )
-    REFERENCES CustomMeasureDetail (id) ON DELETE CASCADE
-);
-
-PRAGMA foreign_keys = 1;
-
 
 
 -- General pragma changes

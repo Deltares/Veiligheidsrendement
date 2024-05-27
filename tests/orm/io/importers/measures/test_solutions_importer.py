@@ -4,11 +4,8 @@ from peewee import SqliteDatabase
 
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
-from tests.orm.io.importers.measures.test_measure_importer import (
-    _get_valid_measure,
-    _set_custom_measure,
-    _set_standard_measure,
-)
+from tests.orm.io.importers.measures.conftest import get_valid_measure
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -61,21 +58,6 @@ class TestSolutionsImporter:
         # 3. Verify expectations.
         assert str(exc_err.value) == f"No valid value given for SectionData."
 
-    @pytest.fixture
-    def valid_section_data_without_measures(self, empty_db_fixture: SqliteDatabase):
-        _traject = DikeTrajectInfo.create(traject_name="A traject")
-        _section_data = SectionData.create(
-            dike_traject=_traject,
-            section_name="E4E5",
-            meas_start=1.2,
-            meas_end=2.3,
-            section_length=3.4,
-            in_analysis=True,
-            crest_height=4.5,
-            annual_crest_decline=5.6,
-        )
-        return _section_data
-
     def test_given_different_sectiondata_and_dikesection_raises_valueerror(
         self,
         valid_config: VrtoolConfig,
@@ -127,10 +109,12 @@ class TestSolutionsImporter:
     def valid_section_data_with_measures(
         self, valid_section_data_without_measures: SectionData
     ) -> SectionData:
-        _standard_measure = _get_valid_measure(
-            "Soil reinforcement", "combinable", _set_standard_measure
+        _standard_measure = get_valid_measure(
+            MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
         )
-        _custom_measure = _get_valid_measure("Custom", "full", _set_custom_measure)
+        _custom_measure = get_valid_measure(
+            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.FULL
+        )
 
         MeasurePerSection.create(
             section=valid_section_data_without_measures, measure=_standard_measure
