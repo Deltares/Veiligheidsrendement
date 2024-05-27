@@ -195,7 +195,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 # TODO: Untested
                 logging.error(
                     "Mechanism %s bestaat niet voor sectie %s",
-                    _mechanism_name,
+                    _custom_measure["MECHANISM_NAME"],
                     section_for_measure.section_name,
                 )
                 continue
