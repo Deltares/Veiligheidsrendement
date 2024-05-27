@@ -296,3 +296,34 @@ class TestListOfDictToCustomMeasureExporter:
             _found_dict_idx = get_matching_dictionary(_unique_custom_measure_detail)
             assert _found_dict_idx >= 0, "Custom measure detailed not created."
             _list_of_dict.pop(_found_dict_idx)
+
+    def test_export_with_unknown_mechanism_does_not_raise(
+        self,
+        exporter_with_db_without_custom_measures: ListOfDictToCustomMeasureExporter,
+    ):
+        # 1. Define test data.
+        _custom_measure_base_dict = dict(
+            MEASURE_NAME="ROCKS",
+            SECTION_NAME="01A",
+            COMBINABLE_TYPE=CombinableTypeEnum.FULL.name,
+            MECHANISM_NAME=MechanismEnum.OVERFLOW.name,
+            COST=42,
+            TIME=0,
+            BETA=8,
+        )
+        _list_of_dict = [
+            _custom_measure_base_dict | dict(MECHANISM_NAME=_mechanism.name)
+            for _mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.INVALID]
+        ]
+
+        # 2. Run test.
+        _exported_custom_measure_details = (
+            exporter_with_db_without_custom_measures.export_dom(_list_of_dict)
+        )
+
+        # 3. Verify expectations.
+        assert len(_exported_custom_measure_details) == 1
+        _orm_mechanism_name = _exported_custom_measure_details[
+            0
+        ].mechanism_per_section.mechanism.name
+        assert MechanismEnum.get_enum(_orm_mechanism_name) == MechanismEnum.OVERFLOW

@@ -176,25 +176,26 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
     ) -> list[CustomMeasureDetail]:
         _custom_measures = []
         for _custom_measure in custom_measure_list_dict:
-            _mechanism = (
-                Mechanism.select()
-                .where(
-                    fn.upper(Mechanism.name)
-                    == MechanismEnum.get_enum(
-                        _custom_measure["MECHANISM_NAME"]
-                    ).legacy_name.upper()
-                )
-                .get()
-            )
+            _mechanism_name = MechanismEnum.get_enum(
+                _custom_measure["MECHANISM_NAME"]
+            ).legacy_name
             _mechanism_per_section_found = MechanismPerSection.get_or_none(
-                (MechanismPerSection.mechanism == _mechanism)
-                & (MechanismPerSection.section == section_for_measure)
+                (MechanismPerSection.section == section_for_measure)
+                & (
+                    MechanismPerSection.mechanism
+                    == Mechanism.get_or_none(
+                        fn.upper(Mechanism.name) == _mechanism_name.upper()
+                    )
+                )
             )
-            if _mechanism_per_section_found is None:
+            if (
+                _mechanism_per_section_found is None
+                or _mechanism_per_section_found.mechanism is None
+            ):
                 # TODO: Untested
                 logging.error(
                     "Mechanism %s bestaat niet voor sectie %s",
-                    _mechanism.name,
+                    _mechanism_name,
                     section_for_measure.section_name,
                 )
                 continue
