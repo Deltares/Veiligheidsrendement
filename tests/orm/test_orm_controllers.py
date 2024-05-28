@@ -11,7 +11,6 @@ from peewee import SqliteDatabase, fn
 
 import vrtool.orm.models as orm
 from tests import (
-    get_clean_test_results_dir,
     get_copy_of_reference_directory,
     get_vrtool_config_test_copy,
     test_data,
@@ -54,6 +53,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
     CustomMeasureTimeBetaCalculator,
 )
@@ -1391,7 +1391,7 @@ class TestCustomMeasureDetail:
         )
         assert _meas_ids == _custom_measure_detail_ids
 
-        assert len(_imported_data[0].measures) == 2
+        assert len(_imported_data[0].measures) == 3
 
         _years = custom_measures_vrtool_config.T
         _expected_betas = np.linspace(7, 4, num=7)
@@ -1402,10 +1402,13 @@ class TestCustomMeasureDetail:
             assert _measure.combine_type == CombinableTypeEnum.FULL
             assert _measure.start_cost == 0
             assert _measure.cost == _custom_measure_cost
-            assert _measure.lcc == _custom_measure_cost
             assert _measure.discount_rate == 0.03
             assert _measure.year == 0
             assert _measure.measure_result_id == 1
+            if isinstance(_measure, ShSgMeasure):
+                assert _measure.lcc == 0
+                continue
+            assert _measure.lcc == _custom_measure_cost
 
         # Verify betas for `sg_measure` as `MechanismEnum.PIPING` is only
         # compatible for `sg_measures`
@@ -1503,7 +1506,7 @@ class TestCustomMeasureDetail:
             return list(
                 _mr.get_id()
                 for _mr in orm.MeasureResult.select()
-                if MeasureTypeEnum.get_enum(_mr.measure_type) == MeasureTypeEnum.CUSTOM
+                if _mr.measure_type == MeasureTypeEnum.CUSTOM
             )
 
         def get_existing_optimization_custom_measure(
