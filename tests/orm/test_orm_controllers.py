@@ -249,7 +249,7 @@ class TestOrmControllers:
 
         _output_directory = test_results.joinpath(request.node.name)
         if _output_directory.exists():
-            shutil.rmtree(_vrtool_config.output_directory)
+            shutil.rmtree(_output_directory)
 
         # Generate a custom `VrtoolConfig`
         _vrtool_config = VrtoolConfig(
@@ -1074,36 +1074,6 @@ class TestCustomMeasureDetail:
             BETA=measure_beta,
         )
 
-    @pytest.fixture(name="custom_measures_vrtool_config")
-    def get_vrtool_config_for_custom_measures_db(
-        self, request: pytest.FixtureRequest
-    ) -> Iterator[VrtoolConfig]:
-        # 1. Define test data.
-        _marker = request.node.get_closest_marker("fixture_database")
-        if _marker is None:
-            _db_name = request.param
-        else:
-            _db_name = _marker.args[0]
-
-        _test_db = self._custom_measures_test_dir.joinpath(_db_name)
-        _output_directory = get_clean_test_results_dir(request)
-
-        # Create a copy of the database to avoid locking it
-        # or corrupting its data.
-        _copy_db = _output_directory.joinpath("vrtool_input.db")
-        shutil.copyfile(_test_db, _copy_db)
-
-        # Generate a custom `VrtoolConfig`
-        _vrtool_config = VrtoolConfig(
-            input_directory=_copy_db.parent,
-            input_database_name=_copy_db.name,
-            traject="38-1",
-            output_directory=_output_directory,
-        )
-        assert _vrtool_config.input_database_path.is_file()
-
-        yield _vrtool_config
-
     @pytest.mark.parametrize(
         "custom_measure_dict_list",
         [
@@ -1204,7 +1174,9 @@ class TestCustomMeasureDetail:
             ),
         ],
     )
-    @pytest.mark.fixture_database("without_custom_measures.db")
+    @pytest.mark.fixture_database(
+        _custom_measures_test_dir.joinpath("without_custom_measures.db")
+    )
     def test_add_custom_measures(
         self,
         custom_measure_dict_list: list[dict],
@@ -1214,14 +1186,6 @@ class TestCustomMeasureDetail:
         Integration test to verify adding new entries to the `orm.CustomMeasureDetail`
         and related tables under different workflows.
         """
-        # Auxiliar methods for validations.
-        def get_custom_measure_dict_hash(cm_dict: dict) -> str:
-            # Useful to compare uniqueness of a dictionary.
-            _dummy_dict = dict() | cm_dict
-            # The only key that does not need to be the same is the section name.
-            _dummy_dict.pop("SECTION_NAME")
-            return str(_dummy_dict)
-
         # 1. Define initial expectations.
         _known_computation_periods = [0, 19, 20, 25, 50, 75, 100]
         _custom_measures_grouped = list(
@@ -1337,7 +1301,7 @@ class TestCustomMeasureDetail:
                             _assessment.beta, rel=1e-6
                         )
 
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_only_one_measure_added_when_same_measure_per_section(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1392,7 +1356,7 @@ class TestCustomMeasureDetail:
             )
 
     @pytest.mark.slow
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_import_result_measures_with_custom_measures(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1452,7 +1416,7 @@ class TestCustomMeasureDetail:
             assert _overflow_betas == pytest.approx(_expected_betas)
 
     @pytest.mark.slow
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_run_optimization_with_custom_measures(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1504,7 +1468,9 @@ class TestCustomMeasureDetail:
                     == MeasureTypeEnum.CUSTOM.legacy_name
                 )
 
-    @pytest.mark.fixture_database("without_custom_measures.db")
+    @pytest.mark.fixture_database(
+        _custom_measures_test_dir.joinpath("without_custom_measures.db")
+    )
     def test_add_custom_measures_without_t0_from_csv_raises(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1522,7 +1488,7 @@ class TestCustomMeasureDetail:
         # 3. Verify expectations.
         assert _expected_error in str(exc_err.value)
 
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_safe_clear_custom_measure(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1663,7 +1629,7 @@ class TestCustomMeasureDetail:
                 is False
             )
 
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_brute_clear_custom_measure(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1749,7 +1715,9 @@ class TestCustomMeasureDetail:
             assert len(_measure_result.measure_result_mechanisms) == 1
 
     @pytest.mark.slow
-    @pytest.mark.fixture_database("with_aggregated_measures.db")
+    @pytest.mark.fixture_database(
+        _custom_measures_test_dir.joinpath("with_aggregated_measures.db")
+    )
     def test_with_aggregated_measures_exports_optimization(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
