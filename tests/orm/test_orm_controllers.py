@@ -15,6 +15,7 @@ from tests import (
     get_copy_of_reference_directory,
     get_vrtool_config_test_copy,
     test_data,
+    test_externals,
     test_results,
 )
 from tests.optimization.measures.test_section_as_input import TestSectionAsInput
@@ -1756,6 +1757,11 @@ class TestCustomMeasureDetail:
         # 1. Define test data.
         _optimization_name = "OptimizationWithAggregatedCustomMeasures"
         custom_measures_vrtool_config.traject = "16-1"
+        custom_measures_vrtool_config.excluded_mechanisms = [
+            MechanismEnum.REVETMENT,
+            MechanismEnum.HYDRAULIC_STRUCTURES,
+        ]
+        custom_measures_vrtool_config.externals = test_externals.joinpath("DStabilityConsole")
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.OptimizationRun.delete().execute(_db)
