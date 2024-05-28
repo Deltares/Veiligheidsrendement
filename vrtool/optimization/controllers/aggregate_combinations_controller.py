@@ -1,6 +1,7 @@
 import math
 from itertools import product
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
@@ -60,6 +61,11 @@ class AggregateCombinationsController:
             if sh_comb.primary.dcrest == 0:
                 return sg_comb.primary.measure_result_id
             if sg_comb.primary.dberm == 0:
+                return sh_comb.primary.measure_result_id
+            if sg_comb.primary.measure_type == MeasureTypeEnum.CUSTOM:
+                # When `SgMeasure` is CUSTOM we return the result id
+                # of the `ShMeasure` regardles of this being also a
+                # Custom or Standard measure.
                 return sh_comb.primary.measure_result_id
             return next(
                 (
