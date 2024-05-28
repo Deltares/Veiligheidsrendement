@@ -344,8 +344,7 @@ class TestAggregateCombinationsController:
 
         # 3. Verify expectations
         assert len(_created_aggregations) == 1
-        pytest.fail("TODO: Not entirely sure what was being tested here.")
-        assert (
-            _created_aggregations[0].measure_result_id
-            == valid_section_as_input.measure_result_id
-        )
+        # VRTOOL-518
+        # When no `ShSgMeasure` is present we simply return a 0.
+        # this will later on give an exception when trying to export.
+        assert _created_aggregations[0].measure_result_id == 0
