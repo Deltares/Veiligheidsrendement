@@ -1537,8 +1537,7 @@ class TestCustomMeasureDetail:
             return list(
                 _mr.get_id()
                 for _mr in orm.MeasureResult.select()
-                if MeasureTypeEnum.get_enum(_mr.measure_type_name)
-                == MeasureTypeEnum.CUSTOM
+                if MeasureTypeEnum.get_enum(_mr.measure_type) == MeasureTypeEnum.CUSTOM
             )
 
         def get_existing_optimization_custom_measure(
@@ -1672,7 +1671,7 @@ class TestCustomMeasureDetail:
             return list(
                 _mr.get_id()
                 for _mr in orm.MeasureResult.select()
-                if _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+                if _mr.measure_type == MeasureTypeEnum.CUSTOM
             )
 
         def get_existing_optimization_custom_measure(
@@ -1761,7 +1760,9 @@ class TestCustomMeasureDetail:
             MechanismEnum.REVETMENT,
             MechanismEnum.HYDRAULIC_STRUCTURES,
         ]
-        custom_measures_vrtool_config.externals = test_externals.joinpath("DStabilityConsole")
+        custom_measures_vrtool_config.externals = test_externals.joinpath(
+            "DStabilityConsole"
+        )
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.OptimizationRun.delete().execute(_db)

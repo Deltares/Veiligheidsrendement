@@ -144,6 +144,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         ):
             yield SgMeasure
 
+        if measure_result.measure_type == MeasureTypeEnum.CUSTOM:
+            yield ShSgMeasure
+
     def import_orm(self, orm_model: OrmMeasureResult) -> list[MeasureAsInputProtocol]:
 
         if not orm_model:
