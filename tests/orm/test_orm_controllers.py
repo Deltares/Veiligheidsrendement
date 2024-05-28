@@ -38,7 +38,11 @@ from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategies.greedy_strategy import GreedyStrategy
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
+from vrtool.decision_making.strategies.target_reliability_strategy import (
+    TargetReliabilityStrategy,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -1757,4 +1761,28 @@ class TestCustomMeasureDetail:
         )
 
         # 3. Verify expectations.
-        assert _results is not None
+        assert isinstance(_results, ResultsOptimization)
+        assert len(_results.results_strategies) == 2
+
+        # Greedy strategy
+        _greedy_result = next(
+            _rs
+            for _rs in _results.results_strategies
+            if isinstance(_rs, GreedyStrategy)
+        )
+        assert _greedy_result.OI_horizon == 50
+        assert _greedy_result.LCCOption.size > 0
+        assert any(_greedy_result.measures_taken)
+        assert any(_greedy_result.probabilities_per_step)
+        assert any(_greedy_result.total_risk_per_step)
+
+        # Target Reliability strategy
+        _target_reliability_result = next(
+            _rs
+            for _rs in _results.results_strategies
+            if isinstance(_rs, TargetReliabilityStrategy)
+        )
+        assert _target_reliability_result.OI_horizon == 50
+        assert any(_target_reliability_result.measures_taken)
+        assert any(_target_reliability_result.probabilities_per_step)
+        assert any(_target_reliability_result.total_risk_per_step)
