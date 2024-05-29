@@ -1,5 +1,6 @@
 import math
 from copy import deepcopy
+from typing import Iterator
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -48,22 +49,6 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         self.discount_rate = vrtool_config.discount_rate
         self.unit_costs = vrtool_config.unit_costs
         self.investment_years = investment_years
-
-    @staticmethod
-    def valid_parameter(measure_result: OrmMeasureResult, parameter_name: str) -> bool:
-        """
-        Verifies whether the given parameter name exists and is within the expected values
-         as a `MeasureResultParameter` for the given `MeasureResult`.
-
-        Args:
-            measure_result (MeasureResult): The `MeasureResult` containing a list of parameters.
-            parameter_name (str): The parameter name which should be in the `MeasureResult`.
-
-        Returns:
-            bool: Parameter is a valid value of the `MeasureResult`.
-        """
-        _parameter_value = measure_result.get_parameter_value(parameter_name)
-        return math.isclose(_parameter_value, 0) or math.isnan(_parameter_value)
 
     def _get_mechanism_year_collection(
         self,
@@ -127,6 +112,45 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
         return list(map(lambda x: measure_as_input_type(**x), _measures_dicts))
 
+    @staticmethod
+    def get_measure_as_input_types(
+        measure_result: OrmMeasureResult,
+    ) -> Iterator[type[MeasureAsInputProtocol]]:
+        """
+        Gets the corresponding imported type(s) for a `MeasureResult`.
+        It could also be that no type is available for the given `MeasureResult`.
+
+        Args:
+            measure_result (OrmMeasureResult): Measure result to import.
+
+        Yields:
+            Iterator[type[MeasureAsInputProtocol]]: Iterator of types that can be used to import the given measure result.
+        """
+
+        def parameter_not_relevant(parameter_name: str) -> bool:
+            _parameter_value = measure_result.get_parameter_value(parameter_name)
+            return math.isclose(_parameter_value, 0) or math.isnan(_parameter_value)
+
+        _combinable_type = CombinableTypeEnum.get_enum(
+            measure_result.combinable_type_name
+        )
+        if ShMeasure.is_combinable_type_allowed(
+            _combinable_type
+        ) and parameter_not_relevant("dberm"):
+            yield ShMeasure
+
+        if SgMeasure.is_combinable_type_allowed(
+            _combinable_type
+        ) and parameter_not_relevant("dcrest"):
+            yield SgMeasure
+
+        if measure_result.measure_type == MeasureTypeEnum.CUSTOM:
+            # VRTOOL-518: To avoid not knowing which MeasureResult.id needs to be
+            # selected we opted to generate a ShSgMeasure to solve this issue.
+            # However, this will imply the creation of "too many" Custom
+            # `ShSgMeasure` which is accepted for now.
+            yield ShSgMeasure
+
     def import_orm(self, orm_model: OrmMeasureResult) -> list[MeasureAsInputProtocol]:
 
         if not orm_model:
@@ -134,17 +158,8 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
         _imported_measures = []
 
-        _combinable_type = CombinableTypeEnum.get_enum(orm_model.combinable_type_name)
-
-        if self.valid_parameter(
-            orm_model, "dberm"
-        ) and ShMeasure.is_combinable_type_allowed(_combinable_type):
-            _imported_measures.extend(self._create_measure(orm_model, ShMeasure))
-
-        if self.valid_parameter(
-            orm_model, "dcrest"
-        ) and SgMeasure.is_combinable_type_allowed(_combinable_type):
-            _imported_measures.extend(self._create_measure(orm_model, SgMeasure))
+        for _mip_type in self.get_measure_as_input_types(orm_model):
+            _imported_measures.extend(self._create_measure(orm_model, _mip_type))
 
         if not _imported_measures:
             _imported_measures.extend(self._create_measure(orm_model, ShSgMeasure))

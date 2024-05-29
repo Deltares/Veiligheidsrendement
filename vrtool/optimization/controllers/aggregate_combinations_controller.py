@@ -1,4 +1,3 @@
-import math
 from itertools import product
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -6,90 +5,72 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 )
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
-from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 
 
 class AggregateCombinationsController:
     def __init__(self, section: SectionAsInput) -> None:
         self._section = section
 
-    def _create_aggregates(
-        self,
-        sh_combinations: list[CombinedMeasure],
-        sg_combinations: list[CombinedMeasure],
-    ) -> list[AggregatedMeasureCombination]:
-        def primaries_match(
-            aggregation: tuple[CombinedMeasure, CombinedMeasure]
-        ) -> bool:
-            def is_matching_stab_length(sh_comb_length: float, sg_comb_length: float):
-                if math.isnan(sh_comb_length) or math.isnan(sg_comb_length):
-                    return True
-                return sh_comb_length == sg_comb_length
+    def _get_aggregated_measure_id(
+        self, sh_comb: CombinedMeasure, sg_comb: CombinedMeasure
+    ) -> int:
+        # Find the aggregated Sh/Sg measure result id
+        if sh_comb.primary.measure_result_id == sg_comb.primary.measure_result_id:
+            return sh_comb.primary.measure_result_id
+        if sh_comb.primary.dcrest == 0:
+            return sg_comb.primary.measure_result_id
+        if sg_comb.primary.dberm == 0:
+            return sh_comb.primary.measure_result_id
 
-            # Check if the primary measures in both combinations match
-            _sh_comb, _sg_comb = aggregation
-            return (
-                _sh_comb.primary.year == _sg_comb.primary.year
-                and _sh_comb.primary.measure_type == _sg_comb.primary.measure_type
-                and is_matching_stab_length(
-                    _sh_comb.primary.l_stab_screen, _sg_comb.primary.l_stab_screen
-                )
+        _found_measure_result_id = next(
+            (
+                m.measure_result_id
+                for m in self._section.sh_sg_measures
+                if m.matches_with_sh_sg_measure(sh_comb, sg_comb)
+            ),
+            None,
+        )
+        if _found_measure_result_id is None:
+            _sh_str = f"Sh ({sh_comb.primary.measure_result_id})"
+            _sg_str = f"Sg ({sg_comb.primary.measure_result_id})"
+            raise ValueError(
+                f"Geen `MeasureResult.id` gevonden tussen gecombineerd (primary) maatregelen met `MeasureResult.id`: {_sh_str} en {_sg_str}."
             )
+        return _found_measure_result_id
 
-        def get_aggregated_measure_id(
-            sh_comb: CombinedMeasure, sg_comb: CombinedMeasure
-        ) -> int:
-            def is_matching_stab_length(sh_sg_length: float, sg_comb_length: float):
-                if math.isnan(sh_sg_length) and math.isnan(sg_comb_length):
-                    return True
-                return sh_sg_length == sg_comb_length
-
-            def is_matching_sh_sg_measure(sh_sg_measure: ShSgMeasure) -> bool:
-                return (
-                    sh_sg_measure.dcrest == sh_comb.primary.dcrest
-                    and sh_sg_measure.dberm == sg_comb.primary.dberm
-                    and is_matching_stab_length(
-                        sh_sg_measure.l_stab_screen, sg_comb.primary.l_stab_screen
-                    )
-                    and sh_sg_measure.measure_type == sh_comb.primary.measure_type
-                )
-
-            # Find the aggregated Sh/Sg measure result id
-            if sh_comb.primary.measure_result_id == sg_comb.primary.measure_result_id:
-                return sh_comb.primary.measure_result_id
-            if sh_comb.primary.dcrest == 0:
-                return sg_comb.primary.measure_result_id
-            if sg_comb.primary.dberm == 0:
-                return sh_comb.primary.measure_result_id
-            return next(
-                (
-                    m.measure_result_id
-                    for m in self._section.sh_sg_measures
-                    if is_matching_sh_sg_measure(m)
-                ),
-                0,
-            )
-
-        def make_aggregate(
-            aggregation: tuple[CombinedMeasure, CombinedMeasure]
-        ) -> AggregatedMeasureCombination:
-            _sh_comb, _sg_comb = aggregation
-            return AggregatedMeasureCombination(
-                _sh_comb,
-                _sg_comb,
-                get_aggregated_measure_id(_sh_comb, _sg_comb),
-                _sh_comb.primary.year,
-            )
-
-        return list(
-            map(
-                make_aggregate,
-                filter(primaries_match, product(sh_combinations, sg_combinations)),
-            )
+    def _make_aggregate(
+        self, sh_combination: CombinedMeasure, sg_combination: CombinedMeasure
+    ) -> AggregatedMeasureCombination:
+        return AggregatedMeasureCombination(
+            sh_combination,
+            sg_combination,
+            self._get_aggregated_measure_id(sh_combination, sg_combination),
+            sh_combination.primary.year,
         )
 
     def aggregate(self) -> list[AggregatedMeasureCombination]:
+        """
+        Creates all possible aggregations based on the section's
+        Sh and Sg combinations (`CombinedMeasure`)
 
-        return self._create_aggregates(
-            self._section.sh_combinations, self._section.sg_combinations
+        Returns:
+            list[AggregatedMeasureCombination]:
+            Resulting list of aggregated combinations.
+        """
+
+        def combinations_can_be_aggregated(
+            combinations: tuple[CombinedMeasure, CombinedMeasure]
+        ) -> bool:
+            return combinations[0].compares_to(combinations[1])
+
+        # Filter combinations that can be aggregated.
+        _combinations_to_aggregate = filter(
+            combinations_can_be_aggregated,
+            product(self._section.sh_combinations, self._section.sg_combinations),
         )
+
+        # Create aggregations.
+        return [
+            self._make_aggregate(_c_sh, _c_sg)
+            for _c_sh, _c_sg in _combinations_to_aggregate
+        ]

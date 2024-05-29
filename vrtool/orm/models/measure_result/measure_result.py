@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from peewee import ForeignKeyField
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
@@ -17,18 +18,17 @@ class MeasureResult(OrmBaseModel):
         table_name = _get_table_name(__qualname__)
 
     @property
-    def measure_type_name(self) -> str:
+    def measure_type(self) -> MeasureTypeEnum:
         """
-        Returns the name of the related `MeasureType` table entry.
-
-        !DESIGN DECISION!: We return a string rather than an enum
-        to prevent the `vrtool.orm.models` to import / have knowledge
-        over datastructures present outside said subproject.
+        Gets the related `MeasureType` table entry and maps it into the
+        corresponding `vrtool.core` enum.
 
         Returns:
-            str: The name in capital letters.
+            MeasureTypeEnum: the mapped `MeasureTypeEnum`.
         """
-        return self.measure_per_section.measure.measure_type.name.upper()
+        return MeasureTypeEnum.get_enum(
+            self.measure_per_section.measure.measure_type.name
+        )
 
     @property
     def combinable_type_name(self) -> str:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -95,6 +96,32 @@ class CombinedMeasure:
         if self.secondary:
             return [self.primary.measure_result_id, self.secondary.measure_result_id]
         return [self.primary.measure_result_id]
+
+    def compares_to(self, other: "CombinedMeasure") -> bool:
+        """
+        Compares this instance of a 'CombinedMeasure' with another one.
+        This method could be also implemented as an overriding of the
+        'equal' operator ('__eq__').
+
+        Args:
+            other (CombinedMeasure): Other combined measure to compare.
+
+        Returns:
+            bool: Whether both combined measures can be conisered as matching.
+        """
+        # Check if the primary measures in both combinations match
+        def compatible_l_stab_screen() -> bool:
+            if math.isnan(self.primary.l_stab_screen) or math.isnan(
+                other.primary.l_stab_screen
+            ):
+                return True
+            return self.primary.l_stab_screen == other.primary.l_stab_screen
+
+        return (
+            self.primary.year == other.primary.year
+            and self.primary.measure_type == other.primary.measure_type
+            and compatible_l_stab_screen()
+        )
 
     @classmethod
     def from_input(

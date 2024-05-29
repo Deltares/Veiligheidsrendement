@@ -11,10 +11,10 @@ from peewee import SqliteDatabase, fn
 
 import vrtool.orm.models as orm
 from tests import (
-    get_clean_test_results_dir,
     get_copy_of_reference_directory,
     get_vrtool_config_test_copy,
     test_data,
+    test_externals,
     test_results,
 )
 from tests.optimization.measures.test_section_as_input import TestSectionAsInput
@@ -31,13 +31,18 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureWithMeasureResultCollectionMocked,
     validate_measure_result_export,
 )
+from vrtool.api import ApiRunWorkflows
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.solutions import Solutions
+from vrtool.decision_making.strategies.greedy_strategy import GreedyStrategy
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
+from vrtool.decision_making.strategies.target_reliability_strategy import (
+    TargetReliabilityStrategy,
+)
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -52,6 +57,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
     CustomMeasureTimeBetaCalculator,
 )
@@ -68,6 +74,7 @@ from vrtool.orm.orm_controllers import (
     export_results_measures,
     export_results_optimization,
     export_results_safety_assessment,
+    get_all_measure_results_with_supported_investment_years,
     get_dike_section_solutions,
     get_dike_traject,
     get_exported_measure_result_ids,
@@ -246,7 +253,7 @@ class TestOrmControllers:
 
         _output_directory = test_results.joinpath(request.node.name)
         if _output_directory.exists():
-            shutil.rmtree(_vrtool_config.output_directory)
+            shutil.rmtree(_output_directory)
 
         # Generate a custom `VrtoolConfig`
         _vrtool_config = VrtoolConfig(
@@ -1071,36 +1078,6 @@ class TestCustomMeasureDetail:
             BETA=measure_beta,
         )
 
-    @pytest.fixture(name="custom_measures_vrtool_config")
-    def get_vrtool_config_for_custom_measures_db(
-        self, request: pytest.FixtureRequest
-    ) -> Iterator[VrtoolConfig]:
-        # 1. Define test data.
-        _marker = request.node.get_closest_marker("fixture_database")
-        if _marker is None:
-            _db_name = request.param
-        else:
-            _db_name = _marker.args[0]
-
-        _test_db = self._custom_measures_test_dir.joinpath(_db_name)
-        _output_directory = get_clean_test_results_dir(request)
-
-        # Create a copy of the database to avoid locking it
-        # or corrupting its data.
-        _copy_db = _output_directory.joinpath("vrtool_input.db")
-        shutil.copyfile(_test_db, _copy_db)
-
-        # Generate a custom `VrtoolConfig`
-        _vrtool_config = VrtoolConfig(
-            input_directory=_copy_db.parent,
-            input_database_name=_copy_db.name,
-            traject="38-1",
-            output_directory=_output_directory,
-        )
-        assert _vrtool_config.input_database_path.is_file()
-
-        yield _vrtool_config
-
     @pytest.mark.parametrize(
         "custom_measure_dict_list",
         [
@@ -1201,7 +1178,9 @@ class TestCustomMeasureDetail:
             ),
         ],
     )
-    @pytest.mark.fixture_database("without_custom_measures.db")
+    @pytest.mark.fixture_database(
+        _custom_measures_test_dir.joinpath("without_custom_measures.db")
+    )
     def test_add_custom_measures(
         self,
         custom_measure_dict_list: list[dict],
@@ -1211,14 +1190,6 @@ class TestCustomMeasureDetail:
         Integration test to verify adding new entries to the `orm.CustomMeasureDetail`
         and related tables under different workflows.
         """
-        # Auxiliar methods for validations.
-        def get_custom_measure_dict_hash(cm_dict: dict) -> str:
-            # Useful to compare uniqueness of a dictionary.
-            _dummy_dict = dict() | cm_dict
-            # The only key that does not need to be the same is the section name.
-            _dummy_dict.pop("SECTION_NAME")
-            return str(_dummy_dict)
-
         # 1. Define initial expectations.
         _known_computation_periods = [0, 19, 20, 25, 50, 75, 100]
         _custom_measures_grouped = list(
@@ -1334,7 +1305,7 @@ class TestCustomMeasureDetail:
                             _assessment.beta, rel=1e-6
                         )
 
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_only_one_measure_added_when_same_measure_per_section(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1389,7 +1360,7 @@ class TestCustomMeasureDetail:
             )
 
     @pytest.mark.slow
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_import_result_measures_with_custom_measures(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1424,7 +1395,7 @@ class TestCustomMeasureDetail:
         )
         assert _meas_ids == _custom_measure_detail_ids
 
-        assert len(_imported_data[0].measures) == 2
+        assert len(_imported_data[0].measures) == 3
 
         _years = custom_measures_vrtool_config.T
         _expected_betas = np.linspace(7, 4, num=7)
@@ -1435,10 +1406,13 @@ class TestCustomMeasureDetail:
             assert _measure.combine_type == CombinableTypeEnum.FULL
             assert _measure.start_cost == 0
             assert _measure.cost == _custom_measure_cost
-            assert _measure.lcc == _custom_measure_cost
             assert _measure.discount_rate == 0.03
             assert _measure.year == 0
             assert _measure.measure_result_id == 1
+            if isinstance(_measure, ShSgMeasure):
+                assert _measure.lcc == 0
+                continue
+            assert _measure.lcc == _custom_measure_cost
 
         # Verify betas for `sg_measure` as `MechanismEnum.PIPING` is only
         # compatible for `sg_measures`
@@ -1449,7 +1423,7 @@ class TestCustomMeasureDetail:
             assert _overflow_betas == pytest.approx(_expected_betas)
 
     @pytest.mark.slow
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_run_optimization_with_custom_measures(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1467,10 +1441,6 @@ class TestCustomMeasureDetail:
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.OptimizationRun.delete().execute(_db)
-            orm.OptimizationSelectedMeasure.delete().execute(_db)
-            orm.OptimizationStep.delete().execute(_db)
-            orm.OptimizationStepResultMechanism.delete().execute(_db)
-            orm.OptimizationStepResultSection.delete().execute(_db)
             assert any(orm.OptimizationRun.select()) is False
             assert any(orm.OptimizationSelectedMeasure.select()) is False
             assert any(orm.OptimizationStep.select()) is False
@@ -1501,7 +1471,9 @@ class TestCustomMeasureDetail:
                     == MeasureTypeEnum.CUSTOM.legacy_name
                 )
 
-    @pytest.mark.fixture_database("without_custom_measures.db")
+    @pytest.mark.fixture_database(
+        _custom_measures_test_dir.joinpath("without_custom_measures.db")
+    )
     def test_add_custom_measures_without_t0_from_csv_raises(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1519,7 +1491,7 @@ class TestCustomMeasureDetail:
         # 3. Verify expectations.
         assert _expected_error in str(exc_err.value)
 
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_safe_clear_custom_measure(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1534,8 +1506,7 @@ class TestCustomMeasureDetail:
             return list(
                 _mr.get_id()
                 for _mr in orm.MeasureResult.select()
-                if MeasureTypeEnum.get_enum(_mr.measure_type_name)
-                == MeasureTypeEnum.CUSTOM
+                if _mr.measure_type == MeasureTypeEnum.CUSTOM
             )
 
         def get_existing_optimization_custom_measure(
@@ -1661,7 +1632,7 @@ class TestCustomMeasureDetail:
                 is False
             )
 
-    @pytest.mark.fixture_database("vrtool_input.db")
+    @pytest.mark.fixture_database(_custom_measures_test_dir.joinpath("vrtool_input.db"))
     def test_brute_clear_custom_measure(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
@@ -1669,7 +1640,7 @@ class TestCustomMeasureDetail:
             return list(
                 _mr.get_id()
                 for _mr in orm.MeasureResult.select()
-                if _mr.measure_type_name == MeasureTypeEnum.CUSTOM.name
+                if _mr.measure_type == MeasureTypeEnum.CUSTOM
             )
 
         def get_existing_optimization_custom_measure(
@@ -1745,3 +1716,64 @@ class TestCustomMeasureDetail:
             _measure_result = _measure_x_section.measure_per_section_result[0]
             assert len(_measure_result.measure_result_section) == 1
             assert len(_measure_result.measure_result_mechanisms) == 1
+
+    @pytest.mark.slow
+    @pytest.mark.fixture_database(
+        _custom_measures_test_dir.joinpath("with_aggregated_measures.db")
+    )
+    def test_with_aggregated_measures_exports_optimization(
+        self, custom_measures_vrtool_config: VrtoolConfig
+    ):
+        # 1. Define test data.
+        _optimization_name = "OptimizationWithAggregatedCustomMeasures"
+        custom_measures_vrtool_config.traject = "16-1"
+        custom_measures_vrtool_config.excluded_mechanisms = [
+            MechanismEnum.REVETMENT,
+            MechanismEnum.HYDRAULIC_STRUCTURES,
+        ]
+        custom_measures_vrtool_config.externals = test_externals.joinpath(
+            "DStabilityConsole"
+        )
+
+        with open_database(custom_measures_vrtool_config.input_database_path) as _db:
+            orm.OptimizationRun.delete().execute(_db)
+            assert any(orm.OptimizationRun.select()) is False
+            assert any(orm.OptimizationSelectedMeasure.select()) is False
+            assert any(orm.OptimizationStep.select()) is False
+            assert any(orm.OptimizationStepResultMechanism.select()) is False
+            assert any(orm.OptimizationStepResultSection.select()) is False
+
+        # 2. Run test.
+        _all_measure_results = get_all_measure_results_with_supported_investment_years(
+            custom_measures_vrtool_config
+        )
+        _results = ApiRunWorkflows(custom_measures_vrtool_config).run_optimization(
+            _optimization_name, _all_measure_results
+        )
+
+        # 3. Verify expectations.
+        assert isinstance(_results, ResultsOptimization)
+        assert len(_results.results_strategies) == 2
+
+        # Greedy strategy
+        _greedy_result = next(
+            _rs
+            for _rs in _results.results_strategies
+            if isinstance(_rs, GreedyStrategy)
+        )
+        assert _greedy_result.OI_horizon == 50
+        assert _greedy_result.LCCOption.size > 0
+        assert any(_greedy_result.measures_taken)
+        assert any(_greedy_result.probabilities_per_step)
+        assert any(_greedy_result.total_risk_per_step)
+
+        # Target Reliability strategy
+        _target_reliability_result = next(
+            _rs
+            for _rs in _results.results_strategies
+            if isinstance(_rs, TargetReliabilityStrategy)
+        )
+        assert _target_reliability_result.OI_horizon == 50
+        assert any(_target_reliability_result.measures_taken)
+        assert any(_target_reliability_result.probabilities_per_step)
+        assert any(_target_reliability_result.total_risk_per_step)
