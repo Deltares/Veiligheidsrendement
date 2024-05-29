@@ -300,15 +300,22 @@ class TestAggregateCombinationsController:
             == _sh_combination.primary.measure_result_id
         )
 
-    def test_aggregated_measure_id_returns_sh_sg(
+    def test_aggregated_measure_id_returns_without_matching_measure_result_id_raises(
         self, valid_section_as_input: SectionAsInput
     ):
+        """
+        This tests validates that we DO NOT support handling aggregating measures that
+        do not have any "shared" measure result (VRTOOL-518).
+        Usually this error would not pop up until the export of the results.
+        """
         # 1. Define input
+        _sh_id = 1
+        _sg_id = 2
         _sh_combination = CombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=1,
+                measure_result_id=_sh_id,
                 year=0,
                 cost=100,
                 dcrest=0.5,
@@ -319,27 +326,22 @@ class TestAggregateCombinationsController:
             mechanism_year_collection=None,
             primary=OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-                measure_result_id=2,
+                measure_result_id=_sg_id,
                 year=0,
                 cost=50,
                 dberm=1.0,
             ),
             secondary=None,
         )
+        _expected_error = f"Geen `MeasureResult.id` gevonden tussen gecombineerd (primary) maatregelen met `MeasureResult.id`: Sh ({_sh_id}) en Sg ({_sg_id})."
 
         # 2. Run test
-        # _aggr_controller._section = MockSectionAsInput(measure_result_id=3)
         valid_section_as_input.combined_measures.append(_sh_combination)
         valid_section_as_input.combined_measures.append(_sg_combination)
 
         # 2. Run test
-        _created_aggregations = AggregateCombinationsController(
-            valid_section_as_input
-        ).aggregate()
+        with pytest.raises(ValueError) as exc_err:
+            AggregateCombinationsController(valid_section_as_input).aggregate()
 
         # 3. Verify expectations
-        assert len(_created_aggregations) == 1
-        # VRTOOL-518
-        # When no `ShSgMeasure` is present we simply return a 0.
-        # this will later on give an exception when trying to export.
-        assert _created_aggregations[0].measure_result_id == 0
+        assert str(exc_err.value) == _expected_error

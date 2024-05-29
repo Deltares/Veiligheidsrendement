@@ -22,14 +22,21 @@ class AggregateCombinationsController:
         if sg_comb.primary.dberm == 0:
             return sh_comb.primary.measure_result_id
 
-        return next(
+        _found_measure_result_id = next(
             (
                 m.measure_result_id
                 for m in self._section.sh_sg_measures
                 if m.matches_with_sh_sg_measure(sh_comb, sg_comb)
             ),
-            0,
+            None,
         )
+        if _found_measure_result_id is None:
+            _sh_str = f"Sh ({sh_comb.primary.measure_result_id})"
+            _sg_str = f"Sg ({sg_comb.primary.measure_result_id})"
+            raise ValueError(
+                f"Geen `MeasureResult.id` gevonden tussen gecombineerd (primary) maatregelen met `MeasureResult.id`: {_sh_str} en {_sg_str}."
+            )
+        return _found_measure_result_id
 
     def _make_aggregate(
         self, sh_combination: CombinedMeasure, sg_combination: CombinedMeasure
