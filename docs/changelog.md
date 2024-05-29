@@ -1,3 +1,19 @@
+## v0.3.0 (2024-05-29)
+
+### Feat
+
+- VRTOOL-514 custom measure detail with section column (#313)
+- VRTOOL-495 implement safe remove of custom measures
+- Added new method to remove custom measures and their results (#299)
+- Exporting CustomMeasure list of dicts does not require all T values (#297)
+- Added orm controller call to add custom measures VRTOOL-346 (#287)
+- Extra: Added new script to add measures to a database. (#302)
+
+### Fix
+
+- VRTOOL-518 aggregated custom measures do not have measure result (#314)
+- [vrtool-510] custom measure real case (#303)
+
 ## v0.2.0 (2024-04-29)
 
 ### Feat
@@ -83,14 +99,20 @@
 
 ### Fix
 
+- import was accidentally removed with merge.
+- take string to select beta rather than enum object
+- condition should contain not.
+- "the forgotten bracket"
 - add run id to ensure proper export when more than 2 runs are present in the database.
 - change empty to zeros as it is not always overwritten and should be zero. Also add more explicit warning for NaN values
 - add year to TakenMeasures
 - add condition to distinguish measures with different years. add copy to prevent ignoring start costs.
 - incorrect reference to redundant trajectdata that was not interpolated
 - optimize determining min year
+- reference data for revetment cases
 - update for revetment in case there Revetment is not an active mechanism at the section.
 - ensure revetment runs as well.
+- forgot to copy a pretty essential line.
 - fix error in indexing to avoid taking a 999 index.
 - further changes to indexing
 - fix error in indexing of measures + improvement to selection of measures to filter out measures with 0 dimensions
@@ -101,19 +123,38 @@
 - change df index to normalized enum name
 - normalize mechanism names from imported measure reliability
 - uniform method for creating list of mechanism names
+- add INVALID to excluded_mechanisms in api test case
+- add INVALID to excluded_mechanisms in api test case
 - typo in initialization
 - allow serialization of enum value
 - improve building excluded_mechanisms
-- improve finding enum;
+- resolve review comment
+- improve finding enum; extend test
+- improve finding enum; extend test
 - resolve most review comments
 - Corrected create statement
 - Small correction to the measure results filter
 - change mechanism string with enum names
 - improve refering to enum
 - imporove enum comparison
+- imporove enum comparison
+- improve refering to enum
 - improve refering to enum
 - Modified measure ORM tables and exporters to include mechanisms and reduce duplications of MeasureResultParameters
 - replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- replace input_database_path by input_database_name in config
+- small change in error message
 
 ## v0.0.4 (2023-09-11)
 
@@ -217,18 +258,25 @@
 
 ## v0.0.2 (2023-03-17)
 
+### Feat
+
+- **vrtool_config**: We can now load and save the VrtoolConfig data from/to json files
+- **run_workflows**: Created new module containing runnable workflows to assess, measure and optimize the given models
+- **__main__.py**: Added endpoint for calling to the tool from CLI either locally or when installing through pip
+- **vrtool_config.py**: Converted previous config.py script into a dataclass with default values. Added default unit_costs.csv file. Wrapped both files under the src/defaults module
+
 ### Fix
 
 - added config variable to set the discount rate
 - fix Sonarcloud issues
 - fixed failing tests
-- **vrtool_config**: Added __post_init__ method to allow mapping strings to paths where needed
-- Small correction on using a path instead of the stem to collect years
 - fixed failing test
 - fixed failing test
-- Corrected type hint
 -  fixed runtime error
 - fixed errors and formatted code
+- **vrtool_config**: Added __post_init__ method to allow mapping strings to paths where needed
+- Small correction on using a path instead of the stem to collect years
+- Corrected type hint
 - **src/run_workflows**: We now create the output directory and sub directories only when needed to avoid false expectations
 - **run_optimization.py**: We now safely create a directory during run_optimization
 - updated reference data for failing 16-3 case
@@ -240,16 +288,8 @@
 - updated test as Python doesn't perform symmetric set differences
 - **vrtool_config.py**: Modified parameters with list or dicts as types to be defined correctly by using field and default factories
 
-### Feat
-
-- **vrtool_config**: We can now load and save the VrtoolConfig data from/to json files
-- **run_workflows**: Created new module containing runnable workflows to assess, measure and optimize the given models
-- **__main__.py**: Added endpoint for calling to the tool from CLI either locally or when installing through pip
-- **vrtool_config.py**: Converted previous config.py script into a dataclass with default values. Added default unit_costs.csv file. Wrapped both files under the src/defaults module
-
 ### Refactor
 
 - **vrtool_run_full_model.py**: Converted previous RunModel.py into RunFullModel class, added related test
 
 ## v0.0.1 (2023-02-03)
-- Initial tag based on previous version from Wouter Jan Klerk (wouterjan.klerk@deltares.nl)
