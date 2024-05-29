@@ -127,24 +127,28 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             Iterator[type[MeasureAsInputProtocol]]: Iterator of types that can be used to import the given measure result.
         """
 
-        def valid_parameter(parameter_name: str) -> bool:
+        def parameter_not_relevant(parameter_name: str) -> bool:
             _parameter_value = measure_result.get_parameter_value(parameter_name)
             return math.isclose(_parameter_value, 0) or math.isnan(_parameter_value)
 
         _combinable_type = CombinableTypeEnum.get_enum(
             measure_result.combinable_type_name
         )
-        if ShMeasure.is_combinable_type_allowed(_combinable_type) and valid_parameter(
-            "dberm"
-        ):
+        if ShMeasure.is_combinable_type_allowed(
+            _combinable_type
+        ) and parameter_not_relevant("dberm"):
             yield ShMeasure
 
-        if SgMeasure.is_combinable_type_allowed(_combinable_type) and valid_parameter(
-            "dcrest"
-        ):
+        if SgMeasure.is_combinable_type_allowed(
+            _combinable_type
+        ) and parameter_not_relevant("dcrest"):
             yield SgMeasure
 
         if measure_result.measure_type == MeasureTypeEnum.CUSTOM:
+            # VRTOOL-518: To avoid not knowing which MeasureResult.id needs to be
+            # selected we opted to generate a ShSgMeasure to solve this issue.
+            # However, this will imply the creation of "too many" Custom
+            # `ShSgMeasure` which is accepted for now.
             yield ShSgMeasure
 
     def import_orm(self, orm_model: OrmMeasureResult) -> list[MeasureAsInputProtocol]:

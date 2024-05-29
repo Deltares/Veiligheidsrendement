@@ -24,7 +24,7 @@ class MeasureResult(OrmBaseModel):
         corresponding `vrtool.core` enum.
 
         Returns:
-            str: the mapped `MeasureTypeEnum`.
+            MeasureTypeEnum: the mapped `MeasureTypeEnum`.
         """
         return MeasureTypeEnum.get_enum(
             self.measure_per_section.measure.measure_type.name

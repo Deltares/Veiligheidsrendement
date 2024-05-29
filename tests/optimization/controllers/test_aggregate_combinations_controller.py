@@ -14,9 +14,6 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
-from vrtool.optimization.measures.measure_as_input_protocol import (
-    MeasureAsInputProtocol,
-)
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
@@ -38,7 +35,6 @@ class OverridenShMeasure(ShMeasure):
     transition_level: float = float("nan")
     dcrest: float = 0
     l_stab_screen: float = float("nan")
-    # _start_cost: float = 0
 
 
 @dataclass
@@ -52,7 +48,6 @@ class OverridenSgMeasure(SgMeasure):
     mechanism_year_collection: MechanismPerYearProbabilityCollection = None
     dberm: float = float("nan")
     l_stab_screen: float = float("nan")
-    # _start_cost: float = 0
 
 
 class TestAggregateCombinationsController:

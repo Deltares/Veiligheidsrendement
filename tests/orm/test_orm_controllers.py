@@ -1441,10 +1441,6 @@ class TestCustomMeasureDetail:
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.OptimizationRun.delete().execute(_db)
-            orm.OptimizationSelectedMeasure.delete().execute(_db)
-            orm.OptimizationStep.delete().execute(_db)
-            orm.OptimizationStepResultMechanism.delete().execute(_db)
-            orm.OptimizationStepResultSection.delete().execute(_db)
             assert any(orm.OptimizationRun.select()) is False
             assert any(orm.OptimizationSelectedMeasure.select()) is False
             assert any(orm.OptimizationStep.select()) is False
@@ -1741,10 +1737,6 @@ class TestCustomMeasureDetail:
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             orm.OptimizationRun.delete().execute(_db)
-            orm.OptimizationSelectedMeasure.delete().execute(_db)
-            orm.OptimizationStep.delete().execute(_db)
-            orm.OptimizationStepResultMechanism.delete().execute(_db)
-            orm.OptimizationStepResultSection.delete().execute(_db)
             assert any(orm.OptimizationRun.select()) is False
             assert any(orm.OptimizationSelectedMeasure.select()) is False
             assert any(orm.OptimizationStep.select()) is False
@@ -1752,7 +1744,6 @@ class TestCustomMeasureDetail:
             assert any(orm.OptimizationStepResultSection.select()) is False
 
         # 2. Run test.
-        clear_optimization_results(custom_measures_vrtool_config)
         _all_measure_results = get_all_measure_results_with_supported_investment_years(
             custom_measures_vrtool_config
         )

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.measures.common import floats_are_equal_or_nan
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -110,12 +110,17 @@ class CombinedMeasure:
             bool: Whether both combined measures can be conisered as matching.
         """
         # Check if the primary measures in both combinations match
+        def compatible_l_stab_screen() -> bool:
+            if math.isnan(self.primary.l_stab_screen) or math.isnan(
+                other.primary.l_stab_screen
+            ):
+                return True
+            return self.primary.l_stab_screen == other.primary.l_stab_screen
+
         return (
             self.primary.year == other.primary.year
             and self.primary.measure_type == other.primary.measure_type
-            and floats_are_equal_or_nan(
-                self.primary.l_stab_screen, other.primary.l_stab_screen
-            )
+            and compatible_l_stab_screen()
         )
 
     @classmethod
