@@ -13,6 +13,9 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.orm.io.importers.optimization.measures.measure_as_input_base_importer import (
     MeasureAsInputBaseImporter,
 )
+from vrtool.orm.io.importers.optimization.measures.sg_measure_importer import (
+    SgMeasureImporter,
+)
 from vrtool.orm.io.importers.optimization.measures.sh_measure_importer import (
     ShMeasureImporter,
 )
@@ -80,7 +83,7 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         if SgMeasure.is_combinable_type_allowed(
             _combinable_type
         ) and parameter_not_relevant("dcrest"):
-            yield ShMeasureImporter
+            yield SgMeasureImporter
 
         if measure_result.measure_type == MeasureTypeEnum.CUSTOM:
             # VRTOOL-518: To avoid not knowing which MeasureResult.id needs to be
