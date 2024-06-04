@@ -4,7 +4,7 @@ from peewee import SqliteDatabase
 
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
-from tests.orm.io.importers.measures.conftest import get_valid_measure
+from tests.orm.io.importers.decision_making.conftest import get_valid_measure
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
