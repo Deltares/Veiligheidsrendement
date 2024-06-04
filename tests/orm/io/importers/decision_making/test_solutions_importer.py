@@ -10,7 +10,7 @@ from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
-from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
+from vrtool.orm.io.importers.decision_making.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.measure_per_section import MeasurePerSection

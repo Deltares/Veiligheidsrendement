@@ -13,10 +13,10 @@ import vrtool.orm.models as orm
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
-from vrtool.orm.io.importers.measures.measure_result_importer import (
+from vrtool.orm.io.importers.decision_making.measure_result_importer import (
     MeasureResultImporter,
 )
+from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.orm_controllers import open_database
 
 OptimizationStepResult = (
