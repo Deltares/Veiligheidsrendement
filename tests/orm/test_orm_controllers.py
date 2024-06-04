@@ -17,6 +17,10 @@ from tests import (
     test_externals,
     test_results,
 )
+from tests.optimization.conftest import (
+    _get_section_with_combinations,
+    _get_section_with_measures,
+)
 from tests.orm import (
     get_basic_combinable_type,
     get_basic_dike_traject_info,
@@ -688,7 +692,7 @@ class TestOrmControllers:
         # 3. Verify expectations.
         assert len(orm.OptimizationStep.select()) == 1
         _optimization_step = orm.OptimizationStep.get()
-        assert _optimization_step.total_lcc == 84.0
+        assert _optimization_step.total_lcc == 42.0
         assert _optimization_step.total_risk == 100.0
         assert len(orm.OptimizationStepResultMechanism) == 10
         assert len(orm.OptimizationStepResultSection) == 3

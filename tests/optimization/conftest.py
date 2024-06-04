@@ -22,7 +22,7 @@ class OverridenShMeasure(ShMeasure):
     measure_type: MeasureTypeEnum
     measure_result_id: int = -1
     year: int = 0
-    cost: float = float("nan")
+    cost: float = 42
     start_cost: float = 0
     combine_type: CombinableTypeEnum = CombinableTypeEnum.FULL
     discount_rate: float = 0
@@ -38,7 +38,7 @@ class OverridenSgMeasure(SgMeasure):
     measure_type: MeasureTypeEnum
     measure_result_id: int = -1
     year: int = 0
-    cost: float = float("nan")
+    cost: float = 42
     start_cost: float = 0
     combine_type: CombinableTypeEnum = CombinableTypeEnum.FULL
     discount_rate: float = float("nan")
