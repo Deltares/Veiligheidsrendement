@@ -28,12 +28,12 @@ class SgMeasureImporter(MeasureAsInputBaseImporter):
                 math.isclose(_dberm, 0) or math.isnan(_dberm)
             )
 
-        if not is_initial_cost_measure() or self._measure_result.measure_type not in [
+        if is_initial_cost_measure() and self._measure_result.measure_type in [
             MeasureTypeEnum.SOIL_REINFORCEMENT,
             MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
         ]:
-            return 0
-        return section_cost
+            return section_cost
+        return 0
 
     def _get_concrete_parameters_as_dictionary(
         self, section_cost: float, investment_year: int

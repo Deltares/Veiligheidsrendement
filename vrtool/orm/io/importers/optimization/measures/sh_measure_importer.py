@@ -28,13 +28,13 @@ class ShMeasureImporter(MeasureAsInputBaseImporter):
                 math.isclose(_dcrest, 0) or math.isnan(_dcrest)
             )
 
-        if not is_initial_cost_measure() or self._measure_result.measure_type not in [
+        if is_initial_cost_measure() and self._measure_result.measure_type in [
             MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             MeasureTypeEnum.DIAPHRAGM_WALL,
             MeasureTypeEnum.STABILITY_SCREEN,
         ]:
-            return 0
-        return section_cost
+            return section_cost
+        return 0
 
     def _get_concrete_parameters_as_dictionary(
         self, section_cost: float, investment_year: int
