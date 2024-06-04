@@ -1,32 +1,29 @@
 import math
-from copy import deepcopy
 from typing import Iterator
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
-from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
-from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
-    MechanismPerYearProbabilityCollection,
-)
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
+from vrtool.orm.io.importers.optimization.measures.measure_as_input_base_importer import (
+    MeasureAsInputBaseImporter,
+)
+from vrtool.orm.io.importers.optimization.measures.sh_measure_importer import (
+    ShMeasureImporter,
+)
+from vrtool.orm.io.importers.optimization.measures.sh_sg_measure_importer import (
+    ShSgMeasureImporter,
+)
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure import Measure as OrmMeasure
 from vrtool.orm.models.measure_result.measure_result import (
     MeasureResult as OrmMeasureResult,
 )
-from vrtool.orm.models.measure_result.measure_result_section import (
-    MeasureResultSection as OrmMeasureResultSection,
-)
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
-from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class OptimizationMeasureResultImporter(OrmImporterProtocol):
@@ -41,7 +38,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
     investment_years: list[int]
 
     def __init__(
-        self, vrtool_config: VrtoolConfig, investment_years: list[int]
+        self,
+        vrtool_config: VrtoolConfig,
+        investment_years: list[int],
     ) -> None:
         if not vrtool_config:
             raise ValueError("VrtoolConfig not provided.")
@@ -50,81 +49,20 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         self.unit_costs = vrtool_config.unit_costs
         self.investment_years = investment_years
 
-    def _get_mechanism_year_collection(
-        self,
-        mechanism_measure_results: list[MechanismPerSection],
-        allowed_mechanisms: list[MechanismEnum],
-    ) -> MechanismPerYearProbabilityCollection:
-
-        _mech_collection = MechanismPerYearProbabilityCollection([])
-        for _mech_result in mechanism_measure_results:
-            _mech_enum = MechanismEnum.get_enum(
-                _mech_result.mechanism_per_section.mechanism.name
-            )
-            if _mech_enum not in allowed_mechanisms:
-                continue
-
-            _mech_per_year = MechanismPerYear(
-                _mech_enum,
-                year=_mech_result.time,
-                probability=beta_to_pf(_mech_result.beta),
-            )
-            _mech_collection.probabilities.append(_mech_per_year)
-
-        return _mech_collection
-
-    def _create_measure(
-        self,
-        measure_result: OrmMeasureResult,
-        measure_as_input_type: type[MeasureAsInputProtocol],
-    ) -> list[MeasureAsInputProtocol]:
-        _mech_year_coll = self._get_mechanism_year_collection(
-            measure_result.measure_result_mechanisms,
-            measure_as_input_type.get_allowed_mechanisms(),
-        )
-        _measure_concrete_params = measure_as_input_type.get_concrete_parameters()
-        _measures_dicts = []
-        for _section_result in measure_result.measure_result_section.where(
-            OrmMeasureResultSection.time == 0
-        ):
-            # Create a measure for each investment year (VRTOOL-431).
-            for _year in self.investment_years:
-                _cost = _section_result.cost
-                _measures_dicts.append(
-                    dict(
-                        measure_result_id=measure_result.id,
-                        measure_type=MeasureTypeEnum.get_enum(
-                            measure_result.measure_per_section.measure.measure_type.name
-                        ),
-                        combine_type=CombinableTypeEnum.get_enum(
-                            measure_result.measure_per_section.measure.combinable_type.name
-                        ),
-                        cost=_cost,
-                        year=_year,
-                        discount_rate=self.discount_rate,
-                        mechanism_year_collection=deepcopy(_mech_year_coll),
-                    )
-                    | {
-                        _param: measure_result.get_parameter_value(_param)
-                        for _param in _measure_concrete_params
-                    }
-                )
-
-        return list(map(lambda x: measure_as_input_type(**x), _measures_dicts))
-
     @staticmethod
-    def get_measure_as_input_types(
+    def get_measure_as_input_importer_type(
         measure_result: OrmMeasureResult,
-    ) -> Iterator[type[MeasureAsInputProtocol]]:
+    ) -> Iterator[type[MeasureAsInputBaseImporter]]:
         """
-        Gets the corresponding imported type(s) for a `MeasureResult`.
+        Gets the corresponding importer type(s) for a `MeasureResult`.
         It could also be that no type is available for the given `MeasureResult`.
 
         Args:
             measure_result (OrmMeasureResult): Measure result to import.
 
         Yields:
-            Iterator[type[MeasureAsInputProtocol]]: Iterator of types that can be used to import the given measure result.
+            Iterator[type[MeasureAsInputBaseImporter]]: Iterator of importer types
+              that can be used to import the given measure result.
         """
 
         def parameter_not_relevant(parameter_name: str) -> bool:
@@ -137,19 +75,19 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         if ShMeasure.is_combinable_type_allowed(
             _combinable_type
         ) and parameter_not_relevant("dberm"):
-            yield ShMeasure
+            yield ShMeasureImporter
 
         if SgMeasure.is_combinable_type_allowed(
             _combinable_type
         ) and parameter_not_relevant("dcrest"):
-            yield SgMeasure
+            yield ShMeasureImporter
 
         if measure_result.measure_type == MeasureTypeEnum.CUSTOM:
             # VRTOOL-518: To avoid not knowing which MeasureResult.id needs to be
             # selected we opted to generate a ShSgMeasure to solve this issue.
             # However, this will imply the creation of "too many" Custom
             # `ShSgMeasure` which is accepted for now.
-            yield ShSgMeasure
+            yield ShSgMeasureImporter
 
     def import_orm(self, orm_model: OrmMeasureResult) -> list[MeasureAsInputProtocol]:
 
@@ -158,10 +96,16 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
         _imported_measures = []
 
-        for _mip_type in self.get_measure_as_input_types(orm_model):
-            _imported_measures.extend(self._create_measure(orm_model, _mip_type))
+        for _mip_importer_type in self.get_measure_as_input_importer_type(orm_model):
+            _mip_importer = _mip_importer_type(
+                orm_model, self.investment_years, self.discount_rate
+            )
+            _imported_measures.extend(_mip_importer.create_measure())
 
         if not _imported_measures:
-            _imported_measures.extend(self._create_measure(orm_model, ShSgMeasure))
+            _shsg_importer = ShSgMeasureImporter(
+                orm_model, self.investment_years, self.discount_rate
+            )
+            _imported_measures.extend(_shsg_importer.create_measure())
 
         return _imported_measures

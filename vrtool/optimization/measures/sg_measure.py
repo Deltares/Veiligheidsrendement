@@ -1,4 +1,3 @@
-import logging
 import math
 from dataclasses import dataclass
 
@@ -28,7 +27,6 @@ class SgMeasure(MeasureAsInputProtocol):
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
     l_stab_screen: float
-    _start_cost: float = 0
 
     @property
     def lcc(self) -> float:
@@ -44,36 +42,6 @@ class SgMeasure(MeasureAsInputProtocol):
             if self.dberm in [0, -999] and math.isnan(self.l_stab_screen):
                 return 0
         return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
-
-    @property
-    def start_cost(self) -> float:
-        """
-        Gets the initial cost for this measure. This is a "protected" property as its
-        value depends on which other measures are present as well as its measure type
-        (`MeasureTypeEnum`).
-
-        Returns:
-            float: The start cost value.
-        """
-        return self._start_cost
-
-    @start_cost.setter
-    def start_cost(self, value: float):
-        if self.measure_type not in [
-            MeasureTypeEnum.SOIL_REINFORCEMENT,
-            MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-        ]:
-            logging.debug(
-                "Start cost for {} must be always 0. (Attempt to set to {}).".format(
-                    self.measure_type, value
-                )
-            )
-            value = 0
-        self._start_cost = value
-
-    @staticmethod
-    def get_concrete_parameters() -> list[str]:
-        return ["dberm", "l_stab_screen"]
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -99,11 +67,3 @@ class SgMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE,
             CombinableTypeEnum.PARTIAL,
         ]
-
-    def is_initial_cost_measure(self) -> bool:
-        if self.year != 0:
-            return False
-
-        return math.isnan(self.l_stab_screen) and (
-            math.isclose(self.dberm, 0) or math.isnan(self.dberm)
-        )

@@ -36,10 +36,6 @@ class ShSgMeasure(MeasureAsInputProtocol):
     lcc: float = 0
 
     @staticmethod
-    def get_concrete_parameters() -> list[str]:
-        return ["dberm", "dcrest", "l_stab_screen"]
-
-    @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
         return mechanism in ShSgMeasure.get_allowed_mechanisms()
 
@@ -52,9 +48,6 @@ class ShSgMeasure(MeasureAsInputProtocol):
         dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
     ):
         return {}
-
-    def is_initial_cost_measure(self) -> bool:
-        return False
 
     def matches_with_sh_sg_measure(
         self, sh_combination: CombinedMeasure, sg_combination: CombinedMeasure

@@ -56,23 +56,12 @@ class OptimizationSectionAsInputImporter:
         """
         _section_imported_measures: list[MeasureAsInputProtocol] = []
         _section_data, _measure_results_dict = section_data_results
-        _initial_costs_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
 
         for _measure_result, _investment_years in _measure_results_dict.items():
             _imported_measures = OptimizationMeasureResultImporter(
                 self.config, _investment_years
             ).import_orm(_measure_result)
             _section_imported_measures.extend(_imported_measures)
-
-            # Update the initial costs dictionary if possible (avoids extra computations later on).
-            for _im in filter(
-                lambda x: x.is_initial_cost_measure(), _imported_measures
-            ):
-                _initial_costs_dictionary[type(_im)][_im.measure_type] = _im.cost
-
-        # Update initial costs for all imported measures
-        for _im in _section_imported_measures:
-            _im.start_cost = _initial_costs_dictionary[type(_im)][_im.measure_type]
 
         return SectionAsInput(
             section_name=_section_data.section_name,
