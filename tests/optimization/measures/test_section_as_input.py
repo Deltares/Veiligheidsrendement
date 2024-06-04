@@ -1,12 +1,8 @@
-from typing import Iterator
-
 import pytest
 
-from tests.optimization import OverridenSgMeasure, OverridenShMeasure
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
@@ -20,52 +16,6 @@ _mechm = MechanismEnum.OVERFLOW
 
 
 class TestSectionAsInput:
-    @pytest.fixture(name="section_with_measures")
-    def _get_section_with_measures(self) -> Iterator[SectionAsInput]:
-        yield SectionAsInput(
-            section_name="section_name",
-            traject_name="traject_name",
-            flood_damage=0,
-            measures=[
-                OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
-                OverridenShMeasure(MeasureTypeEnum.REVETMENT),
-                OverridenSgMeasure(
-                    MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
-                ),
-                OverridenSgMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
-            ],
-        )
-
-    @pytest.fixture(name="section_with_combinations")
-    def _get_section_with_combinations(
-        self, section_with_measures: SectionAsInput
-    ) -> Iterator[SectionAsInput]:
-        section_with_measures.combined_measures = [
-            CombinedMeasure.from_input(
-                OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
-                None,
-                None,
-                0,
-            ),
-            CombinedMeasure.from_input(
-                OverridenShMeasure(
-                    MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
-                ),
-                None,
-                None,
-                1,
-            ),
-            CombinedMeasure.from_input(
-                OverridenSgMeasure(
-                    MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
-                ),
-                None,
-                None,
-                2,
-            ),
-        ]
-        yield section_with_measures
-
     def test_get_sh_measures(self, section_with_measures: SectionAsInput):
         # 1-2. Run test
         _sh_measures = section_with_measures.sh_measures

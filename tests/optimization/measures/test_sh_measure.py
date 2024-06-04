@@ -18,6 +18,7 @@ class TestShMeasure:
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=10.5,
+            start_cost=4.2,
             year=10,
             discount_rate=0.03,
             mechanism_year_collection=None,
@@ -41,13 +42,13 @@ class TestShMeasure:
         assert _measure.measure_type == _measure_type
         assert _measure.combine_type == _combine_type
         assert _measure.cost == pytest.approx(10.5)
+        assert _measure.start_cost == pytest.approx(4.2)
         assert _measure.year == 10
         assert _measure.discount_rate == pytest.approx(0.03)
         assert _measure.mechanism_year_collection is None
         assert _measure.beta_target == pytest.approx(1.1)
         assert _measure.transition_level == pytest.approx(0.5)
         assert _measure.dcrest == pytest.approx(0.1)
-        assert _measure.start_cost == pytest.approx(0)
 
     @pytest.mark.parametrize("dcrest_value", [pytest.param(0), pytest.param(-999)])
     def test_given_dcrest_0_lcc_returns_0(self, dcrest_value: float):
@@ -108,56 +109,6 @@ class TestShMeasure:
         # 3. Verify final expectations.
         assert _result != 0
 
-    @pytest.mark.parametrize(
-        "measure_type",
-        [
-            pytest.param(mt)
-            for mt in MeasureTypeEnum
-            if mt
-            not in [
-                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
-                MeasureTypeEnum.DIAPHRAGM_WALL,
-                MeasureTypeEnum.STABILITY_SCREEN,
-            ]
-        ],
-    )
-    def test_given_unsupported_measure_type_when_set_start_cost_value_is_set_to_0(
-        self, measure_type: MeasureTypeEnum
-    ):
-        # 1. Define test data.
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(measure_type, _combine_type)
-        assert _measure.start_cost == pytest.approx(0)
-
-        # 2. Run test.
-        _measure.start_cost = 42
-
-        # 3. Verify expectations.
-        assert _measure.start_cost == pytest.approx(0)
-
-    @pytest.mark.parametrize(
-        "measure_type",
-        [
-            pytest.param(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
-            pytest.param(MeasureTypeEnum.DIAPHRAGM_WALL),
-            pytest.param(MeasureTypeEnum.STABILITY_SCREEN),
-        ],
-    )
-    def test_given_supported_measure_type_when_set_start_cost_value_is_set_to_0(
-        self, measure_type: MeasureTypeEnum
-    ):
-        # 1. Define test data.
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(measure_type, _combine_type)
-        assert _measure.start_cost == pytest.approx(0)
-        _new_value = 42
-
-        # 2. Run test.
-        _measure.start_cost = _new_value
-
-        # 3. Verify expectations.
-        assert _measure.start_cost == pytest.approx(_new_value)
-
     def test_lcc(self):
         # 1. Define input
         _measure = self._create_sh_measure(
@@ -201,56 +152,3 @@ class TestShMeasure:
         # 3. Verify expectations
         assert isinstance(_allowed_combinations, dict)
         assert _allowed_combinations
-
-    @pytest.mark.parametrize(
-        "dcrest_value",
-        [
-            pytest.param(0),
-            pytest.param(float("nan")),
-        ],
-    )
-    def test_is_initial_cost_measure_when_year_0_and_dcrest_0_or_nan_then_is_true(
-        self, dcrest_value: float
-    ):
-        # 1. Define test data.
-        _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
-        _measure.dcrest = dcrest_value
-        _measure.year = 0
-
-        # 2. Run test and verify expectations.
-        assert _measure.is_initial_cost_measure() is True
-
-    @pytest.mark.parametrize(
-        "dcrest_value",
-        [
-            pytest.param(0),
-            pytest.param(float("nan")),
-        ],
-    )
-    def test_is_initial_cost_measure_when_year_not_0_and_dcrest_0_or_nan_then_is_false(
-        self, dcrest_value: float
-    ):
-        # 1. Define test data.
-        _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
-        _measure.dcrest = dcrest_value
-        _measure.year = 4
-
-        # 2. Run test and verify expectations.
-        assert _measure.is_initial_cost_measure() is False
-
-    def test_is_initial_cost_measure_when_year_0_and_dcrest_not_0_or_not_nan_then_is_false(
-        self,
-    ):
-        # 1. Define test data.
-        _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
-        _measure.dcrest = 4.2
-        _measure.year = 0
-
-        # 2. Run test and verify expectations.
-        assert _measure.is_initial_cost_measure() is False

@@ -17,7 +17,6 @@ from tests import (
     test_externals,
     test_results,
 )
-from tests.optimization.measures.test_section_as_input import TestSectionAsInput
 from tests.orm import (
     get_basic_combinable_type,
     get_basic_dike_traject_info,
@@ -612,6 +611,7 @@ class TestOrmControllers:
         results_measures_with_mocked_data: tuple[
             MeasureResultTestInputData, ResultsMeasures
         ],
+        section_with_combinations: SectionAsInput,
     ):
         # 1. Define test data.
         _measures_input_data, _results_measures = results_measures_with_mocked_data
@@ -641,7 +641,7 @@ class TestOrmControllers:
         class MockedStrategy(StrategyProtocol):
             def __init__(self):
 
-                self.sections = [TestSectionAsInput()._get_section_with_combinations()]
+                self.sections = [section_with_combinations]
                 self.sections[0].aggregated_measure_combinations = [
                     AggregatedMeasureCombination(
                         sh_combination=self.sections[0].sh_combinations[1],

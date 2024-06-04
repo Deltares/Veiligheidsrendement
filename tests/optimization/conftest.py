@@ -5,12 +5,14 @@ import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
@@ -53,3 +55,51 @@ def make_sh_measure() -> Iterator[type[MeasureAsInputProtocol]]:
 @pytest.fixture
 def make_sg_measure() -> Iterator[type[MeasureAsInputProtocol]]:
     yield OverridenSgMeasure
+
+
+@pytest.fixture(name="section_with_measures")
+def _get_section_with_measures() -> Iterator[SectionAsInput]:
+    yield SectionAsInput(
+        section_name="section_name",
+        traject_name="traject_name",
+        flood_damage=0,
+        measures=[
+            OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
+            OverridenShMeasure(MeasureTypeEnum.REVETMENT),
+            OverridenSgMeasure(
+                MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+            ),
+            OverridenSgMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
+        ],
+    )
+
+
+@pytest.fixture(name="section_with_combinations")
+def _get_section_with_combinations(
+    section_with_measures: SectionAsInput,
+) -> Iterator[SectionAsInput]:
+    section_with_measures.combined_measures = [
+        CombinedMeasure.from_input(
+            OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
+            None,
+            None,
+            0,
+        ),
+        CombinedMeasure.from_input(
+            OverridenShMeasure(
+                MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+            ),
+            None,
+            None,
+            1,
+        ),
+        CombinedMeasure.from_input(
+            OverridenSgMeasure(
+                MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+            ),
+            None,
+            None,
+            2,
+        ),
+    ]
+    yield section_with_measures

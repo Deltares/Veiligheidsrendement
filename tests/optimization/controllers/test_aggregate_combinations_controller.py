@@ -4,7 +4,7 @@ from typing import Iterator
 
 import pytest
 
-from tests.optimization import OverridenSgMeasure, OverridenShMeasure
+from tests.optimization.conftest import OverridenSgMeasure, OverridenShMeasure
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.optimization.controllers.aggregate_combinations_controller import (
     AggregateCombinationsController,
