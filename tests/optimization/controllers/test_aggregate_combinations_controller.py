@@ -28,6 +28,7 @@ class OverridenShMeasure(ShMeasure):
     measure_result_id: int = -1
     year: int = 0
     cost: float = float("nan")
+    start_cost: float = 0
     combine_type: CombinableTypeEnum = CombinableTypeEnum.FULL
     discount_rate: float = 0
     mechanism_year_collection: MechanismPerYearProbabilityCollection = None
@@ -43,6 +44,7 @@ class OverridenSgMeasure(SgMeasure):
     measure_result_id: int = -1
     year: int = 0
     cost: float = float("nan")
+    start_cost: float = 0
     combine_type: CombinableTypeEnum = CombinableTypeEnum.FULL
     discount_rate: float = float("nan")
     mechanism_year_collection: MechanismPerYearProbabilityCollection = None

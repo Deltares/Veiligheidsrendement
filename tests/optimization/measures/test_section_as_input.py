@@ -25,6 +25,7 @@ class MockShMeasure(ShMeasure):
     measure_result_id: int = 42
     combine_type: None = None
     cost: float = 0
+    start_cost: float = 0
     discount_rate: float = 0
     year: int = 0
     lcc: float = 42
@@ -41,6 +42,7 @@ class MockSgMeasure(SgMeasure):
     measure_result_id: int = 42
     combine_type: None = None
     cost: float = 0
+    start_cost: float = 0
     discount_rate: float = 0
     year: int = 0
     lcc: float = 42
