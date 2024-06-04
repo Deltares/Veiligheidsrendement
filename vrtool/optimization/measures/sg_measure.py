@@ -22,6 +22,7 @@ class SgMeasure(MeasureAsInputProtocol):
     combine_type: CombinableTypeEnum
     measure_result_id: int
     cost: float
+    start_cost: float
     year: int
     discount_rate: float
     mechanism_year_collection: MechanismPerYearProbabilityCollection

@@ -23,6 +23,7 @@ class ShMeasure(MeasureAsInputProtocol):
     combine_type: CombinableTypeEnum
     measure_result_id: int
     cost: float
+    start_cost: float
     discount_rate: float
     year: int
     mechanism_year_collection: MechanismPerYearProbabilityCollection
@@ -71,11 +72,3 @@ class ShMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE,
             CombinableTypeEnum.REVETMENT,
         ]
-
-    def is_initial_cost_measure(self) -> bool:
-        if self.year != 0:
-            return False
-
-        return math.isnan(self.l_stab_screen) and (
-            math.isclose(self.dcrest, 0) or math.isnan(self.dcrest)
-        )
