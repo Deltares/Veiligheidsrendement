@@ -1,7 +1,13 @@
 from dataclasses import dataclass
+from typing import Iterator
+
+import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
@@ -37,3 +43,13 @@ class OverridenSgMeasure(SgMeasure):
     mechanism_year_collection: MechanismPerYearProbabilityCollection = None
     dberm: float = float("nan")
     l_stab_screen: float = float("nan")
+
+
+@pytest.fixture
+def make_sh_measure() -> Iterator[type[MeasureAsInputProtocol]]:
+    yield OverridenShMeasure
+
+
+@pytest.fixture
+def make_sg_measure() -> Iterator[type[MeasureAsInputProtocol]]:
+    yield OverridenSgMeasure
