@@ -12,7 +12,7 @@ class ShSgMeasureImporter(MeasureAsInputBaseImporter):
         return ShSgMeasure
 
     def _get_concrete_parameters_as_dictionary(
-        self, investment_year: int
+        self, section_cost: float, investment_year: int
     ) -> dict[str, Any]:
         return {
             _parameter_name: self._measure_result.get_parameter_value(_parameter_name)
