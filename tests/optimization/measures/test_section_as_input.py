@@ -91,18 +91,18 @@ class TestSectionAsInput:
         _dummy_discount_rate = 0.05
         _dummy_start_cost = 0
         _measure = ShMeasure(
-            42,
-            MeasureTypeEnum.REVETMENT,
-            CombinableTypeEnum.REVETMENT,
-            _dummy_cost,
-            _dummy_start_cost,
-            _dummy_discount_rate,
-            year,
-            _collection,
-            revetment_params[0],
-            revetment_params[1],
-            revetment_params[2],
-            float("nan"),
+            measure_result_id=42,
+            measure_type=MeasureTypeEnum.REVETMENT,
+            combine_type=CombinableTypeEnum.REVETMENT,
+            cost=_dummy_cost,
+            base_cost=_dummy_start_cost,
+            discount_rate=_dummy_discount_rate,
+            year=year,
+            mechanism_year_collection=_collection,
+            beta_target=revetment_params[0],
+            transition_level=revetment_params[1],
+            dcrest=revetment_params[2],
+            l_stab_screen=float("nan"),
         )
         return _measure
 

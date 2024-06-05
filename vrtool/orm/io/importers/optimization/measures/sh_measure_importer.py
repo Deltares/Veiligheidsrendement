@@ -31,14 +31,14 @@ class ShMeasureImporter(MeasureAsInputBaseImporter):
             _cost_dictionary[_sh_measure.measure_type] = _sh_measure.cost
 
         for _sh_measure in measure_as_input_collection:
-            _start_cost = _cost_dictionary[_sh_measure.measure_type]
+            _base_cost = _cost_dictionary[_sh_measure.measure_type]
             if _sh_measure.measure_type not in [
                 MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
                 MeasureTypeEnum.DIAPHRAGM_WALL,
                 MeasureTypeEnum.STABILITY_SCREEN,
             ]:
-                _start_cost = 0.0
-            _sh_measure.start_cost = _start_cost
+                _base_cost = 0.0
+            _sh_measure.base_cost = _base_cost
 
     def _get_concrete_parameters_as_dictionary(self) -> dict[str, Any]:
         _concrete_params_dict = {

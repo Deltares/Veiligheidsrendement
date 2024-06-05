@@ -31,13 +31,13 @@ class SgMeasureImporter(MeasureAsInputBaseImporter):
             _cost_dictionary[_sg_measure.measure_type] = _sg_measure.cost
 
         for _sg_measure in measure_as_input_collection:
-            _start_cost = _cost_dictionary[_sg_measure.measure_type]
+            _base_cost = _cost_dictionary[_sg_measure.measure_type]
             if _sg_measure.measure_type not in [
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
             ]:
-                _start_cost = 0.0
-            _sg_measure.start_cost = _start_cost
+                _base_cost = 0.0
+            _sg_measure.base_cost = _base_cost
 
     def _get_concrete_parameters_as_dictionary(self) -> dict[str, Any]:
         _concrete_params_dict = {
