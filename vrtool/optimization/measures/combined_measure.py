@@ -23,6 +23,13 @@ class CombinedMeasure:
     sequence_nr: int = None
 
     def is_initial_measure(self) -> bool:
+        """
+        Determines whether this `CombinedMeasure` could be considered
+        as an initial measure (usually when `dberm` / `dcrest` equal to 0).
+
+        Returns:
+            bool: True when its primary measure is an initial measure.
+        """
         return self.primary.is_initial_measure()
 
     @property
