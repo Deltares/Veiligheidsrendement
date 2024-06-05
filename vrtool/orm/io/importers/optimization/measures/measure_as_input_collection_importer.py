@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from copy import deepcopy
 from typing import Any
 
@@ -12,8 +11,8 @@ from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
-from vrtool.orm.models.measure_result.measure_result import (
-    MeasureResult as OrmMeasureResult,
+from vrtool.orm.io.importers.optimization.measures.measure_as_input_importer_data import (
+    MeasureAsInputImporterData,
 )
 from vrtool.orm.models.measure_result.measure_result_section import (
     MeasureResultSection as OrmMeasureResultSection,
@@ -21,38 +20,18 @@ from vrtool.orm.models.measure_result.measure_result_section import (
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
-class MeasureAsInputBaseImporter:
+class MeasureAsInputCollectionImporter:
     def __init__(
-        self,
-        measure_result: OrmMeasureResult,
-        investment_years: list[int],
-        discount_rate: float,
+        self, measure_as_input_importer_data: MeasureAsInputImporterData
     ) -> None:
-        self._measure_result = measure_result
-        self._investment_years = investment_years
+        self._measure_result = measure_as_input_importer_data.measure_result
+        self._investment_years = measure_as_input_importer_data.investment_years
+        self._measure_as_input_type = (
+            measure_as_input_importer_data.measure_as_input_type
+        )
         self._mech_year_coll = self._get_mechanism_year_collection()
-        self._discount_rate = discount_rate
-
-    @property
-    @abstractmethod
-    def _measure_as_input_type(self) -> type[MeasureAsInputProtocol]:
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def set_initial_cost(measure_as_input_collection: list[MeasureAsInputProtocol]):
-        """
-        Sets the initial cost to the given measure as input when applicable.
-
-        Args:
-            measure_as_input_collection (list[MeasureAsInputProtocol]):
-                Collection of `MeasureAsInputProtocol` whose initial costs should be set.
-        """
-        pass
-
-    @abstractmethod
-    def _get_concrete_parameters_as_dictionary(self):
-        pass
+        self._discount_rate = measure_as_input_importer_data.discount_rate
+        self._concrete_parameters = measure_as_input_importer_data.concrete_parameters
 
     def _get_mechanism_year_collection(self) -> MechanismPerYearProbabilityCollection:
         _mech_collection = MechanismPerYearProbabilityCollection([])
@@ -76,22 +55,23 @@ class MeasureAsInputBaseImporter:
     def _get_measure_as_input_dictionary(
         self, section_cost: float, investment_year: int
     ) -> dict[str, Any]:
-        return (
-            dict(
-                measure_result_id=self._measure_result.id,
-                measure_type=MeasureTypeEnum.get_enum(
-                    self._measure_result.measure_per_section.measure.measure_type.name
-                ),
-                combine_type=CombinableTypeEnum.get_enum(
-                    self._measure_result.measure_per_section.measure.combinable_type.name
-                ),
-                cost=section_cost,
-                year=investment_year,
-                discount_rate=self._discount_rate,
-                mechanism_year_collection=deepcopy(self._mech_year_coll),
-            )
-            | self._get_concrete_parameters_as_dictionary()
-        )
+        return dict(
+            measure_result_id=self._measure_result.id,
+            measure_type=MeasureTypeEnum.get_enum(
+                self._measure_result.measure_per_section.measure.measure_type.name
+            ),
+            combine_type=CombinableTypeEnum.get_enum(
+                self._measure_result.measure_per_section.measure.combinable_type.name
+            ),
+            cost=section_cost,
+            base_cost=0.0,
+            year=investment_year,
+            discount_rate=self._discount_rate,
+            mechanism_year_collection=deepcopy(self._mech_year_coll),
+        ) | {
+            _parameter_name: self._measure_result.get_parameter_value(_parameter_name)
+            for _parameter_name in self._concrete_parameters
+        }
 
     def import_measure_as_input_collection(self) -> list[MeasureAsInputProtocol]:
         """

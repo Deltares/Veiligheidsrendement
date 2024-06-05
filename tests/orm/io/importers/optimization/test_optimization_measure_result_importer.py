@@ -71,7 +71,7 @@ class TestOptimizationMeasureResultImporter:
         with open_database(
             custom_measures_vrtool_config.input_database_path
         ).connection_context():
-            _importer_types = OptimizationMeasureResultImporter.get_measure_as_input_importer_type(
+            _importer_types = OptimizationMeasureResultImporter.get_measure_as_input_importer_data(
                 # The provided database only contains 'Custom' MeasureResult rows.
                 # so we do not need to worry further.
                 OrmMeasureResult.select().get()

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.measures.measure_as_input_protocol import (
@@ -10,16 +12,6 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
-from vrtool.orm.io.importers.optimization.measures.sg_measure_importer import (
-    SgMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_measure_importer import (
-    ShMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_sg_measure_importer import (
-    ShSgMeasureImporter,
-)
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
 )
@@ -82,9 +74,23 @@ class OptimizationSectionAsInputImporter:
                 )
             )
 
-        SgMeasureImporter.set_initial_cost(filter_by_type(SgMeasure))
-        ShMeasureImporter.set_initial_cost(filter_by_type(ShMeasure))
-        ShSgMeasureImporter.set_initial_cost(filter_by_type(ShSgMeasure))
+        def set_initial_cost(measure_type: type[MeasureAsInputProtocol]):
+            _cost_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
+            _measure_collection = filter_by_type(measure_type)
+            for _sg_measure in filter(
+                measure_type.is_initial_measure, _measure_collection
+            ):
+                _cost_dictionary[_sg_measure.measure_type][
+                    _sg_measure.l_stab_screen
+                ] = _sg_measure.cost
+
+            for _sg_measure in _measure_collection:
+                _sg_measure.base_cost = _cost_dictionary[_sg_measure.measure_type][
+                    _sg_measure.l_stab_screen
+                ]
+
+        set_initial_cost(SgMeasure)
+        set_initial_cost(ShMeasure)
 
         return SectionAsInput(
             section_name=_section_data.section_name,

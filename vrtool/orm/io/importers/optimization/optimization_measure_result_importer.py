@@ -10,17 +10,12 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.orm.io.importers.optimization.measures.measure_as_input_base_importer import (
-    MeasureAsInputBaseImporter,
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
+from vrtool.orm.io.importers.optimization.measures.measure_as_input_collection_importer import (
+    MeasureAsInputCollectionImporter,
 )
-from vrtool.orm.io.importers.optimization.measures.sg_measure_importer import (
-    SgMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_measure_importer import (
-    ShMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_sg_measure_importer import (
-    ShSgMeasureImporter,
+from vrtool.orm.io.importers.optimization.measures.measure_as_input_importer_data import (
+    MeasureAsInputImporterData,
 )
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.measure import Measure as OrmMeasure
@@ -53,9 +48,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         self.investment_years = investment_years
 
     @staticmethod
-    def get_measure_as_input_importer_type(
+    def get_measure_as_input_importer_data(
         measure_result: OrmMeasureResult,
-    ) -> Iterator[type[MeasureAsInputBaseImporter]]:
+    ) -> Iterator[type[MeasureAsInputImporterData]]:
         """
         Gets the corresponding importer type(s) for a `MeasureResult`.
         It could also be that no type is available for the given `MeasureResult`.
@@ -78,19 +73,35 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         if ShMeasure.is_combinable_type_allowed(
             _combinable_type
         ) and parameter_not_relevant("dberm"):
-            yield ShMeasureImporter
+            yield MeasureAsInputImporterData(
+                measure_as_input_type=ShMeasure,
+                concrete_parameters=[
+                    "beta_target",
+                    "transition_level",
+                    "dcrest",
+                    "l_stab_screen",
+                ],
+            )
 
         if SgMeasure.is_combinable_type_allowed(
             _combinable_type
         ) and parameter_not_relevant("dcrest"):
-            yield SgMeasureImporter
+            yield MeasureAsInputImporterData(
+                measure_as_input_type=SgMeasure,
+                concrete_parameters=[
+                    "dberm",
+                    "l_stab_screen",
+                ],
+            )
 
         if measure_result.measure_type == MeasureTypeEnum.CUSTOM:
             # VRTOOL-518: To avoid not knowing which MeasureResult.id needs to be
             # selected we opted to generate a ShSgMeasure to solve this issue.
             # However, this will imply the creation of "too many" Custom
             # `ShSgMeasure` which is accepted for now.
-            yield ShSgMeasureImporter
+            yield MeasureAsInputImporterData(
+                measure_as_input_type=ShSgMeasure, concrete_parameters=[]
+            )
 
     def import_orm(self, orm_model: OrmMeasureResult) -> list[MeasureAsInputProtocol]:
 
@@ -99,17 +110,22 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
         _imported_measures = []
 
-        for _mip_importer_type in self.get_measure_as_input_importer_type(orm_model):
-            _mip_importer = _mip_importer_type(
-                orm_model, self.investment_years, self.discount_rate
-            )
+        for _mip_importer_data in self.get_measure_as_input_importer_data(orm_model):
             _imported_measures.extend(
-                _mip_importer.import_measure_as_input_collection()
+                MeasureAsInputCollectionImporter(
+                    _mip_importer_data
+                ).import_measure_as_input_collection()
             )
 
         if not _imported_measures:
-            _shsg_importer = ShSgMeasureImporter(
-                orm_model, self.investment_years, self.discount_rate
+            _shsg_importer = MeasureAsInputCollectionImporter(
+                MeasureAsInputImporterData(
+                    measure_as_input_type=ShSgMeasure,
+                    concrete_parameters=[],
+                    measure_result=orm_model,
+                    investment_years=self.investment_years,
+                    discount_rate=self.discount_rate,
+                )
             )
             _imported_measures.extend(
                 _shsg_importer.import_measure_as_input_collection()
