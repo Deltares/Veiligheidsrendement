@@ -21,7 +21,7 @@ class ShMeasureImporter(MeasureAsInputBaseImporter):
     def set_initial_cost(measure_as_input_collection: list[MeasureAsInputProtocol]):
         _cost_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
         for _sh_measure in filter(
-            ShMeasure.is_initial_cost_measure, measure_as_input_collection
+            ShMeasure.is_initial_measure, measure_as_input_collection
         ):
             _cost_dictionary[_sh_measure.measure_type][
                 _sh_measure.l_stab_screen

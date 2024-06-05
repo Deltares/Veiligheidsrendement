@@ -21,7 +21,7 @@ class SgMeasureImporter(MeasureAsInputBaseImporter):
     def set_initial_cost(measure_as_input_collection: list[MeasureAsInputProtocol]):
         _cost_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
         for _sg_measure in filter(
-            SgMeasure.is_initial_cost_measure, measure_as_input_collection
+            SgMeasure.is_initial_measure, measure_as_input_collection
         ):
             _cost_dictionary[_sg_measure.measure_type][
                 _sg_measure.l_stab_screen
