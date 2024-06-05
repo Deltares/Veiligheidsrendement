@@ -20,7 +20,7 @@ from vrtool.orm.models.measure_result.measure_result_section import (
 from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
-class MeasureAsInputCollectionImporter:
+class MeasureAsInputImporter:
     def __init__(
         self, measure_as_input_importer_data: MeasureAsInputImporterData
     ) -> None:

@@ -12,7 +12,7 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 from vrtool.orm.io.importers.optimization.measures.measure_as_input_collection_importer import (
-    MeasureAsInputCollectionImporter,
+    MeasureAsInputImporter,
 )
 from vrtool.orm.io.importers.optimization.measures.measure_as_input_importer_data import (
     MeasureAsInputImporterData,
@@ -47,8 +47,8 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
         self.unit_costs = vrtool_config.unit_costs
         self.investment_years = investment_years
 
-    @staticmethod
     def get_measure_as_input_importer_data(
+        self,
         measure_result: OrmMeasureResult,
     ) -> Iterator[type[MeasureAsInputImporterData]]:
         """
@@ -81,6 +81,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                     "dcrest",
                     "l_stab_screen",
                 ],
+                discount_rate=self.discount_rate,
+                investment_years=self.investment_years,
+                measure_result=measure_result,
             )
 
         if SgMeasure.is_combinable_type_allowed(
@@ -92,6 +95,9 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
                     "dberm",
                     "l_stab_screen",
                 ],
+                discount_rate=self.discount_rate,
+                investment_years=self.investment_years,
+                measure_result=measure_result,
             )
 
         if measure_result.measure_type == MeasureTypeEnum.CUSTOM:
@@ -100,7 +106,11 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             # However, this will imply the creation of "too many" Custom
             # `ShSgMeasure` which is accepted for now.
             yield MeasureAsInputImporterData(
-                measure_as_input_type=ShSgMeasure, concrete_parameters=[]
+                measure_as_input_type=ShSgMeasure,
+                concrete_parameters=[],
+                discount_rate=self.discount_rate,
+                investment_years=self.investment_years,
+                measure_result=measure_result,
             )
 
     def import_orm(self, orm_model: OrmMeasureResult) -> list[MeasureAsInputProtocol]:
@@ -112,13 +122,13 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
 
         for _mip_importer_data in self.get_measure_as_input_importer_data(orm_model):
             _imported_measures.extend(
-                MeasureAsInputCollectionImporter(
+                MeasureAsInputImporter(
                     _mip_importer_data
                 ).import_measure_as_input_collection()
             )
 
         if not _imported_measures:
-            _shsg_importer = MeasureAsInputCollectionImporter(
+            _shsg_importer = MeasureAsInputImporter(
                 MeasureAsInputImporterData(
                     measure_as_input_type=ShSgMeasure,
                     concrete_parameters=[],
