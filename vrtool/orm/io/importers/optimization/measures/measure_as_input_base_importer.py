@@ -93,7 +93,7 @@ class MeasureAsInputBaseImporter:
             | self._get_concrete_parameters_as_dictionary()
         )
 
-    def create_measure(self) -> list[MeasureAsInputProtocol]:
+    def import_measure_as_input_collection(self) -> list[MeasureAsInputProtocol]:
         """
         Creates a list of concrete `MeasureAsInputProtocol` based on all the
         investment years and `MechanismPerYearProbabilityCollection`.

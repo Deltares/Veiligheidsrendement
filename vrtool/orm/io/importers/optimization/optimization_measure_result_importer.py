@@ -103,12 +103,16 @@ class OptimizationMeasureResultImporter(OrmImporterProtocol):
             _mip_importer = _mip_importer_type(
                 orm_model, self.investment_years, self.discount_rate
             )
-            _imported_measures.extend(_mip_importer.create_measure())
+            _imported_measures.extend(
+                _mip_importer.import_measure_as_input_collection()
+            )
 
         if not _imported_measures:
             _shsg_importer = ShSgMeasureImporter(
                 orm_model, self.investment_years, self.discount_rate
             )
-            _imported_measures.extend(_shsg_importer.create_measure())
+            _imported_measures.extend(
+                _shsg_importer.import_measure_as_input_collection()
+            )
 
         return _imported_measures
