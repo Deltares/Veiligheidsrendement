@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from copy import deepcopy
 from typing import Any
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -87,7 +88,7 @@ class MeasureAsInputBaseImporter:
                 cost=section_cost,
                 year=investment_year,
                 discount_rate=self._discount_rate,
-                mechanism_year_collection=self._mech_year_coll,
+                mechanism_year_collection=deepcopy(self._mech_year_coll),
             )
             | self._get_concrete_parameters_as_dictionary()
         )
