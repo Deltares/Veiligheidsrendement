@@ -50,4 +50,4 @@ class ShMeasureImporter(MeasureAsInputBaseImporter):
                 "l_stab_screen",
             ]
         }
-        return _concrete_params_dict | dict(start_cost=0.0)
+        return _concrete_params_dict | dict(base_cost=0.0)

@@ -1408,7 +1408,7 @@ class TestCustomMeasureDetail:
         for _measure in _imported_data[0].measures:
             assert _measure.measure_type == MeasureTypeEnum.CUSTOM
             assert _measure.combine_type == CombinableTypeEnum.FULL
-            assert _measure.start_cost == 0
+            assert _measure.base_cost == 0
             assert _measure.cost == _custom_measure_cost
             assert _measure.discount_rate == 0.03
             assert _measure.year == 0

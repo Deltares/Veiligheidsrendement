@@ -89,13 +89,13 @@ class TestSectionAsInput:
         )
         _dummy_cost = 999.0
         _dummy_discount_rate = 0.05
-        _dummy_start_cost = 0
+        _dummy_base_cost = 0
         _measure = ShMeasure(
             measure_result_id=42,
             measure_type=MeasureTypeEnum.REVETMENT,
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=_dummy_cost,
-            base_cost=_dummy_start_cost,
+            base_cost=_dummy_base_cost,
             discount_rate=_dummy_discount_rate,
             year=year,
             mechanism_year_collection=_collection,

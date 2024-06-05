@@ -17,7 +17,7 @@ class ShSgMeasureImporter(MeasureAsInputBaseImporter):
     @staticmethod
     def set_initial_cost(measure_as_input_collection: list[MeasureAsInputProtocol]):
         for _shsg_measure in measure_as_input_collection:
-            _shsg_measure.start_cost = 0.0
+            _shsg_measure.base_cost = 0.0
 
     def _get_concrete_parameters_as_dictionary(self) -> dict[str, Any]:
         return {
