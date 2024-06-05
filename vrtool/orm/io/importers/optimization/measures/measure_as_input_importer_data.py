@@ -82,7 +82,7 @@ class MeasureAsInputImporterData:
                 MeasureAsInputImporterData(
                     measure_result=measure_result,
                     measure_as_input_type=ShSgMeasure,
-                    concrete_parameters=[],
+                    concrete_parameters=["dberm", "dcrest", "l_stab_screen"],
                     investment_years=investment_years,
                     discount_rate=discount_rate,
                 )
