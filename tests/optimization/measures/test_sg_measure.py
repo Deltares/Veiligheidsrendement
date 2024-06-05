@@ -18,7 +18,7 @@ class TestSgMeasure:
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=10.5,
-            start_cost=4.2,
+            base_cost=4.2,
             year=10,
             discount_rate=0.03,
             mechanism_year_collection=None,
@@ -41,7 +41,7 @@ class TestSgMeasure:
         assert _measure.measure_type == _measure_type
         assert _measure.combine_type == _combine_type
         assert _measure.cost == pytest.approx(10.5)
-        assert _measure.start_cost == pytest.approx(4.2)
+        assert _measure.base_cost == pytest.approx(4.2)
         assert _measure.year == 10
         assert _measure.discount_rate == pytest.approx(0.03)
         assert _measure.mechanism_year_collection is None
@@ -111,7 +111,7 @@ class TestSgMeasure:
         _measure = self._create_sg_measure(
             MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
         )
-        _measure.start_cost = 5.5
+        _measure.base_cost = 5.5
 
         # 2. Run test
         _lcc = _measure.lcc

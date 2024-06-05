@@ -18,10 +18,10 @@ class MeasureAsInputProtocol(Protocol):
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     cost: float
+    base_cost: float
     discount_rate: float
     year: int
     mechanism_year_collection: MechanismPerYearProbabilityCollection
-    start_cost: float
     l_stab_screen: float
 
     @property

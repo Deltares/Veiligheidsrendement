@@ -59,7 +59,7 @@ class TestCombineMeasuresController:
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=0,
-            start_cost=0,
+            base_cost=0,
             year=0,
             discount_rate=0,
             mechanism_year_collection=MockMechanismYearProColl(
@@ -85,7 +85,7 @@ class TestCombineMeasuresController:
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=0,
-            start_cost=0,
+            base_cost=0,
             year=0,
             discount_rate=0,
             mechanism_year_collection=MockMechanismYearProColl(
@@ -111,7 +111,7 @@ class TestCombineMeasuresController:
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=0,
-            start_cost=0,
+            base_cost=0,
             year=0,
             discount_rate=0,
             mechanism_year_collection=MockMechanismYearProColl(

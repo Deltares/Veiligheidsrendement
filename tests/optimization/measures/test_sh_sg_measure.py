@@ -42,4 +42,4 @@ class TestShSgMeasure:
         assert _measure.year == 0
         assert _measure.discount_rate == 0
         assert _measure.mechanism_year_collection.probabilities == []
-        assert _measure.start_cost == 0.0
+        assert _measure.base_cost == 0.0

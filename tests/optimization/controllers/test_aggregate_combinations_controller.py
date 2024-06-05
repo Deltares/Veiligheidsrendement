@@ -16,6 +16,28 @@ from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
+def _make_sh_measure(
+    measure_type: MeasureTypeEnum, measure_result_id: int, year: int, cost: float
+) -> OverridenShMeasure:
+    return OverridenShMeasure(
+        measure_type=measure_type,
+        measure_result_id=measure_result_id,
+        year=year,
+        cost=cost,
+    )
+
+
+def _make_sg_measure(
+    measure_type: MeasureTypeEnum, measure_result_id: int, year: int, cost: float
+) -> OverridenSgMeasure:
+    return OverridenSgMeasure(
+        measure_type=measure_type,
+        measure_result_id=measure_result_id,
+        year=year,
+        cost=cost,
+    )
+
+
 class TestAggregateCombinationsController:
     @pytest.fixture(name="valid_section_as_input")
     def get_section_as_input(self) -> Iterator[SectionAsInput]:
@@ -32,13 +54,13 @@ class TestAggregateCombinationsController:
     ):
         # 1. Define input
         _sh_combination = CombinedMeasure(
-            primary=OverridenShMeasure(
+            primary=_make_sh_measure(
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 1,
                 0,
                 100,
             ),
-            secondary=OverridenSgMeasure(
+            secondary=_make_sg_measure(
                 MeasureTypeEnum.REVETMENT,
                 2,
                 0,
@@ -47,13 +69,13 @@ class TestAggregateCombinationsController:
             mechanism_year_collection=None,
         )
         _sg_combination = CombinedMeasure(
-            primary=OverridenSgMeasure(
+            primary=_make_sg_measure(
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 3,
                 0,
                 50,
             ),
-            secondary=OverridenShMeasure(
+            secondary=_make_sh_measure(
                 MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
                 4,
                 0,
@@ -98,12 +120,12 @@ class TestAggregateCombinationsController:
         [
             pytest.param(
                 [
-                    OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 1, 0, 100),
-                    OverridenSgMeasure(MeasureTypeEnum.REVETMENT, 2, 0, 200),
+                    _make_sh_measure(MeasureTypeEnum.SOIL_REINFORCEMENT, 1, 0, 100),
+                    _make_sg_measure(MeasureTypeEnum.REVETMENT, 2, 0, 200),
                 ],
                 [
-                    OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 3, 20, 50),
-                    OverridenSgMeasure(
+                    _make_sh_measure(MeasureTypeEnum.SOIL_REINFORCEMENT, 3, 20, 50),
+                    _make_sg_measure(
                         MeasureTypeEnum.VERTICAL_PIPING_SOLUTION, 4, 0, 100
                     ),
                 ],
@@ -111,12 +133,12 @@ class TestAggregateCombinationsController:
             ),
             pytest.param(
                 [
-                    OverridenShMeasure(MeasureTypeEnum.DIAPHRAGM_WALL, 1, 0, 100),
-                    OverridenSgMeasure(MeasureTypeEnum.REVETMENT, 2, 0, 200),
+                    _make_sh_measure(MeasureTypeEnum.DIAPHRAGM_WALL, 1, 0, 100),
+                    _make_sg_measure(MeasureTypeEnum.REVETMENT, 2, 0, 200),
                 ],
                 [
-                    OverridenSgMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT, 3, 0, 50),
-                    OverridenShMeasure(
+                    _make_sg_measure(MeasureTypeEnum.SOIL_REINFORCEMENT, 3, 0, 50),
+                    _make_sh_measure(
                         MeasureTypeEnum.VERTICAL_PIPING_SOLUTION, 4, 0, 100
                     ),
                 ],
@@ -149,7 +171,7 @@ class TestAggregateCombinationsController:
         # 1. Define input
         _sh_combination = CombinedMeasure(
             mechanism_year_collection=None,
-            primary=OverridenShMeasure(
+            primary=_make_sh_measure(
                 MeasureTypeEnum.DIAPHRAGM_WALL,
                 1,
                 0,
@@ -159,7 +181,7 @@ class TestAggregateCombinationsController:
         )
         _sg_combination = CombinedMeasure(
             mechanism_year_collection=None,
-            primary=OverridenSgMeasure(
+            primary=_make_sg_measure(
                 MeasureTypeEnum.DIAPHRAGM_WALL,
                 2,
                 0,
