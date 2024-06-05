@@ -22,16 +22,18 @@ class SgMeasureImporter(MeasureAsInputBaseImporter):
         def is_initial_cost_measure(sg_measure: SgMeasure) -> bool:
             if sg_measure.year != 0:
                 return False
-            return math.isnan(sg_measure.l_stab_screen) and (
-                math.isclose(sg_measure.dberm, 0) or math.isnan(sg_measure.dberm)
-            )
+            return math.isclose(sg_measure.dberm, 0) or math.isnan(sg_measure.dberm)
 
-        _cost_dictionary = defaultdict(lambda: 0.0)
+        _cost_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
         for _sg_measure in filter(is_initial_cost_measure, measure_as_input_collection):
-            _cost_dictionary[_sg_measure.measure_type] = _sg_measure.cost
+            _cost_dictionary[_sg_measure.measure_type][
+                _sg_measure.l_stab_screen
+            ] = _sg_measure.cost
 
         for _sg_measure in measure_as_input_collection:
-            _base_cost = _cost_dictionary[_sg_measure.measure_type]
+            _base_cost = _cost_dictionary[_sg_measure.measure_type][
+                _sg_measure.l_stab_screen
+            ]
             if _sg_measure.measure_type not in [
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
