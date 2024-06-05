@@ -24,10 +24,10 @@ class MeasureAsInputProtocol(Protocol):
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     l_stab_screen: float
 
-    @property
-    def lcc(self) -> float:
-        """Life cycle cost"""
-        pass
+    # @property
+    # def lcc(self) -> float:
+    #     """Life cycle cost"""
+    #     pass
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:

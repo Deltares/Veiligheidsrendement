@@ -19,28 +19,18 @@ class ShMeasureImporter(MeasureAsInputBaseImporter):
 
     @staticmethod
     def set_initial_cost(measure_as_input_collection: list[MeasureAsInputProtocol]):
-        def is_initial_cost_measure(sh_measure: ShMeasure) -> bool:
-            if sh_measure.year != 0:
-                return False
-            return math.isclose(sh_measure.dcrest, 0) or math.isnan(sh_measure.dcrest)
-
         _cost_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
-        for _sh_measure in filter(is_initial_cost_measure, measure_as_input_collection):
+        for _sh_measure in filter(
+            ShMeasure.is_initial_cost_measure, measure_as_input_collection
+        ):
             _cost_dictionary[_sh_measure.measure_type][
                 _sh_measure.l_stab_screen
             ] = _sh_measure.cost
 
         for _sh_measure in measure_as_input_collection:
-            _base_cost = _cost_dictionary[_sh_measure.measure_type][
+            _sh_measure.base_cost = _cost_dictionary[_sh_measure.measure_type][
                 _sh_measure.l_stab_screen
             ]
-            if _sh_measure.measure_type not in [
-                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
-                MeasureTypeEnum.DIAPHRAGM_WALL,
-                MeasureTypeEnum.STABILITY_SCREEN,
-            ]:
-                _base_cost = 0.0
-            _sh_measure.base_cost = _base_cost
 
     def _get_concrete_parameters_as_dictionary(self) -> dict[str, Any]:
         _concrete_params_dict = {

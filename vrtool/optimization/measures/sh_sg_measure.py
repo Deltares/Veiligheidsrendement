@@ -28,9 +28,9 @@ class ShSgMeasure(MeasureAsInputBase):
     dcrest: float
     dberm: float
 
-    @property
-    def lcc(self) -> float:
-        return 0
+    # @property
+    # def lcc(self) -> float:
+    #     return 0
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
