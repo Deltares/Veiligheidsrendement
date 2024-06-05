@@ -10,6 +10,18 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
+from vrtool.orm.io.importers.optimization.measures.sg_measure_importer import (
+    SgMeasureImporter,
+)
+from vrtool.orm.io.importers.optimization.measures.sh_measure_importer import (
+    ShMeasureImporter,
+)
+from vrtool.orm.io.importers.optimization.measures.sh_sg_measure_importer import (
+    ShSgMeasureImporter,
+)
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
 )
@@ -62,6 +74,19 @@ class OptimizationSectionAsInputImporter:
                 self.config, _investment_years
             ).import_orm(_measure_result)
             _section_imported_measures.extend(_imported_measures)
+
+        def filter_by_type(
+            measure_type: type[MeasureAsInputProtocol],
+        ) -> list[MeasureAsInputProtocol]:
+            return list(
+                filter(
+                    lambda x: isinstance(x, measure_type), _section_imported_measures
+                )
+            )
+
+        SgMeasureImporter.set_initial_cost(filter_by_type(SgMeasure))
+        ShMeasureImporter.set_initial_cost(filter_by_type(ShMeasure))
+        ShSgMeasureImporter.set_initial_cost(filter_by_type(ShSgMeasure))
 
         return SectionAsInput(
             section_name=_section_data.section_name,

@@ -27,12 +27,12 @@ class ShSgMeasure(MeasureAsInputProtocol):
     dberm: float
     l_stab_screen: float
     cost: float = 0
+    start_cost: float = 0
     discount_rate: float = 0
     year: int = 0
     mechanism_year_collection: MechanismPerYearProbabilityCollection = (
         MechanismPerYearProbabilityCollection([])
     )
-    start_cost: float = 0
     lcc: float = 0
 
     @staticmethod

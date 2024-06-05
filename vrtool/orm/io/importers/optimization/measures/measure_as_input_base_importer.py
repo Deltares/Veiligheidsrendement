@@ -37,10 +37,20 @@ class MeasureAsInputBaseImporter:
     def _measure_as_input_type(self) -> type[MeasureAsInputProtocol]:
         pass
 
+    @staticmethod
     @abstractmethod
-    def _get_concrete_parameters_as_dictionary(
-        self, section_cost: float, investment_year: int
-    ):
+    def set_initial_cost(measure_as_input_collection: list[MeasureAsInputProtocol]):
+        """
+        Sets the initial cost to the given measure as input when applicable.
+
+        Args:
+            measure_as_input_collection (list[MeasureAsInputProtocol]):
+                Collection of `MeasureAsInputProtocol` whose initial costs should be set.
+        """
+        pass
+
+    @abstractmethod
+    def _get_concrete_parameters_as_dictionary(self):
         pass
 
     def _get_mechanism_year_collection(self) -> MechanismPerYearProbabilityCollection:
@@ -65,19 +75,22 @@ class MeasureAsInputBaseImporter:
     def _get_measure_as_input_dictionary(
         self, section_cost: float, investment_year: int
     ) -> dict[str, Any]:
-        return dict(
-            measure_result_id=self._measure_result.id,
-            measure_type=MeasureTypeEnum.get_enum(
-                self._measure_result.measure_per_section.measure.measure_type.name
-            ),
-            combine_type=CombinableTypeEnum.get_enum(
-                self._measure_result.measure_per_section.measure.combinable_type.name
-            ),
-            cost=section_cost,
-            year=investment_year,
-            discount_rate=self._discount_rate,
-            mechanism_year_collection=self._mech_year_coll,
-        ) | self._get_concrete_parameters_as_dictionary(section_cost, investment_year)
+        return (
+            dict(
+                measure_result_id=self._measure_result.id,
+                measure_type=MeasureTypeEnum.get_enum(
+                    self._measure_result.measure_per_section.measure.measure_type.name
+                ),
+                combine_type=CombinableTypeEnum.get_enum(
+                    self._measure_result.measure_per_section.measure.combinable_type.name
+                ),
+                cost=section_cost,
+                year=investment_year,
+                discount_rate=self._discount_rate,
+                mechanism_year_collection=self._mech_year_coll,
+            )
+            | self._get_concrete_parameters_as_dictionary()
+        )
 
     def create_measure(self) -> list[MeasureAsInputProtocol]:
         """
