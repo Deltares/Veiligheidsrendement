@@ -24,10 +24,15 @@ class MeasureAsInputProtocol(Protocol):
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     l_stab_screen: float
 
-    # @property
-    # def lcc(self) -> float:
-    #     """Life cycle cost"""
-    #     pass
+    def is_initial_measure(self) -> bool:
+        """
+        Verifies whether this measure can be considered as an
+        "initial" measure.
+
+        Returns:
+            bool: Whether it's a base / initial measure.
+        """
+        pass
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
