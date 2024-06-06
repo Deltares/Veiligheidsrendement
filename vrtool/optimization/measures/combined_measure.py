@@ -22,11 +22,21 @@ class CombinedMeasure:
     # Legacy index for mapping back to the old structure for evaluate
     sequence_nr: int = None
 
+    def is_initial_measure(self) -> bool:
+        """
+        Determines whether this `CombinedMeasure` could be considered
+        as an initial measure (usually when `dberm` / `dcrest` equal to 0).
+
+        Returns:
+            bool: True when its primary measure is an initial measure.
+        """
+        return self.primary.is_initial_measure()
+
     @property
     def lcc(self) -> float:
         if self.secondary:
-            return self.primary.lcc + self.secondary.lcc
-        return self.primary.lcc
+            return self.primary.cost + self.secondary.cost
+        return self.primary.cost
 
     @property
     def measure_class(self) -> str:
