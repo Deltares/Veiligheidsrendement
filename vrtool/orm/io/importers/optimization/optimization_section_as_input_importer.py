@@ -75,19 +75,31 @@ class OptimizationSectionAsInputImporter:
             )
 
         def set_initial_cost(measure_type: type[MeasureAsInputProtocol]):
-            _cost_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
+            """
+            Sets the initial costs by clustering the measures by both type and
+            `l_stab_screen` value.
+            Args:
+                measure_type (type[MeasureAsInputProtocol]): Measure type to use
+                for measure filtering.
+            """
+            _base_costs = defaultdict(lambda: defaultdict(lambda: 0.0))
             _measure_collection = filter_by_type(measure_type)
+
+            # Base costs are the `cost` of an "initial measure".
             for _initial_measure in filter(
                 measure_type.is_initial_measure, _measure_collection
             ):
-                _cost_dictionary[_initial_measure.measure_type][
+                # We pivot by both `type[MeasureAsInputProtocol]` and
+                # `l_stab_screen`, as for different values of the latter
+                # you might find different "initial" measures.
+                _base_costs[_initial_measure.measure_type][
                     _initial_measure.l_stab_screen
                 ] = _initial_measure.cost
 
-            for _initial_measure in _measure_collection:
-                _initial_measure.base_cost = _cost_dictionary[
-                    _initial_measure.measure_type
-                ][_initial_measure.l_stab_screen]
+            for _measure in _measure_collection:
+                _measure.base_cost = _base_costs[_measure.measure_type][
+                    _measure.l_stab_screen
+                ]
 
         set_initial_cost(SgMeasure)
         set_initial_cost(ShMeasure)

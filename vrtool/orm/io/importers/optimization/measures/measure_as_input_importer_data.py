@@ -13,6 +13,16 @@ from vrtool.orm.models.measure_result.measure_result import MeasureResult
 
 @dataclass(kw_only=True)
 class MeasureAsInputImporterData:
+    """
+    Dataclass created to facilitate the generic implementation of a
+    `MeasureAsInputImporter`.
+
+    The classmethod `get_supported_importer_data` facilitates all
+    data object models for a given `MeasureResult` which can later
+    be imported into `ShMeasure`, `SgMeasure` or `ShSgMeasure`
+    through the mentioned `MeasureAsInputImporter`.
+    """
+
     measure_as_input_type: type[MeasureAsInputProtocol]
     concrete_parameters: list[str]
     measure_result: MeasureResult

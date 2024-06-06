@@ -12,6 +12,11 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 @dataclass(kw_only=True)
 class MeasureAsInputBase(MeasureAsInputProtocol):
+    """
+    (Base) class introduced to reduce code duplication at the
+    `ShMeasure`, `SgMeasure` and `ShSgMeasure`.
+    """
+
     measure_result_id: int
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum

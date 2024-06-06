@@ -14,7 +14,18 @@ class AggregatedMeasureCombination:
     year: int
 
     @property
-    def lcc(self):
+    def lcc(self) -> float:
+        """
+        Calculates the "life cycle cost" of the aggregation of combined measures
+        based on their respectives `lcc` values and discount rate / year.
+
+        When both combinations are an "initial measure" with `sh_combination`
+        considered as a `MeasureTypeEnum.SOIL_REINFORCEMENT` then the `lcc` is
+        computed as `0`.
+
+        Returns:
+            float: Computed life cycle cost value.
+        """
         if (
             self.sh_combination.primary.measure_type
             == MeasureTypeEnum.SOIL_REINFORCEMENT

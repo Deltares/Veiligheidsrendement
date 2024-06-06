@@ -21,6 +21,15 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 
 class MeasureAsInputImporter:
+    """
+    This importer converts a `MeasureResult` from the orm into one or more
+    instances of a concrete type of `MeasureAsInputProtocol`
+    (`ShMeasure`, `SgMeasure` or `ShSgMeasure).
+
+    To improve maintainability `MeasureAsInputImporterData` was introduced
+    so that all three concrete types can be created within this generic importer.
+    """
+
     def __init__(
         self, measure_as_input_importer_data: MeasureAsInputImporterData
     ) -> None:
@@ -67,6 +76,10 @@ class MeasureAsInputImporter:
             base_cost=0.0,
             year=investment_year,
             discount_rate=self._discount_rate,
+            # Important!
+            # The `MechanismYearCollection` needs to be deep copied. Otherwise
+            # its data might be altered affecting all the measures with the same
+            # reference.
             mechanism_year_collection=deepcopy(self._mech_year_coll),
         ) | {
             _parameter_name: self._measure_result.get_parameter_value(_parameter_name)

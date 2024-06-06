@@ -2,6 +2,7 @@ import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
+from vrtool.optimization.measures.measure_as_input_base import MeasureAsInputBase
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -32,6 +33,7 @@ class TestShSgMeasure:
 
         # 3. Verify expectations
         assert isinstance(_measure, ShSgMeasure)
+        assert isinstance(_measure, MeasureAsInputBase)
         assert isinstance(_measure, MeasureAsInputProtocol)
         assert _measure.measure_type == _measure_type
         assert _measure.combine_type == _combine_type

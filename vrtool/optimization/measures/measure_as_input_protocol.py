@@ -26,11 +26,12 @@ class MeasureAsInputProtocol(Protocol):
 
     def is_initial_measure(self) -> bool:
         """
-        Verifies whether this measure can be considered as an
-        "initial" measure.
+        Verifies whether the given measure is considered the "initial measure".
+        This happens when its year is 0 but most important when its
+        `dberm` (for `ShMeasure`) or `dcrest` (for `SgMeasure`) are `0` or `nan`.
 
         Returns:
-            bool: Whether it's a base / initial measure.
+            bool: Whether its an initial measure or not.
         """
         pass
 

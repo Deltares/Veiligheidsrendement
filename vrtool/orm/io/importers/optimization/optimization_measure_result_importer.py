@@ -16,7 +16,7 @@ from vrtool.orm.models.measure_result.measure_result import (
 
 class OptimizationMeasureResultImporter(OrmImporterProtocol):
     """
-    This importer focuses on the creation of Sh / Sg measures for a given
+    This importer focuses on the creation of Sh, Sg and ShSg measures for a given
     `MeasureResult`. However, it does not set its real (start) cost, as this
     depends on which other measures have been previously imported.
     """
