@@ -77,17 +77,17 @@ class OptimizationSectionAsInputImporter:
         def set_initial_cost(measure_type: type[MeasureAsInputProtocol]):
             _cost_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
             _measure_collection = filter_by_type(measure_type)
-            for _sg_measure in filter(
+            for _initial_measure in filter(
                 measure_type.is_initial_measure, _measure_collection
             ):
-                _cost_dictionary[_sg_measure.measure_type][
-                    _sg_measure.l_stab_screen
-                ] = _sg_measure.cost
+                _cost_dictionary[_initial_measure.measure_type][
+                    _initial_measure.l_stab_screen
+                ] = _initial_measure.cost
 
-            for _sg_measure in _measure_collection:
-                _sg_measure.base_cost = _cost_dictionary[_sg_measure.measure_type][
-                    _sg_measure.l_stab_screen
-                ]
+            for _initial_measure in _measure_collection:
+                _initial_measure.base_cost = _cost_dictionary[
+                    _initial_measure.measure_type
+                ][_initial_measure.l_stab_screen]
 
         set_initial_cost(SgMeasure)
         set_initial_cost(ShMeasure)
