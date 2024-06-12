@@ -393,22 +393,24 @@ class TestCostComputation:
                 base_cost=100218.68,
                 dcrest=0.25,
             ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-            #     measure_result_id=219,
-            #     cost=2739300,
-            #     base_cost=2739300,
-            #     dcrest=float("nan"),
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-            #     measure_result_id=220,
-            #     cost=3561090,
-            #     base_cost=2739300,
-            #     dcrest=float("nan"),
-            #     l_stab_screen=6,
-            # ),
+            dict(
+                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=219,
+                cost=2739300,
+                base_cost=2739300,
+                dcrest=float("nan"),
+                l_stab_screen=3,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=220,
+                cost=3561090,
+                base_cost=3561090,
+                dcrest=float("nan"),
+                l_stab_screen=6,
+            ),
             # dict(
             #     measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
             #     measure_result_id=218,
@@ -417,78 +419,42 @@ class TestCostComputation:
             #     dcrest=float("nan"),
             #     l_stab_screen=float("nan"),
             # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=73,
-            #     cost=2839518.68,
-            #     base_cost=2839518.68,
-            #     dcrest=0,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=75,
-            #     cost=2892006.05,
-            #     base_cost=2839518.68,
-            #     dcrest=0,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=74,
-            #     cost=3661308.68,
-            #     base_cost=3661308.68,
-            #     dcrest=0,
-            #     l_stab_screen=6,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=76,
-            #     cost=3713796.05,
-            #     base_cost=3661308.68,
-            #     dcrest=0,
-            #     l_stab_screen=6,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=89,
-            #     cost=3531220.66255916,
-            #     base_cost=3531220.66255916,
-            #     dcrest=0.25,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=91,
-            #     cost=3583708.03255916,
-            #     base_cost=3531220.66255916,
-            #     dcrest=0.25,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=90,
-            #     cost=4353010.66255916,
-            #     base_cost=4353010.66255915,
-            #     dcrest=0.25,
-            #     l_stab_screen=6,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=92,
-            #     cost=4405498.03255916,
-            #     base_cost=4353010.66255915,
-            #     dcrest=0.25,
-            #     l_stab_screen=6,
-            # ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=73,
+                cost=2839518.68,
+                base_cost=2839518.68,
+                dcrest=0,
+                l_stab_screen=3,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=74,
+                cost=3661308.68,
+                base_cost=3661308.68,
+                dcrest=0,
+                l_stab_screen=6,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=89,
+                cost=3531220.66255916,
+                base_cost=2839518.68,
+                dcrest=0.25,
+                l_stab_screen=3,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=90,
+                cost=4353010.66255916,
+                base_cost=3661308.68,
+                dcrest=0.25,
+                l_stab_screen=6,
+            ),
             # SOIL_REINFORCEMENT + VZG (ID=10+217)
             # dict(
             #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -518,22 +484,24 @@ class TestCostComputation:
                 base_cost=100218.68,
                 dberm=5,
             ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-            #     measure_result_id=219,
-            #     cost=2739300,
-            #     base_cost=2739300,
-            #     dberm=float("nan"),
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-            #     measure_result_id=220,
-            #     cost=3561090,
-            #     base_cost=2739300,
-            #     dberm=float("nan"),
-            #     l_stab_screen=6,
-            # ),
+            dict(
+                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=219,
+                cost=2739300,
+                base_cost=2739300,
+                dberm=float("nan"),
+                l_stab_screen=3,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=220,
+                cost=3561090,
+                base_cost=3561090,
+                dberm=float("nan"),
+                l_stab_screen=6,
+            ),
             # dict(
             #     measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
             #     measure_result_id=218,
@@ -542,78 +510,42 @@ class TestCostComputation:
             #     dberm=float("nan"),
             #     l_stab_screen=float("nan"),
             # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-            #     combine_type=CombinableTypeEnum.FULL,
-            #     measure_result_id=73,
-            #     cost=2839518.68,
-            #     base_cost=2839518.68,
-            #     dberm=0,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.COMBINABLE,
-            #     measure_result_id=75,
-            #     cost=2892006.05,
-            #     base_cost=2839518.68,
-            #     dberm=5,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.COMBINABLE,
-            #     measure_result_id=74,
-            #     cost=3661308.68,
-            #     base_cost=3661308.68,
-            #     dberm=0,
-            #     l_stab_screen=6,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.COMBINABLE,
-            #     measure_result_id=76,
-            #     cost=3713796.05,
-            #     base_cost=3661308.68,
-            #     dberm=5,
-            #     l_stab_screen=6,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.COMBINABLE,
-            #     measure_result_id=89,
-            #     cost=3531220.66255916,
-            #     base_cost=3531220.66255916,
-            #     dberm=0,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.COMBINABLE,
-            #     measure_result_id=91,
-            #     cost=3583708.03255916,
-            #     base_cost=3531220.66255916,
-            #     dberm=5,
-            #     l_stab_screen=3,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.COMBINABLE,
-            #     measure_result_id=90,
-            #     cost=4353010.66255916,
-            #     base_cost=4353010.66255915,
-            #     dberm=0,
-            #     l_stab_screen=6,
-            # ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.COMBINABLE,
-            #     measure_result_id=92,
-            #     cost=4405498.03255916,
-            #     base_cost=4353010.66255915,
-            #     dberm=5,
-            #     l_stab_screen=6,
-            # ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=73,
+                cost=2839518.68,
+                base_cost=2839518.68,
+                dberm=0,
+                l_stab_screen=3,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.COMBINABLE,
+                measure_result_id=74,
+                cost=3661308.68,
+                base_cost=3661308.68,
+                dberm=0,
+                l_stab_screen=6,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.COMBINABLE,
+                measure_result_id=75,
+                cost=2892006.05,
+                base_cost=2839518.68,
+                dberm=5,
+                l_stab_screen=3,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.COMBINABLE,
+                measure_result_id=76,
+                cost=3713796.05,
+                base_cost=3661308.68,
+                dberm=5,
+                l_stab_screen=6,
+            ),
             # SOIL_REINFORCEMENT + VZG (ID=10+217)
             # dict(
             #     measure_type=MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
@@ -639,6 +571,26 @@ class TestCostComputation:
                 dcrest=0.25,
                 dberm=5,
             ),
+            ShSgMeasure(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.COMBINABLE,
+                measure_result_id=91,
+                cost=3583708.03255916,
+                base_cost=3583708.03255916,
+                dcrest=0.25,
+                dberm=5,
+                l_stab_screen=3,
+            ),
+            ShSgMeasure(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.COMBINABLE,
+                measure_result_id=92,
+                cost=4405498.03255916,
+                base_cost=4405498.03255916,
+                dcrest=0.25,
+                dberm=5,
+                l_stab_screen=6,
+            ),
         ]
         _section_as_input = SectionAsInput(
             section_name="River case VRTOOL-521",
@@ -657,8 +609,36 @@ class TestCostComputation:
 
         # 3. Verify expectations.
         assert any(_section_as_input.aggregated_measure_combinations)
-        _aggr_measures = _section_as_input.aggregated_measure_combinations
-        assert _aggr_measures[0].lcc == pytest.approx(0)
-        assert _aggr_measures[1].lcc == pytest.approx(152706)
-        assert _aggr_measures[2].lcc == pytest.approx(791921)
-        assert _aggr_measures[3].lcc == pytest.approx(844408)
+
+        def find_aggregated_measure(
+            measure_result_id: int,
+        ) -> AggregatedMeasureCombination:
+            return next(
+                am
+                for am in _section_as_input.aggregated_measure_combinations
+                if am.measure_result_id == measure_result_id
+            )
+
+        # Soil reinforcement aggregations
+        assert find_aggregated_measure(1).lcc == pytest.approx(0)
+        # assert find_aggregated_measure(1).lcc == pytest.approx(100218.68)
+        assert find_aggregated_measure(2).lcc == pytest.approx(152706.05)
+        assert find_aggregated_measure(9).lcc == pytest.approx(791920.662559159)
+        assert find_aggregated_measure(10).lcc == pytest.approx(844408.032559159)
+
+        # Stability screen aggregations
+        assert find_aggregated_measure(219).lcc == pytest.approx(2739300)
+        assert find_aggregated_measure(220).lcc == pytest.approx(3561090)
+
+        # Soil reinforcement with stability screen aggregations
+        assert find_aggregated_measure(73).lcc == pytest.approx(2839518.68)
+        assert find_aggregated_measure(75).lcc == pytest.approx(2892006.05)
+        assert find_aggregated_measure(74).lcc == pytest.approx(3661308.68)
+        assert find_aggregated_measure(76).lcc == pytest.approx(3713796.05)
+        assert find_aggregated_measure(89).lcc == pytest.approx(3531220.66255915)
+        assert find_aggregated_measure(91).lcc == pytest.approx(3583708.03255915)
+        assert find_aggregated_measure(90).lcc == pytest.approx(4353010.66255915)
+        assert find_aggregated_measure(92).lcc == pytest.approx(4405498.03255915)
+        # assert find_aggregated_measure(218).lcc == pytest.approx(13573430)
+        # Soil reinforcement with vertical piping solution
+        # assert find_aggregated_measure(10 + 217).lcc == pytest.approx(2908808.03255916)
