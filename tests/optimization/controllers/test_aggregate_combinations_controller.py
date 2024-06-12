@@ -17,6 +17,9 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
+    MechanismPerYearProbabilityCollection,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
@@ -358,7 +361,7 @@ class TestCostComputation:
                 base_cost=float("nan"),
                 discount_rate=1,
                 year=0,
-                mechanism_year_collection=None,
+                mechanism_year_collection=MechanismPerYearProbabilityCollection([]),
                 l_stab_screen=float("nan"),
             )
 
@@ -411,14 +414,15 @@ class TestCostComputation:
                 dcrest=float("nan"),
                 l_stab_screen=6,
             ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
-            #     measure_result_id=218,
-            #     cost=13573430,
-            #     base_cost=13573430,
-            #     dcrest=float("nan"),
-            #     l_stab_screen=float("nan"),
-            # ),
+            dict(
+                measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=218,
+                cost=13573430,
+                base_cost=13573430,
+                dcrest=float("nan"),
+                l_stab_screen=float("nan"),
+            ),
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
                 combine_type=CombinableTypeEnum.FULL,
@@ -455,16 +459,6 @@ class TestCostComputation:
                 dcrest=0.25,
                 l_stab_screen=6,
             ),
-            # SOIL_REINFORCEMENT + VZG (ID=10+217)
-            # dict(
-            #     measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
-            #     combine_type=CombinableTypeEnum.PARTIAL,
-            #     measure_result_id=10,
-            #     cost=2908808.03255916,
-            #     base_cost=0,
-            #     dcrest=0.25,
-            #     l_stab_screen=6,
-            # ),
         ]
 
         _sg_measures_dicts = [
@@ -502,14 +496,15 @@ class TestCostComputation:
                 dberm=float("nan"),
                 l_stab_screen=6,
             ),
-            # dict(
-            #     measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
-            #     measure_result_id=218,
-            #     cost=13573430,
-            #     base_cost=13573430,
-            #     dberm=float("nan"),
-            #     l_stab_screen=float("nan"),
-            # ),
+            dict(
+                measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=218,
+                cost=13573430,
+                base_cost=13573430,
+                dberm=float("nan"),
+                l_stab_screen=float("nan"),
+            ),
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
                 combine_type=CombinableTypeEnum.FULL,
@@ -521,7 +516,7 @@ class TestCostComputation:
             ),
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-                combine_type=CombinableTypeEnum.COMBINABLE,
+                combine_type=CombinableTypeEnum.FULL,
                 measure_result_id=74,
                 cost=3661308.68,
                 base_cost=3661308.68,
@@ -530,7 +525,7 @@ class TestCostComputation:
             ),
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-                combine_type=CombinableTypeEnum.COMBINABLE,
+                combine_type=CombinableTypeEnum.FULL,
                 measure_result_id=75,
                 cost=2892006.05,
                 base_cost=2839518.68,
@@ -539,7 +534,7 @@ class TestCostComputation:
             ),
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
-                combine_type=CombinableTypeEnum.COMBINABLE,
+                combine_type=CombinableTypeEnum.FULL,
                 measure_result_id=76,
                 cost=3713796.05,
                 base_cost=3661308.68,
@@ -553,8 +548,6 @@ class TestCostComputation:
             #     measure_result_id=10,
             #     cost=2908808.03255916,
             #     base_cost=100218.68,
-            #     dberm=0.25,
-            #     l_stab_screen=6,
             # ),
         ]
 
@@ -619,9 +612,10 @@ class TestCostComputation:
                 if am.measure_result_id == measure_result_id
             )
 
+        # assert len(_section_as_input.aggregated_measure_combinations) == 16
+
         # Soil reinforcement aggregations
         assert find_aggregated_measure(1).lcc == pytest.approx(0)
-        # assert find_aggregated_measure(1).lcc == pytest.approx(100218.68)
         assert find_aggregated_measure(2).lcc == pytest.approx(152706.05)
         assert find_aggregated_measure(9).lcc == pytest.approx(791920.662559159)
         assert find_aggregated_measure(10).lcc == pytest.approx(844408.032559159)
@@ -629,6 +623,9 @@ class TestCostComputation:
         # Stability screen aggregations
         assert find_aggregated_measure(219).lcc == pytest.approx(2739300)
         assert find_aggregated_measure(220).lcc == pytest.approx(3561090)
+
+        # Diaphragm wall aggregations
+        assert find_aggregated_measure(218).lcc == pytest.approx(13573430)
 
         # Soil reinforcement with stability screen aggregations
         assert find_aggregated_measure(73).lcc == pytest.approx(2839518.68)
@@ -639,6 +636,6 @@ class TestCostComputation:
         assert find_aggregated_measure(91).lcc == pytest.approx(3583708.03255915)
         assert find_aggregated_measure(90).lcc == pytest.approx(4353010.66255915)
         assert find_aggregated_measure(92).lcc == pytest.approx(4405498.03255915)
-        # assert find_aggregated_measure(218).lcc == pytest.approx(13573430)
+
         # Soil reinforcement with vertical piping solution
         # assert find_aggregated_measure(10 + 217).lcc == pytest.approx(2908808.03255916)
