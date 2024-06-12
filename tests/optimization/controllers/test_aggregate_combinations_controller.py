@@ -542,13 +542,14 @@ class TestCostComputation:
                 l_stab_screen=6,
             ),
             # SOIL_REINFORCEMENT + VZG (ID=10+217)
-            # dict(
-            #     measure_type=MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
-            #     combine_type=CombinableTypeEnum.PARTIAL,
-            #     measure_result_id=10,
-            #     cost=2908808.03255916,
-            #     base_cost=100218.68,
-            # ),
+            dict(
+                measure_type=MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
+                combine_type=CombinableTypeEnum.PARTIAL,
+                measure_result_id=217,
+                # cost=2908808.03255916,
+                cost=2064400,
+                base_cost=100218.68,
+            ),
         ]
 
         _sh_measures = list(map(_create_sh_measure, _sh_measures_dicts))
@@ -603,39 +604,62 @@ class TestCostComputation:
         # 3. Verify expectations.
         assert any(_section_as_input.aggregated_measure_combinations)
 
-        def find_aggregated_measure(
+        def get_single_aggregated_lcc(
             measure_result_id: int,
-        ) -> AggregatedMeasureCombination:
+        ) -> float:
+            """
+            Gets the aggregated LCC value when NO secondary measure
+            for `sg_combination` is present.
+            """
             return next(
                 am
                 for am in _section_as_input.aggregated_measure_combinations
-                if am.measure_result_id == measure_result_id
-            )
+                if am.sg_combination.secondary is None
+                and am.measure_result_id == measure_result_id
+            ).lcc
 
-        # assert len(_section_as_input.aggregated_measure_combinations) == 16
+        assert len(_section_as_input.aggregated_measure_combinations) == 19
 
+        # Aggregations WITHOUT secondary measures
         # Soil reinforcement aggregations
-        assert find_aggregated_measure(1).lcc == pytest.approx(0)
-        assert find_aggregated_measure(2).lcc == pytest.approx(152706.05)
-        assert find_aggregated_measure(9).lcc == pytest.approx(791920.662559159)
-        assert find_aggregated_measure(10).lcc == pytest.approx(844408.032559159)
+        assert get_single_aggregated_lcc(1) == pytest.approx(0)
+        assert get_single_aggregated_lcc(2) == pytest.approx(152706.05)
+        assert get_single_aggregated_lcc(9) == pytest.approx(791920.662559159)
+        assert get_single_aggregated_lcc(10) == pytest.approx(844408.032559159)
 
         # Stability screen aggregations
-        assert find_aggregated_measure(219).lcc == pytest.approx(2739300)
-        assert find_aggregated_measure(220).lcc == pytest.approx(3561090)
+        assert get_single_aggregated_lcc(219) == pytest.approx(2739300)
+        assert get_single_aggregated_lcc(220) == pytest.approx(3561090)
 
         # Diaphragm wall aggregations
-        assert find_aggregated_measure(218).lcc == pytest.approx(13573430)
+        assert get_single_aggregated_lcc(218) == pytest.approx(13573430)
 
         # Soil reinforcement with stability screen aggregations
-        assert find_aggregated_measure(73).lcc == pytest.approx(2839518.68)
-        assert find_aggregated_measure(75).lcc == pytest.approx(2892006.05)
-        assert find_aggregated_measure(74).lcc == pytest.approx(3661308.68)
-        assert find_aggregated_measure(76).lcc == pytest.approx(3713796.05)
-        assert find_aggregated_measure(89).lcc == pytest.approx(3531220.66255915)
-        assert find_aggregated_measure(91).lcc == pytest.approx(3583708.03255915)
-        assert find_aggregated_measure(90).lcc == pytest.approx(4353010.66255915)
-        assert find_aggregated_measure(92).lcc == pytest.approx(4405498.03255915)
+        assert get_single_aggregated_lcc(73) == pytest.approx(2839518.68)
+        assert get_single_aggregated_lcc(75) == pytest.approx(2892006.05)
+        assert get_single_aggregated_lcc(74) == pytest.approx(3661308.68)
+        assert get_single_aggregated_lcc(76) == pytest.approx(3713796.05)
+        assert get_single_aggregated_lcc(89) == pytest.approx(3531220.66255915)
+        assert get_single_aggregated_lcc(91) == pytest.approx(3583708.03255915)
+        assert get_single_aggregated_lcc(90) == pytest.approx(4353010.66255915)
+        assert get_single_aggregated_lcc(92) == pytest.approx(4405498.03255915)
+
+        # Aggregations WITH secondary measures
+        def get_combined_aggregated_lcc(
+            sh_measure_primary_id: int, sg_measure_secondary_id: int
+        ) -> float:
+            """
+            Gets the LCC of an aggregated measure whose `measure_result_id` primary
+            and secondary measures match the provided values.
+            """
+            return next(
+                am
+                for am in _section_as_input.aggregated_measure_combinations
+                if am.sg_combination.secondary is not None
+                and am.measure_result_id == sh_measure_primary_id
+                and am.sg_combination.secondary.measure_result_id
+                == sg_measure_secondary_id
+            ).lcc
 
         # Soil reinforcement with vertical piping solution
-        # assert find_aggregated_measure(10 + 217).lcc == pytest.approx(2908808.03255916)
+        assert get_combined_aggregated_lcc(10, 217) == pytest.approx(2908808.03255916)
