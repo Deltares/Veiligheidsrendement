@@ -58,14 +58,35 @@ class TestAggregateCombinationsController:
             measures=[],
         )
 
+    @pytest.mark.parametrize(
+        "matching_measure_type, expected_lcc",
+        [
+            pytest.param(
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                0,
+                id=f"LCC=0 when {MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name} with initial measures",
+            ),
+        ]
+        + [
+            pytest.param(
+                _measure_type,
+                450,
+                id=f"LCC=450 when {_measure_type.legacy_name} with initial measures",
+            )
+            for _measure_type in MeasureTypeEnum
+            if _measure_type != MeasureTypeEnum.SOIL_REINFORCEMENT
+        ],
+    )
     def test_aggregate_for_matching_year_and_type(
         self,
         valid_section_as_input: SectionAsInput,
+        matching_measure_type: MeasureTypeEnum,
+        expected_lcc: float,
     ):
         # 1. Define input
         _sh_combination = CombinedMeasure(
             primary=_make_sh_measure(
-                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                matching_measure_type,
                 1,
                 0,
                 100,
@@ -80,7 +101,7 @@ class TestAggregateCombinationsController:
         )
         _sg_combination = CombinedMeasure(
             primary=_make_sg_measure(
-                MeasureTypeEnum.SOIL_REINFORCEMENT,
+                matching_measure_type,
                 3,
                 0,
                 50,
@@ -105,9 +126,10 @@ class TestAggregateCombinationsController:
         assert len(_created_aggregations) == 1
         _aggr_meas_comb = _created_aggregations[0]
         assert isinstance(_aggr_meas_comb, AggregatedMeasureCombination)
-        assert _aggr_meas_comb.lcc == 250
         assert _aggr_meas_comb.sh_combination == _sh_combination
         assert _aggr_meas_comb.sg_combination == _sg_combination
+        # Sh and Sg are initial, Sh combination is  SoilReinforcement
+        assert _aggr_meas_comb.lcc == expected_lcc
 
     @pytest.fixture(name="sh_combination")
     def get_sh_combination(self, request: pytest.FixtureRequest) -> CombinedMeasure:
