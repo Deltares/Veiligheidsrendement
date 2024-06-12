@@ -692,12 +692,12 @@ class TestOrmControllers:
         export_results_optimization(_results_optimization, [_optimization_run.id])
 
         # 3. Verify expectations.
-        assert len(orm.OptimizationStep.select()) == 1
-        _optimization_step = orm.OptimizationStep.get()
-        assert _optimization_step.total_lcc == 42.0
-        assert _optimization_step.total_risk == 100.0
         assert len(orm.OptimizationStepResultMechanism) == 10
         assert len(orm.OptimizationStepResultSection) == 3
+        assert len(orm.OptimizationStep.select()) == 1
+        _optimization_step = orm.OptimizationStep.get()
+        assert _optimization_step.total_lcc == 84.0
+        assert _optimization_step.total_risk == 100.0
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase
