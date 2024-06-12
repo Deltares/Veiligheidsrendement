@@ -379,6 +379,32 @@ class TestCostComputation:
             )
             return SgMeasure(**(_base_dict | sg_measure_dict))
 
+        _diaphragm_wall_measure_dict = dict(
+            measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
+            combine_type=CombinableTypeEnum.FULL,
+            measure_result_id=218,
+            cost=13573430,
+            base_cost=13573430,
+        )
+        _stability_screen_measure_dict_list = [
+            dict(
+                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=219,
+                cost=2739300,
+                base_cost=2739300,
+                l_stab_screen=3,
+            ),
+            dict(
+                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
+                combine_type=CombinableTypeEnum.FULL,
+                measure_result_id=220,
+                cost=3561090,
+                base_cost=3561090,
+                l_stab_screen=6,
+            ),
+        ]
+
         _sh_measures_dicts = [
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -396,33 +422,8 @@ class TestCostComputation:
                 base_cost=100218.68,
                 dcrest=0.25,
             ),
-            dict(
-                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-                combine_type=CombinableTypeEnum.FULL,
-                measure_result_id=219,
-                cost=2739300,
-                base_cost=2739300,
-                dcrest=float("nan"),
-                l_stab_screen=3,
-            ),
-            dict(
-                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-                combine_type=CombinableTypeEnum.FULL,
-                measure_result_id=220,
-                cost=3561090,
-                base_cost=3561090,
-                dcrest=float("nan"),
-                l_stab_screen=6,
-            ),
-            dict(
-                measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
-                combine_type=CombinableTypeEnum.FULL,
-                measure_result_id=218,
-                cost=13573430,
-                base_cost=13573430,
-                dcrest=float("nan"),
-                l_stab_screen=float("nan"),
-            ),
+            *_stability_screen_measure_dict_list,
+            _diaphragm_wall_measure_dict,
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
                 combine_type=CombinableTypeEnum.FULL,
@@ -478,33 +479,8 @@ class TestCostComputation:
                 base_cost=100218.68,
                 dberm=5,
             ),
-            dict(
-                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-                combine_type=CombinableTypeEnum.FULL,
-                measure_result_id=219,
-                cost=2739300,
-                base_cost=2739300,
-                dberm=float("nan"),
-                l_stab_screen=3,
-            ),
-            dict(
-                measure_type=MeasureTypeEnum.STABILITY_SCREEN,
-                combine_type=CombinableTypeEnum.FULL,
-                measure_result_id=220,
-                cost=3561090,
-                base_cost=3561090,
-                dberm=float("nan"),
-                l_stab_screen=6,
-            ),
-            dict(
-                measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
-                combine_type=CombinableTypeEnum.FULL,
-                measure_result_id=218,
-                cost=13573430,
-                base_cost=13573430,
-                dberm=float("nan"),
-                l_stab_screen=float("nan"),
-            ),
+            *_stability_screen_measure_dict_list,
+            _diaphragm_wall_measure_dict,
             dict(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN,
                 combine_type=CombinableTypeEnum.FULL,
@@ -546,7 +522,6 @@ class TestCostComputation:
                 measure_type=MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
                 combine_type=CombinableTypeEnum.PARTIAL,
                 measure_result_id=217,
-                # cost=2908808.03255916,
                 cost=2064400,
                 base_cost=100218.68,
             ),
@@ -678,4 +653,4 @@ class TestCostComputation:
             assert _aggregation.lcc == pytest.approx(expected_lcc)
 
         # Soil reinforcement with vertical piping solution
-        assert validate_aggregated_multiple_combination_lcc(10, 217, 2908808.03255916)
+        validate_aggregated_multiple_combination_lcc(10, 217, 2908808.03255916)
