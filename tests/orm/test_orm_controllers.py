@@ -365,7 +365,9 @@ class TestOrmControllers:
         assert any(_solutions.measures)
 
     @pytest.fixture
-    def export_database(self, request: pytest.FixtureRequest) -> SqliteDatabase:
+    def export_database(
+        self, request: pytest.FixtureRequest
+    ) -> Iterator[SqliteDatabase]:
         _db_file = test_data.joinpath("test_db", "empty_db.db")
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
