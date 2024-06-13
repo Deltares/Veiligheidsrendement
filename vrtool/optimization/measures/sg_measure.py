@@ -2,47 +2,17 @@ import math
 from dataclasses import dataclass
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.measure_as_input_protocol import (
-    MeasureAsInputProtocol,
-)
-from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
-    MechanismPerYearProbabilityCollection,
-)
+from vrtool.optimization.measures.measure_as_input_base import MeasureAsInputBase
 
 
-@dataclass
-class SgMeasure(MeasureAsInputProtocol):
+@dataclass(kw_only=True)
+class SgMeasure(MeasureAsInputBase):
     """
     Class to represent measures that do not have a crest component.
     """
 
-    measure_type: MeasureTypeEnum
-    combine_type: CombinableTypeEnum
-    measure_result_id: int
-    cost: float
-    start_cost: float
-    year: int
-    discount_rate: float
-    mechanism_year_collection: MechanismPerYearProbabilityCollection
     dberm: float
-    l_stab_screen: float
-
-    @property
-    def lcc(self) -> float:
-        """
-        Value for the `life-cycle-cost` of this measure.
-        When the `dberm` is the "initial" value (`0`, `-999`) and there is no stability screen,
-        the cost will be computed as `0`.
-
-        Returns:
-            float: The calculated lcc.
-        """
-        if self.measure_type != MeasureTypeEnum.CUSTOM:
-            if self.dberm in [0, -999] and math.isnan(self.l_stab_screen):
-                return 0
-        return (self.cost - self.start_cost) / (1 + self.discount_rate) ** self.year
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -68,3 +38,8 @@ class SgMeasure(MeasureAsInputProtocol):
             CombinableTypeEnum.COMBINABLE,
             CombinableTypeEnum.PARTIAL,
         ]
+
+    def is_initial_measure(self) -> bool:
+        if self.year != 0:
+            return False
+        return math.isclose(self.dberm, 0) or math.isnan(self.dberm)

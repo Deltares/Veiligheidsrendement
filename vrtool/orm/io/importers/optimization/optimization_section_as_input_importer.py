@@ -12,16 +12,6 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
-from vrtool.orm.io.importers.optimization.measures.sg_measure_importer import (
-    SgMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_measure_importer import (
-    ShMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_sg_measure_importer import (
-    ShSgMeasureImporter,
-)
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
 )
@@ -84,9 +74,35 @@ class OptimizationSectionAsInputImporter:
                 )
             )
 
-        SgMeasureImporter.set_initial_cost(filter_by_type(SgMeasure))
-        ShMeasureImporter.set_initial_cost(filter_by_type(ShMeasure))
-        ShSgMeasureImporter.set_initial_cost(filter_by_type(ShSgMeasure))
+        def set_initial_cost(measure_type: type[MeasureAsInputProtocol]):
+            """
+            Sets the initial costs by clustering the measures by both type and
+            `l_stab_screen` value.
+            Args:
+                measure_type (type[MeasureAsInputProtocol]): Measure type to use
+                for measure filtering.
+            """
+            _base_costs = defaultdict(lambda: defaultdict(lambda: 0.0))
+            _measure_collection = filter_by_type(measure_type)
+
+            # Base costs are the `cost` of an "initial measure".
+            for _initial_measure in filter(
+                measure_type.is_initial_measure, _measure_collection
+            ):
+                # We pivot by both `type[MeasureAsInputProtocol]` and
+                # `l_stab_screen`, as for different values of the latter
+                # you might find different "initial" measures.
+                _base_costs[_initial_measure.measure_type][
+                    _initial_measure.l_stab_screen
+                ] = _initial_measure.cost
+
+            for _measure in _measure_collection:
+                _measure.base_cost = _base_costs[_measure.measure_type][
+                    _measure.l_stab_screen
+                ]
+
+        set_initial_cost(SgMeasure)
+        set_initial_cost(ShMeasure)
 
         return SectionAsInput(
             section_name=_section_data.section_name,

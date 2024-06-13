@@ -365,7 +365,9 @@ class TestOrmControllers:
         assert any(_solutions.measures)
 
     @pytest.fixture
-    def export_database(self, request: pytest.FixtureRequest) -> SqliteDatabase:
+    def export_database(
+        self, request: pytest.FixtureRequest
+    ) -> Iterator[SqliteDatabase]:
         _db_file = test_data.joinpath("test_db", "empty_db.db")
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
@@ -690,12 +692,12 @@ class TestOrmControllers:
         export_results_optimization(_results_optimization, [_optimization_run.id])
 
         # 3. Verify expectations.
-        assert len(orm.OptimizationStep.select()) == 1
-        _optimization_step = orm.OptimizationStep.get()
-        assert _optimization_step.total_lcc == 42.0
-        assert _optimization_step.total_risk == 100.0
         assert len(orm.OptimizationStepResultMechanism) == 10
         assert len(orm.OptimizationStepResultSection) == 3
+        assert len(orm.OptimizationStep.select()) == 1
+        _optimization_step = orm.OptimizationStep.get()
+        assert _optimization_step.total_lcc == 84.0
+        assert _optimization_step.total_risk == 100.0
 
     def test_clear_assessment_results_clears_all_results(
         self, export_database: SqliteDatabase
@@ -1408,15 +1410,14 @@ class TestCustomMeasureDetail:
         for _measure in _imported_data[0].measures:
             assert _measure.measure_type == MeasureTypeEnum.CUSTOM
             assert _measure.combine_type == CombinableTypeEnum.FULL
-            assert _measure.start_cost == 0
             assert _measure.cost == _custom_measure_cost
             assert _measure.discount_rate == 0.03
             assert _measure.year == 0
             assert _measure.measure_result_id == 1
             if isinstance(_measure, ShSgMeasure):
-                assert _measure.lcc == 0
-                continue
-            assert _measure.lcc == _custom_measure_cost
+                assert _measure.base_cost == 0
+            else:
+                assert _measure.base_cost == _custom_measure_cost
 
         # Verify betas for `sg_measure` as `MechanismEnum.PIPING` is only
         # compatible for `sg_measures`

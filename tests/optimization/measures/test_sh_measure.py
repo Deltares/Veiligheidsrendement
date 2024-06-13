@@ -3,6 +3,7 @@ import pytest
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.measure_as_input_base import MeasureAsInputBase
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -18,7 +19,7 @@ class TestShMeasure:
             measure_type=measure_type,
             combine_type=combinable_type,
             cost=10.5,
-            start_cost=4.2,
+            base_cost=4.2,
             year=10,
             discount_rate=0.03,
             mechanism_year_collection=None,
@@ -38,89 +39,18 @@ class TestShMeasure:
 
         # 3. Verify expectations
         assert isinstance(_measure, ShMeasure)
+        assert isinstance(_measure, MeasureAsInputBase)
         assert isinstance(_measure, MeasureAsInputProtocol)
         assert _measure.measure_type == _measure_type
         assert _measure.combine_type == _combine_type
         assert _measure.cost == pytest.approx(10.5)
-        assert _measure.start_cost == pytest.approx(4.2)
+        assert _measure.base_cost == pytest.approx(4.2)
         assert _measure.year == 10
         assert _measure.discount_rate == pytest.approx(0.03)
         assert _measure.mechanism_year_collection is None
         assert _measure.beta_target == pytest.approx(1.1)
         assert _measure.transition_level == pytest.approx(0.5)
         assert _measure.dcrest == pytest.approx(0.1)
-
-    @pytest.mark.parametrize("dcrest_value", [pytest.param(0), pytest.param(-999)])
-    def test_given_dcrest_0_lcc_returns_0(self, dcrest_value: float):
-        """
-        Test related to issue VRTOOL-390
-        """
-        # 1. Define test data.
-        # Measure and combinable type do not really matter,
-        # but we are forced to set a value.
-        _sh_measure = self._create_sh_measure(
-            MeasureTypeEnum.STABILITY_SCREEN, CombinableTypeEnum.COMBINABLE
-        )
-        _sh_measure.dcrest = dcrest_value
-
-        # 2. Run test.
-        _result = _sh_measure.lcc
-
-        # 3. Verify final expectations.
-        assert _result == 0
-
-    def test_given_custom_measure_without_dcrest_returns_cost(self):
-        """
-        Test related to issue VRTOOL-501
-        """
-        # 1. Define test data.
-        # Measure and combinable type do not really matter,
-        # but we are forced to set a value.
-        _sh_measure = self._create_sh_measure(
-            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
-        )
-        _sh_measure.dcrest = 0
-
-        # 2. Run test.
-        _result = _sh_measure.lcc
-
-        # 3. Verify expectations
-        assert _result > 0
-
-    @pytest.mark.parametrize(
-        "dcrest_value",
-        [pytest.param(-10, id="Smaller than 0"), pytest.param(10, id="Greater than 0")],
-    )
-    def test_given_dcrest_else_than_0_lcc_doesnot_return_0(self, dcrest_value: float):
-        """
-        Test related to issue VRTOOL-390
-        """
-        # 1. Define test data.
-        # Measure and combinable type do not really matter,
-        # but we are forced to set a value.
-        _sh_measure = self._create_sh_measure(
-            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
-        )
-        _sh_measure.dcrest = dcrest_value
-
-        # 2. Run test.
-        _result = _sh_measure.lcc
-
-        # 3. Verify final expectations.
-        assert _result != 0
-
-    def test_lcc(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _measure.start_cost = 5.5
-
-        # 2. Run test
-        _lcc = _measure.lcc
-
-        # 3. Verify expectations
-        assert _lcc == pytest.approx(3.720469)
 
     @pytest.mark.parametrize(
         "mechanism, expected",

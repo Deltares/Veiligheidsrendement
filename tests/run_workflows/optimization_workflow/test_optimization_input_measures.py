@@ -15,7 +15,7 @@ class MockedMeasure(MeasureAsInputProtocol):
     discount_rate = float("nan")
     year = 0
     mechanism_year_collection = None
-    start_cost = float("nan")
+    base_cost = float("nan")
 
 
 class TestOptimizationInputMeasures:

@@ -17,13 +17,12 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
-@dataclass
+@dataclass(kw_only=True)
 class OverridenShMeasure(ShMeasure):
-    measure_type: MeasureTypeEnum
     measure_result_id: int = -1
     year: int = 0
     cost: float = 42
-    start_cost: float = 0
+    base_cost: float = 0
     combine_type: CombinableTypeEnum = CombinableTypeEnum.FULL
     discount_rate: float = 0
     mechanism_year_collection: MechanismPerYearProbabilityCollection = None
@@ -33,13 +32,12 @@ class OverridenShMeasure(ShMeasure):
     l_stab_screen: float = float("nan")
 
 
-@dataclass
+@dataclass(kw_only=True)
 class OverridenSgMeasure(SgMeasure):
-    measure_type: MeasureTypeEnum
     measure_result_id: int = -1
     year: int = 0
     cost: float = 42
-    start_cost: float = 0
+    base_cost: float = 0
     combine_type: CombinableTypeEnum = CombinableTypeEnum.FULL
     discount_rate: float = float("nan")
     mechanism_year_collection: MechanismPerYearProbabilityCollection = None
@@ -49,12 +47,18 @@ class OverridenSgMeasure(SgMeasure):
 
 @pytest.fixture
 def make_sh_measure() -> Iterator[type[MeasureAsInputProtocol]]:
-    yield OverridenShMeasure
+    def new_sh_measure(**kwargs):
+        return OverridenShMeasure(**kwargs)
+
+    yield new_sh_measure
 
 
 @pytest.fixture
 def make_sg_measure() -> Iterator[type[MeasureAsInputProtocol]]:
-    yield OverridenSgMeasure
+    def new_sg_measure(**kwargs):
+        return OverridenSgMeasure(**kwargs)
+
+    yield new_sg_measure
 
 
 @pytest.fixture(name="section_with_measures")
@@ -64,12 +68,12 @@ def _get_section_with_measures() -> Iterator[SectionAsInput]:
         traject_name="traject_name",
         flood_damage=0,
         measures=[
-            OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
-            OverridenShMeasure(MeasureTypeEnum.REVETMENT),
+            OverridenShMeasure(measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT),
+            OverridenShMeasure(measure_type=MeasureTypeEnum.REVETMENT),
             OverridenSgMeasure(
-                MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
             ),
-            OverridenSgMeasure(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
+            OverridenSgMeasure(measure_type=MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
         ],
     )
 
@@ -80,14 +84,14 @@ def _get_section_with_combinations(
 ) -> Iterator[SectionAsInput]:
     section_with_measures.combined_measures = [
         CombinedMeasure.from_input(
-            OverridenShMeasure(MeasureTypeEnum.SOIL_REINFORCEMENT),
+            OverridenShMeasure(measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT),
             None,
             None,
             0,
         ),
         CombinedMeasure.from_input(
             OverridenShMeasure(
-                MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
             ),
             None,
             None,
@@ -95,7 +99,7 @@ def _get_section_with_combinations(
         ),
         CombinedMeasure.from_input(
             OverridenSgMeasure(
-                MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
             ),
             None,
             None,

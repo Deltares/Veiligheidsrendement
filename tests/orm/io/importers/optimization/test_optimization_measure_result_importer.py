@@ -15,14 +15,8 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
-from vrtool.orm.io.importers.optimization.measures.sg_measure_importer import (
-    SgMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_measure_importer import (
-    ShMeasureImporter,
-)
-from vrtool.orm.io.importers.optimization.measures.sh_sg_measure_importer import (
-    ShSgMeasureImporter,
+from vrtool.orm.io.importers.optimization.measures.measure_as_input_importer_data import (
+    MeasureAsInputImporterData,
 )
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
@@ -65,20 +59,29 @@ class TestOptimizationMeasureResultImporter:
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        _expected_types = [ShMeasureImporter, SgMeasureImporter, ShSgMeasureImporter]
+        _expected_types = [ShMeasure, SgMeasure, ShSgMeasure]
 
         # 2. Run test.
         with open_database(
             custom_measures_vrtool_config.input_database_path
         ).connection_context():
-            _importer_types = OptimizationMeasureResultImporter.get_measure_as_input_importer_type(
+            _importer_data_collection = MeasureAsInputImporterData.get_supported_importer_data(
                 # The provided database only contains 'Custom' MeasureResult rows.
                 # so we do not need to worry further.
-                OrmMeasureResult.select().get()
+                measure_result=OrmMeasureResult.select().get(),
+                investment_years=[],
+                discount_rate=float("nan"),
             )
 
         # 3. Verify expectations.
-        assert all(_et in _importer_types for _et in _expected_types)
+        assert all(
+            isinstance(_id, MeasureAsInputImporterData)
+            for _id in _importer_data_collection
+        )
+        _importer_data_collection_types = [
+            _id.measure_as_input_type for _id in _importer_data_collection
+        ]
+        assert all(_et in _importer_data_collection_types for _et in _expected_types)
 
     @pytest.mark.fixture_database(
         test_data.joinpath("38-1 custom measures", "with_aggregated_measures.db")
