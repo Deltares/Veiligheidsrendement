@@ -2,6 +2,7 @@ import filecmp
 import shutil
 
 import pytest
+import win32api
 
 from tests import test_data, test_externals, test_results
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
@@ -10,9 +11,6 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
 
 
 class TestDStabilityWrapper:
-    def test_initialize_with_valid_values(self):
-        pass
-
     def test_initialize_missing_stix_path_raises(self):
         with pytest.raises(ValueError) as exception_error:
             DStabilityWrapper(None, test_externals)
@@ -49,11 +47,24 @@ class TestDStabilityWrapper:
         assert str(exception_error.value.message) == _expected_error
 
     @pytest.mark.externals
+    def test_validate_dstability_version(self):
+        # 1. Define test data.
+        _supported_major_version = "2022"
+        _dstability_exe = test_externals.joinpath(
+            "DStabilityConsole", "D-Stability Console.exe"
+        )
+        assert _dstability_exe.exists(), "No d-stability console available for testing."
+
+        # 2. Run test.
+        _version_info = win32api.GetFileVersionInfo(str(_dstability_exe), "\\")
+        _found_version = str(win32api.HIWORD(_version_info["FileVersionMS"]))
+
+        # 3. Verify expectations.
+        assert _found_version == _supported_major_version
+
+    @pytest.mark.externals
     def test_rerun_stix_with_valid_externals_path(self, request: pytest.FixtureRequest):
         # 1. Define test data.
-        assert test_externals.joinpath(
-            "DStabilityConsole"
-        ).exists(), "No d-stability console available for testing."
         _path_test_stix = (
             test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
