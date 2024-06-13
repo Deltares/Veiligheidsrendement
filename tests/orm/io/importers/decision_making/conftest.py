@@ -23,6 +23,10 @@ from vrtool.orm.models.standard_measure import StandardMeasure
 def get_valid_measure_fixture() -> Iterable[
     Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure]
 ]:
+    """
+    Creates a basic measure within a Vrtool database context.
+    """
+
     def _create_custom_measure_detail(measure: Measure) -> None:
         _mech_inst = Mechanism.create(name=MechanismEnum.INVALID.name)
         _any_section = SectionData.get()
@@ -44,10 +48,6 @@ def get_valid_measure_fixture() -> Iterable[
         measure_type: MeasureTypeEnum,
         combinable_type: CombinableTypeEnum,
     ) -> Measure:
-        """
-        Creates a basic measure within a Vrtool database context.
-        TODO: This method should be a fixture.
-        """
         _measure_type = MeasureType.create(name=measure_type.legacy_name)
         _combinable_type = CombinableType.create(name=combinable_type.name)
         _measure = Measure.create(
