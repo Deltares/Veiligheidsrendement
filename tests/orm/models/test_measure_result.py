@@ -3,8 +3,8 @@ from typing import Callable
 
 import pytest
 
-from tests.orm import get_basic_measure_per_section
 from vrtool.orm.models import MeasureResult
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result_parameter import (
     MeasureResultParameter,
 )
@@ -13,7 +13,9 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 class TestMeasureResult:
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_initialize_with_database_fixture(self):
+    def test_initialize_with_database_fixture(
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
+    ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
 
@@ -32,7 +34,9 @@ class TestMeasureResult:
         assert _measure_result in _measure_per_section.measure_per_section_result
 
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_given_measure_result_without_parameters_nan_is_returned(self):
+    def test_given_measure_result_without_parameters_nan_is_returned(
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
+    ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
         _measure_result = MeasureResult.create(
@@ -58,7 +62,9 @@ class TestMeasureResult:
     )
     @pytest.mark.usefixtures("empty_db_fixture")
     def test_given_measure_result_with_parameters_returns_value(
-        self, string_variation: Callable
+        self,
+        string_variation: Callable,
+        get_basic_measure_per_section: Callable[[], MeasurePerSection],
     ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()

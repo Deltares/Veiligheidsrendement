@@ -1,13 +1,17 @@
+from collections.abc import Callable
+
 import pytest
 
-from tests.orm import get_basic_mechanism_per_section
 from vrtool.orm.models import AssessmentMechanismResult
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
 class TestAssessmentMechanismResult:
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_initialize_with_database_fixture(self):
+    def test_initialize_with_database_fixture(
+        self, get_basic_mechanism_per_section: Callable[[], MechanismPerSection]
+    ):
         # 1. Define test data.
         _mechanism_per_section = get_basic_mechanism_per_section()
 

@@ -1,8 +1,9 @@
+from typing import Callable
+
 import numpy as np
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import get_basic_computation_scenario
 from tests.orm.io import add_computation_scenario_id
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
@@ -10,6 +11,7 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.stability_inner_simple_importer import (
     StabilityInnerSimpleImporter,
 )
+from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
@@ -24,7 +26,11 @@ class TestStabilityInnerSimpleImporter:
         assert isinstance(_importer, StabilityInnerSimpleImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, empty_db_fixture: SqliteDatabase):
+    def test_import_orm(
+        self,
+        empty_db_fixture: SqliteDatabase,
+        get_basic_computation_scenario: Callable[[], ComputationScenario],
+    ):
         # Setup
         parameters = [
             {

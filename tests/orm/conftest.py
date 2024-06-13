@@ -1,11 +1,25 @@
 import shutil
-from typing import Iterator
+from typing import Callable, Iterator, Optional
 
 import pytest
 from peewee import SqliteDatabase
 
 from tests import get_clean_test_results_dir, test_data
+from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_section import DikeSection
+from vrtool.orm.models.combinable_type import CombinableType
+from vrtool.orm.models.computation_scenario import ComputationScenario
+from vrtool.orm.models.computation_type import ComputationType
+from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
+from vrtool.orm.models.measure import Measure
+from vrtool.orm.models.measure_per_section import MeasurePerSection
+from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_type import MeasureType
+from vrtool.orm.models.mechanism import Mechanism
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
+from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import open_database
 
 
@@ -60,3 +74,190 @@ def get_vrtool_config_for_custom_measures_db(
     assert _vrtool_config.input_database_path.is_file()
 
     yield _vrtool_config
+
+
+def _get_domain_basic_dike_traject_info() -> DikeTrajectInfo:
+    """
+    Returns a basic dike traject info generator from the Vrtool data model.
+    """
+    return DikeTrajectInfo(traject_name=123)
+
+
+def _get_domain_basic_dike_section() -> DikeSection:
+    _dike_section = DikeSection()
+    _dike_section.name = "TestSection"
+    _dike_section.TrajectInfo = _get_domain_basic_dike_traject_info()
+    return _dike_section
+
+
+def _get_orm_basic_dike_traject_info() -> DikeTrajectInfo:
+    _domain_dike_traject_info = _get_domain_basic_dike_traject_info()
+    return OrmDikeTrajectInfo.create(
+        traject_name=_domain_dike_traject_info.traject_name
+    )
+
+
+def _get_orm_basic_dike_section() -> SectionData:
+    _test_dike_traject = _get_orm_basic_dike_traject_info()
+    return SectionData.create(
+        dike_traject=_test_dike_traject,
+        section_name=_get_domain_basic_dike_section().name,
+        meas_start=2.4,
+        meas_end=4.2,
+        section_length=123,
+        in_analysis=True,
+        crest_height=24,
+        annual_crest_decline=42,
+    )
+
+
+def _get_basic_measure_type(name: str = "TestMeasureType") -> MeasureType:
+    return MeasureType.create(name=name)
+
+
+def _get_basic_combinable_type() -> CombinableType:
+    return CombinableType.create(name="TestCombinableType")
+
+
+def _get_basic_measure() -> Measure:
+    _test_measure_type = _get_basic_measure_type()
+    _test_combinable_type = _get_basic_combinable_type()
+    return Measure.create(
+        measure_type=_test_measure_type,
+        combinable_type=_test_combinable_type,
+        name="TestMeasure",
+        year=20,
+    )
+
+
+def _get_basic_measure_per_section() -> MeasurePerSection:
+    _test_section = _get_orm_basic_dike_section()
+    _test_measure = _get_basic_measure()
+    return MeasurePerSection.create(
+        section=_test_section,
+        measure=_test_measure,
+    )
+
+
+@pytest.fixture(name="get_orm_basic_dike_traject_info")
+def get_orm_basic_dike_traject_info_factory() -> Iterator[
+    Callable[[], OrmDikeTrajectInfo]
+]:
+    """
+    Gets a basic dike traject info entity generator method.
+    """
+    yield _get_orm_basic_dike_traject_info
+
+
+@pytest.fixture(name="get_domain_basic_dike_section")
+def get_domain_basic_dike_section_factory() -> Iterator[Callable[[], DikeSection]]:
+    """
+    Yields a basic dike section generator from the Vrtool data model.
+    """
+    yield _get_domain_basic_dike_section
+
+
+@pytest.fixture(name="get_orm_basic_dike_section")
+def get_orm_basic_section_data_factory() -> Iterator[Callable[[], SectionData]]:
+    """
+    Gets a basic section data entity generator.
+    """
+    yield _get_orm_basic_dike_section
+
+
+@pytest.fixture(name="get_basic_mechanism_per_section")
+def get_basic_mechanism_per_section_factory(
+    get_orm_basic_dike_section: Callable[[], SectionData],
+) -> Iterator[Callable[[], MechanismPerSection]]:
+    """
+    Gets a basic mechanism per section entity generator.
+    """
+
+    def get_basic_mechanism_per_section() -> MechanismPerSection:
+        _test_section = get_orm_basic_dike_section()
+
+        _mech_inst = Mechanism.create(name=MechanismEnum.OVERFLOW.name)
+        return MechanismPerSection.create(section=_test_section, mechanism=_mech_inst)
+
+    yield get_basic_mechanism_per_section
+
+
+@pytest.fixture(name="get_basic_computation_scenario")
+def get_basic_computation_scenario_factory(
+    get_basic_mechanism_per_section: Callable[[], MechanismPerSection]
+) -> Iterator[Callable[[], ComputationScenario]]:
+    """
+    Gets a basic computation scenario entity generator.
+    """
+
+    def get_basic_computation_scenario() -> ComputationScenario:
+        _mech_per_section = get_basic_mechanism_per_section()
+
+        _computation_type = ComputationType.create(name="TestComputation")
+        return ComputationScenario.create(
+            mechanism_per_section=_mech_per_section,
+            computation_type=_computation_type,
+            computation_name="Test Computation",
+            scenario_name="test_name",
+            scenario_probability=0.42,
+            probability_of_failure=0.24,
+        )
+
+    yield get_basic_computation_scenario
+
+
+@pytest.fixture(name="get_basic_measure_type")
+def get_basic_measure_type_factory() -> Iterator[
+    Callable[[Optional[str]], MeasureType]
+]:
+    """
+    Gets a basic measure type entity generator.
+    """
+
+    yield _get_basic_measure_type
+
+
+@pytest.fixture(name="get_basic_combinable_type")
+def get_basic_combinable_type_factory() -> Iterator[Callable[[], CombinableType]]:
+    """
+    Gets a basic combinable type entity generator.
+    """
+    yield _get_basic_combinable_type
+
+
+@pytest.fixture(name="get_basic_measure")
+def get_basic_measure_factory() -> Iterator[Callable[[], Measure]]:
+    """
+    Gets a basic measure entity generator.
+    """
+    yield _get_basic_measure
+
+
+@pytest.fixture(name="get_basic_measure_per_section")
+def get_basic_measure_per_section_factory() -> Iterator[
+    Callable[[], MeasurePerSection]
+]:
+    """
+    Gets a basic measure per section entity generator.
+    """
+    yield _get_basic_measure_per_section
+
+
+@pytest.fixture(name="get_basic_measure_result")
+def get_basic_measure_result_factory(
+    get_basic_measure_per_section: Callable[[], MeasurePerSection]
+) -> Iterator[Callable[[], MeasureResult]]:
+    """
+    Gets a basic measure result entity generator.
+    """
+
+    def get_basic_measure_result() -> MeasureResult:
+        _test_measure_per_section = get_basic_measure_per_section()
+        return MeasureResult.create(
+            beta=3.1234,
+            time=0.0,
+            cost=100,
+            measure_per_section=_test_measure_per_section,
+        )
+
+    yield get_basic_measure_result

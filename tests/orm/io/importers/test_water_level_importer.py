@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from typing import Callable
+
 import pytest
 from peewee import SqliteDatabase
 from pytest import approx
 
-from tests.orm import get_basic_section_data
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
 from vrtool.orm.models.section_data import SectionData
@@ -52,10 +53,12 @@ class TestWaterLevelImporter:
         assert _importer.gridpoint == 42
 
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_import_orm_without_no_water_level_data_doesnot_raise(self):
+    def test_import_orm_without_no_water_level_data_doesnot_raise(
+        self, get_orm_basic_dike_section: Callable[[], SectionData]
+    ):
         # 1. Define test data.
         _importer = WaterLevelImporter(42)
-        _section_data = get_basic_section_data()
+        _section_data = get_orm_basic_dike_section()
         assert not any(_section_data.water_level_data_list)
 
         # 2. Run test.
@@ -66,10 +69,13 @@ class TestWaterLevelImporter:
 
     @pytest.fixture
     def valid_section_data(
-        self, request: pytest.FixtureRequest, empty_db_fixture: SqliteDatabase
+        self,
+        request: pytest.FixtureRequest,
+        empty_db_fixture: SqliteDatabase,
+        get_orm_basic_dike_section: Callable[[], SectionData],
     ) -> SectionData:
         with empty_db_fixture.atomic() as transaction:
-            _section_data = get_basic_section_data()
+            _section_data = get_orm_basic_dike_section()
 
             WaterlevelData.insert_many(request.param).execute()
             transaction.commit()

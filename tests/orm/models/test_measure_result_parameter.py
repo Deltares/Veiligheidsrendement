@@ -1,6 +1,8 @@
+from typing import Callable
+
 import pytest
 
-from tests.orm import get_basic_measure_result
+from vrtool.orm.models.measure_result.measure_result import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_parameter import (
     MeasureResultParameter,
 )
@@ -9,7 +11,9 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 class TestMeasureResultParameter:
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_initialize_with_database_fixture(self):
+    def test_initialize_with_database_fixture(
+        self, get_basic_measure_result: Callable[[], MeasureResult]
+    ):
         # 1. Define test data.
         _measure_result = get_basic_measure_result()
 

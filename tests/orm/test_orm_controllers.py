@@ -2,7 +2,7 @@ import itertools
 import shutil
 from operator import itemgetter
 from pathlib import Path
-from typing import Iterator
+from typing import Callable, Iterator
 
 import numpy as np
 import pandas as pd
@@ -20,12 +20,6 @@ from tests import (
 from tests.optimization.conftest import (
     _get_section_with_combinations,
     _get_section_with_measures,
-)
-from tests.orm import (
-    get_basic_combinable_type,
-    get_basic_dike_traject_info,
-    get_basic_measure_type,
-    get_basic_mechanism_per_section,
 )
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
@@ -65,7 +59,9 @@ from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import
     CustomMeasureTimeBetaCalculator,
 )
 from vrtool.orm.models.assessment_mechanism_result import AssessmentMechanismResult
+from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.measure_result import MeasureResult
+from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.orm_controllers import (
     add_custom_measures,
@@ -385,7 +381,9 @@ class TestOrmControllers:
             _connected_db.close()
 
     def test_export_results_safety_assessment_given_valid_data(
-        self, export_database: SqliteDatabase
+        self,
+        export_database: SqliteDatabase,
+        get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
     ):
         # 1. Define test data.
         export_database.connect()
@@ -700,7 +698,9 @@ class TestOrmControllers:
         assert _optimization_step.total_risk == 100.0
 
     def test_clear_assessment_results_clears_all_results(
-        self, export_database: SqliteDatabase
+        self,
+        export_database: SqliteDatabase,
+        get_orm_basic_dike_traject_info: Callable[[], DikeTrajectInfo],
     ):
         # Setup
         _db_connection = export_database
@@ -709,7 +709,7 @@ class TestOrmControllers:
         assert not any(orm.AssessmentSectionResult.select())
         assert not any(orm.AssessmentMechanismResult.select())
 
-        traject_info = get_basic_dike_traject_info()
+        traject_info = get_orm_basic_dike_traject_info()
 
         _mechanisms = [
             self._create_mechanism("mechanism 1"),
@@ -746,10 +746,12 @@ class TestOrmControllers:
         _db_connection.close()
 
     def test_clear_measure_result_clears_all_results(
-        self, export_database: SqliteDatabase
+        self,
+        export_database: SqliteDatabase,
+        generate_optimization_results: Callable[[SqliteDatabase, str], None],
     ):
         # Setup
-        self._generate_optimization_results(export_database)
+        generate_optimization_results(export_database, "TestMeasureType")
 
         # Call
         _db_path = Path(export_database.database)
@@ -771,11 +773,13 @@ class TestOrmControllers:
         assert not any(orm.OptimizationStepResultSection.select())
 
     def test_clear_measure_result_does_not_clear_custom_results(
-        self, export_database: SqliteDatabase
+        self,
+        export_database: SqliteDatabase,
+        generate_optimization_results: Callable[[SqliteDatabase, str], None],
     ):
         # Setup
         assert not any(orm.MeasureResult.select())
-        self._generate_optimization_results(export_database, "Custom")
+        generate_optimization_results(export_database, "Custom")
 
         # Call
         _db_path = Path(export_database.database)
@@ -799,10 +803,12 @@ class TestOrmControllers:
         assert not any(orm.OptimizationStepResultSection.select())
 
     def test_clear_optimization_results_clears_all_results(
-        self, export_database: SqliteDatabase
+        self,
+        export_database: SqliteDatabase,
+        generate_optimization_results: Callable[[SqliteDatabase, str], None],
     ):
         # 1. Define test data.
-        self._generate_optimization_results(export_database)
+        generate_optimization_results(export_database, "TestMeasureType")
 
         # 2. Run test.
         _db_path = Path(export_database.database)
@@ -819,80 +825,98 @@ class TestOrmControllers:
         assert not any(orm.OptimizationStepResultMechanism.select())
         assert not any(orm.OptimizationStepResultSection.select())
 
-    def _generate_measure_results(
-        self, db_connection: SqliteDatabase, measure_type_name: str = "TestMeasureType"
-    ):
-        if db_connection.is_closed():
-            db_connection.connect()
-        traject_info = get_basic_dike_traject_info()
+    @pytest.fixture(name="generate_measure_results")
+    def _generate_measure_results_fixture(
+        self,
+        get_orm_basic_dike_traject_info: Callable[[], orm.DikeTrajectInfo],
+        get_basic_measure_type: Callable[[str], MeasureType],
+        get_basic_combinable_type: Callable[[], CombinableType],
+    ) -> Iterator[Callable[[SqliteDatabase, str], None]]:
+        def generate_measure_results(
+            db_connection: SqliteDatabase, measure_type_name: str
+        ) -> None:
+            if db_connection.is_closed():
+                db_connection.connect()
+            traject_info = get_orm_basic_dike_traject_info()
 
-        _measure_type = get_basic_measure_type(measure_type_name)
-        _combinable_type = get_basic_combinable_type()
-        _measures = [
-            self._create_measure(_measure_type, _combinable_type, "measure 1"),
-            self._create_measure(_measure_type, _combinable_type, "measure 2"),
-        ]
+            _measure_type = get_basic_measure_type(measure_type_name)
+            _combinable_type = get_basic_combinable_type()
+            _measures = [
+                self._create_measure(_measure_type, _combinable_type, "measure 1"),
+                self._create_measure(_measure_type, _combinable_type, "measure 2"),
+            ]
 
-        self._create_section_with_fully_configured_measure_results(
-            traject_info, "Section 1", _measures
-        )
-        self._create_section_with_fully_configured_measure_results(
-            traject_info, "Section 2", _measures
-        )
-        db_connection.close()
+            self._create_section_with_fully_configured_measure_results(
+                traject_info, "Section 1", _measures
+            )
+            self._create_section_with_fully_configured_measure_results(
+                traject_info, "Section 2", _measures
+            )
+            db_connection.close()
 
-        assert any(orm.MeasureResult.select())
-        assert any(orm.MeasureResultParameter.select())
-        assert any(orm.MeasureResultSection.select())
-        assert any(orm.MeasureResultMechanism.select())
+            assert any(orm.MeasureResult.select())
+            assert any(orm.MeasureResultParameter.select())
+            assert any(orm.MeasureResultSection.select())
+            assert any(orm.MeasureResultMechanism.select())
 
-    def _generate_optimization_results(
-        self, db_connection: SqliteDatabase, measure_type_name: str = "TestMeasureType"
-    ):
-        self._generate_measure_results(db_connection, measure_type_name)
-        if db_connection.is_closed():
-            # It could happen it has not been closed.
-            db_connection.connect()
-        _dummy_optimization_type = orm.OptimizationType.create(name="DummyType")
-        _optimization_run = orm.OptimizationRun.create(
-            name="DummyRun",
-            discount_rate=0.42,
-            optimization_type=_dummy_optimization_type,
-        )
-        _measure_result = orm.MeasureResult.select()[0].get()
-        _optimization_selected_measure = orm.OptimizationSelectedMeasure.create(
-            optimization_run=_optimization_run,
-            measure_result=_measure_result,
-            investment_year=2021,
-        )
-        _optimization_step = orm.OptimizationStep.create(
-            optimization_selected_measure=_optimization_selected_measure, step_number=42
-        )
-        _mechanism = orm.Mechanism.create(name="A Mechanism")
-        _mechanism_per_section = orm.MechanismPerSection.create(
-            mechanism=_mechanism, section=_measure_result.measure_per_section.section
-        )
-        orm.OptimizationStepResultMechanism.create(
-            optimization_step=_optimization_step,
-            mechanism_per_section=_mechanism_per_section,
-            beta=4.2,
-            time=20,
-            lcc=2023.12,
-        )
-        orm.OptimizationStepResultSection.create(
-            optimization_step=_optimization_step,
-            beta=4.2,
-            time=20,
-            lcc=2023.12,
-        )
+        yield generate_measure_results
 
-        db_connection.close()
+    @pytest.fixture(name="generate_optimization_results")
+    def _generate_optimization_results_fixture(
+        self,
+        generate_measure_results: Callable[[SqliteDatabase, str], None],
+    ) -> Iterator[Callable[[SqliteDatabase, str], None]]:
+        def generate_optimization_results(
+            db_connection: SqliteDatabase, measure_type_name: str
+        ) -> None:
+            generate_measure_results(db_connection, measure_type_name)
+            if db_connection.is_closed():
+                # It could happen it has not been closed.
+                db_connection.connect()
+            _dummy_optimization_type = orm.OptimizationType.create(name="DummyType")
+            _optimization_run = orm.OptimizationRun.create(
+                name="DummyRun",
+                discount_rate=0.42,
+                optimization_type=_dummy_optimization_type,
+            )
+            _measure_result = orm.MeasureResult.select()[0].get()
+            _optimization_selected_measure = orm.OptimizationSelectedMeasure.create(
+                optimization_run=_optimization_run,
+                measure_result=_measure_result,
+                investment_year=2021,
+            )
+            _optimization_step = orm.OptimizationStep.create(
+                optimization_selected_measure=_optimization_selected_measure,
+                step_number=42,
+            )
+            _mechanism = orm.Mechanism.create(name="A Mechanism")
+            _mechanism_per_section = orm.MechanismPerSection.create(
+                mechanism=_mechanism,
+                section=_measure_result.measure_per_section.section,
+            )
+            orm.OptimizationStepResultMechanism.create(
+                optimization_step=_optimization_step,
+                mechanism_per_section=_mechanism_per_section,
+                beta=4.2,
+                time=20,
+                lcc=2023.12,
+            )
+            orm.OptimizationStepResultSection.create(
+                optimization_step=_optimization_step,
+                beta=4.2,
+                time=20,
+                lcc=2023.12,
+            )
 
-        assert any(orm.OptimizationRun.select())
-        assert any(orm.OptimizationSelectedMeasure.select())
-        assert any(orm.OptimizationStep.select())
-        assert any(orm.OptimizationStepResultMechanism.select())
-        assert any(orm.OptimizationStepResultSection.select())
+            db_connection.close()
+
+            assert any(orm.OptimizationRun.select())
+            assert any(orm.OptimizationSelectedMeasure.select())
+            assert any(orm.OptimizationStep.select())
+            assert any(orm.OptimizationStepResultMechanism.select())
+            assert any(orm.OptimizationStepResultSection.select())
+
+        yield generate_optimization_results
 
     def _create_section_with_fully_configured_assessment_results(
         self,

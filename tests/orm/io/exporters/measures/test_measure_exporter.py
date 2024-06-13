@@ -1,9 +1,8 @@
-from typing import Type
+from typing import Callable, Type
 
 import pytest
 from pandas import DataFrame
 
-from tests.orm import get_basic_measure_per_section
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -16,6 +15,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 
 
 class TestMeasureExporter:
@@ -118,7 +118,9 @@ class TestMeasureExporter:
         )
 
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_export_dom_invalid_data(self):
+    def test_export_dom_invalid_data(
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
+    ):
         # Setup
         class InvalidMeasureMocked:
             def __init__(self) -> None:
@@ -140,7 +142,9 @@ class TestMeasureExporter:
         assert str(value_error.value) == "Unknown measure type: 'InvalidMeasureMocked'."
 
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_export_dom_invalid_type(self):
+    def test_export_dom_invalid_type(
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
+    ):
         # Setup
         _measure_per_section = get_basic_measure_per_section()
 

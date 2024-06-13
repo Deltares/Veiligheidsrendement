@@ -1,15 +1,19 @@
+from typing import Callable
+
 import pytest
 
-from tests.orm import get_basic_section_data
 from vrtool.orm.models import AssessmentSectionResult
 from vrtool.orm.models.orm_base_model import OrmBaseModel
+from vrtool.orm.models.section_data import SectionData
 
 
 class TestAssessmentSectionResult:
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_initialize_with_database_fixture(self):
+    def test_initialize_with_database_fixture(
+        self, get_orm_basic_dike_section: Callable[[], SectionData]
+    ):
         # 1. Define test data.
-        _section = get_basic_section_data()
+        _section = get_orm_basic_dike_section()
 
         # 2. Run test
         _assessment_section_result = AssessmentSectionResult.create(

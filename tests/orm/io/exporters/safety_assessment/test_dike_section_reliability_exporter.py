@@ -1,6 +1,7 @@
+from typing import Callable
+
 import pytest
 
-from tests.orm import get_basic_section_data
 from tests.orm.io.exporters import create_required_mechanism_per_section
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -32,9 +33,11 @@ class TestDikeSectionReliabilityExporter:
         return _dike_section
 
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_get_related_section_data(self):
+    def test_get_related_section_data(
+        self, get_orm_basic_dike_section: Callable[[], SectionData]
+    ):
         # 1. Define test data.
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         _dike_section = self._get_valid_dike_section(
             _test_section_data.section_name,
             _test_section_data.dike_traject.traject_name,
@@ -50,9 +53,11 @@ class TestDikeSectionReliabilityExporter:
         assert _test_section_data == _related_section_data
 
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_get_related_section_data_returns_none_for_different_traject(self):
+    def test_get_related_section_data_returns_none_for_different_traject(
+        self, get_orm_basic_dike_section: Callable[[], SectionData]
+    ):
         # 1. Define test data.
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         _dike_section = self._get_valid_dike_section(
             _test_section_data.section_name,
             _test_section_data.dike_traject.traject_name,
@@ -69,9 +74,11 @@ class TestDikeSectionReliabilityExporter:
         assert _related_section_data is None
 
     @pytest.mark.usefixtures("empty_db_fixture")
-    def test_get_related_section_data_returns_none_for_different_section(self):
+    def test_get_related_section_data_returns_none_for_different_section(
+        self, get_orm_basic_dike_section: Callable[[], SectionData]
+    ):
         # 1. Define test data.
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         _dike_section = self._get_valid_dike_section(
             "not_the_section_in_the_orm",
             _test_section_data.dike_traject.traject_name,
@@ -91,11 +98,13 @@ class TestDikeSectionReliabilityExporter:
 
     @pytest.mark.usefixtures("empty_db_fixture")
     def test_export_dom_with_valid_data(
-        self, section_reliability_with_values: SectionReliability
+        self,
+        section_reliability_with_values: SectionReliability,
+        get_orm_basic_dike_section: Callable[[], SectionData],
     ):
         # 1. Define test data.
         _exporter = DikeSectionReliabilityExporter()
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         _test_dike_section = self._get_valid_dike_section(
             _test_section_data.section_name,
             _test_section_data.dike_traject.traject_name,

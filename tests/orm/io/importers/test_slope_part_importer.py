@@ -1,9 +1,8 @@
-from typing import Type
+from typing import Callable, Type
 
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import get_basic_computation_scenario
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
@@ -16,6 +15,7 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.slope_part_importer import SlopePartImporter
 from vrtool.orm.models.block_revetment_relation import BlockRevetmentRelation
+from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.slope_part import SlopePart
 
 stone_relations = [
@@ -45,7 +45,10 @@ stone_relations = [
 class TestSlopePartImporter:
     @pytest.fixture
     def get_slope_part_fixture(
-        self, request: pytest.FixtureRequest, empty_db_fixture: SqliteDatabase
+        self,
+        request: pytest.FixtureRequest,
+        empty_db_fixture: SqliteDatabase,
+        get_basic_computation_scenario: Callable[[], ComputationScenario],
     ):
         with empty_db_fixture.atomic() as transaction:
             computation_scenario = get_basic_computation_scenario()
