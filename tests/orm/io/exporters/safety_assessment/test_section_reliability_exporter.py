@@ -1,7 +1,6 @@
 import pytest
 
 from tests.orm import get_basic_section_data
-from tests.orm.io.exporters import section_reliability_with_values
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.safety_assessment.section_reliability_exporter import (
