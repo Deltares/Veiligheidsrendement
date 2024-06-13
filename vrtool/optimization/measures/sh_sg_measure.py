@@ -28,7 +28,7 @@ class ShSgMeasure(MeasureAsInputBase):
     dcrest: float
     dberm: float
 
-    def is_initial_measure(self) -> bool:
+    def is_base_measure(self) -> bool:
         return False
 
     @staticmethod

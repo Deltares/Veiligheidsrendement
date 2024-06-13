@@ -70,7 +70,7 @@ class StrategyExporter(OrmExporterProtocol):
                 for _measure in [_measure_sh.secondary, _measure_sg.secondary]
                 if _measure is not None
             ]
-            _lcc_per_section[_section] = _measure_sh.lcc + _measure_sg.lcc
+            _lcc_per_section[_section] = _measure_sh.cost + _measure_sg.cost
 
             # get total_lcc and total_risk values
             _total_lcc = sum(_lcc_per_section.values())
@@ -91,7 +91,7 @@ class StrategyExporter(OrmExporterProtocol):
                 )
 
                 _prob_per_step = strategy_run.probabilities_per_step[_measure_idx + 1]
-                lcc = _measure_sh.lcc + _measure_sg.lcc
+                lcc = _measure_sh.cost + _measure_sg.cost
                 for _t in strategy_run.time_periods:
                     _prob_section = self._get_section_time_value(
                         _section, _t, _prob_per_step

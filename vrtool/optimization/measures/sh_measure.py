@@ -41,7 +41,7 @@ class ShMeasure(MeasureAsInputBase):
             CombinableTypeEnum.REVETMENT,
         ]
 
-    def is_initial_measure(self) -> bool:
+    def is_base_measure(self) -> bool:
         if self.year != 0:
             return False
         return math.isclose(self.dcrest, 0) or math.isnan(self.dcrest)

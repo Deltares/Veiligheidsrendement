@@ -39,7 +39,7 @@ class SgMeasure(MeasureAsInputBase):
             CombinableTypeEnum.PARTIAL,
         ]
 
-    def is_initial_measure(self) -> bool:
+    def is_base_measure(self) -> bool:
         if self.year != 0:
             return False
         return math.isclose(self.dberm, 0) or math.isnan(self.dberm)

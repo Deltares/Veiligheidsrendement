@@ -34,8 +34,8 @@ class AggregatedMeasureCombination:
         ):
             return 0
         return (
-            self.sh_combination.lcc
-            + self.sg_combination.lcc
+            self.sh_combination.cost
+            + self.sg_combination.cost
             - self.sh_combination.primary.base_cost
         ) / (1 + self.sh_combination.primary.discount_rate) ** self.year
 

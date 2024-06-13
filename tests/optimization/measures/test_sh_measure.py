@@ -1,3 +1,5 @@
+from typing import Callable, Iterable
+
 import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -11,31 +13,40 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
 class TestShMeasure:
-    def _create_sh_measure(
-        self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
-    ) -> ShMeasure:
-        return ShMeasure(
-            measure_result_id=42,
-            measure_type=measure_type,
-            combine_type=combinable_type,
-            cost=10.5,
-            base_cost=4.2,
-            year=10,
-            discount_rate=0.03,
-            mechanism_year_collection=None,
-            beta_target=1.1,
-            transition_level=0.5,
-            dcrest=0.1,
-            l_stab_screen=float("nan"),
-        )
+    @pytest.fixture(name="create_sh_measure")
+    def _create_sg_measure_fixture(
+        self,
+    ) -> Iterable[Callable[[MeasureTypeEnum, CombinableTypeEnum], ShMeasure]]:
+        def create_sh_measure(
+            measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
+        ) -> ShMeasure:
+            return ShMeasure(
+                measure_result_id=42,
+                measure_type=measure_type,
+                combine_type=combinable_type,
+                cost=10.5,
+                base_cost=4.2,
+                year=10,
+                discount_rate=0.03,
+                mechanism_year_collection=None,
+                beta_target=1.1,
+                transition_level=0.5,
+                dcrest=0.1,
+                l_stab_screen=float("nan"),
+            )
 
-    def test_create_sh_measure(self):
+        yield create_sh_measure
+
+    def test_create_sh_measure(
+        self,
+        create_sh_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], ShMeasure],
+    ):
         # 1. Define input
         _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
         _combine_type = CombinableTypeEnum.FULL
 
         # 2. Run test
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
+        _measure = create_sh_measure(_measure_type, _combine_type)
 
         # 3. Verify expectations
         assert isinstance(_measure, ShMeasure)
@@ -82,3 +93,33 @@ class TestShMeasure:
         # 3. Verify expectations
         assert isinstance(_allowed_combinations, dict)
         assert _allowed_combinations
+
+    @pytest.mark.parametrize(
+        "year, dcrest, expected_result",
+        [
+            pytest.param(1, float("nan"), False, id="year != 0"),
+            pytest.param(0, 4.2, False, id="year == 0; dcrest is > 0"),
+            pytest.param(0, 0, True, id="year == 0; dcrest = 0"),
+            pytest.param(0, float("nan"), True, id="year == 0; dcrest == 'nan'"),
+        ],
+    )
+    def test_is_base_measure_returns_expectation(
+        self,
+        year: int,
+        dcrest: float,
+        expected_result: bool,
+        create_sh_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], ShMeasure],
+    ):
+        # 1. Define test data.
+        # Measure and Combinable TypeEnum should not matter for this test.
+        _sh_measure = create_sh_measure(
+            MeasureTypeEnum.INVALID, CombinableTypeEnum.INVALID
+        )
+        _sh_measure.year = year
+        _sh_measure.dcrest = dcrest
+
+        # 2. Run test.
+        _result = _sh_measure.is_base_measure()
+
+        # 3. Verify expectations.
+        assert _result == expected_result

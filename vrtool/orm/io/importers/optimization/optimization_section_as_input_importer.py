@@ -74,9 +74,9 @@ class OptimizationSectionAsInputImporter:
                 )
             )
 
-        def set_initial_cost(measure_type: type[MeasureAsInputProtocol]):
+        def set_base_cost(measure_type: type[MeasureAsInputProtocol]):
             """
-            Sets the initial costs by clustering the measures by both type and
+            Sets the base costs by clustering the measures by both type and
             `l_stab_screen` value.
             Args:
                 measure_type (type[MeasureAsInputProtocol]): Measure type to use
@@ -87,7 +87,7 @@ class OptimizationSectionAsInputImporter:
 
             # Base costs are the `cost` of an "initial measure".
             for _initial_measure in filter(
-                measure_type.is_initial_measure, _measure_collection
+                measure_type.is_base_measure, _measure_collection
             ):
                 # We pivot by both `type[MeasureAsInputProtocol]` and
                 # `l_stab_screen`, as for different values of the latter
@@ -101,8 +101,8 @@ class OptimizationSectionAsInputImporter:
                     _measure.l_stab_screen
                 ]
 
-        set_initial_cost(SgMeasure)
-        set_initial_cost(ShMeasure)
+        set_base_cost(SgMeasure)
+        set_base_cost(ShMeasure)
 
         return SectionAsInput(
             section_name=_section_data.section_name,
