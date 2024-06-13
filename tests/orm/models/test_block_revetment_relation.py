@@ -1,11 +1,14 @@
-from tests.orm import empty_db_fixture, get_basic_computation_scenario
+import pytest
+
+from tests.orm import get_basic_computation_scenario
 from vrtool.orm.models.block_revetment_relation import BlockRevetmentRelation
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.slope_part import SlopePart
 
 
 class TestBlockRevetmentRelation:
-    def test_initialize_with_database_fixture(self, empty_db_fixture):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_initialize_with_database_fixture(self):
         # 1. Define test data.
         _scenario = get_basic_computation_scenario()
         _slope_part = SlopePart.create(

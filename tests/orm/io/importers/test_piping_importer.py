@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_mechanism_per_section
+from tests.orm import get_basic_mechanism_per_section
 from tests.orm.io import add_computation_scenario_id
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.piping_importer import PipingImporter

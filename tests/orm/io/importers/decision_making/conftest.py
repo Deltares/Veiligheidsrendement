@@ -3,7 +3,6 @@ from typing import Callable, Iterable
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture
 from vrtool.common.enums import MechanismEnum
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum

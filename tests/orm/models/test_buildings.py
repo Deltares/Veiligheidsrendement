@@ -1,13 +1,14 @@
 import peewee
 import pytest
 
-from tests.orm import empty_db_fixture, get_basic_section_data
+from tests.orm import get_basic_section_data
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
 class TestBuildings:
-    def test_initialize_with_database_fixture(self, empty_db_fixture):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_initialize_with_database_fixture(self):
         # 1. Define test data.
         _test_section = get_basic_section_data()
 
@@ -22,7 +23,8 @@ class TestBuildings:
         assert _buildings.distance_from_toe == 4.2
         assert _buildings.number_of_buildings == 42
 
-    def test_initialize_with_database_fixture_no_columns(self, empty_db_fixture):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_initialize_with_database_fixture_no_columns(self):
         # 1. Define test data.
         _test_section = get_basic_section_data()
 

@@ -1,10 +1,8 @@
 from typing import Callable, Type
 
 import pytest
-from peewee import SqliteDatabase
 
 from tests import test_data, test_results
-from tests.orm import empty_db_fixture
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
@@ -106,13 +104,13 @@ class TestMeasureImporter:
             pytest.param(CombinableTypeEnum.FULL),
         ],
     )
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_import_orm_with_standard_measure(
         self,
         measure_type: MeasureTypeEnum,
         combinable_type: CombinableTypeEnum,
         expected_type: Type[MeasureProtocol],
         valid_config: VrtoolConfig,
-        empty_db_fixture: SqliteDatabase,
         create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.
@@ -170,10 +168,10 @@ class TestMeasureImporter:
         assert isinstance(measure_base.unit_costs, MeasureUnitCosts)
         assert measure_base.unit_costs == valid_config.unit_costs
 
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_import_orm_with_unknown_standard_measure_raises_error(
         self,
         valid_config: VrtoolConfig,
-        empty_db_fixture: SqliteDatabase,
         create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.

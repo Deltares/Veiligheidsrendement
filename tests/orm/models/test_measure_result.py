@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytest
 
-from tests.orm import empty_db_fixture, get_basic_measure_per_section
+from tests.orm import get_basic_measure_per_section
 from vrtool.orm.models import MeasureResult
 from vrtool.orm.models.measure_result.measure_result_parameter import (
     MeasureResultParameter,
@@ -12,7 +12,8 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
 class TestMeasureResult:
-    def test_initialize_with_database_fixture(self, empty_db_fixture):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_initialize_with_database_fixture(self):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
 
@@ -30,9 +31,8 @@ class TestMeasureResult:
         assert _measure_result.measure_per_section == _measure_per_section
         assert _measure_result in _measure_per_section.measure_per_section_result
 
-    def test_given_measure_result_without_parameters_nan_is_returned(
-        self, empty_db_fixture
-    ):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_given_measure_result_without_parameters_nan_is_returned(self):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
         _measure_result = MeasureResult.create(
@@ -56,8 +56,9 @@ class TestMeasureResult:
             pytest.param(str.upper, id="Uppercase name"),
         ],
     )
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_given_measure_result_with_parameters_returns_value(
-        self, string_variation: Callable, empty_db_fixture
+        self, string_variation: Callable
     ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()

@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_computation_scenario
+from tests.orm import get_basic_computation_scenario
 from tests.orm.io import add_computation_scenario_id
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput

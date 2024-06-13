@@ -1,4 +1,6 @@
-from tests.orm import empty_db_fixture, get_basic_section_data
+import pytest
+
+from tests.orm import get_basic_section_data
 from tests.orm.io.exporters import (
     create_required_mechanism_per_section,
     section_reliability_with_values,
@@ -32,7 +34,8 @@ class TestDikeSectionReliabilityExporter:
         _dike_section.TrajectInfo = DikeTrajectInfo(traject_name)
         return _dike_section
 
-    def test_get_related_section_data(self, empty_db_fixture):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_get_related_section_data(self):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()
         _dike_section = self._get_valid_dike_section(
@@ -49,9 +52,8 @@ class TestDikeSectionReliabilityExporter:
         assert isinstance(_related_section_data, SectionData)
         assert _test_section_data == _related_section_data
 
-    def test_get_related_section_data_returns_none_for_different_traject(
-        self, empty_db_fixture
-    ):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_get_related_section_data_returns_none_for_different_traject(self):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()
         _dike_section = self._get_valid_dike_section(
@@ -69,9 +71,8 @@ class TestDikeSectionReliabilityExporter:
         # 3. Verify expectations.
         assert _related_section_data is None
 
-    def test_get_related_section_data_returns_none_for_different_section(
-        self, empty_db_fixture
-    ):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_get_related_section_data_returns_none_for_different_section(self):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()
         _dike_section = self._get_valid_dike_section(
@@ -91,8 +92,9 @@ class TestDikeSectionReliabilityExporter:
         # 3. Verify expectations.
         assert _related_section_data is None
 
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_export_dom_with_valid_data(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self, section_reliability_with_values: SectionReliability
     ):
         # 1. Define test data.
         _exporter = DikeSectionReliabilityExporter()

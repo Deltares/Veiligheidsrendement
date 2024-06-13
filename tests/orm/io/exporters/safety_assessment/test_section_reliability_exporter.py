@@ -1,4 +1,6 @@
-from tests.orm import empty_db_fixture, get_basic_section_data
+import pytest
+
+from tests.orm import get_basic_section_data
 from tests.orm.io.exporters import section_reliability_with_values
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
@@ -17,8 +19,9 @@ class TestSectionReliabilityExporter:
         assert isinstance(_exporter, SectionReliabilityExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_export_dom_with_valid_arguments(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self, section_reliability_with_values: SectionReliability
     ):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()

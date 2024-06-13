@@ -4,7 +4,7 @@ import pytest
 from peewee import SqliteDatabase
 from pytest import approx
 
-from tests.orm import empty_db_fixture, get_basic_section_data
+from tests.orm import get_basic_section_data
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
 from vrtool.orm.models.section_data import SectionData
@@ -51,9 +51,8 @@ class TestWaterLevelImporter:
         assert isinstance(_importer, OrmImporterProtocol)
         assert _importer.gridpoint == 42
 
-    def test_import_orm_without_no_water_level_data_doesnot_raise(
-        self, empty_db_fixture: SqliteDatabase
-    ):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_import_orm_without_no_water_level_data_doesnot_raise(self):
         # 1. Define test data.
         _importer = WaterLevelImporter(42)
         _section_data = get_basic_section_data()

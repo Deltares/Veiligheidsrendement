@@ -1,7 +1,3 @@
-import pytest
-from peewee import SqliteDatabase
-
-from tests import test_data
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -16,19 +12,6 @@ from vrtool.orm.models.measure_type import MeasureType
 from vrtool.orm.models.mechanism import Mechanism
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.section_data import SectionData
-from vrtool.orm.orm_controllers import open_database
-
-
-@pytest.fixture(autouse=False)
-def empty_db_fixture():
-    _db_file = test_data / "test_db" / f"empty_db.db"
-    _db = open_database(_db_file)
-    assert isinstance(_db, SqliteDatabase)
-
-    with _db.atomic() as transaction:
-        yield _db
-        transaction.rollback()
-    _db.close()
 
 
 def get_domain_basic_dike_traject_info() -> DikeTrajectInfo:

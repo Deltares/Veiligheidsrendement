@@ -3,7 +3,7 @@ from typing import Type
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_computation_scenario
+from tests.orm import get_basic_computation_scenario
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )

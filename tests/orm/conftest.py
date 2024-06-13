@@ -2,9 +2,26 @@ import shutil
 from typing import Iterator
 
 import pytest
+from peewee import SqliteDatabase
 
-from tests import get_clean_test_results_dir
+from tests import get_clean_test_results_dir, test_data
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.orm.orm_controllers import open_database
+
+
+@pytest.fixture(autouse=False, name="empty_db_fixture")
+def get_empty_db_fixture() -> Iterator[SqliteDatabase]:
+    """
+    Get's an empty database with a valid scheme.
+    """
+    _db_file = test_data.joinpath("test_db", "empty_db.db")
+    _db = open_database(_db_file)
+    assert isinstance(_db, SqliteDatabase)
+
+    with _db.atomic() as transaction:
+        yield _db
+        transaction.rollback()
+    _db.close()
 
 
 @pytest.fixture(name="custom_measures_vrtool_config")

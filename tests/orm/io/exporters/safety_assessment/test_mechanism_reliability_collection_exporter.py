@@ -1,6 +1,6 @@
 import pytest
 
-from tests.orm import empty_db_fixture, get_basic_section_data
+from tests.orm import get_basic_section_data
 from tests.orm.io.exporters import (
     create_required_mechanism_per_section,
     section_reliability_with_values,
@@ -26,8 +26,9 @@ class TestMechanismReliabilityCollectionExporter:
         assert isinstance(_exporter, MechanismReliabilityCollectionExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_export_dom_with_valid_arguments(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self, section_reliability_with_values: SectionReliability
     ):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()
@@ -76,8 +77,9 @@ class TestMechanismReliabilityCollectionExporter:
                 ), f"No assessment created for mechanism {_mechanism}, time {time_value}."
                 assert _orm_assessment.beta == beta_value
 
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_export_dom_with_two_sections_exports_to_expected(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self, section_reliability_with_values: SectionReliability
     ):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()
@@ -123,8 +125,9 @@ class TestMechanismReliabilityCollectionExporter:
             for _amr in AssessmentMechanismResult.select()
         )
 
+    @pytest.mark.usefixtures("empty_db_fixture")
     def test_export_dom_with_unknown_mechanism_raises_error(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self, section_reliability_with_values: SectionReliability
     ):
         # 1. Define test data.
         _test_section_data = get_basic_section_data()

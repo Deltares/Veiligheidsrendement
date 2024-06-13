@@ -1,6 +1,5 @@
-from peewee import SqliteDatabase
+import pytest
 
-from tests.orm import empty_db_fixture
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_type import MeasureType
@@ -9,7 +8,8 @@ from vrtool.orm.models.standard_measure import StandardMeasure
 
 
 class TestStandardMeasure:
-    def test_initialize_standard_measure(self, empty_db_fixture: SqliteDatabase):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_initialize_standard_measure(self):
         # 1. Define test data.
         _measure_type = MeasureType.create(name="dummy_measure_type")
         _combinable_type = CombinableType.create(name="dummy_combinable_type")

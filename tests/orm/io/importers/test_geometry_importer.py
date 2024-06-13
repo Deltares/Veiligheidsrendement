@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_section_data
+from tests.orm import get_basic_section_data
 from vrtool.orm.io.importers.geometry_importer import GeometryImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.characteristic_point_type import CharacteristicPointType

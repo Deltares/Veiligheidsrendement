@@ -1,7 +1,5 @@
 import pytest
 
-from tests import test_data, test_results
-from tests.orm import empty_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
@@ -12,7 +10,8 @@ from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajec
 
 
 class TestDikeTrajectImporter:
-    def test_initialize(self, empty_db_fixture):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_initialize(self):
         config = VrtoolConfig(input_directory=".")
         DikeTrajectInfo.create(traject_name="123")
         _importer = DikeTrajectImporter(config)

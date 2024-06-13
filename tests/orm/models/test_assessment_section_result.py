@@ -1,10 +1,13 @@
-from tests.orm import empty_db_fixture, get_basic_section_data
+import pytest
+
+from tests.orm import get_basic_section_data
 from vrtool.orm.models import AssessmentSectionResult
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
 class TestAssessmentSectionResult:
-    def test_initialize_with_database_fixture(self, empty_db_fixture):
+    @pytest.mark.usefixtures("empty_db_fixture")
+    def test_initialize_with_database_fixture(self):
         # 1. Define test data.
         _section = get_basic_section_data()
 
