@@ -3,8 +3,8 @@ import shutil
 import pytest
 
 from tests import test_results
-from tests.run_workflows import MockedDikeTraject
 from vrtool.defaults.vrtool_config import VrtoolConfig
+from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
     RunSafetyAssessment,
 )
@@ -12,13 +12,12 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class TestRunSafetyAssessment:
-    def test_init_with_valid_args(self):
+    def test_init_with_valid_args(self, mocked_dike_traject: DikeTraject):
         # 1. Define test data
         _vr_config = VrtoolConfig()
-        _traject = MockedDikeTraject()
 
         # 2. Run test.
-        _assessment = RunSafetyAssessment(_vr_config, _traject)
+        _assessment = RunSafetyAssessment(_vr_config, mocked_dike_traject)
 
         # 3. Verify expectations.
         assert isinstance(_assessment, RunSafetyAssessment)
@@ -44,14 +43,15 @@ class TestRunSafetyAssessment:
         assert str(exception_error.value) == "Expected instance of a DikeTraject."
 
     def test_get_valid_output_dir_creates_missing_directories(
-        self, request: pytest.FixtureRequest
+        self, mocked_dike_traject: DikeTraject, request: pytest.FixtureRequest
     ):
         # 1. Define test data
         _vr_config = VrtoolConfig()
-        _traject = MockedDikeTraject()
-        _assessment = RunSafetyAssessment(_vr_config, _traject)
+        _assessment = RunSafetyAssessment(_vr_config, mocked_dike_traject)
         _assessment.vr_config = VrtoolConfig()
-        _assessment.vr_config.output_directory = test_results / request.node.name
+        _assessment.vr_config.output_directory = test_results.joinpath(
+            request.node.name
+        )
         if _assessment.vr_config.output_directory.exists():
             shutil.rmtree(_assessment.vr_config.output_directory)
 
