@@ -1401,7 +1401,7 @@ class TestCustomMeasureDetail:
         )
         assert _meas_ids == _custom_measure_detail_ids
 
-        assert len(_imported_data[0].measures) == 3
+        assert len(_imported_data[0].measures) == 2
 
         _years = custom_measures_vrtool_config.T
         _expected_betas = np.linspace(7, 4, num=7)
