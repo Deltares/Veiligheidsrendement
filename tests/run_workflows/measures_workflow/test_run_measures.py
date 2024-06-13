@@ -7,13 +7,14 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class TestRunMeasures:
-    def test_init_with_valid_data(self, mocked_dike_traject: DikeTraject):
+    def test_init_with_valid_data(self):
         # 1. Define test data
         _vr_config = VrtoolConfig()
         _vr_config.traject = "A traject"
+        _traject = DikeTraject()
 
         # 2. Run test
-        _run = RunMeasures(_vr_config, mocked_dike_traject)
+        _run = RunMeasures(_vr_config, _traject)
 
         # 3. Verify expectations
         assert isinstance(_run, RunMeasures)

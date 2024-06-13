@@ -12,12 +12,13 @@ from vrtool.run_workflows.vrtool_run_protocol import VrToolRunProtocol
 
 
 class TestRunSafetyAssessment:
-    def test_init_with_valid_args(self, mocked_dike_traject: DikeTraject):
+    def test_init_with_valid_args(self):
         # 1. Define test data
         _vr_config = VrtoolConfig()
+        _dike_traject = DikeTraject()
 
         # 2. Run test.
-        _assessment = RunSafetyAssessment(_vr_config, mocked_dike_traject)
+        _assessment = RunSafetyAssessment(_vr_config, _dike_traject)
 
         # 3. Verify expectations.
         assert isinstance(_assessment, RunSafetyAssessment)
@@ -43,11 +44,12 @@ class TestRunSafetyAssessment:
         assert str(exception_error.value) == "Expected instance of a DikeTraject."
 
     def test_get_valid_output_dir_creates_missing_directories(
-        self, mocked_dike_traject: DikeTraject, request: pytest.FixtureRequest
+        self, request: pytest.FixtureRequest
     ):
         # 1. Define test data
         _vr_config = VrtoolConfig()
-        _assessment = RunSafetyAssessment(_vr_config, mocked_dike_traject)
+        _dike_traject = DikeTraject()
+        _assessment = RunSafetyAssessment(_vr_config, _dike_traject)
         _assessment.vr_config = VrtoolConfig()
         _assessment.vr_config.output_directory = test_results.joinpath(
             request.node.name
