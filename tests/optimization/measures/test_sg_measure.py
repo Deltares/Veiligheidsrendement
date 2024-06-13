@@ -1,3 +1,5 @@
+from typing import Callable, Iterable
+
 import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -11,30 +13,38 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 
 
 class TestSgMeasure:
-    def _create_sg_measure(
-        self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
-    ) -> SgMeasure:
-        _measure = SgMeasure(
-            measure_result_id=42,
-            measure_type=measure_type,
-            combine_type=combinable_type,
-            cost=10.5,
-            base_cost=4.2,
-            year=10,
-            discount_rate=0.03,
-            mechanism_year_collection=None,
-            dberm=0.1,
-            l_stab_screen=float("nan"),
-        )
-        return _measure
+    @pytest.fixture(name="create_sg_measure")
+    def _create_sg_measure_fixture(
+        self,
+    ) -> Iterable[Callable[[MeasureTypeEnum, CombinableTypeEnum], SgMeasure]]:
+        def create_sg_measure(
+            measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
+        ) -> SgMeasure:
+            return SgMeasure(
+                measure_result_id=42,
+                measure_type=measure_type,
+                combine_type=combinable_type,
+                cost=10.5,
+                base_cost=4.2,
+                year=10,
+                discount_rate=0.03,
+                mechanism_year_collection=None,
+                dberm=0.1,
+                l_stab_screen=float("nan"),
+            )
 
-    def test_create_sg_measure(self):
+        yield create_sg_measure
+
+    def test_create_sg_measure(
+        self,
+        create_sg_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], SgMeasure],
+    ):
         # 1. Define input
         _measure_type = MeasureTypeEnum.SOIL_REINFORCEMENT
         _combine_type = CombinableTypeEnum.COMBINABLE
 
         # 2. Run test
-        _measure = self._create_sg_measure(_measure_type, _combine_type)
+        _measure = create_sg_measure(_measure_type, _combine_type)
 
         # 3. Verify expectations
         assert isinstance(_measure, SgMeasure)
@@ -79,3 +89,33 @@ class TestSgMeasure:
         # 3. Verify expectations
         assert isinstance(_allowed_combinations, dict)
         assert _allowed_combinations
+
+    @pytest.mark.parametrize(
+        "year, dberm, expected_result",
+        [
+            pytest.param(1, float("nan"), False, id="year != 0"),
+            pytest.param(0, 4.2, False, id="year == 0; dberm is > 0"),
+            pytest.param(0, 0, True, id="year == 0; dberm = 0"),
+            pytest.param(0, float("nan"), True, id="year == 0; dberm == 'nan'"),
+        ],
+    )
+    def test_is_base_measure_returns_expectation(
+        self,
+        year: int,
+        dberm: float,
+        expected_result: bool,
+        create_sg_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], SgMeasure],
+    ):
+        # 1. Define test data.
+        # Measure and Combinable TypeEnum should not matter for this test.
+        _sg_measure = create_sg_measure(
+            MeasureTypeEnum.INVALID, CombinableTypeEnum.INVALID
+        )
+        _sg_measure.year = year
+        _sg_measure.dberm = dberm
+
+        # 2. Run test.
+        _result = _sg_measure.is_base_measure()
+
+        # 3. Verify expectations.
+        assert _result == expected_result

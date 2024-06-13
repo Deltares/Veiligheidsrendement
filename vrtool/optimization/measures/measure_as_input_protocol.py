@@ -24,14 +24,14 @@ class MeasureAsInputProtocol(Protocol):
     mechanism_year_collection: MechanismPerYearProbabilityCollection
     l_stab_screen: float
 
-    def is_initial_measure(self) -> bool:
+    def is_base_measure(self) -> bool:
         """
-        Verifies whether the given measure is considered the "initial measure".
+        Verifies whether the given measure is considered the "base measure".
         This happens when its year is 0 but most important when its
         `dberm` (for `ShMeasure`) or `dcrest` (for `SgMeasure`) are `0` or `nan`.
 
         Returns:
-            bool: Whether its an initial measure or not.
+            bool: Whether its an base measure or not.
         """
         pass
 

@@ -30,10 +30,17 @@ class CombinedMeasure:
         Returns:
             bool: True when its primary measure is an initial measure.
         """
-        return self.primary.is_initial_measure()
+        return self.primary.is_base_measure()
 
     @property
-    def lcc(self) -> float:
+    def cost(self) -> float:
+        """
+        Combined measure cost, can be used to compute the `LCC` of
+        an aggregated measure.
+
+        Returns:
+            float: Total (bruto) cost of the combined measures.
+        """
         if self.secondary:
             return self.primary.cost + self.secondary.cost
         return self.primary.cost

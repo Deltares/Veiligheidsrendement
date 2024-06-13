@@ -22,7 +22,6 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure import 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.decision_making.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.section_data import SectionData
 
 
 class TestMeasureImporter:
