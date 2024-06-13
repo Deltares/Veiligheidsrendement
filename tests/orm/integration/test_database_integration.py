@@ -1,47 +1,41 @@
 import math
-from pathlib import Path
-from typing import Union
+from typing import Iterator, Union
 
 import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data
-from tests.orm.integration import valid_data_db_fixture
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
-from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
-    OverFlowHydraRingImporter,
-)
-from vrtool.orm.io.importers.piping_importer import PipingImporter
-from vrtool.orm.io.importers.stability_inner_simple_importer import (
-    StabilityInnerSimpleImporter,
-)
 from vrtool.orm.models import DikeTrajectInfo as OrmDikeTrajectInfo
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
-from vrtool.orm.models.mechanism import Mechanism
-from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.orm_controllers import open_database
 
 
 class TestDatabaseIntegration:
-    def _assert_float(self, actual: float, expected: Union[float, None]) -> None:
-        if not expected:
-            assert math.isnan(actual)
-        else:
-            assert actual == pytest.approx(expected)
+    @pytest.fixture(autouse=False, scope="module", name="valid_data_db")
+    def get_valid_data_db_fixture(self) -> Iterator[SqliteDatabase]:
+        _db_file = test_data.joinpath("test_db", "with_valid_data.db")
+        assert _db_file.is_file()
 
-    def test_import_dike_traject_imports_all_data(
-        self, valid_data_db_fixture: SqliteDatabase
-    ):
+        _db = open_database(_db_file)
+        assert isinstance(_db, SqliteDatabase)
+
+        yield _db
+
+        _db.close()
+
+    @pytest.mark.usefixtures("valid_data_db")
+    def test_import_dike_traject_imports_all_data(self):
         # Setup
         _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
 
@@ -65,183 +59,11 @@ class TestDatabaseIntegration:
         _first_dike_section = _orm_dike_sections[0]
         self._assert_dike_section(_dike_traject.sections[0], _first_dike_section)
 
-    @pytest.mark.skip(reason="This test should not exist. It is also now failing.")
-    def test_import_overflow_imports_all_overflow_data(
-        self, valid_data_db_fixture: SqliteDatabase
-    ):
-        # Setup
-        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
-        _orm_dike_section = _orm_dike_traject_info.dike_sections.select().where(
-            SectionData.in_analysis
-        )[0]
-
-        _mechanisms_per_first_section = (
-            MechanismPerSection.select()
-            .join(SectionData, on=MechanismPerSection.section)
-            .where(SectionData.id == _orm_dike_section.get_id())
-        )
-
-        _overflow_per_first_section = (
-            _mechanisms_per_first_section.select()
-            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == MechanismEnum.OVERFLOW.name)
-        )
-
-        # Precondition
-        assert len(_overflow_per_first_section) == 1
-
-        computation_scenarios = ComputationScenario.select().where(
-            ComputationScenario.mechanism_per_section == _overflow_per_first_section[0]
-        )
-        assert len(computation_scenarios) == 1
-
-        _overflow_computation_scenario = computation_scenarios[0]
-        _importer = OverFlowHydraRingImporter()
-
-        # Call
-        _mechanism_input = _importer.import_orm(_overflow_computation_scenario)
-
-        # Assert
-        self._assert_overflow_mechanism_input(
-            _mechanism_input, _overflow_computation_scenario
-        )
-
-    @pytest.mark.skip(reason="This test should not exist. It is also now failing.")
-    def test_import_dstability_imports_all__dstability_data(
-        self, valid_data_db_fixture: SqliteDatabase
-    ):
-        # Setup
-        # Note: only the first and second sections have a reference to the STIX files
-        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
-        _orm_dike_section = (
-            _orm_dike_traject_info.dike_sections.select()
-            .where(SectionData.id == 1)
-            .get()
-        )
-
-        _mechanisms_per_first_section = (
-            MechanismPerSection.select()
-            .join(SectionData, on=MechanismPerSection.section)
-            .where(SectionData.id == _orm_dike_section.get_id())
-        )
-
-        _dstability_per_first_section = (
-            _mechanisms_per_first_section.select()
-            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == MechanismEnum.STABILITY_INNER.name)
-        )
-
-        # Precondition
-        assert len(_dstability_per_first_section) == 1
-
-        computation_scenarios = ComputationScenario.select().where(
-            ComputationScenario.mechanism_per_section
-            == _dstability_per_first_section[0]
-        )
-
-        _externals_directory = Path("path/to/externals")
-        _stix_directory = Path("path/to/stix")
-        _importer = DStabilityImporter(_externals_directory, _stix_directory)
-
-        # Call
-        # Multiple computation scenarios are defined while only one scenario is supported by the application itself
-        _mechanism_input = _importer.import_orm(computation_scenarios[0])
-
-        # Assert
-        assert _mechanism_input.mechanism == MechanismEnum.STABILITY_INNER.name
-
-        expected_parameters = computation_scenarios[0].parameters.select()
-        assert len(_mechanism_input.input) == len(expected_parameters) + 2
-        self._assert_parameters(_mechanism_input, expected_parameters)
-
-        assert (
-            _mechanism_input.input["STIXNAAM"]
-            == _stix_directory
-            / computation_scenarios[0].supporting_files.select()[0].filename
-        )
-        assert _mechanism_input.input["DStability_exe_path"] == str(
-            _externals_directory
-        )
-
-    @pytest.mark.skip(reason="This test should not exist. It is also now failing.")
-    def test_import_stability_simple_imports_all_stability_data(
-        self, valid_data_db_fixture: SqliteDatabase
-    ):
-        # Setup
-        # Note: Section 22B (id 23) only contains a parameter without stix file support
-        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
-        _orm_dike_section = (
-            _orm_dike_traject_info.dike_sections.select()
-            .where(SectionData.id == 23)
-            .get()
-        )
-
-        _mechanisms_per_first_section = (
-            MechanismPerSection.select()
-            .join(SectionData, on=MechanismPerSection.section)
-            .where(SectionData.id == _orm_dike_section.get_id())
-        )
-
-        _stability_per_first_section = (
-            _mechanisms_per_first_section.select()
-            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == MechanismEnum.STABILITY_INNER.name)
-        )
-
-        # Precondition
-        assert len(_stability_per_first_section) == 1
-
-        computation_scenarios = ComputationScenario.select().where(
-            ComputationScenario.mechanism_per_section == _stability_per_first_section[0]
-        )
-
-        assert len(computation_scenarios) == 1
-
-        _importer = StabilityInnerSimpleImporter()
-
-        # Call
-        _mechanism_input = _importer.import_orm(computation_scenarios[0])
-
-        # Assert
-        self._assert_stability_simple_mechanism_input(
-            _mechanism_input, computation_scenarios[0]
-        )
-
-    @pytest.mark.skip(reason="This test should not exist. It is also now failing.")
-    def test_import_piping_imports_all_piping_data(
-        self, valid_data_db_fixture: SqliteDatabase
-    ):
-        # Setup
-        _orm_dike_traject_info = OrmDikeTrajectInfo.get_by_id(1)
-        _orm_dike_section = _orm_dike_traject_info.dike_sections.select().where(
-            SectionData.in_analysis
-        )[0]
-
-        _mechanisms_per_first_section = (
-            MechanismPerSection.select()
-            .join(SectionData, on=MechanismPerSection.section)
-            .where(SectionData.id == _orm_dike_section.get_id())
-        )
-
-        _piping_per_first_section = (
-            _mechanisms_per_first_section.select()
-            .join(Mechanism, on=MechanismPerSection.mechanism == Mechanism.id)
-            .where(Mechanism.name == MechanismEnum.PIPING.name)
-        )
-
-        # Precondition
-        assert len(_piping_per_first_section) == 1
-
-        _importer = PipingImporter()
-
-        # Call
-        _mechanism_input = _importer.import_orm(_piping_per_first_section[0])
-
-        # Assert
-        computation_scenarios = ComputationScenario.select().where(
-            ComputationScenario.mechanism_per_section == _piping_per_first_section[0]
-        )
-        self._assert_piping_mechanism_input(_mechanism_input, computation_scenarios)
+    def _assert_float(self, actual: float, expected: Union[float, None]) -> None:
+        if not expected:
+            assert math.isnan(actual)
+        else:
+            assert actual == pytest.approx(expected)
 
     def _assert_dike_traject_info(
         self, actual: DikeTrajectInfo, expected: OrmDikeTrajectInfo
