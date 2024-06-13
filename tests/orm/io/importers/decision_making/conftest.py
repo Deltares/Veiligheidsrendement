@@ -1,3 +1,5 @@
+from typing import Callable, Iterable
+
 import pytest
 from peewee import SqliteDatabase
 
@@ -17,55 +19,60 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.standard_measure import StandardMeasure
 
 
-def _create_custom_measure_detail(measure: Measure) -> None:
-    _mech_inst = Mechanism.create(name=MechanismEnum.INVALID.name)
-    _any_section = SectionData.get()
-    _measure_per_section, _ = MeasurePerSection.get_or_create(
-        measure=measure, section=_any_section
-    )
-    _mechanism_per_section, _ = MechanismPerSection.get_or_create(
-        mechanism=_mech_inst, section=_measure_per_section.section
-    )
-    CustomMeasureDetail.create(
-        measure=measure,
-        mechanism_per_section=_mechanism_per_section,
-        cost=1234.56,
-        beta=42.24,
-        year=2023,
-    )
-
-
-def get_valid_measure(
-    measure_type: MeasureTypeEnum,
-    combinable_type: CombinableTypeEnum,
-) -> Measure:
-    """
-    Creates a basic measure within a Vrtool database context.
-    TODO: This method should be a fixture.
-    """
-    _measure_type = MeasureType.create(name=measure_type.legacy_name)
-    _combinable_type = CombinableType.create(name=combinable_type.name)
-    _measure = Measure.create(
-        measure_type=_measure_type,
-        combinable_type=_combinable_type,
-        name="Test Measure",
-        year=2023,
-    )
-    if measure_type == MeasureTypeEnum.CUSTOM:
-        _create_custom_measure_detail(_measure)
-    else:
-        StandardMeasure.create(
-            measure=_measure,
-            crest_step=4.2,
-            direction="onwards",
-            stability_screen=False,
-            max_crest_increase=0.1,
-            max_outward_reinforcement=2,
-            max_inward_reinforcement=3,
-            prob_of_solution_failure=0.4,
-            failure_probability_with_solution=0.5,
+@pytest.fixture(name="create_valid_measure")
+def get_valid_measure_fixture() -> Iterable[
+    Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure]
+]:
+    def _create_custom_measure_detail(measure: Measure) -> None:
+        _mech_inst = Mechanism.create(name=MechanismEnum.INVALID.name)
+        _any_section = SectionData.get()
+        _measure_per_section, _ = MeasurePerSection.get_or_create(
+            measure=measure, section=_any_section
         )
-    return _measure
+        _mechanism_per_section, _ = MechanismPerSection.get_or_create(
+            mechanism=_mech_inst, section=_measure_per_section.section
+        )
+        CustomMeasureDetail.create(
+            measure=measure,
+            mechanism_per_section=_mechanism_per_section,
+            cost=1234.56,
+            beta=42.24,
+            year=2023,
+        )
+
+    def create_valid_measure(
+        measure_type: MeasureTypeEnum,
+        combinable_type: CombinableTypeEnum,
+    ) -> Measure:
+        """
+        Creates a basic measure within a Vrtool database context.
+        TODO: This method should be a fixture.
+        """
+        _measure_type = MeasureType.create(name=measure_type.legacy_name)
+        _combinable_type = CombinableType.create(name=combinable_type.name)
+        _measure = Measure.create(
+            measure_type=_measure_type,
+            combinable_type=_combinable_type,
+            name="Test Measure",
+            year=2023,
+        )
+        if measure_type == MeasureTypeEnum.CUSTOM:
+            _create_custom_measure_detail(_measure)
+        else:
+            StandardMeasure.create(
+                measure=_measure,
+                crest_step=4.2,
+                direction="onwards",
+                stability_screen=False,
+                max_crest_increase=0.1,
+                max_outward_reinforcement=2,
+                max_inward_reinforcement=3,
+                prob_of_solution_failure=0.4,
+                failure_probability_with_solution=0.5,
+            )
+        return _measure
+
+    yield create_valid_measure
 
 
 @pytest.fixture

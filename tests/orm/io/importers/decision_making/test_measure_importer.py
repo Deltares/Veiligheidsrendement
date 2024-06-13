@@ -1,11 +1,10 @@
-from typing import Type
+from typing import Callable, Type
 
 import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
-from tests.orm.io.importers.decision_making.conftest import get_valid_measure
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
@@ -22,6 +21,7 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure import 
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.io.importers.decision_making.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
+from vrtool.orm.models.measure import Measure
 
 
 class TestMeasureImporter:
@@ -113,10 +113,11 @@ class TestMeasureImporter:
         expected_type: Type[MeasureProtocol],
         valid_config: VrtoolConfig,
         empty_db_fixture: SqliteDatabase,
+        create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _orm_measure = get_valid_measure(measure_type, combinable_type)
+        _orm_measure = create_valid_measure(measure_type, combinable_type)
 
         # 2. Run test.
         _imported_measure = _importer.import_orm(_orm_measure)
@@ -143,10 +144,11 @@ class TestMeasureImporter:
     def test_import_custom_measure_raises(
         self,
         valid_config: VrtoolConfig,
+        create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
-        _orm_measure = get_valid_measure(
+        _orm_measure = create_valid_measure(
             MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
         )
         _expected_error = "Custom measures are not supported by this importer."
@@ -169,12 +171,17 @@ class TestMeasureImporter:
         assert measure_base.unit_costs == valid_config.unit_costs
 
     def test_import_orm_with_unknown_standard_measure_raises_error(
-        self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase
+        self,
+        valid_config: VrtoolConfig,
+        empty_db_fixture: SqliteDatabase,
+        create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.
         _importer = MeasureImporter(valid_config)
         _measure_type = MeasureTypeEnum.INVALID
-        _orm_measure = get_valid_measure(_measure_type, CombinableTypeEnum.COMBINABLE)
+        _orm_measure = create_valid_measure(
+            _measure_type, CombinableTypeEnum.COMBINABLE
+        )
 
         # 2. Run test.
         with pytest.raises(NotImplementedError) as exc_err:

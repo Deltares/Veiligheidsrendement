@@ -1,9 +1,10 @@
+from typing import Callable
+
 import pandas as pd
 import pytest
 
 from tests import test_data, test_results
 from tests.orm import empty_db_fixture
-from tests.orm.io.importers.decision_making.conftest import get_valid_measure
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
@@ -11,6 +12,7 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.decision_making.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
+from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.section_data import SectionData
 
@@ -105,12 +107,14 @@ class TestSolutionsImporter:
 
     @pytest.fixture
     def valid_section_data_with_measures(
-        self, valid_section_data_without_measures: SectionData
+        self,
+        valid_section_data_without_measures: SectionData,
+        create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ) -> SectionData:
-        _standard_measure = get_valid_measure(
+        _standard_measure = create_valid_measure(
             MeasureTypeEnum.SOIL_REINFORCEMENT, CombinableTypeEnum.COMBINABLE
         )
-        _custom_measure = get_valid_measure(
+        _custom_measure = create_valid_measure(
             MeasureTypeEnum.CUSTOM, CombinableTypeEnum.FULL
         )
 
