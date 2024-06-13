@@ -10,8 +10,6 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
-from vrtool.optimization.measures.sg_measure import SgMeasure
-from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
 @dataclass
@@ -27,75 +25,6 @@ class CombinedMeasure:
         if self.secondary:
             return self.primary.lcc + self.secondary.lcc
         return self.primary.lcc
-
-    @property
-    def measure_class(self) -> str:
-        if self.secondary:
-            return "combined"
-        return self.primary.combine_type.legacy_name
-
-    @property
-    def dcrest(self) -> float:
-        if isinstance(self.primary, ShMeasure):
-            return self.primary.dcrest
-        return -999
-
-    @property
-    def dberm(self) -> float:
-        if isinstance(self.primary, SgMeasure):
-            return self.primary.dberm
-        return -999
-
-    @property
-    def transition_level(self) -> float:
-        if isinstance(self.primary, ShMeasure):
-            return self.primary.transition_level
-        return -999
-
-    @property
-    def year(self) -> int | list[int]:
-        if self.secondary:
-            return [self.primary.year, self.secondary.year]
-        return self.primary.year
-
-    @property
-    def beta_target(self) -> float:
-        if isinstance(self.primary, ShMeasure):
-            return self.primary.transition_level
-        return -999
-
-    @property
-    def yesno(self) -> int | str:
-        _accepted_measure_types = [
-            MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
-            MeasureTypeEnum.DIAPHRAGM_WALL,
-            MeasureTypeEnum.STABILITY_SCREEN,
-        ]
-        if self.primary.measure_type in _accepted_measure_types:
-            return "yes"
-        if self.secondary and self.secondary.measure_type in _accepted_measure_types:
-            return "yes"
-        return -999
-
-    @property
-    def combined_id(self) -> str:
-        if self.secondary:
-            return (
-                f"{self.primary.measure_type.value}+{self.secondary.measure_type.value}"
-            )
-        return self.primary.measure_type.value
-
-    @property
-    def combined_measure_type(self) -> str:
-        if self.secondary:
-            return f"{self.primary.measure_type.legacy_name}+{self.secondary.measure_type.legacy_name}"
-        return self.primary.measure_type.legacy_name
-
-    @property
-    def combined_db_index(self) -> list[int]:
-        if self.secondary:
-            return [self.primary.measure_result_id, self.secondary.measure_result_id]
-        return [self.primary.measure_result_id]
 
     def compares_to(self, other: "CombinedMeasure") -> bool:
         """
@@ -117,9 +46,17 @@ class CombinedMeasure:
                 return True
             return self.primary.l_stab_screen == other.primary.l_stab_screen
 
+        def compatible_measure_type() -> bool:
+            if self.primary.measure_type != MeasureTypeEnum.CUSTOM:
+                return self.primary.measure_type == other.primary.measure_type
+            return (
+                self.primary.measure_type == other.primary.measure_type
+                and self.primary.measure_result_id == other.primary.measure_result_id
+            )
+
         return (
             self.primary.year == other.primary.year
-            and self.primary.measure_type == other.primary.measure_type
+            and compatible_measure_type()
             and compatible_l_stab_screen()
         )
 
