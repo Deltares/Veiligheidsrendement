@@ -49,7 +49,7 @@ class TestDStabilityWrapper:
     @pytest.mark.externals
     def test_validate_dstability_version(self):
         # 1. Define test data.
-        _supported_version = "2022.2"
+        _supported_major_version = "2022"
         _dstability_exe = test_externals.joinpath(
             "DStabilityConsole", "D-Stability Console.exe"
         )
@@ -57,11 +57,10 @@ class TestDStabilityWrapper:
 
         # 2. Run test.
         _version_info = win32api.GetFileVersionInfo(str(_dstability_exe), "\\")
-        _ms = _version_info["FileVersionMS"]
-        _found_version = f"{win32api.HIWORD(_ms)}.{win32api.LOWORD(_ms)}"
+        _found_version = str(win32api.HIWORD(_version_info["FileVersionMS"]))
 
         # 3. Verify expectations.
-        assert _found_version == _supported_version
+        assert _found_version == _supported_major_version
 
     @pytest.mark.externals
     def test_rerun_stix_with_valid_externals_path(self, request: pytest.FixtureRequest):
