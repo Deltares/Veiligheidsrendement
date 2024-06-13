@@ -102,13 +102,13 @@ class TestAggregateCombinationsController:
         _sg_combination = CombinedMeasure(
             primary=_make_sg_measure(
                 matching_measure_type,
-                3,
+                1,
                 0,
                 50,
             ),
             secondary=_make_sh_measure(
                 MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
-                4,
+                3,
                 0,
                 100,
             ),
