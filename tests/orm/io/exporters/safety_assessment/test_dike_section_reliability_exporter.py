@@ -2,7 +2,6 @@ from typing import Callable
 
 import pytest
 
-from tests.orm.io.exporters import create_required_mechanism_per_section
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -101,6 +100,9 @@ class TestDikeSectionReliabilityExporter:
         self,
         section_reliability_with_values: SectionReliability,
         get_orm_basic_dike_section: Callable[[], SectionData],
+        create_required_mechanism_per_section: Callable[
+            [SectionData, list[MechanismEnum]], None
+        ],
     ):
         # 1. Define test data.
         _exporter = DikeSectionReliabilityExporter()

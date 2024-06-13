@@ -2,7 +2,6 @@ from typing import Callable
 
 import pytest
 
-from tests.orm.io.exporters import create_required_mechanism_per_section
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
@@ -29,6 +28,9 @@ class TestMechanismReliabilityCollectionExporter:
         self,
         section_reliability_with_values: SectionReliability,
         get_orm_basic_dike_section: Callable[[], SectionData],
+        create_required_mechanism_per_section: Callable[
+            [SectionData, list[MechanismEnum]], None
+        ],
     ):
         # 1. Define test data.
         _test_section_data = get_orm_basic_dike_section()
@@ -82,6 +84,9 @@ class TestMechanismReliabilityCollectionExporter:
         self,
         section_reliability_with_values: SectionReliability,
         get_orm_basic_dike_section: Callable[[], SectionData],
+        create_required_mechanism_per_section: Callable[
+            [SectionData, list[MechanismEnum]], None
+        ],
     ):
         # 1. Define test data.
         _test_section_data = get_orm_basic_dike_section()
