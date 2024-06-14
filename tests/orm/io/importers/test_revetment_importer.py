@@ -46,10 +46,10 @@ class TestRevetmentImporter:
     @pytest.fixture(name="computatio_scenario_and_transaction")
     def _get_basic_scenario_fixture(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_computation_scenario: Callable[[], ComputationScenario],
     ) -> Iterator[tuple[ComputationScenario, _savepoint]]:
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             computation_scenario = get_basic_computation_scenario()
 
             yield (computation_scenario, transaction)

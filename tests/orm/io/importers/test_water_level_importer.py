@@ -72,10 +72,10 @@ class TestWaterLevelImporter:
     def _get_water_level_importer_orm_dike_section_fixture(
         self,
         request: pytest.FixtureRequest,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_orm_basic_dike_section: Callable[[], SectionData],
     ) -> Iterator[SectionData]:
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _section_data = get_orm_basic_dike_section()
 
             WaterlevelData.insert_many(request.param).execute()

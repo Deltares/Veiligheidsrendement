@@ -36,11 +36,11 @@ class TestPipingImporter:
 
     def test_import_piping(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
     ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _piping_per_section = get_basic_mechanism_per_section()
             _computation_scenario1 = self._get_valid_computation_scenario(
                 _piping_per_section, 1
@@ -113,11 +113,11 @@ class TestPipingImporter:
 
     def test_import_piping_invalid(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
     ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _piping_per_section = get_basic_mechanism_per_section()
             _computation_scenario1 = self._get_valid_computation_scenario(
                 _piping_per_section, 1

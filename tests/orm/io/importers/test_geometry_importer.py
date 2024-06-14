@@ -19,7 +19,7 @@ class TestGeometryImporter:
 
     def test_import_orm(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_orm_basic_dike_section: Callable[[], SectionData],
     ):
         # Setup
@@ -41,7 +41,7 @@ class TestGeometryImporter:
             {"x_coordinate": 47, "y_coordinate": 5.104},
         ]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             section_data = get_orm_basic_dike_section()
             CharacteristicPointType.insert_many(point_types).execute()
 

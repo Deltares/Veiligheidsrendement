@@ -141,7 +141,7 @@ class TestMeasureImporter:
             == _orm_measure.standard_measure[0].get_id()
         )
 
-    @pytest.mark.usefixtures("empty_db_fixture", "valid_section_data_without_measures")
+    @pytest.mark.usefixtures("empty_db_context", "valid_section_data_without_measures")
     def test_import_custom_measure_raises(
         self,
         measure_importer_vrtool_config: VrtoolConfig,

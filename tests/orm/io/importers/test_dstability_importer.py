@@ -51,7 +51,7 @@ class TestDStabilityImporter:
 
     def test_import_orm(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_dstability_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
@@ -68,7 +68,7 @@ class TestDStabilityImporter:
             },
         ]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_dstability_computation_scenario()
             add_computation_scenario_id(
                 _supporting_files, _computation_scenario.get_id()
@@ -109,13 +109,13 @@ class TestDStabilityImporter:
 
     def test_import_orm_with_invalid_computation_type_raises_value_error(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
     ):
         # Setup
         _supporting_files = [{"filename": "myfile.stix"}]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _mechanism_per_section = get_basic_mechanism_per_section()
 
             _invalid_computation_type = ComputationType.create(name="NotDSTABILITY")
@@ -146,13 +146,13 @@ class TestDStabilityImporter:
 
     def test_import_orm_with_multiple_supporting_files_raises_value_error(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_dstability_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
         _supporting_files = [{"filename": "myfile.stix"}, {"filename": "myfile.stix"}]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_dstability_computation_scenario()
             add_computation_scenario_id(_supporting_files, _computation_scenario.id)
             SupportingFile.insert_many(_supporting_files).execute()
@@ -173,11 +173,11 @@ class TestDStabilityImporter:
 
     def test_import_orm_with_no_supporting_files_raises_value_error(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_dstability_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_dstability_computation_scenario()
             transaction.commit()
 

@@ -28,7 +28,7 @@ class TestStabilityInnerSimpleImporter:
 
     def test_import_orm(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
@@ -63,7 +63,7 @@ class TestStabilityInnerSimpleImporter:
             },
         ]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
 
             add_computation_scenario_id(parameters, _computation_scenario.id)

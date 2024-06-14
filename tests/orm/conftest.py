@@ -4,7 +4,7 @@ from typing import Callable, Iterator, Optional
 import pytest
 from peewee import SqliteDatabase
 
-from tests import get_clean_test_results_dir, test_data
+from tests import get_clean_test_results_dir, test_data, test_results
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -23,10 +23,42 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import open_database
 
 
-@pytest.fixture(name="empty_db_fixture", autouse=False)
+@pytest.fixture(name="persisted_database")
+def get_persisted_database_fixture(
+    request: pytest.FixtureRequest,
+) -> Iterator[SqliteDatabase]:
+    """
+    Get's an empty database context with a valid scheme
+    in a directory where it will be persisted after the test
+    finalizes. Allowing to inspect its results.
+    """
+    # Create a results directory where to persist the database.
+    _output_dir = test_results.joinpath(request.node.name)
+    if _output_dir.exists():
+        shutil.rmtree(_output_dir)
+    _output_dir.mkdir(parents=True)
+    _test_db_file = _output_dir.joinpath("test_db.db")
+
+    # Copy the original `empty_db.db` into the output directory.
+    _db_file = test_data.joinpath("test_db", "empty_db.db")
+    shutil.copyfile(_db_file, _test_db_file)
+
+    # Initialized its context.
+    _connected_db = open_database(_test_db_file)
+    _connected_db.close()
+
+    yield _connected_db
+
+    # Make sure it's closed.
+    # Perhaps during test something fails and does not get to close
+    if isinstance(_connected_db, SqliteDatabase) and not _connected_db.is_closed():
+        _connected_db.close()
+
+
+@pytest.fixture(name="empty_db_context", autouse=False)
 def get_empty_db_fixture() -> Iterator[SqliteDatabase]:
     """
-    Get's an empty database with a valid scheme.
+    Get's an empty database context with a valid scheme.
     """
     _db_file = test_data.joinpath("test_db", "empty_db.db")
     _db = open_database(_db_file)

@@ -24,7 +24,7 @@ class TestOverflowHydraRingImporter:
 
     def test_import_orm(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
@@ -73,7 +73,7 @@ class TestOverflowHydraRingImporter:
             },
         ]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
 
             _mechanism_tables = mechanism_table_year_one + mechanism_table_year_two
@@ -129,7 +129,7 @@ class TestOverflowHydraRingImporter:
 
     def test_import_orm_crest_heights_unequal_raises_value_error(
         self,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
@@ -145,7 +145,7 @@ class TestOverflowHydraRingImporter:
                 "beta": 4.4,
             },
         ]
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
             add_computation_scenario_id(
                 _mechanism_table_source, _computation_scenario.id

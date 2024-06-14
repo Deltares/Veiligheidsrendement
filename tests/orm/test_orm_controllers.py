@@ -362,35 +362,15 @@ class TestOrmControllers:
         assert isinstance(_solutions, Solutions)
         assert any(_solutions.measures)
 
-    @pytest.fixture(name="export_database")
-    def _get_export_database_fixture(
-        self, request: pytest.FixtureRequest
-    ) -> Iterator[SqliteDatabase]:
-        _db_file = test_data.joinpath("test_db", "empty_db.db")
-        _output_dir = test_results.joinpath(request.node.name)
-        if _output_dir.exists():
-            shutil.rmtree(_output_dir)
-        _output_dir.mkdir(parents=True)
-        _test_db_file = _output_dir.joinpath("test_db.db")
-        shutil.copyfile(_db_file, _test_db_file)
-
-        _connected_db = open_database(_test_db_file)
-        _connected_db.close()
-        yield _connected_db
-        # Make sure it's closed.
-        # Perhaps during test something fails and does not get to close
-        if isinstance(_connected_db, SqliteDatabase) and not _connected_db.is_closed():
-            _connected_db.close()
-
     def test_export_results_safety_assessment_given_valid_data(
         self,
-        export_database: SqliteDatabase,
+        persisted_database: SqliteDatabase,
         get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
     ):
         # 1. Define test data.
-        export_database.connect()
+        persisted_database.connect()
         _test_mechanism_per_section = get_basic_mechanism_per_section()
-        export_database.close()
+        persisted_database.close()
         _test_section_data = _test_mechanism_per_section.section
 
         # Dike Section and Dike Traject.
@@ -413,7 +393,7 @@ class TestOrmControllers:
 
         # Safety assessment.
         _safety_assessment = ResultsSafetyAssessment()
-        _db_path = Path(export_database.database)
+        _db_path = Path(persisted_database.database)
         _safety_assessment.vr_config = VrtoolConfig(
             input_directory=_db_path.parent,
             input_database_name=_db_path.name,
@@ -447,14 +427,14 @@ class TestOrmControllers:
 
     @pytest.fixture(name="results_measures_with_mocked_data")
     def _get_results_measures_with_mocked_data_fixture(
-        self, request: pytest.FixtureRequest, export_database: pytest.FixtureRequest
+        self, request: pytest.FixtureRequest, persisted_database: pytest.FixtureRequest
     ) -> Iterator[tuple[MeasureResultTestInputData, ResultsMeasures]]:
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
             request.param, {}
         )
 
         # Define vrtool config.
-        _database_path = Path(export_database.database)
+        _database_path = Path(persisted_database.database)
         _vrtool_config = VrtoolConfig(
             input_directory=_database_path.parent,
             input_database_name=_database_path.name,
@@ -492,7 +472,6 @@ class TestOrmControllers:
         results_measures_with_mocked_data: tuple[
             MeasureResultTestInputData, ResultsMeasures
         ],
-        export_database: pytest.FixtureRequest,
     ):
         """
         Virtually this test verifies (almost) the same as
@@ -701,11 +680,11 @@ class TestOrmControllers:
 
     def test_clear_assessment_results_clears_all_results(
         self,
-        export_database: SqliteDatabase,
+        persisted_database: SqliteDatabase,
         get_orm_basic_dike_traject_info: Callable[[], DikeTrajectInfo],
     ):
         # Setup
-        _db_connection = export_database
+        _db_connection = persisted_database
         _db_connection.connect()
 
         assert not any(orm.AssessmentSectionResult.select())
@@ -749,14 +728,14 @@ class TestOrmControllers:
 
     def test_clear_measure_result_clears_all_results(
         self,
-        export_database: SqliteDatabase,
+        persisted_database: SqliteDatabase,
         generate_optimization_results: Callable[[SqliteDatabase, str], None],
     ):
         # Setup
-        generate_optimization_results(export_database, "TestMeasureType")
+        generate_optimization_results(persisted_database, "TestMeasureType")
 
         # Call
-        _db_path = Path(export_database.database)
+        _db_path = Path(persisted_database.database)
         _vrtool_config = VrtoolConfig(
             input_directory=_db_path.parent,
             input_database_name=_db_path.name,
@@ -776,15 +755,15 @@ class TestOrmControllers:
 
     def test_clear_measure_result_does_not_clear_custom_results(
         self,
-        export_database: SqliteDatabase,
+        persisted_database: SqliteDatabase,
         generate_optimization_results: Callable[[SqliteDatabase, str], None],
     ):
         # Setup
         assert not any(orm.MeasureResult.select())
-        generate_optimization_results(export_database, "Custom")
+        generate_optimization_results(persisted_database, "Custom")
 
         # Call
-        _db_path = Path(export_database.database)
+        _db_path = Path(persisted_database.database)
         _vrtool_config = VrtoolConfig(
             input_directory=_db_path.parent,
             input_database_name=_db_path.name,
@@ -806,14 +785,14 @@ class TestOrmControllers:
 
     def test_clear_optimization_results_clears_all_results(
         self,
-        export_database: SqliteDatabase,
+        persisted_database: SqliteDatabase,
         generate_optimization_results: Callable[[SqliteDatabase, str], None],
     ):
         # 1. Define test data.
-        generate_optimization_results(export_database, "TestMeasureType")
+        generate_optimization_results(persisted_database, "TestMeasureType")
 
         # 2. Run test.
-        _db_path = Path(export_database.database)
+        _db_path = Path(persisted_database.database)
         _vrtool_config = VrtoolConfig(
             input_directory=_db_path.parent,
             input_database_name=_db_path.name,

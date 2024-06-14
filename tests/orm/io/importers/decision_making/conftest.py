@@ -80,7 +80,7 @@ def get_valid_section_data_without_measures_fixture() -> SectionData:
     Fixture to generate a valid (dummy) `SectionData`.
     It has to be used together with a database context, for instance by adding
     `@with_empty_db_fixture` or
-    `@pytest.mark.usefixtures("empty_db_fixture", "valid_section_data_without_measures")`
+    `@pytest.mark.usefixtures("empty_db_context", "valid_section_data_without_measures")`
      (order of arguments is relevant!) to the calling test.
     """
     _traject = DikeTrajectInfo.create(traject_name="A traject")

@@ -47,10 +47,10 @@ class TestSlopePartImporter:
     def _get_slope_part_fixture(
         self,
         request: pytest.FixtureRequest,
-        empty_db_fixture: SqliteDatabase,
+        empty_db_context: SqliteDatabase,
         get_basic_computation_scenario: Callable[[], ComputationScenario],
     ):
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             computation_scenario = get_basic_computation_scenario()
 
             slope_part = SlopePart.create(

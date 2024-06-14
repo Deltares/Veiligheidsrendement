@@ -15,9 +15,9 @@ class TestDikeTrajectInfoImporter:
         assert isinstance(_importer, DikeTrajectInfoImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, empty_db_fixture: SqliteDatabase):
+    def test_import_orm(self, empty_db_context: SqliteDatabase):
         # 1. Define test data.
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _orm_dike_traject_info = DikeTrajectInfo.create(
                 traject_name="16-1",
                 omega_piping=0.25,
