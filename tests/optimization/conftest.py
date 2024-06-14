@@ -45,20 +45,30 @@ class OverridenSgMeasure(SgMeasure):
     l_stab_screen: float = float("nan")
 
 
-@pytest.fixture
-def make_sh_measure() -> Iterator[type[MeasureAsInputProtocol]]:
-    def new_sh_measure(**kwargs):
+@pytest.fixture(name="make_sh_measure")
+def get_make_sh_measure_factory() -> Iterator[type[MeasureAsInputProtocol]]:
+    """
+    Yields:
+        Iterator[type[MeasureAsInputProtocol]]: A `ShMeasure` instance generator.
+    """
+
+    def make_sh_measure(**kwargs):
         return OverridenShMeasure(**kwargs)
 
-    yield new_sh_measure
+    yield make_sh_measure
 
 
-@pytest.fixture
-def make_sg_measure() -> Iterator[type[MeasureAsInputProtocol]]:
-    def new_sg_measure(**kwargs):
+@pytest.fixture(name="make_sg_measure")
+def get_make_sg_measure_factory() -> Iterator[type[MeasureAsInputProtocol]]:
+    """
+    Yields:
+        Iterator[type[MeasureAsInputProtocol]]: A `SgMeasure` instance generator.
+    """
+
+    def make_sg_measure(**kwargs):
         return OverridenSgMeasure(**kwargs)
 
-    yield new_sg_measure
+    yield make_sg_measure
 
 
 @pytest.fixture(name="section_with_measures")

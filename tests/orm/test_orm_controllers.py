@@ -245,8 +245,10 @@ class TestOrmControllers:
         # 3. Verify expectations
         assert str(exc_err.value) == "No file was found at {}".format(_db_file)
 
-    @pytest.fixture
-    def database_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
+    @pytest.fixture(name="database_vrtool_config")
+    def _get_database_vrtool_config_fixture(
+        self, request: pytest.FixtureRequest
+    ) -> Iterator[VrtoolConfig]:
         # 1. Define test data.
         _test_db = test_data.joinpath("test_db", "with_valid_data.db")
 
@@ -360,8 +362,8 @@ class TestOrmControllers:
         assert isinstance(_solutions, Solutions)
         assert any(_solutions.measures)
 
-    @pytest.fixture
-    def export_database(
+    @pytest.fixture(name="export_database")
+    def _get_export_database_fixture(
         self, request: pytest.FixtureRequest
     ) -> Iterator[SqliteDatabase]:
         _db_file = test_data.joinpath("test_db", "empty_db.db")
@@ -443,10 +445,10 @@ class TestOrmControllers:
             )
         )
 
-    @pytest.fixture
-    def results_measures_with_mocked_data(
+    @pytest.fixture(name="results_measures_with_mocked_data")
+    def _get_results_measures_with_mocked_data_fixture(
         self, request: pytest.FixtureRequest, export_database: pytest.FixtureRequest
-    ) -> tuple[MeasureResultTestInputData, ResultsMeasures]:
+    ) -> Iterator[tuple[MeasureResultTestInputData, ResultsMeasures]]:
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
             request.param, {}
         )

@@ -23,7 +23,7 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import open_database
 
 
-@pytest.fixture(autouse=False, name="empty_db_fixture")
+@pytest.fixture(name="empty_db_fixture", autouse=False)
 def get_empty_db_fixture() -> Iterator[SqliteDatabase]:
     """
     Get's an empty database with a valid scheme.
@@ -74,6 +74,9 @@ def get_vrtool_config_for_custom_measures_db(
     assert _vrtool_config.input_database_path.is_file()
 
     yield _vrtool_config
+
+
+# Factory methods
 
 
 def _get_domain_basic_dike_traject_info() -> DikeTrajectInfo:
@@ -137,6 +140,9 @@ def _get_basic_measure_per_section() -> MeasurePerSection:
         section=_test_section,
         measure=_test_measure,
     )
+
+
+# Factory fixtures (using factory methods)
 
 
 @pytest.fixture(name="get_orm_basic_dike_traject_info")

@@ -1,6 +1,7 @@
 import hashlib
 import shutil
 from pathlib import Path
+from typing import Iterator
 
 import pandas as pd
 import pytest
@@ -214,8 +215,10 @@ acceptance_test_cases = list(
 
 @pytest.mark.slow
 class TestApiRunWorkflowsAcceptance:
-    @pytest.fixture
-    def valid_vrtool_config(self, request: pytest.FixtureRequest) -> VrtoolConfig:
+    @pytest.fixture(name="valid_vrtool_config")
+    def _get_valid_vrtool_config(
+        self, request: pytest.FixtureRequest
+    ) -> Iterator[VrtoolConfig]:
         _test_case: AcceptanceTestCase = request.param
         _test_input_directory = Path.joinpath(test_data, _test_case.model_directory)
         assert _test_input_directory.exists()

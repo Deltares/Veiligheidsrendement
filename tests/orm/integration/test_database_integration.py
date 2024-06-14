@@ -22,8 +22,8 @@ from vrtool.orm.orm_controllers import open_database
 
 
 class TestDatabaseIntegration:
-    @pytest.fixture(autouse=False, scope="module", name="valid_data_db")
-    def get_valid_data_db_fixture(self) -> Iterator[SqliteDatabase]:
+    @pytest.fixture(name="valid_data_db", autouse=False, scope="module")
+    def _get_valid_data_db_fixture(self) -> Iterator[SqliteDatabase]:
         _db_file = test_data.joinpath("test_db", "with_valid_data.db")
         assert _db_file.is_file()
 

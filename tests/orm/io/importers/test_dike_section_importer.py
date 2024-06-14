@@ -23,7 +23,7 @@ class TestDikeSectionImporter:
 
         yield _vr_config
 
-    @pytest.fixture(autouse=False, scope="module", name="db_fixture")
+    @pytest.fixture(name="db_fixture", autouse=False, scope="module")
     def _get_db_fixture(self) -> Iterator[SqliteDatabase]:
         _db_file = test_data.joinpath("test_db", "vrtool_db.db")
         assert _db_file.is_file()

@@ -1,11 +1,10 @@
-import pytest
-
+from tests.orm import with_empty_db_fixture
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
 class TestBuildings:
-    @pytest.mark.usefixtures("empty_db_fixture")
+    @with_empty_db_fixture
     def test_initialize_with_database_fixture(self):
         # Run test.
         _dike_traject_info = DikeTrajectInfo.create(traject_name="sth")

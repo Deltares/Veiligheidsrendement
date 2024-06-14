@@ -44,7 +44,7 @@ general_slope_parts = [
 
 class TestRevetmentImporter:
     @pytest.fixture(name="computatio_scenario_and_transaction")
-    def get_basic_scenario_fixture(
+    def _get_basic_scenario_fixture(
         self,
         empty_db_fixture: SqliteDatabase,
         get_basic_computation_scenario: Callable[[], ComputationScenario],

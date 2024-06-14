@@ -1,7 +1,6 @@
 from typing import Callable
 
-import pytest
-
+from tests.orm import with_empty_db_fixture
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.safety_assessment.section_reliability_exporter import (
@@ -20,7 +19,7 @@ class TestSectionReliabilityExporter:
         assert isinstance(_exporter, SectionReliabilityExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
-    @pytest.mark.usefixtures("empty_db_fixture")
+    @with_empty_db_fixture
     def test_export_dom_with_valid_arguments(
         self,
         section_reliability_with_values: SectionReliability,

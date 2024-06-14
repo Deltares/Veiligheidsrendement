@@ -1,14 +1,13 @@
 from typing import Callable
 
-import pytest
-
+from tests.orm import with_empty_db_fixture
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.models.water_level_data import WaterlevelData
 
 
 class TestWaterlevelData:
-    @pytest.mark.usefixtures("empty_db_fixture")
+    @with_empty_db_fixture
     def test_initialize_with_database_fixture(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):
@@ -25,7 +24,7 @@ class TestWaterlevelData:
         assert _water_level_data.section_data == _test_section_data
         assert _water_level_data in _test_section_data.water_level_data_list
 
-    @pytest.mark.usefixtures("empty_db_fixture")
+    @with_empty_db_fixture
     def test_initialize_with_database_fixture_and_water_level_location_id(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):

@@ -14,7 +14,7 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 
 class TestSgMeasure:
     @pytest.fixture(name="create_sg_measure")
-    def _create_sg_measure_fixture(
+    def _get_sg_measure_factory(
         self,
     ) -> Iterable[Callable[[MeasureTypeEnum, CombinableTypeEnum], SgMeasure]]:
         def create_sg_measure(

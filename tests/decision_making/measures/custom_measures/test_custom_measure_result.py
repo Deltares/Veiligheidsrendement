@@ -22,8 +22,8 @@ class TestCustomMeasureResult:
         assert isinstance(_measure_result, CustomMeasureResult)
         assert isinstance(_measure_result, MeasureResultProtocol)
 
-    @pytest.fixture
-    def valid_custom_measure_result(self) -> CustomMeasureResult:
+    @pytest.fixture(name="valid_custom_measure_result")
+    def _get_valid_custom_measure_result_fixture(self) -> CustomMeasureResult:
         _measure_result = CustomMeasureResult()
         _measure_result.beta_target = 4.2
         _measure_result.cost = 240000

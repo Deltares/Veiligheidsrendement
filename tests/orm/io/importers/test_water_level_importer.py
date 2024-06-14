@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Iterator
 
 import pytest
 from peewee import SqliteDatabase
 from pytest import approx
 
+from tests.orm import with_empty_db_fixture
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.water_level_importer import WaterLevelImporter
 from vrtool.orm.models.section_data import SectionData
@@ -52,7 +53,7 @@ class TestWaterLevelImporter:
         assert isinstance(_importer, OrmImporterProtocol)
         assert _importer.gridpoint == 42
 
-    @pytest.mark.usefixtures("empty_db_fixture")
+    @with_empty_db_fixture
     def test_import_orm_without_no_water_level_data_doesnot_raise(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):
@@ -67,36 +68,40 @@ class TestWaterLevelImporter:
         # 3. Verify expectations.
         assert _load_input is None
 
-    @pytest.fixture
-    def valid_section_data(
+    @pytest.fixture(name="water_level_importer_orm_dike_section")
+    def _get_water_level_importer_orm_dike_section_fixture(
         self,
         request: pytest.FixtureRequest,
         empty_db_fixture: SqliteDatabase,
         get_orm_basic_dike_section: Callable[[], SectionData],
-    ) -> SectionData:
+    ) -> Iterator[SectionData]:
         with empty_db_fixture.atomic() as transaction:
             _section_data = get_orm_basic_dike_section()
 
             WaterlevelData.insert_many(request.param).execute()
             transaction.commit()
-        return _section_data
+        yield _section_data
 
     @pytest.mark.parametrize(
-        "valid_section_data", [pytest.param(wl1 + wl2, id="base case")], indirect=True
+        "water_level_importer_orm_dike_section",
+        [pytest.param(wl1 + wl2, id="base case")],
+        indirect=True,
     )
-    def test_import_water_level(self, valid_section_data: SectionData):
+    def test_import_water_level(
+        self, water_level_importer_orm_dike_section: SectionData
+    ):
         # 1. Define test data.
         _importer = WaterLevelImporter(1000)
 
         # 2. Run test
-        _load = _importer.import_orm(valid_section_data)
+        _load = _importer.import_orm(water_level_importer_orm_dike_section)
 
         # 3. Verify expectations.
         sd = _load.distribution[2030].getStandardDeviation()[0]
         assert sd == approx(2.0278)
 
     @pytest.mark.parametrize(
-        "valid_section_data",
+        "water_level_importer_orm_dike_section",
         [
             pytest.param(wl2 + wl4 + wl3 + wl1, id="with shuffle"),
             pytest.param(wl1 + wl2 + wl3 + wl4, id="without shuffle"),
@@ -105,13 +110,13 @@ class TestWaterLevelImporter:
     )
     def test_import_water_level_two_years(
         self,
-        valid_section_data: SectionData,
+        water_level_importer_orm_dike_section: SectionData,
     ):
         # 1. Define test data.
         _importer = WaterLevelImporter(1000)
 
         # 2. Run test
-        _load = _importer.import_orm(valid_section_data)
+        _load = _importer.import_orm(water_level_importer_orm_dike_section)
 
         # 3. Verify expectations.
         sd2030 = _load.distribution[2030].getStandardDeviation()[0]

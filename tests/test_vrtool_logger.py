@@ -8,8 +8,8 @@ from vrtool.vrtool_logger import VrToolLogger
 
 
 class TestVrToolLogger:
-    @pytest.fixture(autouse=True)
-    def cleanup_logging(self):
+    @pytest.fixture(name="cleanup_logging", autouse=True)
+    def _cleanup_logging_fixture(self):
         """
         Fixture to make sure the logging is "restarted" before and after each test.
         """
