@@ -3,7 +3,7 @@ from typing import Callable, Type
 import pytest
 from pandas import DataFrame
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -60,7 +60,7 @@ class TestMeasureExporter:
             ),
         ],
     )
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_with_valid_data(
         self,
         type_measure: Type[MeasureProtocol],
@@ -83,7 +83,7 @@ class TestMeasureExporter:
         # Assert
         validate_measure_result_export(_measures_input_data, parameters_to_validate)
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_given_valid_measure_dict_list(self):
         # 1. Define test data.
         _unsupported_param = "unsupported_param"
@@ -100,7 +100,7 @@ class TestMeasureExporter:
         # 3. Verify final expectations.
         validate_measure_result_export(_input_data, _input_data.parameters_to_validate)
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_given_dict_measure(self):
         # Setup
         _test_input_data = MeasureResultTestInputData.with_measures_type(
@@ -118,7 +118,7 @@ class TestMeasureExporter:
             _test_input_data, _test_input_data.parameters_to_validate
         )
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_invalid_data(
         self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):
@@ -142,7 +142,7 @@ class TestMeasureExporter:
         # Assert
         assert str(value_error.value) == "Unknown measure type: 'InvalidMeasureMocked'."
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_invalid_type(
         self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):

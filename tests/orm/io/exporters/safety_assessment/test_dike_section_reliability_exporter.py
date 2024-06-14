@@ -1,6 +1,6 @@
 from typing import Callable
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -30,7 +30,7 @@ class TestDikeSectionReliabilityExporter:
         _dike_section.TrajectInfo = DikeTrajectInfo(traject_name)
         return _dike_section
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_get_related_section_data(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):
@@ -50,7 +50,7 @@ class TestDikeSectionReliabilityExporter:
         assert isinstance(_related_section_data, SectionData)
         assert _test_section_data == _related_section_data
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_get_related_section_data_returns_none_for_different_traject(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):
@@ -71,7 +71,7 @@ class TestDikeSectionReliabilityExporter:
         # 3. Verify expectations.
         assert _related_section_data is None
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_get_related_section_data_returns_none_for_different_section(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):
@@ -94,7 +94,7 @@ class TestDikeSectionReliabilityExporter:
         # 3. Verify expectations.
         assert _related_section_data is None
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_with_valid_data(
         self,
         section_reliability_with_values: SectionReliability,

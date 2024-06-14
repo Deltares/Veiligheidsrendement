@@ -1,13 +1,13 @@
 import pytest
 from peewee import IntegrityError
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.orm.models.optimization.optimization_run import OptimizationRun
 from vrtool.orm.models.optimization.optimization_type import OptimizationType
 
 
 class TestOptimizationRun:
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_unique_constraint_on_name(self):
         # 1. Define test data.
         _run_name = "DummyRun"

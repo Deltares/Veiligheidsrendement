@@ -1,13 +1,13 @@
 from typing import Callable
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.supporting_file import SupportingFile
 
 
 class TestSupportingFile:
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_initialize_with_database_fixture(
         self, get_basic_computation_scenario: Callable[[], ComputationScenario]
     ):

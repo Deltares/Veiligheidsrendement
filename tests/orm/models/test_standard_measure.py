@@ -1,4 +1,4 @@
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.measure import Measure
 from vrtool.orm.models.measure_type import MeasureType
@@ -7,7 +7,7 @@ from vrtool.orm.models.standard_measure import StandardMeasure
 
 
 class TestStandardMeasure:
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_initialize_standard_measure(self):
         # 1. Define test data.
         _measure_type = MeasureType.create(name="dummy_measure_type")

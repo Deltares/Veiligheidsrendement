@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from tests import test_data, test_results
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.decision_making.solutions import Solutions
@@ -17,7 +17,7 @@ from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.section_data import SectionData
 
 
-@with_empty_db_fixture
+@with_empty_db_context
 class TestSolutionsImporter:
     @pytest.fixture(name="solutions_importer_vrtool_config")
     def _get_solutions_importer_vrtool_config_fixture(self) -> VrtoolConfig:

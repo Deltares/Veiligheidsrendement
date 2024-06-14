@@ -5,7 +5,7 @@ from typing import Callable
 import pytest
 
 from tests import test_data, test_externals
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -145,7 +145,7 @@ class TestDataHelper:
 
 
 class TestMechanismReliabilityCollectionImporter:
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_import_orm_for_dstability(self):
         # Setup
         _mechanism = MechanismEnum.STABILITY_INNER
@@ -206,7 +206,7 @@ class TestMechanismReliabilityCollectionImporter:
             ),
         ],
     )
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_import_orm_with_simple_mechanism_per_section(
         self,
         mechanism: MechanismEnum,

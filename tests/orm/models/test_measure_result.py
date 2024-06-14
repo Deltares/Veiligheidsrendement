@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytest
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.orm.models import MeasureResult
 from vrtool.orm.models.measure_per_section import MeasurePerSection
 from vrtool.orm.models.measure_result.measure_result_parameter import (
@@ -13,7 +13,7 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
 class TestMeasureResult:
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_initialize_with_database_fixture(
         self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):
@@ -34,7 +34,7 @@ class TestMeasureResult:
         assert _measure_result.measure_per_section == _measure_per_section
         assert _measure_result in _measure_per_section.measure_per_section_result
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_given_measure_result_without_parameters_nan_is_returned(
         self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):
@@ -61,7 +61,7 @@ class TestMeasureResult:
             pytest.param(str.upper, id="Uppercase name"),
         ],
     )
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_given_measure_result_with_parameters_returns_value(
         self,
         string_variation: Callable,

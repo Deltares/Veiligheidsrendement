@@ -32,7 +32,7 @@ class TestDikeTrajectInfoImporter:
                 flood_damage=None,
                 traject_length=None,
             )
-            transaction.commit
+            transaction.commit()
 
         _importer = DikeTrajectInfoImporter()
 

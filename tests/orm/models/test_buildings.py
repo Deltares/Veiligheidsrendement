@@ -3,14 +3,14 @@ from typing import Callable
 import peewee
 import pytest
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 from vrtool.orm.models.section_data import SectionData
 
 
 class TestBuildings:
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_initialize_with_database_fixture(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):
@@ -28,7 +28,7 @@ class TestBuildings:
         assert _buildings.distance_from_toe == 4.2
         assert _buildings.number_of_buildings == 42
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_initialize_with_database_fixture_no_columns(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ):

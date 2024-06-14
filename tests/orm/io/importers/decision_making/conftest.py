@@ -1,7 +1,6 @@
 from typing import Callable, Iterable
 
 import pytest
-from peewee import SqliteDatabase
 
 from vrtool.common.enums import MechanismEnum
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
@@ -19,7 +18,7 @@ from vrtool.orm.models.standard_measure import StandardMeasure
 
 
 @pytest.fixture(name="create_valid_measure")
-def get_valid_measure_fixture() -> Iterable[
+def get_valid_measure_factory() -> Iterable[
     Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure]
 ]:
     """
@@ -79,9 +78,11 @@ def get_valid_section_data_without_measures_fixture() -> SectionData:
     """
     Fixture to generate a valid (dummy) `SectionData`.
     It has to be used together with a database context, for instance by adding
-    `@with_empty_db_fixture` or
-    `@pytest.mark.usefixtures("empty_db_context", "valid_section_data_without_measures")`
-     (order of arguments is relevant!) to the calling test.
+    `@with_empty_db_fixture`
+    or `@pytest.mark.usefixtures("empty_db_context", "valid_section_data_without_measures")`
+     (order of arguments is relevant!) to the calling test
+    or `@with_empty_db_context_and_valid_section_data_without_measures`
+     (in `tests.orm.io.importers.decision_making.__init__.py`).
     """
     _traject = DikeTrajectInfo.create(traject_name="A traject")
     _section_data = SectionData.create(

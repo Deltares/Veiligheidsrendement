@@ -31,6 +31,8 @@ def get_persisted_database_fixture(
     Get's an empty database context with a valid scheme
     in a directory where it will be persisted after the test
     finalizes. Allowing to inspect its results.
+    This fixture's database is used when the database needs to be opened
+    and closed during multiple times in a test.
     """
     # Create a results directory where to persist the database.
     _output_dir = test_results.joinpath(request.node.name)
@@ -56,9 +58,11 @@ def get_persisted_database_fixture(
 
 
 @pytest.fixture(name="empty_db_context", autouse=False)
-def get_empty_db_fixture() -> Iterator[SqliteDatabase]:
+def get_empty_db_context_fixture() -> Iterator[SqliteDatabase]:
     """
     Get's an empty database context with a valid scheme.
+    This fixture DOES NOT allow to open and close during the test,
+    as its transaction is already initialized.
     """
     _db_file = test_data.joinpath("test_db", "empty_db.db")
     _db = open_database(_db_file)

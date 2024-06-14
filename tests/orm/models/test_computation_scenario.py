@@ -1,4 +1,4 @@
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
@@ -10,7 +10,7 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class TestComputationScenario:
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_initialize_with_database_fixture(self):
         # 1. Define test data.
         _computation_type = ComputationType.create(name="TestComputation")

@@ -2,7 +2,7 @@ from typing import Callable, Type
 
 import pytest
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -31,7 +31,7 @@ class TestSolutionsExporter:
         assert isinstance(_exporter, SolutionsExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_get_measure_per_section_given_no_measure_raises_error(self):
         # 1. Define test data.
         _non_existent_id = 42
@@ -61,7 +61,7 @@ class TestSolutionsExporter:
             pytest.param("", id="Without traject name"),
         ],
     )
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_get_measure_per_section_given_no_section_data_raises_error(
         self,
         dike_section_name: str,
@@ -92,7 +92,7 @@ class TestSolutionsExporter:
         )
         assert str(exc_err.value) == _expected_error
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_get_measure_per_section_given_no_measure_per_section_returns_none(
         self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):
@@ -120,7 +120,7 @@ class TestSolutionsExporter:
         # 3. Verify expectations.
         assert _retrieved_measure_per_section is None
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_get_measure_per_section_returns_entry_given_valid_arguments(
         self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):
@@ -151,7 +151,7 @@ class TestSolutionsExporter:
             ),
         ],
     )
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_given_solutions_with_supported_measures_raises_error(
         self, type_measure: Type[MeasureProtocol]
     ):

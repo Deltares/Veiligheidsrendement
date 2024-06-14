@@ -2,7 +2,7 @@ from typing import Callable
 
 import pytest
 
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
@@ -24,7 +24,7 @@ class TestMechanismReliabilityCollectionExporter:
         assert isinstance(_exporter, MechanismReliabilityCollectionExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_with_valid_arguments(
         self,
         section_reliability_with_values: SectionReliability,
@@ -80,7 +80,7 @@ class TestMechanismReliabilityCollectionExporter:
                 ), f"No assessment created for mechanism {_mechanism}, time {time_value}."
                 assert _orm_assessment.beta == beta_value
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_with_two_sections_exports_to_expected(
         self,
         section_reliability_with_values: SectionReliability,
@@ -133,7 +133,7 @@ class TestMechanismReliabilityCollectionExporter:
             for _amr in AssessmentMechanismResult.select()
         )
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_export_dom_with_unknown_mechanism_raises_error(
         self,
         section_reliability_with_values: SectionReliability,

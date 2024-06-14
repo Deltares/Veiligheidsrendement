@@ -3,7 +3,10 @@ from typing import Callable, Type
 import pytest
 
 from tests import test_data, test_results
-from tests.orm import with_empty_db_fixture
+from tests.orm import with_empty_db_context
+from tests.orm.io.importers.decision_making import (
+    with_empty_db_context_and_valid_section_data_without_measures,
+)
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
@@ -105,7 +108,7 @@ class TestMeasureImporter:
             pytest.param(CombinableTypeEnum.FULL),
         ],
     )
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_import_orm_with_standard_measure(
         self,
         measure_type: MeasureTypeEnum,
@@ -141,7 +144,7 @@ class TestMeasureImporter:
             == _orm_measure.standard_measure[0].get_id()
         )
 
-    @pytest.mark.usefixtures("empty_db_context", "valid_section_data_without_measures")
+    @with_empty_db_context_and_valid_section_data_without_measures
     def test_import_custom_measure_raises(
         self,
         measure_importer_vrtool_config: VrtoolConfig,
@@ -171,7 +174,7 @@ class TestMeasureImporter:
         assert isinstance(measure_base.unit_costs, MeasureUnitCosts)
         assert measure_base.unit_costs == valid_config.unit_costs
 
-    @with_empty_db_fixture
+    @with_empty_db_context
     def test_import_orm_with_unknown_standard_measure_raises_error(
         self,
         measure_importer_vrtool_config: VrtoolConfig,
