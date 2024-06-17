@@ -29,8 +29,8 @@ class AggregatedMeasureCombination:
         if (
             self.sh_combination.primary.measure_type
             == MeasureTypeEnum.SOIL_REINFORCEMENT
-            and self.sh_combination.is_initial_measure()
-            and self.sg_combination.is_initial_measure()
+            and self.sh_combination.is_base_measure()
+            and self.sg_combination.is_base_measure()
         ):
             return 0
         return (
