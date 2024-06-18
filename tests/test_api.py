@@ -15,13 +15,19 @@ from tests import (
     test_externals,
     test_results,
 )
-from tests.api_acceptance_cases import (
+from tests.api_acceptance_cases.acceptance_test_case import (
     AcceptanceTestCase,
-    RunFullValidator,
-    RunStepAssessmentValidator,
-    RunStepMeasuresValidator,
-    RunStepOptimizationValidator,
     vrtool_db_default_name,
+)
+from tests.api_acceptance_cases.run_full_validator import RunFullValidator
+from tests.api_acceptance_cases.run_step_assessment_validator import (
+    RunStepAssessmentValidator,
+)
+from tests.api_acceptance_cases.run_step_measures_validator import (
+    RunStepMeasuresValidator,
+)
+from tests.api_acceptance_cases.run_step_optimization_validator import (
+    RunStepOptimizationValidator,
 )
 from vrtool.api import (
     ApiRunWorkflows,
