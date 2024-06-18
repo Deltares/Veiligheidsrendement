@@ -267,6 +267,17 @@ class TestApiRunWorkflowsAcceptance:
             )
             shutil.move(_test_config.input_database_path, _results_db_name)
 
+            # Copy the postprocessing report if it exists.
+            # For now it assumes it's created at the same level as the results
+            _report = _test_config.input_database_path.parent.joinpath(
+                "postprocessing_report"
+            )
+            if _report.exists():
+                shutil.move(
+                    _report,
+                    _test_config.output_directory.joinpath("postprocessing_report"),
+                )
+
     @pytest.mark.parametrize(
         "api_vrtool_config",
         acceptance_test_cases[0:6],

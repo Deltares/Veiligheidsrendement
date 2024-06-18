@@ -1,4 +1,5 @@
 import copy
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -33,11 +34,16 @@ class PostProcessingReport:
     take_last: bool = False  # If True, the last step is taken, if False, the step with minimal total cost is taken
     colors: Any = field(default_factory=lambda: sns.color_palette("colorblind", 10))
 
-    def __post_init__(self):
-        if not self.report_dir.exists():
-            self.report_dir.mkdir(parents=True)
-
     def generate_report(self):
+        """
+        Generates all related plots and documents to report the differences
+        between reference and result databases.
+        """
+        # Ensure report directory is empty.
+        if self.report_dir.exists():
+            shutil.rmtree(self.report_dir)
+        self.report_dir.mkdir(parents=True)
+
         # Define colors.
         sns.set(style="whitegrid")
 
@@ -219,18 +225,23 @@ class PostProcessingReport:
             var_name="mechanism",
             value_name="beta",
         )
+        self._plot_comparison_of_betas(betas_per_section_and_mechanism)
 
+    def _plot_comparison_of_betas(self, betas_per_section_and_mechanism: pd.DataFrame):
         # Next we make a plot to compare the beta for both runs
         got.plot_comparison_of_beta_values(betas_per_section_and_mechanism)
+        plt.savefig(self.report_dir.joinpath("comparison_of_beta_values.png"))
 
         # Differences can also be revealing.
         got.plot_difference_in_betas(
             betas_per_section_and_mechanism, self.has_revetment
         )
+        plt.savefig(self.report_dir.joinpath("difference_in_betas.png"))
 
         got.plot_difference_in_betas_per_section(
             betas_per_section_and_mechanism, self.has_revetment
         )
+        plt.savefig(self.report_dir.joinpath("difference_in_betas_per_section.png"))
 
     def _plot_total_cost_and_risk(
         self, optimization_steps: dict, considered_tc_step: dict
@@ -253,6 +264,7 @@ class PostProcessingReport:
         ax.set_xlim(left=0)
         ax.set_ylim(top=1e10)
         ax.legend()
+        plt.savefig(self.report_dir.joinpath("total_lcc_and_risk.png"))
 
     def _plot_traject_probability_for_step(
         self, traject_prob: dict, considered_tc_step: dict
@@ -288,19 +300,26 @@ class PostProcessingReport:
             linestyle="-",
         )
         ax.set_xlim(left=0, right=100)
+        plt.savefig(self.report_dir.joinpath("traject_probablity_for_step.png"))
 
     def _print_measure_result_ids(self, measures_per_section: dict):
-        # This should be printed to a doc?
-        for section in set(
+        _lines = []
+
+        def get_measures_per_section(run_key: str, section_key: str) -> list:
+            _result_measures_per_section = measures_per_section[run_key].get(
+                section_key, []
+            )
+            _lines.append(
+                f"Section '{section_key}' in run '{run_key}' has measures {_result_measures_per_section}"
+            )
+
+        for _unique_section in set(
             list(measures_per_section["result"].keys())
             + list(measures_per_section["reference"].keys())
         ):
-            for run_key, run_value in measures_per_section.items():
-                try:
-                    print(
-                        f"Section {section} in run {run_key} has measures {run_value}"
-                    )
-                except:
-                    print(
-                        f"Section {section} in run {run_key} has no measures in run {run_key}"
-                    )
+            get_measures_per_section("reference", _unique_section)
+            get_measures_per_section("result", _unique_section)
+
+        _txt_file = self.report_dir.joinpath("measure_result_ids.txt")
+        _txt_file.touch()
+        _txt_file.write_text("\n".join(_lines), encoding="utf-8")

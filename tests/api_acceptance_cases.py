@@ -572,7 +572,7 @@ class RunStepOptimizationValidator(RunStepValidator):
         PostProcessingReport(
             reference_db=reference_path,
             result_db=results_path,
-            report_dir=results_path.parent,
+            report_dir=results_path.parent.joinpath("postprocessing_report"),
         ).generate_report()
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
