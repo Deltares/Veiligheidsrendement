@@ -143,7 +143,7 @@ class PostProcessingReport:
 
         self._plot_traject_probability_for_step(traject_prob, considered_tc_step)
 
-        #
+        # Define measures per section.
         measures_per_section = {
             "reference": dan.get_measures_per_section_for_step(
                 measures_per_step["reference"], considered_tc_step["reference"] + 1
