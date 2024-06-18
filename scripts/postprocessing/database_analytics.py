@@ -62,7 +62,7 @@ def get_measures_per_step_number(list_of_measures):
 
 def get_reliability_for_each_step(database_path, measures_per_step):
     # read the OptimizationStepResultMechanism for those optimization_step_ids in measures_per_step
-    # find min and max 'optimization_step_id' in measures_per_step dicts. where these values originates from lists inthe dictionary
+    # find min and max 'optimization_step_id' in measures_per_step dicts. where these values originates from lists in the dictionary
     def get_step_range(input):
         """Gets range of steps for measures that were given as input.
 

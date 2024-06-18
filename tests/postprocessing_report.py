@@ -155,7 +155,7 @@ class PostProcessingReport:
 
         self._print_measure_result_ids(measures_per_section)
 
-        #
+        # Set section parameters
         section_parameters = {"reference": {}, "result": {}}
 
         def _set_section_parameters(db_key: str, db_location: Path):
