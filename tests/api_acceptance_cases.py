@@ -10,6 +10,7 @@ import pytest
 from peewee import fn
 
 import vrtool.orm.models as orm
+from tests.postprocessing_report import PostProcessingReport
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
@@ -565,12 +566,27 @@ class RunStepOptimizationValidator(RunStepValidator):
         for _idx, _reference in enumerate(reference_list):
             self._compare_optimization_step_result(_reference, result_list[_idx])
 
+    def _generate_postprocessing_report(
+        self, reference_path: Path, results_path: Path
+    ) -> None:
+        PostProcessingReport(
+            reference_db=reference_path,
+            result_db=results_path,
+            report_dir=results_path.parent,
+        ).generate_report()
+
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Steps for validation.
-        # Load optimization runs.
         _reference_path = _get_database_reference_path(
             valid_vrtool_config, self._reference_db_suffix
         )
+
+        # Generate postprocessing report
+        self._generate_postprocessing_report(
+            _reference_path, valid_vrtool_config.input_database_path
+        )
+
+        # Load optimization runs.
         _run_data = {
             method: (
                 self._get_opt_run(_reference_path, method),
@@ -586,10 +602,8 @@ class RunStepOptimizationValidator(RunStepValidator):
         # Because the resulting database does not contain the previous results,
         # we can then assume all the values will be in the same exact order.
         for _runs in _run_data.values():
-            [
+            for _reference_run, _result_run in zip(*_runs):
                 self._compare_optimization_run(_reference_run, _result_run)
-                for _reference_run, _result_run in zip(*_runs)
-            ]
 
     @staticmethod
     def get_csv_reference_dir(vrtool_config: VrtoolConfig) -> Path:

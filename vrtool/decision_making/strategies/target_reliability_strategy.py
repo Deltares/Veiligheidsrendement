@@ -324,6 +324,13 @@ class TargetReliabilityStrategy(StrategyProtocol):
             for mechanism, value in _requirement_met_per_mechanism.items()
             if not value
         ]
+
+        if not _valid_measures:
+            logging.warning(
+                "No valid measures found for %s", _section_as_input.section_name
+            )
+            return [], _invalid_mechanisms
+
         # get the failure probabilities for the mechanisms in _invalid_mechanisms for all _valid_measures
         _failure_probabilities = [
             self._get_failure_probability_of_invalid_mechanisms(
@@ -385,8 +392,17 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 _invalid_mechanisms_str = " en ".join(
                     [mechanism.name.capitalize() for mechanism in _invalid_mechanisms]
                 )
+                _geen_maatregel_str = (
+                    "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak %s.",
+                    self.sections[_section_idx].section_name,
+                )
+                if not any(_valid_measures):
+                    raise ValueError(_geen_maatregel_str)
+
                 logging.warning(
-                    f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {self.sections[_section_idx].section_name}. De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor {_invalid_mechanisms_str}."
+                    "%s De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor %s.",
+                    _geen_maatregel_str,
+                    _invalid_mechanisms_str,
                 )
 
             # get measure with lowest lcc from _valid_measures
