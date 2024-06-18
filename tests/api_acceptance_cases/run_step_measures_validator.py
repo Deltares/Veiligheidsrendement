@@ -14,7 +14,7 @@ from tests.api_acceptance_cases.run_step_validator_protocol import (
 )
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.io.importers.measures.measure_result_importer import (
+from vrtool.orm.io.importers.decision_making.measure_result_importer import (
     MeasureResultImporter,
 )
 from vrtool.orm.orm_controllers import open_database
