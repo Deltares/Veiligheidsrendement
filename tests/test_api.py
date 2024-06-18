@@ -15,13 +15,19 @@ from tests import (
     test_externals,
     test_results,
 )
-from tests.api_acceptance_cases import (
+from tests.api_acceptance_cases.acceptance_test_case import (
     AcceptanceTestCase,
-    RunFullValidator,
-    RunStepAssessmentValidator,
-    RunStepMeasuresValidator,
-    RunStepOptimizationValidator,
     vrtool_db_default_name,
+)
+from tests.api_acceptance_cases.run_full_validator import RunFullValidator
+from tests.api_acceptance_cases.run_step_assessment_validator import (
+    RunStepAssessmentValidator,
+)
+from tests.api_acceptance_cases.run_step_measures_validator import (
+    RunStepMeasuresValidator,
+)
+from tests.api_acceptance_cases.run_step_optimization_validator import (
+    RunStepOptimizationValidator,
 )
 from vrtool.api import (
     ApiRunWorkflows,
@@ -266,6 +272,17 @@ class TestApiRunWorkflowsAcceptance:
                 "vrtool_result.db"
             )
             shutil.move(_test_config.input_database_path, _results_db_name)
+
+            # Copy the postprocessing report if it exists.
+            # For now it assumes it's created at the same level as the results
+            _report = _test_config.input_database_path.parent.joinpath(
+                "postprocessing_report"
+            )
+            if _report.exists():
+                shutil.move(
+                    _report,
+                    _test_config.output_directory.joinpath("postprocessing_report"),
+                )
 
     @pytest.mark.parametrize(
         "api_vrtool_config",
