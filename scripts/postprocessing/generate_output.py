@@ -44,7 +44,11 @@ def plot_lcc_tc_from_steps(
 
 
 def plot_traject_probability_for_step(
-    traject_prob_step, ax, run_label="", color="k", linestyle="--"
+    traject_prob_step: dict[MechanismEnum, dict[int, float]],
+    ax,
+    run_label="",
+    color="k",
+    linestyle="--",
 ):
     """Plot the probability of failure for each mechanism for each time step.
 
@@ -59,12 +63,14 @@ def plot_traject_probability_for_step(
     None
     """
 
-    def calculate_traject_probability(traject_prob):
+    def calculate_traject_probability(
+        traject_prob: dict[MechanismEnum, dict[int, float]]
+    ):
         p_nonf = [1] * len(list(traject_prob.values())[0].values())
         for _mechanism, _data in traject_prob.items():
             if not _data:
                 # Sometimes revetment is included yet with no data.
-                print(f"No information related to mechanism {_mechanism}")
+                print(f"No information related to mechanism {_mechanism.name}")
                 continue
             time, pf = zip(*sorted(_data.items()))
             p_nonf = np.multiply(p_nonf, np.subtract(1, pf))
