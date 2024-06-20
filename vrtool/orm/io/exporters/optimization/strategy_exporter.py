@@ -8,6 +8,7 @@ from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
+from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.optimization import (
     OptimizationStep,
@@ -19,6 +20,69 @@ from vrtool.orm.models.optimization.optimization_selected_measure import (
     OptimizationSelectedMeasure,
 )
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
+
+
+class LccExporter:
+    def __init__(self) -> None:
+        self._lcc_per_section = {}
+        self._initial_legacy_lcc_per_section = {}
+        self._total_lcc = 0
+        self._soil_reinforcement_paid = False
+        self._computed_measure_types = {}
+
+    def _get_single_measure_lcc(
+        self, sh_combination: CombinedMeasure, sg_combination: CombinedMeasure
+    ) -> float:
+        if not any(self._initial_legacy_lcc_per_section):
+            return sh_combination.cost + sg_combination.cost
+        return AggregatedMeasureCombination.get_lcc(sh_combination, sg_combination)
+
+    def include(
+        self,
+        section: int,
+        sh_combination: CombinedMeasure,
+        sg_combination: CombinedMeasure,
+    ) -> tuple[float, float]:
+        # This is very dirty, but can't come up with a better solution at the moment
+        _lcc_value = sh_combination.cost + sg_combination.cost
+        if not self._soil_reinforcement_paid:
+            self._soil_reinforcement_paid = (
+                sh_combination.primary.measure_type
+                == MeasureTypeEnum.SOIL_REINFORCEMENT
+            )
+
+        if section not in self._lcc_per_section:
+            # Initial values have not yet been set.
+            self._initial_legacy_lcc_per_section[section] = _lcc_value
+            if sh_combination.primary.measure_type not in self._computed_measure_types:
+                self._computed_measure_types[
+                    sh_combination.primary.measure_type
+                ] = section
+                _lcc_value = AggregatedMeasureCombination.get_lcc(
+                    sh_combination, sg_combination
+                )
+            else:
+                _section_with_computed_measure = self._computed_measure_types[
+                    sh_combination.primary.measure_type
+                ]
+                self._lcc_per_section[
+                    _section_with_computed_measure
+                ] = self._initial_legacy_lcc_per_section[_section_with_computed_measure]
+        elif any(self._initial_legacy_lcc_per_section):
+            # We have already set all initial values, so replace them
+            for (
+                _initial_section,
+                _values,
+            ) in self._initial_legacy_lcc_per_section.items():
+                self._lcc_per_section[_initial_section] = _values
+            self._initial_legacy_lcc_per_section = []
+
+        self._lcc_per_section[section] = _lcc_value
+
+        # get total_lcc and total_risk values
+        return sum(self._lcc_per_section.values()), self._get_single_measure_lcc(
+            sh_combination, sg_combination
+        )
 
 
 class StrategyExporter(OrmExporterProtocol):
@@ -38,11 +102,8 @@ class StrategyExporter(OrmExporterProtocol):
         _step_results_section = []
         _step_results_mechanism = []
 
-        _lcc_per_section = {}
-        _initial_legacy_lcc_per_section = {}
         _total_lcc = 0
-        _soil_reinforcement_paid = False
-        _computed_measure_types = {}
+        _lcc_exporter = LccExporter()
         for _measure_idx, _measure_taken in enumerate(strategy_run.measures_taken):
             _section = _measure_taken[0]
             _selected_section = strategy_run.sections[_section]
@@ -76,44 +137,9 @@ class StrategyExporter(OrmExporterProtocol):
                 if _measure is not None
             ]
 
-            # This is very dirty, but can't come up with a better solution at the moment
-            _lcc_value = _sh_combination.cost + _sg_combination.cost
-            if not _soil_reinforcement_paid:
-                _soil_reinforcement_paid = (
-                    _sh_combination.primary.measure_type
-                    == MeasureTypeEnum.SOIL_REINFORCEMENT
-                )
-
-            if _section not in _lcc_per_section:
-                # Initial values have not yet been set.
-                _initial_legacy_lcc_per_section[_section] = _lcc_value
-                if _sh_combination.primary.measure_type not in _computed_measure_types:
-                    _computed_measure_types[
-                        _sh_combination.primary.measure_type
-                    ] = _section
-                    _lcc_value = AggregatedMeasureCombination.get_lcc(
-                        _sh_combination, _sg_combination
-                    )
-                else:
-                    _section_with_computed_measure = _computed_measure_types[
-                        _sh_combination.primary.measure_type
-                    ]
-                    _lcc_per_section[
-                        _section_with_computed_measure
-                    ] = _initial_legacy_lcc_per_section[_section_with_computed_measure]
-            elif any(_initial_legacy_lcc_per_section):
-                # We have already set all initial values, so replace them
-                for (
-                    _initial_section,
-                    _values,
-                ) in _initial_legacy_lcc_per_section.items():
-                    _lcc_per_section[_initial_section] = _values
-                _initial_legacy_lcc_per_section = []
-
-            _lcc_per_section[_section] = _lcc_value
-
-            # get total_lcc and total_risk values
-            _total_lcc = sum(_lcc_per_section.values())
+            _total_lcc, _single_measure_lcc = _lcc_exporter.include(
+                _section, _sh_combination, _sg_combination
+            )
             _total_risk = strategy_run.total_risk_per_step[_measure_idx + 1]
             for single_measure in _secondary_measures + _aggregated_primary:
 
@@ -129,11 +155,6 @@ class StrategyExporter(OrmExporterProtocol):
                     total_risk=_total_risk,
                 )
 
-                _single_measure_lcc = AggregatedMeasureCombination.get_lcc(
-                    _sh_combination, _sg_combination
-                )
-                if not any(_initial_legacy_lcc_per_section):
-                    _single_measure_lcc = _sh_combination.cost + _sg_combination.cost
                 _prob_per_step = strategy_run.probabilities_per_step[_measure_idx + 1]
                 for _t in strategy_run.time_periods:
                     _prob_section = self._get_section_time_value(

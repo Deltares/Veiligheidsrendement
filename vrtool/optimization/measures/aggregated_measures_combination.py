@@ -17,6 +17,21 @@ class AggregatedMeasureCombination:
     def get_lcc(
         sh_combination: CombinedMeasure, sg_combination: CombinedMeasure
     ) -> float:
+        """
+        Calculates the "life cycle cost" of the aggregation of combined measures
+        based on their respectives `lcc` values and discount rate / year.
+
+        When both combinations are an "initial measure" with `sh_combination`
+        considered as a `MeasureTypeEnum.SOIL_REINFORCEMENT` then the `lcc` is
+        computed as `0`.
+
+        Args:
+            sh_combination (CombinedMeasure): The combination for `ShMeasure` types.
+            sg_combination (CombinedMeasure): The combination for `SgMeasure` types.
+
+        Returns:
+            float: Computed life cycle cost value.
+        """
         if (
             sh_combination.primary.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
             and sh_combination.is_base_measure()
@@ -42,20 +57,7 @@ class AggregatedMeasureCombination:
         Returns:
             float: Computed life cycle cost value.
         """
-        if (
-            self.sh_combination.primary.measure_type
-            == MeasureTypeEnum.SOIL_REINFORCEMENT
-            and self.sh_combination.is_base_measure()
-            and self.sg_combination.is_base_measure()
-        ):
-            return 0
-        _lcc = (
-            self.sh_combination.cost
-            + self.sg_combination.cost
-            - self.sh_combination.primary.base_cost
-        ) / (1 + self.sh_combination.primary.discount_rate) ** self.year
-
-        return _lcc
+        return self.get_lcc(self.sh_combination, self.sg_combination)
 
     def check_primary_measure_result_id_and_year(
         self, primary_sh: ShMeasure, primary_sg: SgMeasure
