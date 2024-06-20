@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 
+from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -40,6 +41,8 @@ class StrategyExporter(OrmExporterProtocol):
         _lcc_per_section = {}
         _initial_legacy_lcc_per_section = {}
         _total_lcc = 0
+        _soil_reinforcement_paid = False
+        _computed_measure_types = {}
         for _measure_idx, _measure_taken in enumerate(strategy_run.measures_taken):
             _section = _measure_taken[0]
             _selected_section = strategy_run.sections[_section]
@@ -75,14 +78,29 @@ class StrategyExporter(OrmExporterProtocol):
 
             # This is very dirty, but can't come up with a better solution at the moment
             _lcc_value = _sh_combination.cost + _sg_combination.cost
+            if not _soil_reinforcement_paid:
+                _soil_reinforcement_paid = (
+                    _sh_combination.primary.measure_type
+                    == MeasureTypeEnum.SOIL_REINFORCEMENT
+                )
+
             if _section not in _lcc_per_section:
                 # Initial values have not yet been set.
-                _initial_legacy_lcc_per_section[_section] = (
-                    _sh_combination.cost + _sg_combination.cost
-                )
-                _lcc_value = AggregatedMeasureCombination.get_lcc(
-                    _sh_combination, _sg_combination
-                )
+                _initial_legacy_lcc_per_section[_section] = _lcc_value
+                if _sh_combination.primary.measure_type not in _computed_measure_types:
+                    _computed_measure_types[
+                        _sh_combination.primary.measure_type
+                    ] = _section
+                    _lcc_value = AggregatedMeasureCombination.get_lcc(
+                        _sh_combination, _sg_combination
+                    )
+                else:
+                    _section_with_computed_measure = _computed_measure_types[
+                        _sh_combination.primary.measure_type
+                    ]
+                    _lcc_per_section[
+                        _section_with_computed_measure
+                    ] = _initial_legacy_lcc_per_section[_section_with_computed_measure]
             elif any(_initial_legacy_lcc_per_section):
                 # We have already set all initial values, so replace them
                 for (
