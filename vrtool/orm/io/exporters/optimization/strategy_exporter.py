@@ -38,44 +38,65 @@ class StrategyExporter(OrmExporterProtocol):
         _step_results_mechanism = []
 
         _lcc_per_section = {}
+        _initial_legacy_lcc_per_section = {}
         _total_lcc = 0
         for _measure_idx, _measure_taken in enumerate(strategy_run.measures_taken):
             _section = _measure_taken[0]
             _selected_section = strategy_run.sections[_section]
             _measure_sh_id = _measure_taken[1] - 1
             _measure_sg_id = _measure_taken[2] - 1
-            _measure_sh = _selected_section.sh_combinations[_measure_sh_id]
-            _measure_sg = _selected_section.sg_combinations[_measure_sg_id]
+            _sh_combination = _selected_section.sh_combinations[_measure_sh_id]
+            _sg_combination = _selected_section.sg_combinations[_measure_sg_id]
             # _aggr_msr = self.find_aggregated(dom_model.sections[section].aggregated_measure_combinations, _measure_sh, _measure_sg)
-            _measures = [_measure_sh.primary, _measure_sg.primary]
+            _measures = [_sh_combination.primary, _sg_combination.primary]
 
             # get index of aggregate of primary measure:
             _aggregated_primary = [
                 agg_measure
                 for agg_measure in _selected_section.aggregated_measure_combinations
                 if agg_measure.check_primary_measure_result_id_and_year(
-                    _measure_sh.primary, _measure_sg.primary
+                    _sh_combination.primary, _sg_combination.primary
                 )
             ]
             # select only the first if there are more (the primary measure needs to be identical). We can also add a check TODO
             if any(_aggregated_primary):
                 logging.debug(
-                    f"More than one aggregated primary measure found for section {_selected_section.section_name}. Only the first one will be used."
+                    "More than one aggregated primary measure found for section %s. Only the first one will be used.",
+                    _selected_section.section_name,
                 )
                 _aggregated_primary = [_aggregated_primary[0]]
 
             # get ids of secondary measures
             _secondary_measures = [
                 _measure
-                for _measure in [_measure_sh.secondary, _measure_sg.secondary]
+                for _measure in [_sh_combination.secondary, _sg_combination.secondary]
                 if _measure is not None
             ]
-            _lcc_per_section[_section] = _measure_sh.cost + _measure_sg.cost
+
+            # This is very dirty, but can't come up with a better solution at the moment
+            _lcc_value = _sh_combination.cost + _sg_combination.cost
+            if _section not in _lcc_per_section:
+                # Initial values have not yet been set.
+                _initial_legacy_lcc_per_section[_section] = (
+                    _sh_combination.cost + _sg_combination.cost
+                )
+                _lcc_value = AggregatedMeasureCombination.get_lcc(
+                    _sh_combination, _sg_combination
+                )
+            elif any(_initial_legacy_lcc_per_section):
+                # We have already set all initial values, so replace them
+                for (
+                    _initial_section,
+                    _values,
+                ) in _initial_legacy_lcc_per_section.items():
+                    _lcc_per_section[_initial_section] = _values
+                _initial_legacy_lcc_per_section = []
+
+            _lcc_per_section[_section] = _lcc_value
 
             # get total_lcc and total_risk values
             _total_lcc = sum(_lcc_per_section.values())
             _total_risk = strategy_run.total_risk_per_step[_measure_idx + 1]
-
             for single_measure in _secondary_measures + _aggregated_primary:
 
                 _option_selected_measure_result = (
@@ -90,8 +111,12 @@ class StrategyExporter(OrmExporterProtocol):
                     total_risk=_total_risk,
                 )
 
+                _single_measure_lcc = AggregatedMeasureCombination.get_lcc(
+                    _sh_combination, _sg_combination
+                )
+                if not any(_initial_legacy_lcc_per_section):
+                    _single_measure_lcc = _sh_combination.cost + _sg_combination.cost
                 _prob_per_step = strategy_run.probabilities_per_step[_measure_idx + 1]
-                lcc = _measure_sh.cost + _measure_sg.cost
                 for _t in strategy_run.time_periods:
                     _prob_section = self._get_section_time_value(
                         _section, _t, _prob_per_step
@@ -101,7 +126,7 @@ class StrategyExporter(OrmExporterProtocol):
                             "optimization_step": _created_optimization_step,
                             "time": _t,
                             "beta": pf_to_beta(_prob_section),
-                            "lcc": lcc,
+                            "lcc": _single_measure_lcc,
                         }
                     )
 
@@ -124,7 +149,7 @@ class StrategyExporter(OrmExporterProtocol):
                             "mechanism_per_section_id": _measure_result_mechanism.mechanism_per_section_id,
                             "time": _measure_result_mechanism.time,
                             "beta": pf_to_beta(_prob_mechanism),
-                            "lcc": lcc,
+                            "lcc": _single_measure_lcc,
                         }
                     )
 

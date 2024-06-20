@@ -13,6 +13,22 @@ class AggregatedMeasureCombination:
     measure_result_id: int
     year: int
 
+    @staticmethod
+    def get_lcc(
+        sh_combination: CombinedMeasure, sg_combination: CombinedMeasure
+    ) -> float:
+        if (
+            sh_combination.primary.measure_type == MeasureTypeEnum.SOIL_REINFORCEMENT
+            and sh_combination.is_base_measure()
+            and sg_combination.is_base_measure()
+        ):
+            return 0
+        _lcc = (
+            sh_combination.cost + sg_combination.cost - sh_combination.primary.base_cost
+        ) / (1 + sh_combination.primary.discount_rate) ** sh_combination.primary.year
+
+        return _lcc
+
     @property
     def lcc(self) -> float:
         """
@@ -33,11 +49,13 @@ class AggregatedMeasureCombination:
             and self.sg_combination.is_base_measure()
         ):
             return 0
-        return (
+        _lcc = (
             self.sh_combination.cost
             + self.sg_combination.cost
             - self.sh_combination.primary.base_cost
         ) / (1 + self.sh_combination.primary.discount_rate) ** self.year
+
+        return _lcc
 
     def check_primary_measure_result_id_and_year(
         self, primary_sh: ShMeasure, primary_sg: SgMeasure
