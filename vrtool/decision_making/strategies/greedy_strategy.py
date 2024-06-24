@@ -31,6 +31,7 @@ class GreedyStrategy(StrategyProtocol):
         self.measures_taken = []
         self.total_risk_per_step = []
         self.probabilities_per_step = []
+        self.selected_aggregated_measures = []
 
     def bundling_output(
         self,
@@ -478,6 +479,19 @@ class GreedyStrategy(StrategyProtocol):
 
         return [], 0
 
+    def _add_aggregation(
+        self, section_idx: int, sh_sequence_nr: int, sg_sequence_nr: int
+    ):
+        _aggregated_combinations = [
+            _amc
+            for _amc in self.sections[section_idx].aggregated_measure_combinations
+            if _amc.sh_combination.sequence_nr == sh_sequence_nr - 1
+            and _amc.sg_combination.sequence_nr == sg_sequence_nr - 1
+        ]
+        self.selected_aggregated_measures.append(
+            (section_idx, _aggregated_combinations[0])
+        )
+
     def evaluate(
         self,
         setting: str = "fast",
@@ -591,6 +605,10 @@ class GreedyStrategy(StrategyProtocol):
 
                     if setting == "robust":
                         measure_list.append(Index_Best)
+                        _section_idx, _sh_sequence_nr, _sg_sequence_nr = Index_Best
+                        self._add_aggregation(
+                            _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                        )
                         # update init_probability
                         self.traject_risk.update_probabilities_for_measure(Index_Best)
 
@@ -628,8 +646,15 @@ class GreedyStrategy(StrategyProtocol):
                                 fast_measure[1],
                             )
                             measure_list.append(Index_Best)
+                            self._add_aggregation(
+                                Index_Best[0], fast_measure[0], fast_measure[1]
+                            )
                         else:
                             measure_list.append(Index_Best)
+                            _section_idx, _sh_sequence_nr, _sg_sequence_nr = Index_Best
+                            self._add_aggregation(
+                                _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                            )
                     BC_list.append(BC[Index_Best])
                     self.traject_risk.update_probabilities_for_measure(Index_Best)
 
@@ -660,6 +685,14 @@ class GreedyStrategy(StrategyProtocol):
                             )
 
                             measure_list.append(IndexMeasure)
+                            (
+                                _section_idx,
+                                _sh_sequence_nr,
+                                _sg_sequence_nr,
+                            ) = IndexMeasure
+                            self._add_aggregation(
+                                _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                            )
                             BC_list.append(BC_bundleOverflow)
 
                             self.traject_risk.update_probabilities_for_measure(
@@ -694,6 +727,14 @@ class GreedyStrategy(StrategyProtocol):
                             )
 
                             measure_list.append(IndexMeasure)
+                            (
+                                _section_idx,
+                                _sh_sequence_nr,
+                                _sg_sequence_nr,
+                            ) = IndexMeasure
+                            self._add_aggregation(
+                                _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                            )
                             BC_list.append(BC_bundleRevetment)
 
                             self.traject_risk.update_probabilities_for_measure(

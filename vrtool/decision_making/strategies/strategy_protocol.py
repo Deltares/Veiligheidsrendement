@@ -4,6 +4,9 @@ import numpy as np
 from typing_extensions import runtime_checkable
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.aggregated_measures_combination import (
+    AggregatedMeasureCombination,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
@@ -15,6 +18,7 @@ class StrategyProtocol(Protocol):
     measures_taken: list[tuple[int, int, int]]
     total_risk_per_step: list[float]
     probabilities_per_step: list[dict[MechanismEnum, np.ndarray]]
+    selected_aggregated_measures: list[tuple[int, AggregatedMeasureCombination]]
 
     def evaluate(self, *args, **kwargs):
         """
