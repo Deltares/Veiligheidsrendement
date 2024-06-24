@@ -1,3 +1,5 @@
+from typing import Iterator
+
 import pytest
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
@@ -80,8 +82,10 @@ class TestPipingSemiProbabilisticCalculator:
         # Assert
         assert str(exception_error.value) == "Expected instance of a DikeTrajectInfo."
 
-    @pytest.fixture
-    def valid_piping_calculator(self) -> PipingSemiProbabilisticCalculator:
+    @pytest.fixture(name="valid_piping_calculator")
+    def _get_valid_piping_calculator_fixture(
+        self,
+    ) -> Iterator[PipingSemiProbabilisticCalculator]:
         """
         Fixture to retrieve an instance of a `PipingSemiProbabilisticCalculator`
         to be used as default test data.
@@ -92,12 +96,12 @@ class TestPipingSemiProbabilisticCalculator:
         _mechanism_input = MechanismInput("")
         _load = LoadInput([])
 
-        return PipingSemiProbabilisticCalculator(
+        yield PipingSemiProbabilisticCalculator(
             _mechanism_input, _load, 0, DikeTrajectInfo(traject_name="")
         )
 
-    @pytest.fixture
-    def _get_scenario_pf_args(self) -> tuple[float, dict]:
+    @pytest.fixture(name="scenario_pf_args")
+    def _get_scenario_pf_args_fixture(self) -> Iterator[tuple[float, dict]]:
         _beta = 4.2
         _mechanism_input_dict = {
             "piping_reduction_factor": 1000,
@@ -105,15 +109,15 @@ class TestPipingSemiProbabilisticCalculator:
             "pf_elim": 0,
             "pf_with_elim": 1,
         }
-        return _beta, _mechanism_input_dict
+        yield _beta, _mechanism_input_dict
 
     def test_get_scenario_pf_with_piping_reduction_factor(
         self,
-        _get_scenario_pf_args: tuple[float, dict],
+        scenario_pf_args: tuple[float, dict],
         valid_piping_calculator: PipingSemiProbabilisticCalculator,
     ):
         # 1. Define test data.
-        _beta, _mechanism_input_dict = _get_scenario_pf_args
+        _beta, _mechanism_input_dict = scenario_pf_args
         assert "piping_reduction_factor" in _mechanism_input_dict
 
         # 2. Run test.
@@ -126,11 +130,11 @@ class TestPipingSemiProbabilisticCalculator:
 
     def test_get_scenario_pf_without_piping_reduction_factor(
         self,
-        _get_scenario_pf_args: tuple[float, dict],
+        scenario_pf_args: tuple[float, dict],
         valid_piping_calculator: PipingSemiProbabilisticCalculator,
     ):
         # 1. Define test data.
-        _beta, _mechanism_input_dict = _get_scenario_pf_args
+        _beta, _mechanism_input_dict = scenario_pf_args
         if "piping_reduction_factor" in _mechanism_input_dict:
             _mechanism_input_dict.pop("piping_reduction_factor")
 

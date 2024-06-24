@@ -1,3 +1,5 @@
+from typing import Iterator
+
 import pandas as pd
 import pytest
 
@@ -48,8 +50,8 @@ class TestAnchoredSheetpileMeasure:
         assert isinstance(_measure, DiaphragmWallMeasure)
         assert isinstance(_measure, MeasureProtocol)
 
-    @pytest.fixture
-    def indirect_dike_section(self, request: pytest.FixtureRequest) -> DikeSection:  # type: ignore
+    @pytest.fixture(name="indirect_dike_section")
+    def _get_indirect_dike_section_fixture(self, request: pytest.FixtureRequest) -> Iterator[DikeSection]:  # type: ignore
         _dike_section_properties = request.param
 
         # Define dike section
@@ -64,7 +66,7 @@ class TestAnchoredSheetpileMeasure:
         _custom_section.InitialGeometry = _dike_section_properties["Initialgeometry"]
         _custom_section.Length = _dike_section_properties["section_length"]
 
-        return _custom_section
+        yield _custom_section
 
     @pytest.mark.parametrize(
         "indirect_dike_section, expected_cost",

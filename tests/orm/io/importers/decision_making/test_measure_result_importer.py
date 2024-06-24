@@ -1,5 +1,5 @@
 from tests import test_data
-from vrtool.orm.io.importers.measures.measure_result_importer import (
+from vrtool.orm.io.importers.decision_making.measure_result_importer import (
     MeasureResultImporter,
 )
 from vrtool.orm.models.measure_result.measure_result import MeasureResult

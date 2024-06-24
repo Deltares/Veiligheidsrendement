@@ -2,42 +2,34 @@ import math
 from dataclasses import dataclass
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.combined_measure import CombinedMeasure
-from vrtool.optimization.measures.measure_as_input_protocol import (
-    MeasureAsInputProtocol,
-)
+from vrtool.optimization.measures.measure_as_input_base import MeasureAsInputBase
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
 
 
-@dataclass
-class ShSgMeasure(MeasureAsInputProtocol):
+@dataclass(kw_only=True)
+class ShSgMeasure(MeasureAsInputBase):
     """
     Class to represent soil measures that have both a crest and berm component.
     These are used to store the optimization result for the aggregated Sh/Sg combined measures.
     """
 
-    measure_type: MeasureTypeEnum
-    combine_type: CombinableTypeEnum
-    measure_result_id: int
-    dcrest: float
-    dberm: float
-    l_stab_screen: float
     cost: float = 0
+    base_cost: float = 0
     discount_rate: float = 0
     year: int = 0
     mechanism_year_collection: MechanismPerYearProbabilityCollection = (
         MechanismPerYearProbabilityCollection([])
     )
-    start_cost: float = 0
-    lcc: float = 0
+    l_stab_screen: float
+    dcrest: float
+    dberm: float
 
-    @staticmethod
-    def get_concrete_parameters() -> list[str]:
-        return ["dberm", "dcrest", "l_stab_screen"]
+    def is_base_measure(self) -> bool:
+        return False
 
     @staticmethod
     def is_mechanism_allowed(mechanism: MechanismEnum) -> bool:
@@ -52,9 +44,6 @@ class ShSgMeasure(MeasureAsInputProtocol):
         dict[CombinableTypeEnum, list[CombinableTypeEnum | None]]
     ):
         return {}
-
-    def is_initial_cost_measure(self) -> bool:
-        return False
 
     def matches_with_sh_sg_measure(
         self, sh_combination: CombinedMeasure, sg_combination: CombinedMeasure

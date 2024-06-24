@@ -1,11 +1,13 @@
-from tests.orm import empty_db_fixture, get_basic_section_data
-from tests.orm.io.exporters import section_reliability_with_values
+from typing import Callable
+
+from tests.orm import with_empty_db_context
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.io.exporters.safety_assessment.section_reliability_exporter import (
     SectionReliabilityExporter,
 )
 from vrtool.orm.models.assessment_section_result import AssessmentSectionResult
+from vrtool.orm.models.section_data import SectionData
 
 
 class TestSectionReliabilityExporter:
@@ -17,11 +19,14 @@ class TestSectionReliabilityExporter:
         assert isinstance(_exporter, SectionReliabilityExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
+    @with_empty_db_context
     def test_export_dom_with_valid_arguments(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self,
+        section_reliability_with_values: SectionReliability,
+        get_orm_basic_dike_section: Callable[[], SectionData],
     ):
         # 1. Define test data.
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         assert not any(_test_section_data.assessment_section_results)
 
         _expected_entries = len(

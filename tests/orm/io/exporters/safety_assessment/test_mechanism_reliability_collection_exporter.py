@@ -1,10 +1,8 @@
+from typing import Callable
+
 import pytest
 
-from tests.orm import empty_db_fixture, get_basic_section_data
-from tests.orm.io.exporters import (
-    create_required_mechanism_per_section,
-    section_reliability_with_values,
-)
+from tests.orm import with_empty_db_context
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
@@ -26,11 +24,17 @@ class TestMechanismReliabilityCollectionExporter:
         assert isinstance(_exporter, MechanismReliabilityCollectionExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
+    @with_empty_db_context
     def test_export_dom_with_valid_arguments(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self,
+        section_reliability_with_values: SectionReliability,
+        get_orm_basic_dike_section: Callable[[], SectionData],
+        create_required_mechanism_per_section: Callable[
+            [SectionData, list[MechanismEnum]], None
+        ],
     ):
         # 1. Define test data.
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         assert not any(AssessmentMechanismResult.select())
 
         _expected_mechanisms_reliability = (
@@ -76,11 +80,17 @@ class TestMechanismReliabilityCollectionExporter:
                 ), f"No assessment created for mechanism {_mechanism}, time {time_value}."
                 assert _orm_assessment.beta == beta_value
 
+    @with_empty_db_context
     def test_export_dom_with_two_sections_exports_to_expected(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self,
+        section_reliability_with_values: SectionReliability,
+        get_orm_basic_dike_section: Callable[[], SectionData],
+        create_required_mechanism_per_section: Callable[
+            [SectionData, list[MechanismEnum]], None
+        ],
     ):
         # 1. Define test data.
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         _additional_section_data = SectionData.create(
             dike_traject=_test_section_data.dike_traject,
             section_name="AdditionalSection",
@@ -123,11 +133,14 @@ class TestMechanismReliabilityCollectionExporter:
             for _amr in AssessmentMechanismResult.select()
         )
 
+    @with_empty_db_context
     def test_export_dom_with_unknown_mechanism_raises_error(
-        self, section_reliability_with_values: SectionReliability, empty_db_fixture
+        self,
+        section_reliability_with_values: SectionReliability,
+        get_orm_basic_dike_section: Callable[[], SectionData],
     ):
         # 1. Define test data.
-        _test_section_data = get_basic_section_data()
+        _test_section_data = get_orm_basic_dike_section()
         assert not any(AssessmentMechanismResult.select())
         assert not any(Mechanism.select())
 

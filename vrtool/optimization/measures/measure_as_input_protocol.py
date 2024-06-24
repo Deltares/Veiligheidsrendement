@@ -18,35 +18,20 @@ class MeasureAsInputProtocol(Protocol):
     measure_type: MeasureTypeEnum
     combine_type: CombinableTypeEnum
     cost: float
+    base_cost: float
     discount_rate: float
     year: int
     mechanism_year_collection: MechanismPerYearProbabilityCollection
-    start_cost: float
     l_stab_screen: float
 
-    @property
-    def lcc(self) -> float:
-        """Life cycle cost"""
-        pass
-
-    def is_initial_cost_measure(self) -> bool:
+    def is_base_measure(self) -> bool:
         """
-        Verifies whether the given measure is considered the "initial measure".
+        Verifies whether the given measure is considered the "base measure".
         This happens when its year is 0 but most important when its
-        dberm or dcrest are 0 / nan (for `ShMeasure` and `SgMeasure` respectively).
+        `dberm` (for `ShMeasure`) or `dcrest` (for `SgMeasure`) are `0` or `nan`.
 
         Returns:
-            bool: Whether its an initial measure or not.
-        """
-        pass
-
-    @staticmethod
-    def get_concrete_parameters() -> list[str]:
-        """
-        Gets the concrete parameters of a `MeasureAsInputProtocol` instance that are not defined in the protocol.
-
-        Returns:
-            list[str]: List of property names not defined in the `MeasureAsInputProtocol` type.
+            bool: Whether its an base measure or not.
         """
         pass
 

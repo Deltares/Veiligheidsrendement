@@ -10,6 +10,8 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
     MechanismPerYearProbabilityCollection,
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
+from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sh_measure import ShMeasure
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
 )
@@ -56,7 +58,6 @@ class OptimizationSectionAsInputImporter:
         """
         _section_imported_measures: list[MeasureAsInputProtocol] = []
         _section_data, _measure_results_dict = section_data_results
-        _initial_costs_dictionary = defaultdict(lambda: defaultdict(lambda: 0.0))
 
         for _measure_result, _investment_years in _measure_results_dict.items():
             _imported_measures = OptimizationMeasureResultImporter(
@@ -64,15 +65,44 @@ class OptimizationSectionAsInputImporter:
             ).import_orm(_measure_result)
             _section_imported_measures.extend(_imported_measures)
 
-            # Update the initial costs dictionary if possible (avoids extra computations later on).
-            for _im in filter(
-                lambda x: x.is_initial_cost_measure(), _imported_measures
-            ):
-                _initial_costs_dictionary[type(_im)][_im.measure_type] = _im.cost
+        def filter_by_type(
+            measure_type: type[MeasureAsInputProtocol],
+        ) -> list[MeasureAsInputProtocol]:
+            return list(
+                filter(
+                    lambda x: isinstance(x, measure_type), _section_imported_measures
+                )
+            )
 
-        # Update initial costs for all imported measures
-        for _im in _section_imported_measures:
-            _im.start_cost = _initial_costs_dictionary[type(_im)][_im.measure_type]
+        def set_base_cost(measure_type: type[MeasureAsInputProtocol]):
+            """
+            Sets the base costs by clustering the measures by both type and
+            `l_stab_screen` value.
+            Args:
+                measure_type (type[MeasureAsInputProtocol]): Measure type to use
+                for measure filtering.
+            """
+            _base_costs = defaultdict(lambda: defaultdict(lambda: 0.0))
+            _measure_collection = filter_by_type(measure_type)
+
+            # Base costs are the `cost` of an "initial measure".
+            for _initial_measure in filter(
+                measure_type.is_base_measure, _measure_collection
+            ):
+                # We pivot by both `type[MeasureAsInputProtocol]` and
+                # `l_stab_screen`, as for different values of the latter
+                # you might find different "initial" measures.
+                _base_costs[_initial_measure.measure_type][
+                    _initial_measure.l_stab_screen
+                ] = _initial_measure.cost
+
+            for _measure in _measure_collection:
+                _measure.base_cost = _base_costs[_measure.measure_type][
+                    _measure.l_stab_screen
+                ]
+
+        set_base_cost(SgMeasure)
+        set_base_cost(ShMeasure)
 
         return SectionAsInput(
             section_name=_section_data.section_name,

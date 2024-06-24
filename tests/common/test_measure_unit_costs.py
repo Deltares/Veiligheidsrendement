@@ -1,5 +1,6 @@
 import dataclasses
 from math import isnan
+from typing import Iterator
 
 import pytest
 
@@ -19,15 +20,15 @@ def get_required_unformatted_field_names() -> list[str]:
 
 
 class TestMeasureUnitCosts:
-    @pytest.fixture
-    def required_unformatted_field_names(self) -> list[str]:
-        return get_required_unformatted_field_names()
+    @pytest.fixture(name="required_unformatted_field_names")
+    def _get_required_unformatted_field_names_fixture(self) -> Iterator[list[str]]:
+        yield get_required_unformatted_field_names()
 
-    @pytest.fixture
-    def valid_unformatted_dict(
+    @pytest.fixture(name="valid_unformatted_dict")
+    def _get_valid_unformatted_dict_fixture(
         self, required_unformatted_field_names: list[str]
-    ) -> dict:
-        return {k: 4.2 for k in required_unformatted_field_names}
+    ) -> Iterator[dict]:
+        yield {k: 4.2 for k in required_unformatted_field_names}
 
     def test_initialize_from_unformatted_dict(self, valid_unformatted_dict: dict):
         # 1. Run test

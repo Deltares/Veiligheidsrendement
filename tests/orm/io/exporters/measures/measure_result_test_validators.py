@@ -1,6 +1,9 @@
 import pandas as pd
 
-from tests.orm import get_basic_measure_per_section, get_domain_basic_dike_section
+from tests.orm.conftest import (
+    _get_basic_measure_per_section,
+    _get_domain_basic_dike_section,
+)
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
@@ -124,11 +127,11 @@ class MeasureResultTestInputData:
         self.t_columns = [0, 2, 4, 24, 42]
         self.expected_cost = 42.24
         self.section_reliability = self.create_section_reliability(self.t_columns)
-        self.measure_per_section = get_basic_measure_per_section()
+        self.measure_per_section = _get_basic_measure_per_section()
         self.available_mechanisms = self.create_mechanism_per_section(
             self.measure_per_section.section.get()
         )
-        self.domain_dike_section = get_domain_basic_dike_section()
+        self.domain_dike_section = _get_domain_basic_dike_section()
         self.parameters_to_validate = dict()
 
     @classmethod

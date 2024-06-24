@@ -1,10 +1,9 @@
-from typing import Type
+from typing import Callable, Type
 
 import pytest
 from pandas import DataFrame
-from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_measure_per_section
+from tests.orm import with_empty_db_context
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -17,6 +16,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.orm.io.exporters.measures.measure_exporter import MeasureExporter
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
+from vrtool.orm.models.measure_per_section import MeasurePerSection
 
 
 class TestMeasureExporter:
@@ -60,12 +60,12 @@ class TestMeasureExporter:
             ),
         ],
     )
+    @with_empty_db_context
     def test_export_dom_with_valid_data(
         self,
         type_measure: Type[MeasureProtocol],
         parameters_to_validate: dict,
         unsupported_parameters: dict,
-        empty_db_fixture: SqliteDatabase,
     ):
         # Setup
         _measures_input_data = MeasureResultTestInputData.with_measures_type(
@@ -83,9 +83,8 @@ class TestMeasureExporter:
         # Assert
         validate_measure_result_export(_measures_input_data, parameters_to_validate)
 
-    def test_export_dom_given_valid_measure_dict_list(
-        self, empty_db_fixture: SqliteDatabase
-    ):
+    @with_empty_db_context
+    def test_export_dom_given_valid_measure_dict_list(self):
         # 1. Define test data.
         _unsupported_param = "unsupported_param"
         _parameters_to_validate = dict(dcrest=4.2, dberm=2.4)
@@ -101,7 +100,8 @@ class TestMeasureExporter:
         # 3. Verify final expectations.
         validate_measure_result_export(_input_data, _input_data.parameters_to_validate)
 
-    def test_export_dom_given_dict_measure(self, empty_db_fixture: SqliteDatabase):
+    @with_empty_db_context
+    def test_export_dom_given_dict_measure(self):
         # Setup
         _test_input_data = MeasureResultTestInputData.with_measures_type(
             MeasureWithDictMocked, {}
@@ -118,7 +118,10 @@ class TestMeasureExporter:
             _test_input_data, _test_input_data.parameters_to_validate
         )
 
-    def test_export_dom_invalid_data(self, empty_db_fixture: SqliteDatabase):
+    @with_empty_db_context
+    def test_export_dom_invalid_data(
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
+    ):
         # Setup
         class InvalidMeasureMocked:
             def __init__(self) -> None:
@@ -139,7 +142,10 @@ class TestMeasureExporter:
         # Assert
         assert str(value_error.value) == "Unknown measure type: 'InvalidMeasureMocked'."
 
-    def test_export_dom_invalid_type(self, empty_db_fixture: SqliteDatabase):
+    @with_empty_db_context
+    def test_export_dom_invalid_type(
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
+    ):
         # Setup
         _measure_per_section = get_basic_measure_per_section()
 

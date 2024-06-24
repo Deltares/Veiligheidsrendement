@@ -1,25 +1,39 @@
+from typing import Iterator
+
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
 from tests import test_data, test_results
-from tests.orm.io.importers import db_fixture
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.orm.io.importers.dike_section_importer import DikeSectionImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.buildings import Buildings
 from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.orm_controllers import open_database
 
 
 class TestDikeSectionImporter:
-    @pytest.fixture
-    def valid_config(self) -> VrtoolConfig:
+    @pytest.fixture(name="valid_config")
+    def _get_valid_config_fixture(self) -> Iterator[VrtoolConfig]:
         _vr_config = VrtoolConfig()
         _vr_config.input_directory = test_data
         _vr_config.output_directory = test_results
 
         yield _vr_config
+
+    @pytest.fixture(name="db_fixture", autouse=False, scope="module")
+    def _get_db_fixture(self) -> Iterator[SqliteDatabase]:
+        _db_file = test_data.joinpath("test_db", "vrtool_db.db")
+        assert _db_file.is_file()
+
+        _db = open_database(_db_file)
+        assert isinstance(_db, SqliteDatabase)
+
+        yield _db
+
+        _db.close()
 
     def test_initialize(self, valid_config: VrtoolConfig):
         _importer = DikeSectionImporter(valid_config)
@@ -32,7 +46,8 @@ class TestDikeSectionImporter:
 
         assert str(exc_err.value) == "VrtoolConfig not provided."
 
-    def test_import_orm(self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig):
+    @pytest.mark.usefixtures("db_fixture")
+    def test_import_orm(self, valid_config: VrtoolConfig):
         # 1. Define test data.
         _importer = DikeSectionImporter(valid_config)
 
@@ -56,9 +71,8 @@ class TestDikeSectionImporter:
         assert but_point["x"] == pytest.approx(-17)
         assert but_point["z"] == pytest.approx(4.996)
 
-    def test_import_buildings_list(
-        self, db_fixture: SqliteDatabase, valid_config: VrtoolConfig
-    ):
+    @pytest.mark.usefixtures("db_fixture")
+    def test_import_buildings_list(self, valid_config: VrtoolConfig):
         # 1. Define test data.
         _importer = DikeSectionImporter(valid_config)
         _section_data = SectionData.get_by_id(1)

@@ -32,7 +32,7 @@ class TestListOfDictToCustomMeasureExporter:
         assert str(exc_err.value) == _expected_error_mssg
 
     @pytest.fixture(name="exporter_with_db_without_custom_measures")
-    def get_valid_custom_measure_exporter_with_db(
+    def _get_valid_custom_measure_exporter_with_db(
         self, custom_measure_db_context: SqliteDatabase
     ):
         yield ListOfDictToCustomMeasureExporter(custom_measure_db_context)

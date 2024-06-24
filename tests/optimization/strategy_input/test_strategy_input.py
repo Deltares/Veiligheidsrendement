@@ -49,6 +49,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
+            base_cost=0,
             discount_rate=0.03,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
@@ -62,6 +63,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
+            base_cost=0,
             discount_rate=0.03,
             year=20,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
@@ -84,6 +86,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
             combine_type=CombinableTypeEnum.FULL,
             cost=234567,
+            base_cost=0,
             discount_rate=0.03,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_diaphragm_0,
@@ -106,6 +109,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.REVETMENT,
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=123456,
+            base_cost=0,
             discount_rate=0.03,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_384,
@@ -128,6 +132,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.REVETMENT,
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=223456,
+            base_cost=0,
             discount_rate=0.03,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_484,
@@ -150,6 +155,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
+            base_cost=0,
             discount_rate=0.03,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
@@ -161,6 +167,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
+            base_cost=0,
             discount_rate=0.03,
             year=20,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
@@ -181,6 +188,7 @@ class TestStrategyInput:
             measure_type=MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
             combine_type=CombinableTypeEnum.PARTIAL,
             cost=1302200,
+            base_cost=0,
             discount_rate=0.03,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_vzg_0,
@@ -348,9 +356,9 @@ class TestStrategyInput:
         assert _strategy_input.LCCOption[0, 1, 1] == pytest.approx(0.0)
         assert _strategy_input.LCCOption[0, 1, 2] == pytest.approx(1e99)
         assert _strategy_input.LCCOption[0, 1, 3] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 2, 2] == pytest.approx(0.0)
+        assert _strategy_input.LCCOption[0, 2, 2] == pytest.approx(214127.45)
         assert _strategy_input.LCCOption[0, 3, 3] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 4, 4] == pytest.approx(0.0)
+        assert _strategy_input.LCCOption[0, 4, 4] == pytest.approx(1003478.61)
 
         # Other structures
         assert _strategy_input.D.shape == (50,)

@@ -23,8 +23,8 @@ from vrtool.orm.io.exporters.optimization.strategy_exporter import StrategyExpor
 from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter import (
     DikeSectionReliabilityExporter,
 )
+from vrtool.orm.io.importers.decision_making.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.measures.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
     OptimizationSectionAsInputImporter,
 )

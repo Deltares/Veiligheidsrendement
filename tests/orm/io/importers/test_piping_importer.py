@@ -1,8 +1,9 @@
+from collections.abc import Callable
+
 import numpy as np
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_mechanism_per_section
 from tests.orm.io import add_computation_scenario_id
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.piping_importer import PipingImporter
@@ -33,9 +34,13 @@ class TestPipingImporter:
         assert isinstance(_importer, PipingImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_piping(self, empty_db_fixture: SqliteDatabase):
+    def test_import_piping(
+        self,
+        empty_db_context: SqliteDatabase,
+        get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
+    ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _piping_per_section = get_basic_mechanism_per_section()
             _computation_scenario1 = self._get_valid_computation_scenario(
                 _piping_per_section, 1
@@ -106,9 +111,13 @@ class TestPipingImporter:
         assert len(_mechanism_input.temporals) == 1
         assert _mechanism_input.temporals[0] == "dh_exit(t)"
 
-    def test_import_piping_invalid(self, empty_db_fixture: SqliteDatabase):
+    def test_import_piping_invalid(
+        self,
+        empty_db_context: SqliteDatabase,
+        get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
+    ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _piping_per_section = get_basic_mechanism_per_section()
             _computation_scenario1 = self._get_valid_computation_scenario(
                 _piping_per_section, 1

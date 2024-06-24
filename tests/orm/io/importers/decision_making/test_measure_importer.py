@@ -1,11 +1,12 @@
-from typing import Type
+from typing import Callable, Type
 
 import pytest
-from peewee import SqliteDatabase
 
 from tests import test_data, test_results
-from tests.orm import empty_db_fixture
-from tests.orm.io.importers.measures.conftest import get_valid_measure
+from tests.orm import with_empty_db_context
+from tests.orm.io.importers.decision_making import (
+    with_empty_db_context_and_valid_section_data_without_measures,
+)
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
@@ -20,14 +21,14 @@ from vrtool.decision_making.measures.standard_measures.revetment_measure import 
     RevetmentMeasure,
 )
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.orm.io.importers.measures.measure_importer import MeasureImporter
+from vrtool.orm.io.importers.decision_making.measure_importer import MeasureImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.section_data import SectionData
+from vrtool.orm.models.measure import Measure
 
 
 class TestMeasureImporter:
-    @pytest.fixture
-    def valid_config(self) -> VrtoolConfig:
+    @pytest.fixture(name="measure_importer_vrtool_config")
+    def _get_measure_importer_vrtool_config_fixture(self) -> VrtoolConfig:
         _vr_config = VrtoolConfig()
         _vr_config.input_directory = test_data
         _vr_config.output_directory = test_results
@@ -48,8 +49,8 @@ class TestMeasureImporter:
         )
         return _vr_config
 
-    def test_initialize(self, valid_config: VrtoolConfig):
-        _importer = MeasureImporter(valid_config)
+    def test_initialize(self, measure_importer_vrtool_config: VrtoolConfig):
+        _importer = MeasureImporter(measure_importer_vrtool_config)
         assert isinstance(_importer, MeasureImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
@@ -59,17 +60,17 @@ class TestMeasureImporter:
         assert str(exc_err.value) == "VrtoolConfig not provided."
 
     def test_import_orm_given_no_orm_model_raises_valueerror(
-        self, valid_config: VrtoolConfig
+        self, measure_importer_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config)
+        _importer = MeasureImporter(measure_importer_vrtool_config)
 
         # 2. Run test.
         with pytest.raises(ValueError) as exc_err:
             _importer.import_orm(None)
 
         # 3. Verify expectations.
-        assert str(exc_err.value) == f"No valid value given for Measure."
+        assert str(exc_err.value) == "No valid value given for Measure."
 
     @pytest.mark.parametrize(
         "measure_type, expected_type",
@@ -107,24 +108,27 @@ class TestMeasureImporter:
             pytest.param(CombinableTypeEnum.FULL),
         ],
     )
+    @with_empty_db_context
     def test_import_orm_with_standard_measure(
         self,
         measure_type: MeasureTypeEnum,
         combinable_type: CombinableTypeEnum,
         expected_type: Type[MeasureProtocol],
-        valid_config: VrtoolConfig,
-        empty_db_fixture: SqliteDatabase,
+        measure_importer_vrtool_config: VrtoolConfig,
+        create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config)
-        _orm_measure = get_valid_measure(measure_type, combinable_type)
+        _importer = MeasureImporter(measure_importer_vrtool_config)
+        _orm_measure = create_valid_measure(measure_type, combinable_type)
 
         # 2. Run test.
         _imported_measure = _importer.import_orm(_orm_measure)
 
         # 3. Verify final expectations.
         assert isinstance(_imported_measure, expected_type)
-        self._validate_measure_base_values(_imported_measure, valid_config)
+        self._validate_measure_base_values(
+            _imported_measure, measure_importer_vrtool_config
+        )
         assert _imported_measure.parameters["Type"] == measure_type.legacy_name
         assert _imported_measure.parameters["Direction"] == "onwards"
         assert _imported_measure.parameters["StabilityScreen"] == "no"
@@ -140,14 +144,15 @@ class TestMeasureImporter:
             == _orm_measure.standard_measure[0].get_id()
         )
 
-    @pytest.mark.usefixtures("valid_section_data_without_measures")
+    @with_empty_db_context_and_valid_section_data_without_measures
     def test_import_custom_measure_raises(
         self,
-        valid_config: VrtoolConfig,
+        measure_importer_vrtool_config: VrtoolConfig,
+        create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config)
-        _orm_measure = get_valid_measure(
+        _importer = MeasureImporter(measure_importer_vrtool_config)
+        _orm_measure = create_valid_measure(
             MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
         )
         _expected_error = "Custom measures are not supported by this importer."
@@ -169,13 +174,18 @@ class TestMeasureImporter:
         assert isinstance(measure_base.unit_costs, MeasureUnitCosts)
         assert measure_base.unit_costs == valid_config.unit_costs
 
+    @with_empty_db_context
     def test_import_orm_with_unknown_standard_measure_raises_error(
-        self, valid_config: VrtoolConfig, empty_db_fixture: SqliteDatabase
+        self,
+        measure_importer_vrtool_config: VrtoolConfig,
+        create_valid_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], Measure],
     ):
         # 1. Define test data.
-        _importer = MeasureImporter(valid_config)
+        _importer = MeasureImporter(measure_importer_vrtool_config)
         _measure_type = MeasureTypeEnum.INVALID
-        _orm_measure = get_valid_measure(_measure_type, CombinableTypeEnum.COMBINABLE)
+        _orm_measure = create_valid_measure(
+            _measure_type, CombinableTypeEnum.COMBINABLE
+        )
 
         # 2. Run test.
         with pytest.raises(NotImplementedError) as exc_err:

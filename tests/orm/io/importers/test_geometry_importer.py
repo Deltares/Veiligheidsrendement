@@ -1,12 +1,14 @@
+from typing import Callable
+
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_section_data
 from vrtool.orm.io.importers.geometry_importer import GeometryImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.models.characteristic_point_type import CharacteristicPointType
 from vrtool.orm.models.profile_point import ProfilePoint
+from vrtool.orm.models.section_data import SectionData
 
 
 class TestGeometryImporter:
@@ -15,7 +17,11 @@ class TestGeometryImporter:
         assert isinstance(_importer, GeometryImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, empty_db_fixture: SqliteDatabase):
+    def test_import_orm(
+        self,
+        empty_db_context: SqliteDatabase,
+        get_orm_basic_dike_section: Callable[[], SectionData],
+    ):
         # Setup
         point_types = [
             {"name": "BUT"},
@@ -35,8 +41,8 @@ class TestGeometryImporter:
             {"x_coordinate": 47, "y_coordinate": 5.104},
         ]
 
-        with empty_db_fixture.atomic() as transaction:
-            section_data = get_basic_section_data()
+        with empty_db_context.atomic() as transaction:
+            section_data = get_orm_basic_dike_section()
             CharacteristicPointType.insert_many(point_types).execute()
 
             for count, point in enumerate(points):

@@ -1,8 +1,11 @@
+from typing import Callable, Iterable
+
 import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.measure_as_input_base import MeasureAsInputBase
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -10,166 +13,55 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
 class TestShMeasure:
-    def _create_sh_measure(
-        self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
-    ) -> ShMeasure:
-        return ShMeasure(
-            measure_result_id=42,
-            measure_type=measure_type,
-            combine_type=combinable_type,
-            cost=10.5,
-            year=10,
-            discount_rate=0.03,
-            mechanism_year_collection=None,
-            beta_target=1.1,
-            transition_level=0.5,
-            dcrest=0.1,
-            l_stab_screen=float("nan"),
-        )
+    @pytest.fixture(name="create_sh_measure")
+    def _get_sg_measure_factory(
+        self,
+    ) -> Iterable[Callable[[MeasureTypeEnum, CombinableTypeEnum], ShMeasure]]:
+        def create_sh_measure(
+            measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
+        ) -> ShMeasure:
+            return ShMeasure(
+                measure_result_id=42,
+                measure_type=measure_type,
+                combine_type=combinable_type,
+                cost=10.5,
+                base_cost=4.2,
+                year=10,
+                discount_rate=0.03,
+                mechanism_year_collection=None,
+                beta_target=1.1,
+                transition_level=0.5,
+                dcrest=0.1,
+                l_stab_screen=float("nan"),
+            )
 
-    def test_create_sh_measure(self):
+        yield create_sh_measure
+
+    def test_create_sh_measure(
+        self,
+        create_sh_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], ShMeasure],
+    ):
         # 1. Define input
         _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
         _combine_type = CombinableTypeEnum.FULL
 
         # 2. Run test
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
+        _measure = create_sh_measure(_measure_type, _combine_type)
 
         # 3. Verify expectations
         assert isinstance(_measure, ShMeasure)
+        assert isinstance(_measure, MeasureAsInputBase)
         assert isinstance(_measure, MeasureAsInputProtocol)
         assert _measure.measure_type == _measure_type
         assert _measure.combine_type == _combine_type
         assert _measure.cost == pytest.approx(10.5)
+        assert _measure.base_cost == pytest.approx(4.2)
         assert _measure.year == 10
         assert _measure.discount_rate == pytest.approx(0.03)
         assert _measure.mechanism_year_collection is None
         assert _measure.beta_target == pytest.approx(1.1)
         assert _measure.transition_level == pytest.approx(0.5)
         assert _measure.dcrest == pytest.approx(0.1)
-        assert _measure.start_cost == pytest.approx(0)
-
-    @pytest.mark.parametrize("dcrest_value", [pytest.param(0), pytest.param(-999)])
-    def test_given_dcrest_0_lcc_returns_0(self, dcrest_value: float):
-        """
-        Test related to issue VRTOOL-390
-        """
-        # 1. Define test data.
-        # Measure and combinable type do not really matter,
-        # but we are forced to set a value.
-        _sh_measure = self._create_sh_measure(
-            MeasureTypeEnum.STABILITY_SCREEN, CombinableTypeEnum.COMBINABLE
-        )
-        _sh_measure.dcrest = dcrest_value
-
-        # 2. Run test.
-        _result = _sh_measure.lcc
-
-        # 3. Verify final expectations.
-        assert _result == 0
-
-    def test_given_custom_measure_without_dcrest_returns_cost(self):
-        """
-        Test related to issue VRTOOL-501
-        """
-        # 1. Define test data.
-        # Measure and combinable type do not really matter,
-        # but we are forced to set a value.
-        _sh_measure = self._create_sh_measure(
-            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
-        )
-        _sh_measure.dcrest = 0
-
-        # 2. Run test.
-        _result = _sh_measure.lcc
-
-        # 3. Verify expectations
-        assert _result > 0
-
-    @pytest.mark.parametrize(
-        "dcrest_value",
-        [pytest.param(-10, id="Smaller than 0"), pytest.param(10, id="Greater than 0")],
-    )
-    def test_given_dcrest_else_than_0_lcc_doesnot_return_0(self, dcrest_value: float):
-        """
-        Test related to issue VRTOOL-390
-        """
-        # 1. Define test data.
-        # Measure and combinable type do not really matter,
-        # but we are forced to set a value.
-        _sh_measure = self._create_sh_measure(
-            MeasureTypeEnum.CUSTOM, CombinableTypeEnum.COMBINABLE
-        )
-        _sh_measure.dcrest = dcrest_value
-
-        # 2. Run test.
-        _result = _sh_measure.lcc
-
-        # 3. Verify final expectations.
-        assert _result != 0
-
-    @pytest.mark.parametrize(
-        "measure_type",
-        [
-            pytest.param(mt)
-            for mt in MeasureTypeEnum
-            if mt
-            not in [
-                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
-                MeasureTypeEnum.DIAPHRAGM_WALL,
-                MeasureTypeEnum.STABILITY_SCREEN,
-            ]
-        ],
-    )
-    def test_given_unsupported_measure_type_when_set_start_cost_value_is_set_to_0(
-        self, measure_type: MeasureTypeEnum
-    ):
-        # 1. Define test data.
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(measure_type, _combine_type)
-        assert _measure.start_cost == pytest.approx(0)
-
-        # 2. Run test.
-        _measure.start_cost = 42
-
-        # 3. Verify expectations.
-        assert _measure.start_cost == pytest.approx(0)
-
-    @pytest.mark.parametrize(
-        "measure_type",
-        [
-            pytest.param(MeasureTypeEnum.VERTICAL_PIPING_SOLUTION),
-            pytest.param(MeasureTypeEnum.DIAPHRAGM_WALL),
-            pytest.param(MeasureTypeEnum.STABILITY_SCREEN),
-        ],
-    )
-    def test_given_supported_measure_type_when_set_start_cost_value_is_set_to_0(
-        self, measure_type: MeasureTypeEnum
-    ):
-        # 1. Define test data.
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(measure_type, _combine_type)
-        assert _measure.start_cost == pytest.approx(0)
-        _new_value = 42
-
-        # 2. Run test.
-        _measure.start_cost = _new_value
-
-        # 3. Verify expectations.
-        assert _measure.start_cost == pytest.approx(_new_value)
-
-    def test_lcc(self):
-        # 1. Define input
-        _measure = self._create_sh_measure(
-            MeasureTypeEnum.DIAPHRAGM_WALL, CombinableTypeEnum.FULL
-        )
-        _measure.start_cost = 5.5
-
-        # 2. Run test
-        _lcc = _measure.lcc
-
-        # 3. Verify expectations
-        assert _lcc == pytest.approx(3.720469)
 
     @pytest.mark.parametrize(
         "mechanism, expected",
@@ -203,54 +95,31 @@ class TestShMeasure:
         assert _allowed_combinations
 
     @pytest.mark.parametrize(
-        "dcrest_value",
+        "year, dcrest, expected_result",
         [
-            pytest.param(0),
-            pytest.param(float("nan")),
+            pytest.param(1, float("nan"), False, id="year != 0"),
+            pytest.param(0, 4.2, False, id="year == 0; dcrest is > 0"),
+            pytest.param(0, 0, True, id="year == 0; dcrest = 0"),
+            pytest.param(0, float("nan"), True, id="year == 0; dcrest == 'nan'"),
         ],
     )
-    def test_is_initial_cost_measure_when_year_0_and_dcrest_0_or_nan_then_is_true(
-        self, dcrest_value: float
-    ):
-        # 1. Define test data.
-        _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
-        _measure.dcrest = dcrest_value
-        _measure.year = 0
-
-        # 2. Run test and verify expectations.
-        assert _measure.is_initial_cost_measure() is True
-
-    @pytest.mark.parametrize(
-        "dcrest_value",
-        [
-            pytest.param(0),
-            pytest.param(float("nan")),
-        ],
-    )
-    def test_is_initial_cost_measure_when_year_not_0_and_dcrest_0_or_nan_then_is_false(
-        self, dcrest_value: float
-    ):
-        # 1. Define test data.
-        _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
-        _measure.dcrest = dcrest_value
-        _measure.year = 4
-
-        # 2. Run test and verify expectations.
-        assert _measure.is_initial_cost_measure() is False
-
-    def test_is_initial_cost_measure_when_year_0_and_dcrest_not_0_or_not_nan_then_is_false(
+    def test_is_base_measure_returns_expectation(
         self,
+        year: int,
+        dcrest: float,
+        expected_result: bool,
+        create_sh_measure: Callable[[MeasureTypeEnum, CombinableTypeEnum], ShMeasure],
     ):
         # 1. Define test data.
-        _measure_type = MeasureTypeEnum.DIAPHRAGM_WALL
-        _combine_type = CombinableTypeEnum.FULL
-        _measure = self._create_sh_measure(_measure_type, _combine_type)
-        _measure.dcrest = 4.2
-        _measure.year = 0
+        # Measure and Combinable TypeEnum should not matter for this test.
+        _sh_measure = create_sh_measure(
+            MeasureTypeEnum.INVALID, CombinableTypeEnum.INVALID
+        )
+        _sh_measure.year = year
+        _sh_measure.dcrest = dcrest
 
-        # 2. Run test and verify expectations.
-        assert _measure.is_initial_cost_measure() is False
+        # 2. Run test.
+        _result = _sh_measure.is_base_measure()
+
+        # 3. Verify expectations.
+        assert _result == expected_result

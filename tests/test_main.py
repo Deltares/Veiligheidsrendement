@@ -2,6 +2,7 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
+from typing import Iterator
 
 import pytest
 from click.testing import CliRunner
@@ -44,8 +45,10 @@ class TestMain:
         # 3. Verify expectations.
         assert _run_result.exit_code == 1
 
-    @pytest.fixture
-    def cli_config_fixture(self, request: pytest.FixtureRequest):
+    @pytest.fixture(name="cli_config_dirs")
+    def _get_cli_config_fixture(
+        self, request: pytest.FixtureRequest
+    ) -> Iterator[tuple[Path, Path]]:
         _input_dir = test_data.joinpath(request.param)
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
@@ -82,17 +85,17 @@ class TestMain:
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
-        "cli_config_fixture",
+        "cli_config_dirs",
         ["38-1 two river sections"],
         indirect=True,
     )
     def test_given_valid_input_when_run_full_then_succeeds(
-        self, cli_config_fixture: tuple[Path, Path]
+        self, cli_config_dirs: tuple[Path, Path]
     ):
         # NOTE: Keep the test case as the fastest of all
         # available in `api_acceptance_cases`.
         # 1. Define test data.
-        _input_dir, _output_dir = cli_config_fixture
+        _input_dir, _output_dir = cli_config_dirs
         assert _input_dir.exists()
         assert not _output_dir.exists()
 

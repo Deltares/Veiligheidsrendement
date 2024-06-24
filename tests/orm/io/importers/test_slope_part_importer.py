@@ -1,9 +1,8 @@
-from typing import Type
+from typing import Callable, Type
 
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_computation_scenario
 from vrtool.failure_mechanisms.revetment.relation_stone_revetment import (
     RelationStoneRevetment,
 )
@@ -16,6 +15,7 @@ from vrtool.failure_mechanisms.revetment.slope_part import (
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.slope_part_importer import SlopePartImporter
 from vrtool.orm.models.block_revetment_relation import BlockRevetmentRelation
+from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.slope_part import SlopePart
 
 stone_relations = [
@@ -43,11 +43,14 @@ stone_relations = [
 
 
 class TestSlopePartImporter:
-    @pytest.fixture
-    def get_slope_part_fixture(
-        self, request: pytest.FixtureRequest, empty_db_fixture: SqliteDatabase
+    @pytest.fixture(name="slope_part_for_importer")
+    def _get_slope_part_fixture(
+        self,
+        request: pytest.FixtureRequest,
+        empty_db_context: SqliteDatabase,
+        get_basic_computation_scenario: Callable[[], ComputationScenario],
     ):
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             computation_scenario = get_basic_computation_scenario()
 
             slope_part = SlopePart.create(
@@ -86,52 +89,50 @@ class TestSlopePartImporter:
         assert str(value_error.value) == _expected_message
 
     @pytest.mark.parametrize(
-        "get_slope_part_fixture, revetment_type",
+        "slope_part_for_importer, revetment_type",
         [
             pytest.param(5.0, AsphaltSlopePart, id="Asphalt"),
             pytest.param(20.0, GrassSlopePart, id="Grass"),
         ],
-        indirect=["get_slope_part_fixture"],
+        indirect=["slope_part_for_importer"],
     )
     def test_non_stone_slope_part_returns_expected_slope_part(
-        self, get_slope_part_fixture: SlopePart, revetment_type: Type
+        self, slope_part_for_importer: SlopePart, revetment_type: Type
     ):
         # Setup
-        slope_part = get_slope_part_fixture
         importer = SlopePartImporter()
 
         # Call
-        imported_part = importer.import_orm(slope_part)
+        imported_part = importer.import_orm(slope_part_for_importer)
 
         # Assert
         assert isinstance(imported_part, revetment_type)
 
-        self._assert_slope_parts(imported_part, slope_part)
+        self._assert_slope_parts(imported_part, slope_part_for_importer)
         assert not any(imported_part.slope_part_relations)
 
     @pytest.mark.parametrize(
-        "get_slope_part_fixture",
+        "slope_part_for_importer",
         [
             pytest.param(26.0, id="Stone slope part type (lower)"),
             pytest.param(27.0, id="Stone slope part type"),
             pytest.param(27.9, id="Stone slope part type (upper)"),
         ],
-        indirect=["get_slope_part_fixture"],
+        indirect=["slope_part_for_importer"],
     )
     def test_stone_slope_part_returns_expected_slope_part(
-        self, get_slope_part_fixture: SlopePart
+        self, slope_part_for_importer: SlopePart
     ):
         # Setup
-        slope_part = get_slope_part_fixture
         importer = SlopePartImporter()
 
         # Call
-        imported_part = importer.import_orm(slope_part)
+        imported_part = importer.import_orm(slope_part_for_importer)
 
         # Assert
         assert isinstance(imported_part, StoneSlopePart)
 
-        self._assert_slope_parts(imported_part, slope_part)
+        self._assert_slope_parts(imported_part, slope_part_for_importer)
 
         imported_slope_part_relations = imported_part.slope_part_relations
         assert all(
@@ -142,7 +143,7 @@ class TestSlopePartImporter:
         )
 
         expected_stone_revetment_relation = (
-            slope_part.block_revetment_relations.select().order_by(
+            slope_part_for_importer.block_revetment_relations.select().order_by(
                 BlockRevetmentRelation.year,
                 BlockRevetmentRelation.top_layer_thickness,
             )

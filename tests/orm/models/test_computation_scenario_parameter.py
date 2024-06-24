@@ -1,4 +1,4 @@
-from tests.orm import empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
@@ -13,7 +13,8 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class TestComputationScenarioParameter:
-    def test_initialize_with_database_fixture(self, empty_db_fixture):
+    @with_empty_db_context
+    def test_initialize_with_database_fixture(self):
         # 1. Define test data.
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
@@ -54,9 +55,8 @@ class TestComputationScenarioParameter:
 
         assert _parameter in _scenario.computation_scenario_parameters
 
-    def test_initialize_two_parameters_with_same_name_with_database_fixture(
-        self, empty_db_fixture
-    ):
+    @with_empty_db_context
+    def test_initialize_two_parameters_with_same_name_with_database_fixture(self):
         # 1. Define test data.
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
