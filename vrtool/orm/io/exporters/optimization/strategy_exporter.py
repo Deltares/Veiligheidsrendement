@@ -101,7 +101,7 @@ class StrategyExporter(OrmExporterProtocol):
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
         _step_results_section = []
         _step_results_mechanism = []
-        _increment = defaultdict(lambda: 0)
+        _last_step_lcc_per_section = defaultdict(lambda: 0)
         # _accumulated_total_lcc stores always the calculated `lcc` of
         # the previous step
         _accumulated_total_lcc = 0
@@ -121,9 +121,13 @@ class StrategyExporter(OrmExporterProtocol):
                 if _measure is not None
             ]
             _accumulated_total_lcc += (
-                _aggregated_measure.lcc - _increment[_selected_section.section_name]
+                _aggregated_measure.lcc
+                - _last_step_lcc_per_section[_selected_section.section_name]
             )
-            _increment[_selected_section.section_name] = _aggregated_measure.lcc
+            # Update the increment dictionary.
+            _last_step_lcc_per_section[
+                _selected_section.section_name
+            ] = _aggregated_measure.lcc
             _total_risk = strategy_run.total_risk_per_step[_measure_idx + 1]
             for single_measure in _secondary_measures + [_aggregated_measure]:
 
