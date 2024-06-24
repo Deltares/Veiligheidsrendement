@@ -105,7 +105,7 @@ class OptimizationSectionAsInputImporter:
 
         set_base_cost(SgMeasure)
         set_base_cost(ShMeasure)
-        set_base_cost(ShSgMeasure)
+        # set_base_cost(ShSgMeasure)
 
         return SectionAsInput(
             section_name=_section_data.section_name,
