@@ -482,12 +482,11 @@ class GreedyStrategy(StrategyProtocol):
     def _add_aggregation(
         self, section_idx: int, sh_sequence_nr: int, sg_sequence_nr: int
     ):
-        _aggregated_combinations = [
-            _amc
-            for _amc in self.sections[section_idx].aggregated_measure_combinations
-            if _amc.sh_combination.sequence_nr == sh_sequence_nr - 1
-            and _amc.sg_combination.sequence_nr == sg_sequence_nr - 1
-        ]
+        _aggregated_combinations = self.sections[
+            section_idx
+        ].get_aggregated_combinations(
+            sh_sequence_nr=sh_sequence_nr - 1, sg_sequence_nr=sg_sequence_nr - 1
+        )
         self.selected_aggregated_measures.append(
             (section_idx, _aggregated_combinations[0])
         )

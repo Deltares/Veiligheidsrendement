@@ -12,6 +12,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 from vrtool.orm.io.importers.optimization.optimization_measure_result_importer import (
     OptimizationMeasureResultImporter,
 )
@@ -87,7 +88,8 @@ class OptimizationSectionAsInputImporter:
 
             # Base costs are the `cost` of an "initial measure".
             for _initial_measure in filter(
-                measure_type.is_base_measure, _measure_collection
+                lambda x: x.is_base_measure() or isinstance(x, ShSgMeasure),
+                _measure_collection,
             ):
                 # We pivot by both `type[MeasureAsInputProtocol]` and
                 # `l_stab_screen`, as for different values of the latter
@@ -103,6 +105,7 @@ class OptimizationSectionAsInputImporter:
 
         set_base_cost(SgMeasure)
         set_base_cost(ShMeasure)
+        set_base_cost(ShSgMeasure)
 
         return SectionAsInput(
             section_name=_section_data.section_name,
