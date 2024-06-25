@@ -1,3 +1,4 @@
+import math
 from collections import defaultdict
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -87,25 +88,27 @@ class OptimizationSectionAsInputImporter:
             _measure_collection = filter_by_type(measure_type)
 
             # Base costs are the `cost` of an "initial measure".
+            def valid_l_stab_screen(l_stab_screen: float) -> float:
+                return -1 if math.isnan(l_stab_screen) else l_stab_screen
+
             for _initial_measure in filter(
-                lambda x: x.is_base_measure() or isinstance(x, ShSgMeasure),
+                lambda x: x.is_base_measure(),
                 _measure_collection,
             ):
                 # We pivot by both `type[MeasureAsInputProtocol]` and
                 # `l_stab_screen`, as for different values of the latter
                 # you might find different "initial" measures.
                 _base_costs[_initial_measure.measure_type][
-                    _initial_measure.l_stab_screen
+                    valid_l_stab_screen(_initial_measure.l_stab_screen)
                 ] = _initial_measure.cost
 
             for _measure in _measure_collection:
                 _measure.base_cost = _base_costs[_measure.measure_type][
-                    _measure.l_stab_screen
+                    valid_l_stab_screen(_measure.l_stab_screen)
                 ]
 
         set_base_cost(SgMeasure)
         set_base_cost(ShMeasure)
-        # set_base_cost(ShSgMeasure)
 
         return SectionAsInput(
             section_name=_section_data.section_name,

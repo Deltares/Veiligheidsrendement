@@ -8,7 +8,6 @@ from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
 from vrtool.orm.io.exporters.orm_exporter_protocol import OrmExporterProtocol
 from vrtool.orm.models.optimization import (
     OptimizationStep,
@@ -22,7 +21,12 @@ from vrtool.orm.models.optimization.optimization_selected_measure import (
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
-class LccExporter:
+class ExporterLccCostCalculator:
+    """
+    Disclaimer, this calculator is not expected to give valid results.
+    It is just kept now for research purposes.
+    """
+
     def __init__(self) -> None:
         self._lcc_per_section = {}
         self._initial_legacy_lcc_per_section = {}
@@ -30,40 +34,46 @@ class LccExporter:
         self._soil_reinforcement_paid = False
         self._computed_measure_types = {}
 
-    def _get_single_measure_lcc(
-        self, sh_combination: CombinedMeasure, sg_combination: CombinedMeasure
-    ) -> float:
-        if not any(self._initial_legacy_lcc_per_section):
-            return sh_combination.cost + sg_combination.cost
-        return AggregatedMeasureCombination.get_lcc(sh_combination, sg_combination)
+    @property
+    def accumulated_lcc(self) -> float:
+        """
+        Returns:
+            float: the accumulated lcc per section
+        """
+        return sum(self._lcc_per_section.values())
 
-    def include(
-        self,
-        section: int,
-        sh_combination: CombinedMeasure,
-        sg_combination: CombinedMeasure,
-    ) -> tuple[float, float]:
+    def add_aggregation(
+        self, section: int, aggregated_measure_combination: AggregatedMeasureCombination
+    ) -> float:
+        """
+        Includes the aggregated measure combination to compute the lcc throughout all
+        sections.
+
+        Args:
+            section (int): Section id for creating the lcc per section catalog.
+            aggregated_measure_combination (AggregatedMeasureCombination): Aggregation to i nclude.
+        """
         # This is very dirty, but can't come up with a better solution at the moment
-        _lcc_value = sh_combination.cost + sg_combination.cost
+        _sh_combination = aggregated_measure_combination.sh_combination
+        _sg_combination = aggregated_measure_combination.sg_combination
+        _lcc_value = _sh_combination.cost + _sg_combination.cost
         if not self._soil_reinforcement_paid:
             self._soil_reinforcement_paid = (
-                sh_combination.primary.measure_type
+                _sh_combination.primary.measure_type
                 == MeasureTypeEnum.SOIL_REINFORCEMENT
             )
 
         if section not in self._lcc_per_section:
             # Initial values have not yet been set.
             self._initial_legacy_lcc_per_section[section] = _lcc_value
-            if sh_combination.primary.measure_type not in self._computed_measure_types:
+            if _sh_combination.primary.measure_type not in self._computed_measure_types:
                 self._computed_measure_types[
-                    sh_combination.primary.measure_type
+                    _sh_combination.primary.measure_type
                 ] = section
-                _lcc_value = AggregatedMeasureCombination.get_lcc(
-                    sh_combination, sg_combination
-                )
+                _lcc_value = aggregated_measure_combination.lcc
             else:
                 _section_with_computed_measure = self._computed_measure_types[
-                    sh_combination.primary.measure_type
+                    _sh_combination.primary.measure_type
                 ]
                 self._lcc_per_section[
                     _section_with_computed_measure
@@ -78,11 +88,6 @@ class LccExporter:
             self._initial_legacy_lcc_per_section = []
 
         self._lcc_per_section[section] = _lcc_value
-
-        # get total_lcc and total_risk values
-        return sum(self._lcc_per_section.values()), self._get_single_measure_lcc(
-            sh_combination, sg_combination
-        )
 
 
 class StrategyExporter(OrmExporterProtocol):
@@ -102,24 +107,16 @@ class StrategyExporter(OrmExporterProtocol):
         _step_results_section = []
         _step_results_mechanism = []
         _last_step_lcc_per_section = defaultdict(lambda: 0)
-        # _accumulated_total_lcc stores always the calculated `lcc` of
-        # the previous step
+
+        # _accumulated_total_lcc stores always the calculated `lcc` of the previous step
         _accumulated_total_lcc = 0
+
         for _measure_idx, (
             _section_idx,
             _aggregated_measure,
         ) in enumerate(strategy_run.selected_aggregated_measures):
             _selected_section = strategy_run.sections[_section_idx]
 
-            _sh_combination = _aggregated_measure.sh_combination
-            _sg_combination = _aggregated_measure.sg_combination
-
-            # get ids of secondary measures
-            _secondary_measures = [
-                _measure
-                for _measure in [_sh_combination.secondary, _sg_combination.secondary]
-                if _measure is not None
-            ]
             _accumulated_total_lcc += (
                 _aggregated_measure.lcc
                 - _last_step_lcc_per_section[_selected_section.section_name]
@@ -128,6 +125,17 @@ class StrategyExporter(OrmExporterProtocol):
             _last_step_lcc_per_section[
                 _selected_section.section_name
             ] = _aggregated_measure.lcc
+
+            # get ids of secondary measures
+            _secondary_measures = [
+                _measure
+                for _measure in [
+                    _aggregated_measure.sh_combination,
+                    _aggregated_measure.sg_combination,
+                ]
+                if _measure is not None
+            ]
+
             _total_risk = strategy_run.total_risk_per_step[_measure_idx + 1]
             for single_measure in _secondary_measures + [_aggregated_measure]:
 
