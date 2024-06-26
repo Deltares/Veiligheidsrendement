@@ -1,10 +1,13 @@
 from dataclasses import dataclass
+from typing import Callable, Iterable
 
 import pytest
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
+from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.measure_as_input_base import MeasureAsInputBase
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -99,3 +102,90 @@ class TestAggregatedMeasuresCombination:
         # 3. Verify expectations
         assert _sh_idx == 1
         assert _sg_idx == 2
+
+    @pytest.fixture(name="measure_as_input_factory")
+    def get_measure_as_input_factory_fixture(
+        self,
+    ) -> Iterable[Callable[[dict], MeasureAsInputBase]]:
+        def create_measure_as_input(**kwargs):
+            default_values = dict(
+                measure_result_id=0,
+                measure_type=None,
+                combine_type=None,
+                discount_rate=0.3,
+                mechanism_year_collection=None,
+                l_stab_screen=float("nan"),
+            )
+            return MeasureAsInputBase(**(default_values | kwargs))
+
+        yield create_measure_as_input
+
+    def test_lcc_given_aggregation_with_sh_and_sg_with_different_investment_years(
+        self, measure_as_input_factory: Callable[[dict], MeasureAsInputBase]
+    ):
+
+        # 1. Define test data.
+        _sh_primary = measure_as_input_factory(cost=4.2, base_cost=2.2, year=20)
+        _sh_secondary = measure_as_input_factory(cost=6.7, base_cost=2.2, year=0)
+        _sh_combined_measure = CombinedMeasure(
+            primary=_sh_primary,
+            secondary=_sh_secondary,
+            mechanism_year_collection=None,
+        )
+
+        _sg_primary = measure_as_input_factory(cost=2.4, base_cost=1.4, year=20)
+        _sg_secondary = measure_as_input_factory(cost=4.6, base_cost=1.4, year=0)
+        _sg_combined_measure = CombinedMeasure(
+            primary=_sg_primary,
+            secondary=_sg_secondary,
+            mechanism_year_collection=None,
+        )
+
+        # 2. Run test.
+        _aggregated_measure = AggregatedMeasureCombination(
+            sh_combination=_sh_combined_measure,
+            sg_combination=_sg_combined_measure,
+            measure_result_id=-1,
+            year=0,
+        )
+
+        # 3. Verify expectations.
+        assert _aggregated_measure.sh_combination.lcc_with_base_cost == pytest.approx(
+            6.7105, 0.0001
+        )
+        assert (
+            _aggregated_measure.sg_combination.lcc_without_base_cost
+            == pytest.approx(4.6126, 0.0001)
+        )
+        assert _aggregated_measure.lcc == pytest.approx(11.3231, 0.0001)
+
+    def test_lcc_given_aggregation_with_sh_with_different_investment_years(
+        self, measure_as_input_factory: Callable[[dict], MeasureAsInputBase]
+    ):
+
+        # 1. Define test data.
+        _sh_primary = measure_as_input_factory(cost=4.2, base_cost=4.2, year=20)
+        _sh_secondary = measure_as_input_factory(cost=6.7, base_cost=4.2, year=0)
+        _sh_combined_measure = CombinedMeasure(
+            primary=_sh_primary,
+            secondary=_sh_secondary,
+            mechanism_year_collection=None,
+        )
+
+        _sg_primary = measure_as_input_factory(cost=2.4, base_cost=2.4, year=20)
+        _sg_combined_measure = CombinedMeasure(
+            primary=_sg_primary,
+            secondary=None,
+            mechanism_year_collection=None,
+        )
+
+        # 2. Run test.
+        _aggregated_measure = AggregatedMeasureCombination(
+            sh_combination=_sh_combined_measure,
+            sg_combination=_sg_combined_measure,
+            measure_result_id=-1,
+            year=0,
+        )
+
+        # 3. Verify expectations.
+        assert _aggregated_measure.lcc == pytest.approx(6.7126, 0.0001)

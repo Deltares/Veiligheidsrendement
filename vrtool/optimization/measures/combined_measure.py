@@ -31,17 +31,54 @@ class CombinedMeasure:
         return self.primary.is_base_measure()
 
     @property
-    def cost(self) -> float:
+    def base_cost(self) -> float:
         """
-        Combined measure cost, can be used to compute the `LCC` of
+        Combined measure base cost, corresponds to the base cost of
+        the primary measure. It can be used to compute the `LCC` of
         an aggregated measure.
 
         Returns:
-            float: Total (bruto) cost of the combined measures.
+            float: Total (bruto) base cost of the combined measure.
         """
-        if self.secondary:
-            return self.primary.cost + self.secondary.cost
-        return self.primary.cost
+        return self.primary.base_cost
+
+    def _calculate_combination_lcc(self, base_cost: float) -> float:
+        def discount_per_year(
+            measure_as_input: MeasureAsInputProtocol,
+        ) -> float:
+            return (1 + measure_as_input.discount_rate) ** measure_as_input.year
+
+        # Calculate the costs for the primary measure.
+        _primary_costs = (self.primary.cost - base_cost) / discount_per_year(
+            self.primary
+        )
+
+        if not self.secondary:
+            return _primary_costs
+
+        # Calculate the costs for the secondary measure (if applies)
+        _secondary_costs = self.secondary.cost / discount_per_year(self.secondary)
+        return _primary_costs + _secondary_costs
+
+    @property
+    def lcc_with_base_cost(self) -> float:
+        """
+        Calculates the LCC of this combined measure including the base cost.
+
+        Returns:
+            float: The total (bruto) lcc of this combined measure.
+        """
+        return self._calculate_combination_lcc(self.base_cost)
+
+    @property
+    def lcc_without_base_cost(self) -> float:
+        """
+        Calculates the LCC of this combined measure excluding the base cost.
+
+        Returns:
+            float: The total (bruto) lcc of this combined measure.
+        """
+        return self._calculate_combination_lcc(0)
 
     def compares_to(self, other: "CombinedMeasure") -> bool:
         """
