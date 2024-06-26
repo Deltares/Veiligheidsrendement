@@ -396,21 +396,18 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[
                 idx
             ]
-            measure_idx = _taken_measures[
+            _aggregated_combination = _taken_measures[
                 self.sections[_section_idx].section_name
-            ].get_combination_idx()
+            ]
+            measure_idx = _aggregated_combination.get_combination_idx()
             _taken_measures_indices.append(
                 (_section_idx, measure_idx[0] + 1, measure_idx[1] + 1)
             )
-            _aggregated_combinations = self.sections[
-                _section_idx
-            ].get_aggregated_combinations(
-                sh_sequence_nr=measure_idx[0], sg_sequence_nr=measure_idx[0]
-            )
+
             self.selected_aggregated_measures.append(
                 (
                     _section_idx,
-                    _aggregated_combinations[0],
+                    _aggregated_combination,
                 )
             )
 
