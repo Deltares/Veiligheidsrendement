@@ -2,7 +2,6 @@ from collections import defaultdict
 
 import numpy as np
 
-from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.measures.aggregated_measures_combination import (
