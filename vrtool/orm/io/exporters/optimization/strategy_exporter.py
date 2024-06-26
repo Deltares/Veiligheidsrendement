@@ -38,18 +38,33 @@ class StrategyExporter(OrmExporterProtocol):
         _step_results_section = []
         _step_results_mechanism = []
         _last_step_lcc_per_section = defaultdict(lambda: 0)
+        _step_lcc_tuples = [
+            (
+                "step_idx",
+                "section_name",
+                "aggregation_lcc",
+                "accumulated_lcc",
+                "last_lcc_values",
+            )
+        ]
+        _accumulated_total_lcc_per_step = []
 
-        # _accumulated_total_lcc stores always the calculated `lcc` of the previous step
-        _accumulated_total_lcc = 0
-
-        for _measure_idx, (
+        for _step_idx, (
             _section_idx,
             _aggregated_measure,
         ) in enumerate(strategy_run.selected_aggregated_measures):
-
-            _accumulated_total_lcc += (
-                _aggregated_measure.lcc - _last_step_lcc_per_section[_section_idx]
+            _accumulated_lcc_last_step = (
+                _accumulated_total_lcc_per_step[-1]
+                if any(_accumulated_total_lcc_per_step)
+                else 0
             )
+            _accumulated_total_lcc_per_step.append(
+                _aggregated_measure.lcc
+                + _accumulated_lcc_last_step
+                - _last_step_lcc_per_section[_section_idx]
+            )
+            _step_total_lcc = _accumulated_total_lcc_per_step[-1]
+
             # Update the increment dictionary.
             _last_step_lcc_per_section[_section_idx] = _aggregated_measure.lcc
 
@@ -63,22 +78,30 @@ class StrategyExporter(OrmExporterProtocol):
                 if _measure is not None
             ]
 
-            _total_risk = strategy_run.total_risk_per_step[_measure_idx + 1]
+            _total_risk = strategy_run.total_risk_per_step[_step_idx + 1]
             for single_measure in _secondary_measures + [_aggregated_measure]:
-
+                _step_lcc_tuples.append(
+                    (
+                        _step_idx + 1,
+                        _section_idx,
+                        _aggregated_measure.lcc,
+                        _accumulated_total_lcc_per_step[-1],
+                        str(list(_last_step_lcc_per_section.items())).strip("[]"),
+                    )
+                )
                 _option_selected_measure_result = (
                     self._get_optimization_selected_measure(
                         single_measure.measure_result_id, single_measure.year
                     )
                 )
                 _created_optimization_step = OptimizationStep.create(
-                    step_number=_measure_idx + 1,
+                    step_number=_step_idx + 1,
                     optimization_selected_measure=_option_selected_measure_result,
-                    total_lcc=_accumulated_total_lcc,
+                    total_lcc=_step_total_lcc,
                     total_risk=_total_risk,
                 )
 
-                _prob_per_step = strategy_run.probabilities_per_step[_measure_idx + 1]
+                _prob_per_step = strategy_run.probabilities_per_step[_step_idx + 1]
                 for _t in strategy_run.time_periods:
                     _prob_section = self._get_section_time_value(
                         _section_idx, _t, _prob_per_step
@@ -115,6 +138,7 @@ class StrategyExporter(OrmExporterProtocol):
                         }
                     )
 
+        # from pathlib import Path; _lcc_timeline=list(str(slt).strip("()").replace("'", "\"") for slt in _step_lcc_tuples); Path("lcc_values.csv").write_text("\n".join(_lcc_timeline))
         OptimizationStepResultSection.insert_many(_step_results_section).execute()
         OptimizationStepResultMechanism.insert_many(_step_results_mechanism).execute()
 
