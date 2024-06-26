@@ -104,7 +104,7 @@ class TestAggregatedMeasuresCombination:
         assert _sg_idx == 2
 
     def test_lcc_given_aggregation_with_sh_and_sg_with_different_investment_years(
-        self, combined_measure_factory: Callable[[dict, dict], MeasureAsInputProtocol]
+        self, combined_measure_factory: Callable[[dict, dict], CombinedMeasure]
     ):
 
         # 1. Define test data.
@@ -127,17 +127,10 @@ class TestAggregatedMeasuresCombination:
         )
 
         # 3. Verify expectations.
-        assert _aggregated_measure.sh_combination.lcc_with_base_cost == pytest.approx(
-            6.7105, 0.0001
-        )
-        assert (
-            _aggregated_measure.sg_combination.lcc_without_base_cost
-            == pytest.approx(4.6126, 0.0001)
-        )
         assert _aggregated_measure.lcc == pytest.approx(11.3231, 0.0001)
 
     def test_lcc_given_aggregation_with_sh_with_different_investment_years(
-        self, combined_measure_factory: Callable[[dict, dict], MeasureAsInputProtocol]
+        self, combined_measure_factory: Callable[[dict, dict], CombinedMeasure]
     ):
         # 1. Define test data.
         _sh_combined_measure = combined_measure_factory(

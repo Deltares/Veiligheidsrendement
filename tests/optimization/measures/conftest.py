@@ -29,8 +29,8 @@ def get_measure_as_input_factory_fixture() -> Iterable[
 
 @pytest.fixture(name="combined_measure_factory")
 def get_combined_measure_factory_fixture(
-    measure_as_input_factory: Callable[[dict, dict], MeasureAsInputProtocol]
-) -> Iterable[Callable[[], CombinedMeasure]]:
+    measure_as_input_factory: Callable[[dict], MeasureAsInputProtocol]
+) -> Iterable[Callable[[dict, dict], CombinedMeasure]]:
     def create_combined_measure(
         primary_dict: dict, secondary_dict: dict
     ) -> CombinedMeasure:

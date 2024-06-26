@@ -14,10 +14,6 @@ class AggregatedMeasureCombination:
     year: int
 
     @property
-    def base_cost(self) -> float:
-        return self.sh_combination.primary.base_cost
-
-    @property
     def lcc(self) -> float:
         """
         Calculates the "life cycle cost" of the aggregation of combined measures

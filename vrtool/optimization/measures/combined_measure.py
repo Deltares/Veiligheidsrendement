@@ -30,18 +30,6 @@ class CombinedMeasure:
         """
         return self.primary.is_base_measure()
 
-    @property
-    def base_cost(self) -> float:
-        """
-        Combined measure base cost, corresponds to the base cost of
-        the primary measure. It can be used to compute the `LCC` of
-        an aggregated measure.
-
-        Returns:
-            float: Total (bruto) base cost of the combined measure.
-        """
-        return self.primary.base_cost
-
     def _calculate_combination_lcc(self, base_cost: float) -> float:
         def discount_per_year(
             measure_as_input: MeasureAsInputProtocol,
@@ -68,7 +56,7 @@ class CombinedMeasure:
         Returns:
             float: The total (bruto) lcc of this combined measure.
         """
-        return self._calculate_combination_lcc(self.base_cost)
+        return self._calculate_combination_lcc(self.primary.base_cost)
 
     @property
     def lcc_without_base_cost(self) -> float:
