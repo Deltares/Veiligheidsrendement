@@ -1,10 +1,12 @@
 import copy
 import shutil
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -226,6 +228,100 @@ class PostProcessingReport:
             value_name="beta",
         )
         self._plot_comparison_of_betas(betas_per_section_and_mechanism)
+
+        # Extra
+        _lcc_per_step = {
+            "reference": daf.get_measure_costs_from_measure_results(
+                self.reference_db, measures_per_step["reference"]
+            ),
+            "result": daf.get_measure_costs_from_measure_results(
+                self.result_db, measures_per_step["result"]
+            ),
+        }
+
+        _optimization_lcc = {
+            "reference": self._get_incremental_cost_from_optimization_path(
+                optimization_steps["reference"], measures_per_step["reference"]
+            ),
+            "result": self._get_incremental_cost_from_optimization_path(
+                optimization_steps["result"], measures_per_step["result"]
+            ),
+        }
+        self._plot_lcc_based_on_optimization_step_and_measure_result(
+            _lcc_per_step, optimization_steps, _optimization_lcc
+        )
+        self._print_different_costs_between_measure_result_and_optimization_step(
+            _lcc_per_step, _optimization_lcc
+        )
+
+    def _get_incremental_cost_from_optimization_path(
+        self, optimization_steps, measures_per_step
+    ):
+        lcc = [0] + [step["total_lcc"] for step in optimization_steps]
+        lcc_increments = np.diff(lcc)
+        lcc_per_section = defaultdict(lambda: 0.0)
+        lcc_steps = []
+        for step, values in measures_per_step.items():
+            # get the section id
+            section_id = values["section_id"][0]
+            # compute the cost based on lcc, take the difference with the previous step and add it
+            lcc_per_section[section_id] += lcc_increments[step - 1]
+            lcc_steps.append(lcc_per_section[section_id])
+
+        return lcc_steps
+
+    def _plot_lcc_based_on_optimization_step_and_measure_result(
+        self, lcc_per_step: dict, optimization_steps: dict, optimization_lcc
+    ):
+        _x_limit = max(optimization_lcc["reference"], optimization_lcc["result"])
+        _y_limit = max(lcc_per_step["reference"], lcc_per_step["result"])
+
+        _, ax = plt.subplots()
+        for count, run in enumerate(optimization_steps.keys()):
+            ax.plot(
+                optimization_lcc[run],
+                lcc_per_step[run],
+                label=run,
+                marker="o",
+                linestyle="",
+                color=self.colors[count],
+            )
+        # plot diagonal
+        ax.plot([0, 25e6], [0, 25e6], color="black")
+        ax.set_xlabel("LCC based on OptimizationStep")
+        ax.set_ylabel("LCC based on MeasureResult")
+        ax.set_xlim(
+            left=0,
+            right=_x_limit,
+        )
+        ax.set_ylim(
+            bottom=0,
+            top=_y_limit,
+        )
+        ax.legend()
+        plt.savefig(
+            self.report_dir.joinpath("lcc_optimization_step_v_measure_result.png")
+        )
+
+    def _print_different_costs_between_measure_result_and_optimization_step(
+        self, lcc_per_step: dict, optimization_lcc: dict
+    ):
+        # for result get the ids where costs ar different
+        different_costs = []
+        for _step, (ref, res) in enumerate(
+            zip(lcc_per_step["result"], optimization_lcc["result"])
+        ):
+            if np.abs(ref - res) > 1e-4:
+                different_costs.append(_step)
+        _lines = []
+        for _step in different_costs:
+            _lines.append(
+                f"Step {_step+1} has different costs (mr_id vs opt): {lcc_per_step['result'][_step]} vs {optimization_lcc['result'][_step]}"
+            )
+
+        _txt_file = self.report_dir.joinpath("costs_measure_result_v_opt_step.txt")
+        _txt_file.touch()
+        _txt_file.write_text("\n".join(_lines), encoding="utf-8")
 
     def _plot_comparison_of_betas(self, betas_per_section_and_mechanism: pd.DataFrame):
         # Next we make a plot to compare the beta for both runs

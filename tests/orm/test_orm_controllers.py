@@ -625,15 +625,16 @@ class TestOrmControllers:
         # Define strategies.
         class MockedStrategy(StrategyProtocol):
             def __init__(self):
-
                 self.sections = [section_with_combinations]
-                self.sections[0].aggregated_measure_combinations = [
-                    AggregatedMeasureCombination(
-                        sh_combination=self.sections[0].sh_combinations[1],
-                        sg_combination=self.sections[0].sg_combinations[0],
-                        measure_result_id=1,
-                        year=0,
-                    )
+                _aggregated_measure_combination = AggregatedMeasureCombination(
+                    sh_combination=self.sections[0].sh_combinations[1],
+                    sg_combination=self.sections[0].sg_combinations[0],
+                    measure_result_id=1,
+                    year=0,
+                )
+                _section_idx = 0
+                self.sections[_section_idx].aggregated_measure_combinations = [
+                    _aggregated_measure_combination
                 ]
                 self.total_risk_per_step = [1000.0, 100.0]
                 self.probabilities_per_step = [
@@ -654,8 +655,11 @@ class TestOrmControllers:
                         ),
                     },
                 ]
-                self.measures_taken = [(0, 1, 1)]
-                self.time_periods = [0, 20, 100]
+                self.measures_taken = [(_section_idx, 1, 1)]
+                self.time_periods = [_section_idx, 20, 100]
+                self.selected_aggregated_measures = [
+                    (_section_idx, _aggregated_measure_combination)
+                ]
 
         _test_strategy = MockedStrategy()
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterator
+from typing import Callable, Iterable, Iterator
 
 import pytest
 
@@ -114,3 +114,22 @@ class TestCombinedMeasure:
 
         # 3. Verify expectations
         assert _result == expected
+
+    @pytest.fixture(name="combined_measure_example")
+    def _get_combined_measure_example_fixture(
+        self, combined_measure_factory: Callable[[dict, dict], CombinedMeasure]
+    ) -> Iterable[CombinedMeasure]:
+        yield combined_measure_factory(
+            dict(cost=4.2, base_cost=2.2, year=20),
+            dict(cost=6.7, base_cost=4.2, year=0),
+        )
+
+    def test_lcc_with_base_cost(self, combined_measure_example: CombinedMeasure):
+        assert combined_measure_example.lcc_with_base_cost == pytest.approx(
+            6.7105, 0.0001
+        )
+
+    def test_lcc_without_base_cost(self, combined_measure_example: CombinedMeasure):
+        assert combined_measure_example.lcc_without_base_cost == pytest.approx(
+            6.7220, 0.0001
+        )

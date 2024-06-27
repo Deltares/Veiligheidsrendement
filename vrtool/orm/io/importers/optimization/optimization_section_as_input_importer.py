@@ -106,6 +106,7 @@ class OptimizationSectionAsInputImporter:
                     valid_l_stab_screen(_measure.l_stab_screen)
                 ]
 
+        # TODO: Do we need to set base costs for `SgMeasure` type?
         set_base_cost(SgMeasure)
         set_base_cost(ShMeasure)
 
