@@ -10,6 +10,7 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 class AggregatedMeasureCombination:
     sh_combination: CombinedMeasure
     sg_combination: CombinedMeasure
+    sh_sg_combination: CombinedMeasure | None
     measure_result_id: int
     year: int
 
