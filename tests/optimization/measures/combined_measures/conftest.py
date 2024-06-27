@@ -4,9 +4,6 @@ from typing import Iterator
 import pytest
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.measures.combined_measures.combined_measure_base import (
-    CombinedMeasureBase,
-)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
