@@ -14,7 +14,7 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 
 class TestShMeasure:
     @pytest.fixture(name="create_sh_measure")
-    def _get_sg_measure_factory(
+    def _get_sh_measure_factory(
         self,
     ) -> Iterable[Callable[[MeasureTypeEnum, CombinableTypeEnum], ShMeasure]]:
         def create_sh_measure(

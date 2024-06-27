@@ -100,14 +100,14 @@ class TestCombinedMeasureBase:
     @pytest.fixture(name="combined_measure_example_factory")
     def _get_combined_measure_example_fixture(
         self,
-        combined_measure_factory: Callable[
+        combined_measure_factory_fixture: Callable[
             [type[CombinedMeasureBase], dict, dict], CombinedMeasureBase
         ],
     ) -> Iterable[Callable[[type[CombinedMeasureBase]], CombinedMeasureBase]]:
         def create_combined_measure(
             combined_measure_type: type[CombinedMeasureBase],
         ) -> CombinedMeasureBase:
-            return combined_measure_factory(
+            return combined_measure_factory_fixture(
                 combined_measure_type,
                 dict(cost=4.2, base_cost=2.2, year=20),
                 dict(cost=6.7, base_cost=4.2, year=0),

@@ -112,19 +112,19 @@ class TestAggregatedMeasuresCombination:
 
     def test_lcc_given_aggregation_with_sh_and_sg_with_different_investment_years(
         self,
-        combined_measure_factory: Callable[
+        combined_measure_factory_fixture: Callable[
             [type[CombinedMeasureBase], dict, dict], CombinedMeasureBase
         ],
     ):
 
         # 1. Define test data.
-        _sh_combined_measure = combined_measure_factory(
+        _sh_combined_measure = combined_measure_factory_fixture(
             combined_measure_type=ShCombinedMeasure,
             primary_dict=dict(cost=4.2, base_cost=2.2, year=20),
             secondary_dict=dict(cost=6.7, base_cost=2.2, year=0),
         )
 
-        _sg_combined_measure = combined_measure_factory(
+        _sg_combined_measure = combined_measure_factory_fixture(
             combined_measure_type=SgCombinedMeasure,
             primary_dict=dict(cost=2.4, base_cost=1.4, year=20),
             secondary_dict=dict(cost=4.6, base_cost=1.4, year=0),
@@ -143,18 +143,18 @@ class TestAggregatedMeasuresCombination:
 
     def test_lcc_given_aggregation_with_sh_with_different_investment_years(
         self,
-        combined_measure_factory: Callable[
+        combined_measure_factory_fixture: Callable[
             [type[CombinedMeasureBase], dict, dict], CombinedMeasureBase
         ],
     ):
         # 1. Define test data.
-        _sh_combined_measure = combined_measure_factory(
+        _sh_combined_measure = combined_measure_factory_fixture(
             combined_measure_type=ShCombinedMeasure,
             primary_dict=dict(cost=4.2, base_cost=4.2, year=20),
             secondary_dict=dict(cost=6.7, base_cost=4.2, year=0),
         )
 
-        _sg_combined_measure = combined_measure_factory(
+        _sg_combined_measure = combined_measure_factory_fixture(
             combined_measure_type=SgCombinedMeasure,
             primary_dict=dict(cost=2.4, base_cost=2.4, year=20),
             secondary_dict=None,
