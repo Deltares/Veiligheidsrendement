@@ -31,12 +31,12 @@ class TestShCombinedMeasure:
         self, sh_measure_factory: Callable[[], ShMeasure]
     ) -> Iterator[ShCombinedMeasure]:
         # Modify some of the parameters for more insightful tests.
-        _sg_measure = sh_measure_factory()
-        _sg_measure.base_cost = 100
-        _sg_measure.cost = 420
-        _sg_measure.year = 0
+        _sh_measure = sh_measure_factory()
+        _sh_measure.base_cost = 100
+        _sh_measure.cost = 420
+        _sh_measure.year = 0
 
-        yield ShCombinedMeasure(primary=_sg_measure, mechanism_year_collection=None)
+        yield ShCombinedMeasure(primary=_sh_measure, mechanism_year_collection=None)
 
     @pytest.mark.parametrize(
         "base_cost",
