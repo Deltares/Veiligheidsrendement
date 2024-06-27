@@ -152,8 +152,8 @@ class TestCombinedMeasureFactory:
         # 3. Verify expectations
         assert str(exc_err.value) == _expected_error
 
-    @pytest.fixture(name="section_as_input_to_get_shsg_combined")
-    def _get_section_as_input_to_get_shsg_combined(
+    @pytest.fixture(name="shsg_combined_measure_arguments")
+    def _get_shsg_combined_measure_arguments_fixture(
         self,
         section_with_combinations: SectionAsInput,
         shsg_measure_factory: Callable[[], ShSgMeasure],
@@ -184,7 +184,7 @@ class TestCombinedMeasureFactory:
 
     def test_get_shsg_combined_measure_with_different_years_returns_none(
         self,
-        section_as_input_to_get_shsg_combined: tuple[
+        shsg_combined_measure_arguments: tuple[
             ShSgMeasure, ShCombinedMeasure, SgCombinedMeasure
         ],
     ):
@@ -193,7 +193,7 @@ class TestCombinedMeasureFactory:
             _shsg_measure,
             _sh_combined,
             _sg_combined,
-        ) = section_as_input_to_get_shsg_combined
+        ) = shsg_combined_measure_arguments
         _shsg_measure.year = _sh_combined.primary.year + 100
 
         # 2. Run test.
@@ -206,7 +206,7 @@ class TestCombinedMeasureFactory:
 
     def test_get_shsg_combined_measure_returns_shsgcombinedmeasure(
         self,
-        section_as_input_to_get_shsg_combined: tuple[
+        shsg_combined_measure_arguments: tuple[
             ShSgMeasure, ShCombinedMeasure, SgCombinedMeasure
         ],
     ):
@@ -215,7 +215,7 @@ class TestCombinedMeasureFactory:
             _shsg_measure,
             _sh_combined,
             _sg_combined,
-        ) = section_as_input_to_get_shsg_combined
+        ) = shsg_combined_measure_arguments
 
         # 2. Run test.
         _shsg_combined_measure = CombinedMeasureFactory.get_shsg_combined_measure(
@@ -234,7 +234,7 @@ class TestCombinedMeasureFactory:
 
     def test_get_shsg_combined_measure_multiple_options_returns_first_found(
         self,
-        section_as_input_to_get_shsg_combined: tuple[
+        shsg_combined_measure_arguments: tuple[
             ShSgMeasure, ShCombinedMeasure, SgCombinedMeasure
         ],
     ):
@@ -243,7 +243,7 @@ class TestCombinedMeasureFactory:
             _shsg_measure,
             _sh_combined,
             _sg_combined,
-        ) = section_as_input_to_get_shsg_combined
+        ) = shsg_combined_measure_arguments
         _alter_shsg_measure = deepcopy(_shsg_measure)
         assert _shsg_measure != _alter_shsg_measure
 
