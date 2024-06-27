@@ -111,5 +111,5 @@ class CombinedMeasureFactory:
             return SgCombinedMeasure(**_combined_measure_dict)
         else:
             raise NotImplementedError(
-                f"It is not supported to combine measures of type {type(primary)}"
+                f"It is not supported to combine measures of type {type(primary).__name__}."
             )

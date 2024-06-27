@@ -13,6 +13,7 @@ from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
 from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
     ShCombinedMeasure,
 )
+from vrtool.optimization.measures.measure_as_input_base import MeasureAsInputBase
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -111,3 +112,26 @@ class TestCombinedMeasureFactory:
         assert _combination.primary.measure_result_id == _primary.measure_result_id
         assert _combination.secondary == None
         assert _combination.sequence_nr == 7
+
+    def test_from_input_with_unsupported_type_raises(self, measure_as_input_factory):
+        # 1. Define test data.
+        _base_measure = measure_as_input_factory(
+            **dict(
+                measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
+                measure_result_id=23,
+            )
+        )
+        assert isinstance(_base_measure, MeasureAsInputBase)
+        _expected_error = f"It is not supported to combine measures of type {MeasureAsInputBase.__name__}."
+
+        # 2. Run test.
+        with pytest.raises(NotImplementedError) as exc_err:
+            CombinedMeasureFactory.from_input(
+                primary=_base_measure,
+                secondary=None,
+                initial_assessment=None,
+                sequence_nr=42,
+            )
+
+        # 3. Verify expectations
+        assert str(exc_err.value) == _expected_error
