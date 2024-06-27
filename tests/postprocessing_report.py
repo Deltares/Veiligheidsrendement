@@ -273,8 +273,8 @@ class PostProcessingReport:
     def _plot_lcc_based_on_optimization_step_and_measure_result(
         self, lcc_per_step: dict, optimization_steps: dict, optimization_lcc
     ):
-        _x_limit = max(optimization_lcc["reference"], optimization_lcc["result"])
-        _y_limit = max(lcc_per_step["reference"], lcc_per_step["result"])
+        _x_limit = max(*optimization_lcc["reference"], *optimization_lcc["result"])
+        _y_limit = max(*lcc_per_step["reference"], *lcc_per_step["result"])
 
         _, ax = plt.subplots()
         for count, run in enumerate(optimization_steps.keys()):
