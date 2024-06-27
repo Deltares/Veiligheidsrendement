@@ -364,7 +364,7 @@ class TestStrategyInput:
         assert _strategy_input.LCCOption.shape == (1, 8, 5)
         for _amc in _sections[_section_idx].aggregated_measure_combinations:
             _sh_sequence_nr, _sg_sequence_nr = _amc.get_combination_idx()
-            # +1 becauese the `LegacyMappingHelper` requires it for the `_lcc` array.
+            # +1 because the `LegacyMappingHelper` requires it for the `_lcc` array.
             assert _strategy_input.LCCOption[
                 _section_idx, _sh_sequence_nr + 1, _sg_sequence_nr + 1
             ] == pytest.approx(_amc.lcc)
