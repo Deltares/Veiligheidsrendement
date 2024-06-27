@@ -20,6 +20,8 @@ from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
+from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
 @pytest.fixture(name="probability_collection_factory")
@@ -82,3 +84,51 @@ def get_combined_measure_factory_fixture(
         )
 
     yield create_combined_measure
+
+
+@pytest.fixture(name="sh_measure_factory")
+def get_sh_measure_factory(
+    probability_collection_factory,
+) -> Iterator[Callable[[], ShMeasure]]:
+    def create_sh_measure() -> ShMeasure:
+        return ShMeasure(
+            beta_target=float("nan"),
+            transition_level=float("nan"),
+            dcrest=float("nan"),
+            cost=0,
+            base_cost=0,
+            measure_result_id=0,
+            measure_type=None,
+            combine_type=None,
+            discount_rate=0.3,
+            mechanism_year_collection=probability_collection_factory(
+                MechanismEnum.OVERFLOW
+            ),
+            l_stab_screen=float("nan"),
+            year=0,
+        )
+
+    yield create_sh_measure
+
+
+@pytest.fixture(name="sg_measure_factory")
+def get_sg_measure_factory(
+    probability_collection_factory,
+) -> Iterator[Callable[[], SgMeasure]]:
+    def create_sg_measure() -> SgMeasure:
+        return SgMeasure(
+            dberm=float("nan"),
+            cost=0,
+            base_cost=0,
+            measure_result_id=0,
+            measure_type=None,
+            combine_type=None,
+            discount_rate=0.3,
+            mechanism_year_collection=probability_collection_factory(
+                MechanismEnum.OVERFLOW
+            ),
+            l_stab_screen=float("nan"),
+            year=0,
+        )
+
+    yield create_sg_measure
