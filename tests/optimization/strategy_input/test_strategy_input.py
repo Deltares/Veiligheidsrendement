@@ -1,5 +1,5 @@
 import pytest
-from numpy import ndarray
+from numpy import ndarray, ndenumerate
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -256,7 +256,8 @@ class TestStrategyInput:
             _sg_measure_soil_20_0, _sg_measure_vzg_0, _initial_assessment, 3
         )
 
-        _sections[0].combined_measures = [
+        _section_idx = 0
+        _sections[_section_idx].combined_measures = [
             _sh_combination_soil_0,
             _sh_combination_soil_20,
             _sh_combination_soil_revetment_0_384,
@@ -271,7 +272,7 @@ class TestStrategyInput:
         ]
 
         # Aggregations
-        _sections[0].aggregated_measure_combinations = [
+        _sections[_section_idx].aggregated_measure_combinations = [
             AggregatedMeasureCombination(
                 _sh_combination_soil_0, _sg_combination_soil_0, 1, 0
             ),
@@ -351,14 +352,13 @@ class TestStrategyInput:
 
         # Cost
         assert isinstance(_strategy_input.LCCOption, ndarray)
-        assert _strategy_input.LCCOption.shape == (1, 8, 5)
-        assert _strategy_input.LCCOption[0, 0, 0] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 1, 1] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 1, 2] == pytest.approx(1e99)
-        assert _strategy_input.LCCOption[0, 1, 3] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 2, 2] == pytest.approx(214127.45)
-        assert _strategy_input.LCCOption[0, 3, 3] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 4, 4] == pytest.approx(1003478.61)
 
+        assert _strategy_input.LCCOption.shape == (1, 8, 5)
+        for _amc in _sections[_section_idx].aggregated_measure_combinations:
+            _sh_sequence_nr, _sg_sequence_nr = _amc.get_combination_idx()
+            # +1 becauese the `LegacyMappingHelper` requires it for the `_lcc` array.
+            assert _strategy_input.LCCOption[
+                _section_idx, _sh_sequence_nr + 1, _sg_sequence_nr + 1
+            ] == pytest.approx(_amc.lcc)
         # Other structures
         assert _strategy_input.D.shape == (50,)
