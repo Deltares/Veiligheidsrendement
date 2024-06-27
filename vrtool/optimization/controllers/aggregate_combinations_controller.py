@@ -1,4 +1,3 @@
-import logging
 from itertools import product
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
@@ -23,36 +22,14 @@ from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
 class AggregateCombinationsController:
+    """
+    Controller responsable of creating a collection of `AggregatedCombinedMeasure`.
+    This controller is also responsible of creating the "additional" `ShSgCombinedMeasure`
+    when required by an `AggregatedCombinedMeasure`.
+    """
+
     def __init__(self, section: SectionAsInput) -> None:
         self._section = section
-
-    def _get_shsg_combined_measure(
-        self, sh_comb: ShCombinedMeasure, sg_comb: SgCombinedMeasure
-    ) -> ShSgCombinedMeasure | None:
-        _found_shsg_measures = [
-            _shsg_measure
-            for _shsg_measure in self._section.sh_sg_measures
-            if CombinedMeasureFactory.check_sh_sg_measures_match(
-                _shsg_measure, sh_comb, sg_comb
-            )
-        ]
-        if not _found_shsg_measures:
-            return None
-
-        if len(_found_shsg_measures) > 1:
-            logging.warning(
-                "More than one `ShSgMeasure` found for combination of primary measure results (%s, %s). Using only the first one found.",
-                sh_comb.primary.measure_result_id,
-                sg_comb.primary.measure_result_id,
-            )
-        _shsg_measure = _found_shsg_measures[0]
-
-        return ShSgCombinedMeasure(
-            primary=_shsg_measure,
-            sh_secondary=sh_comb.secondary,
-            sg_secondary=sg_comb.secondary,
-            mechanism_year_collection=_shsg_measure.mechanism_year_collection,
-        )
 
     def _get_aggregated_measure_id(
         self,
@@ -79,8 +56,8 @@ class AggregateCombinationsController:
     def _make_aggregate(
         self, sh_combination: ShCombinedMeasure, sg_combination: SgCombinedMeasure
     ) -> AggregatedMeasureCombination:
-        _shsg_combined_measure = self._get_shsg_combined_measure(
-            sh_combination, sg_combination
+        _shsg_combined_measure = CombinedMeasureFactory.get_shsg_combined_measure(
+            self._section.sh_sg_measures, sh_combination, sg_combination
         )
         return AggregatedMeasureCombination(
             sh_combination=sh_combination,

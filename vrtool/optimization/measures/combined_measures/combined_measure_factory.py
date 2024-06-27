@@ -1,3 +1,4 @@
+import logging
 import math
 
 from vrtool.optimization.measures.combined_measures.combined_measure_base import (
@@ -20,6 +21,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
+from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 
 
 class CombinedMeasureFactory:
@@ -29,47 +31,73 @@ class CombinedMeasureFactory:
     """
 
     @staticmethod
-    def check_sh_sg_measures_match(
-        shsg_combination: ShSgCombinedMeasure,
+    def get_shsg_combined_measure(
+        shsg_measure: list[ShSgMeasure],
         sh_combination: ShCombinedMeasure,
         sg_combination: SgCombinedMeasure,
-    ) -> bool:
+    ) -> ShSgCombinedMeasure | None:
         """
-        Compares the instance of a `ShSgCombinedMeasure` with two combined measure
-        representing a `ShMeasure` and `SgMeasure` each. When their `dcrest`
-        `dberm`, `l_stab_screen` and `measure_type` match this `ShSgMeasure`
-        we consider them as equal.
+        Retrieves a new `ShSgCombinedMeasure` when the provided combinations
+        can be matched with any of the items in the `ShSgMeasure` list.
 
         Args:
-            shsg_combination (ShSgCombinedMeasure): Initial `ShSgMeasure`.
-            sh_combination (ShCombinedMeasure): Combined `ShMeasure`.
-            sg_combination (SgCombinedMeasure): Combined `SgMeasure`.
+            shsg_measure (list[ShSgMeasure]): List of `ShSgMeasure` candidates.
+            sh_comb (ShCombinedMeasure): Sh combination.
+            sg_comb (SgCombinedMeasure): Sg combination.
 
         Returns:
-            bool: Comparison result.
+            ShSgCombinedMeasure | None: New combined measure or `None` when no match was found.
         """
 
-        def floats_are_equal_or_nan(left_float: float, right_float: float) -> bool:
-            """
-            Compares two floats for equality, when both are `float("nan")` then
-            we considered them as equal.
-            """
-            if math.isnan(left_float) and math.isnan(right_float):
-                return True
-            return left_float == right_float
+        def check_sh_sg_measures_match(
+            shsg_combination: ShSgCombinedMeasure,
+            sh_combination: ShCombinedMeasure,
+            sg_combination: SgCombinedMeasure,
+        ) -> bool:
+            def floats_are_equal_or_nan(left_float: float, right_float: float) -> bool:
+                """
+                Compares two floats for equality, when both are `float("nan")` then
+                we considered them as equal.
+                """
+                if math.isnan(left_float) and math.isnan(right_float):
+                    return True
+                return left_float == right_float
 
-        return (
-            floats_are_equal_or_nan(
-                shsg_combination.dcrest, sh_combination.primary.dcrest
+            return (
+                floats_are_equal_or_nan(
+                    shsg_combination.dcrest, sh_combination.primary.dcrest
+                )
+                and floats_are_equal_or_nan(
+                    shsg_combination.dberm, sg_combination.primary.dberm
+                )
+                and floats_are_equal_or_nan(
+                    shsg_combination.l_stab_screen, sg_combination.primary.l_stab_screen
+                )
+                and shsg_combination.measure_type == sh_combination.primary.measure_type
+                and shsg_combination.year == sh_combination.primary.year
             )
-            and floats_are_equal_or_nan(
-                shsg_combination.dberm, sg_combination.primary.dberm
+
+        _found_shsg_measures = [
+            _shsg_measure
+            for _shsg_measure in shsg_measure
+            if check_sh_sg_measures_match(_shsg_measure, sh_combination, sg_combination)
+        ]
+        if not _found_shsg_measures:
+            return None
+
+        if len(_found_shsg_measures) > 1:
+            logging.warning(
+                "More than one `ShSgMeasure` found for combination of primary measure results (%s, %s). Using only the first one found.",
+                sh_combination.primary.measure_result_id,
+                sg_combination.primary.measure_result_id,
             )
-            and floats_are_equal_or_nan(
-                shsg_combination.l_stab_screen, sg_combination.primary.l_stab_screen
-            )
-            and shsg_combination.measure_type == sh_combination.primary.measure_type
-            and shsg_combination.year == sh_combination.primary.year
+        _shsg_measure = _found_shsg_measures[0]
+
+        return ShSgCombinedMeasure(
+            primary=_shsg_measure,
+            sh_secondary=sh_combination.secondary,
+            sg_secondary=sg_combination.secondary,
+            mechanism_year_collection=_shsg_measure.mechanism_year_collection,
         )
 
     @staticmethod
