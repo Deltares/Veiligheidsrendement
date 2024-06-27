@@ -1,5 +1,5 @@
 import pytest
-from numpy import ndarray, ndenumerate
+from numpy import ndarray
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -7,7 +7,15 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_factory import (
+    CombinedMeasureFactory,
+)
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
@@ -221,38 +229,38 @@ class TestStrategyInput:
         ]
 
         # Combinations
-        _sh_combination_soil_0 = CombinedMeasure.from_input(
+        _sh_combination_soil_0 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_0_0, None, _initial_assessment, 0
         )
-        _sh_combination_soil_20 = CombinedMeasure.from_input(
+        _sh_combination_soil_20 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_20_0, None, _initial_assessment, 1
         )
-        _sh_combination_soil_revetment_0_384 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_0_384 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_0_0, _sh_measure_revetment_0_384, _initial_assessment, 2
         )
-        _sh_combination_soil_revetment_20_384 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_20_384 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_20_0, _sh_measure_revetment_0_384, _initial_assessment, 3
         )
-        _sh_combination_soil_revetment_0_484 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_0_484 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_0_0, _sh_measure_revetment_0_484, _initial_assessment, 4
         )
-        _sh_combination_soil_revetment_20_484 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_20_484 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_20_0, _sh_measure_revetment_0_484, _initial_assessment, 5
         )
-        _sh_combination_diaphragm_0 = CombinedMeasure.from_input(
+        _sh_combination_diaphragm_0 = CombinedMeasureFactory.from_input(
             _sh_measure_diaphragm_0, None, _initial_assessment, 6
         )
 
-        _sg_combination_soil_0 = CombinedMeasure.from_input(
+        _sg_combination_soil_0 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_0_0, None, _initial_assessment, 0
         )
-        _sg_combination_soil_20 = CombinedMeasure.from_input(
+        _sg_combination_soil_20 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_20_0, None, _initial_assessment, 1
         )
-        _sg_combination_soil_vzg_0 = CombinedMeasure.from_input(
+        _sg_combination_soil_vzg_0 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_0_0, _sg_measure_vzg_0, _initial_assessment, 2
         )
-        _sg_combination_soil_vzg_20 = CombinedMeasure.from_input(
+        _sg_combination_soil_vzg_20 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_20_0, _sg_measure_vzg_0, _initial_assessment, 3
         )
 
@@ -273,8 +281,8 @@ class TestStrategyInput:
 
         # Aggregations
         def get_aggregation(
-            sh_measure: CombinedMeasure,
-            sg_measure: CombinedMeasure,
+            sh_measure: ShCombinedMeasure,
+            sg_measure: SgCombinedMeasure,
             measure_result_id: int,
             year: int,
         ) -> AggregatedMeasureCombination:

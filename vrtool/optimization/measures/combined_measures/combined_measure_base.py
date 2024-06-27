@@ -5,9 +5,6 @@ from abc import abstractmethod
 from dataclasses import dataclass
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.measures.combined_measures.combined_measure_protocol import (
-    CombinedMeasureProtocol,
-)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -17,7 +14,7 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 
 @dataclass(kw_only=True)
-class CombinedMeasureBase(CombinedMeasureProtocol):
+class CombinedMeasureBase:
     """
     Base class to represent the combination between two measures
     where the most important (`primary`) will have the leading
@@ -31,13 +28,20 @@ class CombinedMeasureBase(CombinedMeasureProtocol):
 
     @property
     def lcc(self) -> float:
+        """
+        Calculates the "life cycle cost" of this combined measure
+        based on their respectives `cost` values and discount rate / year.
+
+        Returns:
+            float: The total (bruto) lcc of this combined measure.
+        """
         return self._get_primary_lcc() + self._get_secondary_lcc()
 
     @property
     @abstractmethod
     def _base_cost(self) -> float:
         """
-        The base cost of this `CombinedMeasureProtocol` instance.
+        The base cost of this `CombinedMeasureBase` instance.
 
         Returns:
             float: The (bruto) cost of this combined measure.
@@ -45,7 +49,7 @@ class CombinedMeasureBase(CombinedMeasureProtocol):
 
     def is_base_measure(self) -> bool:
         """
-        Determines whether this `CombinedMeasure` could be considered
+        Determines whether this `CombinedMeasureBase` could be considered
         as a base measure (usually when `dberm` / `dcrest` equal to 0).
 
         Returns:
@@ -68,14 +72,14 @@ class CombinedMeasureBase(CombinedMeasureProtocol):
     def _get_secondary_lcc(self) -> float:
         pass
 
-    def compares_to(self, other: CombinedMeasureProtocol) -> bool:
+    def compares_to(self, other: "CombinedMeasureBase") -> bool:
         """
-        Compares this instance of a 'CombinedMeasureProtocol' with another one.
+        Compares this instance of a 'CombinedMeasureBase' with another one.
         This method could be also implemented as an overriding of the
         'equal' operator ('__eq__').
 
         Args:
-            other (CombinedMeasure): Other combined measure to compare.
+            other (CombinedMeasureBase): Other combined measure to compare.
 
         Returns:
             bool: Whether both combined measures can be conisered as matching.

@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from vrtool.optimization.measures.combined_measures.combined_measure_base import (
     CombinedMeasureBase,
 )
+from vrtool.optimization.measures.measure_as_input_protocol import (
+    MeasureAsInputProtocol,
+)
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
@@ -15,11 +18,14 @@ class ShCombinedMeasure(CombinedMeasureBase):
     """
 
     primary: ShMeasure
-    secondary: ShMeasure | None = None
+    secondary: MeasureAsInputProtocol | None = None
 
     @property
     def _base_cost(self) -> float:
         return self.primary.base_cost
 
     def _get_secondary_lcc(self) -> float:
-        return self._calculate_lcc(self.secondary, self._base_cost)
+        if self.secondary is None:
+            return 0
+        # secondary lcc is calculated with base_cost = 0
+        return self._calculate_lcc(self.secondary, 0)

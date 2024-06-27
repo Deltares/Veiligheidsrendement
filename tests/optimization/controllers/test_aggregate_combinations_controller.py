@@ -16,7 +16,15 @@ from vrtool.optimization.controllers.combine_measures_controller import (
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.shsg_combined_measure import (
+    ShSgCombinedMeasure,
+)
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
@@ -84,7 +92,7 @@ class TestAggregateCombinationsController:
         expected_lcc: float,
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             primary=_make_sh_measure(
                 matching_measure_type,
                 1,
@@ -99,7 +107,7 @@ class TestAggregateCombinationsController:
             ),
             mechanism_year_collection=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             primary=_make_sg_measure(
                 matching_measure_type,
                 1,
@@ -132,16 +140,16 @@ class TestAggregateCombinationsController:
         assert _aggr_meas_comb.lcc == expected_lcc
 
     @pytest.fixture(name="sh_combination")
-    def get_sh_combination(self, request: pytest.FixtureRequest) -> CombinedMeasure:
-        return CombinedMeasure(
+    def get_sh_combination(self, request: pytest.FixtureRequest) -> ShCombinedMeasure:
+        return ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=request.param[0],
             secondary=request.param[1],
         )
 
     @pytest.fixture(name="sg_combination")
-    def get_sg_combination(self, request: pytest.FixtureRequest) -> CombinedMeasure:
-        return CombinedMeasure(
+    def get_sg_combination(self, request: pytest.FixtureRequest) -> SgCombinedMeasure:
+        return SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=request.param[0],
             secondary=request.param[1],
@@ -181,8 +189,8 @@ class TestAggregateCombinationsController:
     )
     def test_aggregate_for_non_compatible_returns_empty_list(
         self,
-        sh_combination: CombinedMeasure,
-        sg_combination: CombinedMeasure,
+        sh_combination: ShCombinedMeasure,
+        sg_combination: SgCombinedMeasure,
         valid_section_as_input: SectionAsInput,
     ):
         # 1. Define input
@@ -201,7 +209,7 @@ class TestAggregateCombinationsController:
         self, valid_section_as_input: SectionAsInput
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=_make_sh_measure(
                 MeasureTypeEnum.DIAPHRAGM_WALL,
@@ -211,7 +219,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=_make_sg_measure(
                 MeasureTypeEnum.DIAPHRAGM_WALL,
@@ -241,7 +249,7 @@ class TestAggregateCombinationsController:
         self, valid_section_as_input: SectionAsInput
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -252,7 +260,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -283,7 +291,7 @@ class TestAggregateCombinationsController:
         self, valid_section_as_input: SectionAsInput
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -294,7 +302,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -332,7 +340,7 @@ class TestAggregateCombinationsController:
         # 1. Define input
         _sh_id = 1
         _sg_id = 2
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -343,7 +351,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -733,7 +741,7 @@ class TestCostComputation:
         # Get the subset we actually want to test.
         _with_shsg_combinations = list(
             filter(
-                lambda x: isinstance(x.shsg_combination, CombinedMeasure),
+                lambda x: isinstance(x.shsg_combination, ShSgCombinedMeasure),
                 _aggregated_measure_combinations,
             )
         )
@@ -741,5 +749,5 @@ class TestCostComputation:
 
         for _amc_with_shsg in _with_shsg_combinations:
             assert _amc_with_shsg.lcc == pytest.approx(
-                _amc_with_shsg.shsg_combination.lcc_with_base_cost
+                _amc_with_shsg.shsg_combination.lcc
             )

@@ -4,7 +4,21 @@ from itertools import product
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_base import (
+    CombinedMeasureBase,
+)
+from vrtool.optimization.measures.combined_measures.combined_measure_factory import (
+    CombinedMeasureFactory,
+)
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.shsg_combined_measure import (
+    ShSgCombinedMeasure,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
@@ -13,12 +27,14 @@ class AggregateCombinationsController:
         self._section = section
 
     def _get_shsg_combined_measure(
-        self, sh_comb: CombinedMeasure, sg_comb: CombinedMeasure
-    ) -> CombinedMeasure | None:
+        self, sh_comb: ShCombinedMeasure, sg_comb: SgCombinedMeasure
+    ) -> ShSgCombinedMeasure | None:
         _found_shsg_measures = [
             _shsg_measure
             for _shsg_measure in self._section.sh_sg_measures
-            if _shsg_measure.matches_with_sh_sg_measure(sh_comb, sg_comb)
+            if CombinedMeasureFactory.check_sh_sg_measures_match(
+                _shsg_measure, sh_comb, sg_comb
+            )
         ]
         if not _found_shsg_measures:
             return None
@@ -31,22 +47,18 @@ class AggregateCombinationsController:
             )
         _shsg_measure = _found_shsg_measures[0]
 
-        if sh_comb.secondary and sg_comb.secondary:
-            logging.warning(
-                "There are secondary measures for both `Sh` and `Sg`, using `Sg`'s secondary for the `ShSg` Combined measure."
-            )
-
-        return CombinedMeasure(
+        return ShSgCombinedMeasure(
             primary=_shsg_measure,
-            secondary=sg_comb.secondary,
+            sh_secondary=sh_comb.secondary,
+            sg_secondary=sg_comb.secondary,
             mechanism_year_collection=_shsg_measure.mechanism_year_collection,
         )
 
     def _get_aggregated_measure_id(
         self,
-        sh_comb: CombinedMeasure,
-        sg_comb: CombinedMeasure,
-        shsg_comb: CombinedMeasure | None,
+        sh_comb: ShCombinedMeasure,
+        sg_comb: SgCombinedMeasure,
+        shsg_comb: ShSgCombinedMeasure | None,
     ) -> int:
         # Find the aggregated Sh/Sg measure result id
         if sh_comb.primary.measure_result_id == sg_comb.primary.measure_result_id:
@@ -65,7 +77,7 @@ class AggregateCombinationsController:
         return shsg_comb.primary.measure_result_id
 
     def _make_aggregate(
-        self, sh_combination: CombinedMeasure, sg_combination: CombinedMeasure
+        self, sh_combination: ShCombinedMeasure, sg_combination: SgCombinedMeasure
     ) -> AggregatedMeasureCombination:
         _shsg_combined_measure = self._get_shsg_combined_measure(
             sh_combination, sg_combination
@@ -83,7 +95,7 @@ class AggregateCombinationsController:
     def aggregate(self) -> list[AggregatedMeasureCombination]:
         """
         Creates all possible aggregations based on the section's
-        Sh and Sg combinations (`CombinedMeasure`)
+        Sh and Sg combinations (`CombinedMeasureBase`)
 
         Returns:
             list[AggregatedMeasureCombination]:
@@ -91,7 +103,7 @@ class AggregateCombinationsController:
         """
 
         def combinations_can_be_aggregated(
-            combinations: tuple[CombinedMeasure, CombinedMeasure]
+            combinations: tuple[CombinedMeasureBase, CombinedMeasureBase]
         ) -> bool:
             return combinations[0].compares_to(combinations[1])
 

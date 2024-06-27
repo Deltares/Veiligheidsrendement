@@ -1,4 +1,7 @@
 from dataclasses import dataclass, field
+from typing import Callable, Iterable
+
+import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
@@ -18,37 +21,6 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
-@dataclass
-class MockMechanismYearProColl(MechanismPerYearProbabilityCollection):
-    probabilities: list[MechanismPerYear] = field(default_factory=list)
-
-
-@dataclass
-class MockMeasureHeight(MeasureAsInputProtocol):
-    combine_type: CombinableTypeEnum
-    mechanism_year_collection: MockMechanismYearProColl = MockMechanismYearProColl(
-        [
-            MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
-            MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.5),
-            MechanismPerYear(MechanismEnum.REVETMENT, 0, 0.5),
-            MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),
-        ]
-    )
-
-
-@dataclass
-class MockMeasureGeotechnical(MeasureAsInputProtocol):
-    combine_type: CombinableTypeEnum
-    mechanism_year_collection: MockMechanismYearProColl = MockMechanismYearProColl(
-        [
-            MechanismPerYear(MechanismEnum.STABILITY_INNER, 0, 0.5),
-            MechanismPerYear(MechanismEnum.STABILITY_INNER, 20, 0.5),
-            MechanismPerYear(MechanismEnum.PIPING, 0, 0.5),
-            MechanismPerYear(MechanismEnum.PIPING, 20, 0.5),
-        ]
-    )
-
-
 class TestCombineMeasuresController:
     def _create_sh_measure(
         self, measure_type: MeasureTypeEnum, combinable_type: CombinableTypeEnum
@@ -62,7 +34,7 @@ class TestCombineMeasuresController:
             base_cost=0,
             year=0,
             discount_rate=0,
-            mechanism_year_collection=MockMechanismYearProColl(
+            mechanism_year_collection=MechanismPerYearProbabilityCollection(
                 [
                     MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.1),
                     MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.2),
@@ -88,7 +60,7 @@ class TestCombineMeasuresController:
             base_cost=0,
             year=0,
             discount_rate=0,
-            mechanism_year_collection=MockMechanismYearProColl(
+            mechanism_year_collection=MechanismPerYearProbabilityCollection(
                 [
                     MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
                     MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.5),
@@ -114,7 +86,7 @@ class TestCombineMeasuresController:
             base_cost=0,
             year=0,
             discount_rate=0,
-            mechanism_year_collection=MockMechanismYearProColl(
+            mechanism_year_collection=MechanismPerYearProbabilityCollection(
                 [
                     MechanismPerYear(MechanismEnum.PIPING, 0, 0.1),
                     MechanismPerYear(MechanismEnum.PIPING, 20, 0.2),
@@ -134,13 +106,72 @@ class TestCombineMeasuresController:
             measures=[],
         )
 
-    def test_combine_combinable_partial_measures(self):
-
-        # 1. Define input
-        _measures = [
-            MockMeasureGeotechnical(CombinableTypeEnum.COMBINABLE),
-            MockMeasureGeotechnical(CombinableTypeEnum.PARTIAL),
+    @pytest.fixture(name="combinable_partial_measures_factory")
+    def _get_combinable_partial_measure(
+        self,
+    ) -> Iterable[
+        Callable[
+            [list[CombinableTypeEnum], list[MechanismPerYear]],
+            list[MeasureAsInputProtocol],
         ]
+    ]:
+        @dataclass(kw_only=True)
+        class ShMeasureGeotechnical(ShMeasure):
+            beta_target: float = float("nan")
+            transition_level: float = float("nan")
+            dcrest: float = float("nan")
+
+        def create_geotechnical_measure(
+            measure_as_input_type: type[MeasureAsInputProtocol],
+            combine_type: CombinableTypeEnum,
+            mechanism_year_collection: list[MechanismPerYear],
+        ) -> MeasureAsInputProtocol:
+            return measure_as_input_type(
+                measure_result_id=-1,
+                measure_type=None,
+                combine_type=combine_type,
+                cost=float("nan"),
+                base_cost=float("nan"),
+                discount_rate=float("nan"),
+                year=-1,
+                l_stab_screen=float("nan"),
+                mechanism_year_collection=MechanismPerYearProbabilityCollection(
+                    mechanism_year_collection
+                ),
+            )
+
+        def create_measures(
+            combinable_types: list[CombinableTypeEnum],
+            mechanism_year_collection: list[MechanismPerYear],
+        ) -> list[MeasureAsInputProtocol]:
+            return [
+                create_geotechnical_measure(
+                    ShMeasureGeotechnical,
+                    _combinable_type,
+                    mechanism_year_collection,
+                )
+                for _combinable_type in combinable_types
+            ]
+
+        yield create_measures
+
+    def test_combine_combinable_partial_measures(
+        self,
+        combinable_partial_measures_factory: Callable[
+            [list[CombinableTypeEnum], list[MechanismPerYear]],
+            list[MeasureAsInputProtocol],
+        ],
+    ):
+        # 1. Define input
+        _measures = combinable_partial_measures_factory(
+            [CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.PARTIAL],
+            [
+                MechanismPerYear(MechanismEnum.STABILITY_INNER, 0, 0.5),
+                MechanismPerYear(MechanismEnum.STABILITY_INNER, 20, 0.5),
+                MechanismPerYear(MechanismEnum.PIPING, 0, 0.5),
+                MechanismPerYear(MechanismEnum.PIPING, 20, 0.5),
+            ],
+        )
         _allowed_combinations = {
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.PARTIAL]
         }
@@ -186,13 +217,24 @@ class TestCombineMeasuresController:
             == 1
         )
 
-    def test_combine_combinable_revetment_measures(self):
+    def test_combine_combinable_revetment_measures(
+        self,
+        combinable_partial_measures_factory: Callable[
+            [list[CombinableTypeEnum], list[MechanismPerYear]],
+            list[MeasureAsInputProtocol],
+        ],
+    ):
 
         # 1. Define input
-        _measures = [
-            MockMeasureHeight(CombinableTypeEnum.COMBINABLE),
-            MockMeasureHeight(CombinableTypeEnum.REVETMENT),
-        ]
+        _measures = combinable_partial_measures_factory(
+            [CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.REVETMENT],
+            [
+                MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
+                MechanismPerYear(MechanismEnum.OVERFLOW, 20, 0.5),
+                MechanismPerYear(MechanismEnum.REVETMENT, 0, 0.5),
+                MechanismPerYear(MechanismEnum.REVETMENT, 20, 0.5),
+            ],
+        )
         _allowed_combinations = {
             CombinableTypeEnum.COMBINABLE: [None, CombinableTypeEnum.REVETMENT],
             CombinableTypeEnum.REVETMENT: [None],

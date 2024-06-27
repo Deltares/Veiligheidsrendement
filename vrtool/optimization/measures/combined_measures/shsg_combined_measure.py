@@ -11,13 +11,13 @@ from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 @dataclass(kw_only=True)
 class ShSgCombinedMeasure(CombinedMeasureBase):
     """
-    This `CombinedMeasure` specialization brings together a `ShSgMeasure`
+    This `CombinedMeasureBase` specialization brings together a `ShSgMeasure`
     with the secondary measures of its matching `SgMeasure` and `ShMeasure`.
     """
 
     primary: ShSgMeasure
-    sh_secondary: ShMeasure
-    sg_secondary: SgMeasure
+    sh_secondary: ShMeasure | None
+    sg_secondary: SgMeasure | None
 
     @property
     def _base_cost(self) -> float:

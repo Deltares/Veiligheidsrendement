@@ -151,7 +151,9 @@ class RunStepOptimizationValidator(RunStepValidator):
         # Check each row individually.
         for _idx, _reference in enumerate(reference_list):
             _result = result_list[_idx]
-            assert _reference.step_number == _result.step_number
+            assert (
+                _reference.step_number == _result.step_number
+            ), f"Expected {_reference.step_number} but got {_result.step_number}"
             if (
                 _reference.total_lcc is not None
             ):  # TODO: temporary fix as long as references don't contain cost for TR.

@@ -5,7 +5,12 @@ import pytest
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_base import (
+    CombinedMeasureBase,
+)
+from vrtool.optimization.measures.combined_measures.combined_measure_factory import (
+    CombinedMeasureFactory,
+)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -62,7 +67,7 @@ class TestCombinedMeasure:
         _sequence_nr = 7
 
         # 2. Run test
-        _combination = CombinedMeasure.from_input(
+        _combination = CombinedMeasureFactory.from_input(
             _primary,
             _secondary,
             self._get_valid_probability_collection(MechanismEnum.OVERFLOW),
@@ -96,13 +101,13 @@ class TestCombinedMeasure:
         _other_primary = mocked_measure(measure_type, _other_primary_measure_result_id)
         _secondary = mocked_measure(measure_type, 3)
 
-        _this_combination = CombinedMeasure.from_input(
+        _this_combination = CombinedMeasureFactory.from_input(
             _this_primary,
             _secondary,
             self._get_valid_probability_collection(MechanismEnum.OVERFLOW),
             7,
         )
-        _other_combination = CombinedMeasure.from_input(
+        _other_combination = CombinedMeasureFactory.from_input(
             _other_primary,
             _secondary,
             self._get_valid_probability_collection(MechanismEnum.OVERFLOW),
@@ -117,19 +122,13 @@ class TestCombinedMeasure:
 
     @pytest.fixture(name="combined_measure_example")
     def _get_combined_measure_example_fixture(
-        self, combined_measure_factory: Callable[[dict, dict], CombinedMeasure]
-    ) -> Iterable[CombinedMeasure]:
+        self, combined_measure_factory: Callable[[dict, dict], CombinedMeasureBase]
+    ) -> Iterable[CombinedMeasureBase]:
         yield combined_measure_factory(
             dict(cost=4.2, base_cost=2.2, year=20),
             dict(cost=6.7, base_cost=4.2, year=0),
         )
 
-    def test_lcc_with_base_cost(self, combined_measure_example: CombinedMeasure):
-        assert combined_measure_example.lcc_with_base_cost == pytest.approx(
-            6.7105, 0.0001
-        )
-
-    def test_lcc_without_base_cost(self, combined_measure_example: CombinedMeasure):
-        assert combined_measure_example.lcc_without_base_cost == pytest.approx(
-            6.7220, 0.0001
-        )
+    def test_lcc_for_sh(self, combined_measure_example: CombinedMeasureBase):
+        assert combined_measure_example.lcc == pytest.approx(6.7105, 0.0001)
+        assert combined_measure_example.lcc == pytest.approx(6.7220, 0.0001)

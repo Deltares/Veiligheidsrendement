@@ -1,7 +1,15 @@
 from dataclasses import dataclass
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.shsg_combined_measure import (
+    ShSgCombinedMeasure,
+)
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
@@ -10,14 +18,14 @@ from vrtool.optimization.measures.sh_measure import ShMeasure
 class AggregatedMeasureCombination:
     """
     Represents the aggregation of the same `ShMeasure` and `SgMeasure`
-    both contained within a `CombinedMeasure` dataclass.
+    both contained within a `CombinedMeasureBase` dataclass.
     It could also contain the "exceptional created" `ShSgMeasure` that
     also represents their combined costs.
     """
 
-    sh_combination: CombinedMeasure
-    sg_combination: CombinedMeasure
-    shsg_combination: CombinedMeasure | None = None
+    sh_combination: ShCombinedMeasure
+    sg_combination: SgCombinedMeasure
+    shsg_combination: ShSgCombinedMeasure | None = None
     measure_result_id: int
     year: int
 
@@ -42,13 +50,10 @@ class AggregatedMeasureCombination:
         ):
             return 0
 
-        if isinstance(self.shsg_combination, CombinedMeasure):
-            return self.shsg_combination.lcc_with_base_cost
+        if isinstance(self.shsg_combination, ShSgCombinedMeasure):
+            return self.shsg_combination.lcc
 
-        return (
-            self.sh_combination.lcc_with_base_cost
-            + self.sg_combination.lcc_without_base_cost
-        )
+        return self.sh_combination.lcc + self.sg_combination.lcc
 
     def check_primary_measure_result_id_and_year(
         self, primary_sh: ShMeasure, primary_sg: SgMeasure
