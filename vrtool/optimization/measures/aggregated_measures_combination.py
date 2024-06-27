@@ -6,11 +6,18 @@ from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AggregatedMeasureCombination:
+    """
+    Represents the aggregation of the same `ShMeasure` and `SgMeasure`
+    both contained within a `CombinedMeasure` dataclass.
+    It could also contain the "exceptional created" `ShSgMeasure` that
+    also represents their combined costs.
+    """
+
     sh_combination: CombinedMeasure
     sg_combination: CombinedMeasure
-    sh_sg_combination: CombinedMeasure | None
+    shsg_combination: CombinedMeasure | None = None
     measure_result_id: int
     year: int
 
@@ -34,6 +41,9 @@ class AggregatedMeasureCombination:
             and self.sg_combination.is_base_measure()
         ):
             return 0
+
+        if isinstance(self.shsg_combination, CombinedMeasure):
+            return self.shsg_combination.lcc_with_base_cost
 
         return (
             self.sh_combination.lcc_with_base_cost

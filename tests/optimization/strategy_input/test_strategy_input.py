@@ -272,44 +272,52 @@ class TestStrategyInput:
         ]
 
         # Aggregations
+        def get_aggregation(
+            sh_measure: CombinedMeasure,
+            sg_measure: CombinedMeasure,
+            measure_result_id: int,
+            year: int,
+        ) -> AggregatedMeasureCombination:
+            return AggregatedMeasureCombination(
+                sh_combination=sh_measure,
+                sg_combination=sg_measure,
+                shsg_combination=None,
+                measure_result_id=measure_result_id,
+                year=year,
+            )
+
         _sections[_section_idx].aggregated_measure_combinations = [
-            AggregatedMeasureCombination(
-                _sh_combination_soil_0, _sg_combination_soil_0, 1, 0
-            ),
-            AggregatedMeasureCombination(
+            get_aggregation(_sh_combination_soil_0, _sg_combination_soil_0, 1, 0),
+            get_aggregation(
                 _sh_combination_soil_revetment_0_384, _sg_combination_soil_0, 2, 0
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_0_484, _sg_combination_soil_0, 3, 0
             ),
-            AggregatedMeasureCombination(
-                _sh_combination_soil_0, _sg_combination_soil_vzg_0, 4, 0
-            ),
-            AggregatedMeasureCombination(
+            get_aggregation(_sh_combination_soil_0, _sg_combination_soil_vzg_0, 4, 0),
+            get_aggregation(
                 _sh_combination_soil_revetment_0_384, _sg_combination_soil_vzg_0, 5, 0
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_0_484, _sg_combination_soil_vzg_0, 6, 0
             ),
-            AggregatedMeasureCombination(
-                _sh_combination_soil_20, _sg_combination_soil_20, 1, 20
-            ),
-            AggregatedMeasureCombination(
+            get_aggregation(_sh_combination_soil_20, _sg_combination_soil_20, 1, 20),
+            get_aggregation(
                 _sh_combination_soil_revetment_20_384, _sg_combination_soil_20, 2, 20
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_20_484, _sg_combination_soil_20, 3, 20
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_20, _sg_combination_soil_vzg_20, 4, 20
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_20_384,
                 _sg_combination_soil_vzg_20,
                 5,
                 20,
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_20_484,
                 _sg_combination_soil_vzg_20,
                 6,

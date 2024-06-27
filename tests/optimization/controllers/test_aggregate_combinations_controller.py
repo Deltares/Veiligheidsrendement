@@ -369,6 +369,10 @@ class TestAggregateCombinationsController:
 
 
 class TestCostComputation:
+    """
+    (Integration) Tests to wrap up the validation of cost computations (mostly lcc)
+    """
+
     @pytest.fixture(name="measure_as_input_base_dict")
     def _get_measure_as_input_base_dict_fixture(self) -> Iterator[dict]:
         yield dict(
@@ -704,5 +708,38 @@ class TestCostComputation:
         # Soil reinforcement with vertical piping solution
         validate_aggregated_multiple_combination_lcc(10, 217, 2908808.03255916)
 
-    def test_given_aggregations_with_shsg_combined_measures_get_their_value(self, cost_computation_section_as_input: SectionAsInput):
-        pass
+    def test_given_aggregations_with_shsg_combined_measures_get_their_value(
+        self, cost_computation_section_as_input: SectionAsInput
+    ):
+        # 1. Define test data.
+        assert isinstance(cost_computation_section_as_input, SectionAsInput)
+
+        # 2. Run test.
+        cost_computation_section_as_input.combined_measures = CombineMeasuresController(
+            cost_computation_section_as_input
+        ).combine()
+
+        _aggregated_measure_combinations = AggregateCombinationsController(
+            cost_computation_section_as_input
+        ).aggregate()
+
+        # 3. Verify expectations.
+        assert any(_aggregated_measure_combinations)
+        assert all(
+            isinstance(_amc, AggregatedMeasureCombination)
+            for _amc in _aggregated_measure_combinations
+        )
+
+        # Get the subset we actually want to test.
+        _with_shsg_combinations = list(
+            filter(
+                lambda x: isinstance(x.shsg_combination, CombinedMeasure),
+                _aggregated_measure_combinations,
+            )
+        )
+        assert any(_with_shsg_combinations)
+
+        for _amc_with_shsg in _with_shsg_combinations:
+            assert _amc_with_shsg.lcc == pytest.approx(
+                _amc_with_shsg.shsg_combination.lcc_with_base_cost
+            )

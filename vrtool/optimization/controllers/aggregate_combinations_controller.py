@@ -30,9 +30,15 @@ class AggregateCombinationsController:
                 sg_comb.primary.measure_result_id,
             )
         _shsg_measure = _found_shsg_measures[0]
+
+        if sh_comb.secondary and sg_comb.secondary:
+            logging.warning(
+                "There are secondary measures for both `Sh` and `Sg`, using `Sg`'s secondary for the `ShSg` Combined measure."
+            )
+
         return CombinedMeasure(
             primary=_shsg_measure,
-            secondary=None,
+            secondary=sg_comb.secondary,
             mechanism_year_collection=_shsg_measure.mechanism_year_collection,
         )
 
@@ -67,7 +73,7 @@ class AggregateCombinationsController:
         return AggregatedMeasureCombination(
             sh_combination=sh_combination,
             sg_combination=sg_combination,
-            sh_sg_combination=_shsg_combined_measure,
+            shsg_combination=_shsg_combined_measure,
             measure_result_id=self._get_aggregated_measure_id(
                 sh_combination, sg_combination, _shsg_combined_measure
             ),
