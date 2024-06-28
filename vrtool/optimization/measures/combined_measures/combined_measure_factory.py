@@ -32,7 +32,7 @@ class CombinedMeasureFactory:
 
     @staticmethod
     def get_shsg_combined_measure(
-        shsg_measure: list[ShSgMeasure],
+        shsg_measure_collection: list[ShSgMeasure],
         sh_combination: ShCombinedMeasure,
         sg_combination: SgCombinedMeasure,
     ) -> ShSgCombinedMeasure | None:
@@ -41,19 +41,15 @@ class CombinedMeasureFactory:
         can be matched with any of the items in the `ShSgMeasure` list.
 
         Args:
-            shsg_measure (list[ShSgMeasure]): List of `ShSgMeasure` candidates.
-            sh_comb (ShCombinedMeasure): Sh combination.
-            sg_comb (SgCombinedMeasure): Sg combination.
+            shsg_measure_collection (list[ShSgMeasure]): List of `ShSgMeasure` candidates.
+            sh_combination (ShCombinedMeasure): Sh combination.
+            sg_combination (SgCombinedMeasure): Sg combination.
 
         Returns:
             ShSgCombinedMeasure | None: New combined measure or `None` when no match was found.
         """
 
-        def check_sh_sg_measures_match(
-            shsg_combination: ShSgCombinedMeasure,
-            sh_combination: ShCombinedMeasure,
-            sg_combination: SgCombinedMeasure,
-        ) -> bool:
+        def check_sh_sg_measures_match(shsg_combination: ShSgCombinedMeasure) -> bool:
             def floats_are_equal_or_nan(left_float: float, right_float: float) -> bool:
                 """
                 Compares two floats for equality, when both are `float("nan")` then
@@ -77,11 +73,9 @@ class CombinedMeasureFactory:
                 and shsg_combination.year == sh_combination.primary.year
             )
 
-        _found_shsg_measures = [
-            _shsg_measure
-            for _shsg_measure in shsg_measure
-            if check_sh_sg_measures_match(_shsg_measure, sh_combination, sg_combination)
-        ]
+        _found_shsg_measures = list(
+            filter(check_sh_sg_measures_match, shsg_measure_collection)
+        )
         if not _found_shsg_measures:
             return None
 

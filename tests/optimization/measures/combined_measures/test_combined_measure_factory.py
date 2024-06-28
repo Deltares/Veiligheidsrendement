@@ -182,6 +182,27 @@ class TestCombinedMeasureFactory:
 
         yield (_shsg_measure, _sh_combined, _sg_combined)
 
+    def test_get_shsg_combined_measure_with_empty_collection(
+        self,
+        shsg_combined_measure_arguments: tuple[
+            ShSgMeasure, ShCombinedMeasure, SgCombinedMeasure
+        ],
+    ):
+        # 1. Define test data.
+        (
+            _,
+            _sh_combined,
+            _sg_combined,
+        ) = shsg_combined_measure_arguments
+
+        # 2. Run test.
+        _found_shsg_measure = CombinedMeasureFactory.get_shsg_combined_measure(
+            [], _sh_combined, _sg_combined
+        )
+
+        # 3. Verify expectations
+        assert _found_shsg_measure is None
+
     def test_get_shsg_combined_measure_with_different_years_returns_none(
         self,
         shsg_combined_measure_arguments: tuple[
