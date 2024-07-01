@@ -1,9 +1,8 @@
-from typing import Type
+from typing import Callable, Type
 
 import pytest
-from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_measure_per_section
+from tests.orm import with_empty_db_context
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -32,9 +31,8 @@ class TestSolutionsExporter:
         assert isinstance(_exporter, SolutionsExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
-    def test_get_measure_per_section_given_no_measure_raises_error(
-        self, empty_db_fixture: SqliteDatabase
-    ):
+    @with_empty_db_context
+    def test_get_measure_per_section_given_no_measure_raises_error(self):
         # 1. Define test data.
         _non_existent_id = 42
         assert not any(Measure.select())
@@ -63,11 +61,12 @@ class TestSolutionsExporter:
             pytest.param("", id="Without traject name"),
         ],
     )
+    @with_empty_db_context
     def test_get_measure_per_section_given_no_section_data_raises_error(
         self,
         dike_section_name: str,
         traject_name: str,
-        empty_db_fixture: SqliteDatabase,
+        get_basic_measure_per_section: Callable[[], MeasurePerSection],
     ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
@@ -93,8 +92,9 @@ class TestSolutionsExporter:
         )
         assert str(exc_err.value) == _expected_error
 
+    @with_empty_db_context
     def test_get_measure_per_section_given_no_measure_per_section_returns_none(
-        self, empty_db_fixture: SqliteDatabase
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
@@ -120,8 +120,9 @@ class TestSolutionsExporter:
         # 3. Verify expectations.
         assert _retrieved_measure_per_section is None
 
+    @with_empty_db_context
     def test_get_measure_per_section_returns_entry_given_valid_arguments(
-        self, empty_db_fixture: SqliteDatabase
+        self, get_basic_measure_per_section: Callable[[], MeasurePerSection]
     ):
         # 1. Define test data.
         _measure_per_section = get_basic_measure_per_section()
@@ -150,10 +151,9 @@ class TestSolutionsExporter:
             ),
         ],
     )
+    @with_empty_db_context
     def test_given_solutions_with_supported_measures_raises_error(
-        self,
-        type_measure: Type[MeasureProtocol],
-        empty_db_fixture: SqliteDatabase,
+        self, type_measure: Type[MeasureProtocol]
     ):
         # 1. Define test data.
         _measure_parameters = {}

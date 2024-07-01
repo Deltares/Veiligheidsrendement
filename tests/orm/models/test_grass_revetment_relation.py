@@ -1,10 +1,18 @@
-from tests.orm import empty_db_fixture, get_basic_computation_scenario
+from collections.abc import Callable
+
+import pytest
+
+from tests.orm import with_empty_db_context
+from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.grass_revetment_relation import GrassRevetmentRelation
 from vrtool.orm.models.orm_base_model import OrmBaseModel
 
 
 class TestGrassRevetmentRelation:
-    def test_initialize_with_database_fixture(self, empty_db_fixture):
+    @with_empty_db_context
+    def test_initialize_with_database_fixture(
+        self, get_basic_computation_scenario: Callable[[], ComputationScenario]
+    ):
         # 1. Define test data.
         _scenario = get_basic_computation_scenario()
 

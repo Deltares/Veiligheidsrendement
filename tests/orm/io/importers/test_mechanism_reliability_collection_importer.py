@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import Callable
 
 import pytest
-from peewee import SqliteDatabase
 
 from tests import test_data, test_externals
-from tests.orm import empty_db_fixture
+from tests.orm import with_empty_db_context
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -146,7 +145,8 @@ class TestDataHelper:
 
 
 class TestMechanismReliabilityCollectionImporter:
-    def test_import_orm_for_dstability(self, empty_db_fixture: SqliteDatabase):
+    @with_empty_db_context
+    def test_import_orm_for_dstability(self):
         # Setup
         _mechanism = MechanismEnum.STABILITY_INNER
         _computation_type = "DSTABILITY"
@@ -206,12 +206,12 @@ class TestMechanismReliabilityCollectionImporter:
             ),
         ],
     )
+    @with_empty_db_context
     def test_import_orm_with_simple_mechanism_per_section(
         self,
         mechanism: MechanismEnum,
         computation_type: str,
         get_mechanism_per_section: Callable,
-        empty_db_fixture: SqliteDatabase,
     ):
         # Setup
         _config = TestDataHelper.create_valid_config()

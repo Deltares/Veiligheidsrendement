@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterator
 
 import pytest
 
@@ -24,10 +24,10 @@ from vrtool.flood_defence_system.dike_section import DikeSection
 
 
 class TestVerticalPipingMeasureCalculatorFactory:
-    @pytest.fixture
-    def calculator_d_cover_args(
+    @pytest.fixture(name="calculator_d_cover_args")
+    def _get_calculator_d_cover_args_fixture(
         self, request: pytest.FixtureRequest
-    ) -> tuple[DikeTrajectInfo, DikeSection, MeasureProtocol]:
+    ) -> Iterator[tuple[DikeTrajectInfo, DikeSection, MeasureProtocol]]:
         class MockedMeasure(MeasureProtocol):
             """
              Define required args for calculator initialization.
@@ -43,7 +43,7 @@ class TestVerticalPipingMeasureCalculatorFactory:
         _dike_section.TrajectInfo = _dike_traject
         _dike_section.cover_layer_thickness = request.param
 
-        return _dike_traject, _dike_section, MockedMeasure()
+        yield _dike_traject, _dike_section, MockedMeasure()
 
     @pytest.mark.parametrize(
         "calculator_d_cover_args, expected_calculator_type",

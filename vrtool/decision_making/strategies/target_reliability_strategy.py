@@ -95,6 +95,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.measures_taken = []
         self.total_risk_per_step = []
         self.probabilities_per_step = []
+        self.selected_aggregated_measures = []
 
     def check_cross_sectional_requirements(
         self,
@@ -395,11 +396,19 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[
                 idx
             ]
-            measure_idx = _taken_measures[
+            _aggregated_combination = _taken_measures[
                 self.sections[_section_idx].section_name
-            ].get_combination_idx()
+            ]
+            measure_idx = _aggregated_combination.get_combination_idx()
             _taken_measures_indices.append(
                 (_section_idx, measure_idx[0] + 1, measure_idx[1] + 1)
+            )
+
+            self.selected_aggregated_measures.append(
+                (
+                    _section_idx,
+                    _aggregated_combination,
+                )
             )
 
         # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step

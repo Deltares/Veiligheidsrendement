@@ -1,8 +1,6 @@
 from typing import Type
 
-from peewee import SqliteDatabase
-
-from tests.orm import empty_db_fixture
+from tests.orm import with_empty_db_context
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     validate_clean_database,
@@ -28,9 +26,8 @@ class TestMeasureResultExporter:
         assert isinstance(_exporter, MeasureResultExporter)
         assert isinstance(_exporter, OrmExporterProtocol)
 
-    def test_export_given_valid_mocked_measure_result_returns_expectation(
-        self, empty_db_fixture: SqliteDatabase
-    ):
+    @with_empty_db_context
+    def test_export_given_valid_mocked_measure_result_returns_expectation(self):
         # 1. Define test data.
         class MockedMeasureResult(MeasureResultProtocol):
             def __init__(self) -> None:
@@ -53,8 +50,9 @@ class TestMeasureResultExporter:
         # 3. Verify expectations.
         validate_measure_result_export(_test_input_data, {})
 
+    @with_empty_db_context
     def test_export_given_revetment_measure_section_reliability_creates_measure_parameter_result(
-        self, empty_db_fixture: SqliteDatabase
+        self,
     ):
         # 1. Define test data.
         _test_input_data = MeasureResultTestInputData()

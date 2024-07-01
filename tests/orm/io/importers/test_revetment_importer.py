@@ -1,7 +1,8 @@
+from typing import Callable, Iterator
+
 import pytest
 from peewee import SqliteDatabase, _savepoint
 
-from tests.orm import empty_db_fixture, get_basic_computation_scenario
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.revetment.relation_grass_revetment import (
@@ -42,9 +43,13 @@ general_slope_parts = [
 
 
 class TestRevetmentImporter:
-    @pytest.fixture
-    def get_basic_scenario_fixture(self, empty_db_fixture: SqliteDatabase):
-        with empty_db_fixture.atomic() as transaction:
+    @pytest.fixture(name="computatio_scenario_and_transaction")
+    def _get_basic_scenario_fixture(
+        self,
+        empty_db_context: SqliteDatabase,
+        get_basic_computation_scenario: Callable[[], ComputationScenario],
+    ) -> Iterator[tuple[ComputationScenario, _savepoint]]:
+        with empty_db_context.atomic() as transaction:
             computation_scenario = get_basic_computation_scenario()
 
             yield (computation_scenario, transaction)
@@ -55,7 +60,8 @@ class TestRevetmentImporter:
         assert isinstance(_importer, OrmImporterProtocol)
 
     def test_import_revetment_basic_scenario(
-        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
+        self,
+        computatio_scenario_and_transaction: tuple[ComputationScenario, _savepoint],
     ):
         # Setup
         grass_relations = [
@@ -111,7 +117,7 @@ class TestRevetmentImporter:
             },
         ]
 
-        (computation_scenario, transaction) = get_basic_scenario_fixture
+        (computation_scenario, transaction) = computatio_scenario_and_transaction
         database_grass_relations = [
             dict(computation_scenario=computation_scenario) | relation
             for relation in grass_relations
@@ -154,7 +160,8 @@ class TestRevetmentImporter:
         )
 
     def test_import_revetment_with_unsorted_slope_parts_returns_input_with_sorted_parts(
-        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
+        self,
+        computatio_scenario_and_transaction: tuple[ComputationScenario, _savepoint],
     ):
         # Setup
         slope_parts = [
@@ -181,7 +188,7 @@ class TestRevetmentImporter:
             },
         ]
 
-        (computation_scenario, transaction) = get_basic_scenario_fixture
+        (computation_scenario, transaction) = computatio_scenario_and_transaction
         database_slope_parts = [
             dict(computation_scenario=computation_scenario) | slope_part
             for slope_part in slope_parts
@@ -207,7 +214,8 @@ class TestRevetmentImporter:
         self._assert_slope_parts(revetment_input.slope_parts, slope_parts)
 
     def test_import_revetment_with_unsorted_grass_relations_returns_input_with_sorted_relations(
-        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
+        self,
+        computatio_scenario_and_transaction: tuple[ComputationScenario, _savepoint],
     ):
         # Setup
         grass_relations = [
@@ -219,7 +227,7 @@ class TestRevetmentImporter:
             {"year": 2100, "transition_level": 4.25, "beta": 4.77},
         ]
 
-        (computation_scenario, transaction) = get_basic_scenario_fixture
+        (computation_scenario, transaction) = computatio_scenario_and_transaction
         database_grass_relations = [
             dict(computation_scenario=computation_scenario) | relation
             for relation in grass_relations
@@ -246,10 +254,11 @@ class TestRevetmentImporter:
         )
 
     def test_import_revetment_without_grass_transition_levels_raises_value_error(
-        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
+        self,
+        computatio_scenario_and_transaction: tuple[ComputationScenario, _savepoint],
     ):
         # Setup
-        (computation_scenario, transaction) = get_basic_scenario_fixture
+        (computation_scenario, transaction) = computatio_scenario_and_transaction
         database_slope_parts = [
             dict(computation_scenario=computation_scenario) | slope_part
             for slope_part in general_slope_parts
@@ -269,14 +278,15 @@ class TestRevetmentImporter:
         assert str(value_error.value) == _expected_mssg
 
     def test_import_revetment_with_transition_level_larger_than_grass_transition_level_raises_value_error(
-        self, get_basic_scenario_fixture: tuple[ComputationScenario, _savepoint]
+        self,
+        computatio_scenario_and_transaction: tuple[ComputationScenario, _savepoint],
     ):
         # Setup
         grass_relations = [
             {"year": 2025, "transition_level": 2, "beta": 4.90},
         ]
 
-        (computation_scenario, transaction) = get_basic_scenario_fixture
+        (computation_scenario, transaction) = computatio_scenario_and_transaction
         database_grass_relations = [
             dict(computation_scenario=computation_scenario) | relation
             for relation in grass_relations

@@ -11,19 +11,17 @@ from vrtool.failure_mechanisms.piping.piping_probabilistic_helper import (
 )
 
 
-@pytest.fixture
-def configured_functions():
-    traject_name = "16-1"
-    traject_length = 15000
-
-    info = DikeTrajectInfo.from_traject_info(traject_name, traject_length)
-    return PipingProbabilisticHelper(info)
-
-
 class TestPipingProbabilisticHelper:
-    @pytest.fixture(autouse=True)
-    def setup(self, configured_functions: PipingProbabilisticHelper):
-        self._probabilistic_functions = configured_functions
+    _traject_name = "16-1"
+    _traject_length = 15000
+    _probabilistic_functions: PipingProbabilisticHelper = None
+
+    @pytest.fixture(name="piping_probabilistic_helper_setup", autouse=True)
+    def _piping_probabilistic_helper_setup_fixture(self):
+        _dike_traject_info = DikeTrajectInfo.from_traject_info(
+            self._traject_name, self._traject_length
+        )
+        self._probabilistic_functions = PipingProbabilisticHelper(_dike_traject_info)
 
     def test_init_with_invalid_dike_traject_info(self):
         # Call

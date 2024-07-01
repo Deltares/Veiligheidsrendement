@@ -1,9 +1,9 @@
 from pathlib import Path
+from typing import Callable, Iterator
 
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_mechanism_per_section
 from tests.orm.io import add_computation_scenario_id
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
@@ -14,22 +14,28 @@ from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
 from vrtool.orm.models.computation_type import ComputationType
+from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 from vrtool.orm.models.supporting_file import SupportingFile
 
 
 class TestDStabilityImporter:
-    def _get_valid_computation_scenario(self) -> ComputationScenario:
-        _mechanism_per_section = get_basic_mechanism_per_section()
+    @pytest.fixture(name="get_dstability_computation_scenario")
+    def _get_valid_computation_scenario(
+        self, get_basic_mechanism_per_section: Callable[[], MechanismPerSection]
+    ) -> Iterator[Callable[[], ComputationScenario]]:
+        def get_dstability_computation_scenario() -> ComputationScenario:
+            _mechanism_per_section = get_basic_mechanism_per_section()
+            _computation_type = ComputationType.create(name="DSTABILITY")
+            return ComputationScenario.create(
+                mechanism_per_section=_mechanism_per_section,
+                computation_type=_computation_type,
+                computation_name="Computation Name",
+                scenario_name="Scenario Name",
+                scenario_probability=1,
+                probability_of_failure=1,
+            )
 
-        _computation_type = ComputationType.create(name="DSTABILITY")
-        return ComputationScenario.create(
-            mechanism_per_section=_mechanism_per_section,
-            computation_type=_computation_type,
-            computation_name="Computation Name",
-            scenario_name="Scenario Name",
-            scenario_probability=1,
-            probability_of_failure=1,
-        )
+        yield get_dstability_computation_scenario
 
     def test_initialize(self):
         # Setup
@@ -43,7 +49,11 @@ class TestDStabilityImporter:
         assert isinstance(_importer, DStabilityImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, empty_db_fixture: SqliteDatabase):
+    def test_import_orm(
+        self,
+        empty_db_context: SqliteDatabase,
+        get_dstability_computation_scenario: Callable[[], ComputationScenario],
+    ):
         # Setup
         _supporting_files = [{"filename": "myfile.stix"}]
 
@@ -58,8 +68,8 @@ class TestDStabilityImporter:
             },
         ]
 
-        with empty_db_fixture.atomic() as transaction:
-            _computation_scenario = self._get_valid_computation_scenario()
+        with empty_db_context.atomic() as transaction:
+            _computation_scenario = get_dstability_computation_scenario()
             add_computation_scenario_id(
                 _supporting_files, _computation_scenario.get_id()
             )
@@ -98,12 +108,14 @@ class TestDStabilityImporter:
             )
 
     def test_import_orm_with_invalid_computation_type_raises_value_error(
-        self, empty_db_fixture: SqliteDatabase
+        self,
+        empty_db_context: SqliteDatabase,
+        get_basic_mechanism_per_section: Callable[[], MechanismPerSection],
     ):
         # Setup
         _supporting_files = [{"filename": "myfile.stix"}]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _mechanism_per_section = get_basic_mechanism_per_section()
 
             _invalid_computation_type = ComputationType.create(name="NotDSTABILITY")
@@ -133,13 +145,15 @@ class TestDStabilityImporter:
         assert str(value_error.value) == _expected_mssg
 
     def test_import_orm_with_multiple_supporting_files_raises_value_error(
-        self, empty_db_fixture: SqliteDatabase
+        self,
+        empty_db_context: SqliteDatabase,
+        get_dstability_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
         _supporting_files = [{"filename": "myfile.stix"}, {"filename": "myfile.stix"}]
 
-        with empty_db_fixture.atomic() as transaction:
-            _computation_scenario = self._get_valid_computation_scenario()
+        with empty_db_context.atomic() as transaction:
+            _computation_scenario = get_dstability_computation_scenario()
             add_computation_scenario_id(_supporting_files, _computation_scenario.id)
             SupportingFile.insert_many(_supporting_files).execute()
 
@@ -158,11 +172,13 @@ class TestDStabilityImporter:
         assert str(value_error.value) == _expected_mssg
 
     def test_import_orm_with_no_supporting_files_raises_value_error(
-        self, empty_db_fixture: SqliteDatabase
+        self,
+        empty_db_context: SqliteDatabase,
+        get_dstability_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
-        with empty_db_fixture.atomic() as transaction:
-            _computation_scenario = self._get_valid_computation_scenario()
+        with empty_db_context.atomic() as transaction:
+            _computation_scenario = get_dstability_computation_scenario()
             transaction.commit()
 
         _externals_directory = Path("path/to/externals")

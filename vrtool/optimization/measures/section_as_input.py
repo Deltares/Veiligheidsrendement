@@ -48,6 +48,26 @@ class SectionAsInput:
         """
         return list(filter(lambda x: isinstance(x, measure_class), self.measures))
 
+    def get_aggregated_combinations(
+        self, sh_sequence_nr: int, sg_sequence_nr: int
+    ) -> list[AggregatedMeasureCombination]:
+        """
+        Gets the list of aggregated combinations that match the given sequence numbers.
+
+        Args:
+            sh_sequence_nr (int): ShMeasure sequence number.
+            sg_sequence_nr (int): SgMeasure sequence number.
+
+        Returns:
+            list[AggregatedMeasureCombination]: Aggregated measure combination collection matching the sequence numbers.
+        """
+        return [
+            _amc
+            for _amc in self.aggregated_measure_combinations
+            if _amc.sh_combination.sequence_nr == sh_sequence_nr
+            and _amc.sg_combination.sequence_nr == sg_sequence_nr
+        ]
+
     @property
     def sh_measures(self) -> list[ShMeasure]:
         return self.get_measures_by_class(ShMeasure)

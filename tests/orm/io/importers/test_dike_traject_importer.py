@@ -1,28 +1,27 @@
 import pytest
 
-from tests import test_data, test_results
-from tests.orm import empty_db_fixture
-from vrtool.common.dike_traject_info import DikeTrajectInfo
+from tests.orm import with_empty_db_context
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.dike_traject_info import DikeTrajectInfo
 from vrtool.orm.models.dike_traject_info import DikeTrajectInfo as OrmDikeTrajectInfo
 
 
 class TestDikeTrajectImporter:
-    def test_initialize(self, empty_db_fixture):
+    @with_empty_db_context
+    def test_initialize(self):
         config = VrtoolConfig(input_directory=".")
-        DikeTrajectInfo.create(traject_name="123")
+        OrmDikeTrajectInfo.create(traject_name="123")
         _importer = DikeTrajectImporter(config)
         assert isinstance(_importer, DikeTrajectImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, empty_db_fixture):
+    @with_empty_db_context
+    def test_import_orm(self):
         # 1. Define test data.
         config = VrtoolConfig(input_directory=".")
-        DikeTrajectInfo.create(traject_name="123")
+        OrmDikeTrajectInfo.create(traject_name="123")
         _importer = DikeTrajectImporter(config)
 
         # 2. Run test.
@@ -36,7 +35,8 @@ class TestDikeTrajectImporter:
 
         assert _dike_traject.general_info.traject_name == "123"
 
-    def test_import_orm_without_model_raises_value(self, empty_db_fixture):
+    @with_empty_db_context
+    def test_import_orm_without_model_raises_value(self):
         # 1. Define test data.
         config = VrtoolConfig(input_directory=".")
         _importer = DikeTrajectImporter(config)

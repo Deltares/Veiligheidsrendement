@@ -29,15 +29,15 @@ class AggregatedMeasureCombination:
         if (
             self.sh_combination.primary.measure_type
             == MeasureTypeEnum.SOIL_REINFORCEMENT
-            and self.sh_combination.is_initial_measure()
-            and self.sg_combination.is_initial_measure()
+            and self.sh_combination.is_base_measure()
+            and self.sg_combination.is_base_measure()
         ):
             return 0
+
         return (
-            self.sh_combination.lcc
-            + self.sg_combination.lcc
-            - self.sh_combination.primary.base_cost
-        ) / (1 + self.sh_combination.primary.discount_rate) ** self.year
+            self.sh_combination.lcc_with_base_cost
+            + self.sg_combination.lcc_without_base_cost
+        )
 
     def check_primary_measure_result_id_and_year(
         self, primary_sh: ShMeasure, primary_sg: SgMeasure

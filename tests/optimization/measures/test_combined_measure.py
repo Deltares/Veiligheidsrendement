@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Callable, Iterable, Iterator
 
 import pytest
 
@@ -15,24 +16,30 @@ from vrtool.optimization.measures.mechanism_per_year_probability_collection impo
 
 
 class TestCombinedMeasure:
-    @dataclass
-    class MockMeasure(MeasureAsInputProtocol):
-        measure_type: MeasureTypeEnum = None
-        measure_result_id: int = 0
-        year: int = 0
-        mechanism_year_collection: MechanismPerYearProbabilityCollection = None
-        l_stab_screen: float = 0.0
-
+    @pytest.fixture(name="mocked_measure")
     def _get_valid_measure(
-        self, measure_type: MeasureTypeEnum, measure_result_id: int
-    ) -> MeasureAsInputProtocol:
-        return self.MockMeasure(
-            measure_type=measure_type,
-            measure_result_id=measure_result_id,
-            mechanism_year_collection=self._get_valid_probability_collection(
-                MechanismEnum.OVERFLOW
-            ),
-        )
+        self,
+    ) -> Iterator[Callable[[MeasureTypeEnum, int], MeasureAsInputProtocol]]:
+        @dataclass
+        class MockMeasure(MeasureAsInputProtocol):
+            measure_type: MeasureTypeEnum = None
+            measure_result_id: int = 0
+            year: int = 0
+            mechanism_year_collection: MechanismPerYearProbabilityCollection = None
+            l_stab_screen: float = 0.0
+
+        def create_mocked_measure(
+            measure_type: MeasureTypeEnum, measure_result_id: int
+        ):
+            return MockMeasure(
+                measure_type=measure_type,
+                measure_result_id=measure_result_id,
+                mechanism_year_collection=self._get_valid_probability_collection(
+                    MechanismEnum.OVERFLOW
+                ),
+            )
+
+        yield create_mocked_measure
 
     def _get_valid_probability_collection(
         self, mechanism: MechanismEnum
@@ -40,14 +47,16 @@ class TestCombinedMeasure:
         _mech_per_year = MechanismPerYear(mechanism=mechanism, year=0, probability=0.5)
         return MechanismPerYearProbabilityCollection(probabilities=[_mech_per_year])
 
-    def test_from_input(self):
+    def test_from_input(
+        self, mocked_measure: Callable[[MeasureTypeEnum, int], MeasureAsInputProtocol]
+    ):
         # 1. Define test data
         _primary_measure_result_id = 2
         _secondary_measure_result_id = 3
-        _primary = self._get_valid_measure(
+        _primary = mocked_measure(
             MeasureTypeEnum.SOIL_REINFORCEMENT, _primary_measure_result_id
         )
-        _secondary = self._get_valid_measure(
+        _secondary = mocked_measure(
             MeasureTypeEnum.SOIL_REINFORCEMENT, _secondary_measure_result_id
         )
         _sequence_nr = 7
@@ -67,19 +76,25 @@ class TestCombinedMeasure:
 
     @pytest.mark.parametrize(
         "measure_type, expected",
-        [[MeasureTypeEnum.SOIL_REINFORCEMENT, True], [MeasureTypeEnum.CUSTOM, False]],
+        [pytest.param(MeasureTypeEnum.CUSTOM, False)]
+        + [
+            pytest.param(_measure_type, True)
+            for _measure_type in MeasureTypeEnum
+            if _measure_type not in (MeasureTypeEnum.INVALID, MeasureTypeEnum.CUSTOM)
+        ],
     )
-    def test_compares_to(self, measure_type: MeasureTypeEnum, expected: bool):
+    def test_compares_to(
+        self,
+        measure_type: MeasureTypeEnum,
+        expected: bool,
+        mocked_measure: Callable[[MeasureTypeEnum, int], MeasureAsInputProtocol],
+    ):
         # 1. Define test data
         _this_primary_measure_result_id = 1
         _other_primary_measure_result_id = 2
-        _this_primary = self._get_valid_measure(
-            measure_type, _this_primary_measure_result_id
-        )
-        _other_primary = self._get_valid_measure(
-            measure_type, _other_primary_measure_result_id
-        )
-        _secondary = self._get_valid_measure(measure_type, 3)
+        _this_primary = mocked_measure(measure_type, _this_primary_measure_result_id)
+        _other_primary = mocked_measure(measure_type, _other_primary_measure_result_id)
+        _secondary = mocked_measure(measure_type, 3)
 
         _this_combination = CombinedMeasure.from_input(
             _this_primary,
@@ -99,3 +114,22 @@ class TestCombinedMeasure:
 
         # 3. Verify expectations
         assert _result == expected
+
+    @pytest.fixture(name="combined_measure_example")
+    def _get_combined_measure_example_fixture(
+        self, combined_measure_factory: Callable[[dict, dict], CombinedMeasure]
+    ) -> Iterable[CombinedMeasure]:
+        yield combined_measure_factory(
+            dict(cost=4.2, base_cost=2.2, year=20),
+            dict(cost=6.7, base_cost=4.2, year=0),
+        )
+
+    def test_lcc_with_base_cost(self, combined_measure_example: CombinedMeasure):
+        assert combined_measure_example.lcc_with_base_cost == pytest.approx(
+            6.7105, 0.0001
+        )
+
+    def test_lcc_without_base_cost(self, combined_measure_example: CombinedMeasure):
+        assert combined_measure_example.lcc_without_base_cost == pytest.approx(
+            6.7220, 0.0001
+        )

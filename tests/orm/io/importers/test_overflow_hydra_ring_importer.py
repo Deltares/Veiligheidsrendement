@@ -1,8 +1,9 @@
+from collections.abc import Callable
+
 import pandas as pd
 import pytest
 from peewee import SqliteDatabase
 
-from tests.orm import empty_db_fixture, get_basic_computation_scenario
 from tests.orm.io import add_computation_scenario_id
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
@@ -10,6 +11,7 @@ from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.overflow_hydra_ring_importer import (
     OverFlowHydraRingImporter,
 )
+from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.mechanism_table import MechanismTable
 from vrtool.orm.models.section_data import SectionData
 
@@ -20,7 +22,11 @@ class TestOverflowHydraRingImporter:
         assert isinstance(_importer, OverFlowHydraRingImporter)
         assert isinstance(_importer, OrmImporterProtocol)
 
-    def test_import_orm(self, empty_db_fixture: SqliteDatabase):
+    def test_import_orm(
+        self,
+        empty_db_context: SqliteDatabase,
+        get_basic_computation_scenario: Callable[[], ComputationScenario],
+    ):
         # Setup
         values = [
             9.51,
@@ -67,7 +73,7 @@ class TestOverflowHydraRingImporter:
             },
         ]
 
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
 
             _mechanism_tables = mechanism_table_year_one + mechanism_table_year_two
@@ -122,7 +128,9 @@ class TestOverflowHydraRingImporter:
         assert str(value_error.value) == _expected_mssg
 
     def test_import_orm_crest_heights_unequal_raises_value_error(
-        self, empty_db_fixture: SqliteDatabase
+        self,
+        empty_db_context: SqliteDatabase,
+        get_basic_computation_scenario: Callable[[], ComputationScenario],
     ):
         # Setup
         _mechanism_table_source = [
@@ -137,7 +145,7 @@ class TestOverflowHydraRingImporter:
                 "beta": 4.4,
             },
         ]
-        with empty_db_fixture.atomic() as transaction:
+        with empty_db_context.atomic() as transaction:
             _computation_scenario = get_basic_computation_scenario()
             add_computation_scenario_id(
                 _mechanism_table_source, _computation_scenario.id

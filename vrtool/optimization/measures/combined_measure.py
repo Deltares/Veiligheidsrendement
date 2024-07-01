@@ -20,21 +20,53 @@ class CombinedMeasure:
     # Legacy index for mapping back to the old structure for evaluate
     sequence_nr: int = None
 
-    def is_initial_measure(self) -> bool:
+    def is_base_measure(self) -> bool:
         """
         Determines whether this `CombinedMeasure` could be considered
-        as an initial measure (usually when `dberm` / `dcrest` equal to 0).
+        as a base measure (usually when `dberm` / `dcrest` equal to 0).
 
         Returns:
             bool: True when its primary measure is an initial measure.
         """
-        return self.primary.is_initial_measure()
+        return self.primary.is_base_measure()
+
+    def _calculate_combination_lcc(self, base_cost: float) -> float:
+        def discount_per_year(
+            measure_as_input: MeasureAsInputProtocol,
+        ) -> float:
+            return (1 + measure_as_input.discount_rate) ** measure_as_input.year
+
+        # Calculate the costs for the primary measure.
+        _primary_costs = (self.primary.cost - base_cost) / discount_per_year(
+            self.primary
+        )
+
+        if not self.secondary:
+            return _primary_costs
+
+        # Calculate the costs for the secondary measure (if applies)
+        _secondary_costs = self.secondary.cost / discount_per_year(self.secondary)
+        return _primary_costs + _secondary_costs
 
     @property
-    def lcc(self) -> float:
-        if self.secondary:
-            return self.primary.cost + self.secondary.cost
-        return self.primary.cost
+    def lcc_with_base_cost(self) -> float:
+        """
+        Calculates the LCC of this combined measure including the base cost.
+
+        Returns:
+            float: The total (bruto) lcc of this combined measure.
+        """
+        return self._calculate_combination_lcc(self.primary.base_cost)
+
+    @property
+    def lcc_without_base_cost(self) -> float:
+        """
+        Calculates the LCC of this combined measure excluding the base cost.
+
+        Returns:
+            float: The total (bruto) lcc of this combined measure.
+        """
+        return self._calculate_combination_lcc(0)
 
     def compares_to(self, other: "CombinedMeasure") -> bool:
         """
