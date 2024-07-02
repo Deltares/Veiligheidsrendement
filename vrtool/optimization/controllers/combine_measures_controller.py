@@ -1,7 +1,12 @@
 from itertools import combinations
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_base import (
+    CombinedMeasureBase,
+)
+from vrtool.optimization.measures.combined_measures.combined_measure_factory import (
+    CombinedMeasureFactory,
+)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -24,7 +29,7 @@ class CombineMeasuresController:
             CombinableTypeEnum, list[CombinableTypeEnum | None]
         ],
         initial_assessment: MechanismPerYearProbabilityCollection,
-    ) -> list[CombinedMeasure]:
+    ) -> list[CombinedMeasureBase]:
         """
         Create all possible combinations of measures
 
@@ -35,7 +40,7 @@ class CombineMeasuresController:
             initial_assessment (MechanismPerYearProbabilityCollection): The initial assessment
 
         Returns:
-            list[CombinedMeasure]: The combined measures
+            list[CombinedMeasureBase]: The combined measures
         """
         _list_to_combine = measures + [None]
         _prospect_combinations = combinations(_list_to_combine, 2)
@@ -63,7 +68,9 @@ class CombineMeasuresController:
             return _combine_type in _allowed_secondary_combinations
 
         _combinations = [
-            CombinedMeasure.from_input(_primary, _secondary, initial_assessment, i)
+            CombinedMeasureFactory.from_input(
+                _primary, _secondary, initial_assessment, i
+            )
             for i, (_primary, _secondary) in enumerate(
                 filter(valid_combination, _prospect_combinations)
             )
@@ -71,12 +78,12 @@ class CombineMeasuresController:
 
         return _combinations
 
-    def combine(self) -> list[CombinedMeasure]:
+    def combine(self) -> list[CombinedMeasureBase]:
         """
         Combine measures from section.
 
         Returns:
-            list[CombinedMeasure]: List of combined measures.
+            list[CombinedMeasureBase]: List of combined measures.
         """
         _combinations = []
 
