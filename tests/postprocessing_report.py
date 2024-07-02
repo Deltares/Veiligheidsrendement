@@ -25,6 +25,8 @@ class PostProcessingReport:
     Dataclass that produces different figures and files based on its data structure.
     Mostly intended for testing.
 
+    Invoke like: `with PostProcessingReport(...) as pr:` to trigger the ContextApp
+
     Note: If we want to make this class general available (`vrtool` project) then
     we need to adapt all the logic in the `scripts.postprocessing` subproject.
     """
@@ -44,14 +46,14 @@ class PostProcessingReport:
         self.report_dir.mkdir(parents=True)
 
         # Create a new log file.
+        # We need to set up the root logger, otherwise nothging would be output.
+        logging.root.setLevel(logging.DEBUG)
         _log_file = self.report_dir.joinpath("postprocessing.log")
         _log_file.unlink(missing_ok=True)
         _log_file.touch()
 
         # Set file handler
-        _file_handler = logging.FileHandler(
-            filename=_log_file, encoding="utf-8", mode="a"
-        )
+        _file_handler = logging.FileHandler(filename=_log_file, encoding="utf-8")
         _formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
