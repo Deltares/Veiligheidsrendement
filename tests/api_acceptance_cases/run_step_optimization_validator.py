@@ -219,11 +219,12 @@ class RunStepOptimizationValidator(RunStepValidator):
     def _generate_postprocessing_report(
         self, reference_path: Path, results_path: Path
     ) -> None:
-        PostProcessingReport(
+        with PostProcessingReport(
             reference_db=reference_path,
             result_db=results_path,
             report_dir=results_path.parent.joinpath("postprocessing_report"),
-        ).generate_report()
+        ) as _pp_report:
+            _pp_report.generate_report()
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Steps for validation.

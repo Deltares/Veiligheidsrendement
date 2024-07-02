@@ -1,4 +1,5 @@
 import copy
+import logging
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -15,6 +16,8 @@ import scripts.postprocessing.database_analytics as dan
 import scripts.postprocessing.generate_output as got
 from vrtool.common.enums import MechanismEnum
 
+_logger = logging.getLogger(__name__)
+
 
 @dataclass
 class PostProcessingReport:
@@ -30,40 +33,90 @@ class PostProcessingReport:
     result_db: Path
     report_dir: Path
 
-    id_for_result: int = 1
-    id_for_reference: int = 1
     has_revetment: bool = True  # Whether a revetment is present or not
     take_last: bool = False  # If True, the last step is taken, if False, the step with minimal total cost is taken
     colors: Any = field(default_factory=lambda: sns.color_palette("colorblind", 10))
+
+    def __enter__(self):
+        # Ensure report directory is empty.
+        if self.report_dir.exists():
+            shutil.rmtree(self.report_dir)
+        self.report_dir.mkdir(parents=True)
+
+        # Create a new log file.
+        _log_file = self.report_dir.joinpath("postprocessing.log")
+        _log_file.unlink(missing_ok=True)
+        _log_file.touch()
+
+        # Set file handler
+        _file_handler = logging.FileHandler(
+            filename=_log_file, encoding="utf-8", mode="a"
+        )
+        _file_handler.set_name("Postprocessing log file handler")
+        _file_handler.setLevel(logging.DEBUG)
+
+        # Add file handler to logger.
+        _logger.addHandler(_file_handler)
+        _logger.info("Staretd postprocessing report logger.")
+        return self
+
+    def __exit__(self, *args):
+        for _handler in _logger.handlers:
+            _logger.removeHandler(_handler)
+            _handler.close()
 
     def generate_report(self):
         """
         Generates all related plots and documents to report the differences
         between reference and result databases.
         """
-        # Ensure report directory is empty.
-        if self.report_dir.exists():
-            shutil.rmtree(self.report_dir)
-        self.report_dir.mkdir(parents=True)
 
         # Define colors.
         sns.set(style="whitegrid")
 
         # Get the runs to compare
-        result_runs = daf.get_overview_of_runs(self.result_db)
-        reference_runs = daf.get_overview_of_runs(self.reference_db)
+        _result_runs = daf.get_overview_of_runs(self.result_db)
+        _reference_runs = daf.get_overview_of_runs(self.reference_db)
 
         # This should generate a csv table?
-        pd.DataFrame(result_runs + reference_runs)
+        _result_and_reference_runs = pd.DataFrame(_result_runs + _reference_runs)
+        _result_and_reference_runs.to_csv(
+            self.report_dir.joinpath("result_and_refernce_runs_table.csv"), sep=","
+        )
+        _logger.info(
+            "Result + Reference runs - %s", _result_and_reference_runs.to_string()
+        )
 
+        for _result_run_dict in _result_runs:
+            # We iterate over results because reference could also contain
+            # strategies that are actually not being tested!
+            _run_type = _result_run_dict["optimization_type"]
+            _reference_run = self._find_reference_run(_run_type, _reference_runs)
+            if not _reference_run:
+                continue
+            self._generate_run_report(_reference_run["id"], _result_run_dict["id"])
+
+    def _find_reference_run(self, run_type: str, reference_runs: list[dict]) -> dict:
+        _found_runs = [
+            rr for rr in reference_runs if rr["optimization_type"] == run_type
+        ]
+        if not _found_runs:
+            _logger.error("No reference runs found for optimization type %s", run_type)
+
+        if len(_found_runs) > 1:
+            _logger.warning(
+                "Found more than one reference run for optimization type %s; using only the first one.",
+                run_type,
+            )
+        return _found_runs[0]
+
+    def _generate_run_report(self, reference_id: int, result_id: int):
         # For each run, we get the optimization steps and the index of the step with minimal total costs. This is the optimal combination of measures.
         optimization_steps = {
             "reference": daf.get_optimization_steps_for_run_id(
-                self.reference_db, self.id_for_reference
+                self.reference_db, reference_id
             ),
-            "result": daf.get_optimization_steps_for_run_id(
-                self.result_db, self.id_for_result
-            ),
+            "result": daf.get_optimization_steps_for_run_id(self.result_db, result_id),
         }
 
         # add total cost as sum of total_lcc and total_risk in each step
@@ -83,10 +136,8 @@ class PostProcessingReport:
 
         # Reading measures per step
         lists_of_measures = {
-            "reference": daf.get_measures_for_run_id(
-                self.reference_db, self.id_for_reference
-            ),
-            "result": daf.get_measures_for_run_id(self.result_db, self.id_for_result),
+            "reference": daf.get_measures_for_run_id(self.reference_db, reference_id),
+            "result": daf.get_measures_for_run_id(self.result_db, result_id),
         }
 
         measures_per_step = {
