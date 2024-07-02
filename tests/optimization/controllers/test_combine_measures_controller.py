@@ -106,8 +106,8 @@ class TestCombineMeasuresController:
             measures=[],
         )
 
-    @pytest.fixture(name="combinable_partial_measures_factory")
-    def _get_combinable_partial_measure(
+    @pytest.fixture(name="combinable_measures_factory")
+    def _get_combinable_measures_factory(
         self,
     ) -> Iterable[
         Callable[
@@ -157,13 +157,13 @@ class TestCombineMeasuresController:
 
     def test_combine_combinable_partial_measures(
         self,
-        combinable_partial_measures_factory: Callable[
+        combinable_measures_factory: Callable[
             [list[CombinableTypeEnum], list[MechanismPerYear]],
             list[MeasureAsInputProtocol],
         ],
     ):
         # 1. Define input
-        _measures = combinable_partial_measures_factory(
+        _measures = combinable_measures_factory(
             [CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.PARTIAL],
             [
                 MechanismPerYear(MechanismEnum.STABILITY_INNER, 0, 0.5),
@@ -217,16 +217,16 @@ class TestCombineMeasuresController:
             == 1
         )
 
-    def test_combine_combinable_revetment_measures(
+    def test_combine_revetment_measures(
         self,
-        combinable_partial_measures_factory: Callable[
+        combinable_measures_factory: Callable[
             [list[CombinableTypeEnum], list[MechanismPerYear]],
             list[MeasureAsInputProtocol],
         ],
     ):
 
         # 1. Define input
-        _measures = combinable_partial_measures_factory(
+        _measures = combinable_measures_factory(
             [CombinableTypeEnum.COMBINABLE, CombinableTypeEnum.REVETMENT],
             [
                 MechanismPerYear(MechanismEnum.OVERFLOW, 0, 0.5),
