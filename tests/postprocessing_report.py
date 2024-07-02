@@ -52,7 +52,10 @@ class PostProcessingReport:
         _file_handler = logging.FileHandler(
             filename=_log_file, encoding="utf-8", mode="a"
         )
-        _file_handler.set_name("Postprocessing log file handler")
+        _formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        _file_handler.setFormatter(_formatter)
         _file_handler.setLevel(logging.DEBUG)
 
         # Add file handler to logger.
@@ -81,7 +84,7 @@ class PostProcessingReport:
         # This should generate a csv table?
         _result_and_reference_runs = pd.DataFrame(_result_runs + _reference_runs)
         _result_and_reference_runs.to_csv(
-            self.report_dir.joinpath("result_and_refernce_runs_table.csv"), sep=","
+            self.report_dir.joinpath("result_and_reference_runs_table.csv"), sep=","
         )
         _logger.info(
             "Result + Reference runs - %s", _result_and_reference_runs.to_string()
@@ -91,10 +94,10 @@ class PostProcessingReport:
             # We iterate over results because reference could also contain
             # strategies that are actually not being tested!
             _run_type = _result_run_dict["optimization_type"]
-            _reference_run = self._find_reference_run(_run_type, _reference_runs)
-            if not _reference_run:
+            _reference_run_dict = self._find_reference_run(_run_type, _reference_runs)
+            if not _reference_run_dict:
                 continue
-            self._generate_run_report(_reference_run["id"], _result_run_dict["id"])
+            self._generate_run_report(_reference_run_dict, _result_run_dict)
 
     def _find_reference_run(self, run_type: str, reference_runs: list[dict]) -> dict:
         _found_runs = [
@@ -110,13 +113,21 @@ class PostProcessingReport:
             )
         return _found_runs[0]
 
-    def _generate_run_report(self, reference_id: int, result_id: int):
+    def _generate_run_report(self, reference_run_dict: dict, result_run_dict: dict):
+        _reference_id = reference_run_dict["id"]
+        _result_id = result_run_dict["id"]
+
+        _subreport_dir = self.report_dir.joinpath(
+            reference_run_dict["optimization_type_name"]
+        )
+        _subreport_dir.mkdir(exist_ok=True)
+
         # For each run, we get the optimization steps and the index of the step with minimal total costs. This is the optimal combination of measures.
         optimization_steps = {
             "reference": daf.get_optimization_steps_for_run_id(
-                self.reference_db, reference_id
+                self.reference_db, _reference_id
             ),
-            "result": daf.get_optimization_steps_for_run_id(self.result_db, result_id),
+            "result": daf.get_optimization_steps_for_run_id(self.result_db, _result_id),
         }
 
         # add total cost as sum of total_lcc and total_risk in each step
@@ -132,12 +143,14 @@ class PostProcessingReport:
                 "result": len(optimization_steps["result"]) - 1,
             }
 
-        self._plot_total_cost_and_risk(optimization_steps, considered_tc_step)
+        self._plot_total_cost_and_risk(
+            optimization_steps, considered_tc_step, _subreport_dir
+        )
 
         # Reading measures per step
         lists_of_measures = {
-            "reference": daf.get_measures_for_run_id(self.reference_db, reference_id),
-            "result": daf.get_measures_for_run_id(self.result_db, result_id),
+            "reference": daf.get_measures_for_run_id(self.reference_db, _reference_id),
+            "result": daf.get_measures_for_run_id(self.result_db, _result_id),
         }
 
         measures_per_step = {
@@ -194,7 +207,9 @@ class PostProcessingReport:
             ),
         }
 
-        self._plot_traject_probability_for_step(traject_prob, considered_tc_step)
+        self._plot_traject_probability_for_step(
+            traject_prob, considered_tc_step, _subreport_dir
+        )
 
         # Define measures per section.
         measures_per_section = {
@@ -206,7 +221,7 @@ class PostProcessingReport:
             ),
         }
 
-        self._print_measure_result_ids(measures_per_section)
+        self._print_measure_result_ids(measures_per_section, _subreport_dir)
 
         # Set section parameters
         section_parameters = {"reference": {}, "result": {}}
@@ -235,10 +250,10 @@ class PostProcessingReport:
 
         # Potentially we can export this to csv:
         measure_parameters["reference"].to_csv(
-            str(self.report_dir.joinpath("reference_measures.csv"))
+            str(_subreport_dir.joinpath("reference_measures.csv"))
         )
         measure_parameters["result"].to_csv(
-            str(self.report_dir.joinpath("result_measures.csv"))
+            str(_subreport_dir.joinpath("result_measures.csv"))
         )
 
         # Analysis of reliability index
@@ -278,7 +293,7 @@ class PostProcessingReport:
             var_name="mechanism",
             value_name="beta",
         )
-        self._plot_comparison_of_betas(betas_per_section_and_mechanism)
+        self._plot_comparison_of_betas(betas_per_section_and_mechanism, _subreport_dir)
 
         # Extra
         _lcc_per_step = {
@@ -299,10 +314,10 @@ class PostProcessingReport:
             ),
         }
         self._plot_lcc_based_on_optimization_step_and_measure_result(
-            _lcc_per_step, optimization_steps, _optimization_lcc
+            _lcc_per_step, optimization_steps, _optimization_lcc, _subreport_dir
         )
         self._print_different_costs_between_measure_result_and_optimization_step(
-            _lcc_per_step, _optimization_lcc
+            _lcc_per_step, _optimization_lcc, _subreport_dir
         )
 
     def _get_incremental_cost_from_optimization_path(
@@ -322,7 +337,11 @@ class PostProcessingReport:
         return lcc_steps
 
     def _plot_lcc_based_on_optimization_step_and_measure_result(
-        self, lcc_per_step: dict, optimization_steps: dict, optimization_lcc
+        self,
+        lcc_per_step: dict,
+        optimization_steps: dict,
+        optimization_lcc: dict,
+        subreport_dir: Path,
     ):
         _x_limit = max(*optimization_lcc["reference"], *optimization_lcc["result"])
         _y_limit = max(*lcc_per_step["reference"], *lcc_per_step["result"])
@@ -351,11 +370,11 @@ class PostProcessingReport:
         )
         ax.legend()
         plt.savefig(
-            self.report_dir.joinpath("lcc_optimization_step_v_measure_result.png")
+            subreport_dir.joinpath("lcc_optimization_step_v_measure_result.png")
         )
 
     def _print_different_costs_between_measure_result_and_optimization_step(
-        self, lcc_per_step: dict, optimization_lcc: dict
+        self, lcc_per_step: dict, optimization_lcc: dict, subreport_dir: Path
     ):
         # for result get the ids where costs ar different
         different_costs = []
@@ -370,28 +389,30 @@ class PostProcessingReport:
                 f"Step {_step+1} has different costs (mr_id vs opt): {lcc_per_step['result'][_step]} vs {optimization_lcc['result'][_step]}"
             )
 
-        _txt_file = self.report_dir.joinpath("costs_measure_result_v_opt_step.txt")
+        _txt_file = subreport_dir.joinpath("costs_measure_result_v_opt_step.txt")
         _txt_file.touch()
         _txt_file.write_text("\n".join(_lines), encoding="utf-8")
 
-    def _plot_comparison_of_betas(self, betas_per_section_and_mechanism: pd.DataFrame):
+    def _plot_comparison_of_betas(
+        self, betas_per_section_and_mechanism: pd.DataFrame, subreport_dir: Path
+    ):
         # Next we make a plot to compare the beta for both runs
         got.plot_comparison_of_beta_values(betas_per_section_and_mechanism)
-        plt.savefig(self.report_dir.joinpath("comparison_of_beta_values.png"))
+        plt.savefig(subreport_dir.joinpath("comparison_of_beta_values.png"))
 
         # Differences can also be revealing.
         got.plot_difference_in_betas(
             betas_per_section_and_mechanism, self.has_revetment
         )
-        plt.savefig(self.report_dir.joinpath("difference_in_betas.png"))
+        plt.savefig(subreport_dir.joinpath("difference_in_betas.png"))
 
         got.plot_difference_in_betas_per_section(
             betas_per_section_and_mechanism, self.has_revetment
         )
-        plt.savefig(self.report_dir.joinpath("difference_in_betas_per_section.png"))
+        plt.savefig(subreport_dir.joinpath("difference_in_betas_per_section.png"))
 
     def _plot_total_cost_and_risk(
-        self, optimization_steps: dict, considered_tc_step: dict
+        self, optimization_steps: dict, considered_tc_step: dict, subreport_dir: Path
     ):
         _, ax = plt.subplots()
         markers = ["d", "o"]
@@ -411,10 +432,10 @@ class PostProcessingReport:
         ax.set_xlim(left=0)
         ax.set_ylim(top=1e10)
         ax.legend()
-        plt.savefig(self.report_dir.joinpath("total_lcc_and_risk.png"))
+        plt.savefig(subreport_dir.joinpath("total_lcc_and_risk.png"))
 
     def _plot_traject_probability_for_step(
-        self, traject_prob: dict, considered_tc_step: dict
+        self, traject_prob: dict, considered_tc_step: dict, subreport_dir: Path
     ):
         _, ax = plt.subplots()
 
@@ -447,9 +468,11 @@ class PostProcessingReport:
             linestyle="-",
         )
         ax.set_xlim(left=0, right=100)
-        plt.savefig(self.report_dir.joinpath("traject_probablity_for_step.png"))
+        plt.savefig(subreport_dir.joinpath("traject_probablity_for_step.png"))
 
-    def _print_measure_result_ids(self, measures_per_section: dict):
+    def _print_measure_result_ids(
+        self, measures_per_section: dict, subreport_dir: Path
+    ):
         _lines = []
 
         def get_measures_per_section(run_key: str, section_key: str) -> list:
@@ -467,6 +490,6 @@ class PostProcessingReport:
             get_measures_per_section("reference", _unique_section)
             get_measures_per_section("result", _unique_section)
 
-        _txt_file = self.report_dir.joinpath("measure_result_ids.txt")
+        _txt_file = subreport_dir.joinpath("measure_result_ids.txt")
         _txt_file.touch()
         _txt_file.write_text("\n".join(_lines), encoding="utf-8")
