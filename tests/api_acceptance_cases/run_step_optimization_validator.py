@@ -222,7 +222,9 @@ class RunStepOptimizationValidator(RunStepValidator):
         with PostProcessingReport(
             reference_db=reference_path,
             result_db=results_path,
-            report_dir=results_path.parent.joinpath("postprocessing_report"),
+            report_dir=results_path.parent.joinpath(
+                "postprocessing_report_" + results_path.stem
+            ),
         ) as _pp_report:
             _pp_report.generate_report()
 
