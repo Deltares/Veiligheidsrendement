@@ -5,8 +5,8 @@ This subproject contains the different classes that represent all ways of combin
 A `CombinedMeasure` is actually represented by the generalization`CombinedMeasureBase` and it 
 has the following specializations:
 
-- `ShCombinedMeasure`, when the `primary` measure to combine is of type `ShMeasure`. It also has an optional `secondary` measure that can be of any type.
-- `SgCombinedMeasure`, when the `primary` measure to combine is of type `SgMeasure`, its `lcc` is always based on a `base_cost` equal to `0`. It also has an optional `secondary` measure that can be of any type.
+- `ShCombinedMeasure`, when the `primary` measure to combine is of type `ShMeasure`. It also has an optional `secondary` `ShMeasure` measure.
+- `SgCombinedMeasure`, when the `primary` measure to combine is of type `SgMeasure`, its `lcc` is always based on a `base_cost` equal to `0`. It also has an optional `secondary` `SgMeasure` measure.
 - `ShSgCombinedMeasure`, when the `primary` measure to combine is of type `ShSgMeasure`, its `lcc`is always based on a `base_cost` equal to `0`. It also has two optional secondary measures: `sh_secondary` with a `ShMeasure` and `sg_secondary` with a `SgMeasure`.
 
 ## Creation of combined measures

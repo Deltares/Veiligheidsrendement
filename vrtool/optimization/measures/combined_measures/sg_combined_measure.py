@@ -3,9 +3,6 @@ from dataclasses import dataclass
 from vrtool.optimization.measures.combined_measures.combined_measure_base import (
     CombinedMeasureBase,
 )
-from vrtool.optimization.measures.measure_as_input_protocol import (
-    MeasureAsInputProtocol,
-)
 from vrtool.optimization.measures.sg_measure import SgMeasure
 
 
@@ -18,7 +15,7 @@ class SgCombinedMeasure(CombinedMeasureBase):
     """
 
     primary: SgMeasure
-    secondary: MeasureAsInputProtocol | None = None
+    secondary: SgMeasure | None = None
 
     @property
     def _base_cost(self) -> float:
