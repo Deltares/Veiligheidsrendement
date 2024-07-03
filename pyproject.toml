@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vrtool"
-version = "0.3.0"
+version = "0.3.1"
 description = "veiligheidsrendement tool (core and orm)"
 authors = ["Wouter Jan Klerk <wouterjan.klerk@deltares.nl>"]
 maintainers = [
@@ -99,7 +99,7 @@ markers = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.3.0"
+version = "0.3.1"
 tag_format = "v$major.$minor.$patch"
 changelog_file = "docs/changelog.md"
 version_files= [
