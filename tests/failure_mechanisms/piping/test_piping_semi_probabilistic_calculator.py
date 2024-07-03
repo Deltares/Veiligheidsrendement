@@ -105,9 +105,6 @@ class TestPipingSemiProbabilisticCalculator:
         _beta = 4.2
         _mechanism_input_dict = {
             "piping_reduction_factor": 1000,
-            # The following values will simply allow to compute `beta_to_pf(scenario_beta)`
-            "pf_elim": 0,
-            "pf_with_elim": 1,
         }
         yield _beta, _mechanism_input_dict
 

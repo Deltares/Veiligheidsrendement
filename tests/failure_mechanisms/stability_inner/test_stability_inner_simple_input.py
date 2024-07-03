@@ -147,8 +147,6 @@ class TestStabilityInnerSimpleInput:
         mechanism_input = MechanismInput("")
         mechanism_input.input["beta"] = np.array([0.5], dtype=float)
         mechanism_input.input["elimination"] = "yes"
-        mechanism_input.input["pf_elim"] = np.array([0.2], dtype=float)
-        mechanism_input.input["pf_with_elim"] = np.array([0.3], dtype=float)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
@@ -157,14 +155,6 @@ class TestStabilityInnerSimpleInput:
 
         # Assert
         assert failure_mechanism_input.is_eliminated
-        assert (
-            failure_mechanism_input.failure_probability_elimination
-            == mechanism_input.input["pf_elim"]
-        )
-        assert (
-            failure_mechanism_input.failure_probability_with_elimination
-            == mechanism_input.input["pf_with_elim"]
-        )
 
     @pytest.mark.parametrize(
         "elimination",
