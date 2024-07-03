@@ -55,11 +55,11 @@ class TestOptimizationMeasureResultImporter:
     @pytest.mark.fixture_database(
         test_data.joinpath("38-1 custom measures", "with_aggregated_measures.db")
     )
-    def test_get_measure_as_input_types_custom_measure_returns_all_types(
+    def test_get_measure_as_input_types_custom_measure_returns_sh_sg(
         self, custom_measures_vrtool_config: VrtoolConfig
     ):
         # 1. Define test data.
-        _expected_types = [ShMeasure, SgMeasure, ShSgMeasure]
+        _expected_types = [ShMeasure, SgMeasure]
 
         # 2. Run test.
         with open_database(
@@ -93,7 +93,7 @@ class TestOptimizationMeasureResultImporter:
             custom_measures_vrtool_config.input_database_path
         ).connection_context():
             # 1. Define test data.
-            _expected_types = [ShMeasure, SgMeasure, ShSgMeasure]
+            _expected_types = [ShMeasure, SgMeasure]
             _investment_years = [0]
 
             # The provided database only contains 'Custom' MeasureResult rows.
@@ -107,7 +107,7 @@ class TestOptimizationMeasureResultImporter:
             ).import_orm(_measure_result)
 
         # 3. Verify expectations.
-        assert len(_imported_measure_as_input_list) == 3
+        assert len(_imported_measure_as_input_list) == 2
 
         for _imported_mai in _imported_measure_as_input_list:
             assert isinstance(_imported_mai, MeasureAsInputProtocol)
