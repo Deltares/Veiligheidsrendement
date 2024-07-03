@@ -72,7 +72,3 @@ Migration scripts are located in `scripts\migration\versions`.
 ### Database migration.
 TODO:
 * how to update the database
-
-### Future developments.
-In the future a database will be automatically migrated to the version of the `orm` on startup of the `vrtool`, assuming the database is compatible.
-In case the database is not compatible, a migration can be done partially, leaving the rest to the user.
