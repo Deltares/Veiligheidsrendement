@@ -13,36 +13,39 @@ class OrmVersion:
             self.version_file = version_file
         else:
             self.version_file = Path(__file__).parent.joinpath("__init__.py")
-        (self.major, self.minor, self.patch) = self.read_version()
+        self.read_version()
 
     @property
     def version_string(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
 
-    @property
-    def version_dict(self) -> dict[IncrementTypeEnum, int]:
-        return {
-            IncrementTypeEnum.MAJOR: self.major,
-            IncrementTypeEnum.MINOR: self.minor,
-            IncrementTypeEnum.PATCH: self.patch,
-        }
-
     def read_version(self) -> tuple[int, int, int]:
-        with open(self.version_file, "r") as f:
-            for line in f:
-                if "__version__" in line:
-                    _version = line.split('"')[1]
-                    return tuple(map(int, _version.split(".")))
-        return (0, 0, 0)
+        _version = (0, 0, 0)
+        if self.version_file.exists():
+            with open(self.version_file, "r") as f:
+                for line in f:
+                    if "__version__" in line:
+                        _version_str = line.split('"')[1]
+                        _version = tuple(map(int, _version_str.split(".")))
+        self.set_version(_version)
+        return _version
 
-    def update_version(self, new_version: tuple[int, int, int]) -> None:
-        self.major = new_version[0]
-        self.minor = new_version[1]
-        self.patch = new_version[2]
-        with open(self.version_file, "w") as f:
-            f.write(f'__version__ = "{self.version_string}"\n')
+    def get_version(self) -> tuple[int, int, int]:
+        return self.major, self.minor, self.patch
+
+    def set_version(self, version: tuple[int, int, int]) -> None:
+        self.major, self.minor, self.patch = version
 
     def add_increment(self, increment_type: IncrementTypeEnum):
-        _version = self.version_dict
-        _version[increment_type] += 1
-        self.update_version(tuple(_version.values()))
+        if increment_type == IncrementTypeEnum.MAJOR:
+            self.major += 1
+        elif increment_type == IncrementTypeEnum.MINOR:
+            self.minor += 1
+        elif increment_type == IncrementTypeEnum.PATCH:
+            self.patch += 1
+
+    def write_version(self) -> None:
+        if not self.version_file.parent.exists():
+            self.version_file.parent.mkdir(parents=True)
+        with open(self.version_file, "w") as f:
+            f.write(f'__version__ = "{self.version_string}"\n')
