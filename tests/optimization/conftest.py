@@ -5,7 +5,9 @@ import pytest
 
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_factory import (
+    CombinedMeasureFactory,
+)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -93,13 +95,13 @@ def _get_section_with_combinations(
     section_with_measures: SectionAsInput,
 ) -> Iterator[SectionAsInput]:
     section_with_measures.combined_measures = [
-        CombinedMeasure.from_input(
+        CombinedMeasureFactory.from_input(
             OverridenShMeasure(measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT),
             None,
             None,
             0,
         ),
-        CombinedMeasure.from_input(
+        CombinedMeasureFactory.from_input(
             OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
             ),
@@ -107,7 +109,7 @@ def _get_section_with_combinations(
             None,
             1,
         ),
-        CombinedMeasure.from_input(
+        CombinedMeasureFactory.from_input(
             OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT_WITH_STABILITY_SCREEN
             ),

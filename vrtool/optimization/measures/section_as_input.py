@@ -5,7 +5,15 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_base import (
+    CombinedMeasureBase,
+)
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
 )
@@ -26,8 +34,8 @@ class SectionAsInput:
     initial_assessment: MechanismPerYearProbabilityCollection = field(
         default_factory=lambda: MechanismPerYearProbabilityCollection([])
     )
-    combined_measures: list[CombinedMeasure] = field(
-        default_factory=list[CombinedMeasure]
+    combined_measures: list[CombinedMeasureBase] = field(
+        default_factory=list[CombinedMeasureBase]
     )  # TODO do we need this in SectionAsInput or can it be volatile?
     aggregated_measure_combinations: Optional[
         list[AggregatedMeasureCombination]
@@ -48,6 +56,26 @@ class SectionAsInput:
         """
         return list(filter(lambda x: isinstance(x, measure_class), self.measures))
 
+    def get_aggregated_combinations(
+        self, sh_sequence_nr: int, sg_sequence_nr: int
+    ) -> list[AggregatedMeasureCombination]:
+        """
+        Gets the list of aggregated combinations that match the given sequence numbers.
+
+        Args:
+            sh_sequence_nr (int): ShMeasure sequence number.
+            sg_sequence_nr (int): SgMeasure sequence number.
+
+        Returns:
+            list[AggregatedMeasureCombination]: Aggregated measure combination collection matching the sequence numbers.
+        """
+        return [
+            _amc
+            for _amc in self.aggregated_measure_combinations
+            if _amc.sh_combination.sequence_nr == sh_sequence_nr
+            and _amc.sg_combination.sequence_nr == sg_sequence_nr
+        ]
+
     @property
     def sh_measures(self) -> list[ShMeasure]:
         return self.get_measures_by_class(ShMeasure)
@@ -60,32 +88,32 @@ class SectionAsInput:
     def sh_sg_measures(self) -> list[ShSgMeasure]:
         return self.get_measures_by_class(ShSgMeasure)
 
-    def get_combinations_by_class(
-        self, measure_class: type[MeasureAsInputProtocol]
-    ) -> list[CombinedMeasure]:
-        """
-        Get the combinations of measures for a section
-        based on the class of measure of the primary measure (Sg/Sh).
-
-        Args:
-            measure_class (type[MeasureAsInputProtocol]): Class of measure.
-
-        Returns:
-            list[CombinedMeasure]: Combined measures of the class.
-        """
+    def _get_combinations_by_type(
+        self, measure_type: type[CombinedMeasureBase]
+    ) -> list[CombinedMeasureBase]:
         return list(
-            filter(
-                lambda x: isinstance(x.primary, measure_class), self.combined_measures
-            )
+            filter(lambda x: isinstance(x, measure_type), self.combined_measures)
         )
 
     @property
-    def sh_combinations(self) -> list[CombinedMeasure]:
-        return self.get_combinations_by_class(ShMeasure)
+    def sh_combinations(self) -> list[ShCombinedMeasure]:
+        """
+        Gets the Sh combinations for this `SectionAsInput`.
+
+        Returns:
+            list[ShCombinedMeasure]: Sh combined measures of the class.
+        """
+        return self._get_combinations_by_type(ShCombinedMeasure)
 
     @property
-    def sg_combinations(self) -> list[CombinedMeasure]:
-        return self.get_combinations_by_class(SgMeasure)
+    def sg_combinations(self) -> list[SgCombinedMeasure]:
+        """
+        Gets the Sg combinations for this `SectionAsInput`.
+
+        Returns:
+            list[SgCombinedMeasure]: Sg combined measures of the class.
+        """
+        return self._get_combinations_by_type(SgCombinedMeasure)
 
     def _get_sample_years(self) -> set[int]:
         """

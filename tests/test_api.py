@@ -276,7 +276,7 @@ class TestApiRunWorkflowsAcceptance:
             # Copy the postprocessing report if it exists.
             # For now it assumes it's created at the same level as the results
             _report = _test_config.input_database_path.parent.joinpath(
-                "postprocessing_report"
+                "postprocessing_report_" + _test_config.input_database_path.stem
             )
             if _report.exists():
                 shutil.move(
