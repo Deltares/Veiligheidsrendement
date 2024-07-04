@@ -22,7 +22,7 @@ class OrmVersion:
     def read_version(self) -> tuple[int, int, int]:
         _version = (0, 0, 0)
         if self.version_file.exists():
-            with open(self.version_file, "r") as f:
+            with open(self.version_file, "r", encoding="utf-8") as f:
                 for line in f:
                     if "__version__" in line:
                         _version_str = line.split('"')[1]
@@ -47,5 +47,5 @@ class OrmVersion:
     def write_version(self) -> None:
         if not self.version_file.parent.exists():
             self.version_file.parent.mkdir(parents=True)
-        with open(self.version_file, "w") as f:
+        with open(self.version_file, "w", encoding="utf-8") as f:
             f.write(f'__version__ = "{self.version_string}"\n')
