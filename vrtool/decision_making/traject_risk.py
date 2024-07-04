@@ -95,7 +95,12 @@ class TrajectRisk:
                         (zeros if the mechanism is not present in the traject)
         """
         if mechanism not in self._probability_of_failure:
-            return np.zeros([self.num_measures, self.num_years])
+            if mechanism in ShMeasure.get_allowed_mechanisms():
+                return np.zeros([self.num_sh_measures, self.num_years])
+            elif mechanism in SgMeasure.get_allowed_mechanisms():
+                return np.zeros([self.num_sg_measures, self.num_years])
+            else:
+                raise ValueError(f"Mechanism {mechanism} not in allowed mechanisms")
         return self._probability_of_failure[mechanism][section, :, :]
 
     def get_measure_probabilities(
@@ -347,6 +352,6 @@ class TrajectRisk:
                 _measure = measure[2]
             else:
                 continue
-            self._probability_of_failure[_mech][
-                _section, 0, :
-            ] = self._probability_of_failure[_mech][_section, _measure, :]
+            self._probability_of_failure[_mech][_section, 0, :] = (
+                self._probability_of_failure[_mech][_section, _measure, :]
+            )
