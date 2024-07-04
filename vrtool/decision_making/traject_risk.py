@@ -352,6 +352,6 @@ class TrajectRisk:
                 _measure = measure[2]
             else:
                 continue
-            self._probability_of_failure[_mech][_section, 0, :] = (
-                self._probability_of_failure[_mech][_section, _measure, :]
-            )
+            self._probability_of_failure[_mech][
+                _section, 0, :
+            ] = self._probability_of_failure[_mech][_section, _measure, :]
