@@ -8,6 +8,8 @@ from vrtool.flood_defence_system.failure_mechanism_collection import (
     FailureMechanismCollection,
 )
 
+BETA_THRESHOLD: float = 8.0
+
 
 # Class describing safety assessments of a section:
 class SectionReliability:
@@ -36,9 +38,9 @@ class SectionReliability:
                 )
 
                 if mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.REVETMENT]:
-                    _pf_mechanisms_time[
-                        _count, _range_idx
-                    ] = _mechanism_collection.Reliability[str(_range_val)].Pf
+                    _pf_mechanisms_time[_count, _range_idx] = (
+                        _mechanism_collection.Reliability[str(_range_val)].Pf
+                    )
                 elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
                     pf = _mechanism_collection.Reliability[str(_range_val)].Pf
                     # underneath one can choose whether to upscale within sections or not:
@@ -69,5 +71,12 @@ class SectionReliability:
             columns=_calculation_years,
             index=["Section"],
         )
+
         self.SectionReliability = pd.concat((_beta_mech_time, _beta_time))
+
+        # replace values greater than the threshold with the threshold itself.
+        self.SectionReliability[self.SectionReliability > BETA_THRESHOLD] = (
+            BETA_THRESHOLD
+        )
+
         # TODO add output as probability so we dont have to switch using scipystats all the time.
