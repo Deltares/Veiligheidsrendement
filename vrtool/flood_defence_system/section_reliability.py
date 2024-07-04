@@ -45,16 +45,6 @@ class SectionReliability:
                     pf = _mechanism_collection.Reliability[str(_range_val)].Pf
                     # underneath one can choose whether to upscale within sections or not:
                     N = 1
-                    # For StabilityInner:
-                    # N = length/TrajectInfo['bStabilityInner']
-                    # N = TrajectInfo['aStabilityInner']*length/TrajectInfo['bStabilityInner']
-                    #
-                    # For Piping:
-                    # N = length/TrajectInfo['bPiping']
-                    # N = TrajectInfo['aPiping'] * length / TrajectInfo['bPiping']
-                    # pf_mechanisms_time[count, j] = min(1 - (1 - pf) ** N,1./100)
-
-                    # pf_mechanisms_time[count,j] = min(1 - (1 - pf) ** N,1./100)
                     _pf_mechanisms_time[_count, _range_idx] = min(
                         1 - (1 - pf) ** N, 1.0 / 2
                     )
@@ -78,5 +68,3 @@ class SectionReliability:
         self.SectionReliability[self.SectionReliability > BETA_THRESHOLD] = (
             BETA_THRESHOLD
         )
-
-        # TODO add output as probability so we dont have to switch using scipystats all the time.
