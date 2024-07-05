@@ -1,8 +1,15 @@
 # Inspired by https://stackoverflow.com/a/19473206
 import sqlite3
+from collections import OrderedDict
 from pathlib import Path
 
 import click
+import peewee
+
+from vrtool.orm.models.version import Version as DbVersion
+from vrtool.orm.orm_controllers import open_database
+from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
+from vrtool.orm.version.orm_version import OrmVersion
 
 
 @click.group()
@@ -11,95 +18,145 @@ def cli():
 
 
 class MigrateDb:
-    def migrate_single_db(self, db_filepath: Path, sql_filepath: Path):
-        """
-        Applies all SQL statements from a migration file to the provided
-        database file.
+    scripts_dict: OrderedDict[tuple[int, int, int], Path]
+    orm_version: OrmVersion
+    force_orm: bool
 
-        Can be run with `python -m migrate_db db_filepath sql_filepath`
+    def __init__(self, **kwargs):
+        _scripts_dir = Path(__file__).parent.joinpath("versions")
+        self.scripts_dict = self._parse_scripts_dir(_scripts_dir)
+        self.orm_version = OrmVersion(None)
+        self.force_orm = False
+        if "force_orm" in kwargs:
+            self.force_orm = kwargs["force_orm"]
 
-        Args:
-            database_file (Path): Database file to migrate (`*.db`)
-            migration_file (Path): Migration file to apply (`*.sql`)
+    def _get_hash(self, version: tuple[int, int, int]) -> int:
+        return version[0] * 100 + version[1] * 10 + version[2]
 
-        """
-        # Show which migration will be done, expected format `v0_2_0__to__v0_3_0.sql`
-        def format_version(version_value: str) -> str:
-            return version_value.replace("_", ".")
+    def _parse_scripts_dir(self, scripts_dir: Path) -> dict[int, Path]:
+        _scripts_dict = dict()
+        for _script in scripts_dir.rglob("*.sql"):
+            _version = OrmVersion.parse_version(_script.stem)
+            _scripts_dict[_version] = _script
+        # Ensure ordering from low to high version.
+        return OrderedDict(sorted(_scripts_dict.items()))
 
-        _from_version, _to_version = tuple(
-            map(format_version, sql_filepath.stem.split("__to__"))
-        )
-
-        # Open and read the file as a single buffer
+    @staticmethod
+    def apply_migration_script(db_filepath: Path, script_filepath: Path) -> None:
         try:
             with sqlite3.connect(db_filepath) as _db_connection:
                 print(
-                    f"Migrating database file [{_from_version} to {_to_version}]: {db_filepath}"
+                    f"Migrating database file with {script_filepath.stem}: {db_filepath.stem}"
                 )
-                _db_connection.executescript(sql_filepath.read_text(encoding="utf-8"))
+                _db_connection.executescript(
+                    script_filepath.read_text(encoding="utf-8")
+                )
         except Exception as _err:
             print(f"Error during migration of {db_filepath}, details: {_err}")
 
-    def migrate_databases_in_dir(self, database_dir: Path, sql_file: Path):
+    def migrate_single_db(self, db_filepath: Path):
+        """
+        Applies all SQL statements from a migration file to the provided
+        database file.
+        All available migrations scripts with a version higher than the current
+        version in the database will be applied from a lower to a higher version.
+
+
+        Can be run with `python -m migrate_db db_filepath`
+
+        Args:
+            database_file (Path): Database file to migrate (`*.db`)
+
+        """
+
+        def get_db_version() -> tuple[int, int, int]:
+            with open_database(db_filepath).connection_context():
+                try:
+                    _version = DbVersion.select()
+                    _db_version_str = _version.get().orm_version
+                except peewee.OperationalError:
+                    _db_version_str = "0.1.0"
+            return OrmVersion.parse_version(_db_version_str)
+
+        def set_db_version(version: tuple[int, int, int]) -> None:
+            with open_database(db_filepath).connection_context():
+                _version = DbVersion.select().get()
+                _version.orm_version = version
+                _version.save()
+
+        _db_version = get_db_version()
+
+        _version = (0, 0, 0)
+        for _version, _script in self.scripts_dict.items():
+            if _version > _db_version:
+                self.apply_migration_script(db_filepath, _script)
+                if (
+                    OrmVersion.get_increment_type(_db_version, _version)
+                    == IncrementTypeEnum.MAJOR
+                ):
+                    raise ValueError(
+                        "Major version upgrade detected, aborting. Please finish the migration before continuing."
+                    )
+                set_db_version(_version)
+
+        # Update the ORM version if necessary.
+        _orm_version = self.orm_version.read_version()
+        if self.force_orm and _version > _orm_version:
+            self.orm_version.write_version(_orm_version)
+
+    def migrate_databases_in_dir(self, database_dir: Path):
         """
         Migrates all existing databases in the given directory (and subdirectories)
         with the provided migration file.
 
         Args:
             database_dir (Path): Directory containing the databases to migrate.
-            sql_file (Path): SQL file with migration statements.
         """
         for _db_to_migrate in database_dir.rglob("*.db"):
-            self.migrate_single_db(_db_to_migrate, sql_file)
+            self.migrate_single_db(_db_to_migrate)
 
 
 @cli.command(
     name="migrate_db",
-    help="Applies all SQL statements from a migration file to the provided database file.",
+    help="Migrate the provided database file.",
 )
 @click.argument("db_filepath", type=click.Path(exists=True), nargs=1)
-@click.argument("sql_filepath", type=click.Path(exists=True), nargs=1)
-def migrate_db(db_filepath: str, sql_filepath: str):
+def migrate_db(db_filepath: str):
     """
-    Can be run with `python migrate_database.py migrate_db db_filepath sql_filepath`
+    Can be run with `python migrate_database.py migrate_db db_filepath`
     """
-    MigrateDb().migrate_single_db(Path(db_filepath), Path(sql_filepath))
+    MigrateDb().migrate_single_db(Path(db_filepath))
 
 
 @cli.command(
     name="migrate_db_dir",
-    help="Applies all SQL statements from a migration file to the provided database files in a directory.",
+    help="Migrates all provided database files in a directory.",
 )
 @click.argument("database_dir", type=click.Path(exists=True), nargs=1)
-@click.argument("sql_file", type=click.Path(exists=True), nargs=1)
-def migrate_databases_in_dir(database_dir: str, sql_file: str):
+def migrate_databases_in_dir(database_dir: str):
     """
-    Can be run with `python migrate_database.py migrate_db_dir database_dir sql_file`
+    Can be run with `python migrate_database.py migrate_db_dir database_dir`
     """
-    MigrateDb().migrate_databases_in_dir(Path(database_dir), Path(sql_file))
+    MigrateDb().migrate_databases_in_dir(Path(database_dir))
 
 
 def migrate_test_databases():
     """
-    Migrates all existing test databases (in the `tests` directory) with
-    the latest available migration file.
+    Migrates all existing test databases (in the `tests` directory) to
+    the latest version.
 
     Can be run with `poetry run migrate_test_db`
     """
-    # Fetch the SQL script.
-    _scripts_dir = Path(__file__).parent.parent
-    _migration_file = _scripts_dir.joinpath(
-        "migration", "versions", "v0_2_0__to__v0_3_0.sql"
-    )
-    assert _migration_file.exists(), "No migration file found."
+    # Fetch the dir containing the migration scripts.
+    _root_dir = Path(__file__).parent.parent
 
     # Fetch the tests directory.
-    _tests_dir = _scripts_dir.parent.joinpath("tests", "test_data")
+    _tests_dir = _root_dir.joinpath("tests", "test_data")
     assert _tests_dir.exists(), "No tests directory found."
 
     # Apply migration.
-    MigrateDb().migrate_databases_in_dir(_tests_dir, _migration_file)
+    # Force the ORM version to be upgraded according to the migration scripts.
+    MigrateDb(force_orm=True).migrate_databases_in_dir(_tests_dir)
 
 
 if __name__ == "__main__":

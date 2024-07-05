@@ -6,6 +6,8 @@ from tests import test_results
 from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 from vrtool.orm.version.orm_version import OrmVersion
 
+ZERO_VERSION = (0, 0, 0)
+
 
 class TestOrmVersion:
     def test_initialize(self, valid_version_init_file: Path):
@@ -23,25 +25,25 @@ class TestOrmVersion:
         _version = _orm_version.read_version()
 
         # 3. Verify expectations
-        assert _version == (0, 0, 0)
+        assert _version == ZERO_VERSION
 
     def test_read_version_empty_file_returns_default(
         self, request: pytest.FixtureRequest
     ):
         # 1. Define test data
-        _init_file = test_results.joinpath(request.node.name, "version_file.py")
-        _init_file.unlink(missing_ok=True)
-        _init_file.parent.mkdir(parents=True, exist_ok=True)
-        _init_file.touch(exist_ok=True)
-        assert _init_file.exists()
+        _version_file = test_results.joinpath(request.node.name, "version_file.py")
+        _version_file.unlink(missing_ok=True)
+        _version_file.parent.mkdir(parents=True, exist_ok=True)
+        _version_file.touch(exist_ok=True)
+        assert _version_file.exists()
 
-        _orm_version = OrmVersion(_init_file)
+        _orm_version = OrmVersion(_version_file)
 
         # 2. Execute test
         _version = _orm_version.read_version()
 
         # 3. Verify expectations
-        assert _version == (0, 0, 0)
+        assert _version == ZERO_VERSION
 
     def test_read_version(self, valid_version_init_file: Path):
         # 1. Define test data
@@ -91,7 +93,7 @@ class TestOrmVersion:
     ):
         # 1. Define test data
         _orm_version = OrmVersion(valid_version_init_file)
-        _orm_version.set_version((0, 0, 0))
+        _orm_version.set_version(ZERO_VERSION)
 
         # 2. Execute test
         _orm_version.add_increment(increment_type)
@@ -101,33 +103,33 @@ class TestOrmVersion:
 
     def test_write_version_existing_file(self, request: pytest.FixtureRequest):
         # 1. Define test data
-        _init_file = test_results.joinpath(request.node.name, "version_file.py")
-        _init_file.parent.mkdir(parents=True, exist_ok=True)
-        _init_file.touch(exist_ok=True)
-        assert _init_file.exists()
+        _version_file = test_results.joinpath(request.node.name, "version_file.py")
+        _version_file.parent.mkdir(parents=True, exist_ok=True)
+        _version_file.touch(exist_ok=True)
+        assert _version_file.exists()
 
-        _orm_version = OrmVersion(_init_file)
-        _orm_version.set_version((1, 2, 3))
+        _orm_version = OrmVersion(_version_file)
+        _version = (1, 2, 3)
 
         # 2. Execute test
-        _orm_version.write_version()
+        _orm_version.write_version(_version)
 
         # 3. Verify expectations
-        assert _init_file.exists()
-        assert _orm_version.read_version() == (1, 2, 3)
+        assert _version_file.exists()
+        assert _orm_version.read_version() == _version
 
     def test_write_version_new_file(self, request: pytest.FixtureRequest):
         # 1. Define test data
-        _init_file = test_results.joinpath(request.node.name, "version_file.py")
-        _init_file.unlink(missing_ok=True)
-        assert not _init_file.exists()
+        _version_file = test_results.joinpath(request.node.name, "version_file.py")
+        _version_file.unlink(missing_ok=True)
+        assert not _version_file.exists()
 
-        _orm_version = OrmVersion(_init_file)
-        _orm_version.set_version((1, 2, 3))
+        _orm_version = OrmVersion(_version_file)
+        _version = (1, 2, 3)
 
         # 2. Execute test
-        _orm_version.write_version()
+        _orm_version.write_version(_version)
 
         # 3. Verify expectations
-        assert _init_file.exists()
-        assert _orm_version.read_version() == (1, 2, 3)
+        assert _version_file.exists()
+        assert _orm_version.read_version() == _version

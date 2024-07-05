@@ -12,8 +12,38 @@ class OrmVersion:
         if version_file:
             self.version_file = version_file
         else:
-            self.version_file = Path(__file__).parent.joinpath("__init__.py")
+            self.version_file = Path(__file__).parent.parent.joinpath("__init__.py")
         self.read_version()
+
+    @staticmethod
+    def parse_version(version_string: str) -> tuple[int, int, int]:
+        """
+        Parse a version string.
+        Examples:
+            v1_2_3 -> (1, 2, 3)
+            1.2.3 -> (1, 2, 3)
+
+        Args:
+            version_string (str): _description_
+
+        Returns:
+            tuple[int, int, int]: _description_
+        """
+        return tuple(
+            map(int, version_string.replace("v", "").replace("_", ".").split("."))
+        )
+
+    @staticmethod
+    def get_increment_type(
+        from_version: tuple[int, int, int], to_version: tuple[int, int, int]
+    ) -> IncrementTypeEnum:
+        if from_version[0] < to_version[0]:
+            return IncrementTypeEnum.MAJOR
+        elif from_version[1] < to_version[1]:
+            return IncrementTypeEnum.MINOR
+        elif from_version[2] < to_version[2]:
+            return IncrementTypeEnum.PATCH
+        return IncrementTypeEnum.NONE
 
     @property
     def version_string(self) -> str:
@@ -26,7 +56,7 @@ class OrmVersion:
                 for line in f:
                     if "__version__" in line:
                         _version_str = line.split('"')[1]
-                        _version = tuple(map(int, _version_str.split(".")))
+                        _version = self.parse_version(_version_str)
         self.set_version(_version)
         return _version
 
@@ -44,7 +74,8 @@ class OrmVersion:
         elif increment_type == IncrementTypeEnum.PATCH:
             self.patch += 1
 
-    def write_version(self) -> None:
+    def write_version(self, version: tuple[int, int, int]) -> None:
+        self.set_version(version)
         if not self.version_file.parent.exists():
             self.version_file.parent.mkdir(parents=True)
         with open(self.version_file, "w", encoding="utf-8") as f:
