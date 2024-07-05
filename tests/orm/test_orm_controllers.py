@@ -17,6 +17,10 @@ from tests import (
     test_externals,
     test_results,
 )
+from tests.optimization.conftest import (  # These imports are required by `test_export_results_optimization_given_valid_data`
+    _get_section_with_combinations,
+    _get_section_with_measures,
+)
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
