@@ -63,6 +63,8 @@ class LegacyMappingHelper:
                 mech, list(range(max_year))
             )
             # Get probabilities for all measures
+            if not any(section.measures):
+                return np.array(_initial_probs)[None, :]
             if section.sg_measures[0].is_mechanism_allowed(mech):
                 _probs = _get_pf_for_measures(
                     mech, section.sg_combinations, (dims[0] - 1, dims[1]), max_year

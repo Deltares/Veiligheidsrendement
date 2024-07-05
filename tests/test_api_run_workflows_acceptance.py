@@ -47,7 +47,7 @@ acceptance_test_cases = list(
 )
 
 
-def get_list_of_sections_for_measure_ids(
+def _get_list_of_sections_for_measure_ids(
     vrtool_config: VrtoolConfig,
     measure_ids: list[int],
 ) -> list[int]:
@@ -72,7 +72,7 @@ def get_list_of_sections_for_measure_ids(
     return [x.section.get_id() for x in _sections]
 
 
-def get_all_measure_results_of_specific_type(
+def _get_all_measure_results_of_specific_type(
     vrtool_config: VrtoolConfig,
     measure_type: MeasureTypeEnum,
 ) -> list[int]:
@@ -315,7 +315,7 @@ class TestApiRunWorkflowsAcceptance:
 
         # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
         _measure_ids = [
-            get_all_measure_results_of_specific_type(api_vrtool_config, measure_type)
+            _get_all_measure_results_of_specific_type(api_vrtool_config, measure_type)
             for measure_type in [
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 MeasureTypeEnum.REVETMENT,
@@ -355,7 +355,7 @@ class TestApiRunWorkflowsAcceptance:
 
         # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
         _measure_ids = [
-            get_all_measure_results_of_specific_type(api_vrtool_config, measure_type)
+            _get_all_measure_results_of_specific_type(api_vrtool_config, measure_type)
             for measure_type in [
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
                 MeasureTypeEnum.REVETMENT,
@@ -366,7 +366,7 @@ class TestApiRunWorkflowsAcceptance:
         _measure_ids = sorted([item for sublist in _measure_ids for item in sublist])
 
         # get the sections for each measure
-        _sections_per_measure_id = get_list_of_sections_for_measure_ids(
+        _sections_per_measure_id = _get_list_of_sections_for_measure_ids(
             api_vrtool_config, _measure_ids
         )
 

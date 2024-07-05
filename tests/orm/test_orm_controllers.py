@@ -17,10 +17,6 @@ from tests import (
     test_externals,
     test_results,
 )
-from tests.optimization.conftest import (
-    _get_section_with_combinations,
-    _get_section_with_measures,
-)
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -1041,7 +1037,7 @@ class TestOrmControllers:
         self, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _test_dir_name = "test_stability_multiple_scenarios"
+        _test_dir_name = str(Path("reported_bugs", "test_stability_multiple_scenarios"))
         _test_case_dir = get_copy_of_reference_directory(_test_dir_name)
 
         _vrtool_config = get_vrtool_config_test_copy(
