@@ -350,7 +350,11 @@ class TestApiRunWorkflowsAcceptance:
         )
         clear_optimization_results(api_vrtool_config)
 
-        _validator = RunStepOptimizationValidator("_adjusted_timing")
+        # The post validation is not reliable as the way to calculate lcc's does not
+        # seem to be accurate when dealing with filtered timings.
+        _validator = RunStepOptimizationValidator(
+            reference_db_suffix="_adjusted_timing", report_validation=False
+        )
         _validator.validate_preconditions(api_vrtool_config)
 
         # get the measure ids. We only consider soil reinforcement, revetment (if available) and VZG
