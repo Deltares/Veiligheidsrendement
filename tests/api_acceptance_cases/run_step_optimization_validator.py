@@ -231,7 +231,7 @@ class RunStepOptimizationValidator(RunStepValidator):
         # TODO: Due to time concerns we reuse the logic from the report
         # to compare optimization lcc with measure result cost by simply
         # reading the 'lines' in their respective reports.
-        if _found_errors.values():
+        if any(_found_errors.values()):
             _error_header = "For {}, the following errors were found: \n"
             _error_str = ""
             for _opt_run, _errors in _found_errors.items():
