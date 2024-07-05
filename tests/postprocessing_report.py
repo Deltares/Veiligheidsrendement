@@ -70,10 +70,13 @@ class PostProcessingReport:
             _logger.removeHandler(_handler)
             _handler.close()
 
-    def generate_report(self):
+    def generate_report(self) -> dict[str, list[str]]:
         """
         Generates all related plots and documents to report the differences
         between reference and result databases.
+
+        Returns:
+            dict[str, list[str]]: A dictionary containing the optimization run's errors.
         """
 
         # Define colors.
@@ -92,6 +95,7 @@ class PostProcessingReport:
             "Result + Reference runs - %s", _result_and_reference_runs.to_string()
         )
 
+        _comparison_errors = {}
         for _result_run_dict in _result_runs:
             # We iterate over results because reference could also contain
             # strategies that are actually not being tested!
@@ -100,6 +104,24 @@ class PostProcessingReport:
             if not _reference_run_dict:
                 continue
             self._generate_run_report(_reference_run_dict, _result_run_dict)
+            _comparison_errors = (
+                _comparison_errors
+                | self._validate_comparison_of_optimization_and_betas(_result_run_dict)
+            )
+
+        return _comparison_errors
+
+    def _validate_comparison_of_optimization_and_betas(
+        self, subreport_dirname: str
+    ) -> dict[str, list[str]]:
+        _subreport_path = self.report_dir.joinpath(
+            subreport_dirname["optimization_type_name"]
+        )
+        _comparison_file = _subreport_path.joinpath(
+            "costs_measure_result_v_opt_step.txt"
+        )
+        _errors_found = _comparison_file.read_text().splitlines()
+        return {subreport_dirname["optimization_type_name"]: _errors_found}
 
     def _find_reference_run(self, run_type: str, reference_runs: list[dict]) -> dict:
         _found_runs = [

@@ -226,7 +226,20 @@ class RunStepOptimizationValidator(RunStepValidator):
                 "postprocessing_report_" + results_path.stem
             ),
         ) as _pp_report:
-            _pp_report.generate_report()
+            _found_errors = _pp_report.generate_report()
+
+        # TODO: Due to time concerns we reuse the logic from the report
+        # to compare optimization lcc with measure result cost by simply
+        # reading the 'lines' in their respective reports.
+        if _found_errors.values():
+            _error_header = "For {}, the following errors were found: \n"
+            _error_str = ""
+            for _opt_run, _errors in _found_errors.items():
+                _error_str += _error_header.format(_opt_run)
+                _error_str += "\n\t".join(_errors)
+                _error_str += "\n"
+
+            pytest.fail(_error_str)
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Steps for validation.
