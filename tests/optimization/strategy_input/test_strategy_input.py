@@ -41,6 +41,7 @@ class TestStrategyInput:
     def test_optimization_input(self):
         # 1. Define input
         _design_method = "dummy_method"
+        _discount_rate = 0.03
 
         # Measures
         # - Sh soil year 0/20
@@ -58,7 +59,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
             dcrest=0,
@@ -72,7 +73,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=20,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
             dcrest=0,
@@ -95,7 +96,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.FULL,
             cost=234567,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_diaphragm_0,
             dcrest=-999,
@@ -118,7 +119,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=123456,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_384,
             dcrest=-999,
@@ -141,7 +142,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=223456,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_484,
             dcrest=-999,
@@ -164,7 +165,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
@@ -176,7 +177,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=20,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
@@ -197,7 +198,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.PARTIAL,
             cost=1302200,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_vzg_0,
             dberm=-999,
@@ -335,7 +336,7 @@ class TestStrategyInput:
 
         # 2. Run test
         _strategy_input = StrategyInput.from_section_as_input_collection(
-            _sections, _design_method
+            _sections, _design_method, _discount_rate
         )
 
         # 3. Verify expectations

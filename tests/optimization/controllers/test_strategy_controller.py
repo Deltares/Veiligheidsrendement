@@ -7,7 +7,7 @@ class TestStrategyController:
         _list_section_as_input = []
 
         # 2. Run test.
-        _controller = StrategyController(_list_section_as_input)
+        _controller = StrategyController(_list_section_as_input, None)
 
         # 3. Verify expectations.
         assert isinstance(_controller, StrategyController)

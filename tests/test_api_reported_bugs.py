@@ -105,24 +105,6 @@ class TestApiReportedBugs:
         if isinstance(vrtool_db, SqliteDatabase) and not vrtool_db.is_closed():
             vrtool_db.close()
 
-        # Copy the test database to the results directory so it can be manually reviewed.
-        if _test_config.input_database_path.exists():
-            _results_db_name = _test_config.output_directory.joinpath(
-                "vrtool_result.db"
-            )
-            shutil.move(_test_config.input_database_path, _results_db_name)
-
-            # Copy the postprocessing report if it exists.
-            # For now it assumes it's created at the same level as the results
-            _report = _test_config.input_database_path.parent.joinpath(
-                "postprocessing_report_" + _test_config.input_database_path.stem
-            )
-            if _report.exists():
-                shutil.move(
-                    _report,
-                    _test_config.output_directory.joinpath("postprocessing_report"),
-                )
-
     @pytest.mark.parametrize(
         "api_vrtool_config",
         [
@@ -138,7 +120,7 @@ class TestApiReportedBugs:
                         ],
                     )
                 ),
-                id="[VRTOOL-561] Sections without selected optimization measures.",
+                id="Sections without selected optimization measures [VRTOOL-561]",
             )
         ],
         indirect=True,
@@ -160,4 +142,4 @@ class TestApiReportedBugs:
 
         # 3. Verify expectations.
         assert isinstance(_results_optimization, ResultsOptimization)
-        assert any(api_vrtool_config.output_directory.glob("*"))
+        assert any(_results_optimization.results_strategies)

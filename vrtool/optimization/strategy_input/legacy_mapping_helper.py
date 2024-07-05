@@ -94,6 +94,8 @@ class LegacyMappingHelper:
             # Loop over sections
             for n, _section in enumerate(sections):
                 try:
+                    # if not _section.measures:
+                    #     continue
                     _probs = _get_pf_for_mech(
                         _mech, _section, _pf[_mech].shape[1:], max_year
                     )
