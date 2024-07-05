@@ -41,7 +41,10 @@ class OptimizationTrajectImporter(OrmImporterProtocol):
         for _result_tuple in self._measure_results_to_import:
             _measure_result = MeasureResult.get_by_id(_result_tuple[0])
             _measure_section = _measure_result.measure_per_section.section
-            # Should we allow importing of measures whose section is not included in the analysis?
+            if not _measure_section.in_analysis:
+                raise ValueError(
+                    f"Niet mogelijk om te importeren maatregel (id={_measure_result.id}) in sectie (naam={_measure_section.section_name}) vanwege 'sectie.in_analysis' is False.",
+                )
             _section_measure_result_dict[_measure_section][_measure_result].append(
                 _result_tuple[1]
             )
