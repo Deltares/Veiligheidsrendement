@@ -34,6 +34,10 @@ class OrmVersion:
         )
 
     @staticmethod
+    def construct_version_string(version: tuple[int, int, int]) -> str:
+        return ".".join(map(str, version))
+
+    @staticmethod
     def get_increment_type(
         from_version: tuple[int, int, int], to_version: tuple[int, int, int]
     ) -> IncrementTypeEnum:
@@ -47,7 +51,7 @@ class OrmVersion:
 
     @property
     def version_string(self) -> str:
-        return f"{self.major}.{self.minor}.{self.patch}"
+        return self.construct_version_string((self.major, self.minor, self.patch))
 
     def read_version(self) -> tuple[int, int, int]:
         _version = (0, 0, 0)

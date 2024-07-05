@@ -17,15 +17,29 @@ class TestOrmVersion:
         # 2. Verify expectations
         assert isinstance(_orm_version, OrmVersion)
 
-    def test_read_version_no_file_returns_default(self):
-        # 1. Define test data
-        _orm_version = OrmVersion(None)
-
-        # 2. Execute test
-        _version = _orm_version.read_version()
+    @pytest.mark.parametrize(
+        "version_string, expected",
+        [
+            pytest.param("v1_2_3", (1, 2, 3), id="v1_2_3"),
+            pytest.param("1.2.3", (1, 2, 3), id="1.2.3"),
+        ],
+    )
+    def test_parse_version(self, version_string: str, expected: tuple[int, int, int]):
+        # 1. Execute test
+        _version = OrmVersion.parse_version(version_string)
 
         # 3. Verify expectations
-        assert _version == ZERO_VERSION
+        assert _version == expected
+
+    def test_construct_version_string(self):
+        # 1. Define test data
+        _version = (1, 2, 3)
+
+        # 2. Execute test
+        _version_string = OrmVersion.construct_version_string(_version)
+
+        # 3. Verify expectations
+        assert _version_string == "1.2.3"
 
     def test_read_version_empty_file_returns_default(
         self, request: pytest.FixtureRequest
