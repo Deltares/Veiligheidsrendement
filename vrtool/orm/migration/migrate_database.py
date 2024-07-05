@@ -23,15 +23,12 @@ class MigrateDb:
     force_orm: bool
 
     def __init__(self, **kwargs):
-        _scripts_dir = Path(__file__).parent.joinpath("versions")
+        _scripts_dir = Path(__file__).parent.joinpath("scripts")
         self.scripts_dict = self._parse_scripts_dir(_scripts_dir)
         self.orm_version = OrmVersion(None)
         self.force_orm = False
         if "force_orm" in kwargs:
             self.force_orm = kwargs["force_orm"]
-
-    def _get_hash(self, version: tuple[int, int, int]) -> int:
-        return version[0] * 100 + version[1] * 10 + version[2]
 
     def _parse_scripts_dir(self, scripts_dir: Path) -> dict[int, Path]:
         _scripts_dict = dict()
@@ -43,6 +40,13 @@ class MigrateDb:
 
     @staticmethod
     def apply_migration_script(db_filepath: Path, script_filepath: Path) -> None:
+        """
+        Apply the migration script to the database file.
+
+        Args:
+            db_filepath (Path): Path to the database file to migrate.
+            script_filepath (Path): Path to the migration script to apply.
+        """
         try:
             with sqlite3.connect(db_filepath) as _db_connection:
                 print(
@@ -62,7 +66,7 @@ class MigrateDb:
         version in the database will be applied from a lower to a higher version.
 
 
-        Can be run with `python -m migrate_db db_filepath`
+        Can be run with `python -m migrate_db <db_filepath>`
 
         Args:
             database_file (Path): Database file to migrate (`*.db`)
@@ -90,14 +94,15 @@ class MigrateDb:
         for _version, _script in self.scripts_dict.items():
             if _version > _db_version:
                 self.apply_migration_script(db_filepath, _script)
+                set_db_version(_version)
                 if (
                     OrmVersion.get_increment_type(_db_version, _version)
                     == IncrementTypeEnum.MAJOR
                 ):
-                    raise ValueError(
-                        "Major version upgrade detected, aborting. Please finish the migration before continuing."
+                    print(
+                        "Major version upgrade detected, aborting. Please finish the migration step before continuing."
                     )
-                set_db_version(_version)
+                    break
 
         # Update the ORM version if necessary.
         _orm_version = self.orm_version.read_version()
@@ -144,11 +149,12 @@ def migrate_test_databases():
     """
     Migrates all existing test databases (in the `tests` directory) to
     the latest version.
+    The orm version will be updated according to the migration scripts.
 
     Can be run with `poetry run migrate_test_db`
     """
     # Fetch the dir containing the migration scripts.
-    _root_dir = Path(__file__).parent.parent
+    _root_dir = Path(__file__).parent.parent.parent
 
     # Fetch the tests directory.
     _tests_dir = _root_dir.joinpath("tests", "test_data")

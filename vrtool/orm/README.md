@@ -4,10 +4,13 @@ This module focuses on mapping the input/output database tables (in SQLite) to a
 
 ## Module structure.
 
-* Importers: The classes responsible to read one or many tables from a database and trigger the corresponding mappings to `vrtool` objects. They are located in the `vrtool.orm.importers` module.
-* Exporters: The classes responsible to write in one or many tables of a database with the current status of our `vrtool` objects. They are located in the `vrtool.orm.exporters` module.
+* IO:
+  * Importers: The classes responsible to read one or many tables from a database and trigger the corresponding mappings to `vrtool` objects. They are located in the `vrtool.orm.importers` module.
+  * Exporters: The classes responsible to write in one or many tables of a database with the current status of our `vrtool` objects. They are located in the `vrtool.orm.exporters` module.
 * Models: `Python` objects representing the database entities and their relationships. They are located in the `vrtool.orm.models` module.
 * Controllers: A series of endpoints to trigger different actions related to read or write from / to the database. For now located in the `vrtool.orm.orm_controllers.py` file.
+* Version: The classes responsible for managing the verions of the `vrtool.orm`.
+* Migration: The artifacts needed to upgrade 1 or more databases to the latest version of the `vrtool.orm`.
 * `orm_db.py`. File containing the simple definition of the current (`SQLite` database).
 
 ## How to use it?
@@ -58,11 +61,6 @@ In the context of the `orm`:
 * a minor release has functional impact and is backwards compatible (e.g. adding a column with a default value)
 * a patch release has no functional impact and is backwards compatible (e.g. tweaking a database or table property)
 
-### Version update.
-TODO:
-* how to update the version
-* create/run a conversion script adding the version to the database
-
 ### Compatibility check.
 On starting the `vrtool` with a database to import/export data from/to the version of the database is checked against the version or the `orm`.
 In case the version of the database is not compatible with the `orm`, operation is terminated with an error. The user is responsible for creating databases that are compatible. A provided conversion script with instruction can support this process.
@@ -70,5 +68,4 @@ If the database is compatible, a warning or info message is issued if the minor 
 Migration scripts are located in `scripts\migration\versions`.
 
 ### Database migration.
-TODO:
-* how to update the database
+The subpackage `migration` describes the procedure for upgrading databases to the latest version.
