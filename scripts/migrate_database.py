@@ -89,7 +89,7 @@ def migrate_test_databases():
     """
     # Fetch the SQL script.
     _scripts_dir = Path(__file__).parent
-    _migration_file = _scripts_dir.joinpath("v0_2_0__to__v0_3_0.sql")
+    _migration_file = _scripts_dir.joinpath("v0_3_0__to__v1_0_0.sql")
     assert _migration_file.exists(), "No migration file found."
 
     # Fetch the tests directory.
