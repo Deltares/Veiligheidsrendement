@@ -1,13 +1,28 @@
+## 0.3.2 (2024-07-08)
+
+### Fix
+
+- [VRTOOL-561] Sections without measure are not taken for optimization (#330)
+- [VRTOOL-536] Ensure that bundling no longer relies on stability & piping both being present. If not: use 0 values for current pf. Ensure dimensions are consistent. (#329)
+
+## v0.3.1 (2024-07-03)
+
+### Fix
+
+- VRTOOL-522 remove creation of shsgmeasure for custom measures (#320)
+- VRTOOL-521 export corrections (#323)
+
 ## v0.3.0 (2024-05-29)
 
 ### Feat
 
 - VRTOOL-514 custom measure detail with section column (#313)
+- VRTOOL-514 create custom measure per section table
 - VRTOOL-495 implement safe remove of custom measures
 - Added new method to remove custom measures and their results (#299)
-- Exporting CustomMeasure list of dicts does not require all T values (#297)
+- Added new script to add measures to a database. (#302)
+- exporting CustomMeasure list of dicts does not require all T values (#297)
 - Added orm controller call to add custom measures VRTOOL-346 (#287)
-- Extra: Added new script to add measures to a database. (#302)
 
 ### Fix
 

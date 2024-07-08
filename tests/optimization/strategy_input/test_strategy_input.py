@@ -7,7 +7,15 @@ from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_factory import (
+    CombinedMeasureFactory,
+)
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
 from vrtool.optimization.measures.mechanism_per_year import MechanismPerYear
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
@@ -33,6 +41,7 @@ class TestStrategyInput:
     def test_optimization_input(self):
         # 1. Define input
         _design_method = "dummy_method"
+        _discount_rate = 0.03
 
         # Measures
         # - Sh soil year 0/20
@@ -50,7 +59,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
             dcrest=0,
@@ -64,7 +73,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=20,
             mechanism_year_collection=_mech_yr_coll_sh_soil_0,
             dcrest=0,
@@ -87,7 +96,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.FULL,
             cost=234567,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_diaphragm_0,
             dcrest=-999,
@@ -110,7 +119,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=123456,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_384,
             dcrest=-999,
@@ -133,7 +142,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.REVETMENT,
             cost=223456,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sh_revetment_0_484,
             dcrest=-999,
@@ -156,7 +165,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
@@ -168,7 +177,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.COMBINABLE,
             cost=193369,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=20,
             mechanism_year_collection=_mech_yr_coll_sg_soil_0,
             dberm=0,
@@ -189,7 +198,7 @@ class TestStrategyInput:
             combine_type=CombinableTypeEnum.PARTIAL,
             cost=1302200,
             base_cost=0,
-            discount_rate=0.03,
+            discount_rate=_discount_rate,
             year=0,
             mechanism_year_collection=_mech_yr_coll_sg_vzg_0,
             dberm=-999,
@@ -221,42 +230,43 @@ class TestStrategyInput:
         ]
 
         # Combinations
-        _sh_combination_soil_0 = CombinedMeasure.from_input(
+        _sh_combination_soil_0 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_0_0, None, _initial_assessment, 0
         )
-        _sh_combination_soil_20 = CombinedMeasure.from_input(
+        _sh_combination_soil_20 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_20_0, None, _initial_assessment, 1
         )
-        _sh_combination_soil_revetment_0_384 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_0_384 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_0_0, _sh_measure_revetment_0_384, _initial_assessment, 2
         )
-        _sh_combination_soil_revetment_20_384 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_20_384 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_20_0, _sh_measure_revetment_0_384, _initial_assessment, 3
         )
-        _sh_combination_soil_revetment_0_484 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_0_484 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_0_0, _sh_measure_revetment_0_484, _initial_assessment, 4
         )
-        _sh_combination_soil_revetment_20_484 = CombinedMeasure.from_input(
+        _sh_combination_soil_revetment_20_484 = CombinedMeasureFactory.from_input(
             _sh_measure_soil_20_0, _sh_measure_revetment_0_484, _initial_assessment, 5
         )
-        _sh_combination_diaphragm_0 = CombinedMeasure.from_input(
+        _sh_combination_diaphragm_0 = CombinedMeasureFactory.from_input(
             _sh_measure_diaphragm_0, None, _initial_assessment, 6
         )
 
-        _sg_combination_soil_0 = CombinedMeasure.from_input(
+        _sg_combination_soil_0 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_0_0, None, _initial_assessment, 0
         )
-        _sg_combination_soil_20 = CombinedMeasure.from_input(
+        _sg_combination_soil_20 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_20_0, None, _initial_assessment, 1
         )
-        _sg_combination_soil_vzg_0 = CombinedMeasure.from_input(
+        _sg_combination_soil_vzg_0 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_0_0, _sg_measure_vzg_0, _initial_assessment, 2
         )
-        _sg_combination_soil_vzg_20 = CombinedMeasure.from_input(
+        _sg_combination_soil_vzg_20 = CombinedMeasureFactory.from_input(
             _sg_measure_soil_20_0, _sg_measure_vzg_0, _initial_assessment, 3
         )
 
-        _sections[0].combined_measures = [
+        _section_idx = 0
+        _sections[_section_idx].combined_measures = [
             _sh_combination_soil_0,
             _sh_combination_soil_20,
             _sh_combination_soil_revetment_0_384,
@@ -271,44 +281,52 @@ class TestStrategyInput:
         ]
 
         # Aggregations
-        _sections[0].aggregated_measure_combinations = [
-            AggregatedMeasureCombination(
-                _sh_combination_soil_0, _sg_combination_soil_0, 1, 0
-            ),
-            AggregatedMeasureCombination(
+        def get_aggregation(
+            sh_measure: ShCombinedMeasure,
+            sg_measure: SgCombinedMeasure,
+            measure_result_id: int,
+            year: int,
+        ) -> AggregatedMeasureCombination:
+            return AggregatedMeasureCombination(
+                sh_combination=sh_measure,
+                sg_combination=sg_measure,
+                shsg_combination=None,
+                measure_result_id=measure_result_id,
+                year=year,
+            )
+
+        _sections[_section_idx].aggregated_measure_combinations = [
+            get_aggregation(_sh_combination_soil_0, _sg_combination_soil_0, 1, 0),
+            get_aggregation(
                 _sh_combination_soil_revetment_0_384, _sg_combination_soil_0, 2, 0
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_0_484, _sg_combination_soil_0, 3, 0
             ),
-            AggregatedMeasureCombination(
-                _sh_combination_soil_0, _sg_combination_soil_vzg_0, 4, 0
-            ),
-            AggregatedMeasureCombination(
+            get_aggregation(_sh_combination_soil_0, _sg_combination_soil_vzg_0, 4, 0),
+            get_aggregation(
                 _sh_combination_soil_revetment_0_384, _sg_combination_soil_vzg_0, 5, 0
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_0_484, _sg_combination_soil_vzg_0, 6, 0
             ),
-            AggregatedMeasureCombination(
-                _sh_combination_soil_20, _sg_combination_soil_20, 1, 20
-            ),
-            AggregatedMeasureCombination(
+            get_aggregation(_sh_combination_soil_20, _sg_combination_soil_20, 1, 20),
+            get_aggregation(
                 _sh_combination_soil_revetment_20_384, _sg_combination_soil_20, 2, 20
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_20_484, _sg_combination_soil_20, 3, 20
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_20, _sg_combination_soil_vzg_20, 4, 20
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_20_384,
                 _sg_combination_soil_vzg_20,
                 5,
                 20,
             ),
-            AggregatedMeasureCombination(
+            get_aggregation(
                 _sh_combination_soil_revetment_20_484,
                 _sg_combination_soil_vzg_20,
                 6,
@@ -318,7 +336,7 @@ class TestStrategyInput:
 
         # 2. Run test
         _strategy_input = StrategyInput.from_section_as_input_collection(
-            _sections, _design_method
+            _sections, _design_method, _discount_rate
         )
 
         # 3. Verify expectations
@@ -351,14 +369,13 @@ class TestStrategyInput:
 
         # Cost
         assert isinstance(_strategy_input.LCCOption, ndarray)
-        assert _strategy_input.LCCOption.shape == (1, 8, 5)
-        assert _strategy_input.LCCOption[0, 0, 0] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 1, 1] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 1, 2] == pytest.approx(1e99)
-        assert _strategy_input.LCCOption[0, 1, 3] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 2, 2] == pytest.approx(214127.45)
-        assert _strategy_input.LCCOption[0, 3, 3] == pytest.approx(0.0)
-        assert _strategy_input.LCCOption[0, 4, 4] == pytest.approx(1003478.61)
 
+        assert _strategy_input.LCCOption.shape == (1, 8, 5)
+        for _amc in _sections[_section_idx].aggregated_measure_combinations:
+            _sh_sequence_nr, _sg_sequence_nr = _amc.get_combination_idx()
+            # +1 because the `LegacyMappingHelper` requires it for the `_lcc` array.
+            assert _strategy_input.LCCOption[
+                _section_idx, _sh_sequence_nr + 1, _sg_sequence_nr + 1
+            ] == pytest.approx(_amc.lcc)
         # Other structures
         assert _strategy_input.D.shape == (50,)

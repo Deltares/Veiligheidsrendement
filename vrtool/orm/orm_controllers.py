@@ -25,11 +25,11 @@ from vrtool.orm.io.exporters.safety_assessment.dike_section_reliability_exporter
 )
 from vrtool.orm.io.importers.decision_making.solutions_importer import SolutionsImporter
 from vrtool.orm.io.importers.dike_traject_importer import DikeTrajectImporter
-from vrtool.orm.io.importers.optimization.optimization_section_as_input_importer import (
-    OptimizationSectionAsInputImporter,
-)
 from vrtool.orm.io.importers.optimization.optimization_step_importer import (
     OptimizationStepImporter,
+)
+from vrtool.orm.io.importers.optimization.optimization_traject_importer import (
+    OptimizationTrajectImporter,
 )
 from vrtool.orm.orm_db import vrtool_db
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
@@ -300,32 +300,13 @@ def import_results_measures_for_optimization(
         list[SectionAsInput]: Mapped sections with relevant measure results data.
     """
 
-    def get_measure_results_to_import() -> (
-        dict[orm.SectionData, dict[orm.MeasureResult, list[int]]]
-    ):
-        """
-        Returns a dictionary of `orm.SectionData` containing dictionaries of their
-        to-be-imported `orm.MeasureResult` with their respective `investment_year`.
-        """
-        _section_measure_result_dict = defaultdict(lambda: defaultdict(list))
-        for _result_tuple in results_ids_to_import:
-            _measure_result = orm.MeasureResult.get_by_id(_result_tuple[0])
-            _measure_section = _measure_result.measure_per_section.section
-            _section_measure_result_dict[_measure_section][_measure_result].append(
-                _result_tuple[1]
-            )
-
-        return _section_measure_result_dict
-
     # Import a solution per section:
     _list_section_as_input: list[SectionAsInput] = []
     with open_database(config.input_database_path).connection_context():
-        _importer = OptimizationSectionAsInputImporter(config)
-        _list_section_as_input = list(
-            map(
-                _importer.import_from_section_data_results,
-                get_measure_results_to_import().items(),
-            )
+        _list_section_as_input = OptimizationTrajectImporter(
+            config, results_ids_to_import
+        ).import_orm(
+            orm.DikeTrajectInfo.get(orm.DikeTrajectInfo.traject_name == config.traject)
         )
 
     return _list_section_as_input

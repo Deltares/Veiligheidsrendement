@@ -80,14 +80,7 @@ class MeasureAsInputImporterData:
                 )
             )
 
-        if (
-            not any(_supported_importer_data)
-            or measure_result.measure_type == MeasureTypeEnum.CUSTOM
-        ):
-            # VRTOOL-518: To avoid not knowing which MeasureResult.id needs to be
-            # selected we opted to generate a ShSgMeasure to solve this issue.
-            # However, this will imply the creation of "too many" Custom
-            # `ShSgMeasure` which is accepted for now.
+        if not any(_supported_importer_data):
             _supported_importer_data.append(
                 MeasureAsInputImporterData(
                     measure_result=measure_result,

@@ -31,6 +31,7 @@ class GreedyStrategy(StrategyProtocol):
         self.measures_taken = []
         self.total_risk_per_step = []
         self.probabilities_per_step = []
+        self.selected_aggregated_measures = []
 
     def bundling_output(
         self,
@@ -180,23 +181,36 @@ class GreedyStrategy(StrategyProtocol):
                 # note that matrix indices in existing_investments are always 1 higher than the investment id
                 investment_id_sg = existing_investments[section_no, 1] - 1
 
-                current_pf_stability = (
-                    self.sections[section_no]
-                    .sg_combinations[investment_id_sg]
-                    .mechanism_year_collection.get_probabilities(
-                        MechanismEnum.STABILITY_INNER,
-                        np.arange(0, self.traject_risk.num_years),
+                if (
+                    MechanismEnum.STABILITY_INNER
+                    in self.sections[section_no].initial_assessment.get_mechanisms()
+                ):
+                    current_pf_stability = (
+                        self.sections[section_no]
+                        .sg_combinations[investment_id_sg]
+                        .mechanism_year_collection.get_probabilities(
+                            MechanismEnum.STABILITY_INNER,
+                            np.arange(0, self.traject_risk.num_years),
+                        )
                     )
-                )
+                else:  # return list of same size  with zeros
+                    current_pf_stability = [0.0] * self.traject_risk.num_years
 
-                current_pf_piping = (
-                    self.sections[section_no]
-                    .sg_combinations[investment_id_sg]
-                    .mechanism_year_collection.get_probabilities(
-                        MechanismEnum.PIPING,
-                        np.arange(0, self.traject_risk.num_years),
+                # same for piping
+                if (
+                    MechanismEnum.PIPING
+                    in self.sections[section_no].initial_assessment.get_mechanisms()
+                ):
+                    current_pf_piping = (
+                        self.sections[section_no]
+                        .sg_combinations[investment_id_sg]
+                        .mechanism_year_collection.get_probabilities(
+                            MechanismEnum.PIPING,
+                            np.arange(0, self.traject_risk.num_years),
+                        )
                     )
-                )
+                else:
+                    current_pf_piping = [0.0] * self.traject_risk.num_years
 
                 # measure_pf_stability
                 measure_pfs_stability = self.traject_risk.get_section_probabilities(
@@ -478,6 +492,18 @@ class GreedyStrategy(StrategyProtocol):
 
         return [], 0
 
+    def _add_aggregation(
+        self, section_idx: int, sh_sequence_nr: int, sg_sequence_nr: int
+    ):
+        _aggregated_combinations = self.sections[
+            section_idx
+        ].get_aggregated_combinations(
+            sh_sequence_nr=sh_sequence_nr - 1, sg_sequence_nr=sg_sequence_nr - 1
+        )
+        self.selected_aggregated_measures.append(
+            (section_idx, _aggregated_combinations[0])
+        )
+
     def evaluate(
         self,
         setting: str = "fast",
@@ -591,6 +617,10 @@ class GreedyStrategy(StrategyProtocol):
 
                     if setting == "robust":
                         measure_list.append(Index_Best)
+                        _section_idx, _sh_sequence_nr, _sg_sequence_nr = Index_Best
+                        self._add_aggregation(
+                            _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                        )
                         # update init_probability
                         self.traject_risk.update_probabilities_for_measure(Index_Best)
 
@@ -628,8 +658,15 @@ class GreedyStrategy(StrategyProtocol):
                                 fast_measure[1],
                             )
                             measure_list.append(Index_Best)
+                            self._add_aggregation(
+                                Index_Best[0], fast_measure[0], fast_measure[1]
+                            )
                         else:
                             measure_list.append(Index_Best)
+                            _section_idx, _sh_sequence_nr, _sg_sequence_nr = Index_Best
+                            self._add_aggregation(
+                                _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                            )
                     BC_list.append(BC[Index_Best])
                     self.traject_risk.update_probabilities_for_measure(Index_Best)
 
@@ -660,6 +697,14 @@ class GreedyStrategy(StrategyProtocol):
                             )
 
                             measure_list.append(IndexMeasure)
+                            (
+                                _section_idx,
+                                _sh_sequence_nr,
+                                _sg_sequence_nr,
+                            ) = IndexMeasure
+                            self._add_aggregation(
+                                _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                            )
                             BC_list.append(BC_bundleOverflow)
 
                             self.traject_risk.update_probabilities_for_measure(
@@ -694,6 +739,14 @@ class GreedyStrategy(StrategyProtocol):
                             )
 
                             measure_list.append(IndexMeasure)
+                            (
+                                _section_idx,
+                                _sh_sequence_nr,
+                                _sg_sequence_nr,
+                            ) = IndexMeasure
+                            self._add_aggregation(
+                                _section_idx, _sh_sequence_nr, _sg_sequence_nr
+                            )
                             BC_list.append(BC_bundleRevetment)
 
                             self.traject_risk.update_probabilities_for_measure(

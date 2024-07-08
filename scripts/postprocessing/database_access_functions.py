@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models import *
 from vrtool.orm.orm_controllers import open_database
@@ -202,3 +204,27 @@ def get_measure_type(measure_result_id, database_path):
             .measure.name
         )
     return {"name": measure_name}
+
+
+def get_measure_costs_from_measure_results(
+    database_path: Path, measures_per_step: dict
+):
+    lcc_per_step = []
+    with open_database(database_path) as db:
+        for _, values in measures_per_step.items():
+            lcc = 0
+            for count, mr_id in enumerate(values["measure_result"]):
+                # get the cost from the database by getting the cost from MeasureResultSection
+                measure_cost = MeasureResultSection.get(
+                    MeasureResultSection.measure_result_id == mr_id
+                ).cost
+
+                # discount if necessary
+                if values["investment_year"][count] != 0:
+                    measure_cost = measure_cost / (1.03) ** (
+                        values["investment_year"][count]
+                    )
+
+                lcc += measure_cost
+            lcc_per_step.append(lcc)
+    return lcc_per_step

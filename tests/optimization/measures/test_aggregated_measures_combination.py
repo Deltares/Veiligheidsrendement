@@ -1,9 +1,19 @@
 from dataclasses import dataclass
+from typing import Callable
 
 import pytest
 
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
+)
+from vrtool.optimization.measures.combined_measures.combined_measure_base import (
+    CombinedMeasureBase,
+)
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
 )
 from vrtool.optimization.measures.measure_as_input_protocol import (
     MeasureAsInputProtocol,
@@ -99,3 +109,64 @@ class TestAggregatedMeasuresCombination:
         # 3. Verify expectations
         assert _sh_idx == 1
         assert _sg_idx == 2
+
+    def test_lcc_given_aggregation_with_sh_and_sg_with_different_investment_years(
+        self,
+        combined_measure_factory_fixture: Callable[
+            [type[CombinedMeasureBase], dict, dict], CombinedMeasureBase
+        ],
+    ):
+
+        # 1. Define test data.
+        _sh_combined_measure = combined_measure_factory_fixture(
+            combined_measure_type=ShCombinedMeasure,
+            primary_dict=dict(cost=4.2, base_cost=2.2, year=20),
+            secondary_dict=dict(cost=6.7, base_cost=2.2, year=0),
+        )
+
+        _sg_combined_measure = combined_measure_factory_fixture(
+            combined_measure_type=SgCombinedMeasure,
+            primary_dict=dict(cost=2.4, base_cost=1.4, year=20),
+            secondary_dict=dict(cost=4.6, base_cost=1.4, year=0),
+        )
+
+        # 2. Run test.
+        _aggregated_measure = AggregatedMeasureCombination(
+            sh_combination=_sh_combined_measure,
+            sg_combination=_sg_combined_measure,
+            measure_result_id=-1,
+            year=0,
+        )
+
+        # 3. Verify expectations.
+        assert _aggregated_measure.lcc == pytest.approx(11.3231, 0.0001)
+
+    def test_lcc_given_aggregation_with_sh_with_different_investment_years(
+        self,
+        combined_measure_factory_fixture: Callable[
+            [type[CombinedMeasureBase], dict, dict], CombinedMeasureBase
+        ],
+    ):
+        # 1. Define test data.
+        _sh_combined_measure = combined_measure_factory_fixture(
+            combined_measure_type=ShCombinedMeasure,
+            primary_dict=dict(cost=4.2, base_cost=4.2, year=20),
+            secondary_dict=dict(cost=6.7, base_cost=4.2, year=0),
+        )
+
+        _sg_combined_measure = combined_measure_factory_fixture(
+            combined_measure_type=SgCombinedMeasure,
+            primary_dict=dict(cost=2.4, base_cost=2.4, year=20),
+            secondary_dict=None,
+        )
+
+        # 2. Run test.
+        _aggregated_measure = AggregatedMeasureCombination(
+            sh_combination=_sh_combined_measure,
+            sg_combination=_sg_combined_measure,
+            measure_result_id=-1,
+            year=0,
+        )
+
+        # 3. Verify expectations.
+        assert _aggregated_measure.lcc == pytest.approx(6.7126, 0.0001)

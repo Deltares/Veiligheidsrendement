@@ -95,6 +95,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
         self.measures_taken = []
         self.total_risk_per_step = []
         self.probabilities_per_step = []
+        self.selected_aggregated_measures = []
 
     def check_cross_sectional_requirements(
         self,
@@ -228,6 +229,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
         """
         # get the first possible investment year from the aggregated measures
         _section_as_input = self.sections[section_idx]
+        if not _section_as_input.aggregated_measure_combinations:
+            return []
         _invest_year = min(
             [
                 measure.year
@@ -269,6 +272,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
             list[MechanismEnum]: The list of mechanisms that do not satisfy the cross-sectional requirements.
         """
         _section_as_input = self.sections[section_idx]
+        if not _section_as_input.aggregated_measure_combinations:
+            return [], []
+
         # get the first possible investment year from the aggregated measures
         _invest_year = min(
             measure.year
@@ -385,8 +391,17 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 _invalid_mechanisms_str = " en ".join(
                     [mechanism.name.capitalize() for mechanism in _invalid_mechanisms]
                 )
+                _base_warning = (
+                    "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak %s.",
+                    self.sections[_section_idx].section_name,
+                )
+                if not _valid_measures:
+                    logging.warning(_base_warning)
+                    continue
                 logging.warning(
-                    f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {self.sections[_section_idx].section_name}. De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor {_invalid_mechanisms_str}."
+                    "%s De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor %s.",
+                    _base_warning,
+                    _invalid_mechanisms_str,
                 )
 
             # get measure with lowest lcc from _valid_measures
@@ -395,11 +410,19 @@ class TargetReliabilityStrategy(StrategyProtocol):
             _taken_measures[self.sections[_section_idx].section_name] = _valid_measures[
                 idx
             ]
-            measure_idx = _taken_measures[
+            _aggregated_combination = _taken_measures[
                 self.sections[_section_idx].section_name
-            ].get_combination_idx()
+            ]
+            measure_idx = _aggregated_combination.get_combination_idx()
             _taken_measures_indices.append(
                 (_section_idx, measure_idx[0] + 1, measure_idx[1] + 1)
+            )
+
+            self.selected_aggregated_measures.append(
+                (
+                    _section_idx,
+                    _aggregated_combination,
+                )
             )
 
         # For output we need to give the list of measure indices, the total_risk per step, and the probabilities per step

@@ -20,9 +20,13 @@ OptimizationStepResult = (
 
 class RunStepOptimizationValidator(RunStepValidator):
     _reference_db_suffix: str
+    _report_validation: bool
 
-    def __init__(self, reference_db_suffix: str = "") -> None:
+    def __init__(
+        self, reference_db_suffix: str = "", report_validation: bool = True
+    ) -> None:
         self._reference_db_suffix = reference_db_suffix
+        self._report_validation = report_validation
 
     def validate_preconditions(self, valid_vrtool_config: VrtoolConfig):
         _connected_db = open_database(valid_vrtool_config.input_database_path)
@@ -151,7 +155,9 @@ class RunStepOptimizationValidator(RunStepValidator):
         # Check each row individually.
         for _idx, _reference in enumerate(reference_list):
             _result = result_list[_idx]
-            assert _reference.step_number == _result.step_number
+            assert (
+                _reference.step_number == _result.step_number
+            ), f"Expected {_reference.step_number} but got {_result.step_number}"
             if (
                 _reference.total_lcc is not None
             ):  # TODO: temporary fix as long as references don't contain cost for TR.
@@ -217,11 +223,31 @@ class RunStepOptimizationValidator(RunStepValidator):
     def _generate_postprocessing_report(
         self, reference_path: Path, results_path: Path
     ) -> None:
-        PostProcessingReport(
+        with PostProcessingReport(
             reference_db=reference_path,
             result_db=results_path,
-            report_dir=results_path.parent.joinpath("postprocessing_report"),
-        ).generate_report()
+            report_dir=results_path.parent.joinpath(
+                "postprocessing_report_" + results_path.stem
+            ),
+        ) as _pp_report:
+            _found_errors = _pp_report.generate_report()
+
+        if not self._report_validation:
+            return
+
+        # TODO: Due to time concerns we reuse the logic from the report
+        # to compare optimization lcc with measure result cost by simply
+        # reading the 'lines' in their respective reports.
+
+        if any(_found_errors.values()):
+            _error_header = "For {}, the following errors were found: \n"
+            _error_str = ""
+            for _opt_run, _errors in _found_errors.items():
+                _error_str += _error_header.format(_opt_run)
+                _error_str += "\n\t".join(_errors)
+                _error_str += "\n"
+
+            pytest.fail(_error_str)
 
     def validate_results(self, valid_vrtool_config: VrtoolConfig):
         # Steps for validation.

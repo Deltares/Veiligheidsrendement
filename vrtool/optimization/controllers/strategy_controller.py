@@ -23,8 +23,11 @@ class StrategyController:
     _vrtool_config: VrtoolConfig
     _section_measures_input: list[SectionAsInput]
 
-    def __init__(self, section_measures_input: list[SectionAsInput]) -> None:
+    def __init__(
+        self, section_measures_input: list[SectionAsInput], vrtool_config: VrtoolConfig
+    ) -> None:
         self._section_measures_input = section_measures_input
+        self._vrtool_config = vrtool_config
 
     def combine(self) -> None:
         """
@@ -71,7 +74,9 @@ class StrategyController:
         """
         if strategy_type in [GreedyStrategy, TargetReliabilityStrategy]:
             return StrategyInput.from_section_as_input_collection(
-                self._section_measures_input, design_method
+                self._section_measures_input,
+                design_method,
+                self._vrtool_config.discount_rate,
             )
         raise ValueError(f"Strategy type {strategy_type} not implemented yet.")
 

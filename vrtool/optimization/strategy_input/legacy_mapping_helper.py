@@ -3,7 +3,9 @@ import logging
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.combined_measure_base import (
+    CombinedMeasureBase,
+)
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 
 
@@ -35,7 +37,7 @@ class LegacyMappingHelper:
 
         def _get_pf_for_measures(
             mech: MechanismEnum,
-            combinations: list[CombinedMeasure],
+            combinations: list[CombinedMeasureBase],
             dims: tuple[int, ...],
             max_year: int,
         ) -> np.ndarray:
@@ -61,6 +63,8 @@ class LegacyMappingHelper:
                 mech, list(range(max_year))
             )
             # Get probabilities for all measures
+            if not any(section.measures):
+                return np.array(_initial_probs)[None, :]
             if section.sg_measures[0].is_mechanism_allowed(mech):
                 _probs = _get_pf_for_measures(
                     mech, section.sg_combinations, (dims[0] - 1, dims[1]), max_year

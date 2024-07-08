@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Callable, Iterator
 
 import pytest
 
@@ -16,7 +16,15 @@ from vrtool.optimization.controllers.combine_measures_controller import (
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.shsg_combined_measure import (
+    ShSgCombinedMeasure,
+)
 from vrtool.optimization.measures.mechanism_per_year_probability_collection import (
     MechanismPerYearProbabilityCollection,
 )
@@ -84,7 +92,7 @@ class TestAggregateCombinationsController:
         expected_lcc: float,
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             primary=_make_sh_measure(
                 matching_measure_type,
                 1,
@@ -99,7 +107,7 @@ class TestAggregateCombinationsController:
             ),
             mechanism_year_collection=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             primary=_make_sg_measure(
                 matching_measure_type,
                 1,
@@ -132,16 +140,16 @@ class TestAggregateCombinationsController:
         assert _aggr_meas_comb.lcc == expected_lcc
 
     @pytest.fixture(name="sh_combination")
-    def get_sh_combination(self, request: pytest.FixtureRequest) -> CombinedMeasure:
-        return CombinedMeasure(
+    def get_sh_combination(self, request: pytest.FixtureRequest) -> ShCombinedMeasure:
+        return ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=request.param[0],
             secondary=request.param[1],
         )
 
     @pytest.fixture(name="sg_combination")
-    def get_sg_combination(self, request: pytest.FixtureRequest) -> CombinedMeasure:
-        return CombinedMeasure(
+    def get_sg_combination(self, request: pytest.FixtureRequest) -> SgCombinedMeasure:
+        return SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=request.param[0],
             secondary=request.param[1],
@@ -181,8 +189,8 @@ class TestAggregateCombinationsController:
     )
     def test_aggregate_for_non_compatible_returns_empty_list(
         self,
-        sh_combination: CombinedMeasure,
-        sg_combination: CombinedMeasure,
+        sh_combination: ShCombinedMeasure,
+        sg_combination: SgCombinedMeasure,
         valid_section_as_input: SectionAsInput,
     ):
         # 1. Define input
@@ -201,7 +209,7 @@ class TestAggregateCombinationsController:
         self, valid_section_as_input: SectionAsInput
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=_make_sh_measure(
                 MeasureTypeEnum.DIAPHRAGM_WALL,
@@ -211,7 +219,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=_make_sg_measure(
                 MeasureTypeEnum.DIAPHRAGM_WALL,
@@ -241,7 +249,7 @@ class TestAggregateCombinationsController:
         self, valid_section_as_input: SectionAsInput
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -252,7 +260,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -283,7 +291,7 @@ class TestAggregateCombinationsController:
         self, valid_section_as_input: SectionAsInput
     ):
         # 1. Define input
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -294,7 +302,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -332,7 +340,7 @@ class TestAggregateCombinationsController:
         # 1. Define input
         _sh_id = 1
         _sg_id = 2
-        _sh_combination = CombinedMeasure(
+        _sh_combination = ShCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenShMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -343,7 +351,7 @@ class TestAggregateCombinationsController:
             ),
             secondary=None,
         )
-        _sg_combination = CombinedMeasure(
+        _sg_combination = SgCombinedMeasure(
             mechanism_year_collection=None,
             primary=OverridenSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -369,38 +377,59 @@ class TestAggregateCombinationsController:
 
 
 class TestCostComputation:
-    def test_given_river_sh_sg_measures_gets_expected_lcc_values(self):
-        """
-        VRTOOL-521 example.
-        """
-        # 1. Define test data.
-        def _get_measure_as_input_base_dict() -> dict:
-            return dict(
-                measure_type=MeasureTypeEnum.INVALID,
-                combine_type=CombinableTypeEnum.FULL,
-                measure_result_id=-1,
-                cost=float("nan"),
-                base_cost=float("nan"),
-                discount_rate=1,
-                year=0,
-                mechanism_year_collection=MechanismPerYearProbabilityCollection([]),
-                l_stab_screen=float("nan"),
-            )
+    """
+    (Integration) Tests to wrap up the validation of cost computations (mostly lcc)
+    """
 
-        def _create_sh_measure(sh_measure_dict: dict) -> ShMeasure:
-            _base_dict = _get_measure_as_input_base_dict() | dict(
+    @pytest.fixture(name="measure_as_input_base_dict")
+    def _get_measure_as_input_base_dict_fixture(self) -> Iterator[dict]:
+        yield dict(
+            measure_type=MeasureTypeEnum.INVALID,
+            combine_type=CombinableTypeEnum.FULL,
+            measure_result_id=-1,
+            cost=float("nan"),
+            base_cost=float("nan"),
+            discount_rate=1,
+            year=0,
+            mechanism_year_collection=MechanismPerYearProbabilityCollection([]),
+            l_stab_screen=float("nan"),
+        )
+
+    @pytest.fixture(name="create_sh_measure")
+    def _get_sh_measure_factory_fixture(
+        self, measure_as_input_base_dict: dict
+    ) -> Iterator[Callable[[dict], ShMeasure]]:
+        def create_sh_measure(sh_measure_dict: dict) -> ShMeasure:
+            _base_dict = measure_as_input_base_dict | dict(
                 beta_target=float("nan"),
                 transition_level=float("nan"),
                 dcrest=float("nan"),
             )
             return ShMeasure(**(_base_dict | sh_measure_dict))
 
-        def _create_sg_measure(sg_measure_dict: dict) -> SgMeasure:
-            _base_dict = _get_measure_as_input_base_dict() | dict(
+        yield create_sh_measure
+
+    @pytest.fixture(name="create_sg_measure")
+    def _get_sg_measure_factory_fixture(
+        self, measure_as_input_base_dict: dict
+    ) -> Iterator[Callable[[dict], SgMeasure]]:
+        def create_sg_measure(sg_measure_dict: dict) -> SgMeasure:
+            _base_dict = measure_as_input_base_dict | dict(
                 dberm=float("nan"),
             )
             return SgMeasure(**(_base_dict | sg_measure_dict))
 
+        yield create_sg_measure
+
+    @pytest.fixture(name="cost_computation_section_as_input")
+    def _get_cost_computat_section_as_input_fixture(
+        self,
+        create_sh_measure: Callable[[dict], ShMeasure],
+        create_sg_measure: Callable[[dict], SgMeasure],
+    ) -> Iterator[SectionAsInput]:
+        """
+        VRTOOL-521 example.
+        """
         _diaphragm_wall_measure_dict = dict(
             measure_type=MeasureTypeEnum.DIAPHRAGM_WALL,
             combine_type=CombinableTypeEnum.FULL,
@@ -549,8 +578,8 @@ class TestCostComputation:
             ),
         ]
 
-        _sh_measures = list(map(_create_sh_measure, _sh_measures_dicts))
-        _sg_measures = list(map(_create_sg_measure, _sg_measures_dicts))
+        _sh_measures = list(map(create_sh_measure, _sh_measures_dicts))
+        _sg_measures = list(map(create_sg_measure, _sg_measures_dicts))
         _sh_sg_measures = [
             ShSgMeasure(
                 measure_type=MeasureTypeEnum.SOIL_REINFORCEMENT,
@@ -583,23 +612,33 @@ class TestCostComputation:
                 l_stab_screen=6,
             ),
         ]
-        _section_as_input = SectionAsInput(
+        yield SectionAsInput(
             section_name="River case VRTOOL-521",
             traject_name="test",
             flood_damage=float("nan"),
             measures=_sh_measures + _sg_measures + _sh_sg_measures,
         )
 
+    def test_given_river_sh_sg_measures_gets_expected_lcc_values(
+        self, cost_computation_section_as_input: SectionAsInput
+    ):
+        # 1. Define test data.
+        assert isinstance(cost_computation_section_as_input, SectionAsInput)
+
         # 2. Run test (create combinations and aggregations).
-        _section_as_input.combined_measures = CombineMeasuresController(
-            _section_as_input
+        cost_computation_section_as_input.combined_measures = CombineMeasuresController(
+            cost_computation_section_as_input
         ).combine()
-        _section_as_input.aggregated_measure_combinations = (
-            AggregateCombinationsController(_section_as_input).aggregate()
+        cost_computation_section_as_input.aggregated_measure_combinations = (
+            AggregateCombinationsController(
+                cost_computation_section_as_input
+            ).aggregate()
         )
 
         # 3. Verify expectations.
-        assert len(_section_as_input.aggregated_measure_combinations) == 19
+        assert (
+            len(cost_computation_section_as_input.aggregated_measure_combinations) == 19
+        )
 
         def validate_aggregated_single_combination_lcc(
             measure_result_id: int, expected_lcc: float
@@ -611,7 +650,7 @@ class TestCostComputation:
             _aggregation = next(
                 (
                     am
-                    for am in _section_as_input.aggregated_measure_combinations
+                    for am in cost_computation_section_as_input.aggregated_measure_combinations
                     if am.sg_combination.secondary is None
                     and am.measure_result_id == measure_result_id
                 ),
@@ -660,7 +699,7 @@ class TestCostComputation:
             _aggregation = next(
                 (
                     am
-                    for am in _section_as_input.aggregated_measure_combinations
+                    for am in cost_computation_section_as_input.aggregated_measure_combinations
                     if am.sg_combination.secondary is not None
                     and am.measure_result_id == sh_measure_primary_id
                     and am.sg_combination.secondary.measure_result_id
@@ -676,3 +715,39 @@ class TestCostComputation:
 
         # Soil reinforcement with vertical piping solution
         validate_aggregated_multiple_combination_lcc(10, 217, 2908808.03255916)
+
+    def test_given_aggregations_with_shsg_combined_measures_get_their_value(
+        self, cost_computation_section_as_input: SectionAsInput
+    ):
+        # 1. Define test data.
+        assert isinstance(cost_computation_section_as_input, SectionAsInput)
+
+        # 2. Run test.
+        cost_computation_section_as_input.combined_measures = CombineMeasuresController(
+            cost_computation_section_as_input
+        ).combine()
+
+        _aggregated_measure_combinations = AggregateCombinationsController(
+            cost_computation_section_as_input
+        ).aggregate()
+
+        # 3. Verify expectations.
+        assert any(_aggregated_measure_combinations)
+        assert all(
+            isinstance(_amc, AggregatedMeasureCombination)
+            for _amc in _aggregated_measure_combinations
+        )
+
+        # Get the subset we actually want to test.
+        _with_shsg_combinations = list(
+            filter(
+                lambda x: isinstance(x.shsg_combination, ShSgCombinedMeasure),
+                _aggregated_measure_combinations,
+            )
+        )
+        assert any(_with_shsg_combinations)
+
+        for _amc_with_shsg in _with_shsg_combinations:
+            assert _amc_with_shsg.lcc == pytest.approx(
+                _amc_with_shsg.shsg_combination.lcc
+            )

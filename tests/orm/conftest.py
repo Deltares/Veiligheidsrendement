@@ -128,6 +128,7 @@ def get_vrtool_config_for_custom_measures_db(
         input_database_name=_copy_db.name,
         traject="38-1",
         output_directory=_output_directory,
+        discount_rate=0.03,
     )
     assert _vrtool_config.input_database_path.is_file()
 

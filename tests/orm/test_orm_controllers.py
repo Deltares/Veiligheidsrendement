@@ -17,6 +17,10 @@ from tests import (
     test_externals,
     test_results,
 )
+from tests.optimization.conftest import (  # These imports are required by `test_export_results_optimization_given_valid_data`
+    _get_section_with_combinations,
+    _get_section_with_measures,
+)
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -623,15 +627,16 @@ class TestOrmControllers:
         # Define strategies.
         class MockedStrategy(StrategyProtocol):
             def __init__(self):
-
                 self.sections = [section_with_combinations]
-                self.sections[0].aggregated_measure_combinations = [
-                    AggregatedMeasureCombination(
-                        sh_combination=self.sections[0].sh_combinations[1],
-                        sg_combination=self.sections[0].sg_combinations[0],
-                        measure_result_id=1,
-                        year=0,
-                    )
+                _aggregated_measure_combination = AggregatedMeasureCombination(
+                    sh_combination=self.sections[0].sh_combinations[1],
+                    sg_combination=self.sections[0].sg_combinations[0],
+                    measure_result_id=1,
+                    year=0,
+                )
+                _section_idx = 0
+                self.sections[_section_idx].aggregated_measure_combinations = [
+                    _aggregated_measure_combination
                 ]
                 self.total_risk_per_step = [1000.0, 100.0]
                 self.probabilities_per_step = [
@@ -652,8 +657,11 @@ class TestOrmControllers:
                         ),
                     },
                 ]
-                self.measures_taken = [(0, 1, 1)]
-                self.time_periods = [0, 20, 100]
+                self.measures_taken = [(_section_idx, 1, 1)]
+                self.time_periods = [_section_idx, 20, 100]
+                self.selected_aggregated_measures = [
+                    (_section_idx, _aggregated_measure_combination)
+                ]
 
         _test_strategy = MockedStrategy()
 
@@ -1035,7 +1043,7 @@ class TestOrmControllers:
         self, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _test_dir_name = "test_stability_multiple_scenarios"
+        _test_dir_name = str(Path("reported_bugs", "test_stability_multiple_scenarios"))
         _test_case_dir = get_copy_of_reference_directory(_test_dir_name)
 
         _vrtool_config = get_vrtool_config_test_copy(
@@ -1395,22 +1403,28 @@ class TestCustomMeasureDetail:
 
         # 3. Verify expectations.
         assert isinstance(_imported_data, list)
-        assert len(_imported_data) == 1
-        assert isinstance(_imported_data[0], SectionAsInput)
-        assert _imported_data[0].section_name == _measures_section_id
+        assert any(_imported_data)
+        _imported_with_custom_measures = next(
+            _id for _id in _imported_data if _id.section_name == _measures_section_id
+        )
+        assert isinstance(_imported_with_custom_measures, SectionAsInput)
+        assert _imported_with_custom_measures.section_name == _measures_section_id
 
         _meas_ids = list(
-            set((x.measure_result_id, x.year) for x in _imported_data[0].measures)
+            set(
+                (x.measure_result_id, x.year)
+                for x in _imported_with_custom_measures.measures
+            )
         )
         assert _meas_ids == _custom_measure_detail_ids
 
-        assert len(_imported_data[0].measures) == 3
+        assert len(_imported_with_custom_measures.measures) == 2
 
         _years = custom_measures_vrtool_config.T
         _expected_betas = np.linspace(7, 4, num=7)
 
         # Verify each imported measure
-        for _measure in _imported_data[0].measures:
+        for _measure in _imported_with_custom_measures.measures:
             assert _measure.measure_type == MeasureTypeEnum.CUSTOM
             assert _measure.combine_type == CombinableTypeEnum.FULL
             assert _measure.cost == _custom_measure_cost
@@ -1424,7 +1438,7 @@ class TestCustomMeasureDetail:
 
         # Verify betas for `sg_measure` as `MechanismEnum.PIPING` is only
         # compatible for `sg_measures`
-        for _sg_measure in _imported_data[0].sg_measures:
+        for _sg_measure in _imported_with_custom_measures.sg_measures:
             _overflow_betas = _sg_measure.mechanism_year_collection.get_betas(
                 MechanismEnum.PIPING, _years
             )

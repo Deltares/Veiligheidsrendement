@@ -1,10 +1,13 @@
 import copy
+import logging
 import shutil
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -13,12 +16,16 @@ import scripts.postprocessing.database_analytics as dan
 import scripts.postprocessing.generate_output as got
 from vrtool.common.enums import MechanismEnum
 
+_logger = logging.getLogger(__name__)
+
 
 @dataclass
 class PostProcessingReport:
     """
     Dataclass that produces different figures and files based on its data structure.
     Mostly intended for testing.
+
+    Invoke like: `with PostProcessingReport(...) as pr:` to trigger the ContextApp
 
     Note: If we want to make this class general available (`vrtool` project) then
     we need to adapt all the logic in the `scripts.postprocessing` subproject.
@@ -28,40 +35,123 @@ class PostProcessingReport:
     result_db: Path
     report_dir: Path
 
-    id_for_result: int = 1
-    id_for_reference: int = 1
     has_revetment: bool = True  # Whether a revetment is present or not
     take_last: bool = False  # If True, the last step is taken, if False, the step with minimal total cost is taken
     colors: Any = field(default_factory=lambda: sns.color_palette("colorblind", 10))
 
-    def generate_report(self):
-        """
-        Generates all related plots and documents to report the differences
-        between reference and result databases.
-        """
+    def __enter__(self):
         # Ensure report directory is empty.
         if self.report_dir.exists():
             shutil.rmtree(self.report_dir)
         self.report_dir.mkdir(parents=True)
 
+        # Create a new log file.
+        # We need to set up the root logger, otherwise nothging would be output.
+        logging.root.setLevel(logging.DEBUG)
+        _log_file = self.report_dir.joinpath("postprocessing.log")
+        _log_file.unlink(missing_ok=True)
+        _log_file.touch()
+
+        # Set file handler
+        _file_handler = logging.FileHandler(filename=_log_file, encoding="utf-8")
+        _formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        _file_handler.setFormatter(_formatter)
+        _file_handler.setLevel(logging.DEBUG)
+
+        # Add file handler to logger.
+        _logger.addHandler(_file_handler)
+        _logger.info("Staretd postprocessing report logger.")
+        return self
+
+    def __exit__(self, *args):
+        for _handler in _logger.handlers:
+            _logger.removeHandler(_handler)
+            _handler.close()
+
+    def generate_report(self) -> dict[str, list[str]]:
+        """
+        Generates all related plots and documents to report the differences
+        between reference and result databases.
+
+        Returns:
+            dict[str, list[str]]: A dictionary containing the optimization run's errors.
+        """
+
         # Define colors.
         sns.set(style="whitegrid")
 
         # Get the runs to compare
-        result_runs = daf.get_overview_of_runs(self.result_db)
-        reference_runs = daf.get_overview_of_runs(self.reference_db)
+        _result_runs = daf.get_overview_of_runs(self.result_db)
+        _reference_runs = daf.get_overview_of_runs(self.reference_db)
 
         # This should generate a csv table?
-        pd.DataFrame(result_runs + reference_runs)
+        _result_and_reference_runs = pd.DataFrame(_result_runs + _reference_runs)
+        _result_and_reference_runs.to_csv(
+            self.report_dir.joinpath("result_and_reference_runs_table.csv"), sep=","
+        )
+        _logger.info(
+            "Result + Reference runs - %s", _result_and_reference_runs.to_string()
+        )
+
+        _comparison_errors = {}
+        for _result_run_dict in _result_runs:
+            # We iterate over results because reference could also contain
+            # strategies that are actually not being tested!
+            _run_type = _result_run_dict["optimization_type"]
+            _reference_run_dict = self._find_reference_run(_run_type, _reference_runs)
+            if not _reference_run_dict:
+                continue
+            self._generate_run_report(_reference_run_dict, _result_run_dict)
+            _comparison_errors = (
+                _comparison_errors
+                | self._validate_comparison_of_optimization_and_betas(_result_run_dict)
+            )
+
+        return _comparison_errors
+
+    def _validate_comparison_of_optimization_and_betas(
+        self, subreport_dirname: str
+    ) -> dict[str, list[str]]:
+        _subreport_path = self.report_dir.joinpath(
+            subreport_dirname["optimization_type_name"]
+        )
+        _comparison_file = _subreport_path.joinpath(
+            "costs_measure_result_v_opt_step.txt"
+        )
+        _errors_found = _comparison_file.read_text().splitlines()
+        return {subreport_dirname["optimization_type_name"]: _errors_found}
+
+    def _find_reference_run(self, run_type: str, reference_runs: list[dict]) -> dict:
+        _found_runs = [
+            rr for rr in reference_runs if rr["optimization_type"] == run_type
+        ]
+        if not _found_runs:
+            _logger.error("No reference runs found for optimization type %s", run_type)
+
+        if len(_found_runs) > 1:
+            _logger.warning(
+                "Found more than one reference run for optimization type %s; using only the first one.",
+                run_type,
+            )
+        return _found_runs[0]
+
+    def _generate_run_report(self, reference_run_dict: dict, result_run_dict: dict):
+        _reference_id = reference_run_dict["id"]
+        _result_id = result_run_dict["id"]
+
+        _subreport_dir = self.report_dir.joinpath(
+            reference_run_dict["optimization_type_name"]
+        )
+        _subreport_dir.mkdir(exist_ok=True)
 
         # For each run, we get the optimization steps and the index of the step with minimal total costs. This is the optimal combination of measures.
         optimization_steps = {
             "reference": daf.get_optimization_steps_for_run_id(
-                self.reference_db, self.id_for_reference
+                self.reference_db, _reference_id
             ),
-            "result": daf.get_optimization_steps_for_run_id(
-                self.result_db, self.id_for_result
-            ),
+            "result": daf.get_optimization_steps_for_run_id(self.result_db, _result_id),
         }
 
         # add total cost as sum of total_lcc and total_risk in each step
@@ -77,14 +167,14 @@ class PostProcessingReport:
                 "result": len(optimization_steps["result"]) - 1,
             }
 
-        self._plot_total_cost_and_risk(optimization_steps, considered_tc_step)
+        self._plot_total_cost_and_risk(
+            optimization_steps, considered_tc_step, _subreport_dir
+        )
 
         # Reading measures per step
         lists_of_measures = {
-            "reference": daf.get_measures_for_run_id(
-                self.reference_db, self.id_for_reference
-            ),
-            "result": daf.get_measures_for_run_id(self.result_db, self.id_for_result),
+            "reference": daf.get_measures_for_run_id(self.reference_db, _reference_id),
+            "result": daf.get_measures_for_run_id(self.result_db, _result_id),
         }
 
         measures_per_step = {
@@ -141,7 +231,9 @@ class PostProcessingReport:
             ),
         }
 
-        self._plot_traject_probability_for_step(traject_prob, considered_tc_step)
+        self._plot_traject_probability_for_step(
+            traject_prob, considered_tc_step, _subreport_dir
+        )
 
         # Define measures per section.
         measures_per_section = {
@@ -153,7 +245,7 @@ class PostProcessingReport:
             ),
         }
 
-        self._print_measure_result_ids(measures_per_section)
+        self._print_measure_result_ids(measures_per_section, _subreport_dir)
 
         # Set section parameters
         section_parameters = {"reference": {}, "result": {}}
@@ -182,10 +274,10 @@ class PostProcessingReport:
 
         # Potentially we can export this to csv:
         measure_parameters["reference"].to_csv(
-            str(self.report_dir.joinpath("reference_measures.csv"))
+            str(_subreport_dir.joinpath("reference_measures.csv"))
         )
         measure_parameters["result"].to_csv(
-            str(self.report_dir.joinpath("result_measures.csv"))
+            str(_subreport_dir.joinpath("result_measures.csv"))
         )
 
         # Analysis of reliability index
@@ -225,26 +317,126 @@ class PostProcessingReport:
             var_name="mechanism",
             value_name="beta",
         )
-        self._plot_comparison_of_betas(betas_per_section_and_mechanism)
+        self._plot_comparison_of_betas(betas_per_section_and_mechanism, _subreport_dir)
 
-    def _plot_comparison_of_betas(self, betas_per_section_and_mechanism: pd.DataFrame):
+        # Extra
+        _lcc_per_step = {
+            "reference": daf.get_measure_costs_from_measure_results(
+                self.reference_db, measures_per_step["reference"]
+            ),
+            "result": daf.get_measure_costs_from_measure_results(
+                self.result_db, measures_per_step["result"]
+            ),
+        }
+
+        _optimization_lcc = {
+            "reference": self._get_incremental_cost_from_optimization_path(
+                optimization_steps["reference"], measures_per_step["reference"]
+            ),
+            "result": self._get_incremental_cost_from_optimization_path(
+                optimization_steps["result"], measures_per_step["result"]
+            ),
+        }
+        self._plot_lcc_based_on_optimization_step_and_measure_result(
+            _lcc_per_step, optimization_steps, _optimization_lcc, _subreport_dir
+        )
+        self._print_different_costs_between_measure_result_and_optimization_step(
+            _lcc_per_step, _optimization_lcc, _subreport_dir
+        )
+
+    def _get_incremental_cost_from_optimization_path(
+        self, optimization_steps, measures_per_step
+    ):
+        lcc = [0] + [step["total_lcc"] for step in optimization_steps]
+        lcc_increments = np.diff(lcc)
+        lcc_per_section = defaultdict(lambda: 0.0)
+        lcc_steps = []
+        for step, values in measures_per_step.items():
+            # get the section id
+            section_id = values["section_id"][0]
+            # compute the cost based on lcc, take the difference with the previous step and add it
+            lcc_per_section[section_id] += lcc_increments[step - 1]
+            lcc_steps.append(lcc_per_section[section_id])
+
+        return lcc_steps
+
+    def _plot_lcc_based_on_optimization_step_and_measure_result(
+        self,
+        lcc_per_step: dict,
+        optimization_steps: dict,
+        optimization_lcc: dict,
+        subreport_dir: Path,
+    ):
+        _x_limit = max(*optimization_lcc["reference"], *optimization_lcc["result"])
+        _y_limit = max(*lcc_per_step["reference"], *lcc_per_step["result"])
+
+        _, ax = plt.subplots()
+        for count, run in enumerate(optimization_steps.keys()):
+            ax.plot(
+                optimization_lcc[run],
+                lcc_per_step[run],
+                label=run,
+                marker="o",
+                linestyle="",
+                color=self.colors[count],
+            )
+        # plot diagonal
+        ax.plot([0, 25e6], [0, 25e6], color="black")
+        ax.set_xlabel("LCC based on OptimizationStep")
+        ax.set_ylabel("LCC based on MeasureResult")
+        ax.set_xlim(
+            left=0,
+            right=_x_limit,
+        )
+        ax.set_ylim(
+            bottom=0,
+            top=_y_limit,
+        )
+        ax.legend()
+        plt.savefig(
+            subreport_dir.joinpath("lcc_optimization_step_v_measure_result.png")
+        )
+
+    def _print_different_costs_between_measure_result_and_optimization_step(
+        self, lcc_per_step: dict, optimization_lcc: dict, subreport_dir: Path
+    ):
+        # for result get the ids where costs ar different
+        different_costs = []
+        for _step, (ref, res) in enumerate(
+            zip(lcc_per_step["result"], optimization_lcc["result"])
+        ):
+            if np.abs(ref - res) > 1e-4:
+                different_costs.append(_step)
+        _lines = []
+        for _step in different_costs:
+            _lines.append(
+                f"Step {_step+1} has different costs (mr_id vs opt): {lcc_per_step['result'][_step]} vs {optimization_lcc['result'][_step]}"
+            )
+
+        _txt_file = subreport_dir.joinpath("costs_measure_result_v_opt_step.txt")
+        _txt_file.touch()
+        _txt_file.write_text("\n".join(_lines), encoding="utf-8")
+
+    def _plot_comparison_of_betas(
+        self, betas_per_section_and_mechanism: pd.DataFrame, subreport_dir: Path
+    ):
         # Next we make a plot to compare the beta for both runs
         got.plot_comparison_of_beta_values(betas_per_section_and_mechanism)
-        plt.savefig(self.report_dir.joinpath("comparison_of_beta_values.png"))
+        plt.savefig(subreport_dir.joinpath("comparison_of_beta_values.png"))
 
         # Differences can also be revealing.
         got.plot_difference_in_betas(
             betas_per_section_and_mechanism, self.has_revetment
         )
-        plt.savefig(self.report_dir.joinpath("difference_in_betas.png"))
+        plt.savefig(subreport_dir.joinpath("difference_in_betas.png"))
 
         got.plot_difference_in_betas_per_section(
             betas_per_section_and_mechanism, self.has_revetment
         )
-        plt.savefig(self.report_dir.joinpath("difference_in_betas_per_section.png"))
+        plt.savefig(subreport_dir.joinpath("difference_in_betas_per_section.png"))
 
     def _plot_total_cost_and_risk(
-        self, optimization_steps: dict, considered_tc_step: dict
+        self, optimization_steps: dict, considered_tc_step: dict, subreport_dir: Path
     ):
         _, ax = plt.subplots()
         markers = ["d", "o"]
@@ -264,10 +456,10 @@ class PostProcessingReport:
         ax.set_xlim(left=0)
         ax.set_ylim(top=1e10)
         ax.legend()
-        plt.savefig(self.report_dir.joinpath("total_lcc_and_risk.png"))
+        plt.savefig(subreport_dir.joinpath("total_lcc_and_risk.png"))
 
     def _plot_traject_probability_for_step(
-        self, traject_prob: dict, considered_tc_step: dict
+        self, traject_prob: dict, considered_tc_step: dict, subreport_dir: Path
     ):
         _, ax = plt.subplots()
 
@@ -300,9 +492,11 @@ class PostProcessingReport:
             linestyle="-",
         )
         ax.set_xlim(left=0, right=100)
-        plt.savefig(self.report_dir.joinpath("traject_probablity_for_step.png"))
+        plt.savefig(subreport_dir.joinpath("traject_probablity_for_step.png"))
 
-    def _print_measure_result_ids(self, measures_per_section: dict):
+    def _print_measure_result_ids(
+        self, measures_per_section: dict, subreport_dir: Path
+    ):
         _lines = []
 
         def get_measures_per_section(run_key: str, section_key: str) -> list:
@@ -320,6 +514,6 @@ class PostProcessingReport:
             get_measures_per_section("reference", _unique_section)
             get_measures_per_section("result", _unique_section)
 
-        _txt_file = self.report_dir.joinpath("measure_result_ids.txt")
+        _txt_file = subreport_dir.joinpath("measure_result_ids.txt")
         _txt_file.touch()
         _txt_file.write_text("\n".join(_lines), encoding="utf-8")

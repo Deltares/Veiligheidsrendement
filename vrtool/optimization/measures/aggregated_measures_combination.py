@@ -1,15 +1,31 @@
 from dataclasses import dataclass
 
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
-from vrtool.optimization.measures.combined_measure import CombinedMeasure
+from vrtool.optimization.measures.combined_measures.sg_combined_measure import (
+    SgCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.sh_combined_measure import (
+    ShCombinedMeasure,
+)
+from vrtool.optimization.measures.combined_measures.shsg_combined_measure import (
+    ShSgCombinedMeasure,
+)
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AggregatedMeasureCombination:
-    sh_combination: CombinedMeasure
-    sg_combination: CombinedMeasure
+    """
+    Represents the aggregation of the same `ShMeasure` and `SgMeasure`
+    both contained within a `CombinedMeasureBase` dataclass.
+    It could also contain the "exceptional created" `ShSgMeasure` that
+    also represents their combined costs.
+    """
+
+    sh_combination: ShCombinedMeasure
+    sg_combination: SgCombinedMeasure
+    shsg_combination: ShSgCombinedMeasure | None = None
     measure_result_id: int
     year: int
 
@@ -33,11 +49,11 @@ class AggregatedMeasureCombination:
             and self.sg_combination.is_base_measure()
         ):
             return 0
-        return (
-            self.sh_combination.cost
-            + self.sg_combination.cost
-            - self.sh_combination.primary.base_cost
-        ) / (1 + self.sh_combination.primary.discount_rate) ** self.year
+
+        if isinstance(self.shsg_combination, ShSgCombinedMeasure):
+            return self.shsg_combination.lcc
+
+        return self.sh_combination.lcc + self.sg_combination.lcc
 
     def check_primary_measure_result_id_and_year(
         self, primary_sh: ShMeasure, primary_sg: SgMeasure
