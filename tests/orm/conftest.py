@@ -93,11 +93,7 @@ def get_empty_db_path_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
 
     yield _test_db_file
 
-    try:
-        _test_db_file.unlink()
-    except PermissionError:
-        # If the file is locked, it will not be removed.
-        pass
+    _test_db_file.unlink()
 
 
 @pytest.fixture(name="custom_measures_vrtool_config")
