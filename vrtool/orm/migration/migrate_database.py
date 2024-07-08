@@ -1,4 +1,5 @@
 # Inspired by https://stackoverflow.com/a/19473206
+import logging
 import sqlite3
 from collections import OrderedDict
 from pathlib import Path
@@ -49,7 +50,9 @@ class MigrateDb:
         """
 
         with sqlite3.connect(db_filepath) as _db_connection:
-            print(f"Migrating database file with {script_filepath.stem}: {db_filepath}")
+            logging.info(
+                "Applying migration script: %s to %s", script_filepath.stem, db_filepath
+            )
             _db_connection.executescript(script_filepath.read_text(encoding="utf-8"))
 
     def migrate_single_db(self, db_filepath: Path):
@@ -101,7 +104,9 @@ class MigrateDb:
                 try:
                     self.apply_migration_script(db_filepath, _script)
                 except Exception as _err:
-                    print(f"Error during migration of {db_filepath}, details: {_err}")
+                    logging.error(
+                        "Error during migration of %s. Details: %s", db_filepath, _err
+                    )
                     break
                 set_db_version(_version)
                 if (
@@ -109,7 +114,7 @@ class MigrateDb:
                     and OrmVersion.get_increment_type(_db_version, _version)
                     == IncrementTypeEnum.MAJOR
                 ):
-                    print(
+                    logging.error(
                         "Major version upgrade detected, aborting. Please finish the migration step before continuing."
                     )
                     break
