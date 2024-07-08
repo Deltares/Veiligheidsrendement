@@ -1,9 +1,16 @@
+## 0.3.2 (2024-07-08)
+
+### Fix
+
+- [VRTOOL-561] Sections without measure are not taken for optimization (#330)
+- [VRTOOL-536] Ensure that bundling no longer relies on stability & piping both being present. If not: use 0 values for current pf. Ensure dimensions are consistent. (#329)
+
 ## v0.3.1 (2024-07-03)
 
 ### Fix
 
 - VRTOOL-522 remove creation of shsgmeasure for custom measures (#320)
-- VRTOOL-521 export optimization results corrections (#323)
+- VRTOOL-521 export corrections (#323)
 
 ## v0.3.0 (2024-05-29)
 
