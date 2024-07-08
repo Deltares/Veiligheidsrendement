@@ -122,6 +122,12 @@ class MigrateDb:
                     logging.error(
                         "Major version upgrade detected, aborting. Please finish the migration step before continuing."
                     )
+                    _txt = _script.with_suffix(".txt")
+                    if _txt.exists():
+                        logging.error(
+                            "Please check the migration notes:\n%s",
+                            _txt.read_text(encoding="utf-8"),
+                        )
                     break
 
         # Update the ORM version if necessary.
