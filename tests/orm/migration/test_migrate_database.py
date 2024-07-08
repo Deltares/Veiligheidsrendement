@@ -65,11 +65,11 @@ class TestMigrateDatabase:
         """
         This test loops over the different conversion scripts available
         and executes some of them:
-            v7_7_7.sql: will not be executed
+            v7_7_7.sql: will not be executed as the database is already at version 7.7.7
             v7_7_8.sql: will be executed (creates table TestTable with record id 778)
             v7_8_0.sql: will be executed (creates record id 780)
             v8_0_0.sql: will be executed (creates record id 800)
-            v8_0_1.sql: will not be executed as v8_0_0 is a major version
+            v8_0_1.sql: will not be executed as v8_0_0 is a major version on which migration is interrupted
         """
         # 1. Define test data
         _scripts_dir = test_data.joinpath("orm", "populated_folder")
