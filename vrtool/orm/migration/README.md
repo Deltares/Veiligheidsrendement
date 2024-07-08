@@ -9,8 +9,8 @@ E.g. `v0_1_1.sql` migrates a database from version 0.1.0 to 0.1.1.
 
 ## Migration
 
-From a user perspective a database can be migrated with `python migrate_database.py migrate_db <path to database>`.
-Alternatively databases in a certain folder can be converted with `python migrate_database.py migrate_db_dir <path to folder with database(s)>`.
+From a user perspective a database can be migrated with `python vrtool migrate_db <path to database>`.
+Alternatively databases in a certain folder can be converted with `python vrtool migrate_db_dir <path to folder with database(s)>`.
 If a database is upgraded multiple versions, the different migrations are done consecutively.
 
 ### Major upgrade
