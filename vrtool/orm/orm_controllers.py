@@ -102,10 +102,25 @@ def open_database(database_path: Path) -> SqliteDatabase:
     Returns:
         SqliteDatabase: Initialized database.
     """
+
+    def check_orm_version() -> bool:
+        _orm_verion = OrmVersion(None).read_version()
+        try:
+            _version = DbVersion.select()
+        except Exception:
+            _version = (0, 1, 0)
+        _db_version = OrmVersion.parse_version(_version.get().orm_version)
+        return _orm_verion == _db_version
+
     if not database_path.exists():
         raise ValueError("No file was found at {}".format(database_path))
     vrtool_db.init(database_path)
     vrtool_db.connect()
+    if not check_orm_version():
+        logging.error(
+            "Database ORM version does not match the current ORM version. Please migrate the database."
+        )
+
     return vrtool_db
 
 
