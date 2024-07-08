@@ -229,6 +229,8 @@ class TargetReliabilityStrategy(StrategyProtocol):
         """
         # get the first possible investment year from the aggregated measures
         _section_as_input = self.sections[section_idx]
+        if not _section_as_input.aggregated_measure_combinations:
+            return []
         _invest_year = min(
             [
                 measure.year
@@ -270,6 +272,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
             list[MechanismEnum]: The list of mechanisms that do not satisfy the cross-sectional requirements.
         """
         _section_as_input = self.sections[section_idx]
+        if not _section_as_input.aggregated_measure_combinations:
+            return [], []
+
         # get the first possible investment year from the aggregated measures
         _invest_year = min(
             measure.year
@@ -386,8 +391,17 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 _invalid_mechanisms_str = " en ".join(
                     [mechanism.name.capitalize() for mechanism in _invalid_mechanisms]
                 )
+                _base_warning = (
+                    "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak %s.",
+                    self.sections[_section_idx].section_name,
+                )
+                if not _valid_measures:
+                    logging.warning(_base_warning)
+                    continue
                 logging.warning(
-                    f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {self.sections[_section_idx].section_name}. De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor {_invalid_mechanisms_str}."
+                    "%s De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor %s.",
+                    _base_warning,
+                    _invalid_mechanisms_str,
                 )
 
             # get measure with lowest lcc from _valid_measures

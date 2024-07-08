@@ -22,7 +22,10 @@ class StrategyInput(StrategyInputProtocol):
 
     @classmethod
     def from_section_as_input_collection(
-        cls, section_as_input_collection: list[SectionAsInput], design_method: str
+        cls,
+        section_as_input_collection: list[SectionAsInput],
+        design_method: str,
+        discount_rate: float,
     ) -> StrategyInput:
         """
         Maps the aggregate combinations of measures to the legacy output (temporarily).
@@ -67,13 +70,7 @@ class StrategyInput(StrategyInputProtocol):
         # Decision variables for discounted damage [T,]
         _strategy_input.D = np.array(
             section_as_input_collection[0].flood_damage
-            * (
-                1
-                / (
-                    (1 + section_as_input_collection[0].measures[0].discount_rate)
-                    ** np.arange(0, _max_year, 1)
-                )
-            )
+            * (1 / ((1 + discount_rate) ** np.arange(0, _max_year, 1)))
         )
 
         return _strategy_input

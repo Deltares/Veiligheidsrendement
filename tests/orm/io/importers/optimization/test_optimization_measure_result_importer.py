@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 
 import pytest
 
@@ -14,7 +15,6 @@ from vrtool.optimization.measures.measure_as_input_protocol import (
 )
 from vrtool.optimization.measures.sg_measure import SgMeasure
 from vrtool.optimization.measures.sh_measure import ShMeasure
-from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
 from vrtool.orm.io.importers.optimization.measures.measure_as_input_importer_data import (
     MeasureAsInputImporterData,
 )
@@ -32,7 +32,7 @@ class TestOptimizationMeasureResultImporter:
         self, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _test_dir_name = "test_stability_multiple_scenarios"
+        _test_dir_name = str(Path("reported_bugs", "test_stability_multiple_scenarios"))
         _test_case_dir = get_copy_of_reference_directory(_test_dir_name)
 
         _investment_years = [0]

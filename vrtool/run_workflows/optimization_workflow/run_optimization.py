@@ -50,7 +50,9 @@ class RunOptimization(VrToolRunProtocol):
         self,
         section_input_collection: list[SectionAsInput],
     ) -> StrategyController:
-        _strategy_controller = StrategyController(section_input_collection)
+        _strategy_controller = StrategyController(
+            section_input_collection, self.vr_config
+        )
         _strategy_controller.set_investment_year()
         _strategy_controller.combine()
         _strategy_controller.aggregate()
