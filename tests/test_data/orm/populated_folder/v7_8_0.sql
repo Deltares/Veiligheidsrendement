@@ -1,0 +1,1 @@
+INSERT INTO TestTable (id) VALUES (780)

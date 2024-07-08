@@ -47,16 +47,12 @@ class MigrateDb:
             db_filepath (Path): Path to the database file to migrate.
             script_filepath (Path): Path to the migration script to apply.
         """
-        try:
-            with sqlite3.connect(db_filepath) as _db_connection:
-                print(
-                    f"Migrating database file with {script_filepath.stem}: {db_filepath.stem}"
-                )
-                _db_connection.executescript(
-                    script_filepath.read_text(encoding="utf-8")
-                )
-        except Exception as _err:
-            print(f"Error during migration of {db_filepath}, details: {_err}")
+
+        with sqlite3.connect(db_filepath) as _db_connection:
+            print(
+                f"Migrating database file with {script_filepath.stem}: {db_filepath.stem}"
+            )
+            _db_connection.executescript(script_filepath.read_text(encoding="utf-8"))
 
     def migrate_single_db(self, db_filepath: Path):
         """
@@ -65,6 +61,9 @@ class MigrateDb:
         All available migrations scripts with a version higher than the current
         version in the database will be applied from a lower to a higher version.
 
+        The target version is the version of the orm, unless force_orm is set to True.
+        In that case the target version is the highest version available in the migration scripts.
+        The orm version will then be updated according to the migration scripts.
 
         Can be run with `python -m migrate_db <db_filepath>`
 
@@ -84,19 +83,32 @@ class MigrateDb:
 
         def set_db_version(version: tuple[int, int, int]) -> None:
             with open_database(db_filepath).connection_context():
-                _version = DbVersion.select().get()
+                _version = DbVersion.get_or_none()
                 _version.orm_version = version
                 _version.save()
 
+        # Determine the current db version.
         _db_version = get_db_version()
 
+        # Determine the target version.
+        _orm_version = self.orm_version.read_version()
+        _to_version = _orm_version
+        if self.force_orm and self.scripts_dict:
+            _to_version = list(self.scripts_dict.keys())[-1]
+
+        # Loop over the migration scripts and apply them if necessary.
         _version = (0, 0, 0)
         for _version, _script in self.scripts_dict.items():
-            if _version > _db_version:
-                self.apply_migration_script(db_filepath, _script)
+            if _db_version < _version <= _to_version:
+                try:
+                    self.apply_migration_script(db_filepath, _script)
+                except Exception as _err:
+                    print(f"Error during migration of {db_filepath}, details: {_err}")
+                    break
                 set_db_version(_version)
                 if (
-                    OrmVersion.get_increment_type(_db_version, _version)
+                    not self.force_orm
+                    and OrmVersion.get_increment_type(_db_version, _version)
                     == IncrementTypeEnum.MAJOR
                 ):
                     print(
@@ -105,9 +117,8 @@ class MigrateDb:
                     break
 
         # Update the ORM version if necessary.
-        _orm_version = self.orm_version.read_version()
-        if self.force_orm and _version > _orm_version:
-            self.orm_version.write_version(_orm_version)
+        if self.force_orm:
+            self.orm_version.write_version(_version)
 
     def migrate_databases_in_dir(self, database_dir: Path):
         """

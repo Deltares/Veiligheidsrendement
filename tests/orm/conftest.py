@@ -61,7 +61,7 @@ def get_persisted_database_fixture(
 @pytest.fixture(name="empty_db_context", autouse=False)
 def get_empty_db_context_fixture() -> Iterator[SqliteDatabase]:
     """
-    Get's an empty database context with a valid scheme.
+    Gets an empty database context with a valid scheme.
     This fixture DOES NOT allow to open and close during the test,
     as its transaction is already initialized.
     """
@@ -73,6 +73,27 @@ def get_empty_db_context_fixture() -> Iterator[SqliteDatabase]:
         yield _db
         transaction.rollback()
     _db.close()
+
+
+@pytest.fixture(name="empty_db_path")
+def get_empty_db_path_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
+    """
+    Gets an empty database path with a valid scheme.
+    """
+    # Create a results directory where to persist the database.
+    _output_dir = test_results.joinpath(request.node.name)
+    if _output_dir.exists():
+        shutil.rmtree(_output_dir)
+    _output_dir.mkdir(parents=True)
+    _test_db_file = _output_dir.joinpath("test_db.db")
+
+    # Copy the original `empty_db.db` into the output directory.
+    _db_file = test_data.joinpath("test_db", "empty_db.db")
+    shutil.copyfile(_db_file, _test_db_file)
+
+    yield _test_db_file
+
+    _test_db_file.unlink()
 
 
 @pytest.fixture(name="custom_measures_vrtool_config")

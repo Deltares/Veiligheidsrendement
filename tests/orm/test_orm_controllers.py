@@ -17,10 +17,6 @@ from tests import (
     test_externals,
     test_results,
 )
-from tests.optimization.conftest import (
-    _get_section_with_combinations,
-    _get_section_with_measures,
-)
 from tests.orm.io.exporters.measures.measure_result_test_validators import (
     MeasureResultTestInputData,
     MeasureWithDictMocked,
@@ -197,6 +193,8 @@ class TestOrmControllers:
                     | dict(section_data=_dike_section, profile_point_type=_c_point)
                 )
             ).save()
+
+        orm.Version.create(orm_version="0.1.0").save()
 
         # 3. Save tables.
         assert _db_file.exists()

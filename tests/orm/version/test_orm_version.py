@@ -67,7 +67,7 @@ class TestOrmVersion:
         _version = _orm_version.read_version()
 
         # 3. Verify expectations
-        assert _version == (1, 2, 3)
+        assert _version == (8, 0, 1)
 
     def test_get_version(self, valid_version_init_file: Path):
         # 1. Define test data
@@ -78,7 +78,7 @@ class TestOrmVersion:
         _version = _orm_version.get_version()
 
         # 3. Verify expectations
-        assert _version == (1, 2, 3)
+        assert _version == (8, 0, 1)
 
     def test_set_version(self, valid_version_init_file: Path):
         # 1. Define test data
