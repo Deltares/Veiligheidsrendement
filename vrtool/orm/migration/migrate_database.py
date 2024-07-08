@@ -135,30 +135,6 @@ class MigrateDb:
             self.migrate_single_db(_db_to_migrate)
 
 
-@cli.command(
-    name="migrate_db",
-    help="Migrate the provided database file.",
-)
-@click.argument("db_filepath", type=click.Path(exists=True), nargs=1)
-def migrate_db(db_filepath: str):
-    """
-    Can be run with `python migrate_database.py migrate_db <db_filepath>`
-    """
-    MigrateDb().migrate_single_db(Path(db_filepath))
-
-
-@cli.command(
-    name="migrate_db_dir",
-    help="Migrates all provided database files in a directory.",
-)
-@click.argument("database_dir", type=click.Path(exists=True), nargs=1)
-def migrate_databases_in_dir(database_dir: str):
-    """
-    Can be run with `python migrate_database.py migrate_db_dir <database_dir>`
-    """
-    MigrateDb().migrate_databases_in_dir(Path(database_dir))
-
-
 def migrate_test_databases():
     """
     Migrates all existing test databases (in the `tests` directory) to

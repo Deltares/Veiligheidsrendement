@@ -4,6 +4,7 @@ from pathlib import Path
 import click
 
 from vrtool import api
+from vrtool.orm.migration.migrate_database import MigrateDb
 from vrtool.vrtool_logger import VrToolLogger
 
 
@@ -73,6 +74,22 @@ def run_full(**kwargs):
     # Define VrToolConfig and Selected Traject
     _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
     api.run_full(_vr_config)
+
+
+@cli.command(name="migrate_db", help="Migrate the provided database file.")
+@click.argument("db_filepath", type=click.Path(exists=True), nargs=1)
+def migrate_db(db_filepath: str):
+    logging.info("Migreren van database %s.", db_filepath)
+    MigrateDb().migrate_single_db(Path(db_filepath))
+
+
+@cli.command(
+    name="migrate_db_dir", help="Migrates all provided database files in a directory."
+)
+@click.argument("database_dir", type=click.Path(exists=True), nargs=1)
+def migrate_databases_in_dir(database_dir: str):
+    logging.info("Migreren van databases in %s.", database_dir)
+    MigrateDb().migrate_databases_in_dir(Path(database_dir))
 
 
 if __name__ == "__main__":
