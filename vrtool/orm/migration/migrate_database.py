@@ -49,9 +49,7 @@ class MigrateDb:
         """
 
         with sqlite3.connect(db_filepath) as _db_connection:
-            print(
-                f"Migrating database file with {script_filepath.stem}: {db_filepath.stem}"
-            )
+            print(f"Migrating database file with {script_filepath.stem}: {db_filepath}")
             _db_connection.executescript(script_filepath.read_text(encoding="utf-8"))
 
     def migrate_single_db(self, db_filepath: Path):
@@ -84,7 +82,7 @@ class MigrateDb:
         def set_db_version(version: tuple[int, int, int]) -> None:
             with open_database(db_filepath).connection_context():
                 _version = DbVersion.get_or_none()
-                _version.orm_version = version
+                _version.orm_version = OrmVersion.construct_version_string(version)
                 _version.save()
 
         # Determine the current db version.
