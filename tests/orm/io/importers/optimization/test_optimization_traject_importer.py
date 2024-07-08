@@ -43,7 +43,7 @@ class TestOptimizationTrajectImporter:
         )
         assert _test_db.exists()
 
-        # 2. Create a copy to avoid overwritting or locking data.
+        # 2. Create a copy to avoid overwriting or locking data.
         _results_dir = get_clean_test_results_dir(request)
         _test_db_copy = _results_dir.joinpath("traject_importer.db")
         shutil.copy(_test_db, _test_db_copy)
