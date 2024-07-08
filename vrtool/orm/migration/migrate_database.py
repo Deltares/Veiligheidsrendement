@@ -50,7 +50,13 @@ class MigrateDb:
 
         with sqlite3.connect(db_filepath) as _db_connection:
             print(f"Migrating database file with {script_filepath.stem}: {db_filepath}")
-            _db_connection.executescript(script_filepath.read_text(encoding="utf-8"))
+            try:
+                _db_connection.executescript(
+                    script_filepath.read_text(encoding="utf-8")
+                )
+            except Exception as exc_err:
+                _db_connection.close()
+                raise exc_err
 
     def migrate_single_db(self, db_filepath: Path):
         """
