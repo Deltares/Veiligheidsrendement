@@ -1,3 +1,5 @@
+from typing import Callable
+
 from tests.orm import with_empty_db_context
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -45,3 +47,35 @@ class TestComputationScenario:
         assert isinstance(_scenario, OrmBaseModel)
         assert not any(_scenario.computation_scenario_parameters)
         assert not any(_scenario.supporting_files)
+
+    @with_empty_db_context
+    def test_on_delete_mechanism_per_section_cascades(
+        self, get_basic_computation_scenario: Callable[[], ComputationScenario]
+    ):
+        # 1. Define test data.
+        _computation_scenario = get_basic_computation_scenario()
+        assert isinstance(_computation_scenario, ComputationScenario)
+        assert any(ComputationScenario.select())
+
+        # 2. Run test.
+        MechanismPerSection.delete_by_id(
+            _computation_scenario.mechanism_per_section.get_id()
+        )
+
+        # 3. Verify expectations
+        assert not any(ComputationScenario.select())
+
+    @with_empty_db_context
+    def test_on_delete_computation_type_cascades(
+        self, get_basic_computation_scenario: Callable[[], ComputationScenario]
+    ):
+        # 1. Define test data.
+        _computation_scenario = get_basic_computation_scenario()
+        assert isinstance(_computation_scenario, ComputationScenario)
+        assert any(ComputationScenario.select())
+
+        # 2. Run test.
+        ComputationType.delete_by_id(_computation_scenario.computation_type.get_id())
+
+        # 3. Verify expectations
+        assert not any(ComputationScenario.select())
