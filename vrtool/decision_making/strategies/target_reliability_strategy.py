@@ -273,7 +273,6 @@ class TargetReliabilityStrategy(StrategyProtocol):
         """
         _section_as_input = self.sections[section_idx]
         if not _section_as_input.aggregated_measure_combinations:
-            # TODO, should we here return all mechanisms as invalid mechanisms?
             return [], []
 
         # get the first possible investment year from the aggregated measures
