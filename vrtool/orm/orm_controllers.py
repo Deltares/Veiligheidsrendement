@@ -31,9 +31,7 @@ from vrtool.orm.io.importers.optimization.optimization_step_importer import (
 from vrtool.orm.io.importers.optimization.optimization_traject_importer import (
     OptimizationTrajectImporter,
 )
-from vrtool.orm.models.version import Version as DbVersion
 from vrtool.orm.orm_db import vrtool_db
-from vrtool.orm.version.orm_version import OrmVersion
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
