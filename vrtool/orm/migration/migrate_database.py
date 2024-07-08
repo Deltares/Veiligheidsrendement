@@ -165,7 +165,7 @@ def migrate_test_databases():
     Can be run with `poetry run migrate_test_db`
     """
     # Fetch the dir containing the migration scripts.
-    _root_dir = Path(__file__).parent.parent.parent
+    _root_dir = Path(__file__).parent.parent.parent.parent
 
     # Fetch the tests directory.
     _tests_dir = _root_dir.joinpath("tests", "test_data")
