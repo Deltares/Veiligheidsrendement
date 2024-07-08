@@ -4,18 +4,12 @@ import sqlite3
 from collections import OrderedDict
 from pathlib import Path
 
-import click
 import peewee
 
 from vrtool.orm.models.version import Version as DbVersion
 from vrtool.orm.orm_controllers import open_database
 from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 from vrtool.orm.version.orm_version import OrmVersion
-
-
-@click.group()
-def cli():
-    pass
 
 
 class MigrateDb:
@@ -158,7 +152,3 @@ def migrate_test_databases():
     # Apply migration.
     # Force the ORM version to be upgraded according to the migration scripts.
     MigrateDb(force_orm=True).migrate_databases_in_dir(_tests_dir)
-
-
-if __name__ == "__main__":
-    cli()
