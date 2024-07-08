@@ -25,7 +25,9 @@ class MigrateDb:
         if "force_orm" in kwargs:
             self.force_orm = kwargs["force_orm"]
 
-    def _parse_scripts_dir(self, scripts_dir: Path) -> dict[int, Path]:
+    def _parse_scripts_dir(
+        self, scripts_dir: Path
+    ) -> OrderedDict[tuple[int, int, int], Path]:
         _scripts_dict = dict()
         for _script in scripts_dir.rglob("*.sql"):
             _version = OrmVersion.parse_version(_script.stem)
