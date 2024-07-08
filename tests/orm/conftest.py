@@ -24,12 +24,16 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import open_database
 
 
-@pytest.fixture(name="persisted_database_path")
-def get_persisted_database_path_fixture(
+@pytest.fixture(name="persisted_database")
+def get_persisted_database_fixture(
     request: pytest.FixtureRequest,
-) -> Iterator[Path]:
+) -> Iterator[SqliteDatabase]:
     """
-    Gets the path to a persisted empty database to be used during the test.
+    Gets an empty database context with a valid scheme
+    in a directory where it will be persisted after the test
+    finalizes, allowing to inspect its results.
+    This fixture's database is used when the database needs to be opened
+    and closed during multiple times in a test.
     """
     # Create a results directory where to persist the database.
     _output_dir = test_results.joinpath(request.node.name)
@@ -41,22 +45,6 @@ def get_persisted_database_path_fixture(
     # Copy the original `empty_db.db` into the output directory.
     _db_file = test_data.joinpath("test_db", "empty_db.db")
     shutil.copyfile(_db_file, _test_db_file)
-
-    yield _test_db_file
-
-
-@pytest.fixture(name="persisted_database")
-def get_persisted_database_fixture(
-    request: pytest.FixtureRequest,
-) -> Iterator[SqliteDatabase]:
-    """
-    Gets an empty database context with a valid scheme
-    in a directory where it will be persisted after the test
-    finalizes. weAllowing to inspect its results.
-    This fixture's database is used when the database needs to be opened
-    and closed during multiple times in a test.
-    """
-    _test_db_file = get_persisted_database_path_fixture(request)
 
     # Initialized its context.
     _connected_db = open_database(_test_db_file)
