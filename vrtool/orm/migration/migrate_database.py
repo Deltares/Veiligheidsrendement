@@ -50,13 +50,7 @@ class MigrateDb:
 
         with sqlite3.connect(db_filepath) as _db_connection:
             print(f"Migrating database file with {script_filepath.stem}: {db_filepath}")
-            try:
-                _db_connection.executescript(
-                    script_filepath.read_text(encoding="utf-8")
-                )
-            except Exception as exc_err:
-                _db_connection.close()
-                raise exc_err
+            _db_connection.executescript(script_filepath.read_text(encoding="utf-8"))
 
     def migrate_single_db(self, db_filepath: Path):
         """
@@ -143,7 +137,7 @@ class MigrateDb:
 @click.argument("db_filepath", type=click.Path(exists=True), nargs=1)
 def migrate_db(db_filepath: str):
     """
-    Can be run with `python migrate_database.py migrate_db db_filepath`
+    Can be run with `python migrate_database.py migrate_db <db_filepath>`
     """
     MigrateDb().migrate_single_db(Path(db_filepath))
 
@@ -155,7 +149,7 @@ def migrate_db(db_filepath: str):
 @click.argument("database_dir", type=click.Path(exists=True), nargs=1)
 def migrate_databases_in_dir(database_dir: str):
     """
-    Can be run with `python migrate_database.py migrate_db_dir database_dir`
+    Can be run with `python migrate_database.py migrate_db_dir <database_dir>`
     """
     MigrateDb().migrate_databases_in_dir(Path(database_dir))
 
