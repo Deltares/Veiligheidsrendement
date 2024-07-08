@@ -5,7 +5,9 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class Buildings(OrmBaseModel):
-    section_data = ForeignKeyField(SectionData, backref="buildings_list")
+    section_data = ForeignKeyField(
+        SectionData, backref="buildings_list", on_delete="CASCADE"
+    )
 
     distance_from_toe = FloatField()
     number_of_buildings = IntegerField()

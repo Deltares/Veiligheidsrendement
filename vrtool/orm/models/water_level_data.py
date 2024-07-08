@@ -5,7 +5,9 @@ from vrtool.orm.models.section_data import SectionData
 
 
 class WaterlevelData(OrmBaseModel):
-    section_data = ForeignKeyField(SectionData, backref="water_level_data_list")
+    section_data = ForeignKeyField(
+        SectionData, backref="water_level_data_list", on_delete="CASCADE"
+    )
     water_level_location_id = IntegerField(null=True)
     year = IntegerField()
     water_level = FloatField()
