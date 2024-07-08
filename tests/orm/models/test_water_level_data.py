@@ -46,3 +46,27 @@ class TestWaterlevelData:
         assert _water_level_data.section_data == _test_section_data
         assert _water_level_data in _test_section_data.water_level_data_list
         assert _water_level_data.water_level_location_id == 4
+
+    @with_empty_db_context
+    def test_on_delete_section_data_deletes_water_level_data(
+        self, get_orm_basic_dike_section: Callable[[], SectionData]
+    ):
+        # 1. Define test data.
+        _test_section_data = get_orm_basic_dike_section()
+        assert not any(WaterlevelData.select())
+
+        WaterlevelData.create(
+            section_data=_test_section_data,
+            year=2023,
+            water_level=42,
+            beta=24,
+            water_level_location_id=4,
+        )
+        assert any(WaterlevelData.select())
+
+        # 2. Run test.
+        _test_section_data.delete_instance()
+
+        # 3. Verify expectations
+        assert not any(SectionData.select())
+        assert not any(WaterlevelData.select())
