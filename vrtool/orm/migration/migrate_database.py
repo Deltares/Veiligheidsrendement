@@ -49,11 +49,16 @@ class MigrateDb:
             script_filepath (Path): Path to the migration script to apply.
         """
 
-        with sqlite3.connect(db_filepath) as _db_connection:
-            logging.info(
-                "Applying migration script: %s to %s", script_filepath.stem, db_filepath
-            )
+        _db_connection = sqlite3.connect(db_filepath)
+        logging.info(
+            "Applying migration script: %s to %s", script_filepath.stem, db_filepath
+        )
+        try:
             _db_connection.executescript(script_filepath.read_text(encoding="utf-8"))
+        except Exception as _exc_err:
+            raise _exc_err
+        finally:
+            _db_connection.close()
 
     def migrate_single_db(self, db_filepath: Path):
         """
