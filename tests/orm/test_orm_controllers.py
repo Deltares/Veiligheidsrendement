@@ -1547,7 +1547,6 @@ class TestCustomMeasureDetail:
             )
             _measure_that_remains, _created = orm.Measure.get_or_create(
                 name=measure_name,
-                year=0,
                 combinable_type=_full_combinable,
                 measure_type=orm.MeasureType.get(
                     orm.MeasureType.name == measure_type.legacy_name

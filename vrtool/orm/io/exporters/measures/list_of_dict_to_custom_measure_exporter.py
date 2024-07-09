@@ -69,7 +69,6 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 measure_type=MeasureType.get_or_create(
                     name=MeasureTypeEnum.CUSTOM.legacy_name
                 )[0],
-                year=0,
                 combinable_type=CombinableType.select()
                 .where(
                     fn.upper(CombinableType.name)

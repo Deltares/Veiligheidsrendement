@@ -61,7 +61,6 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.parameters["dcrest_max"] = orm_measure.max_crest_increase
         _measure.parameters["max_outward"] = orm_measure.max_outward_reinforcement
         _measure.parameters["max_inward"] = orm_measure.max_inward_reinforcement
-        _measure.parameters["year"] = orm_measure.measure.year
         _measure.parameters["P_solution"] = orm_measure.prob_of_solution_failure
         _measure.parameters[
             "Pf_solution"
