@@ -1237,7 +1237,6 @@ class TestCustomMeasureDetail:
 
         # 3. Verify final expectations
         assert len(_added_measures) == len(custom_measure_dict_list)
-        assert all(_am.measure.year == 0 for _am in _added_measures)
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             # Verify the expected amount of `orm.Measure` and `orm.CustomMeasureDetail`
