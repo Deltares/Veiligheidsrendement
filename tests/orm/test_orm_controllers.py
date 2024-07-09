@@ -983,7 +983,6 @@ class TestOrmControllers:
             measure_type=measure_type,
             combinable_type=combinable_type,
             name=measure_name,
-            year=20,
         )
 
     def _create_measure_results(
@@ -1686,7 +1685,6 @@ class TestCustomMeasureDetail:
             )
             _measure_that_remains = orm.Measure.create(
                 name=_measure_that_remains_name,
-                year=2021,
                 combinable_type=orm.CombinableType.get(),
                 measure_type=orm.MeasureType.get(
                     fn.upper(orm.MeasureType.name) != MeasureTypeEnum.CUSTOM.name

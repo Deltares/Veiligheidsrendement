@@ -52,7 +52,6 @@ def get_valid_measure_factory() -> Iterable[
             measure_type=_measure_type,
             combinable_type=_combinable_type,
             name="Test Measure",
-            year=2023,
         )
         if measure_type == MeasureTypeEnum.CUSTOM:
             _create_custom_measure_detail(_measure)
