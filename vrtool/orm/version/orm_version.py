@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from vrtool.orm import __version__
 from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 
 
@@ -54,13 +55,7 @@ class OrmVersion:
         return self.construct_version_string((self.major, self.minor, self.patch))
 
     def read_version(self) -> tuple[int, int, int]:
-        _version = (0, 0, 0)
-        if self.version_file.exists():
-            with open(self.version_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    if "__version__" in line:
-                        _version_str = line.split('"')[1]
-                        _version = self.parse_version(_version_str)
+        _version = self.parse_version(__version__)
         self.set_version(_version)
         return _version
 

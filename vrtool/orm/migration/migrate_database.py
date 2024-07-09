@@ -76,11 +76,12 @@ class MigrateDb:
 
         def get_db_version() -> tuple[int, int, int]:
             with open_database(db_filepath).connection_context():
+                _db_version_str = "0.1.0"
                 try:
                     _version = DbVersion.select()
                     _db_version_str = _version.get().orm_version
-                except peewee.OperationalError:
-                    _db_version_str = "0.1.0"
+                except peewee.OperationalError as _op_err:
+                    logging.error(_op_err)
             return OrmVersion.parse_version(_db_version_str)
 
         def set_db_version(version: tuple[int, int, int]) -> None:
@@ -106,7 +107,9 @@ class MigrateDb:
                     self.apply_migration_script(db_filepath, _script)
                 except Exception as _err:
                     logging.error(
-                        "Error during migration of %s. Details: %s", db_filepath, _err
+                        "Er is een fout opgetreden tijdens de migratie van %s. Details: %s",
+                        db_filepath,
+                        _err,
                     )
                     break
                 set_db_version(_version)
@@ -116,7 +119,7 @@ class MigrateDb:
                     == IncrementTypeEnum.MAJOR
                 ):
                     logging.error(
-                        "Major version upgrade detected, aborting. Please finish the migration step before continuing."
+                        "Er is een major versie upgrade detecteerd; de migratie wordt afgebroken. Rond de huidige upgrade af voordat wordt doorgegaan met eventuele volgende stappen."
                     )
                     break
 
