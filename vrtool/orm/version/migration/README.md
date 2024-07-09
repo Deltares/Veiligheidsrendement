@@ -20,4 +20,4 @@ To have a compatible database, the user has to finish the migration step by addi
 
 ### Test databases
 From a developer perspective all available test databases can be migrated with `poetry run migrate_test_db`.
-In this case the `orm` version of the `vrtool` will be updated according to the latest available migration script.
+Make sure the right migration scripts are available and version of `vrtool.orm` is updated accordingly.

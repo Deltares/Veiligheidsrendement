@@ -9,8 +9,8 @@ This module focuses on mapping the input/output database tables (in SQLite) to a
   * Exporters: The classes responsible to write in one or many tables of a database with the current status of our `vrtool` objects. They are located in the `vrtool.orm.exporters` module.
 * Models: `Python` objects representing the database entities and their relationships. They are located in the `vrtool.orm.models` module.
 * Controllers: A series of endpoints to trigger different actions related to read or write from / to the database. For now located in the `vrtool.orm.orm_controllers.py` file.
-* Version: The classes responsible for managing the verions of the `vrtool.orm`.
-* Migration: The artifacts needed to upgrade 1 or more databases to the latest version of the `vrtool.orm`.
+* Version: The classes responsible for managing the version of the `vrtool.orm`.
+  * Migration: The artifacts needed to upgrade 1 or more databases to the latest version of the `vrtool.orm`.
 * `orm_db.py`. File containing the simple definition of the current (`SQLite` database).
 
 ## How to use it?

@@ -1,81 +1,46 @@
-from pathlib import Path
+from __future__ import annotations
+
+from dataclasses import dataclass
 
 from vrtool.orm import __version__
 from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 
 
+@dataclass
 class OrmVersion:
     major: int
     minor: int
     patch: int
 
-    def __init__(self, version_file: Path | None) -> None:
-        if version_file:
-            self.version_file = version_file
-        else:
-            self.version_file = Path(__file__).parent.parent.joinpath("__init__.py")
-        self.read_version()
+    def __hash__(self) -> int:
+        return (100 * self.major) + (10 * self.minor) + self.patch
 
-    @staticmethod
-    def parse_version(version_string: str) -> tuple[int, int, int]:
-        """
-        Parse a version string.
-        Examples:
-            v1_2_3 -> (1, 2, 3)
-            1.2.3 -> (1, 2, 3)
+    def __gt__(self, other: OrmVersion) -> bool:
+        return self.__hash__() > other.__hash__()
 
-        Args:
-            version_string (str): _description_
+    def __le__(self, other: OrmVersion) -> bool:
+        return self.__hash__() <= other.__hash__()
 
-        Returns:
-            tuple[int, int, int]: _description_
-        """
-        return tuple(
-            map(int, version_string.replace("v", "").replace("_", ".").split("."))
-        )
-
-    @staticmethod
-    def construct_version_string(version: tuple[int, int, int]) -> str:
-        return ".".join(map(str, version))
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}.{self.patch}"
 
     @staticmethod
     def get_increment_type(
-        from_version: tuple[int, int, int], to_version: tuple[int, int, int]
+        from_version: OrmVersion, to_version: OrmVersion
     ) -> IncrementTypeEnum:
-        if from_version[0] < to_version[0]:
+        if from_version.major < to_version.major:
             return IncrementTypeEnum.MAJOR
-        elif from_version[1] < to_version[1]:
+        elif from_version.minor < to_version.minor:
             return IncrementTypeEnum.MINOR
-        elif from_version[2] < to_version[2]:
+        elif from_version.patch < to_version.patch:
             return IncrementTypeEnum.PATCH
         return IncrementTypeEnum.NONE
 
-    @property
-    def version_string(self) -> str:
-        return self.construct_version_string((self.major, self.minor, self.patch))
+    @staticmethod
+    def parse_version(version_string: str) -> tuple[int, int, int]:
+        return tuple(map(int, version_string.split(".")))
 
-    def read_version(self) -> tuple[int, int, int]:
-        _version = self.parse_version(__version__)
-        self.set_version(_version)
-        return _version
-
-    def get_version(self) -> tuple[int, int, int]:
-        return self.major, self.minor, self.patch
-
-    def set_version(self, version: tuple[int, int, int]) -> None:
-        self.major, self.minor, self.patch = version
-
-    def add_increment(self, increment_type: IncrementTypeEnum):
-        if increment_type == IncrementTypeEnum.MAJOR:
-            self.major += 1
-        elif increment_type == IncrementTypeEnum.MINOR:
-            self.minor += 1
-        elif increment_type == IncrementTypeEnum.PATCH:
-            self.patch += 1
-
-    def write_version(self, version: tuple[int, int, int]) -> None:
-        self.set_version(version)
-        if not self.version_file.parent.exists():
-            self.version_file.parent.mkdir(parents=True)
-        with open(self.version_file, "w", encoding="utf-8") as f:
-            f.write(f'__version__ = "{self.version_string}"\n')
+    @classmethod
+    def from_orm(cls) -> OrmVersion:
+        _major, _minor, _patch = cls.parse_version(__version__)
+        return cls(major=_major, minor=_minor, patch=_patch)
