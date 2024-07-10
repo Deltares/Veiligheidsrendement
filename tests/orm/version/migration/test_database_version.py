@@ -1,8 +1,10 @@
+from pathlib import Path
+
 from vrtool.orm.version.migration.database_version import DatabaseVersion
 
 
 class TestDatabaseVersion:
-    def test_from_database(self, valid_conversion_input):
+    def test_from_database(self, valid_conversion_input: Path):
         # 1. Define test data
         _database_path = valid_conversion_input.joinpath("test_db.db")
 

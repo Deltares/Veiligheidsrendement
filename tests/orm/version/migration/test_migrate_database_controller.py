@@ -14,7 +14,7 @@ from vrtool.orm.version.migration.migrate_database_controller import (
 class TestMigrateDatabaseController:
     def test_initialize(self, valid_conversion_input: Path):
         # 1. Run test
-        _migrate_db = MigrateDatabaseController(scripts_dir=valid_conversion_input)
+        _migrate_db = MigrateDatabaseController(valid_conversion_input)
 
         # 2. Verify expectations
         assert _migrate_db is not None
@@ -28,7 +28,7 @@ class TestMigrateDatabaseController:
         _empty_dir.mkdir()
 
         # 2. Run test
-        _migrate_db = MigrateDatabaseController(scripts_dir=_empty_dir)
+        _migrate_db = MigrateDatabaseController(_empty_dir)
 
         # 3. Verify expectations
         assert len(_migrate_db.script_versions) == 0
@@ -44,7 +44,9 @@ class TestMigrateDatabaseController:
                 _connected_db.execute_sql(_query)
 
         # 2. Run test
-        MigrateDatabaseController()._apply_migration_script(_database_path, _script)
+        MigrateDatabaseController(Path(""))._apply_migration_script(
+            _database_path, _script
+        )
 
         # 3. Verify expectations
         with open_database(_database_path) as _connected_db:
@@ -58,7 +60,9 @@ class TestMigrateDatabaseController:
 
         # 2. Run test
         with pytest.raises(Exception) as exc_err:
-            MigrateDatabaseController()._apply_migration_script(_database_path, _script)
+            MigrateDatabaseController(Path(""))._apply_migration_script(
+                _database_path, _script
+            )
 
         # 3. Verify expectations
         assert "syntax error" in str(exc_err.value)
@@ -89,7 +93,7 @@ class TestMigrateDatabaseController:
             script 4: will never be executed as previous upgrade is a major version on which migration is interrupted
         """
         # 1. Define test data
-        _migrate_db = MigrateDatabaseController(scripts_dir=valid_conversion_input)
+        _migrate_db = MigrateDatabaseController(valid_conversion_input)
         _database_path = valid_conversion_input.joinpath("test_db.db")
 
         _db_version = DatabaseVersion(

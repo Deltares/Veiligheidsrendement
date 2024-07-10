@@ -13,22 +13,18 @@ from vrtool.orm.version.orm_version import OrmVersion
 
 class MigrateDatabaseController:
     orm_version: OrmVersion
-    scripts_dir: Path
     script_versions: list[ScriptVersion]
+    scripts_dir: Path
 
-    def __init__(self, **kwargs):
+    def __init__(self, scripts_dir: Path):
         self.orm_version = OrmVersion.from_orm()
-        if "scripts_dir" in kwargs:
-            self.scripts_dir = kwargs["scripts_dir"]
-        else:
-            self.scripts_dir = Path(__file__).parent.joinpath("scripts")
-        self.script_versions = self._read_scripts()
+        self.script_versions = self._read_scripts(scripts_dir)
 
-    def _read_scripts(self) -> list[ScriptVersion]:
+    def _read_scripts(self, scripts_dir: Path) -> list[ScriptVersion]:
         return sorted(
             list(
                 ScriptVersion.from_script(_script)
-                for _script in self.scripts_dir.rglob("*.sql")
+                for _script in scripts_dir.rglob("*.sql")
             )
         )
 
@@ -122,23 +118,3 @@ class MigrateDatabaseController:
         """
         for _db_to_migrate in database_dir.rglob("*.db"):
             self.migrate_single_db(_db_to_migrate)
-
-
-def migrate_test_databases():
-    """
-    Migrates all existing test databases (in the `tests` directory) to
-    the latest version.
-    The orm version will be updated according to the migration scripts.
-
-    Can be run with `poetry run migrate_test_db`
-    """
-    # Fetch the dir containing the migration scripts.
-    _root_dir = Path(__file__).parent.parent.parent.parent
-
-    # Fetch the tests directory.
-    _tests_dir = _root_dir.joinpath("tests", "test_data")
-    assert _tests_dir.exists(), "No tests directory found."
-
-    # Apply migration.
-    # Force the ORM version to be upgraded according to the migration scripts.
-    MigrateDatabaseController(force_orm=True).migrate_databases_in_dir(_tests_dir)

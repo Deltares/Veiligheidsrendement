@@ -27,7 +27,7 @@ classifiers = [
 packages = [{ include = "vrtool" }]
 
 [tool.poetry.scripts]
-migrate_test_db = "vrtool.orm.migration.migrate_database:migrate_test_databases"
+migrate_test_db = "scripts.migration.migrate_test_databases:migrate_test_databases"
 
 [tool.poetry.dependencies]
 python = "^3.9, <3.11"
