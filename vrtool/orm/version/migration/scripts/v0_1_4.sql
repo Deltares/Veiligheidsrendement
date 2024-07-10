@@ -25,7 +25,7 @@ CREATE TABLE DikeTrajectInfo (
     flood_damage          REAL,
     traject_length        REAL,
     n_revetment           INTEGER       DEFAULT (3),
-    n_overflow                          DEFAULT (1) 
+    n_overflow            INTEGER       DEFAULT (1) 
 );
 
 INSERT INTO DikeTrajectInfo (
