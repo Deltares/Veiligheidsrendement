@@ -82,6 +82,7 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
             orm.GrassRevetmentRelation,
             orm.AssessmentSectionResult,
             orm.AssessmentMechanismResult,
+            orm.Version,
         ]
         + orm.get_optimization_results_tables()
         + orm.get_measure_results_tables()
