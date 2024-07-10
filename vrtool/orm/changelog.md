@@ -2,7 +2,7 @@
 
 ## Feat
 
-- [VRTOOL-546] Renamed `CustomMeasureDetail` property `year` to `time` (#338).
+- [VRTOOL-547] Renamed `CustomMeasureDetail` property `year` to `time` (#338).
 
 ## 0.1.4
 
