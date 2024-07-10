@@ -61,7 +61,7 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.parameters["dcrest_max"] = orm_measure.max_crest_increase
         _measure.parameters["max_outward"] = orm_measure.max_outward_reinforcement
         _measure.parameters["max_inward"] = orm_measure.max_inward_reinforcement
-        # VRTOOL-543 by definition maatregel jaar is altijd 0
+        # VRTOOL-543 by definition measure year is always 0
         _measure.parameters["year"] = 0
         _measure.parameters["P_solution"] = orm_measure.prob_of_solution_failure
         _measure.parameters[
