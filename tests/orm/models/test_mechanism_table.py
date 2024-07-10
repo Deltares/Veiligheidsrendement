@@ -9,7 +9,7 @@ from vrtool.orm.models.mechanism_table import MechanismTable
 
 class TestMechanismTable:
     @pytest.fixture(name="mechanism_table_fixture")
-    def _get_profile_proint_fixture(
+    def _get_computation_scenario_fixture(
         self, get_basic_computation_scenario: Callable[[], ComputationScenario]
     ) -> Iterator[MechanismTable]:
         _computation_scenario = get_basic_computation_scenario()
