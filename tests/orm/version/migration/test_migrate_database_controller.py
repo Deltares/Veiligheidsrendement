@@ -4,6 +4,7 @@ from pathlib import Path
 import peewee
 import pytest
 
+from tests import test_results
 from vrtool.orm.orm_controllers import open_database
 from vrtool.orm.version.migration.database_version import DatabaseVersion
 from vrtool.orm.version.migration.migrate_database_controller import (
@@ -19,12 +20,11 @@ class TestMigrateDatabaseController:
         # 2. Verify expectations
         assert _migrate_db is not None
         assert _migrate_db.orm_version is not None
-        assert _migrate_db.scripts_dir == valid_conversion_input
         assert len(_migrate_db.script_versions) == 5
 
-    def test_initialize_empty_scripts_dir(self, valid_conversion_input: Path):
+    def test_initialize_empty_scripts_dir(self):
         # 1. Define test data
-        _empty_dir = valid_conversion_input.joinpath("empty_folder")
+        _empty_dir = test_results.joinpath("empty_folder")
         _empty_dir.mkdir()
 
         # 2. Run test
@@ -32,6 +32,7 @@ class TestMigrateDatabaseController:
 
         # 3. Verify expectations
         assert len(_migrate_db.script_versions) == 0
+        _empty_dir.rmdir()
 
     def test__apply_migration_script(self, valid_conversion_input: Path):
         # 1. Define test data

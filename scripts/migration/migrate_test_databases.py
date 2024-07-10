@@ -1,9 +1,11 @@
+import logging
 from pathlib import Path
 
 from vrtool.orm.version.migration import default_scripts_dir
 from vrtool.orm.version.migration.migrate_database_controller import (
     MigrateDatabaseController,
 )
+from vrtool.vrtool_logger import VrToolLogger
 
 
 def migrate_test_databases():
@@ -22,5 +24,6 @@ def migrate_test_databases():
     assert _tests_dir.exists(), "No tests directory found."
 
     # Apply migration.
-    print(f"Migrating test databases in {_tests_dir}")
+    VrToolLogger.init_console_handler(logging.INFO)
+    logging.info("Migrating test databases in %s.", _tests_dir)
     MigrateDatabaseController(default_scripts_dir).migrate_databases_in_dir(_tests_dir)
