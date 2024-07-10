@@ -12,15 +12,22 @@ from vrtool.orm.version.orm_version import OrmVersion
 
 
 class MigrateDb:
-    script_versions: list[ScriptVersion]
+    scripts_dir: Path
     orm_version: OrmVersion
+    script_versions: list[ScriptVersion]
 
     def __init__(self):
-        _scripts_dir = Path(__file__).parent.joinpath("scripts")
-        self.script_versions = sorted(
-            list(map(ScriptVersion.from_script, _scripts_dir.rglob("*.sql")))
-        )
+        self.scripts_dir = Path(__file__).parent.joinpath("scripts")
         self.orm_version = OrmVersion.from_orm()
+        self.script_versions = []
+
+    def read_scripts(self) -> None:
+        self.script_versions = sorted(
+            list(
+                ScriptVersion.from_script(_script)
+                for _script in self.scripts_dir.rglob("*.sql")
+            )
+        )
 
     @staticmethod
     def apply_migration_script(db_filepath: Path, script_filepath: Path) -> None:
@@ -60,7 +67,7 @@ class MigrateDb:
 
         def set_db_version(version: OrmVersion) -> None:
             with open_database(db_filepath).connection_context():
-                _version = DbVersion.get_or_none()
+                _version, _ = DbVersion.get_or_create()
                 _version.orm_version = str(version)
                 _version.save()
 
@@ -88,9 +95,7 @@ class MigrateDb:
                     db_filepath,
                     _err,
                 )
-                break
-
-            # Update the database version to the latest executed script.
+                return
 
             # Check if the migration needs to be interrupted on major upgrade.
             if (
@@ -101,9 +106,9 @@ class MigrateDb:
                     "Er is een major versie upgrade detecteerd (%s); de migratie wordt afgebroken. Rond de huidige upgrade af voordat wordt doorgegaan met eventuele volgende stappen.",
                     _script_version,
                 )
-                set_db_version(_script_version)
                 break
 
+        # Update the database version to the latest executed script.
         set_db_version(_script_version)
 
     def migrate_databases_in_dir(self, database_dir: Path):

@@ -10,6 +10,9 @@ from vrtool.orm.version.orm_version import OrmVersion
 class ScriptVersion(OrmVersion):
     script_path: Path
 
+    def __hash__(self) -> int:
+        return (100 * self.major) + (10 * self.minor) + self.patch
+
     @classmethod
     def from_script(cls, script_path: Path) -> ScriptVersion:
         def parse_version(version_string: str) -> tuple[int, int, int]:

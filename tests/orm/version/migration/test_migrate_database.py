@@ -1,0 +1,132 @@
+import sqlite3
+from pathlib import Path
+
+import peewee
+import pytest
+
+from vrtool.orm.orm_controllers import open_database
+from vrtool.orm.version.migration.database_version import DatabaseVersion
+from vrtool.orm.version.migration.migrate_database import MigrateDb
+from vrtool.orm.version.orm_version import OrmVersion
+
+
+class TestMigrateDatabase:
+    def test_initialize(self):
+        # 1. Run test
+        _migrate_db = MigrateDb()
+
+        # 2. Verify expectations
+        assert _migrate_db is not None
+        assert _migrate_db.orm_version is not None
+
+    def test_read_scripts(self, valid_conversion_input: Path):
+        # 1. Define test data
+        _migrate_db = MigrateDb()
+        _migrate_db.scripts_dir = valid_conversion_input
+
+        # 2. Run test
+        _migrate_db.read_scripts()
+
+        # 3. Verify expectations
+        assert len(_migrate_db.script_versions) == 5
+
+    def test_read_scripts_empty_dir(self, valid_conversion_input: Path):
+        # 1. Define test data
+        _migrate_db = MigrateDb()
+        _migrate_db.scripts_dir = valid_conversion_input.joinpath("empty_folder")
+        _migrate_db.scripts_dir.mkdir()
+
+        # 2. Run test
+        _migrate_db.read_scripts()
+
+        # 3. Verify expectations
+        assert len(_migrate_db.script_versions) == 0
+
+    def test_apply_migration_script(self, valid_conversion_input: Path):
+        # 1. Define test data
+        _script = valid_conversion_input.joinpath("valid_script.txt")
+        _database_path = valid_conversion_input.joinpath("test_db.db")
+
+        _query = "SELECT * FROM ValidTable"
+        _connected_db = open_database(_database_path)
+        with pytest.raises(peewee.OperationalError):
+            _connected_db.execute_sql(_query)
+        _connected_db.close()
+
+        # 2. Run test
+        MigrateDb.apply_migration_script(_database_path, _script)
+
+        # 3. Verify expectations
+        _connected_db = open_database(_database_path)
+        _result = _connected_db.execute_sql(_query)
+        _connected_db.close()
+        assert isinstance(_result, sqlite3.Cursor)
+
+    def test_apply_erroneous_script_raises(self, valid_conversion_input: Path):
+        # 1. Define test data
+        _script = valid_conversion_input.joinpath("wrong_script.txt")
+        _database_path = valid_conversion_input.joinpath("test_db.db")
+
+        # 2. Run test
+        with pytest.raises(Exception) as exc_err:
+            MigrateDb.apply_migration_script(_database_path, _script)
+
+        # 3. Verify expectations
+        assert "syntax error" in str(exc_err.value)
+
+    @pytest.mark.parametrize(
+        "orm_increment, db_increment",
+        [
+            pytest.param((0, 0, 0), (0, 0, 0), id="No migration"),
+            pytest.param((0, 0, 1), (0, 0, 1), id="Patch migration"),
+            pytest.param((0, 1, 1), (0, 1, 1), id="Minor migration"),
+            pytest.param((1, 1, 1), (1, 1, 1), id="Major migration"),
+            pytest.param((1, 1, 2), (1, 1, 1), id="Patch migration after major"),
+        ],
+    )
+    def test_migrate_single_db(
+        self,
+        valid_conversion_input: Path,
+        orm_increment: tuple[int, int, int],
+        db_increment: tuple[int, int, int],
+    ):
+        """
+        This test loops over the different conversion scripts available
+        and executes some of them:
+            script 0: will not be executed as the database is already this
+            script 1: will be executed on a patch (creates table TestTable with record 1)
+            script 2: will be executed on a minor (creates record 2)
+            script 3: will be executed on a major (creates record 3)
+            script 4: will never be executed as previous upgrade is a major version on which migration is interrupted
+        """
+        # 1. Define test data
+        _migrate_db = MigrateDb()
+        _migrate_db.scripts_dir = valid_conversion_input
+        _migrate_db.read_scripts()
+        _database_path = valid_conversion_input.joinpath("test_db.db")
+
+        _db_version = DatabaseVersion(
+            **_migrate_db.orm_version.__dict__, database_path=None
+        )
+        _query = "SELECT max(orm_version) from Version"
+        _connected_db = open_database(_database_path)
+        _result = _connected_db.execute_sql(_query)
+        _rows = _result.fetchall()
+        assert _rows[0][0] == str(_db_version)
+        _connected_db.close()
+
+        # 2. Run test
+        _migrate_db.orm_version.major += orm_increment[0]
+        _migrate_db.orm_version.minor += orm_increment[1]
+        _migrate_db.orm_version.patch += orm_increment[2]
+        _migrate_db.migrate_single_db(_database_path)
+
+        # 3. Verify expectations
+        _db_version.major += db_increment[0]
+        _db_version.minor += db_increment[1]
+        _db_version.patch += db_increment[2]
+        _connected_db = open_database(_database_path)
+        _result = _connected_db.execute_sql(_query)
+        _rows = _result.fetchall()
+        assert _rows[0][0] == str(_db_version)
+        _connected_db.close()

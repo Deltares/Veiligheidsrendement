@@ -75,27 +75,6 @@ def get_empty_db_context_fixture() -> Iterator[SqliteDatabase]:
     _db.close()
 
 
-@pytest.fixture(name="empty_db_path")
-def get_empty_db_path_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
-    """
-    Gets an empty database path with a valid scheme.
-    """
-    # Create a results directory where to persist the database.
-    _output_dir = test_results.joinpath(request.node.name)
-    if _output_dir.exists():
-        shutil.rmtree(_output_dir)
-    _output_dir.mkdir(parents=True)
-    _test_db_file = _output_dir.joinpath("test_db.db")
-
-    # Copy the original `empty_db.db` into the output directory.
-    _db_file = test_data.joinpath("test_db", "empty_db.db")
-    shutil.copyfile(_db_file, _test_db_file)
-
-    yield _test_db_file
-
-    _test_db_file.unlink()
-
-
 @pytest.fixture(name="custom_measures_vrtool_config")
 def get_vrtool_config_for_custom_measures_db(
     request: pytest.FixtureRequest,

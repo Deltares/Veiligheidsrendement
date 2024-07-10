@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 
 from vrtool import api
-from vrtool.orm.migration.migrate_database import MigrateDb
+from vrtool.orm.version.migration.migrate_database import MigrateDb
 from vrtool.vrtool_logger import VrToolLogger
 
 

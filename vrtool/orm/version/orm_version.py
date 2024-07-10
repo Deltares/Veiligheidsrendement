@@ -15,11 +15,11 @@ class OrmVersion:
     def __hash__(self) -> int:
         return (100 * self.major) + (10 * self.minor) + self.patch
 
-    def __gt__(self, other: OrmVersion) -> bool:
-        return self.__hash__() > other.__hash__()
-
     def __le__(self, other: OrmVersion) -> bool:
         return self.__hash__() <= other.__hash__()
+
+    def __gt__(self, other: OrmVersion) -> bool:
+        return self.__hash__() > other.__hash__()
 
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
