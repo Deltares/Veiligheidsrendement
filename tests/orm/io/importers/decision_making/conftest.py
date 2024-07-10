@@ -39,7 +39,7 @@ def get_valid_measure_factory() -> Iterable[
             mechanism_per_section=_mechanism_per_section,
             cost=1234.56,
             beta=42.24,
-            year=2023,
+            time=2023,
         )
 
     def create_valid_measure(

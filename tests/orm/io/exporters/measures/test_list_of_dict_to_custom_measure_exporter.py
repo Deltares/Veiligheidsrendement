@@ -182,7 +182,7 @@ class TestListOfDictToCustomMeasureExporter:
             )
             assert _exported_measure.cost == _measure_cost
             _expected_time_beta = time_beta_tuples[_idx]
-            assert _exported_measure.year == _expected_time_beta[0]
+            assert _exported_measure.time == _expected_time_beta[0]
             assert _exported_measure.beta == _expected_time_beta[1]
 
         # Get the generated `MeasureResult`
