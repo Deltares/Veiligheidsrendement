@@ -17,6 +17,16 @@ class TestOrmVersion:
         assert isinstance(_orm_version.minor, int)
         assert isinstance(_orm_version.patch, int)
 
+    def test_initialize_from_version_string(self):
+        # 1. Define test data
+        _version_string = "1.2.3"
+
+        # 2. Execute test
+        _orm_version = OrmVersion.from_string(_version_string)
+
+        # 3. Verify expectations
+        assert str(_orm_version) == _version_string
+
     @pytest.mark.parametrize(
         "increment, expected",
         [
