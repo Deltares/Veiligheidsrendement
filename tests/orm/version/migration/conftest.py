@@ -29,7 +29,7 @@ def get_empty_db_path_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
 
     yield _test_db_file
 
-    _test_db_file.unlink()
+    _test_db_file.unlink(missing_ok=True)
 
 
 @pytest.fixture(name="valid_conversion_input")
@@ -41,7 +41,7 @@ def get_valid_conversion_input_fixture(
         return f"v{version.major}_{version.minor}_{version.patch}.sql"
 
     def drop_table_script(version: DatabaseVersion):
-        _drop_script = _scripts_dir.joinpath(generate_script_name(version))
+        _drop_script = _input_dir.joinpath(generate_script_name(version))
         _drop_script.write_text(
             """
             -- This script will not be executed as it has the same version as the ORM
@@ -50,7 +50,7 @@ def get_valid_conversion_input_fixture(
         )
 
     def insert_script(version: DatabaseVersion):
-        _insert_script = _scripts_dir.joinpath(generate_script_name(version))
+        _insert_script = _input_dir.joinpath(generate_script_name(version))
         _insert_script.write_text(
             f"""
             INSERT INTO Version (orm_version) VALUES ('{version}');
@@ -58,7 +58,7 @@ def get_valid_conversion_input_fixture(
         )
 
     def valid_script():
-        _valid_script = _scripts_dir.joinpath("valid_script.txt")
+        _valid_script = _input_dir.joinpath("valid_script.txt")
         _valid_script.write_text(
             """
             CREATE TABLE IF NOT EXISTS ValidTable (
@@ -68,7 +68,7 @@ def get_valid_conversion_input_fixture(
         )
 
     def wrong_script():
-        _wrong_script = _scripts_dir.joinpath("wrong_script.txt")
+        _wrong_script = _input_dir.joinpath("wrong_script.txt")
         _wrong_script.write_text("THIS IS NO SQL!")
 
     def prepare_database(database_version: DatabaseVersion):
@@ -78,8 +78,8 @@ def get_valid_conversion_input_fixture(
             _version.save()
 
     # Remove existing scripts
-    _scripts_dir = test_results.joinpath(request.node.name)
-    for _script in _scripts_dir.rglob("*.sql"):
+    _input_dir = test_results.joinpath(request.node.name)
+    for _script in _input_dir.rglob("*.sql"):
         _script.unlink()
 
     # Set the database version to the current ORM version
@@ -101,6 +101,6 @@ def get_valid_conversion_input_fixture(
     valid_script()
     wrong_script()
 
-    yield _scripts_dir
+    yield _input_dir
 
-    shutil.rmtree(_scripts_dir)
+    shutil.rmtree(_input_dir)
