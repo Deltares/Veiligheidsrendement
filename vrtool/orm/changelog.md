@@ -1,3 +1,10 @@
+## 0.1.4
+
+### Feat
+
+- [VRTOOL-546] Adding `n_revetment` and `n_overflow` to `DikeTrajectInfo` (#337).
+
+
 ## 0.1.3
 
 ### Feat
