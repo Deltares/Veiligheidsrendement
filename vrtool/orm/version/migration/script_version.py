@@ -8,10 +8,11 @@ from vrtool.orm.version.orm_version import OrmVersion
 
 @dataclass
 class ScriptVersion(OrmVersion):
-    script_path: Path
+    """
+    Class representing a migration script with version.
+    """
 
-    def __hash__(self) -> int:
-        return super().__hash__()
+    script_path: Path
 
     @classmethod
     def from_script(cls, script_path: Path) -> ScriptVersion:

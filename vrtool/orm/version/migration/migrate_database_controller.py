@@ -11,26 +11,28 @@ from vrtool.orm.version.migration.script_version import ScriptVersion
 from vrtool.orm.version.orm_version import OrmVersion
 
 
-class MigrateDb:
-    scripts_dir: Path
+class MigrateDatabaseController:
     orm_version: OrmVersion
+    scripts_dir: Path
     script_versions: list[ScriptVersion]
 
-    def __init__(self):
-        self.scripts_dir = Path(__file__).parent.joinpath("scripts")
+    def __init__(self, **kwargs):
         self.orm_version = OrmVersion.from_orm()
-        self.script_versions = []
+        if "scripts_dir" in kwargs:
+            self.scripts_dir = kwargs["scripts_dir"]
+        else:
+            self.scripts_dir = Path(__file__).parent.joinpath("scripts")
+        self.script_versions = self._read_scripts()
 
-    def read_scripts(self) -> None:
-        self.script_versions = sorted(
+    def _read_scripts(self) -> list[ScriptVersion]:
+        return sorted(
             list(
                 ScriptVersion.from_script(_script)
                 for _script in self.scripts_dir.rglob("*.sql")
             )
         )
 
-    @staticmethod
-    def apply_migration_script(db_filepath: Path, script_filepath: Path) -> None:
+    def _apply_migration_script(self, db_filepath: Path, script_filepath: Path) -> None:
         """
         Apply the migration script to the database file.
 
@@ -58,8 +60,6 @@ class MigrateDb:
         version in the database will be applied from a lower to a higher version.
         The target version is the version of the orm.
 
-        Can be run with `python -m migrate_db <db_filepath>`
-
         Args:
             database_file (Path): Database file to migrate (`*.db`)
 
@@ -84,11 +84,11 @@ class MigrateDb:
 
         # Loop over the migration scripts and apply them if necessary.
         _script_version = self.orm_version
-        for _script_version in [
-            s for s in self.script_versions if _db_version < s <= self.orm_version
-        ]:
+        for _script_version in filter(
+            lambda x: _db_version < x <= self.orm_version, self.script_versions
+        ):
             try:
-                self.apply_migration_script(db_filepath, _script_version.script_path)
+                self._apply_migration_script(db_filepath, _script_version.script_path)
             except Exception as _err:
                 logging.error(
                     "Er is een fout opgetreden tijdens de migratie van %s. Details: %s",
@@ -99,7 +99,7 @@ class MigrateDb:
 
             # Check if the migration needs to be interrupted on major upgrade.
             if (
-                OrmVersion.get_increment_type(_db_version, _script_version)
+                _script_version.get_increment_type(_db_version)
                 == IncrementTypeEnum.MAJOR
             ):
                 logging.error(
@@ -108,7 +108,8 @@ class MigrateDb:
                 )
                 break
 
-        # Update the database version to the latest executed script.
+        # Update the database version to the last executed script
+        # (or orm_version if no script is executed).
         set_db_version(_script_version)
 
     def migrate_databases_in_dir(self, database_dir: Path):
@@ -140,4 +141,4 @@ def migrate_test_databases():
 
     # Apply migration.
     # Force the ORM version to be upgraded according to the migration scripts.
-    MigrateDb(force_orm=True).migrate_databases_in_dir(_tests_dir)
+    MigrateDatabaseController(force_orm=True).migrate_databases_in_dir(_tests_dir)
