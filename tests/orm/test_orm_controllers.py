@@ -986,7 +986,6 @@ class TestOrmControllers:
             measure_type=measure_type,
             combinable_type=combinable_type,
             name=measure_name,
-            year=20,
         )
 
     def _create_measure_results(
@@ -1241,7 +1240,6 @@ class TestCustomMeasureDetail:
 
         # 3. Verify final expectations
         assert len(_added_measures) == len(custom_measure_dict_list)
-        assert all(_am.measure.year == 0 for _am in _added_measures)
 
         with open_database(custom_measures_vrtool_config.input_database_path) as _db:
             # Verify the expected amount of `orm.Measure` and `orm.CustomMeasureDetail`
@@ -1551,7 +1549,6 @@ class TestCustomMeasureDetail:
             )
             _measure_that_remains, _created = orm.Measure.get_or_create(
                 name=measure_name,
-                year=0,
                 combinable_type=_full_combinable,
                 measure_type=orm.MeasureType.get(
                     orm.MeasureType.name == measure_type.legacy_name
@@ -1572,7 +1569,7 @@ class TestCustomMeasureDetail:
                     _custom_measure_detail = orm.CustomMeasureDetail.create(
                         measure=_measure_that_remains,
                         mechanism_per_section=_selected_mechanism_x_section,
-                        year=_idx,
+                        time=_idx,
                         cost=42,
                         beta=4.2,
                     )
@@ -1689,7 +1686,6 @@ class TestCustomMeasureDetail:
             )
             _measure_that_remains = orm.Measure.create(
                 name=_measure_that_remains_name,
-                year=2021,
                 combinable_type=orm.CombinableType.get(),
                 measure_type=orm.MeasureType.get(
                     fn.upper(orm.MeasureType.name) != MeasureTypeEnum.CUSTOM.name

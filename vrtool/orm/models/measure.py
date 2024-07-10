@@ -1,4 +1,4 @@
-from peewee import CharField, ForeignKeyField, IntegerField
+from peewee import CharField, ForeignKeyField
 
 from vrtool.orm.models.combinable_type import CombinableType
 from vrtool.orm.models.measure_type import MeasureType
@@ -19,7 +19,6 @@ class Measure(OrmBaseModel):
         CombinableType, backref="measures", on_delete="CASCADE"
     )
     name = CharField(max_length=_max_char_length)
-    year = IntegerField(default=2025)
 
     class Meta:
         table_name = _get_table_name(__qualname__)

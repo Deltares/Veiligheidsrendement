@@ -167,7 +167,6 @@ def _get_basic_measure() -> Measure:
         measure_type=_test_measure_type,
         combinable_type=_test_combinable_type,
         name="TestMeasure",
-        year=20,
     )
 
 

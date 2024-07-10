@@ -1,4 +1,4 @@
-from peewee import CharField, FloatField
+from peewee import CharField, FloatField, IntegerField
 
 from vrtool.orm.models.orm_base_model import (
     OrmBaseModel,
@@ -20,6 +20,8 @@ class DikeTrajectInfo(OrmBaseModel):
     p_max = FloatField(default=float("nan"), null=True)
     flood_damage = FloatField(default=float("nan"), null=True)
     traject_length = FloatField(default=float("nan"), null=True)
+    n_revetment = IntegerField(default=3)
+    n_overflow = IntegerField(default=1)
 
     class Meta:
         table_name = _get_table_name(__qualname__)

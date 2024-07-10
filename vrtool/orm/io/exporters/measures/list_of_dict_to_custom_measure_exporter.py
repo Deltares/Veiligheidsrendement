@@ -69,7 +69,6 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 measure_type=MeasureType.get_or_create(
                     name=MeasureTypeEnum.CUSTOM.legacy_name
                 )[0],
-                year=0,
                 combinable_type=CombinableType.select()
                 .where(
                     fn.upper(CombinableType.name)
@@ -207,7 +206,7 @@ class ListOfDictToCustomMeasureExporter(OrmExporterProtocol):
                 mechanism_per_section=_mechanism_per_section_found,
                 cost=_custom_measure["COST"],
                 beta=_custom_measure["BETA"],
-                year=_custom_measure["TIME"],
+                time=_custom_measure["TIME"],
             )
             if not _is_new:
                 logging.info(

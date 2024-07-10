@@ -39,7 +39,7 @@ def get_valid_measure_factory() -> Iterable[
             mechanism_per_section=_mechanism_per_section,
             cost=1234.56,
             beta=42.24,
-            year=2023,
+            time=2023,
         )
 
     def create_valid_measure(
@@ -52,7 +52,6 @@ def get_valid_measure_factory() -> Iterable[
             measure_type=_measure_type,
             combinable_type=_combinable_type,
             name="Test Measure",
-            year=2023,
         )
         if measure_type == MeasureTypeEnum.CUSTOM:
             _create_custom_measure_detail(_measure)

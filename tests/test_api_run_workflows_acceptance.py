@@ -94,7 +94,6 @@ def _get_all_measure_results_of_specific_type(
             .join(orm.MeasurePerSection)
             .join(orm.Measure)
             .join(orm.MeasureType)
-            .where(orm.Measure.year != 20)
             .where(orm.MeasureType.name == measure_type.legacy_name)
         )
     # get all ids of _supported_measures

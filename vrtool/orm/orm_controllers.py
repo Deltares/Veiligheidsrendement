@@ -329,10 +329,7 @@ def get_all_measure_results_with_supported_investment_years(
     _connected_db = open_database(valid_vrtool_config.input_database_path)
     # We do not want measures that have a year variable >0 initially, as then the interpolation is messed up.
     _supported_measures = (
-        orm.MeasureResult.select()
-        .join(orm.MeasurePerSection)
-        .join(orm.Measure)
-        .where(orm.Measure.year == 0)
+        orm.MeasureResult.select().join(orm.MeasurePerSection).join(orm.Measure)
     )
     _connected_db.close()
 

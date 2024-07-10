@@ -22,7 +22,7 @@ class CustomMeasureDetail(OrmBaseModel):
     )
     cost = FloatField(default=float("nan"), null=True)
     beta = FloatField(default=float("nan"), null=True)
-    year = IntegerField()
+    time = IntegerField()
 
     class Meta:
         table_name = _get_table_name(__qualname__)

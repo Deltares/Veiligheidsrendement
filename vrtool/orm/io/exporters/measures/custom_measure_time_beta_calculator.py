@@ -59,7 +59,7 @@ class CustomMeasureTimeBetaCalculator:
             ),
             key=lambda x: x.mechanism_per_section.mechanism,
         ):
-            _time_betas = [(_cm.year, _cm.beta) for _cm in _custom_measures_group]
+            _time_betas = [(_cm.time, _cm.beta) for _cm in _custom_measures_group]
             _interpolated_betas_dict = self.get_interpolated_time_beta_collection(
                 _time_betas,
                 sorted(self._assessment_time_beta_collection[_mechanism].keys()),
