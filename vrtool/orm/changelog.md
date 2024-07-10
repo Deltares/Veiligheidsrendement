@@ -1,3 +1,16 @@
+## 0.1.5
+
+## Feat
+
+- [VRTOOL-546] Renamed `CustomMeasureDetail` property `year` to `time` (#338).
+
+## 0.1.4
+
+### Feat
+
+- [VRTOOL-546] Adding `n_revetment` and `n_overflow` to `DikeTrajectInfo` (#337).
+
+
 ## 0.1.3
 
 ### Feat
