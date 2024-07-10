@@ -10,7 +10,9 @@ from vrtool.orm.models.orm_base_model import (
 
 class ComputationScenarioParameter(OrmBaseModel):
     computation_scenario = ForeignKeyField(
-        ComputationScenario, backref="computation_scenario_parameters"
+        ComputationScenario,
+        backref="computation_scenario_parameters",
+        on_delete="CASCADE",
     )
     parameter = CharField(max_length=_max_char_length)
     value = FloatField()

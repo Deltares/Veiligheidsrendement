@@ -10,7 +10,7 @@ from vrtool.orm.models.orm_base_model import (
 
 class SupportingFile(OrmBaseModel):
     computation_scenario = ForeignKeyField(
-        ComputationScenario, backref="supporting_files"
+        ComputationScenario, backref="supporting_files", on_delete="CASCADE"
     )
     filename = CharField(max_length=_max_char_length)
 

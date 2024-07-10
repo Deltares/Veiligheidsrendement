@@ -9,7 +9,9 @@ from vrtool.orm.models.orm_base_model import (
 
 
 class SectionData(OrmBaseModel):
-    dike_traject = ForeignKeyField(DikeTrajectInfo, backref="dike_sections")
+    dike_traject = ForeignKeyField(
+        DikeTrajectInfo, backref="dike_sections", on_delete="CASCADE"
+    )
     section_name = CharField(unique=True, max_length=_max_char_length)
     dijkpaal_start = CharField(null=True, max_length=_max_char_length)
     dijkpaal_end = CharField(null=True, max_length=_max_char_length)

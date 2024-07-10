@@ -5,7 +5,9 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 
 class SlopePart(OrmBaseModel):
-    computation_scenario = ForeignKeyField(ComputationScenario, backref="slope_parts")
+    computation_scenario = ForeignKeyField(
+        ComputationScenario, backref="slope_parts", on_delete="CASCADE"
+    )
     begin_part = FloatField()
     end_part = FloatField()
     top_layer_type = FloatField()

@@ -1,3 +1,10 @@
+## 0.1.2
+
+### Feat
+
+- [VRTOOL-542] Migration of tables to include `on_delete="CASCADE"` for all foreign keys (#332).
+
+
 ## 0.1.1
 
 ### Feat

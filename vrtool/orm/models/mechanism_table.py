@@ -6,7 +6,7 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 class MechanismTable(OrmBaseModel):
     computation_scenario = ForeignKeyField(
-        ComputationScenario, backref="mechanism_tables"
+        ComputationScenario, backref="mechanism_tables", on_delete="CASCADE"
     )
     year = IntegerField()
     value = FloatField()

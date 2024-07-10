@@ -6,7 +6,7 @@ from vrtool.orm.models.orm_base_model import OrmBaseModel, _get_table_name
 
 class GrassRevetmentRelation(OrmBaseModel):
     computation_scenario = ForeignKeyField(
-        ComputationScenario, backref="grass_revetment_relations"
+        ComputationScenario, backref="grass_revetment_relations", on_delete="CASCADE"
     )
     year = IntegerField()
     transition_level = FloatField()
