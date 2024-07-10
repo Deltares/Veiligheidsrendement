@@ -8,7 +8,7 @@ In the context of the `orm`:
 
 ## Compatibility check.
 On starting the `vrtool` with a database to import/export data from/to the version of the database is checked against the version or the `orm`.
-In case the version of the database is not compatible with the `orm`, operation is terminated with an error. The user is responsible for creating databases that are compatible. A provided conversion script with instruction can support this process.
+In case the version of the database is not compatible with the `orm`, the operation is terminated with an error. The user is responsible for creating databases that are compatible. A provided conversion script with instruction can support this process.
 If the database is compatible, a warning or info message is issued if the minor or patch version is different, respectively. The user is encouraged to migrate the database to the current version of the `orm` with a provided conversion script.
 Migration scripts are located in `orm\migration\versions`.
 

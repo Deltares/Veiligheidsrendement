@@ -32,6 +32,7 @@ from vrtool.orm.io.importers.optimization.optimization_traject_importer import (
     OptimizationTrajectImporter,
 )
 from vrtool.orm.orm_db import vrtool_db
+from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 from vrtool.orm.version.orm_version import OrmVersion
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
@@ -102,20 +103,25 @@ def open_database(database_path: Path) -> SqliteDatabase:
         SqliteDatabase: Initialized database.
     """
 
-    def check_orm_version() -> bool:
+    def check_orm_version() -> IncrementTypeEnum:
         _orm_verion = OrmVersion.from_orm()
         _db_version = OrmVersion.from_string(orm.Version.get().orm_version)
-        return _orm_verion == _db_version
+        return _orm_verion.get_increment_type(_db_version)
 
     if not database_path.exists():
         raise ValueError("No file was found at {}".format(database_path))
 
     vrtool_db.init(database_path)
     vrtool_db.connect()
-    if not check_orm_version():
-        logging.error(
-            "Database ORM version does not match the current ORM version. Please migrate the database."
-        )
+
+    _increment_type = check_orm_version()
+    _message = "Database ORM version does not match the current ORM version."
+    if _increment_type == IncrementTypeEnum.MAJOR:
+        raise ValueError(_message)
+    elif _increment_type == IncrementTypeEnum.MINOR:
+        logging.error(_message)
+    elif _increment_type == IncrementTypeEnum.PATCH:
+        logging.warning(_message)
 
     return vrtool_db
 

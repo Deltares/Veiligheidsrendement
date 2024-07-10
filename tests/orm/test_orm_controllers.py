@@ -83,6 +83,8 @@ from vrtool.orm.orm_controllers import (
     open_database,
     safe_clear_custom_measure,
 )
+from vrtool.orm.orm_db import vrtool_db
+from vrtool.orm.version.orm_version import OrmVersion
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -206,7 +208,7 @@ class TestOrmControllers:
 
     def test_open_database(self):
         # 1. Define test data.
-        _db_file = test_data / "test_db" / "vrtool_db.db"
+        _db_file = test_data.joinpath("test_db", "vrtool_db.db")
         assert _db_file.is_file()
         _expected_data = DummyModelsData.section_data
 
@@ -234,11 +236,43 @@ class TestOrmControllers:
         )
         assert _section_data.pleistocene_level == _expected_data["pleistocene_level"]
 
+    def test_open_database_with_incompatible_version_raises_value_error(
+        self, request: pytest.FixtureRequest
+    ):
+        # 1. Define test data
+        _orm_version = OrmVersion.from_orm()
+        _orm_version.major -= 1
+
+        _db_file = test_data.joinpath("test_db", "empty_db.db")
+        _output_dir = test_results.joinpath(request.node.name)
+        if _output_dir.exists():
+            shutil.rmtree(_output_dir)
+        _output_dir.mkdir(parents=True)
+        _test_db_file = _output_dir.joinpath("test_db.db")
+        shutil.copyfile(_db_file, _test_db_file)
+
+        vrtool_db.init(_test_db_file)
+        vrtool_db.connect()
+        _db_version = orm.Version.get()
+        _db_version.orm_version = str(_orm_version)
+        _db_version.save()
+        vrtool_db.close()
+
+        # 2. Run test
+        with pytest.raises(ValueError) as exc_err:
+            _ = open_database(_test_db_file)
+
+        # 3. Verify expectations
+        assert (
+            str(exc_err.value)
+            == "Database ORM version does not match the current ORM version."
+        )
+
     def test_open_database_when_file_doesnot_exist_raises_value_error(
         self, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
-        _db_file = test_results / request.node.name / "vrtool_db.db"
+        _db_file = test_results.joinpath(request.node.name, "vrtool_db.db")
         assert not _db_file.exists()
 
         # 2. Run test.

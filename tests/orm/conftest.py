@@ -1,5 +1,4 @@
 import shutil
-from pathlib import Path
 from typing import Callable, Iterator, Optional
 
 import pytest
