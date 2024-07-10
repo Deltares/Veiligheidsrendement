@@ -32,6 +32,7 @@ from vrtool.orm.io.importers.optimization.optimization_traject_importer import (
     OptimizationTrajectImporter,
 )
 from vrtool.orm.orm_db import vrtool_db
+from vrtool.orm.version.orm_version import OrmVersion
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -100,10 +101,22 @@ def open_database(database_path: Path) -> SqliteDatabase:
     Returns:
         SqliteDatabase: Initialized database.
     """
+
+    def check_orm_version() -> bool:
+        _orm_verion = OrmVersion.from_orm()
+        _db_version = OrmVersion.from_string(orm.Version.get().orm_version)
+        return _orm_verion == _db_version
+
     if not database_path.exists():
         raise ValueError("No file was found at {}".format(database_path))
+
     vrtool_db.init(database_path)
     vrtool_db.connect()
+    if not check_orm_version():
+        logging.error(
+            "Database ORM version does not match the current ORM version. Please migrate the database."
+        )
+
     return vrtool_db
 
 

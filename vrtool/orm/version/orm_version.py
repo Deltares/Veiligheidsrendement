@@ -86,9 +86,22 @@ class OrmVersion:
         Returns:
             OrmVersion: Object representing the ORM version.
         """
+        return cls.from_string(__version__)
+
+    @classmethod
+    def from_string(cls, version_string: str) -> OrmVersion:
+        """
+        Create an OrmVersion object from a version string.
+
+        Args:
+            version_string (str): Version string in the format "major.minor.patch".
+
+        Returns:
+            OrmVersion: Object representing the version.
+        """
 
         def parse_version(version_string: str) -> tuple[int, int, int]:
             return tuple(map(int, version_string.split(".")))
 
-        _major, _minor, _patch = parse_version(__version__)
+        _major, _minor, _patch = parse_version(version_string)
         return cls(major=_major, minor=_minor, patch=_patch)
