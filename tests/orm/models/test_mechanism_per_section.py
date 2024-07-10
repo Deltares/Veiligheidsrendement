@@ -10,7 +10,7 @@ from vrtool.orm.models.section_data import SectionData
 
 class TestMechanismPerSection:
     @pytest.fixture(name="mechanism_per_section_fixture")
-    def _get_profile_proint_fixture(
+    def _get_mechanism_per_section_fixture(
         self, get_orm_basic_dike_section: Callable[[], SectionData]
     ) -> Iterator[MechanismPerSection]:
         _section_data = get_orm_basic_dike_section()

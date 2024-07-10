@@ -55,6 +55,7 @@ from vrtool.optimization.measures.aggregated_measures_combination import (
 )
 from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.sh_sg_measure import ShSgMeasure
+from vrtool.orm import __version__
 from vrtool.orm.io.exporters.measures.custom_measure_time_beta_calculator import (
     CustomMeasureTimeBetaCalculator,
 )
@@ -197,6 +198,8 @@ class TestOrmControllers:
                     | dict(section_data=_dike_section, profile_point_type=_c_point)
                 )
             ).save()
+
+        orm.Version.create(orm_version=__version__).save()
 
         # 3. Save tables.
         assert _db_file.exists()
