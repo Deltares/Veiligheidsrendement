@@ -16,7 +16,7 @@ class DatabaseVersion(OrmVersion):
     database_path: Path
 
     def __hash__(self) -> int:
-        return (100 * self.major) + (10 * self.minor) + self.patch
+        return super().__hash__()
 
     @classmethod
     def from_database(cls, database_path: Path) -> DatabaseVersion:

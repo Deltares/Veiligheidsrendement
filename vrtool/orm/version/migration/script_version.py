@@ -11,7 +11,7 @@ class ScriptVersion(OrmVersion):
     script_path: Path
 
     def __hash__(self) -> int:
-        return (100 * self.major) + (10 * self.minor) + self.patch
+        return super().__hash__()
 
     @classmethod
     def from_script(cls, script_path: Path) -> ScriptVersion:
