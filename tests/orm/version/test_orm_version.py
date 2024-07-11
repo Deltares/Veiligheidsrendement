@@ -3,8 +3,6 @@ import pytest
 from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 from vrtool.orm.version.orm_version import OrmVersion
 
-ZERO_VERSION = (0, 0, 0)
-
 
 class TestOrmVersion:
     def test_initialize_from_orm(self):
@@ -36,7 +34,7 @@ class TestOrmVersion:
             pytest.param((0, 1, 1), IncrementTypeEnum.MINOR, id="Minor (with Patch)"),
             pytest.param((0, 0, 1), IncrementTypeEnum.PATCH, id="Patch"),
             pytest.param((0, 0, 0), IncrementTypeEnum.NONE, id="None"),
-            pytest.param((-1, -1, -1), IncrementTypeEnum.NONE, id="None (decrement)"),
+            pytest.param((-1, 0, 0), IncrementTypeEnum.MAJOR, id="Major (decrement)"),
         ],
     )
     def test_get_increment_type(

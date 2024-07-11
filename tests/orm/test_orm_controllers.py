@@ -260,7 +260,7 @@ class TestOrmControllers:
 
         # 2. Run test
         with pytest.raises(ValueError) as exc_err:
-            _ = open_database(_test_db_file)
+            open_database(_test_db_file)
 
         # 3. Verify expectations
         assert (

@@ -33,9 +33,7 @@ class OrmVersion:
         return False
 
     def __le__(self, other: OrmVersion) -> bool:
-        if self == other:
-            return True
-        return self < other
+        return self == other or self < other
 
     def __gt__(self, other: OrmVersion) -> bool:
         if self.major > other.major:
@@ -47,9 +45,7 @@ class OrmVersion:
         return False
 
     def __ge__(self, other: OrmVersion) -> bool:
-        if self == other:
-            return True
-        return self > other
+        return self == other or self > other
 
     def __str__(self) -> str:
         """
@@ -62,19 +58,19 @@ class OrmVersion:
 
     def get_increment_type(self, from_version: OrmVersion) -> IncrementTypeEnum:
         """
-        Define the increment type from another version.
+        Define the increment type between this and another version (reciprocal).
 
         Args:
-            other (OrmVersion): Version to increment from to this version.
+            other (OrmVersion): Version to increment compare against.
 
         Returns:
-            IncrementTypeEnum: Type of increment from the other to this versions.
+            IncrementTypeEnum: Type of increment between the other and this versions.
         """
-        if self.major > from_version.major:
+        if self.major != from_version.major:
             return IncrementTypeEnum.MAJOR
-        if self.minor > from_version.minor:
+        if self.minor != from_version.minor:
             return IncrementTypeEnum.MINOR
-        if self.patch > from_version.patch:
+        if self.patch != from_version.patch:
             return IncrementTypeEnum.PATCH
         return IncrementTypeEnum.NONE
 
