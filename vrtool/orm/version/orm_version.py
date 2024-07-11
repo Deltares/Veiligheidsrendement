@@ -60,21 +60,21 @@ class OrmVersion:
         """
         return f"{self.major}.{self.minor}.{self.patch}"
 
-    def get_increment_type(self, other: OrmVersion) -> IncrementTypeEnum:
+    def get_increment_type(self, from_version: OrmVersion) -> IncrementTypeEnum:
         """
-        Define the increment type against another version.
+        Define the increment type from another version.
 
         Args:
-            other (OrmVersion): Version to compare against.
+            other (OrmVersion): Version to increment from to this version.
 
         Returns:
-            IncrementTypeEnum: Type of increment between this and other versions.
+            IncrementTypeEnum: Type of increment from the other to this versions.
         """
-        if self.major != other.major:
+        if self.major > from_version.major:
             return IncrementTypeEnum.MAJOR
-        if self.minor != other.minor:
+        if self.minor > from_version.minor:
             return IncrementTypeEnum.MINOR
-        if self.patch != other.patch:
+        if self.patch > from_version.patch:
             return IncrementTypeEnum.PATCH
         return IncrementTypeEnum.NONE
 
