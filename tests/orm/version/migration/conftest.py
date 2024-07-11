@@ -6,7 +6,7 @@ import pytest
 
 from tests import test_data, test_results
 from vrtool.orm.models.version import Version as DbVersion
-from vrtool.orm.orm_controllers import open_database
+from vrtool.orm.orm_controllers import open_database_without_compatibility_check
 from vrtool.orm.version.migration.database_version import DatabaseVersion
 from vrtool.orm.version.orm_version import OrmVersion
 
@@ -72,7 +72,9 @@ def get_valid_conversion_input_fixture(
         _wrong_script.write_text("THIS IS NO SQL!")
 
     def prepare_database(database_version: DatabaseVersion):
-        with open_database(database_version.database_path).connection_context():
+        with open_database_without_compatibility_check(
+            database_version.database_path
+        ).connection_context():
             _version, _ = DbVersion.get_or_create()
             _version.orm_version = str(database_version)
             _version.save()

@@ -1,8 +1,15 @@
-## 0.1.6
+## 0.1.7
 
 ## Feat
 
 - [VRTOOL-544] Remove columns from `StandardMeasure`: `rob_of_solution_failure`, `failure_probability_with_solution`, `stability_screen_s_f_increase` (#341).
+
+
+## 0.1.6
+
+## Feat
+
+- [VRTOOL-545] Added property `flood_damage` to `SectionData` (#343).
 
 
 ## 0.1.5

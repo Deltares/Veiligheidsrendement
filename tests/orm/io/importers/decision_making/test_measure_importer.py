@@ -137,7 +137,7 @@ class TestMeasureImporter:
         assert _imported_measure.parameters["max_outward"] == 2
         assert _imported_measure.parameters["max_inward"] == 3
         assert _imported_measure.parameters["P_solution"] == 0.4
-        assert _imported_measure.parameters["Pf_solution"] == 0.5
+        assert _imported_measure.parameters["Pf_solution"] == 1e-12
         assert (
             _imported_measure.parameters["ID"]
             == _orm_measure.standard_measure[0].get_id()
