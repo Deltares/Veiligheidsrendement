@@ -83,8 +83,7 @@ from vrtool.orm.orm_controllers import (
     open_database,
     safe_clear_custom_measure,
 )
-from vrtool.orm.orm_db import vrtool_db
-from vrtool.orm.version.orm_version import OrmVersion
+from vrtool.orm.version.migration.database_version import DatabaseVersion
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -240,9 +239,6 @@ class TestOrmControllers:
         self, request: pytest.FixtureRequest
     ):
         # 1. Define test data
-        _orm_version = OrmVersion.from_orm()
-        _orm_version.major -= 1
-
         _db_file = test_data.joinpath("test_db", "empty_db.db")
         _output_dir = test_results.joinpath(request.node.name)
         if _output_dir.exists():
@@ -251,12 +247,9 @@ class TestOrmControllers:
         _test_db_file = _output_dir.joinpath("test_db.db")
         shutil.copyfile(_db_file, _test_db_file)
 
-        vrtool_db.init(_test_db_file)
-        vrtool_db.connect()
-        _db_version = orm.Version.get()
-        _db_version.orm_version = str(_orm_version)
-        _db_version.save()
-        vrtool_db.close()
+        _db_version = DatabaseVersion.from_database(_test_db_file)
+        _db_version.major += 1
+        _db_version.update_version(_db_version)
 
         # 2. Run test
         with pytest.raises(ValueError) as exc_err:
