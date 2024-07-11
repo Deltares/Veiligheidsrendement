@@ -16,13 +16,13 @@ class IncrementTypeEnum(VrtoolEnum):
         Returns the list of supported increments.
 
         Returns:
-            list[IncrementTypeEnum]: Increments supported for mgiration.
+            list[IncrementTypeEnum]: Increments compatible with the current `orm` version.
         """
         return [IncrementTypeEnum.PATCH, IncrementTypeEnum.NONE]
 
     def is_supported(self) -> bool:
         """
-        Verifies whether this type of increment is supported for migration.
+        Verifies whether this type of increment is supported with the current `orm`version.
 
         Returns:
             bool: Increment can be migrated.
