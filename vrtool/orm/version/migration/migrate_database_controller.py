@@ -93,6 +93,9 @@ class MigrateDatabaseController:
                 )
                 return
 
+            # Update the database version
+            set_db_version(_script_version)
+
             # Check if the migration needs to be interrupted on major upgrade.
             if (
                 _script_version.get_increment_type(_db_version)
@@ -103,10 +106,6 @@ class MigrateDatabaseController:
                     _script_version,
                 )
                 break
-
-        # Update the database version to the last executed script
-        # (or orm_version if no script is executed).
-        set_db_version(_script_version)
 
     def migrate_databases_in_dir(self, database_dir: Path):
         """
