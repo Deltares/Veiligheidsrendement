@@ -74,15 +74,14 @@ class StabilityInnerSimpleInput:
         elif _is_eliminated:
             raise ValueError("Warning: Elimination defined but not turned on")
 
+        _prob_solution_failure = mechanism_input.input.get("Pf", np.ndarray([]))
         _input = cls(
             beta=_beta,
             scenario_probability=mechanism_input.input.get(
                 "P_scenario", np.ndarray([])
             ),
-            initial_probability_of_failure=mechanism_input.input.get(
-                "Pf", np.ndarray([])
-            ),
-            piping_reduction_factor=mechanism_input.input["piping_reduction_factor"],
+            initial_probability_of_failure=_prob_solution_failure,
+            piping_reduction_factor=1 / _prob_solution_failure,
             reliability_calculation_method=_reliability_calculation_method,
             is_eliminated=_is_eliminated,
         )
