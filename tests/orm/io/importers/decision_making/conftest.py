@@ -65,7 +65,6 @@ def get_valid_measure_factory() -> Iterable[
                 max_outward_reinforcement=2,
                 max_inward_reinforcement=3,
                 prob_of_solution_failure=0.4,
-                failure_probability_with_solution=0.5,
             )
         return _measure
 

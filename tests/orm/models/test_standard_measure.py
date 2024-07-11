@@ -32,8 +32,5 @@ class TestStandardMeasure:
         assert _standard_measure.max_crest_increase == 2
         assert _standard_measure.stability_screen == 0
         assert _standard_measure.prob_of_solution_failure == 1 / 1000
-        assert _standard_measure.failure_probability_with_solution == 10**-12
-        assert _standard_measure.stability_screen_s_f_increase == 0.2
-        assert _standard_measure.transition_level_increase_step == 0.25
         assert _standard_measure.max_pf_factor_block == 1000
         assert _standard_measure.n_steps_block == 4

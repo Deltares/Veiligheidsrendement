@@ -19,9 +19,6 @@ class StandardMeasure(OrmBaseModel):
     max_crest_increase = FloatField(default=2)
     stability_screen = BooleanField(default=0)
     prob_of_solution_failure = FloatField(default=1 / 1000)
-    failure_probability_with_solution = FloatField(default=10**-12)
-    stability_screen_s_f_increase = FloatField(default=0.2)
-    transition_level_increase_step = FloatField(default=0.25)
     max_pf_factor_block = FloatField(default=1000)
     n_steps_block = IntegerField(default=4)
 
