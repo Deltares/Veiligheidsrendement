@@ -1,8 +1,8 @@
-## 0.1.5
+## 0.1.6
 
 ## Feat
 
-- [VRTOOL-547] Added property `flood_damage` to `SectionData` (#341).
+- [VRTOOL-547] Added property `flood_damage` to `SectionData` (#342).
 
 
 ## 0.1.5
