@@ -32,6 +32,10 @@ from vrtool.orm.io.importers.optimization.optimization_traject_importer import (
     OptimizationTrajectImporter,
 )
 from vrtool.orm.orm_db import vrtool_db
+from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
+from vrtool.orm.version.migration.migrate_database_controller import (
+    MigrateDatabaseController,
+)
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -100,8 +104,29 @@ def open_database(database_path: Path) -> SqliteDatabase:
     Returns:
         SqliteDatabase: Initialized database.
     """
+    _vrtool_db = open_database_without_compatibility_check(database_path)
+
+    if not MigrateDatabaseController.is_database_compatible(database_path):
+        raise ValueError("Database ORM version does not match the current ORM version.")
+
+    return _vrtool_db
+
+
+def open_database_without_compatibility_check(database_path: Path) -> SqliteDatabase:
+    """
+    Initializes and connects the `Vrtool` to its related database.
+    No check on compatibility of the database version is performed.
+
+    Args:
+        database_path (Path): Location of the SQLite database.
+
+    Returns:
+        SqliteDatabase: Initialized database.
+    """
+
     if not database_path.exists():
         raise ValueError("No file was found at {}".format(database_path))
+
     vrtool_db.init(database_path)
     vrtool_db.connect()
     return vrtool_db
