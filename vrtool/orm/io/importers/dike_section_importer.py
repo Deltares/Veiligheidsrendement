@@ -165,16 +165,18 @@ class DikeSectionImporter(OrmImporterProtocol):
         if not orm_model:
             raise ValueError(f"No valid value given for {SectionData.__name__}.")
 
-        _dike_section = DikeSection()
-        _dike_section.name = orm_model.section_name
-        _dike_section.houses = self._import_buildings_list(orm_model.buildings_list)
-        _dike_section.InitialGeometry = self._import_geometry(orm_model)
-        # TODO: Not entirely sure mechanism_data is correctly set. Technically should not be needed anymore.
-        _dike_section.mechanism_data = self._get_mechanism_data(orm_model)
-        _dike_section.section_reliability = self._get_section_reliability(orm_model)
-        _dike_section.Length = orm_model.section_length
-        _dike_section.crest_height = orm_model.crest_height
-        _dike_section.cover_layer_thickness = orm_model.cover_layer_thickness
-        _dike_section.pleistocene_level = orm_model.pleistocene_level
+        _dike_section = DikeSection(
+            name=orm_model.section_name,
+            houses=self._import_buildings_list(orm_model.buildings_list),
+            InitialGeometry=self._import_geometry(orm_model),
+            # TODO: Not entirely sure mechanism_data is correctly set. Technically should not be needed anymore.
+            mechanism_data=self._get_mechanism_data(orm_model),
+            section_reliability=self._get_section_reliability(orm_model),
+            Length=orm_model.section_length,
+            crest_height=orm_model.crest_height,
+            cover_layer_thickness=orm_model.cover_layer_thickness,
+            pleistocene_level=orm_model.pleistocene_level,
+            flood_damage=orm_model.get_flood_damage_value(),
+        )
 
         return _dike_section
