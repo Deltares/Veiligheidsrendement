@@ -21,8 +21,6 @@ CREATE TABLE StandardMeasure (
     crest_step                        REAL          NOT NULL,
     max_crest_increase                REAL          NOT NULL,
     stability_screen                  INTEGER       NOT NULL,
-    failure_probability_with_solution REAL          NOT NULL,
-    stability_screen_s_f_increase     REAL          NOT NULL,
     transition_level_increase_step    REAL          NOT NULL,
     max_pf_factor_block               REAL          NOT NULL,
     n_steps_block                     INTEGER       NOT NULL,
@@ -41,8 +39,6 @@ INSERT INTO StandardMeasure (
                                 crest_step,
                                 max_crest_increase,
                                 stability_screen,
-                                failure_probability_with_solution,
-                                stability_screen_s_f_increase,
                                 transition_level_increase_step,
                                 max_pf_factor_block,
                                 n_steps_block
@@ -55,8 +51,6 @@ INSERT INTO StandardMeasure (
                                    crest_step,
                                    max_crest_increase,
                                    stability_screen,
-                                   failure_probability_with_solution,
-                                   stability_screen_s_f_increase,
                                    transition_level_increase_step,
                                    max_pf_factor_block,
                                    n_steps_block
