@@ -21,6 +21,7 @@ class StandardMeasure(OrmBaseModel):
     max_pf_factor_block = FloatField(default=1000)
     transition_level_increase_step = FloatField(default=0.25)
     n_steps_block = IntegerField(default=4)
+    piping_reduction_factor = FloatField(null=True)
 
     class Meta:
         table_name = _get_table_name(__qualname__)

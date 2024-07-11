@@ -63,10 +63,9 @@ class MeasureImporter(OrmImporterProtocol):
         _measure.parameters["max_inward"] = orm_measure.max_inward_reinforcement
         # VRTOOL-543 by definition measure year is always 0
         _measure.parameters["year"] = 0
-        # Using previous default value to VRTOOL-544
-        _measure.parameters["P_solution"] = 1 / 1000
-        # Using previous default value to VRTOOL-544
-        _measure.parameters["Pf_solution"] = 10**-12
+        _measure.parameters[
+            "piping_reduction_factor"
+        ] = orm_measure.piping_reduction_factor
         _measure.parameters[
             "transition_level_increase_step"
         ] = orm_measure.transition_level_increase_step

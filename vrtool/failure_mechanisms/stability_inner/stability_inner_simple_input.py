@@ -19,9 +19,7 @@ class StabilityInnerSimpleInput:
     beta: np.ndarray
     scenario_probability: np.ndarray
     initial_probability_of_failure: np.ndarray
-
-    failure_probability_with_elimination: np.ndarray
-    failure_probability_elimination: np.ndarray
+    piping_reduction_factor: float
 
     is_eliminated: bool
     reliability_calculation_method: ReliabilityCalculationMethod
@@ -71,14 +69,8 @@ class StabilityInnerSimpleInput:
             raise Exception("Warning: No input values SF or Beta StabilityInner")
 
         _is_eliminated = mechanism_input.input.get("elimination", False)
-        _failure_probability_elimination = None
-        _failure_probability_with_elimination = None
         if _get_valid_bool_value(_is_eliminated):
             _is_eliminated = True
-            _failure_probability_elimination = mechanism_input.input["pf_elim"]
-            _failure_probability_with_elimination = mechanism_input.input[
-                "pf_with_elim"
-            ]
         elif _is_eliminated:
             raise ValueError("Warning: Elimination defined but not turned on")
 
@@ -90,9 +82,8 @@ class StabilityInnerSimpleInput:
             initial_probability_of_failure=mechanism_input.input.get(
                 "Pf", np.ndarray([])
             ),
+            piping_reduction_factor=mechanism_input.input["piping_reduction_factor"],
             reliability_calculation_method=_reliability_calculation_method,
-            failure_probability_with_elimination=_failure_probability_with_elimination,
-            failure_probability_elimination=_failure_probability_elimination,
             is_eliminated=_is_eliminated,
         )
         return _input

@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
@@ -10,11 +9,10 @@ from vrtool.failure_mechanisms.stability_inner import (
 
 
 class TestStabilityInnerSimpleCalculator:
-    def test_init_with_valid_data(self):
+    def test_init_with_valid_data(self, mechanism_input_fixture: MechanismInput):
         # Setup
-        _mechanism_input = MechanismInput("")
-        _mechanism_input.input["beta"] = np.array([0.1], dtype=float)
-        _input = StabilityInnerSimpleInput.from_mechanism_input(_mechanism_input)
+        assert isinstance(mechanism_input_fixture, MechanismInput)
+        _input = StabilityInnerSimpleInput.from_mechanism_input(mechanism_input_fixture)
 
         # Call
         _calculator = StabilityInnerSimpleCalculator(_input)

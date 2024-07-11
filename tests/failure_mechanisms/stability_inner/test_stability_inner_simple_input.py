@@ -10,14 +10,15 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class TestStabilityInnerSimpleInput:
-    def test_from_mechanism_input_with_beta_returns_input_with_beta(self):
+    def test_from_mechanism_input_with_beta_returns_input_with_beta(
+        self, mechanism_input_fixture: MechanismInput
+    ):
         # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["beta"] = np.array([0.1], dtype=float)
+        assert isinstance(mechanism_input_fixture, MechanismInput)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
+            mechanism_input_fixture
         )
 
         # Assert
@@ -25,9 +26,13 @@ class TestStabilityInnerSimpleInput:
             failure_mechanism_input.reliability_calculation_method
             == ReliabilityCalculationMethod.BETA_SINGLE
         )
-        assert failure_mechanism_input.beta == mechanism_input.input["beta"]
+        assert failure_mechanism_input.beta == mechanism_input_fixture.input["beta"]
+        assert (
+            failure_mechanism_input.piping_reduction_factor
+            == mechanism_input_fixture.input["piping_reduction_factor"]
+        )
 
-    def test_from_mechanism_input_without_any_reliability_or_safety_factor_raises_exception(
+    def test_from_mechanism_input_without_any_reliability_raises_exception(
         self,
     ):
         # Setup
@@ -44,30 +49,20 @@ class TestStabilityInnerSimpleInput:
         )
 
     def test_from_mechanism_input_with_elimination_returns_input_with_elimination(
-        self,
+        self, mechanism_input_fixture: MechanismInput
     ):
         # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
-        mechanism_input.input["elimination"] = "yes"
-        mechanism_input.input["pf_elim"] = np.array([0.2], dtype=float)
-        mechanism_input.input["pf_with_elim"] = np.array([0.3], dtype=float)
+        mechanism_input_fixture.input["elimination"] = "yes"
+        mechanism_input_fixture.input["pf_elim"] = np.array([0.2], dtype=float)
+        mechanism_input_fixture.input["pf_with_elim"] = np.array([0.3], dtype=float)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
+            mechanism_input_fixture
         )
 
         # Assert
         assert failure_mechanism_input.is_eliminated
-        assert (
-            failure_mechanism_input.failure_probability_elimination
-            == mechanism_input.input["pf_elim"]
-        )
-        assert (
-            failure_mechanism_input.failure_probability_with_elimination
-            == mechanism_input.input["pf_with_elim"]
-        )
 
     @pytest.mark.parametrize(
         "elimination",
@@ -77,16 +72,15 @@ class TestStabilityInnerSimpleInput:
         ],
     )
     def test_from_mechanism_input_with_elimination_without_valid_value_raises_value_error(
-        self, elimination: str
+        self, elimination: str, mechanism_input_fixture: MechanismInput
     ):
         # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
-        mechanism_input.input["elimination"] = elimination
+        mechanism_input_fixture.input["beta"] = np.array([0.5], dtype=float)
+        mechanism_input_fixture.input["elimination"] = elimination
 
         # Call
         with pytest.raises(ValueError) as exception_error:
-            StabilityInnerSimpleInput.from_mechanism_input(mechanism_input)
+            StabilityInnerSimpleInput.from_mechanism_input(mechanism_input_fixture)
 
         # Assert
         assert (
@@ -113,10 +107,9 @@ class TestStabilityInnerSimpleInput:
             beta=pf_to_beta(np.array(initial_probability_of_failure)),
             scenario_probability=np.array(scenario_probability),
             initial_probability_of_failure=np.array(initial_probability_of_failure),
-            failure_probability_with_elimination=np.array([]),
-            failure_probability_elimination=np.array([]),
             is_eliminated=False,
             reliability_calculation_method=ReliabilityCalculationMethod.BETA_SINGLE,
+            piping_reduction_factor=1000,
         )
 
         # 2. Run test.
