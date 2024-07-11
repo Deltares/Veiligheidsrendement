@@ -40,8 +40,7 @@ class MigrateDatabaseController:
         """
         _orm_version = OrmVersion.from_orm()
         _db_version = DatabaseVersion.from_database(db_filepath)
-        _increment_type = _orm_version.get_increment_type(_db_version)
-        return _increment_type not in (IncrementTypeEnum.MAJOR, IncrementTypeEnum.MINOR)
+        return _orm_version.get_increment_type(_db_version).is_supported()
 
     def _apply_migration_script(self, db_filepath: Path, script_filepath: Path) -> None:
         """

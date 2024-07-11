@@ -63,9 +63,7 @@ class DatabaseVersion(OrmVersion):
         # Don't use the OrmControllers to avoid circular dependencies.
         vrtool_db.init(self.database_path)
         vrtool_db.connect()
-
-        _version, _ = DbVersion.get_or_create()
-        _version.orm_version = str(version)
-        _version.save()
-
-        vrtool_db.close()
+        with vrtool_db.connection_context():
+            _version, _ = DbVersion.get_or_create()
+            _version.orm_version = str(version)
+            _version.save()

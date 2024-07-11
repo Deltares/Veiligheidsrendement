@@ -51,11 +51,15 @@ class TestMigrateDatabaseController:
         expected: bool,
     ):
         # 1. Define test data
-        _db_version = DatabaseVersion.from_database(empty_db_path)
-        _db_version.major += increment[0]
-        _db_version.minor += increment[1]
-        _db_version.patch += increment[2]
-        _db_version.update_version(_db_version)
+        _from_db_version = DatabaseVersion.from_database(empty_db_path)
+        _orm_version = OrmVersion.from_orm()
+        _to_db_version = DatabaseVersion(
+            major=increment[0] + _orm_version.major,
+            minor=increment[1] + _orm_version.minor,
+            patch=increment[2] + _orm_version.patch,
+            database_path=_from_db_version.database_path,
+        )
+        _from_db_version.update_version(_to_db_version)
 
         # 2. Run test
         _result = MigrateDatabaseController.is_database_compatible(empty_db_path)
