@@ -19,6 +19,7 @@ class StandardMeasure(OrmBaseModel):
     max_crest_increase = FloatField(default=2)
     stability_screen = BooleanField(default=0)
     max_pf_factor_block = FloatField(default=1000)
+    transition_level_increase_step = FloatField(default=0.25)
     n_steps_block = IntegerField(default=4)
 
     class Meta:

@@ -31,5 +31,6 @@ class TestStandardMeasure:
         assert _standard_measure.crest_step == 0.5
         assert _standard_measure.max_crest_increase == 2
         assert _standard_measure.stability_screen == 0
+        assert _standard_measure.transition_level_increase_step == 0.25
         assert _standard_measure.max_pf_factor_block == 1000
         assert _standard_measure.n_steps_block == 4

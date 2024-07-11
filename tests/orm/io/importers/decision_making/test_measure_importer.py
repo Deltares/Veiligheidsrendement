@@ -136,7 +136,7 @@ class TestMeasureImporter:
         assert _imported_measure.parameters["dcrest_max"] == 0.1
         assert _imported_measure.parameters["max_outward"] == 2
         assert _imported_measure.parameters["max_inward"] == 3
-        assert _imported_measure.parameters["P_solution"] == 0.4
+        assert _imported_measure.parameters["P_solution"] == 1 / 1000
         assert _imported_measure.parameters["Pf_solution"] == 1e-12
         assert (
             _imported_measure.parameters["ID"]
