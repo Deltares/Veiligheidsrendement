@@ -1,0 +1,18 @@
+,Section,option_index,LCC,BC,ID,name,year,yes/no,dcrest,dberm,beta_target,transition_level
+0,,,0.0,0.0,,,,,,,,
+1,WsNoo_Stab_015400_016200,237,2582272.000000001,3246.3519826534193,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.0,20.0,3.924192142846635,6.43
+2,WsNoo_Stab_014700_015400,310,3263811.7844822323,28.249374849118983,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.5,5.0,3.7181384406537568,7.42
+3,WsNoo_Stab_014700_015400,502,1076843.5682818685,15.663230592466247,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.0,5.0,3.7181384406537568,7.42
+4,WsNoo_Stab_015400_016200,429,2491880.245252137,15.663230592466247,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.5,20.0,3.924192142846635,6.43
+5,WsNoo_Stab_015400_016200,430,1238560.546997685,10.843526999474674,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,0.5,20.0,3.924192142846635,7.43
+6,WsNoo_Stab_014700_015400,694,1143192.9518296914,8.692948667398406,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.5,5.0,3.7181384406537568,7.42
+7,WsNoo_Stab_015400_016200,622,1208636.1283004992,8.692948667398406,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.0,20.0,3.924192142846635,7.43
+8,WsNoo_Stab_014700_015400,695,306647.23443294875,5.6907767389047805,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.5,5.0,3.7181384406537568,7.92
+9,WsNoo_Stab_015400_016200,632,356142.47306474485,4.306240722770502,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.0,20.0,4.880551222356271,7.93
+10,WsNoo_Stab_014700_015400,896,1209542.3353775162,3.2414157370749166,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,2.0,5.0,4.82903779680805,7.92
+11,WsNoo_Stab_015400_016200,818,1281392.011348866,3.2414157370749166,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.5,20.0,4.24297850268318,7.93
+12,WsNoo_Stab_015400_016200,839,1440160.0000000019,0.6938942177215259,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,1.5,30.0,3.924192142846635,7.93
+13,WsNoo_Stab_015400_016200,1031,1354147.8943972327,0.5182620254380554,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,2.0,30.0,3.924192142846635,7.93
+14,WsNoo_Stab_015400_016200,1055,16993511.720701262,0.38161034419088435,2+3,['Zelfkerende constructie+Aanpassing bekleding'],"[0, 0]",yes,-999.0,-999.0,3.924192142846635,7.93
+15,WsNoo_Stab_014700_015400,911,246792.0,0.3003707961253092,1+3,['Grondversterking binnenwaarts+Aanpassing bekleding'],"[0, 0]",-999,2.0,8.0,3.7181384406537568,7.92
+16,WsNoo_Stab_014700_015400,1055,17909106.95977688,0.1882455199288427,2+3,['Zelfkerende constructie+Aanpassing bekleding'],"[0, 0]",yes,-999.0,-999.0,3.7181384406537568,7.92
