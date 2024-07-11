@@ -102,6 +102,12 @@ class MigrateDatabaseController:
                     "Er is een major versie upgrade detecteerd (%s); de migratie wordt afgebroken. Rond de huidige upgrade af voordat wordt doorgegaan met eventuele volgende stappen.",
                     _script_version,
                 )
+                _txt = _script_version.script_path.with_suffix(".txt")
+                    if _txt.exists():
+                        logging.error(
+                            "Instructie voor migratie:\n%s",
+                            _txt.read_text(encoding="utf-8"),
+                        )
                 break
 
         # Update the database version to the last executed script
