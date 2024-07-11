@@ -2,6 +2,13 @@
 
 ## Feat
 
+- [VRTOOL-547] Added property `flood_damage` to `SectionData` (#341).
+
+
+## 0.1.5
+
+## Feat
+
 - [VRTOOL-547] Renamed `CustomMeasureDetail` property `year` to `time` (#338).
 
 ## 0.1.4
