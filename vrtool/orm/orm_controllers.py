@@ -103,10 +103,10 @@ def open_database(database_path: Path) -> SqliteDatabase:
         SqliteDatabase: Initialized database.
     """
 
-    def check_orm_version() -> IncrementTypeEnum:
+    def check_orm_version() -> tuple[IncrementTypeEnum, OrmVersion, OrmVersion]:
         _orm_verion = OrmVersion.from_orm()
         _db_version = OrmVersion.from_string(orm.Version.get().orm_version)
-        return _orm_verion.get_increment_type(_db_version)
+        return _orm_verion.get_increment_type(_db_version), _orm_verion, _db_version
 
     if not database_path.exists():
         raise ValueError("No file was found at {}".format(database_path))
@@ -114,12 +114,10 @@ def open_database(database_path: Path) -> SqliteDatabase:
     vrtool_db.init(database_path)
     vrtool_db.connect()
 
-    _increment_type = check_orm_version()
-    _message = "Database ORM version does not match the current ORM version."
-    if _increment_type == IncrementTypeEnum.MAJOR:
-        raise ValueError(_message)
-    elif _increment_type == IncrementTypeEnum.MINOR:
-        logging.error(_message)
+    _increment_type, _orm_version, _db_version = check_orm_version()
+    _message = "Database ORM version (%s) does not match the current ORM version (%s)."
+    if _increment_type in (IncrementTypeEnum.MAJOR, IncrementTypeEnum.MINOR):
+        logging.error(_message, _db_version, _orm_version)
     elif _increment_type == IncrementTypeEnum.PATCH:
         logging.warning(_message)
 
