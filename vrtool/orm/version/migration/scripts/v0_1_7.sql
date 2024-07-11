@@ -24,6 +24,7 @@ CREATE TABLE StandardMeasure (
     transition_level_increase_step    REAL          NOT NULL,
     max_pf_factor_block               REAL          NOT NULL,
     n_steps_block                     INTEGER       NOT NULL,
+    piping_reduction_factor           REAL,
     FOREIGN KEY (
         measure_id
     )
@@ -41,7 +42,8 @@ INSERT INTO StandardMeasure (
                                 stability_screen,
                                 transition_level_increase_step,
                                 max_pf_factor_block,
-                                n_steps_block
+                                n_steps_block,
+                                piping_reduction_factor
                             )
                             SELECT id,
                                    measure_id,
@@ -53,8 +55,14 @@ INSERT INTO StandardMeasure (
                                    stability_screen,
                                    transition_level_increase_step,
                                    max_pf_factor_block,
-                                   n_steps_block
+                                   n_steps_block,
+                                   (1 / prob_of_solution_failure)
                               FROM sqlitestudio_temp_table;
+
+-- Replace any invalid values when `prob_of_solution_failure` was -999
+UPDATE StandardMeasure
+SET   piping_reduction_factor = NULL
+WHERE piping_reduction_factor <= 0
 
 DROP TABLE sqlitestudio_temp_table;
 
