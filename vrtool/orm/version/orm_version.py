@@ -33,9 +33,7 @@ class OrmVersion:
         return False
 
     def __le__(self, other: OrmVersion) -> bool:
-        if self == other:
-            return True
-        return self < other
+        return self == other or self < other
 
     def __gt__(self, other: OrmVersion) -> bool:
         if self.major > other.major:
@@ -47,9 +45,7 @@ class OrmVersion:
         return False
 
     def __ge__(self, other: OrmVersion) -> bool:
-        if self == other:
-            return True
-        return self > other
+        return self == other or self > other
 
     def __str__(self) -> str:
         """
@@ -60,21 +56,21 @@ class OrmVersion:
         """
         return f"{self.major}.{self.minor}.{self.patch}"
 
-    def get_increment_type(self, other: OrmVersion) -> IncrementTypeEnum:
+    def get_increment_type(self, from_version: OrmVersion) -> IncrementTypeEnum:
         """
-        Define the increment type against another version.
+        Define the increment type between this and another version (reciprocal).
 
         Args:
-            other (OrmVersion): Version to compare against.
+            other (OrmVersion): Version to increment compare against.
 
         Returns:
-            IncrementTypeEnum: Type of increment between this and other versions.
+            IncrementTypeEnum: Type of increment between the other and this versions.
         """
-        if self.major != other.major:
+        if self.major != from_version.major:
             return IncrementTypeEnum.MAJOR
-        if self.minor != other.minor:
+        if self.minor != from_version.minor:
             return IncrementTypeEnum.MINOR
-        if self.patch != other.patch:
+        if self.patch != from_version.patch:
             return IncrementTypeEnum.PATCH
         return IncrementTypeEnum.NONE
 
@@ -86,9 +82,22 @@ class OrmVersion:
         Returns:
             OrmVersion: Object representing the ORM version.
         """
+        return cls.from_string(__version__)
+
+    @classmethod
+    def from_string(cls, version_string: str) -> OrmVersion:
+        """
+        Create an OrmVersion object from a version string.
+
+        Args:
+            version_string (str): Version string in the format "major.minor.patch".
+
+        Returns:
+            OrmVersion: Object representing the version.
+        """
 
         def parse_version(version_string: str) -> tuple[int, int, int]:
             return tuple(map(int, version_string.split(".")))
 
-        _major, _minor, _patch = parse_version(__version__)
+        _major, _minor, _patch = parse_version(version_string)
         return cls(major=_major, minor=_minor, patch=_patch)

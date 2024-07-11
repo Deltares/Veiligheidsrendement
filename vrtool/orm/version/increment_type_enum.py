@@ -9,3 +9,22 @@ class IncrementTypeEnum(VrtoolEnum):
     MINOR = 2
     PATCH = 3
     INVALID = 99
+
+    @staticmethod
+    def get_supported_increments() -> list[IncrementTypeEnum]:
+        """
+        Returns the list of supported increments.
+
+        Returns:
+            list[IncrementTypeEnum]: Increments compatible with the current `orm` version.
+        """
+        return [IncrementTypeEnum.PATCH, IncrementTypeEnum.NONE]
+
+    def is_supported(self) -> bool:
+        """
+        Verifies whether this type of increment is supported with the current `orm`version.
+
+        Returns:
+            bool: Increment can be migrated.
+        """
+        return self in self.get_supported_increments()
