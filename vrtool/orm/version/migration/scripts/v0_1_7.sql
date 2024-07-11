@@ -62,7 +62,7 @@ INSERT INTO StandardMeasure (
 -- Replace any invalid values when `prob_of_solution_failure` was -999
 UPDATE StandardMeasure
 SET   piping_reduction_factor = NULL
-WHERE piping_reduction_factor <= 0
+WHERE piping_reduction_factor <= 0;
 
 DROP TABLE sqlitestudio_temp_table;
 
