@@ -2,7 +2,6 @@ DROP TABLE IF EXISTS sqlitestudio_temp_table;
 
 -- VRTOOL-547 Added property `flood_damage` to `SectionData`.
 -- SectionData
-
 PRAGMA foreign_keys = 0;
 
 CREATE TABLE sqlitestudio_temp_table AS SELECT *
@@ -25,7 +24,7 @@ CREATE TABLE SectionData (
     annual_crest_decline  REAL          NOT NULL,
     cover_layer_thickness REAL          NOT NULL,
     pleistocene_level     REAL          NOT NULL,
-    flood_damage,
+    flood_damage          REAL,
     FOREIGN KEY (
         dike_traject_id
     )
