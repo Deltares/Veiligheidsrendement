@@ -173,33 +173,9 @@ class StabilityScreenMeasure(MeasureProtocol):
 
         elif _calc_type == "SIMPLE":
             if int(year_to_calculate) >= self.parameters["year"]:
-                if "SF_2025" in mechanism_reliability_input:
-                    mechanism_reliability_input["SF_2025"] += _safety_factor_increase
-                    mechanism_reliability_input["SF_2075"] += _safety_factor_increase
-                elif "beta_2025" in mechanism_reliability.Input.input:
-                    # convert to SF and back:
-                    mechanism_reliability_input["beta_2025"] = calculate_reliability(
-                        np.add(
-                            calculate_safety_factor(
-                                mechanism_reliability_input["beta_2025"]
-                            ),
-                            _safety_factor_increase,
-                        )
+                mechanism_reliability_input["beta"] = calculate_reliability(
+                    np.add(
+                        calculate_safety_factor(mechanism_reliability_input["beta"]),
+                        _safety_factor_increase,
                     )
-                    mechanism_reliability_input["beta_2075"] = calculate_reliability(
-                        np.add(
-                            calculate_safety_factor(
-                                mechanism_reliability_input["beta_2075"]
-                            ),
-                            _safety_factor_increase,
-                        )
-                    )
-                else:
-                    mechanism_reliability_input["beta"] = calculate_reliability(
-                        np.add(
-                            calculate_safety_factor(
-                                mechanism_reliability_input["beta"]
-                            ),
-                            _safety_factor_increase,
-                        )
-                    )
+                )

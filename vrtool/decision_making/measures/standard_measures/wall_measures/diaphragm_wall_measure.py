@@ -145,7 +145,6 @@ class DiaphragmWallMeasure(MeasureProtocol):
         self, mechanism_reliability: MechanismReliability
     ) -> None:
         mechanism_reliability.Input.input["elimination"] = "yes"
-        mechanism_reliability.Input.input["pf_elim"] = self.parameters["P_solution"]
-        mechanism_reliability.Input.input["pf_with_elim"] = self.parameters[
-            "Pf_solution"
+        mechanism_reliability.Input.input["piping_reduction_factor"] = self.parameters[
+            "piping_reduction_factor"
         ]

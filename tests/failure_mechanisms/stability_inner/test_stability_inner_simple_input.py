@@ -10,70 +10,15 @@ from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 
 
 class TestStabilityInnerSimpleInput:
-    def test_from_mechanism_input_with_safety_factor_range_returns_input_with_safety_factor_range(
-        self,
+    def test_from_mechanism_input_with_beta_returns_input_with_beta(
+        self, mechanism_input_fixture: MechanismInput
     ):
         # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["sf_2025"] = np.array([0.1], dtype=float)
-        mechanism_input.input["sf_2075"] = np.array([0.2], dtype=float)
+        assert isinstance(mechanism_input_fixture, MechanismInput)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
-        )
-
-        # Assert
-        assert (
-            failure_mechanism_input.reliability_calculation_method
-            == ReliabilityCalculationMethod.SAFETYFACTOR_RANGE
-        )
-        assert (
-            failure_mechanism_input.safety_factor_2025
-            == mechanism_input.input["sf_2025"]
-        )
-        assert (
-            failure_mechanism_input.safety_factor_2075
-            == mechanism_input.input["sf_2075"]
-        )
-
-        assert failure_mechanism_input.beta_2025 is None
-        assert failure_mechanism_input.beta_2075 is None
-
-        assert failure_mechanism_input.beta is None
-
-    def test_from_mechanism_input_with_beta_range_returns_input_with_beta_range(self):
-        # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["beta_2025"] = np.array([0.1], dtype=float)
-        mechanism_input.input["beta_2075"] = np.array([0.2], dtype=float)
-
-        # Call
-        failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
-        )
-
-        # Assert
-        assert (
-            failure_mechanism_input.reliability_calculation_method
-            == ReliabilityCalculationMethod.BETA_RANGE
-        )
-        assert failure_mechanism_input.beta_2025 == mechanism_input.input["beta_2025"]
-        assert failure_mechanism_input.beta_2075 == mechanism_input.input["beta_2075"]
-
-        assert failure_mechanism_input.safety_factor_2025 is None
-        assert failure_mechanism_input.safety_factor_2075 is None
-
-        assert failure_mechanism_input.beta is None
-
-    def test_from_mechanism_input_with_beta_returns_input_with_beta(self):
-        # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["beta"] = np.array([0.1], dtype=float)
-
-        # Call
-        failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
+            mechanism_input_fixture
         )
 
         # Assert
@@ -81,15 +26,10 @@ class TestStabilityInnerSimpleInput:
             failure_mechanism_input.reliability_calculation_method
             == ReliabilityCalculationMethod.BETA_SINGLE
         )
-        assert failure_mechanism_input.beta == mechanism_input.input["beta"]
+        assert failure_mechanism_input.beta == mechanism_input_fixture.input["beta"]
+        assert failure_mechanism_input.stability_reduction_factor == 1
 
-        assert failure_mechanism_input.beta_2025 is None
-        assert failure_mechanism_input.beta_2075 is None
-
-        assert failure_mechanism_input.safety_factor_2025 is None
-        assert failure_mechanism_input.safety_factor_2075 is None
-
-    def test_from_mechanism_input_without_any_reliability_or_safety_factor_raises_exception(
+    def test_from_mechanism_input_without_any_reliability_raises_exception(
         self,
     ):
         # Setup
@@ -105,66 +45,21 @@ class TestStabilityInnerSimpleInput:
             == "Warning: No input values SF or Beta StabilityInner"
         )
 
-    def test_from_mechanism_input_with_all_reliability_and_safety_factor_returns_input_with_safety_factor_range(
-        self,
-    ):
-        # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["sf_2025"] = np.array([0.1], dtype=float)
-        mechanism_input.input["sf_2075"] = np.array([0.2], dtype=float)
-        mechanism_input.input["beta_2075"] = np.array([0.3], dtype=float)
-        mechanism_input.input["beta_2075"] = np.array([0.4], dtype=float)
-        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
-
-        # Call
-        failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
-        )
-
-        # Assert
-        assert (
-            failure_mechanism_input.reliability_calculation_method
-            == ReliabilityCalculationMethod.SAFETYFACTOR_RANGE
-        )
-        assert (
-            failure_mechanism_input.safety_factor_2025
-            == mechanism_input.input["sf_2025"]
-        )
-        assert (
-            failure_mechanism_input.safety_factor_2075
-            == mechanism_input.input["sf_2075"]
-        )
-
-        assert failure_mechanism_input.beta_2025 is None
-        assert failure_mechanism_input.beta_2075 is None
-
-        assert failure_mechanism_input.beta is None
-
     def test_from_mechanism_input_with_elimination_returns_input_with_elimination(
-        self,
+        self, mechanism_input_fixture: MechanismInput
     ):
         # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
-        mechanism_input.input["elimination"] = "yes"
-        mechanism_input.input["pf_elim"] = np.array([0.2], dtype=float)
-        mechanism_input.input["pf_with_elim"] = np.array([0.3], dtype=float)
+        mechanism_input_fixture.input["elimination"] = "yes"
+        mechanism_input_fixture.input["pf_elim"] = np.array([0.2], dtype=float)
+        mechanism_input_fixture.input["pf_with_elim"] = np.array([0.3], dtype=float)
 
         # Call
         failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
-            mechanism_input
+            mechanism_input_fixture
         )
 
         # Assert
         assert failure_mechanism_input.is_eliminated
-        assert (
-            failure_mechanism_input.failure_probability_elimination
-            == mechanism_input.input["pf_elim"]
-        )
-        assert (
-            failure_mechanism_input.failure_probability_with_elimination
-            == mechanism_input.input["pf_with_elim"]
-        )
 
     @pytest.mark.parametrize(
         "elimination",
@@ -174,16 +69,15 @@ class TestStabilityInnerSimpleInput:
         ],
     )
     def test_from_mechanism_input_with_elimination_without_valid_value_raises_value_error(
-        self, elimination: str
+        self, elimination: str, mechanism_input_fixture: MechanismInput
     ):
         # Setup
-        mechanism_input = MechanismInput("")
-        mechanism_input.input["beta"] = np.array([0.5], dtype=float)
-        mechanism_input.input["elimination"] = elimination
+        mechanism_input_fixture.input["beta"] = np.array([0.5], dtype=float)
+        mechanism_input_fixture.input["elimination"] = elimination
 
         # Call
         with pytest.raises(ValueError) as exception_error:
-            StabilityInnerSimpleInput.from_mechanism_input(mechanism_input)
+            StabilityInnerSimpleInput.from_mechanism_input(mechanism_input_fixture)
 
         # Assert
         assert (
@@ -207,17 +101,12 @@ class TestStabilityInnerSimpleInput:
     ):
         # 1. Define test data.
         _dummy_input = StabilityInnerSimpleInput(
-            safety_factor_2025=np.array([]),
-            safety_factor_2075=np.array([]),
-            beta_2025=np.array([]),
-            beta_2075=np.array([]),
             beta=pf_to_beta(np.array(initial_probability_of_failure)),
             scenario_probability=np.array(scenario_probability),
             initial_probability_of_failure=np.array(initial_probability_of_failure),
-            failure_probability_with_elimination=np.array([]),
-            failure_probability_elimination=np.array([]),
             is_eliminated=False,
             reliability_calculation_method=ReliabilityCalculationMethod.BETA_SINGLE,
+            stability_reduction_factor=np.array([1000] * len(scenario_probability)),
         )
 
         # 2. Run test.
