@@ -3,8 +3,6 @@ import logging
 import sqlite3
 from pathlib import Path
 
-from vrtool.orm.models.version import Version as DbVersion
-from vrtool.orm.orm_controllers import open_database
 from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 from vrtool.orm.version.migration.database_version import DatabaseVersion
 from vrtool.orm.version.migration.script_version import ScriptVersion
@@ -27,6 +25,22 @@ class MigrateDatabaseController:
                 for _script in scripts_dir.rglob("*.sql")
             )
         )
+
+    @staticmethod
+    def is_database_compatible(db_filepath: Path) -> bool:
+        """
+        Checks if the database file is compatible with the provided ORM version.
+
+        Args:
+            db_filepath (Path): Path to the database file to check.
+            orm_version (OrmVersion): ORM version to check compatibility with.
+
+        Returns:
+            bool: True if the database is compatible with the ORM version, False otherwise.
+        """
+        _orm_version = OrmVersion.from_orm()
+        _db_version = DatabaseVersion.from_database(db_filepath)
+        return _orm_version.get_increment_type(_db_version).is_supported()
 
     def _apply_migration_script(self, db_filepath: Path, script_filepath: Path) -> None:
         """
@@ -60,13 +74,6 @@ class MigrateDatabaseController:
             database_file (Path): Database file to migrate (`*.db`)
 
         """
-
-        def set_db_version(version: OrmVersion) -> None:
-            with open_database(db_filepath).connection_context():
-                _version, _ = DbVersion.get_or_create()
-                _version.orm_version = str(version)
-                _version.save()
-
         # Check the database version.
         _db_version = DatabaseVersion.from_database(db_filepath)
         if _db_version >= self.orm_version:
@@ -110,9 +117,8 @@ class MigrateDatabaseController:
                         )
                 break
 
-        # Update the database version to the last executed script
-        # (or orm_version if no script is executed).
-        set_db_version(_script_version)
+            # Update the database version
+            _db_version.update_version(_script_version)
 
     def migrate_databases_in_dir(self, database_dir: Path):
         """

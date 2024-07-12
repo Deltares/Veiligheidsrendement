@@ -15,11 +15,6 @@ If a database is upgraded multiple versions, the different migrations are done c
 
 ### Major upgrade
 A major upgrade is assumed to be non-compatible with the previous version, meaning the migration can't be fully supported.
-In case a major upgrade is done, the migration is interrupted after executing the supported part of the migration.
 To have a compatible database, the user has to finish the migration step by adding the right data to the database before continuing with the remaining migration steps.
 Instruction on finishing a major upgrade can be found in a file with the same name as the migration script, but with extension `.txt`.
 So next to `v1_0_0.sql` the instruction can be found in `v1_0_0.txt`.
-
-### Test databases
-From a developer perspective all available test databases can be migrated with `poetry run migrate_test_db`.
-Make sure the right migration scripts are available and version of `vrtool.orm` is updated accordingly.
