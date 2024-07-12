@@ -91,7 +91,7 @@ def get_valid_conversion_scripts_fixture(
 
 
 @pytest.fixture(name="empty_db_path", scope="module")
-def _get_empty_database(output_dir: Path) -> Iterator[Path]:
+def _get_empty_database_fixture(output_dir: Path) -> Iterator[Path]:
     # Copy the original `empty_db.db` into the output directory.
     _db_file = test_data.joinpath("test_db", "empty_db.db")
     _test_db_file = output_dir.joinpath("test_db.db")
