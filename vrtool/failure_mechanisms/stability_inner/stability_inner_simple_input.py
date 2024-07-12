@@ -19,7 +19,7 @@ class StabilityInnerSimpleInput:
     beta: np.ndarray
     scenario_probability: np.ndarray
     initial_probability_of_failure: np.ndarray
-    piping_reduction_factor: float
+    piping_reduction_factor: np.ndarray
 
     is_eliminated: bool
     reliability_calculation_method: ReliabilityCalculationMethod

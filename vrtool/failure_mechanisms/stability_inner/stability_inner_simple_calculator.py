@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import interpolate
 
 from vrtool.failure_mechanisms.failure_mechanism_calculator_protocol import (
     FailureMechanismCalculatorProtocol,
@@ -9,7 +8,6 @@ from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method im
 )
 from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import (
     BETA_THRESHOLD,
-    calculate_reliability,
 )
 from vrtool.failure_mechanisms.stability_inner.stability_inner_simple_input import (
     StabilityInnerSimpleInput,
