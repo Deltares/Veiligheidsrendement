@@ -54,7 +54,7 @@ class TestToMeasureResultCollection:
         with pytest.raises(ValueError) as exc_err:
             to_measure_result_collection(_measure_type)
 
-        assert str(exc_err.value) == f"Unknown measure type: 'str'."
+        assert str(exc_err.value) == "Unknown measure type: 'str'."
 
     def test_to_measure_result_collection_given_dict(self):
         # 1. Define test data.
