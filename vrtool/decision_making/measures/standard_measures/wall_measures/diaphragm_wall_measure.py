@@ -3,6 +3,7 @@ import copy
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import probabilistic_design
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -60,7 +61,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
     def _get_configured_mechanism_reliability_collection(
         self,
         mechanism: MechanismEnum,
-        calc_type: str,
+        calc_type: ComputationTypeEnum,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
     ) -> MechanismReliabilityCollection:
@@ -104,7 +105,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
         _probability_overflow = traject_info.Pmax * traject_info.omegaOverflow
 
         mechanism_input = mechanism_reliability.Input.input
-        if mechanism_reliability.mechanism_type == "Simple":
+        if mechanism_reliability.mechanism_type == ComputationTypeEnum.SIMPLE:
             if hasattr(dike_section, "HBNRise_factor"):
                 hc = probabilistic_design(
                     "h_crest",
@@ -133,7 +134,7 @@ class DiaphragmWallMeasure(MeasureProtocol):
                 t_0=self.t_0,
                 horizon=self.parameters["year"] + 100,
                 load_change=float("nan"),
-                type="HRING",
+                type=ComputationTypeEnum.HRING,
                 mechanism=MechanismEnum.OVERFLOW,
             )
 

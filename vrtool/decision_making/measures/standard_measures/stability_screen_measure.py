@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     get_safety_factor_increase,
@@ -73,7 +74,7 @@ class StabilityScreenMeasure(MeasureProtocol):
     def _get_configured_mechanism_reliability_collection(
         self,
         mechanism: MechanismEnum,
-        calc_type: str,
+        calc_type: ComputationTypeEnum,
         dike_section: DikeSection,
         traject_info: DikeTrajectInfo,
         length: float,
@@ -133,14 +134,12 @@ class StabilityScreenMeasure(MeasureProtocol):
         dike_section: DikeSection,
         length: float,
     ) -> None:
-        _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][
-            1
-        ].upper()
+        _calc_type = dike_section.mechanism_data[MechanismEnum.STABILITY_INNER][0][1]
 
         mechanism_reliability_input = mechanism_reliability.Input.input
         _safety_factor_increase = get_safety_factor_increase(length)
         _depth_screen = dike_section.cover_layer_thickness + length
-        if _calc_type == "DSTABILITY":
+        if _calc_type == ComputationTypeEnum.DSTABILITY:
             # Add screen to model
             _dstability_wrapper = DStabilityWrapper(
                 Path(mechanism_reliability_input["STIXNAAM"]),
@@ -171,7 +170,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                 np.array([_dstability_wrapper.get_safety_factor()])
             )
 
-        elif _calc_type == "SIMPLE":
+        elif _calc_type == ComputationTypeEnum.SIMPLE:
             if int(year_to_calculate) >= self.parameters["year"]:
                 if "SF_2025" in mechanism_reliability_input:
                     mechanism_reliability_input["SF_2025"] += _safety_factor_increase

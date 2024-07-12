@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -113,12 +114,17 @@ class DikeSectionImporter(OrmImporterProtocol):
 
     def _get_mechanism_data(
         self, section_data: SectionData
-    ) -> dict[MechanismEnum, tuple[str, str]]:
+    ) -> dict[MechanismEnum, tuple[str, ComputationTypeEnum]]:
         _mechanism_data = {}
         for _mechanism_per_section in section_data.mechanisms_per_section:
             _available_cs = []
             for _cs in _mechanism_per_section.computation_scenarios:
-                _available_cs.append((_cs.scenario_name, _cs.computation_type.name))
+                _available_cs.append(
+                    (
+                        _cs.scenario_name,
+                        ComputationTypeEnum.get_enum(_cs.computation_type.name),
+                    )
+                )
             _mechanism = MechanismEnum.get_enum(_mechanism_per_section.mechanism.name)
             _mechanism_data[_mechanism] = _available_cs
         return _mechanism_data

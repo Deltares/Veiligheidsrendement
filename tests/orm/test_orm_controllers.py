@@ -31,6 +31,7 @@ from tests.orm.io.exporters.measures.measure_result_test_validators import (
 from vrtool.api import ApiRunWorkflows
 from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
@@ -350,7 +351,7 @@ class TestOrmControllers:
         _water_load_input.input["beta"] = np.array([42.24])
         _stability_inner_collection = MechanismReliabilityCollection(
             MechanismEnum.STABILITY_INNER,
-            "combinable",
+            ComputationTypeEnum.SIMPLE,
             database_vrtool_config.T,
             2023,
             2025,
@@ -380,9 +381,9 @@ class TestOrmControllers:
 
         # Mechanism data
         _dike_section.mechanism_data[MechanismEnum.STABILITY_INNER] = [
-            ("RW000", "SIMPLE"),
-            "combinable",
+            ("RW000", ComputationTypeEnum.SIMPLE)
         ]
+
         # 2. Run test.
         _solutions = get_dike_section_solutions(
             database_vrtool_config, _dike_section, _general_info

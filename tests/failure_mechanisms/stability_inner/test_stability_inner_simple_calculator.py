@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner import (
@@ -28,7 +29,7 @@ class TestStabilityInnerSimpleCalculator:
     def test_init_with_invalid_data(self):
         # Call
         with pytest.raises(ValueError) as exception_error:
-            StabilityInnerSimpleCalculator("simple")
+            StabilityInnerSimpleCalculator(ComputationTypeEnum.SIMPLE)
 
         # Assert
         assert (

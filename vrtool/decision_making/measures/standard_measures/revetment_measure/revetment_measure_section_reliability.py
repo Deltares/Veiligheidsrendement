@@ -1,5 +1,6 @@
 from numpy import concatenate
 
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
@@ -20,8 +21,7 @@ class RevetmentMeasureSectionReliability(MeasureResultProtocol):
     measure_year: int
     # TODO: This should be an ENUM
     reinforcement_type: str
-    # TODO: This should be an ENUM
-    combinable_type: str
+    combinable_type: CombinableTypeEnum
 
     def get_measure_result_parameters(self) -> dict:
         return dict(
