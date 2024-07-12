@@ -5,20 +5,20 @@ from vrtool.orm.version.migration.database_version import DatabaseVersion
 
 
 class TestDatabaseVersion:
-    def test_from_database(self, empty_db_path: Path):
+    def test_from_database(self, valid_conversion_db: Path):
         # 1. Execute test
-        _database_version = DatabaseVersion.from_database(empty_db_path)
+        _database_version = DatabaseVersion.from_database(valid_conversion_db)
 
         # 2. Verify expectations
         assert isinstance(_database_version, DatabaseVersion)
         assert isinstance(_database_version.major, int)
         assert isinstance(_database_version.minor, int)
         assert isinstance(_database_version.patch, int)
-        assert _database_version.database_path == empty_db_path
+        assert _database_version.database_path == valid_conversion_db
 
-    def test_update_version(self, empty_db_path: Path):
+    def test_update_version(self, valid_conversion_db: Path):
         # 1. Define test data
-        _from_db_version = DatabaseVersion.from_database(empty_db_path)
+        _from_db_version = DatabaseVersion.from_database(valid_conversion_db)
         _to_db_version = DatabaseVersion(
             major=_from_db_version.major + 1,
             minor=_from_db_version.minor + 1,
