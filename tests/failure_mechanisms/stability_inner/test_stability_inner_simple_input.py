@@ -27,10 +27,7 @@ class TestStabilityInnerSimpleInput:
             == ReliabilityCalculationMethod.BETA_SINGLE
         )
         assert failure_mechanism_input.beta == mechanism_input_fixture.input["beta"]
-        assert (
-            failure_mechanism_input.stability_reduction_factor
-            == 1 / mechanism_input_fixture.input["Pf"]
-        )
+        assert failure_mechanism_input.stability_reduction_factor == 1
 
     def test_from_mechanism_input_without_any_reliability_raises_exception(
         self,
