@@ -28,7 +28,7 @@ class TestStabilityInnerSimpleInput:
         )
         assert failure_mechanism_input.beta == mechanism_input_fixture.input["beta"]
         assert (
-            failure_mechanism_input.piping_reduction_factor
+            failure_mechanism_input.stability_reduction_factor
             == 1 / mechanism_input_fixture.input["Pf"]
         )
 
@@ -109,7 +109,7 @@ class TestStabilityInnerSimpleInput:
             initial_probability_of_failure=np.array(initial_probability_of_failure),
             is_eliminated=False,
             reliability_calculation_method=ReliabilityCalculationMethod.BETA_SINGLE,
-            piping_reduction_factor=np.array([1000] * len(scenario_probability)),
+            stability_reduction_factor=np.array([1000] * len(scenario_probability)),
         )
 
         # 2. Run test.

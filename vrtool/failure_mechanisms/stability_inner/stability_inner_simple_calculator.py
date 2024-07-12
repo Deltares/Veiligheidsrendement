@@ -43,7 +43,7 @@ class StabilityInnerSimpleCalculator(FailureMechanismCalculatorProtocol):
             # addition: should not be more unsafe
             failure_probability = np.min(
                 [
-                    beta_to_pf(beta) / self._mechanism_input.piping_reduction_factor[0],
+                    beta_to_pf(beta) / self._mechanism_input.stability_reduction_factor,
                     beta_to_pf(beta),
                 ]
             )

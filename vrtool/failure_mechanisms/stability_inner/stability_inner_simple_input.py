@@ -19,7 +19,7 @@ class StabilityInnerSimpleInput:
     beta: np.ndarray
     scenario_probability: np.ndarray
     initial_probability_of_failure: np.ndarray
-    piping_reduction_factor: np.ndarray
+    stability_reduction_factor: float
 
     is_eliminated: bool
     reliability_calculation_method: ReliabilityCalculationMethod
@@ -81,7 +81,9 @@ class StabilityInnerSimpleInput:
                 "P_scenario", np.ndarray([])
             ),
             initial_probability_of_failure=_prob_solution_failure,
-            piping_reduction_factor=1 / _prob_solution_failure,
+            stability_reduction_factor=mechanism_input.input.get(
+                "piping_reduction_factor", 1
+            ),
             reliability_calculation_method=_reliability_calculation_method,
             is_eliminated=_is_eliminated,
         )
