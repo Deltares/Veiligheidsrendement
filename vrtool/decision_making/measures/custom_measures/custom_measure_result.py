@@ -1,6 +1,5 @@
 from numpy import concatenate
 
-from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )
@@ -16,7 +15,8 @@ class CustomMeasureResult(MeasureResultProtocol):
     measure_year: int
     # TODO: This should be an ENUM
     reinforcement_type: str
-    combinable_type: CombinableTypeEnum
+    # TODO: This should be an ENUM
+    combinable_type: str
 
     def _get_input_vector(
         self,

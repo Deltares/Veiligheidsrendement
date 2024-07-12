@@ -1,6 +1,5 @@
 from typing import Protocol, runtime_checkable
 
-from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
 
@@ -12,7 +11,8 @@ class MeasureResultProtocol(Protocol):
     cost: float
     # TODO: This should be an ENUM
     reinforcement_type: str
-    combinable_type: CombinableTypeEnum
+    # TODO: This should be an ENUM
+    combinable_type: str
 
     def get_measure_result_parameters(self) -> dict:
         """

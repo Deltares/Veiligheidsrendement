@@ -21,7 +21,8 @@ class RevetmentMeasureSectionReliability(MeasureResultProtocol):
     measure_year: int
     # TODO: This should be an ENUM
     reinforcement_type: str
-    combinable_type: CombinableTypeEnum
+    # TODO: This should be an ENUM
+    combinable_type: str
 
     def get_measure_result_parameters(self) -> dict:
         return dict(
