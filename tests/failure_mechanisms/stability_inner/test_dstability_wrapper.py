@@ -44,12 +44,12 @@ class TestDStabilityWrapper:
             DStabilityWrapper(_path_test_stix, _invalid_externals).rerun_stix()
 
         # This CalculationError exception comes from d-geolib.
-        assert str(exception_error.value.message) == _expected_error
+        assert str(exception_error.value) == _expected_error
 
     @pytest.mark.externals
     def test_validate_dstability_version(self):
         # 1. Define test data.
-        _supported_major_version = "2022"
+        _supported_major_version = "2024"
         _dstability_exe = test_externals.joinpath(
             "DStabilityConsole", "D-Stability Console.exe"
         )
