@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
@@ -51,7 +52,9 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
 
         # Assume computation type is the same accross the computation scenarios
         computation_scenarios = orm_model.computation_scenarios.select()
-        computation_type = computation_scenarios[0].computation_type.name
+        computation_type = ComputationTypeEnum.get_enum(
+            computation_scenarios[0].computation_type.name
+        )
         collection = MechanismReliabilityCollection(
             mechanism, computation_type, self.computation_years, self.t_0, 0
         )
@@ -69,10 +72,9 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
         self,
         mechanism_per_section: MechanismPerSection,
         mechanism: MechanismEnum,
-        computation_type: str,
+        computation_type: ComputationTypeEnum,
     ) -> MechanismInput:
         # TODO: VRTOOL-340 - no multiple computation scenarios possible from here on.
-        _computation_type_name = computation_type.upper().strip()
 
         if mechanism == MechanismEnum.OVERFLOW:
             # TODO: VRTOOL-340. This does not support multiple scenarios.
@@ -81,10 +83,10 @@ class MechanismReliabilityCollectionImporter(OrmImporterProtocol):
             )
 
         if mechanism == MechanismEnum.STABILITY_INNER:
-            if _computation_type_name == "SIMPLE":
+            if computation_type == ComputationTypeEnum.SIMPLE:
                 return StabilityInnerSimpleImporter().import_orm(mechanism_per_section)
 
-            elif _computation_type_name == "DSTABILITY":
+            elif computation_type == ComputationTypeEnum.DSTABILITY:
                 _dstability_importer = DStabilityImporter(
                     self.externals_path, self.input_directory.joinpath("stix")
                 )

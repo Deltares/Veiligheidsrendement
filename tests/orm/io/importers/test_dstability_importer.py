@@ -5,6 +5,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm.io import add_computation_scenario_id
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.dstability_importer import DStabilityImporter
@@ -25,7 +26,9 @@ class TestDStabilityImporter:
     ) -> Iterator[Callable[[], ComputationScenario]]:
         def get_dstability_computation_scenario() -> ComputationScenario:
             _mechanism_per_section = get_basic_mechanism_per_section()
-            _computation_type = ComputationType.create(name="DSTABILITY")
+            _computation_type = ComputationType.create(
+                name=ComputationTypeEnum.DSTABILITY.name
+            )
             return ComputationScenario.create(
                 mechanism_per_section=_mechanism_per_section,
                 computation_type=_computation_type,
@@ -118,7 +121,9 @@ class TestDStabilityImporter:
         with empty_db_context.atomic() as transaction:
             _mechanism_per_section = get_basic_mechanism_per_section()
 
-            _invalid_computation_type = ComputationType.create(name="NotDSTABILITY")
+            _invalid_computation_type = ComputationType.create(
+                name=ComputationTypeEnum.INVALID.name
+            )
             _computation_scenario = ComputationScenario.create(
                 mechanism_per_section=_mechanism_per_section,
                 computation_type=_invalid_computation_type,

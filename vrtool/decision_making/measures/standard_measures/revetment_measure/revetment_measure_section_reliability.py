@@ -1,5 +1,6 @@
 from numpy import concatenate
 
+from vrtool.common.enums.combinable_type_enum import CombinableTypeEnum
 from vrtool.decision_making.measures.measure_result_collection_protocol import (
     MeasureResultProtocol,
 )

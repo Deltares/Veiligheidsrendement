@@ -2,6 +2,7 @@ import copy
 from abc import ABC, abstractmethod
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -86,7 +87,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
     def _get_configured_mechanism_reliability_collection(
         self,
         mechanism: MechanismEnum,
-        calc_type: str,
+        calc_type: ComputationTypeEnum,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism, calc_type, self.reliability_years, self.computation_year_start, 0

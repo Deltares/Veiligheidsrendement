@@ -6,6 +6,7 @@ import pytest
 
 from tests import test_data, test_externals
 from tests.orm import with_empty_db_context
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.mechanism_reliability_collection import (
@@ -36,9 +37,10 @@ class TestDataHelper:
 
     @staticmethod
     def _create_valid_scenario(
-        mechanism_per_section: MechanismPerSection, computation_type: str
+        mechanism_per_section: MechanismPerSection,
+        computation_type: ComputationTypeEnum,
     ) -> ComputationScenario:
-        _computation_type = ComputationType.create(name=computation_type)
+        _computation_type = ComputationType.create(name=computation_type.name)
         return ComputationScenario.create(
             mechanism_per_section=mechanism_per_section,
             computation_type=_computation_type,
@@ -69,7 +71,7 @@ class TestDataHelper:
 
     @staticmethod
     def get_valid_mechanism_per_section(
-        mechanism: MechanismEnum, computation_type: str
+        mechanism: MechanismEnum, computation_type: ComputationTypeEnum
     ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
@@ -80,7 +82,7 @@ class TestDataHelper:
 
     @staticmethod
     def get_mechanism_per_section_with_supporting_file(
-        mechanism: MechanismEnum, computation_type: str
+        mechanism: MechanismEnum, computation_type: ComputationTypeEnum
     ) -> MechanismPerSection:
         _file_name = "something.stix"
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
@@ -97,7 +99,7 @@ class TestDataHelper:
 
     @staticmethod
     def get_overflow_hydraring_mechanism_per_section(
-        mechanism: MechanismEnum, computation_type: str
+        mechanism: MechanismEnum, computation_type: ComputationTypeEnum
     ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
@@ -116,7 +118,7 @@ class TestDataHelper:
 
     @staticmethod
     def get_revetment_mechanism_per_section(
-        mechanism: MechanismEnum, computation_type: str
+        mechanism: MechanismEnum, computation_type: ComputationTypeEnum
     ) -> MechanismPerSection:
         mechanism_per_section = TestDataHelper.get_mechanism_per_section_with_scenario(
             mechanism
@@ -149,7 +151,7 @@ class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_for_dstability(self):
         # Setup
         _mechanism = MechanismEnum.STABILITY_INNER
-        _computation_type = "DSTABILITY"
+        _computation_type = ComputationTypeEnum.DSTABILITY
         _config = TestDataHelper.create_valid_config()
         _config.input_directory = test_data
 
@@ -182,25 +184,25 @@ class TestMechanismReliabilityCollectionImporter:
         [
             pytest.param(
                 MechanismEnum.STABILITY_INNER,
-                "SIMPLE",
+                ComputationTypeEnum.SIMPLE,
                 TestDataHelper.get_valid_mechanism_per_section,
                 id="Stability Inner simple",
             ),
             pytest.param(
                 MechanismEnum.PIPING,
-                "SEMIPROB",
+                ComputationTypeEnum.SEMIPROB,
                 TestDataHelper.get_valid_mechanism_per_section,
                 id="Piping SEMIPROB",
             ),
             pytest.param(
                 MechanismEnum.OVERFLOW,
-                "HRING",
+                ComputationTypeEnum.HRING,
                 TestDataHelper.get_overflow_hydraring_mechanism_per_section,
                 id="Overflow HRING",
             ),
             pytest.param(
                 MechanismEnum.REVETMENT,
-                "",
+                ComputationTypeEnum.NONE,
                 TestDataHelper.get_revetment_mechanism_per_section,
                 id="Revetment",
             ),
@@ -210,7 +212,7 @@ class TestMechanismReliabilityCollectionImporter:
     def test_import_orm_with_simple_mechanism_per_section(
         self,
         mechanism: MechanismEnum,
-        computation_type: str,
+        computation_type: ComputationTypeEnum,
         get_mechanism_per_section: Callable,
     ):
         # Setup
@@ -249,7 +251,7 @@ class TestMechanismReliabilityCollectionImporter:
         self,
         collection: MechanismReliabilityCollection,
         mechanism: MechanismEnum,
-        computation_type: str,
+        computation_type: ComputationTypeEnum,
     ) -> None:
         mechanism_reliabilities = collection.Reliability.values()
         assert all(

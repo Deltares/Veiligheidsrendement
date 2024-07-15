@@ -13,6 +13,7 @@ class CombinableType(OrmBaseModel):
         * full
         * combinable
         * partial
+        * revetment
     """
 
     name = CharField(unique=True, max_length=_max_char_length)

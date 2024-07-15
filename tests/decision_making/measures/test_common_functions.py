@@ -9,6 +9,7 @@ import pytest
 from geolib import DStabilityModel
 
 from tests import test_data, test_externals, test_results
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.common_functions import (
     determine_new_geometry,
@@ -271,7 +272,7 @@ class TestCommonFunctions:
             _measure_input,
             measure_parameters={},
             mechanism=MechanismEnum.STABILITY_INNER,
-            computation_type="DStability",
+            computation_type=ComputationTypeEnum.DSTABILITY,
             is_first_year_with_widening=True,
             path_intermediate_stix=_path_intermediate_stix,
             depth_screen=6.0,
