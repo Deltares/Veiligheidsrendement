@@ -19,7 +19,9 @@ class DStabilityWrapper:
         self._dstability_model.parse(self.stix_path)
         # We only need to provide where the "DStabilityConsole" directory is.
         # https://deltares.github.io/GEOLib/latest/user/setup.html
-        self._dstability_model.meta.console_folder = externals_path
+        self._dstability_model.set_meta_property(
+            "dstability_console_path", externals_path
+        )
 
     @property
     def get_dstability_model(self) -> DStabilityModel:

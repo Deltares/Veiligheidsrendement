@@ -30,21 +30,21 @@ class TestDStabilityWrapper:
     def test_rerun_stix_with_invalid_externals_path_raises(
         self, request: pytest.FixtureRequest
     ):
-        _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+        _path_test_stix = test_data.joinpath(
+            "stix", "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
-        _invalid_externals = test_data / request.node.name
+        _invalid_externals = test_data.joinpath(request.node.name)
         assert not _invalid_externals.exists(), "This (test) folder should not exist."
 
         _expected_error = "Console executable not found at {}.".format(
-            _invalid_externals.joinpath("DStabilityConsole\\D-Stability Console.exe")
+            _invalid_externals
         )
 
         with pytest.raises(Exception) as exception_error:
             DStabilityWrapper(_path_test_stix, _invalid_externals).rerun_stix()
 
-        # This CalculationError exception comes from d-geolib.
-        assert str(exception_error.value) == _expected_error
+        # This CalculationError exception comes from d-geolib and contains a message field.
+        assert str(exception_error.value.message) == _expected_error
 
     @pytest.mark.externals
     def test_validate_dstability_version(self):
