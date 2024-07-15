@@ -348,6 +348,7 @@ class TestOrmControllers:
         _water_load_input = LoadInput([])
         _water_load_input.input["d_cover"] = None
         _water_load_input.input["beta"] = np.array([42.24])
+        _water_load_input.input["piping_reduction_factor"] = 1000
         _stability_inner_collection = MechanismReliabilityCollection(
             MechanismEnum.STABILITY_INNER,
             "combinable",

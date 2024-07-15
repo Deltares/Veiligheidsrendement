@@ -1,3 +1,10 @@
+## 0.1.7
+
+## Feat
+
+- [VRTOOL-544] Remove columns from `StandardMeasure`: `prob_of_solution_failure`, `failure_probability_with_solution`, `stability_screen_s_f_increase` (#341).
+
+
 ## 0.1.6
 
 ## Feat

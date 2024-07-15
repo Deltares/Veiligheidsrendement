@@ -26,17 +26,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
     reliability_years: list[int]
     computation_year_start: int
     measure_year: int
-
-    @property
-    @abstractmethod
-    def pf_piping_reduction_factor(self) -> float:
-        """
-        Gets the default reduction factor for `pf_piping` ( `P_solution` ).
-        This property can be overriden when inheriting from this class.
-
-        Returns:
-            float: reduction value.
-        """
+    piping_reduction_factor: float
 
     @classmethod
     def from_measure_section_traject(
@@ -63,6 +53,9 @@ class VerticalPipingMeasureCalculatorBase(ABC):
         _calculator.reliability_years = measure.config.T
         _calculator.computation_year_start = measure.config.t_0
         _calculator.measure_year = measure.parameters["year"]
+        _calculator.piping_reduction_factor = measure.parameters[
+            "piping_reduction_factor"
+        ]
         return _calculator
 
     def _get_configured_section_reliability(self) -> SectionReliability:
@@ -146,4 +139,4 @@ class VerticalPipingMeasureCalculatorBase(ABC):
         mechanism_reliability.Input.input["elimination"] = "yes"
         mechanism_reliability.Input.input[
             "piping_reduction_factor"
-        ] = self.pf_piping_reduction_factor
+        ] = self.piping_reduction_factor
