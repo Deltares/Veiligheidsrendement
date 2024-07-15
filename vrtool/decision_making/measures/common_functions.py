@@ -25,7 +25,6 @@ from vrtool.failure_mechanisms.stability_inner.stability_inner_functions import 
     calculate_reliability,
     calculate_safety_factor,
 )
-from vrtool.flood_defence_system.dike_section import DikeSection
 
 
 def implement_berm_widening(

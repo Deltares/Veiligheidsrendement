@@ -252,10 +252,10 @@ class TestCommonFunctions:
     ):
         # 1. Define test data.
         _berm_input = {
-            "STIXNAAM": test_data
-            / "stix"
-            / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix",
-            "DStability_exe_path": test_externals.joinpath("DStabilityConsole"),
+            "STIXNAAM": test_data.joinpath(
+                "stix", "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
+            ),
+            "DStability_exe_path": test_externals,
         }
         _path_intermediate_stix = test_results / request.node.name
         _expected_file_name = (
