@@ -62,7 +62,7 @@ class PostProcessingReport:
 
         # Add file handler to logger.
         _logger.addHandler(_file_handler)
-        _logger.info("Staretd postprocessing report logger.")
+        _logger.info("Started postprocessing report logger.")
         return self
 
     def __exit__(self, *args):
