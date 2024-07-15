@@ -39,9 +39,13 @@ class DStabilityWrapper:
         """
         self._dstability_model.serialize(save_path)
 
-    def get_all_stage_ids(self) -> list[int]:
+    def get_all_stage_ids(self) -> list[tuple[int, int]]:
         """Return a list with all the stage ids as integer from the dstability model"""
-        return [int(stage.Id) for stage in self._dstability_model.stages]
+        return [
+            (scenario_id, stage_id)
+            for scenario_id, scenario in enumerate(self._dstability_model.scenarios)
+            for stage_id, _ in enumerate(scenario.Stages)
+        ]
 
     def rerun_stix(self) -> None:
         self._dstability_model.execute()
@@ -54,15 +58,14 @@ class DStabilityWrapper:
             The safety factor of the requested stage.
 
         """
-        try:
-            _results = self._dstability_model.output[-1]
+        _results = self._dstability_model.output[-1]
+        if _results:
             return _results.FactorOfSafety
 
         # if no results are found, rerun the model and try again
-        except ValueError:
-            self.rerun_stix()
-            _results = self._dstability_model.output[-1]
-            return _results.FactorOfSafety
+        self.rerun_stix()
+        _results = self._dstability_model.output[-1]
+        return _results.FactorOfSafety
 
     def add_stability_screen(self, bottom_screen: float, location: float) -> None:
         """
@@ -81,5 +84,7 @@ class DStabilityWrapper:
         _end_screen = GeolibPoint(x=location, z=bottom_screen)
         _stability_screen = ForbiddenLine(start=_start_screen, end=_end_screen)
 
-        for id in self.get_all_stage_ids():
-            self._dstability_model.add_reinforcement(_stability_screen, stage_id=id)
+        for (_scen_id, _stage_id) in self.get_all_stage_ids():
+            self._dstability_model.add_reinforcement(
+                _stability_screen, scenario_index=_scen_id, stage_index=_stage_id
+            )

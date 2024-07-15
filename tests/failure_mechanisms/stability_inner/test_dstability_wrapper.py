@@ -9,11 +9,13 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
 )
 
+_DSTABILITY_CONSOLE = r"DStabilityConsole\D-Stability Console.exe"
+
 
 class TestDStabilityWrapper:
     def test_initialize_missing_stix_path_raises(self):
         with pytest.raises(ValueError) as exception_error:
-            DStabilityWrapper(None, test_externals)
+            DStabilityWrapper(stix_path=None, externals_path=test_externals)
 
         assert str(exception_error.value) == "Missing argument value stix_path."
 
@@ -23,7 +25,7 @@ class TestDStabilityWrapper:
         )
 
         with pytest.raises(ValueError) as exception_error:
-            DStabilityWrapper(_path_test_stix, None)
+            DStabilityWrapper(stix_path=_path_test_stix, externals_path=None)
 
         assert str(exception_error.value) == "Missing argument value externals_path."
 
@@ -41,7 +43,9 @@ class TestDStabilityWrapper:
         )
 
         with pytest.raises(Exception) as exception_error:
-            DStabilityWrapper(_path_test_stix, _invalid_externals).rerun_stix()
+            DStabilityWrapper(
+                stix_path=_path_test_stix, externals_path=_invalid_externals
+            ).rerun_stix()
 
         # This CalculationError exception comes from d-geolib and contains a message field.
         assert str(exception_error.value.message) == _expected_error
@@ -50,9 +54,8 @@ class TestDStabilityWrapper:
     def test_validate_dstability_version(self):
         # 1. Define test data.
         _supported_major_version = "2024"
-        _dstability_exe = test_externals.joinpath(
-            "DStabilityConsole", "D-Stability Console.exe"
-        )
+        _dstability_exe = test_externals.joinpath(_DSTABILITY_CONSOLE)
+
         assert _dstability_exe.exists(), "No d-stability console available for testing."
 
         # 2. Run test.
@@ -83,7 +86,10 @@ class TestDStabilityWrapper:
         assert filecmp.cmp(str(_path_test_stix), str(_test_file))
 
         # 2. Run test.
-        DStabilityWrapper(_test_file, test_externals).rerun_stix()
+        DStabilityWrapper(
+            stix_path=_test_file,
+            externals_path=test_externals.joinpath(_DSTABILITY_CONSOLE),
+        ).rerun_stix()
 
         # 3. Verify expectations.
         assert not filecmp.cmp(str(_path_test_stix), str(_test_file))
@@ -97,7 +103,8 @@ class TestDStabilityWrapper:
             test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstab_wrapper = DStabilityWrapper(
-            stix_path=_path_test_stix, externals_path=test_externals
+            stix_path=_path_test_stix,
+            externals_path=test_externals.joinpath(_DSTABILITY_CONSOLE),
         )
 
         # Call
@@ -116,7 +123,8 @@ class TestDStabilityWrapper:
             test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstab_wrapper = DStabilityWrapper(
-            stix_path=_path_test_stix, externals_path=test_externals
+            stix_path=_path_test_stix,
+            externals_path=test_externals.joinpath(_DSTABILITY_CONSOLE),
         )
 
         # Call
@@ -136,7 +144,8 @@ class TestDStabilityWrapper:
         )
         _path_test_stix = test_data / "stix" / _stix_name
         _dstab_wrapper = DStabilityWrapper(
-            stix_path=_path_test_stix, externals_path=test_externals
+            stix_path=_path_test_stix,
+            externals_path=test_externals.joinpath(_DSTABILITY_CONSOLE),
         )
         _export_path = test_results / request.node.name
 
@@ -158,7 +167,8 @@ class TestDStabilityWrapper:
             test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstab_wrapper = DStabilityWrapper(
-            stix_path=_path_test_stix, externals_path=test_externals
+            stix_path=_path_test_stix,
+            externals_path=test_externals.joinpath(_DSTABILITY_CONSOLE),
         )
 
         # Call the method
@@ -166,7 +176,7 @@ class TestDStabilityWrapper:
 
         # Assert that
         assert (
-            len(_dstab_wrapper.get_dstability_model.datastructure.reinforcements) == 2
+            len(_dstab_wrapper.get_dstability_model.datastructure.reinforcements) == 3
         )
         assert (
             len(
