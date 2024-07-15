@@ -8,6 +8,9 @@ import pytest
 from shapely import Polygon
 
 from tests import test_data, test_externals, test_results
+from tests.failure_mechanisms.stability_inner.test_dstability_wrapper import (
+    DSTABILITY_CONSOLE,
+)
 from vrtool.decision_making.measures.berm_widening_dstability import (
     BermWideningDStability,
 )
@@ -98,15 +101,16 @@ class TestBermWideningDStability:
         self, request: pytest.FixtureRequest
     ):
         # SetUp
-        assert test_externals.joinpath(
-            "DStabilityConsole"
-        ).exists(), "No d-stability console available for testing."
+        _dstability_exe = test_externals.joinpath(DSTABILITY_CONSOLE)
+        assert (
+            _dstability_exe.is_file()
+        ), "No d-stability console available for testing."
 
         _path_test_stix = (
             test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstability_wrapper = DStabilityWrapper(
-            _path_test_stix, externals_path=test_externals
+            _path_test_stix, externals_path=_dstability_exe
         )
         _berm_widening_dstability = BermWideningDStability(
             measure_input=_measure_input_test,
@@ -134,7 +138,7 @@ class TestBermWideningDStability:
         shutil.copy(str(_path_test_stix), str(_test_file))
 
         # 3. Run test.
-        _dstability_wrapper.stix_name = _test_file
+        _dstability_wrapper.stix_path = _test_file
         _dstability_wrapper.rerun_stix()
         _safety_factor = _dstability_wrapper.get_safety_factor()
 

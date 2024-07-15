@@ -286,7 +286,7 @@ class TestCommonFunctions:
         # Verify content of the file through the wrapper.
         _dstability_model = DStabilityModel()
         _dstability_model.parse(_intermediate_stix_file)
-        assert len(_dstability_model.datastructure.reinforcements) == 2
+        assert len(_dstability_model.datastructure.reinforcements) == 3
         assert (
             len(_dstability_model.datastructure.reinforcements[0].ForbiddenLines) == 1
         )

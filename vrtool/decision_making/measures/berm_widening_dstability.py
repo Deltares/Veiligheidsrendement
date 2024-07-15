@@ -267,8 +267,10 @@ class BermWideningDStability:
             The Path of the new stix file
         """
 
-        for stage_id in self.dstability_wrapper.get_all_stage_ids():
-            self.modify_geometry(fill_polygons=fill_polygons, stage_id=stage_id)
+        for (scenario_id, stage_id) in self.dstability_wrapper.get_all_stage_ids():
+            self.modify_geometry(
+                fill_polygons=fill_polygons, scenario_id=scenario_id, stage_id=stage_id
+            )
 
         self.adjust_calculation_settings()
         _original_name = self.dstability_wrapper.stix_path.stem
@@ -284,7 +286,9 @@ class BermWideningDStability:
         self.dstability_wrapper.save_dstability_model(_export_path)
         return _export_path
 
-    def modify_geometry(self, fill_polygons: list[Polygon], stage_id: int):
+    def modify_geometry(
+        self, fill_polygons: list[Polygon], scenario_id: int, stage_id: int
+    ):
         """
         Modify in place the geometry of the dstability model for a given stage adding the filling polygons.
         The excess parts of the initial geometry above the surface line are NOT removed.
@@ -292,7 +296,8 @@ class BermWideningDStability:
 
         Args:
             fill_polygons: The polygons that are filling the gap between the initial geometry and the new surface line
-            stage_id (int): Id if the stage for which the geonetry is modified.
+            scenario_id (int): Id of the scenario for which the geometry is modified.
+            stage_id (int): Id of the stage for which the geonetry is modified.
 
         """
 
@@ -337,7 +342,10 @@ class BermWideningDStability:
 
             # add layer to the model, keep the custom function until GEOLIB is updated/debugged
             self.dstability_wrapper._dstability_model.add_layer(
-                points=new_list, soil_code="Dijksmateriaal", stage_id=stage_id
+                points=new_list,
+                soil_code="Dijksmateriaal",
+                scenario_index=scenario_id,
+                stage_index=stage_id,
             )
 
     def adjust_calculation_settings(self):

@@ -6,7 +6,7 @@ from geolib.models.dstability.reinforcements import ForbiddenLine
 
 
 class DStabilityWrapper:
-    def __init__(self, stix_path: Path, externals_path: Path) -> None:
+    def __init__(self, stix_path: Path | None, externals_path: Path | None) -> None:
 
         if not stix_path:
             raise ValueError("Missing argument value stix_path.")
