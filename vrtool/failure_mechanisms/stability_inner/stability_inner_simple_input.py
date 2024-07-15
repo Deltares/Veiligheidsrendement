@@ -13,9 +13,6 @@ from vrtool.probabilistic_tools.probabilistic_functions import beta_to_pf
 
 @dataclass
 class StabilityInnerSimpleInput:
-    # TODO: VRTOOL-340. This does not support multiple scenarios.
-    # We can remove everything from 2025 / 2075 (discussed with PO)
-
     beta: np.ndarray
     scenario_probability: np.ndarray
     initial_probability_of_failure: np.ndarray

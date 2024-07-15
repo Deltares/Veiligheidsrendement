@@ -34,3 +34,4 @@ class TestStandardMeasure:
         assert _standard_measure.transition_level_increase_step == 0.25
         assert _standard_measure.max_pf_factor_block == 1000
         assert _standard_measure.n_steps_block == 4
+        assert _standard_measure.piping_reduction_factor is None
