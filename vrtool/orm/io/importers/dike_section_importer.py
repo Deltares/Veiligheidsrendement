@@ -103,10 +103,9 @@ class DikeSectionImporter(OrmImporterProtocol):
         for _mechanism_per_section in section_data.mechanisms_per_section:
             if not any(_mechanism_per_section.computation_scenarios):
                 logging.error(
-                    "No computation scenarios available for Section {} - Mechanism: {}".format(
-                        _mechanism_per_section.section.section_name,
-                        _mechanism_per_section.mechanism.name,
-                    )
+                    "No computation scenarios available for Section %s - Mechanism: %s",
+                    _mechanism_per_section.section.section_name,
+                    _mechanism_per_section.mechanism.name,
                 )
             else:
                 _mechanism_data.append(_importer.import_orm(_mechanism_per_section))
@@ -114,7 +113,7 @@ class DikeSectionImporter(OrmImporterProtocol):
 
     def _get_mechanism_data(
         self, section_data: SectionData
-    ) -> dict[MechanismEnum, tuple[str, ComputationTypeEnum]]:
+    ) -> dict[MechanismEnum, list[tuple[str, ComputationTypeEnum]]]:
         _mechanism_data = {}
         for _mechanism_per_section in section_data.mechanisms_per_section:
             _available_cs = []

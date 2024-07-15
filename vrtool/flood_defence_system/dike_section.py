@@ -19,7 +19,7 @@ class DikeSection:
     crest_height: float = float("nan")
     cover_layer_thickness: float = float("nan")
     mechanism_data: dict[MechanismEnum, list[tuple[str, ComputationTypeEnum]]] = field(
-        default_factory=lambda: {}
+        default_factory=dict
     )
     section_reliability: SectionReliability = field(default_factory=SectionReliability)
     TrajectInfo: DikeTrajectInfo = None
