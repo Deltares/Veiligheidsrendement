@@ -9,8 +9,6 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
 )
 
-DSTABILITY_CONSOLE = r"DStabilityConsole\D-Stability Console.exe"
-
 
 class TestDStabilityWrapper:
     def test_initialize_missing_stix_path_raises(self):
@@ -39,7 +37,7 @@ class TestDStabilityWrapper:
         assert not _invalid_externals.exists(), "This (test) folder should not exist."
 
         _expected_error = "Console executable not found at {}.".format(
-            _invalid_externals
+            _invalid_externals.joinpath("DStabilityConsole", "D-Stability Console.exe")
         )
 
         with pytest.raises(Exception) as exception_error:
@@ -54,7 +52,9 @@ class TestDStabilityWrapper:
     def test_validate_dstability_version(self):
         # 1. Define test data.
         _supported_major_version = "2024"
-        _dstability_exe = test_externals.joinpath(DSTABILITY_CONSOLE)
+        _dstability_exe = test_externals.joinpath(
+            "DStabilityConsole", "D-Stability Console.exe"
+        )
 
         assert (
             _dstability_exe.is_file()
@@ -90,7 +90,7 @@ class TestDStabilityWrapper:
         # 2. Run test.
         DStabilityWrapper(
             stix_path=_test_file,
-            externals_path=test_externals.joinpath(DSTABILITY_CONSOLE),
+            externals_path=test_externals,
         ).rerun_stix()
 
         # 3. Verify expectations.
@@ -105,8 +105,7 @@ class TestDStabilityWrapper:
             test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _dstab_wrapper = DStabilityWrapper(
-            stix_path=_path_test_stix,
-            externals_path=test_externals.joinpath(DSTABILITY_CONSOLE),
+            stix_path=_path_test_stix, externals_path=test_externals
         )
 
         # Call
@@ -126,7 +125,7 @@ class TestDStabilityWrapper:
         )
         _dstab_wrapper = DStabilityWrapper(
             stix_path=_path_test_stix,
-            externals_path=test_externals.joinpath(DSTABILITY_CONSOLE),
+            externals_path=test_externals,
         )
 
         # Call
@@ -147,7 +146,7 @@ class TestDStabilityWrapper:
         _path_test_stix = test_data / "stix" / _stix_name
         _dstab_wrapper = DStabilityWrapper(
             stix_path=_path_test_stix,
-            externals_path=test_externals.joinpath(DSTABILITY_CONSOLE),
+            externals_path=test_externals,
         )
         _export_path = test_results / request.node.name
 
@@ -170,7 +169,7 @@ class TestDStabilityWrapper:
         )
         _dstab_wrapper = DStabilityWrapper(
             stix_path=_path_test_stix,
-            externals_path=test_externals.joinpath(DSTABILITY_CONSOLE),
+            externals_path=test_externals,
         )
 
         # Call the method
