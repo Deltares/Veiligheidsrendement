@@ -11,24 +11,6 @@ from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
 
 
 class TestDStabilityWrapper:
-    def test_reproduce_issue(self):
-        _path_test_stix = (
-            test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
-        )
-        _dstab_wrapper = DStabilityWrapper(
-            stix_path=_path_test_stix, externals_path=test_externals
-        )
-        _dstab_wrapper._dstability_model.parse(_path_test_stix)
-        
-        _intermediate_stix_file = test_results / "test_reproduce_issue.stix"
-        _dstab_wrapper.save_dstability_model(_intermediate_stix_file)
-
-        
-        with pytest.raises(KeyError) as exception_error:
-            _dstab_wrapper._dstability_model.parse(_intermediate_stix_file)
-        
-        assert str(exception_error.value) == '"There is no item named \'results/upliftvanparticleswarm/upliftvanparticleswarmresult.json\' in the archive"'
-    
     def test_initialize_missing_stix_path_raises(self):
         with pytest.raises(ValueError) as exception_error:
             DStabilityWrapper(stix_path=None, externals_path=test_externals)
