@@ -7,11 +7,11 @@ class MeasureType(OrmBaseModel):
     """
     Existing types:
         * Soil reinforcement
-        * Stability screen
+        * Stability Screen
         * Soil reinforcement with stability screen
         * Vertical Piping Solution
-        * Diaphragm wall
-        * Anchored sheetpile
+        * Diaphragm Wall
+        * Anchored Sheetpile
     """
 
     name = CharField(unique=True)

@@ -10,9 +10,10 @@ from vrtool.orm.models.orm_base_model import (
 class ComputationType(OrmBaseModel):
     """
     Possible values:
-        * Simple
         * HRING
-        * SemiProb
+        * SEMIPROB
+        * SIMPLE
+        * DSTABILITY
     """
 
     name = CharField(unique=True, max_length=_max_char_length)

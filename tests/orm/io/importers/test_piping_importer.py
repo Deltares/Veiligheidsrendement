@@ -5,6 +5,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from tests.orm.io import add_computation_scenario_id
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
 from vrtool.orm.io.importers.piping_importer import PipingImporter
 from vrtool.orm.models.computation_scenario import ComputationScenario
@@ -19,7 +20,7 @@ class TestPipingImporter:
     def _get_valid_computation_scenario(
         self, mechanism_per_section: MechanismPerSection, id: int
     ) -> ComputationScenario:
-        _computation_type = ComputationType.create(name=f"irrelevant{id}")
+        _computation_type = ComputationType.create(name=ComputationTypeEnum(id).name)
         return ComputationScenario.create(
             mechanism_per_section=mechanism_per_section,
             computation_type=_computation_type,

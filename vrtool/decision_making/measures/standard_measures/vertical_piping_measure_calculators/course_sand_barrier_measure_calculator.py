@@ -16,10 +16,6 @@ class CourseSandBarrierMeasureCalculator(
     * It reduces the `pf_piping` with a factor `1000`.
     """
 
-    @property
-    def pf_piping_reduction_factor(self) -> float:
-        return 1000
-
     def calculate_cost(self, unit_costs: MeasureUnitCosts) -> float:
         return unit_costs.course_sand_barrier * self.dike_section.Length
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from vrtool.common.enums.vrtool_enum import VrtoolEnum
 
 
@@ -13,3 +15,7 @@ class CombinableTypeEnum(VrtoolEnum):
     def legacy_name(self) -> str:
         """Get name according to old naming convention"""
         return self.name.lower()
+
+    @classmethod
+    def get_enum(cls, enum_name: str) -> CombinableTypeEnum:
+        return super().get_enum(enum_name)

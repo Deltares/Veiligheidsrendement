@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
@@ -24,7 +25,7 @@ class DStabilityImporter(OrmImporterProtocol):
         self._dstability_exe_directory = externals_directory
         self._stix_directory = stix_directory
 
-        self._computation_type = "DSTABILITY"
+        self._computation_type = ComputationTypeEnum.DSTABILITY
 
     def _set_parameters(
         self, mech_input: MechanismInput, parameters: list[ComputationScenarioParameter]
@@ -45,7 +46,7 @@ class DStabilityImporter(OrmImporterProtocol):
             )
 
         if any(
-            cs.computation_type.name != self._computation_type
+            cs.computation_type.name != self._computation_type.legacy_name
             for cs in orm_model.computation_scenarios
         ):
             raise ValueError(

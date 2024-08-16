@@ -9,7 +9,7 @@ E.g. `v0_1_1.sql` migrates a database from version 0.1.0 to 0.1.1.
 
 ## Migration
 
-From a user perspective a database can be migrated with `python vrtool migrate_db <path to database>`.
+A database can be migrated with `python vrtool migrate_db <path to database>`.
 Alternatively databases in a certain folder can be converted with `python vrtool migrate_db_dir <path to folder with database(s)>`.
 If a database is upgraded multiple versions, the different migrations are done consecutively.
 
@@ -18,3 +18,5 @@ A major upgrade is assumed to be non-compatible with the previous version, meani
 To have a compatible database, the user has to finish the migration step by adding the right data to the database before continuing with the remaining migration steps.
 Instruction on finishing a major upgrade can be found in a file with the same name as the migration script, but with extension `.txt`.
 So next to `v1_0_0.sql` the instruction can be found in `v1_0_0.txt`.
+
+**DISCLAIMER**: Databases are overwritten during migration, so it is advised to create a backup beforehand.

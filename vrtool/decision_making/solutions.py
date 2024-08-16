@@ -160,7 +160,7 @@ class Solutions:
                 elif _measure_type == MeasureTypeEnum.REVETMENT.legacy_name:
                     _design_vars = measure.measures["Revetment"]
                 elif _measure_type == MeasureTypeEnum.CUSTOM.legacy_name:
-                    _design_vars = 1.0  ##TODO check
+                    _design_vars = 1.0  # TODO check
 
                 measure_class = measure.parameters["Class"]
                 year = measure.parameters["year"]

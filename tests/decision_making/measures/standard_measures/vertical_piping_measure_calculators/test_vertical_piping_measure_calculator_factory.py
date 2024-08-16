@@ -35,7 +35,7 @@ class TestVerticalPipingMeasureCalculatorFactory:
             """
 
             def __init__(self) -> None:
-                self.parameters = dict(year=42)
+                self.parameters = dict(year=42, piping_reduction_factor=1000)
                 self.config = VrtoolConfig()
 
         _dike_traject = DikeTrajectInfo(traject_name="DummyTraject")

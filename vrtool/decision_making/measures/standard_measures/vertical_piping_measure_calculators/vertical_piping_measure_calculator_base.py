@@ -2,6 +2,7 @@ import copy
 from abc import ABC, abstractmethod
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
 from vrtool.flood_defence_system.dike_section import DikeSection
@@ -26,17 +27,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
     reliability_years: list[int]
     computation_year_start: int
     measure_year: int
-
-    @property
-    @abstractmethod
-    def pf_piping_reduction_factor(self) -> float:
-        """
-        Gets the default reduction factor for `pf_piping` ( `P_solution` ).
-        This property can be overriden when inheriting from this class.
-
-        Returns:
-            float: reduction value.
-        """
+    piping_reduction_factor: float
 
     @classmethod
     def from_measure_section_traject(
@@ -63,6 +54,9 @@ class VerticalPipingMeasureCalculatorBase(ABC):
         _calculator.reliability_years = measure.config.T
         _calculator.computation_year_start = measure.config.t_0
         _calculator.measure_year = measure.parameters["year"]
+        _calculator.piping_reduction_factor = measure.parameters[
+            "piping_reduction_factor"
+        ]
         return _calculator
 
     def _get_configured_section_reliability(self) -> SectionReliability:
@@ -93,7 +87,7 @@ class VerticalPipingMeasureCalculatorBase(ABC):
     def _get_configured_mechanism_reliability_collection(
         self,
         mechanism: MechanismEnum,
-        calc_type: str,
+        calc_type: ComputationTypeEnum,
     ) -> MechanismReliabilityCollection:
         mechanism_reliability_collection = MechanismReliabilityCollection(
             mechanism, calc_type, self.reliability_years, self.computation_year_start, 0
@@ -146,4 +140,4 @@ class VerticalPipingMeasureCalculatorBase(ABC):
         mechanism_reliability.Input.input["elimination"] = "yes"
         mechanism_reliability.Input.input[
             "piping_reduction_factor"
-        ] = self.pf_piping_reduction_factor
+        ] = self.piping_reduction_factor

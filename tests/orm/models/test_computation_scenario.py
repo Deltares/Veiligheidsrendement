@@ -1,6 +1,7 @@
 from typing import Callable
 
 from tests.orm import with_empty_db_context
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_type import ComputationType
@@ -15,7 +16,7 @@ class TestComputationScenario:
     @with_empty_db_context
     def test_initialize_with_database_fixture(self):
         # 1. Define test data.
-        _computation_type = ComputationType.create(name="TestComputation")
+        _computation_type = ComputationType.create(name=ComputationTypeEnum.NONE.name)
         _test_dike_traject = DikeTrajectInfo.create(traject_name="123")
         _test_section = SectionData.create(
             dike_traject=_test_dike_traject,
