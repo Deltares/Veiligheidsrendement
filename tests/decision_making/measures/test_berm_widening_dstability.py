@@ -97,6 +97,10 @@ class TestBermWideningDStability:
         self, request: pytest.FixtureRequest
     ):
         # SetUp
+        assert test_externals.joinpath(
+            "DStabilityConsole"
+        ).exists(), "No d-stability console available for testing."
+
         _path_test_stix = (
             test_data / "stix" / "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
