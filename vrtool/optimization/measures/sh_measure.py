@@ -42,6 +42,4 @@ class ShMeasure(MeasureAsInputBase):
         ]
 
     def is_base_measure(self) -> bool:
-        if self.year != 0:
-            return False
         return math.isclose(self.dcrest, 0) or math.isnan(self.dcrest)
