@@ -67,18 +67,26 @@ class TestAggregateCombinationsController:
         )
 
     @pytest.mark.parametrize(
-        "matching_measure_type, expected_lcc",
+        "matching_measure_type, expected_lcc, include_secondary_measure",
         [
             pytest.param(
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
+                300,
+                True,
+                id=f"LCC=300 when {MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name} with initial measures and secondary measures",
+            ),
+            pytest.param(
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
                 0,
-                id=f"LCC=0 when {MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name} with initial measures",
+                False,
+                id=f"LCC=0 when {MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name} with initial measures and no secondary measures",
             ),
         ]
         + [
             pytest.param(
                 _measure_type,
                 450,
+                True,
                 id=f"LCC=450 when {_measure_type.legacy_name} with initial measures",
             )
             for _measure_type in MeasureTypeEnum
@@ -89,6 +97,7 @@ class TestAggregateCombinationsController:
         self,
         valid_section_as_input: SectionAsInput,
         matching_measure_type: MeasureTypeEnum,
+        include_secondary_measure: bool,
         expected_lcc: float,
     ):
         # 1. Define input
@@ -107,6 +116,7 @@ class TestAggregateCombinationsController:
             ),
             mechanism_year_collection=None,
         )
+
         _sg_combination = SgCombinedMeasure(
             primary=_make_sg_measure(
                 matching_measure_type,
@@ -122,6 +132,11 @@ class TestAggregateCombinationsController:
             ),
             mechanism_year_collection=None,
         )
+
+        if not include_secondary_measure:
+            _sh_combination.secondary = None
+            _sg_combination.secondary = None
+
         valid_section_as_input.combined_measures.append(_sh_combination)
         valid_section_as_input.combined_measures.append(_sg_combination)
 
