@@ -36,7 +36,9 @@ class PostProcessingReport:
     report_dir: Path
 
     has_revetment: bool = True  # Whether a revetment is present or not
-    take_last: bool = False  # If True, the last step is taken, if False, the step with minimal total cost is taken
+    take_last: bool = (
+        False  # If True, the last step is taken, if False, the step with minimal total cost is taken
+    )
     colors: Any = field(default_factory=lambda: sns.color_palette("colorblind", 10))
 
     def __enter__(self):
@@ -193,12 +195,12 @@ class PostProcessingReport:
             MechanismEnum.REVETMENT,
         ]:
             if self.has_revetment or mechanism != MechanismEnum.REVETMENT:
-                assessment_results["reference"][
-                    mechanism
-                ] = daf.import_original_assessment(self.reference_db, mechanism)
-                assessment_results["result"][
-                    mechanism
-                ] = daf.import_original_assessment(self.result_db, mechanism)
+                assessment_results["reference"][mechanism] = (
+                    daf.import_original_assessment(self.reference_db, mechanism)
+                )
+                assessment_results["result"][mechanism] = (
+                    daf.import_original_assessment(self.result_db, mechanism)
+                )
 
         reliability_per_step = {
             "reference": dan.get_reliability_for_each_step(
@@ -234,6 +236,13 @@ class PostProcessingReport:
         self._plot_traject_probability_for_step(
             traject_prob, considered_tc_step, _subreport_dir
         )
+
+        [
+            self._plot_traject_probability_for_time(
+                traject_prob, considered_year, _subreport_dir
+            )
+            for considered_year in [0, 25, 75]
+        ]
 
         # Define measures per section.
         measures_per_section = {
@@ -458,6 +467,63 @@ class PostProcessingReport:
         ax.legend()
         plt.savefig(subreport_dir.joinpath("total_lcc_and_risk.png"))
 
+    def _plot_traject_probability_for_time(
+        self, traject_prob: dict, considered_year: int, subreport_dir: Path
+    ):
+        def extract_traject_prob_per_year(traject_prob):
+            traject_prob_for_year = []
+            for step in traject_prob:
+                traject_prob_for_year.append(
+                    {
+                        mechanism: step[mechanism][considered_year]
+                        for mechanism in step.keys()
+                    }
+                )
+            return traject_prob_for_year
+
+        # extract the traject probability for the considered year for all mechanisms
+        traject_prob_per_step = {}
+        traject_prob_per_step["reference"] = extract_traject_prob_per_year(
+            traject_prob["reference"]
+        )
+        traject_prob_per_step["result"] = extract_traject_prob_per_year(
+            traject_prob["result"]
+        )
+
+        # for each mechanism + 1 for the total failure prob
+        n_figs = len(traject_prob_per_step["reference"][0].keys()) + 1
+        _, ax = plt.subplots(nrows=n_figs, figsize=(6, 2 * n_figs))
+
+        got.plot_traject_probability_for_time(
+            traject_prob_per_step["reference"],
+            ax,
+            run_label="Referentie",
+            color=self.colors[0],
+            linestyle="-",
+        )
+
+        got.plot_traject_probability_for_time(
+            traject_prob_per_step["result"],
+            ax,
+            run_label="Resultaat",
+            color=self.colors[1],
+            linestyle="-",
+        )
+
+        for axes in ax:
+            axes.set_xlim(left=0)
+        # add space between the plots
+        plt.subplots_adjust(hspace=1.0)
+
+        plt.savefig(
+            subreport_dir.joinpath(
+                f"traject_probability_for_year_{considered_year}.png"
+            ),
+            dpi=300,
+            bbox_inches="tight",
+        )
+        pass
+
     def _plot_traject_probability_for_step(
         self, traject_prob: dict, considered_tc_step: dict, subreport_dir: Path
     ):
@@ -492,7 +558,7 @@ class PostProcessingReport:
             linestyle="-",
         )
         ax.set_xlim(left=0, right=100)
-        plt.savefig(subreport_dir.joinpath("traject_probablity_for_step.png"))
+        plt.savefig(subreport_dir.joinpath("traject_probability_for_step.png"))
 
     def _print_measure_result_ids(
         self, measures_per_section: dict, subreport_dir: Path

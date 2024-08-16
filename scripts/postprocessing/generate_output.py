@@ -43,6 +43,46 @@ def plot_lcc_tc_from_steps(
             )
 
 
+def plot_traject_probability_for_time(
+    traject_prob_per_year: dict[MechanismEnum, int],
+    ax,
+    run_label="",
+    color="k",
+    linestyle="--",
+):
+    mechanisms = list(traject_prob_per_year[0].keys())
+    # for each mechanism, put pf in a list
+    pf_per_mech = {}
+    for idx, mechanism in enumerate(mechanisms):
+        pf_per_mech[mechanism] = [
+            year_prob[mechanism] for year_prob in traject_prob_per_year
+        ]
+
+    # traject probability is the product of 1-pf for each mechanism
+    p_non_f = [1] * len(traject_prob_per_year)
+    for mechanism in mechanisms:
+        p_non_f = np.multiply(p_non_f, np.subtract(1, np.array(pf_per_mech[mechanism])))
+
+    traject_prob = np.subtract(1, p_non_f)
+
+    # add subplots for each mechanism
+    for idx, mechanism in enumerate(mechanisms):
+        ax[idx].plot(
+            pf_per_mech[mechanism], label=run_label, color=color, linestyle=linestyle
+        )
+        ax[idx].set_yscale("log")
+        ax[idx].set_xlabel("Stap", fontsize='x-small')
+        ax[idx].set_ylabel("Trajectfaalkans", fontsize='x-small')
+        ax[idx].set_title(f"{mechanism.name.capitalize()}")
+    # add for traject_prob
+    ax[-1].plot(traject_prob, label=run_label, color=color, linestyle=linestyle)
+    ax[-1].set_yscale("log")
+    ax[-1].set_xlabel("Stap", fontsize='x-small')
+    ax[-1].set_ylabel("Trajectfaalkans", fontsize='x-small')
+    ax[-1].set_title("Trajectfaalkans")
+    ax[-1].legend()
+
+
 def plot_traject_probability_for_step(
     traject_prob_step: dict[MechanismEnum, dict[int, float]],
     ax,
