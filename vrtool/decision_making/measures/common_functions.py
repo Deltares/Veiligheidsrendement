@@ -437,7 +437,7 @@ def determine_costs(
         # add costs for housing
         if isinstance(housing, pd.DataFrame) and dberm_in > 0.0:
             if dberm_in > housing.size:
-                logging.warning(
+                logging.debug(
                     "Binnenwaartse teenverschuiving is groter dan gegevens voor bebouwing op dijkvak {}".format(
                         section
                     )
