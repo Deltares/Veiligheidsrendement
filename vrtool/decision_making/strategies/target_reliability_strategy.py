@@ -417,13 +417,17 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 _invalid_mechanisms_str = " en ".join(
                     [mechanism.name.capitalize() for mechanism in _invalid_mechanisms]
                 )
-                _base_warning = f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {self.sections[_section_idx].section_name}."
 
-                if not _valid_measures:
-                    logging.warning(_base_warning)
-                    continue
                 logging.warning(
-                    f"{_base_warning} De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor {_invalid_mechanisms_str}."
+                    "Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak %s.",
+                    self.sections[_section_idx].section_name,
+                )
+                if not _valid_measures:
+                    continue
+
+                logging.warning(
+                    "De beste maatregel is gekozen, maar deze voldoet niet aan de eisen voor %s.",
+                    _invalid_mechanisms_str,
                 )
 
             # get measure with lowest lcc from _valid_measures
