@@ -477,6 +477,7 @@ class PostProcessingReport:
                     {
                         mechanism: step[mechanism][considered_year]
                         for mechanism in step.keys()
+                        if len(step[mechanism].keys()) > 0
                     }
                 )
             return traject_prob_for_year
