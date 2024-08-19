@@ -93,10 +93,11 @@ class TestSgMeasure:
     @pytest.mark.parametrize(
         "year, dberm, expected_result",
         [
-            pytest.param(1, float("nan"), True, id="year != 0"),
             pytest.param(0, 4.2, False, id="year == 0; dberm is > 0"),
             pytest.param(0, 0, True, id="year == 0; dberm = 0"),
             pytest.param(0, float("nan"), True, id="year == 0; dberm == 'nan'"),
+            pytest.param(1, float("nan"), True, id="year > 0; dberm == 'nan'"),
+            pytest.param(1, 4.2, False, id="year > 0; dberm == 4.2"),
         ],
     )
     def test_is_base_measure_returns_expectation(
