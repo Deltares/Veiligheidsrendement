@@ -302,7 +302,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 ):
                     _requirement_met_per_mechanism[mechanism] = True
                     break
-        
+
         # next we get the mechanisms in _requirement_met_per_mechanism where values are True
         _valid_mechanisms = [
             mechanism
@@ -327,8 +327,9 @@ class TargetReliabilityStrategy(StrategyProtocol):
         ]
 
         # Unpack the list of tuples into two separate lists
-        _valid_measure_idx, _valid_measures = zip(*_valid_measures_with_idx) if _valid_measures_with_idx else ([], [])
-
+        _valid_measure_idx, _valid_measures = (
+            zip(*_valid_measures_with_idx) if _valid_measures_with_idx else ([], [])
+        )
 
         # get the mechanisms in _requirement_met_per_mechanism where values are False
         _invalid_mechanisms = [
@@ -344,17 +345,27 @@ class TargetReliabilityStrategy(StrategyProtocol):
             for _measure_idx in _valid_measure_idx
         ]
 
-        #remove measures with a pf that is too high
-        _valid_measures_filtered = [_measure for _idx, _measure in enumerate(_valid_measures) if math.isclose(_failure_probabilities[_idx],min(_failure_probabilities),rel_tol=1e-9)]
+        # remove measures with a pf that is too high
+        _valid_measures_low_prob = [
+            _measure
+            for _idx, _measure in enumerate(_valid_measures)
+            if math.isclose(
+                _failure_probabilities[_idx], min(_failure_probabilities), rel_tol=1e-9
+            )
+        ]
 
-        #take one with lowest cost
-        _valid_measure_lccs = [_measure.lcc for _measure in _valid_measures_filtered]
+        # take one with lowest cost
+        _valid_measure_lccs = [_measure.lcc for _measure in _valid_measures_low_prob]
 
-        #filter further based on cost: only take measures that are cheapest
-        _valid_measures_filtered2 = [_measure for _idx, _measure in enumerate(_valid_measures_filtered) if math.isclose(_measure.lcc, min(_valid_measure_lccs))]
+        # filter further based on cost: only take measures that are cheapest
+        _valid_measures_low_prob_cost = [
+            _measure
+            for _idx, _measure in enumerate(_valid_measures_low_prob)
+            if math.isclose(_measure.lcc, min(_valid_measure_lccs))
+        ]
 
-        #return the first as they have the same cost and pf and are not distinctive
-        return [_valid_measures_filtered2[0]], _invalid_mechanisms
+        # return the first as they have the same cost and pf and are not distinctive
+        return [_valid_measures_low_prob_cost[0]], _invalid_mechanisms
 
     def evaluate(
         self,
@@ -407,7 +418,7 @@ class TargetReliabilityStrategy(StrategyProtocol):
                     [mechanism.name.capitalize() for mechanism in _invalid_mechanisms]
                 )
                 _base_warning = f"Geen maatregelen gevonden die voldoen aan doorsnede-eisen op dijkvak {self.sections[_section_idx].section_name}."
-                
+
                 if not _valid_measures:
                     logging.warning(_base_warning)
                     continue
