@@ -38,7 +38,8 @@ class StrategyExporter(OrmExporterProtocol):
         """
         Gets the list of time periods to export by combining the expected required ones
         ([0, 100]), the time periods defined in the configuration (`VrtoolConfig.T`)
-        and the provided investment years for optimization calculation.
+        and the provided investment years (including `investment_year - 1`
+        if `investment_year > 1`) for optimization calculation.
         Note: this method is created in relation to VRTOOL-577.
 
         Args:
