@@ -108,3 +108,26 @@ class TestStrategyExporter:
 
         # 3. Verify expectations.
         assert _time_periods_to_export == _expected_values
+
+    def test_get_time_periods_to_export_includes_previous_investment_year(self):
+        # 1. Define test data.
+        _expected_values = sorted(
+            list(
+                set(
+                    _basic_config_t_values
+                    + [_bc - 1 for _bc in _basic_config_t_values]
+                    + [0, 100]
+                )
+            )
+        )
+        _strategy_run = self._get_mocked_strategy_run(
+            _basic_config_t_values, _basic_config_t_values
+        )
+
+        # 2. Run test.
+        _time_periods_to_export = StrategyExporter.get_time_periods_to_export(
+            _strategy_run
+        )
+
+        # 3. Verify expectations.
+        assert _time_periods_to_export == _expected_values

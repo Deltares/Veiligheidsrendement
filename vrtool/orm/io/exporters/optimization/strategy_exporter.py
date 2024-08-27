@@ -51,11 +51,11 @@ class StrategyExporter(OrmExporterProtocol):
         def get_investment_years() -> list[int]:
             _investment_years = []
             for _, sam in strategy_run.selected_aggregated_measures:
-                if sam.year in _investment_years:
-                    continue
-                _investment_years.append(sam.year)
-                if sam.year > 0:
-                    _investment_years.append(sam.year - 1)
+                if sam.year not in _investment_years:
+                    _investment_years.append(sam.year)
+                _previous_year = sam.year - 1
+                if _previous_year not in _investment_years and _previous_year > 0:
+                    _investment_years.append(_previous_year)
             return _investment_years
 
         # Year 0 and 100 are ALWAYS included.
