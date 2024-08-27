@@ -33,7 +33,8 @@ class StrategyExporter(OrmExporterProtocol):
             if a.sg_combination == measure_sg and a.sh_combination == measure_sh:
                 return a
 
-    def _get_time_periods_to_export(self, strategy_run: StrategyProtocol) -> list[int]:
+    @staticmethod
+    def get_time_periods_to_export(strategy_run: StrategyProtocol) -> list[int]:
         """
         Gets the list of time periods to export by combining the expected required ones
         ([0, 100]), the time periods defined in the configuration (`VrtoolConfig.T`)
@@ -82,7 +83,7 @@ class StrategyExporter(OrmExporterProtocol):
             )
         ]
         _accumulated_total_lcc_per_step = []
-        _time_periods_to_export = self._get_time_periods_to_export(strategy_run)
+        _time_periods_to_export = self.get_time_periods_to_export(strategy_run)
         for _step_idx, (
             _section_idx,
             _aggregated_measure,
