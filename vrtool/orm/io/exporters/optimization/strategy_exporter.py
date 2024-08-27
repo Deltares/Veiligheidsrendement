@@ -58,7 +58,8 @@ class StrategyExporter(OrmExporterProtocol):
                     _investment_years.append(sam.year - 1)
             return _investment_years
 
-        _required_time_periods = [0, max(100, *strategy_run.time_periods)]
+        # Year 0 and 100 are ALWAYS included.
+        _required_time_periods = [0, 100]
         return sorted(
             list(
                 set(

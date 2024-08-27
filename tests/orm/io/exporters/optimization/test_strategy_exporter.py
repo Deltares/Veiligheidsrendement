@@ -1,5 +1,3 @@
-from typing import Iterator
-
 import pytest
 
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
@@ -84,6 +82,24 @@ class TestStrategyExporter:
             )
         )
         _strategy_run = self._get_mocked_strategy_run(config_t, investment_years)
+
+        # 2. Run test.
+        _time_periods_to_export = StrategyExporter.get_time_periods_to_export(
+            _strategy_run
+        )
+
+        # 3. Verify expectations.
+        assert _time_periods_to_export == _expected_values
+
+    def test_get_time_periods_to_export_includes_always_0_and_100(
+        self,
+    ):
+        # 1. Define test data.
+        _expected_values = list(sorted(_basic_config_t_values + [0, 100]))
+        assert 0 not in _basic_config_t_values
+        assert 100 not in _basic_config_t_values
+
+        _strategy_run = self._get_mocked_strategy_run(_basic_config_t_values, [])
 
         # 2. Run test.
         _time_periods_to_export = StrategyExporter.get_time_periods_to_export(
