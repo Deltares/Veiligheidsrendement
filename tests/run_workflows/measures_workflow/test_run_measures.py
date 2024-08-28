@@ -38,3 +38,17 @@ class TestRunMeasures:
 
         # 2. Verify expectations
         assert str(exception_error.value) == "Expected instance of a DikeTraject."
+
+    def test_given_invalid_vrtool_config_when_initialize_raises(
+        self, invalid_vrtool_config_fixture: tuple[VrtoolConfig, str]
+    ):
+        # 1. Define test data.
+        _invalid_vrtool_config, _expected_error_mssg = invalid_vrtool_config_fixture
+        assert isinstance(_invalid_vrtool_config, VrtoolConfig)
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            RunMeasures(_invalid_vrtool_config, None)
+
+        # 3. Verify expectation
+        assert str(exc_err.value) == _expected_error_mssg
