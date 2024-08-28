@@ -19,6 +19,7 @@ class RunSafetyAssessment(VrToolRunProtocol):
             raise ValueError("Expected instance of a {}.".format(VrtoolConfig.__name__))
         if not isinstance(selected_traject, DikeTraject):
             raise ValueError("Expected instance of a {}.".format(DikeTraject.__name__))
+        self.vr_config.validate_config()
         self.vr_config = vr_config
         self.selected_traject = selected_traject
 

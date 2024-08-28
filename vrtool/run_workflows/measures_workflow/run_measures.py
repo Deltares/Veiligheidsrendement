@@ -26,6 +26,7 @@ class RunMeasures(VrToolRunProtocol):
 
         self.vr_config = vr_config
         self.selected_traject = selected_traject
+        self.vr_config.validate_config()
 
     def _get_section_solution(
         self,

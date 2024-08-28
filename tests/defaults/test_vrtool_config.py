@@ -242,3 +242,43 @@ class TestVrtoolConfig:
         assert _vrtool_config.input_directory == expected_value
         assert _vrtool_config.output_directory == expected_value
         assert _vrtool_config.externals == expected_value
+
+    def test_t0_and_t100_included_in_T(self):
+        # 1. Define test data.
+        _dummy_t = [24, 42]
+        _expected_values = [0, 24, 42, 100]
+
+        # 2. Run test.
+        _vrtool_config = VrtoolConfig(T=_dummy_t)
+
+        # 3. Verify expectations
+        assert _vrtool_config.T == _expected_values
+
+    def test_given_default_vrtool_config_when_validate_succeeds(self):
+        # 1. Deifne test data / Run test / verify expectations.
+        VrtoolConfig().validate_config()
+
+    @pytest.mark.parametrize(
+        "t_values",
+        [
+            pytest.param([0, 23, 42], id="Without 100"),
+            pytest.param([23, 42, 100], id="Without 0"),
+            pytest.param([23, 42], id="Without 0 and 100"),
+        ],
+    )
+    def test_given_t_without_required_values_when_validate_raises_exception(
+        self, t_values: list[int]
+    ):
+        # 1. Define test data.
+        _vrtool_config = VrtoolConfig()
+        _vrtool_config.T = t_values
+
+        # 2. Run test
+        with pytest.raises(ValueError) as exc_err:
+            _vrtool_config.validate_config()
+
+        # 3. Verify expectations.
+        assert (
+            str(exc_err.value)
+            == "'VrtoolConfig' is niet geldig, het vereist de waarden: 0, 100"
+        )

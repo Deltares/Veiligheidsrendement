@@ -59,17 +59,7 @@ class StrategyExporter(OrmExporterProtocol):
                     _investment_years.append(_previous_year)
             return _investment_years
 
-        # Year 0 and 100 are ALWAYS included.
-        _required_time_periods = [0, 100]
-        return sorted(
-            list(
-                set(
-                    _required_time_periods
-                    + strategy_run.time_periods
-                    + get_investment_years()
-                )
-            )
-        )
+        return sorted(list(set(strategy_run.time_periods + get_investment_years())))
 
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
         _step_results_section = []

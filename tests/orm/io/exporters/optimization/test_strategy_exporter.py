@@ -39,17 +39,6 @@ class TestStrategyExporter:
         return MockedStrategy()
 
     @pytest.mark.parametrize(
-        "config_t",
-        [
-            pytest.param(
-                _basic_config_t_values + [0, 100], id="Including t=0 and t=100"
-            ),
-            pytest.param(_basic_config_t_values + [100], id="Including t=100"),
-            pytest.param(_basic_config_t_values + [0], id="Including t=0"),
-            pytest.param(_basic_config_t_values, id="Excluding t=0 and t=100"),
-        ],
-    )
-    @pytest.mark.parametrize(
         "investment_years",
         [
             pytest.param(
@@ -67,7 +56,6 @@ class TestStrategyExporter:
     )
     def test_get_time_periods_to_export(
         self,
-        config_t: list[int],
         investment_years: list[int],
     ):
         # 1. Define test data.
@@ -75,31 +63,14 @@ class TestStrategyExporter:
             sorted(
                 set(
                     _basic_config_t_values
-                    + [0, 100]
                     + investment_years
                     + [iy - 1 for iy in investment_years]
                 )
             )
         )
-        _strategy_run = self._get_mocked_strategy_run(config_t, investment_years)
-
-        # 2. Run test.
-        _time_periods_to_export = StrategyExporter.get_time_periods_to_export(
-            _strategy_run
+        _strategy_run = self._get_mocked_strategy_run(
+            _basic_config_t_values, investment_years
         )
-
-        # 3. Verify expectations.
-        assert _time_periods_to_export == _expected_values
-
-    def test_get_time_periods_to_export_includes_always_0_and_100(
-        self,
-    ):
-        # 1. Define test data.
-        _expected_values = list(sorted(_basic_config_t_values + [0, 100]))
-        assert 0 not in _basic_config_t_values
-        assert 100 not in _basic_config_t_values
-
-        _strategy_run = self._get_mocked_strategy_run(_basic_config_t_values, [])
 
         # 2. Run test.
         _time_periods_to_export = StrategyExporter.get_time_periods_to_export(
@@ -114,9 +85,7 @@ class TestStrategyExporter:
         _expected_values = sorted(
             list(
                 set(
-                    _basic_config_t_values
-                    + [_bc - 1 for _bc in _basic_config_t_values]
-                    + [0, 100]
+                    _basic_config_t_values + [_bc - 1 for _bc in _basic_config_t_values]
                 )
             )
         )
