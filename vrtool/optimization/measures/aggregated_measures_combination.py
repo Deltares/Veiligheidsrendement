@@ -48,7 +48,10 @@ class AggregatedMeasureCombination:
             and self.sh_combination.is_base_measure()
             and self.sg_combination.is_base_measure()
         ):
-            return self.sh_combination._get_secondary_lcc() + self.sg_combination._get_secondary_lcc()
+            return (
+                self.sh_combination.get_secondary_lcc()
+                + self.sg_combination.get_secondary_lcc()
+            )
 
         if isinstance(self.shsg_combination, ShSgCombinedMeasure):
             return self.shsg_combination.lcc
