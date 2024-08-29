@@ -1,10 +1,9 @@
+import math
 from pathlib import Path
 
 from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models import *
 from vrtool.orm.orm_controllers import open_database
-
-import math
 
 
 def get_overview_of_runs(db_path):
