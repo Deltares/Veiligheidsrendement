@@ -10,7 +10,6 @@ from vrtool.defaults.vrtool_config import VrtoolConfig
     params=[[0], [100], [0, 100]],
     ids=["Without t=0", "Without t=100", "Without t=0, t=100"],
 )
-@pytest.mark.parametrize
 def get_invalid_vrtool_config_fixture(
     request: pytest.FixtureRequest,
 ) -> Iterator[tuple[VrtoolConfig, str]]:
