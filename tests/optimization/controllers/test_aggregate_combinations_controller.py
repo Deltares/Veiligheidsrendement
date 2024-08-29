@@ -67,18 +67,26 @@ class TestAggregateCombinationsController:
         )
 
     @pytest.mark.parametrize(
-        "matching_measure_type, expected_lcc",
+        "matching_measure_type, expected_lcc, include_secondary_measure",
         [
             pytest.param(
                 MeasureTypeEnum.SOIL_REINFORCEMENT,
+                300,
+                True,
+                id=f"LCC=300 when {MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name} with initial measures and secondary measures",
+            ),
+            pytest.param(
+                MeasureTypeEnum.SOIL_REINFORCEMENT,
                 0,
-                id=f"LCC=0 when {MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name} with initial measures",
+                False,
+                id=f"LCC=0 when {MeasureTypeEnum.SOIL_REINFORCEMENT.legacy_name} with initial measures and no secondary measures",
             ),
         ]
         + [
             pytest.param(
                 _measure_type,
                 450,
+                True,
                 id=f"LCC=450 when {_measure_type.legacy_name} with initial measures",
             )
             for _measure_type in MeasureTypeEnum
@@ -89,39 +97,66 @@ class TestAggregateCombinationsController:
         self,
         valid_section_as_input: SectionAsInput,
         matching_measure_type: MeasureTypeEnum,
+        include_secondary_measure: bool,
         expected_lcc: float,
     ):
         # 1. Define input
-        _sh_combination = ShCombinedMeasure(
-            primary=_make_sh_measure(
-                matching_measure_type,
-                1,
-                0,
-                100,
-            ),
-            secondary=_make_sg_measure(
-                MeasureTypeEnum.REVETMENT,
-                2,
-                0,
-                200,
-            ),
-            mechanism_year_collection=None,
-        )
-        _sg_combination = SgCombinedMeasure(
-            primary=_make_sg_measure(
-                matching_measure_type,
-                1,
-                0,
-                50,
-            ),
-            secondary=_make_sh_measure(
-                MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
-                3,
-                0,
-                100,
-            ),
-            mechanism_year_collection=None,
-        )
+
+        if include_secondary_measure:
+            _sh_combination = ShCombinedMeasure(
+                primary=_make_sh_measure(
+                    matching_measure_type,
+                    1,
+                    0,
+                    100,
+                ),
+                secondary=_make_sg_measure(
+                    MeasureTypeEnum.REVETMENT,
+                    2,
+                    0,
+                    200,
+                ),
+                mechanism_year_collection=None,
+            )
+
+            _sg_combination = SgCombinedMeasure(
+                primary=_make_sg_measure(
+                    matching_measure_type,
+                    1,
+                    0,
+                    50,
+                ),
+                secondary=_make_sh_measure(
+                    MeasureTypeEnum.VERTICAL_PIPING_SOLUTION,
+                    3,
+                    0,
+                    100,
+                ),
+                mechanism_year_collection=None,
+            )
+        else:
+            _sh_combination = ShCombinedMeasure(
+                primary=_make_sh_measure(
+                    matching_measure_type,
+                    1,
+                    0,
+                    100,
+                ),
+                secondary=None,
+                mechanism_year_collection=None,
+            )
+
+            _sg_combination = SgCombinedMeasure(
+                primary=_make_sg_measure(
+                    matching_measure_type,
+                    1,
+                    0,
+                    50,
+                ),
+                secondary=None,
+                mechanism_year_collection=None,
+            )
+
         valid_section_as_input.combined_measures.append(_sh_combination)
         valid_section_as_input.combined_measures.append(_sg_combination)
 

@@ -35,7 +35,7 @@ class CombinedMeasureBase:
         Returns:
             float: The total (bruto) lcc of this combined measure.
         """
-        return self._get_primary_lcc() + self._get_secondary_lcc()
+        return self._get_primary_lcc() + self.get_secondary_lcc()
 
     @property
     @abstractmethod
@@ -69,7 +69,7 @@ class CombinedMeasureBase:
         return self._calculate_lcc(self.primary, self._base_cost)
 
     @abstractmethod
-    def _get_secondary_lcc(self) -> float:
+    def get_secondary_lcc(self) -> float:
         pass
 
     def compares_to(self, other: "CombinedMeasureBase") -> bool:
@@ -84,6 +84,7 @@ class CombinedMeasureBase:
         Returns:
             bool: Whether both combined measures can be conisered as matching.
         """
+
         # Check if the primary measures in both combinations match
         def compatible_l_stab_screen() -> bool:
             if math.isnan(self.primary.l_stab_screen) or math.isnan(

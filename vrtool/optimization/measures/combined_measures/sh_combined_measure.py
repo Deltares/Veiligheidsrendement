@@ -21,7 +21,7 @@ class ShCombinedMeasure(CombinedMeasureBase):
     def _base_cost(self) -> float:
         return self.primary.base_cost
 
-    def _get_secondary_lcc(self) -> float:
+    def get_secondary_lcc(self) -> float:
         if self.secondary is None:
             return 0
         # secondary lcc is calculated with base_cost = 0
