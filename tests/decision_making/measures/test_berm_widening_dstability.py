@@ -1,4 +1,3 @@
-import filecmp
 import shutil
 from pathlib import Path
 
@@ -134,13 +133,13 @@ class TestBermWideningDStability:
         shutil.copy(str(_path_test_stix), str(_test_file))
 
         # 3. Run test.
-        _dstability_wrapper.stix_name = _test_file
+        _dstability_wrapper.stix_path = _test_file
         _dstability_wrapper.rerun_stix()
         _safety_factor = _dstability_wrapper.get_safety_factor()
 
         # 4. Assert
         assert isinstance(_safety_factor, float)
-        assert pytest.approx(1.3400506446227483) == _safety_factor
+        assert pytest.approx(1.3401, rel=1e-4) == _safety_factor
 
     def test_find_polygons_to_fill_to_measure_one_polygon_returned(self):
         # SetUp

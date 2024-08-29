@@ -113,6 +113,12 @@ class VrtoolConfig:
 
         self.excluded_mechanisms = list(map(_valid_mechanism, self.excluded_mechanisms))
 
+        # VRTOOL-577: Ensure 0 and 100 are defined in `T`
+        for _required_t in [0, 100]:
+            if _required_t not in self.T:
+                self.T.append(_required_t)
+        self.T = sorted(self.T)
+
     def _relative_paths_to_absolute(self, parent_path: Path):
         """
         Converts all relevant relative paths to absolute paths.
@@ -163,3 +169,17 @@ class VrtoolConfig:
         _vrtool_config = cls(**_custom_config)
         _vrtool_config._relative_paths_to_absolute(json_path.parent)
         return _vrtool_config
+
+    def validate_config(self) -> None:
+        """
+        Validates this `VrtoolConfig` raising errors when it is not compliant.
+        The validation checks for the integrity of:
+         - `T` property contains the values `0` and `100`.
+
+        Raises:
+            ValueError: When one of the integrity requirements is not met.
+        """
+        if any(_rt not in self.T for _rt in [0, 100]):
+            raise ValueError(
+                "'VrtoolConfig' is niet geldig, het vereist de waarden: 0, 100"
+            )

@@ -33,6 +33,34 @@ class StrategyExporter(OrmExporterProtocol):
             if a.sg_combination == measure_sg and a.sh_combination == measure_sh:
                 return a
 
+    @staticmethod
+    def get_time_periods_to_export(strategy_run: StrategyProtocol) -> list[int]:
+        """
+        Gets the list of time periods to export by combining the expected required ones
+        ([0, 100]), the time periods defined in the configuration (`VrtoolConfig.T`)
+        and the provided investment years (including `investment_year - 1`
+        if `investment_year > 1`) for optimization calculation.
+        Note: this method is created in relation to VRTOOL-577.
+
+        Args:
+            strategy_run (StrategyProtocol): Strategy object containing all required data.
+
+        Returns:
+            list[int]: Years whose betas needs to be exported to the database.
+        """
+
+        def get_investment_years() -> list[int]:
+            _investment_years = []
+            for _, sam in strategy_run.selected_aggregated_measures:
+                if sam.year not in _investment_years:
+                    _investment_years.append(sam.year)
+                _previous_year = sam.year - 1
+                if _previous_year not in _investment_years and _previous_year > 0:
+                    _investment_years.append(_previous_year)
+            return _investment_years
+
+        return sorted(list(set(strategy_run.time_periods + get_investment_years())))
+
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
         _step_results_section = []
         _step_results_mechanism = []
@@ -47,7 +75,7 @@ class StrategyExporter(OrmExporterProtocol):
             )
         ]
         _accumulated_total_lcc_per_step = []
-
+        _time_periods_to_export = self.get_time_periods_to_export(strategy_run)
         for _step_idx, (
             _section_idx,
             _aggregated_measure,
@@ -101,7 +129,8 @@ class StrategyExporter(OrmExporterProtocol):
                 )
 
                 _prob_per_step = strategy_run.probabilities_per_step[_step_idx + 1]
-                for _t in strategy_run.time_periods:
+
+                for _t in _time_periods_to_export:
                     _prob_section = self._get_section_time_value(
                         _section_idx, _t, _prob_per_step
                     )
