@@ -1,6 +1,6 @@
-import numpy as np
 import pytest
 
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.failure_mechanisms.stability_inner import (
@@ -10,13 +10,10 @@ from vrtool.failure_mechanisms.stability_inner import (
 
 
 class TestStabilityInnerSimpleCalculator:
-    def test_init_with_valid_data(self):
+    def test_init_with_valid_data(self, mechanism_input_fixture: MechanismInput):
         # Setup
-        _mechanism_input = MechanismInput("")
-        _mechanism_input.input["sf_2025"] = np.array([0.1], dtype=float)
-        _mechanism_input.input["sf_2075"] = np.array([0.2], dtype=float)
-
-        _input = StabilityInnerSimpleInput.from_mechanism_input(_mechanism_input)
+        assert isinstance(mechanism_input_fixture, MechanismInput)
+        _input = StabilityInnerSimpleInput.from_mechanism_input(mechanism_input_fixture)
 
         # Call
         _calculator = StabilityInnerSimpleCalculator(_input)
@@ -28,7 +25,7 @@ class TestStabilityInnerSimpleCalculator:
     def test_init_with_invalid_data(self):
         # Call
         with pytest.raises(ValueError) as exception_error:
-            StabilityInnerSimpleCalculator("simple")
+            StabilityInnerSimpleCalculator(ComputationTypeEnum.SIMPLE)
 
         # Assert
         assert (

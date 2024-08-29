@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon
 
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.measure_type_enum import MeasureTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.measure_unit_costs import MeasureUnitCosts
@@ -32,7 +33,7 @@ def implement_berm_widening(
     measure_input,
     measure_parameters,
     mechanism: MechanismEnum,
-    computation_type,
+    computation_type: ComputationTypeEnum,
     is_first_year_with_widening: bool,
     path_intermediate_stix: Path,
     depth_screen: Optional[float] = None,
@@ -44,7 +45,7 @@ def implement_berm_widening(
         measure_input (dict): input dictionary of the measure
         measure_parameters (dict): parameters dictionary of the measure
         mechanism (MechanismEnum): mechanism, one of [MechanismEnum.PIPING, MechanismEnum.OVERFLOW, MechanismEnum.STABILITY_INNER]
-        computation_type (str): type of computation for the mechanism
+        computation_type (ComputationTypeEnum): type of computation for the mechanism
         is_first_year_with_widening (bool): flag for triggering rerunning stix
         path_intermediate_stix (Path): path to the intermediate stix files
         depth_screen (float): depth of the stability screen
@@ -72,7 +73,7 @@ def implement_berm_widening(
         berm_input["h_crest"] = berm_input["h_crest"] + measure_input["dcrest"]
     elif mechanism == MechanismEnum.STABILITY_INNER:
         # Case where the berm widened through DStability and the stability factors will be recalculated
-        if computation_type.lower() == "dstability":
+        if computation_type == ComputationTypeEnum.DSTABILITY:
             _dstability_wrapper = DStabilityWrapper(
                 stix_path=Path(berm_input["STIXNAAM"]),
                 externals_path=Path(berm_input["DStability_exe_path"]),
@@ -473,10 +474,10 @@ def probabilistic_design(
     horizon: int = 50,
     load_change: float = 0,
     mechanism: MechanismEnum = MechanismEnum.OVERFLOW,
-    type: str = "SAFE",
+    type: ComputationTypeEnum = ComputationTypeEnum.SAFE,
 ) -> float:
     if mechanism == MechanismEnum.OVERFLOW:
-        if type == "SAFE":
+        if type == ComputationTypeEnum.SAFE:
             # determine the crest required for the target
             h_crest, beta = calculate_overflow_simple_design(
                 strength_input["q_crest"],
@@ -489,10 +490,11 @@ def probabilistic_design(
             # add temporal changes due to settlement and climate change
             h_crest = h_crest + horizon * (strength_input["dhc(t)"] + load_change)
             return h_crest
-        elif type == "HRING":
+        elif type == ComputationTypeEnum.HRING:
             h_crest, beta = calculate_overflow_hydra_ring_design(
                 strength_input, horizon, t_0, p_t
             )
             return h_crest
         else:
             raise ValueError("Unknown calculation type for {}".format(mechanism))
+    return 0.0

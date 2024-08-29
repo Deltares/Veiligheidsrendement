@@ -2,9 +2,7 @@ import logging
 from pathlib import Path
 
 from vrtool.defaults.vrtool_config import VrtoolConfig
-from vrtool.flood_defence_system.dike_section import DikeSection
 from vrtool.flood_defence_system.dike_traject import DikeTraject
-from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta
 from vrtool.run_workflows.safety_workflow.results_safety_assessment import (
     ResultsSafetyAssessment,
 )

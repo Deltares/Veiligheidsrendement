@@ -33,8 +33,8 @@ class AnchoredSheetpileMeasure(DiaphragmWallMeasure, MeasureProtocol):
 
         _length_sheetpile = max(min((_h_dike + _d_cover) * 3, 20), 10)
         _l_section = dike_section.Length
-        logging.info("Calculating anchored sheetpile measure costs:")
-        logging.info(
+        logging.debug("Calculating anchored sheetpile measure costs:")
+        logging.debug(
             "h_dike: {}; d_cover: {}; length_sheetpile: {}; l_section: {}".format(
                 _h_dike, _d_cover, _length_sheetpile, _l_section
             )

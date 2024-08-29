@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.flood_defence_system.section_reliability import SectionReliability
 
@@ -17,8 +18,8 @@ class DikeSection:
 
     crest_height: float = float("nan")
     cover_layer_thickness: float = float("nan")
-    mechanism_data: dict[MechanismEnum, tuple[str, str]] = field(
-        default_factory=lambda: {}
+    mechanism_data: dict[MechanismEnum, list[tuple[str, ComputationTypeEnum]]] = field(
+        default_factory=dict
     )
     section_reliability: SectionReliability = field(default_factory=SectionReliability)
     TrajectInfo: DikeTrajectInfo = None

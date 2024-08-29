@@ -6,6 +6,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.decision_making.measures.measure_protocol import MeasureProtocol
@@ -365,7 +366,7 @@ class RevetmentMeasure(MeasureProtocol):
     def _get_configured_section_reliability_and_cost(
         self,
         mechanism: MechanismEnum,
-        calc_type: str,
+        calc_type: ComputationTypeEnum,
         dike_section: DikeSection,
         revetment_measure_results: list[RevetmentMeasureResult],
     ) -> tuple[SectionReliability, float]:
@@ -393,7 +394,7 @@ class RevetmentMeasure(MeasureProtocol):
     def _get_mechanism_reliabilty_for_beta_transition(
         self,
         mechanism: MechanismEnum,
-        calc_type: str,
+        calc_type: ComputationTypeEnum,
         revetment_measure_results: list[RevetmentMeasureResult],
     ) -> dict[MechanismEnum, MechanismReliability]:
         class RevetmentMeasureMechanismReliability(MechanismReliability):

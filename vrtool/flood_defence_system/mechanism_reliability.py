@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
@@ -40,7 +41,7 @@ class MechanismReliability:
     def __init__(
         self,
         mechanism: MechanismEnum,
-        mechanism_type: str,
+        mechanism_type: ComputationTypeEnum,
         t_0: int,
         copy_or_calculate="calculate",
     ):
@@ -89,22 +90,21 @@ class MechanismReliability:
         strength: MechanismInput,
         load: LoadInput,
     ) -> FailureMechanismCalculatorProtocol:
-        _normalized_type = self.mechanism_type.lower().strip()
 
-        if _normalized_type == "directinput":
+        if self.mechanism_type == ComputationTypeEnum.DIRECTINPUT:
             return self._get_direct_input_calculator(strength)
 
-        if _normalized_type == "hring":
+        if self.mechanism_type == ComputationTypeEnum.HRING:
             return self._get_hydra_ring_calculator(mechanism, self.Input)
 
-        if _normalized_type == "simple":
+        if self.mechanism_type == ComputationTypeEnum.SIMPLE:
             return self._get_simple_calculator(mechanism, strength, load)
 
-        if _normalized_type == "semiprob":
+        if self.mechanism_type == ComputationTypeEnum.SEMIPROB:
             return self._get_semi_probabilistic_calculator(
                 mechanism, strength, load, traject_info
             )
-        if _normalized_type == "dstability":
+        if self.mechanism_type == ComputationTypeEnum.DSTABILITY:
             return self._get_d_stability_calculator(mechanism, strength)
 
         raise Exception("Unknown computation type {}".format(self.mechanism_type))

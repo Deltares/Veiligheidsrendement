@@ -1,4 +1,5 @@
 from vrtool.common.dike_traject_info import DikeTrajectInfo
+from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
 from vrtool.flood_defence_system.mechanism_reliability import MechanismReliability
@@ -14,7 +15,7 @@ class MechanismReliabilityCollection:
     def __init__(
         self,
         mechanism: MechanismEnum,
-        computation_type: str,
+        computation_type: ComputationTypeEnum,
         computation_years: list[int],
         t_0: int,
         measure_year: int,
@@ -23,7 +24,7 @@ class MechanismReliabilityCollection:
 
         Args:
             mechanism (MechanismEnum): The mechanism.
-            computation_type (str): The computation type.
+            computation_type (ComputionTypeEnum): The computation type.
             computation_years (list[int]): The collection of years to compute the reliability for.
             t_0 (float): The initial year.
             measure_year (int): The year to compute the measure for
