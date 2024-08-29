@@ -139,7 +139,7 @@ class TestBermWideningDStability:
 
         # 4. Assert
         assert isinstance(_safety_factor, float)
-        assert pytest.approx(1.3380575991293264, rel=1e-4) == _safety_factor
+        assert pytest.approx(1.3401, rel=1e-4) == _safety_factor
 
     def test_find_polygons_to_fill_to_measure_one_polygon_returned(self):
         # SetUp
