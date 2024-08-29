@@ -69,3 +69,17 @@ class TestRunSafetyAssessment:
             / "nested"
             / "dir"
         ).exists()
+
+    def test_given_invalid_vrtool_config_when_initialize_raises(
+        self, invalid_vrtool_config_fixture: tuple[VrtoolConfig, str]
+    ):
+        # 1. Define test data.
+        _invalid_vrtool_config, _expected_error_mssg = invalid_vrtool_config_fixture
+        assert isinstance(_invalid_vrtool_config, VrtoolConfig)
+
+        # 2. Run test.
+        with pytest.raises(ValueError) as exc_err:
+            RunSafetyAssessment(_invalid_vrtool_config, None)
+
+        # 3. Verify expectation
+        assert str(exc_err.value) == _expected_error_mssg

@@ -34,6 +34,7 @@ class RunOptimization(VrToolRunProtocol):
 
         self.selected_traject = optimization_input.selected_traject
         self.vr_config = optimization_input.vr_config
+        self.vr_config.validate_config()
         self._strategy_controller = self._get_strategy_controller_with_aggregations(
             optimization_input.section_input_collection
         )
