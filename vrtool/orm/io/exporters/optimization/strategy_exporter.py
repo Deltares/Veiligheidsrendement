@@ -64,7 +64,7 @@ class StrategyExporter(OrmExporterProtocol):
 
         _investment_years = get_investment_years()
         return (
-            sorted(list(set(strategy_run.time_periods + _investment_years()))),
+            sorted(list(set(strategy_run.time_periods + _investment_years))),
             _investment_years,
         )
 
