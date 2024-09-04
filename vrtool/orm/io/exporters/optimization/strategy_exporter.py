@@ -48,8 +48,9 @@ class StrategyExporter(OrmExporterProtocol):
             strategy_run (StrategyProtocol): Strategy object containing all required data.
 
         Returns:
-            list[int]: Years whose betas needs to be exported to the database.
-            list[int]: Years that are considered as investment years for the strategy run.
+            tuple[list[int], list[int]:] Tuple containing:
+                years whose betas needs to be exported to the database
+                years that are considered as investment years for the strategy run
         """
 
         def get_investment_years() -> list[int]:
