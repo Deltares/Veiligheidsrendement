@@ -49,8 +49,8 @@ class StrategyExporter(OrmExporterProtocol):
 
         Returns:
             tuple[list[int], list[int]:] Tuple containing:
-                years whose betas needs to be exported to the database
-                years that are considered as investment years for the strategy run
+                list of years whose betas needs to be exported to the database
+                list of years to export that are not the configured time periods
         """
 
         def get_investment_years() -> list[int]:
@@ -66,7 +66,7 @@ class StrategyExporter(OrmExporterProtocol):
         _investment_years = get_investment_years()
         return (
             sorted(list(set(strategy_run.time_periods + _investment_years))),
-            _investment_years,
+            sorted(list(set(_investment_years) - set(strategy_run.time_periods))),
         )
 
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
@@ -83,9 +83,10 @@ class StrategyExporter(OrmExporterProtocol):
             )
         ]
         _accumulated_total_lcc_per_step = []
-        (_time_periods_to_export, _investment_years) = self.get_time_periods_to_export(
-            strategy_run
-        )
+        (
+            _time_periods_to_export,
+            _years_not_in_config,
+        ) = self.get_time_periods_to_export(strategy_run)
         for _step_idx, (
             _section_idx,
             _aggregated_measure,
@@ -152,11 +153,12 @@ class StrategyExporter(OrmExporterProtocol):
                         }
                     )
 
-                # Export mechanism results for investment years (including `investment_year - 1`)
+                # Export mechanism results for years not in config_t
+                # These could be investment years (including `investment_year - 1`)
                 for (_mech, _mech_per_section_id) in self._get_mechanisms(
                     _opt_selected_measure_result
                 ):
-                    for _t in _investment_years:
+                    for _t in _years_not_in_config:
                         _prob_mechanism = self._get_selected_time(
                             _section_idx, _t, _mech, _prob_per_step
                         )
