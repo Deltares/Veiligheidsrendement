@@ -59,7 +59,7 @@ class TestStrategyExporter:
         investment_years: list[int],
     ):
         # 1. Define test data.
-        _expected_values = list(
+        _expected_years_to_export = list(
             sorted(
                 set(
                     _basic_config_t_values
@@ -68,35 +68,46 @@ class TestStrategyExporter:
                 )
             )
         )
+        _expected_years_not_in_config = list(
+            sorted(
+                set(investment_years + [iy - 1 for iy in investment_years])
+                - set(_basic_config_t_values)
+            )
+        )
         _strategy_run = self._get_mocked_strategy_run(
             _basic_config_t_values, investment_years
         )
 
         # 2. Run test.
-        _time_periods_to_export = StrategyExporter.get_time_periods_to_export(
-            _strategy_run
-        )
+        (
+            _time_periods_to_export,
+            _years_not_in_config,
+        ) = StrategyExporter.get_time_periods_to_export(_strategy_run)
 
         # 3. Verify expectations.
-        assert _time_periods_to_export == _expected_values
+        assert _time_periods_to_export == _expected_years_to_export
+        assert _years_not_in_config == _expected_years_not_in_config
 
     def test_get_time_periods_to_export_includes_previous_investment_year(self):
         # 1. Define test data.
-        _expected_values = sorted(
+        _expected_years_to_export = sorted(
             list(
                 set(
                     _basic_config_t_values + [_bc - 1 for _bc in _basic_config_t_values]
                 )
             )
         )
+        _expected_years_not_in_config = [_bc - 1 for _bc in _basic_config_t_values]
         _strategy_run = self._get_mocked_strategy_run(
             _basic_config_t_values, _basic_config_t_values
         )
 
         # 2. Run test.
-        _time_periods_to_export = StrategyExporter.get_time_periods_to_export(
-            _strategy_run
-        )
+        (
+            _time_periods_to_export,
+            _years_not_in_config,
+        ) = StrategyExporter.get_time_periods_to_export(_strategy_run)
 
         # 3. Verify expectations.
-        assert _time_periods_to_export == _expected_values
+        assert _time_periods_to_export == _expected_years_to_export
+        assert _years_not_in_config == _expected_years_not_in_config
