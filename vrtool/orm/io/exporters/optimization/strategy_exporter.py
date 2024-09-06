@@ -34,9 +34,7 @@ class StrategyExporter(OrmExporterProtocol):
                 return a
 
     @staticmethod
-    def get_time_periods_to_export(
-        strategy_run: StrategyProtocol,
-    ) -> list[int]:
+    def get_time_periods_to_export(strategy_run: StrategyProtocol) -> list[int]:
         """
         Gets the list of time periods to export by combining the expected required ones
         ([0, 100]), the time periods defined in the configuration (`VrtoolConfig.T`)
@@ -48,9 +46,7 @@ class StrategyExporter(OrmExporterProtocol):
             strategy_run (StrategyProtocol): Strategy object containing all required data.
 
         Returns:
-            tuple[list[int], list[int]:] Tuple containing:
-                list of years whose betas needs to be exported to the database
-                list of years to export that are not the configured time periods
+            list[int]: Years whose betas needs to be exported to the database.
         """
 
         def get_investment_years() -> list[int]:
