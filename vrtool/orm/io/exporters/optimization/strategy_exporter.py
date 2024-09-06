@@ -34,9 +34,7 @@ class StrategyExporter(OrmExporterProtocol):
                 return a
 
     @staticmethod
-    def get_time_periods_to_export(
-        strategy_run: StrategyProtocol,
-    ) -> tuple[list[int], list[int]]:
+    def get_time_periods_to_export(strategy_run: StrategyProtocol) -> list[int]:
         """
         Gets the list of time periods to export by combining the expected required ones
         ([0, 100]), the time periods defined in the configuration (`VrtoolConfig.T`)
@@ -48,9 +46,7 @@ class StrategyExporter(OrmExporterProtocol):
             strategy_run (StrategyProtocol): Strategy object containing all required data.
 
         Returns:
-            tuple[list[int], list[int]:] Tuple containing:
-                list of years whose betas needs to be exported to the database
-                list of years to export that are not the configured time periods
+            list[int]: Years whose betas needs to be exported to the database.
         """
 
         def get_investment_years() -> list[int]:
@@ -63,11 +59,7 @@ class StrategyExporter(OrmExporterProtocol):
                     _investment_years.append(_previous_year)
             return _investment_years
 
-        _investment_years = get_investment_years()
-        return (
-            sorted(list(set(strategy_run.time_periods + _investment_years))),
-            sorted(list(set(_investment_years) - set(strategy_run.time_periods))),
-        )
+        return sorted(list(set(strategy_run.time_periods + get_investment_years())))
 
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
         _step_results_section = []
@@ -83,10 +75,8 @@ class StrategyExporter(OrmExporterProtocol):
             )
         ]
         _accumulated_total_lcc_per_step = []
-        (
-            _time_periods_to_export,
-            _years_not_in_config,
-        ) = self.get_time_periods_to_export(strategy_run)
+        _time_periods_to_export = self.get_time_periods_to_export(strategy_run)
+
         for _step_idx, (
             _section_idx,
             _aggregated_measure,
@@ -139,11 +129,14 @@ class StrategyExporter(OrmExporterProtocol):
 
                 _prob_per_step = strategy_run.probabilities_per_step[_step_idx + 1]
 
-                # Export section results for time periods
+                # Loop over time periods to export including the ones not in the configuration
+                _mechs = self._get_mechanisms(_opt_selected_measure_result)
                 for _t in _time_periods_to_export:
                     _prob_section = self._get_section_time_value(
                         _section_idx, _t, _prob_per_step
                     )
+
+                    # Export section results for time periods
                     _step_results_section.append(
                         {
                             "optimization_step": _created_optimization_step,
@@ -153,12 +146,8 @@ class StrategyExporter(OrmExporterProtocol):
                         }
                     )
 
-                # Export mechanism results for years not in config_t
-                # These could be investment years (including `investment_year - 1`)
-                for (_mech, _mech_per_section_id) in self._get_mechanisms(
-                    _opt_selected_measure_result
-                ):
-                    for _t in _years_not_in_config:
+                    # Export mechanism results
+                    for (_mech, _mech_per_section_id) in _mechs:
                         _prob_mechanism = self._get_selected_time(
                             _section_idx, _t, _mech, _prob_per_step
                         )
@@ -171,29 +160,6 @@ class StrategyExporter(OrmExporterProtocol):
                                 "lcc": _aggregated_measure.lcc,
                             }
                         )
-
-                # From OptimizationSelectedMeasure get measure_result_id based on singleMsrId
-                for (
-                    _measure_result_mechanism
-                ) in (
-                    _opt_selected_measure_result.measure_result.measure_result_mechanisms
-                ):
-                    _mechanism = MechanismEnum.get_enum(
-                        _measure_result_mechanism.mechanism_per_section.mechanism.name
-                    )
-                    _t = _measure_result_mechanism.time
-                    _prob_mechanism = self._get_selected_time(
-                        _section_idx, _t, _mechanism, _prob_per_step
-                    )
-                    _step_results_mechanism.append(
-                        {
-                            "optimization_step": _created_optimization_step,
-                            "mechanism_per_section_id": _measure_result_mechanism.mechanism_per_section_id,
-                            "time": _measure_result_mechanism.time,
-                            "beta": pf_to_beta(_prob_mechanism),
-                            "lcc": _aggregated_measure.lcc,
-                        }
-                    )
 
         # from pathlib import Path; _lcc_timeline=list(str(slt).strip("()").replace("'", "\"") for slt in _step_lcc_tuples); Path("lcc_values.csv").write_text("\n".join(_lcc_timeline))
         OptimizationStepResultSection.insert_many(_step_results_section).execute()
