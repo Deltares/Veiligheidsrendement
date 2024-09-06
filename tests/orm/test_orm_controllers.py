@@ -688,7 +688,7 @@ class TestOrmControllers:
                     },
                 ]
                 self.measures_taken = [(_section_idx, 1, 1)]
-                self.time_periods = [_section_idx, 20, 100]
+                self.time_periods = [0, 2, 4, 24, 42]
                 self.selected_aggregated_measures = [
                     (_section_idx, _aggregated_measure_combination)
                 ]
@@ -708,7 +708,7 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert len(orm.OptimizationStepResultMechanism) == 10
-        assert len(orm.OptimizationStepResultSection) == 3
+        assert len(orm.OptimizationStepResultSection) == 5
         assert len(orm.OptimizationStep.select()) == 1
         _optimization_step = orm.OptimizationStep.get()
         assert _optimization_step.total_lcc == 84.0
