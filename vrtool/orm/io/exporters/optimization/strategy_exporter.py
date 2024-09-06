@@ -59,8 +59,7 @@ class StrategyExporter(OrmExporterProtocol):
                     _investment_years.append(_previous_year)
             return _investment_years
 
-        _investment_years = get_investment_years()
-        return sorted(list(set(strategy_run.time_periods + _investment_years)))
+        return sorted(list(set(strategy_run.time_periods + get_investment_years())))
 
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
         _step_results_section = []
