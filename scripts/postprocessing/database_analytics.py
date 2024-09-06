@@ -3,6 +3,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models import *
@@ -169,8 +170,38 @@ def assessment_for_each_step(assessment_input, reliability_per_step):
     Returns:
     list: list of dictionaries containing the reliability of each section and mechanism for each step.
     """
-    assessment_per_step = [copy.deepcopy(assessment_input)]
-    for step, data in reliability_per_step.items():
+
+    def get_assessment() -> list[
+        dict[MechanismEnum, dict[list[str], dict[str, list[int]]]]
+    ]:
+        # Extend the assessment if needed (e.g. if the investment years are not in the config years)
+        _ass_times = set(assessment_input[MechanismEnum.STABILITY_INNER][1]["time"])
+        _rel_times = set(
+            reliability_per_step[1]["reliability"][MechanismEnum.STABILITY_INNER][
+                "time"
+            ]
+        )
+        _diff_times = _rel_times - _ass_times
+
+        assessment_per_step = [copy.deepcopy(assessment_input)]
+        if not _diff_times:
+            return assessment_per_step
+
+        # Get betas for extra times by interpolation
+        for _mech in assessment_input.keys():
+            for _section in assessment_input[_mech]:
+                _betas = interp1d(
+                    assessment_input[_mech][_section]["time"],
+                    assessment_input[_mech][_section]["beta"],
+                )
+                assessment_per_step[0][_mech][_section]["time"].extend(_diff_times)
+                assessment_per_step[0][_mech][_section]["beta"].extend(
+                    _betas(list(_diff_times))
+                )
+        return assessment_per_step
+
+    assessment_per_step = get_assessment()
+    for data in reliability_per_step.values():
         traject_reliability = copy.deepcopy(assessment_per_step[-1])
         for mechanism, reliability in data["reliability"].items():
             traject_reliability[mechanism][data["section_id"]]["beta"] = copy.deepcopy(
