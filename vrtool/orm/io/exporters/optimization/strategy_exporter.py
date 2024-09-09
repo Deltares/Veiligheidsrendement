@@ -225,7 +225,7 @@ class StrategyExporter(OrmExporterProtocol):
                 (
                     m.mechanism_per_section_id,
                     MechanismEnum.get_enum(m.mechanism_per_section.mechanism.name),
-                )6
+                )
                 for m in opt_selected_measure.measure_result.measure_result_mechanisms
             )
         )
