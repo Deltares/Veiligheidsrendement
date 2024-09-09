@@ -180,19 +180,19 @@ class StrategyExporter(OrmExporterProtocol):
     def _get_optimization_selected_measure(
         self, single_msr_id: int, investment_year: int
     ) -> OptimizationSelectedMeasure:
-        _opt_selected_measure = (
+        _optimization_selected_measure = (
             self.optimization_run.optimization_run_measure_results.where(
                 (OptimizationSelectedMeasure.measure_result_id == single_msr_id)
                 & (OptimizationSelectedMeasure.investment_year == investment_year)
             ).get_or_none()
         )
-        if not _opt_selected_measure:
+        if not _optimization_selected_measure:
             raise ValueError(
                 "OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(
                     self.optimization_run.get_id(), single_msr_id
                 )
             )
-        return _opt_selected_measure
+        return _optimization_selected_measure
 
     def _get_section_time_value(
         self, section: int, t: int, values: dict[MechanismEnum, np.ndarray]
