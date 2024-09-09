@@ -63,15 +63,13 @@ class StrategyExporter(OrmExporterProtocol):
         return sorted(list(set(strategy_run.time_periods + get_investment_years())))
 
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
-        def get_step_results_mechanism(
-            self, mechanisms: tuple[int, MechanismEnum]
-        ) -> Iterator[dict]:
+        def get_step_results_mechanism(mechanism: tuple[int, MechanismEnum]) -> dict:
             _prob_mechanism = self._get_selected_time(
-                _section_idx, _t, mechanisms[1], _prob_per_step
+                _section_idx, _t, mechanism[1], _prob_per_step
             )
-            yield {
+            return {
                 "optimization_step": _created_optimization_step,
-                "mechanism_per_section_id": mechanisms[0],
+                "mechanism_per_section_id": mechanism[0],
                 "time": _t,
                 "beta": pf_to_beta(_prob_mechanism),
                 "lcc": _aggregated_measure.lcc,
