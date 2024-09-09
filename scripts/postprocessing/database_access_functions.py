@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 from vrtool.common.enums import MechanismEnum
@@ -206,6 +207,10 @@ def get_measure_type(measure_result_id, database_path):
     return {"name": measure_name}
 
 
+def all_nan_or_zero(values):
+    return all(math.isnan(value) or value == 0 for value in values)
+
+
 def get_measure_costs_from_measure_results(
     database_path: Path, measures_per_step: dict
 ):
@@ -214,10 +219,22 @@ def get_measure_costs_from_measure_results(
         for _, values in measures_per_step.items():
             lcc = 0
             for count, mr_id in enumerate(values["measure_result"]):
+
                 # get the cost from the database by getting the cost from MeasureResultSection
                 measure_cost = MeasureResultSection.get(
                     MeasureResultSection.measure_result_id == mr_id
                 ).cost
+
+                # get all parameters of mr_id
+                measure_parameters = MeasureResultParameter.select().where(
+                    MeasureResultParameter.measure_result_id == mr_id
+                )
+                parameter_names = [p.name for p in measure_parameters]
+                if "DCREST" in parameter_names:
+                    parameter_values = [p.value for p in measure_parameters]
+                    if all_nan_or_zero(parameter_values):
+                        # initial measure so no measure cost
+                        measure_cost = 0
 
                 # discount if necessary
                 if values["investment_year"][count] != 0:

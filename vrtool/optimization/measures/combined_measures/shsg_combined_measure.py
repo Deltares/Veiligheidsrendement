@@ -26,7 +26,7 @@ class ShSgCombinedMeasure(CombinedMeasureBase):
     def is_base_measure(self) -> bool:
         return False
 
-    def _get_secondary_lcc(self) -> float:
+    def get_secondary_lcc(self) -> float:
         _secondary_costs = 0
         if self.sh_secondary:
             _secondary_costs += self._calculate_lcc(self.sh_secondary, 0)

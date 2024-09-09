@@ -97,7 +97,7 @@ class TestShMeasure:
     @pytest.mark.parametrize(
         "year, dcrest, expected_result",
         [
-            pytest.param(1, float("nan"), False, id="year != 0"),
+            pytest.param(1, float("nan"), True, id="year != 0"),
             pytest.param(0, 4.2, False, id="year == 0; dcrest is > 0"),
             pytest.param(0, 0, True, id="year == 0; dcrest = 0"),
             pytest.param(0, float("nan"), True, id="year == 0; dcrest == 'nan'"),

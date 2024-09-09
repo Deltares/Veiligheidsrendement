@@ -14,7 +14,7 @@ If you have not installed the `vrtool` for development please do so now:
     ```
     | Note, the above steps are based on a Windows setup. If you are not familiar with Git, we recommend using the [GitHub desktop tool](https://desktop.github.com/).
 
-2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda](https://www.anaconda.com/) (or check [other options](#other-installation-options)):    
+2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda (miniforge)](https://conda-forge.org/miniforge/) (or check [other options](#other-installation-options)):    
     ```bash
     cd C:\repos\vrtool_repo
     conda env create -f .config\environment.yml
