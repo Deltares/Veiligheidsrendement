@@ -78,10 +78,6 @@ def plot_traject_probability_for_step(
 
     time, pf_traject = calculate_traject_probability(traject_prob_step)
     ax.plot(time, pf_traject, label=run_label, color=color, linestyle=linestyle)
-
-    # for mechanism, data in traject_prob_step.items():
-    #     time, pf = zip(*sorted(data.items()))
-    #     ax.plot(time, pf, label = f'{mechanism.name.capitalize()} {run_label}')
     ax.set_yscale("log")
     ax.set_xlabel("Tijd")
     ax.set_ylabel("Faalkans")
@@ -118,10 +114,6 @@ def plot_traject_probability_for_section_step(
         )
     )
     ax.plot(time, pf_traject, label=run_label, color=color, linestyle=linestyle)
-
-    # for mechanism, data in traject_prob_step.items():
-    #     time, pf = zip(*sorted(data.items()))
-    #     ax.plot(time, pf, label = f'{mechanism.name.capitalize()} {run_label}')
     ax.set_yscale("log")
     ax.set_xlabel("Tijd")
     ax.set_ylabel("Faalkans")
