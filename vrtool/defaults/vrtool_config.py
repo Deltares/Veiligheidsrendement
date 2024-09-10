@@ -54,6 +54,7 @@ class VrtoolConfig:
     f_cautious: float = 1.5
     discount_rate: float = 0.03
 
+    requirements_file: Optional[Path] = None
     ## OUTPUT SETTINGS:
 
     design_methods: list[str] = field(

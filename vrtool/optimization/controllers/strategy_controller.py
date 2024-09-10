@@ -2,7 +2,11 @@ import logging
 
 from tqdm import tqdm
 
-from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
+from vrtool.decision_making.strategies import (
+    GreedyStrategy,
+    TargetReliabilityStrategy,
+    SmartTargetReliabilityStrategy,
+)
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.optimization.controllers.aggregate_combinations_controller import (
@@ -72,7 +76,11 @@ class StrategyController:
             StrategyInputProtocol: Concrete instance of a `StrategyInputProtocol`
             set to the provided `design_method` to be used by the given `strategy_type`
         """
-        if strategy_type in [GreedyStrategy, TargetReliabilityStrategy]:
+        if strategy_type in [
+            GreedyStrategy,
+            TargetReliabilityStrategy,
+            SmartTargetReliabilityStrategy,
+        ]:
             return StrategyInput.from_section_as_input_collection(
                 self._section_measures_input,
                 design_method,

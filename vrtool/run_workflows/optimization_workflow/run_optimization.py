@@ -2,7 +2,11 @@ import logging
 from pathlib import Path
 from typing import Callable
 
-from vrtool.decision_making.strategies import GreedyStrategy, TargetReliabilityStrategy
+from vrtool.decision_making.strategies import (
+    GreedyStrategy,
+    TargetReliabilityStrategy,
+    SmartTargetReliabilityStrategy,
+)
 from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.optimization.controllers.strategy_controller import StrategyController
 from vrtool.optimization.measures.section_as_input import SectionAsInput
@@ -78,6 +82,27 @@ class RunOptimization(VrToolRunProtocol):
         )
         return _greedy_strategy
 
+    def _get_smart_target_reliability_strategy(
+        self, design_method: str
+    ) -> StrategyProtocol:
+        logging.info("Start bepaling maatregelen op basis van %s.", design_method)
+        # Initalize strategy controller
+        _smart_target_reliability_input = self._strategy_controller.get_evaluate_input(
+            SmartTargetReliabilityStrategy, design_method
+        )
+
+        # Initialize a strategy type (i.e combination of objective & constraints)
+        _smart_target_reliability_based = SmartTargetReliabilityStrategy(
+            _smart_target_reliability_input, self.vr_config
+        )
+
+        # filter those measures that are not available at the first available time step
+        # self._filter_measures_first_time()
+
+        # Calculate optimal strategy using Traject & Measures objects as input (and possibly general settings)
+        _smart_target_reliability_based.evaluate(self.selected_traject)
+        return _smart_target_reliability_based
+
     def _get_target_reliability_strategy(self, design_method: str) -> StrategyProtocol:
         logging.info(
             "Start bepaling referentiemaatregelen op basis van %s.", design_method
@@ -109,6 +134,7 @@ class RunOptimization(VrToolRunProtocol):
             "OI": self._get_target_reliability_strategy,
             "TargetReliability": self._get_target_reliability_strategy,
             "Doorsnede-eisen": self._get_target_reliability_strategy,
+            "Specifieke doorsnede-eisen": self._get_smart_target_reliability_strategy,
         }
 
     def run(self) -> ResultsOptimization:
