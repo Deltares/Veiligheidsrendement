@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Iterator
 
 import numpy as np
 
@@ -62,6 +63,18 @@ class StrategyExporter(OrmExporterProtocol):
         return sorted(list(set(strategy_run.time_periods + get_investment_years())))
 
     def export_dom(self, strategy_run: StrategyProtocol) -> None:
+        def get_step_results_mechanism(mechanism: tuple[int, MechanismEnum]) -> dict:
+            _prob_mechanism = self._get_selected_time(
+                _section_idx, _t, mechanism[1], _prob_per_step
+            )
+            return {
+                "optimization_step": _created_optimization_step,
+                "mechanism_per_section_id": mechanism[0],
+                "time": _t,
+                "beta": pf_to_beta(_prob_mechanism),
+                "lcc": _aggregated_measure.lcc,
+            }
+
         _step_results_section = []
         _step_results_mechanism = []
         _last_step_lcc_per_section = defaultdict(lambda: 0)
@@ -76,6 +89,7 @@ class StrategyExporter(OrmExporterProtocol):
         ]
         _accumulated_total_lcc_per_step = []
         _time_periods_to_export = self.get_time_periods_to_export(strategy_run)
+
         for _step_idx, (
             _section_idx,
             _aggregated_measure,
@@ -116,24 +130,26 @@ class StrategyExporter(OrmExporterProtocol):
                         str(list(_last_step_lcc_per_section.items())).strip("[]"),
                     )
                 )
-                _option_selected_measure_result = (
-                    self._get_optimization_selected_measure(
-                        single_measure.measure_result_id, single_measure.year
-                    )
+                _opt_selected_measure_result = self._get_optimization_selected_measure(
+                    single_measure.measure_result_id, single_measure.year
                 )
                 _created_optimization_step = OptimizationStep.create(
                     step_number=_step_idx + 1,
-                    optimization_selected_measure=_option_selected_measure_result,
+                    optimization_selected_measure=_opt_selected_measure_result,
                     total_lcc=_step_total_lcc,
                     total_risk=_total_risk,
                 )
 
                 _prob_per_step = strategy_run.probabilities_per_step[_step_idx + 1]
 
+                # Loop over time periods to export including the ones not in the configuration
+                _mechs = self._get_mechanisms(_opt_selected_measure_result)
                 for _t in _time_periods_to_export:
                     _prob_section = self._get_section_time_value(
                         _section_idx, _t, _prob_per_step
                     )
+
+                    # Export section results for time periods
                     _step_results_section.append(
                         {
                             "optimization_step": _created_optimization_step,
@@ -143,27 +159,8 @@ class StrategyExporter(OrmExporterProtocol):
                         }
                     )
 
-                # From OptimizationSelectedMeasure get measure_result_id based on singleMsrId
-                for (
-                    _measure_result_mechanism
-                ) in (
-                    _option_selected_measure_result.measure_result.measure_result_mechanisms
-                ):
-                    _mechanism = MechanismEnum.get_enum(
-                        _measure_result_mechanism.mechanism_per_section.mechanism.name
-                    )
-                    _t = _measure_result_mechanism.time
-                    _prob_mechanism = self._get_selected_time(
-                        _section_idx, _t, _mechanism, _prob_per_step
-                    )
-                    _step_results_mechanism.append(
-                        {
-                            "optimization_step": _created_optimization_step,
-                            "mechanism_per_section_id": _measure_result_mechanism.mechanism_per_section_id,
-                            "time": _measure_result_mechanism.time,
-                            "beta": pf_to_beta(_prob_mechanism),
-                            "lcc": _aggregated_measure.lcc,
-                        }
+                    _step_results_mechanism.extend(
+                        list(map(get_step_results_mechanism, _mechs))
                     )
 
         # from pathlib import Path; _lcc_timeline=list(str(slt).strip("()").replace("'", "\"") for slt in _step_lcc_tuples); Path("lcc_values.csv").write_text("\n".join(_lcc_timeline))
@@ -181,19 +178,19 @@ class StrategyExporter(OrmExporterProtocol):
     def _get_optimization_selected_measure(
         self, single_msr_id: int, investment_year: int
     ) -> OptimizationSelectedMeasure:
-        _opt_selected_measure = (
+        _optimization_selected_measure = (
             self.optimization_run.optimization_run_measure_results.where(
                 (OptimizationSelectedMeasure.measure_result_id == single_msr_id)
                 & (OptimizationSelectedMeasure.investment_year == investment_year)
             ).get_or_none()
         )
-        if not _opt_selected_measure:
+        if not _optimization_selected_measure:
             raise ValueError(
                 "OptimizationSelectedMeasure with run_id {} and measure result id {} not found".format(
                     self.optimization_run.get_id(), single_msr_id
                 )
             )
-        return _opt_selected_measure
+        return _optimization_selected_measure
 
     def _get_section_time_value(
         self, section: int, t: int, values: dict[MechanismEnum, np.ndarray]
@@ -216,3 +213,17 @@ class StrategyExporter(OrmExporterProtocol):
         maxt = values[mechanism].shape[1] - 1
         _t = min(t, maxt)
         return values[mechanism][section, _t]
+
+    def _get_mechanisms(
+        self,
+        opt_selected_measure: OptimizationSelectedMeasure,
+    ) -> list[tuple[int, MechanismEnum]]:
+        return sorted(
+            set(
+                (
+                    m.mechanism_per_section_id,
+                    MechanismEnum.get_enum(m.mechanism_per_section.mechanism.name),
+                )
+                for m in opt_selected_measure.measure_result.measure_result_mechanisms
+            )
+        )
