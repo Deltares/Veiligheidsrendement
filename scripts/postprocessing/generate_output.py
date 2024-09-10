@@ -78,10 +78,42 @@ def plot_traject_probability_for_step(
 
     time, pf_traject = calculate_traject_probability(traject_prob_step)
     ax.plot(time, pf_traject, label=run_label, color=color, linestyle=linestyle)
+    ax.set_yscale("log")
+    ax.set_xlabel("Tijd")
+    ax.set_ylabel("Faalkans")
+    ax.legend()
 
-    # for mechanism, data in traject_prob_step.items():
-    #     time, pf = zip(*sorted(data.items()))
-    #     ax.plot(time, pf, label = f'{mechanism.name.capitalize()} {run_label}')
+
+def plot_traject_probability_for_section_step(
+    traject_prob_step: dict[int, float],
+    ax,
+    run_label="",
+    color="k",
+    linestyle="--",
+):
+    """Plot the probability of failure for each mechanism for each time step.
+
+    Args:
+    traject_prob_step: dict, dictionary containing the probability of failure for each mechanism at each time step
+    ax: matplotlib axis object
+    run_label: str, label for the line to be plotted
+    color: str, color for the plotted line
+    linestyle: str, linestyle for the plotted line
+
+    Returns:
+    None
+    """
+
+    def calculate_traject_probability(traject_prob: list[float]):
+        return list(1 - np.multiply(1, np.subtract(1, traject_prob)))
+
+    time, pf_traject = zip(
+        *(
+            (_time, calculate_traject_probability(_pf))
+            for _time, _pf in traject_prob_step.items()
+        )
+    )
+    ax.plot(time, pf_traject, label=run_label, color=color, linestyle=linestyle)
     ax.set_yscale("log")
     ax.set_xlabel("Tijd")
     ax.set_ylabel("Faalkans")

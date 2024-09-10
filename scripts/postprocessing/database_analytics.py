@@ -1,6 +1,9 @@
 import copy
+from collections import defaultdict
+from pathlib import Path
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 from vrtool.common.enums import MechanismEnum
 from vrtool.orm.models import *
@@ -167,8 +170,38 @@ def assessment_for_each_step(assessment_input, reliability_per_step):
     Returns:
     list: list of dictionaries containing the reliability of each section and mechanism for each step.
     """
-    assessment_per_step = [copy.deepcopy(assessment_input)]
-    for step, data in reliability_per_step.items():
+
+    def get_assessment() -> list[
+        dict[MechanismEnum, dict[list[str], dict[str, list[int]]]]
+    ]:
+        # Extend the assessment if needed (e.g. if the investment years are not in the config years)
+        _ass_times = set(assessment_input[MechanismEnum.STABILITY_INNER][1]["time"])
+        _rel_times = set(
+            reliability_per_step[1]["reliability"][MechanismEnum.STABILITY_INNER][
+                "time"
+            ]
+        )
+        _diff_times = _rel_times - _ass_times
+
+        assessment_per_step = [copy.deepcopy(assessment_input)]
+        if not _diff_times:
+            return assessment_per_step
+
+        # Get betas for extra times by interpolation
+        for _mech in assessment_input.keys():
+            for _section in assessment_input[_mech]:
+                _betas = interp1d(
+                    assessment_input[_mech][_section]["time"],
+                    assessment_input[_mech][_section]["beta"],
+                )
+                assessment_per_step[0][_mech][_section]["time"].extend(_diff_times)
+                assessment_per_step[0][_mech][_section]["beta"].extend(
+                    _betas(list(_diff_times))
+                )
+        return assessment_per_step
+
+    assessment_per_step = get_assessment()
+    for data in reliability_per_step.values():
         traject_reliability = copy.deepcopy(assessment_per_step[-1])
         for mechanism, reliability in data["reliability"].items():
             traject_reliability[mechanism][data["section_id"]]["beta"] = copy.deepcopy(
@@ -240,6 +273,69 @@ def calculate_traject_probability_for_steps(stepwise_assessment):
     for step in stepwise_assessment:
         traject_probability.append(compute_system_failure_probability(step))
     return traject_probability
+
+
+def get_reliability_for_each_step_investment(
+    database_path: Path, measures_per_step: dict[int, dict]
+) -> list[dict[int, list[float]]]:
+    # read the OptimizationStepResultMechanism for those optimization_step_ids in measures_per_step
+    # find min and max 'optimization_step_id' in measures_per_step dicts. where these values originates from lists in the dictionary
+    def get_step_range(input: dict[int, dict]):
+        """Gets range of steps for measures that were given as input.
+
+        Args:
+        input: dict with keys as stepnumbers and values as lists of measures
+
+        Returns:
+        min_step: int, the lowest optimization_step_id
+        max_step: int, the highest optimization_step_id"""
+        number, _steps = zip(*list(input.items()))
+
+        min_step = _steps[0]["optimization_step_id"][0]
+        max_step = _steps[-1]["optimization_step_id"][0]
+        return min_step, max_step
+
+    # first get min and max step to get from DB.
+    min_step, max_step = get_step_range(measures_per_step)
+
+    with open_database(database_path):
+        reliability_values = (
+            OptimizationStepResultSection.select(
+                OptimizationStepResultSection.optimization_step_id,
+                OptimizationStepResultSection.beta,
+                OptimizationStepResultSection.time,
+                OptimizationStep.step_number,
+            )
+            .join(
+                OptimizationStep,
+                on=(
+                    OptimizationStepResultSection.optimization_step_id
+                    == OptimizationStep.id
+                ),
+            )
+            .where(
+                OptimizationStepResultSection.optimization_step_id >= min_step,
+                OptimizationStepResultSection.optimization_step_id <= max_step,
+            )
+            .dicts()
+        )
+    # restructure to a dictionary with stepnumber as key, mechanism as subkey and beta, time and section_id as values
+
+    _grouped_by_stepnumber = defaultdict(lambda: defaultdict(list))
+    for _entry in reliability_values:
+        _grouped_by_stepnumber[_entry["step_number"]][_entry["time"]].append(
+            _entry["beta"]
+        )
+
+    _traject_probability = []
+    for _, _reliability_values in sorted(_grouped_by_stepnumber.items()):
+        _step_pf = {
+            _t: list(beta_to_pf(np.array(_r_values)))
+            for _t, _r_values in _reliability_values.items()
+        }
+        _traject_probability.append(_step_pf)
+
+    return _traject_probability
 
 
 def get_measures_per_section_for_step(measures_per_step, final_step_no):

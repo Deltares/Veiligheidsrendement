@@ -232,7 +232,26 @@ class PostProcessingReport:
         }
 
         self._plot_traject_probability_for_step(
-            traject_prob, considered_tc_step, _subreport_dir
+            traject_prob,
+            considered_tc_step,
+            _subreport_dir.joinpath("traject_probablity_for_step.png"),
+        )
+
+        traject_prob_with_investment_year = {
+            "reference": dan.get_reliability_for_each_step_investment(
+                self.reference_db, measures_per_step["reference"]
+            ),
+            "result": dan.get_reliability_for_each_step_investment(
+                self.result_db, measures_per_step["result"]
+            ),
+        }
+        self._plot_traject_probability_for_step_with_investment_years(
+            traject_prob,
+            traject_prob_with_investment_year,
+            considered_tc_step,
+            _subreport_dir.joinpath(
+                "traject_probablity_for_step_and_investment_years.png"
+            ),
         )
 
         # Define measures per section.
@@ -459,7 +478,7 @@ class PostProcessingReport:
         plt.savefig(subreport_dir.joinpath("total_lcc_and_risk.png"))
 
     def _plot_traject_probability_for_step(
-        self, traject_prob: dict, considered_tc_step: dict, subreport_dir: Path
+        self, traject_prob: dict, considered_tc_step: dict, subreport_location: Path
     ):
         _, ax = plt.subplots()
 
@@ -492,7 +511,49 @@ class PostProcessingReport:
             linestyle="-",
         )
         ax.set_xlim(left=0, right=100)
-        plt.savefig(subreport_dir.joinpath("traject_probablity_for_step.png"))
+        plt.savefig(subreport_location)
+
+    def _plot_traject_probability_for_step_with_investment_years(
+        self,
+        traject_prob: dict,
+        traject_prob_with_investment_years: dict,
+        considered_tc_step: dict,
+        subreport_location: Path,
+    ):
+        _, ax = plt.subplots()
+
+        got.plot_traject_probability_for_step(
+            traject_prob["reference"][0],
+            ax,
+            run_label="Beginsituatie referentie",
+            color=self.colors[0],
+            linestyle="--",
+        )
+        got.plot_traject_probability_for_step(
+            traject_prob["result"][0],
+            ax,
+            run_label="Beginsituatie resultaat",
+            color=self.colors[1],
+            linestyle=":",
+        )
+        got.plot_traject_probability_for_section_step(
+            traject_prob_with_investment_years["reference"][
+                considered_tc_step["reference"]
+            ],
+            ax,
+            run_label="Referentie",
+            color=self.colors[0],
+            linestyle="-",
+        )
+        got.plot_traject_probability_for_section_step(
+            traject_prob_with_investment_years["result"][considered_tc_step["result"]],
+            ax,
+            run_label="Resultaat",
+            color=self.colors[1],
+            linestyle="-",
+        )
+        ax.set_xlim(left=0, right=100)
+        plt.savefig(subreport_location)
 
     def _print_measure_result_ids(
         self, measures_per_section: dict, subreport_dir: Path
