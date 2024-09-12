@@ -85,6 +85,7 @@ from vrtool.orm.orm_controllers import (
     safe_clear_custom_measure,
 )
 from vrtool.orm.version.migration.database_version import DatabaseVersion
+from vrtool.orm.version.orm_version import OrmVersion
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -154,6 +155,7 @@ class TestOrmControllers:
 
         # 3. Verify expectations.
         assert _db_file.exists()
+        assert DatabaseVersion.from_database(_db_file) == OrmVersion.from_orm()
 
     @pytest.mark.skipif(
         condition=(test_data.joinpath("test_db\\vrtool_db.db").exists()),

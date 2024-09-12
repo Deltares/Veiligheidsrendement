@@ -32,10 +32,11 @@ from vrtool.orm.io.importers.optimization.optimization_traject_importer import (
     OptimizationTrajectImporter,
 )
 from vrtool.orm.orm_db import vrtool_db
-from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
+from vrtool.orm.version.migration.database_version import DatabaseVersion
 from vrtool.orm.version.migration.migrate_database_controller import (
     MigrateDatabaseController,
 )
+from vrtool.orm.version.orm_version import OrmVersion
 from vrtool.run_workflows.measures_workflow.results_measures import ResultsMeasures
 from vrtool.run_workflows.optimization_workflow.results_optimization import (
     ResultsOptimization,
@@ -91,6 +92,12 @@ def initialize_database(database_path: Path) -> SqliteDatabase:
         + orm.get_optimization_results_tables()
         + orm.get_measure_results_tables()
     )
+
+    # Set database version to current ORM version
+    _orm_version = OrmVersion.from_orm()
+    _db_version = DatabaseVersion.from_database(database_path)
+    _db_version.update_version(_orm_version)
+
     return vrtool_db
 
 

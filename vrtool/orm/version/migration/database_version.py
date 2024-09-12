@@ -39,9 +39,16 @@ class DatabaseVersion(OrmVersion):
             _db_version_str = "0.1.0"  # default version
             _query = "SELECT orm_version FROM Version;"
             try:
-                _db_version_str = _db_connection.execute(_query).fetchone()[0]
+                _db_version = _db_connection.execute(_query).fetchone()
+                if _db_version:
+                    _db_version_str = _db_version[0]
             except sqlite3.OperationalError as _op_err:
-                logging.error(_op_err)
+                if str(_op_err) == "no such table: Version":
+                    logging.info(
+                        "Database version table not found. Assuming version 0.1.0."
+                    )
+                else:
+                    raise RuntimeError("Error reading database version") from _op_err
 
         _major, _minor, _patch = parse_version(_db_version_str)
         return cls(
@@ -64,6 +71,8 @@ class DatabaseVersion(OrmVersion):
         vrtool_db.init(self.database_path)
         vrtool_db.connect()
         with vrtool_db.connection_context():
-            _version, _ = DbVersion.get_or_create()
+            _version = DbVersion.get_or_none()
+            if not _version:
+                _version = DbVersion()
             _version.orm_version = str(version)
             _version.save()
