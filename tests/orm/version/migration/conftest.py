@@ -120,7 +120,9 @@ def get_valid_conversion_db_fixture(
     _orm_version = OrmVersion.from_orm()
 
     with open_database_without_compatibility_check(empty_db_path).connection_context():
-        _version, _ = DbVersion.get_or_create()
+        _version = DbVersion.get_or_none()
+        if not _version:
+            _version = DbVersion()
         _version.orm_version = str(_orm_version)
         _version.save()
 

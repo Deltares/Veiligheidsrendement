@@ -45,7 +45,7 @@ class DatabaseVersion(OrmVersion):
             except sqlite3.OperationalError as _op_err:
                 if str(_op_err) == "no such table: Version":
                     logging.info(
-                        "Database version table not found. Assuming version 0.1.0."
+                        "Database versie tabel niet gevonden. Versie 0.1.0 wordt aangenomen."
                     )
                 else:
                     raise RuntimeError("Error reading database version") from _op_err
