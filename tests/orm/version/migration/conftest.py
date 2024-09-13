@@ -131,7 +131,7 @@ def get_valid_conversion_db_fixture(
 
 @pytest.fixture(name="conversion_db_without_version_table")
 def get_conversion_db_without_version_table_fixture(
-    empty_db_path: Path,
+    output_dir: Path,
 ) -> Iterator[Path]:
     """
     Get a database for conversion based on the empty database
@@ -143,9 +143,13 @@ def get_conversion_db_without_version_table_fixture(
     Yields:
         Iterator[Path]: Path to the database.
     """
+    # Copy the original `empty_db.db` into the output directory.
+    _db_file = test_data.joinpath("test_db", "empty_db.db")
+    _test_db_file = output_dir.joinpath("test_db_no_version.db")
+    shutil.copyfile(_db_file, _test_db_file)
 
-    with sqlite3.connect(empty_db_path) as _db_connection:
+    with sqlite3.connect(_test_db_file) as _db_connection:
         _query = "DROP table Version;"
         _db_connection.execute(_query)
 
-    yield empty_db_path
+    yield _test_db_file
