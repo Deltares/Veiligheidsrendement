@@ -136,6 +136,29 @@ When "merging a pull-request" three options are displayed. Our preferred way wil
 
 After merging a pull-request its related source branch will be deleted from the repository and a [Github workflow](../.github/workflows/normalize_code.yml)) will be run.
 
+### Creating a release.
+
+On shipment of the software a formal release is created.
+
+1. Create (and afterwards polish) the `changelog.md`:
+    ```bash
+    cz changelog --unreleased-version="v<x>.<y>.<z>"
+    ```
+    where `x`, `y`, `z` are the major, minor, patch version (e.g. v1.0.3).
+
+2. Update the version and create a tag:
+    ```bash
+    cz bump --increment <increment_type>
+    ```
+    where `increment_type` is `MAJOR`, `MINOR` or `PATCH`, depending on the impact of the release.
+    Note the resulting version should be identical to the one given in the previous step.
+
+3. Push the release:
+    ```bash
+    git push tags
+    git push --force
+    ```
+
 ## Code standards
 
 In general, we adhere to the [Zen of Python](https://peps.python.org/pep-0020/#id3) and we use the [Google convention](https://google.github.io/styleguide/pyguide.html) as a base for our coding standards. Those points where we differ from the _Google convention_ are documented below. We consider this document to be a living document, so it is subject to discussion and potential changes.
