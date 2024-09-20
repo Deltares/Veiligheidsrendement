@@ -1,4 +1,22 @@
-## 0.3.2 (2024-07-08)
+## v1.0.0 (2024-09-16)
+
+### Feat
+
+- VRTOOL-523 Update D-Stability dependency
+- VRTOOL-544 Remove 3 fields from `StandardMeasure` (#341)
+- VRTOOL-545 Add flood damage to `SectionData`. (#343)
+- VRTOOL-540 Check ORM version on startup (#339)
+- VRTOOL-543 Remove `year` from `orm.models.Measure` (#335)
+- VRTOOL-542 Added `on_delete="CASCADE"` to remaining missing models. (#332)
+
+### Fix
+
+- VRTOOL-590 Improve logic on database version check
+- VRTOOL-578 Extend/fix probability plots
+- VRTOOL-579 Include 0 and 100 as computation times (#354)
+- VRTOOL-577 VRTool does not write results for all investment years (#352)
+
+## v0.3.2 (2024-07-08)
 
 ### Fix
 
