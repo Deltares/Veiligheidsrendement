@@ -14,6 +14,7 @@ from vrtool.decision_making.strategies.strategy_protocol import StrategyProtocol
 from vrtool.decision_making.traject_risk import TrajectRisk
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.flood_defence_system.dike_traject import DikeTraject
+from vrtool.optimization.measures.section_as_input import SectionAsInput
 from vrtool.optimization.measures.aggregated_measures_combination import (
     AggregatedMeasureCombination,
 )
@@ -28,8 +29,27 @@ class CrossSectionalRequirements:
     dike_traject_b_stability_inner: float
 
     @classmethod
-    def from_file(cls, file_path: Path, section_id: int) -> CrossSectionalRequirements:
-        pass
+    def from_file(cls, section: SectionAsInput,  dike_traject: DikeTraject, file_path: Path) -> CrossSectionalRequirements:
+        #read the requirements from a csv file
+        import pandas as pd
+        _input_data = pd.read_csv(file_path,index_col = 0, dtype={0:str})
+        _section_N_requirements = _input_data.loc[section.section_name].to_dict()
+
+        if MechanismEnum.REVETMENT.name not in _section_N_requirements.keys():
+            _section_N_requirements[MechanismEnum.REVETMENT.name] = 3
+
+        return cls(
+            cross_sectional_requirement_per_mechanism={
+                MechanismEnum.PIPING: dike_traject.general_info.Pmax/ _section_N_requirements[MechanismEnum.PIPING.name],
+                MechanismEnum.STABILITY_INNER: dike_traject.general_info.Pmax/ _section_N_requirements[MechanismEnum.STABILITY_INNER.name],
+                MechanismEnum.OVERFLOW: dike_traject.general_info.Pmax/ _section_N_requirements[MechanismEnum.OVERFLOW.name],
+                MechanismEnum.REVETMENT: dike_traject.general_info.Pmax/ _section_N_requirements[MechanismEnum.REVETMENT.name],
+
+            },
+            dike_traject_b_piping=dike_traject.general_info.bPiping,
+            dike_traject_b_stability_inner=dike_traject.general_info.bStabilityInner,
+        )
+
 
     @classmethod
     def from_dike_traject(cls, dike_traject: DikeTraject) -> CrossSectionalRequirements:
@@ -403,18 +423,20 @@ class SmartTargetReliabilityStrategy(StrategyProtocol):
         #     )
 
 
-        # _cross_sectional_requirements = map(CrossSectionalRequirements.from_file(
-        #     dike_traject
-        # )
+        _cross_sectional_requirements = list(map(
+            lambda section: CrossSectionalRequirements.from_file(
+            section, dike_traject, self.requirements 
+        ), self.sections)
+        )
 
         # and the risk for each step
         _taken_measures = {}
         _taken_measures_indices = []
-        for _section_idx in section_order:
+        for  _section_idx in section_order:
             # add probability for this step:
             # get the first possible investment year from the aggregated measures
             _valid_measures = self.get_valid_measures_for_section(
-                _section_idx, _cross_sectional_requirements
+                _section_idx, _cross_sectional_requirements[_section_idx]
             )
 
             if len(_valid_measures) == 0:
