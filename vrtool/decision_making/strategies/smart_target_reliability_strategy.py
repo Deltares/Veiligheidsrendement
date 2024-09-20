@@ -30,7 +30,11 @@ class CrossSectionalRequirements:
 
     @classmethod
     def from_file(cls, section: SectionAsInput,  dike_traject: DikeTraject, file_path: Path) -> CrossSectionalRequirements:
-        #read the requirements from a csv file
+        #read the requirements from a csv file that is structured as follows:
+        # | section_name | PIPING | STABILITY_INNER | OVERFLOW | REVETMENT |
+        # |--------------|--------|-----------------|----------|-----------|    
+        # where columns of mechanisms contain a factor N that is used to divide the Pmax of the dike traject to get the cross-sectional requirements.
+        # Returns: CrossSectionalRequirements object with the cross-sectional requirements for the section.
         import pandas as pd
         _input_data = pd.read_csv(file_path,index_col = 0, dtype={0:str})
         _section_N_requirements = _input_data.loc[section.section_name].to_dict()
@@ -416,13 +420,7 @@ class SmartTargetReliabilityStrategy(StrategyProtocol):
         # Rank sections based on initial probability
         section_order = np.flip(np.argsort(initial_section_pfs))
 
-        # get the cross-sectional requirements for each section from a file, and write them to a dictionary with CrossSectionalRequirements objects and section_ids as keys
-        # _cross_sectional_requirements = {
-        #     section_id: CrossSectionalRequirements.from_file(
-        #         self.requirements, section_id
-        #     )
-
-
+        # get the cross sectional requirements for each section
         _cross_sectional_requirements = list(map(
             lambda section: CrossSectionalRequirements.from_file(
             section, dike_traject, self.requirements 
