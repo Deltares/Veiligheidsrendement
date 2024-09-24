@@ -100,22 +100,20 @@ class StabilityScreenMeasure(MeasureProtocol):
             ).Reliability[
                 _year_to_calculate
             ]
-            if float(_year_to_calculate) >= self.parameters["year"]:
-                if mechanism == MechanismEnum.STABILITY_INNER:
-                    self._configure_stability_inner(
-                        _collection, _year_to_calculate, dike_section, length
-                    )
-                elif mechanism == MechanismEnum.PIPING:
-                    self._copy_results(_collection, dike_section_mechanism_reliability)
-                    _collection.Input.input[
-                        "sf_factor"
-                    ] = sf_factor_piping(length)
-                elif mechanism == MechanismEnum.OVERFLOW:
-                    self._copy_results(
-                        _collection, dike_section_mechanism_reliability
-                    )  # No influence
-            else:
-                raise ValueError("Year of measure is larger than 0. Since version 1.0.0 this should not be the case.")
+            if mechanism == MechanismEnum.STABILITY_INNER:
+                self._configure_stability_inner(
+                    _collection, _year_to_calculate, dike_section, length
+                )
+            elif mechanism == MechanismEnum.PIPING:
+                self._copy_results(_collection, dike_section_mechanism_reliability)
+                _collection.Input.input[
+                    "sf_factor"
+                ] = sf_factor_piping(length)
+            elif mechanism == MechanismEnum.OVERFLOW:
+                self._copy_results(
+                    _collection, dike_section_mechanism_reliability
+                )  # No influence
+            
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
             traject_info=traject_info,
