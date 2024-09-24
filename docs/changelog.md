@@ -1,27 +1,33 @@
+## v1.0.1 (2024-09-24)
+
+### Fix
+
+- Write value to correct object (#360)
+
 ## v1.0.0 (2024-09-16)
 
 ### Feat
 
-- VRTOOL-523 Update D-Stability dependency
-- VRTOOL-544 Remove 3 fields from `StandardMeasure` (#341)
-- VRTOOL-545 Add flood damage to `SectionData`. (#343)
-- VRTOOL-540 Check ORM version on startup (#339)
-- VRTOOL-543 Remove `year` from `orm.models.Measure` (#335)
-- VRTOOL-542 Added `on_delete="CASCADE"` to remaining missing models. (#332)
+- VRTOOL-523 update dstab dependency
+- [VRTOOL-544] Remove 3 fields from `StandardMeasure` (#341)
+- [VRTOOL-545] Add flood damage to `SectionData`. (#343)
+- [VRTOOL-540] Check ORM version on startup (#339)
+- [VRTOOL-543] remove `year` from `orm.models.Measure` (#335)
+- Added `on_delete="CASCADE"` to remaining missing models. (#332)
 
 ### Fix
 
-- VRTOOL-590 Improve logic on database version check
-- VRTOOL-578 Extend/fix probability plots
-- VRTOOL-579 Include 0 and 100 as computation times (#354)
-- VRTOOL-577 VRTool does not write results for all investment years (#352)
+- VRTOOL-590 improve logic on database version check
+- VRTOOL-578 extend/fix probability plots
+- VRTOOL-579 include 0 and 100 as computation times (#354)
+- VRTOOL-577 vrtool doesnot write results for all investment years (#352)
 
 ## v0.3.2 (2024-07-08)
 
 ### Fix
 
-- [VRTOOL-561] Sections without measure are not taken for optimization (#330)
-- [VRTOOL-536] Ensure that bundling no longer relies on stability & piping both being present. If not: use 0 values for current pf. Ensure dimensions are consistent. (#329)
+- [VRTool-561] Sections without measure are not taken for optimization (#330)
+- ensure that bundling no longer relies on stability & piping both being present. If not: use 0 values for current pf. Ensure dimensions are consistent. (#329)
 
 ## v0.3.1 (2024-07-03)
 
