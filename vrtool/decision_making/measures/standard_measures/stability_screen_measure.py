@@ -106,14 +106,12 @@ class StabilityScreenMeasure(MeasureProtocol):
                 )
             elif mechanism == MechanismEnum.PIPING:
                 self._copy_results(_collection, dike_section_mechanism_reliability)
-                _collection.Input.input[
-                    "sf_factor"
-                ] = sf_factor_piping(length)
+                _collection.Input.input["sf_factor"] = sf_factor_piping(length)
             elif mechanism == MechanismEnum.OVERFLOW:
                 self._copy_results(
                     _collection, dike_section_mechanism_reliability
                 )  # No influence
-            
+
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
             traject_info=traject_info,
