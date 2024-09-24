@@ -115,7 +115,7 @@ class StabilityScreenMeasure(MeasureProtocol):
                         _collection, dike_section_mechanism_reliability
                     )  # No influence
             else:
-                raise Exception('Shouldnt happen')
+                raise ValueError("Year of measure is larger than 0. Since version 1.0.0 this should not be the case.")
         mechanism_reliability_collection.generate_LCR_profile(
             dike_section.section_reliability.load,
             traject_info=traject_info,
