@@ -50,7 +50,7 @@ coverage = "^6.4.4"
 teamcity-messages = "^1.32"
 pytest-xdist = "^3.3.1"
 pytest-profiling = "^1.7.0"
-pywin32 = "^306"
+pywin32 = "306"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"
