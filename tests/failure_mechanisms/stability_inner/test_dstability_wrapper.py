@@ -1,8 +1,8 @@
 import filecmp
 import shutil
+import sys
 
 import pytest
-import win32api
 
 from tests import test_data, test_externals, test_results
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
@@ -49,8 +49,13 @@ class TestDStabilityWrapper:
         assert str(exception_error.value.message) == _expected_error
 
     @pytest.mark.externals
+    @pytest.mark.skipif(
+        sys.platform != "win32", reason="Pywin32 only available for windows"
+    )
     def test_validate_dstability_version(self):
         # 1. Define test data.
+        import win32api
+
         _supported_major_version = "2024"
         _dstability_exe = test_externals.joinpath(
             "DStabilityConsole", "D-Stability Console.exe"
