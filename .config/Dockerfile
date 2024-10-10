@@ -20,6 +20,7 @@ ARG CONDA_ENV="${SRC_ROOT}/.env"
 # -v {your_vrtool_checkout_dir}:/usr/src/app
 WORKDIR $SRC_ROOT/app
 COPY environment.yml $SRC_ROOT/.config/environment.yml
+COPY externals $SRC_ROOT/test_externals
 
 RUN conda init bash \
     && . ~/.bashrc \
