@@ -214,7 +214,7 @@ class TestVrtoolConfig:
         "path_value, expected_value",
         [
             pytest.param(
-                Path(".\\my_relative_path"),
+                Path(".", "my_relative_path"),
                 test_results / "my_relative_path",
                 id="Relative path",
             ),
