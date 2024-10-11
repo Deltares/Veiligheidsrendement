@@ -12,8 +12,9 @@ from vrtool.orm.version.orm_version import OrmVersion
 
 
 @pytest.fixture(name="output_dir", scope="module")
-def _get_output_dir_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
-    _output_dir = test_results.joinpath(request.node.name)
+def _get_module_output_dir_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
+    _requesting_module = Path(request.node.name).stem
+    _output_dir = test_results.joinpath(_requesting_module)
     if _output_dir.exists():
         shutil.rmtree(_output_dir)
     _output_dir.mkdir(parents=True)
@@ -25,9 +26,7 @@ def _get_output_dir_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
 
 
 @pytest.fixture(name="valid_conversion_scripts", scope="module")
-def get_valid_conversion_scripts_fixture(
-    output_dir: Path,
-) -> Iterator[Path]:
+def get_valid_conversion_scripts_fixture(output_dir: Path) -> Iterator[Path]:
     """
     Get valid conversion scripts for the migration tests.
 
@@ -103,9 +102,7 @@ def _get_empty_database_fixture(output_dir: Path) -> Iterator[Path]:
 
 
 @pytest.fixture(name="valid_conversion_db")
-def get_valid_conversion_db_fixture(
-    empty_db_path: Path,
-) -> Iterator[Path]:
+def get_valid_conversion_db_fixture(empty_db_path: Path) -> Iterator[Path]:
     """
     Get a valid database for conversion based on the empty database
     with the current ORM version.
@@ -116,7 +113,6 @@ def get_valid_conversion_db_fixture(
     Yields:
         Iterator[Path]: Path to the valid database.
     """
-
     # Set the database version to the current ORM version
     _orm_version = OrmVersion.from_orm()
 
@@ -131,9 +127,7 @@ def get_valid_conversion_db_fixture(
 
 
 @pytest.fixture(name="conversion_db_without_version_table")
-def get_conversion_db_without_version_table_fixture(
-    output_dir: Path,
-) -> Iterator[Path]:
+def get_conversion_db_without_version_table_fixture(output_dir: Path) -> Iterator[Path]:
     """
     Get a database for conversion based on the empty database
     without a version table.
