@@ -22,6 +22,9 @@ WORKDIR $SRC_ROOT/app
 COPY environment.yml $SRC_ROOT/.config/environment.yml
 COPY externals $SRC_ROOT/test_externals
 
+# Give execution rights to DStability
+RUN chmod a+x "${SRC_ROOT}/test_externals/DStabilityConsole/D-Stability Console.exe"
+
 RUN conda init bash \
     && . ~/.bashrc \
     && conda env create -f $SRC_ROOT/.config/environment.yml -p $CONDA_ENV
