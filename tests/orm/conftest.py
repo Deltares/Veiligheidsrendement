@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Callable, Iterator, Optional
 
 import pytest
@@ -23,6 +24,21 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import open_database
 
 
+def _get_empty_db_copy(request: pytest.FixtureRequest) -> Path:
+    # Create a results directory where to persist the database.
+    _output_dir = test_results.joinpath(request.node.name)
+    if _output_dir.exists():
+        shutil.rmtree(_output_dir)
+    _output_dir.mkdir(parents=True)
+    _test_db_file = _output_dir.joinpath("test_db.db")
+
+    # Copy the original `empty_db.db` into the output directory.
+    _db_file = test_data.joinpath("test_db", "empty_db.db")
+    shutil.copyfile(_db_file, _test_db_file)
+
+    return _test_db_file
+
+
 @pytest.fixture(name="persisted_database")
 def get_persisted_database_fixture(
     request: pytest.FixtureRequest,
@@ -34,16 +50,7 @@ def get_persisted_database_fixture(
     This fixture's database is used when the database needs to be opened
     and closed during multiple times in a test.
     """
-    # Create a results directory where to persist the database.
-    _output_dir = test_results.joinpath(request.node.name)
-    if _output_dir.exists():
-        shutil.rmtree(_output_dir)
-    _output_dir.mkdir(parents=True)
-    _test_db_file = _output_dir.joinpath("test_db.db")
-
-    # Copy the original `empty_db.db` into the output directory.
-    _db_file = test_data.joinpath("test_db", "empty_db.db")
-    shutil.copyfile(_db_file, _test_db_file)
+    _test_db_file = _get_empty_db_copy(request)
 
     # Initialized its context.
     _connected_db = open_database(_test_db_file)
@@ -58,13 +65,15 @@ def get_persisted_database_fixture(
 
 
 @pytest.fixture(name="empty_db_context", autouse=False)
-def get_empty_db_context_fixture() -> Iterator[SqliteDatabase]:
+def get_empty_db_context_fixture(
+    request: pytest.FixtureRequest,
+) -> Iterator[SqliteDatabase]:
     """
     Gets an empty database context with a valid scheme.
     This fixture DOES NOT allow to open and close during the test,
     as its transaction is already initialized.
     """
-    _db_file = test_data.joinpath("test_db", "empty_db.db")
+    _db_file = _get_empty_db_copy(request)
     _db = open_database(_db_file)
     assert isinstance(_db, SqliteDatabase)
 
