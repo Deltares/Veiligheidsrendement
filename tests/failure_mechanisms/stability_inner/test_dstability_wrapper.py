@@ -148,7 +148,7 @@ class TestDStabilityWrapper:
         _stix_name = (
             "RW001.+096_STBI_maatgevend_Segment_38005_1D1_no_results_saved.stix"
         )
-        _path_test_stix = test_data / "stix" / _stix_name
+        _path_test_stix = test_data.joinpath("stix", _stix_name)
         _dstab_wrapper = DStabilityWrapper(
             stix_path=_path_test_stix,
             externals_path=test_externals,

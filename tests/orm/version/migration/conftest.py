@@ -20,7 +20,8 @@ def _get_output_dir_fixture(request: pytest.FixtureRequest) -> Iterator[Path]:
 
     yield _output_dir
 
-    shutil.rmtree(_output_dir)
+    if _output_dir.exists():
+        shutil.rmtree(_output_dir)
 
 
 @pytest.fixture(name="valid_conversion_scripts", scope="module")
