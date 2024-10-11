@@ -24,12 +24,10 @@ from vrtool.orm.models.section_data import SectionData
 from vrtool.orm.orm_controllers import open_database
 
 
+@pytest.fixture(name="empty_db_fixture")
 def _get_empty_db_copy(request: pytest.FixtureRequest) -> Path:
     # Create a results directory where to persist the database.
-    _output_dir = test_results.joinpath(request.node.name)
-    if _output_dir.exists():
-        shutil.rmtree(_output_dir)
-    _output_dir.mkdir(parents=True)
+    _output_dir = get_clean_test_results_dir(request)
     _test_db_file = _output_dir.joinpath("test_db.db")
 
     # Copy the original `empty_db.db` into the output directory.
@@ -41,7 +39,7 @@ def _get_empty_db_copy(request: pytest.FixtureRequest) -> Path:
 
 @pytest.fixture(name="persisted_database")
 def get_persisted_database_fixture(
-    request: pytest.FixtureRequest,
+    empty_db_fixture: Path,
 ) -> Iterator[SqliteDatabase]:
     """
     Gets an empty database context with a valid scheme
@@ -50,10 +48,8 @@ def get_persisted_database_fixture(
     This fixture's database is used when the database needs to be opened
     and closed during multiple times in a test.
     """
-    _test_db_file = _get_empty_db_copy(request)
-
     # Initialized its context.
-    _connected_db = open_database(_test_db_file)
+    _connected_db = open_database(empty_db_fixture)
     _connected_db.close()
 
     yield _connected_db
@@ -65,16 +61,13 @@ def get_persisted_database_fixture(
 
 
 @pytest.fixture(name="empty_db_context", autouse=False)
-def get_empty_db_context_fixture(
-    request: pytest.FixtureRequest,
-) -> Iterator[SqliteDatabase]:
+def get_empty_db_context_fixture(empty_db_fixture: Path) -> Iterator[SqliteDatabase]:
     """
     Gets an empty database context with a valid scheme.
     This fixture DOES NOT allow to open and close during the test,
     as its transaction is already initialized.
     """
-    _db_file = _get_empty_db_copy(request)
-    _db = open_database(_db_file)
+    _db = open_database(empty_db_fixture)
     assert isinstance(_db, SqliteDatabase)
 
     with _db.atomic() as transaction:
