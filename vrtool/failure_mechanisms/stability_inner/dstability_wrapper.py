@@ -21,11 +21,10 @@ class DStabilityWrapper:
         # We only need to provide where the "DStabilityConsole" directory is.
         # https://deltares.github.io/GEOLib/latest/user/setup.html
 
-        # G
-
+        _dstability_console = self.get_dstability_console_path(externals_path)
         self._dstability_model.set_meta_property(
             "dstability_console_path",
-            externals_path.joinpath("DStabilityConsole", "D-Stability Console"),
+            _dstability_console,
         )
 
     @staticmethod
