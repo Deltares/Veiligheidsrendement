@@ -26,7 +26,10 @@ def get_clean_test_results_dir(request: FixtureRequest) -> Path:
     Returns:
         Path: Generated directory where results can be exported.
     """
-    _test_dir = test_results.joinpath(request.node.originalname)
+    # Parts should contain the test class name and the test name.
+    # The ultimate idea is to create a unique test results directory.
+    _class_name = request.node.nodeid.split("::")[-2]
+    _test_dir = test_results.joinpath(_class_name, request.node.originalname)
 
     if hasattr(request.node, "callspec"):
         # It's a parametrized test:
