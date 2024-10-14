@@ -37,7 +37,7 @@ class TestDStabilityWrapper:
         assert not _invalid_externals.exists(), "This (test) folder should not exist."
 
         _expected_error = "Console executable not found at {}.".format(
-            _invalid_externals.joinpath("DStabilityConsole", "D-Stability Console.exe")
+            _invalid_externals.joinpath("DStabilityConsole", "D-Stability Console")
         )
 
         with pytest.raises(Exception) as exception_error:
