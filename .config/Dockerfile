@@ -7,7 +7,10 @@
 
 FROM condaforge/miniforge3:latest
 
-RUN apt-get update && apt-get install libgl1 -y && apt-get install libicu66
+ENV TZ=Europe/Amsterdam \
+    DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install libgl1 -y && apt-get install libicu66 -y
+
 
 ARG SRC_ROOT="/usr/src"
 
