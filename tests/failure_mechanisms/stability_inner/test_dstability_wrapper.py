@@ -30,15 +30,17 @@ class TestDStabilityWrapper:
     def test_rerun_stix_with_invalid_externals_path_raises(
         self, request: pytest.FixtureRequest
     ):
+        # 1. Define test data.
         _path_test_stix = test_data.joinpath(
             "stix", "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _invalid_externals = test_data.joinpath(request.node.name)
-        assert not _invalid_externals.exists(), "This (test) folder should not exist."
-
-        _expected_error = "Console executable not found at {}.".format(
-            _invalid_externals.joinpath("DStabilityConsole", "D-Stability Console")
+        _console_path = DStabilityWrapper.get_dstability_console_path(
+            _invalid_externals
         )
+        assert not _console_path.exists(), "This (test) file should not exist."
+
+        _expected_error = "Console executable not found at {}.".format(_console_path)
 
         with pytest.raises(Exception) as exception_error:
             DStabilityWrapper(

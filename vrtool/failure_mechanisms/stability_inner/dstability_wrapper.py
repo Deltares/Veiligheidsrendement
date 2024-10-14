@@ -36,9 +36,6 @@ class DStabilityWrapper:
         Args:
             externals_path (Path): Parent directory where the binaries are placed
 
-        Raises:
-            FileNotFoundError: When the console cannot be found.
-
         Returns:
             Path: Location of the D-Stability console.
         """
@@ -46,9 +43,7 @@ class DStabilityWrapper:
             "DStabilityConsole", "D-Stability Console.exe"
         )
         if sys.platform != "win32":
-            _dstability_console_path = _dstability_console_path.with_suffix("")
-        if not _dstability_console_path.exists():
-            raise FileNotFoundError(_dstability_console_path)
+            return _dstability_console_path.with_suffix("")
         return _dstability_console_path
 
     @property
