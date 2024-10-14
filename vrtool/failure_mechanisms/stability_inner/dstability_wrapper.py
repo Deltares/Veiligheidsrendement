@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from geolib import DStabilityModel
@@ -19,10 +20,37 @@ class DStabilityWrapper:
         self._dstability_model.parse(self.stix_path)
         # We only need to provide where the "DStabilityConsole" directory is.
         # https://deltares.github.io/GEOLib/latest/user/setup.html
+
+        # G
+
         self._dstability_model.set_meta_property(
             "dstability_console_path",
-            externals_path.joinpath("DStabilityConsole", "D-Stability Console.exe"),
+            externals_path.joinpath("DStabilityConsole", "D-Stability Console"),
         )
+
+    @staticmethod
+    def get_dstability_console_path(externals_path: Path) -> Path:
+        """
+        Returns the expected path to the `D-Stability Console` depending
+        on the platform where this code is running (`win32` / `linux`).
+
+        Args:
+            externals_path (Path): Parent directory where the binaries are placed
+
+        Raises:
+            FileNotFoundError: When the console cannot be found.
+
+        Returns:
+            Path: Location of the D-Stability console.
+        """
+        _dstability_console_path = externals_path.joinpath(
+            "DStabilityConsole", "D-Stability Console.exe"
+        )
+        if sys.platform != "win32":
+            _dstability_console_path = _dstability_console_path.with_suffix("")
+        if not _dstability_console_path.exists():
+            raise FileNotFoundError(_dstability_console_path)
+        return _dstability_console_path
 
     @property
     def get_dstability_model(self) -> DStabilityModel:

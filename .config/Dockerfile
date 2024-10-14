@@ -7,7 +7,7 @@
 
 FROM condaforge/miniforge3:latest
 
-RUN apt-get update && apt-get install libgl1 -y
+RUN apt-get update && apt-get install libgl1 -y && apt-get install libicu66
 
 ARG SRC_ROOT="/usr/src"
 
@@ -23,7 +23,7 @@ COPY environment.yml $SRC_ROOT/.config/environment.yml
 COPY externals $SRC_ROOT/test_externals
 
 # Give execution rights to DStability
-RUN chmod a+x "${SRC_ROOT}/test_externals/DStabilityConsole/D-Stability Console.exe"
+# RUN chmod a+x "${SRC_ROOT}/test_externals/DStabilityConsole/D-Stability Console.exe"
 
 RUN conda init bash \
     && . ~/.bashrc \
