@@ -47,7 +47,7 @@ class StabilityScreenMeasure(MeasureProtocol):
             _modified_measure["Reliability"] = self._get_configured_section_reliability(
                 dike_section, traject_info, _length
             )
-            _modified_measure["Reliability"].calculate_section_reliability()
+            _modified_measure["Reliability"].calculate_section_reliability(dike_section.Length)
             self.measures.append(_modified_measure)
 
     def _get_configured_section_reliability(

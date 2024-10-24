@@ -19,7 +19,7 @@ class SectionReliability:
     def __init__(self) -> None:
         self.failure_mechanisms = FailureMechanismCollection()
 
-    def calculate_section_reliability(self):
+    def calculate_section_reliability(self, section_length: float) -> None:
         # This routine translates cross-sectional to section reliability indices
 
         # TODO Add optional interpolation here.
@@ -41,10 +41,18 @@ class SectionReliability:
                     _pf_mechanisms_time[
                         _count, _range_idx
                     ] = _mechanism_collection.Reliability[str(_range_val)].Pf
-                elif mechanism in [MechanismEnum.STABILITY_INNER, MechanismEnum.PIPING]:
+                elif mechanism in [MechanismEnum.STABILITY_INNER]:
+                    pf = _mechanism_collection.Reliability[str(_range_val)].Pf
+                    N = max(section_length/50, 1.)
+                    # underneath one can choose whether to upscale within sections or not:
+                    # N = 1
+                    _pf_mechanisms_time[_count, _range_idx] = min(
+                        1 - (1 - pf) ** N, 1.0 / 2
+                    )
+                elif mechanism in [MechanismEnum.PIPING]:
                     pf = _mechanism_collection.Reliability[str(_range_val)].Pf
                     # underneath one can choose whether to upscale within sections or not:
-                    N = 1
+                    N = max(section_length/300., 1.)
                     _pf_mechanisms_time[_count, _range_idx] = min(
                         1 - (1 - pf) ** N, 1.0 / 2
                     )
