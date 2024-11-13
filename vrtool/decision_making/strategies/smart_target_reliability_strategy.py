@@ -36,7 +36,7 @@ class CrossSectionalRequirements:
         # where columns of mechanisms contain a factor N that is used to divide the Pmax of the dike traject to get the cross-sectional requirements.
         # Returns: CrossSectionalRequirements object with the cross-sectional requirements for the section.
         import pandas as pd
-        _input_data = pd.read_csv(file_path,index_col = 0, dtype={0:str}, sep=";")
+        _input_data = pd.read_csv(file_path,index_col = 0, dtype={0:str}, sep=",")
         _section_N_requirements = _input_data.loc[str(section_id)].to_dict()
 
         if MechanismEnum.REVETMENT.name not in _section_N_requirements.keys():
