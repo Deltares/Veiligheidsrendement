@@ -92,11 +92,11 @@ def run_dsn_lenient_and_stringent(_vr_config: VrtoolConfig, run_strict: bool = F
         print("Stringent DSN done: ", t3 - t2)
 
 
-_input_model = Path(r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\cheap")
-assert _input_model.exists()
-_vr_config = VrtoolConfig().from_json(Path(_input_model).joinpath("config.json"))
+# _input_model = Path(r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\cheap")
+# assert _input_model.exists()
+# _vr_config = VrtoolConfig().from_json(Path(_input_model).joinpath("config.json"))
 
 # copy_database(_vr_config)
 # modify_cost_measure_database(multiplier=0.5, measure_type="soil reinforcement")
 # rerun_database()
-run_dsn_lenient_and_stringent(_vr_config)
+# run_dsn_lenient_and_stringent(_vr_config)

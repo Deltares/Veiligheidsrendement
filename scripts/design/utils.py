@@ -12,11 +12,12 @@ from vrtool.common.enums import MechanismEnum
 import copy
 
 from vrtool.orm.models import MeasureResultMechanism, MechanismPerSection, Mechanism, MeasureResultSection, \
-    MeasureResult, MeasurePerSection, Measure, MeasureType, DikeTrajectInfo
+    MeasureResult, MeasurePerSection, Measure, MeasureType, DikeTrajectInfo, SectionData
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
 
 
-def get_traject_probs(db_path: Path, has_revetment: bool = False) -> list[tuple[tuple[int], list[float]]]:
+def get_traject_probs(db_path: Path, has_revetment: bool = False, run_id: int = 1) -> list[
+    tuple[tuple[int], list[float]]]:
     """
     Return a list of the traject probabilities for each step in the optimization process.
     Args:
@@ -34,7 +35,7 @@ def get_traject_probs(db_path: Path, has_revetment: bool = False) -> list[tuple[
    0.10811136593394344])
     """
 
-    lists_of_measures = get_measures_for_run_id(db_path, 1)
+    lists_of_measures = get_measures_for_run_id(db_path, run_id)
     measures_per_step = get_measures_per_step_number(lists_of_measures)
 
     assessment_results = {}
@@ -54,6 +55,7 @@ def get_traject_probs(db_path: Path, has_revetment: bool = False) -> list[tuple[
 
     return traject_probs
 
+
 def calculate_traject_probability(traject_prob):
     p_nonf = [1] * len(list(traject_prob.values())[0].values())
     for mechanism, data in traject_prob.items():
@@ -63,8 +65,7 @@ def calculate_traject_probability(traject_prob):
     return time, list(1 - p_nonf)
 
 
-
-def get_measures_for_all_sections(db_path, t_design):
+def get_measures_for_all_sections(t_design):
     # Fetch all MeasureResultMechanism records for the specified year
     measures_for_all_sections_beta = (MeasureResultMechanism
                                       .select(MeasureResultMechanism, MechanismPerSection, Mechanism.name)
@@ -142,6 +143,34 @@ def add_combined_vzg_soil(df):
         df_out = pd.concat([df_out, soil])
     return df_out
 
+def get_measures_df_with_dsn(LE: bool = False, t_design: int = 50):
+    measures_df_db = get_measures_for_all_sections(t_design)
+    measures_df = add_combined_vzg_soil(measures_df_db)
+    # sort measures_df by section_id and measure_result
+    measures_df.sort_values(by=['section_id', 'measure_result'], inplace=True)
+
+    # as probabilities in the df are to be interpreted as probabilities per section, we need to also compute the corresponding cross-section probabilities
+
+    # get the section lengths from the database
+    section_lengths = pd.DataFrame([(section.id, section.section_length) for section in SectionData.select()],
+                                   columns=['section_id', 'section_length'])
+    section_lengths.set_index('section_id', inplace=True)
+    # merge lengths to measures_df
+    measures_df_with_dsn = measures_df.merge(section_lengths, left_on='section_id', right_index=True)
+    measures_df_with_dsn['Overflow_dsn'] = measures_df_with_dsn['Overflow']
+    if LE:
+        N_piping = measures_df_with_dsn['section_length'] / 300
+        N_piping = N_piping.apply(lambda x: max(x, 1))
+        measures_df_with_dsn['Piping_dsn'] = pf_to_beta(beta_to_pf(measures_df_with_dsn['Piping']) / N_piping)
+        N_stability = measures_df_with_dsn['section_length'] / 50
+        N_stability = N_stability.apply(lambda x: max(x, 1))
+        measures_df_with_dsn['StabilityInner_dsn'] = pf_to_beta(
+            beta_to_pf(measures_df_with_dsn['StabilityInner']) / N_stability)
+    else:
+        measures_df_with_dsn['Piping_dsn'] = measures_df_with_dsn['Piping']
+        measures_df_with_dsn['StabilityInner_dsn'] = measures_df_with_dsn['StabilityInner']
+    return measures_df_with_dsn
+
 
 def compute_traject_probability(minimal_cost_dataset: pd.DataFrame):
     """
@@ -195,10 +224,10 @@ def calculate_cost(overflow_beta, piping_beta, stability_beta, measures_df, corr
         return minimal_costs.sum(), computed_traject_probability
 
 
-
 def get_target_beta_grid(N_omega, N_LE):
     """
     Return a iterator of (beta_overflow, beta_piping, beta_stability_inner) for every combination p_eis / ( N_omega * N_LE)
+    Also return the DataFrame with all the combinations of N_omega and N_LE
 
 
     Returns:
@@ -224,35 +253,91 @@ def get_target_beta_grid(N_omega, N_LE):
     N_stability_inner_grid = N_stability_inner_grid + [
         np.divide(1, omega_stability_inner) * np.divide(a_stability_inner * traject_length, b_stability_inner)]
 
-    # make a beta_grid for all
-    overflow_grid = pf_to_beta(np.divide(p_max, N_overflow_grid))
-    piping_grid = pf_to_beta(np.divide(p_max, N_piping_grid))
-    stability_inner_grid = pf_to_beta(np.divide(p_max, N_stability_inner_grid))
+    # make a DataFrame with all the combinations of N_grid
 
-    # #make a grid for all 3 mechanisms.
-    target_beta_grid = itertools.product(overflow_grid, piping_grid, stability_inner_grid)
-    print(f"Grid dimensions are {len(overflow_grid)} x {len(piping_grid)} x {len(stability_inner_grid)}")
-    print(target_beta_grid)
+    # combinations_df = pd.DataFrame(list(itertools.product(N_overflow_grid, N_piping_grid, N_stability_inner_grid)), columns=['N_overflow_grid', 'N_piping_grid', 'N_stability_inner_grid'])
+    # # add the corresponding N_omega and N_LE
+    combinations = []
+    for N_overflow, N_piping, N_stability_inner in itertools.product(N_overflow_grid, N_piping_grid,
+                                                                     N_stability_inner_grid):
+        # Find closest matching N_omega and N_LE values for each parameter
+        N_overflow_origin = min(N_omega, key=lambda x: abs(x - N_overflow))  # Closest match in N_omega
+        N_piping_origin = min(N_omega, key=lambda x: abs(x - N_piping / N_LE[0]))  # Closest match in N_omega for piping
+        N_stability_inner_origin = min(N_omega, key=lambda x: abs(
+            x - N_stability_inner / N_LE[0]))  # Closest match in N_omega for stability
 
-    return target_beta_grid
+        # Add a row to the list with original values
+        combinations.append((N_overflow, N_piping, N_stability_inner, N_overflow_origin, N_LE[0]))
+
+    # Create DataFrame with mapped N_omega and N_LE columns
+    combinations_df = pd.DataFrame(
+        combinations,
+        columns=['N_overflow_grid', 'N_piping_grid', 'N_stability_inner_grid', 'N_omega', 'N_LE']
+    )
+
+    combinations_df["overflow_grid"] = pf_to_beta(np.divide(p_max, combinations_df["N_overflow_grid"]))
+    combinations_df["piping_grid"] = pf_to_beta(np.divide(p_max, combinations_df["N_piping_grid"]))
+    combinations_df["stability_inner_grid"] = pf_to_beta(np.divide(p_max, combinations_df["N_stability_inner_grid"]))
+
+    return combinations_df
 
 
-def get_cost_traject_pf_combinations(target_beta_grid: pd.DataFrame, measures_df_with_dsn: pd.DataFrame) -> tuple[list, list]:
+def get_cost_traject_pf_combinations(combination_df: pd.DataFrame, measures_df_with_dsn: pd.DataFrame) -> pd.DataFrame:
     """
-    Return a list of cost and a list of traject faalkans for every combination of betas in the grid target_beta_grid
+    Add the cost and the traject probability to the combination_df
 
-    params: target_beta_grid: list of tuple (beta_overflow, beta_piping, beta_stability) for every combination of p_eis/
-    N_omega *N_LE.
+    params: target_beta_grid: combination for all N_omega and N_LE, it contains also the corresponding N_stability_inner,
+     N_piping, N_overflow, and the corresponding beta values
     params: measures_df_with_dsn: DataFrame containing all the measures and their betas.
     """
     cost = []
     pf_traject = []
-    for count, (overflow_beta, piping_beta, stability_beta) in enumerate(list(copy.deepcopy(target_beta_grid))):
-        cost_i, pf_traject_i = calculate_cost(overflow_beta, piping_beta, stability_beta, measures_df_with_dsn)
+
+    for _, row in combination_df.iterrows():
+        cost_i, pf_traject_i = calculate_cost(row['overflow_grid'], row['piping_grid'], row['stability_inner_grid'],
+                                              measures_df_with_dsn)
         if cost_i < 1.e99:
             cost.append(cost_i)
             pf_traject.append(pf_traject_i)
         else:
-            pass
+            cost.append(np.nan)
+            pf_traject.append(np.nan)
             # print(f"Skipping beta combination {overflow_beta, piping_beta, stability_beta}")
-    return cost, pf_traject
+    combination_df['cost'] = cost
+    combination_df['pf_traject'] = pf_traject
+    return combination_df
+
+
+
+def get_dsn_point_pf_cost(db_path):
+    """Return (cost, traject_pf) for the DSN point"""
+    dsn_steps = get_optimization_steps_for_run_id(db_path, 2)
+    traject_probs_dsn = get_traject_probs(db_path, run_id=2)
+
+
+    ind_2075 = np.where(np.array(traject_probs_dsn[0][0]) == 50)[0][0]
+    dsn_cost = dsn_steps[-1]['total_lcc']
+    dsn_pf = traject_probs_dsn[-1][1][ind_2075]
+    return dsn_cost, dsn_pf
+
+def get_vr_eco_optimum_point(traject_probs, optimization_steps):
+
+    considered_tc_step = get_minimal_tc_step(optimization_steps) - 1
+    # find index where traject_probs[0][0] == 50
+    ind_2075 = np.where(np.array(traject_probs[0][0]) == 50)[0][0]
+    pf_2075 = [traject_probs[i][1][ind_2075] for i in range(len(traject_probs))]
+    cost_vrm = [optimization_steps[i]['total_lcc'] for i in range(len(traject_probs))]
+
+    vrm_optimum_cost = optimization_steps[considered_tc_step - 1]['total_lcc']
+    vrm_optimum_pf = traject_probs[considered_tc_step - 1][1][ind_2075]
+    return vrm_optimum_cost, vrm_optimum_pf
+
+def get_least_expensive_combination_point(df_combinations_results, p_max):
+    cost = np.array(df_combinations_results['cost'])
+    pf_traject = np.array(df_combinations_results['pf_traject'])
+    # find the measure with the lowest cost that is compliant with the p_max
+    df = pd.DataFrame({'cost': cost, 'pf': pf_traject})
+    df = df[df['pf'] <= p_max]
+    min_cost = df['cost'].min()
+    min_cost_idx = df[df['cost'] == min_cost].index[0]
+    return min_cost, pf_traject[min_cost_idx]
