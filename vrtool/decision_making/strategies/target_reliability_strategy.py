@@ -126,13 +126,17 @@ class TargetReliabilityStrategy(StrategyProtocol):
                 ):
                     return False
             elif _mechanism in [MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]:
+                if _mechanism == MechanismEnum.PIPING:
+                    LE_factor = max(self.sections[section_idx].section_length/300,1.)
+                elif _mechanism == MechanismEnum.STABILITY_INNER:
+                    LE_factor = max(self.sections[section_idx].section_length/50,1.)
                 if (
                     _measure.sg_combination.mechanism_year_collection.get_probabilities(
                         _mechanism, [year]
                     )[0]
                     > cross_sectional_requirements.cross_sectional_requirement_per_mechanism[
                         _mechanism
-                    ]
+                    ] * LE_factor
                 ):
                     return False
         return True

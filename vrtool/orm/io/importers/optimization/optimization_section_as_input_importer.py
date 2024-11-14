@@ -113,6 +113,7 @@ class OptimizationSectionAsInputImporter:
         return SectionAsInput(
             section_name=_section_data.section_name,
             traject_name=_section_data.dike_traject.traject_name,
+            section_length=_section_data.section_length,
             measures=_section_imported_measures,
             flood_damage=_section_data.dike_traject.flood_damage,
             initial_assessment=self._import_initial_assessment(_section_data),

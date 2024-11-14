@@ -30,6 +30,7 @@ class SectionAsInput:
     section_name: str
     traject_name: str
     flood_damage: float
+    section_length: float
     measures: list[MeasureAsInputProtocol]
     initial_assessment: MechanismPerYearProbabilityCollection = field(
         default_factory=lambda: MechanismPerYearProbabilityCollection([])
