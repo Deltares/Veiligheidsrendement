@@ -1,3 +1,4 @@
+from cProfile import label
 from pathlib import Path
 
 import pandas as pd
@@ -100,8 +101,24 @@ def plot_combined_measure_figure(
     # get xtick labels and divide by 1e6 and replace
     ax.set_xticklabels([f'{x / 1e6:.0f}' for x in ax.get_xticks()])
     ax.grid(True, which='both', linestyle=':')
-
+    
     # save the figure
     save_dir = Path(r'C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation')
     # plt.savefig(save_dir.joinpath('38-1_geenLE_smaller_grid.png'), dpi=300, bbox_inches='tight')
+    plt.show()
+
+
+def plot_sensitivity(df_sensitivity: pd.DataFrame):
+    fig, ax = plt.subplots()
+    from scripts.design.deltares_colors import colors
+
+    ax.scatter(df_sensitivity["least_expensive_combination_cost"], df_sensitivity["least_expensive_combination_pf"], color=colors[4], label='Combi optimum')
+    ax.scatter(df_sensitivity["dsn_point_cost"], df_sensitivity["dsn_point_pf"], color=colors[6], label='DSN')
+    ax.scatter(df_sensitivity["vrm_eco_point_cost"], df_sensitivity["vrm_eco_point_pf"], color=colors[0], label='VRM optimum')
+    ax.set_xlim(left=0)
+    ax.set_xlabel('Kosten (M€)')
+    ax.set_ylabel('Traject faalkans in 2075')
+    ax.set_yscale('log')
+    ax.legend()
+
     plt.show()

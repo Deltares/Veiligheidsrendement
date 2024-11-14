@@ -1,18 +1,13 @@
 import copy
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
 from pathlib import Path
 import numpy as np
 from scipy.stats import norm
-from peewee import fn
 
 from scripts.postprocessing.database_access_functions import get_overview_of_runs, get_optimization_steps_for_run_id, \
     get_measures_for_run_id, import_original_assessment
 from scripts.postprocessing.database_analytics import get_minimal_tc_step, get_measures_per_step_number, \
     get_reliability_for_each_step, assessment_for_each_step, calculate_traject_probability_for_steps
-from vrtool.orm.models import *
-from vrtool.orm.orm_controllers import open_database
 from vrtool.common.enums import MechanismEnum
 
 
