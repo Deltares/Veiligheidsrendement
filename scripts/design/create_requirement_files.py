@@ -185,18 +185,18 @@ def create_requirement_files(requirements_per_section: dict, trajec_config: dict
     lenient_df.to_csv(trajec_config['path'].parent.joinpath('requirements_lenient.csv'), sep=",", index=False)
 
 
-traject_config = {
-    "name": "41-1",
-    "path": Path(
-        # r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\ref\41-1_database_origineel.db"
-        # r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\expensive\41-1_database_origineel_modified_expensive.db"
-        r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\cheap\41-1_database_origineel_cheap.db"
-    ),
-    "eis": 1 / 10000,
-    "l_traject": 12500,
-    "revetment": False,
-    "meet_eis": True,
-}
-
-requirements_per_section = get_traject_requirements_per_sections(traject_config)
-create_requirement_files(requirements_per_section, traject_config)
+# traject_config = {
+#     "name": "41-1",
+#     "path": Path(
+#         # r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\ref\41-1_database_origineel.db"
+#         # r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\expensive\41-1_database_origineel_modified_expensive.db"
+#         r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\cheap\41-1_database_origineel_cheap.db"
+#     ),
+#     "eis": 1 / 10000,
+#     "l_traject": 12500,
+#     "revetment": False,
+#     "meet_eis": True,
+# }
+#
+# requirements_per_section = get_traject_requirements_per_sections(traject_config)
+# create_requirement_files(requirements_per_section, traject_config)
