@@ -253,21 +253,13 @@ def get_target_beta_grid(N_omega, N_LE):
     N_stability_inner_grid = N_stability_inner_grid + [
         np.divide(1, omega_stability_inner) * np.divide(a_stability_inner * traject_length, b_stability_inner)]
 
-    # make a DataFrame with all the combinations of N_grid
-
-    # combinations_df = pd.DataFrame(list(itertools.product(N_overflow_grid, N_piping_grid, N_stability_inner_grid)), columns=['N_overflow_grid', 'N_piping_grid', 'N_stability_inner_grid'])
-    # # add the corresponding N_omega and N_LE
     combinations = []
     for N_overflow, N_piping, N_stability_inner in itertools.product(N_overflow_grid, N_piping_grid,
                                                                      N_stability_inner_grid):
         # Find closest matching N_omega and N_LE values for each parameter
-        N_overflow_origin = min(N_omega, key=lambda x: abs(x - N_overflow))  # Closest match in N_omega
-        N_piping_origin = min(N_omega, key=lambda x: abs(x - N_piping / N_LE[0]))  # Closest match in N_omega for piping
-        N_stability_inner_origin = min(N_omega, key=lambda x: abs(
-            x - N_stability_inner / N_LE[0]))  # Closest match in N_omega for stability
 
         # Add a row to the list with original values
-        combinations.append((N_overflow, N_piping, N_stability_inner, N_overflow_origin, N_LE[0]))
+        combinations.append((N_overflow, N_piping, N_stability_inner, N_omega[0], N_LE[0]))
 
     # Create DataFrame with mapped N_omega and N_LE columns
     combinations_df = pd.DataFrame(
@@ -284,28 +276,28 @@ def get_target_beta_grid(N_omega, N_LE):
 
 def get_cost_traject_pf_combinations(combination_df: pd.DataFrame, measures_df_with_dsn: pd.DataFrame) -> pd.DataFrame:
     """
-    Add the cost and the traject probability to the combination_df
+    Add the cost and the traject probability to the combination_df.
 
-    params: target_beta_grid: combination for all N_omega and N_LE, it contains also the corresponding N_stability_inner,
-     N_piping, N_overflow, and the corresponding beta values
-    params: measures_df_with_dsn: DataFrame containing all the measures and their betas.
+    :param combination_df: DataFrame containing combinations for all N_omega and N_LE.
+                           It includes N_stability_inner, N_piping, N_overflow, and their corresponding beta values.
+    :param measures_df_with_dsn: DataFrame containing all the measures and their betas.
+    :return: Updated combination_df with 'cost' and 'pf_traject' columns.
     """
-    cost = []
-    pf_traject = []
 
-    for _, row in combination_df.iterrows():
+    def compute_cost_and_pf(row):
         cost_i, pf_traject_i = calculate_cost(row['overflow_grid'], row['piping_grid'], row['stability_inner_grid'],
                                               measures_df_with_dsn)
         if cost_i < 1.e99:
-            cost.append(cost_i)
-            pf_traject.append(pf_traject_i)
+            return pd.Series({'cost': cost_i, 'pf_traject': pf_traject_i})
         else:
-            cost.append(np.nan)
-            pf_traject.append(np.nan)
-            # print(f"Skipping beta combination {overflow_beta, piping_beta, stability_beta}")
-    combination_df['cost'] = cost
-    combination_df['pf_traject'] = pf_traject
+            return pd.Series({'cost': np.nan, 'pf_traject': np.nan})
+
+    # Use apply to process each row more efficiently
+    result = combination_df.apply(compute_cost_and_pf, axis=1)
+    combination_df[['cost', 'pf_traject']] = result
+
     return combination_df
+
 
 
 

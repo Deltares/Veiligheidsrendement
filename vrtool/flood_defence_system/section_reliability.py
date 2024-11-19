@@ -43,7 +43,7 @@ class SectionReliability:
                     ] = _mechanism_collection.Reliability[str(_range_val)].Pf
                 elif mechanism in [MechanismEnum.STABILITY_INNER]:
                     pf = _mechanism_collection.Reliability[str(_range_val)].Pf
-                    N = max(section_length/50, 1.)
+                    N = 4
                     # underneath one can choose whether to upscale within sections or not:
                     # N = 1
                     _pf_mechanisms_time[_count, _range_idx] = min(
@@ -52,7 +52,7 @@ class SectionReliability:
                 elif mechanism in [MechanismEnum.PIPING]:
                     pf = _mechanism_collection.Reliability[str(_range_val)].Pf
                     # underneath one can choose whether to upscale within sections or not:
-                    N = max(section_length/300., 1.)
+                    N = 4
                     _pf_mechanisms_time[_count, _range_idx] = min(
                         1 - (1 - pf) ** N, 1.0 / 2
                     )

@@ -6,7 +6,7 @@ from scripts.design.run_vrtool_specific import run_dsn_lenient_and_stringent, re
 from vrtool.api import ApiRunWorkflows
 from vrtool.defaults.vrtool_config import VrtoolConfig
 from vrtool.orm.models import MeasureResultSection, MeasureResult, MeasurePerSection, Measure, \
-    ComputationScenarioParameter
+    ComputationScenarioParameter, MeasureResultMechanism, Mechanism, MechanismPerSection
 from vrtool.orm.orm_controllers import get_all_measure_results_with_supported_investment_years, open_database
 from time import time
 import shutil
@@ -34,10 +34,74 @@ def modify_initial_beta_stability(_vr_config: VrtoolConfig, std_beta: float):
     return
 
 
+def modify_beta_measure_database(_vr_config: VrtoolConfig, measure_type: str, mechanism: str, std_beta: float):
+    """
+    Modify the beta for a specific mechanism in the measure database.
+
+    Args:
+        _vr_config:
+        measure_type:
+        mechanism: one of "Overflow", "Piping", "StabilityInner", "Revetment". Check for spelling.
+        std_beta:
+
+    """
+    # Open the database and reduce cost of the measures:
+    _connected_db = open_database(_vr_config.input_database_path)
+
+    subquery_measure_result = get_subquery_for_measure_type(measure_type)
+
+    subquery_mechanism_result = get_subquery_for_mechanism(mechanism)
+
+    _query = (MeasureResultMechanism
+    .update(beta=MeasureResultMechanism.beta + np.random.normal(0, std_beta))
+    .where(
+        MeasureResultMechanism.measure_result_id.in_(subquery_measure_result) &
+        MeasureResultMechanism.mechanism_per_section_id.in_(subquery_mechanism_result)
+    ))
+
+    _query.execute()
+    _connected_db.close()
+
+
 def modify_cost_measure_database(_vr_config: VrtoolConfig, multiplier: int = 2, measure_type: str = None):
     # Open the database and reduce cost of the measures:
     _connected_db = open_database(_vr_config.input_database_path)
 
+    subquery_measure_result = get_subquery_for_measure_type(measure_type)
+
+    _query = (MeasureResultSection
+              .update(cost=MeasureResultSection.cost * multiplier)
+              .where(MeasureResultSection.measure_result_id.in_(subquery_measure_result)))
+
+    _query.execute()
+    _connected_db.close()
+
+
+def get_subquery_for_mechanism(mechanism: str):
+    """
+    Get the subquery for a specific mechanism
+    Args:
+        mechanism: one of "Overflow", "Piping", "StabilityInner", "Revetment"
+
+    Returns:
+
+    """
+    if mechanism == "Overflow":
+        meca_id = 1
+    elif mechanism == "Piping":
+        meca_id = 2
+    elif mechanism == "StabilityInner":
+        meca_id = 3
+    elif mechanism == "Revetment":
+        meca_id = 4
+    else:
+        raise ValueError("Mechanism not found")
+
+    subquery_mechanism_result = (MechanismPerSection.select(MechanismPerSection.id)
+                                 .where(MechanismPerSection.mechanism_id == meca_id))
+    return subquery_mechanism_result
+
+def get_subquery_for_measure_type(measure_type: str):
     if measure_type == "soil reinforcement":
         subquery = (MeasureResult
                     .select(MeasureResult.id)
@@ -64,14 +128,7 @@ def modify_cost_measure_database(_vr_config: VrtoolConfig, multiplier: int = 2, 
                     .where(Measure.measure_type_id == 5))
     else:
         raise ValueError("Measure type not found")
-
-    _query = (MeasureResultSection
-              .update(cost=MeasureResultSection.cost * multiplier)
-              .where(MeasureResultSection.measure_result_id.in_(subquery)))
-
-    _query.execute()
-    _connected_db.close()
-
+    return subquery
 
 
 def copy_database(vr_config: VrtoolConfig, suffix: str):
@@ -80,19 +137,3 @@ def copy_database(vr_config: VrtoolConfig, suffix: str):
     new_name = database_name + f"_{suffix}.db"
     shutil.copy(vr_config.input_database_path, vr_config.input_directory.joinpath(new_name))
     vr_config.input_database_name = new_name
-
-
-_input_model = Path(
-    r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation\automation")
-assert _input_model.exists()
-_vr_config = VrtoolConfig().from_json(Path(_input_model).joinpath("config.json"))
-_vr_config.input_directory = _input_model
-
-copy_database(_vr_config, "modified_stability")
-# modify_cost_measure_database(_vr_config, multiplier=2, measure_type="soil reinforcement")
-modify_initial_beta_stability(_vr_config, std_beta=1.0)
-rerun_database(_vr_config, rerun_all=True)
-run_dsn_lenient_and_stringent(_vr_config, run_strict=False)
-
-
-

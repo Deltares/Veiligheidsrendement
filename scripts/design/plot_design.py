@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import seaborn as sns
 
+# import plotly.graph_objects as go
 from scripts.design.create_requirement_files import get_vr_eis_index_2075, traject_config
 
 # sns.set(style="whitegrid")
@@ -71,10 +72,7 @@ def plot_1():
 
 def plot_combined_measure_figure(
         df_combinations: pd.DataFrame,
-        cost_vrm: list,
-        pf_2075_vrm: list,
-        cost_vrm_filtered: list,
-        pf_2075_vrm_filtered: list,
+        vrm_optimization_steps: pd.DataFrame,
         vrm_optimum_point: tuple[float, float],
         least_expensive_combination: tuple[float, float],
         dsn_point: tuple[float, float],
@@ -85,8 +83,9 @@ def plot_combined_measure_figure(
     fig, ax = plt.subplots()
     ax.scatter(df_combinations['cost'], df_combinations['pf_traject'], color=colors[4], marker='.')
     ax.plot(dsn_point[0], dsn_point[1], color=colors[6], marker='o', linestyle='', label='DSN')
-    ax.plot(cost_vrm, pf_2075_vrm, color=colors[2], linestyle=':', label='Optimalisatiestappen')
-    ax.plot(cost_vrm_filtered, pf_2075_vrm_filtered, color=colors[0], label='Optimalisatiestappen gefilterd')
+    # Shoe line+points for VRM optimization
+    ax.plot(vrm_optimization_steps['cost'], vrm_optimization_steps['pf_traject'], color=colors[0],
+            label='Optimalisatiestappen', linestyle='-', marker='o', markersize=2)
     ax.plot(vrm_optimum_point[0], vrm_optimum_point[1], marker='o', color=colors[0], label='VRM optimum')
     ax.plot(least_expensive_combination[0], least_expensive_combination[1], marker='o', color=colors[7],
             label='Combi optimum')
@@ -101,7 +100,7 @@ def plot_combined_measure_figure(
     # get xtick labels and divide by 1e6 and replace
     ax.set_xticklabels([f'{x / 1e6:.0f}' for x in ax.get_xticks()])
     ax.grid(True, which='both', linestyle=':')
-    
+
     # save the figure
     save_dir = Path(r'C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\41-1_test_automation')
     # plt.savefig(save_dir.joinpath('38-1_geenLE_smaller_grid.png'), dpi=300, bbox_inches='tight')
@@ -112,13 +111,85 @@ def plot_sensitivity(df_sensitivity: pd.DataFrame):
     fig, ax = plt.subplots()
     from scripts.design.deltares_colors import colors
 
-    ax.scatter(df_sensitivity["least_expensive_combination_cost"], df_sensitivity["least_expensive_combination_pf"], color=colors[4], label='Combi optimum')
+    ax.scatter(df_sensitivity["least_expensive_combination_cost"], df_sensitivity["least_expensive_combination_pf"],
+               color=colors[4], label='Combi optimum')
     ax.scatter(df_sensitivity["dsn_point_cost"], df_sensitivity["dsn_point_pf"], color=colors[6], label='DSN')
-    ax.scatter(df_sensitivity["vrm_eco_point_cost"], df_sensitivity["vrm_eco_point_pf"], color=colors[0], label='VRM optimum')
+    ax.scatter(df_sensitivity["vrm_eco_point_cost"], df_sensitivity["vrm_eco_point_pf"], color=colors[0],
+               label='VRM optimum')
     ax.set_xlim(left=0)
     ax.set_xlabel('Kosten (M€)')
     ax.set_ylabel('Traject faalkans in 2075')
     ax.set_yscale('log')
     ax.legend()
-
     plt.show()
+
+
+
+
+def plot_sensitivity_plotly(df_sensitive: pd.DataFrame):
+    import plotly.graph_objects as go
+    fig = go.Figure()
+    from scripts.design.deltares_colors import colors
+    fig.add_trace(go.Scatter(x=df_sensitive["least_expensive_combination_cost"],
+                             y=df_sensitive["least_expensive_combination_pf"],
+                             mode='markers',
+                             marker=dict(color=colors[4]),
+                             name='Combi optimum'))
+    fig.add_trace(go.Scatter(x=df_sensitive["dsn_point_cost"],
+                                y=df_sensitive["dsn_point_pf"],
+                                mode='markers',
+                                marker=dict(color=colors[6]),
+                                name='DSN'))
+    fig.add_trace(go.Scatter(x=df_sensitive["vrm_eco_point_cost"],
+                                y=df_sensitive["vrm_eco_point_pf"],
+                                mode='markers',
+                                marker=dict(color=colors[0]),
+                                name='VRM optimum'))
+    fig.update_layout(
+        xaxis_title='Kosten (M€)',
+        yaxis_title='Traject faalkans in 2075',
+        yaxis_type='log',
+        showlegend=True
+    )
+    fig.show()
+
+
+def plot_histogram_metrics(df_sensitive: pd.DataFrame):
+    # Plot one hist per axis, but have multiple axes
+    fig, ax = plt.subplots()
+    from scripts.design.deltares_colors import colors
+    ax.hist(df_sensitive["dsn_point_cost"] - df_sensitive["vrm_eco_point_cost"], bins=20, color=colors[0], label='dist VR/DSN')
+    ax.hist(df_sensitive["dsn_point_cost"] - df_sensitive["least_expensive_combination_cost"], bins=20, color=colors[4],
+            label='dist vakspecifiek/DSN')
+    ax.set_xlabel('Afstand in kosten')
+
+    ax.set_ylabel('Aantal trajecten')
+    ax.legend()
+    plt.show()
+
+    #     - distance vr-dsn
+    #     - distance combi-dsn
+    # - distance combi and closest vr point on the VR path
+
+    return
+
+
+def plot_scatter_cost_cost(df_sensitive: pd.DataFrame):
+    fig, ax = plt.subplots()
+    from scripts.design.deltares_colors import colors
+    # ax.scatter(df_sensitive["dsn_point_cost"], df_sensitive["vrm_eco_point_cost"], color=colors[0], label='VRM optimum')
+    ax.scatter(df_sensitive["least_expensive_combination_cost"], df_sensitive["dsn_point_cost"],  color=colors[4],
+               label='data')
+
+    # plot 1:1 line
+    ax.plot([2.5e8, 3.5e8], [2.5e8, 3.5e8], color='black', label='1:1 lijn')
+    # set axis in Millions
+    ax.set_xticklabels([f'{x / 1e6:.0f}' for x in ax.get_xticks()])
+    ax.set_yticklabels([f'{x / 1e6:.0f}' for x in ax.get_yticks()])
+    ax.set_xlabel('vakspecifiek kosten (M€)')
+    ax.set_ylabel('DSN Kosten (M€)')
+    ax.legend()
+    plt.show()
+
+df_results = pd.read_csv(Path(__file__).parent.joinpath("old", "results_sensitivity_analysis_38-1.csv"))
+plot_scatter_cost_cost(df_results)
