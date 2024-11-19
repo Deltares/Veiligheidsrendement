@@ -191,5 +191,5 @@ def plot_scatter_cost_cost(df_sensitive: pd.DataFrame):
     ax.legend()
     plt.show()
 
-df_results = pd.read_csv(Path(__file__).parent.joinpath("old", "results_sensitivity_analysis_38-1.csv"))
-plot_scatter_cost_cost(df_results)
+# df_results = pd.read_csv(Path(__file__).parent.joinpath("old", "results_sensitivity_analysis_38-1.csv"))
+# plot_scatter_cost_cost(df_results)

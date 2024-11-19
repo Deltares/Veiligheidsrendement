@@ -33,7 +33,7 @@ def rerun_database(_vr_config: VrtoolConfig, rerun_all: bool = False):
     print("IDS to import done: ", t1 - t0)
 
     # Run lenient DSN
-    _vr_config.requirements_file = _vr_config.input_directory.joinpath("requirements_lenient.csv")
+    # _vr_config.requirements_file = _vr_config.input_directory.joinpath("requirements_lenient.csv")
     api.run_optimization(optimization_name="Basisberekening_mod",
                          selected_measures_id_year=_ids_to_import)
     t2 = time()

@@ -94,7 +94,7 @@ colors =  Deltares_colors().sns_palette("DeltaresFull")
 # db_path = Path(r"c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\10-1\versie 2\10-1_Trajectaanpak_metbodemdaling\database_10-1.sqlite")
 # db_path = Path(r"c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\10-1\versie 2\10-1_Trajectaanpak_metbodemdaling\lengte-effecten\database_10-1.sqlite")
 db_path = Path(
-    r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\38-1\38-1_basis.db")
+    r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\38-1\test\38-1_basis_0.db")
 # db_path = Path(r"c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\53-1\53-1_vakindeling1.db")
 has_revetment = False
 # LE = True
@@ -385,7 +385,7 @@ ax.set_xticklabels([f'{x/1e6:.0f}' for x in ax.get_xticks()])
 ax.grid(True, which='both', linestyle=':')
 
 #save the figure
-save_dir = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\vergelijkingen_uniforme_kansen')
+# save_dir = Path(r'c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\vergelijkingen_uniforme_kansen')
 # plt.savefig(save_dir.joinpath('38-1_geenLE_smaller_grid.png'), dpi=300, bbox_inches='tight')
 plt.show()
 
