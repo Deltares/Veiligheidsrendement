@@ -71,7 +71,6 @@ def get_vr_eis_index_2075(traject_config: dict) -> int:
 def get_traject_requirements_per_sections(traject_config: dict):
     db_path = traject_config['path']
     has_revetment = traject_config['revetment']
-    eis = traject_config["eis"]
 
     _runs_overview = get_overview_of_runs(db_path)
 
@@ -140,7 +139,7 @@ def calculate_lenient_boundaries(val):
             return 300
 
 
-def create_requirement_files(requirements_per_section: dict, trajec_config: dict):
+def create_requirement_files_lenient_and_strict(requirements_per_section: dict, trajec_config: dict):
     requirements_df = pd.DataFrame.from_dict(requirements_per_section)
 
     requirements_df["pf_OVERFLOW"] = norm.cdf(-requirements_df[MechanismEnum.OVERFLOW])
@@ -183,6 +182,8 @@ def create_requirement_files(requirements_per_section: dict, trajec_config: dict
     lenient_df["PIPING"] = requirements_df["lenient_piping"]
     lenient_df["STABILITY_INNER"] = requirements_df["lenient_stability_inner"]
     lenient_df.to_csv(trajec_config['path'].parent.joinpath('requirements_lenient.csv'), sep=",", index=False)
+
+    return lenient_df, strick_df
 
 
 # traject_config = {

@@ -143,6 +143,7 @@ def add_combined_vzg_soil(df):
         df_out = pd.concat([df_out, soil])
     return df_out
 
+
 def get_measures_df_with_dsn(LE: bool = False, t_design: int = 50):
     measures_df_db = get_measures_for_all_sections(t_design)
     measures_df = add_combined_vzg_soil(measures_df_db)
@@ -299,30 +300,26 @@ def get_cost_traject_pf_combinations(combination_df: pd.DataFrame, measures_df_w
     return combination_df
 
 
-
-
 def get_dsn_point_pf_cost(db_path):
     """Return (cost, traject_pf) for the DSN point"""
     dsn_steps = get_optimization_steps_for_run_id(db_path, 2)
     traject_probs_dsn = get_traject_probs(db_path, run_id=2)
-
 
     ind_2075 = np.where(np.array(traject_probs_dsn[0][0]) == 50)[0][0]
     dsn_cost = dsn_steps[-1]['total_lcc']
     dsn_pf = traject_probs_dsn[-1][1][ind_2075]
     return dsn_cost, dsn_pf
 
-def get_vr_eco_optimum_point(traject_probs, optimization_steps):
 
+def get_vr_eco_optimum_point(traject_probs, optimization_steps):
     considered_tc_step = get_minimal_tc_step(optimization_steps) - 1
     # find index where traject_probs[0][0] == 50
     ind_2075 = np.where(np.array(traject_probs[0][0]) == 50)[0][0]
-    pf_2075 = [traject_probs[i][1][ind_2075] for i in range(len(traject_probs))]
-    cost_vrm = [optimization_steps[i]['total_lcc'] for i in range(len(traject_probs))]
 
     vrm_optimum_cost = optimization_steps[considered_tc_step - 1]['total_lcc']
     vrm_optimum_pf = traject_probs[considered_tc_step - 1][1][ind_2075]
     return vrm_optimum_cost, vrm_optimum_pf
+
 
 def get_least_expensive_combination_point(df_combinations_results, p_max):
     cost = np.array(df_combinations_results['cost'])

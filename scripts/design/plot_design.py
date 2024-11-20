@@ -107,23 +107,27 @@ def plot_combined_measure_figure(
     plt.show()
 
 
-def plot_sensitivity(df_sensitivity: pd.DataFrame):
+def plot_sensitivity(df_sensitivity: pd.DataFrame, vrm_optimization_steps: pd.DataFrame, pmax: float):
     fig, ax = plt.subplots()
     from scripts.design.deltares_colors import colors
 
-    ax.scatter(df_sensitivity["least_expensive_combination_cost"], df_sensitivity["least_expensive_combination_pf"],
+    ax.scatter(df_sensitivity["cheapest_combination_cost"], df_sensitivity["cheapest_combination_pf"],
                color=colors[4], label='Combi optimum')
     ax.scatter(df_sensitivity["dsn_point_cost"], df_sensitivity["dsn_point_pf"], color=colors[6], label='DSN')
     ax.scatter(df_sensitivity["vrm_eco_point_cost"], df_sensitivity["vrm_eco_point_pf"], color=colors[0],
                label='VRM optimum')
+
+    ax.hlines(pmax, 0, df_sensitivity['dsn_point_cost'].max(), colors='k', linestyles='dashed', label='Ondergrens * 0.52')
+    ax.plot(vrm_optimization_steps['cost'], vrm_optimization_steps['pf_traject'], color=colors[0],
+            label='VR pad basis', linestyle='-', marker='o', markersize=2)
+
     ax.set_xlim(left=0)
+    ax.set_ylim(top=pmax * 10, bottom=pmax / 10)
     ax.set_xlabel('Kosten (M€)')
     ax.set_ylabel('Traject faalkans in 2075')
     ax.set_yscale('log')
     ax.legend()
     plt.show()
-
-
 
 
 def plot_sensitivity_plotly(df_sensitive: pd.DataFrame):
@@ -162,7 +166,6 @@ def plot_histogram_metrics(df_sensitive: pd.DataFrame):
     ax.hist(df_sensitive["dsn_point_cost"] - df_sensitive["least_expensive_combination_cost"], bins=20, color=colors[4],
             label='dist vakspecifiek/DSN')
     ax.set_xlabel('Afstand in kosten')
-
     ax.set_ylabel('Aantal trajecten')
     ax.legend()
     plt.show()
