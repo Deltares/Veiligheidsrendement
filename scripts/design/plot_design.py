@@ -5,7 +5,7 @@ import pandas as pd
 import seaborn as sns
 
 # import plotly.graph_objects as go
-from scripts.design.create_requirement_files import get_vr_eis_index_2075, traject_config
+from scripts.design.create_requirement_files import get_vr_eis_index_2075
 
 # sns.set(style="whitegrid")
 # colors = sns.color_palette("colorblind", 10)
