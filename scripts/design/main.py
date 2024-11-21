@@ -14,7 +14,7 @@ assert _input_model.exists()
 
 
 res_list = []
-N = 20
+N = 3
 for i in range(0, N):
     _vr_config = VrtoolConfig().from_json(Path(_input_model).joinpath("config.json"))
     _vr_config.input_directory = _input_model
@@ -28,10 +28,10 @@ for i in range(0, N):
         continue
 
     print(f"Finished run {i} of {N}")
-#
-# # convert to csv
-# df = pd.DataFrame(res_list)
-# df.to_csv(_input_model.joinpath("results_sensitivity_analysis_modified_piping_beta_VZG.csv"))
+
+# convert to csv
+df = pd.DataFrame(res_list)
+df.to_csv(_input_model.joinpath("results_sensitivity_analysis_modified_piping_beta_VZG.csv"))
 
 
 # run_single_database(_vr_config.input_directory.joinpath(_vr_config.input_database_name), plot=True)
