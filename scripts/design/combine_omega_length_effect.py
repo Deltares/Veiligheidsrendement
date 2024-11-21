@@ -15,7 +15,7 @@ from scripts.postprocessing.database_analytics import get_minimal_tc_step
 from vrtool.orm.models import DikeTrajectInfo
 
 
-def run_single_database(db_path: Path, plot: bool = False):
+def run_single_database(db_path: Path, plot: bool = False, run_id: int =1):
     # Input
     has_revetment = False
     LE = False
@@ -34,10 +34,10 @@ def run_single_database(db_path: Path, plot: bool = False):
         "N_omega": None,
 
     }
-    traject_probs = get_traject_probs(db_path)
+    traject_probs = get_traject_probs(db_path, has_revetment, run_id)
     p_max = DikeTrajectInfo.get(DikeTrajectInfo.id == 1).p_max * 0.52
     traject_name = DikeTrajectInfo.get(DikeTrajectInfo.id == 1).traject_name
-    optimization_steps = get_optimization_steps_for_run_id(db_path, 1)
+    optimization_steps = get_optimization_steps_for_run_id(db_path, run_id)
     ind_2075 = np.where(np.array(traject_probs[0][0]) == 50)[0][0]  # find index where traject_probs[0][0] == 50
     pf_2075 = [traject_probs[i][1][ind_2075] for i in range(len(traject_probs))]
     cost_vrm = [optimization_steps[i]['total_lcc'] for i in range(len(traject_probs))]
@@ -54,8 +54,8 @@ def run_single_database(db_path: Path, plot: bool = False):
 
     res_run["cheapest_combination_cost"] = cheapest_combination[0]
     res_run["cheapest_combination_pf"] = cheapest_combination[1]
-    res_run["dsn_point_cost"] = get_dsn_point_pf_cost(db_path)[0]
-    res_run["dsn_point_pf"] = get_dsn_point_pf_cost(db_path)[1]
+    res_run["dsn_point_cost"] = get_dsn_point_pf_cost(db_path, run_id_dsn=run_id+1)[0]
+    res_run["dsn_point_pf"] = get_dsn_point_pf_cost(db_path, run_id_dsn=run_id+1)[1]
     res_run["vrm_eco_point_cost"] = get_vr_eco_optimum_point(traject_probs, optimization_steps)[0]
     res_run["vrm_eco_point_pf"] = get_vr_eco_optimum_point(traject_probs, optimization_steps)[1]
 
@@ -73,7 +73,7 @@ def run_single_database(db_path: Path, plot: bool = False):
                                      vrm_optimization_steps=vrm_optimization_steps,
                                      vrm_optimum_point=get_vr_eco_optimum_point(traject_probs, optimization_steps),
                                      least_expensive_combination=cheapest_combination,
-                                     dsn_point=get_dsn_point_pf_cost(db_path),
+                                     dsn_point=(res_run["dsn_point_cost"], res_run["dsn_point_pf"]),
                                      p_max=p_max)
 
     return res_run, vrm_optimization_steps, df_combinations_results, p_max

@@ -101,7 +101,7 @@ def import_original_assessment(database_path, mechanism: MechanismEnum):
     return result
 
 
-def get_measures_for_run_id(database_path, run_id):
+def get_measures_for_run_id(database_path, run_id: int):
     """Get the measures for a specific run id.
 
     Args:

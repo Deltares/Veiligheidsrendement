@@ -34,13 +34,14 @@ def get_traject_probs(db_path: Path, has_revetment: bool = False, run_id: int = 
    0.10075928830016645,
    0.10811136593394344])
     """
-
     lists_of_measures = get_measures_for_run_id(db_path, run_id)
     measures_per_step = get_measures_per_step_number(lists_of_measures)
 
     assessment_results = {}
-    for mechanism in [MechanismEnum.OVERFLOW, MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER,
-                      MechanismEnum.REVETMENT]:
+    all_mechanisms = [MechanismEnum.OVERFLOW, MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]
+    if has_revetment:
+        all_mechanisms.append(MechanismEnum.REVETMENT)
+    for mechanism in all_mechanisms:
         if has_revetment or mechanism != MechanismEnum.REVETMENT:
             assessment_results[mechanism] = import_original_assessment(db_path, mechanism)
 
@@ -49,7 +50,6 @@ def get_traject_probs(db_path: Path, has_revetment: bool = False, run_id: int = 
     stepwise_assessment = assessment_for_each_step(copy.deepcopy(assessment_results), reliability_per_step)
 
     traject_probability = calculate_traject_probability_for_steps(stepwise_assessment)
-
     traject_probs = [calculate_traject_probability(traject_probability_step) for traject_probability_step in
                      traject_probability]
 
@@ -59,6 +59,9 @@ def get_traject_probs(db_path: Path, has_revetment: bool = False, run_id: int = 
 def calculate_traject_probability(traject_prob):
     p_nonf = [1] * len(list(traject_prob.values())[0].values())
     for mechanism, data in traject_prob.items():
+        if not data:
+            # Sometimes revetment is included yet with no data.
+            continue
         time, pf = zip(*sorted(data.items()))
 
         p_nonf = np.multiply(p_nonf, np.subtract(1, pf))
@@ -300,10 +303,10 @@ def get_cost_traject_pf_combinations(combination_df: pd.DataFrame, measures_df_w
     return combination_df
 
 
-def get_dsn_point_pf_cost(db_path):
+def get_dsn_point_pf_cost(db_path, run_id_dsn):
     """Return (cost, traject_pf) for the DSN point"""
-    dsn_steps = get_optimization_steps_for_run_id(db_path, 2)
-    traject_probs_dsn = get_traject_probs(db_path, run_id=2)
+    dsn_steps = get_optimization_steps_for_run_id(db_path, run_id_dsn)
+    traject_probs_dsn = get_traject_probs(db_path, run_id_dsn)
 
     ind_2075 = np.where(np.array(traject_probs_dsn[0][0]) == 50)[0][0]
     dsn_cost = dsn_steps[-1]['total_lcc']
