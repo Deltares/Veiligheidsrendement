@@ -64,14 +64,52 @@ def modify_beta_measure_database(_vr_config: VrtoolConfig, measure_type: str, me
 
 
 def modify_cost_measure_database(_vr_config: VrtoolConfig, multiplier: int = 2, measure_type: str = None):
+    """
+
+    Args:
+        _vr_config:
+        multiplier:
+        measure_type: One of "soil reinforcement", "vertical piping solution", "diaphram wall", "stability screening", "soil reinforcement + screen"
+
+    Returns:
+
+    """
     # Open the database and reduce cost of the measures:
     _connected_db = open_database(_vr_config.input_database_path)
 
-    subquery_measure_result = get_subquery_for_measure_type(measure_type)
 
-    _query = (MeasureResultSection
-              .update(cost=MeasureResultSection.cost * multiplier)
-              .where(MeasureResultSection.measure_result_id.in_(subquery_measure_result)))
+    if measure_type  == "soil reinforcement":
+        # apply new cost to the MeasureType == 1 directly.
+        subquery_measure_result_soil_reinf = get_subquery_for_measure_type("soil reinforcement")
+        _query = (MeasureResultSection
+                  .update(cost=MeasureResultSection.cost * multiplier)
+                  .where(MeasureResultSection.measure_result_id.in_(subquery_measure_result_soil_reinf)))
+
+
+        # For MeasureType =2, we need to subtract the cost of a screen: this comes from subquery_measure_result_screen
+        subquery_measure_soil_reinforcement_and_screen = get_subquery_for_measure_type("soil reinforcement + screen")
+        subquery_measure_result_screen = get_subquery_for_measure_type("stability screening")
+        sub = (MeasureResultSection.select().where(MeasureResultSection.measure_result_id.in_(subquery_measure_result_screen)))
+        # len = 840 = 120 * 7 = 60 section * 2 Lscreen * 7 times OK
+
+
+        query = (MeasureResultSection.select().where(MeasureResultSection.measure_result_id.in_(subquery_measure_soil_reinforcement_and_screen)))
+        #dberm: 0/2/5/8/10/15/20/30
+        #dcrest: 0/0.25/0.5/0.75/1/1.25/1.5/1.75/2
+        i = 0
+        for row in query: #len 60480 =  72 * 840 = 8dberm * 9dcrest * 840
+            cost_screen  = sub[i // 72].cost # for every 72 consecutive rows, the cost of the screen is the same
+            new_cost = (row.cost - cost_screen) * multiplier + cost_screen
+            row.cost = new_cost
+            row.save()
+            i += 1
+
+    else:
+        subquery_measure_result = get_subquery_for_measure_type(measure_type)
+
+        _query = (MeasureResultSection
+                  .update(cost=MeasureResultSection.cost * multiplier)
+                  .where(MeasureResultSection.measure_result_id.in_(subquery_measure_result)))
 
     _query.execute()
     _connected_db.close()
@@ -107,7 +145,7 @@ def get_subquery_for_measure_type(measure_type: str):
                     .select(MeasureResult.id)
                     .join(MeasurePerSection)
                     .join(Measure)
-                    .where(Measure.measure_type_id.in_([1, 2])))
+                    .where(Measure.measure_type_id.in_([1])))
     elif measure_type == "vertical piping solution":
         subquery = (MeasureResult
                     .select(MeasureResult.id)
@@ -126,6 +164,13 @@ def get_subquery_for_measure_type(measure_type: str):
                     .join(MeasurePerSection)
                     .join(Measure)
                     .where(Measure.measure_type_id == 5))
+    elif measure_type == "soil reinforcement + screen":
+        subquery = (MeasureResult
+                    .select(MeasureResult.id)
+                    .join(MeasurePerSection)
+                    .join(Measure)
+                    .where(Measure.measure_type_id.in_([2])))
+
     else:
         raise ValueError("Measure type not found")
     return subquery
