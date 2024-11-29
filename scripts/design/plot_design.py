@@ -81,7 +81,14 @@ def plot_combined_measure_figure(
     from scripts.design.deltares_colors import colors
 
     fig, ax = plt.subplots()
-    ax.scatter(df_combinations['cost'], df_combinations['pf_traject'], color=colors[4], marker='.')
+    # ax.scatter(df_combinations['cost'], df_combinations['pf_traject'], color=colors[4], marker='.')
+    # ax.scatter()
+    # chance column type to str
+    df_combinations['N_overflow_grid'] = df_combinations['N_overflow_grid'].astype(str)
+    df_combinations['N_piping_grid'] = df_combinations['N_piping_grid'].astype(str)
+    df_combinations['N_stability_inner_grid'] = df_combinations['N_stability_inner_grid'].astype(str)
+
+    sns.scatterplot(data=df_combinations, x="cost", y="pf_traject", hue="N_stability_inner_grid") # N_piping_grid N_stability_inner_grid
     ax.plot(dsn_point[0], dsn_point[1], color=colors[6], marker='o', linestyle='', label='DSN')
     # Shoe line+points for VRM optimization
     ax.plot(vrm_optimization_steps['cost'], vrm_optimization_steps['pf_traject'], color=colors[0],
@@ -114,10 +121,13 @@ def plot_sensitivity(df_sensitivity: pd.DataFrame, vrm_optimization_steps: pd.Da
     ax.scatter(df_sensitivity["cheapest_combination_cost"], df_sensitivity["cheapest_combination_pf"],
                color=colors[4], label='Combi optimum')
     ax.scatter(df_sensitivity["dsn_point_cost"], df_sensitivity["dsn_point_pf"], color=colors[6], label='DSN')
-    ax.scatter(df_sensitivity["vrm_eco_point_cost"], df_sensitivity["vrm_eco_point_pf"], color=colors[0],
-               label='VRM optimum')
+    ax.scatter(df_sensitivity["vrm_ondergrenz_point_cost"], df_sensitivity["vrm_ondergrenz_point_pf"], color=colors[0],
+               label='VRM ondergrenz')
+    ax.scatter(df_sensitivity["vrm_eco_point_cost"], df_sensitivity["vrm_eco_point_pf"], color=colors[1],
+               label='VRM eco opti')
 
-    ax.hlines(pmax, 0, df_sensitivity['dsn_point_cost'].max(), colors='k', linestyles='dashed', label='Ondergrens * 0.52')
+    ax.hlines(pmax, 0, df_sensitivity['dsn_point_cost'].max(), colors='k', linestyles='dashed',
+              label='Ondergrens * 0.52')
     ax.plot(vrm_optimization_steps['cost'], vrm_optimization_steps['pf_traject'], color=colors[0],
             label='VR pad basis', linestyle='-', marker='o', markersize=2)
 
@@ -140,15 +150,15 @@ def plot_sensitivity_plotly(df_sensitive: pd.DataFrame):
                              marker=dict(color=colors[4]),
                              name='Combi optimum'))
     fig.add_trace(go.Scatter(x=df_sensitive["dsn_point_cost"],
-                                y=df_sensitive["dsn_point_pf"],
-                                mode='markers',
-                                marker=dict(color=colors[6]),
-                                name='DSN'))
+                             y=df_sensitive["dsn_point_pf"],
+                             mode='markers',
+                             marker=dict(color=colors[6]),
+                             name='DSN'))
     fig.add_trace(go.Scatter(x=df_sensitive["vrm_eco_point_cost"],
-                                y=df_sensitive["vrm_eco_point_pf"],
-                                mode='markers',
-                                marker=dict(color=colors[0]),
-                                name='VRM optimum'))
+                             y=df_sensitive["vrm_eco_point_pf"],
+                             mode='markers',
+                             marker=dict(color=colors[0]),
+                             name='VRM optimum'))
     fig.update_layout(
         xaxis_title='Kosten (M€)',
         yaxis_title='Traject faalkans in 2075',
@@ -158,30 +168,71 @@ def plot_sensitivity_plotly(df_sensitive: pd.DataFrame):
     fig.show()
 
 
-def plot_histogram_metrics(df_sensitive: pd.DataFrame):
+def plot_histogram_metrics(df_sensitive: pd.DataFrame, normalized: bool, save: bool):
     # Plot one hist per axis, but have multiple axes
     fig, ax = plt.subplots()
     from scripts.design.deltares_colors import colors
-    ax.hist(df_sensitive["dsn_point_cost"] - df_sensitive["vrm_eco_point_cost"], bins=20, color=colors[0], label='dist VR/DSN')
-    ax.hist(df_sensitive["dsn_point_cost"] - df_sensitive["least_expensive_combination_cost"], bins=20, color=colors[4],
-            label='dist vakspecifiek/DSN')
-    ax.set_xlabel('Afstand in kosten')
-    ax.set_ylabel('Aantal trajecten')
+    # ax.hist(df_sensitive["dsn_point_cost"] - df_sensitive["vrm_eco_point_cost"], bins=20, color=colors[0], label='dist VR/DSN')
+    # remove last element
+    if normalized:
+        ax.hist((df_sensitive["cheapest_combination_cost"] - df_sensitive["vrm_ondergrenz_point_cost"]) / df_sensitive[
+            "vrm_ondergrenz_point_cost"] * 100, bins=20, color=colors[4],
+                )
+        ax.set_title('Verschil tussen VR (2075) en Optimale uniforme doorsnede-eisen in %')
+        ax.set_xlabel('%')
+
+        title = 'Verschil tussen VR en Optimale uniforme doorsnede-eisen genormaliseerd'
+
+    else:
+        ax.hist((df_sensitive["cheapest_combination_cost"] - df_sensitive["vrm_ondergrenz_point_cost"]) / 1e6, bins=20,
+                color=colors[4],
+                )
+        ax.set_title('Verschil tussen VR (2075) en Optimale uniforme doorsnede-eisen in M€')
+        ax.set_xlabel('Kosten (M€)')
+        title = 'Verschil tussen VR en Optimale uniforme doorsnede-eisen'
+
+    ax.set_ylabel('Aantal simulaties')
     ax.legend()
     plt.show()
 
-    #     - distance vr-dsn
-    #     - distance combi-dsn
-    # - distance combi and closest vr point on the VR path
+    if save:
+        fig.savefig(title)
 
-    return
+def plot_histogram_metrics_respective_to_base(df_sensitive: pd.DataFrame, normalized: bool, save: bool):
+    # Plot one hist per axis, but have multiple axes
+    fig, ax = plt.subplots()
+    from scripts.design.deltares_colors import colors
+    # ax.hist(df_sensitive["dsn_point_cost"] - df_sensitive["vrm_eco_point_cost"], bins=20, color=colors[0], label='dist VR/DSN')
+    if normalized:
+        ax.hist((list(df_sensitive["cheapest_combination_cost"])[-1]- df_sensitive["vrm_ondergrenz_point_cost"]) / df_sensitive[
+            "vrm_ondergrenz_point_cost"] * 100, bins=20, color=colors[4],
+                )
+        ax.set_title('Verschil tussen VR (2075) en Optimale uniforme doorsnede-eisen in %')
+        title = 'Verschil tussen VR en Optimale uniforme doorsnede-eisen genormaliseerd_compared_to_base'
+        ax.set_xlabel('%')
+
+
+    else:
+        ax.hist((list(df_sensitive["cheapest_combination_cost"])[-1]- df_sensitive["vrm_ondergrenz_point_cost"]) / 1e6, bins=20,
+                color=colors[4],
+                )
+        ax.set_title('Verschil tussen VR (2075) en Optimale uniforme doorsnede-eisen in M€')
+        ax.set_xlabel('Kosten (M€)')
+        title = 'Verschil tussen VR en Optimale uniforme doorsnede-eisen_compared_to_base'
+
+    ax.set_ylabel('Aantal simulaties')
+    ax.legend()
+    plt.show()
+
+    if save:
+        fig.savefig(title)
 
 
 def plot_scatter_cost_cost(df_sensitive: pd.DataFrame):
     fig, ax = plt.subplots()
     from scripts.design.deltares_colors import colors
     # ax.scatter(df_sensitive["dsn_point_cost"], df_sensitive["vrm_eco_point_cost"], color=colors[0], label='VRM optimum')
-    ax.scatter(df_sensitive["least_expensive_combination_cost"], df_sensitive["dsn_point_cost"],  color=colors[4],
+    ax.scatter(df_sensitive["least_expensive_combination_cost"], df_sensitive["dsn_point_cost"], color=colors[4],
                label='data')
 
     # plot 1:1 line

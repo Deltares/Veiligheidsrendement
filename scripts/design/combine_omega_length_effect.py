@@ -5,17 +5,42 @@ import copy
 import numpy as np
 import pandas as pd
 
-from scripts.design.plot_design import plot_combined_measure_figure, plot_sensitivity, plot_sensitivity_plotly, \
-    plot_histogram_metrics
+from scripts.design.plot_design import plot_combined_measure_figure
 from scripts.design.utils import get_traject_probs, get_target_beta_grid, get_cost_traject_pf_combinations, \
     get_measures_df_with_dsn, get_dsn_point_pf_cost, get_least_expensive_combination_point, get_vr_eco_optimum_point
-from scripts.postprocessing.database_access_functions import get_overview_of_runs, get_optimization_steps_for_run_id
-from scripts.postprocessing.database_analytics import get_minimal_tc_step
+from scripts.postprocessing.database_access_functions import get_optimization_steps_for_run_id
 
 from vrtool.orm.models import DikeTrajectInfo
 
 
-def run_single_database(db_path: Path, plot: bool = False, run_id: int =1):
+def create_summary_results_csv(dir_path: Path, filename: str, run_id: int = 1):
+    """
+    Go through all databases in a direction and apply combination of N_omega and N_LE to get:
+        - the cheapest combination complying with eis
+        - the DSN point
+        - the VRM eco point
+        - the VRM optimal point (lowest cost complying with the target reliability on the VR pad)
+
+    Args:
+        dir_path:
+        filename: save result csv
+        run_id: some database have the correct run_id on 1 or 3.
+
+    Returns:
+
+    """
+    res_list = []
+    for db_path in dir_path.glob("*.db"):
+        print(db_path, "processing ...")
+        res, vrm_optimization_steps, df_combinations_results, p_max = run_combination_single_database(db_path,
+                                                                                                      run_id=run_id)
+        res_list.append(res)
+
+    df = pd.DataFrame(res_list)
+    df.to_csv(dir_path.joinpath(f"{filename}.csv"))
+
+
+def run_combination_single_database(db_path: Path, plot: bool = False, run_id: int =1):
     # Input
     has_revetment = False
     LE = False
@@ -28,8 +53,8 @@ def run_single_database(db_path: Path, plot: bool = False, run_id: int =1):
         "dsn_point_pf": None,
         "vrm_eco_point_cost": None,
         "vrm_eco_point_pf": None,
-        "vrm_optimal_point_cost": None,
-        "vrm_optimal_point_pf": None,
+        "vrm_ondergrenz_point_cost": None,
+        "vrm_ondergrenz_point_pf": None,
         "N_LE": None,
         "N_omega": None,
 
@@ -61,9 +86,9 @@ def run_single_database(db_path: Path, plot: bool = False, run_id: int =1):
 
     # Get distance between VR path and the least expensive combination
     # Point 1: VR lowest complying with the target reliability
-    step_idx_pf_2075 = np.argwhere(np.array(pf_2075) < p_max * .52)[0][0]
-    res_run["vrm_optimal_point_cost"] = cost_vrm[step_idx_pf_2075]
-    res_run["vrm_optimal_point_pf"] = pf_2075[step_idx_pf_2075]
+    step_idx_pf_2075 = np.argwhere(np.array(pf_2075) < p_max)[0][0]
+    res_run["vrm_ondergrenz_point_cost"] = cost_vrm[step_idx_pf_2075]
+    res_run["vrm_ondergrenz_point_pf"] = pf_2075[step_idx_pf_2075]
 
     # path VRM
     vrm_optimization_steps = pd.DataFrame({"cost": cost_vrm, "pf_traject": pf_2075})

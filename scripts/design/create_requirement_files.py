@@ -33,9 +33,6 @@ def get_vr_eis_index_2075(traject_config: dict) -> int:
 
     _runs_overview = get_overview_of_runs(db_path)
 
-    optimization_steps = get_optimization_steps_for_run_id(db_path, 1)
-    considered_tc_step = get_minimal_tc_step(optimization_steps) - 1
-
     lists_of_measures = get_measures_for_run_id(db_path, 1)
     measures_per_step = get_measures_per_step_number(lists_of_measures)
 
@@ -74,8 +71,8 @@ def get_traject_requirements_per_sections(traject_config: dict):
 
     _runs_overview = get_overview_of_runs(db_path)
 
-    optimization_steps = get_optimization_steps_for_run_id(db_path, 1)
-    considered_tc_step = get_minimal_tc_step(optimization_steps) - 1
+    # optimization_steps = get_optimization_steps_for_run_id(db_path, 1)
+    # considered_tc_step = get_minimal_tc_step(optimization_steps) - 1  # this eco optimal
 
     lists_of_measures = get_measures_for_run_id(db_path, 1)
     measures_per_step = get_measures_per_step_number(lists_of_measures)

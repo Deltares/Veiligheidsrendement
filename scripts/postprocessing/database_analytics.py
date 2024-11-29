@@ -338,7 +338,7 @@ def get_reliability_for_each_step_investment(
     return _traject_probability
 
 
-def get_measures_per_section_for_step(measures_per_step, final_step_no):
+def get_measures_per_section_for_step(measures_per_step, final_step_no: int):
     """Get the measures per section for a given step number.
 
     Args:

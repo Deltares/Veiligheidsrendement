@@ -94,7 +94,7 @@ colors =  Deltares_colors().sns_palette("DeltaresFull")
 # db_path = Path(r"c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\10-1\versie 2\10-1_Trajectaanpak_metbodemdaling\database_10-1.sqlite")
 # db_path = Path(r"c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\10-1\versie 2\10-1_Trajectaanpak_metbodemdaling\lengte-effecten\database_10-1.sqlite")
 db_path = Path(
-    r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\38-1\test\38-1_basis_0.db")
+    r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_beta_stability_soil_reinforcement\38-1_basis_0_modified_beta_15.db")
 # db_path = Path(r"c:\Users\klerk_wj\OneDrive - Stichting Deltares\00_Projecten\11_VR_HWBP\05_Handreiking\casus_ontwerpen\53-1\53-1_vakindeling1.db")
 has_revetment = False
 # LE = True
@@ -102,10 +102,10 @@ LE = False
 _runs_overview = get_overview_of_runs(db_path)
 
 # VRM results
-optimization_steps = get_optimization_steps_for_run_id(db_path, 1)
+optimization_steps = get_optimization_steps_for_run_id(db_path, 3)
 considered_tc_step = get_minimal_tc_step(optimization_steps) - 1
 
-lists_of_measures = get_measures_for_run_id(db_path, 1)
+lists_of_measures = get_measures_for_run_id(db_path, 3)
 measures_per_step = get_measures_per_step_number(lists_of_measures)
 
 assessment_results = {}
@@ -375,7 +375,7 @@ ax.plot(cost_vrm_filtered, pf_2075_filtered, color=colors[0], label = 'Optimalis
 ax.plot(optimization_steps[considered_tc_step-1]['total_lcc'], traject_probs[considered_tc_step-1][1][ind_2075], marker = 'o',color = colors[0], label='VRM optimum')
 ax.set_xlim(left = 0, right = max(cost))
 ax.hlines(p_max, 0, 5e8, colors='k', linestyles='dashed', label='Ondergrens')
-ax.set_ylim(top=p_max *10,  bottom = p_max/10)
+# ax.set_ylim(top=p_max *10,  bottom = p_max/10)
 ax.set_xlabel('Kosten (M€)')
 ax.set_ylabel('Traject faalkans in 2075')
 ax.set_yscale('log')
