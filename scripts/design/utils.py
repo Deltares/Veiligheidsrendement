@@ -4,68 +4,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from scripts.postprocessing.database_access_functions import get_optimization_steps_for_run_id, get_measures_for_run_id, \
-    import_original_assessment
-from scripts.postprocessing.database_analytics import get_minimal_tc_step, get_measures_per_step_number, \
-    get_reliability_for_each_step, assessment_for_each_step, calculate_traject_probability_for_steps
-from vrtool.common.enums import MechanismEnum
-import copy
+from scripts.design.vrtool_optimization_object import VRTOOLOptimizationObject
+
+from scripts.postprocessing.database_analytics import get_minimal_tc_step
 
 from vrtool.orm.models import MeasureResultMechanism, MechanismPerSection, Mechanism, MeasureResultSection, \
     MeasureResult, MeasurePerSection, Measure, MeasureType, DikeTrajectInfo, SectionData
 from vrtool.probabilistic_tools.probabilistic_functions import pf_to_beta, beta_to_pf
-
-
-def get_traject_probs(db_path: Path, has_revetment: bool = False, run_id: int = 1) -> list[
-    tuple[tuple[int], list[float]]]:
-    """
-    Return a list of the traject probabilities for each step in the optimization process.
-    Args:
-        db_path:
-
-    Returns:
-    list of tuples, where each tuple contains a tuple of years and a list of probabilities
-    example item: ((0, 19, 20, 25, 50, 75, 100),
-  [0.09562056040494016,
-   0.09606587510969489,
-   0.09609719749741086,
-   0.09626876542106155,
-   0.09764883134543301,
-   0.10075928830016645,
-   0.10811136593394344])
-    """
-    lists_of_measures = get_measures_for_run_id(db_path, run_id)
-    measures_per_step = get_measures_per_step_number(lists_of_measures)
-
-    assessment_results = {}
-    all_mechanisms = [MechanismEnum.OVERFLOW, MechanismEnum.PIPING, MechanismEnum.STABILITY_INNER]
-    if has_revetment:
-        all_mechanisms.append(MechanismEnum.REVETMENT)
-    for mechanism in all_mechanisms:
-        if has_revetment or mechanism != MechanismEnum.REVETMENT:
-            assessment_results[mechanism] = import_original_assessment(db_path, mechanism)
-
-    reliability_per_step = get_reliability_for_each_step(db_path, measures_per_step)
-
-    stepwise_assessment = assessment_for_each_step(copy.deepcopy(assessment_results), reliability_per_step)
-
-    traject_probability = calculate_traject_probability_for_steps(stepwise_assessment)
-    traject_probs = [calculate_traject_probability(traject_probability_step) for traject_probability_step in
-                     traject_probability]
-
-    return traject_probs
-
-
-def calculate_traject_probability(traject_prob):
-    p_nonf = [1] * len(list(traject_prob.values())[0].values())
-    for mechanism, data in traject_prob.items():
-        if not data:
-            # Sometimes revetment is included yet with no data.
-            continue
-        time, pf = zip(*sorted(data.items()))
-
-        p_nonf = np.multiply(p_nonf, np.subtract(1, pf))
-    return time, list(1 - p_nonf)
 
 
 def get_measures_for_all_sections(t_design):
@@ -305,8 +250,12 @@ def get_cost_traject_pf_combinations(combination_df: pd.DataFrame, measures_df_w
 
 def get_dsn_point_pf_cost(db_path, run_id_dsn):
     """Return (cost, traject_pf) for the DSN point"""
-    dsn_steps = get_optimization_steps_for_run_id(db_path, run_id_dsn)
-    traject_probs_dsn = get_traject_probs(db_path, run_id_dsn)
+
+    dsn_run = VRTOOLOptimizationObject(db_path, run_id_dsn)
+    dsn_run.get_all_optimization_results()
+
+    dsn_steps = dsn_run.optimization_steps
+    traject_probs_dsn = dsn_run.traject_probs
 
     ind_2075 = np.where(np.array(traject_probs_dsn[0][0]) == 50)[0][0]
     dsn_cost = dsn_steps[-1]['total_lcc']

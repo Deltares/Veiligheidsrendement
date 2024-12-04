@@ -14,7 +14,6 @@ _input_model = Path(
     r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\38-1\automation\test")
 assert _input_model.exists()
 
-
 # res_list = []
 # N = 6
 # for i, multiplier in enumerate([0.5, 0.75, 1.25, 1.5, 2.0, 2.5, 3]):
@@ -36,33 +35,39 @@ assert _input_model.exists()
 # df = pd.DataFrame(res_list)
 # df.to_csv(_input_model.joinpath("results_sensitivity_analysis_modified_piping_beta_VZG.csv"))
 #
-# create_summary_results_csv(dir_path=Path(r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\10-3\modified_beta_stability_beoordeling"),
-#                            filename="results_sensitivity_beta_stab_beoordeling",
-#                            run_id=3)
+# create_summary_results_csv(dir_path=Path(
+#     r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\10-3\modified_beta_soil_reinforcement"),
+#     filename="results_sensitivity_beta_stab_soil_reinforcement.csv",
+#     run_id=3)
 
-run_combination_single_database(Path(r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_beta_stability_beoordeling\38-1_basis_0.db"
-                                     ), plot=True, run_id=1)
+# run_combination_single_database(Path(
+#     # r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_beta_stability_beoordeling\38-1_basis_0.db"
+#     r"N:\Projects\11209000\11209353\B. Measurements and calculations\008 - Resultaten Proefvlucht\Alle_Databases\10-3\database_10-3.sqlite"
+#                                      ), plot=True, run_id=1)
 
 
-
-# create_csv_runs_summary()
+# # create_csv_runs_summary()
 # df = read_sensitivity_results_and_plot(Path(
-#     # r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\38-1\automation\results_sensitivity_analysis_38-1.csv"),
-#     r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_cost_VZG/results_sensitivity_cost_VZG.csv"),
-#     Path(r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\38-1\automation\38-1_basis_0.db")
+#     r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\10-3\modified_beta_soil_reinforcement\results_sensitivity_beta_stab_soil_reinforcement.csv"),
+#     Path(r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\10-3\database_10-3.sqlite")
 # )
-# df = pd.read_csv(r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_cost_VZG\results_sensitivity_cost_VZG.csv")
-# plot_histogram_metrics(df, True, save=True)
+
+# df = pd.read_csv(
+#     r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\10-3\modified_beta_soil_reinforcement\results_sensitivity_beta_stab_soil_reinforcement.csv"
+# )
+# plot_histogram_metrics(df, False, save=True)
 # plot_histogram_metrics_respective_to_base(df, False, save=True)
 # compare_lenient_requirement_tables()
 
 # compare_lenient_requirement_tables()
-path_dir = Path(r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_cost_VZG")
+path_dir = Path(
+    # r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_beta_stability_soil_reinforcement")
+    r"C:\Users\hauth\TEMPO\try_databases")
 # df = plot_sensitivity_box_plot_beta_all_runs(path_dir, mechanism="piping")
 # df = pd.read_csv(path_dir / "beta_piping_per_section.csv")
 # make_boxplot_sensitivity_per_sections(df)
 
-create_comparison_section_table(path_dir, run_id=3)
+create_comparison_section_table(path_dir, run_id=1)
 # Workflow:
 # 1. run create_summary_results_csv to make the csv summary file of the case
 # 2. Manually add the base case to the csv file at the last row!

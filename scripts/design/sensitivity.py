@@ -27,7 +27,7 @@ def read_sensitivity_results_and_plot(csv_result_path: Path, db_path):
 
 
 def compare_lenient_requirement_tables():
-    path_dir = Path(r"C:\Users\hauth\OneDrive - Stichting Deltares\projects\VRTool\databases\38-1\automation")
+    path_dir = Path(r"N:\Projects\11209000\11209353\B. Measurements and calculations\Handleiding & handreiking\sensitivity_analysis\modified_beta_stability_beoordeling")
     wb = Workbook()
     ws_base = wb.active
     ws_base.title = "Base Case"
@@ -46,6 +46,9 @@ def compare_lenient_requirement_tables():
 
     for idx, db_path in enumerate(path_dir.glob("*.db")):
         print(db_path, "processing ...")
+
+        if idx>2:
+            break
         params["path"] = db_path
 
         requirements_per_section = get_traject_requirements_per_sections(params)
@@ -82,7 +85,7 @@ def compare_lenient_requirement_tables():
         ws_summary.append(r)
 
     # Save workbook
-    output_file = path_dir / "comparison_results_with_summary.xlsx"
+    output_file = path_dir / "comparison_results_with_summary222.xlsx"
     wb.save(output_file)
     print(f"Comparison saved to {output_file}")
 
@@ -165,14 +168,6 @@ def create_comparison_section_table(path_dir: Path, run_id: int, path_base_db: P
 
     # Get data
     for idx, db_path in enumerate(path_dir.glob("*.db")):
-
-        print(db_path, "processing ...")
-        if idx == 0:
-            run_idd = 1 # force run_id for base case
-            assert db_path.stem == "38-1_basis_0", "Verify that first iterated database is the base case"
-        else:
-            run_idd = run_id
-
         params = {
             "name": "38-1",
             "eis": 1 / 10000,
@@ -181,6 +176,23 @@ def create_comparison_section_table(path_dir: Path, run_id: int, path_base_db: P
             "meet_eis": True,
             "path": db_path
         }
+
+        if idx > 1:
+            break
+        print(db_path, "processing ...")
+        if idx == 0:
+            run_idd = 1 # force run_id for base case
+            assert db_path.stem == "38-1_basis_0", "Verify that first iterated database is the base case"
+            # assert db_path.stem == "atabase_10-3.sqlite_0", "Verify that first iterated database is the base case"
+
+            requirements_per_section = get_traject_requirements_per_sections(params)
+            requirement_df, _ = create_requirement_files_lenient_and_strict(requirements_per_section, params)
+            section_ids = list(requirement_df.index)
+
+        else:
+            run_idd = run_id
+
+
         step_requirement: int = get_vr_eis_index_2075(params)
         lists_of_measures = get_measures_for_run_id(db_path, run_id=run_idd)
 
@@ -210,15 +222,16 @@ def create_comparison_section_table(path_dir: Path, run_id: int, path_base_db: P
 
     # data base case
     base_case = all_data[0]
-    count_diff_meas_type = np.zeros(len(base_case))
-    count_diff_dberm = np.zeros(len(base_case))
-    count_diff_dcrest = np.zeros(len(base_case))
-    count_diff_L_screen = np.zeros(len(base_case))
-    vzg_present = np.zeros(len(base_case))
-    stab_screen_present = np.zeros(len(base_case))
-    damwand_present = np.zeros(len(base_case))
+    nb_sections = len(section_ids)
+    count_diff_meas_type = np.zeros(nb_sections)
+    count_diff_dberm = np.zeros(nb_sections)
+    count_diff_dcrest = np.zeros(nb_sections)
+    count_diff_L_screen = np.zeros(nb_sections)
+    vzg_present = np.zeros(nb_sections)
+    stab_screen_present = np.zeros(nb_sections)
+    damwand_present = np.zeros(nb_sections)
 
-    dim_array = (len(base_case), len(all_data))
+    dim_array = (nb_sections, len(all_data))
     array_dberm = np.zeros(dim_array)
     array_dcrest = np.zeros(dim_array)
     array_L_screen = np.zeros(dim_array)
@@ -226,29 +239,64 @@ def create_comparison_section_table(path_dir: Path, run_id: int, path_base_db: P
 
     # Process data
     for i, run in enumerate(all_data):
-        for j, section in enumerate(run):
-            if run[section]["name"] != base_case[section]["name"]:
-                count_diff_meas_type[j] += 1
-            if run[section]["params"]["dberm"] != base_case[section]["params"]["dberm"]:
-                count_diff_dberm[j] += 1
-            if run[section]["params"]["dcrest"] != base_case[section]["params"]["dcrest"]:
-                count_diff_dcrest[j] += 1
-            if run[section]["params"]["L_screen"] != base_case[section]["params"]["L_screen"]:
-                count_diff_L_screen[j] += 1
+        # for j, section in enumerate(run):
+        for j in section_ids:
+            if j in base_case.keys():
+                if j not in run.keys():
+                    continue
+                if run[j]["name"] != base_case[j]["name"]:
+                    count_diff_meas_type[j] += 1
+                if run[j]["params"]["dberm"] != base_case[j]["params"]["dberm"]:
+                    count_diff_dberm[j] += 1
+                if run[j]["params"]["dcrest"] != base_case[j]["params"]["dcrest"]:
+                    count_diff_dcrest[j] += 1
+                if run[j]["params"]["L_screen"] != base_case[j]["params"]["L_screen"]:
+                    count_diff_L_screen[j] += 1
 
-            # NOT ROBUST TO RELY ON THE USER NAME PROVIDED FOR THE MEASURE!
-            if "Verticaal Zanddicht" in run[section]["name"]:
-                vzg_present[j] += 1
-            if "stabiliteitsscherm" in run[section]["name"]:
-                stab_screen_present[j] += 1
-            if "Zelfkerende constructie" in run[section]["name"]:
-                damwand_present[j] += 1
+                # NOT ROBUST TO RELY ON THE USER NAME PROVIDED FOR THE MEASURE!
+                if "Verticaal Zanddicht" in run[j]["name"]:
+                    vzg_present[j] += 1
+                if "stabiliteitsscherm" in run[j]["name"]:
+                    stab_screen_present[j] += 1
+                if "Zelfkerende constructie" in run[j]["name"]:
+                    damwand_present[j] += 1
 
-            # get the parameters
-            array_dberm[j, i] = run[section]["params"]["dberm"]
-            array_dcrest[j, i] = run[section]["params"]["dcrest"]
-            array_L_screen[j, i] = run[section]["params"]["L_screen"]
+                # get the parameters
+                print(i, j)
+                print(array_dberm)
+                array_dberm[j-1, i-1] = run[j]["params"]["dberm"]
+                array_dcrest[j-1, i-1] = run[j]["params"]["dcrest"]
+                array_L_screen[j-1, i-1] = run[j]["params"]["L_screen"]
+            else:
+                base_case[j] = {"name": "Geen Maatregel", "params": {"dberm": 0, "dcrest": 0, "L_screen": 0}}
+                if j in run.keys():
+                    # NOT ROBUST TO RELY ON THE USER NAME PROVIDED FOR THE MEASURE!
+                    if "Verticaal Zanddicht" in run[j]["name"]:
+                        vzg_present[j] += 1
+                    if "stabiliteitsscherm" in run[j]["name"]:
+                        stab_screen_present[j] += 1
+                    if "Zelfkerende constructie" in run[j]["name"]:
+                        damwand_present[j] += 1
+                    # get the parameters
+                    array_dberm[j-1, i-1] = run[j]["params"]["dberm"]
+                    array_dcrest[j-1, i-1] = run[j]["params"]["dcrest"]
+                    array_L_screen[j-1, i-1] = run[j]["params"]["L_screen"]
+                    count_diff_meas_type[j] += 1
+                    count_diff_dberm[j] += 1
+                    count_diff_dcrest[j] += 1
+                    count_diff_L_screen[j] += 1
+                else:
+                    continue
 
+
+
+
+
+
+    #replace nan values with 0: (no Berm means dberm=0)
+    array_dberm = np.nan_to_num(array_dberm)
+    array_dcrest = np.nan_to_num(array_dcrest)
+    array_L_screen = np.nan_to_num(array_L_screen)
     mean_dberm = np.mean(array_dberm, axis=1)
     mean_dcrest = np.mean(array_dcrest, axis=1)
     mean_l_stab_screen = np.mean(array_L_screen, axis=1)
@@ -267,7 +315,7 @@ def create_comparison_section_table(path_dir: Path, run_id: int, path_base_db: P
 
     # put data in a csv file
     df = pd.DataFrame({
-        "Section name": list(base_case.keys()),
+        "Section id": list(base_case.keys()),
         "Base_measure_type": base_measure_type,
         "Base_dberm": base_dberm,
         "Base_dcrest": base_dcrest,
@@ -285,7 +333,14 @@ def create_comparison_section_table(path_dir: Path, run_id: int, path_base_db: P
         "count_unique_dberm": count_unique_dberm,
         "count_unique_dcrest": count_unique_dcrest,
         "count_unique_Lscreen": count_unique_Lscreen
+
     })
+
+    df.sort_values(by="Section id", inplace=True)
+
+    df["N_piping_base"] =  requirement_df["PIPING"].to_numpy()
+    df["N_overflow_base"] = requirement_df["OVERFLOW"].to_numpy()
+    df["N_stability_inner_base"] = requirement_df["STABILITY_INNER"].to_numpy()
 
     df.to_csv(path_dir / "comparison_section_table.csv")
     #save to excel
