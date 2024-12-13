@@ -19,7 +19,7 @@ ARG SRC_ROOT="/usr/src"
 ARG CONDA_ENV="${SRC_ROOT}/.env"
 
 # Install conda environment
-# This location needs to be mounted with your vrtool checout:
+# This location needs to be mounted with your vrtool checkout:
 # -v {your_vrtool_checkout_dir}:/usr/src/app
 WORKDIR $SRC_ROOT/app
 COPY environment.yml $SRC_ROOT/.config/environment.yml
