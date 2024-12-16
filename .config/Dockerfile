@@ -11,6 +11,10 @@ ENV TZ=Europe/Amsterdam \
     DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install libgl1 -y && apt-get install libicu66 -y
 
+# Install dotnet runtime
+RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+RUN chmod +x ./dotnet-install.sh
+RUN ./dotnet-install.sh --channel 8.0  --runtime aspnetcore
 
 ARG SRC_ROOT="/usr/src"
 
@@ -33,9 +37,10 @@ RUN conda init bash \
     && . ~/.bashrc \
     && conda env create -f $SRC_ROOT/.config/environment.yml -p $CONDA_ENV
 
+   
 # Activate conda environment
 ENV PATH $CONDA_ENV/bin:$PATH
-RUN conda activate ${CONDA_ENV} & poetry config virtualenvs.create false
+RUN conda init & conda activate ${CONDA_ENV} & poetry config virtualenvs.create false
 RUN echo conda init && echo "conda activate ${CONDA_ENV}" >>  ~/.bashrc
 # This ensures it's available also for `sh` instead of `bash`.
 RUN echo "conda activate ${CONDA_ENV}" > ~/.profile
