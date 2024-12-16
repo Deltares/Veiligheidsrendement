@@ -1,7 +1,7 @@
-# To build this docker run:
-# `docker build -t vrtool_core_dev`
+# To build this docker (from the root checkout) run:
+# `docker build -t vrtool_dev .config`
 # To run the docker for pytest:
-# `docker run -v {your_vrtool_checkout_dir}:/usr/src/app/ -v {vrtool_env_dir}:/usr/src/.env -t vrtool_core_dev`
+# `docker run -v {your_vrtool_checkout_dir}:/usr/src/app/ -v {vrtool_env_dir}:/usr/src/.env -t vrtool_dev`
 # `poetry install`
 # `poetry run pytest -m {your_pytest_arguments}`
 
