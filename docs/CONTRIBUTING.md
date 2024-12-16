@@ -37,6 +37,7 @@ To download and use it, assuming a running [Docker desktop](https://www.docker.c
     docker pull containers.deltares.nl/gfs-dev/vrtool_dev:latest
     docker image tag containers.deltares.nl/gfs-dev/vrtool_dev:latest vrtool_dev
     ```
+    > You may change `:latest` with any other development tag available. This is useful during development of features with new dependencies.
 
 2. Access the docker and mount your current checkout.
     ```bash
