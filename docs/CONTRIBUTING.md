@@ -17,7 +17,7 @@ If you have not installed the `vrtool` for development please do so now:
 2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda (miniforge)](https://conda-forge.org/miniforge/) (or check [other options](#other-installation-options)):    
     ```bash
     cd C:\repos\vrtool_repo
-    conda env create -f .config\environment.yml
+    conda env create -f .devcontainer\environment.yml
     conda activate vrtool_env
     poetry install
     ```

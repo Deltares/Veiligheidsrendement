@@ -69,7 +69,7 @@ exclude = '''
     | \.github          # root of the project
     | \.env
     | \.venv
-    | \.config
+    | \.devcontainer
     | .pytest_cache
     | .scannerwork
     | .vscode
@@ -87,7 +87,7 @@ skip = [
   ".github",
   ".env",
   ".venv",
-  ".config",
+  ".devcontainer",
   ".pytest_cache",
   ".scannerwork",
   ".vscode",

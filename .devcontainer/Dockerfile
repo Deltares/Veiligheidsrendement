@@ -1,5 +1,5 @@
 # To build this docker (from the root checkout) run:
-# `docker build -t vrtool_dev .config`
+# `docker build -t vrtool_dev .devcontainer`
 # To run the docker for pytest:
 # `docker run -v {your_vrtool_checkout_dir}:/usr/src/app/ -v {vrtool_env_dir}:/usr/src/.env -t vrtool_dev`
 # `poetry install`
@@ -34,7 +34,7 @@ ARG CONDA_ENV="${SRC_ROOT}/.env"
 # This location needs to be mounted with your vrtool checkout:
 # -v {your_vrtool_checkout_dir}:/usr/src/app
 WORKDIR $SRC_ROOT/app
-COPY environment.yml $SRC_ROOT/.config/environment.yml
+COPY environment.yml $SRC_ROOT/.devcontainer/environment.yml
 COPY externals $SRC_ROOT/test_externals
 
 # Give execution rights to DStability
@@ -43,7 +43,7 @@ RUN chmod a+x "${SRC_ROOT}/test_externals/DStabilityConsole/D-Stability Console"
 # Set conda environment
 RUN conda init bash \
     && . ~/.bashrc \
-    && conda env create -f $SRC_ROOT/.config/environment.yml -p $CONDA_ENV
+    && conda env create -f $SRC_ROOT/.devcontainer/environment.yml -p $CONDA_ENV
 
    
 # Activate conda environment
