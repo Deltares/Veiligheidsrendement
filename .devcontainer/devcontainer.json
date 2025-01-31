@@ -1,8 +1,14 @@
 {
   "name": "vrtool_dev_container",
-  "dockerComposeFile": "docker-compose.devcontainer.yml",
-  "service": "deploy-dev-container",
+  "build":{
+    "dockerfile": "Dockerfile"
+  },
   "workspaceFolder": "/usr/src/app",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/usr/src/app,type=bind,consistency=cached",
+    "source=vrtool_dev_container,target=/usr/src/.env,type=volume"
+  ],
+  "postStartCommand": "poetry install & git config --global core.autocrlf true & git config --global --add safe.directory ${containerWorkspaceFolder}",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -17,7 +23,5 @@
       ]
     }
   },
-
-  // "forwardPorts": [3000]
-  "postCreateCommand": "poetry install"
+  "forwardPorts": [3000]
 }
