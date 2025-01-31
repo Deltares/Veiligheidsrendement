@@ -30,17 +30,17 @@ packages = [{ include = "vrtool" }]
 migrate_test_db = "scripts.migration.migrate_test_databases:migrate_test_databases"
 
 [tool.poetry.dependencies]
-python = "^3.9, <3.11"
+python = ">=3.10,<4.0"
 matplotlib = "^3.7.0"
 pandas = "^1.5.3"
 shapely = "^2.0.1"
-scipy = "1.8.1"
+scipy = "^1.8.1"
 seaborn = "^0.12.2"
 openturns = "^1.19"
 openpyxl = "^3.1.1"
 click = "^8.1.3"
 peewee = "^3.16.1"
-d-geolib = { git = "https://github.com/Deltares/GEOLib.git", rev = "32dea98" }
+d-geolib = "^2.6.0"
 tqdm = "^4.66.2"
 
 [tool.poetry.group.test.dependencies]
