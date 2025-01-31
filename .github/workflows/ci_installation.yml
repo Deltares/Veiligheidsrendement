@@ -10,29 +10,27 @@ jobs:
   install-package:
     if: "${{ (!startsWith(github.event.head_commit.message, 'chore: autoformat isort & black')) && (!startsWith(github.event.head_commit.message, 'bump:')) }}"
     name: "Verify package can be installed in different systems."
-    permissions: write-all
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.BYPASS_PROTECTED_BRANCHES_PAT }}
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
+        uses: abatilo/actions-poetry@v2.3.0
         with:
-          poetry-version: 1.4.0
+          poetry-version: 1.6.1
 
       - name: Cache Poetry virtualenv
         uses: actions/cache@v1
