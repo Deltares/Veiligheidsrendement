@@ -9,7 +9,6 @@ on:
 jobs:
   install-package:
     if: "${{ (!startsWith(github.event.head_commit.message, 'chore: autoformat isort & black')) && (!startsWith(github.event.head_commit.message, 'bump:')) }}"
-    name: "Verify package can be installed in different systems."
     strategy:
       fail-fast: false
       matrix:
