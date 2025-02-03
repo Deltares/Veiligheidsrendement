@@ -30,7 +30,7 @@ packages = [{ include = "vrtool" }]
 migrate_test_db = "scripts.migration.migrate_test_databases:migrate_test_databases"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.11,<3.13"
 matplotlib = "^3.7.0"
 numpy = "1.26.4"
 pandas = "^1.5.3"

@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - conda-forge::python=3.10
+  - conda-forge::python=3.11
   - conda-forge::poetry
   - conda-forge::openturns
   # If this does not work, try adding in pyproject.toml the following PINNED dependency:
