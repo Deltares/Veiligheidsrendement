@@ -1,5 +1,3 @@
-from dataclasses import field
-
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
@@ -13,7 +11,7 @@ class TrajectRisk:
     """
 
     _probability_of_failure: dict[MechanismEnum, np.ndarray] = {}
-    _annual_damage: np.ndarray = field(default_factory=np.array([], dtype=float))
+    _annual_damage: np.ndarray = np.array([], dtype=float)
 
     def __init__(self, Pf: dict[MechanismEnum, np.ndarray], D: np.ndarray):
         self._probability_of_failure = Pf
