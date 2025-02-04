@@ -3,6 +3,8 @@ from dataclasses import field
 import numpy as np
 
 from vrtool.common.enums.mechanism_enum import MechanismEnum
+from vrtool.optimization.measures.sg_measure import SgMeasure
+from vrtool.optimization.measures.sh_measure import ShMeasure
 
 
 class TrajectRisk:
