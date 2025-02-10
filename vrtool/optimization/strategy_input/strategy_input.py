@@ -17,8 +17,8 @@ class StrategyInput(StrategyInputProtocol):
     design_method: str
     sections: list[SectionAsInput] = field(default_factory=list)
     Pf: dict[MechanismEnum, np.ndarray] = field(default_factory=dict)
-    LCCOption: np.ndarray = field(default_factory=np.array([]))
-    D: np.ndarray = field(default_factory=np.array([]))
+    LCCOption: np.ndarray = field(default_factory= lambda: np.ndarray(shape=(0, 0)))
+    D: np.ndarray = field(default_factory=lambda: np.ndarray(shape=(0, 0)))
 
     @classmethod
     def from_section_as_input_collection(
