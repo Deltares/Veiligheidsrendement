@@ -158,7 +158,7 @@ class TestOrmControllers:
         assert DatabaseVersion.from_database(_db_file) == OrmVersion.from_orm()
 
     @pytest.mark.skipif(
-        condition=(test_data.joinpath("test_db\\vrtool_db.db").exists()),
+        condition=(test_data.joinpath("test_db", "vrtool_db.db").exists()),
         reason="Test database already exists. Won't overwrite.",
     )
     def test_create_db_with_data(self):

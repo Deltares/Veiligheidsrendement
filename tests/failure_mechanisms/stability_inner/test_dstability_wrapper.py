@@ -1,8 +1,8 @@
 import filecmp
 import shutil
+import sys
 
 import pytest
-import win32api
 
 from tests import test_data, test_externals, test_results
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
@@ -30,15 +30,17 @@ class TestDStabilityWrapper:
     def test_rerun_stix_with_invalid_externals_path_raises(
         self, request: pytest.FixtureRequest
     ):
+        # 1. Define test data.
         _path_test_stix = test_data.joinpath(
             "stix", "RW001.+096_STBI_maatgevend_Segment_38005_1D1.stix"
         )
         _invalid_externals = test_data.joinpath(request.node.name)
-        assert not _invalid_externals.exists(), "This (test) folder should not exist."
-
-        _expected_error = "Console executable not found at {}.".format(
-            _invalid_externals.joinpath("DStabilityConsole", "D-Stability Console.exe")
+        _console_path = DStabilityWrapper.get_dstability_console_path(
+            _invalid_externals
         )
+        assert not _console_path.exists(), "This (test) file should not exist."
+
+        _expected_error = "Console executable not found at {}.".format(_console_path)
 
         with pytest.raises(Exception) as exception_error:
             DStabilityWrapper(
@@ -49,8 +51,13 @@ class TestDStabilityWrapper:
         assert str(exception_error.value.message) == _expected_error
 
     @pytest.mark.externals
+    @pytest.mark.skipif(
+        sys.platform != "win32", reason="Pywin32 only available for windows"
+    )
     def test_validate_dstability_version(self):
         # 1. Define test data.
+        import win32api
+
         _supported_major_version = "2024"
         _dstability_exe = test_externals.joinpath(
             "DStabilityConsole", "D-Stability Console.exe"
@@ -143,7 +150,7 @@ class TestDStabilityWrapper:
         _stix_name = (
             "RW001.+096_STBI_maatgevend_Segment_38005_1D1_no_results_saved.stix"
         )
-        _path_test_stix = test_data / "stix" / _stix_name
+        _path_test_stix = test_data.joinpath("stix", _stix_name)
         _dstab_wrapper = DStabilityWrapper(
             stix_path=_path_test_stix,
             externals_path=test_externals,

@@ -72,6 +72,7 @@ class TestMigrateDatabaseController:
     ):
         # 1. Define test data
         _script = valid_conversion_scripts.joinpath("valid_script.txt")
+        assert _script.exists()
 
         _query = "SELECT * FROM ValidTable"
         with open_database_without_compatibility_check(

@@ -17,7 +17,7 @@ If you have not installed the `vrtool` for development please do so now:
 2. Navigate to your `Veiligheidsrendement` local directory and then install the `vrtool` package with [Anaconda (miniforge)](https://conda-forge.org/miniforge/) (or check [other options](#other-installation-options)):    
     ```bash
     cd C:\repos\vrtool_repo
-    conda env create -f .config\environment.yml
+    conda env create -f .devcontainer\environment.yml
     conda activate vrtool_env
     poetry install
     ```
@@ -25,6 +25,40 @@ If you have not installed the `vrtool` for development please do so now:
 
 ### Other installation options.
 
+### Using the Docker dev container.
+With each succesful commit to `main` we publish a new development docker container that can be used as a means to speed up the installation steps in a controlled environment. This docker development container includes the "test externals" (at the moment of writing this is only the `DStability` **linux** kernel) and a conda environment with poetry already installed in it.
+
+The container is accessible to all deltares contributors at the [Deltares Harbor](containers.deltares.nl/gfs-dev/vrtool_dev:latest)
+
+To download and use it, assuming a running [Docker desktop](https://www.docker.com/products/docker-desktop/) instance, you may follow the following steps:
+
+1. Pull and rename the docker dev image from `containers.deltares.nl/gfs-dev/vrtool_dev:latest`:
+    ```bash
+    docker pull containers.deltares.nl/gfs-dev/vrtool_dev:latest
+    docker image tag containers.deltares.nl/gfs-dev/vrtool_dev:latest vrtool_dev
+    ```
+    > You may change `:latest` with any other development tag available. This is useful during development of features with new dependencies.
+
+2. Access the docker and mount your current checkout.
+    ```bash
+    docker run -v .:/usr/src/app/ -v docker_env:/usr/src/.env -it vrtool_dev
+    ```
+    > -v Will mount the left side (yor local disk) into the right one (docker virtual volume). Mounting the environment allows you to reuse it at anytime.
+
+    > -it Will give you access to the docker console.
+
+3. Copy the "test externals" into the test directory (so tests can be run):
+    ```bash
+    cp -r /usr/src/test_externals /usr/src/app/tests/test_externals
+    ```
+
+3. Install your checkout.
+    ```bash
+    poetry install
+    ```
+    > If it fails you can try doing `poetry install` instead, this is due to some dependency differences between the `conda-forge` version and the one in the `poetry.lock` file.
+
+### Via `pypi`
 It is also possible to contribute to the project without the use of `conda` and `poetry`. For instance, directly with pip (`pypi`):
 ```bash
 cd C:\repos\vrtool_repo
