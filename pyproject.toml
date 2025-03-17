@@ -33,7 +33,7 @@ migrate_test_db = "scripts.migration.migrate_test_databases:migrate_test_databas
 python = ">=3.12,<3.13"
 matplotlib = "^3.7.0"
 numpy = "1.26.4"
-pandas = "^1.5.3"
+pandas = ">=1.5.3"
 shapely = "^2.0.1"
 scipy = ">=1.8.1,<1.14.0"
 seaborn = "^0.12.2"
