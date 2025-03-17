@@ -35,12 +35,12 @@ from vrtool.run_workflows.safety_workflow.run_safety_assessment import (
 )
 
 
-def get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
+def get_valid_vrtool_config(config_file: Path) -> VrtoolConfig:
     """
     Gets the location of a valid `VrtoolConfig` file within the provided directory.
 
     Args:
-        model_directory (Path): Directory containing a `.json` VRTOOL config file.
+        config_file (Path): Path to the  `.json` VRTOOL config file.
 
     Raises:
         FileNotFoundError: When no `.json` config file was found.
@@ -49,24 +49,14 @@ def get_valid_vrtool_config(model_directory: Path) -> VrtoolConfig:
     Returns:
         VrtoolConfig: Configuration file representing the model in the given directory.
     """
-    _found_json = list(model_directory.glob("*.json"))
-    if not any(_found_json):
+    if not config_file.is_file():
         raise FileNotFoundError(
-            "No json config file found in the model directory {}.".format(
-                model_directory
-            )
+            f"Config file {config_file} not found."
         )
 
-    if len(_found_json) > 1:
-        raise ValueError(
-            "More than one json file found in the directory {}. Only one json at the root directory supported.".format(
-                model_directory
-            )
-        )
-
-    _vr_config = VrtoolConfig.from_json(_found_json[0])
+    _vr_config = VrtoolConfig.from_json(config_file)
     if not _vr_config.input_directory:
-        _vr_config.input_directory = model_directory
+        _vr_config.input_directory = config_file.parent
 
     if not _vr_config.output_directory:
         _vr_config.output_directory = _vr_config.input_directory / "results"

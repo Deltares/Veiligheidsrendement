@@ -60,16 +60,16 @@ Tests can be run with the pytest command `pytest run`. However, when working und
 When using `Veiligheidsrendement` as a package (`vrtool`) you can run it directly from the command line as follows:
 
 ```cli
-python -m vrtool {desired_run} {MODEL_DIRECTORY}
+python -m vrtool {desired_run} {CONFIG_FILE}
 ```
 The run options are:
-- `assessment`: Runs a validation of the model in the given MODEL_DIRECTORY.
+- `assessment`: Runs a validation with the database and settings specified in the `CONFIG_FILE`.
 - `measures`: Calculates the effect of the provided measures on all specified mechanisms in the model.
 - `optimization`: Runs an optimization of the model based on the previous measures run.
 - `run_full`: Runs all the steps above sequentially.
 
 The arguments are:
-- `MODEL_DIRECTORY` (required): Absolute path to the location of your model directory. It expects a `*.json` file containing the configuration to be run.
+- `CONFIG_FILE` (required): Absolute path to the `*.json` file containing the configuration to be run.
 
 It is also possible to check all the above possibilities via the `--help` argument in the command line:
 ```cli
