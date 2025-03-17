@@ -1,0 +1,47 @@
+---
+name: Release
+description: Release a version of VRTool Suite
+labels: [release, "triage required"]
+type: task
+projects: ["Deltares/105"]
+
+body:
+  - type: checkboxes
+    id: component
+    attributes:
+      label: Component(s)
+      description: Which components do you want to release?
+      options:
+        - label: Core
+        - label: Preprocessor
+        - label: Dashboard
+        - label: Documentation
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of release
+      description: What type of release is this?
+      options:
+        - Major
+        - Minor
+        - Patch
+    validations:
+      required: true
+  - type: textarea
+    id: instructions
+    attributes:
+      label: Release instructions
+      description: Execute the steps below to release the version
+      value: |
+        - [ ] TeamCity `main` branch is "green".
+        - [ ] `cz changelog --unreleased-version="v<x>.<y>.<z>"`.
+        - [ ] `cz bump --increment <increment_type>`.
+        - [ ] `git push tags && git push --force`.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The version to release
+      placeholder: v0.1.0
