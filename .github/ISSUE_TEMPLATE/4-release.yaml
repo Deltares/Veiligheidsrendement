@@ -1,6 +1,6 @@
 ---
 name: Release
-description: Release a version of GeoLab Suite
+description: Release a version of VRTool Suite
 labels: [release, "triage required"]
 type: task
 projects: ["Deltares/105"]
