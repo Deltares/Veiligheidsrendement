@@ -1,4 +1,4 @@
-[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3129/)
 [![ci-install-package](https://github.com/Deltares/Veiligheidsrendement/actions/workflows/ci_installation.yml/badge.svg)](https://github.com/Deltares/Veiligheidsrendement/actions/workflows/ci_installation.yml)
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)

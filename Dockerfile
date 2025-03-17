@@ -1,7 +1,7 @@
 # To build this docker run:
 # `docker build -t vrtool`
 
-FROM python:3.11
+FROM python:3.12
 
 RUN apt-get update
 
