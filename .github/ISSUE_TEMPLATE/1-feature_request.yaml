@@ -1,0 +1,51 @@
+---
+name: Feature Request
+description: Suggest an improvement for VRTool Suite.
+labels: [enhancement, "triage required"]
+type: feature
+projects: ["Deltares/105"]
+
+body:
+  - type: dropdown
+    id: checks
+    attributes:
+      description: What kind of feature request is this?
+      label: Kind of request
+      options:
+        - Adding new functionality
+        - Changing existing functionality
+        - Removing existing functionality
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: To which components of the VRTool Suite does it relate to?
+      multiple: true
+      options:
+        - Core
+        - Preprocessor
+        - Dashboard
+        - Documentation
+        - Unclear
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      description: >
+        Please provide a clear and concise description of the feature you're requesting
+      label: Enhancement Description
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      description: >
+        Please describe a situation in which this feature would be useful to you, with code or cli examples if possible
+      label: Use case
+  - type: textarea
+    id: context
+    attributes:
+      description: >
+        Please add any other context about the enhancement here
+      label: Additional Context
