@@ -19,63 +19,64 @@ def cli():
     pass
 
 
-@cli.command(name="assessment", help="Assesses the model in the given directory.")
-@click.argument("model_directory", type=click.Path(exists=True), nargs=1)
+@cli.command(name="assessment", help="Assesses the model with the given configuration file.")
+@click.argument("config_file", type=click.Path(exists=True), nargs=1)
 def run_step_assessment(**kwargs):
     logging.info(
-        "Start beoordeling voor database in {0}".format(kwargs["model_directory"])
+        "Start beoordeling met configuratie {0}".format(kwargs["config_file"])
     )
 
     # Get the selected Traject.
-    _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
+    _vr_config = api.get_valid_vrtool_config(Path(kwargs["config_file"]))
     api.run_step_assessment(_vr_config)
 
 
 @cli.command(
     name="measures",
-    help="Berekening voor betrouwbaarheid en kosten voor alle maatregelen.",
+    help="Calculates the reliability and cost for all measures with the given configuration file.",
 )
-@click.argument("model_directory", type=click.Path(exists=True), nargs=1)
+@click.argument("config_file", type=click.Path(exists=True), nargs=1)
 def run_step_measures(**kwargs):
     logging.info(
-        "Start berekenen betrouwbaarheid en kosten maatregelen voor database in {0}".format(
-            kwargs["model_directory"]
+        "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie {0}".format(
+            kwargs["config_file"]
         )
     )
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
+    _vr_config = api.get_valid_vrtool_config(Path(kwargs["config_file"]))
     api.run_step_measures(_vr_config)
 
 
 @cli.command(
-    name="optimization", help="Optimizes the model measures in the given directory."
+    name="optimization", help="Optimizes the model measures with the given configuration file."
 )
-@click.argument("model_directory", type=click.Path(exists=True), nargs=1)
+@click.argument("config_file", type=click.Path(exists=True), nargs=1)
 @click.argument("measure_result_ids", type=click.INT, nargs=-1)
 def run_step_optimization(**kwargs):
     logging.info(
-        "Start optimalisatie voor bestanden in {0}".format(kwargs["model_directory"])
+        "Start optimalisatie met configuratie {0}".format(kwargs["config_file"])
     )
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
+    _config_file = Path(kwargs["config_file"])
+    _vr_config = api.get_valid_vrtool_config(_config_file)
     api.run_step_optimization(
-        _vr_config, kwargs["model_directory"], kwargs.get("measure_result_ids", [])
+        _vr_config, _config_file.parent, kwargs.get("measure_result_ids", [])
     )
 
 
-@cli.command(name="run_full", help="Full run of the model in the given directory.")
-@click.argument("model_directory", type=click.Path(exists=True), nargs=1)
+@cli.command(name="run_full", help="Full run of the model with the given configuration.")
+@click.argument("config_file", type=click.Path(exists=True), nargs=1)
 def run_full(**kwargs):
     logging.info(
-        "Start volledige berekening voor bestanden in {0}!".format(
-            kwargs["model_directory"]
+        "Start volledige berekening met configuratie {0}!".format(
+            kwargs["config_file"]
         )
     )
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = api.get_valid_vrtool_config(Path(kwargs["model_directory"]))
+    _vr_config = api.get_valid_vrtool_config(Path(kwargs["config_file"]))
     api.run_full(_vr_config)
 
 
