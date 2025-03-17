@@ -16,7 +16,7 @@ from vrtool.orm.orm_controllers import open_database
 
 
 class TestApi:
-    def test_when_get_valid_vrtool_config_given_directory_without_json_raises_error(
+    def test_when_get_valid_vrtool_config_with_missing_config_file_raises_error(
         self, request: pytest.FixtureRequest
     ):
         # 1. Define test data.
@@ -25,48 +25,28 @@ class TestApi:
             _input_dir.mkdir(parents=True)
 
         assert _input_dir.exists()
+        _config_file = _input_dir.joinpath("missing.json")
+        assert not _config_file.exists()
 
         # 2. Run test.
         with pytest.raises(FileNotFoundError) as exception_error:
-            get_valid_vrtool_config(_input_dir)
+            get_valid_vrtool_config(_config_file)
 
         # 3. Verify expectations.
         assert str(
             exception_error.value
-        ) == "No json config file found in the model directory {}.".format(_input_dir)
+        ) == "Config file {} not found.".format(_config_file)
 
-    def test_when_get_valid_vrtool_config_given_directory_with_too_many_jsons_raises_error(
-        self, request: pytest.FixtureRequest
-    ):
-        # 1. Define test data.
-        _input_dir = test_results / request.node.name
-        if _input_dir.exists():
-            shutil.rmtree(_input_dir)
-
-        _input_dir.mkdir(parents=True)
-        Path.joinpath(_input_dir, "first.json").touch()
-        Path.joinpath(_input_dir, "second.json").touch()
-
-        # 2. Run test.
-        with pytest.raises(ValueError) as exception_error:
-            get_valid_vrtool_config(_input_dir)
-
-        # 3. Verify expectations.
-        assert str(
-            exception_error.value
-        ) == "More than one json file found in the directory {}. Only one json at the root directory supported.".format(
-            _input_dir
-        )
-
-    def test_when_get_valid_vrtool_config_given_directory_with_valid_config_returns_vrtool_config(
+    def test_when_get_valid_vrtool_config_with_valid_config_returns_vrtool_config(
         self,
     ):
         # 1. Define test data.
         _input_dir = test_data / "vrtool_config"
-        assert _input_dir.exists()
+        _config_file = _input_dir.joinpath("custom_config.json")
+        assert _config_file.exists()
 
         # 2. Run test.
-        _vrtool_config = get_valid_vrtool_config(_input_dir)
+        _vrtool_config = get_valid_vrtool_config(_config_file)
 
         # 3. Verify expectations.
         assert isinstance(_vrtool_config, VrtoolConfig)
