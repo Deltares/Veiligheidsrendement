@@ -3,14 +3,13 @@ import numpy as np
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.failure_mechanisms.mechanism_input import MechanismInput
 from vrtool.orm.io.importers.orm_importer_protocol import OrmImporterProtocol
-from vrtool.orm.models.computation_scenario import ComputationScenario
 from vrtool.orm.models.computation_scenario_parameter import (
     ComputationScenarioParameter,
 )
 from vrtool.orm.models.mechanism_per_section import MechanismPerSection
 
 
-class StabilityInnerSimpleImporter(OrmImporterProtocol):
+class MechanismSimpleImporter(OrmImporterProtocol):  
     def _set_parameters(
         self, mech_input: MechanismInput, parameters: list[ComputationScenarioParameter]
     ) -> None:
@@ -29,7 +28,7 @@ class StabilityInnerSimpleImporter(OrmImporterProtocol):
                 f"No valid value given for {MechanismPerSection.__name__}."
             )
 
-        mechanism_input = MechanismInput(MechanismEnum.STABILITY_INNER)
+        mechanism_input = MechanismInput(mechanism=MechanismEnum.get_enum(orm_model.mechanism.name))
         _scenario_key = "Scenario"
         _scenario_probablity_key = "P_scenario"
         _probability_of_failure = "Pf"
