@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from vrtool.failure_mechanisms.mechanism_input import MechanismInput
-from vrtool.failure_mechanisms.stability_inner import StabilityInnerSimpleInput
+from vrtool.failure_mechanisms import MechanismInput, MechanismSimpleInput
 from vrtool.failure_mechanisms.stability_inner.reliability_calculation_method import (
     ReliabilityCalculationMethod,
 )
@@ -17,7 +16,7 @@ class TestStabilityInnerSimpleInput:
         assert isinstance(mechanism_input_fixture, MechanismInput)
 
         # Call
-        failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
+        failure_mechanism_input = MechanismSimpleInput.from_mechanism_input(
             mechanism_input_fixture
         )
 
@@ -27,7 +26,7 @@ class TestStabilityInnerSimpleInput:
             == ReliabilityCalculationMethod.BETA_SINGLE
         )
         assert failure_mechanism_input.beta == mechanism_input_fixture.input["beta"]
-        assert failure_mechanism_input.stability_reduction_factor == 1
+        assert failure_mechanism_input.mechanism_reduction_factor == 1
 
     def test_from_mechanism_input_without_any_reliability_raises_exception(
         self,
@@ -37,7 +36,7 @@ class TestStabilityInnerSimpleInput:
 
         # Call
         with pytest.raises(Exception) as exception_error:
-            StabilityInnerSimpleInput.from_mechanism_input(mechanism_input)
+            MechanismSimpleInput.from_mechanism_input(mechanism_input)
 
         # Assert
         assert (
@@ -54,7 +53,7 @@ class TestStabilityInnerSimpleInput:
         mechanism_input_fixture.input["pf_with_elim"] = np.array([0.3], dtype=float)
 
         # Call
-        failure_mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
+        failure_mechanism_input = MechanismSimpleInput.from_mechanism_input(
             mechanism_input_fixture
         )
 
@@ -77,7 +76,7 @@ class TestStabilityInnerSimpleInput:
 
         # Call
         with pytest.raises(ValueError) as exception_error:
-            StabilityInnerSimpleInput.from_mechanism_input(mechanism_input_fixture)
+            MechanismSimpleInput.from_mechanism_input(mechanism_input_fixture)
 
         # Assert
         assert (
@@ -100,13 +99,13 @@ class TestStabilityInnerSimpleInput:
         expected_result: float,
     ):
         # 1. Define test data.
-        _dummy_input = StabilityInnerSimpleInput(
+        _dummy_input = MechanismSimpleInput(
             beta=pf_to_beta(np.array(initial_probability_of_failure)),
             scenario_probability=np.array(scenario_probability),
             initial_probability_of_failure=np.array(initial_probability_of_failure),
             is_eliminated=False,
             reliability_calculation_method=ReliabilityCalculationMethod.BETA_SINGLE,
-            stability_reduction_factor=np.array([1000] * len(scenario_probability)),
+            mechanism_reduction_factor=np.array([1000] * len(scenario_probability)),
         )
 
         # 2. Run test.

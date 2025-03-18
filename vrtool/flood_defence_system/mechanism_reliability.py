@@ -6,7 +6,11 @@ from vrtool.common.dike_traject_info import DikeTrajectInfo
 from vrtool.common.enums.computation_type_enum import ComputationTypeEnum
 from vrtool.common.enums.mechanism_enum import MechanismEnum
 from vrtool.common.hydraulic_loads.load_input import LoadInput
-from vrtool.failure_mechanisms import FailureMechanismCalculatorProtocol
+from vrtool.failure_mechanisms import (
+    FailureMechanismCalculatorProtocol,
+    MechanismSimpleCalculator,
+    MechanismSimpleInput,
+)
 from vrtool.failure_mechanisms.general import (
     GenericFailureMechanismCalculator,
     GenericFailureMechanismInput,
@@ -20,10 +24,6 @@ from vrtool.failure_mechanisms.overflow import (
 )
 from vrtool.failure_mechanisms.piping import PipingSemiProbabilisticCalculator
 from vrtool.failure_mechanisms.revetment.revetment_calculator import RevetmentCalculator
-from vrtool.failure_mechanisms.stability_inner import (
-    StabilityInnerSimpleCalculator,
-    StabilityInnerSimpleInput,
-)
 from vrtool.failure_mechanisms.stability_inner.dstability_wrapper import (
     DStabilityWrapper,
 )
@@ -132,10 +132,17 @@ class MechanismReliability:
         self, mechanism: MechanismEnum, mechanism_input: MechanismInput, load: LoadInput
     ) -> FailureMechanismCalculatorProtocol:
         if mechanism == MechanismEnum.STABILITY_INNER:
-            _mechanism_input = StabilityInnerSimpleInput.from_mechanism_input(
+            _mechanism_input = MechanismSimpleInput.from_mechanism_input(
                 mechanism_input
             )
-            return StabilityInnerSimpleCalculator(_mechanism_input)
+            return MechanismSimpleCalculator(_mechanism_input)
+        
+        if mechanism == MechanismEnum.PIPING:
+            # TODO: Implement calculator
+            _mechanism_input = MechanismSimpleInput.from_mechanism_input(
+                mechanism_input
+            )
+            return MechanismSimpleCalculator(_mechanism_input)
 
         if mechanism == MechanismEnum.OVERFLOW:  # specific for SAFE
             _mechanism_input = OverflowSimpleInput.from_mechanism_input(mechanism_input)
