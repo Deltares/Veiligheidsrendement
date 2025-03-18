@@ -27,3 +27,4 @@ def migrate_test_databases():
     VrToolLogger.init_console_handler(logging.INFO)
     logging.info("Migrating test databases in %s.", _tests_dir)
     MigrateDatabaseController(default_scripts_dir).migrate_databases_in_dir(_tests_dir)
+migrate_test_databases()

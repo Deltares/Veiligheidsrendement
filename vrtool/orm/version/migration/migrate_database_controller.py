@@ -3,7 +3,6 @@ import logging
 import sqlite3
 from pathlib import Path
 
-from vrtool.orm.version.increment_type_enum import IncrementTypeEnum
 from vrtool.orm.version.migration.database_version import DatabaseVersion
 from vrtool.orm.version.migration.script_version import ScriptVersion
 from vrtool.orm.version.orm_version import OrmVersion
