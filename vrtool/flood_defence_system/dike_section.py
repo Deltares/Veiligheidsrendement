@@ -32,3 +32,5 @@ class DikeSection:
     cover_layer_thickness: float = float("nan")
     pleistocene_level: float = float("nan")
     flood_damage: float = float("nan")
+    sensitive_fraction_piping: float = 0
+    sensitive_fraction_stability_inner: float = 0
