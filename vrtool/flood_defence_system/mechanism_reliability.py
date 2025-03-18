@@ -138,7 +138,6 @@ class MechanismReliability:
             return MechanismSimpleCalculator(_mechanism_input)
         
         if mechanism == MechanismEnum.PIPING:
-            # TODO: Implement calculator
             _mechanism_input = MechanismSimpleInput.from_mechanism_input(
                 mechanism_input
             )

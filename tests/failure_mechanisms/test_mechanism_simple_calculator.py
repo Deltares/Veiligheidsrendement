@@ -30,5 +30,5 @@ class TestStabilityInnerSimpleCalculator:
         # Assert
         assert (
             str(exception_error.value)
-            == "Expected instance of a StabilityInnerSimpleInput."
+            == "Expected instance of a MechanismSimpleInput."
         )
