@@ -19,15 +19,33 @@ def cli():
     pass
 
 
+def _initialize_log_file(log_dir: click.Path | None):
+    # Logging dir.
+    if log_dir is None:
+        log_dir = Path.cwd()
+
+   
+    # Define logging filename and initialize handler
+    _log_file = Path(log_dir).joinpath("vrtool_logging.log")
+    VrToolLogger.init_file_handler(_log_file, logging_level=logging.INFO)
+    logging.info("Start logging vanuit %s", str(_log_file))
+
 @cli.command(name="assessment", help="Assesses the model with the given configuration file.")
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
-def run_step_assessment(**kwargs):
+@click.option("-ld", "--log-dir", type=click.Path())
+def run_step_assessment(config_file: click.Path, log_dir: click.Path | None):
+    """
+    Runs the step assessment.
+    """
+    # Retrieve parameter and initialize logging.
+    _initialize_log_file(log_dir)
+
     logging.info(
-        "Start beoordeling met configuratie {0}".format(kwargs["config_file"])
+        "Start beoordeling met configuratie %s", str(config_file)
     )
 
     # Get the selected Traject.
-    _vr_config = api.get_valid_vrtool_config(Path(kwargs["config_file"]))
+    _vr_config = api.get_valid_vrtool_config(Path(config_file))
     api.run_step_assessment(_vr_config)
 
 
@@ -36,15 +54,22 @@ def run_step_assessment(**kwargs):
     help="Calculates the reliability and cost for all measures with the given configuration file.",
 )
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
-def run_step_measures(**kwargs):
+@click.option("-ld", "--log-dir", type=click.Path())
+def run_step_measures(config_file: click.Path, log_dir: click.Path | None):
+    """
+    Runs step measures.
+    """
+    # Retrieve parameter and initialize logging.
+    _initialize_log_file(log_dir)
+
     logging.info(
-        "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie {0}".format(
-            kwargs["config_file"]
+        "Start berekenen betrouwbaarheid en kosten maatregelen met configuratie %s", str(
+            config_file
         )
     )
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = api.get_valid_vrtool_config(Path(kwargs["config_file"]))
+    _vr_config = api.get_valid_vrtool_config(Path(config_file))
     api.run_step_measures(_vr_config)
 
 
@@ -53,36 +78,60 @@ def run_step_measures(**kwargs):
 )
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
 @click.argument("measure_result_ids", type=click.INT, nargs=-1)
-def run_step_optimization(**kwargs):
+@click.option("-ld", "--log-dir", type=click.Path())
+def run_step_optimization(
+    config_file: click.Path,
+    log_dir: click.Path | None,
+    measure_result_ids: tuple[int]):
+    """
+    Runs step optimization.
+    """
+    # Retrieve parameter and initialize logging.
+    _initialize_log_file(log_dir)
+
+    _config_file = Path(config_file)
     logging.info(
-        "Start optimalisatie met configuratie {0}".format(kwargs["config_file"])
+        "Start optimalisatie met configuratie %s", str(config_file)
     )
 
     # Define VrToolConfig and Selected Traject
-    _config_file = Path(kwargs["config_file"])
     _vr_config = api.get_valid_vrtool_config(_config_file)
+    _measure_result_tuples = []
+    if any(measure_result_ids):
+        _iterator = iter(measure_result_ids)
+        _measure_result_tuples = list(zip(_iterator, _iterator))
     api.run_step_optimization(
-        _vr_config, _config_file.parent, kwargs.get("measure_result_ids", [])
+        _vr_config, _config_file.parent, _measure_result_tuples
     )
 
 
 @cli.command(name="run_full", help="Full run of the model with the given configuration.")
 @click.argument("config_file", type=click.Path(exists=True), nargs=1)
-def run_full(**kwargs):
+@click.option("-ld", "--log-dir", type=click.Path())
+def run_full(config_file: click.Path, log_dir: click.Path | None):
+    """
+    Runs all the veiligheidsrendement steps (assessment, measures and optimization).
+    """
+    # Retrieve parameter and initialize logging.
+    _initialize_log_file(log_dir)
     logging.info(
-        "Start volledige berekening met configuratie {0}!".format(
-            kwargs["config_file"]
-        )
+        "Start volledige berekening met configuratie %s!", str(config_file)
     )
 
     # Define VrToolConfig and Selected Traject
-    _vr_config = api.get_valid_vrtool_config(Path(kwargs["config_file"]))
+    _vr_config = api.get_valid_vrtool_config(Path(config_file))
     api.run_full(_vr_config)
 
 
 @cli.command(name="migrate_db", help="Migrate the provided database file.")
 @click.argument("db_filepath", type=click.Path(exists=True), nargs=1)
 def migrate_db(db_filepath: str):
+    """
+    Migrates the provided database file to the latest version possible.
+
+    Args:
+        db_filepath (str): Database file location to migrate.
+    """
     logging.info("Migreren van database %s.", db_filepath)
     MigrateDatabaseController(default_scripts_dir).migrate_single_db(Path(db_filepath))
 
@@ -92,6 +141,12 @@ def migrate_db(db_filepath: str):
 )
 @click.argument("database_dir", type=click.Path(exists=True), nargs=1)
 def migrate_databases_in_dir(database_dir: str):
+    """
+    Migrates all the database files within a given directory.
+
+    Args:
+        database_dir (str): Directory path location.
+    """
     logging.info("Migreren van databases in %s.", database_dir)
     MigrateDatabaseController(default_scripts_dir).migrate_databases_in_dir(
         Path(database_dir)
